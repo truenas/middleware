@@ -80,3 +80,7 @@ def local_s3_task(params=None, credential_params=None):
                 **params,
             }) as t:
                 yield t
+
+
+def run_task(task, timeout=120):
+    call("cloudsync.sync", task["id"], job=True, timeout=timeout)

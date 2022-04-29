@@ -139,21 +139,34 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-def check_local_path(path):
+def check_local_path(path, *, check_mountpoint=True, error_text_path=None):
+    error_text_path = error_text_path or path
+
     if not os.path.exists(path):
-        raise CallError(f"Directory {path!r} does not exist")
+        raise CallError(f"Directory {error_text_path!r} does not exist")
 
     if not os.path.isdir(path):
-        raise CallError(f"{path!r} is not a directory")
+        raise CallError(f"{error_text_path!r} is not a directory")
 
-    if not os.path.normpath(path).startswith("/mnt/") or os.stat(path).st_dev == os.stat("/mnt").st_dev:
-        raise CallError(f"Directory {path!r} must reside within volume mount point")
+    if check_mountpoint:
+        if not os.path.normpath(path).startswith("/mnt/") or os.stat(path).st_dev == os.stat("/mnt").st_dev:
+            raise CallError(f"Directory {error_text_path!r} must reside within volume mount point")
 
 
 async def rclone(middleware, job, cloud_sync, dry_run):
     await middleware.call("network.general.will_perform_activity", "cloud_sync")
 
-    await middleware.run_in_thread(check_local_path, cloud_sync["path"])
+    if await middleware.call("filesystem.is_cluster_path", cloud_sync["path"]):
+        path = await middleware.call("filesystem.resolve_cluster_path", cloud_sync["path"])
+        await middleware.run_in_thread(
+            check_local_path,
+            path,
+            check_mountpoint=False,
+            error_text_path=cloud_sync["path"],
+        )
+    else:
+        path = cloud_sync["path"]
+        await middleware.run_in_thread(check_local_path, path)
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
@@ -189,7 +202,6 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         args += [cloud_sync["transfer_mode"].lower()]
 
         snapshot = None
-        path = cloud_sync["path"]
         if cloud_sync["direction"] == "PUSH":
             if cloud_sync["snapshot"]:
                 dataset, recursive = get_dataset_recursive(
@@ -830,16 +842,18 @@ class CloudSyncService(TaskPathService):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
-        await self.validate_path_field(data, name, verrors)
+        await self.validate_path_field(data, name, verrors, allow_cluster=True)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
             if data["transfer_mode"] == "MOVE":
                 verrors.add(f"{name}.snapshot", "This option can not be used for MOVE transfer mode")
-            if await self.middleware.call("pool.dataset.query",
-                                          [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
-                                           ["type", "=", "FILESYSTEM"]]):
+            if await self.middleware.call("filesystem.is_cluster_path", data["path"]):
+                verrors.add(f"{name}.snapshot", "This option can not be used for cluster paths")
+            elif await self.middleware.call("pool.dataset.query",
+                                            [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
+                                             ["type", "=", "FILESYSTEM"]]):
                 verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "
                                                 "nesting")
 

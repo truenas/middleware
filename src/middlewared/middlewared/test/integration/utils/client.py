@@ -11,8 +11,15 @@ __all__ = ["client", "session", "url"]
 
 @contextlib.contextmanager
 def client(py_exceptions=True):
-    with Client(f"ws://{os.environ['MIDDLEWARE_TEST_IP']}/websocket", py_exceptions=py_exceptions) as c:
-        c.call("auth.login", "root", os.environ["MIDDLEWARE_TEST_PASSWORD"])
+    if "NODE_A_IP" in os.environ:
+        host = os.environ["NODE_A_IP"]
+        password = os.environ["APIPASS"]
+    else:
+        host = os.environ["MIDDLEWARE_TEST_IP"]
+        password = os.environ["MIDDLEWARE_TEST_PASSWORD"]
+
+    with Client(f"ws://{host}/websocket", py_exceptions=py_exceptions) as c:
+        c.call("auth.login", "root", password)
         yield c
 
 
