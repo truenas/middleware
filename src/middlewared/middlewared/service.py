@@ -1091,10 +1091,16 @@ class SharingTaskService(CRUDService):
         }
 
     @private
-    async def validate_path_field(self, data, schema, verrors, bypass=False):
-        await check_path_resides_within_volume(
-            verrors, self.middleware, f'{schema}.{self.path_field}', data.get(self.path_field), gluster_bypass=bypass,
-        )
+    async def validate_path_field(self, data, schema, verrors, *, allow_cluster=False):
+        name = f'{schema}.{self.path_field}'
+        path = data[self.path_field]
+
+        if await self.middleware.call('filesystem.is_cluster_path', path):
+            if not allow_cluster:
+                verrors.add(name, 'Cluster path is not allowed')
+        else:
+            await check_path_resides_within_volume(verrors, self.middleware, name, path)
+
         return verrors
 
     @private

@@ -431,15 +431,13 @@ class SharingNFSService(SharingService):
             verrors.add(f"{schema_name}.alldirs", "This option can only be used for shares that contain single path")
 
         # if any of the `paths` that were passed to us by user are within the gluster volume
-        # mountpoint then we need to pass the `gluster_bypass` kwarg so that we don't raise a
-        # validation error complaining about using a gluster path within the zpool mountpoint
-        bypass = any('.glusterfs' in i for i in data["paths"] + data["aliases"])
-
-        # need to make sure that the nfs share is within the zpool mountpoint
-        for idx, i in enumerate(data["paths"]):
-            await check_path_resides_within_volume(
-                verrors, self.middleware, f'{schema_name}.paths.{idx}', i, gluster_bypass=bypass
-            )
+        # then we don't need to check whether the path is within the zpool mountpoint
+        if not any('.glusterfs' in i for i in data["paths"] + data["aliases"]):
+            # need to make sure that the nfs share is within the zpool mountpoint
+            for idx, i in enumerate(data["paths"]):
+                await check_path_resides_within_volume(
+                    verrors, self.middleware, f'{schema_name}.paths.{idx}', i,
+                )
 
         await self.middleware.run_in_thread(self.validate_paths, data, schema_name, verrors)
 

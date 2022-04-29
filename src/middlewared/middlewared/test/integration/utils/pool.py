@@ -8,7 +8,7 @@ try:
     sys.path.append(apifolder)
     from auto_config import pool_name
 except ImportError:
-    pool_name = None
+    pool_name = os.environ["ZPOOL"]
 
 logger = logging.getLogger(__name__)
 
