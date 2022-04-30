@@ -3518,7 +3518,7 @@ class PoolDatasetService(CRUDService):
                 )
             if rs := data.get('recordsize'):
                 if rs not in await self.middleware.call('pool.dataset.recordsize_choices'):
-                    verrors.add(f'{schema}.recordsize', '{rs!r} is an invalid recordsize.')
+                    verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
         elif data['type'] == 'VOLUME':
             if mode == 'CREATE' and 'volsize' not in data:
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
