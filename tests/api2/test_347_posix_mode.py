@@ -652,7 +652,8 @@ def test_23_delete_user(request):
     assert results.status_code == 200, results.text
 
 
-def test_24_delete_dataset():
+def test_24_delete_dataset(request):
+    depends(request, ["DATASET_CREATED"])
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )
