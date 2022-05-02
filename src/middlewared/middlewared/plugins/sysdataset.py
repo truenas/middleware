@@ -194,7 +194,7 @@ class SystemDatasetService(ConfigService):
     @accepts(
         Bool('mount', default=True),
         Str('exclude_pool', default=None, null=True),
-        Bool('boot_pool', default=None, null=True),
+        Str('boot_pool', default=None, null=True),
         Bool('on_active', default=False),
     )
     @private
