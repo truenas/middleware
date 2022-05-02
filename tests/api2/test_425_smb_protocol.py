@@ -95,7 +95,8 @@ SMB_PWD = "smb1234"
 
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_dataset():
+def test_001_creating_smb_dataset(request):
+    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"
@@ -104,7 +105,8 @@ def test_001_creating_smb_dataset():
     assert results.status_code == 200, results.text
 
 
-def test_002_get_next_uid_for_smbuser():
+def test_002_get_next_uid_for_smbuser(request):
+    depends(request, ["SMB_DATASET_CREATED"])
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
     global next_uid
