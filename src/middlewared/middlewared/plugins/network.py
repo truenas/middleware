@@ -960,7 +960,7 @@ class InterfaceService(CRUDService):
         dfva = data.get('failover_virtual_aliases', [])
 
         aliases = []
-        iface = {}
+        iface = {'address': '', 'address_b': '', 'netmask': '', 'version': '', 'vip': ''}
         for idx, (a, fa, fva) in enumerate(zip_longest(da, dfa, dfva, fillvalue={})):
             netmask = a['netmask']
             ipa = a['address']
