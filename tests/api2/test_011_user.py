@@ -542,7 +542,7 @@ def test_46_creating_non_smb_user(request):
 
 
 def test_47_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
     cmd = """grep -R "testabcd" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -582,6 +582,7 @@ def test_49_convert_to_smb_knownfail(request):
     assert results.status_code == 422, results.text
 
 
+@pytest.mark.dependency(name="CONVERT_TO_SMB_USER")
 def test_50_convert_to_smb_user(request):
     depends(request, ["NON_SMB_USER_CREATED"])
     payload = {
@@ -594,7 +595,7 @@ def test_50_convert_to_smb_user(request):
 
 
 def test_51_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "CONVERT_TO_SMB_USER"], scope="session")
     cmd = """grep -R "testabcd1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -605,7 +606,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
     At this point the non-SMB user has been converted to an SMB user. Verify
     that a passdb entry was appropriately generated.
     """
-    depends(request, ["NON_SMB_USER_CREATED", "ssh_password"], scope="session")
+    depends(request, ["CONVERT_TO_SMB_USER", "ssh_password"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
@@ -622,7 +623,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
 
 
 def test_53_add_user_to_sudoers(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "CONVERT_TO_SMB_USER"], scope="session")
     results = PUT(f"/user/id/{user_id}", {"sudo": True})
     assert results.status_code == 200, results.text
 
@@ -635,7 +636,7 @@ def test_53_add_user_to_sudoers(request):
 
 
 def test_54_disable_password_auth(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "CONVERT_TO_SMB_USER"], scope="session")
     results = PUT(f"/user/id/{user_id}", {"password_disabled": True})
     assert results.status_code == 200, results.text
 
