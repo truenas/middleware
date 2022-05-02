@@ -787,13 +787,13 @@ class PoolService(CRUDService):
             # this means the system dataset is on the boot-pool and so on enterprise
             # systems we're forcefully migrating the system dataset from the boot pool
             # to the first created zpool. If this isn't an enterprise system, then other
-            # logic is applied (`sysdataset.setup` handles all this)
+            # logic is applied (`systemdataset.setup` handles all this)
             mount = True
             exclude_pool = None
             on_active = True
             # this restarts rrdcached and therefore collectd
             job.set_progress(95, 'Setting up system dataset')
-            await self.middleware.call('sysdataset.setup', mount, exclude_pool, boot_pool, on_active)
+            await self.middleware.call('systemdataset.setup', mount, exclude_pool, boot_pool, on_active)
         else:
             job.set_progress(95, 'Restarting reporting services')
             asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
