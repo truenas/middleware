@@ -332,60 +332,39 @@ class EnclosureService(Service):
             "model": "",
             "controller": True,
             "has_slot_status": False,
-            "elements": {"Array Device Slot": {}},
+            "elements": {},
         }]
 
-        orig_slots = {}
-        orig_id = this_num = None
-        for slot, mapping in enumerate(slots, 1):
-            if mapping.num != this_num:
-                # this means we haven't pulled out the original enclosure
-                # information for /dev/ses{mapping.num}.
-                orig = [i for i in enclosures if i["number"] == mapping.num]
-                if not orig:
-                    self.logger.error("Failed to detect /dev/ses%d. Mapping enclosure failed.", mapping.num)
-                    return []
-                else:
-                    this_num = mapping.num
-                    orig_id = orig[0]["id"]
-                    # pull out the original slots
-                    orig_slots = orig[0]["elements"].pop("Array Device Slot")
-                    # go ahead and pull out the other elements from the head-unit to prevent lossful translation
-                    mapped[0]["elements"].update(orig[0]["elements"])
-                    # set the model of the mapped enclosure
-                    mapped[0]["model"] = orig[0]["model"]
+        orig_encs = {i["number"]: i for i in filter(lambda x: x["controller"], enclosures)}
+        for idx, enc_num in enumerate(orig_encs):
+            if idx == 0:
+                mapped[0]["model"] = orig_encs[enc_num]["model"]
+                mapped[0]["elements"].update(orig_encs[enc_num]["elements"])
+                mapped[0]["elements"]["Array Device Slot"] = {}
 
-            # now we need to map the original enclosures disk slots to the new mapping
-            try:
-                orig_slot = orig_slots[mapping.slot]
-            except KeyError:
-                self.logger.error(
-                    "Failed to detect slot %d in enclosure /dev/ses%d. Mapping slot failed.", mapping.slot, mapping.num
-                )
-                return []
-
-            # disk has been mapped so update `mapped` variable appropriately
-            mapped[0]["elements"]["Array Device Slot"].update({
-                slot: {
-                    "descriptor": f"Disk #{slot}",
-                    "status": orig_slot["status"],
-                    "value": orig_slot["value"],
-                    "value_raw": orig_slot["value_raw"],
-                    "dev": orig_slot["dev"],
-                    "original": {
-                        "enclosure_id": orig_id,
-                        "slot": mapping.slot,
+            for slot, mapping in enumerate(slots, start=1):
+                orig_slot = orig_encs[mapping.num]["elements"]["Array Device Slot"][mapping.slot]
+                mapped[0]["elements"]["Array Device Slot"].update({
+                    slot: {
+                        "descriptor": f"Disk #{slot}",
+                        "status": orig_slot["status"],
+                        "value": orig_slot["value"],
+                        "value_raw": orig_slot["value_raw"],
+                        "dev": orig_slot["dev"],
+                        "original": {
+                            "enclosure_id": orig_encs[mapping.num]["id"],
+                            "slot": mapping.slot,
+                        },
                     },
-                }
-            })
+                })
 
-            # set this if the disk that is being mapped is flagged
-            # as being able to be faulted/identified/cleared etc
-            # NOTE: we're doing this wrong....we're not setting this per-disk
-            # we're setting this for _ALL_ disks. The only way this will ever
-            # be True is if _ALL_ disks were mapped as True up above in the
-            # mapping code.....
-            mapped[0]["has_slot_status"] = True if mapping.identify else False
+                # set this if the disk that is being mapped is flagged
+                # as being able to be faulted/identified/cleared etc
+                # NOTE: we're doing this wrong....we're not setting this per-disk
+                # we're setting this for _ALL_ disks. The only way this will ever
+                # be True is if _ALL_ disks were mapped as True up above in the
+                # mapping code.....
+                mapped[0]["has_slot_status"] = True if mapping.identify else False
 
         # getting here means we've mapped the enclosures for the given product
         # but if we have future products that need to be mapped and/or have the
