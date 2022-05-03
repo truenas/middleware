@@ -29,7 +29,7 @@ async def added_disk(middleware, disk_name):
 
 
 async def remove_disk(middleware, disk_name):
-    await middleware.call('geom.cache.remove_disk', disk_name)
+    await middleware.call('geom.cache.invalidate')
     await middleware.call('disk.sync', disk_name)
     await middleware.call('disk.multipath_sync')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
