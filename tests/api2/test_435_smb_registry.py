@@ -191,11 +191,12 @@ def test_008_test_presets(request, preset):
         assert to_test[k] == new_conf[k]
 
 
-def test_009_reset_smb():
+def test_009_reset_smb(request):
     """
     Remove all parameters that might turn us into
     a MacOS-style SMB server (fruit).
     """
+    depends(request, ["SHARES_CREATED"])
     payload = {"aapl_extensions": False}
     results = PUT("/smb/", payload)
     assert results.status_code == 200, results.text

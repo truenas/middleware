@@ -445,6 +445,7 @@ def test_29_verify_no_nfs_principals(request):
     assert results['output'].strip() == 'False'
 
 
+@pytest.mark.dependency(name="NFS_EXPORTS")
 def test_30_check_nfs_exports_sec(request):
     """
     First NFS exports check. In this situation we are joined to
@@ -477,7 +478,7 @@ def test_30_check_nfs_exports_sec(request):
 
 @pytest.mark.dependency(name="V4_KRB_ENABLED")
 def test_31_enable_krb5_nfs4(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    depends(request, ["KRB5_IS_HEALTHY", "NFS_EXPORTS"])
     payload = {"v4_krb": True}
     results = PUT("/nfs/", payload)
     assert results.status_code == 200, results.text
@@ -520,7 +521,7 @@ def test_35_check_nfs_exports_sec(request):
     Expected security with is:
     "V4: / -sec=krb5:krb5i:krb5p"
     """
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NFS_EXPORTS"], scope="session")
     cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
@@ -553,7 +554,7 @@ def test_37_check_nfs_exports_sec(request):
     Expected security with is:
     "V4: / -sec=sys:krb5:krb5i:krb5p"
     """
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NFS_EXPORTS"], scope="session")
     cmd = 'midclt call etc.generate nfsd'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
@@ -566,6 +567,7 @@ def test_37_check_nfs_exports_sec(request):
 
 
 def test_38_cleanup_nfs_settings(request):
+    depends(request, ["NFS_EXPORTS"])
     nfsid = GET('/sharing/nfs?comment=KRB Test Share').json()[0]['id']
     results = DELETE(f"/sharing/nfs/id/{nfsid}")
     assert results.status_code == 200, results.text

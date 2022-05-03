@@ -246,7 +246,7 @@ def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
 
 
 def test_020_verify_smbclient_127_0_0_1_nt_status_access_is_denied(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "service_cifs_running"], scope="session")
     cmd = 'smbclient -NL //127.0.0.1'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, f'out: {results["output"]}, err: {results["stderr"]}'

@@ -2,12 +2,11 @@
 import os
 import pytest
 import sys
-import time
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import pool_name, ha, dev_test
-from functions import GET, POST, PUT, DELETE, wait_on_job
+from functions import GET, POST, DELETE, wait_on_job
 
 reason = 'Skip for test development'
 # comment pytestmark for development testing with --dev-test
@@ -52,27 +51,7 @@ if not ha:
         'iconik'
     ]
 
-    def test_01_get_nameserver1_and_nameserver2(request):
-        depends(request, ["pool_04"], scope="session")
-        global nameserver1, nameserver2
-        results = GET("/network/configuration/")
-        assert results.status_code == 200, results.text
-        nameserver1 = results.json()['nameserver1']
-        nameserver2 = results.json()['nameserver2']
-
-    def test_02_set_nameserver_to_google_dns(request):
-        depends(request, ["pool_04"], scope="session")
-        global payload
-        payload = {
-            "nameserver1": '8.8.8.8',
-            "nameserver2": '8.8.4.4'
-        }
-        global results
-        results = PUT("/network/configuration/", payload)
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
-        time.sleep(1)
-
+    @pytest.mark.dependency(name="ACTIVATE_JAIL_POOL")
     def test_03_activate_jail_pool(request):
         depends(request, ["pool_04"], scope="session")
         results = POST('/jail/activate/', pool_name)
@@ -80,19 +59,19 @@ if not ha:
         assert results.json() is True, results.text
 
     def test_04_verify_jail_pool(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         results = GET('/jail/get_activated_pool/')
         assert results.status_code == 200, results.text
         assert results.json() == pool_name, results.text
 
     def test_05_get_list_of_installed_plugin(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         results = GET('/plugin/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
 
     def test_06_verify_plugin_repos_is_in_official_repositories(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         results = GET('/plugin/official_repositories/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -101,7 +80,7 @@ if not ha:
         assert results.json()['IXSYSTEMS']['git_repository'] == test_repos_url, results.text
 
     def test_07_get_list_of_default_plugins_available_job_id(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         global job_results
         results = POST('/plugin/available/')
         assert results.status_code == 200, results.text
@@ -111,21 +90,23 @@ if not ha:
         job_results = job_status['results']
 
     @pytest.mark.parametrize('plugin', default_plugins)
-    def test_08_verify_available_plugin_(plugin):
+    def test_08_verify_available_plugin_(plugin, request):
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         assert isinstance(job_results['result'], list), str(job_results)
         assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
     @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
     def test_09_verify_available_plugins_asigra_is_not_na_with(prop, request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         for plugin_info in job_results['result']:
             if 'asigra' in plugin_info['plugin']:
                 break
         assert plugin_info[prop] != 'N/A', str(job_results)
 
     @pytest.mark.timeout(1200)
+    @pytest.mark.dependency(name="ADD_ASIGRA_PLUGIN")
     def test_10_add_asigra_plugin(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         payload = {
             "plugin_name": "asigra",
             "jail_name": "asigra",
@@ -140,13 +121,13 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_11_search_plugin_asigra_id(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         results = GET('/plugin/?id=asigra')
         assert results.status_code == 200, results.text
         assert len(results.json()) > 0, results.text
 
     def test_12_get_asigra_plugin_info(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         global asigra_plugin
         results = GET('/plugin/id/asigra/')
         assert results.status_code == 200, results.text
@@ -155,19 +136,19 @@ if not ha:
 
     @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
     def test_13_verify_asigra_plugin_value_is_not_na_for_(prop, request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         assert asigra_plugin[prop] != 'N/A', str(asigra_plugin)
 
     @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
     def test_14_verify_asigra_plugins_installed_and_available_value_(prop, request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         for plugin_info in job_results['result']:
             if 'asigra' in plugin_info['plugin']:
                 break
         assert plugin_info[prop] == asigra_plugin[prop], str(plugin_info)
 
     def test_15_get_asigra_jail_info(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         global asigra_jail, results
         results = GET("/jail/id/asigra")
         assert results.status_code == 200, results.text
@@ -176,11 +157,11 @@ if not ha:
 
     @pytest.mark.parametrize('prop', plugin_objects)
     def test_16_verify_asigra_plugin_value_with_jail_value_of_(prop, request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         assert asigra_jail[prop] == asigra_plugin[prop], results.text
 
     def test_17_get_list_of_available_plugins_without_cache(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         global job_results
         payload = {
             "plugin_repository": repos_url,
@@ -194,12 +175,13 @@ if not ha:
         job_results = job_status['results']
 
     @pytest.mark.parametrize('plugin', plugin_list)
-    def test_18_verify_available_plugin_without_cache_(plugin):
+    def test_18_verify_available_plugin_without_cache_(plugin, request):
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         assert isinstance(job_results['result'], list), str(job_results)
         assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
     def test_19_stop_asigra_jail(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         payload = {
             "jail": "asigra",
             "force": True
@@ -212,7 +194,7 @@ if not ha:
         assert results.json()['state'] == 'down', results.text
 
     def test_20_start_asigra_jail(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         payload = "asigra"
         results = POST('/jail/start/', payload)
         assert results.status_code == 200, results.text
@@ -222,7 +204,7 @@ if not ha:
         assert results.json()['state'] == 'up', results.text
 
     def test_21_stop_asigra_jail_before_deleteing(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         payload = {
             "jail": "asigra",
             "force": True
@@ -235,22 +217,22 @@ if not ha:
         assert results.json()['state'] == 'down', results.text
 
     def test_22_delete_asigra_plugin(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         results = DELETE('/plugin/id/asigra/')
         assert results.status_code == 200, results.text
 
     def test_23_looking_asigra_jail_id_is_delete(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         results = GET('/jail/id/asigra/')
         assert results.status_code == 404, results.text
 
     def test_24_looking_asigra_plugin_id_is_delete(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         results = GET('/plugin/id/asigra/')
         assert results.status_code == 404, results.text
 
     def test_25_get_list_of_available_plugins_job_id_on_custom_repos(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         global job_results
         payload = {
             "plugin_repository": repos_url2,
@@ -264,21 +246,23 @@ if not ha:
         job_results = job_status['results']
 
     @pytest.mark.parametrize('plugin', plugin_list2)
-    def test_26_verify_available_plugin_(plugin):
+    def test_26_verify_available_plugin_(plugin, request):
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         assert isinstance(job_results['result'], list), str(job_results)
         assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
     @pytest.mark.parametrize('prop', ['version', 'revision', 'epoch'])
     def test_27_verify_available_plugins_transmission_is_not_na_(prop, request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         for plugin_info in job_results['result']:
             if 'transmission' in plugin_info['plugin']:
                 break
         assert plugin_info[prop] != 'N/A', str(job_results)
 
     @pytest.mark.timeout(1200)
+    @pytest.mark.dependency(name="ADD_TRANSMISSION_PLUGINS")
     def test_28_add_transmission_plugins(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         payload = {
             "plugin_name": "transmission",
             "jail_name": "transmission",
@@ -294,24 +278,24 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_29_search_plugin_transmission_id(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_TRANSMISSION_PLUGINS"])
         results = GET('/plugin/?id=transmission')
         assert results.status_code == 200, results.text
         assert len(results.json()) > 0, results.text
 
     def test_30_verify_transmission_plugin_id_exist(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_TRANSMISSION_PLUGINS"])
         results = GET('/plugin/id/transmission/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
 
     def test_31_verify_the_transmission_jail_id_exist(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_TRANSMISSION_PLUGINS"])
         results = GET('/jail/id/transmission/')
         assert results.status_code == 200, results.text
 
     def test_32_delete_transmission_jail(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_TRANSMISSION_PLUGINS"])
         payload = {
             'force': True
         }
@@ -319,23 +303,12 @@ if not ha:
         assert results.status_code == 200, results.text
 
     def test_33_verify_the_transmission_jail_id_is_delete(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ADD_TRANSMISSION_PLUGINS"])
         results = GET('/jail/id/transmission/')
         assert results.status_code == 404, results.text
 
     def test_34_verify_clean_call(request):
-        depends(request, ["pool_04"], scope="session")
+        depends(request, ["ACTIVATE_JAIL_POOL"])
         results = POST('/jail/clean/', 'ALL')
         assert results.status_code == 200, results.text
         assert results.json() is True, results.text
-
-    def test_35_configure_setting_domain_hostname_and_dns(request):
-        depends(request, ["pool_04"], scope="session")
-        global payload
-        payload = {
-            "nameserver1": nameserver1,
-            "nameserver2": nameserver2
-        }
-        global results
-        results = PUT("/network/configuration/", payload)
-        assert results.status_code == 200, results.text

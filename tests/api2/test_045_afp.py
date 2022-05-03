@@ -16,14 +16,16 @@ AFP_NAME = "MyAFPShare"
 AFP_PATH = f"/mnt/{dataset}"
 
 
+@pytest.mark.dependency(name="CREATING_AFP_DATASET")
 def test_01_creating_afp_dataset(request):
     depends(request, ["pool_04"], scope="session")
     results = POST("/pool/dataset/", {"name": dataset})
     assert results.status_code == 200, results.text
 
 
-def test_02_changing__dataset_permissions_of_afp_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+@pytest.mark.dependency(name="AFP_DATASET_PERMISSIONS")
+def test_02_changing_dataset_permissions_of_afp_dataset(request):
+    depends(request, ["CREATING_AFP_DATASET"])
     payload = {
         "acl": [],
         "mode": "777",
@@ -38,15 +40,16 @@ def test_02_changing__dataset_permissions_of_afp_dataset(request):
 
 
 def test_03_get_afp_bindip(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = GET("/afp/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert isinstance(results.json()['bindip'], list), results.text
 
 
+@pytest.mark.dependency(name="SETTING_AFP")
 def test_04_setting_afp(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     global payload, results
     payload = {"guest": True,
                "bindip": [ip]}
@@ -55,13 +58,14 @@ def test_04_setting_afp(request):
 
 
 @pytest.mark.parametrize('data', ['guest', 'bindip'])
-def test_05_verify_new_setting_afp_for_(data):
+def test_05_verify_new_setting_afp_for_(data, request):
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     assert results.json()[data] == payload[data], results.text
     assert isinstance(results.json(), dict), results.text
 
 
 def test_06_get_new_afp_data(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     global results
     results = GET("/afp/")
     assert results.status_code == 200, results.text
@@ -69,36 +73,38 @@ def test_06_get_new_afp_data(request):
 
 
 @pytest.mark.parametrize('data', ['guest', 'bindip'])
-def test_07_verify_new_afp_data_for_(data):
+def test_07_verify_new_afp_data_for_(data, request):
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     assert results.json()[data] == payload[data], results.text
 
 
 def test_08_send_empty_afp_data(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     global results
     results = PUT("/afp/", {})
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('data', ['guest', 'bindip'])
-def test_09_verify_afp_data_did_not_change_for_(data):
+def test_09_verify_afp_data_did_not_change_for_(data, request):
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     assert results.json()[data] == payload[data], results.text
 
 
 def test_10_enable_afp_service_at_boot(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = PUT("/service/id/afp/", {"enable": True})
     assert results.status_code == 200, results.text
 
 
 def test_11_checking_afp_enable_at_boot(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = GET("/service?service=afp")
     assert results.json()[0]['enable'] is True, results.text
 
 
 def test_12_start_afp_service(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     payload = {"service": "afp"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
@@ -106,27 +112,27 @@ def test_12_start_afp_service(request):
 
 
 def test_13_checking_if_afp_is_running(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = GET("/service?service=afp")
     assert results.json()[0]['state'] == "RUNNING", results.text
 
 
 def test_14_creating_a_afp_share_on_afp_path(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     payload = {"name": AFP_NAME, "path": AFP_PATH}
     results = POST("/sharing/afp/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_15_updating_the_apf_service(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     payload = {"connections_limit": 10}
     results = PUT("/afp/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_16_update_afp_share(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     afpid = GET(f'/sharing/afp?name={AFP_NAME}').json()[0]['id']
     payload = {"home": True, "comment": "AFP Test"}
     results = PUT(f"/sharing/afp/id/{afpid}", payload)
@@ -134,44 +140,44 @@ def test_16_update_afp_share(request):
 
 
 def test_17_checking_to_see_if_afp_service_is_enabled(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = GET("/service?service=afp")
     assert results.json()[0]["state"] == "RUNNING", results.text
 
 
 def test_18_delete_afp_share(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     afpid = GET(f'/sharing/afp?name={AFP_NAME}').json()[0]['id']
     results = DELETE(f"/sharing/afp/id/{afpid}")
     assert results.status_code == 200, results.text
 
 
 def test_19_stopping_afp_service(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     payload = {"service": "afp"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
 def test_20_checking_if_afp_is_stop(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = GET("/service?service=afp")
     assert results.json()[0]['state'] == "STOPPED", results.text
 
 
 def test_21_disable_afp_service_at_boot(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = PUT("/service/id/afp/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
 def test_22_checking_afp_disable_at_boot(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = GET("/service?service=afp")
     assert results.json()[0]['enable'] is False, results.text
 
 
 def test_23_destroying_afp_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
