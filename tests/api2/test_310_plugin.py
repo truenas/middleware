@@ -175,7 +175,8 @@ if not ha:
         job_results = job_status['results']
 
     @pytest.mark.parametrize('plugin', plugin_list)
-    def test_18_verify_available_plugin_without_cache_(plugin):
+    def test_18_verify_available_plugin_without_cache_(plugin, request):
+        depends(request, ["ADD_ASIGRA_PLUGIN"])
         assert isinstance(job_results['result'], list), str(job_results)
         assert plugin in [p['plugin'] for p in job_results['result']], str(job_results['result'])
 
