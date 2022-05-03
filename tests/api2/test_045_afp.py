@@ -86,7 +86,8 @@ def test_08_send_empty_afp_data(request):
 
 
 @pytest.mark.parametrize('data', ['guest', 'bindip'])
-def test_09_verify_afp_data_did_not_change_for_(data):
+def test_09_verify_afp_data_did_not_change_for_(data, request):
+    depends(request, ["AFP_DATASET_PERMISSIONS"])
     assert results.json()[data] == payload[data], results.text
 
 
