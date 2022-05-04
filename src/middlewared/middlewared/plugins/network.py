@@ -233,10 +233,16 @@ class NetworkConfigurationService(ConfigService):
 
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
-        lhost_changed = config['hostname'] != new_config['hostname']
-        bhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
-        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
+        lhost_changed = rhost_changed = False
+        this_node = await self.middleware.call('failover.node')
+        if this_node in ('MANUAL', 'A'):
+            lhost_changed = config['hostname'] != new_config['hostname']
+            rhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
+        elif this_node == 'B':
+            lhost_changed = config['hostname_b'] != new_config['hostname_b']
+            rhost_changed = config['hostname'] != new_config['hostname']
 
+        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
         if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
             verrors.add(
                 'global_confiugration_update.hostname_virtual',
@@ -294,7 +300,7 @@ class NetworkConfigurationService(ConfigService):
             local_actions[3].add(('restart', 'collectd'))
 
         # hostname of standby controller changed
-        if bhost_changed:
+        if rhost_changed:
             remote_actions[2].add('rc')
             remote_actions[2].add('hosts')
             remote_actions[3].add(('restart', 'hostname'))
