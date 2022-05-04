@@ -9,7 +9,7 @@ from middlewared.utils.generate import random_string
 from middlewared.validators import Match, Range
 
 import asyncio
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import contextlib
 import ipaddress
 import itertools
@@ -261,8 +261,8 @@ class NetworkConfigurationService(ConfigService):
 
         # the actions we take need to be done in a particular order so
         # we don't duplicate restart/regenerate operations
-        local_actions = {1: set(), 2: set(), 3: set()}
-        remote_actions = {1: set(), 2: set(), 3: set()}
+        local_actions = OrderedDict([(1, set()), (2, set()), (3, set())])
+        remote_actions = OrderedDict([(1, set()), (2, set()), (3, set())])
 
         # anything related to resolv.conf changed
         dnssearch_changed = config['domains'] != new_config['domains']
@@ -310,7 +310,7 @@ class NetworkConfigurationService(ConfigService):
                 remote_actions[3].add(('restart', 'routing'))
 
         # netwait ip changed
-        if set(config['netwait_ip'].split()) != set(new_config['netwait_ip'].split()):
+        if config['netwait_ip'] != new_config['netwait_ip']:
             local_actions[2].add('rc')
             if licensed:
                 remote_actions[2].add('rc')
@@ -349,9 +349,9 @@ class NetworkConfigurationService(ConfigService):
                 local_actions[3].add((verb, service_name))
 
         # finally, we need to iterate over the `local_actions` and `remote_actions`
-        # and perform the necessary operations. Since they're a dict, we sort them
-        # based off the keys which guarantees the order of operations are correct
-        for key, values in {k: local_actions[k] for k in sorted(local_actions)}:
+        # and perform the necessary operations. Since they're a `OrderedDict`, we
+        # guaranteed the order of operatiosn is what we want
+        for key, values in local_actions.items():
             if key == 1:
                 for method in values:
                     # middleware specific methods for generating configs
@@ -367,7 +367,7 @@ class NetworkConfigurationService(ConfigService):
 
         # this is the exact same methodology as above but for the remote node (only on HA)
         try:
-            for key, value in {k: remote_actions[k] for k in sorted(remote_actions)}:
+            for key, value in remote_actions.items():
                 if key == 1:
                     for method in values:
                         # middleware specific methods for generating configs
