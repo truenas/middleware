@@ -280,9 +280,11 @@ class NetworkConfigurationService(ConfigService):
             local_actions[2].add('rc')
             local_actions[2].add('hosts')
             local_actions[3].add(('restart', 'collectd'))
+            local_actions[3].add(('restart', 'hostname'))
             if licensed:
                 remote_actions[2].add('rc')
                 remote_actions[2].add('hosts')
+                remote_actions[3].add(('restart', 'hostname'))
 
         # hostname of this controller changed
         if lhost_changed:
@@ -367,7 +369,7 @@ class NetworkConfigurationService(ConfigService):
 
         # this is the exact same methodology as above but for the remote node (only on HA)
         try:
-            for key, value in remote_actions.items():
+            for key, values in remote_actions.items():
                 if key == 1:
                     for method in values:
                         # middleware specific methods for generating configs

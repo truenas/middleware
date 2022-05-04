@@ -272,6 +272,7 @@ class EtcService(Service):
         'syslogd': [
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
+        'hosts': [{'type': 'mako', 'path': 'hosts'}],
         'hostname': [
             {'type': 'mako', 'path': 'hosts'},
             {'type': 'py', 'path': 'hostname', 'platform': 'Linux'},
