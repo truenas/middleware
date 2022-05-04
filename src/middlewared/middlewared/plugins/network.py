@@ -2376,17 +2376,16 @@ class DNSService(Service):
         Query Name Servers with `query-filters` and `query-options`.
         """
         ips = set()
-        with contextlib.suppress(Exception):
-            with open('/etc/resolv.conf') as f:
-                for line in f:
-                    if line.startswith('nameserver'):
-                        ip = line[len('nameserver'):].strip()
-                        try:
-                            IPAddr().validate(ip)  # make sure it's a valid IP (better safe than sorry)
-                            ips.add(ip)
-                        except ValidationErrors:
-                            self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
-                            continue
+        with open('/etc/resolv.conf') as f:
+            for line in f:
+                if line.startswith('nameserver'):
+                    ip = line[len('nameserver'):].strip()
+                    try:
+                        IPAddr('ip').validate(ip)  # make sure it's a valid IP (better safe than sorry)
+                        ips.add(ip)
+                    except ValidationErrors:
+                        self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
+                        continue
 
         return filter_list([{'nameserver': i} for i in ips], filters, options)
 
