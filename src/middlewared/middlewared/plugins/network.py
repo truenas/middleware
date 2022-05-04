@@ -183,9 +183,9 @@ class NetworkConfigurationService(ConfigService):
             List('domains', items=[Str('domains')]),
             Dict(
                 'service_announcement',
-                Bool('netbios'),
-                Bool('mdns'),
-                Bool('wsd'),
+                Bool('netbios', default=False),
+                Bool('mdns', default=True),
+                Bool('wsd', default=True),
             ),
             IPAddr('ipv4gateway'),
             IPAddr('ipv6gateway', allow_zone_index=True),
@@ -224,116 +224,169 @@ class NetworkConfigurationService(ConfigService):
         """
         config = await self.config()
         new_config = config.copy()
-        is_ha = True
-        sync_group_mappings = False
-
-        # Apply on-disk settings and user provided ones to our
-        # defaults to ensure that the JSON stored in db
-        # always has required elements
-        srv = {'netbios': False, 'mdns': True, 'wsd': True}
-        srv |= config['service_announcement'] | data.get('service_announcement', {})
         new_config.update(data)
-        new_config['service_announcement'] = srv
+        new_config['service_announcement'] = config['service_announcement'] | data.get('service_announcement', {})
 
-        if not (
-                not await self.middleware.call('system.is_freenas') and
-                await self.middleware.call('failover.licensed')
-        ):
-            for key in ['hostname_virtual', 'hostname_b']:
-                data.pop(key, None)
-            is_ha = False
+        if new_config == config:
+            # nothing changed so return early
+            return await self.config()
 
-        new_config.update(data)
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
-        if is_ha and config['hostname_virtual'] != new_config['hostname_virtual']:
-            ad_enabled = await self.middleware.call('activedirectory.get_state') != "DISABLED"
-            if ad_enabled:
-                verrors.add('global_confiugration_update.hostname_virtual',
-                            'This parameter may not be changed after joining Active Directory (AD). '
-                            'If it must be changed, the proper procedure is to leave the AD domain '
-                            'and then alter the parameter before re-joining the domain.')
 
+        lhost_changed = config['hostname'] != new_config['hostname']
+        bhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
+        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
+
+        if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+            verrors.add(
+                'global_confiugration_update.hostname_virtual',
+                'This parameter may not be changed after joining Active Directory (AD). '
+                'If it must be changed, the proper procedure is to leave the AD domain '
+                'and then alter the parameter before re-joining the domain.'
+            )
         verrors.check()
 
-        new_config['domains'] = ' '.join(new_config.get('domains', []))
-        new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
+        # pop the `hostname_local` key since that's created in the _extend method
+        # and doesn't exist in the database
         new_config.pop('hostname_local', None)
 
+        # normalize the `domains` and `netwait_ip` keys
+        new_config['domains'] = ' '.join(new_config.get('domains', []))
+        new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
+
+        # update the db
         await self.middleware.call(
-            'datastore.update',
-            'network.globalconfiguration',
-            config['id'],
-            new_config,
-            {'prefix': 'gc_'}
+            'datastore.update', 'network.globalconfiguration', config['id'], new_config, {'prefix': 'gc_'}
         )
-        if new_config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']:
+
+        # the actions we take need to be done in a particular order so
+        # we don't duplicate restart/regenerate operations
+        local_actions = {1: set(), 2: set(), 3: set()}
+        remote_actions = {1: set(), 2: set(), 3: set()}
+
+        # anything related to resolv.conf changed
+        dnssearch_changed = config['domains'] != new_config['domains']
+        dns1_changed = config['nameserver1'] != new_config['nameserver1']
+        dns2_changed = config['nameserver2'] != new_config['nameserver2']
+        dns3_changed = config['nameserver3'] != new_config['nameserver3']
+        dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
+        if dnssearch_changed or dnsservers_changed:
+            local_actions[1].add('dns.sync')
+
+        # system domain name changed
+        licensed = await self.middleware.call('failover.licensed')
+        domainname_changed = config['domain'] != new_config['domain']
+        if domainname_changed:
+            local_actions[2].add('rc')
+            local_actions[2].add('hosts')
+            local_actions[3].add(('collectd', 'restart'))
+            if licensed:
+                remote_actions[2].add('rc')
+                remote_actions[2].add('hosts')
+
+        # hostname of this controller changed
+        if lhost_changed:
+            local_actions[2].add('rc')
+            local_actions[2].add('hostname')
+            local_actions[2].add('hosts')
+            local_actions[3].add(('hostname', 'restart'))
+            local_actions[3].add(('collectd', 'restart'))
+
+        # hostname of standby controller changed
+        if bhost_changed:
+            remote_actions[2].add('rc')
+            remote_actions[2].add('hostname')
+            remote_actions[2].add('hosts')
+            remote_actions[3].add(('service.restart', 'hostname'))
+
+        # default gateways changed
+        ipv4gw_changed = config['ipv4gateway'] != new_config['ipv4gateway']
+        ipv6gw_changed = config['ipv6gateway'] != new_config['ipv6gateway']
+        if ipv4gw_changed or ipv6gw_changed:
+            local_actions[1].add('route.sync')
+            local_actions[2].add('rc')
+            local_actions[3].add(('service.restart', 'routing'))
+            if licensed:
+                remote_actions[1].add('route.sync')
+                remote_actions[2].add('rc')
+                remote_actions[3].add(('service.restart', 'routing'))
+
+        # netwait ip changed
+        netwait_changed = set(config['netwait_ip'].split()) != set(new_config['netwait_ip'].split())
+        if netwait_changed:
+            local_actions[2].add('rc')
+            if licensed:
+                remote_actions[2].add('rc')
+
+        # handle kerberized nfsv4
+        if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
+            if any((lhost_changed, vhost_changed, domainname_changed)):
+                local_actions[2].add('rc')
+                local_actions[3].add(('service.restart', 'nfs'))
+
+        # proxy server has changed
+        if new_config['httpproxy'] != config['httpproxy']:
+            await self.middleware.call(
+                'core.event_send',
+                'network.config',
+                'CHANGED',
+                {'data': {'httpproxy': new_config['httpproxy']}}
+            )
+
+        # handle the various service announcement daemons
+        announced_changed = config['service_announcement'] != new_config['service_announcement']
+        if any((lhost_changed, vhost_changed, announced_changed)):
+            for srv, enabled in new_config['service_announcement'].items():
+                service_name = ANNOUNCE_SRV[srv]
+                started = await self.middleware.call('service.started', service_name)
+                verb = None
+
+                if enabled:
+                    verb = 'restart' if started else 'start'
+                else:
+                    verb = 'stop' if started else None
+
+                if not verb:
+                    continue
+
+                local_actions[3].add((service_name, verb))
+
+        # finally, we need to iterate over the `local_actions` and `remote_actions`
+        # and perform the necessary operations. Since they're a dict, we sort them
+        # based off the keys which guarantees the order of operations are correct
+        for key, values in {k: local_actions[k] for k in sorted(local_actions)}:
+            if key == 1:
+                for method in values:
+                    # middleware specific methods for generating configs
+                    await self.middleware.call(method)
+            elif key == 2:
+                for etc_file in values:
+                    # etc plugin for generating configs
+                    await self.middleware.call('etc.generate', etc_file)
+            elif key == 3:
+                for verb, service_name in values:
+                    # restarting the actual services
+                    await self.middleware.call(f'service.{verb}', service_name)
+
+        # this is the exact same methodology as above but for the remote node (only on HA)
+        for key, value in {k: remote_actions[k] for k in sorted(remote_actions)}:
+            if key == 1:
+                for method in values:
+                    # middleware specific methods for generating configs
+                    await self.middleware.call('failover.call_remote', [method])
+            elif key == 2:
+                for etc_file in values:
+                    # etc plugin for generating configs
+                    await self.middleware.call('failover.call_remote', 'etc.generate', [etc_file])
+            elif key == 3:
+                for verb, service_name in values:
+                    # restarting the actual services
+                    await self.middleware.call('failover.call_remote', f'service.{verb}', [service_name])
+
+        # virtual hostname on an HA system changed
+        if vhost_changed:
             await self.middleware.call('etc.generate', 'smb')
-            new_sid = await self.middleware.call("smb.get_system_sid")
-            await self.middleware.call("smb.set_database_sid", new_sid)
-            sync_group_mappings = True
-
-        service_announcement = new_config.pop('service_announcement')
-        new_config['domains'] = new_config['domains'].split()
-        new_config['netwait_ip'] = new_config['netwait_ip'].split()
-
-        netwait_ip_set = set(new_config.pop('netwait_ip', []))
-        old_netwait_ip_set = set(config.pop('netwait_ip', []))
-        old_service_announcement = config.pop('service_announcement')
-        data_changed = netwait_ip_set != old_netwait_ip_set
-
-        if not data_changed:
-            domains_set = set(new_config.pop('domains', []))
-            old_domains_set = set(config.pop('domains', []))
-            data_changed = domains_set != old_domains_set
-
-        if (
-                data_changed or
-                len(set(new_config.items()) ^ set(config.items())) > 0
-        ):
-            services_to_reload = ['resolvconf']
-            if (
-                    new_config['domain'] != config['domain'] or
-                    new_config['nameserver1'] != config['nameserver1'] or
-                    new_config['nameserver2'] != config['nameserver2'] or
-                    new_config['nameserver3'] != config['nameserver3']
-            ):
-                services_to_reload.append('hostname')
-
-            if (
-                    new_config['ipv4gateway'] != config['ipv4gateway'] or
-                    new_config['ipv6gateway'] != config['ipv6gateway']
-            ):
-                services_to_reload.append('networkgeneral')
-                await self.middleware.call('route.sync')
-
-            restart_nfs = False
-            if (
-                    'hostname_virtual' in new_config.keys() and
-                    (
-                        new_config['hostname_virtual'] != config['hostname_virtual'] or
-                        new_config['domain'] != config['domain']
-                    )
-            ):
-                restart_nfs = True
-
-            for service_to_reload in services_to_reload:
-                await self.middleware.call('service.reload', service_to_reload)
-            if restart_nfs:
-                await self._service_change('nfs', 'restart')
-
-            if new_config['httpproxy'] != config['httpproxy']:
-                await self.middleware.call(
-                    'core.event_send',
-                    'network.config',
-                    'CHANGED',
-                    {'data': {'httpproxy': new_config['httpproxy']}}
-                )
-
-        if service_announcement != old_service_announcement:
-            await self.middleware.call('network.configuration.toggle_announcement',
-                                       service_announcement)
-
-        if sync_group_mappings:
+            await self.middleware.call("smb.set_database_sid", (await self.middleware.call("smb.get_system_sid")))
             await self.middleware.call("smb.synchronize_group_mappings")
 
         return await self.config()
