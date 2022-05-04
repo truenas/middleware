@@ -2355,6 +2355,7 @@ class PoolDatasetService(CRUDService):
                         Str('name', required=True, empty=False),
                         Str('key', validators=[Range(min=64, max=64)], private=True),
                         Str('passphrase', empty=False, private=True),
+                        Bool('recursive', default=False),
                     )
                 ],
             ),
@@ -2372,23 +2373,28 @@ class PoolDatasetService(CRUDService):
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, id, options):
         """
-        Unlock `id` dataset.
+        Unlock dataset `id` (and its children if `unlock_options.recursive` is `true`).
 
         If `id` dataset is not encrypted an exception will be raised. There is one exception:
         when `id` is a root dataset and `unlock_options.recursive` is specified, encryption
-        validation will not be performed for `id`. This allow unlocking encrypted children the `id` pool.
+        validation will not be performed for `id`. This allow unlocking encrypted children for the entire pool `id`.
 
-        For datasets which are encrypted with a passphrase, include the passphrase with
-        `unlock_options.datasets`.
+        There are two ways to supply the key(s)/passphrase(s) for unlocking a dataset:
 
-        Uploading a json file which contains encrypted dataset keys can be specified with
-        `unlock_options.key_file`. The format is similar to that used for exporting encrypted dataset keys.
+        1. Upload a json file which contains encrypted dataset keys (it will be read from the input pipe if
+        `unlock_options.key_file` is `true`). The format is the one that is used for exporting encrypted dataset keys
+        (`pool.export_keys`).
 
-        `toggle_attachments` controls whether attachments  should be put in action after unlocking dataset(s).
-        Toggling attachments can theoretically lead to service interruption when daemons configurations are reloaded
-        (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have a state
-        for resources that should be unlocked but are still locked, disabling this option will put the system into an
-        inconsistent state so it should really never be disabled.
+        2. Specify a key or a passphrase for each unlocked dataset using `unlock_options.datasets`.
+
+        If `unlock_options.datasets.{i}.recursive` is `true`, a key or a passphrase is applied to all the encrypted
+        children of a dataset.
+
+        `unlock_options.toggle_attachments` controls whether attachments  should be put in action after unlocking
+        dataset(s). Toggling attachments can theoretically lead to service interruption when daemons configurations are
+        reloaded (this should not happen,  and if this happens it should be considered a bug). As TrueNAS does not have
+        a state for resources that should be unlocked but are still locked, disabling this option will put the system
+        into an inconsistent state so it should really never be disabled.
 
         In some cases it's possible that the provided key/passphrase is valid but the path where the dataset is
         supposed to be mounted after being unlocked already exists and is not empty. In this case, unlock operation
@@ -2434,6 +2440,7 @@ class PoolDatasetService(CRUDService):
 
         locked_datasets = []
         datasets = self.query_encrypted_datasets(id.split('/', 1)[0], {'key_loaded': False})
+        self._assign_supplied_recursive_keys(options['datasets'], keys_supplied, list(datasets.keys()))
         for name, ds in datasets.items():
             ds_key = keys_supplied.get(name) or ds['encryption_key']
             if ds['locked'] and id.startswith(f'{name}/'):
@@ -2492,9 +2499,14 @@ class PoolDatasetService(CRUDService):
                 if os.path.exists(mount_path):
                     try:
                         self.middleware.call_sync('filesystem.set_immutable', False, mount_path)
-                    except CallError as e:
-                        failed[name]['error'] = 'Dataset could not be mounted as unable to remove ' \
-                                                f'immutable flag at {mount_path!r}: {e}'
+                    except OSError as e:
+                        # It's ok to get `EROFS` because the dataset can have `readonly=on`
+                        if e.errno != errno.EROFS:
+                            raise
+                    except Exception as e:
+                        failed[name]['error'] = (
+                            f'Dataset mount failed because immutable flag at {mount_path!r} could not be removed: {e}'
+                        )
                         continue
 
                     if not os.path.isdir(mount_path) or os.listdir(mount_path):
@@ -2515,12 +2527,16 @@ class PoolDatasetService(CRUDService):
                 if os.path.exists(mount_path):
                     try:
                         self.middleware.call_sync('filesystem.set_immutable', True, mount_path)
-                    except CallError as e:
+                    except OSError as e:
+                        # It's ok to get `EROFS` because the dataset can have `readonly=on`
+                        if e.errno != errno.EROFS:
+                            raise
+                    except Exception as e:
                         failed_datasets[ds] = str(e)
 
             if failed_datasets:
                 failed[failed_ds]['error'] += '\n\nFailed to set immutable flag on following datasets:\n' + '\n'.join(
-                    f'{i + 1}) {ds} ({failed_datasets[ds]})' for i, ds in enumerate(failed_datasets)
+                    f'{i + 1}) {ds!r}: {failed_datasets[ds]}' for i, ds in enumerate(failed_datasets)
                 )
 
         services_to_restart = set()
@@ -2554,6 +2570,17 @@ class PoolDatasetService(CRUDService):
             )
 
         return {'unlocked': unlocked, 'failed': failed}
+
+    def _assign_supplied_recursive_keys(self, request_datasets, keys_supplied, queried_datasets):
+        request_datasets = {ds['name']: ds for ds in request_datasets}
+        for name in queried_datasets:
+            if name not in keys_supplied:
+                for parent in Path(name).parents:
+                    parent = str(parent)
+                    if parent in request_datasets and request_datasets[parent]['recursive']:
+                        if parent in keys_supplied:
+                            keys_supplied[name] = keys_supplied[parent]
+                            break
 
     @private
     async def unlock_handle_attachments(self, dataset, options):
