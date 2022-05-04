@@ -20,6 +20,7 @@ from .ups import UPSService
 from .webdav import WebDAVService
 from .wsd import WSDService
 from .routing import RoutingService
+from .hostname import HostnameService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -31,7 +32,6 @@ from .pseudo.misc import (
     KmipService,
     LoaderService,
     MOTDService,
-    HostnameService,
     HttpService,
     NetworkService,
     NetworkGeneralService,

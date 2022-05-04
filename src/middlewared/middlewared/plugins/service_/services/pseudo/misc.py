@@ -82,22 +82,6 @@ class MOTDService(PseudoServiceBase):
             await freebsd_service("motd", "start")
 
 
-class HostnameService(PseudoServiceBase):
-    name = "hostname"
-
-    reloadable = True
-
-    async def reload(self):
-        if osc.IS_FREEBSD:
-            await run(["hostname", ""])
-        await self.middleware.call("etc.generate", "hostname")
-        if osc.IS_FREEBSD:
-            await self.middleware.call("etc.generate", "rc")
-            await freebsd_service("hostname", "start")
-        await self.middleware.call("service.restart", "mdns")
-        await self.middleware.call("service.restart", "collectd")
-
-
 class HttpService(PseudoServiceBase):
     name = "http"
 
