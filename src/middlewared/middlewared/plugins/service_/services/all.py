@@ -19,6 +19,7 @@ from .truecommand import TruecommandService
 from .ups import UPSService
 from .webdav import WebDAVService
 from .wsd import WSDService
+from .routing import RoutingService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -38,7 +39,6 @@ from .pseudo.misc import (
     PowerdService,
     RcService,
     ResolvConfService,
-    RoutingService,
     SslService,
     SysconsService,
     SysctlService,

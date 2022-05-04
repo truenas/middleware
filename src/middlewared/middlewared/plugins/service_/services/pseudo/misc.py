@@ -179,19 +179,6 @@ class ResolvConfService(PseudoServiceBase):
         await self.middleware.call("dns.sync")
 
 
-class RoutingService(SimpleService):
-    name = "routing"
-
-    etc = ["rc"]
-
-    restartable = True
-
-    freebsd_rc = "routing"
-
-    async def get_state(self):
-        return ServiceState(True, [])
-
-
 class SslService(PseudoServiceBase):
     name = "ssl"
 
