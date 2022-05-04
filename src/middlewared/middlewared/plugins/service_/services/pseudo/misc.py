@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.utils import osc, run
+from middlewared.utils import osc
 
 from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
