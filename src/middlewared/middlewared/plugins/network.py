@@ -363,22 +363,25 @@ class NetworkConfigurationService(ConfigService):
             elif key == 3:
                 for verb, service_name in values:
                     # restarting the actual services
-                    await self.middleware.call(f'service.{verb}', service_name)
+                    await self.middleware.call(f'service.{verb}', service_name, {'ha_propagate': False})
 
         # this is the exact same methodology as above but for the remote node (only on HA)
-        for key, value in {k: remote_actions[k] for k in sorted(remote_actions)}:
-            if key == 1:
-                for method in values:
-                    # middleware specific methods for generating configs
-                    await self.middleware.call('failover.call_remote', [method])
-            elif key == 2:
-                for etc_file in values:
-                    # etc plugin for generating configs
-                    await self.middleware.call('failover.call_remote', 'etc.generate', [etc_file])
-            elif key == 3:
-                for verb, service_name in values:
-                    # restarting the actual services
-                    await self.middleware.call('failover.call_remote', f'service.{verb}', [service_name])
+        try:
+            for key, value in {k: remote_actions[k] for k in sorted(remote_actions)}:
+                if key == 1:
+                    for method in values:
+                        # middleware specific methods for generating configs
+                        await self.middleware.call('failover.call_remote', [method])
+                elif key == 2:
+                    for etc_file in values:
+                        # etc plugin for generating configs
+                        await self.middleware.call('failover.call_remote', 'etc.generate', [etc_file])
+                elif key == 3:
+                    for verb, service_name in values:
+                        # restarting the actual services
+                        await self.middleware.call('failover.call_remote', f'service.{verb}', [service_name])
+        except Exception:
+            self.logger.warning('Failed to configure network global config on standby controller', exc_info=True)
 
         # virtual hostname on an HA system changed
         if vhost_changed:
