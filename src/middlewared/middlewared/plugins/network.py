@@ -279,7 +279,7 @@ class NetworkConfigurationService(ConfigService):
         if domainname_changed:
             local_actions[2].add('rc')
             local_actions[2].add('hosts')
-            local_actions[3].add(('collectd', 'restart'))
+            local_actions[3].add(('restart', 'collectd'))
             if licensed:
                 remote_actions[2].add('rc')
                 remote_actions[2].add('hosts')
@@ -287,17 +287,15 @@ class NetworkConfigurationService(ConfigService):
         # hostname of this controller changed
         if lhost_changed:
             local_actions[2].add('rc')
-            local_actions[2].add('hostname')
             local_actions[2].add('hosts')
-            local_actions[3].add(('hostname', 'restart'))
-            local_actions[3].add(('collectd', 'restart'))
+            local_actions[3].add(('restart', 'hostname'))
+            local_actions[3].add(('restart', 'collectd'))
 
         # hostname of standby controller changed
         if bhost_changed:
             remote_actions[2].add('rc')
-            remote_actions[2].add('hostname')
             remote_actions[2].add('hosts')
-            remote_actions[3].add(('service.restart', 'hostname'))
+            remote_actions[3].add(('restart', 'hostname'))
 
         # default gateways changed
         ipv4gw_changed = config['ipv4gateway'] != new_config['ipv4gateway']
@@ -305,15 +303,14 @@ class NetworkConfigurationService(ConfigService):
         if ipv4gw_changed or ipv6gw_changed:
             local_actions[1].add('route.sync')
             local_actions[2].add('rc')
-            local_actions[3].add(('service.restart', 'routing'))
+            local_actions[3].add(('restart', 'routing'))
             if licensed:
                 remote_actions[1].add('route.sync')
                 remote_actions[2].add('rc')
-                remote_actions[3].add(('service.restart', 'routing'))
+                remote_actions[3].add(('restart', 'routing'))
 
         # netwait ip changed
-        netwait_changed = set(config['netwait_ip'].split()) != set(new_config['netwait_ip'].split())
-        if netwait_changed:
+        if set(config['netwait_ip'].split()) != set(new_config['netwait_ip'].split()):
             local_actions[2].add('rc')
             if licensed:
                 remote_actions[2].add('rc')
@@ -322,7 +319,7 @@ class NetworkConfigurationService(ConfigService):
         if await self.middleware.call('kerberos.keytab.has_nfs_principal'):
             if any((lhost_changed, vhost_changed, domainname_changed)):
                 local_actions[2].add('rc')
-                local_actions[3].add(('service.restart', 'nfs'))
+                local_actions[3].add(('restart', 'nfs'))
 
         # proxy server has changed
         if new_config['httpproxy'] != config['httpproxy']:
@@ -349,7 +346,7 @@ class NetworkConfigurationService(ConfigService):
                 if not verb:
                     continue
 
-                local_actions[3].add((service_name, verb))
+                local_actions[3].add((verb, service_name))
 
         # finally, we need to iterate over the `local_actions` and `remote_actions`
         # and perform the necessary operations. Since they're a dict, we sort them
