@@ -646,7 +646,8 @@ class InterfaceService(CRUDService):
                     'netmask': int(config['int_v6netmaskbit']),
                 })
 
-        for alias in self.middleware.call_sync('datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]):
+        filters = [('alias_interface', '=', config['id'])]
+        for alias in self.middleware.call_sync('datastore.query', 'network.alias', filters):
 
             if alias['alias_v4address']:
                 iface['aliases'].append({
@@ -1013,14 +1014,16 @@ class InterfaceService(CRUDService):
         else:
             filters = []
 
+        cant = ' cannot be changed.'
+        required = ' is required when configuring HA'
         validation_attrs = {
-            'aliases': ['Active node IP address', ' cannot be changed.', ' is required when configuring HA'],
-            'failover_aliases': ['Standby node IP address', ' cannot be changed.', ' is required when configuring HA'],
-            'failover_virtual_aliases': ['Virtual IP address', ' cannot be changed.', ' is required when configuring HA'],
-            'failover_group': ['Failover group number', ' cannot be changed.', ' is required when configuring HA'],
-            'mtu': ['MTU', ' cannot be changed.'],
-            'ipv4_dhcp': ['DHCP', ' cannot be changed.'],
-            'ipv6_auto': ['Autconfig for IPv6', ' cannot be changed.'],
+            'aliases': ['Active node IP address', cant, required],
+            'failover_aliases': ['Standby node IP address', cant, required],
+            'failover_virtual_aliases': ['Virtual IP address', cant, required],
+            'failover_group': ['Failover group number', cant, required],
+            'mtu': ['MTU', cant],
+            'ipv4_dhcp': ['DHCP', cant],
+            'ipv6_auto': ['Autconfig for IPv6', cant],
         }
 
         ifaces = {
@@ -1234,7 +1237,7 @@ class InterfaceService(CRUDService):
                     if data.get('failover_critical') and data.get('lag_protocol') == 'FAILOVER':
                         verrors.add(
                             f'{schema_name}.failover_critical',
-                            'A lagg interface using the "Failover" protocol is not allowed to be marked critical for failover.'
+                            'A lagg using "Failover" protocol is not allowed to be marked critical for failover.'
                         )
 
             if update and update.get('failover_vhid') != data['failover_vhid']:
@@ -1679,8 +1682,7 @@ class InterfaceService(CRUDService):
             return
 
         remote_port = (
-            app.request.headers.get('X-Real-Remote-Port') or
-            app.request.transport.get_extra_info('peername')[1]
+            app.request.headers.get('X-Real-Remote-Port') or app.request.transport.get_extra_info('peername')[1]
         )
         if not remote_port:
             return
@@ -1968,12 +1970,16 @@ class InterfaceService(CRUDService):
         options = options or {}
 
         try:
-            data = await self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
+            data = await self.middleware.call(
+                'datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True}
+            )
         except IndexError:
             self.logger.info('{} is not in interfaces database'.format(name))
             return
 
-        aliases = await self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
+        aliases = await self.middleware.call(
+            'datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])]
+        )
 
         await self.middleware.call('interface.configure', data, aliases, wait_dhcp, options)
 
@@ -2101,10 +2107,7 @@ class RouteService(Service):
                 interfaces = [
                     interface
                     for interface in netif.list_interfaces().keys()
-                    if not (
-                        re.match("^(bridge|epair|ipfw|lo)[0-9]+", interface) or
-                        ":" in interface
-                    )
+                    if not (re.match("^(bridge|epair|ipfw|lo)[0-9]+", interface) or ":" in interface)
                 ]
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)
@@ -2126,7 +2129,11 @@ class RouteService(Service):
                 self.logger.info('Adding IPv4 default route to {}'.format(ipv4_gateway.gateway))
                 routing_table.add(ipv4_gateway)
             elif ipv4_gateway != routing_table.default_route_ipv4:
-                self.logger.info('Changing IPv4 default route from {} to {}'.format(routing_table.default_route_ipv4.gateway, ipv4_gateway.gateway))
+                self.logger.info(
+                    'Changing IPv4 default route from {} to {}'.format(
+                        routing_table.default_route_ipv4.gateway, ipv4_gateway.gateway
+                    )
+                )
                 routing_table.change(ipv4_gateway)
         elif routing_table.default_route_ipv4:
             # If there is no gateway in database but one is configured
@@ -2149,7 +2156,11 @@ class RouteService(Service):
                 self.logger.info('Adding IPv6 default route to {}'.format(ipv6_gateway.gateway))
                 routing_table.add(ipv6_gateway)
             elif ipv6_gateway != routing_table.default_route_ipv6:
-                self.logger.info('Changing IPv6 default route from {} to {}'.format(routing_table.default_route_ipv6.gateway, ipv6_gateway.gateway))
+                self.logger.info(
+                    'Changing IPv6 default route from {} to {}'.format(
+                        routing_table.default_route_ipv6.gateway, ipv6_gateway.gateway
+                    )
+                )
                 routing_table.change(ipv6_gateway)
         elif routing_table.default_route_ipv6:
             # If there is no gateway in database but one is configured
