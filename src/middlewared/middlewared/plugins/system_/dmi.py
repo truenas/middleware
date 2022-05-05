@@ -7,6 +7,7 @@ class SystemService(Service):
     # DMI information is mostly static so cache it
     HAS_CACHE = False
     CACHE = {
+        'release-date': '',
         'ecc-memory': None,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -19,7 +20,7 @@ class SystemService(Service):
     @private
     def dmidecode_info(self):
         if not SystemService.HAS_CACHE:
-            cp = subprocess.run(['dmidecode', '-t', '1,2,16'], encoding='utf8', capture_output=True)
+            cp = subprocess.run(['dmidecode', '-t', '0,1,2,16'], encoding='utf8', capture_output=True)
             self._parse_dmi(cp.stdout.splitlines())
             SystemService.HAS_CACHE = True
 
@@ -35,6 +36,8 @@ class SystemService(Service):
                 SystemService.CACHE = {i: '' for i in SystemService.CACHE}
                 break
 
+            if 'DMI type 0,' in line:
+                _type = 'RELEASE_DATE'
             if 'DMI type 1,' in line:
                 _type = 'SYSINFO'
             if 'DMI type 2,' in line:
@@ -46,7 +49,9 @@ class SystemService(Service):
                 continue
 
             sect, val = [i.strip() for i in line.split(':', 1)]
-            if sect == 'Manufacturer':
+            if sect == 'Release Date':
+                SystemService.CACHE['release-date'] = val
+            elif sect == 'Manufacturer':
                 SystemService.CACHE['system-manufacturer' if _type == 'SYSINFO' else 'baseboard-manufacturer'] = val
             elif sect == 'Product Name':
                 SystemService.CACHE['system-product-name' if _type == 'SYSINFO' else 'baseboard-product-name'] = val

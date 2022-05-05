@@ -7,6 +7,35 @@ full_dmi = ("""
 Getting SMBIOS data from sysfs.
 SMBIOS 3.2.1 present.
 
+Handle 0x0000, DMI type 0, 26 bytes
+BIOS Information
+        Vendor: American Megatrends Inc.
+        Version: 3.3aV3
+        Release Date: 12/03/2020
+        Address: 0xF0000
+        Runtime Size: 64 kB
+        ROM Size: 32 MB
+        Characteristics:
+                PCI is supported
+                BIOS is upgradeable
+                BIOS shadowing is allowed
+                Boot from CD is supported
+                Selectable boot is supported
+                BIOS ROM is socketed
+                EDD is supported
+                5.25"/1.2 MB floppy services are supported (int 13h)
+                3.5"/720 kB floppy services are supported (int 13h)
+                3.5"/2.88 MB floppy services are supported (int 13h)
+                Print screen service is supported (int 5h)
+                Serial services are supported (int 14h)
+                Printer services are supported (int 17h)
+                ACPI is supported
+                USB legacy is supported
+                BIOS boot specification is supported
+                Targeted content distribution is supported
+                UEFI is supported
+        BIOS Revision: 5.14
+
 Handle 0x0001, DMI type 1, 27 bytes
 System Information
         Manufacturer: iXsystems
@@ -191,6 +220,7 @@ Base Board Information
 
 def test__full_dmi():
     expected_result = {
+        'release-date': '12/03/2020',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
@@ -206,6 +236,7 @@ def test__full_dmi():
 
 def test__double_colon_dmi():
     expected_result = {
+        'release-date': '',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X9DRi-LN4+/X9DR3-LN4+',
@@ -221,6 +252,7 @@ def test__double_colon_dmi():
 
 def test__missing_dmi():
     expected_result = {
+        'release-date': '',
         'ecc-memory': '',
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -236,6 +268,7 @@ def test__missing_dmi():
 
 def test__missing_dmi_type1():
     expected_result = {
+        'release-date': '',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
@@ -251,6 +284,7 @@ def test__missing_dmi_type1():
 
 def test__missing_dmi_type2():
     expected_result = {
+        'release-date': '',
         'ecc-memory': True,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -266,6 +300,7 @@ def test__missing_dmi_type2():
 
 def test__missing_dmi_type16():
     expected_result = {
+        'release-date': '',
         'ecc-memory': '',
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
