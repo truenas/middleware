@@ -62,7 +62,7 @@ class EnterpriseService(Service):
             hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
             if min_bios_date := bios_dates.get(hardware):
                 dmidecode = self.middleware.call_sync('system.dmidecode_info')['release-date']
-                m = re.search(r"Release Date: (?P<m>[0-9]{2})/(?P<d>[0-9]{2})/(?P<y>[0-9]{4})", dmidecode)
+                m = re.search(r"(?P<m>[0-9]{2})/(?P<d>[0-9]{2})/(?P<y>[0-9]{4})", dmidecode)
                 bios_date = datetime(int(m.group("y")), int(m.group("m")), int(m.group("d")))
                 self.IS_OLD_BIOS_VERSION = bios_date < min_bios_date
         except Exception as e:
