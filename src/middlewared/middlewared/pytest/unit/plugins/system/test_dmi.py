@@ -222,7 +222,7 @@ Base Board Information
 
 def test__full_dmi():
     expected_result = {
-        'bios-release-date-parsed': datetime(2020, 12, 3).date(),
+        'bios-release-date': datetime(2020, 12, 3).date(),
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
@@ -238,7 +238,7 @@ def test__full_dmi():
 
 def test__double_colon_dmi():
     expected_result = {
-        'bios-release-date-parsed': '',
+        'bios-release-date': '',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X9DRi-LN4+/X9DR3-LN4+',
@@ -254,7 +254,7 @@ def test__double_colon_dmi():
 
 def test__missing_dmi():
     expected_result = {
-        'bios-release-date-parsed': '',
+        'bios-release-date': '',
         'ecc-memory': '',
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -270,7 +270,7 @@ def test__missing_dmi():
 
 def test__missing_dmi_type1():
     expected_result = {
-        'bios-release-date-parsed': '',
+        'bios-release-date': '',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
@@ -286,7 +286,7 @@ def test__missing_dmi_type1():
 
 def test__missing_dmi_type2():
     expected_result = {
-        'bios-release-date-parsed': '',
+        'bios-release-date': '',
         'ecc-memory': True,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -302,7 +302,7 @@ def test__missing_dmi_type2():
 
 def test__missing_dmi_type16():
     expected_result = {
-        'bios-release-date-parsed': '',
+        'bios-release-date': '',
         'ecc-memory': '',
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
