@@ -35,7 +35,7 @@ jobs:
     - name: Get errors from base branch
       run: |
         tmpbefore=$(mktemp)
-        find src -name \*.py -exec flake8 --application-import-names middlewared --ignore=E402,E501,W504 {} + | egrep -v "alembic/versions/|usr/local/share/pysnmp/mibs/" > $tmpbefore
+        find src -name \*.py -exec flake8 --application-import-names middlewared --ignore=I101,E402,E501,W504 {} + | egrep -v "alembic/versions/|usr/local/share/pysnmp/mibs/" > $tmpbefore
         num_errors_before=`cat $tmpbefore | wc -l`
         echo "OLD_ERROR_FILE=${tmpbefore}" >> $GITHUB_ENV
         echo "OLD_ERRORS=${num_errors_before}" >> $GITHUB_ENV
