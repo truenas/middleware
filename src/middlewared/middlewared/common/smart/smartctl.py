@@ -19,7 +19,7 @@ else:
     get_nsid = None
 
 
-async def get_smartctl_args(middleware, devices, disk):
+async def get_smartctl_args(middleware, devices, disk, enterprise_hardware):
     if disk.startswith(('nvd', 'nvme')):
         if osc.IS_LINUX:
             return [f'/dev/{disk}', '-d', 'nvme']
@@ -85,7 +85,7 @@ async def get_smartctl_args(middleware, devices, disk):
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
     args = [f"/dev/{disk}"]
-    if disk.startswith("da") and not await middleware.call("system.is_enterprise_ix_hardware"):
+    if disk.startswith("da") and not enterprise_hardware:
         p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
         if "Unknown USB bridge" in p.stdout:
             args = args + ["-d", "sat"]
