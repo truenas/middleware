@@ -8,8 +8,7 @@ class SystemService(Service):
     # DMI information is mostly static so cache it
     HAS_CACHE = False
     CACHE = {
-        'bios-release-date-raw': '',
-        'bios-release-date-formatted': '',
+        'bios-release-date-parsed': '',
         'ecc-memory': None,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -71,10 +70,7 @@ class SystemService(Service):
 
     @private
     def _parse_bios_release_date(self, string):
-        SystemService.CACHE['bios-release-date-raw'] = string
-        if not (string := string.strip()):
-            return
-        elif (parts := string.split('/')) < 3:
+        if (parts := string.strip().split('/')) < 3:
             # dont know what the BIOS is reporting so
             # assume it's invalid
             return
@@ -86,6 +82,6 @@ class SystemService(Service):
         # 2 digit year instead of a 4 digit year...gross
         formatter = '%m/%d/%Y' if len(parts[-1]) == 4 else '%m/%d/%y'
         try:
-            SystemService.CACHE['bios-release-date-formatted'] = datetime(string, formatter).date()
+            SystemService.CACHE['bios-release-date-parsed'] = datetime(string, formatter).date()
         except Exception:
             self.logger.warning('Failed to format BIOS release date to datetime object', exc_info=True)
