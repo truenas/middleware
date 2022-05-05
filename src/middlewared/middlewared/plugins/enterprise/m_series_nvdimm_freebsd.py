@@ -1,13 +1,9 @@
-# -*- coding=utf-8 -*-
 from datetime import datetime
 import glob
-import logging
 import re
 import subprocess
 
 from middlewared.service import CallError, private, Service
-
-logger = logging.getLogger(__name__)
 
 
 class EnterpriseService(Service):
@@ -68,7 +64,7 @@ class EnterpriseService(Service):
                 dmidecode = subprocess.run(["dmidecode", "-tbios"], capture_output=True, check=True, encoding="utf-8",
                                            errors="ignore")
                 m = re.search(r"Release Date: (?P<m>[0-9]{2})/(?P<d>[0-9]{2})/(?P<y>[0-9]{4})", dmidecode.stdout)
-                bios_date = datetime(int(m.group("y")), int(m.group("m")) ,int(m.group("d")))
+                bios_date = datetime(int(m.group("y")), int(m.group("m")), int(m.group("d")))
                 if bios_date < min_bios_date:
                     self.IS_OLD_BIOS_VERSION = True
         except Exception as e:
