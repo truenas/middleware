@@ -65,7 +65,7 @@ class DiskService(Service):
             else:
                 devices = await self.middleware.call('device.get_storage_devices_topology')
                 enterprise_hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
-                smartctl_args = await get_smartctl_args(self.middleware, devices, disk, enterprise_hardware)
+                smartctl_args = await get_smartctl_args(self.middleware, devices, enterprise_hardware, disk)
 
             if smartctl_args is None:
                 raise CallError(f'S.M.A.R.T. is unavailable for disk {disk}')

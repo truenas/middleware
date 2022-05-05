@@ -21,11 +21,11 @@ RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:
 RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to complete')
 
 
-async def annotate_disk_smart_tests(middleware, devices, disk, enterprise_hardware):
+async def annotate_disk_smart_tests(middleware, devices, enterprise_hardware, disk):
     if disk["disk"] is None:
         return
 
-    if args := await get_smartctl_args(middleware, devices, disk["disk"], enterprise_hardware):
+    if args := await get_smartctl_args(middleware, devices, enterprise_hardware, disk["disk"]):
         p = await smartctl(args + ["-l", "selftest"], check=False, encoding="utf8")
         tests = parse_smart_selftest_results(p.stdout)
         if tests is not None:

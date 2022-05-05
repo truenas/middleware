@@ -9,8 +9,8 @@ from middlewared.utils.asyncio_ import asyncio_map
 logger = logging.getLogger(__name__)
 
 
-async def annotate_disk_for_smart(middleware, devices, disk, enterprise_hardware):
-    if args := await get_smartctl_args(middleware, devices, disk, enterprise_hardware):
+async def annotate_disk_for_smart(middleware, devices, enterprise_hardware, disk):
+    if args := await get_smartctl_args(middleware, devices, enterprise_hardware, disk):
         if enterprise_hardware or await ensure_smart_enabled(args):
             # On Enterprise hardware we only use S.M.A.R.T.-enabled disks,
             # there is no need to check for this every time.

@@ -14,7 +14,7 @@ SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 areca_lock = Lock()
 
 
-async def get_smartctl_args(middleware, devices, disk, enterprise_hardware):
+async def get_smartctl_args(middleware, devices, enterprise_hardware, disk):
     if disk.startswith(('nvd', 'nvme')):
         try:
             nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
