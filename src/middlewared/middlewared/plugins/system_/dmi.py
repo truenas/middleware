@@ -1,4 +1,5 @@
 import subprocess
+from datetime import datetime
 
 from middlewared.service import private, Service
 
@@ -7,7 +8,8 @@ class SystemService(Service):
     # DMI information is mostly static so cache it
     HAS_CACHE = False
     CACHE = {
-        'release-date': '',
+        'bios-release-date-raw': '',
+        'bios-release-date-formatted': '',
         'ecc-memory': None,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -50,7 +52,7 @@ class SystemService(Service):
 
             sect, val = [i.strip() for i in line.split(':', 1)]
             if sect == 'Release Date':
-                SystemService.CACHE['release-date'] = val
+                self._parse_bios_release_date(val)
             elif sect == 'Manufacturer':
                 SystemService.CACHE['system-manufacturer' if _type == 'SYSINFO' else 'baseboard-manufacturer'] = val
             elif sect == 'Product Name':
@@ -66,3 +68,24 @@ class SystemService(Service):
                 # the same order as requested (1,2,16) and "Error Correction Type"
                 # doesn't appear in any of the other sections
                 break
+
+    @private
+    def _parse_bios_release_date(self, string):
+        SystemService.CACHE['bios-release-date-raw'] = string
+        if not (string := string.strip()):
+            return
+        elif (parts := string.split('/')) < 3:
+            # dont know what the BIOS is reporting so
+            # assume it's invalid
+            return
+
+        # Give a best effort to convert to a date object.
+        # Searched hundreds of debugs that have been provided
+        # via end-users and 99% all reported the same date
+        # format, however, there are a couple that had a
+        # 2 digit year instead of a 4 digit year...gross
+        formatter = '%m/%d/%Y' if len(parts[-1]) == 4 else '%m/%d/%y'
+        try:
+            SystemService.CACHE['bios-release-date-formatted'] = datetime(string, formatter).date()
+        except Exception:
+            self.logger.warning('Failed to format BIOS release date to datetime object', exc_info=True)

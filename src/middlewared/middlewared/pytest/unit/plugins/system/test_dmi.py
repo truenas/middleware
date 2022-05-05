@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from middlewared.plugins.system_.dmi import SystemService
 from middlewared.service import Service
 
@@ -220,7 +222,8 @@ Base Board Information
 
 def test__full_dmi():
     expected_result = {
-        'release-date': '12/03/2020',
+        'bios-release-date-raw': '12/03/2020',
+        'bios-release-date-formatted': datetime(2020, 12, 3).date(),
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
@@ -236,7 +239,8 @@ def test__full_dmi():
 
 def test__double_colon_dmi():
     expected_result = {
-        'release-date': '',
+        'bios-release-date-raw': '',
+        'bios-release-date-formatted': '',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X9DRi-LN4+/X9DR3-LN4+',
@@ -252,7 +256,8 @@ def test__double_colon_dmi():
 
 def test__missing_dmi():
     expected_result = {
-        'release-date': '',
+        'bios-release-date-raw': '',
+        'bios-release-date-formatted': '',
         'ecc-memory': '',
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -268,7 +273,8 @@ def test__missing_dmi():
 
 def test__missing_dmi_type1():
     expected_result = {
-        'release-date': '',
+        'bios-release-date-raw': '',
+        'bios-release-date-formatted': '',
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
@@ -284,7 +290,8 @@ def test__missing_dmi_type1():
 
 def test__missing_dmi_type2():
     expected_result = {
-        'release-date': '',
+        'bios-release-date-raw': '',
+        'bios-release-date-formatted': '',
         'ecc-memory': True,
         'baseboard-manufacturer': '',
         'baseboard-product-name': '',
@@ -300,7 +307,8 @@ def test__missing_dmi_type2():
 
 def test__missing_dmi_type16():
     expected_result = {
-        'release-date': '',
+        'bios-release-date-raw': '',
+        'bios-release-date-formatted': '',
         'ecc-memory': '',
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
