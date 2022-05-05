@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 
 from middlewared.plugins.system_.dmi import SystemService
 from middlewared.service import Service
@@ -222,7 +222,7 @@ Base Board Information
 
 def test__full_dmi():
     expected_result = {
-        'bios-release-date': datetime(2020, 12, 3).date(),
+        'bios-release-date': date(2020, 12, 3),
         'ecc-memory': True,
         'baseboard-manufacturer': 'Supermicro',
         'baseboard-product-name': 'X11SPH-nCTPF',
