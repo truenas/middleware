@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 import glob
 import re
 import subprocess
@@ -55,9 +55,9 @@ class EnterpriseService(Service):
             self.DATA = result
 
             bios_dates = {
-                "TRUENAS-M40": datetime(2020, 2, 20).date(),
-                "TRUENAS-M50": datetime(2020, 12, 3).date(),
-                "TRUENAS-M60": datetime(2020, 12, 3).date(),
+                "TRUENAS-M40": date(2020, 2, 20),
+                "TRUENAS-M50": date(2020, 12, 3),
+                "TRUENAS-M60": date(2020, 12, 3),
             }
             hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
             if min_bios_date := bios_dates.get(hardware):
