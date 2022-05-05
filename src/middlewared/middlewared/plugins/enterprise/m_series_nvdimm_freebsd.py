@@ -66,7 +66,7 @@ class EnterpriseService(Service):
                 bios_date = datetime(int(m.group("y")), int(m.group("m")), int(m.group("d")))
                 self.IS_OLD_BIOS_VERSION = bios_date < min_bios_date
         except Exception as e:
-            self.middleware.logger.error("Unhandled exception in enterprise.setup_m_series_nvdimm", exc_info=True)
+            self.logger.error("Unhandled exception in enterprise.setup_m_series_nvdimm", exc_info=True)
             self.ERROR = str(e)
 
     @private
