@@ -5,6 +5,7 @@ import os
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service
+from middlewared.utils.functools import cache
 import middlewared.sqlalchemy as sa
 
 EULA_FILE = '/usr/local/share/truenas/eula.html'
@@ -39,6 +40,7 @@ class TruenasCustomerInformationModel(sa.Model):
 class TrueNASService(Service):
 
     @accepts()
+    @cache
     async def get_chassis_hardware(self):
         """
         Returns what type of hardware this is, detected from dmidecode.
