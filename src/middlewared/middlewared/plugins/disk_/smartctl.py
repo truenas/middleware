@@ -28,10 +28,13 @@ class DiskService(Service):
                 ]
 
                 devices = await self.middleware.call('device.get_storage_devices_topology')
+                enterprise_hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
 
                 self.smartctl_args_for_disk = dict(zip(
                     disks,
-                    await asyncio_map(functools.partial(get_smartctl_args, self.middleware, devices), disks, 8)
+                    await asyncio_map(
+                        functools.partial(get_smartctl_args, self.middleware, devices, enterprise_hardware), disks, 8
+                    )
                 ))
             except Exception:
                 self.logger.error("update_smartctl_args_for_disks failed", exc_info=True)
@@ -61,7 +64,8 @@ class DiskService(Service):
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
             else:
                 devices = await self.middleware.call('device.get_storage_devices_topology')
-                smartctl_args = await get_smartctl_args(self.middleware, devices, disk)
+                enterprise_hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
+                smartctl_args = await get_smartctl_args(self.middleware, devices, disk, enterprise_hardware)
 
             if smartctl_args is None:
                 raise CallError(f'S.M.A.R.T. is unavailable for disk {disk}')
