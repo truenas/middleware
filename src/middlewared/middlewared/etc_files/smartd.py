@@ -3,15 +3,14 @@ import logging
 import re
 import subprocess
 
-from middlewared.common.smart.smartctl import get_smartctl_args, smartctl
+from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
 from middlewared.utils.asyncio_ import asyncio_map
-
 logger = logging.getLogger(__name__)
 
 
-async def annotate_disk_for_smart(middleware, devices, enterprise_hardware, disk):
-    if args := await get_smartctl_args(middleware, devices, enterprise_hardware, disk):
-        if enterprise_hardware or await ensure_smart_enabled(args):
+async def annotate_disk_for_smart(context, disk):
+    if args := await get_smartctl_args(context, disk):
+        if context.enterprise_hardware or await ensure_smart_enabled(args):
             # On Enterprise hardware we only use S.M.A.R.T.-enabled disks,
             # there is no need to check for this every time.
             args.extend(["-a"])
@@ -118,9 +117,10 @@ async def render(service, middleware):
     disks = [dict(disk, **smart_config) for disk in disks]
 
     devices = await middleware.call('device.get_storage_devices_topology')
-    enterprise_hardware = await middleware.call('system.is_enterprise_ix_hardware')
+    hardware = await middleware.call('system.is_enterprise_ix_hardware')
+    context = SMARTCTX(middleware=middleware, devices=devices, enterprise_hardware=hardware)
     annotated = dict(filter(None, await asyncio_map(
-        functools.partial(annotate_disk_for_smart, middleware, devices, enterprise_hardware),
+        functools.partial(annotate_disk_for_smart, context),
         set(filter(None, {disk["disk_name"] for disk in disks})), 16
     )))
     disks = [dict(disk, **annotated[disk["disk_name"]]) for disk in disks if disk["disk_name"] in annotated]

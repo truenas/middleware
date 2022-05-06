@@ -1,4 +1,5 @@
 from asyncio import Lock
+from collections import namedtuple
 import logging
 import re
 import subprocess
@@ -11,10 +12,15 @@ from .areca import annotate_devices_with_areca_dev_id
 logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
+SMARTCTX = namedtuple('smartctl_args', ['middleware', 'devices', 'enterprise_hardware'])
 areca_lock = Lock()
 
 
-async def get_smartctl_args(middleware, devices, enterprise_hardware, disk):
+async def get_smartctl_args(context, disk):
+    middleware = context.middleware
+    devices = context.devices
+    enterprise_hardware = context.enterprise_hardware
+
     if disk.startswith(('nvd', 'nvme')):
         try:
             nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
