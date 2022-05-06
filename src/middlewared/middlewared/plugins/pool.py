@@ -4177,10 +4177,11 @@ class PoolDatasetService(CRUDService):
         ]
         """
         dataset = await self.get_instance(oid)
+        if dataset['locked']:
+            return []
         path = self.__attachments_path(dataset)
         zvol_path = f"/dev/zvol/{dataset['name']}"
-        if path:
-            return await self.middleware.call('pool.dataset.processes_using_paths', [path, zvol_path])
+        return await self.middleware.call('pool.dataset.processes_using_paths', [path, zvol_path])
 
     @private
     async def kill_processes(self, oid, control_services, max_tries=5):
