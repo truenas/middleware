@@ -551,13 +551,13 @@ class FailoverService(Service):
                 for volume in fobj['volumes']:
                     logger.info('Importing %r', volume["name"])
                     set_cachefile = False
-                    cmd = f'zpool import -o cachefile=none -m -R /mnt -f {volume["guid"]} -c /data/zfs/zpool.cache'
+                    cmd = f'zpool import -o cachefile=none -m -R /mnt -f {volume["name"]} -c /data/zfs/zpool.cache'
                     error, output = run(cmd, stderr=True)
                     if error:
                         set_cachefile = True
                         logger.error('Failed to import %r using cachefile so retrying without it', volume["name"])
                         error, output = run(
-                            f'zpool import -o cachefile=none -m -R /mnt -f {volume["guid"]}', stderr=True
+                            f'zpool import -o cachefile=none -m -R /mnt -f {volume["name"]}', stderr=True
                         )
                         if error:
                             open(FAILED_FILE, 'w').close()
