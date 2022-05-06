@@ -14,6 +14,7 @@ except ImportError:
 import asyncio
 from contextlib import asynccontextmanager
 import errno
+import json
 import os
 from pathlib import Path
 import psutil
@@ -446,7 +447,22 @@ class SystemDatasetService(ConfigService):
                 if 'no mount point specified' in stderr:
                     # Already unmounted
                     continue
-                raise CallError(f'Unable to umount {dataset}: {stderr}')
+
+                error = f'Unable to umount {dataset}: {stderr}'
+                if 'target is busy' in stderr:
+                    mountpoint = None
+                    for partition in psutil.disk_partitions():
+                        if partition.device == dataset:
+                            mountpoint = partition.mountpoint
+                            break
+
+                    if mountpoint is not None:
+                        error += f'\nThe following processes are using {mountpoint!r}: ' + json.dumps(
+                            await self.middleware.call('pool.dataset.processes_using_paths', [mountpoint], True),
+                            indent=2,
+                        )
+
+                raise CallError(error) from None
 
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [

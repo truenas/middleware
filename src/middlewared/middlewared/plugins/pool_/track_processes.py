@@ -13,7 +13,7 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @private
-    def processes_using_paths(self, paths):
+    def processes_using_paths(self, paths, include_paths=False):
         exact_matches = set()
         include_devs = []
         for path in paths:
@@ -42,19 +42,35 @@ class PoolDatasetService(Service):
                 with contextlib.suppress(FileNotFoundError):
                     # FileNotFoundError for when a process is killed/exits
                     # while we're iterating
+                    found = False
+                    paths = set()
                     for f in os.listdir(f'/proc/{pid}/fd'):
                         fd = f'/proc/{pid}/fd/{f}'
                         if (
                             (include_devs and os.stat(fd).st_dev in include_devs) or
                             (exact_matches and os.path.islink(fd) and os.path.realpath(fd) in exact_matches)
                         ):
-                            with open(f'/proc/{pid}/status') as status:
-                                name = status.readline().split('\t', 1)[1].strip()
-                                if svc := self.middleware.call_sync('service.identify_process', name):
-                                    result.append({'pid': pid, 'name': name, 'service': svc})
-                                else:
-                                    with open(f'/proc/{pid}/cmdline') as cmd:
-                                        cmdline = cmd.read().replace('\u0000', ' ').strip()
-                                        result.append({'pid': pid, 'name': name, 'cmdline': cmdline})
+                            found = True
+                            if os.path.islink(fd):
+                                paths.add(os.path.realpath(fd))
+
+                    if found:
+                        with open(f'/proc/{pid}/status') as status:
+                            name = status.readline().split('\t', 1)[1].strip()
+
+                        proc = {'pid': pid, 'name': name}
+
+                        if svc := self.middleware.call_sync('service.identify_process', name):
+                            proc['service'] = svc
+                        else:
+                            with open(f'/proc/{pid}/cmdline') as cmd:
+                                cmdline = cmd.read().replace('\u0000', ' ').strip()
+
+                            proc['cmdline'] = cmdline
+
+                        if include_paths:
+                            proc['paths'] = sorted(paths)
+
+                        result.append(proc)
 
         return result
