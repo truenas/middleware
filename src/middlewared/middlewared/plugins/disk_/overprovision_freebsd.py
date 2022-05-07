@@ -22,6 +22,7 @@ def can_overprovision(devname):
 async def temporarily_disassemble_multipath(middleware, devname, pre_check=None):
     if devname.startswith("multipath/"):
         multipath_name = devname[len("multipath/"):]
+        await middleware.run_in_thread(geom.scan)
         for g in geom.class_by_name("MULTIPATH").geoms:
             if g.name == multipath_name:
                 mode = g.config["Mode"]
