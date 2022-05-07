@@ -12,7 +12,7 @@ def get_serial_ports():
 
 if __name__ == "__main__":
     advanced = query_config_table("system_advanced", prefix="adv_")
-    kernel_extra_args = advanced.get('kernel_extra_options') or ''
+    kernel_extra_options = advanced.get("kernel_extra_options") or ""
 
     # We need to allow tpm in grub as sedutil-cli requires it
     # `zfsforce=1` is needed because FreeBSD bootloader imports boot pool with hostid=0 while SCALE releases up to
@@ -21,7 +21,7 @@ if __name__ == "__main__":
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 amd_iommu=on iommu=pt '
         'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on zfsforce=1'
-        f'{f" {kernel_extra_args}" if kernel_extra_args else ""}"',
+        f'{f" {kernel_extra_options}" if kernel_extra_options else ""}"',
     ]
 
     terminal = ["console"]

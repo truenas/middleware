@@ -105,24 +105,23 @@ class SystemDatasetService(ConfigService):
 
         return pool in BOOT_POOL_NAME_VALID
 
-    @accepts()
+    @accepts(Bool('include_current_pool', default=True))
     @returns(Dict('systemdataset_pool_choices', additional_attrs=True))
-    async def pool_choices(self):
+    async def pool_choices(self, include_current_pool):
         """
         Retrieve pool choices which can be used for configuring system dataset.
         """
         boot_pool = await self.middleware.call('boot.pool_name')
         current_pool = (await self.config())['pool']
-        pools = [p['name'] for p in await self.middleware.call('pool.query')]
-        valid_root_ds = [
-            ds['id'] for ds in await self.middleware.call(
-                'pool.dataset.query', [['key_format.value', '!=', 'PASSPHRASE'], ['locked', '!=', True]], {
-                    'extra': {'retrieve_children': False}
-                }
-            )
-        ]
+        valid_pools = await self._query_pools_names_for_system_dataset()
+
+        pools = [boot_pool]
+        if include_current_pool:
+            pools.append(current_pool)
+        pools.extend(valid_pools)
+
         return {
-            p: p for p in set([boot_pool, current_pool] + [ds for ds in valid_root_ds if ds in pools])
+            p: p for p in sorted(set(pools))
         }
 
     @accepts(Dict(
@@ -162,43 +161,24 @@ class SystemDatasetService(ConfigService):
                 if error := await self.destination_pool_error(new['pool']):
                     verrors.add('sysdataset_update.pool', error)
 
-        if new['pool'] and new['pool'] != await self.middleware.call('boot.pool_name'):
-            pool = await self.middleware.call('pool.query', [['name', '=', new['pool']]])
-            if not pool:
+        if new['pool']:
+            if new['pool'] not in await self.pool_choices(False):
                 verrors.add(
                     'sysdataset_update.pool',
-                    f'Pool "{new["pool"]}" not found',
-                    errno.ENOENT
+                    'The system dataset cannot be placed on this pool.'
                 )
-            elif await self.middleware.call(
-                'pool.dataset.query', [
-                    ['name', '=', new['pool']], ['encrypted', '=', True],
-                    ['OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]]
-                ]
-            ):
-                verrors.add(
-                    'sysdataset_update.pool',
-                    'The system dataset cannot be placed on a pool '
-                    'which has the root dataset encrypted with a passphrase or is locked.'
-                )
-        elif not new['pool']:
-            for pool in await self.middleware.call('pool.query'):
-                if data.get('pool_exclude') == pool['name'] or await self.middleware.call('pool.dataset.query', [
-                    ['name', '=', pool['name']], [
-                        'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
-                    ]
-                ]):
+        else:
+            for pool in await self._query_pools_names_for_system_dataset():
+                if await self.destination_pool_error(pool):
                     continue
 
-                if await self.destination_pool_error(pool['name']):
-                    continue
-
-                new['pool'] = pool['name']
+                new['pool'] = pool
                 break
             else:
                 # If a data pool could not be found, reset it to blank
                 # Which will eventually mean its back to boot pool (temporarily)
                 new['pool'] = ''
+
         verrors.check()
 
         new['syslog_usedataset'] = new['syslog']
@@ -293,7 +273,7 @@ class SystemDatasetService(ConfigService):
         if config['pool'] != boot_pool:
             dataset = await self.middleware.call('pool.dataset.query', [['name', '=', config['pool']]],
                                                  {'extra': {'retrieve_children': False}})
-            if not dataset or dataset[0]['locked']:
+            if not dataset or (dataset[0]['locked'] and dataset[0]['key_format']['value'] != 'PASSPHRASE'):
                 # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
                 self.logger.debug(
                     'Root dataset for pool %r is not available, temporarily setting up system dataset on boot pool',
@@ -361,26 +341,50 @@ class SystemDatasetService(ConfigService):
         return await self.config()
 
     async def _query_pool_for_system_dataset(self, exclude_pool):
-        for p in await self.middleware.call('pool.query'):
-            if (exclude_pool and p['name'] == exclude_pool) or await self.middleware.call('pool.dataset.query', [
-                ['name', '=', p['name']], [
-                    'OR', [['key_format.value', '=', 'PASSPHRASE'], ['locked', '=', True]]
-                ]
-            ]):
+        for name in await self._query_pools_names_for_system_dataset():
+            if name == exclude_pool:
                 continue
 
-            return p
+            return await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
+
+    async def _query_pools_names_for_system_dataset(self):
+        return [
+            ds['id']
+            for ds in await self.middleware.call(
+                'pool.dataset.query',
+                [
+                    ['OR', [
+                        # Pools without encryption
+                        ['encrypted', '=', False],
+                        # Encrypted pools that are not locked
+                        ['locked', '=', False],
+                        # Passphrase-encrypted pools (system dataset will be unencrypted in this case)
+                        ['key_format.value', '=', 'PASSPHRASE'],
+                    ]],
+                ],
+                {'extra': {'retrieve_children': False}},
+            )
+        ]
 
     async def __setup_datasets(self, pool, uuid):
         """
         Make sure system datasets for `pool` exist and have the right mountpoint property
         """
+        boot_pool = await self.middleware.call('boot.pool_name')
+        root_dataset_is_passphrase_encrypted = (
+            pool != boot_pool and
+            (await self.middleware.call('pool.dataset.get_instance', pool))['key_format']['value'] == 'PASSPHRASE'
+        )
         datasets = [i[0] for i in self.__get_datasets(pool, uuid)]
         datasets_prop = {
             i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
         }
         for dataset in datasets:
             props = {'mountpoint': 'legacy', 'readonly': 'off', 'snapdir': 'hidden'}
+            # Disable encryption for pools with passphrase-encrypted root datasets so that system dataset could be
+            # automatically mounted on system boot.
+            if root_dataset_is_passphrase_encrypted:
+                props['encryption'] = 'off'
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
                 props['quota'] = '1G'
