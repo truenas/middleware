@@ -4,7 +4,6 @@ import os
 import subprocess
 import sysctl
 
-from bsd import geom
 from middlewared.client.utils import Struct
 logger = logging.getLogger(__name__)
 
@@ -213,7 +212,7 @@ def main(middleware):
     poolthreshold = {}
     zpoollist = {i['name']: i for i in middleware.call_sync('zfs.pool.query')}
 
-    geom_xml = geom.class_by_name('DISK').xml
+    geom_xml = middleware.call_sync('geom.cache.get_class_xml', 'DISK')
     locked_extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['locked', '=', True]])}
     # Generate the LUN section
     for extent in middleware.call_sync('datastore.query', 'services.iSCSITargetExtent',
