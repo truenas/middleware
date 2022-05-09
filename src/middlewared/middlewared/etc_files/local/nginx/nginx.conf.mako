@@ -156,6 +156,13 @@ http {
     % endfor
 % endif
 
+% if general_settings['ui_allowlist']:
+    % for ip in general_settings['ui_allowlist']:
+        allow ${ip};
+    % endfor
+        deny all;
+% endif
+
         # Security Headers
         add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
         add_header X-Content-Type-Options "nosniff" always;
@@ -167,6 +174,7 @@ http {
 % endif
 
         location / {
+            allow all;
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
 
@@ -199,9 +207,13 @@ http {
         }
 
         location /ui {
+            allow all;
             if ( $request_method ~ ^POST$ ) {
                 proxy_pass http://127.0.0.1:6000;
             }
+            # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+
             try_files $uri $uri/ /index.html =404;
             alias /usr/share/truenas/webui;
             add_header Cache-Control "must-revalidate";
@@ -270,6 +282,7 @@ http {
         }
 
         location /images {
+            allow all;
             alias /var/db/system/webui/images;
         }
 
