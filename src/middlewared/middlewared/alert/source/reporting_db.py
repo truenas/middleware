@@ -1,6 +1,7 @@
 import shutil
 from humanfriendly import format_size
 
+import sysctl
 from middlewared.alert.base import (AlertClass, AlertCategory, AlertLevel,
                                     Alert, ThreadedAlertSource, UnavailableException)
 
@@ -19,8 +20,7 @@ class ReportingDbAlertSource(ThreadedAlertSource):
         except FileNotFoundError:
             raise UnavailableException()
 
-        threshold = 1073741824 + len(self.middleware.call_sync('disk.query')) * 1024 * 1024
-
+        threshold = 1073741824 + len(sysctl.filter('kern.disks')[0].value.split()) * 1024 * 1024
         if used > threshold:
             # zfs list reports in kibi/mebi/gibi(bytes) but
             # format_size() calculates in kilo/mega/giga by default
