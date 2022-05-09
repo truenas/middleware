@@ -1,7 +1,8 @@
+import asyncio
 import syslog
 
 from middlewared.logger import CrashReporting
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, Str
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, returns, Str
 import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import run
@@ -72,6 +73,11 @@ class SystemGeneralService(ConfigService):
         Bool('usage_collection_is_set', required=True),
         Int('id', required=True),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_datastore = {}
+        self._rollback_timer = None
 
     @private
     async def general_system_extend(self, data):
@@ -181,8 +187,10 @@ class SystemGeneralService(ConfigService):
             ('rm', {'name': 'wizardshown'}),
             ('rm', {'name': 'id'}),
             ('replace', Int('ui_certificate', null=True)),
+            ('add', Int('rollback_timeout', null=True)),
+            ('add', Int('ui_restart_delay', null=True)),
             ('attr', {'update': True}),
-        )
+        ),
     )
     async def do_update(self, data):
         """
@@ -199,7 +207,26 @@ class SystemGeneralService(ConfigService):
 
         `ui_allowlist` is a list of IP addresses and networks that are allow to use API and UI. If this list is empty,
         then all IP addresses are allowed to use API and UI.
+
+        UI configuration is not applied automatically. Call `system.general.ui_restart` to apply new UI settings (all
+        HTTP connections will be aborted) or specify `ui_restart_delay` (in seconds) to automatically apply them after
+        some small amount of time necessary you might need to receive the response for your settings update request.
+
+        If incorrect UI configuration is applied, you might loss API connectivity and won't be able to fix the settings.
+        To avoid that, specify `rollback_timeout` (in seconds). It will automatically roll back UI configuration to the
+        previously working settings after `rollback_timeout` passes unless you call `system.general.checkin` in case
+        the new settings were correct and no rollback is necessary.
         """
+        rollback_timeout = data.pop('rollback_timeout', None)
+        ui_restart_delay = data.pop('ui_restart_delay', None)
+
+        original_datastore = await self.middleware.call('datastore.config', self._config.datastore)
+        original_datastore['stg_guicertificate'] = (
+            original_datastore['stg_guicertificate']['id']
+            if original_datastore['stg_guicertificate']
+            else None
+        )
+
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('crash_reporting_is_set'):
@@ -244,8 +271,59 @@ class SystemGeneralService(ConfigService):
 
         await self.middleware.call('service.start', 'ssl')
 
+        if rollback_timeout is not None:
+            self._original_datastore = original_datastore
+            self._rollback_timer = asyncio.get_event_loop().call_later(
+                rollback_timeout,
+                lambda: asyncio.ensure_future(self.rollback()),
+            )
+
+        if ui_restart_delay is not None:
+            await self.middleware.call('system.general.ui_restart', ui_restart_delay)
+
         return await self.config()
 
     @private
     def set_crash_reporting(self):
         CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
+
+    @accepts()
+    @returns(Int('remaining_seconds', null=True))
+    async def checkin_waiting(self):
+        """
+        Determines whether or not we are waiting user to check-in the applied UI settings changes before they are rolled
+        back. Returns a number of seconds before the automatic rollback or null if there are no changes pending.
+        """
+        if self._rollback_timer:
+            remaining = self._rollback_timer.when() - asyncio.get_event_loop().time()
+            if remaining > 0:
+                return int(remaining)
+
+    @accepts()
+    @returns()
+    async def checkin(self):
+        """
+        After UI settings are saved with `rollback_timeout` this method needs to be called within that timeout limit
+        to prevent reverting the changes.
+
+        This is to ensure user verifies the changes went as planned and its working.
+        """
+        if self._rollback_timer:
+            self._rollback_timer.cancel()
+
+        self._rollback_timer = None
+        self._original_datastore = {}
+
+    @private
+    async def rollback(self):
+        if self._original_datastore:
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                self._original_datastore['id'],
+                {k: v for k, v in self._original_datastore.items() if k.startswith('stg_gui')},
+            )
+            await self.middleware.call('system.general.ui_restart', 0)
+
+            self._rollback_timer = None
+            self._original_datastore = {}
