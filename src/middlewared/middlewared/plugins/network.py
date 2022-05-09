@@ -484,7 +484,7 @@ class InterfaceService(CRUDService):
         if self._rollback_timer:
             remaining = self._rollback_timer.when() - asyncio.get_event_loop().time()
             if remaining > 0:
-                return remaining
+                return int(remaining)
 
     @accepts(Dict(
         'options',
