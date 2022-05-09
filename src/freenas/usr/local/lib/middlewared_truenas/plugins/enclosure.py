@@ -92,12 +92,25 @@ class EnclosureService(CRUDService):
             # the enclosure given to us doesn't match anything connected to the system
             raise CallError(f'Enclosure with id: {enclosure_id} not found')
 
-        # create enclosure object
-        enc = ENC(f'/dev/ses{info["number"]}')
+        bad_slot = False
+        if enclosure_id == 'mapped_enclosure_0':
+            if slot not in info['elements']['Array Device Slot']:
+                bad_slot = True
+            else:
+                # this is a system where we've "mapped" the drive slots so we need
+                # to use the "original" ses device information
+                orig_ses_number = info['elements']['Array Device Slot'][slot]['original']['number']
+                slot = info['elements']['Array Device Slot'][slot]['original']['slot']
+                enc = ENC(f'/dev/ses{orig_ses_number}')
+        else:
+            enc = ENC(f'/dev/ses{info["number"]}')
+            if slot not in enc.status()['elements']['Array Device Slot']:
+                # gotta make sure the slot number given to us exists on the enclosure since
+                # this isn't being mapped by us
+                bad_slot = True
 
-        # gotta make sure the slot number given to us exists on the enclosure
-        if slot not in enc.status()['elements']:
-            raise CallError(f'Enclosure with id: {enclosure_id} does not have slot: {slot}')
+        if bad_slot:
+            raise CallError(f'Enclosure with id: {enclosure_id!r} does not have slot: {slot!r}')
 
         # set the status of the enclosure slot
         if status == 'CLEAR':
