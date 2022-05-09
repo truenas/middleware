@@ -1,10 +1,8 @@
 import syslog
-import warnings
-
-import middlewared.sqlalchemy as sa
 
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, Str
+import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.validators import Range
@@ -176,12 +174,6 @@ class SystemGeneralService(ConfigService):
     @accepts(
         Patch(
             'system_general_entry', 'general_settings',
-            ('add', Str(
-                'sysloglevel', enum=[
-                    'F_EMERG', 'F_ALERT', 'F_CRIT', 'F_ERR', 'F_WARNING', 'F_NOTICE', 'F_INFO', 'F_DEBUG',
-                ]
-            )),
-            ('add', Str('syslogserver')),
             ('rm', {'name': 'crash_reporting_is_set'}),
             ('rm', {'name': 'usage_collection_is_set'}),
             ('rm', {'name': 'wizardshown'}),
@@ -202,23 +194,7 @@ class SystemGeneralService(ConfigService):
 
         `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
         listen on.
-
-        `syslogserver` and `sysloglevel` are deprecated fields as of 11.3
-        and will be permanently moved to system.advanced.update for 12.0
         """
-        advanced_config = {}
-        # fields were moved to Advanced
-        for deprecated_field in ('sysloglevel', 'syslogserver'):
-            if deprecated_field in data:
-                warnings.warn(
-                    f"{deprecated_field} has been deprecated and moved to 'system.advanced'",
-                    DeprecationWarning
-                )
-                advanced_config[deprecated_field] = data[deprecated_field]
-                del data[deprecated_field]
-        if advanced_config:
-            await self.middleware.call('system.advanced.update', advanced_config)
-
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
         if not config.pop('crash_reporting_is_set'):
