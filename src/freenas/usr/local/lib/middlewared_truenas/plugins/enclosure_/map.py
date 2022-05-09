@@ -353,6 +353,7 @@ class EnclosureService(Service):
                         "dev": orig_slot["dev"],
                         "original": {
                             "enclosure_id": orig_encs[mapping.num]["id"],
+                            "number": mapping.num,
                             "slot": mapping.slot,
                         },
                     },
