@@ -16,10 +16,13 @@ class SystemGeneralModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     stg_guiaddress = sa.Column(sa.JSON(type=list), default=['0.0.0.0'])
     stg_guiv6address = sa.Column(sa.JSON(type=list), default=['::'])
+    stg_guiallowlist = sa.Column(sa.JSON(type=list), default=[])
     stg_guiport = sa.Column(sa.Integer(), default=80)
     stg_guihttpsport = sa.Column(sa.Integer(), default=443)
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
+    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
     stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
+    stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
     stg_language = sa.Column(sa.String(120), default='en')
     stg_kbdmap = sa.Column(sa.String(120), default='us')
     stg_birthday = sa.Column(sa.DateTime(), nullable=True)
@@ -29,8 +32,6 @@ class SystemGeneralModel(sa.Model):
     stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
     stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
-    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
-    stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
 
 
 class SystemGeneralService(ConfigService):
@@ -57,6 +58,7 @@ class SystemGeneralService(ConfigService):
         Int('ui_port', validators=[Range(min=1, max=65535)], required=True),
         List('ui_address', items=[IPAddr('addr')], empty=False, required=True),
         List('ui_v6address', items=[IPAddr('addr')], empty=False, required=True),
+        List('ui_allowlist', items=[IPAddr('addr', network=True, network_strict=True)], required=True),
         Bool('ui_consolemsg', required=True),
         Str('ui_x_frame_options', enum=['SAMEORIGIN', 'DENY', 'ALLOW_ALL'], required=True),
         Str('kbdmap', required=True),
@@ -194,6 +196,9 @@ class SystemGeneralService(ConfigService):
 
         `ui_address` and `ui_v6address` are a list of valid ipv4/ipv6 addresses respectively which the system will
         listen on.
+
+        `ui_allowlist` is a list of IP addresses and networks that are allow to use API and UI. If this list is empty,
+        then all IP addresses are allowed to use API and UI.
         """
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None

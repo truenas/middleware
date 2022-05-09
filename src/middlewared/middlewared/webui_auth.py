@@ -1,3 +1,5 @@
+from ipaddress import ip_address, ip_network
+
 from aiohttp import web
 
 
@@ -7,6 +9,23 @@ class WebUIAuth(object):
         self.middleware = middleware
 
     async def __call__(self, request):
+        """
+        TrueCommand authenticates client's browser in WebUI by sending POST request with `auth_token`.
+        This is more secure than using query string.
+        """
+
+        # We are not able to use nginx to allow/deny client for this specific endpoint so we'll have to make that
+        # check ourselves.
+        config = await self.middleware.call('system.general.config')
+        if config['ui_allowlist']:
+            remote_addr = ip_address(request.headers['X-Real-Remote-Addr'])
+            for allowed in config['ui_allowlist']:
+                allowed = ip_network(allowed)
+                if remote_addr == allowed or remote_addr in allowed:
+                    break
+            else:
+                return web.Response(status=403)
+
         post = await request.post()
         if 'auth_token' not in post:
             return web.Response(status=400, text='No token provided.')
