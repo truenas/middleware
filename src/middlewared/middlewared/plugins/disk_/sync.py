@@ -200,14 +200,16 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(None, 'Enumerating geom disk XML information')
         geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
 
+        job.set_progress(None, 'Enumerating disk information from database')
+        db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
+
         seen_disks = {}
         serials = []
         changed = set()
         deleted = set()
-        for disk in self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']}):
+        for disk in db_disks:
             original_disk = disk.copy()
-
-            name = self.middleware.call_sync('disk.identifier_to_device', disk['disk_identifier'], False, geom_xml)
+            name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
             if (
                     not name or
                     name in seen_disks or
