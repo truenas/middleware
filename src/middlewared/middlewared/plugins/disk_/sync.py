@@ -226,21 +226,27 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(None, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
 
+        uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_uuids')
         seen_disks = {}
         serials = []
         changed = set()
         deleted = set()
         for disk in db_disks:
             original_disk = disk.copy()
+
+            expire = False
             name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
-            if (
-                    not name or
-                    name in seen_disks or
-                    self.middleware.call_sync('disk.device_to_identifier', name, sys_disks) != disk['disk_identifier']
-            ):
-                # If we cant translate the identifier to a device, give up
-                # If name has already been seen once then we are probably
-                # dealing with with multipath here
+            if not name:
+                expire = True
+            if name in seen_disks:
+                expire = True
+            if self.dev_to_ident(name, sys_disks, geom_xml, uuids) != disk['disk_identifier']:
+                expire = True
+
+            if expire:
+                # 1. can't translate identifier to a device
+                # 2. or the device is in `seen_disks` (probably multipath device)
+                # 3. or can't translate a device to an identifier
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                     self.middleware.call_sync(
