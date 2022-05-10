@@ -1,4 +1,5 @@
 import subprocess
+from datetime import date
 
 from middlewared.service import private, Service
 
@@ -6,6 +7,7 @@ from middlewared.service import private, Service
 class SystemService(Service):
     # DMI information is mostly static so cache it
     CACHE = {
+        'bios-release-date': None,
         'ecc-memory': None,
         'baseboard-manufacturer': None,
         'baseboard-product-name': None,
@@ -18,7 +20,7 @@ class SystemService(Service):
     @private
     def dmidecode_info(self):
         if all(v is None for k, v in SystemService.CACHE.items()):
-            cp = subprocess.run(['dmidecode', '-t', '1,2,16'], encoding='utf8', capture_output=True)
+            cp = subprocess.run(['dmidecode', '-t', '0,1,2,16'], encoding='utf8', capture_output=True)
             self._parse_dmi(cp.stdout.splitlines())
 
         return SystemService.CACHE
@@ -28,6 +30,8 @@ class SystemService(Service):
         SystemService.CACHE = {i: '' for i in SystemService.CACHE}
         SystemService.CACHE['ecc-memory'] = False
         for line in lines:
+            if 'DMI type 0,' in line:
+                _type = 'RELEASE_DATE'
             if 'DMI type 1,' in line:
                 _type = 'SYSINFO'
             if 'DMI type 2,' in line:
@@ -39,7 +43,9 @@ class SystemService(Service):
                 continue
 
             sect, val = [i.strip() for i in line.split(':', 1)]
-            if sect == 'Manufacturer':
+            if sect == 'Release Date':
+                self._parse_bios_release_date(val)
+            elif sect == 'Manufacturer':
                 SystemService.CACHE['system-manufacturer' if _type == 'SYSINFO' else 'baseboard-manufacturer'] = val
             elif sect == 'Product Name':
                 SystemService.CACHE['system-product-name' if _type == 'SYSINFO' else 'baseboard-product-name'] = val
@@ -54,3 +60,21 @@ class SystemService(Service):
                 # the same order as requested (1,2,16) and "Error Correction Type"
                 # doesn't appear in any of the other sections
                 break
+
+    @private
+    def _prase_bios_release_date(self, string):
+        if (parts := string.strip().split('/')) < 3:
+            # dont know what the BIOS is reporting so
+            # assume it's invalid
+            return
+
+        # Give a best effort to convert to a date object.
+        # Searched hundreds of debugs that have been provided
+        # via end-users and 99% all reported the same date
+        # format, however, there are a couple that had a
+        # 2 digit year instead of a 4 digit year...gross
+        formatter = '%m/%d/%Y' if len(parts[-1]) == 4 else '%m/%d/%y'
+        try:
+            SystemService.CACHE['bios-release-date'] = date(string, formatter)
+        except Exception:
+            self.logger.warning('Failed to format BIOS release date to datetime object', exc_info=True)
