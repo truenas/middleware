@@ -61,6 +61,14 @@ nfs_func()
 	systemctl status nfs-server
 	section_footer
 
+	section_header "RPC Statd Status"
+	systemctl status rpc-statd
+	section_footer
+
+	section_header "RPC GSSD Status"
+	systemctl status rpc-gssd
+	section_footer
+
 	section_header "rpcinfo -p"
 	rpcinfo -p
 	section_footer
