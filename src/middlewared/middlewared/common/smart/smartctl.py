@@ -1,36 +1,34 @@
 from asyncio import Lock
+from collections import namedtuple
 import logging
 import re
 import subprocess
 
-from middlewared.utils import osc, run
+from middlewared.utils import run
+from nvme import get_nsid
 
 from .areca import annotate_devices_with_areca_dev_id
 
 logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
-
+SMARTCTX = namedtuple('smartctl_args', ['middleware', 'devices', 'enterprise_hardware'])
 areca_lock = Lock()
 
-if osc.IS_FREEBSD:
-    from nvme import get_nsid
-else:
-    get_nsid = None
 
+async def get_smartctl_args(context, disk):
+    middleware = context.middleware
+    devices = context.devices
+    enterprise_hardware = context.enterprise_hardware
 
-async def get_smartctl_args(middleware, devices, disk):
     if disk.startswith(('nvd', 'nvme')):
-        if osc.IS_LINUX:
-            return [f'/dev/{disk}', '-d', 'nvme']
+        try:
+            nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
+        except Exception as e:
+            logger.warning('Unable to run nvme.get_nsid for %r: %r', disk, e)
+            return
         else:
-            try:
-                nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
-            except Exception as e:
-                logger.warning('Unable to run nvme.get_nsid for %r: %r', disk, e)
-                return
-            else:
-                return [f'/dev/{nvme}']
+            return [f'/dev/{nvme}']
 
     device = devices.get(disk)
     if device is None:
@@ -85,7 +83,7 @@ async def get_smartctl_args(middleware, devices, disk):
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"]
 
     args = [f"/dev/{disk}"]
-    if disk.startswith("da") and not await middleware.call("system.is_enterprise_ix_hardware"):
+    if disk.startswith("da") and not enterprise_hardware:
         p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
         if "Unknown USB bridge" in p.stdout:
             args = args + ["-d", "sat"]

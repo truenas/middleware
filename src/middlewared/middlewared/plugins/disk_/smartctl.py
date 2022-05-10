@@ -2,7 +2,7 @@ import asyncio
 import functools
 import subprocess
 
-from middlewared.common.smart.smartctl import get_smartctl_args, smartctl
+from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
 from middlewared.service import accepts, Bool, Dict, CallError, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -28,10 +28,10 @@ class DiskService(Service):
                 ]
 
                 devices = await self.middleware.call('device.get_storage_devices_topology')
-
+                hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
+                context = SMARTCTX(middleware=self.middleware, devices=devices, enterprise_hardware=hardware)
                 self.smartctl_args_for_disk = dict(zip(
-                    disks,
-                    await asyncio_map(functools.partial(get_smartctl_args, self.middleware, devices), disks, 8)
+                    disks, await asyncio_map(functools.partial(get_smartctl_args, context), disks, 8)
                 ))
             except Exception:
                 self.logger.error("update_smartctl_args_for_disks failed", exc_info=True)
@@ -61,7 +61,9 @@ class DiskService(Service):
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
             else:
                 devices = await self.middleware.call('device.get_storage_devices_topology')
-                smartctl_args = await get_smartctl_args(self.middleware, devices, disk)
+                hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
+                context = SMARTCTX(middleware=self.middleware, devices=devices, enterprise_hardware=hardware)
+                smartctl_args = await get_smartctl_args(context, disk)
 
             if smartctl_args is None:
                 raise CallError(f'S.M.A.R.T. is unavailable for disk {disk}')

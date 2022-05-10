@@ -6,7 +6,7 @@ from itertools import chain
 
 import asyncio
 
-from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl
+from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES, get_smartctl_args, smartctl, SMARTCTX
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.validators import Range
 from middlewared.service import (
@@ -21,12 +21,11 @@ RE_TIME = re.compile(r'test will complete after ([a-z]{3} [a-z]{3} [0-9 ]+ \d\d:
 RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to complete')
 
 
-async def annotate_disk_smart_tests(middleware, devices, disk):
+async def annotate_disk_smart_tests(context, disk):
     if disk["disk"] is None:
         return
 
-    args = await get_smartctl_args(middleware, devices, disk["disk"])
-    if args:
+    if args := await get_smartctl_args(context, disk["disk"]):
         p = await smartctl(args + ["-l", "selftest"], check=False, encoding="utf8")
         tests = parse_smart_selftest_results(p.stdout)
         if tests is not None:
@@ -552,11 +551,12 @@ class SMARTTestService(CRUDService):
         )
 
         devices = await self.middleware.call('device.get_storage_devices_topology')
+        hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
+        context = SMARTCTX(middleware=self.middleware, devices=devices, enterprise_hardware=hardware)
         return filter_list(
-            list(filter(
-                None,
-                await asyncio_map(functools.partial(annotate_disk_smart_tests, self.middleware, devices), disks, 16)
-            )),
+            list(filter(None, await asyncio_map(
+                functools.partial(annotate_disk_smart_tests, context), disks, 16
+            ))),
             [],
             {"get": get},
         )
