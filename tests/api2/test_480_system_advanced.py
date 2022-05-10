@@ -12,6 +12,7 @@ from auto_config import user, password, ip, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 MOTD = 'FREENAS_MOTD'
+SYSLOGLEVEL = "F_CRIT"
 
 
 @pytest.fixture(scope='module')
@@ -95,3 +96,16 @@ def test_10_system_advanced_check_motd_using_ssh(request):
     depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'cat /etc/motd | grep "{MOTD}"', user, password, ip)
     assert results['result'] is True, results
+
+    
+def test_11_Setting_sysloglevel():
+    results = PUT("/system/advanced/", {"sysloglevel": SYSLOGLEVEL})
+    assert results.status_code == 200, results.text
+
+
+def test_12_Checking_sysloglevel_using_api():
+    results = GET("/system/advanced/")
+    assert results.status_code == 200, results.text
+    data = results.json()
+    assert data['sysloglevel'] == SYSLOGLEVEL
+    
