@@ -15,7 +15,6 @@ from auto_config import user, password, ip, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 TIMEZONE = "America/New_York"
-SYSLOGLEVEL = "F_CRIT"
 
 
 def test_01_get_system_general():
@@ -72,19 +71,7 @@ def test_08_Checking_timezone_using_ssh(request):
     assert results['result'] is True, results
 
 
-def test_09_Setting_sysloglevel():
-    results = PUT("/system/general/", {"sysloglevel": SYSLOGLEVEL})
-    assert results.status_code == 200, results.text
-
-
-def test_10_Checking_sysloglevel_using_api():
-    results = GET("/system/advanced/")
-    assert results.status_code == 200, results.text
-    data = results.json()
-    assert data['sysloglevel'] == SYSLOGLEVEL
-
-
-def test_11_timezone_choices():
+def test_09_timezone_choices():
     timezones_dic = call('system.general.timezone_choices')
     result = ssh('timedatectl list-timezones')
     missing = []
