@@ -2492,10 +2492,14 @@ class PoolDatasetService(CRUDService):
                 if os.path.exists(mount_path):
                     try:
                         self.middleware.call_sync('filesystem.set_immutable', False, mount_path)
-                    except CallError as e:
-                        failed[name]['error'] = 'Dataset could not be mounted as unable to remove ' \
-                                                f'immutable flag at {mount_path!r}: {e}'
-                        continue
+                    except OSError as e:
+                        # It's ok to get `EROFS` because the dataset can have `readonly=on`
+                        if e.errno != errno.EROFS:
+                            raise
+                    except Exception as e:
+                        failed[name]['error'] = (
+                            f'Dataset mount failed because immutable flag at {mount_path!r} could not be removed: {e}'
+                        )
 
                     if not os.path.isdir(mount_path) or os.listdir(mount_path):
                         # rename please
@@ -2515,7 +2519,11 @@ class PoolDatasetService(CRUDService):
                 if os.path.exists(mount_path):
                     try:
                         self.middleware.call_sync('filesystem.set_immutable', True, mount_path)
-                    except CallError as e:
+                    except OSError as e:
+                        # It's ok to get `EROFS` because the dataset can have `readonly=on`
+                        if e.errno != errno.EROFS:
+                            raise
+                    except Exception as e:
                         failed_datasets[ds] = str(e)
 
             if failed_datasets:
