@@ -77,18 +77,18 @@ class FailoverDisabledReasonsService(Service):
             # call. This essentially bypasses the TCP timeout window.
             if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
                 reasons.add('NO_SYSTEM_READY')
+            else:
+                if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
+                    reasons.add('NO_LICENSE')
 
-            if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
-                reasons.add('NO_LICENSE')
+                local = self.middleware.call_sync('failover.vip.get_states', ifaces)
+                remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
+                if self.middleware.call_sync('failover.vip.check_states', local, remote):
+                    reasons.add('DISAGREE_VIP')
 
-            local = self.middleware.call_sync('failover.vip.get_states', ifaces)
-            remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
-            if self.middleware.call_sync('failover.vip.check_states', local, remote):
-                reasons.add('DISAGREE_VIP')
-
-            mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
-            if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
-                reasons.add('MISMATCH_DISKS')
+                mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
+                if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
+                    reasons.add('MISMATCH_DISKS')
         except Exception:
             reasons.add('NO_PONG')
 
