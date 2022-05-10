@@ -1,6 +1,6 @@
 import asyncio
 
-from middlewared.utils import osc, run
+from middlewared.utils import osc
 
 from middlewared.plugins.service_.services.base import ServiceState, ServiceInterface, SimpleService
 from middlewared.plugins.service_.services.base_freebsd import freebsd_service
@@ -82,22 +82,6 @@ class MOTDService(PseudoServiceBase):
             await freebsd_service("motd", "start")
 
 
-class HostnameService(PseudoServiceBase):
-    name = "hostname"
-
-    reloadable = True
-
-    async def reload(self):
-        if osc.IS_FREEBSD:
-            await run(["hostname", ""])
-        await self.middleware.call("etc.generate", "hostname")
-        if osc.IS_FREEBSD:
-            await self.middleware.call("etc.generate", "rc")
-            await freebsd_service("hostname", "start")
-        await self.middleware.call("service.restart", "mdns")
-        await self.middleware.call("service.restart", "collectd")
-
-
 class HttpService(PseudoServiceBase):
     name = "http"
 
@@ -177,19 +161,6 @@ class ResolvConfService(PseudoServiceBase):
     async def reload(self):
         await self.middleware.call("service.reload", "hostname")
         await self.middleware.call("dns.sync")
-
-
-class RoutingService(SimpleService):
-    name = "routing"
-
-    etc = ["rc"]
-
-    restartable = True
-
-    freebsd_rc = "routing"
-
-    async def get_state(self):
-        return ServiceState(True, [])
 
 
 class SslService(PseudoServiceBase):
