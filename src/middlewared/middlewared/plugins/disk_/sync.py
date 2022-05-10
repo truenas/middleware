@@ -125,7 +125,7 @@ class DiskService(Service, ServiceChangeMixin):
         _type = search.group('type')
         _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
         if _type == 'uuid':
-            found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"/../../name'), None)
+            found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
             if found and found.text.startswith('label'):
                 return found.text
         elif _type == 'label':
@@ -144,7 +144,7 @@ class DiskService(Service, ServiceChangeMixin):
             _norm_value = ' '.join(_value.split())
             for i in geom_xml.iterfind('.//provider/config/ident'):
                 if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
-                    name = geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name', None)
+                    name = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
                     if name:
                         return name.text
 
@@ -165,9 +165,9 @@ class DiskService(Service, ServiceChangeMixin):
                 _lunid = info[-1]
                 _ident = _value[:-len(_lunid)].rstrip('_')
 
-            found_ident = geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name', None)
+            found_ident = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
             if found_ident:
-                found_lunid = geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"/../../name', None)
+                found_lunid = next(geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"/../../name'), None)
                 if found_lunid:
                     # means the identifier and lunid given to us
                     # matches a disk on the system so just return
@@ -178,6 +178,29 @@ class DiskService(Service, ServiceChangeMixin):
                 return _value
         else:
             raise NotImplementedError(f'Unknown type {_type!r}')
+
+    @private
+    def dev_to_ident(self, name, sys_disks, geom_xml, valid_zfs_partition_uuids):
+        if disk_data := sys_disks.get(name):
+            if disk_data['serial_lunid']:
+                return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
+            elif disk_data['serial']:
+                return f'{{serial}}{disk_data["serial"]}'
+
+        found = next(geom_xml.iterfind(f'.//config[rawuuid="{name}"]'), None)
+        if found:
+            if (_type := found.find('rawtype')):
+                if _type.text in valid_zfs_partition_uuids:
+                    # has a label on it AND the label type is a zfs partition type
+                    return f'{{uuid}}{name}'
+            elif (label := found.find('label')) and (label.text):
+                # Why are we doing this? `label` isn't used by us on TrueNAS but
+                # maybe we added this for the situation where someone moved a
+                # disk from a vanilla freeBSD box??
+                return f'{{label}}{name}'
+
+        if os.path.exists(f'/dev/{name}'):
+            return f'{{devicename}}{name}'
 
     @private
     @accepts()
