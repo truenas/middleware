@@ -141,8 +141,8 @@ zfs_func()
 	done
 	section_footer
 
-	section_header "lsblk -o name,partuuid -l"
-	lsblk -o name,partuuid -l
+	section_header "lsblk -o NAME,FSTYPE,LABEL,UUID,PARTUUID -l -e 230"
+	lsblk -o NAME,FSTYPE,LABEL,UUID,PARTUUID -l -e 230
 	section_footer
 	section_header  "zpool status -v"
 	zpool status -v
