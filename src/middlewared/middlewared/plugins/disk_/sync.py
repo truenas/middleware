@@ -1,10 +1,13 @@
 import asyncio
 import os
 import time
+import re
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+
+RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -113,6 +116,68 @@ class DiskService(Service, ServiceChangeMixin):
             self.logger.info('Found disks: %r', log_info)
         else:
             self.logger.info('Found %d disks', number_of_disks)
+
+    @private
+    def ident_to_dev(self, ident, geom_xml, disks_in_db):
+        if not ident or not (search := RE_IDENT.search(ident)):
+            return
+
+        _type = search.group('type')
+        _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
+        if _type == 'uuid':
+            found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"/../../name'), None)
+            if found and found.text.startswith('label'):
+                return found.text
+        elif _type == 'label':
+            found = next(geom_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
+            if found:
+                return found.text
+        elif _type == 'serial':
+            found = next(geom_xml.iterfind(f'.//provider/config[ident="{_value}"]/../../name'), None)
+            if found:
+                return found.text
+
+            # normalize the passed in value by stripping leading/trailing and more
+            # than single-space char(s) on the passed in data to us as well as the
+            # xml data that's returned from the system. We'll check to see if we
+            # have a match on the normalized data and return the name accordingly
+            _norm_value = ' '.join(_value.split())
+            for i in geom_xml.iterfind('.//provider/config/ident'):
+                if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
+                    name = geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name', None)
+                    if name:
+                        return name.text
+
+            # check the database for a disk with the same serial and return the name
+            # that we have written in db
+            if name := list(filter(lambda x: x['disk_serial'] == _value, disks_in_db)):
+                return name[0]['name']
+        elif _type == 'serial_lunid':
+            info = _value.split('_')
+            info_len = len(info)
+            if info_len < 2:
+                return
+            elif info_len == 2:
+                _ident, _lunid = info
+            else:
+                # vmware nvme disks look like VMware NVME_0000_a9d1a9a7feaf1d66000c296f092d9204
+                # so we need to account for it
+                _lunid = info[-1]
+                _ident = _value[:-len(_lunid)].rstrip('_')
+
+            found_ident = geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name', None)
+            if found_ident:
+                found_lunid = geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"/../../name', None)
+                if found_lunid:
+                    # means the identifier and lunid given to us
+                    # matches a disk on the system so just return
+                    # the found `_ident` name
+                    return found_ident.text
+        elif _type == 'devicename':
+            if os.path.exists(f'/dev/{_value}'):
+                return _value
+        else:
+            raise NotImplementedError(f'Unknown type {_type!r}')
 
     @private
     @accepts()
