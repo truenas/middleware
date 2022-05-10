@@ -522,16 +522,20 @@ if __name__ == "__main__":
                 row = zpool_table.addRow([agent.Integer32(i + 1)])
                 row.setRowCell(1, agent.Integer32(i + 1))
                 row.setRowCell(2, agent.DisplayString(zpool.properties["name"].value))
-                allocation_units, \
-                    (
-                        size,
-                        used,
-                        available
-                    ) = calculate_allocation_units(
-                        int(zpool.properties["size"].rawvalue),
-                        int(zpool.properties["allocated"].rawvalue),
-                        int(zpool.properties["free"].rawvalue),
-                    )
+                try:
+                    allocation_units, \
+                        (
+                            size,
+                            used,
+                            available
+                        ) = calculate_allocation_units(
+                            int(zpool.properties["size"].rawvalue),
+                            int(zpool.properties["allocated"].rawvalue),
+                            int(zpool.properties["free"].rawvalue),
+                        )
+                except ValueError:
+                    allocation_units = 4096
+                    size = used = available = 0
                 row.setRowCell(3, agent.Integer32(allocation_units))
                 row.setRowCell(4, agent.Integer32(size))
                 row.setRowCell(5, agent.Integer32(used))
