@@ -100,6 +100,21 @@ class DiskService(Service, ServiceChangeMixin):
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
     @private
+    def log_disk_info(self, sys_disks):
+        number_of_disks = len(sys_disks)
+        if number_of_disks <= 25:
+            # output logging information to middlewared.log in case we sync disks
+            # when not all the disks have been resolved
+            log_info = {
+                ok: {
+                    ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
+                } for ok, ov in sys_disks.items()
+            }
+            self.logger.info('Found disks: %r', log_info)
+        else:
+            self.logger.info('Found %d disks', number_of_disks)
+
+    @private
     @accepts()
     @job(lock='disk.sync_all')
     def sync_all(self, job):
@@ -113,21 +128,12 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(None, 'Waiting on devd connection')
         self.wait_on_devd()
 
+        job.set_progress(None, 'Enumerating system disks')
         sys_disks = self.middleware.call_sync('device.get_disks')
-        geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
+        self.log_disk_info(sys_disks)
 
-        number_of_disks = len(sys_disks)
-        if number_of_disks <= 25:
-            # output logging information to middlewared.log in case we sync disks
-            # when not all the disks have been resolved
-            log_info = {
-                ok: {
-                    ik: iv for ik, iv in ov.items() if ik in ('name', 'ident', 'lunid', 'serial')
-                } for ok, ov in sys_disks.items()
-            }
-            self.logger.info('Found disks: %r', log_info)
-        else:
-            self.logger.info('Found %d disks', number_of_disks)
+        job.set_progress(None, 'Enumerating geom disk XML information')
+        geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
 
         seen_disks = {}
         serials = []
