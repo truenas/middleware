@@ -62,7 +62,7 @@ class SystemService(Service):
                 break
 
     @private
-    def _prase_bios_release_date(self, string):
+    def _parse_bios_release_date(self, string):
         if (parts := string.strip().split('/')) < 3:
             # dont know what the BIOS is reporting so
             # assume it's invalid
