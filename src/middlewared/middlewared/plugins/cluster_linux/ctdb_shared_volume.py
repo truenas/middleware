@@ -133,29 +133,16 @@ class CtdbSharedVolumeService(Service):
         return await self.middleware.call('gluster.volume.query', [('name', '=', CTDB_VOL_NAME)])
 
     @job(lock=CRE_OR_DEL_LOCK)
-    async def delete(self, job):
-        """
-        Delete and unmount the shared volume used by ctdb daemon.
-        """
-
-        # nothing to delete if it doesn't exist
-        info = await self.middleware.call('gluster.volume.exists_and_started', CTDB_VOL_NAME)
-        if not info['exists']:
-            return
-
-        # need to stop smb locally and on all peers
+    async def teardown(self, job):
         if await self.middleware.call('service.started', 'cifs'):
-            job.set_progress(16, 'Stopping SMB on all nodes')
-            stop_job = await self.middleware.call('clusterjob.submit', 'service.stop', 'cifs')
-            await stop_job.wait()
+            job.set_progress(25, 'Stopping SMB')
+            await self.middleware.call('service.stop', 'cifs')
 
-        # need to stop ctdb locally and on all peers
-        job.set_progress(36, 'Stopping ctdbd on all nodes')
-        stop_job = await self.middleware.call('clusterjob.submit', 'service.stop', 'ctdb')
-        await stop_job.wait()
+        job.set_progress(50, 'Stopping ctdb')
+        await self.middleware.call('service.stop', 'ctdb')
 
         def __remove_config():
-            # keep this method inside here so it doesn't get (mis)used anywhere else.
+            # keep this inner method so it doesn't get (mis)used anywhere else.
             files = (
                 CTDBConfig.ETC_GEN_FILE.value,
                 CTDBConfig.ETC_REC_FILE.value,
@@ -169,21 +156,31 @@ class CtdbSharedVolumeService(Service):
                     except Exception:
                         self.logger.warning(f'Failed to remove {i!r}', exc_info=True)
 
-        job.set_progress(52, 'Removing ctdbd configuration data')
+        job.set_progress(75, 'Removing ctdbd configuration data')
         await self.middleware.run_in_thread(__remove_config)
 
-        # need to unmount the gluster fuse mountpoint locally and on all peers
-        job.set_progress(68, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem on all nodes')
-        stop_job = await self.middleware.call('clusterjob.submit', 'gluster.fuse.umount', {'name': CTDB_VOL_NAME})
-        await stop_job.wait()
+        job.set_progress(99, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem')
+        fuse_job = await self.middleware.call('gluster.fuse.umount', {'name': CTDB_VOL_NAME})
+        await fuse_job.wait()
+        job.set_progress(100, 'CTDB shared volume teardown complete.')
+
+    @job(lock=CRE_OR_DEL_LOCK)
+    async def delete(self, job):
+        """
+        Delete and unmount the shared volume used by ctdb daemon.
+        """
+        # nothing to delete if it doesn't exist
+        info = await self.middleware.call('gluster.volume.exists_and_started', CTDB_VOL_NAME)
+        if not info['exists']:
+            return
 
         # stop the gluster volume
         if info['started']:
             options = {'args': (CTDB_VOL_NAME,), 'kwargs': {'force': True}}
-            job.set_progress(84, f'Stopping gluster volume {CTDB_VOL_NAME!r}')
+            job.set_progress(33, f'Stopping gluster volume {CTDB_VOL_NAME!r}')
             await self.middleware.call('gluster.method.run', volume.stop, options)
 
         # finally, we delete it
-        job.set_progress(99, f'Deleting gluster volume {CTDB_VOL_NAME!r}')
+        job.set_progress(66, f'Deleting gluster volume {CTDB_VOL_NAME!r}')
         await self.middleware.call('gluster.method.run', volume.delete, {'args': (CTDB_VOL_NAME,)})
         job.set_progress(100, f'Successfully deleted {CTDB_VOL_NAME!r}')
