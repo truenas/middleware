@@ -264,10 +264,16 @@ class NetworkConfigurationService(ConfigService):
                 'NAS is configured as a time machine target. mDNS is required.'
             )
 
-        lhost_changed = config['hostname'] != new_config['hostname']
-        bhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
-        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
+        lhost_changed = rhost_changed = False
+        this_node = await self.middleware.call('failover.node')
+        if this_node in ('MANUAL', 'A'):
+            lhost_changed = config['hostname'] != new_config['hostname']
+            rhost_changed = config.get('hostname_b') and config['hostname_b'] != new_config['hostname_b']
+        elif this_node == 'B':
+            lhost_changed = config['hostname_b'] != new_config['hostname_b']
+            rhost_changed = config['hostname'] != new_config['hostname']
 
+        vhost_changed = config.get('hostname_virtual') and config['hostname_virtual'] != new_config['hostname_virtual']
         if vhost_changed and await self.middleware.call('activedirectory.get_state') != "DISABLED":
             verrors.add(
                 'global_configuration_update.hostname_virtual',
@@ -297,7 +303,7 @@ class NetworkConfigurationService(ConfigService):
             service_actions.add(('collectd', 'restart'))
             service_actions.add(('nscd', 'reload'))
 
-        if bhost_changed:
+        if rhost_changed:
             try:
                 await self.middleware.call('failover.call_remote', 'etc.generate', ['hostname'])
             except Exception:
