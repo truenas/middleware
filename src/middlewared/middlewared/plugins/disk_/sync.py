@@ -86,6 +86,20 @@ class DiskService(Service, ServiceChangeMixin):
         await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
     @private
+    def wait_on_devd(self, seconds_to_wait=10):
+        seconds_to_wait = 10 if (seconds_to_wait <= 0 or seconds_to_wait >= 300) else seconds_to_wait
+        if not self.middleware.call_sync('device.devd_connected'):
+            # wait on devd up to `seconds_to_wait` to become connected
+            for i in range(seconds_to_wait):
+                if i > 0:
+                    time.sleep(1)
+
+                if self.middleware.call_sync('device.devd_connected'):
+                    break
+            else:
+                self.logger.warning('Starting disk.sync_all when devd is not connected yet')
+
+    @private
     @accepts()
     @job(lock='disk.sync_all')
     def sync_all(self, job):
@@ -96,16 +110,8 @@ class DiskService(Service, ServiceChangeMixin):
         if licensed and self.middleware.call_sync('failover.status') == 'BACKUP':
             return
 
-        if not self.middleware.call_sync('device.devd_connected'):
-            # try for 10 seconds to wait on devd before we continue
-            for i in range(10):
-                if i > 0:
-                    time.sleep(1)
-
-                if self.middleware.call_sync('device.devd_connected'):
-                    break
-            else:
-                self.logger.warning('Starting disk.sync_all when devd is not connected yet')
+        job.set_progress(None, 'Waiting on devd connection')
+        self.wait_on_devd()
 
         sys_disks = self.middleware.call_sync('device.get_disks')
         geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
