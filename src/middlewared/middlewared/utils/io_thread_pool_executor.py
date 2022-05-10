@@ -1,30 +1,45 @@
-from os import cpu_count
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
+from itertools import count
+import logging
+import os
+import threading
 
-from middlewared.utils.osc import set_thread_name
+from bsd.threading import set_thread_name
+
+logger = logging.getLogger(__name__)
+
+__all__ = ["IoThreadPoolExecutor"]
+
+counter = count(1)
 
 
-class IoThreadPoolExecutor(ThreadPoolExecutor):
+def start_daemon_thread(*args, daemon=True, **kwargs):
+    t = threading.Thread(*args, daemon=daemon, **kwargs)
+    t.start()
+    return t
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._initializer = set_thread_name('IoThread')
 
-        # we set these to 21 or 33 respectively so that we
-        # always have a 1 idle thread buffer when we check
-        # the semaphore which should help prevent a non-fatal
-        # race condition with the caller of this method
-        # minimally we have 21 - 1 thread available
-        # on large cpu count systems we set it to 33 - 1 (to match upstream)
-        self._max_workers = 21 if ((cpu_count() or 1) + 4) < 32 else 33
+class IoThreadPoolExecutor(Executor):
+    def __init__(self):
+        self.thread_count = (20 if ((os.cpu_count() or 1) + 4) < 32 else 32) + 1
+        self.executor = ThreadPoolExecutor(
+            self.thread_count,
+            "IoThread",
+            initializer=lambda: set_thread_name("IoThread"),
+        )
 
-    @property
-    def no_idle_threads(self):
-        # note, this is "technically" an implementation
-        # detail of the threading.Semaphore class so upstream
-        # can change this variable at any time so I'm noting
-        # it here so my future self doesn't pull their hair
-        # out when this occurs :)
+    def submit(self, fn, *args, **kwargs):
+        if len(self.executor._threads) == self.thread_count and self.executor._idle_semaphore._value - 1 <= 1:
+            fut = Future()
+            logger.trace("Calling %r in a single-use thread", fn)
+            start_daemon_thread(name=f"ExtraIoThread_{next(counter)}", target=worker, args=(fut, fn, args, kwargs))
+            return fut
+        return self.executor.submit(fn, *args, **kwargs)
 
-        # give ourselvs a single idle thread buffer
-        return self._idle_semaphore._value - 1 <= 1
+
+def worker(fut, fn, args, kwargs):
+    set_thread_name("ExtraIoThread")
+    try:
+        fut.set_result(fn(*args, **kwargs))
+    except Exception as e:
+        fut.set_exception(e)
