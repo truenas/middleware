@@ -60,9 +60,9 @@ class EnterpriseService(Service):
                 "TRUENAS-M60": date(2020, 12, 3),
             }
             hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
-            if min_bios_date := bios_dates.get(hardware):
-                if bios_date := self.middleware.call_sync('system.dmidecode_info')['bios-release-date']:
-                    self.IS_OLD_BIOS_VERSION = bios_date < min_bios_date
+            min_bios_date = next((v for k, v in bios_dates.items() if k.startswith(hardware)), None)
+            if min_bios_date and (bios := self.middleware.call_sync('system.dmidecode_info')['bios-release-date']):
+                self.IS_OLD_BIOS_VERSION = bios < min_bios_date
         except Exception as e:
             self.logger.error("Unhandled exception in enterprise.setup_m_series_nvdimm", exc_info=True)
             self.ERROR = str(e)
