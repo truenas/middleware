@@ -1,195 +1,35 @@
-import re
-import threading
-from xml.etree import ElementTree as etree
-from itertools import zip_longest
-from collections import defaultdict
-
-import sysctl
 from middlewared.service import Service
-from middlewared.common.camcontrol import camcontrol_list
-from bsd.disk import get_ident_with_name
+from middlewared.plugins.geom_.cache import GeomCachedObjects
+
+GCACHE = GeomCachedObjects()
 
 
 class GeomCache(Service):
-    DISKS = defaultdict()  # formatted cache for geom DISKS (parsed xml)
-    MULTIPATH = defaultdict()  # formatted cache for geom MULTIPATH providers (parsed xml)
-    TOPOLOGY = defaultdict()  # formatted `camcontrol devlist -v` output
-    XML = None  # raw xml cache
-    LOCK = threading.Lock()
-    RE_DISK_NAME = re.compile(r'^([a-z]+)([0-9]+)$')
-    CLASSES = ('PART', 'MULTIPATH', 'DISK', 'LABEL', 'DEV', 'RAID')
-    DISK_TEMPLATE = {
-        'name': None,
-        'mediasize': None,
-        'sectorsize': None,
-        'stripesize': None,
-        'rotationrate': None,
-        'ident': '',
-        'lunid': None,
-        'descr': None,
-        'subsystem': '',
-        'number': 1,  # Database defaults
-        'model': None,
-        'type': 'UNKNOWN',
-        'serial': '',
-        'size': None,
-        'serial_lunid': None,
-        'blocks': None,
-    }
 
     class Config:
         namespace = 'geom.cache'
         private = True
 
     def get_disks(self):
-        return self.DISKS
+        return GCACHE.get_disks()
 
     def get_multipath(self):
-        return self.MULTIPATH
+        return GCACHE.get_multipath()
 
     def get_topology(self):
-        return self.TOPOLOGY
+        return GCACHE.get_topology()
 
     def get_xml(self):
-        return self.XML
+        return GCACHE.get_xml()
 
     def get_class_xml(self, class_name):
-        if self.XML is not None:
-            class_name = class_name.upper()
-            if class_name in self.CLASSES:
-                return self.XML.find(f'.//class[name="{class_name}"]')
+        return GCACHE.get_xml(xml_class=class_name.upper())
 
     def invalidate(self):
-        self.middleware.call_sync('geom.cache.fill')
+        GeomCachedObjects.cache.fget.cache_clear()
 
     def remove_disk(self, disk):
-        with self.LOCK:
-            self.DISKS.pop(disk, None)
-            self.MULTIPATH.pop(disk, None)
-            self.TOPOLOGY.pop(disk, None)
-            if ele := self.XML.find(f'.//class[name="DISK"]/geom[name="{disk}"]'):
-                self.XML.find('.//class[name="DISK"]').remove(ele)
-            if ele := self.XML.find(f'.//class[name="MULTIPATH"]/geom[name="{disk}"]'):
-                self.XML.find('.//class[name="MULTIPATH"]').remove(ele)
+        pass
 
-    def _fill_disk_details(self, xmlelem):
-        name = xmlelem.find('provider/name').text
-        if name.startswith('cd'):
-            # ignore cd devices
-            return
-
-        # make a copy of disk template
-        disk = self.DISK_TEMPLATE.copy()
-
-        # sizes
-        disk.update({
-            'name': name,
-            'mediasize': int(xmlelem.find('provider/mediasize').text),
-            'sectorsize': int(xmlelem.find('provider/sectorsize').text),
-            'stripesize': int(xmlelem.find('provider/stripesize').text),
-        })
-
-        if config := xmlelem.find('provider/config'):
-            # unique identifiers
-            disk.update({i.tag: i.text for i in config if i.tag not in ('fwheads', 'fwsectors')})
-            if disk['rotationrate'] is not None and disk['rotationrate'].isdigit():
-                disk['rotationrate'] = int(disk['rotationrate'])
-                if disk['rotationrate'] == 0:
-                    disk['type'] = 'SSD'
-                    disk['rotationrate'] = None
-                else:
-                    disk['type'] = 'HDD'
-
-            # description and model (they're the same)
-            disk['descr'] = disk['model'] = None if not disk['descr'] else disk['descr']
-
-            # if geom doesn't give us a serial then try again
-            # (even though this is 100% guaranteed to return
-            #   what geom gave us)
-            if not disk['ident']:
-                try:
-                    disk['ident'] = get_ident_with_name(name)
-                except Exception:
-                    disk['ident'] = ''
-
-        # sprinkle our own information here
-        reg = self.RE_DISK_NAME.search(name)
-        if reg:
-            disk['subsystem'] = reg.group(1)
-            disk['number'] = int(reg.group(2))
-
-        # API backwards compatibility dictates that we keep the
-        # serial and size keys in the output
-        disk['serial'] = disk['ident']
-        disk['size'] = disk['mediasize']
-
-        # some more sprinkling of our own information
-        if disk['serial'] and disk['lunid']:
-            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
-        if disk['size'] and disk['sectorsize']:
-            disk['blocks'] = int(disk['size'] / disk['sectorsize'])
-
-        # get the disk driver
-        if driver := self.TOPOLOGY.get(name, {}).get('driver'):
-            if driver == 'umass-sim':
-                disk['bus'] = 'USB'
-            else:
-                disk['bus'] = driver.upper()
-        else:
-            disk['bus'] = 'UNKNOWN'
-
-        # update the cache with the disk info
-        self.DISKS[name] = disk
-
-    def _fill_multipath_consumer_details(self, xmlelem):
-        children = []
-        for i in xmlelem.findall('./consumer'):
-            consumer_status = i.find('./config/State').text
-            provref = i.find('./provider').attrib['ref']
-            prov = self.XML.findall(f'.//provider[@id="{provref}"]')[0]
-            da_name = prov.find('./name').text
-            try:
-                lun_id = prov.find('./config/lunid').text
-            except Exception:
-                lun_id = ''
-
-            children.append({
-                'type': 'consumer',
-                'name': da_name,
-                'status': consumer_status,
-                'lun_id': lun_id,
-            })
-
-        multipath_name = 'multipath/' + xmlelem.find('./name').text
-        self.MULTIPATH[multipath_name] = {
-            'type': 'root',
-            'name': multipath_name,
-            'status': xmlelem.find('./config/State').text,
-            'children': children,
-        }
-
-    async def get_devices_topology(self):
-        return await camcontrol_list()
-
-    def fill(self):
-        with self.LOCK:
-            # wipe/overwrite the current cache
-            self.XML = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value)
-            self.MULTIPATH.clear()
-            self.DISKS.clear()
-            self.TOPOLOGY.clear()
-            self.TOPOLOGY.update(self.middleware.call_sync('geom.cache.get_devices_topology'))
-
-            # grab the relevant xml classes and refill the cache objects
-            _disks = self.XML.findall('.//class[name="DISK"]/geom')
-            _mpdisks = self.XML.findall('.//class[name="MULTIPATH"]/geom')
-            for disk, mpdisk in zip_longest(_disks, _mpdisks, fillvalue=None):
-                if disk is not None:
-                    self._fill_disk_details(disk)
-                if mpdisk is not None:
-                    self._fill_disk_details(mpdisk)
-                    self._fill_multipath_consumer_details(mpdisk)
-
-
-async def setup(middleware):
-    await middleware.call('geom.cache.fill')
+    def get_devices_topology(self):
+        return GCACHE.get_topology()
