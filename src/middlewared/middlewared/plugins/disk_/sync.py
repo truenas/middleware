@@ -153,7 +153,7 @@ class DiskService(Service, ServiceChangeMixin):
             # check the database for a disk with the same serial and return the name
             # that we have written in db
             if name := list(filter(lambda x: x['disk_serial'] == _value, disks_in_db)):
-                return name[0]['name']
+                return name[0]['disk_name']
         elif _type == 'serial_lunid':
             info = _value.split('_')
             info_len = len(info)
