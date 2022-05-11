@@ -390,8 +390,8 @@ class UPSBase:
     def get_identifiers(self):
         ups_identifier = self.middleware.call_sync('ups.config')['identifier']
 
-        if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{_type}.rrd'))
-               for _type, dsname, transform, in self.rrd_types):
+        if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{rrd_type.type}.rrd'))
+               for rrd_type in self.rrd_types):
             return [ups_identifier]
 
         return []
