@@ -128,15 +128,15 @@ class DiskService(Service, ServiceChangeMixin):
         _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
         if _type == 'uuid':
             found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
-            if found and found.text.startswith('label'):
+            if found is not None and found.text.startswith('label'):
                 return found.text
         elif _type == 'label':
             found = next(geom_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
-            if found:
+            if found is not None:
                 return found.text
         elif _type == 'serial':
             found = next(geom_xml.iterfind(f'.//provider/config[ident="{_value}"]/../../name'), None)
-            if found:
+            if found is not None:
                 return found.text
 
             # normalize the passed in value by stripping leading/trailing and more
@@ -147,7 +147,7 @@ class DiskService(Service, ServiceChangeMixin):
             for i in geom_xml.iterfind('.//provider/config/ident'):
                 if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
                     name = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
-                    if name:
+                    if name is not None:
                         return name.text
 
             # check the database for a disk with the same serial and return the name
@@ -168,9 +168,9 @@ class DiskService(Service, ServiceChangeMixin):
                 _ident = _value[:-len(_lunid)].rstrip('_')
 
             found_ident = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
-            if found_ident:
-                found_lunid = next(geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"/../../name'), None)
-                if found_lunid:
+            if found_ident is not None:
+                found_lunid = next(geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"]/../../name'), None)
+                if found_lunid is not None:
                     # means the identifier and lunid given to us
                     # matches a disk on the system so just return
                     # the found `_ident` name
@@ -190,7 +190,7 @@ class DiskService(Service, ServiceChangeMixin):
                 return f'{{serial}}{disk_data["serial"]}'
 
         found = next(geom_xml.iterfind(f'.//config[rawuuid="{name}"]'), None)
-        if found:
+        if found is not None:
             if (_type := found.find('rawtype')):
                 if _type.text in valid_zfs_partition_uuids:
                     # has a label on it AND the label type is a zfs partition type
@@ -243,11 +243,11 @@ class DiskService(Service, ServiceChangeMixin):
 
             expire = False
             name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
-            if not name:
-                expire = True
-            if name in seen_disks:
-                expire = True
-            if self.dev_to_ident(name, sys_disks, geom_xml, uuids) != disk['disk_identifier']:
+            if (
+                not name or
+                name in seen_disks or
+                self.dev_to_ident(name, sys_disks, geom_xml, uuids) != disk['disk_identifier']
+            ):
                 expire = True
 
             if expire:
