@@ -301,6 +301,7 @@ class DiskService(Service, ServiceChangeMixin):
             seen_disks[name] = disk
 
         qs = None
+        job.set_progress(70, 'Syncing disks not found in the database (if any)')
         for name in sys_disks:
             if name not in seen_disks:
                 disk_identifier = self.dev_to_ident(name, sys_disks, geom_xml, uuids)
@@ -340,9 +341,11 @@ class DiskService(Service, ServiceChangeMixin):
         # matches with what is reported by the OS (we query the db again since we've
         # (potentially) made updates to the db up above)
         db_disks = self.middleware.call_sync('disk.query', [], {'extra': {'include_expired': True}})
+        job.set_progress(85, 'Syncing disks with enclosures')
         self.middleware.call_sync('enclosure.sync_disks', None, db_disks)
 
         if changed or deleted:
+            job.set_progress(95, 'Emitting disk events')
             self.middleware.call_sync('disk.restart_services_after_sync')
             disks = {i['identifier']: i for i in db_disks}
             for change in changed:
@@ -350,6 +353,7 @@ class DiskService(Service, ServiceChangeMixin):
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
+        job.set_progress(100, 'Syncing all disks complete!')
         return 'OK'
 
     def _disk_changed(self, disk, original_disk):
