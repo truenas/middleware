@@ -1821,6 +1821,12 @@ class InterfaceService(CRUDService):
         })
 
     @private
+    async def internal_interfaces(self):
+        ifaces = ['wg', 'lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair', 'vnet']
+        ifaces.extend(await self.middleware.call('failover.internal_interfaces'))
+        return ifaces
+
+    @private
     def scan_vrrp(self, ifname, count=10, timeout=10):
         # This runs tcpdump looking for VRRP packets.  If
         # none are seen we have a gun in the glovebox that times the
@@ -1933,10 +1939,7 @@ class InterfaceService(CRUDService):
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
-        internal_interfaces = ['wg', 'lo', 'pflog', 'pfsync', 'tun', 'tap', 'epair', 'vnet']
-        if not await self.middleware.call('system.is_freenas'):
-            internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces') or [])
-        internal_interfaces = tuple(internal_interfaces)
+        internal_interfaces = tuple(await self.internal_interfaces())
 
         dhclient_aws = []
         for name, iface in await self.middleware.run_in_thread(lambda: list(netif.list_interfaces().items())):
@@ -2436,9 +2439,7 @@ class DNSService(Service):
             if interfaces:
                 interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]
             else:
-                ignore = self.middleware.call_sync('interface.internal_interfaces')
-                ignore.extend(self.middleware.call_sync('failover.internal_interfaces'))
-                ignore = tuple(ignore)
+                ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
                 interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
 
             dns_from_dhcp = set()
