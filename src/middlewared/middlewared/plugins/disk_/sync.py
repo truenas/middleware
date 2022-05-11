@@ -296,7 +296,7 @@ class DiskService(Service, ServiceChangeMixin):
         qs = None
         for name in sys_disks:
             if name not in seen_disks:
-                disk_identifier = self.middleware.call_sync('disk.device_to_identifier', name, sys_disks)
+                disk_identifier = self.dev_to_ident(name, sys_disks, geom_xml, uuids)
                 if qs is None:
                     qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
