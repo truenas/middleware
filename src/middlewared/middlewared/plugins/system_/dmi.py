@@ -1,5 +1,5 @@
 import subprocess
-from datetime import date
+from datetime import datetime
 
 from middlewared.service import private, Service
 
@@ -83,6 +83,6 @@ class SystemService(Service):
         # 2 digit year instead of a 4 digit year...gross
         formatter = '%m/%d/%Y' if len(parts[-1]) == 4 else '%m/%d/%y'
         try:
-            SystemService.CACHE['bios-release-date'] = date(string, formatter)
+            SystemService.CACHE['bios-release-date'] = datetime.strptime(string, formatter).date()
         except Exception:
             self.logger.warning('Failed to format BIOS release date to datetime object', exc_info=True)
