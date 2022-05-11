@@ -337,12 +337,14 @@ class DiskService(Service, ServiceChangeMixin):
                     changed.add(disk['disk_identifier'])
 
         # make sure the database entries for enclosure slot information for each disk
-        # matches with what is reported by the OS
-        self.middleware.call_sync('enclosure.sync_disks')
+        # matches with what is reported by the OS (we query the db again since we've
+        # (potentially) made updates to the db up above)
+        db_disks = self.middleware.call_sync('disk.query', [], {'extra': {'include_expired': True}})
+        self.middleware.call_sync('enclosure.sync_disks', None, db_disks)
 
         if changed or deleted:
             self.middleware.call_sync('disk.restart_services_after_sync')
-            disks = {i['identifier']: i for i in self.middleware.call_sync('disk.query', [], {'prefix': 'disk_'})}
+            disks = {i['identifier']: i for i in db_disks}
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:
