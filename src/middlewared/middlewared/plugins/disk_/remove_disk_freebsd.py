@@ -10,9 +10,9 @@ class DiskService(Service):
         # remove the disk from it (#40560)
         gdisk = await self.middleware.call('geom.cache.get_class_xml', 'DISK')
         graid = await self.middleware.call('geom.cache.get_class_xml', 'RAID')
-        if (gdisk and graid) and (prov := gdisk.xml.find(f'.//provider[name = "{dev}"]')):
+        if (gdisk and graid) and (prov := gdisk.find(f'.//provider[name = "{dev}"]')):
             provid = prov.attrib.get('id')
-            if graid := graid.xml.find(f'.//consumer/provider[@ref = "{provid}"]/../../name'):
+            if graid := graid.find(f'.//consumer/provider[@ref = "{provid}"]/../../name'):
                 cp = await run('graid', 'remove', graid.text, dev, check=False)
                 if cp.returncode != 0:
                     self.logger.debug(
