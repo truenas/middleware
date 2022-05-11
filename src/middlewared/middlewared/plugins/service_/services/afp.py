@@ -6,6 +6,7 @@ from .base import SimpleService
 class AFPService(SimpleService):
     name = "afp"
     reloadable = True
+    deprecated = True
 
     etc = ["afpd"]
 
