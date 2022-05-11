@@ -226,7 +226,7 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(None, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
 
-        uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_uuids')
+        uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
         seen_disks = {}
         serials = []
         changed = set()
