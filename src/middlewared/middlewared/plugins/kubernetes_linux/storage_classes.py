@@ -77,9 +77,9 @@ class KubernetesStorageClassService(CRUDService):
             ['metadata.annotations.storageclass\\.kubernetes\\.io/is-default-class', '=', 'true'],
             ['metadata.name', '=', DEFAULT_STORAGE_CLASS],
         ]):
-            await self.middleware.call('k8s.storage_class.update', DEFAULT_STORAGE_CLASS, config)
-        else:
-            await self.middleware.call('k8s.storage_class.create', config)
+            await self.middleware.call('k8s.storage_class.delete', DEFAULT_STORAGE_CLASS)
+
+        await self.middleware.call('k8s.storage_class.create', config)
 
     async def retrieve_storage_class_manifest(self):
         return {
