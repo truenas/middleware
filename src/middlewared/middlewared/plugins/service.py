@@ -7,7 +7,7 @@ from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
-from middlewared.service import filterable, CallError, CRUDService, private
+from middlewared.service import filterable, CallError, CRUDService, periodic, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
@@ -142,6 +142,12 @@ class ServiceService(CRUDService):
         if state.running:
             await service_object.after_start()
             await self.middleware.call('service.notify_running', service)
+            if service_object.deprecated:
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'DeprecatedService',
+                    {"service": service_object.name}
+                )
             return True
         else:
             self.logger.error("Service %r not running after start", service)
@@ -150,7 +156,6 @@ class ServiceService(CRUDService):
                 return False
             else:
                 raise CallError(await service_object.failure_logs() or 'Service not running after start')
-
 
     @accepts(Str('service'))
     @returns(Bool('service_started', description='Will return `true` if service is running'))
@@ -161,6 +166,17 @@ class ServiceService(CRUDService):
         service_object = await self.middleware.call('service.object', service)
 
         state = await service_object.get_state()
+
+        if service_object.deprecated:
+            if state.running:
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'DeprecatedService',
+                    {"service": service_object.name}
+                )
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
+
         return state.running
 
     @accepts(Str('service'))
@@ -195,6 +211,9 @@ class ServiceService(CRUDService):
         if not state.running:
             await service_object.after_stop()
             await self.middleware.call('service.notify_running', service)
+            if service_object.deprecated:
+                await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', service_object.name)
+
             return False
         else:
             self.logger.error("Service %r running after stop", service)
@@ -225,13 +244,11 @@ class ServiceService(CRUDService):
             await service_object.after_restart()
 
             state = await service_object.get_state()
-            if state.running:
-                await self.middleware.call('service.notify_running', service)
-                return True
-            else:
+            if not state.running:
                 await self.middleware.call('service.notify_running', service)
                 self.logger.error("Service %r not running after restart", service)
                 return False
+
         else:
             try:
                 await service_object.before_stop()
@@ -247,14 +264,18 @@ class ServiceService(CRUDService):
             await service_object.before_start()
             await service_object.start()
             state = await service_object.get_state()
-            if state.running:
-                await service_object.after_start()
-                await self.middleware.call('service.notify_running', service)
-                return True
-            else:
+            if not state.running:
                 await self.middleware.call('service.notify_running', service)
                 self.logger.error("Service %r not running after restart-caused start", service)
                 return False
+
+            await service_object.after_start()
+
+        await self.middleware.call('service.notify_running', service)
+        if service_object.deprecated:
+            await self.middleware.call('alert.oneshot_create', 'DeprecatedService', {"service": service_object.name})
+
+        return True
 
     @accepts(
         Str('service'),
@@ -350,7 +371,26 @@ class ServiceService(CRUDService):
 
         return False
 
+    @periodic(3600, run_on_start=False)
+    @private
+    async def check_deprecated_services(self):
+        """
+        Simple call to service.started is sufficient to toggle alert
+        """
+        for service_name, service in self.SERVICES.items():
+            if not service.deprecated:
+                continue
+
+            await self.started(service.name)
+
+
+async def __event_service_ready(middleware, event_type, args):
+    if args['id'] == 'ready':
+        asyncio.ensure_future(middleware.call('service.check_deprecated_services'))
+
 
 async def setup(middleware):
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))
+
+    middleware.event_subscribe('system', __event_service_ready)
