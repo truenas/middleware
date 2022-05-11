@@ -117,6 +117,8 @@ class DiskService(Service, ServiceChangeMixin):
         else:
             self.logger.info('Found %d disks', number_of_disks)
 
+        return number_of_disks
+
     @private
     def ident_to_dev(self, ident, geom_xml, disks_in_db):
         if not ident or not (search := RE_IDENT.search(ident)):
@@ -213,17 +215,17 @@ class DiskService(Service, ServiceChangeMixin):
         if licensed and self.middleware.call_sync('failover.status') == 'BACKUP':
             return
 
-        job.set_progress(None, 'Waiting on devd connection')
+        job.set_progress(10, 'Waiting on devd connection')
         self.wait_on_devd()
 
-        job.set_progress(None, 'Enumerating system disks')
+        job.set_progress(20, 'Enumerating system disks')
         sys_disks = self.middleware.call_sync('device.get_disks')
-        self.log_disk_info(sys_disks)
+        number_of_disks = self.log_disk_info(sys_disks)
 
-        job.set_progress(None, 'Enumerating geom disk XML information')
+        job.set_progress(30, 'Enumerating geom disk XML information')
         geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
 
-        job.set_progress(None, 'Enumerating disk information from database')
+        job.set_progress(40, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
 
         uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
@@ -231,7 +233,12 @@ class DiskService(Service, ServiceChangeMixin):
         serials = []
         changed = set()
         deleted = set()
-        for disk in db_disks:
+        increment = round((60 - 40) / number_of_disks, 3)  # 20% of the total percentage
+        progress_percent = 40
+        for idx, disk in enumerate(db_disks, start=1):
+            progress_percent += increment
+            job.set_progress(progress_percent, f'Syncing disk {idx}/{number_of_disks}')
+
             original_disk = disk.copy()
 
             expire = False
