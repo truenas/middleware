@@ -1,10 +1,7 @@
-import contextlib
-import time
-
 import pytest
 
-from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.assets.pool import dataset, pool, another_pool
+from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.pool import another_pool
 
 import os
 import sys
