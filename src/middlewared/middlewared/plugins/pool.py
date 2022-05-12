@@ -4054,8 +4054,8 @@ class PoolDatasetService(CRUDService):
 
                 xid = None
 
+                id_type = 'user' if quota_type.startswith('user') else 'group'
                 if not q["id"].isdigit():
-                    id_type = 'user' if quota_type.startswith('user') else 'group'
                     try:
                         xid_obj = await self.middleware.call(f'{id_type}.get_{id_type}_obj',
                                                              {f'{id_type}name': q["id"]})
@@ -4067,14 +4067,12 @@ class PoolDatasetService(CRUDService):
                             f'{quota_type} {q["id"]} is not valid.'
                         )
                 else:
-                    id_type = ('user', 'uid') if 'user' in quota_type else ('group', 'gid')
                     xid = int(q["id"])
 
                 if xid == 0:
                     verrors.add(
                         f'quotas.{i}.id',
-                        f'{quota_type}: Setting {id_type[0]} quota on {id_type[1]} [{xid}] '
-                        'is not permitted.'
+                        f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted.'
                     )
             else:
                 if not q["id"].isdigit():
