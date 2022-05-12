@@ -347,10 +347,18 @@ class AlertService(Service):
         """
 
         as_ = AlertSerializer(self.middleware)
+        classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         return [
             await as_.serialize(alert)
-            for alert in sorted(self.alerts, key=lambda alert: (alert.klass.title, alert.datetime))
+            for alert in sorted(
+                self.alerts,
+                key=lambda alert: (
+                    -get_alert_level(alert, classes).value,
+                    alert.klass.title,
+                    alert.datetime,
+                ),
+            )
             if await as_.should_show_alert(alert)
         ]
 
