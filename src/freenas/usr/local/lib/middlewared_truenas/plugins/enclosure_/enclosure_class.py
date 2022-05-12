@@ -79,7 +79,7 @@ class Enclosure(object):
                 # means the element type that's being
                 # reported to us is unknown so log it
                 # and continue on
-                logger.warning('Unknown element type: %r for %r', element['type'][0], self.devname)
+                logger.warning('Unknown element type: %r for %r', element['type'], self.devname)
                 continue
 
             try:
