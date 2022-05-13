@@ -165,10 +165,9 @@ def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
             break
         sleep(1)
     while True:
-        cmd = f'test -e /dev/{zvol_device_name}'
+        cmd = f'test -e /dev/{file_device_name}'
         results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
         if results['result'] and "Connected:" in results['output']:
-            file_device_name = results['output'].strip().split()[3]
             assert True
             break
 
@@ -382,7 +381,6 @@ def test_35_waiting_for_iscsi_connection_before_grabbing_device_name(request):
         cmd = f'test -e /dev/{zvol_device_name}'
         results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
         if results['result'] and "Connected:" in results['output']:
-            zvol_device_name = results['output'].strip().split()[3]
             assert True
             break
 
@@ -500,7 +498,6 @@ def test_48_waiting_for_iscsi_connection_before_grabbing_device_name(request):
         cmd = f'test -e /dev/{zvol_device_name}'
         results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
         if results['result'] and "Connected:" in results['output']:
-            zvol_device_name = results['output'].strip().split()[3]
             assert True
             break
 
