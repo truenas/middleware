@@ -405,6 +405,42 @@ def test_067_stream_delete_on_close_smb1(request):
     c.disconnect()
 
 
+def test_068_case_insensitive_rename(request):
+    """
+    ZFS is case sensitive, but case preserving when casesensitivity == insensitive
+
+    rename of to_rename -> To_rename should succeed and new file appear
+    correctly in directory listing.
+
+    Will fail with NT_STATUS_OBJECT_NAME_COLLISION if we have regression and
+    samba identifies files as same.
+    """
+    depends(request, ["SHARE_IS_WRITABLE"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    fd = c.create_file("to_rename", "w")
+    c.close(fd)
+    c.rename("to_rename", "To_rename")
+    files = [x['name'] for x in c.ls('\\')]
+    c.disconnect()
+    assert("To_rename" in files)
+
+
+def test_069_normal_rename(request):
+    """
+    This verifies that renames are successfully completed
+    """
+    depends(request, ["SHARE_IS_WRITABLE"])
+    c = SMB()
+    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+    fd = c.create_file("old_file_to_rename", "w")
+    c.close(fd)
+    c.rename("old_file_to_rename", "renamed_new_file")
+    files = [x['name'] for x in c.ls('\\')]
+    c.disconnect()
+    assert("renamed_new_file" in files)
+
+
 """
 At this point we grant SMB_USER SeDiskOperatorPrivilege by making it a member
 of the local group builtin_administrators. This privilege is required to manipulate
