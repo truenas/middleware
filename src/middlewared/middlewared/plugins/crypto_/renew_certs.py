@@ -27,6 +27,7 @@ class CertificateService(Service):
         certs = self.middleware.call_sync('certificate.query', filters)
 
         progress = 0
+        changed_certs = []
         for cert in certs:
             progress += (100 / len(certs))
 
@@ -66,6 +67,11 @@ class CertificateService(Service):
                 cert_payload,
                 {'prefix': 'cert_'}
             )
+            changed_certs.append(cert)
+
+        self.middleware.call_sync('etc.generate', 'ssl')
+
+        for cert in changed_certs:
             try:
                 self.middleware.call_sync('certificate.redeploy_cert_attachments', cert['id'])
             except Exception:
