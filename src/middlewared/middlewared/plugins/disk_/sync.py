@@ -228,6 +228,7 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(40, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
 
+        options = {'send_events': False, 'ha_sync': False}
         uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
         seen_disks = {}
         serials = []
@@ -257,7 +258,7 @@ class DiskService(Service, ServiceChangeMixin):
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                     self.middleware.call_sync(
-                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
                     )
                     changed.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < datetime.utcnow():
@@ -270,9 +271,7 @@ class DiskService(Service, ServiceChangeMixin):
                         asyncio.ensure_future(self.middleware.call(
                             'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
                         ))
-                    self.middleware.call_sync(
-                        'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_events': False}
-                    )
+                    self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)
                     deleted.add(disk['disk_identifier'])
                 continue
             else:
@@ -286,16 +285,12 @@ class DiskService(Service, ServiceChangeMixin):
             if serial:
                 serials.append(serial)
 
-            # If for some reason disk is not identified as a system disk
-            # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
+                # If for some reason disk is not identified as a system disk mark it to expire.
                 disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
-            # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
-            # when lots of drives are present
+
             if self._disk_changed(disk, original_disk):
-                self.middleware.call_sync(
-                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
-                )
+                self.middleware.call_sync('datastore.update', 'storage.disk', disk['disk_identifier'], disk, options)
                 changed.add(disk['disk_identifier'])
 
             seen_disks[name] = disk
@@ -330,11 +325,11 @@ class DiskService(Service, ServiceChangeMixin):
                     # when lots of drives are present
                     if self._disk_changed(disk, original_disk):
                         self.middleware.call_sync(
-                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
                         )
                         changed.add(disk['disk_identifier'])
                 else:
-                    self.middleware.call_sync('datastore.insert', 'storage.disk', disk, {'send_events': False})
+                    self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
                     changed.add(disk['disk_identifier'])
 
         if changed or deleted:
@@ -352,6 +347,17 @@ class DiskService(Service, ServiceChangeMixin):
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
+
+        if self.middleware.call_sync('failover.licensed'):
+            job.set_progress(97, 'Synchronizing database to standby node')
+            # there could be, literally, > 1k databse changes in this method on large systems
+            # so we've forgoed from queuing up the number of db changes in the HA journal thread
+            # in favor of just sync'ing the database to the remote node after we're done. The
+            # speed improvement this provides is substantial
+            try:
+                self.middleware.call_sync('failover.send_database')
+            except Exception:
+                self.logger.warning('Failed to sync database to standby controller', exc_info=True)
 
         job.set_progress(100, 'Syncing all disks complete!')
         return 'OK'
