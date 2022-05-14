@@ -604,12 +604,29 @@ class ChartReleaseService(CRUDService):
 
         # If the chart release was consuming any PV's, they would have to be manually removed from k8s database
         # because of chart release reclaim policy being retain
+        pvc_volume_ds = os.path.join(release_ds, 'volumes')
         for pv in await self.middleware.call(
             'k8s.pv.query', [
-                ['spec.csi.volume_attributes.openebs\\.io/poolname', '=', os.path.join(release_ds, 'volumes')]
+                ['spec.csi.volume_attributes.openebs\\.io/poolname', '=', pvc_volume_ds]
             ]
         ):
             await self.middleware.call('k8s.pv.delete', pv['metadata']['name'])
+
+        failed_zfs_volumes = []
+        # We would like to delete openebs zfs volumes ( not actual zfs volumes ) in openebs namespace
+        for zfs_volume in await self.middleware.call('k8s.zv.query', [['spec.poolName', '=', pvc_volume_ds]]):
+            try:
+                await self.middleware.call('k8s.zv.delete', zfs_volume['metadata']['name'])
+            except Exception:
+                # It's perfectly fine if this fails as functionality wise this change is just cosmetic
+                # and is essentially cleaning up leftover zfs volume entries from k8s db
+                failed_zfs_volumes.append(zfs_volume['metadata']['name'])
+
+        if failed_zfs_volumes:
+            self.logger.error(
+                'Failed to delete %r zfs volumes when deleting %r chart release',
+                ', '.join(failed_zfs_volumes), release_name
+            )
 
         if await self.middleware.call('zfs.dataset.query', [['id', '=', release_ds]]):
             if job:
