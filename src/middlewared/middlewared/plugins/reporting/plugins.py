@@ -390,8 +390,8 @@ class UPSBase:
     def get_identifiers(self):
         ups_identifier = self.middleware.call_sync('ups.config')['identifier']
 
-        if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{_type}.rrd'))
-               for _type, dsname, transform, in self.rrd_types):
+        if all(os.path.exists(os.path.join(self._base_path, f'{self.plugin}-{ups_identifier}', f'{rrd_type.type}.rrd'))
+               for rrd_type in self.rrd_types):
             return [ups_identifier]
 
         return []
@@ -402,7 +402,7 @@ class UPSBatteryChargePlugin(UPSBase, RRDBase):
     title = 'UPS Battery Statistics'
     vertical_label = 'Percent'
     rrd_types = (
-        ('percent-charge', 'value', None),
+        RRDType('percent-charge', 'value', None),
     )
 
 
@@ -411,5 +411,5 @@ class UPSRemainingBatteryPlugin(UPSBase, RRDBase):
     title = 'UPS Battery Time Remaining Statistics'
     vertical_label = 'Minutes'
     rrd_types = (
-        ('timeleft-battery', 'value', '%name%,60,/'),
+        RRDType('timeleft-battery', 'value', '%name%,60,/'),
     )
