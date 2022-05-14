@@ -105,7 +105,6 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('threads', default=1),
         Int('memory', required=True),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
-        List('devices', items=[Patch('vmdevice_create', 'vmdevice_update', ('rm', {'name': 'vm'}))]),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
         Bool('ensure_display_device', default=True),
@@ -119,9 +118,6 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def do_create(self, data):
         """
         Create a Virtual Machine (VM).
-
-        `devices` is a list of virtualized hardware to add to the newly created Virtual Machine.
-        Failure to attach a device destroys the VM and any resources allocated by the VM devices.
 
         Maximum of 16 guest virtual CPUs are allowed. By default, every virtual CPU is configured as a
         separate package. Multiple cores can be configured per CPU by specifying `cores` attributes.
@@ -146,33 +142,15 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         `hide_from_msr` is a boolean which when set will hide the KVM hypervisor from standard MSR based discovery and
         is useful to enable when doing GPU passthrough.
-
-        SCALE Angelfish: Specifying `devices` is deprecated and will be removed in next major release.
         """
         async with LIBVIRT_LOCK:
             await self.middleware.run_in_thread(self._check_setup_connection)
-
-        if data.get('devices'):
-            warnings.warn(
-                'SCALE Angelfish: Specifying "devices" in "vm.create" is deprecated and will be '
-                'removed in next major release.', DeprecationWarning
-            )
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, 'vm_create', data)
         verrors.check()
 
-        devices = data.pop('devices')
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
-        try:
-            await self.safe_devices_updates(devices)
-        except Exception as e:
-            await self.middleware.call('vm.delete', vm_id)
-            raise e
-        else:
-            for device in devices:
-                await self.middleware.call('vm.device.create', {'vm': vm_id, **device})
-
         await self.middleware.run_in_thread(self._add, vm_id)
 
         return await self.get_instance(vm_id)
@@ -265,29 +243,6 @@ class VMService(CRUDService, VMSupervisorMixin):
                 verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
             elif not RE_NAME.search(data['name']):
                 verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
-
-        devices_ids = {d['id']: d for d in await self.middleware.call('vm.device.query')}
-        for i, device in enumerate(data.get('devices') or []):
-            try:
-                await self.middleware.call(
-                    'vm.device.validate_device', device, devices_ids.get(device.get('id')), data
-                )
-                if old:
-                    # We would like to enforce the presence of "vm" attribute in each device so that
-                    # it explicitly tells it wants to be associated to the provided "vm" in question
-                    if device.get('id') and device['id'] not in devices_ids:
-                        verrors.add(
-                            f'{schema_name}.devices.{i}.{device["id"]}',
-                            f'VM device {device["id"]} does not exist.'
-                        )
-                    elif not device.get('vm') or device['vm'] != old['id']:
-                        verrors.add(
-                            f'{schema_name}.devices.{i}.{device["id"]}',
-                            f'Device must be associated with current VM {old["id"]}.'
-                        )
-            except ValidationErrors as verrs:
-                for attribute, errmsg, enumber in verrs:
-                    verrors.add(f'{schema_name}.devices.{i}.{attribute}', errmsg, enumber)
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
