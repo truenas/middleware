@@ -54,6 +54,9 @@ def get_login_failures(now, messages):
                     if "sshd" not in message:
                         continue
 
+                    if "bad id: channel free" in message:
+                        continue
+
                     login_failures.append(message)
 
             if not message.startswith(yesterday) and not message.startswith(today):
