@@ -13,6 +13,8 @@ from .utils import OPENEBS_ZFS_GROUP_NAME, NODE_NAME, KUBECONFIG_FILE
 
 class KubernetesZFSVolumesService(CRUDService):
 
+    GROUP = 'zfs.openebs.io'
+    NAMESPACE = 'openebs'
     PLURAL = 'zfsvolumes'
     VERSION = 'v1'
 
@@ -71,6 +73,15 @@ class KubernetesZFSVolumesService(CRUDService):
             ['metadata.name', '=', data['metadata']['name']],
             ['metadata.namespace', '=', data['metadata']['namespace']],
         ], {'get': True})
+
+    @accepts(Str('volume_name'))
+    async def do_delete(self, volume_name):
+        async with api_client() as (api, context):
+            await context['custom_object_api'].delete_namespaced_custom_object(
+                group=self.GROUP, version=self.VERSION, plural=self.PLURAL,
+                namespace=self.NAMESPACE, name=volume_name,
+            )
+        return True
 
 
 class KubernetesZFSSnapshotClassService(CRUDService):
