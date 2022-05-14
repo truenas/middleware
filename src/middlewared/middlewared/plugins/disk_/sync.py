@@ -337,14 +337,14 @@ class DiskService(Service, ServiceChangeMixin):
                     self.middleware.call_sync('datastore.insert', 'storage.disk', disk, {'send_events': False})
                     changed.add(disk['disk_identifier'])
 
-        # make sure the database entries for enclosure slot information for each disk
-        # matches with what is reported by the OS (we query the db again since we've
-        # (potentially) made updates to the db up above)
-        db_disks = self.middleware.call_sync('datastore.query', 'storage.disk')
-        job.set_progress(85, 'Syncing disks with enclosures')
-        self.middleware.call_sync('enclosure.sync_disks', None, db_disks)
-
         if changed or deleted:
+            # make sure the database entries for enclosure slot information for each disk
+            # matches with what is reported by the OS (we query the db again since we've
+            # (potentially) made updates to the db up above)
+            db_disks = self.middleware.call_sync('datastore.query', 'storage.disk')
+            job.set_progress(85, 'Syncing disks with enclosures')
+            self.middleware.call_sync('enclosure.sync_disks', None, db_disks)
+
             job.set_progress(95, 'Emitting disk events')
             self.middleware.call_sync('disk.restart_services_after_sync')
             disks = {i['disk_identifier']: i for i in db_disks}
