@@ -2,12 +2,11 @@ import asyncio
 import errno
 import re
 import uuid
-import warnings
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
 
@@ -57,7 +56,7 @@ class VMService(CRUDService, VMSupervisorMixin):
     ENTRY = Patch(
         'vm_create',
         'vm_entry',
-        ('edit', {'name': 'devices', 'method': lambda v: setattr(v, 'items', [Ref('vm_device_entry')])}),
+        ('add', List('devices')),
         ('add', Dict(
             'status',
             Str('state', required=True),
@@ -155,37 +154,6 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         return await self.get_instance(vm_id)
 
-    @private
-    async def safe_devices_updates(self, devices):
-        # We will filter devices which create resources and if any of those fail, we destroy the created
-        # resources with the devices
-        # Returns true if resources were created successfully, false otherwise
-        created_resources = []
-        existing_devices = {d['id']: d for d in await self.middleware.call('vm.device.query')}
-        try:
-            for device in devices:
-                if not await self.middleware.call(
-                    'vm.device.create_resource', device, existing_devices.get(device.get('id'))
-                ):
-                    continue
-
-                created_resources.append(
-                    await self.middleware.call(
-                        'vm.device.update_device', device, existing_devices.get(device.get('id'))
-                    )
-                )
-        except Exception:
-            for created_resource in created_resources:
-                try:
-                    await self.middleware.call(
-                        'vm.device.delete_resource', {
-                            'zvol': created_resource['dtype'] == 'DISK', 'raw_file': created_resource['dtype'] == 'RAW'
-                        }, created_resource
-                    )
-                except Exception:
-                    self.logger.warn(f'Failed to delete {created_resource["dtype"]}', exc_info=True)
-            raise
-
     async def __common_validation(self, verrors, schema_name, data, old=None):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
@@ -248,39 +216,14 @@ class VMService(CRUDService, VMSupervisorMixin):
         # with reports of users having thousands of disks
         # Let's validate that the VM has the correct no of slots available to accommodate currently configured devices
 
-    async def __do_update_devices(self, id, devices):
-        # There are 3 cases:
-        # 1) "devices" can have new device entries
-        # 2) "devices" can have updated existing entries
-        # 3) "devices" can have removed exiting entries
-        old_devices = await self.middleware.call('vm.device.query', [['vm', '=', id]])
-        existing_devices = [d.copy() for d in devices if 'id' in d]
-        for remove_id in ({d['id'] for d in old_devices} - {d['id'] for d in existing_devices}):
-            await self.middleware.call('vm.device.delete', remove_id)
-
-        for update_device in existing_devices:
-            device_id = update_device.pop('id')
-            await self.middleware.call('vm.device.update', device_id, update_device)
-
-        for create_device in filter(lambda v: 'id' not in v, devices):
-            await self.middleware.call('vm.device.create', create_device)
-
     @accepts(
-        Int('id'),
+        Int('id', required=True),
         Patch(
-            'vm_create',
+            'vm_entry',
             'vm_update',
+            ('rm', {'name': 'devices'}),
+            ('rm', {'name': 'status'}),
             ('attr', {'update': True}),
-            (
-                'edit', {
-                    'name': 'devices', 'method': lambda v: setattr(
-                        v, 'items', [Patch(
-                            'vmdevice_create', 'vmdevice_update',
-                            ('add', {'name': 'id', 'type': 'int', 'required': False})
-                        )]
-                    )
-                }
-            )
         )
     )
     async def do_update(self, id, data):
@@ -315,12 +258,8 @@ class VMService(CRUDService, VMSupervisorMixin):
         if verrors:
             raise verrors
 
-        devices = new.pop('devices', [])
+        new.pop('devices')
         new.pop('status', None)
-        if devices != old['devices']:
-            await self.safe_devices_updates(devices)
-            await self.__do_update_devices(id, devices)
-
         await self.middleware.call('datastore.update', 'vm.vm', id, new)
 
         vm_data = await self.get_instance(id)
