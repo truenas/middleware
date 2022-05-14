@@ -228,8 +228,8 @@ class DiskService(Service, ServiceChangeMixin):
         job.set_progress(40, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
 
-        options = {'send_events': False, 'ha_sync': False}
         uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
+        options = {'send_events': False, 'ha_sync': False}
         seen_disks = {}
         serials = []
         changed = set()
@@ -341,7 +341,7 @@ class DiskService(Service, ServiceChangeMixin):
             # (potentially) made updates to the db up above)
             db_disks = self.middleware.call_sync('datastore.query', 'storage.disk')
             job.set_progress(85, 'Syncing disks with enclosures')
-            self.middleware.call_sync('enclosure.sync_disks', None, db_disks)
+            self.middleware.call_sync('enclosure.sync_disks', None, db_disks, options['ha_sync'])
 
             job.set_progress(95, 'Emitting disk events')
             self.middleware.call_sync('disk.restart_services_after_sync')

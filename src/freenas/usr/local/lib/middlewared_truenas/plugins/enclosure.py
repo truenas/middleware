@@ -121,7 +121,7 @@ class EnclosureService(CRUDService):
             enc.identify(slot)
 
     @private
-    async def sync_disks(self, enclosure_info=None, db_disks=None):
+    async def sync_disks(self, enclosure_info=None, db_disks=None, ha_sync=True):
         if enclosure_info is None:
             enclosure_info = await self.middleware.call('enclosure.query')
 
@@ -140,7 +140,7 @@ class EnclosureService(CRUDService):
             if disk_enclosure['disk_enclosure_slot'] != disk['disk_enclosure_slot']:
                 await self.middleware.call(
                     'datastore.update', 'storage.disk', disk['disk_identifier'], disk_enclosure,
-                    {'send_events': False, 'prefix': 'disk_'}
+                    {'send_events': False, 'ha_sync': ha_sync, 'prefix': 'disk_'}
                 )
                 changed[disk['disk_identifier']] = disk
 
