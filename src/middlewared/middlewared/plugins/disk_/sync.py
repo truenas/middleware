@@ -296,7 +296,6 @@ class DiskService(Service, ServiceChangeMixin):
             seen_disks[name] = disk
 
         qs = None
-        job.set_progress(70, 'Syncing disks not found in the database (if any)')
         progress_percent = 70
         for name in filter(lambda x: x not in seen_disks, sys_disks):
             progress_percent += increment
