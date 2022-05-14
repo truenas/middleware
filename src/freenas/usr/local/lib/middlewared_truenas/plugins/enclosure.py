@@ -126,25 +126,25 @@ class EnclosureService(CRUDService):
             enclosure_info = await self.middleware.call('enclosure.query')
 
         if db_disks is None:
-            db_disks = await self.middleware.call('disk.query', [], {'extra': {'include_expired': True}})
+            db_disks = await self.middleware.call('datastore.query', 'storage.disk')
 
         changed = dict()
         for disk in db_disks:
             try:
-                encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['name'], enclosure_info)
+                encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['disk_name'], enclosure_info)
             except MatchNotFound:
-                disk_enclosure = None
+                disk_enclosure = {'disk_enclosure_slot': None}
             else:
-                disk_enclosure = {'enclosure_slot': (encnum * 1000) + slot}
+                disk_enclosure = {'disk_enclosure_slot': (encnum * 1000) + slot}
 
-            if disk_enclosure != disk['enclosure']:
+            if disk_enclosure['disk_enclosure_slot'] != disk['disk_enclosure_slot']:
                 await self.middleware.call(
-                    'datastore.update', 'storage.disk', disk['identifier'], disk_enclosure,
+                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk_enclosure,
                     {'send_events': False, 'prefix': 'disk_'}
                 )
-                changed[disk['identifier']] = disk
+                changed[disk['disk_identifier']] = disk
 
-        for ident, disk in changed.items():
+        for ident in changed:
             self.middleware.send_event('disk.query', 'CHANGED', id=ident, fields=changed[ident])
 
     @private
