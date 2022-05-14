@@ -297,40 +297,44 @@ class DiskService(Service, ServiceChangeMixin):
 
         qs = None
         job.set_progress(70, 'Syncing disks not found in the database (if any)')
-        for name in sys_disks:
-            if name not in seen_disks:
-                disk_identifier = self.dev_to_ident(name, sys_disks, geom_xml, uuids)
-                if qs is None:
-                    qs = self.middleware.call_sync('datastore.query', 'storage.disk')
+        progress_percent = 70
+        for name in filter(lambda x: x not in seen_disks, sys_disks):
+            progress_percent += increment
+            disk_identifier = self.dev_to_ident(name, sys_disks, geom_xml, uuids)
+            if qs is None:
+                qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
-                if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
-                    new = False
-                    disk = disk[0]
-                else:
-                    new = True
-                    disk = {'disk_identifier': disk_identifier}
-                original_disk = disk.copy()
-                disk['disk_name'] = name
-                self._map_device_disk_to_db(disk, sys_disks[name])
-                serial = disk['disk_serial'] + (sys_disks[name]['lunid'] or '')
-                if serial:
-                    if serial in serials:
-                        # Probably dealing with multipath here, do not add another
-                        continue
-                    else:
-                        serials.append(serial)
+            if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
+                new = False
+                disk = disk[0]
+                job.set_progress(progress_percent, f'Updating disk {name!r}')
+            else:
+                new = True
+                disk = {'disk_identifier': disk_identifier}
+                job.set_progress(progress_percent, f'Syncing new disk {name!r}')
 
-                if not new:
-                    # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
-                    # when lots of drives are present
-                    if self._disk_changed(disk, original_disk):
-                        self.middleware.call_sync(
-                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
-                        )
-                        changed.add(disk['disk_identifier'])
+            original_disk = disk.copy()
+            disk['disk_name'] = name
+            self._map_device_disk_to_db(disk, sys_disks[name])
+            serial = disk['disk_serial'] + (sys_disks[name]['lunid'] or '')
+            if serial:
+                if serial in serials:
+                    # Probably dealing with multipath here, do not add another
+                    continue
                 else:
-                    self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
+                    serials.append(serial)
+
+            if not new:
+                # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
+                # when lots of drives are present
+                if self._disk_changed(disk, original_disk):
+                    self.middleware.call_sync(
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
+                    )
                     changed.add(disk['disk_identifier'])
+            else:
+                self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
+                changed.add(disk['disk_identifier'])
 
         if changed or deleted:
             # make sure the database entries for enclosure slot information for each disk
