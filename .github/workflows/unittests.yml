@@ -1,0 +1,41 @@
+name: unittests
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Image URI'
+        required: true
+        type: string
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies
+      run: |
+        sudo apt update && sudo apt install -y curl squashfs-tools
+    - name: Download update file
+      run: |
+        curl "$URI" -o truenas_image.update
+      env:
+        URI: ${{ github.event.inputs.url }}
+    - name: Run unit tests
+      run: |
+        mkdir unit_test_temp
+        mkdir outer_layer_temp
+        sudo unsquashfs -f -d ./outer_layer_temp truenas_image.update
+        sudo unsquashfs -f -d ./unit_test_temp ./outer_layer_temp/rootfs.squashfs
+        sudo chroot ./unit_test_temp bash -c 'echo "nameserver 8.8.8.8" >> /etc/resolv.conf'
+        sudo cp -a src/middlewared/middlewared/pytest ./unit_test_temp/usr/lib/python3/dist-packages/middlewared/
+        sudo chroot ./unit_test_temp curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        sudo chroot ./unit_test_temp python3 get-pip.py
+        sudo chroot ./unit_test_temp python3 -m pip install --upgrade pip
+        sudo mkdir -p ./unit_test_temp/dev
+        sudo mount -t devtmpfs udev ./unit_test_temp/dev
+        sudo chroot ./unit_test_temp pip install asynctest pytest asyncmock pytest-asyncio
+        sudo chroot ./unit_test_temp pytest -v --disable-pytest-warnings /usr/lib/python3/dist-packages/middlewared/pytest
+        echo "exit code : " $?
