@@ -9,8 +9,6 @@ The authenticator script is called two times during the certificate generation:
 It is up to script implementation to handle both calls and perform the record creation.
 """
 import logging
-import os
-import pwd
 import subprocess
 
 from middlewared.schema import accepts, Dict, Str, Dir, File, Int
@@ -29,7 +27,6 @@ class ShellAuthenticator(Authenticator):
     SCHEMA = Dict(
         'shell',
         File('script', required=True, empty=False, title='Authenticator script'),
-        Dir('workdir', default='/tmp', title='Working directory'),
         Str('user', default='nobody', title='Running user'),
         Int('timeout', default=60, title='Timeout'),
         Int('delay', default=60, title='Propagation delay'),
@@ -37,7 +34,6 @@ class ShellAuthenticator(Authenticator):
 
     def initialize_credentials(self):
         self.script = self.attributes.get('script')
-        self.workdir = self.attributes.get('workdir')
         self.user = self.attributes.get('user')
         self.timeout = int(self.attributes.get('timeout'))
         self.PROPAGATION_DELAY = int(self.attributes.get('delay'))
@@ -45,26 +41,20 @@ class ShellAuthenticator(Authenticator):
     @staticmethod
     @accepts(SCHEMA)
     def validate_credentials(data):
+        # We would like to validate the following bits:
+        # 1) script exists and is executable
+        # 2) user exists
+        # 3) User can access the script in question
         pass
 
     def _run(self, args):
-        def demote(uid, gid):
-            def result():
-                os.setgid(gid)
-                os.setuid(uid)
-            return result
-
-        pw_record = pwd.getpwnam(self.user)
-        env = os.environ.copy()
-        env['HOME'] = pw_record.pw_dir
-        env['LOGNAME'] = pw_record.pw_name
-        env['PWD'] = self.workdir
-        env['USER'] = pw_record.pw_name
         process = subprocess.Popen(
-            args, preexec_fn=demote(pw_record.pw_uid, pw_record.pw_gid), cwd=self.workdir, env=env
+            ['sudo', '-H', '-u', self.user, 'sh', '-c', args], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
-        result = process.wait(timeout=self.timeout)
-        return result
+        try:
+            process.communicate(timeout=self.timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
 
     def _perform(self, domain, validation_name, validation_content):
         self._run([self.script, 'set', domain, validation_name, validation_content, '600'])
