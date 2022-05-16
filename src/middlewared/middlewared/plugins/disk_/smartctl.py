@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 
-from middlewared.common.smart.smartctl import get_smartctl_args, smartctl
+from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
 from middlewared.service import accepts, Bool, Dict, CallError, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -19,13 +19,12 @@ class DiskService(Service):
                 disks = await self.middleware.call("disk.query", [["name", "!=", None]])
 
                 devices = await self.middleware.call("device.get_storage_devices_topology")
-
+                hardware = await self.middleware.call("system.is_enterprise_ix_hardware")
+                context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
                 self.smartctl_args_for_disk = dict(zip(
                     [disk["name"] for disk in disks],
                     await asyncio_map(
-                        lambda disk: get_smartctl_args(self.middleware, devices, disk["name"], disk["smartoptions"]),
-                        disks,
-                        8
+                        lambda disk: get_smartctl_args(context, disk["name"], disk["smartoptions"]), disks, 8
                     )
                 ))
             except Exception:
@@ -56,14 +55,15 @@ class DiskService(Service):
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
             else:
                 devices = await self.middleware.call('device.get_storage_devices_topology')
-
+                hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
+                context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
                 if disks := await self.middleware.call('disk.query', [['name', '=', disk]]):
                     smartoptions = disks[0]['smartoptions']
                 else:
                     self.middleware.logger.warning("No database row found for disk %r", disk)
                     smartoptions = ''
 
-                smartctl_args = await get_smartctl_args(self.middleware, devices, disk, smartoptions)
+                smartctl_args = await get_smartctl_args(context, disk, smartoptions)
 
             if smartctl_args is None:
                 raise CallError(f'S.M.A.R.T. is unavailable for disk {disk}')
