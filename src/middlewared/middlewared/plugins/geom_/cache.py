@@ -54,7 +54,7 @@ class GeomCachedObjects:
         name = xmlelem.find('provider/name').text
         if name.startswith('cd'):
             # ignore cd devices
-            return
+            return None, None
 
         # make a copy of disk template
         disk = DISK_TEMPLATE.copy()
@@ -192,7 +192,8 @@ class GeomCachedObjects:
         disks = {}
         for xmlelm in xml.findall('.//class[name="DISK"]/geom'):
             name, info = self.fill_disks_details(xmlelm, topology)
-            disks[name] = info
+            if name and info:
+                disks[name] = info
 
         multipath = {}
         for xmlelm in xml.findall('.//class[name="MULTIPATH"]/geom'):
