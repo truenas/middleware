@@ -1,4 +1,5 @@
 from asyncio import Lock
+from collections import namedtuple
 import logging
 import re
 import shlex
@@ -11,11 +12,13 @@ from .areca import annotate_devices_with_areca_dev_id
 logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
-
+SMARTCTX = namedtuple('smartctl_args', ['devices', 'enterprise_hardware'])
 areca_lock = Lock()
 
 
-async def get_smartctl_args(middleware, devices, disk, smartoptions):
+async def get_smartctl_args(context, disk, smartoptions):
+    devices = context.devices
+    enterprise_hardware = context.enterprise_hardware
     try:
         smartoptions = shlex.split(smartoptions)
     except Exception as e:
@@ -78,7 +81,7 @@ async def get_smartctl_args(middleware, devices, disk, smartoptions):
         return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"] + smartoptions
 
     args = [f"/dev/{disk}"] + smartoptions
-    if not await middleware.call("system.is_enterprise_ix_hardware"):
+    if not enterprise_hardware:
         p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
         if "Unknown USB bridge" in p.stdout:
             args = args + ["-d", "sat"]
