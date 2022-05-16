@@ -55,6 +55,8 @@ class SMB(object):
         self._host = host
         self._share = share
         self._smb1 = smb1
+        self._username = username
+        self._password = password
         self._connection = libsmb.Conn(
             host,
             share,
