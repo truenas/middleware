@@ -919,8 +919,7 @@ class VNC(Device):
             bool, [
                 '29',
                 'fbuf',
-                'vncserver',
-                f'tcp={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
+                f'vncserver={attrs["vnc_bind"]}:{attrs["vnc_port"]}',
                 f'w={width}',
                 f'h={height}',
                 f'password={attrs["vnc_password"]}' if attrs.get('vnc_password') else None,
