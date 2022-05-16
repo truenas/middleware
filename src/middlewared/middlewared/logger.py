@@ -220,11 +220,17 @@ class Logger(object):
                 },
                 'failover': {
                     'level': 'NOTSET',
-                    'handlers': ['failover_file'],
+                    'handlers': ['failover_file', 'sys-logger'],
                     'propagate': False,
                 },
             },
             'handlers': {
+                'sys-logger': {
+                    'level': 'DEBUG',
+                    'class': 'logging.handlers.SysLogHandler',
+                    'address': '/var/run/log',
+                    'formatter': 'file',
+                },
                 'file': {
                     'level': 'DEBUG',
                     'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
