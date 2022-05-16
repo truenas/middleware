@@ -191,8 +191,10 @@ class GeomCachedObjects:
 
         disks = {}
         for xmlelm in xml.findall('.//class[name="DISK"]/geom'):
-            name, info = self.fill_disks_details(xmlelm, topology)
-            disks[name] = info
+            detail = self.fill_disks_details(xmlelm, topology)
+            if detail:
+                name, info = detail
+                disks[name] = info
 
         multipath = {}
         for xmlelm in xml.findall('.//class[name="MULTIPATH"]/geom'):
