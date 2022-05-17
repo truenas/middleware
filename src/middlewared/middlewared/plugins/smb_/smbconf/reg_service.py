@@ -258,9 +258,7 @@ class ShareSchema(RegistrySchema):
             "recycle:directory_mode": {"parsed": "0777"},
             "recycle:subdir_mode": {"parsed": "0700"},
         })
-        data_out['vfs objects']['parsed'].extend([
-            "recycle", "crossrename"
-        ])
+        data_out['vfs objects']['parsed'].append("recycle")
 
         return
 
