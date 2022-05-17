@@ -198,6 +198,8 @@ class SMBService(Service):
         smb_sd = json.loads(sc.stdout.decode().splitlines()[1])
         if data['options']['output_format'] == 'SMB':
             return {"acl_type": "SMB", "acl_data": smb_sd}
+        else:
+            return self.middleware.call_sync('smb.convert_acl', ACLType.SMB.value, smb_sd)
 
     @private
     async def smb_to_nfsv4(self, sd, ignore_errors=False):
@@ -210,7 +212,7 @@ class SMBService(Service):
 
             if x['trustee']['sid'] in ACLPrincipal.sids():
                 aclp = ACLPrincipal.from_sid(x['trustee']['sid'])
-                entry['tag'] = aclp.to_nfsv4
+                entry['tag'] = aclp.to_nfsv4()
             else:
                 trustee = await self.middleware.call('idmap.sid_to_unixid',
                                                      x['trustee']['sid'])
@@ -226,7 +228,7 @@ class SMBService(Service):
                 entry['tag'] = "USER" if trustee['id_type'] == "USER" else "GROUP"
                 entry['id'] = trustee['id']
 
-            acl_out.append(entry)
+            acl_out['acl'].append(entry)
 
         return {"acl_type": "NFSV4", "acl_data": acl_out}
 
