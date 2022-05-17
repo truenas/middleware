@@ -1325,6 +1325,8 @@ class SharingSMBService(SharingService):
             'socket options',
             'include',
             'interfaces',
+            'wide links',
+            'insecure wide links'
         ]
         freebsd_vfs_objects = [
             'zfsacl',
