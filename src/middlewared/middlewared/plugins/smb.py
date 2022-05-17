@@ -1057,6 +1057,8 @@ class SharingSMBService(SharingService):
             'private directory',
             'private dir',
             'cache directory',
+            'wide links',
+            'insecure wide links',
         ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
