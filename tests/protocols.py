@@ -4,6 +4,7 @@ from samba.samba3 import param as s3param
 from samba import credentials
 import subprocess
 from samba import NTSTATUSError
+libsmb_has_rename = 'rename' in dir(libsmb.Conn)
 
 
 class SMB(object):
@@ -151,6 +152,23 @@ class SMB(object):
         return self._connection.write(
             self._open_files[idx]["fh"], data, offset
         )
+
+    def rename(self, src, dst):
+        if libsmb_has_rename:
+            return self._connection.rename(src, dst)
+
+        cmd = [
+            "smbclient", f"//{self._host}/{self._share}",
+            "-U", f"{self._username}%{self._password}",
+        ]
+
+        if self._smb1:
+            cmd.extend(["-m", "NT1"])
+
+        cmd.extend(["-c", f'rename {src} {dst}'])
+        cl = subprocess.run(cmd, capture_output=True)
+        if cl.returncode != 0:
+            raise RuntimeError(cl.stdout.decode())
 
     def _parse_quota(self, quotaout):
         ret = []
