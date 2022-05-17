@@ -50,12 +50,14 @@ class FailoverDisabledReasonsService(Service):
             reasons.add('NO_FAILOVER')
 
         ifaces = self.middleware.call_sync('interface.query')
+        _ifaces = {i['name']: i for i in ifaces}
+        db_ifaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
         crit_iface = False
-        for iface in ifaces:
-            if not iface.get('failover_virtual_aliases'):
+        for iface in filter(lambda x: x in db_ifaces, _ifaces):
+            if not _ifaces[iface].get('failover_virtual_aliases'):
                 # if any interface is configured on HA, then it must have VIP
                 reasons.add('NO_VIP')
-            if iface.get('failover_critical'):
+            if _ifaces[iface].get('failover_critical'):
                 # only need 1 interface marked critical for failover
                 crit_iface = True
 
