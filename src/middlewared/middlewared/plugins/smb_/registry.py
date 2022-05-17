@@ -307,10 +307,7 @@ class SharingSMBService(Service):
             data['vfsobjects'].append('noacl')
 
         if data['recyclebin']:
-            # crossrename is required for 'recycle' to work across sub-datasets
-            # FIXME: crossrename imposes 20MB limit on filesize moves across mountpoints
-            # This really needs to be addressed with a zfs-aware recycle bin.
-            data['vfsobjects'].extend(['recycle', 'crossrename'])
+            data['vfsobjects'].append('recycle')
 
         if data['shadowcopy'] or data['fsrvp']:
             data['vfsobjects'].append('shadow_copy_zfs')
