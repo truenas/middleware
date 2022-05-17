@@ -364,7 +364,7 @@ def test_040_verify_that_recyclebin_is_true(request):
     assert results.json()['recyclebin'] is True, results.text
 
 
-@pytest.mark.parametrize('vfs_object', ["crossrename", "recycle"])
+@pytest.mark.parametrize('vfs_object', ["recycle"])
 def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     depends(request, ["service_cifs_running", "ssh_password"], scope="session")
     cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
