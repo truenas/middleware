@@ -11,6 +11,10 @@ from middlewared.validators import Range
 from middlewared.plugins.smb import SMBCmd, WBCErr
 
 
+SID_LOCAL_USER_PREFIX = "S-1-22-1-"
+SID_LOCAL_GROUP_PREFIX = "S-1-22-2-"
+
+
 class DSType(enum.Enum):
     """
     The below DS_TYPES are defined for use as system domains for idmap backends.
@@ -760,6 +764,13 @@ class IdmapDomainService(CRUDService):
         rv = None
         gid = None
         uid = None
+
+        if sid_str.startswith(SID_LOCAL_USER_PREFIX):
+            return {"id_type": "USER", "id": int(sid_str.strip(SID_LOCAL_USER_PREFIX))}
+
+        elif sid_str.startswith(SID_LOCAL_GROUP_PREFIX):
+            return {"id_type": "GROUP", "id": int(sid_str.strip(SID_LOCAL_GROUP_PREFIX))}
+
         wb = await run([SMBCmd.WBINFO.value, '--sid-to-gid', sid_str], check=False)
         if wb.returncode == 0:
             gid = int(wb.stdout.decode().strip())
