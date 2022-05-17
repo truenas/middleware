@@ -121,20 +121,31 @@ class EnclosureService(CRUDService):
             enc.identify(slot)
 
     @private
-    async def sync_disks(self, enclosure_info=None):
+    async def sync_disks(self, enclosure_info=None, db_disks=None, ha_sync=True):
         if enclosure_info is None:
             enclosure_info = await self.middleware.call('enclosure.query')
 
-        for disk in await self.middleware.call('disk.query', [], {'extra': {'include_expired': True}}):
-            try:
-                encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['name'], enclosure_info)
-            except MatchNotFound:
-                disk_enclosure = None
-            else:
-                disk_enclosure = {'number': encnum, 'slot': slot}
+        if db_disks is None:
+            db_disks = await self.middleware.call('datastore.query', 'storage.disk')
 
-            if disk_enclosure != disk['enclosure']:
-                await self.middleware.call('disk.update', disk['identifier'], {'enclosure': disk_enclosure})
+        changed = dict()
+        for disk in db_disks:
+            try:
+                encnum, slot = await self.get_enclosure_number_and_slot_for_disk(disk['disk_name'], enclosure_info)
+            except MatchNotFound:
+                disk_enclosure = {'disk_enclosure_slot': None}
+            else:
+                disk_enclosure = {'disk_enclosure_slot': (encnum * 1000) + slot}
+
+            if disk_enclosure['disk_enclosure_slot'] != disk['disk_enclosure_slot']:
+                await self.middleware.call(
+                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk_enclosure,
+                    {'send_events': False, 'ha_sync': ha_sync, 'prefix': 'disk_'}
+                )
+                changed[disk['disk_identifier']] = disk
+
+        for ident in changed:
+            self.middleware.send_event('disk.query', 'CHANGED', id=ident, fields=changed[ident])
 
     @private
     async def get_enclosure_number_and_slot_for_disk(self, disk, enclosure_info=None):

@@ -1,9 +1,13 @@
 import asyncio
 import os
+import time
+import re
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
+
+RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -73,7 +77,7 @@ class DiskService(Service, ServiceChangeMixin):
 
         disk.update({'disk_name': name, 'disk_expiretime': None})
 
-        await self._map_device_disk_to_db(disk, disks[name])
+        await self.middleware.run_in_thread(self._map_device_disk_to_db, disk, disks[name])
 
         if not new:
             await self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
@@ -85,31 +89,21 @@ class DiskService(Service, ServiceChangeMixin):
         await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
 
     @private
-    @accepts()
-    @job(lock='disk.sync_all')
-    async def sync_all(self, job):
-        """
-        Synchronize all disks with the cache in database.
-        """
-        # Skip sync disks on standby node
-        if await self.middleware.call('failover.licensed'):
-            if await self.middleware.call('failover.status') == 'BACKUP':
-                return
-
-        if not await self.middleware.call('device.devd_connected'):
-            # try for 10 seconds to wait on devd before we continue
-            for i in range(10):
+    def wait_on_devd(self, seconds_to_wait=10):
+        seconds_to_wait = 10 if (seconds_to_wait <= 0 or seconds_to_wait >= 300) else seconds_to_wait
+        if not self.middleware.call_sync('device.devd_connected'):
+            # wait on devd up to `seconds_to_wait` to become connected
+            for i in range(seconds_to_wait):
                 if i > 0:
-                    await asyncio.sleep(1)
+                    time.sleep(1)
 
-                if await self.middleware.call('device.devd_connected'):
+                if self.middleware.call_sync('device.devd_connected'):
                     break
             else:
                 self.logger.warning('Starting disk.sync_all when devd is not connected yet')
 
-        sys_disks = await self.middleware.call('device.get_disks')
-        geom_xml = await self.middleware.call('geom.cache.get_class_xml', 'DISK')
-
+    @private
+    def log_disk_info(self, sys_disks):
         number_of_disks = len(sys_disks)
         if number_of_disks <= 25:
             # output logging information to middlewared.log in case we sync disks
@@ -123,43 +117,161 @@ class DiskService(Service, ServiceChangeMixin):
         else:
             self.logger.info('Found %d disks', number_of_disks)
 
+        return number_of_disks
+
+    @private
+    def ident_to_dev(self, ident, geom_xml, disks_in_db):
+        if not ident or not (search := RE_IDENT.search(ident)):
+            return
+
+        _type = search.group('type')
+        _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
+        if _type == 'uuid':
+            found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
+            if found is not None and found.text.startswith('label'):
+                return found.text
+        elif _type == 'label':
+            found = next(geom_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
+            if found is not None:
+                return found.text
+        elif _type == 'serial':
+            found = next(geom_xml.iterfind(f'.//provider/config[ident="{_value}"]/../../name'), None)
+            if found is not None:
+                return found.text
+
+            # normalize the passed in value by stripping leading/trailing and more
+            # than single-space char(s) on the passed in data to us as well as the
+            # xml data that's returned from the system. We'll check to see if we
+            # have a match on the normalized data and return the name accordingly
+            _norm_value = ' '.join(_value.split())
+            for i in geom_xml.iterfind('.//provider/config/ident'):
+                if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
+                    name = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
+                    if name is not None:
+                        return name.text
+
+            # check the database for a disk with the same serial and return the name
+            # that we have written in db
+            if name := list(filter(lambda x: x['disk_serial'] == _value, disks_in_db)):
+                return name[0]['disk_name']
+        elif _type == 'serial_lunid':
+            info = _value.split('_')
+            info_len = len(info)
+            if info_len < 2:
+                return
+            elif info_len == 2:
+                _ident, _lunid = info
+            else:
+                # vmware nvme disks look like VMware NVME_0000_a9d1a9a7feaf1d66000c296f092d9204
+                # so we need to account for it
+                _lunid = info[-1]
+                _ident = _value[:-len(_lunid)].rstrip('_')
+
+            found_ident = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
+            if found_ident is not None:
+                found_lunid = next(geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"]/../../name'), None)
+                if found_lunid is not None:
+                    # means the identifier and lunid given to us
+                    # matches a disk on the system so just return
+                    # the found `_ident` name
+                    return found_ident.text
+        elif _type == 'devicename':
+            if os.path.exists(f'/dev/{_value}'):
+                return _value
+        else:
+            raise NotImplementedError(f'Unknown type {_type!r}')
+
+    @private
+    def dev_to_ident(self, name, sys_disks, geom_xml, valid_zfs_partition_uuids):
+        if disk_data := sys_disks.get(name):
+            if disk_data['serial_lunid']:
+                return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
+            elif disk_data['serial']:
+                return f'{{serial}}{disk_data["serial"]}'
+
+        found = next(geom_xml.iterfind(f'.//config[rawuuid="{name}"]'), None)
+        if found is not None:
+            if (_type := found.find('rawtype')):
+                if _type.text in valid_zfs_partition_uuids:
+                    # has a label on it AND the label type is a zfs partition type
+                    return f'{{uuid}}{name}'
+            elif (label := found.find('label')) and (label.text):
+                # Why are we doing this? `label` isn't used by us on TrueNAS but
+                # maybe we added this for the situation where someone moved a
+                # disk from a vanilla freeBSD box??
+                return f'{{label}}{name}'
+
+        if os.path.exists(f'/dev/{name}'):
+            return f'{{devicename}}{name}'
+
+    @private
+    @accepts()
+    @job(lock='disk.sync_all')
+    def sync_all(self, job):
+        """
+        Synchronize all disks with the cache in database.
+        """
+        licensed = self.middleware.call_sync('failover.licensed')
+        if licensed and self.middleware.call_sync('failover.status') == 'BACKUP':
+            return
+
+        job.set_progress(10, 'Waiting on devd connection')
+        self.wait_on_devd()
+
+        job.set_progress(20, 'Enumerating system disks')
+        sys_disks = self.middleware.call_sync('device.get_disks')
+        number_of_disks = self.log_disk_info(sys_disks)
+
+        job.set_progress(30, 'Enumerating geom disk XML information')
+        geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
+
+        job.set_progress(40, 'Enumerating disk information from database')
+        db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
+
+        uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
+        options = {'send_events': False, 'ha_sync': False}
         seen_disks = {}
         serials = []
         changed = set()
         deleted = set()
-        for disk in (
-            await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
-        ):
+        increment = round((60 - 40) / number_of_disks, 3)  # 20% of the total percentage
+        progress_percent = 40
+        for idx, disk in enumerate(db_disks, start=1):
+            progress_percent += increment
+            job.set_progress(progress_percent, f'Syncing disk {idx}/{number_of_disks}')
+
             original_disk = disk.copy()
 
-            name = await self.middleware.call('disk.identifier_to_device', disk['disk_identifier'], False, geom_xml)
+            expire = False
+            name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
             if (
-                    not name or
-                    name in seen_disks or
-                    await self.middleware.call('disk.device_to_identifier', name, sys_disks) != disk['disk_identifier']
+                not name or
+                name in seen_disks or
+                self.dev_to_ident(name, sys_disks, geom_xml, uuids) != disk['disk_identifier']
             ):
-                # If we cant translate the identifier to a device, give up
-                # If name has already been seen once then we are probably
-                # dealing with with multipath here
+                expire = True
+
+            if expire:
+                # 1. can't translate identifier to a device
+                # 2. or the device is in `seen_disks` (probably multipath device)
+                # 3. or can't translate a device to an identifier
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
-                    await self.middleware.call(
-                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                    self.middleware.call_sync(
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
                     )
                     changed.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
-                    for extent in await self.middleware.call(
+                    for extent in self.middleware.call_sync(
                         'iscsi.extent.query', [['type', '=', 'DISK'], ['path', '=', disk['disk_identifier']]]
                     ):
-                        await self.middleware.call('iscsi.extent.delete', extent['id'])
+                        self.middleware.call_sync('iscsi.extent.delete', extent['id'])
                     if disk['disk_kmip_uid']:
                         asyncio.ensure_future(self.middleware.call(
                             'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
                         ))
-                    await self.middleware.call(
-                        'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_events': False}
-                    )
+                    self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)
                     deleted.add(disk['disk_identifier'])
                 continue
             else:
@@ -167,81 +279,97 @@ class DiskService(Service, ServiceChangeMixin):
                 disk['disk_name'] = name
 
             if name in sys_disks:
-                await self._map_device_disk_to_db(disk, sys_disks[name])
+                self._map_device_disk_to_db(disk, sys_disks[name])
 
             serial = (disk['disk_serial'] or '') + (sys_disks.get(name, {}).get('lunid') or '')
             if serial:
                 serials.append(serial)
 
-            # If for some reason disk is not identified as a system disk
-            # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
+                # If for some reason disk is not identified as a system disk mark it to expire.
                 disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
-            # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
-            # when lots of drives are present
+
             if self._disk_changed(disk, original_disk):
-                await self.middleware.call(
-                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
-                )
+                self.middleware.call_sync('datastore.update', 'storage.disk', disk['disk_identifier'], disk, options)
                 changed.add(disk['disk_identifier'])
 
             seen_disks[name] = disk
 
         qs = None
-        for name in sys_disks:
-            if name not in seen_disks:
-                disk_identifier = await self.middleware.call('disk.device_to_identifier', name, sys_disks)
-                if qs is None:
-                    qs = await self.middleware.call('datastore.query', 'storage.disk')
+        progress_percent = 70
+        for name in filter(lambda x: x not in seen_disks, sys_disks):
+            progress_percent += increment
+            disk_identifier = self.dev_to_ident(name, sys_disks, geom_xml, uuids)
+            if qs is None:
+                qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
-                if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
-                    new = False
-                    disk = disk[0]
-                else:
-                    new = True
-                    disk = {'disk_identifier': disk_identifier}
-                original_disk = disk.copy()
-                disk['disk_name'] = name
-                await self._map_device_disk_to_db(disk, sys_disks[name])
-                serial = disk['disk_serial'] + (sys_disks[name]['lunid'] or '')
-                if serial:
-                    if serial in serials:
-                        # Probably dealing with multipath here, do not add another
-                        continue
-                    else:
-                        serials.append(serial)
+            if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
+                new = False
+                disk = disk[0]
+                job.set_progress(progress_percent, f'Updating disk {name!r}')
+            else:
+                new = True
+                disk = {'disk_identifier': disk_identifier}
+                job.set_progress(progress_percent, f'Syncing new disk {name!r}')
 
-                if not new:
-                    # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
-                    # when lots of drives are present
-                    if self._disk_changed(disk, original_disk):
-                        await self.middleware.call(
-                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
-                        )
-                        changed.add(disk['disk_identifier'])
+            original_disk = disk.copy()
+            disk['disk_name'] = name
+            self._map_device_disk_to_db(disk, sys_disks[name])
+            serial = disk['disk_serial'] + (sys_disks[name]['lunid'] or '')
+            if serial:
+                if serial in serials:
+                    # Probably dealing with multipath here, do not add another
+                    continue
                 else:
-                    await self.middleware.call('datastore.insert', 'storage.disk', disk, {'send_events': False})
+                    serials.append(serial)
+
+            if not new:
+                # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
+                # when lots of drives are present
+                if self._disk_changed(disk, original_disk):
+                    self.middleware.call_sync(
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
+                    )
                     changed.add(disk['disk_identifier'])
-
-        # make sure the database entries for enclosure slot information for each disk
-        # matches with what is reported by the OS
-        await self.middleware.call('enclosure.sync_disks')
+            else:
+                self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
+                changed.add(disk['disk_identifier'])
 
         if changed or deleted:
-            await self.middleware.call('disk.restart_services_after_sync')
-            disks = {i['identifier']: i for i in await self.middleware.call('disk.query', [], {'prefix': 'disk_'})}
+            # make sure the database entries for enclosure slot information for each disk
+            # matches with what is reported by the OS (we query the db again since we've
+            # (potentially) made updates to the db up above)
+            db_disks = self.middleware.call_sync('datastore.query', 'storage.disk')
+            job.set_progress(85, 'Syncing disks with enclosures')
+            self.middleware.call_sync('enclosure.sync_disks', None, db_disks, options['ha_sync'])
+
+            job.set_progress(95, 'Emitting disk events')
+            self.middleware.call_sync('disk.restart_services_after_sync')
+            disks = {i['disk_identifier']: i for i in db_disks}
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
+        if self.middleware.call_sync('failover.licensed'):
+            job.set_progress(97, 'Synchronizing database to standby node')
+            # there could be, literally, > 1k databse changes in this method on large systems
+            # so we've forgoed from queuing up the number of db changes in the HA journal thread
+            # in favor of just sync'ing the database to the remote node after we're done. The
+            # speed improvement this provides is substantial
+            try:
+                self.middleware.call_sync('failover.send_database')
+            except Exception:
+                self.logger.warning('Failed to sync database to standby controller', exc_info=True)
+
+        job.set_progress(100, 'Syncing all disks complete!')
         return 'OK'
 
     def _disk_changed(self, disk, original_disk):
         # storage_disk.disk_size is a string
         return dict(disk, disk_size=None if disk.get('disk_size') is None else str(disk['disk_size'])) != original_disk
 
-    async def _map_device_disk_to_db(self, db_disk, disk):
+    def _map_device_disk_to_db(self, db_disk, disk):
         only_update_if_true = ('size',)
         update_keys = ('serial', 'lunid', 'rotationrate', 'type', 'size', 'subsystem', 'number', 'model', 'bus')
         for key in filter(lambda k: k in update_keys and (k not in only_update_if_true or disk[k]), disk):
