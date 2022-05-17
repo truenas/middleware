@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from collections import deque
 from time import time, sleep
 from sys import exit
