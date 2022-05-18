@@ -51,7 +51,7 @@ class FailoverDisabledReasonsService(Service):
 
         ifaces = self.middleware.call_sync('interface.query')
         _ifaces = {i['name']: i for i in ifaces}
-        db_ifaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
+        db_ifaces = [i['int_interface'] for i in self.middleware.call_sync('datastore.query', 'network.interfaces')]
         crit_iface = False
         for iface in filter(lambda x: x in db_ifaces, _ifaces):
             if not _ifaces[iface].get('failover_virtual_aliases'):
