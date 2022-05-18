@@ -68,6 +68,7 @@ setup(
             'midclt = middlewared.client.client:main',
             'midgdb = middlewared.scripts.gdb:main',
             'sedhelper = middlewared.scripts.sedhelper:main',
+            'zpoolhelper = middlewared.scripts.zpoolhelper:main',
         ],
     },
     cmdclass={
