@@ -237,9 +237,9 @@ MAPPINGS = [
             MappingSlot(1, 22, False),
             MappingSlot(1, 23, False),
             # FIXME: rear nvme drive mapping on SCALE
-            #MappingSlot(2, 0, False),
-            #MappingSlot(2, 1, False),
-            #MappingSlot(2, 2, False),
+            # MappingSlot(2, 0, False),
+            # MappingSlot(2, 1, False),
+            # MappingSlot(2, 2, False),
         ]),
     ]),
     # R50b has 2 rear nvme drives
@@ -294,9 +294,9 @@ MAPPINGS = [
             MappingSlot(1, 22, False),
             MappingSlot(1, 23, False),
             # FIXME: rear nvme drive mapping on SCALE
-            #MappingSlot(2, 0, False),
-            #MappingSlot(2, 1, False),
-            #MappingSlot(2, 2, False),
+            # MappingSlot(2, 0, False),
+            # MappingSlot(2, 1, False),
+            # MappingSlot(2, 2, False),
         ]),
     ]),
 ]
