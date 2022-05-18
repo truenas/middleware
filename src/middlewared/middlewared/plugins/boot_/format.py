@@ -121,3 +121,5 @@ class BootService(Service):
 
         if osc.IS_LINUX:
             await self.middleware.call('device.settle_udev_events')
+
+        await self.middleware.call('geom.cache.invalidate')
