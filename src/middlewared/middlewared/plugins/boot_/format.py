@@ -19,9 +19,9 @@ class BootService(Service):
         Format a given disk `dev` using the appropriate partition layout
         """
         job = await self.middleware.call('disk.wipe', dev, 'QUICK')
-        await job.wait()
-        if job.error:
-            raise CallError(job.error)
+        await job.wait(raise_error=True)
+
+        await self.middleware.call('geom.cache.invalidate')
 
         disk_details = await self.middleware.call('device.get_disk', dev)
         if not disk_details:
@@ -44,9 +44,7 @@ class BootService(Service):
 
         # Around 80 sectors are reserved by FreeBSD for GPT tables and
         # our 4096 bytes alignment offset for the boot disk
-        partitions.append((
-            'GPT partition table', 80 * disk_details['sectorsize']
-        ))
+        partitions.append(('GPT partition table', 80 * disk_details['sectorsize']))
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
             partitions = [
@@ -92,5 +90,3 @@ class BootService(Service):
                 raise CallError(
                     '{} failed:\n{}{}'.format(' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
                 )
-
-        await self.middleware.call('geom.cache.invalidate')
