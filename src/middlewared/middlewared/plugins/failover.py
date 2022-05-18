@@ -470,10 +470,21 @@ class FailoverService(ConfigService):
         reasons = []
         if not self.middleware.call_sync('pool.query'):
             reasons.append('NO_VOLUME')
-        if not any(filter(
-            lambda x: x.get('failover_virtual_aliases'), self.middleware.call_sync('interface.query'))
-        ):
-            reasons.append('NO_VIP')
+
+        ifaces = {i['name']: i for i in self.middleware.call_sync('interface.query')}
+        db_ifaces = [i['int_interface'] for i in self.middleware.call_sync('datastore.query', 'network.interfaces')]
+        crit_iface = False
+        for iface in filter(lambda x: x in db_ifaces, ifaces):
+            if not ifaces[iface].get('failover_virtual_aliases'):
+                # if any interface is configured on HA, then it must have a VIP
+                reasons.add('NO_VIP')
+            if ifaces[iface].get('failover_critical'):
+                # only need 1 interface marked critical for failover
+                crit_iface = True
+
+        if not crit_iface:
+            reasons.add('NO_CRITICAL_INTERFACES')
+
         try:
             assert self.middleware.call_sync('failover.remote_connected') is True
 
@@ -501,13 +512,12 @@ class FailoverService(ConfigService):
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
                 reasons.append('MISMATCH_DISKS')
-
-            if not self.middleware.call_sync('datastore.query', 'network.interfaces', [['int_critical', '=', True]]):
-                reasons.append('NO_CRITICAL_INTERFACES')
         except Exception:
             reasons.append('NO_PONG')
+
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.append('NO_FAILOVER')
+
         return reasons
 
     @private
