@@ -13,7 +13,6 @@ import os
 import re
 import secrets
 import shutil
-import subprocess
 import uuid
 
 from collections import defaultdict
@@ -32,7 +31,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import InstanceNotFound, ValidationError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import Popen, filter_list, run
+from middlewared.utils import filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 from middlewared.utils.size import MB
@@ -432,33 +431,7 @@ class PoolService(CRUDService):
 
     @private
     async def is_upgraded_by_name(self, name):
-        proc = await Popen(
-            f'zpool get -H -o value version {name}',
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )
-        res, err = await proc.communicate()
-        if proc.returncode != 0:
-            return True
-        res = res.decode('utf8').rstrip('\n')
-        try:
-            int(res)
-        except ValueError:
-
-            if res == '-':
-                proc = await Popen(
-                    f"zpool get -H -o property,value all {name}",
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-                )
-                data = (await proc.communicate())[0].decode('utf8').strip('\n')
-                for line in [i for i in data.split('\n') if i.startswith('feature') and '\t' in i]:
-                    prop, value = line.split('\t', 1)
-                    if value not in ('active', 'enabled'):
-                        return False
-                return True
-            else:
-                return False
-        else:
-            return False
+        return await self.middleware.call('zfs.pool.is_upgraded', name)
 
     @accepts(Int('id'))
     @returns(Bool('upgraded'))
