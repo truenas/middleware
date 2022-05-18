@@ -21,8 +21,6 @@ class BootService(Service):
         job = await self.middleware.call('disk.wipe', dev, 'QUICK')
         await job.wait(raise_error=True)
 
-        await self.middleware.call('geom.cache.invalidate')
-
         disk_details = await self.middleware.call('device.get_disk', dev)
         if not disk_details:
             raise CallError(f'Details for {dev} not found.')
@@ -90,3 +88,5 @@ class BootService(Service):
                 raise CallError(
                     '{} failed:\n{}{}'.format(' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
                 )
+
+        await self.middleware.call('geom.cache.invalidate')
