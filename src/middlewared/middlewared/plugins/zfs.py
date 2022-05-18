@@ -99,6 +99,14 @@ class ZFSPoolService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed listing imported pools with error: {e}')
 
+    def is_upgraded(self, pool_name):
+        is_upgraded = False
+        with libzfs.ZFS() as zfs:
+            for pool in filter(lambda x: x.name == pool_name, zfs.pools):
+                is_upgraded = not any((i.state.name not in ('ACTIVE', 'ENABLED') for i in pool.features))
+
+        return is_upgraded
+
     @accepts(
         Dict(
             'zfspool_create',
