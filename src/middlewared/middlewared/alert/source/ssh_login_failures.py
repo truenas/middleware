@@ -50,7 +50,11 @@ def get_login_failures(now, messages):
         message = message.decode("utf-8", "ignore")
         if message.strip():
             if message.startswith(yesterday):
-                if re.search(r"\b(fail(ures?|ed)?|invalid|bad|illegal|auth.*error)\b", message, re.I):
+                if re.search(
+                    r"\b(fail(ures?|ed)?|invalid|bad|illegal|auth.*error)\b",
+                    message.replace(".fail", ""),
+                    re.I,
+                ):
                     if "sshd" not in message:
                         continue
 
