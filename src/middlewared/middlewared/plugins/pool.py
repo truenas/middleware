@@ -431,7 +431,10 @@ class PoolService(CRUDService):
 
     @private
     async def is_upgraded_by_name(self, name):
-        return await self.middleware.call('zfs.pool.is_upgraded', name)
+        try:
+            return await self.middleware.call('zfs.pool.is_upgraded', name)
+        except CallError:
+            return False
 
     @accepts(Int('id'))
     @returns(Bool('upgraded'))
