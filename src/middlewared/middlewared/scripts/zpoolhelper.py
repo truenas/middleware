@@ -5,7 +5,7 @@ from sys import exit
 
 from pyudev import Context, Monitor, MonitorObserver
 
-dq = deque()
+dq = deque(maxlen=2)
 
 
 def callback(dev):
@@ -22,7 +22,7 @@ def get_observer():
 
 
 def main():
-    obs = get_observer(dq)
+    obs = get_observer()
     obs.start()  # start background thread
 
     max_time_to_wait = 600  # total time to wait in seconds
