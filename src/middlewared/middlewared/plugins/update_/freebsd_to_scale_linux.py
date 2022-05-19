@@ -1,6 +1,5 @@
-import contextlib
 import logging
-import os
+from pathlib import Path
 
 from middlewared.service import job, private, Service
 from middlewared.utils import run
@@ -12,9 +11,11 @@ class UpdateService(Service):
 
     @private
     def remove_files(self):
-        with contextlib.suppress(FileNotFoundError):
-            for i in ("/data/freebsd-to-scale-update", "/var/lib/dbus/machine-id", "/etc/machine-id"):
-                os.unlink(i)
+        for i in ("/data/freebsd-to-scale-update", "/var/lib/dbus/machine-id", "/etc/machine-id"):
+            try:
+                Path(i).unlink(missing_ok=True)
+            except Exception:
+                logger.error('Failed removing %r', i, exc_info=True)
 
     @private
     @job()
