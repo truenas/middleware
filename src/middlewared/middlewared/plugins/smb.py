@@ -124,7 +124,6 @@ class SMBSharePreset(enum.Enum):
         'timemachine': True,
         'auxsmbconf': '\n'.join([
             'zfs_core:zfs_auto_create=true',
-            'zfs_core:base_user_quota=1T',
         ])
     }}
     MULTI_PROTOCOL_AFP = {"verbose_name": "Multi-protocol (AFP/SMB) shares", "params": {
