@@ -6,6 +6,7 @@
 import pytest
 import sys
 import os
+from configparser import ConfigParser
 from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
@@ -176,3 +177,32 @@ if update is True:
             pytest.skip('Reboot is False skip')
         else:
             assert update_version == current_version, results.text
+
+
+# These folowing test will only run if iXautomation created config.cfg
+if os.path.exists(f'{apifolder}/config.cfg') is True:
+    configs = ConfigParser()
+    configs.read('config.cfg')
+    version = configs['NAS_CONFIG']['version']
+
+    def test_16_verify_TrueNAS_trains():
+        if 'INTERNAL' in version:
+            train = version.rsplit('-', maxsplit=2)[0] + '-STABLE'
+            current = version.rsplit('-', maxsplit=1)[0].lower()
+        elif any(line in version for line in ['-RELEASE', '-U']):
+            train = version.rsplit('-', maxsplit=1)[0] + '-STABLE'
+            current = train
+        elif any(line in version for line in ['-ALPHA', '-BETA', '-RC']):
+            train = None
+            current = version.rsplit('-', maxsplit=1)[0] + '-Nightlies'
+        else:
+            train = None
+            current = version.rsplit('-', maxsplit=3)[0] + '-Nightlies'
+        results = GET('/update/get_trains/')
+        # For nightlies
+        if train is None:
+            assert results.json()['trains'] == {}, results.text
+        else:
+            assert train in results.json()['trains'], results.text
+        assert results.json()['current'] == current, results.text
+        assert results.json()['selected'] == current, results.text

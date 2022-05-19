@@ -7,10 +7,11 @@
 import pytest
 import sys
 import os
+from configparser import ConfigParser
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET  # , POST
-from auto_config import dev_test
+from functions import GET, SSH_TEST
+from auto_config import dev_test, user, password, ip
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
@@ -43,6 +44,20 @@ def test_05_check_system_debug():
     assert results.status_code == 200, results.text
 
 
-# Reboot system to enable tunable
-# def test_06_Reboot_system_to_enable_tunable():
-#     assert POST("/system/reboot/") == 200
+if os.path.exists(f'{apifolder}/config.cfg') is True:
+    configs = ConfigParser()
+    configs.read('config.cfg')
+    version = configs['NAS_CONFIG']['version']
+
+    # These folowing test will only run if iXautomation created config.cfg
+    def test_06_verify_system_version_and_system_info_version_match_iso_version():
+        system_version_results = GET("/system/version/")
+        assert system_version_results.json() == version, system_version_results.text
+
+        system_info_results = GET("/system/info/")
+        assert system_info_results.json()['version'] == version, system_info_results.text
+
+    def test_07_verify_etc_versionwith_iso_version():
+        results = SSH_TEST('cat /etc/version', user, password, ip)
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+        assert version in results["output"], str(results["output"])
