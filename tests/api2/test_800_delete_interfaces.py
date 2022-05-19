@@ -61,7 +61,7 @@ if not ha:
     def test_08_get_interface_checkin_waiting():
         results = GET('/interface/checkin_waiting/')
         assert results.status_code == 200, results.text
-        assert isinstance(results.json(), float), results.text
+        assert isinstance(results.json(), int), results.text
 
     def test_09_get_interface_checkin():
         results = GET('/interface/checkin/')
