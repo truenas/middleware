@@ -1,5 +1,6 @@
 import copy
 import errno
+import os
 import subprocess
 from collections import defaultdict
 from copy import deepcopy
@@ -93,11 +94,17 @@ class ZFSPoolService(CRUDService):
 
     def query_imported_fast(self):
         # the equivalent of running `zpool list -H -o guid,name` from cli
-        try:
-            with libzfs.ZFS() as zfs:
-                return {str(i.guid): i.name for i in zfs.pools}
-        except libzfs.ZFSException as e:
-            raise CallError(f'Failed listing imported pools with error: {e}')
+        out = {}
+        with os.scandir('/proc/spl/kstat/zfs') as it:
+            for entry in it:
+                if not entry.is_dir() or entry.name == '$import':
+                    continue
+
+                guid = self.guid_fast(entry.name)
+                state = self.state_fast(entry.name)
+                out.update({guid: {'name': entry.name, 'state': state}})
+
+        return out
 
     def is_upgraded(self, pool_name):
         enabled = (libzfs.FeatureState.ENABLED, libzfs.FeatureState.ACTIVE)
@@ -262,6 +269,28 @@ class ZFSPoolService(CRUDService):
             if options['clear_label']:
                 self.clear_label(target.path)
         self.__zfs_vdev_operation(name, label, impl)
+
+    @accepts(Str('pool'))
+    def guid_fast(self, pool):
+        """
+        Lockless read of zpool guid. Raises FileNotFoundError
+        if pool not imported.
+        """
+        with open(f'/proc/spl/kstat/zfs/{pool}/guid') as f:
+            guid_out = f.read()
+
+        return guid_out.strip()
+
+    @accepts(Str('pool'))
+    def state_fast(self, pool):
+        """
+        Lockless read of zpool state. Raises FileNotFoundError
+        if pool not imported.
+        """
+        with open(f'/proc/spl/kstat/zfs/{pool}/state') as f:
+            state = f.read()
+
+        return state.strip()
 
     @accepts(Str('device'))
     def clear_label(self, device):
