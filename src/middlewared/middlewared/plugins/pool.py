@@ -1387,7 +1387,7 @@ class PoolService(CRUDService):
 
         # get the zpool name
         if not new_name:
-            pool_name = (await self.middleware.call('zfs.pool.query_imported_fast'))[guid]
+            pool_name = (await self.middleware.call('zfs.pool.query_imported_fast'))[guid]['name']
         else:
             pool_name = new_name
 
