@@ -243,7 +243,7 @@ def test_18_get_interface_checkin_waiting(request):
     depends(request, ['COMMIT'])
     results = GET('/interface/checkin_waiting/', controller_a=ha)
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), float), results.text
+    assert isinstance(results.json(), int), results.text
 
 
 @pytest.mark.dependency(name='CHECKIN')
