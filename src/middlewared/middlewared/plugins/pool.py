@@ -31,7 +31,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
+from middlewared.utils import osc, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 from middlewared.utils.shell import join_commandline
