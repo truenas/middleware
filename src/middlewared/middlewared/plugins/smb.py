@@ -115,8 +115,7 @@ class SMBSharePreset(enum.Enum):
         'path_suffix': '%U',
         'timemachine': True,
         'auxsmbconf': '\n'.join([
-            'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true',
-            'ixnas:default_user_quota=1T' if osc.IS_FREEBSD else 'zfs_core:base_user_quota=1T',
+            'zfs_core:zfs_auto_create=true'
         ])
     }}
     MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv3/SMB) shares", "params": {
