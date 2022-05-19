@@ -9,14 +9,20 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateService(Service):
+
+    @private
+    def remove_files(self):
+        with contextlib.suppress(FileNotFoundError):
+            for i in ("/data/freebsd-to-scale-update", "/var/lib/dbus/machine-id", "/etc/machine-id"):
+                os.unlink(i)
+
     @private
     @job()
     async def freebsd_to_scale(self, job):
-        logger.info("Updating FreeBSD installation to SCALE")
+        logger.info("Updating CORE installation to SCALE")
 
-        with contextlib.suppress(FileNotFoundError):
-            os.unlink("/data/freebsd-to-scale-update")
-
+        await self.middleware.run_in_thread(self.remove_files)
+        await run(["systemd-machine-id-setup"], check=False)
         await self.middleware.call("etc.generate", "fstab", "initial")
         await run(["mount", "-a"])
 
