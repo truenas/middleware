@@ -31,7 +31,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import ValidationError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, filter_list, run, start_daemon_thread
+from middlewared.utils import osc, filter_list, run, start_daemon_thread
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.path import is_child
 from middlewared.utils.shell import join_commandline
@@ -346,33 +346,9 @@ class PoolService(CRUDService):
                 "params": [1]
             }
         """
-        name = (await self.get_instance(oid))['name']
-        proc = await Popen(
-            f'zpool get -H -o value version {name}',
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-        )
-        res, err = await proc.communicate()
-        if proc.returncode != 0:
-            return True
-        res = res.decode('utf8').rstrip('\n')
         try:
-            int(res)
-        except ValueError:
-
-            if res == '-':
-                proc = await Popen(
-                    f"zpool get -H -o property,value all {name}",
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-                )
-                data = (await proc.communicate())[0].decode('utf8').strip('\n')
-                for line in [i for i in data.split('\n') if i.startswith('feature') and '\t' in i]:
-                    prop, value = line.split('\t', 1)
-                    if value not in ('active', 'enabled'):
-                        return False
-                return True
-            else:
-                return False
-        else:
+            return await self.middleware.call('zfs.pool.is_upgraded', (await self.get_instance(oid))['name'])
+        except CallError:
             return False
 
     @accepts(Int('id'))
