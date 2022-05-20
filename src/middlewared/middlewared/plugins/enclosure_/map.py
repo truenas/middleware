@@ -293,10 +293,8 @@ MAPPINGS = [
             MappingSlot(1, 21, False),
             MappingSlot(1, 22, False),
             MappingSlot(1, 23, False),
-            # FIXME: rear nvme drive mapping on SCALE
-            # MappingSlot(2, 0, False),
-            # MappingSlot(2, 1, False),
-            # MappingSlot(2, 2, False),
+            MappingSlot(2, 0, False),  # rear nvme
+            MappingSlot(2, 1, False),  # rear nvme
         ]),
     ]),
 ]
