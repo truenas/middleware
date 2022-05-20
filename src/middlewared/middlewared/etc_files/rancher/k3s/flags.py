@@ -29,6 +29,9 @@ def render(service, middleware):
         'audit-log-maxsize=100',
         'service-account-lookup=true',
     ]
+    kubelet_args = [
+        'max-pods=250',
+    ]
     os.makedirs('/etc/rancher/k3s', exist_ok=True)
     with open(FLAGS_PATH, 'w') as f:
         f.write(yaml.dump({
@@ -36,9 +39,10 @@ def render(service, middleware):
             'service-cidr': config['service_cidr'],
             'cluster-dns': config['cluster_dns_ip'],
             'data-dir': os.path.join('/mnt', config['dataset'], 'k3s'),
-            'kube-controller-manager-arg': kube_controller_args,
             'node-ip': config['node_ip'],
+            'kube-controller-manager-arg': kube_controller_args,
             'kube-apiserver-arg': kube_api_server_args,
+            'kubelet-arg': kubelet_args,
             'protect-kernel-defaults': True,
             'disable': [] if config['servicelb'] else ['servicelb'],
         }))
