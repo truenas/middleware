@@ -398,17 +398,18 @@ class VMDeviceService(CRUDService):
                 # a) Check if libvirt user can access the file
                 # b) Change ownership of the file to libvirt user as libvirt would eventually do
                 # 3) Check if libvirt user can access the file
-                libvirt_user = await self.middleware.call(
-                    'user.query', [['username', '=', LIBVIRT_USER]], {'get': True}
-                )
-                libvirt_group = await self.middleware.call('group.query', [['group', '=', LIBVIRT_USER]], {'get': True})
+                libvirt_user = await self.middleware.call('user.get_user_obj', {'username': LIBVIRT_USER})
                 current_owner = os.stat(path)
                 is_valid = False
-                if current_owner.st_uid != libvirt_user['uid']:
+                if current_owner.st_uid != libvirt_user['pw_uid']:
                     if await self.middleware.call('filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}):
                         is_valid = True
                     else:
-                        os.chown(path, libvirt_user['uid'], libvirt_group['gid'])
+                        chown_job = await self.middleware.call(
+                            'filesystem.chown',
+                            {'path': path, 'uid': libvirt_user['pw_uid'], 'gid': libvirt_user['pw_gid']}
+                        )
+                        await chown_job.wait()
                 if not is_valid and not await self.middleware.call(
                     'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
                 ):
@@ -419,7 +420,11 @@ class VMDeviceService(CRUDService):
                     )
                     # Now that we know libvirt user would not be able to read the file in any case,
                     # let's rollback the chown change we did
-                    os.chown(path, current_owner.st_uid, current_owner.st_gid)
+                    chown_job = await self.middleware.call(
+                        'filesystem.chown',
+                        {'path': path, 'uid': current_owner.st_uid, 'gid': current_group.st_gid}
+                    )
+                    await chown_job.wait()
 
         elif device.get('dtype') == 'NIC':
             nic = device['attributes'].get('nic_attach')
