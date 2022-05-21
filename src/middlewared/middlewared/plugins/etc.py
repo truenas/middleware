@@ -73,8 +73,8 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        'dual-nvdimm': [
-            {'type': 'mako', 'path': 'modprobe.d/truenas-dual-nvdimm.conf', 'local_path': 'dual-nvdimm'}
+        'nvdimm': [
+            {'type': 'mako', 'path': 'modprobe.d/nvdimm.conf', 'local_path': 'nvdimm'}
         ],
         'user': {
             'ctx': [
