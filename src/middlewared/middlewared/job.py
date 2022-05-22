@@ -97,8 +97,7 @@ class JobsQueue(object):
         self.deque.add(job)
         self.queue.append(job)
 
-        if not job.options["transient"]:
-            self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
+        job.send_event('ADDED', job.__encode__())
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
@@ -311,7 +310,7 @@ class Job:
         """
         if self.description != description:
             self.description = description
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+            self.send_event('CHANGED', self.__encode__())
 
     def set_progress(self, percent=None, description=None, extra=None):
         """
@@ -349,7 +348,7 @@ class Job:
                 logger.warning('Failed to run on progress callback', exc_info=True)
 
         if changed:
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
+            self.send_event('CHANGED', encoded)
 
     async def wait(self, timeout=None, raise_error=False):
         if timeout is None:
@@ -405,7 +404,7 @@ class Job:
                 raise asyncio.CancelledError()
             else:
                 self.set_state('RUNNING')
-                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+                self.send_event('CHANGED', self.__encode__())
 
             self.future = asyncio.ensure_future(self.__run_body())
             try:
@@ -428,10 +427,9 @@ class Job:
 
             queue.release_lock(self)
             self._finished.set()
+            self.send_event('CHANGED', self.__encode__())
             if self.options['transient']:
                 queue.remove(self.id)
-            else:
-                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     async def __run_body(self):
         """
@@ -569,6 +567,10 @@ class Job:
             self.logs_fd = open(self.logs_path, 'ab', buffering=0)
             if fd is not None:
                 fd.close()
+
+    def send_event(self, name, fields):
+        if not self.options['transient']:
+            self.middleware.send_event('core.get_jobs', name, id=self.id, fields=fields)
 
 
 class JobProgressBuffer:
