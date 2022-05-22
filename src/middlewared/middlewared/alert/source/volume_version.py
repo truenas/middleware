@@ -20,8 +20,8 @@ class VolumeVersionAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        for pool in await self.middleware.call("pool.query"):
-            if not await self.middleware.call("pool.is_upgraded", pool["id"]):
+        for pool in await self.middleware.call("pool.query", [], {"extra": {"is_upgraded": True}}):
+            if not pool["is_upgraded"]:
                 alerts.append(Alert(
                     VolumeVersionAlertClass,
                     pool["name"],

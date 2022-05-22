@@ -109,10 +109,12 @@ class ZFSPoolService(CRUDService):
     def is_upgraded(self, pool_name):
         enabled = (libzfs.FeatureState.ENABLED, libzfs.FeatureState.ACTIVE)
         with libzfs.ZFS() as zfs:
-            for pool in filter(lambda x: x.name == pool_name, zfs.pools):
-                return all((i.state in enabled for i in pool.features))
-            else:
+            try:
+                pool = zfs.get(pool_name)
+            except libzfs.ZFSException:
                 raise CallError(f'{pool_name!r} not found', errno.ENOENT)
+
+            return all((i.state in enabled for i in pool.features))
 
     @accepts(
         Dict(
