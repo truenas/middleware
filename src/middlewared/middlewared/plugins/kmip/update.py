@@ -35,6 +35,7 @@ class KMIPService(ConfigService):
         Int('certificate_authority', null=True, required=True),
         Int('port', validators=[Port()], required=True),
         Str('server', required=True, null=True),
+        Str('ssl_version', required=True, enum=['PROTOCOL_TLSv1', 'PROTOCOL_TLSv1_1', 'PROTOCOL_TLSv1_2']),
     )
 
     @private
@@ -71,6 +72,8 @@ class KMIPService(ConfigService):
 
         `enabled` if true, cannot be set to disabled if there are existing keys pending to be synced. However users
         can still perform this action by enabling `force_clear`.
+
+        `ssl_version` can be specified to match the ssl configuration being used by KMIP server.
 
         `change_server` is a boolean field which allows users to migrate data between two KMIP servers. System
         will first migrate keys from old KMIP server to local database and then migrate the keys from local database
