@@ -79,7 +79,42 @@ GPU_CONFIG = {
                 }
             }
         }
-    }
+    },
+    'AMD': {
+        'apiVersion': 'apps/v1',
+        'kind': 'DaemonSet',
+        'metadata': {
+            'name': 'amdgpu-device-plugin-daemonset',
+            'namespace': 'kube-system'
+        },
+        'spec': {
+            'selector': {'matchLabels': {'name': 'amdgpu-dp-ds'}},
+            'template': {
+                'metadata': {
+                    'labels': {'name': 'amdgpu-dp-ds'},
+                    'annotations': {'scheduler.alpha.kubernetes.io/critical-pod': ''},
+                },
+                'spec': {
+                    'tolerations': [
+                        {'key': 'CriticalAddonsOnly', 'operator': 'Exists'},
+                    ],
+                    'containers': [{
+                        'image': 'rocm/k8s-device-plugin',
+                        'name': 'amdgpu-dp-cntr',
+                        'securityContext': {'allowPrivilegeEscalation': False, 'capabilities': {'drop': ['ALL']}},
+                        'volumeMounts': [
+                            {'name': 'dp', 'mountPath': '/var/lib/kubelet/device-plugins'},
+                            {'name': 'sys', 'mountPath': '/sys'},
+                        ]
+                    }],
+                    'volumes': [
+                        {'name': 'dp', 'hostPath': {'path': '/var/lib/kubelet/device-plugins'}},
+                        {'name': 'sys', 'hostPath': {'path': '/sys'}},
+                    ]
+                }
+            }
+        }
+    },
 }
 
 
@@ -114,7 +149,7 @@ class KubernetesGPUService(Service):
 
     async def get_system_gpus(self):
         gpus = await self.middleware.call('device.get_info', 'GPU')
-        supported_gpus = {'NVIDIA', 'INTEL'}
+        supported_gpus = {'NVIDIA', 'INTEL', 'AMD'}
         return supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus if gpu['available_to_host']]))
 
     async def setup_internal(self):
