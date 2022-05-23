@@ -419,7 +419,13 @@ class VMService(CRUDService, VMSupervisorMixin):
                                 'Failed to delete %r volume when removing %r VM', disk_name, vm['name'], exc_info=True
                             )
 
-            await self.middleware.run_in_thread(self._undefine_domain, vm['name'])
+            try:
+                await self.middleware.run_in_thread(self._undefine_domain, vm['name'])
+            except Exception:
+                if not force_delete:
+                    raise
+                else:
+                    self.logger.error('Failed to un-define %r VM\'s domain', vm['name'], exc_info=True)
 
             # We remove vm devices first
             for device in vm['devices']:
