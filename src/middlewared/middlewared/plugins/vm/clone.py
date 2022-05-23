@@ -1,5 +1,6 @@
 import errno
 import re
+import uuid
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Int, returns, Str
@@ -83,6 +84,7 @@ class VMService(Service):
         del vm['status']
 
         vm['name'] = await self.__next_clone_name(vm['name'])
+        vm['uuid'] = str(uuid.uuid4())  # We want to use a newer uuid here as it is supposed to be unique per VM
 
         if name is not None:
             vm['name'] = name
