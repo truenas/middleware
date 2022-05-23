@@ -351,7 +351,7 @@ class DiskService(Service, ServiceChangeMixin):
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
-        if self.middleware.call_sync('failover.licensed'):
+        if licensed:
             job.set_progress(97, 'Synchronizing database to standby node')
             # there could be, literally, > 1k databse changes in this method on large systems
             # so we've forgoed from queuing up the number of db changes in the HA journal thread
