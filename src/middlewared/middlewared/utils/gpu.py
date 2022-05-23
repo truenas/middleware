@@ -38,6 +38,8 @@ def get_gpus():
             vendor = 'NVIDIA'
         elif 'intel' in vendor_id_from_db:
             vendor = 'INTEL'
+        elif 'amd' in vendor_id_from_db:
+            vendor = 'AMD'
 
         devices = []
         critical = False
