@@ -10,6 +10,7 @@ class KMIPModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     server = sa.Column(sa.String(128), default=None, nullable=True)
+    ssl_version = sa.Column(sa.String(128), default='PROTOCOL_TLSv1_2', nullable=False)
     port = sa.Column(sa.SmallInteger(), default=5696)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     certificate_authority_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
