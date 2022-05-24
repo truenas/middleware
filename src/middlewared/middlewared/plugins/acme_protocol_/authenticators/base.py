@@ -16,8 +16,7 @@ class Authenticator:
     def initialize_credentials(self):
         pass
 
-    @staticmethod
-    async def validate_credentials(middleware, data):
+    async def validate_credentials(self, middleware, data):
         raise NotImplementedError
 
     def perform(self, domain, validation_name, validation_content):

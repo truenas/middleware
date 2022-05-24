@@ -28,10 +28,9 @@ class Route53Authenticator(Authenticator):
             aws_secret_access_key=self.secret_access_key,
         ).client('route53')
 
-    @staticmethod
     @accepts(SCHEMA)
     @skip_arg(count=1)
-    async def validate_credentials(middleware, data):
+    async def validate_credentials(self, middleware, data):
         pass
 
     def _perform(self, domain, validation_name, validation_content):
