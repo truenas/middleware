@@ -255,6 +255,8 @@ class KubernetesService(Service):
     async def setup_pool(self):
         config = await self.middleware.call('kubernetes.config')
         await self.create_update_k8s_datasets(config['dataset'])
+        # We will make sure that certificate paths point to the newly configured pool
+        await self.middleware.call('kubernetes.update_server_credentials', config['dataset'])
         # Now we would like to setup catalogs
         await self.middleware.call('catalog.sync_all')
 
