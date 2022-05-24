@@ -48,7 +48,8 @@ def run_with_user_context(func: Callable, user_details: dict, func_args: Optiona
 
 
 def run_command_with_user_context(
-    commandline: str, user: str, callback: Optional[Callable] = None, disable_output: bool = False
+    commandline: str, user: str, callback: Optional[Callable] = None, disable_output: bool = False,
+    timeout: Optional[int] = None,
 ) -> subprocess.CompletedProcess:
     if not disable_output and not callback:
         raise ValueError("Callback must be specified when output is desired")
@@ -69,6 +70,9 @@ def run_command_with_user_context(
             stdout += line
             callback(line)
 
-    p.communicate()
+    try:
+        p.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        p.kill()
 
     return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=p.returncode)
