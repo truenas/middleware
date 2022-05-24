@@ -82,6 +82,7 @@ class VMService(Service):
         origin_name = vm['name']
         del vm['id']
         del vm['status']
+        devices = vm.pop('devices')
 
         vm['name'] = await self.__next_clone_name(vm['name'])
         vm['uuid'] = str(uuid.uuid4())  # We want to use a newer uuid here as it is supposed to be unique per VM
@@ -93,9 +94,11 @@ class VMService(Service):
         created_snaps = []
         created_clones = []
         try:
-            for item in vm['devices']:
+            new_vm = await self.middleware.call('vm.do_create', vm)
+
+            for item in devices:
                 item.pop('id', None)
-                item.pop('vm', None)
+                item['vm'] = new_vm['id']
                 if item['dtype'] == 'NIC':
                     if 'mac' in item['attributes']:
                         del item['attributes']['mac']
@@ -112,7 +115,7 @@ class VMService(Service):
                     item['attributes']['path'] = ''
                     self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
 
-            await self.middleware.call('vm.do_create', vm)
+                await self.middleware.call('vm.device.create', item)
         except Exception as e:
             for i in reversed(created_clones):
                 try:
