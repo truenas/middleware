@@ -9,10 +9,11 @@ class Authenticator:
     PROPAGATION_DELAY = NotImplementedError
     SCHEMA = NotImplementedError
 
-    def __init__(self, middleware, attributes):
+    def __init__(self, middleware, attributes, initialize_credentials=True):
         self.middleware = middleware
         self.attributes = attributes
-        self.initialize_credentials()
+        if initialize_credentials:
+            self.initialize_credentials()
 
     def initialize_credentials(self):
         pass
