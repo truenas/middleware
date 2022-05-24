@@ -6,7 +6,7 @@ import time
 from botocore import exceptions as boto_exceptions
 
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import CallError
+from middlewared.service import CallError, skip_arg
 
 from .base import Authenticator
 
@@ -30,7 +30,8 @@ class Route53Authenticator(Authenticator):
 
     @staticmethod
     @accepts(SCHEMA)
-    def validate_credentials(data):
+    @skip_arg(count=1)
+    async def validate_credentials(middleware, data):
         pass
 
     def _perform(self, domain, validation_name, validation_content):

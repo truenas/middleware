@@ -11,7 +11,8 @@ It is up to script implementation to handle both calls and perform the record cr
 import logging
 import subprocess
 
-from middlewared.schema import accepts, Dict, Str, Dir, File, Int
+from middlewared.schema import accepts, Dict, Str, File, Int
+from middlewared.service import skip_arg
 
 from .base import Authenticator
 
@@ -40,7 +41,8 @@ class ShellAuthenticator(Authenticator):
 
     @staticmethod
     @accepts(SCHEMA)
-    def validate_credentials(data):
+    @skip_arg(count=1)
+    async def validate_credentials(middleware, data):
         # We would like to validate the following bits:
         # 1) script exists and is executable
         # 2) user exists
