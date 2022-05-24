@@ -9,11 +9,11 @@ The authenticator script is called two times during the certificate generation:
 It is up to script implementation to handle both calls and perform the record creation.
 """
 import logging
-import subprocess
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Dict, Str, File, Int
 from middlewared.service import CallError, ValidationErrors
+from middlewared.utils.osc.linux.user_context import run_command_with_user_context
 
 from .base import Authenticator
 
@@ -66,17 +66,14 @@ class ShellAuthenticator(Authenticator):
 
         verrors.check()
 
-    def _run(self, args):
-        process = subprocess.Popen(
-            ['sudo', '-H', '-u', self.user, 'sh', '-c', args], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        try:
-            process.communicate(timeout=self.timeout)
-        except subprocess.TimeoutExpired:
-            process.kill()
-
     def _perform(self, domain, validation_name, validation_content):
-        self._run([self.script, 'set', domain, validation_name, validation_content, '600'])
+        run_command_with_user_context(
+            f'{self.script} set {domain} {validation_name} {validation_content}', self.user,
+            disable_output=True, timeout=self.timeout
+        )
 
     def _cleanup(self, domain, validation_name, validation_content):
-        self._run([self.script, 'unset', domain, validation_name, validation_content])
+        run_command_with_user_context(
+            f'{self.script} unset {domain} {validation_name} {validation_content}', self.user,
+            disable_output=True, timeout=self.timeout
+        )
