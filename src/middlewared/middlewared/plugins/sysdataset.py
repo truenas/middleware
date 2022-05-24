@@ -380,7 +380,7 @@ class SystemDatasetService(ConfigService):
             i['id']: i['properties'] for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])
         }
         for dataset in datasets:
-            props = {'mountpoint': 'legacy', 'readonly': 'off'}
+            props = {'mountpoint': 'legacy', 'readonly': 'off', 'snapdir': 'hidden'}
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
                 props['quota'] = '1G'
