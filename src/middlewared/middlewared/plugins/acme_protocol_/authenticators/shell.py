@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class ShellAuthenticator(Authenticator):
 
+
     NAME = 'shell'
     PROPAGATION_DELAY = 60
 
@@ -35,10 +36,10 @@ class ShellAuthenticator(Authenticator):
     )
 
     def initialize_credentials(self):
-        self.script = self.attributes.get('script')
-        self.user = self.attributes.get('user')
-        self.timeout = int(self.attributes.get('timeout'))
-        self.PROPAGATION_DELAY = int(self.attributes.get('delay'))
+        self.script = self.attributes['script']
+        self.user = self.attributes['user']
+        self.timeout = self.attributes['timeout']
+        self.PROPAGATION_DELAY = self.attributes['delay']
 
     @accepts(SCHEMA)
     async def validate_credentials(self, data):
