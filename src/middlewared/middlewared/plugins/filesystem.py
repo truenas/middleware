@@ -19,6 +19,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
 from middlewared.plugins.filesystem_.acl_base import ACLType
+from middlewared.plugins.zfs import ZFSCTL
 
 
 class FilesystemService(Service):
@@ -106,6 +107,52 @@ class FilesystemService(Service):
 
         return data
 
+    @private
+    def stat_entry_impl(self, entry, options=None):
+        out = {'st': None, 'etype': None, 'is_ctldir': False}
+        opts = options or {"dir_only": False, "file_only": False}
+        path = entry.absolute()
+
+        try:
+            out['st'] = entry.lstat()
+        except FileNotFoundError:
+            return None
+
+        if statlib.S_ISDIR(out['st'].st_mode):
+            out['etype'] = 'DIRECTORY'
+
+        elif statlib.S_ISLNK(out['st'].st_mode):
+            out['etype'] = 'SYMLINK'
+            try:
+                out['st'] = entry.stat()
+            except FileNotFoundError:
+                return None
+
+        elif statlib.S_ISREG(out['st'].st_mode):
+            out['etype'] = 'FILE'
+
+        else:
+            out['etype'] = 'OTHER'
+
+        while str(path) != '/':
+            if not path.name == '.zfs':
+                path = path.parent
+                continue
+
+            if path.stat().st_ino == ZFSCTL.INO_ROOT:
+                out['is_ctldir'] = True
+                break
+
+            path = path.parent
+
+        if opts['dir_only'] and out['etype'] != 'DIRECTORY':
+            return None
+
+        elif opts['file_only'] and out['etype'] != 'FILE':
+            return None
+
+        return out
+
     @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
     @filterable_returns(Dict(
         'path_entry',
@@ -118,6 +165,8 @@ class FilesystemService(Service):
         Bool('acl', required=True, null=True),
         Int('uid', required=True, null=True),
         Int('gid', required=True, null=True),
+        Bool('is_mountpoint', required=True),
+        Bool('is_ctldir', required=True),
         register=True
     ))
     def listdir(self, path, filters, options):
@@ -139,38 +188,9 @@ class FilesystemService(Service):
           uid(int): user id of entry owner
           gid(int): group id of entry onwer
           acl(bool): extended ACL is present on file
+          is_mountpoint(bool): path is a mountpoint
+          is_ctldir(bool): path is within special .zfs directory
         """
-
-        def stat_entry(entry):
-            out = {'st': None, 'etype': None}
-            try:
-                out['st'] = entry.lstat()
-            except Exception:
-                return None
-
-            if statlib.S_ISDIR(out['st'].st_mode):
-                out['etype'] = 'DIRECTORY'
-
-            elif statlib.S_ISLNK(out['st'].st_mode):
-                out['etype'] = 'SYMLINK'
-                try:
-                    out['st'] = entry.stat()
-                except Exception:
-                    return None
-
-            elif statlib.S_ISREG(out['st'].st_mode):
-                out['etype'] = 'FILE'
-
-            else:
-                out['etype'] = 'OTHER'
-
-            if dir_only and out['etype'] != 'DIRECTORY':
-                return None
-
-            elif file_only and out['etype'] != 'FILE':
-                return None
-
-            return out
 
         path = self.resolve_cluster_path(path)
         path = pathlib.Path(path)
@@ -183,8 +203,7 @@ class FilesystemService(Service):
         if 'ix-applications' in path.parts:
             raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
 
-        file_only = False
-        dir_only = False
+        stat_opts = {"file_only": False, "dir_only": False}
         for filter in filters:
             if filter[0] not in ['type']:
                 continue
@@ -193,17 +212,17 @@ class FilesystemService(Service):
                 continue
 
             if filter[2] == 'DIRECTORY':
-                dir_only = True
+                stat_opts["dir_only"] = True
             else:
-                file_only = True
+                stat_opts["file_only"] = True
 
         rv = []
-        if dir_only and file_only:
+        if stat_opts["dir_only"] and stat_opts["file_only"]:
             return rv
 
         only_top_level = path.absolute() == pathlib.Path('/mnt')
         for entry in path.iterdir():
-            st = stat_entry(entry)
+            st = self.stat_entry_impl(entry, stat_opts)
             if st is None:
                 continue
 
@@ -236,6 +255,8 @@ class FilesystemService(Service):
                 'acl': False if self.acl_is_trivial(realpath) else True,
                 'uid': stat.st_uid,
                 'gid': stat.st_gid,
+                'is_mountpoint': entry.is_mount(),
+                'is_ctldir': st['is_ctldir'],
             }
 
             rv.append(data)
@@ -245,6 +266,7 @@ class FilesystemService(Service):
     @accepts(Str('path'))
     @returns(Dict(
         'path_stats',
+        Str('realpath', required=True),
         Int('size', required=True),
         Int('mode', required=True),
         Int('uid', required=True),
@@ -255,11 +277,13 @@ class FilesystemService(Service):
         Int('dev', required=True),
         Int('inode', required=True),
         Int('nlink', required=True),
+        Bool('is_mountpoint', required=True),
+        Bool('is_ctldir', required=True),
         Str('user', null=True, required=True),
         Str('group', null=True, required=True),
         Bool('acl', required=True),
     ))
-    def stat(self, path):
+    def stat(self, _path):
         """
         Return the filesystem stat(2) for a given `path`.
 
@@ -268,23 +292,28 @@ class FilesystemService(Service):
         in the directory 'data' in the clustered volume `smb01`, the
         path should be specified as `CLUSTER:smb01/data`.
         """
-        path = self.resolve_cluster_path(path)
-        try:
-            stat = os.stat(path, follow_symlinks=False)
-        except FileNotFoundError:
+        path = pathlib.Path(self.resolve_cluster_path(_path))
+        st = self.stat_entry_impl(path, None)
+        if st is None:
             raise CallError(f'Path {path} not found', errno.ENOENT)
 
+        realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
+
         stat = {
-            'size': stat.st_size,
-            'mode': stat.st_mode,
-            'uid': stat.st_uid,
-            'gid': stat.st_gid,
-            'atime': stat.st_atime,
-            'mtime': stat.st_mtime,
-            'ctime': stat.st_ctime,
-            'dev': stat.st_dev,
-            'inode': stat.st_ino,
-            'nlink': stat.st_nlink,
+            'realpath': realpath,
+            'type': st['etype'],
+            'size': st['st'].st_size,
+            'mode': st['st'].st_mode,
+            'uid': st['st'].st_uid,
+            'gid': st['st'].st_gid,
+            'atime': st['st'].st_atime,
+            'mtime': st['st'].st_mtime,
+            'ctime': st['st'].st_ctime,
+            'dev': st['st'].st_dev,
+            'inode': st['st'].st_ino,
+            'nlink': st['st'].st_nlink,
+            'is_mountpoint': path.is_mount(),
+            'is_ctldir': st['is_ctldir'],
         }
 
         try:
@@ -297,7 +326,7 @@ class FilesystemService(Service):
         except KeyError:
             stat['group'] = None
 
-        stat['acl'] = False if self.acl_is_trivial(path) else True
+        stat['acl'] = False if self.acl_is_trivial(_path) else True
 
         return stat
 
