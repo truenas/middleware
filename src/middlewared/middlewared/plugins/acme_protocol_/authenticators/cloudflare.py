@@ -27,10 +27,9 @@ class CloudFlareAuthenticator(Authenticator):
         self.api_key = self.attributes.get('api_key')
         self.api_token = self.attributes.get('api_token')
 
-    @staticmethod
     @accepts(SCHEMA)
     @skip_arg(count=1)
-    async def validate_credentials(middleware, data):
+    async def validate_credentials(self, middleware, data):
         verrors = ValidationErrors()
         if data.get('api_token'):
             if data.get('cloudflare_email'):
