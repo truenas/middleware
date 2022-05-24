@@ -5,31 +5,26 @@ on:
     types:
       - 'synchronize'
       - 'opened'
-
 env:
   BDIR: /builds/scale-build
 
 jobs:
   build:
     runs-on: self-hosted
-    
     steps:
     - name: Update Sources
       run: |
         cd $BDIR && make checkout
-
     - uses: actions/checkout@v2
     - name: Link Sources
       run: |
         ln -fs `pwd` ${BDIR}/sources/middlewared
-
     - name: Build TrueNAS
       run: |
         cd $BDIR && make iso
-
     - name: Upload ISO
-     uses: koraykoska/s3-upload-github-action@master
-        env:
+      uses: koraykoska/s3-upload-github-action@master
+      env:
           FILE: ${BDIR}/tmp/release/TrueNAS*.iso
           S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
           S3_BUCKET: $${ secrets.S3_BUCKET }} 
@@ -37,8 +32,8 @@ jobs:
           S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
 
     - name: Upload rootfs
-     uses: koraykoska/s3-upload-github-action@master
-        env:
+      uses: koraykoska/s3-upload-github-action@master
+      env:
           FILE: ${BDIR}/tmp/update/rootfs.squashfs
           S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
           S3_BUCKET: $${ secrets.S3_BUCKET }} 
