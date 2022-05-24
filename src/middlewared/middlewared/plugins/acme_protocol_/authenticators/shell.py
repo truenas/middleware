@@ -11,8 +11,9 @@ It is up to script implementation to handle both calls and perform the record cr
 import logging
 import subprocess
 
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Dict, Str, File, Int
-from middlewared.service import skip_arg
+from middlewared.service import CallError, skip_arg, ValidationErrors
 
 from .base import Authenticator
 
@@ -28,7 +29,7 @@ class ShellAuthenticator(Authenticator):
     SCHEMA = Dict(
         'shell',
         File('script', required=True, empty=False, title='Authenticator script'),
-        Str('user', default='nobody', title='Running user'),
+        Str('user', default='nobody', title='Running user', empty=False),
         Int('timeout', default=60, title='Timeout'),
         Int('delay', default=60, title='Propagation delay'),
     )
@@ -47,7 +48,25 @@ class ShellAuthenticator(Authenticator):
         # 1) script exists and is executable
         # 2) user exists
         # 3) User can access the script in question
-        pass
+        verrors = ValidationErrors()
+        try:
+            await middleware.call('user.get_user_obj', {'username': data['user']})
+        except KeyError:
+            verrors.add('user', f'Unable to locate {data["user"]!r} user')
+
+        await check_path_resides_within_volume(verrors, middleware, 'script', data['script'])
+
+        try:
+            can_access = await middleware.call(
+                'filesystem.can_access_as_user', data['user'], data['script'], {'execute': True}
+            )
+        except CallError as e:
+            verrors.add('script', f'Unable to validate script: {e}')
+        else:
+            if not can_access:
+                verrors.add('user', f'{data["user"]!r} user does not has permission to execute the script')
+
+        verrors.check()
 
     def _run(self, args):
         process = subprocess.Popen(
