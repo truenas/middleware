@@ -40,7 +40,7 @@ class DNSAuthenticatorService(Service):
 
     @private
     def get_authenticator_internal(self, auth_details):
-        return auth_factory.authenticator(auth_details['authenticator'].lower())
+        return auth_factory.authenticator(self.middleware, auth_details['authenticator'].lower())
 
     @private
     def get_validation_parameters(self, challenge, domain, key):
