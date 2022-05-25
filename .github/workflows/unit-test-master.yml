@@ -14,15 +14,15 @@ jobs:
     steps:
     - name: Update Sources
       run: |
-        cd $BDIR && git pull origin master
-        cd $BDIR && make checkout
+        cd $BDIR && sudo git pull origin master
+        cd $BDIR && sudo make checkout
     - uses: actions/checkout@v2
     - name: Link Sources
       run: |
-        ln -fs `pwd` ${BDIR}/sources/middlewared
+        sudo ln -fs `pwd` ${BDIR}/sources/middlewared
     - name: Build TrueNAS
       run: |
-        cd $BDIR && make iso
+        cd $BDIR && sudo make iso
     - name: Upload ISO
       uses: koraykoska/s3-upload-github-action@master
       env:
