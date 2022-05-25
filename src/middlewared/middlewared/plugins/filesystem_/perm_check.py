@@ -51,4 +51,9 @@ class FilesystemService(Service):
         if all(v is None for v in perms.values()):
             raise CallError('At least one of read/write/execute flags must be set', errno.EINVAL)
 
-        return run_with_user_context(check_access, username, [path, perms])
+        try:
+            user_details = self.middleware.call_sync('user.get_user_obj', {'username': username, 'get_groups': True})
+        except KeyError:
+            raise CallError(f'{username!r} user does not exist', errno=errno.ENOENT)
+
+        return run_with_user_context(check_access, user_details, [path, perms])
