@@ -30,7 +30,7 @@ jobs:
     - name: Upload rootfs
       uses: koraykoska/s3-upload-github-action@master
       env:
-          FILE: $${ env.BDIR }}/tmp/update/rootfs.squashfs
+          FILE: /builds/scale-build/tmp/update/rootfs.squashfs
           S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
           S3_BUCKET: $${ secrets.S3_BUCKET }} 
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
@@ -38,7 +38,7 @@ jobs:
     - name: Upload ISO
       uses: koraykoska/s3-upload-github-action@master
       env:
-          FILE: ${{ env.BDIR }}/tmp/release/
+          FILE: /builds/scale-build/tmp/release/
           S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
           S3_BUCKET: $${ secrets.S3_BUCKET }} 
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
