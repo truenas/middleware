@@ -29,7 +29,7 @@ jobs:
     - name: Upload ISO
       uses: koraykoska/s3-upload-github-action@master
       env:
-          FILE: ${BDIR}/tmp/release/TrueNAS*.iso
+          FILE: ${BDIR}/tmp/release/
           S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
           S3_BUCKET: $${ secrets.S3_BUCKET }} 
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
