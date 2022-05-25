@@ -15,6 +15,7 @@ jobs:
     - name: Update Sources
       run: |
         cd $BDIR && sudo git pull origin master
+        sudo rm ${BDIR}/sources/middlewared
         cd $BDIR && sudo make checkout
     - uses: actions/checkout@v2
     - name: Link Sources
