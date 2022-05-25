@@ -74,5 +74,8 @@ def run_command_with_user_context(
         p.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
         p.kill()
+        return_code = 137
+    else:
+        return_code = p.returncode
 
-    return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=p.returncode)
+    return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=return_code)
