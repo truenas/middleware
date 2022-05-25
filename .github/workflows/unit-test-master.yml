@@ -19,9 +19,12 @@ jobs:
     - uses: actions/checkout@v2
     - name: Link Sources
       run: |
+        sudo rm -rf ${BDIR}/sources/middlewared
         sudo ln -fs `pwd` ${BDIR}/sources/middlewared
     - name: Build TrueNAS
       run: |
+        cd $BDIR && sudo make packages
+        cd $BDIR && sudo make update
         cd $BDIR && sudo make iso
     - name: Upload ISO
       uses: koraykoska/s3-upload-github-action@master
