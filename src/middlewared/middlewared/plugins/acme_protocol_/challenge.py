@@ -36,13 +36,11 @@ class DNSAuthenticatorService(Service):
     @private
     def get_authenticator(self, authenticator):
         auth_details = self.middleware.call_sync('acme.dns.authenticator.get_instance', authenticator)
-        return self.get_authenticator_internal(auth_details)(auth_details['attributes'])
+        return self.get_authenticator_internal(auth_details)(self.middleware, auth_details['attributes'])
 
     @private
-    def get_authenticator_internal(self, auth_details, initialize_credentials=True):
-        return auth_factory.authenticator(
-            self.middleware, auth_details['authenticator'].lower(), initialize_credentials
-        )
+    def get_authenticator_internal(self, auth_details):
+        return auth_factory.authenticator(auth_details['authenticator'].lower())
 
     @private
     def get_validation_parameters(self, challenge, domain, key):

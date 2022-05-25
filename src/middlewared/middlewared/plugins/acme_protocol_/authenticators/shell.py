@@ -12,7 +12,7 @@ import logging
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Dict, Str, File, Int
-from middlewared.service import CallError, ValidationErrors
+from middlewared.service import CallError, skip_arg, ValidationErrors
 from middlewared.utils.osc.linux.user_context import run_command_with_user_context
 
 from .base import Authenticator
@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class ShellAuthenticator(Authenticator):
-
 
     NAME = 'shell'
     PROPAGATION_DELAY = 60
@@ -41,22 +40,24 @@ class ShellAuthenticator(Authenticator):
         self.timeout = self.attributes['timeout']
         self.PROPAGATION_DELAY = self.attributes['delay']
 
+    @staticmethod
     @accepts(SCHEMA)
-    async def validate_credentials(self, data):
+    @skip_arg(count=1)
+    async def validate_credentials(middleware, data):
         # We would like to validate the following bits:
         # 1) script exists and is executable
         # 2) user exists
         # 3) User can access the script in question
         verrors = ValidationErrors()
         try:
-            await self.middleware.call('user.get_user_obj', {'username': data['user']})
+            await middleware.call('user.get_user_obj', {'username': data['user']})
         except KeyError:
             verrors.add('user', f'Unable to locate {data["user"]!r} user')
 
-        await check_path_resides_within_volume(verrors, self.middleware, 'script', data['script'])
+        await check_path_resides_within_volume(verrors, middleware, 'script', data['script'])
 
         try:
-            can_access = await self.middleware.call(
+            can_access = await middleware.call(
                 'filesystem.can_access_as_user', data['user'], data['script'], {'execute': True}
             )
         except CallError as e:
