@@ -46,7 +46,7 @@ class DeviceService(Service, DeviceInfoBase):
             try:
                 disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy(), disks_data)
             except Exception:
-                self.logger.debug('Failed to retrieve disk details for %s : %s', dev.sys_name, exc_info=True)
+                self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
         return disks
 
@@ -116,93 +116,53 @@ class DeviceService(Service, DeviceInfoBase):
         return str(rotation_rate)
 
     @private
-    def get_disk_details(self, block_device, disk, disks_data):
+    def safe_retrieval(self, dev, key, default, asint=False):
+        value = dev.attributes.get(key)
+        if value is not None:
+            value = value.strip().decode()
+            return value if not asint else int(value)
+        return default
 
-        device_path = os.path.join('/dev', block_device.sys_name)
-        disk_sys_path = os.path.join('/sys/block', block_device.sys_name)
-        driver_name = os.path.realpath(os.path.join(disk_sys_path, 'device/driver')).split('/')[-1]
+    @private
+    def get_disk_details(self, dev, disk, disks_data):
+        size = mediasize = self.safe_retrieval(dev, 'size', None, asint=True)
+        sectorsize = self.safe_retrieval(dev, 'queue/logical_block_size', None, asint=True)
 
-        number = 0
-        if driver_name != 'driver':
-            number = sum(
-                (ord(letter) - ord('a') + 1) * 26 ** i
-                for i, letter in enumerate(reversed(block_device.sys_name[len(driver_name):]))
-            )
-        elif block_device.sys_name.startswith('nvme'):
-            number = int(block_device.sys_name.rsplit('n', 1)[-1])
+        info = dict(dev.properties)
+        ident = serial = info.get('ID_SERIAL_SHORT', '')
+        model = descr = info.get('ID_MODEL')
+        lunid = info.get('ID_WWN', '').removeprefix('0x').removeprefix('eui.').removeprefix('naa.')
+        bus = info.get('ID_BUS', 'UNKNOWN')
+        subsystem = info.get('SUBSYSTEM', '')
 
         disk.update({
-            'name': block_device.sys_name,
-            'number': number,
-            'subsystem': os.path.realpath(os.path.join(disk_sys_path, 'device/subsystem')).split('/')[-1],
+            'name': dev.sys_name,
+            'mediasize': mediasize,
+            'sectorsize': sectorsize,
+            'number': dev.device_number,
+            'subsystem': subsystem,
+            'size': size,
+            'mediasize': mediasize,
+            'ident': ident,
+            'serial': serial,
+            'model': model,
+            'descr': descr,
+            'lunid': lunid,
+            'bus': bus,
         })
 
-        if device_path in disks_data:
-            disk_data = disks_data[device_path]
+        if disk['size'] and disk['sectorsize']:
+            disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
-            # get type of disk and rotational rate (if HDD)
-            disk['type'] = 'SSD' if not disk_data['rota'] else 'HDD'
-            if disk['type'] == 'HDD':
-                if self.HOST_TYPE == 'QEMU':
-                    # qemu/kvm guests do not support necessary ioctl for
-                    # retrieving rotational rate
-                    disk['rotationrate'] = None
-                else:
-                    disk['rotationrate'] = self.get_rotational_rate(device_path)
+        if (info := self.safe_retrieval(dev, 'queue/rotational', None)) and info == '1':
+            disk['type'] = 'HDD'
+            disk['rotationrate'] = self.get_rotational_rate(info['DEVNAME'])
+        else:
+            disk['type'] = 'SSD'
+            disk['rotationrate'] = None
 
-            # get model and serial
-            disk['ident'] = disk['serial'] = (disk_data.get('serial') or '').strip()
-            disk['descr'] = disk['model'] = (disk_data.get('model') or '').strip()
-
-            # get all relevant size attributes of disk
-            disk['sectorsize'] = disk_data['log-sec']
-            disk['size'] = disk['mediasize'] = disk_data['size']
-            if disk['size'] and disk['sectorsize']:
-                disk['blocks'] = int(disk['size'] / disk['sectorsize'])
-
-            # get lunid
-            if disk_data['wwn']:
-                if disk_data['tran'] == 'nvme':
-                    disk['lunid'] = disk_data['wwn'].lstrip('eui.')
-                else:
-                    disk['lunid'] = disk_data['wwn'].lstrip('0x')
-
-            if disk_data['tran']:
-                disk['bus'] = disk_data['tran'].upper()
-
-        if not disk['size'] and os.path.exists(os.path.join(disk_sys_path, 'size')):
-            with open(os.path.join(disk_sys_path, 'size'), 'r') as f:
-                disk['blocks'] = int(f.read().strip())
+        if not disk['size'] and (disk['blocks'] and disk['sectorsize']):
             disk['size'] = disk['mediasize'] = disk['blocks'] * disk['sectorsize']
-
-        if not disk['serial'] and (block_device.get('ID_SERIAL_SHORT') or block_device.get('ID_SERIAL')):
-            disk['serial'] = block_device.get('ID_SERIAL_SHORT') or block_device.get('ID_SERIAL')
-
-        if not disk['serial']:
-            serial_cp = subprocess.Popen(
-                ['sg_vpd', '--quiet', '--page=0x80', device_path],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            cp_stdout, cp_stderr = serial_cp.communicate()
-            if not serial_cp.returncode:
-                reg = RE_DISK_SERIAL.search(cp_stdout.decode().strip())
-                if reg:
-                    disk['serial'] = disk['ident'] = reg.group(1)
-
-        if not disk['lunid']:
-            # We make a device ID query to get DEVICE ID VPD page of the drive if available and then use that identifier
-            # as the lunid - FreeBSD does the same, however it defaults to other schemes if this is unavailable
-            lun_id_cp = subprocess.Popen(
-                ['sg_vpd', '--quiet', '-i', device_path],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            )
-            cp_stdout, cp_stderr = lun_id_cp.communicate()
-            if not lun_id_cp.returncode and lun_id_cp.stdout:
-                lunid = cp_stdout.decode().strip()
-                if lunid:
-                    disk['lunid'] = lunid.split()[0]
-                if lunid and disk['lunid'].startswith('0x'):
-                    disk['lunid'] = disk['lunid'][2:]
 
         if disk['serial'] and disk['lunid']:
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
