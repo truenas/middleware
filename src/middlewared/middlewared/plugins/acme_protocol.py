@@ -243,9 +243,7 @@ class DNSAuthenticatorService(CRUDService):
                 f'System does not support {data["authenticator"]} as an Authenticator'
             )
         else:
-            authenticator_obj = await self.middleware.call(
-                'acme.dns.authenticator.get_authenticator_internal', data, False
-            )
+            authenticator_obj = await self.middleware.call('acme.dns.authenticator.get_authenticator_internal', data)
             await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
 
         verrors.check()

@@ -9,16 +9,16 @@ class Authenticator:
     PROPAGATION_DELAY = NotImplementedError
     SCHEMA = NotImplementedError
 
-    def __init__(self, middleware, attributes, initialize_credentials=True):
+    def __init__(self, middleware, attributes):
         self.middleware = middleware
         self.attributes = attributes
-        if initialize_credentials:
-            self.initialize_credentials()
+        self.initialize_credentials()
 
     def initialize_credentials(self):
         pass
 
-    async def validate_credentials(self, data):
+    @staticmethod
+    async def validate_credentials(middleware, data):
         raise NotImplementedError
 
     def perform(self, domain, validation_name, validation_content):
