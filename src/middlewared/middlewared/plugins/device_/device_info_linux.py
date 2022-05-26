@@ -37,25 +37,26 @@ class DeviceService(Service, DeviceInfoBase):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev)
+                disks[dev.sys_name] = self.get_disk_details(dev, is_nvme=dev.sys_name.startswith('nvme'))
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
         return disks
 
     @private
-    def get_disk_details(self, dev):
+    def get_disk_details(self, dev, is_nvme=False):
         size = mediasize = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
-        ident = serial = self.safe_retrieval(
-            dev.properties, 'ID_SERIAL_SHORT' if dev.sys_name.startswith('nvme') else 'ID_SCSI_SERIAL', ''
-        )
+        ident = serial = self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT' if is_nvme else 'ID_SCSI_SERIAL', '')
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
+        driver = self.safe_retrieval(dev.parent.properties, 'DRIVER', '') if not is_nvme else 'nvme'
 
         disk = {
             'name': dev.sys_name,
             'sectorsize': self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True),
             'number': dev.device_number,
-            'subsystem': self.safe_retrieval(dev.properties, 'SUBSYSTEM', ''),
+            'subsystem': self.safe_retrieval(dev.parent.properties, 'SUBSYSTEM', ''),
+            'driver': driver,
+            'hctl': self.safe_retrieval(dev.parent.properties, 'DEVPATH', '').split('/')[-1],
             'size': size,
             'mediasize': mediasize,
             'ident': ident,
@@ -63,7 +64,7 @@ class DeviceService(Service, DeviceInfoBase):
             'model': model,
             'descr': descr,
             'lunid': self.safe_retrieval(dev.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.') or None,
-            'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN'),
+            'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN').upper(),
             'type': 'UNKNOWN',
             'blocks': None,
             'serial_lunid': None,
@@ -181,20 +182,16 @@ class DeviceService(Service, DeviceInfoBase):
             self.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
     def get_storage_devices_topology(self):
-        disks = self.get_disks()
         topology = {}
-        for disk in filter(lambda d: d['subsystem'] == 'scsi', disks.values()):
-            disk_path = os.path.join('/sys/block', disk['name'])
-            hctl = os.path.realpath(os.path.join(disk_path, 'device')).split('/')[-1]
-            if hctl.count(':') == 3:
-                driver = os.path.realpath(os.path.join(disk_path, 'device/driver')).split('/')[-1]
+        for disk in filter(lambda d: d['subsystem'] == 'scsi', self.get_disks().values()):
+            if disk['hctl'].count(':') == 3:
+                hctl = disk['hctl'].split(':')
                 topology[disk['name']] = {
-                    'driver': driver if driver != 'driver' else disk['subsystem'], **{
-                        k: int(v) for k, v in zip(
-                            ('controller_id', 'channel_no', 'target', 'lun_id'), hctl.split(':')
-                        )
+                    'driver': disk['driver'], **{
+                        k: int(v) for k, v in zip(('controller_id', 'channel_no', 'target', 'lun_id'), hctl)
                     }
                 }
+
         return topology
 
     def get_gpus(self):
