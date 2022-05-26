@@ -33,7 +33,7 @@ def get_action_context(release_name):
         'isUpdate': False,
         'isUpgrade': False,
         'storageClassName': get_storage_class_name(release_name),
-        'storageClassName': get_storage_class_name(release_name) + "_db",
+        'storageClassName': get_db_storage_class_name(release_name),
         'upgradeMetadata': {},
     })
 
