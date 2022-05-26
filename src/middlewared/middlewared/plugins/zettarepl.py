@@ -100,7 +100,7 @@ def zettarepl_schedule(schedule):
     schedule["day-of-month"] = schedule.pop("dom")
     schedule["day-of-week"] = schedule.pop("dow")
     for k in ["begin", "end"]:
-        if isinstance(schedule[k], _time):
+        if k in schedule and isinstance(schedule[k], _time):
             schedule[k] = str(schedule[k])[:5]
 
     return schedule
