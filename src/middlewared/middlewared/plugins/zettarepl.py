@@ -1,5 +1,6 @@
 from collections import defaultdict
 from contextlib import asynccontextmanager
+from ctypes import c_bool
 from datetime import datetime, time as _time, timedelta
 import errno
 import logging
@@ -130,49 +131,55 @@ class ObserverQueueLoggingHandler(logging.Handler):
 
 
 class ZettareplProcess:
-    def __init__(self, definition, debug_level, log_handler, command_queue, observer_queue):
+    def __init__(self, definition, debug_level, log_handler, command_queue, observer_queue, startup_error):
         self.definition = definition
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.command_queue = command_queue
         self.observer_queue = observer_queue
+        self.startup_error = startup_error
 
         self.zettarepl = None
 
         self.vmware_contexts = {}
 
     def __call__(self):
-        setproctitle.setproctitle('middlewared (zettarepl)')
-        osc.die_with_parent()
-        move_to_root_cgroups(os.getpid())
-        if logging.getLevelName(self.debug_level) == logging.TRACE:
-            # If we want TRACE then we want all debug from zettarepl
-            default_level = logging.DEBUG
-        elif logging.getLevelName(self.debug_level) == logging.DEBUG:
-            # Regular development level. We don't need verbose debug from zettarepl
-            default_level = logging.INFO
-        else:
-            default_level = logging.getLevelName(self.debug_level)
-        setup_logging("", "DEBUG", self.log_handler)
-        oqlh = ObserverQueueLoggingHandler(self.observer_queue)
-        oqlh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
-                                            '%Y/%m/%d %H:%M:%S'))
-        logging.getLogger("zettarepl").addHandler(oqlh)
-        for handler in logging.getLogger("zettarepl").handlers:
-            handler.addFilter(LongStringsFilter())
-            handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
+        try:
+            setproctitle.setproctitle('middlewared (zettarepl)')
+            osc.die_with_parent()
+            move_to_root_cgroups(os.getpid())
+            if logging.getLevelName(self.debug_level) == logging.TRACE:
+                # If we want TRACE then we want all debug from zettarepl
+                default_level = logging.DEBUG
+            elif logging.getLevelName(self.debug_level) == logging.DEBUG:
+                # Regular development level. We don't need verbose debug from zettarepl
+                default_level = logging.INFO
+            else:
+                default_level = logging.getLevelName(self.debug_level)
+            setup_logging("", "DEBUG", self.log_handler)
+            oqlh = ObserverQueueLoggingHandler(self.observer_queue)
+            oqlh.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
+                                                '%Y/%m/%d %H:%M:%S'))
+            logging.getLogger("zettarepl").addHandler(oqlh)
+            for handler in logging.getLogger("zettarepl").handlers:
+                handler.addFilter(LongStringsFilter())
+                handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
-        c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
-        c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging())
+            c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+            c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging())
 
-        definition = Definition.from_data(self.definition, raise_on_error=False)
-        self.observer_queue.put(DefinitionErrors(definition.errors))
+            definition = Definition.from_data(self.definition, raise_on_error=False)
+            self.observer_queue.put(DefinitionErrors(definition.errors))
 
-        self.zettarepl = create_zettarepl(definition)
-        self.zettarepl.set_observer(self._observer)
-        self.zettarepl.set_tasks(definition.tasks)
+            self.zettarepl = create_zettarepl(definition)
+            self.zettarepl.set_observer(self._observer)
+            self.zettarepl.set_tasks(definition.tasks)
 
-        start_daemon_thread(target=self._process_command_queue)
+            start_daemon_thread(target=self._process_command_queue)
+        except Exception:
+            logging.getLogger("zettarepl").error("Unhandled exception during zettarepl startup", exc_info=True)
+            self.startup_error.value = True
+            return
 
         while True:
             try:
@@ -282,13 +289,18 @@ class ZettareplService(Service):
         with self.lock:
             if not self.is_running():
                 self.queue = multiprocessing.Queue()
-                self.process = multiprocessing.Process(
-                    name="zettarepl",
-                    target=ZettareplProcess(definition, self.middleware.debug_level, self.middleware.log_handler,
-                                            self.queue, self.observer_queue)
+                startup_error = multiprocessing.Value(c_bool, False)
+                zettarepl_process = ZettareplProcess(
+                    definition,
+                    self.middleware.debug_level,
+                    self.middleware.log_handler,
+                    self.queue,
+                    self.observer_queue,
+                    startup_error,
                 )
+                self.process = multiprocessing.Process(name="zettarepl", target=zettarepl_process)
                 self.process.start()
-                start_daemon_thread(target=self._join, args=(self.process,))
+                start_daemon_thread(target=self._join, args=(self.process, startup_error))
 
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(target=self._observer_queue_reader)
@@ -315,8 +327,11 @@ class ZettareplService(Service):
 
                 self.process = None
 
-    def _join(self, process):
+    def _join(self, process, startup_error):
         process.join()
+
+        if startup_error.value:
+            return
 
         restart = False
         with self.lock:
