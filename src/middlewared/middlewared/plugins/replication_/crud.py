@@ -22,13 +22,19 @@ class ReplicationService(Service):
 
         if replication_task["direction"] == "PUSH":
             data["direction"] = "PULL"
-            data["naming_schema"] = list(
-                {pst["naming_schema"] for pst in replication_task["periodic_snapshot_tasks"]} |
-                set(replication_task["also_include_naming_schema"])
-            )
+            if replication_task["name_regex"]:
+                data["name_regex"] = replication_task["name_regex"]
+            else:
+                data["naming_schema"] = list(
+                    {pst["naming_schema"] for pst in replication_task["periodic_snapshot_tasks"]} |
+                    set(replication_task["also_include_naming_schema"])
+                )
         else:
             data["direction"] = "PUSH"
-            data["also_include_naming_schema"] = replication_task["naming_schema"]
+            if replication_task["name_regex"]:
+                data["name_regex"] = replication_task["name_regex"]
+            else:
+                data["also_include_naming_schema"] = replication_task["naming_schema"]
 
         data["source_datasets"], _ = (
             await self.middleware.call("zettarepl.reverse_source_target_datasets",
