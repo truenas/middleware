@@ -37,21 +37,21 @@ class DeviceService(Service, DeviceInfoBase):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy())
+                disks[dev.sys_name] = self.get_disk_details(dev)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
         return disks
 
     @private
-    def get_disk_details(self, dev, disk):
+    def get_disk_details(self, dev):
         size = mediasize = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
         ident = serial = self.safe_retrieval(
             dev.properties, 'ID_SERIAL_SHORT' if dev.sys_name.startswith('nvme') else 'ID_SCSI_SERIAL', ''
         )
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
 
-        disk.update({
+        disk = {
             'name': dev.sys_name,
             'sectorsize': self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True),
             'number': dev.device_number,
@@ -64,7 +64,12 @@ class DeviceService(Service, DeviceInfoBase):
             'descr': descr,
             'lunid': self.safe_retrieval(dev.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.') or None,
             'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN'),
-        })
+            'type': 'UNKNOWN',
+            'blocks': None,
+            'serial_lunid': None,
+            'rotationrate': None,
+            'stripesize': None,  # remove this? (not used)
+        }
 
         if disk['size'] and disk['sectorsize']:
             disk['blocks'] = int(disk['size'] / disk['sectorsize'])
@@ -132,14 +137,13 @@ class DeviceService(Service, DeviceInfoBase):
         return lsblk_disks
 
     def get_disk(self, name):
-        disk = self.disk_default.copy()
         context = pyudev.Context()
         try:
             block_device = pyudev.Devices.from_name(context, 'block', name)
         except pyudev.DeviceNotFoundByNameError:
             return None
 
-        return self.get_disk_details(block_device, disk)
+        return self.get_disk_details(block_device)
 
     @private
     def get_rotational_rate(self, device_path):
