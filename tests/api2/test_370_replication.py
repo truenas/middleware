@@ -13,6 +13,8 @@ from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
+from middlewared.test.integration.utils import call
+
 BASE_REPLICATION = {
     "direction": "PUSH",
     "transport": "LOCAL",
@@ -226,8 +228,14 @@ def test_create_replication(request, credentials, periodic_snapshot_tasks, req, 
     else:
         assert result.status_code == 200, result.text
 
-        result = POST(f"/replication/id/{result.json()['id']}/restore/", {
+        task_id = result.json()["id"]
+
+        result = POST(f"/replication/id/{task_id}/restore/", {
             "name": f"restore {name}",
             "target_dataset": "data/restore",
         })
         assert result.status_code == 200, result.text
+
+        call("replication.delete", result.json()["id"])
+
+        call("replication.delete", task_id)
