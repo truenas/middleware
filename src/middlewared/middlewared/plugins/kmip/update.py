@@ -1,8 +1,10 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Bool, Dict, Int, Patch, Str
-from middlewared.service import accepts, CallError, ConfigService, job, private, ValidationErrors
+from middlewared.service import accepts, CallError, ConfigService, job, private, returns, ValidationErrors
 from middlewared.validators import Port
+
+from .utils import SUPPORTED_SSL_VERSIONS
 
 
 class KMIPModel(sa.Model):
@@ -10,7 +12,7 @@ class KMIPModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     server = sa.Column(sa.String(128), default=None, nullable=True)
-    ssl_version = sa.Column(sa.String(128), default='PROTOCOL_TLSv1_2', nullable=False)
+    ssl_version = sa.Column(sa.String(128), default='PROTOCOL_TLSv1_2')
     port = sa.Column(sa.SmallInteger(), default=5696)
     certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     certificate_authority_id = sa.Column(sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True)
@@ -35,7 +37,7 @@ class KMIPService(ConfigService):
         Int('certificate_authority', null=True, required=True),
         Int('port', validators=[Port()], required=True),
         Str('server', required=True, null=True),
-        Str('ssl_version', required=True, enum=['PROTOCOL_TLSv1', 'PROTOCOL_TLSv1_1', 'PROTOCOL_TLSv1_2']),
+        Str('ssl_version', required=True, enum=SUPPORTED_SSL_VERSIONS),
     )
 
     @private
@@ -43,6 +45,14 @@ class KMIPService(ConfigService):
         for k in filter(lambda v: data[v], ('certificate', 'certificate_authority')):
             data[k] = data[k]['id']
         return data
+
+    @accepts()
+    @returns(Dict(*[Str(i, enum=[i]) for i in SUPPORTED_SSL_VERSIONS]))
+    async def ssl_version_choices(self):
+        """
+        Retrieve valid SSL version choices to be used when configuring kmip service.
+        """
+        return {k: k for k in SUPPORTED_SSL_VERSIONS}
 
     @accepts(
         Patch(
