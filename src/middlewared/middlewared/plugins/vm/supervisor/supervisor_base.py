@@ -240,7 +240,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             # Add features
             self.get_features_xml(),
             # Clock offset
-            create_element('clock', offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'),
+            self.get_clock_xml(),
             # Devices
             self.devices_xml(),
             # Command line args
@@ -278,10 +278,15 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             features.append(
                 create_element('kvm', attribute_dict={'children': [create_element('hidden', state='on')]})
             )
+
+        if self.vm_data['hyperv_enlightenments']:
+            features.append(self.get_hyperv_xml())
+
         return create_element(
             'features', attribute_dict={
                 'children': [
                     create_element('acpi'),
+                    create_element('apic'),
                     create_element('msrs', unknown='ignore'),
                 ] + features,
             }
@@ -296,6 +301,36 @@ class VMSupervisorBase(LibvirtConnectionMixin):
                 create_element('currentMemory', unit='M', attribute_dict={'text': str(self.vm_data['min_memory'])})
             )
         return memory_xml
+
+    def get_clock_xml(self):
+        timers = []
+        if self.vm_data['hyperv_enlightenments']:
+            timers = [create_element('timer', name='hypervclock', present='yes')]
+
+        return create_element(
+            'clock', attribute_dict={'children': timers},
+            offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'
+        )
+
+    # Documentation for each enlightenment can be found from:
+    # https://github.com/qemu/qemu/blob/master/docs/system/i386/hyperv.rst
+    def get_hyperv_xml(self):
+        return create_element(
+            'hyperv', attribute_dict={
+                'children': [
+                    create_element('relaxed', state='on'),
+                    create_element('vapic', state='on'),
+                    create_element('spinlocks', state='on', retries='8191'),
+                    create_element('reset', state='on'),
+                    create_element('frequencies', state='on'),
+                    # All enlightenments under vpindex depend on it.
+                    create_element('vpindex', state='on'),
+                    create_element('synic', state='on'),
+                    create_element('ipi', state='on'),
+                    create_element('tlbflush', state='on'),
+                ],
+            }
+        )
 
     def cpu_xml(self):
         features = []
