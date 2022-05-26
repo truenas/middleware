@@ -14,9 +14,10 @@ from middlewared.utils.gpu import get_gpus
 from middlewared.utils import osc
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
-RE_NVME_PRIVATE_NAMESPACE = re.compile(r'nvme[0-9]+c')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
+RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
+IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 
 
 class DeviceService(Service, DeviceInfoBase):
@@ -28,27 +29,72 @@ class DeviceService(Service, DeviceInfoBase):
         return osc.system.serial_port_choices()
 
     def get_disks(self):
-        disks = {}
-        disks_data = self.retrieve_disks_data()
+        ctx = pyudev.Context()
 
-        for dev in pyudev.Context().list_devices(subsystem='block', DEVTYPE='disk'):
-            if dev.sys_name.startswith(('sr', 'md', 'dm-', 'loop', 'zd')):
+        disks = {}
+        for dev in ctx.list_devices(subsystem='block', DEVTYPE='disk'):
+            if dev.sys_name.startswith(IGNORE) or RE_NVME_PRIV.match(dev.sys_name):
                 continue
-            if RE_NVME_PRIVATE_NAMESPACE.match(dev.sys_name):
-                continue
-            device_type = os.path.join('/sys/block', dev.sys_name, 'device/type')
-            if os.path.exists(device_type):
-                with open(device_type, 'r') as f:
-                    if f.read().strip() != '0':
-                        continue
-            # nvme drives won't have this
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy(), disks_data)
+                disks[dev.sys_name] = self.get_disk_details(dev, self.disk_default.copy())
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
         return disks
+
+    @private
+    def get_disk_details(self, dev, disk):
+        size = mediasize = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
+        ident = serial = self.safe_retrieval(
+            dev.properties, 'ID_SERIAL_SHORT' if dev.sys_name.startswith('nvme') else 'ID_SCSI_SERIAL', ''
+        )
+        model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
+
+        disk.update({
+            'name': dev.sys_name,
+            'sectorsize': self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True),
+            'number': dev.device_number,
+            'subsystem': self.safe_retrieval(dev.properties, 'SUBSYSTEM', ''),
+            'size': size,
+            'mediasize': mediasize,
+            'ident': ident,
+            'serial': serial,
+            'model': model,
+            'descr': descr,
+            'lunid': self.safe_retrieval(dev.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.') or None,
+            'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN'),
+        })
+
+        if disk['size'] and disk['sectorsize']:
+            disk['blocks'] = int(disk['size'] / disk['sectorsize'])
+
+        if (info := self.safe_retrieval(dev.attributes, 'queue/rotational', None)) and info == '1':
+            disk['type'] = 'HDD'
+            disk['rotationrate'] = self.get_rotational_rate(f'/dev/{dev.sys_name}')
+        else:
+            disk['type'] = 'SSD'
+            disk['rotationrate'] = None
+
+        if not disk['size'] and (disk['blocks'] and disk['sectorsize']):
+            disk['size'] = disk['mediasize'] = disk['blocks'] * disk['sectorsize']
+
+        if disk['serial'] and disk['lunid']:
+            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+
+        return disk
+
+    @private
+    def safe_retrieval(self, prop, key, default, asint=False):
+        value = prop.get(key)
+        if value is not None:
+            if type(value) == bytes:
+                value = value.strip().decode()
+            else:
+                value = value.strip()
+            return value if not asint else int(value)
+
+        return default
 
     @private
     def retrieve_disks_data(self):
@@ -93,7 +139,7 @@ class DeviceService(Service, DeviceInfoBase):
         except pyudev.DeviceNotFoundByNameError:
             return None
 
-        return self.get_disk_details(block_device, disk, self.retrieve_disks_data())
+        return self.get_disk_details(block_device, disk)
 
     @private
     def get_rotational_rate(self, device_path):
@@ -114,60 +160,6 @@ class DeviceService(Service, DeviceInfoBase):
             return
 
         return str(rotation_rate)
-
-    @private
-    def safe_retrieval(self, dev, key, default, asint=False):
-        value = dev.attributes.get(key)
-        if value is not None:
-            value = value.strip().decode()
-            return value if not asint else int(value)
-        return default
-
-    @private
-    def get_disk_details(self, dev, disk, disks_data):
-        size = mediasize = self.safe_retrieval(dev, 'size', None, asint=True)
-        sectorsize = self.safe_retrieval(dev, 'queue/logical_block_size', None, asint=True)
-
-        info = dict(dev.properties)
-        ident = serial = info.get('ID_SERIAL_SHORT', '')
-        model = descr = info.get('ID_MODEL')
-        lunid = info.get('ID_WWN', '').removeprefix('0x').removeprefix('eui.').removeprefix('naa.')
-        bus = info.get('ID_BUS', 'UNKNOWN')
-        subsystem = info.get('SUBSYSTEM', '')
-
-        disk.update({
-            'name': dev.sys_name,
-            'mediasize': mediasize,
-            'sectorsize': sectorsize,
-            'number': dev.device_number,
-            'subsystem': subsystem,
-            'size': size,
-            'mediasize': mediasize,
-            'ident': ident,
-            'serial': serial,
-            'model': model,
-            'descr': descr,
-            'lunid': lunid,
-            'bus': bus,
-        })
-
-        if disk['size'] and disk['sectorsize']:
-            disk['blocks'] = int(disk['size'] / disk['sectorsize'])
-
-        if (info := self.safe_retrieval(dev, 'queue/rotational', None)) and info == '1':
-            disk['type'] = 'HDD'
-            disk['rotationrate'] = self.get_rotational_rate(info['DEVNAME'])
-        else:
-            disk['type'] = 'SSD'
-            disk['rotationrate'] = None
-
-        if not disk['size'] and (disk['blocks'] and disk['sectorsize']):
-            disk['size'] = disk['mediasize'] = disk['blocks'] * disk['sectorsize']
-
-        if disk['serial'] and disk['lunid']:
-            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
-
-        return disk
 
     @private
     def logical_sector_size(self, name):
