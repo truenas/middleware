@@ -14,13 +14,9 @@ jobs:
     steps:
     - name: 'Update Sources'
       run: |
-        rm -rf ./artifacts
-        rm -rf ./build-logs
-        mkdir ./artifacts
         cd $BDIR && sudo git pull origin master
         sudo rm ${BDIR}/sources/middlewared
         cd $BDIR && sudo make checkout
-
     - uses: actions/checkout@v2
     - name: 'Link Sources'
       run: |
@@ -28,6 +24,9 @@ jobs:
         sudo ln -fs `pwd` ${BDIR}/sources/middlewared
     - name: 'Build TrueNAS'
       run: |
+        rm -rf ./artifacts
+        rm -rf ./build-logs
+        mkdir ./artifacts
         cd $BDIR && sudo make packages
         cd $BDIR && sudo make update
         cd $BDIR && sudo make iso
