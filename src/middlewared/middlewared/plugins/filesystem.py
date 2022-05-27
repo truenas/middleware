@@ -493,6 +493,7 @@ class FilesystemService(Service):
         stx = stat_x.statx(path)
         maj_min = f'{stx.stx_dev_major}:{stx.stx_dev_minor}'
         fstype = None
+        flags = []
         with open('/proc/self/mountinfo') as f:
             # example lines look like this. We use `find()` to keep the `.split()` calls to only 2 (instead of 3)
             # (minor optimization, but still one nonetheless)
@@ -502,10 +503,22 @@ class FilesystemService(Service):
             for line in f:
                 if line.find(maj_min) != -1:
                     fstype = line.rsplit(' - ')[1].split()[0]
+                    unsorted_info, mount_flags = line.rsplit(' ', 1)
+                    flags = mount_flags.strip().upper().split(',')
+
+                    offset = unsorted_info.find(flags[0].lower())
+                    other_flags = unsorted_info[offset:].split()[0]
+
+                    for f in other_flags.split(','):
+                        flag = f.upper()
+                        if flag in flags:
+                            continue
+
+                        flags.append(flag)
                     break
 
         return {
-            'flags': [],
+            'flags': flags,
             'fstype': fstype,
             'source': device,
             'dest': mountpoint.as_posix(),
