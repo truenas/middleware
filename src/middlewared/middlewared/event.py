@@ -83,8 +83,11 @@ class EventSource(metaclass=EventSourceMetabase):
 
     async def validate_arg(self):
         verrors = ValidationErrors()
-        with contextlib.suppress(json.JSONDecodeError, TypeError):
-            self.arg = json.loads(self.arg)
+        try:
+            with contextlib.suppress(json.JSONDecodeError):
+                self.arg = json.loads(self.arg)
+        except TypeError:
+            self.arg = self.ACCEPTS[0].default
 
         self.arg = clean_and_validate_arg(verrors, self.ACCEPTS[0], self.arg)
         verrors.check()
