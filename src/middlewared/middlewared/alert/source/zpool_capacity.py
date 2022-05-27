@@ -1,8 +1,19 @@
 from datetime import timedelta
-import subprocess
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
 from middlewared.alert.schedule import IntervalSchedule
+
+
+class ZpoolCapacityNoticeAlertClass(AlertClass):
+    category = AlertCategory.STORAGE
+    level = AlertLevel.NOTICE
+    title = "Pool Space Usage Is Above 70%"
+    text = (
+        "Space usage for pool \"%(volume)s\" is %(capacity)d%%. "
+        "Optimal pool performance requires used space remain below 80%%."
+    )
+
+    proactive_support = True
 
 
 class ZpoolCapacityWarningAlertClass(AlertClass):
@@ -28,46 +39,38 @@ class ZpoolCapacityCriticalAlertClass(AlertClass):
 
     proactive_support = True
 
-class ZpoolCapacityAlertSource(ThreadedAlertSource):
+
+class ZpoolCapacityAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
-    def check_sync(self):
+    async def check(self):
         alerts = []
-        pools = [
-            pool["name"]
-            for pool in self.middleware.call_sync("pool.query")
-        ] + [self.middleware.call_sync("boot.pool_name")]
-        for pool in pools:
-            proc = subprocess.Popen([
-                "zpool",
-                "list",
-                "-H",
-                "-o", "cap",
-                pool.encode("utf8"),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8")
-            data = proc.communicate()[0]
-            if proc.returncode != 0:
-                continue
+        for pool in await self.middleware.call("zfs.pool.query"):
             try:
-                cap = int(data.strip("\n").replace("%", ""))
-            except ValueError:
+                capacity = int(pool["properties"]["capacity"]["parsed"])
+            except (KeyError, ValueError):
                 continue
 
-            klass = None
-            if cap >= 90:
-                klass = ZpoolCapacityCriticalAlertClass
-            elif cap >= 80:
-                klass = ZpoolCapacityWarningAlertClass
-            if klass:
-                alerts.append(
-                    Alert(
-                        klass,
-                        {
-                            "volume": pool,
-                            "capacity": cap,
-                        },
-                        key=[pool],
+            for target_capacity, klass in [
+                (90, ZpoolCapacityCriticalAlertClass),
+                (80, ZpoolCapacityWarningAlertClass),
+                (70, ZpoolCapacityNoticeAlertClass),
+            ]:
+                if capacity >= target_capacity:
+                    alerts.append(
+                        Alert(
+                            klass,
+                            {
+                                "volume": pool["name"],
+                                "capacity": capacity,
+                            },
+                            key=[pool["name"]],
+                        )
                     )
-                )
+                    break
+                elif capacity == target_capacity - 1:
+                    # If pool capacity is 89%, 79%, 69%, leave the alert in its previous state.
+                    # In other words, don't flap alert in case if pool capacity is oscilating around threshold value.
+                    raise UnavailableException()
 
         return alerts
