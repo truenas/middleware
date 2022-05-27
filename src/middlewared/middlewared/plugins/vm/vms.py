@@ -9,6 +9,7 @@ from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
+from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -37,6 +38,9 @@ class VMModel(sa.Model):
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
     cpu_mode = sa.Column(sa.Text())
     cpu_model = sa.Column(sa.Text(), nullable=True)
+    cpuset = sa.Column(sa.Text(), default=None, nullable=True)
+    nodeset = sa.Column(sa.Text(), default=None, nullable=True)
+    pin_vcpus = sa.Column(sa.Boolean(), default=False)
     hide_from_msr = sa.Column(sa.Boolean(), default=False)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
@@ -102,6 +106,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('vcpus', default=1),
         Int('cores', default=1),
         Int('threads', default=1),
+        Str('cpuset', default=None, null=True, validators=[NumericSet()]),
+        Str('nodeset', default=None, null=True, validators=[NumericSet()]),
+        Bool('pin_vcpus', default=False),
         Int('memory', required=True),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Bool('autostart', default=True),
@@ -211,6 +218,15 @@ class VMService(CRUDService, VMSupervisorMixin):
                 verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
             elif not RE_NAME.search(data['name']):
                 verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
+
+        if data['pin_vcpus']:
+            if not data['cpuset']:
+                verrors.add(f'{schema_name}.cpuset', f'Must be specified when "{schema_name}.pin_vcpus" is set.')
+            elif len(parse_numeric_set(data['cpuset'])) != vcpus:
+                verrors.add(
+                    f'{schema_name}.pin_vcpus',
+                    f'Number of cpus in "{schema_name}.cpuset" must be equal to total number vpcus if pinning is enabled.'
+                )
 
         # TODO: Let's please implement PCI express hierarchy as the limit on devices in KVM is quite high
         # with reports of users having thousands of disks
