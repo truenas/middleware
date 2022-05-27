@@ -5,7 +5,6 @@ from time import sleep
 
 @contextlib.contextmanager
 def create_dataset(dataset, options=None, acl=None, mode=None):
-    assert "/" not in name
     perm_job = None
 
     result = POST("/pool/dataset/", {"name": dataset, **(options or {})})

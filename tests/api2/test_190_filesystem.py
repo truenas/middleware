@@ -138,6 +138,12 @@ def test_06_test_filesystem_listdir_exclude_non_mounts():
 
 
 def test_07_test_filesystem_stat_filetype():
+     """
+     This test checks that file types are properly
+     identified through the filesystem plugin in middleware.
+     There is an additional check to make sure that paths
+     in the ZFS CTL directory (.zfs) are properly flagged.
+     """
      ds_name = 'stat_test'
      snap_name = f'{ds_name}_snap1'
      path = f'/mnt/{pool_name}/{ds_name}'
@@ -189,3 +195,46 @@ def test_07_test_filesystem_stat_filetype():
          results = POST('/filesystem/stat/', f'{path}/.zfs')
          assert results.status_code == 200, results.text
          assert results.json()['is_ctldir']
+
+
+def test_08_test_fiilesystem_statfs_flags():
+     """
+     This test verifies that changing ZFS properties via
+     middleware causes mountinfo changes visible via statfs.
+     """
+     ds_name = 'statfs_test'
+     target = f'{pool_name}/{ds_name}'
+     target_url = target.replace('/', '%2F')
+     path = f'/mnt/{target}'
+
+     # tuple: ZFS property name, property value, mountinfo value
+     properties = [
+         ("readonly", "ON", "RO"),
+         ("readonly", "OFF", "RW"),
+         ("atime", "OFF", "NOATIME"),
+         ("exec", "OFF", "NOEXEC"),
+         ("acltype", "NFSV4", "NFS4ACL"),
+         ("acltype", "POSIX", "POSIXACL"),
+     ]
+
+     with create_dataset(target):
+         for p in properties:
+             # set option we're checking and make sure it's really set
+             payload = {
+                 p[0]: p[1]
+             }
+             if p[0] == 'acltype':
+                 payload.update({
+                     'aclmode': 'RESTRICTED' if p[1] == 'NFSV4' else 'DISCARD'
+                 })
+             results = PUT(f'/pool/dataset/id/{target_url}', payload)
+             assert results.status_code == 200, results.text
+             prop_out = results.json()[p[0]]
+             assert prop_out['value'] == p[1]
+
+             # check statfs results
+             results = POST('/filesystem/statfs/', path)
+             assert results.status_code == 200, results.text
+
+             mount_flags = results.json()['flags']
+             assert p[2] in mount_flags, f'{path}: ({p[2]}) not in {mount_flags}'
