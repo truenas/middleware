@@ -32,8 +32,8 @@ jobs:
         cd $BDIR && sudo make iso
     - name: 'Move Images'
       run: |
-        mv ${BDIR}/tmp/update/rootfs.squashfs ./artifacts/
-        mv ${BDIR}/tmp/release/TrueNAS*.iso ./artifacts/TrueNAS-SCALE.iso
+        cp ${BDIR}/tmp/update/rootfs.squashfs ./artifacts/
+        cp ${BDIR}/tmp/release/TrueNAS*.iso ./artifacts/TrueNAS-SCALE.iso
     - name: 'Move Log Artifacts'
       if: always()
       run: |
