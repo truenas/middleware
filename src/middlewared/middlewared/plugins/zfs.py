@@ -1,5 +1,6 @@
 import copy
 import errno
+import enum
 import os
 import subprocess
 from collections import defaultdict
@@ -16,6 +17,12 @@ from middlewared.utils.path import is_child
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 SEARCH_PATHS = ['/dev/disk/by-partuuid', '/dev']
+
+
+class ZFSCTL(enum.IntEnum):
+    # from include/os/linux/zfs/sys/zfs_ctldir.h in ZFS repo
+    INO_ROOT = 0x0000FFFFFFFFFFFF
+    INO_SNAPDIR = 0x0000FFFFFFFFFFFD
 
 
 class ZFSSetPropertyError(CallError):
