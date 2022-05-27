@@ -37,7 +37,7 @@ jobs:
     - name: 'Move Log Artifacts'
       if: always()
       run: |
-        mv ${BDIR}/logs ./build-logs
+        cp -r ${BDIR}/logs ./build-logs
     - name: 'Save Log Artifacts'
       if: always()
       uses: actions/upload-artifact@v3
