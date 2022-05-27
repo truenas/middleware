@@ -11,6 +11,7 @@ from xml.etree import ElementTree as etree
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
 from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY # noqa
+from middlewared.plugins.vm.numeric_set import parse_numeric_set
 
 from .utils import create_element
 
@@ -232,9 +233,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             # OS/boot related xml - returns an iterable
             *self.os_xml(),
             # VCPU related xml
-            create_element('vcpu', attribute_dict={
-                'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads'])
-            }),
+            self.vcpu_xml(),
             self.cpu_xml(),
             # Memory related xml
             create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
@@ -247,6 +246,11 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             # Command line args
             *self.commandline_xml(),
         ]
+
+        if self.vm_data['pin_vcpus'] and self.vm_data['cpuset']:
+            domain_children.append(self.cputune_xml())
+        if self.vm_data['nodeset']:
+            domain_children.append(self.numatune_xml())
 
         # Wire memory if PCI passthru device is configured
         #   Implicit configuration for now.
@@ -284,15 +288,47 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         )
 
     def cpu_xml(self):
+        features = []
+        if self.vm_data['cpu_mode'] == 'HOST-PASSTHROUGH':
+            features.append(create_element('cache', mode='passthrough'))
+
         return create_element(
             'cpu', attribute_dict={
                 'children': [
                     create_element(
                         'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
                         threads=str(self.vm_data['threads'])
-                    )
+                    ),
+                ] + features,
+            }, mode=self.vm_data['cpu_mode'].lower(),
+        )
+
+    def vcpu_xml(self):
+        vcpu_xml = create_element(
+            'vcpu',
+            attribute_dict={
+                'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads']),
+            },
+        )
+        if self.vm_data['cpuset']:
+            vcpu_xml.set('cpuset', self.vm_data['cpuset'])
+
+        return vcpu_xml
+
+    def cputune_xml(self):
+        vcpus = []
+        for i, cpu in enumerate(parse_numeric_set(self.vm_data['cpuset'])):
+            vcpus.append(create_element('vcpupin', vcpu=str(i), cpuset=str(cpu)))
+
+        return create_element('cputune', attribute_dict={'children': vcpus})
+
+    def numatune_xml(self):
+        return create_element(
+            'numatune', attribute_dict={
+                'children': [
+                    create_element('memory', nodeset=self.vm_data['nodeset']),
                 ]
-            }
+            },
         )
 
     def construct_xml(self):
