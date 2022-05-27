@@ -216,8 +216,9 @@ def test_011_check_dos_ro_cred_handling(request):
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file("RO_TEST", "w", "r")
     c.write(fd, b"TESTING123\n")
+    fd2 = c.create_file("RO_TEST:test_stream", "w")
+    c.write(fd2, b"TESTING456\n")
     c.disconnect()
-
 
 @pytest.mark.dependency(name="SMB1_ENABLED")
 def test_050_enable_smb1(request):
