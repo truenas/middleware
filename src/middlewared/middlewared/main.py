@@ -1290,7 +1290,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.logger.trace('Calling %r in current IO loop', name)
             return await methodobj(*prepared_call.args)
 
-        if serviceobj._config.process_pool:
+        if name not in self.mocks and serviceobj._config.process_pool:
             self.logger.trace('Calling %r in process pool', name)
             if isinstance(serviceobj, middlewared.service.CRUDService):
                 service_name, method_name = name.rsplit('.', 1)
