@@ -7,7 +7,7 @@ class BootPoolStatusAlertClass(AlertClass):
     title = "Boot Pool Is Not Healthy"
     text = "Boot pool status is %(status)s: %(status_detail)s."
 
-    hardware = True
+    proactive_support = True
 
 
 class BootPoolStatusAlertSource(AlertSource):

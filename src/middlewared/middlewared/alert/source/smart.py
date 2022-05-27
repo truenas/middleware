@@ -7,7 +7,7 @@ class SMARTAlertClass(AlertClass, OneShotAlertClass):
     title = "S.M.A.R.T. Error"
     text = "%(message)s."
 
-    hardware = True
+    proactive_support = True
 
     deleted_automatically = False
 

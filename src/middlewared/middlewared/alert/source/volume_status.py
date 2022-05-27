@@ -7,7 +7,7 @@ class VolumeStatusAlertClass(AlertClass):
     title = "Pool Status Is Not Healthy"
     text = "Pool %(volume)s state is %(state)s: %(status)s%(devices)s"
 
-    hardware = True
+    proactive_support = True
 
 
 class VolumeStatusAlertSource(AlertSource):
