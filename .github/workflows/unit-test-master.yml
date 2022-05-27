@@ -27,10 +27,16 @@ jobs:
         cd $BDIR && sudo make packages
         cd $BDIR && sudo make update
         cd $BDIR && sudo make iso
-    - name: Upload rootfs
+    - name: Build TrueNAS
+      run: |
+        rm -rf ./artifacts
+        mkdir ./artifacts
+        mv ${BDIR}/tmp/update/rootfs.squashfs ./artifacts/
+        mv ${BDIR}/tmp/release/TrueNAS*.iso ./artifacts/TrueNAS-SCALE.iso
+    - name: Upload Artifacts
       uses: koraykoska/s3-upload-github-action@master
       env:
-          FILE: /builds/scale-build/tmp/update/rootfs.squashfs
+          FILE: ./artifacts
           S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
           S3_BUCKET: $${ secrets.S3_BUCKET }} 
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
