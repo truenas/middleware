@@ -503,6 +503,15 @@ class FilesystemService(Service):
             for line in f:
                 if line.find(maj_min) != -1:
                     fstype = line.rsplit(' - ')[1].split()[0]
+
+                    """
+                    Following gets mount flags. For filesystems, there are two
+                    varieties. First are flags returned by statfs(2) on Linux which
+                    are defined in manpage. These are located in middle of mountinfo line.
+                    The second info group is at end of mountinfo string and contains
+                    superblock info returned from FS. We attempt to consilidate this
+                    disparate info here.
+                    """
                     unsorted_info, mount_flags = line.rsplit(' ', 1)
                     flags = mount_flags.strip().upper().split(',')
 
