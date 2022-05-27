@@ -16,7 +16,7 @@ class TrueNASMOldBIOSVersionAlertClass(AlertClass):
     )
 
     products = ("ENTERPRISE",)
-    hardware = True
+    proactive_support = True
 
 
 class TrueNASMOldBIOSVersionAlertSource(AlertSource):

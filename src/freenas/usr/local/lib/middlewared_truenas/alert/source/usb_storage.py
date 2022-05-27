@@ -16,7 +16,7 @@ class USBStorageAlertClass(AlertClass):
             "prevent problems with system boot or HA failover.")
 
     products = ("ENTERPRISE",)
-    hardware = True
+    proactive_support = True
 
 
 class USBStorageAlertSource(ThreadedAlertSource):

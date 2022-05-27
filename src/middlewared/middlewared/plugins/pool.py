@@ -66,7 +66,7 @@ class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
 
     expires_after = timedelta(hours=4)
 
-    hardware = True
+    proactive_support = True
 
 
 class ZFSKeyFormat(enum.Enum):

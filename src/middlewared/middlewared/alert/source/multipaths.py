@@ -7,7 +7,7 @@ class MultipathIsNotOptimalAlertClass(AlertClass):
     title = "Multipath Connection Is Not Optimal"
     text = "Multipath %s connection is not optimal. Please check disk cables."
 
-    hardware = True
+    proactive_support = True
 
 
 class MultipathsAlertSource(AlertSource):
