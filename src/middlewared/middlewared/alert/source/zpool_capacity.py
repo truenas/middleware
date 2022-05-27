@@ -14,6 +14,8 @@ class ZpoolCapacityWarningAlertClass(AlertClass):
         "Optimal pool performance requires used space remain below 80%%."
     )
 
+    proactive_support = True
+
 
 class ZpoolCapacityCriticalAlertClass(AlertClass):
     category = AlertCategory.STORAGE
@@ -24,6 +26,7 @@ class ZpoolCapacityCriticalAlertClass(AlertClass):
         "Optimal pool performance requires used space remain below 80%%."
     )
 
+    proactive_support = True
 
 class ZpoolCapacityAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))

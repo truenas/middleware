@@ -10,7 +10,7 @@ class USBStorageAlertClass(AlertClass):
     text = ('A USB storage device %r has been connected to this system. Please remove that USB device to '
             'prevent problems with system boot or HA failover.')
     products = ('SCALE_ENTERPRISE',)
-    hardware = True
+    proactive_support = True
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
