@@ -8,6 +8,8 @@ import humanfriendly
 
 from middlewared.event import EventSource
 from middlewared.plugins.interface.netif import netif
+from middlewared.schema import Dict, Float, Int
+from middlewared.validators import Range
 
 from .iostat import DiskStats
 
@@ -23,9 +25,49 @@ class RealtimeEventSource(EventSource):
     Retrieve real time statistics for CPU, network,
     virtual memory and zfs arc.
     """
-
-    INTERFACE_SPEEDS_CACHE_INTERLVAL = 300
-    INTERVAL = 2
+    ACCEPTS = Dict(
+        Int('interval', default=2, validators=[Range(min=2)]),
+    )
+    RETURNS = Dict(
+        Dict('cpu', additional_attrs=True),
+        Dict(
+            'disks',
+            Float('busy'),
+            Float('read_bytes'),
+            Float('write_bytes'),
+            Float('read_ops'),
+            Float('write_ops'),
+        ),
+        Dict('interfaces', additional_attrs=True),
+        Dict(
+            'memory',
+            Dict(
+                'classes',
+                Int('apps'),
+                Int('arc'),
+                Int('buffers'),
+                Int('cache'),
+                Int('page_tables'),
+                Int('slab_cache'),
+                Int('swap_cache'),
+                Int('unused'),
+            ),
+            Dict('extra', additional_attrs=True),
+            Dict(
+                'swap',
+                Int('total'),
+                Int('used'),
+            )
+        ),
+        Dict('virtual_memory', additional_attrs=True),
+        Dict(
+            'zfs',
+            Int('arc_max_size'),
+            Int('arc_size'),
+            Float('cache_hit_ratio'),
+        ),
+    )
+    INTERFACE_SPEEDS_CACHE_INTERVAL = 300
 
     @staticmethod
     def get_cpu_usages(cp_diff):
@@ -123,7 +165,7 @@ class RealtimeEventSource(EventSource):
         return speeds
 
     def run_sync(self):
-
+        interval = self.arg['interval']
         cp_time_last = None
         cp_times_last = None
         last_interface_stats = {}
@@ -199,7 +241,7 @@ class RealtimeEventSource(EventSource):
             data['cpu']['temperature'] = {k: 2732 + int(v * 10) for k, v in data['cpu']['temperature_celsius'].items()}
 
             # Interface related statistics
-            if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERLVAL:
+            if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERVAL:
                 last_interface_speeds.update({
                     'time': time.monotonic(),
                     'speeds': self.get_interface_speeds(),
@@ -243,12 +285,12 @@ class RealtimeEventSource(EventSource):
                 # means this is the first time disk stats are being gathered so
                 # get the results but don't set anything yet since we need to
                 # calculate the difference between the iterations
-                last_disk_stats, new = DiskStats(self.INTERVAL, last_disk_stats).read()
+                last_disk_stats, new = DiskStats(interval, last_disk_stats).read()
             else:
-                last_disk_stats, data['disks'] = DiskStats(self.INTERVAL, last_disk_stats).read()
+                last_disk_stats, data['disks'] = DiskStats(interval, last_disk_stats).read()
 
             self.send_event('ADDED', fields=data)
-            time.sleep(self.INTERVAL)
+            time.sleep(interval)
 
 
 def setup(middleware):
