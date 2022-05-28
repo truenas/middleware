@@ -206,6 +206,10 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
               dict(schedule={"hour": "0"}, lifetime_value=30, lifetime_unit="DAY"),
               dict(schedule={"hour": "0", "dow": "1"}, lifetime_value=1, lifetime_unit="YEAR"),
           ]), None),
+
+    # name_regex
+    (dict(name_regex="manual-.+"), None),
+    (dict(direction="PULL", name_regex="manual-.+"), None),
 ])
 def test_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
     depends(request, ["pool_04"], scope="session")
