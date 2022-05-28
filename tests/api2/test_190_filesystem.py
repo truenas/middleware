@@ -10,7 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from functions import POST, SSH_TEST
+from functions import POST, PUT, SSH_TEST
 from auto_config import dev_test, pool_name, ip, user, password
 from middlewared.test.integration.assets.filesystem import directory
 from utils import create_dataset
