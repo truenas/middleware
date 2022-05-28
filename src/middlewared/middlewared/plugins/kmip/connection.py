@@ -17,7 +17,14 @@ class KMIPServerMixin:
         self.middleware.call_sync('network.general.will_perform_activity', 'kmip')
 
         data = data or {}
-        mapping = {'hostname': 'server', 'port': 'port', 'cert': 'cert', 'key': 'cert_key', 'ca': 'ca'}
+        mapping = {
+            'hostname': 'server',
+            'port': 'port',
+            'cert': 'cert',
+            'key': 'cert_key',
+            'ca': 'ca',
+            'ssl_version': 'ssl_version'
+        }
         try:
             with ProxyKmipClient(**{k: data[v] for k, v in mapping.items() if data.get(v)}) as conn:
                 yield conn
