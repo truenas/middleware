@@ -46,11 +46,11 @@ jobs:
         path: ./build-logs
         retention-days: 14
     - name: 'Upload Images'
-      uses: koraykoska/s3-upload-github-action@master
-      env:
-          FILE: ./artifacts
-          S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
-          S3_BUCKET: $${ secrets.S3_BUCKET }} 
-          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-
+      uses: lovellfelix/minio-deploy-action@v1
+      with:
+        endpoint: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
+        access_key: ${{ secrets.S3_ACCESS_KEY_ID }}
+        secret_key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+        bucket: $${ secrets.S3_BUCKET }} 
+        source_dir: './artifacts'
+        target_dir: '/'
