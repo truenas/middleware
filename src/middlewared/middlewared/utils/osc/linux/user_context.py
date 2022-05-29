@@ -48,20 +48,20 @@ def run_with_user_context(func: Callable, user_details: dict, func_args: Optiona
 
 
 def run_command_with_user_context(
-    commandline: str, user: str, callback: Optional[Callable] = None, disable_output: bool = False,
+    commandline: str, user: str, callback: Optional[Callable] = None, output: bool = True,
     timeout: Optional[int] = None,
 ) -> subprocess.CompletedProcess:
-    if not disable_output and not callback:
+    if output and not callback:
         raise ValueError("Callback must be specified when output is desired")
 
-    kwargs = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL} if disable_output else {
-        "stdout": subprocess.PIPE, "stderr": subprocess.DEVNULL
+    kwargs = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL} if not output else {
+        "stdout": subprocess.PIPE, "stderr": subprocess.STDOUT
     }
-
-    p = subprocess.Popen(["sudo", "-H", "-u", user, "sh", "-c", commandline], **kwargs)
+    timeout_args = ["timeout", "-k", str(timeout), str(timeout)] if timeout else []
+    p = subprocess.Popen(timeout_args + ["sudo", "-H", "-u", user, "sh", "-c", commandline], **kwargs)
 
     stdout = b""
-    if not disable_output:
+    if output:
         while True:
             line = p.stdout.readline()
             if not line:
@@ -70,12 +70,5 @@ def run_command_with_user_context(
             stdout += line
             callback(line)
 
-    try:
-        p.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        p.kill()
-        return_code = 137
-    else:
-        return_code = p.returncode
-
-    return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=return_code)
+    p.communicate(timeout=timeout)
+    return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=p.returncode)
