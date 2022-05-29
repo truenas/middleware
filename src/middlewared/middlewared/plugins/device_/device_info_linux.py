@@ -1,8 +1,6 @@
 import os
 import pyudev
 import re
-import subprocess
-import json
 
 import libsgio
 
@@ -12,28 +10,26 @@ from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils import osc
+from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 
 RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
 RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
 RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
-IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 
 
 class DeviceService(Service, DeviceInfoBase):
 
     DISK_ROTATION_ERROR_LOG_CACHE = set()
-    HOST_TYPE = None
 
     def get_serials(self):
         return osc.system.serial_port_choices()
 
     def get_disks(self):
         ctx = pyudev.Context()
-
         disks = {}
         for dev in ctx.list_devices(subsystem='block', DEVTYPE='disk'):
-            if dev.sys_name.startswith(IGNORE) or RE_NVME_PRIV.match(dev.sys_name):
+            if dev.sys_name.startswith(DISKS_TO_IGNORE) or RE_NVME_PRIV.match(dev.sys_name):
                 continue
 
             try:
@@ -75,7 +71,7 @@ class DeviceService(Service, DeviceInfoBase):
         if disk['size'] and disk['sectorsize']:
             disk['blocks'] = int(disk['size'] / disk['sectorsize'])
 
-        if (info := self.safe_retrieval(dev.attributes, 'queue/rotational', None)) and info == '1':
+        if self.safe_retrieval(dev.attributes, 'queue/rotational', None) == '1':
             disk['type'] = 'HDD'
             disk['rotationrate'] = self.get_rotational_rate(f'/dev/{dev.sys_name}')
         else:
@@ -101,41 +97,6 @@ class DeviceService(Service, DeviceInfoBase):
             return value if not asint else int(value)
 
         return default
-
-    @private
-    def retrieve_disks_data(self):
-
-        # some disk information will fail to be retrived
-        # based on what type of guest this is. For example,
-        # if this a qemu/kvm guest, then rotation_rate is
-        # expected to fail since th ioctl to query that
-        # information is invalid. So cache the result here
-        # so that we don't have to continually call this
-        # method for every disk on the system
-        if self.HOST_TYPE is None:
-            self.HOST_TYPE = self.middleware.call_sync('system.dmidecode_info')['system-manufacturer']
-
-        lsblk_disks = {}
-        disks_cp = subprocess.run(
-            ['lsblk', '-OJdb'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            errors='ignore'
-        )
-        if not disks_cp.returncode:
-            try:
-                lsblk_disks = json.loads(disks_cp.stdout)['blockdevices']
-                lsblk_disks = {i['path']: i for i in lsblk_disks}
-            except Exception as e:
-                self.logger.error(
-                    'Failed parsing lsblk information with error: %s', e
-                )
-        else:
-            self.logger.error(
-                'Failed running lsblk command with error: %s', disks_cp.stderr.decode()
-            )
-
-        return lsblk_disks
 
     def get_disk(self, name):
         context = pyudev.Context()
