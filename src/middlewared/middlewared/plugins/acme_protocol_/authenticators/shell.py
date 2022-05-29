@@ -71,11 +71,11 @@ class ShellAuthenticator(Authenticator):
     def _perform(self, domain, validation_name, validation_content):
         run_command_with_user_context(
             f'{self.script} set {domain} {validation_name} {validation_content}', self.user,
-            disable_output=True, timeout=self.timeout
+            output=False, timeout=self.timeout
         )
 
     def _cleanup(self, domain, validation_name, validation_content):
         run_command_with_user_context(
             f'{self.script} unset {domain} {validation_name} {validation_content}', self.user,
-            disable_output=True, timeout=self.timeout
+            output=False, timeout=self.timeout
         )
