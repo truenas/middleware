@@ -70,5 +70,5 @@ def run_command_with_user_context(
             stdout += line
             callback(line)
 
-    p.communicate(timeout=timeout)
+    p.communicate()
     return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=p.returncode)
