@@ -33,14 +33,15 @@ class DeviceService(Service, DeviceInfoBase):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev, is_nvme=dev.sys_name.startswith('nvme'))
+                disks[dev.sys_name] = self.get_disk_details(dev)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
         return disks
 
     @private
-    def get_disk_details(self, dev, is_nvme=False):
+    def get_disk_details(self, dev):
+        is_nvme = dev.sys_name.startswith('nvme')
         size = mediasize = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
         ident = serial = self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT' if is_nvme else 'ID_SCSI_SERIAL', '')
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
