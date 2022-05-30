@@ -67,6 +67,7 @@ class ShellAuthenticator(Authenticator):
                 verrors.add('user', f'{data["user"]!r} user does not has permission to execute the script')
 
         verrors.check()
+        return data
 
     def _perform(self, domain, validation_name, validation_content):
         run_command_with_user_context(
