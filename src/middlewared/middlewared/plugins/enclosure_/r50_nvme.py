@@ -63,5 +63,5 @@ class EnclosureService(Service):
             return []
 
         ctx = Context()
-        method = self.map_r50 if prod.endswith('R50') else self.map_r50b
+        method = self.map_r50 if prod == 'TRUENAS-R50' else self.map_r50b
         return self.middleware.call_sync('enclosure.fake_nvme_enclosure', *method(ctx))
