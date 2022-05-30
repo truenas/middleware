@@ -12,9 +12,6 @@ from middlewared.utils.gpu import get_gpus
 from middlewared.utils import osc
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 
-RE_DISK_SERIAL = re.compile(r'Unit serial number:\s*(.*)')
-RE_SERIAL = re.compile(r'state.*=\s*(\w*).*io (.*)-(\w*)\n.*', re.S | re.A)
-RE_UART_TYPE = re.compile(r'is a\s*(\w+)')
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
 
 
