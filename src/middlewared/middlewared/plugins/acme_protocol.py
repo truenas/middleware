@@ -244,7 +244,7 @@ class DNSAuthenticatorService(CRUDService):
             )
         else:
             authenticator_obj = await self.middleware.call('acme.dns.authenticator.get_authenticator_internal', data)
-            await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
+            data['attributes'] = await authenticator_obj.validate_credentials(self.middleware, data['attributes'])
 
         verrors.check()
 

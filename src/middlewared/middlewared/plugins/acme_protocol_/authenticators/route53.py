@@ -32,7 +32,7 @@ class Route53Authenticator(Authenticator):
     @accepts(SCHEMA)
     @skip_arg(count=1)
     async def validate_credentials(middleware, data):
-        pass
+        return data
 
     def _perform(self, domain, validation_name, validation_content):
         return self._change_txt_record('UPSERT', validation_name, validation_content)

@@ -50,6 +50,7 @@ class CloudFlareAuthenticator(Authenticator):
             verrors.add('api_token', 'Attribute must be specified when Global API Key is not specified.')
 
         verrors.check()
+        return data
 
     def _perform(self, domain, validation_name, validation_content):
         self.get_cloudflare_object().add_txt_record(domain, validation_name, validation_content, 600)
