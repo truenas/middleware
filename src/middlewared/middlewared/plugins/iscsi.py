@@ -8,6 +8,7 @@ from middlewared.service import CallError, CRUDService, private, ServiceChangeMi
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.path import is_child
+from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
 import bidict
@@ -833,34 +834,20 @@ class iSCSITargetExtentService(SharingService):
         """
         diskchoices = {}
 
-        zvol_query_filters = [('type', '=', 'DISK')]
-
-        used_zvols = [
-            i['path'] for i in (await self.query(zvol_query_filters))
-        ]
-
         zvols = await self.middleware.call(
-            'pool.dataset.query', [
-                ('type', '=', 'VOLUME'),
-                ('locked', '=', False)
-            ]
+            'zfs.dataset.unlocked_zvols_fast',
+            [['attachment', '=', None]], {},
+            ['SIZE', 'RO', 'ATTACHMENT']
         )
-        zvol_list = []
-        for zvol in zvols:
-            zvol_name = zvol['name']
-            zvol_size = zvol['volsize']['value']
-            zvol_list.append(zvol_name)
-            key = os.path.relpath(zvol_name_to_path(zvol_name), '/dev')
-            if key not in used_zvols:
-                diskchoices[key] = f'{zvol_name} ({zvol_size})'
 
-        zfs_snaps = await self.middleware.call(
-            'zfs.snapshot.query',
-            [['dataset', 'in', [zvol['name'] for zvol in zvols]]],
-            {'select': ['name']},
-        )
-        for snap in zfs_snaps:
-            diskchoices[os.path.relpath(zvol_name_to_path(snap['name']), '/dev')] = f'{snap["name"]} [ro]'
+        for zvol in zvols:
+            key = os.path.relpath(zvol['path'], '/dev')
+            if zvol['ro']:
+                description = f'{zvol["name"]} [ro]'
+            else:
+                description = f'{zvol["name"]} ({format_size(zvol["size"])})'
+
+            diskchoices[key] = description
 
         return diskchoices
 
