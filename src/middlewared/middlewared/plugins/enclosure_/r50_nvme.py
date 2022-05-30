@@ -25,12 +25,12 @@ class EnclosureService(Service):
             2,  # r50b has 2 rear nvme
             {},
         ]
-        apci_handles = (b'\\_SB_.PC03.BR3A', b'\\_SB_.PC00.RP01.PXSX')
+        acpi_handles = (b'\\_SB_.PC03.BR3A', b'\\_SB_.PC00.RP01.PXSX')
         mapped = info[-1]
         num_of_nvme_slots = info[-2]
 
         for i in ctx.list_devices(subsystem='acpi'):
-            if (path := i.attributes.get('path')) and path in apci_handles:
+            if (path := i.attributes.get('path')) and path in acpi_handles:
                 try:
                     phys_node = Devices.from_path(ctx, i.sys_path + '/physical_node')
                 except DeviceNotFoundByNameError:
