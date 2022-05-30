@@ -4,7 +4,7 @@ import re
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.utils import osc, run
@@ -55,14 +55,17 @@ class VMDeviceService(CRUDService):
         """
         Returns disk choices for device type "DISK".
         """
-        return {
-            zvol_name_to_path(vol['id']): vol['id']
-            for vol in await self.middleware.call(
-                'pool.dataset.query', [['type', '=', 'VOLUME'], ['locked', '=', False]], {
-                    'extra': {'properties': ['encryption', 'keystatus']}
-                }
-            )
-        }
+        out = {}
+        zvols = await self.middleware.call(
+            'zfs.dataset.unlocked_zvols_fast',
+            [["OR", [["attachment", "=", None], ["attachment.method", "=", "vm.devices.query"]]]],
+            {}, ['ATTACHMENT']
+        )
+
+        for zvol in zvols:
+            out[zvol['path']] = zvol['name']
+
+        return out
 
     @private
     async def create_resource(self, device, old=None):
