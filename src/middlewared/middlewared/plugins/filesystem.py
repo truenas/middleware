@@ -293,9 +293,12 @@ class FilesystemService(Service):
         path should be specified as `CLUSTER:smb01/data`.
         """
         path = pathlib.Path(self.resolve_cluster_path(_path))
+        if not path.is_absolute():
+            raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
+
         st = self.stat_entry_impl(path, None)
         if st is None:
-            raise CallError(f'Path {path} not found', errno.ENOENT)
+            raise CallError(f'Path {_path} not found', errno.ENOENT)
 
         realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
 
