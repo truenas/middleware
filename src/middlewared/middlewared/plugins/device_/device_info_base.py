@@ -43,7 +43,7 @@ class DeviceInfoBase(ServicePartBase):
         raise NotImplementedError()
 
     @private
-    async def get_disks(self):
+    async def get_disks(self, get_partitions=False):
         raise NotImplementedError()
 
     @private

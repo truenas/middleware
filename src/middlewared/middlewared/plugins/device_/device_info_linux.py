@@ -23,7 +23,7 @@ class DeviceService(Service, DeviceInfoBase):
     def get_serials(self):
         return osc.system.serial_port_choices()
 
-    def get_disks(self):
+    def get_disks(self, get_partitions=False):
         ctx = pyudev.Context()
         disks = {}
         for dev in ctx.list_devices(subsystem='block', DEVTYPE='disk'):
@@ -31,7 +31,7 @@ class DeviceService(Service, DeviceInfoBase):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev)
+                disks[dev.sys_name] = self.get_disk_details(dev, get_partitions)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
