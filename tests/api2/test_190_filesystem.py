@@ -13,6 +13,7 @@ sys.path.append(apifolder)
 from functions import POST, SSH_TEST
 from auto_config import dev_test, pool_name, ip, user, password
 from middlewared.test.integration.assets.filesystem import directory
+from utils import create_dataset
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -134,3 +135,57 @@ def test_06_test_filesystem_listdir_exclude_non_mounts():
         results = POST('/filesystem/listdir/', {'path': mnt})
         assert results.status_code == 200, results.text
         assert not any(i['name'] == randir for i in results.json()), f'{randir} should not be listed'
+
+
+def test_07_test_filesystem_stat_filetype():
+     ds_name = 'stat_test'
+     snap_name = f'{ds_name}_snap1'
+     path = f'/mnt/{pool_name}/{ds_name}'
+     targets = ['file', 'directory', 'symlink', 'other']
+     cmds = [
+         f'mkdir {path}/directory',
+         f'touch {path}/file',
+         f'ln -s {path}/file {path}/symlink',
+         f'mkfifo {path}/other'
+     ]
+
+     with create_dataset(f'{pool_name}/{ds_name}'):
+         results = SSH_TEST(' && '.join(cmds), user, password, ip)
+         assert results['result'] is True, str(results)
+
+         for x in targets:
+             target = f'{path}/{x}'
+             results = POST('/filesystem/stat/', target)
+             assert results.status_code == 200, f'{target}: {results.text}'
+             statout = results.json()
+
+             assert statout['type'] == x.upper(), str(statout)
+             assert not statout['is_ctldir']
+
+         result = POST("/zfs/snapshot/", {
+             'dataset': f'{pool_name}/{ds_name}',
+             'name': snap_name,
+             'recursive': False,
+         })
+         assert result.status_code == 200, result.text
+
+         for x in targets:
+             target = f'{path}/.zfs/snapshot/{snap_name}/{x}'
+             results = POST('/filesystem/stat/', target)
+             assert results.status_code == 200, f'{target}: {results.text}'
+             statout = results.json()
+
+             assert statout['type'] == x.upper(), str(statout)
+             assert statout['is_ctldir']
+
+         results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot/{snap_name}')
+         assert results.status_code == 200, results.text
+         assert results.json()['is_ctldir']
+
+         results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot')
+         assert results.status_code == 200, results.text
+         assert results.json()['is_ctldir']
+
+         results = POST('/filesystem/stat/', f'{path}/.zfs')
+         assert results.status_code == 200, results.text
+         assert results.json()['is_ctldir']
