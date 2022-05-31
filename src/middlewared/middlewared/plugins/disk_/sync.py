@@ -1,8 +1,11 @@
+import re
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 from middlewared.utils.threading import start_daemon_thread
+
+RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -73,6 +76,24 @@ class DiskService(Service, ServiceChangeMixin):
         return number_of_disks
 
     @private
+    def ident_to_dev(self, ident, sys_disks):
+        if not ident or not (search := RE_IDENT.search(ident)):
+            return
+
+        tp = search.group('type')
+        value = search.group('value')
+        mapping = {'uuid': 'uuid', 'devicename': 'name', 'serial_lunid': 'serial_lunid', 'serial': 'serial'}
+        if tp not in mapping:
+            return
+
+        for disk, info in sys_disks.items():
+            if tp == 'uuid':
+                for part in filter(lambda x: x['partition_uuid'] == value, info['parts']):
+                    return part['disk']
+            elif info.get(mapping[tp]) == value:
+                return disk
+
+    @private
     @accepts()
     @job(lock='disk.sync_all')
     def sync_all(self, job):
@@ -106,7 +127,7 @@ class DiskService(Service, ServiceChangeMixin):
 
             original_disk = disk.copy()
 
-            name = self.middleware.call_sync('disk.identifier_to_device', disk['disk_identifier'], sys_disks)
+            name = self.ident_to_dev(disk['disk_identifier'], sys_disks)
             if (
                     not name or
                     name in seen_disks or
