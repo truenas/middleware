@@ -38,6 +38,14 @@ class ValidationError(CallException):
         errname = get_errname(self.errno)
         return f'[{errname}] {self.attribute}: {self.errmsg}'
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, ValidationError) and
+            self.attribute == other.attribute and
+            self.errmsg == other.errmsg and
+            self.errno == other.errno
+        )
+
 
 class ValidationErrors(CallException):
     """
