@@ -188,39 +188,41 @@ class DiskService(Service, ServiceChangeMixin):
             seen_disks[name] = disk
 
         qs = None
-        for name in sys_disks:
-            if name not in seen_disks:
-                disk_identifier = self.middleware.call_sync('disk.device_to_identifier', name, sys_disks)
-                if qs is None:
-                    qs = self.middleware.call_sync('datastore.query', 'storage.disk')
+        progress_percent = 70
+        for name in filter(lambda x: x not in seen_disks, sys_disks):
+            progress_percent += increment
+            disk_identifier = self.dev_to_ident(name, sys_disks, uuids)
+            if qs is None:
+                qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
-                if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
-                    new = False
-                    disk = disk[0]
-                else:
-                    new = True
-                    disk = {'disk_identifier': disk_identifier}
-                original_disk = disk.copy()
-                disk['disk_name'] = name
-                self._map_device_disk_to_db(disk, sys_disks[name])
+            if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
+                new = False
+                disk = disk[0]
+                job.set_progress(progress_percent, f'Updating disk {name!r}')
+            else:
+                new = True
+                disk = {'disk_identifier': disk_identifier}
+                job.set_progress(progress_percent, f'Syncing new disk {name!r}')
 
-                if not new:
-                    # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
-                    # when lots of drives are present
-                    if self._disk_changed(disk, original_disk):
-                        self.middleware.call_sync(
-                            'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
-                        )
-                        changed.add(disk['disk_identifier'])
-                else:
-                    self.middleware.call_sync('datastore.insert', 'storage.disk', disk, {'send_events': False})
+            original_disk = disk.copy()
+            disk['disk_name'] = name
+            self._map_device_disk_to_db(disk, sys_disks[name])
+
+            if not new:
+                if self._disk_changed(disk, original_disk):
+                    self.middleware.call_sync(
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
+                    )
                     changed.add(disk['disk_identifier'])
+            else:
+                self.middleware.call_sync('datastore.insert', 'storage.disk', disk, options)
+                changed.add(disk['disk_identifier'])
 
-                try:
-                    self.middleware.call_sync('enclosure.sync_disk', disk['disk_identifier'], encs)
-                except Exception:
-                    self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
-                                                 disk['disk_identifier'], exc_info=True)
+            try:
+                self.middleware.call_sync('enclosure.sync_disk', disk['disk_identifier'], encs)
+            except Exception:
+                self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
+                                             disk['disk_identifier'], exc_info=True)
 
         if changed or deleted:
             self.middleware.call_sync('disk.restart_services_after_sync')
