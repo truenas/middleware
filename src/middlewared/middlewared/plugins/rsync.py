@@ -31,6 +31,7 @@ import enum
 import glob
 import os
 import shlex
+import tempfile
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
@@ -266,8 +267,10 @@ class RsyncTaskModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     rsync_path = sa.Column(sa.String(255))
-    rsync_remotehost = sa.Column(sa.String(120))
-    rsync_remotemodule = sa.Column(sa.String(120))
+    rsync_remotehost = sa.Column(sa.String(120), nullable=True)
+    rsync_remoteport = sa.Column(sa.SmallInteger(), nullable=True)
+    rsync_remotemodule = sa.Column(sa.String(120), nullable=True)
+    rsync_ssh_credentials_id = sa.Column(sa.ForeignKey('system_keychaincredential.id'), index=True, nullable=True)
     rsync_desc = sa.Column(sa.String(120))
     rsync_minute = sa.Column(sa.String(100), default="00")
     rsync_hour = sa.Column(sa.String(100), default="*")
@@ -288,7 +291,6 @@ class RsyncTaskModel(sa.Model):
     rsync_mode = sa.Column(sa.String(20), default='module')
     rsync_remotepath = sa.Column(sa.String(255))
     rsync_direction = sa.Column(sa.String(10), default='PUSH')
-    rsync_remoteport = sa.Column(sa.SmallInteger(), default=22)
     rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
 
 
@@ -305,8 +307,10 @@ class RsyncTaskService(TaskPathService):
 
     ENTRY = Patch(
         'rsync_task_create', 'rsync_task_entry',
+        ('rm', {'name': 'ssh_credentials'}),
         ('rm', {'name': 'validate_rpath'}),
         ('add', Int('id')),
+        ('add', Dict('ssh_credentials', null=True, additional_attrs=True)),
         ('add', Bool('locked')),
         ('add', Dict('job', null=True, additional_attrs=True)),
     )
@@ -367,99 +371,119 @@ class RsyncTaskService(TaskPathService):
 
         await self.validate_path_field(data, schema, verrors)
 
-        remote_host = data.get('remotehost')
-        if not remote_host:
-            verrors.add(f'{schema}.remotehost', 'Please specify a remote host')
-
         data['extra'] = ' '.join(data['extra'])
         try:
             shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
         except ValueError as e:
             verrors.add(f'{schema}.extra', f'Please specify valid value: {e}')
 
-        mode = data.get('mode')
-        if not mode:
-            verrors.add(f'{schema}.mode', 'This field is required')
+        if data['mode'] == 'MODULE':
+            if not data['remotehost']:
+                verrors.add(f'{schema}.remotehost', 'This field is required')
 
-        remote_module = data.get('remotemodule')
-        if mode == 'MODULE' and not remote_module:
-            verrors.add(f'{schema}.remotemodule', 'This field is required')
+            if not data['remotemodule']:
+                verrors.add(f'{schema}.remotemodule', 'This field is required')
 
-        if mode == 'SSH':
-            remote_port = data.get('remoteport')
-            if not remote_port:
-                verrors.add(f'{schema}.remoteport', 'This field is required')
+        if data['mode'] == 'SSH':
+            connect_kwargs = None
+            if data['ssh_credentials']:
+                try:
+                    ssh_credentials = await self.middleware.call(
+                        'keychaincredential.get_of_type',
+                        data['ssh_credentials'],
+                        'SSH_CREDENTIALS',
+                    )
+                except CallError as e:
+                    verrors.add(f'{schema}.ssh_credentials', e.errmsg)
+                else:
+                    ssh_keypair = await self.middleware.call(
+                        'keychaincredential.get_of_type',
+                        ssh_credentials['attributes']['private_key'],
+                        'SSH_KEY_PAIR',
+                    )
+                    connect_kwargs = {
+                        "host": ssh_credentials['attributes']['host'],
+                        "port": ssh_credentials['attributes']['port'],
+                        'username': ssh_credentials['attributes']['username'],
+                        'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
+                        'known_hosts': None,
+                    }
+            else:
+                if not data['remotehost']:
+                    verrors.add(f'{schema}.remotehost', 'This field is required')
+
+                if not data['remoteport']:
+                    verrors.add(f'{schema}.remoteport', 'This field is required')
+
+                search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*')
+                exclude_from_search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*pub')
+                key_files = set(glob.glob(search)) - set(glob.glob(exclude_from_search))
+                if not key_files:
+                    verrors.add(
+                        f'{schema}.user',
+                        'In order to use rsync over SSH you need a user'
+                        ' with a private key (DSA/ECDSA/RSA) set up in home dir.'
+                    )
+                else:
+                    for file in set(key_files):
+                        # file holds a private key and it's permissions should be 600
+                        if os.stat(file).st_mode & 0o077 != 0:
+                            verrors.add(
+                                f'{schema}.user',
+                                f'Permissions {str(oct(os.stat(file).st_mode & 0o777))[2:]} for {file} are too open. Please '
+                                f'correct them by running chmod 600 {file}'
+                            )
+                            key_files.discard(file)
+
+                    if key_files:
+                        if '@' in data['remotehost']:
+                            remote_username, remote_host = data['remotehost'].rsplit('@', 1)
+                        else:
+                            remote_username = username
+                            remote_host = data['remotehost']
+
+                        connect_kwargs = {
+                            'host': remote_host,
+                            'port': data['remoteport'],
+                            'username': remote_username,
+                            'client_keys': key_files,
+                            'known_hosts': None,
+                        }
 
             remote_path = data.get('remotepath')
             if not remote_path:
                 verrors.add(f'{schema}.remotepath', 'This field is required')
 
-            search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*')
-            exclude_from_search = os.path.join(user['pw_dir'], '.ssh', 'id_[edr]*pub')
-            key_files = set(glob.glob(search)) - set(glob.glob(exclude_from_search))
-            if not key_files:
-                verrors.add(
-                    f'{schema}.user',
-                    'In order to use rsync over SSH you need a user'
-                    ' with a private key (DSA/ECDSA/RSA) set up in home dir.'
-                )
-            else:
-                for file in glob.glob(search):
-                    if '.pub' not in file:
-                        # file holds a private key and it's permissions should be 600
-                        if os.stat(file).st_mode & 0o077 != 0:
-                            verrors.add(
-                                f'{schema}.user',
-                                f'Permissions {oct(os.stat(file).st_mode & 0o777)} for {file} are too open. Please '
-                                f'correct them by running chmod 600 {file}'
-                            )
-
-            if(
-                data['enabled'] and data['validate_rpath'] and remote_path and remote_host and remote_port
-            ):
-                if '@' in remote_host:
-                    remote_username, remote_host = remote_host.rsplit('@', 1)
-                else:
-                    remote_username = username
-
+            if data['enabled'] and data['validate_rpath'] and connect_kwargs:
                 try:
                     async with await asyncio.wait_for(
-                        asyncssh.connect(
-                            remote_host, port=remote_port, username=remote_username,
-                            client_keys=key_files, known_hosts=None
-                        ), timeout=5,
+                        asyncssh.connect(**connect_kwargs), timeout=5,
                     ) as conn:
                         await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
                 except asyncio.TimeoutError:
-
                     verrors.add(
                         f'{schema}.remotehost',
                         'SSH timeout occurred. Remote path cannot be validated.'
                     )
-
                 except OSError as e:
-
                     if e.errno == 113:
                         verrors.add(
                             f'{schema}.remotehost',
-                            f'Connection to the remote host {remote_host} on port {remote_port} failed.'
+                            f'Connection to the remote host {connect_kwargs["host"]} on port {connect_kwargs["port"]} '
+                            'failed.'
                         )
                     else:
                         verrors.add(
                             f'{schema}.remotehost',
                             e.__str__()
                         )
-
                 except asyncssh.DisconnectError as e:
-
                     verrors.add(
                         f'{schema}.remotehost',
-                        f'Disconnect Error[ error code {e.code} ] was generated when trying to '
-                        f'communicate with remote host {remote_host} and remote user {remote_username}.'
+                        f'Disconnect Error[ error code {e.code} ] was generated when trying to communicate with remote '
+                        f'host {connect_kwargs["host"]} and remote user {connect_kwargs["username"]}.'
                     )
-
                 except asyncssh.ProcessError as e:
-
                     if e.code == '1':
                         verrors.add(
                             f'{schema}.remotepath',
@@ -473,9 +497,7 @@ class RsyncTaskService(TaskPathService):
                             f'Connection to Remote Host was successful but failed to verify '
                             f'Remote Path. {e.__str__()}'
                         )
-
                 except asyncssh.Error as e:
-
                     if e.__class__.__name__ in e.__str__():
                         exception_reason = e.__str__()
                     else:
@@ -484,11 +506,6 @@ class RsyncTaskService(TaskPathService):
                         f'{schema}.remotepath',
                         f'Remote Path could not be validated. An exception was raised. {exception_reason}'
                     )
-            elif data['enabled'] and data['validate_rpath']:
-                verrors.add(
-                    f'{schema}.remotepath',
-                    'Remote path could not be validated because of missing fields'
-                )
 
         data.pop('validate_rpath', None)
 
@@ -502,10 +519,11 @@ class RsyncTaskService(TaskPathService):
         'rsync_task_create',
         Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
         Str('user', required=True),
-        Str('remotehost'),
-        Int('remoteport'),
         Str('mode', enum=['MODULE', 'SSH'], default='MODULE'),
-        Str('remotemodule'),
+        Str('remotehost', null=True, default=None),
+        Int('remoteport', null=True, default=None),
+        Str('remotemodule', null=True, default=None),
+        Int('ssh_credentials', null=True, default=None),
         Str('remotepath'),
         Bool('validate_rpath', default=True),
         Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
@@ -537,6 +555,10 @@ class RsyncTaskService(TaskPathService):
         "username@remote_host" format should be used.
 
         `mode` represents different operating mechanisms for Rsync i.e Rsync Module mode / Rsync SSH mode.
+
+        In SSH mode, if `ssh_credentials` (a keychain credential of `SSH_CREDENTIALS` type) is specified then it is used
+        to connect to the remote host. If it is not specified, then keys in `user`'s .ssh directory are used.
+        `remotehost` and `remoteport` are not used in this case.
 
         `remotemodule` is the name of remote module, this attribute should be specified when `mode` is set to MODULE.
 
@@ -616,6 +638,8 @@ class RsyncTaskService(TaskPathService):
         old.pop('job')
 
         new = old.copy()
+        if new['ssh_credentials']:
+            new['ssh_credentials'] = new['ssh_credentials']['id']
         new.update(data)
 
         verrors, new = await self.validate_rsync_task(new, 'rsync_task_update')
@@ -644,55 +668,94 @@ class RsyncTaskService(TaskPathService):
         return res
 
     @private
-    async def commandline(self, id):
+    @contextlib.contextmanager
+    def commandline(self, id):
         """
         Helper method to generate the rsync command avoiding code duplication.
         """
-        rsync = await self.get_instance(id)
+        rsync = self.middleware.call_sync('rsynctask.get_instance', id)
         path = shlex.quote(rsync['path'])
 
-        line = ['rsync']
-        for name, flag in (
-            ('archive', '-a'),
-            ('compress', '-zz'),
-            ('delayupdates', '--delay-updates'),
-            ('delete', '--delete-delay'),
-            ('preserveattr', '-X'),
-            ('preserveperm', '-p'),
-            ('recursive', '-r'),
-            ('times', '-t'),
-        ):
-            if rsync[name]:
-                line.append(flag)
-        if rsync['extra']:
-            line.append(' '.join(rsync['extra']))
+        with contextlib.ExitStack() as exit_stack:
+            line = ['rsync']
+            for name, flag in (
+                ('archive', '-a'),
+                ('compress', '-zz'),
+                ('delayupdates', '--delay-updates'),
+                ('delete', '--delete-delay'),
+                ('preserveattr', '-X'),
+                ('preserveperm', '-p'),
+                ('recursive', '-r'),
+                ('times', '-t'),
+            ):
+                if rsync[name]:
+                    line.append(flag)
+            if rsync['extra']:
+                line.append(' '.join(rsync['extra']))
 
-        # Do not use username if one is specified in host field
-        # See #5096 for more details
-        if '@' in rsync['remotehost']:
-            remote = rsync['remotehost']
-        else:
-            remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
+            # Do not use username if one is specified in host field
+            # See #5096 for more details
+            if '@' in rsync['remotehost']:
+                remote = rsync['remotehost']
+            else:
+                remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
-        if rsync['mode'] == 'MODULE':
-            module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
-            if rsync['direction'] != 'PUSH':
-                module_args.reverse()
-            line += module_args
-        else:
-            line += [
-                '-e',
-                f'"ssh -p {rsync["remoteport"]} -o BatchMode=yes -o StrictHostKeyChecking=yes"'
-            ]
-            path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
-            if rsync['direction'] != 'PUSH':
-                path_args.reverse()
-            line += path_args
+            if rsync['mode'] == 'MODULE':
+                module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
+                if rsync['direction'] != 'PUSH':
+                    module_args.reverse()
+                line += module_args
+            else:
+                if rsync['ssh_credentials']:
+                    credentials = rsync['ssh_credentials']['attributes']
+                    key_pair = self.middleware.call_sync(
+                        'keychaincredential.get_of_type',
+                        credentials['private_key'],
+                        'SSH_KEY_PAIR',
+                    )
 
-        if rsync['quiet']:
-            line += ['>', '/dev/null', '2>&1']
+                    remote = f'"{credentials["username"]}"@{credentials["host"]}'
+                    port = credentials['port']
 
-        return ' '.join(line)
+                    user = self.middleware.call_sync('dscache.get_uncached_user', rsync['user'])
+
+                    private_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile('w'))
+                    os.fchmod(private_key_file.fileno(), 0o600)
+                    os.fchown(private_key_file.fileno(), user['pw_uid'], user['pw_gid'])
+                    private_key_file.write(key_pair['attributes']['private_key'])
+                    private_key_file.flush()
+
+                    host_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile('w'))
+                    os.fchmod(host_key_file.fileno(), 0o600)
+                    os.fchown(host_key_file.fileno(), user['pw_uid'], user['pw_gid'])
+                    host_key_file.write('\n'.join([
+                        (
+                            f'{credentials["host"]} {host_key}' if credentials['port'] == 22
+                            else f'[{credentials["host"]}]:{credentials["port"]} {host_key}'
+                        )
+                        for host_key in credentials['remote_host_key'].split("\n")
+                        if host_key.strip() and not host_key.strip().startswith("#")
+                    ]))
+                    host_key_file.flush()
+
+                    extra_args = f'-i {private_key_file.name} -o UserKnownHostsFile={host_key_file.name}'
+                else:
+                    port = rsync['remoteport']
+                    extra_args = ''
+
+                line += [
+                    '-e',
+                    f'"ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}"'
+                ]
+                path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
+                if rsync['direction'] != 'PUSH':
+                    path_args.reverse()
+                line += path_args
+
+            if rsync['quiet']:
+                line += ['>', '/dev/null', '2>&1']
+
+            yield ' '.join(line)
 
     @item_method
     @accepts(Int('id'))
@@ -711,11 +774,10 @@ class RsyncTaskService(TaskPathService):
             self.middleware.call_sync('rsynctask.generate_locked_alert', id)
             return
 
-        commandline = self.middleware.call_sync('rsynctask.commandline', id)
-
-        cp = run_command_with_user_context(
-            commandline, rsync['user'], lambda v: job.logs_fd.write(v)
-        )
+        with self.commandline(id) as commandline:
+            cp = run_command_with_user_context(
+                commandline, rsync['user'], lambda v: job.logs_fd.write(v)
+            )
 
         for klass in ('RsyncSuccess', 'RsyncFailed') if not rsync['quiet'] else ():
             self.middleware.call_sync('alert.oneshot_delete', klass, rsync['id'])

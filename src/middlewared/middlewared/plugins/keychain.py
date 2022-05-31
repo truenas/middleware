@@ -3,7 +3,6 @@ import enum
 import errno
 import os
 import re
-import string
 import subprocess
 import tempfile
 import urllib.parse
@@ -182,6 +181,22 @@ class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelega
         })
 
 
+class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
+    unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
+
+    async def query(self, id):
+        return await self.middleware.call("rsynctask.query", [["ssh_credentials.id", "=", id]])
+
+    async def get_title(self, row):
+        return f"Rsync task for {row['path']!r}"
+
+    async def unbind(self, row):
+        await self.middleware.call("rsynctask.update", row["id"], {"enabled": False})
+        await self.middleware.call("datastore.update", "tasks.rsync", row["id"], {
+            "rsync_ssh_credentials": None,
+        })
+
+
 class SSHCredentials(KeychainCredentialType):
     name = "SSH_CREDENTIALS"
     title = "SSH credentials"
@@ -198,6 +213,7 @@ class SSHCredentials(KeychainCredentialType):
 
     used_by_delegates = [
         ReplicationTaskSSHCredentialsUsedByDelegate,
+        RsyncTaskSSHCredentialsUsedByDelegate,
     ]
 
 
