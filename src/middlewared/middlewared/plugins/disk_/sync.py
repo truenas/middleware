@@ -56,19 +56,7 @@ class DiskService(Service, ServiceChangeMixin):
         self.middleware.call_sync('kmip.reset_sed_disk_password', ident, kmip_uuid)
 
     @private
-    @accepts()
-    @job(lock='disk.sync_all')
-    def sync_all(self, job):
-        """
-        Synchronize all disks with the cache in database.
-        """
-        # Skip sync disks on standby node
-        if self.middleware.call_sync('failover.licensed'):
-            if self.middleware.call_sync('failover.status') == 'BACKUP':
-                return
-
-        sys_disks = self.middleware.call_sync('device.get_disks')
-
+    def log_disk_info(self, sys_disks):
         number_of_disks = len(sys_disks)
         if number_of_disks <= 25:
             # output logging information to middlewared.log in case we sync disks
@@ -82,13 +70,35 @@ class DiskService(Service, ServiceChangeMixin):
         else:
             self.logger.info('Found %d disks', number_of_disks)
 
+        return number_of_disks
+
+    @private
+    @accepts()
+    @job(lock='disk.sync_all')
+    def sync_all(self, job):
+        """
+        Synchronize all disks with the cache in database.
+        """
+        # Skip sync disks on standby node
+        if self.middleware.call_sync('failover.licensed'):
+            if self.middleware.call_sync('failover.status') == 'BACKUP':
+                return
+
+        job.set_progress(10, 'Enumerating system disks')
+        sys_disks = self.middleware.call_sync('device.get_disks', True)
+        number_of_disks = self.log_disk_info(sys_disks)
+
+        job.set_progress(20, 'Enumerating disk information from database')
+        db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
+
+        uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
+        options = {'send_events': False, 'ha_sync': False}
         seen_disks = {}
+        serials = []
         changed = set()
         deleted = set()
         encs = self.middleware.call_sync('enclosure.query')
-        for disk in (
-            self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
-        ):
+        for disk in db_disks:
             original_disk = disk.copy()
 
             name = self.middleware.call_sync('disk.identifier_to_device', disk['disk_identifier'], sys_disks)
