@@ -64,8 +64,8 @@ hardware_func()
 	lsblk -o NAME,ALIGNMENT,MIN-IO,OPT-IO,PHY-SEC,LOG-SEC,ROTA,SCHED,RQ-SIZE,RA,WSAME,HCTL,PATH
 	section_footer
 
-	section_header "Disk information (device.retrieve_disks_data)"
-	midclt call device.retrieve_disks_data | jq
+	section_header "Disk information (device.get_disks)"
+	midclt call device.get_disks | jq
 	section_footer
 
 	section_header "sensors -j"
