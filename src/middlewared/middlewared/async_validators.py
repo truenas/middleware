@@ -4,18 +4,27 @@ import socket
 from pathlib import Path
 
 from middlewared.validators import IpAddress
+from middlewared.plugins.zfs_.utils import ZFSCTL
 
 
 async def check_path_resides_within_volume(verrors, middleware, name, path):
 
     # we need to make sure the sharing service is configured within the zpool
-    rp = os.path.realpath(path)
+    st = await middleware.call("filesystem.stat", path)
+    rp = st["realpath"]
     vol_names = [vol["vol_name"] for vol in await middleware.call("datastore.query", "storage.volume")]
     vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
     if not path.startswith("/mnt/") or not any(
         os.path.commonpath([parent]) == os.path.commonpath([parent, rp]) for parent in vol_paths
     ):
         verrors.add(name, "The path must reside within a pool mount point")
+
+    if st['inode'] in (ZFSCTL.INO_ROOT, ZFSCTL.INO_SNAPDIR):
+        verrors.add(name,
+                    "The ZFS control directory (.zfs) and snapshot directory (.zfs/snapshot) "
+                    "are not permitted paths. If a snapshot within this directory must "
+                    "be accessed through the path-based API, then it should be called "
+                    "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'.")
 
     # we must also make sure that any sharing service does not point to
     # anywhere within the ".glusterfs" dataset since the clients need
@@ -26,12 +35,14 @@ async def check_path_resides_within_volume(verrors, middleware, name, path):
     rp = Path(rp)
     for check_path, svc_name in (('.glusterfs', 'Gluster'), ('ix-applications', 'Applications')):
         in_use = False
-        if rp.is_mount() and rp.name == check_path:
+        if st['is_mountpoint'] and rp.name == check_path:
             in_use = True
         else:
             # subtract 2 here to remove the '/' and 'mnt' parents
             for i in range(0, len(rp.parents) - 2):
-                if rp.parents[i].is_mount() and rp.parents[i].name == check_path:
+                p = rp.parents[i]
+                p_ismnt = await middleware.run_in_thread(p.is_mount)
+                if p_ismnt and p.name == check_path:
                     in_use = True
                     break
         if in_use:
