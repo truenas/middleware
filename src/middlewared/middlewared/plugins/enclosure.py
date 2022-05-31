@@ -9,6 +9,7 @@ from collections import OrderedDict
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.service_exception import MatchNotFound
+from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 
@@ -1193,9 +1194,11 @@ async def zfs_events_hook(middleware, data):
 
 
 async def udev_block_devices_hook(middleware, data):
-    if data.get('SUBSYSTEM') != 'block' or data.get('DEVTYPE') != 'disk' or data['SYS_NAME'].startswith((
-        'sr', 'md', 'dm-', 'loop'
-    )):
+    if data.get('SUBSYSTEM') != 'block':
+        return
+    elif data.get('DEVTYPE') != 'disk':
+        return
+    elif data['SYS_NAME'].startswith(DISKS_TO_IGNORE):
         return
 
     if data['ACTION'] in ['add', 'remove']:

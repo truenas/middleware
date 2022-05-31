@@ -1,5 +1,7 @@
 from asyncio import ensure_future
 
+from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
+
 
 async def added_disk(middleware, disk_name):
     await middleware.call('disk.sync', disk_name)
@@ -16,9 +18,11 @@ async def remove_disk(middleware, disk_name):
 
 
 async def udev_block_devices_hook(middleware, data):
-    if data.get('SUBSYSTEM') != 'block' or data.get('DEVTYPE') != 'disk' or data['SYS_NAME'].startswith((
-        'dm-', 'loop', 'md', 'sr', 'zd',
-    )):
+    if data.get('SUBSYSTEM') != 'block':
+        return
+    elif data.get('DEVTYPE') != 'disk':
+        return
+    elif data['SYS_NAME'].startswith(DISKS_TO_IGNORE):
         return
 
     if data['ACTION'] == 'add':
