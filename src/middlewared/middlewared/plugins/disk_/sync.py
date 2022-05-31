@@ -97,8 +97,13 @@ class DiskService(Service, ServiceChangeMixin):
         serials = []
         changed = set()
         deleted = set()
+        increment = round((40 - 20) / number_of_disks, 3)  # 20% of the total percentage
+        progress_percent = 40
         encs = self.middleware.call_sync('enclosure.query')
-        for disk in db_disks:
+        for idx, disk in enumerate(db_disks, start=1):
+            progress_percent += increment
+            job.set_progress(progress_percent, f'Syncing disk {idx}/{number_of_disks}')
+
             original_disk = disk.copy()
 
             name = self.middleware.call_sync('disk.identifier_to_device', disk['disk_identifier'], sys_disks)
