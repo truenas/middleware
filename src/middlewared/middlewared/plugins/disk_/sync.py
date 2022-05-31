@@ -182,8 +182,9 @@ class DiskService(Service, ServiceChangeMixin):
             try:
                 self.middleware.call_sync('enclosure.sync_disk', disk['disk_identifier'], encs)
             except Exception:
-                self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
-                                             disk['disk_identifier'], exc_info=True)
+                self.logger.error(
+                    'Unhandled exception in enclosure.sync_disk for %r', disk['disk_identifier'], exc_info=True
+                )
 
             seen_disks[name] = disk
 
@@ -221,8 +222,9 @@ class DiskService(Service, ServiceChangeMixin):
             try:
                 self.middleware.call_sync('enclosure.sync_disk', disk['disk_identifier'], encs)
             except Exception:
-                self.middleware.logger.error('Unhandled exception in enclosure.sync_disk for %r',
-                                             disk['disk_identifier'], exc_info=True)
+                self.logger.error(
+                    'Unhandled exception in enclosure.sync_disk for %r', disk['disk_identifier'], exc_info=True
+                )
 
         if changed or deleted:
             self.middleware.call_sync('disk.restart_services_after_sync')
