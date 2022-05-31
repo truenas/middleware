@@ -94,6 +94,24 @@ class DiskService(Service, ServiceChangeMixin):
                 return disk
 
     @private
+    def dev_to_ident(self, name, sys_disks, uuids):
+        if name not in sys_disks:
+            return ''
+        else:
+            dev = sys_disks[name]
+
+        if dev['serial_lunid']:
+            return f'{{serial_lunid}}{dev["serial_lunid"]}'
+        elif dev['serial']:
+            return f'{{serial}}{dev["serial"]}'
+
+        for disk, info in sys_disks.items():
+            for part in filter(lambda x: x['partition_type'] in uuids, info['parts']):
+                return f'{{uuid}}{part["partition_uuid"]}'
+
+        return f'{{devicename}}{name}'
+
+    @private
     @accepts()
     @job(lock='disk.sync_all')
     def sync_all(self, job):
@@ -131,7 +149,7 @@ class DiskService(Service, ServiceChangeMixin):
             if (
                     not name or
                     name in seen_disks or
-                    self.middleware.call_sync('disk.device_to_identifier', name) != disk['disk_identifier']
+                    self.dev_to_ident(name, sys_disks, uuids) != disk['disk_identifier']
             ):
                 # If we cant translate the identifier to a device, give up
                 if not disk['disk_expiretime']:
