@@ -133,7 +133,6 @@ class DiskService(Service, ServiceChangeMixin):
         uuids = self.middleware.call_sync('disk.get_valid_zfs_partition_type_uuids')
         options = {'send_events': False, 'ha_sync': False}
         seen_disks = {}
-        serials = []
         changed = set()
         deleted = set()
         increment = round((40 - 20) / number_of_disks, 3)  # 20% of the total percentage
@@ -146,16 +145,13 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
 
             name = self.ident_to_dev(disk['disk_identifier'], sys_disks)
-            if (
-                    not name or
-                    name in seen_disks or
-                    self.dev_to_ident(name, sys_disks, uuids) != disk['disk_identifier']
-            ):
-                # If we cant translate the identifier to a device, give up
+            if not name or self.dev_to_ident(name, sys_disks, uuids) != disk['disk_identifier']:
+                # 1. can't translate identitifer to device
+                # 2. or can't translate device to identifier
                 if not disk['disk_expiretime']:
                     disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
                     self.middleware.call_sync(
-                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
+                        'datastore.update', 'storage.disk', disk['disk_identifier'], disk, options
                     )
                     changed.add(disk['disk_identifier'])
                 elif disk['disk_expiretime'] < datetime.utcnow():
@@ -165,9 +161,7 @@ class DiskService(Service, ServiceChangeMixin):
                             target=self.kmip_reset_sed_disk_password,
                             args=(disk['disk_identifier'], disk['disk_kmip_uuid'],)
                         )
-                    self.middleware.call_sync(
-                        'datastore.delete', 'storage.disk', disk['disk_identifier'], {'send_events': False}
-                    )
+                    self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)
                     deleted.add(disk['disk_identifier'])
                 continue
             else:
@@ -177,16 +171,12 @@ class DiskService(Service, ServiceChangeMixin):
             if name in sys_disks:
                 self._map_device_disk_to_db(disk, sys_disks[name])
 
-            # If for some reason disk is not identified as a system disk
-            # mark it to expire.
             if name not in sys_disks and not disk['disk_expiretime']:
+                # If for some reason disk is not identified as a system disk mark it to expire.
                 disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=self.DISK_EXPIRECACHE_DAYS)
-            # Do not issue unnecessary updates, they are slow on HA systems and cause severe boot delays
-            # when lots of drives are present
+
             if self._disk_changed(disk, original_disk):
-                self.middleware.call_sync(
-                    'datastore.update', 'storage.disk', disk['disk_identifier'], disk, {'send_events': False}
-                )
+                self.middleware.call_sync('datastore.update', 'storage.disk', disk['disk_identifier'], disk, options)
                 changed.add(disk['disk_identifier'])
 
             try:
