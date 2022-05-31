@@ -119,9 +119,9 @@ class DiskService(Service, ServiceChangeMixin):
         Synchronize all disks with the cache in database.
         """
         # Skip sync disks on standby node
-        if self.middleware.call_sync('failover.licensed'):
-            if self.middleware.call_sync('failover.status') == 'BACKUP':
-                return
+        licensed = self.middleware.call_sync('failover.licensed')
+        if licensed and self.middleware.call_sync('failover.status') == 'BACKUP':
+            return
 
         job.set_progress(10, 'Enumerating system disks')
         sys_disks = self.middleware.call_sync('device.get_disks', True)
@@ -227,13 +227,29 @@ class DiskService(Service, ServiceChangeMixin):
                 )
 
         if changed or deleted:
+            job.set_pgoress(85, 'Restarting necessary services')
             self.middleware.call_sync('disk.restart_services_after_sync')
-            disks = {i['identifier']: i for i in self.middleware.call_sync('disk.query', [], {'prefix': 'disk_'})}
+
+            # we query the db again since we've made changes to it
+            job.set_progress(95, 'Emitting disk events')
+            disks = {i['disk_identifier']: i for i in self.middleware.call_sync('datastore.query', 'storage.disk')}
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
+        if licensed:
+            job.set_progress(97, 'Synchronizing database to standby controller')
+            # there could be, literally, > 1k database changes in this method on large systems
+            # so we've forgoed queuing up the number of db changes in the HA journal thread
+            # in favor of just sync'ing the database to the remote node after we're done. The
+            # (potential) speed improvement this provides is substantial
+            try:
+                self.middleware.call_sync('failover.send_database')
+            except Exception:
+                self.logger.warning('Failed to sync database to standby controller', exc_info=True)
+
+        job.set_progress(100, 'Syncing all disks complete')
         return 'OK'
 
     def _disk_changed(self, disk, original_disk):
