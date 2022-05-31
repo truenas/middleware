@@ -17,7 +17,6 @@ depends_on = None
 
 
 def upgrade():
-    conn = op.get_bind()
     with op.batch_alter_table('system_kmip', schema=None) as batch_op:
         batch_op.add_column(
             sa.Column('ssl_version', sa.String(length=128), server_default='PROTOCOL_TLSv1_2')
