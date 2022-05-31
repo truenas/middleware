@@ -14,26 +14,22 @@ class ActiveDirectoryService(Service):
         service = "activedirectory"
 
     @private
-    async def net_ads_setspn(self, spn_list):
-        """
-        Only automatically add NFS SPN entries on domain join
-        if kerberized nfsv4 is enabled.
-        """
+    async def net_keytab_add_update_ads(self, service_class):
         if not (await self.middleware.call('nfs.config'))['v4_krb']:
             return False
 
-        for spn in spn_list:
-            cmd = [
-                SMBCmd.NET.value,
-                '--use-kerberos', 'required',
-                '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-                'ads', 'setspn',
-                'add', spn,
-            ]
-            netads = await run(cmd, check=False)
-            if netads.returncode != 0:
-                raise CallError('failed to set spn entry '
-                                f'[{spn}]: {netads.stdout.decode().strip()}')
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'keytab',
+            'add_update_ads', service_class
+        ]
+
+        netads = await run(cmd, check=False)
+        if netads.returncode != 0:
+            raise CallError('failed to set spn entry '
+                            f'[{service_class}]: {netads.stdout.decode().strip()}')
 
         return True
 
@@ -97,17 +93,11 @@ class ActiveDirectoryService(Service):
                                 "may only be manipulated when the Active Directory Service is Healthy. "
                                 f"Current state is: {ad_state}")
 
-        ok = await self.net_ads_setspn([
-            f'nfs/{netbiosname.upper()}.{domain}',
-            f'nfs/{netbiosname.upper()}'
-        ])
+        ok = await self.net_keytab_add_update_ads('nfs')
         if not ok:
             return False
 
-        await self.change_trust_account_pw()
-        if update_keytab:
-            await self.middleware.call('kerberos.keytab.store_samba_keytab')
-
+        await self.middleware.call('kerberos.keytab.store_samba_keytab')
         return True
 
     @private
