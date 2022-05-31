@@ -71,7 +71,7 @@ class DeviceService(Service):
 
         if self.safe_retrieval(dev.attributes, 'queue/rotational', None) == '1':
             disk['type'] = 'HDD'
-            disk['rotationrate'] = self.get_rotational_rate(f'/dev/{dev.sys_name}')
+            disk['rotationrate'] = self._get_rotation_rate(f'/dev/{dev.sys_name}')
         else:
             disk['type'] = 'SSD'
             disk['rotationrate'] = None
