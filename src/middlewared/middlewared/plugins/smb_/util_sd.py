@@ -242,7 +242,10 @@ class SMBService(Service):
         else:
             out['sid'] = await self.middleware.call('idmap.unixid_to_sid', {"id": unixid, "id_type": id_type})
             if out['sid'] is not None:
-                out['name'] = await self.middleware.call('idmap.sid_to_name', out['sid'])
+                try:
+                    out['name'] = (await self.middleware.call('idmap.sid_to_name', out['sid']))['name']
+                except CallError:
+                    out['name'] = None
 
         return out
 
