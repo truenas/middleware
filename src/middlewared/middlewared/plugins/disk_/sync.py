@@ -226,11 +226,11 @@ class DiskService(Service, ServiceChangeMixin):
                 )
 
         if changed or deleted:
-            job.set_progress(85, 'Restarting necessary services')
+            job.set_progress(92, 'Restarting necessary services')
             self.middleware.call_sync('disk.restart_services_after_sync')
 
             # we query the db again since we've made changes to it
-            job.set_progress(95, 'Emitting disk events')
+            job.set_progress(94, 'Emitting disk events')
             disks = {i['disk_identifier']: i for i in self.middleware.call_sync('datastore.query', 'storage.disk')}
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
@@ -238,7 +238,7 @@ class DiskService(Service, ServiceChangeMixin):
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
         if licensed:
-            job.set_progress(97, 'Synchronizing database to standby controller')
+            job.set_progress(96, 'Synchronizing database to standby controller')
             # there could be, literally, > 1k database changes in this method on large systems
             # so we've forgoed queuing up the number of db changes in the HA journal thread
             # in favor of just sync'ing the database to the remote node after we're done. The
