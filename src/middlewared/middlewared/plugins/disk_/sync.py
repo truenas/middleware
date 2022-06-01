@@ -104,9 +104,8 @@ class DiskService(Service, ServiceChangeMixin):
             return f'{{serial_lunid}}{dev["serial_lunid"]}'
         elif dev['serial']:
             return f'{{serial}}{dev["serial"]}'
-
-        for disk, info in sys_disks.items():
-            for part in filter(lambda x: x['partition_type'] in uuids, info['parts']):
+        elif dev['parts']:
+            for part in filter(lambda x: x['partition_type'] in uuids, dev['parts']):
                 return f'{{uuid}}{part["partition_uuid"]}'
 
         return f'{{devicename}}{name}'
@@ -227,7 +226,7 @@ class DiskService(Service, ServiceChangeMixin):
                 )
 
         if changed or deleted:
-            job.set_pgoress(85, 'Restarting necessary services')
+            job.set_progress(85, 'Restarting necessary services')
             self.middleware.call_sync('disk.restart_services_after_sync')
 
             # we query the db again since we've made changes to it
