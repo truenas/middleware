@@ -20,6 +20,7 @@ from io import BytesIO
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.zfs import ZFSSetPropertyError
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name, validate_pool_name
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron,
     Dict, EnumMixin, Int, List,
@@ -698,6 +699,8 @@ class PoolService(CRUDService):
 
         if await self.middleware.call('pool.query', [('name', '=', data['name'])]):
             verrors.add('pool_create.name', 'A pool with this name already exists.', errno.EEXIST)
+        elif not validate_pool_name(data['name']):
+            verrors.add('pool_create.name', 'Invalid pool name', errno.EINVAL)
 
         if not data['topology']['data']:
             verrors.add('pool_create.topology.data', 'At least one data vdev is required')
@@ -3160,6 +3163,8 @@ class PoolDatasetService(CRUDService):
 
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
+        elif not validate_dataset_name(data['name']):
+            verrors.add('pool_dataset_create.name', 'Invalid dataset name')
         else:
             parent_name = data['name'].rsplit('/', 1)[0]
             if data['create_ancestors']:
