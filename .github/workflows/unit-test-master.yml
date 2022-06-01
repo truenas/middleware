@@ -12,30 +12,45 @@ jobs:
   build:
     runs-on: self-hosted
     steps:
-    - name: Update Sources
+    - name: 'Update Sources'
       run: |
-        cd $BDIR && make checkout
+        cd $BDIR && sudo git pull origin master
+        sudo rm ${BDIR}/sources/middlewared
+        cd $BDIR && sudo make checkout
     - uses: actions/checkout@v2
-    - name: Link Sources
+    - name: 'Link Sources'
       run: |
-        ln -fs `pwd` ${BDIR}/sources/middlewared
-    - name: Build TrueNAS
+        sudo rm -rf ${BDIR}/sources/middlewared
+        sudo ln -fs `pwd` ${BDIR}/sources/middlewared
+    - name: 'Build TrueNAS'
       run: |
-        cd $BDIR && make iso
-    - name: Upload ISO
-      uses: koraykoska/s3-upload-github-action@master
-      env:
-          FILE: ${BDIR}/tmp/release/TrueNAS*.iso
-          S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
-          S3_BUCKET: $${ secrets.S3_BUCKET }} 
-          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-
-    - name: Upload rootfs
-      uses: koraykoska/s3-upload-github-action@master
-      env:
-          FILE: ${BDIR}/tmp/update/rootfs.squashfs
-          S3_ENDPOINT: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
-          S3_BUCKET: $${ secrets.S3_BUCKET }} 
-          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+        rm -rf ./artifacts
+        rm -rf ./build-logs
+        mkdir ./artifacts
+        cd $BDIR && sudo make packages
+        cd $BDIR && sudo make update
+        cd $BDIR && sudo make iso
+    - name: 'Move Images'
+      run: |
+        cp ${BDIR}/tmp/update/rootfs.squashfs ./artifacts/
+        cp ${BDIR}/tmp/release/TrueNAS*.iso ./artifacts/TrueNAS-SCALE.iso
+    - name: 'Move Log Artifacts'
+      if: always()
+      run: |
+        cp -r ${BDIR}/logs ./build-logs
+    - name: 'Save Log Artifacts'
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'Build Logs'
+        path: ./build-logs
+        retention-days: 14
+    - name: 'Upload Images'
+      uses: lovellfelix/minio-deploy-action@v1
+      with:
+        endpoint: $${ secrets.S3_HOST }}:${{ secrets.S3_PORT }}
+        access_key: ${{ secrets.S3_ACCESS_KEY_ID }}
+        secret_key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+        bucket: $${ secrets.S3_BUCKET }} 
+        source_dir: './artifacts'
+        target_dir: '/'
