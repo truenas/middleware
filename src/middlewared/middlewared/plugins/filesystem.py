@@ -19,7 +19,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
 from middlewared.plugins.filesystem_.acl_base import ACLType
-from middlewared.plugins.zfs import ZFSCTL
+from middlewared.plugins.zfs_.utils import ZFSCTL
 
 
 class FilesystemService(Service):
