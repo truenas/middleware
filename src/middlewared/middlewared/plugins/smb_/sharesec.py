@@ -281,8 +281,13 @@ class ShareSec(CRUDService):
 
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for s in shares:
-            rc_info = (list(filter(lambda x: s['name'] == x['share_name'], rc)))[0]
-            rc_acl = ' '.join([(await self._ae_to_string(i)) for i in rc_info['share_acl']])
+            share_name = s['name'] if not s['home'] else 'homes'
+            rc_info = filter_list(rc, [('share_name', '=', share_name)])
+            if not rc_info:
+                self.logger.debug("%s: no share_info.tdb entry", share_name)
+                continue
+
+            rc_acl = ' '.join([(await self._ae_to_string(i)) for i in rc_info[0]['share_acl']])
             if rc_acl != s['share_acl']:
                 self.logger.debug('updating stored ACL on %s to %s', s['name'], rc_acl)
                 await self.middleware.call(
