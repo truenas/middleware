@@ -41,7 +41,6 @@ the opinion or recommendation of iXsystems.
 """
 SAMPLE_AUX = [
     'follow symlinks = yes ',
-    'wide links = yes',
     'veto files = /.windows/.mac/.zfs/',
     '# needed explicitly for each share to prevent default being set',
     'admin users = MY_ACCOUNT',
