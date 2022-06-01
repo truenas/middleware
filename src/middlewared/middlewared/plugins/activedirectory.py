@@ -1073,7 +1073,7 @@ class ActiveDirectoryService(ConfigService):
         return neterr.JOINED
 
     @private
-    async def _net_ads_setspn(self, spn_list):
+    async def net_keytab_add_update_ads(self, service_class):
         """
         Only automatically add NFS SPN entries on domain join
         if kerberized nfsv4 is enabled.
@@ -1082,18 +1082,18 @@ class ActiveDirectoryService(ConfigService):
         if not (await self.middleware.call('nfs.config'))['v4_krb']:
             return False
 
-        for spn in spn_list:
-            cmd = [
-                SMBCmd.NET.value,
-                '--use-kerberos', 'required',
-                '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-                'ads', 'setspn',
-                'add', spn,
-            ]
-            netads = await run(cmd, check=False)
-            if netads.returncode != 0:
-                raise CallError('failed to set spn entry '
-                                f'[{spn}]: {netads.stdout.decode().strip()}')
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            'ads', 'keytab',
+            'add_update_ads', service_class
+        ]
+
+        netads = await run(cmd, check=False)
+        if netads.returncode != 0:
+            raise CallError('failed to set spn entry '
+                            f'[{service_class}]: {netads.stdout.decode().strip()}')
 
         return True
 
@@ -1152,14 +1152,9 @@ class ActiveDirectoryService(ConfigService):
         if ad is None:
             ad = await self.config()
 
-        ok = await self._net_ads_setspn([
-            f'nfs/{ad["netbiosname"].upper()}.{ad["domainname"]}',
-            f'nfs/{ad["netbiosname"].upper()}'
-        ])
+        ok = await self.net_keytab_add_update_ads('nfs')
         if not ok:
             return False
-
-        await self.change_trust_account_pw()
 
         return True
 
