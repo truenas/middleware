@@ -1182,7 +1182,7 @@ class GroupService(CRUDService):
         await self.__common_validation(verrors, data, 'group_create')
         verrors.check()
 
-        if not data.get('gid'):
+        if data.get('gid') is None:
             data['gid'] = await self.get_next_gid()
 
         group = data.copy()
