@@ -63,18 +63,20 @@ class ShareSec(CRUDService):
 
             acl_entry.update(m.groupdict())
             if (options.get('resolve_sids', True)) is True:
-                wb = await run([SMBCmd.WBINFO.value, '--sid-to-name', acl_entry['ae_who_sid']], check=False)
-                if wb.returncode == 0:
-                    wb_ret = wb.stdout.decode()[:-3].split('\\')
-                    sidtypeint = int(wb.stdout.decode().strip()[-1:])
+                try:
+                    who = await self.middleware.call('idmap.sid_to_name', acl_entry['ae_who_sid'])
+                    if '\\' in who['name']:
+                        domain, name = who['name'].split('\\')
+                    else:
+                        domain = who['name']
+                        name = None
+
                     acl_entry['ae_who_name'] = {'domain': None, 'name': None, 'sidtype': SIDType.NONE}
-                    acl_entry['ae_who_name']['domain'] = wb_ret[0]
-                    acl_entry['ae_who_name']['name'] = wb_ret[1]
-                    acl_entry['ae_who_name']['sidtype'] = SIDType(sidtypeint).name
-                else:
-                    self.logger.debug(
-                        'Failed to resolve SID (%s) to name: (%s)' % (acl_entry['ae_who_sid'], wb.stderr.decode())
-                    )
+                    acl_entry['ae_who_name']['domain'] = domain
+                    acl_entry['ae_who_name']['name'] = name
+                    acl_entry['ae_who_name']['sidtype'] = SIDType(who['type']).name
+                except CallError as e:
+                    self.logger.debug('%s: failed to resolve SID to name: %s', acl_entry['ae_who_sid'], e)
 
             parsed_share_sd['share_acl'].append(acl_entry)
 
@@ -297,8 +299,7 @@ class ShareSec(CRUDService):
         Use query-filters to search the SMB share ACLs present on server.
         """
         share_acls = await self._view_all({'resolve_sids': True})
-        ret = filter_list(share_acls, filters, options)
-        return ret
+        return filter_list(share_acls, filters, options)
 
     @accepts(Dict(
         'smbsharesec_create',
