@@ -754,10 +754,10 @@ class IdmapDomainService(CRUDService):
         """
         wb = await run([SMBCmd.WBINFO.value, '--sid-to-name', sid], check=False)
         if wb.returncode != 0:
-            self.logger.debug("wbinfo failed with error: %s",
-                              wb.stderr.decode().strip())
+            raise CallError(f'wbinfo failed with error: {wb.stderr.decode().strip()}')
 
-        return wb.stdout.decode().strip()[:-2]
+        out = wb.stdout.decode().strip()
+        return {"name": out[:-2], "type": int(out[-2:])}
 
     @private
     async def sid_to_unixid(self, sid_str):
