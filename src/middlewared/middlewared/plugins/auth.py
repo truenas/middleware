@@ -591,7 +591,7 @@ class TwoFactorAuthService(ConfigService):
         return pyotp.random_base32()
 
 
-def check_perms(app):
+def authenticate_connection(app):
     remote_addr, remote_port = get_remote_addr_port(app)
     if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
@@ -609,8 +609,7 @@ def check_perms(app):
 
 async def check_permission(middleware, app):
     """
-    Authenticates connections coming from loopback and from
-    root user.
+    Authenticates connections coming from loopback and from root user.
     """
     sock = app.request.transport.get_extra_info('socket')
     if sock.family == socket.AF_UNIX:
@@ -618,7 +617,7 @@ async def check_permission(middleware, app):
         AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials())
         return
 
-    await middleware.run_in_thread(check_perms, app)
+    await middleware.run_in_thread(authenticate_connection, app)
 
 
 def setup(middleware):
