@@ -43,42 +43,51 @@ class FilesystemService(Service, ACLBase):
 
         path = data['path']
 
-        p = Path(path)
-        if not p.is_absolute():
-            verrors.add(f'{schema}.path', 'Must be an absolute path.')
+        try:
+            st = self.middleware.call_sync('filesystem.stat', path)
+        except CallError as e:
+            if e.errno == errno.EINVAL:
+                verrors.add('f{schema}.path', 'Must be an absolute path')
+                return
+
+            raise e
+
+        if st['type'] == 'FILE' and data['options']['recursive']:
+            verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
             return
 
-        if p.is_file() and data['options']['recursive']:
-            verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
+        if st['is_ctldir']:
+            verrors.add(f'{schema}.path',
+                        'Permissions changes in ZFS control directory (.zfs) are not permitted')
             return
 
         if is_cluster:
             return
 
-        if os.path.realpath(path).startswith("/root/.ssh"):
+        if st['realpath'].startswith("/root/.ssh"):
             return
 
-        if not os.path.realpath(path).startswith('/mnt/'):
+        if not st['realpath'].startswith('/mnt/'):
             verrors.add(
                 f'{schema}.path',
                 "Changes to permissions on paths that are not beneath "
                 f"the directory /mnt are not permitted: {path}"
             )
 
-        elif len(p.resolve().parents) == 2:
+        elif len(Path(st['realpath']).resolve().parents) == 2:
             verrors.add(
                 f'{schema}.path',
                 f'The specified path is a ZFS pool mountpoint "({path})" '
             )
 
-        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', path):
+        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st['realpath']):
             verrors.add(
                 f'{schema}.path',
                 'Path component for is currently encrypted and locked'
             )
 
         apps_dataset = self.middleware.call_sync('kubernetes.config')['dataset']
-        if apps_dataset and os.path.realpath(path).startswith(f'/mnt/{apps_dataset}'):
+        if apps_dataset and st['realpath'].startswith(f'/mnt/{apps_dataset}'):
             verrors.add(
                 f'{schema}.path',
                 f'Changes to permissions of ix-applications dataset are not permitted: {path}.'
