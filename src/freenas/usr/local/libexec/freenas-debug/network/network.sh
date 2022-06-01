@@ -155,8 +155,8 @@ network_func()
 	done
 	section_footer
 
-	section_header "Open connections and listening sockets (sockstat)"
-	sockstat
+	section_header "Socket Statistics (ss -nipea)"
+	ss -nipea
 	section_footer
 
 	section_header "Network configuration"
