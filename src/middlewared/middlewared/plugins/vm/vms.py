@@ -30,6 +30,7 @@ class VMModel(sa.Model):
     description = sa.Column(sa.String(250))
     vcpus = sa.Column(sa.Integer(), default=1)
     memory = sa.Column(sa.Integer())
+    min_memory = sa.Column(sa.Integer(), nullable=True)
     autostart = sa.Column(sa.Boolean(), default=False)
     time = sa.Column(sa.String(5), default='LOCAL')
     bootloader = sa.Column(sa.String(50), default='UEFI')
@@ -109,7 +110,8 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('cpuset', default=None, null=True, validators=[NumericSet()]),
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
         Bool('pin_vcpus', default=False),
-        Int('memory', required=True),
+        Int('memory', required=True, validators=[Range(min=20)]),
+        Int('min_memory', null=True, validators=[Range(min=20)]),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
@@ -164,6 +166,12 @@ class VMService(CRUDService, VMSupervisorMixin):
     async def __common_validation(self, verrors, schema_name, data, old=None):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
+
+        if data['min_memory'] and data['min_memory'] > data['memory']:
+            verrors.add(
+                f'{schema_name}.min_memory',
+                'Minimum memory should not be greater then defined/maximum memory'
+            )
 
         vcpus = data['vcpus'] * data['cores'] * data['threads']
         if vcpus:

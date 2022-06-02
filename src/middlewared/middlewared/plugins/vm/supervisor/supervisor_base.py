@@ -236,7 +236,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             self.vcpu_xml(),
             self.cpu_xml(),
             # Memory related xml
-            create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])}),
+            *self.memory_xml(),
             # Add features
             self.get_features_xml(),
             # Clock offset
@@ -286,6 +286,16 @@ class VMSupervisorBase(LibvirtConnectionMixin):
                 ] + features,
             }
         )
+
+    def memory_xml(self):
+        memory_xml = [create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])})]
+        # Memory Ballooning - this will be memory which will always be allocated to the VM
+        # If not specified, this defaults to `memory`
+        if self.vm_data['min_memory']:
+            memory_xml.append(
+                create_element('currentMemory', unit='M', attribute_dict={'text': str(self.vm_data['min_memory'])})
+            )
+        return memory_xml
 
     def cpu_xml(self):
         features = []
