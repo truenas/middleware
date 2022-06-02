@@ -1,11 +1,12 @@
 #
 # NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
-# $FreeBSD$
 #
 <%
         ldap = middleware.call_sync('ldap.config')
+        kerberos_realm = None
         aux = []
         min_uid = 1000
+        kerberos_realm = None
         if ldap:
             certpath = None
             if ldap['certificate']:
@@ -16,6 +17,12 @@
                 else:
                     certpath = cert['certificate_path']
                     keypath = cert['privatekey_path']
+            if ldap['kerberos_realm']:
+                kerberos_realm = middleware.call_sync(
+                    'kerberos.realm.query',
+                    [('id', '=', ldap['kerberos_realm'])],
+                    {'get': True}
+                )['realm']
         else:
             ldap = None
 
@@ -50,9 +57,9 @@
   % if ldap['disable_freenas_cache']:
     nss_disable_enumeration yes
   % endif
-  % if ldap['kerberos_realm']:
+  % if kerberos_realm:
     sasl_mech 	GSSAPI
-    sasl_realm	${ldap['kerberos_realm']}
+    sasl_realm	${kerberos_realm}
   % endif
     scope 	sub
     timelimit	${ldap['timeout']}

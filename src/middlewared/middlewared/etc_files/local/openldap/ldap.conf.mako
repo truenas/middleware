@@ -28,7 +28,12 @@
 
         if ad['enable'] and idmap['idmap_backend'] in ["rfc2307", "ldap"]:
             is_kerberized = True
-            krb_realm = ad['kerberos_realm']
+            krb_realm = middleware.call_sync(
+                'kerberos.realm.query',
+                [('id', '=', ad['kerberos_realm'])],
+                {'get': True}
+            )['realm']
+
             base = idmap['ldap_base_dn']
             idmap_url = idmap['ldap_url']
             idmap_url = re.sub('^(ldaps?://)', '', idmap_url)
@@ -45,7 +50,12 @@
         elif ldap_enabled and ldap:
             uri = " ".join(ldap['uri_list'])
             if ldap['kerberos_realm']:
-                krb_realm = ldap['kerberos_realm']
+                krb_realm = middleware.call_sync(
+                    'kerberos.realm.query',
+                    [('id', '=', ldap['kerberos_realm'])],
+                    {'get': True}
+                )['realm']
+
                 is_kerberized = True
             else:
                 binddn = ldap['binddn']
