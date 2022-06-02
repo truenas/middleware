@@ -19,7 +19,7 @@ from auto_config import (
 from pytest_dependency import depends
 from protocols import SMB
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
@@ -98,7 +98,8 @@ SMB_PWD = "smb1234"
 
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_dataset():
+def test_001_creating_smb_dataset(request):
+    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"

@@ -1,5 +1,5 @@
 import pytest
-
+from pytest_dependency import depends
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool, ssh
 
@@ -8,13 +8,14 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import dev_test
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 @pytest.mark.parametrize("exclude_mountpoint_property", [True, False])
-def test_run_onetime__exclude_mountpoint_property(exclude_mountpoint_property):
+def test_run_onetime__exclude_mountpoint_property(request, exclude_mountpoint_property):
+    depends(request, ["pool_04"], scope="session")
     with dataset("src") as src:
         with dataset("src/legacy") as src_legacy:
             ssh(f"zfs set mountpoint=legacy {src_legacy}")

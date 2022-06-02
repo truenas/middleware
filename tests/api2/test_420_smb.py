@@ -17,7 +17,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test, send_file
 from auto_config import ip, pool_name, password, user, hostname, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 try:
     Reason = 'Windows host credential is missing in config.py'
@@ -160,6 +160,7 @@ def test_015_verify_testdir_exist_on_the_active_directory_share(request):
 
 
 def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
+    depends(request, ["stating_cifs_service"], scope="session")
     command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
         ' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
     results = cmd_test(command)
@@ -167,6 +168,7 @@ def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
 
 
 def test_017_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
+    depends(request, ["stating_cifs_service"], scope="session")
     results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
     assert results.status_code == 200, results.text
     sleep(10)

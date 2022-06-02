@@ -14,7 +14,7 @@ from functions import DELETE, GET, POST, PUT, wait_on_job
 from auto_config import dev_test
 from pytest_dependency import depends
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test_change_retention(request):

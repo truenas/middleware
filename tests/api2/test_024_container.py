@@ -25,7 +25,7 @@ try:
 except ImportError:
     skip_container_image = pytest.mark.skipif(True, reason=container_reason)
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
@@ -62,14 +62,14 @@ if not ha:
         found_images = get_num_of_images(chart_release_data["resources"]["container_images"])
         assert found_images == len(chart_release_data["resources"]["container_images"])
 
-
-    def test_pruning_existing_chart_release_images():
+    def test_pruning_existing_chart_release_images(request):
+        depends(request, ['setup_kubernetes'], scope='session')
         with chart_release("prune-test1", {"image": {"repository": "nginx"}}) as chart_release_data:
             call("container.prune", {"remove_unused_images": True})
             assert_images_exist_for_chart_release(chart_release_data)
 
-
-    def test_pruning_for_deleted_chart_release_images():
+    def test_pruning_for_deleted_chart_release_images(request):
+        depends(request, ['setup_kubernetes'], scope='session')
         with chart_release("prune-test2", {"image": {"repository": "nginx"}}) as chart_release_data:
             container_images = chart_release_data["resources"]["container_images"]
             before_deletion_images = get_num_of_images(container_images)
@@ -77,7 +77,6 @@ if not ha:
 
         call("container.prune", {"remove_unused_images": True})
         assert get_num_of_images(container_images) == 0
-
 
     def test_01_get_container():
         results = GET('/container/')

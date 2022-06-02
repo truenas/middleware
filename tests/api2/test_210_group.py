@@ -14,7 +14,7 @@ from functions import GET, POST, PUT, DELETE, SSH_TEST
 from auto_config import user, password, ip, dev_test
 from pytest_dependency import depends
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
 

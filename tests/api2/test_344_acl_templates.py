@@ -9,7 +9,7 @@ sys.path.append(apifolder)
 from functions import POST, GET, PUT, DELETE
 from auto_config import pool_name, dev_test
 
-reason = 'Skip for testing' if dev_test else 'Skipping test for Core and Enterprise'
+reason = 'Skipping for test development testing' if dev_test else 'Skipping test for Core and Enterprise'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='dev-test')
 

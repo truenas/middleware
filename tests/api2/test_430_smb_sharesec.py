@@ -8,7 +8,7 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import pool_name, user, password, ip, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 share_name = "my_sharesec"
 dataset = f"{pool_name}/smb-sharesec"

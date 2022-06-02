@@ -3,6 +3,9 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, ssh
 
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
 
 @pytest.fixture(scope="module")
 def outdated_pool():

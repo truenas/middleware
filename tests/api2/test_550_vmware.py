@@ -12,7 +12,7 @@ sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
 from auto_config import ip, user, password, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 try:
     Reason = 'VMWARE credentials credential is missing'

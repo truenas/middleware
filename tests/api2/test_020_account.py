@@ -13,7 +13,7 @@ from functions import DELETE, GET, POST
 from auto_config import dev_test
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def delete_group_delete_users(delete_users):

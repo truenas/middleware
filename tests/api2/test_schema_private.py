@@ -2,6 +2,9 @@ import pytest
 
 from middlewared.test.integration.utils import call, client, mock, ssh
 
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
 
 def test_private_params_do_not_leak_to_logs():
     with mock("test.test1", """    
