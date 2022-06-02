@@ -67,6 +67,7 @@ setup(
             'midclt = middlewared.client.client:main',
             'midgdb = middlewared.scripts.gdb:main',
             'sedhelper = middlewared.scripts.sedhelper:main',
+            'wait_to_hang_and_dump_core = middlewared.scripts.wait_to_hang_and_dump_core:main',
             'zpoolhelper = middlewared.scripts.zpoolhelper:main',
         ],
     },
