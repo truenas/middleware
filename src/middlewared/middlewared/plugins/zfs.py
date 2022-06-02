@@ -949,9 +949,7 @@ class ZFSSnapshot(CRUDService):
                 {'name': i, 'pool': i.split('/', 1)[0]}
                 for i in stdout.split('\n')
             ]
-            if filters:
-                return filter_list(snaps, filters, options)
-            return snaps
+            return filter_list(snaps, filters, options)
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
             snapshots = []
