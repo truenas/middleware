@@ -1249,10 +1249,10 @@ class LDAPService(TDBWrapConfigService):
         await self.middleware.call('idmap.synchronize')
 
         if ldap['has_samba_schema']:
-            job.set_progress(70, 'Restarting SMB service')
+            job.set_progress(70, 'Storing LDAP password for SMB configuration')
             await self.middleware.call('smb.store_ldap_admin_password')
-            await self.middleware.call('service.restart', 'cifs')
 
+        await self._service_change('cifs', 'restart')
         await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Reloading directory service cache.')
         await self.middleware.call('service.start', 'dscache')
