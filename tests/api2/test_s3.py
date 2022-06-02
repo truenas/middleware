@@ -1,23 +1,24 @@
 import pytest
-
+from pytest_dependency import depends
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.s3 import s3_server
 from middlewared.test.integration.utils import call, ssh
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import dev_test
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
-def test_s3_attachment_delegate__works():
+def test_s3_attachment_delegate__works(request):
+    depends(request, ["pool_04"], scope="session")
     with dataset("test") as test_dataset:
         ssh(f"mkdir /mnt/{test_dataset}/s3_root")
 
@@ -31,7 +32,8 @@ def test_s3_attachment_delegate__works():
             assert not call("service.started", "s3")
 
 
-def test_s3_attachment_delegate__works_for_poor_s3_configuration():
+def test_s3_attachment_delegate__works_for_poor_s3_configuration(request):
+    depends(request, ["pool_04"], scope="session")
     with dataset("test") as test_dataset:
         old_path = "/mnt/unavailable-pool/s3"
         ssh(f"mkdir -p {old_path}")

@@ -12,7 +12,7 @@ sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
 from auto_config import ip, pool_name, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 ENDPOINT = ip + ':9000'
 ACCESS_KEY = 'ixsystems'

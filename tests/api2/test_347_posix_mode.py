@@ -13,7 +13,7 @@ from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 MODE_DATASET = f'{pool_name}/modetest'
 dataset_url = MODE_DATASET.replace('/', '%2F')
@@ -651,7 +651,8 @@ def test_23_delete_user(request):
     assert results.status_code == 200, results.text
 
 
-def test_24_delete_dataset():
+def test_24_delete_dataset(request):
+    depends(request, ["DATASET_CREATED"])
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )

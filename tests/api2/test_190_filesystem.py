@@ -6,7 +6,7 @@
 import pytest
 import sys
 import os
-
+from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
@@ -16,7 +16,7 @@ from middlewared.test.integration.assets.filesystem import directory
 from utils import create_dataset
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 group = 'root'
 path = '/etc'
 path_list = ['default', 'kernel', 'zfs', 'ssh']
@@ -65,7 +65,8 @@ def test_03_get_filesystem_stat_(path):
     assert results.json()['acl'] is False, results.text
 
 
-def test_04_test_filesystem_statfs_fstype():
+def test_04_test_filesystem_statfs_fstype(request):
+    depends(request, ["pool_04"], scope="session")
     # test zfs fstype first
     parent_path = f'/mnt/{pool_name}'
     results = POST('/filesystem/statfs/', parent_path)
@@ -103,7 +104,8 @@ def test_04_test_filesystem_statfs_fstype():
     assert results['result'] is True, results['output']
 
 
-def test_05_set_immutable_flag_on_path():
+def test_05_set_immutable_flag_on_path(request):
+    depends(request, ["pool_04"], scope="session")
     t_path = os.path.join('/mnt', pool_name, 'random_directory_immutable')
     t_child_path = os.path.join(t_path, 'child')
 
@@ -137,104 +139,106 @@ def test_06_test_filesystem_listdir_exclude_non_mounts():
         assert not any(i['name'] == randir for i in results.json()), f'{randir} should not be listed'
 
 
-def test_07_test_filesystem_stat_filetype():
-     """
-     This test checks that file types are properly
-     identified through the filesystem plugin in middleware.
-     There is an additional check to make sure that paths
-     in the ZFS CTL directory (.zfs) are properly flagged.
-     """
-     ds_name = 'stat_test'
-     snap_name = f'{ds_name}_snap1'
-     path = f'/mnt/{pool_name}/{ds_name}'
-     targets = ['file', 'directory', 'symlink', 'other']
-     cmds = [
-         f'mkdir {path}/directory',
-         f'touch {path}/file',
-         f'ln -s {path}/file {path}/symlink',
-         f'mkfifo {path}/other'
-     ]
+def test_07_test_filesystem_stat_filetype(request):
+    """
+    This test checks that file types are properly
+    identified through the filesystem plugin in middleware.
+    There is an additional check to make sure that paths
+    in the ZFS CTL directory (.zfs) are properly flagged.
+    """
+    depends(request, ["pool_04"], scope="session")
+    ds_name = 'stat_test'
+    snap_name = f'{ds_name}_snap1'
+    path = f'/mnt/{pool_name}/{ds_name}'
+    targets = ['file', 'directory', 'symlink', 'other']
+    cmds = [
+        f'mkdir {path}/directory',
+        f'touch {path}/file',
+        f'ln -s {path}/file {path}/symlink',
+        f'mkfifo {path}/other'
+    ]
 
-     with create_dataset(f'{pool_name}/{ds_name}'):
-         results = SSH_TEST(' && '.join(cmds), user, password, ip)
-         assert results['result'] is True, str(results)
+    with create_dataset(f'{pool_name}/{ds_name}'):
+        results = SSH_TEST(' && '.join(cmds), user, password, ip)
+        assert results['result'] is True, str(results)
 
-         for x in targets:
-             target = f'{path}/{x}'
-             results = POST('/filesystem/stat/', target)
-             assert results.status_code == 200, f'{target}: {results.text}'
-             statout = results.json()
+        for x in targets:
+            target = f'{path}/{x}'
+            results = POST('/filesystem/stat/', target)
+            assert results.status_code == 200, f'{target}: {results.text}'
+            statout = results.json()
 
-             assert statout['type'] == x.upper(), str(statout)
-             assert not statout['is_ctldir']
+            assert statout['type'] == x.upper(), str(statout)
+            assert not statout['is_ctldir']
 
-         result = POST("/zfs/snapshot/", {
-             'dataset': f'{pool_name}/{ds_name}',
-             'name': snap_name,
-             'recursive': False,
-         })
-         assert result.status_code == 200, result.text
+        result = POST("/zfs/snapshot/", {
+            'dataset': f'{pool_name}/{ds_name}',
+            'name': snap_name,
+            'recursive': False,
+        })
+        assert result.status_code == 200, result.text
 
-         for x in targets:
-             target = f'{path}/.zfs/snapshot/{snap_name}/{x}'
-             results = POST('/filesystem/stat/', target)
-             assert results.status_code == 200, f'{target}: {results.text}'
-             statout = results.json()
+        for x in targets:
+            target = f'{path}/.zfs/snapshot/{snap_name}/{x}'
+            results = POST('/filesystem/stat/', target)
+            assert results.status_code == 200, f'{target}: {results.text}'
+            statout = results.json()
 
-             assert statout['type'] == x.upper(), str(statout)
-             assert statout['is_ctldir']
+            assert statout['type'] == x.upper(), str(statout)
+            assert statout['is_ctldir']
 
-         results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot/{snap_name}')
-         assert results.status_code == 200, results.text
-         assert results.json()['is_ctldir']
+        results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot/{snap_name}')
+        assert results.status_code == 200, results.text
+        assert results.json()['is_ctldir']
 
-         results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot')
-         assert results.status_code == 200, results.text
-         assert results.json()['is_ctldir']
+        results = POST('/filesystem/stat/', f'{path}/.zfs/snapshot')
+        assert results.status_code == 200, results.text
+        assert results.json()['is_ctldir']
 
-         results = POST('/filesystem/stat/', f'{path}/.zfs')
-         assert results.status_code == 200, results.text
-         assert results.json()['is_ctldir']
+        results = POST('/filesystem/stat/', f'{path}/.zfs')
+        assert results.status_code == 200, results.text
+        assert results.json()['is_ctldir']
 
 
-def test_08_test_fiilesystem_statfs_flags():
-     """
-     This test verifies that changing ZFS properties via
-     middleware causes mountinfo changes visible via statfs.
-     """
-     ds_name = 'statfs_test'
-     target = f'{pool_name}/{ds_name}'
-     target_url = target.replace('/', '%2F')
-     path = f'/mnt/{target}'
+def test_08_test_fiilesystem_statfs_flags(request):
+    """
+    This test verifies that changing ZFS properties via
+    middleware causes mountinfo changes visible via statfs.
+    """
+    depends(request, ["pool_04"], scope="session")
+    ds_name = 'statfs_test'
+    target = f'{pool_name}/{ds_name}'
+    target_url = target.replace('/', '%2F')
+    path = f'/mnt/{target}'
 
-     # tuple: ZFS property name, property value, mountinfo value
-     properties = [
-         ("readonly", "ON", "RO"),
-         ("readonly", "OFF", "RW"),
-         ("atime", "OFF", "NOATIME"),
-         ("exec", "OFF", "NOEXEC"),
-         ("acltype", "NFSV4", "NFS4ACL"),
-         ("acltype", "POSIX", "POSIXACL"),
-     ]
+    # tuple: ZFS property name, property value, mountinfo value
+    properties = [
+        ("readonly", "ON", "RO"),
+        ("readonly", "OFF", "RW"),
+        ("atime", "OFF", "NOATIME"),
+        ("exec", "OFF", "NOEXEC"),
+        ("acltype", "NFSV4", "NFS4ACL"),
+        ("acltype", "POSIX", "POSIXACL"),
+    ]
 
-     with create_dataset(target):
-         for p in properties:
-             # set option we're checking and make sure it's really set
-             payload = {
-                 p[0]: p[1]
-             }
-             if p[0] == 'acltype':
-                 payload.update({
-                     'aclmode': 'RESTRICTED' if p[1] == 'NFSV4' else 'DISCARD'
-                 })
-             results = PUT(f'/pool/dataset/id/{target_url}', payload)
-             assert results.status_code == 200, results.text
-             prop_out = results.json()[p[0]]
-             assert prop_out['value'] == p[1]
+    with create_dataset(target):
+        for p in properties:
+            # set option we're checking and make sure it's really set
+            payload = {
+                p[0]: p[1]
+            }
+            if p[0] == 'acltype':
+                payload.update({
+                    'aclmode': 'RESTRICTED' if p[1] == 'NFSV4' else 'DISCARD'
+                })
+            results = PUT(f'/pool/dataset/id/{target_url}', payload)
+            assert results.status_code == 200, results.text
+            prop_out = results.json()[p[0]]
+            assert prop_out['value'] == p[1]
 
-             # check statfs results
-             results = POST('/filesystem/statfs/', path)
-             assert results.status_code == 200, results.text
+            # check statfs results
+            results = POST('/filesystem/statfs/', path)
+            assert results.status_code == 200, results.text
 
-             mount_flags = results.json()['flags']
-             assert p[2] in mount_flags, f'{path}: ({p[2]}) not in {mount_flags}'
+            mount_flags = results.json()['flags']
+            assert p[2] in mount_flags, f'{path}: ({p[2]}) not in {mount_flags}'

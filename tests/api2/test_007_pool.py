@@ -64,7 +64,8 @@ def test_03_creating_a_pool(request):
             "data": [
                 {"type": "STRIPE", "disks": tank_pool_disks}
             ],
-        }
+        },
+        "allow_duplicate_serials": True,
     }
     results = POST("/pool/", payload)
     assert results.status_code == 200, results.text
@@ -128,8 +129,8 @@ def test_08_test_pool_property_normalization(request):
     re-importing it. Once this is complete, we check whether properties
     have been set to their correct new values.
     """
-    global tp
     depends(request, ["pool_04"])
+    global tp
     with another_pool() as tp:
         payload = {'msg': 'method', 'method': 'zfs.dataset.update', 'params': [
             tp['name'],
@@ -184,6 +185,7 @@ def test_08_test_pool_property_normalization(request):
 
 
 def test_09_export_test_pool_with_destroy_true(request):
+    depends(request, ["pool_04"])
     payload = {
         'cascade': True,
         'restart_services': True,

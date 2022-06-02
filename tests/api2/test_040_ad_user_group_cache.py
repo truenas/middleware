@@ -19,7 +19,7 @@ except ImportError:
 else:
     from auto_config import dev_test
     # comment pytestmark for development testing with --dev-test
-    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 WINBIND_SEPARATOR = "\\"
 nameserver1 = None
@@ -53,7 +53,7 @@ def test_02_set_nameserver_for_ad(request):
 
 @pytest.mark.dependency(name="AD_ENABLED")
 def test_03_enabling_activedirectory(request):
-    depends(request, ["SET_DNS"])
+    depends(request, ["pool_04", "SET_DNS"], scope="session")
     global payload, results, job_id
     payload = {
         "bindpw": ADPASSWORD,

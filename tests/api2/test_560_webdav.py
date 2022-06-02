@@ -11,7 +11,7 @@ from auto_config import pool_name, dev_test
 
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 DATASET = f'{pool_name}/webdav-share'
 DATASET_URL = DATASET.replace('/', '%2F')

@@ -11,7 +11,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST
 from auto_config import user, password, ip, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 DESTINATION = '127.1.1.1'
 GATEWAY = '127.0.0.1'
 

@@ -11,7 +11,7 @@ sys.path.append(apifolder)
 from functions import POST
 from auto_config import ha, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 global all_results
 all_results = {}
 disk_list = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())

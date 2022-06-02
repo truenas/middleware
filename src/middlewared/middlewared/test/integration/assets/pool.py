@@ -40,6 +40,7 @@ def another_pool(data=None, topology=None):
     pool = call("pool.create", {
         "name": "test",
         "encryption": False,
+        "allow_duplicate_serials": True,
         "topology": topology[1]([d["devname"] for d in unused]),
         **data,
     }, job=True)

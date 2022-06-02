@@ -4,6 +4,9 @@ import pytest
 
 from middlewared.test.integration.utils import client, mock
 
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
 
 @pytest.mark.parametrize("block", [True, False])
 def test_block_hooks(block):

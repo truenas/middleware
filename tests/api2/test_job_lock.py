@@ -6,6 +6,8 @@ import pytest
 
 from middlewared.test.integration.utils import call, mock, ssh
 
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_jobs_execute_in_parallel():

@@ -15,7 +15,7 @@ from functions import POST, DELETE, SSH_TEST, wait_on_job
 from protocols import SMB
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def passphrase_encryption():

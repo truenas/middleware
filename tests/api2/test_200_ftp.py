@@ -12,7 +12,7 @@ sys.path.append(apifolder)
 from functions import PUT, GET, POST  # , RC_TEST
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test_01_Configuring_ftp():
