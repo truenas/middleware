@@ -101,15 +101,17 @@ class CatalogService(CRUDService):
                 }
                 if not catalog_info['cached']:
                     caching_job = filter_list(item_jobs, [['arguments', '=', [row['label'], item_sync_params]]])
-                    if not caching_job:
-                        caching_job_obj = await self.middleware.call('catalog.items', label, item_sync_params)
-                        caching_job = caching_job_obj.__encode__()
-                    else:
+                    if caching_job:
+                        # We will almost certainly always have this except for the case when middleware starts
+                        # it is guaranteed that we will eventually have this anyways as catalog.sync_all is called
+                        # periodically. So let's not trigger a new redundant job for this
                         caching_job = caching_job[0]
+                    else:
+                        caching_job = None
 
                     catalog_info['normalized_progress'] = {
                         'caching_job': caching_job,
-                        'caching_progress': caching_job['progress'],
+                        'caching_progress': caching_job['progress'] if caching_job else None,
                     }
                 context['catalogs_context'][label] = catalog_info
 
