@@ -65,7 +65,9 @@ HANDLER ${handler} {
         naa_id ${extent['naa']}
         prod_id "iSCSI Disk"
 %       if extent['rpm'] != 'SSD':
-        rotational ${extent['rpm']}
+        rotational 1
+%       else:
+        rotational 0
 %       endif
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
