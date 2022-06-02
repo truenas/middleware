@@ -37,7 +37,7 @@ ldap_func()
 	local has_samba_schema=$(echo ${CONF} | jq ".has_samba_schema")
 
 	enabled="DISABLED"
-	if [ "${onoff}" == "true" ]
+	if [ "${onoff}" = "true" ]
 	then
 		enabled="ENABLED"
 	fi
