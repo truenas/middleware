@@ -10,6 +10,7 @@ Type=oneshot
 RemainAfterExit=yes
 ExecStart=midclt call --job true --job-print description disk.sync_all
 StandardOutput=null
+TimeoutStartSec=5min
 
 [Install]
 WantedBy=multi-user.target
