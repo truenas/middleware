@@ -7,13 +7,15 @@ from copy import deepcopy
 
 import libzfs
 
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str
+from middlewared.plugins.zfs_.utils import zvol_path_to_name, unlocked_zvols_fast
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, job, private,
 )
 from middlewared.utils import filter_list, filter_getattrs
 from middlewared.utils.path import is_child
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
+
 
 SEARCH_PATHS = ['/dev/disk/by-partuuid', '/dev']
 
@@ -578,6 +580,42 @@ class ZFSDatasetService(CRUDService):
             }
             for dataset in self.query()
         ]
+
+    @accepts(
+        Ref('query-filters'),
+        Ref('query-options'),
+        List(
+            'additional_information',
+            items=[Str('desideratum', enum=['SIZE', 'RO', 'DEVID', 'ATTACHMENT'])]
+        )
+    )
+    def unlocked_zvols_fast(self, filters, options, additional_information):
+        """
+        Fast check for zvol information. Supports `additional_information` to
+        expand output on an as-needed basis. Adding additional_information to
+        the output may impact performance of 'fast' method.
+        """
+        def get_attachments():
+            extents = self.middleware.call_sync('iscsi.extent.query', [('type', '=', 'DISK')])
+            iscsi_zvols = {
+                i['path'][len('zvol/'):]: i for i in extents
+            }
+
+            vm_devices = self.middleware.call_sync('vm.device.query', [['dtype', '=', 'DISK']])
+            vm_zvols = {
+                zvol_path_to_name(i['attributes']['path']): i for i in vm_devices
+            }
+            return {
+                'iscsi.extent.query': iscsi_zvols,
+                'vm.devices.query': vm_zvols
+            }
+
+        data = {}
+        if 'ATTACHMENT' in additional_information:
+            data['attachments'] = get_attachments()
+
+        zvol_list = list(unlocked_zvols_fast(additional_information, data).values())
+        return filter_list(zvol_list, filters, options)
 
     def common_load_dataset_checks(self, ds):
         self.common_encryption_checks(ds)
