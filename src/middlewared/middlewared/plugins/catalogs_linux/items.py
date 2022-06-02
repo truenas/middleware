@@ -62,7 +62,7 @@ class CatalogService(Service):
             }
         }
     ))
-    @job(lock=lambda args: f'{args[0]}_catalog_item_retrieval_{json.dumps(args[1])}')
+    @job(lock=lambda args: f'{args[0]}_catalog_item_retrieval_{json.dumps(args[1])}', lock_queue_size=1)
     def items(self, job, label, options):
         """
         Retrieve item details for `label` catalog.
@@ -126,6 +126,7 @@ class CatalogService(Service):
                 cached_data[train] = train_data
 
             job.set_progress(100, 'Retrieved catalog item(s) details successfully')
+            self.middleware.loop.call_later(30, functools.partial(job.set_result, None))
             return cached_data
         elif not os.path.exists(catalog['location']):
             job.set_progress(5, f'Cloning {label!r} catalog repository')
@@ -145,7 +146,6 @@ class CatalogService(Service):
             # come with a case where system is trying to access cached data but it has expired and it's
             # reading again from disk hence the extra 1 hour.
             if options['retrieve_versions']:
-                self.middleware.call_sync('cache.put', get_cache_key(label, True), trains, 90000)
                 trains_copy = {}
                 for train in trains:
                     trains_copy[train] = {}
@@ -162,6 +162,7 @@ class CatalogService(Service):
             self.middleware.call_sync('catalog.get_feature_map', False)
 
         job.set_progress(100, f'Successfully retrieved {label!r} catalog information')
+        self.middleware.loop.call_later(30, functools.partial(job.set_result, None))
         return trains
 
     @private
