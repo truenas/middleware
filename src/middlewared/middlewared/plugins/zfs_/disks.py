@@ -27,7 +27,7 @@ class ZFSPoolService(Service):
 
             # these are the the various by-{partuuid/label/id/path} etc labels
             if dev.properties['DEVTYPE'] == 'partition':
-                for link in (dev.properties['DEVLINKS'] or '').split():
+                for link in (dev.properties.get('DEVLINKS') or '').split():
                     sys_devices[link.removeprefix('/dev/')] = dev.find_parent('block').sys_name
 
         mapping = {name: set()}
