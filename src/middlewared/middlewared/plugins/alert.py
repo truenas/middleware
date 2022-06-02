@@ -160,13 +160,17 @@ class AlertSerializer:
             one_shot=issubclass(alert.klass, OneShotAlertClass) and not alert.klass.deleted_automatically
         )
 
+    async def get_alert_class(self, alert):
+        await self._ensure_initialized()
+        return self.classes.get(alert.klass.name, {})
+
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
         if self.product_type not in alert.klass.products:
             return False
 
-        if self.classes.get(alert.klass.name, {}).get("policy") == "NEVER":
+        if (await self.get_alert_class(alert)).get("policy") == "NEVER":
             return False
 
         return True
@@ -277,6 +281,7 @@ class AlertService(Service):
             Str('id'),
             Str('title'),
             Str('level'),
+            Bool('proactive_support'),
         )])
     )]))
     async def list_categories(self):
@@ -299,6 +304,7 @@ class AlertService(Service):
                             "id": alert_class.name,
                             "title": alert_class.title,
                             "level": alert_class.level.name,
+                            "proactive_support": alert_class.proactive_support,
                         }
                         for alert_class in classes
                         if alert_class.category == alert_category
@@ -308,18 +314,6 @@ class AlertService(Service):
             }
             for alert_category in AlertCategory
             if any(alert_class.category == alert_category for alert_class in classes)
-        ]
-
-    @private
-    async def list_sources(self):
-        # TODO: this is a deprecated method for backward compatibility
-
-        return [
-            {
-                "name": klass["id"],
-                "title": klass["title"],
-            }
-            for klass in sum([v["classes"] for v in await self.list_categories()], [])
         ]
 
     @accepts()
@@ -551,11 +545,18 @@ class AlertService(Service):
                         await self.middleware.call("mail.send", alert.mail)
 
                 if await self.middleware.call("system.is_enterprise"):
-                    new_hardware_alerts = [alert for alert in new_alerts if alert.klass.hardware]
-                    if new_hardware_alerts:
+                    new_proactive_support_alerts = [
+                        alert
+                        for alert in new_alerts
+                        if (
+                            alert.klass.proactive_support and
+                            (await as_.get_alert_class(alert)).get("proactive_support", True)
+                        )
+                    ]
+                    if new_proactive_support_alerts:
                         if await self.middleware.call("support.is_available_and_enabled"):
                             support = await self.middleware.call("support.config")
-                            msg = [f"* {alert.formatted}" for alert in new_hardware_alerts]
+                            msg = [f"* {alert.formatted}" for alert in new_proactive_support_alerts]
 
                             serial = (await self.middleware.call("system.dmidecode_info"))["system-serial-number"]
 
@@ -1120,7 +1121,7 @@ class AlertClassesService(ConfigService):
             "classes": {
                 "ClassName": {
                     "level": "LEVEL",
-                    "policy": "POLICY"
+                    "policy": "POLICY",
                 }
             }
         }
@@ -1136,16 +1137,20 @@ class AlertClassesService(ConfigService):
             if k not in AlertClass.class_by_name:
                 verrors.add(f"alert_class_update.classes.{k}", "This alert class does not exist")
 
-            if not isinstance(v, dict):
-                verrors.add(f"alert_class_update.classes.{k}", "Not a dictionary")
+            verrors.add_child(
+                f"alert_class_update.classes.{k}",
+                validate_schema([
+                    Str("level", enum=list(AlertLevel.__members__)),
+                    Str("policy", enum=POLICIES),
+                    Bool("proactive_support"),
+                ], v),
+            )
 
-            if "level" in v:
-                if v["level"] not in AlertLevel.__members__:
-                    verrors.add(f"alert_class_update.classes.{k}.level", "This alert level does not exist")
-
-            if "policy" in v:
-                if v["policy"] not in POLICIES:
-                    verrors.add(f"alert_class_update.classes.{k}.policy", "This alert policy does not exist")
+            if "proactive_support" in v and not AlertClass.class_by_name[k].proactive_support:
+                verrors.add(
+                    f"alert_class_update.classes.{k}.proactive_support",
+                    "Proactive support is not supported by this alert class",
+                )
 
         if verrors:
             raise verrors
