@@ -42,7 +42,7 @@ active_directory_func()
 	local cifs_onoff
 
 	enabled="DISABLED"
-	if [ "${onoff}" == "true" ]
+	if [ "${onoff}" = "true" ]
 	then
 		enabled="ENABLED"
 	fi
@@ -71,7 +71,7 @@ active_directory_func()
 	")	
 
 	cifs_enabled="not start on boot."
-	if [ "$cifs_onoff" == "1" ]
+	if [ "$cifs_onoff" = "1" ]
 	then
 		cifs_enabled="start on boot."
 	fi
