@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.utils.threading import start_daemon_thread
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
@@ -53,10 +52,6 @@ class DiskService(Service, ServiceChangeMixin):
         await self.restart_services_after_sync()
 
         await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
-
-    @private
-    def kmip_reset_sed_disk_password(self, ident, kmip_uuid):
-        self.middleware.call_sync('kmip.reset_sed_disk_password', ident, kmip_uuid)
 
     @private
     def log_disk_info(self, sys_disks):
@@ -156,9 +151,9 @@ class DiskService(Service, ServiceChangeMixin):
                 elif disk['disk_expiretime'] < datetime.utcnow():
                     # Disk expire time has surpassed, go ahead and remove it
                     if disk['disk_kmip_uid']:
-                        start_daemon_thread(
-                            target=self.kmip_reset_sed_disk_password,
-                            args=(disk['disk_identifier'], disk['disk_kmip_uuid'],)
+                        self.middleware.call_sync(
+                            'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uuid'],
+                            background=True
                         )
                     self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)
                     deleted.add(disk['disk_identifier'])

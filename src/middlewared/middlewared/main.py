@@ -1099,8 +1099,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         for hook in self.__hooks[name]:
             if hook['blockable'] != blockable:
+                qualname = hook['method'].__qualname__
+                method_qualname = method.__qualname__
                 raise RuntimeError(
-                    f'Hook {name!r}: {hook["method"].__qualname__!r} has blockable={hook["blockable"]!r}, but {method.__qualname__!r} has '
+                    f'Hook {name!r}: {qualname!r} has blockable={hook["blockable"]!r}, but {method_qualname!r} has '
                     f'blockable={blockable!r}'
                 )
 
@@ -1344,7 +1346,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             app=app, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None):
+    def call_sync(self, name, *params, job_on_progress_cb=None, background=False):
+        if background:
+            return self.loop.call_soon_threadsafe(lambda: asyncio.ensure_future(self.call(name, *params)))
+
         serviceobj, methodobj = self._method_lookup(name)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
