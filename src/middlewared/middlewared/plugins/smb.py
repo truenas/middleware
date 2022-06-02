@@ -92,7 +92,25 @@ class SMBPath(enum.Enum):
 class SMBSharePreset(enum.Enum):
     NO_PRESET = {"verbose_name": "No presets", "params": {
         'auxsmbconf': '',
-    }}
+    }, "cluster": False}
+    DEFAULT_CLUSTER_SHARE = {"verbose_name": "Default parameters for cluster share", "params": {
+        'path_suffix': '',
+        'home': False,
+        'ro': False,
+        'browsable': True,
+        'timemachine': False,
+        'recyclebin': False,
+        'abe': False,
+        'hostsallow': [],
+        'hostsdeny': [],
+        'aapl_name_mangling': False,
+        'acl': True,
+        'durablehandle': True,
+        'shadowcopy': False,
+        'streams': True,
+        'fsrvp': False,
+        'auxsmbconf': '',
+    }, "cluster": True}
     DEFAULT_SHARE = {"verbose_name": "Default share parameters", "params": {
         'path_suffix': '',
         'home': False,
@@ -110,14 +128,14 @@ class SMBSharePreset(enum.Enum):
         'streams': True,
         'fsrvp': False,
         'auxsmbconf': '',
-    }}
+    }, "cluster": False}
     ENHANCED_TIMEMACHINE = {"verbose_name": "Multi-user time machine", "params": {
         'path_suffix': '%U',
         'timemachine': True,
         'auxsmbconf': '\n'.join([
             'zfs_core:zfs_auto_create=true'
         ])
-    }}
+    }, "cluster": False}
     MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv3/SMB) shares", "params": {
         'acl': False,
         'streams': False,
@@ -127,19 +145,24 @@ class SMBSharePreset(enum.Enum):
             'level2 oplocks = no',
             'strict locking = yes',
         ])
-    }}
+    }, "cluster": False}
     PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
         'path_suffix': '%U',
         'auxsmbconf': '\n'.join([
             'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true'
         ])
-    }}
+    }, "cluster": False},
+    READ_ONLY = {"verbose": "Read-only share", "params": {
+        'ro': True,
+        'shadowcopy': False,
+        'auxsmbconf': '',
+    }, "cluster": True},
     WORM_DROPBOX = {"verbose_name": "SMB WORM. Files become readonly via SMB after 5 minutes", "params": {
         'path_suffix': '',
         'auxsmbconf': '\n'.join([
             'worm:grace_period = 300',
         ])
-    }}
+    }, "cluster": False}
 
 
 class SMBModel(sa.Model):
