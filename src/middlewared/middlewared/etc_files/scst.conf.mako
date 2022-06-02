@@ -42,6 +42,7 @@
             )
             continue
 
+        extent['name'] = extent['name'].replace('.', '_')  # CORE ctl device names are incompatible with SCALE SCST
         extents_io[extents_io_key].append(extent)
 
         extent['t10_dev_id'] = extent['serial']
