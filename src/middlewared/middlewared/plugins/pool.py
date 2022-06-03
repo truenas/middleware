@@ -3492,17 +3492,19 @@ class PoolDatasetService(CRUDService):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
 
-            c_value = data.get('special_small_block_size')
-            if 'special_small_block_size' in data and c_value != 'INHERIT' and not (
-                c_value == 0 or 512 <= data['special_small_block_size'] <= 1048576 or c_value % 512 == 0
-            ):
-                verrors.add(
-                    f'{schema}.special_small_block_size',
-                    'This field can be "INHERIT", 0 or multiple of 512, up to 1048576'
-                )
+            if (c_value := data.get('special_small_block_size')) is not None:
+                if c_value != 'INHERIT' and not (
+                    (c_value == 0 or 512 <= c_value <= 1048576) and ((c_value & (c_value - 1)) == 0)
+                ):
+                    verrors.add(
+                        f'{schema}.special_small_block_size',
+                        'This field must be zero or a power of 2 from 512B to 1M'
+                    )
+
             if rs := data.get('recordsize'):
-                if rs not in await self.middleware.call('pool.dataset.recordsize_choices'):
+                if rs != 'INHERIT' and rs not in await self.middleware.call('pool.dataset.recordsize_choices'):
                     verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
+
         elif data['type'] == 'VOLUME':
             if mode == 'CREATE' and 'volsize' not in data:
                 verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
