@@ -200,6 +200,12 @@ class ActiveDirectoryService(TDBWrapConfigService):
         must_update = False
         for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
             if key in new and old[key] != new[key]:
+                if old['enable']:
+                    raise ValidationError(
+                        f'activedirectory.{key}',
+                        'NetBIOS names may not be changed while service is enabled.'
+                    )
+
                 must_update = True
                 break
 
@@ -215,8 +221,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 }
             )
 
+        # updating hostname virtual does not go through same valiation as netbios name
+        # in smb.update and so perform additional validation here
         elif not await self.middleware.call('smb.validate_netbios_name', new['netbiosname']):
-            raise ValidationError('activedirectory_update.netbiosname', "Invalid NetBIOS name")
+            raise ValidationError('activedirectory_update.netbiosname', 'Invalid NetBIOS name')
 
         else:
             await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
