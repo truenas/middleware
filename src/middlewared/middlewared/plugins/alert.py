@@ -1086,11 +1086,11 @@ class AlertClassesService(ConfigService):
 
             verrors.add_child(
                 f"alert_class_update.classes.{k}",
-                validate_schema([
+                validate_attributes([
                     Str("level", enum=list(AlertLevel.__members__)),
                     Str("policy", enum=POLICIES),
                     Bool("proactive_support"),
-                ], v),
+                ], new["classes"], attr_key=k),
             )
 
             if "proactive_support" in v and not AlertClass.class_by_name[k].proactive_support:
