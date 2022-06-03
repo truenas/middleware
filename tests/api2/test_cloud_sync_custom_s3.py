@@ -1,7 +1,7 @@
 import time
 
 import pytest
-import depends
+from pytest_dependency import depends
 from middlewared.test.integration.assets.cloud_sync import credential, task
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
