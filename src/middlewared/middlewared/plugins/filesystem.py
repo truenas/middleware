@@ -14,7 +14,7 @@ import pyinotify
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
-from middlewared.plugins.filesystem_ import chflags, stat_x
+from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
@@ -44,6 +44,30 @@ class FilesystemService(Service):
         `set_flag` when set will set immutable flag and when unset will unset immutable flag at `path`.
         """
         chflags.set_immutable(path, set_flag)
+
+    @accepts(Dict(
+        'set_dosmode',
+        Path('path', required=True),
+        Dict(
+            'dosmode',
+            Bool('readonly'),
+            Bool('hidden'),
+            Bool('system'),
+            Bool('archive'),
+            Bool('reparse'),
+            Bool('offline'),
+            Bool('sparse'),
+            register=True
+        ),
+    ))
+    @returns()
+    def set_dosmode(self, data):
+        return dosmode.set_dosflags(data['path'], data['dosmode'])
+
+    @accepts(Str('path'))
+    @returns(Ref('dosmode'))
+    def get_dosmode(self, path):
+        return dosmode.get_dosflags(path)
 
     @private
     def is_cluster_path(self, path):

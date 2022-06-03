@@ -242,3 +242,38 @@ def test_08_test_fiilesystem_statfs_flags(request):
 
             mount_flags = results.json()['flags']
             assert p[2] in mount_flags, f'{path}: ({p[2]}) not in {mount_flags}'
+
+
+def test_09_test_dosmodes():
+    modes = ['readonly', 'hidden', 'system', 'archive', 'offline', 'sparse']
+    ds_name = 'dosmode_test'
+    target = f'{pool_name}/{ds_name}'
+    path = f'/mnt/{target}'
+    testpaths = [
+        f'{path}/testfile',
+        f'{path}/testdir',
+    ]
+
+    with create_dataset(target):
+        cmd = [
+            f'touch {testpaths[0]}',
+            f'mkdir {testpaths[1]}'
+        ]
+        results = SSH_TEST(' && '.join(cmd), user, password, ip)
+        assert results['result'] is True, str(results)
+
+        for p in testpaths:
+            results = POST('/filesystem/get_dosmode', p)
+            assert results.status_code == 200, results
+
+            expected_flags = results.json()
+
+            for m in modes:
+                to_set = {m: not expected_flags[m]}
+                results = POST('/filesystem/set_dosmode', {'path': p, 'dosmode': to_set})
+                assert results.status_code == 200, results.text
+
+                expected_flags.update(to_set)
+                results = POST('/filesystem/get_dosmode', p)
+                assert results.status_code == 200, results
+                assert results.json() == expected_flags
