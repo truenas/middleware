@@ -48,7 +48,7 @@ def test__disable_proactive_support_for_valid_alert_class(request):
     })
 
 
-def test__disable_proactive_support_for_invalid_alert_class(re):
+def test__disable_proactive_support_for_invalid_alert_class(request):
     depends(request, ["pool_04"], scope="session")
     with pytest.raises(ValidationErrors) as ve:
         call("alertclasses.update", {
