@@ -151,12 +151,12 @@ class SMBSharePreset(enum.Enum):
         'auxsmbconf': '\n'.join([
             'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true'
         ])
-    }, "cluster": False},
+    }, "cluster": False}
     READ_ONLY = {"verbose": "Read-only share", "params": {
         'ro': True,
         'shadowcopy': False,
         'auxsmbconf': '',
-    }, "cluster": True},
+    }, "cluster": True}
     WORM_DROPBOX = {"verbose_name": "SMB WORM. Files become readonly via SMB after 5 minutes", "params": {
         'path_suffix': '',
         'auxsmbconf': '\n'.join([
