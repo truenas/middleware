@@ -47,7 +47,7 @@ class AlertClass(metaclass=AlertClassMeta):
 
     exclude_from_list = False
     products = ("CORE", "ENTERPRISE")
-    hardware = False
+    proactive_support = False
 
     def __init__(self, middleware):
         self.middleware = middleware

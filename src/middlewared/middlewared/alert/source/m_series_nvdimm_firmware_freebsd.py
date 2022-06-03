@@ -17,7 +17,7 @@ class TrueNASMNVDIMMFirmwareVersionAlertClass(AlertClass):
     )
 
     products = ("ENTERPRISE",)
-    hardware = True
+    proactive_support = True
 
 
 class TrueNASMNVDIMMFirmwareVersionAlertSource(AlertSource):
