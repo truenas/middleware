@@ -29,20 +29,27 @@ def test__iscsi_extent__disk_choices():
         "type": "VOLUME",
         "volsize": 1024000,
     }) as ds:
+        # Make snapshots available for devices
+        call("zfs.dataset.update", ds, {"properties": {"snapdev": {"parsed": "visible"}}})
         call("zfs.snapshot.create", {"dataset": ds, "name": "snap-1"})
-
         assert call("iscsi.extent.disk_choices") == {
-            f'zvol/{ds.replace(" ", "+")}': f'{ds} (1000K)',
+            f'zvol/{ds.replace(" ", "+")}': f'{ds} (1000 KiB)',
             f'zvol/{ds.replace(" ", "+")}@snap-1': f'{ds}@snap-1 [ro]',
         }
 
+        # Create new extent
         with iscsi_extent({
             "name": "test_extent",
             "type": "DISK",
             "disk": f"zvol/{ds.replace(' ', '+')}",
         }):
+            # Verify that zvol is not available in iscsi disk choices
             assert call("iscsi.extent.disk_choices") == {
                 f'zvol/{ds.replace(" ", "+")}@snap-1': f'{ds}@snap-1 [ro]',
+            }
+            # Verify that zvol is not availabe in VM disk choices
+            assert call("vm.device.disk_choices") == {
+                f'/dev/zvol/{ds.replace(" ", "+")}@snap-1': f'{ds}@snap-1'
             }
 
 
