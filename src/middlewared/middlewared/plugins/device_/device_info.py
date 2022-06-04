@@ -1,7 +1,6 @@
 import os
 import pyudev
 import re
-import glob
 
 import libsgio
 
@@ -66,8 +65,10 @@ class DeviceService(Service):
                 part['end'] = lss * part['end_sector']
                 part['size'] = lss * int(i['ID_PART_ENTRY_SIZE'])
 
-            if ep := glob.glob(f'/sys/block/dm-*/slaves/{part_name}'):
-                part['encrypted_provider'] = f'/dev/{ep[0].split("/")[3]}'
+            for attr in filter(lambda x: x.startswith('holders/md'), i.attributes.available_attributes):
+                # looks like `holders/md123`
+                part['encrypted_provider'] = f'/dev/{attr.split("/", 1)[1].strip()}'
+                break
 
             parts.append(part)
 
