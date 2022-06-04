@@ -1,4 +1,3 @@
-import copy
 import concurrent.futures
 import functools
 import json
@@ -18,7 +17,7 @@ def item_details(items, location, questions_context, item_key):
     item = item_key.removesuffix(f'_{train}')
     item_location = os.path.join(location, train, item)
     return {
-        k: v for k, v in get_item_details(item_location, questions_context, {'retrieve_versions': True})
+        k: v for k, v in get_item_details(item_location, questions_context, {'retrieve_versions': True}).items()
         if k != 'versions'
     }
 
@@ -62,7 +61,7 @@ class CatalogService(Service):
             }
         }
     ))
-    @job(lock=lambda args: f'{args[0]}_catalog_item_retrieval_{json.dumps(args[1])}', lock_queue_size=1)
+    @job(lock=lambda args: f'catalog_item_retrieval_{json.dumps(args)}', lock_queue_size=1)
     def items(self, job, label, options):
         """
         Retrieve item details for `label` catalog.
@@ -82,9 +81,9 @@ class CatalogService(Service):
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
-        cache_available = False
         cache_key = get_cache_key(label)
-        if options['cache'] and options['cache_only'] and not self.middleware.call_sync('cache.has_key', cache_key):
+        cache_available = self.middleware.call_sync('cache.has_key', cache_key)
+        if options['cache'] and options['cache_only'] and not cache_available:
             return {}
 
         if options['cache'] and cache_available:
