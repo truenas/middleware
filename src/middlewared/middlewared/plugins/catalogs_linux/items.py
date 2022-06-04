@@ -29,8 +29,8 @@ class CatalogService(Service):
         cli_namespace = 'app.catalog'
 
     @private
-    def cached(self, label, retrieve_versions):
-        return self.middleware.call_sync('cache.has_key', get_cache_key(label, retrieve_versions))
+    def cached(self, label):
+        return self.middleware.call_sync('cache.has_key', get_cache_key(label))
 
     @accepts(
         Str('label'),
@@ -79,19 +79,15 @@ class CatalogService(Service):
 
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
-
-        `options.retrieve_versions` can be unset to skip retrieving version details of each catalog item. This
-        can help in cases to optimize performance. Retrieving versions would be deprecated in the next major
-        release from this endpoint.
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
         cache_available = False
-        cache_key = get_cache_key(label, options['retrieve_versions'])
+        cache_key = get_cache_key(label)
         if options['cache']:
             cache_available = self.middleware.call_sync('cache.has_key', cache_key)
             if not cache_available and not options['retrieve_versions']:
-                cache_key = get_cache_key(label, True)
+                cache_key = get_cache_key(label)
                 cache_available = self.middleware.call_sync('cache.has_key', cache_key)
             if not cache_available and options['cache_only']:
                 return {}
@@ -155,7 +151,7 @@ class CatalogService(Service):
                         trains_copy[train][item] = item_data
             else:
                 trains_copy = trains
-            self.middleware.call_sync('cache.put', get_cache_key(label, False), trains_copy, 90000)
+            self.middleware.call_sync('cache.put', get_cache_key(label), trains_copy, 90000)
 
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
             # Update feature map cache whenever official catalog is updated
