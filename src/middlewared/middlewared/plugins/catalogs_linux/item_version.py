@@ -16,6 +16,7 @@ class CatalogService(Service):
         Str('item_name'),
         Dict(
             'item_version_details',
+            Bool('cache'),  # TODO: Remove this once UI adapts
             Str('catalog', required=True),
             Str('train', required=True),
         )
@@ -48,4 +49,3 @@ class CatalogService(Service):
 
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         return get_item_details(item_location, questions_context, {'retrieve_versions': True})
-
