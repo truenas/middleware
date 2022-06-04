@@ -69,7 +69,7 @@ class DeviceService(Service):
             for idx, attr in enumerate(attrs):
                 if attr.startswith('holders/md'):
                     # looks like `holders/md123`
-                    part['encrypted_provider'] = f'/dev/{attrs[idx].split("/", 1)[-1].strip()}'
+                    part['encrypted_provider'] = f'/dev/{attr.split("/", 1)[1].strip()}'
                     break
 
             parts.append(part)
