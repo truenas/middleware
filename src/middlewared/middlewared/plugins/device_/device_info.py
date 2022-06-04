@@ -66,7 +66,7 @@ class DeviceService(Service):
                 part['size'] = lss * int(i['ID_PART_ENTRY_SIZE'])
 
             attrs = list(i.attributes.available_attributes)
-            for idx, attr in enumerate(attrs):
+            for attr in attrs:
                 if attr.startswith('holders/md'):
                     # looks like `holders/md123`
                     part['encrypted_provider'] = f'/dev/{attr.split("/", 1)[1].strip()}'
