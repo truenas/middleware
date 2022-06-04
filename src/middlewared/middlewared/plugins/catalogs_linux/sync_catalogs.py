@@ -55,7 +55,6 @@ class CatalogService(Service):
             'cache': False,
             'cache_only': False,
             'retrieve_all_trains': True,
-            'retrieve_versions': True,
             'trains': [],
         }
 
