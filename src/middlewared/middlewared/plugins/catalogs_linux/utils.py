@@ -58,6 +58,5 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
         return True
 
 
-def get_cache_key(label, retrieve_versions):
-    suffix = '' if retrieve_versions else '_without_versions'
-    return f'catalog_{label}_train_details{suffix}'
+def get_cache_key(label):
+    return f'catalog_{label}_train_details'
