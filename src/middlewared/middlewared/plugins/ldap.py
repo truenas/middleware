@@ -13,7 +13,7 @@ import copy
 
 from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref, LDAP_DN
+from middlewared.schema import accepts, returns, Bool, Dict, Int, List, Str, Ref, LDAP_DN
 from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
@@ -675,6 +675,7 @@ class LDAPService(TDBWrapConfigService):
         return data
 
     @accepts()
+    @returns(List('schema_choices', items=[Ref('nss_info_ldap')]))
     async def schema_choices(self):
         """
         Returns list of available LDAP schema choices.
@@ -682,6 +683,7 @@ class LDAPService(TDBWrapConfigService):
         return await self.middleware.call('directoryservices.nss_info_choices', 'LDAP')
 
     @accepts()
+    @returns(List('ssl_choices', items=[Ref('ldap_ssl_choice', 'ssl')]))
     async def ssl_choices(self):
         """
         Returns list of SSL choices.
@@ -924,7 +926,7 @@ class LDAPService(TDBWrapConfigService):
         LDAP_DN('binddn'),
         Str('bindpw', private=True),
         Bool('anonbind', default=False),
-        Str('ssl', default='OFF', enum=['OFF', 'ON', 'START_TLS']),
+        Ref('ldap_ssl_choice', 'ssl'),
         Int('certificate', null=True),
         Bool('validate_certificates', default=True),
         Bool('disable_freenas_cache'),
@@ -934,7 +936,7 @@ class LDAPService(TDBWrapConfigService):
         Str('kerberos_principal'),
         Bool('has_samba_schema', default=False),
         Str('auxiliary_parameters', default=False, max_length=None),
-        Str('schema', default='RFC2307', enum=['RFC2307', 'RFC2307BIS']),
+        Ref('nss_info_ldap', 'schema'),
         Bool('enable'),
         update=True
     ))
@@ -1183,6 +1185,7 @@ class LDAPService(TDBWrapConfigService):
         return await self.middleware.call('directoryservices.set_state', {'ldap': state.name})
 
     @accepts()
+    @returns(Ref('directoryservice_state'))
     async def get_state(self):
         """
         Wrapper function for 'directoryservices.get_state'. Returns only the state of the
