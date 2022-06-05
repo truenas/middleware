@@ -4,10 +4,10 @@ from middlewared.service import Service, private
 class EnclosureService(Service):
 
     @private
-    def fake_nvme_enclosure(self, id, name, model, count, slot_to_nvd):
+    def fake_nvme_enclosure(self, id, name, model, count, slot_to_nvme):
         elements = []
         for slot in range(1, 1 + count):
-            device = slot_to_nvd.get(slot, None)
+            device = slot_to_nvme.get(slot, None)
 
             if device is not None:
                 status = "OK"

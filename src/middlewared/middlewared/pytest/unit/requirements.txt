@@ -1,3 +1,4 @@
 asyncmock
 asynctest
+pyfakefs
 pytest-asyncio
