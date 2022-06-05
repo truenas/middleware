@@ -3,7 +3,7 @@ import asyncio
 import errno
 import os
 import datetime
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str, LDAP_DN, OROperator
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
 from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
@@ -608,7 +608,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         OROperator(
             Dict(
                 'idmap_ad_options',
-                Str('schema_mode', required=True, enum=['RFC2307', 'SFU', 'SFU20']),
+                Ref('nss_info_ad', 'schema_mode'),
                 Bool('unix_primary_group', default=False),
                 Bool('unix_nss_info', default=False),
             ),
@@ -625,7 +625,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 Str('ldap_user_dn_password', private=True),
                 Str('ldap_url'),
                 Bool('readonly', default=False),
-                Str('ssl', enum=[x.value for x in SSL]),
+                Ref('ldap_ssl_choice', 'ssl'),
                 Bool('validate_certificates', default=True),
             ),
             Dict(
@@ -644,7 +644,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 Str('ldap_url'),
                 LDAP_DN('ldap_user_dn'),
                 Str('ldap_user_dn_password', private=True),
-                Str('ssl', enum=[x.value for x in SSL]),
+                Ref('ldap_ssl_choice', 'ssl'),
                 Bool('validate_certificates', default=True),
             ),
             Dict(

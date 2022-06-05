@@ -897,15 +897,17 @@ class Cron(Dict):
 
 class Ref(object):
 
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, name, new_name=None):
+        self.schema_name = name
+        self.name = new_name or name
         self.resolved = False
 
     def resolve(self, schemas):
-        schema = schemas.get(self.name)
+        schema = schemas.get(self.schema_name)
         if not schema:
-            raise ResolverError('Schema {0} does not exist'.format(self.name))
+            raise ResolverError('Schema {0} does not exist'.format(self.schema_name))
         schema = schema.copy()
+        schema.name = self.name
         schema.register = False
         schema.resolved = True
         self.resolved = True
