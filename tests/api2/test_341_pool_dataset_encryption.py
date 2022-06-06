@@ -39,7 +39,8 @@ def test_001_create_a_normal_pool(request):
             'data': [
                 {'type': 'STRIPE', 'disks': pool_disks}
             ],
-        }
+        },
+        "allow_duplicate_serials": True,
     }
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
@@ -449,7 +450,8 @@ def test_033_create_a_passphrase_encrypted_pool(request):
             'data': [
                 {'type': 'STRIPE', 'disks': pool_disks}
             ],
-        }
+        },
+        "allow_duplicate_serials": True,
     }
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text
@@ -624,7 +626,8 @@ def test_049_creating_a_key_encrypted_pool(request):
             'data': [
                 {'type': 'STRIPE', 'disks': pool_disks}
             ],
-        }
+        },
+        "allow_duplicate_serials": True,
     }
     results = POST('/pool/', payload)
     assert results.status_code == 200, results.text

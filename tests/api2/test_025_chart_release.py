@@ -8,7 +8,7 @@ sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE, wait_on_job
 from auto_config import ha, dev_test, interface, pool_name
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
@@ -309,7 +309,9 @@ if not ha:
         result = DELETE(f'/pool/dataset/id/{pool_name}%2Fipfs-data/', {'recursive': True})
         assert result.status_code == 200, result.text
 
-    def test_31_set_custom_catalog_for_testing_update():
+    @pytest.mark.dependency(name='custom_catalog')
+    def test_31_set_custom_catalog_for_testing_update(request):
+        depends(request, ['setup_kubernetes'], scope='session')
         global results
         payload = {
             'force': False,
@@ -329,24 +331,28 @@ if not ha:
         time.sleep(5)
 
     @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
-    def test_32_verify_updatechart_catalog_object(key):
+    def test_32_verify_updatechart_catalog_object(request, key):
+        depends(request, ['custom_catalog'])
         assert results[key] == updatechart_catalog[key], results
 
-    def test_33_verify_updatechart_is_in_catalog_list():
+    def test_33_verify_updatechart_is_in_catalog_list(request):
+        depends(request, ['custom_catalog'])
         results = GET('/catalog/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
         assert 'UPDATECHARTS' in results.text, results.text
 
     @pytest.mark.parametrize('key', list(updatechart_catalog.keys()))
-    def test_34_verify_updatechart_catalog_object(key):
+    def test_34_verify_updatechart_catalog_object(request, key):
+        depends(request, ['custom_catalog'])
         results = GET('/catalog/id/UPDATECHARTS/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()[key] == updatechart_catalog[key], results.text
 
     @pytest.mark.dependency(name='plex_version')
-    def test_35_get_plex_old_version():
+    def test_35_get_plex_old_version(request):
+        depends(request, ['custom_catalog'])
         global old_plex_version, new_plex_version
         payload = {
             'label': 'UPDATECHARTS',
@@ -452,7 +458,8 @@ if not ha:
         job_status = wait_on_job(results.json(), 600)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    def test_43_delete_truechart_catalog():
+    def test_43_delete_truechart_catalog(request):
+        depends(request, ['custom_catalog'])
         results = DELETE('/catalog/id/UPDATECHARTS/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text

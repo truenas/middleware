@@ -1,7 +1,7 @@
 import time
 
 import pytest
-
+from pytest_dependency import depends
 from middlewared.test.integration.assets.cloud_sync import credential, task
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
@@ -12,7 +12,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import dev_test
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
@@ -29,7 +29,8 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
         {"region": "fr-par"},
     )
 ])
-def test_custom_s3(credential_attributes, result):
+def test_custom_s3(request, credential_attributes, result):
+    depends(request, ["pool_04"], scope="session")
     with dataset("test") as ds:
         with credential({
             "name": "S3",

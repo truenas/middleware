@@ -139,6 +139,7 @@ def test_05_check_user_exists(request):
         assert pw['pw_gecos'] == 'Test User', results.txt
         assert pw['pw_dir'] == '/nonexistent', results.txt
 
+
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
     global userinfo
@@ -551,7 +552,7 @@ def test_46_creating_non_smb_user(request):
 
 
 def test_47_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
     cmd = """grep -R "testabcd" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -604,7 +605,7 @@ def test_50_convert_to_smb_user(request):
 
 
 def test_51_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
     cmd = """grep -R "testabcd1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -633,7 +634,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
 
 
 def test_53_add_user_to_sudoers(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
     results = PUT(f"/user/id/{testuser_id}", {"sudo": True})
     assert results.status_code == 200, results.text
 
@@ -646,7 +647,7 @@ def test_53_add_user_to_sudoers(request):
 
 
 def test_54_disable_password_auth(request):
-    depends(request, ["ssh_password"], scope="session")
+    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
     results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True})
     assert results.status_code == 200, results.text
 

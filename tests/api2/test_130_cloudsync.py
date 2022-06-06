@@ -25,7 +25,7 @@ except ImportError:
     pytestmark = pytest.mark.skip(reason=Reason)
 else:
     # comment pytestmark for development testing with --dev-test
-    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 @pytest.fixture(scope='module')

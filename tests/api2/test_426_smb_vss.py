@@ -19,7 +19,7 @@ from pytest_dependency import depends
 from protocols import SMB
 from samba import ntstatus
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
@@ -114,6 +114,7 @@ def check_previous_version_contents(path, contents, offset):
 @pytest.mark.parametrize('ds', [dataset, dataset_nested])
 @pytest.mark.dependency(name="VSS_DATASET_CREATED")
 def test_001_creating_smb_dataset(request, ds):
+    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": ds,
         "share_type": "SMB"

@@ -18,7 +18,7 @@ from functions import (
 )
 from auto_config import pool_name, ip, user, password, dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 try:
     from config import (
@@ -75,7 +75,8 @@ def test_05_get_ldap_ssl_choices():
 
 
 @pytest.mark.dependency(name="setup_ldap")
-def test_06_setup_and_enabling_ldap():
+def test_06_setup_and_enabling_ldap(request):
+    depends(request, ["pool_04"], scope="session")
     payload = {
         "basedn": LDAPBASEDN,
         "binddn": LDAPBINDDN,
@@ -128,6 +129,7 @@ def test_11_verify_that_the_ldap_user_id_exist_on_the_nas(request):
     get_user_obj is a wrapper around the pwd module.
     This check verifies that the user is _actually_ created.
     """
+    depends(request, ["setup_ldap"])
     payload = {
         "username": LDAPUSER
     }

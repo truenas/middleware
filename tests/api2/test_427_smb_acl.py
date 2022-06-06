@@ -7,19 +7,15 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
+from functions import POST, GET, DELETE, wait_on_job
 from auto_config import (
-    ip,
     pool_name,
     dev_test,
-    user,
-    password,
 )
 from pytest_dependency import depends
-from protocols import SMB
 from time import sleep
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
@@ -84,7 +80,6 @@ def smb_share(path, options=None):
     finally:
         result = DELETE(f"/sharing/smb/id/{id}/")
         assert result.status_code == 200, result.text
-
 
     assert results.status_code == 200, results.text
     global next_uid
@@ -170,14 +165,14 @@ def test_003_test_perms(request):
     correct NT ACL bit gets toggled when viewed through SMB
     protocol.
     """
-    depends(request, ["SMB_SERVICE_STARTED"])
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
 
     ds = 'nfs4acl_perms_smb'
     path = f'/mnt/{pool_name}/{ds}'
     with smb_dataset(ds):
         with smb_share(path, {"name": "PERMS"}):
             result = POST('/filesystem/getacl/', {'path': path, 'simplified': False})
-            assert result.status_code == 200, results.text
+            assert result.status_code == 200, result.text
             the_acl = result.json()['acl']
             new_entry = {
                 'perms': permset,
@@ -203,14 +198,14 @@ def test_004_test_flags(request):
     correct NT ACL bit gets toggled when viewed through SMB
     protocol.
     """
-    depends(request, ["SMB_SERVICE_STARTED"])
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
 
     ds = 'nfs4acl_flags_smb'
     path = f'/mnt/{pool_name}/{ds}'
     with smb_dataset(ds):
         with smb_share(path, {"name": "FLAGS"}):
             result = POST('/filesystem/getacl/', {'path': path, 'simplified': False})
-            assert result.status_code == 200, results.text
+            assert result.status_code == 200, result.text
             the_acl = result.json()['acl']
             new_entry = {
                 'perms': permset,

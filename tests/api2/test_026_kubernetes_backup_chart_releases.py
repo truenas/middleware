@@ -9,7 +9,7 @@ from functions import GET, POST, DELETE, SSH_TEST, wait_on_job
 from auto_config import ha, dev_test, artifacts, password, ip
 
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 

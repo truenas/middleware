@@ -12,7 +12,7 @@ from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')

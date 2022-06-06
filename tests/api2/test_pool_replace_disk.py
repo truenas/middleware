@@ -3,6 +3,9 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
 
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
 
 def disks(topology):
     flat = call("pool.flatten_topology", topology)

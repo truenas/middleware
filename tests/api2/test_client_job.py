@@ -1,7 +1,11 @@
 import pprint
+import pytest
 import time
 
 from middlewared.test.integration.utils import client, call, mock, ssh
+
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test_client_job_callback():

@@ -13,7 +13,7 @@ from pytest_dependency import depends
 
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 shell = '/usr/bin/bash'
 group = 'nogroup'
@@ -558,7 +558,8 @@ def test_20_delete_child_dataset(request):
     assert result.status_code == 200, result.text
 
 
-def test_20_get_next_uid_for_acluser():
+def test_20_get_next_uid_for_acluser(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     results = GET('/user/get_next_uid/')
     assert results.status_code == 200, results.text
     global next_uid
@@ -566,7 +567,8 @@ def test_20_get_next_uid_for_acluser():
 
 
 @pytest.mark.dependency(name="ACL_USER_CREATED")
-def test_21_creating_shareuser_to_test_acls():
+def test_21_creating_shareuser_to_test_acls(request):
+    depends(request, ["HAS_NFS4_ACLS"])
     global acluser_id
     payload = {
         "username": ACL_USER,
