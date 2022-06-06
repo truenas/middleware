@@ -8,7 +8,7 @@ import contextlib
 
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.plugins.kerberos import krb5ccache
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, LDAP_DN, List, Ref, returns, Str
 from middlewared.service import job, private, TDBWrapConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -188,6 +188,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return ad
 
     @accepts()
+    @returns(Ref('nss_info_ad'))
     async def nss_info_choices(self):
         """
         Returns list of available LDAP schema choices.
@@ -492,6 +493,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return await self.middleware.call('directoryservices.set_state', {'activedirectory': state})
 
     @accepts()
+    @returns(Str('directoryservice_state', enum=[x.name for x in DSStatus], register=True))
     async def get_state(self):
         """
         Wrapper function for 'directoryservices.get_state'. Returns only the state of the
@@ -800,6 +802,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return neterr.JOINED
 
     @accepts(Str('domain', default=''))
+    @returns(Dict(
+        IPAddr('LDAP server'),
+        Str('LDAP server name'),
+        Str('Realm'),
+        LDAP_DN('Bind Path'),
+        Int('LDAP port'),
+        Int('Server time'),
+        IPAddr('KDC server'),
+        Int('Server time offset'),
+        Int('Last machine account password change')
+    ))
     async def domain_info(self, domain):
         """
         Returns the following information about the currently joined domain:
