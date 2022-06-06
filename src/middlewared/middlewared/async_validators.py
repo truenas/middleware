@@ -18,7 +18,7 @@ async def check_path_resides_within_volume(verrors, middleware, name, path):
         rv = {'realpath': None, 'inode': None, 'dev': None, 'is_mountpoint': False}
         try:
             st = os.stat(path)
-            rv['inode'] = st.st_inode
+            rv['inode'] = st.st_ino
             rv['dev'] = st.st_dev
         except FileNotFoundError:
             pass
