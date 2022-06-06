@@ -25,16 +25,13 @@ class EnclosureService(Service):
         }
 
         slot_to_nvme = {}
-        context = pyudev.Context()
-        for i in filter(lambda x: x.attributes.get("path") == b"\\_SB_.PC03.BR3A",
-                        context.list_devices(subsystem="acpi")):
-            physical_node_path = f"{i.sys_path}/physical_node"
+        ctx = pyudev.Context()
+        for i in filter(lambda x: x.attributes.get("path") == b"\\_SB_.PC03.BR3A", ctx.list_devices(subsystem="acpi")):
             try:
-                physical_node = pyudev.Devices.from_path(context, physical_node_path)
+                physical_node = pyudev.Devices.from_path(context, f"{i.sys_path}/physical_node")
             except pyudev.DeviceNotFoundAtPathError:
-                self.logger.error("Failed to find PCI slot information for rear NVME drives at path %r",
-                                  physical_node_path)
-                return []
+                # happens when there are no rear-nvme drives plugged in
+                pass
             else:
                 for child in physical_node.children:
                     if not self.RE_NVME.fullmatch(child.sys_name):
