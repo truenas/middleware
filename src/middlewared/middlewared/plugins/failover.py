@@ -477,13 +477,13 @@ class FailoverService(ConfigService):
         for iface in filter(lambda x: x in db_ifaces, ifaces):
             if not ifaces[iface].get('failover_virtual_aliases'):
                 # if any interface is configured on HA, then it must have a VIP
-                reasons.add('NO_VIP')
+                reasons.append('NO_VIP')
             if ifaces[iface].get('failover_critical'):
                 # only need 1 interface marked critical for failover
                 crit_iface = True
 
         if not crit_iface:
-            reasons.add('NO_CRITICAL_INTERFACES')
+            reasons.append('NO_CRITICAL_INTERFACES')
 
         try:
             assert self.middleware.call_sync('failover.remote_connected') is True
