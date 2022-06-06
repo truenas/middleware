@@ -1,4 +1,3 @@
-import copy
 import concurrent.futures
 import functools
 import json
@@ -10,17 +9,17 @@ from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
 
 from .items_util import get_item_details, get_item_version_details
-from .questions_utils import normalise_questions
 from .utils import get_cache_key
 
 
-def item_details(items, location, questions_context, options, item_key):
+def item_details(items, location, questions_context, item_key):
     train = items[item_key]
     item = item_key.removesuffix(f'_{train}')
     item_location = os.path.join(location, train, item)
-    return get_item_details(item_location, questions_context, {
-        'retrieve_versions': options['retrieve_versions'],
-    })
+    return {
+        k: v for k, v in get_item_details(item_location, questions_context, {'retrieve_versions': True}).items()
+        if k != 'versions'
+    }
 
 
 class CatalogService(Service):
@@ -29,8 +28,8 @@ class CatalogService(Service):
         cli_namespace = 'app.catalog'
 
     @private
-    def cached(self, label, retrieve_versions):
-        return self.middleware.call_sync('cache.has_key', get_cache_key(label, retrieve_versions))
+    def cached(self, label):
+        return self.middleware.call_sync('cache.has_key', get_cache_key(label))
 
     @accepts(
         Str('label'),
@@ -39,7 +38,6 @@ class CatalogService(Service):
             Bool('cache', default=True),
             Bool('cache_only', default=False),
             Bool('retrieve_all_trains', default=True),
-            Bool('retrieve_versions', default=False),
             List('trains', items=[Str('train_name')]),
         )
     )
@@ -62,7 +60,7 @@ class CatalogService(Service):
             }
         }
     ))
-    @job(lock=lambda args: f'{args[0]}_catalog_item_retrieval_{json.dumps(args[1])}')
+    @job(lock=lambda args: f'catalog_item_retrieval_{json.dumps(args)}', lock_queue_size=1)
     def items(self, job, label, options):
         """
         Retrieve item details for `label` catalog.
@@ -79,30 +77,18 @@ class CatalogService(Service):
 
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
-
-        `options.retrieve_versions` can be unset to skip retrieving version details of each catalog item. This
-        can help in cases to optimize performance. Retrieving versions would be deprecated in the next major
-        release from this endpoint.
         """
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
-        cache_available = False
-        cache_key = get_cache_key(label, options['retrieve_versions'])
-        if options['cache']:
-            cache_available = self.middleware.call_sync('cache.has_key', cache_key)
-            if not cache_available and not options['retrieve_versions']:
-                cache_key = get_cache_key(label, True)
-                cache_available = self.middleware.call_sync('cache.has_key', cache_key)
-            if not cache_available and options['cache_only']:
-                return {}
+        cache_key = get_cache_key(label)
+        cache_available = self.middleware.call_sync('cache.has_key', cache_key)
+        if options['cache'] and options['cache_only'] and not cache_available:
+            return {}
 
         if options['cache'] and cache_available:
             job.set_progress(10, 'Retrieving cached content')
             orig_data = self.middleware.call_sync('cache.get', cache_key)
             job.set_progress(60, 'Normalizing cached content')
-            questions_context = None if not options['retrieve_versions'] else self.middleware.call_sync(
-                'catalog.get_normalised_questions_context'
-            )
             cached_data = {}
             for train in orig_data:
                 if not all_trains and train not in options['trains']:
@@ -110,22 +96,12 @@ class CatalogService(Service):
 
                 train_data = {}
                 for catalog_item in orig_data[train]:
-                    train_data[catalog_item] = {
-                        k: v for k, v in orig_data[train][catalog_item].items()
-                        if k != 'versions' or options['retrieve_versions']
-                    }
-                    if not options['retrieve_versions']:
-                        continue
-
-                    for version in train_data[catalog_item]['versions']:
-                        version_data = train_data[catalog_item]['versions'][version]
-                        if not version_data.get('healthy'):
-                            continue
-                        normalise_questions(version_data, questions_context)
+                    train_data[catalog_item] = {k: v for k, v in orig_data[train][catalog_item].items()}
 
                 cached_data[train] = train_data
 
             job.set_progress(100, 'Retrieved catalog item(s) details successfully')
+            self.middleware.loop.call_later(30, functools.partial(job.set_result, None))
             return cached_data
         elif not os.path.exists(catalog['location']):
             job.set_progress(5, f'Cloning {label!r} catalog repository')
@@ -144,24 +120,14 @@ class CatalogService(Service):
             # happens after 24h - which means that for a small amount of time it's possible that user
             # come with a case where system is trying to access cached data but it has expired and it's
             # reading again from disk hence the extra 1 hour.
-            if options['retrieve_versions']:
-                self.middleware.call_sync('cache.put', get_cache_key(label, True), trains, 90000)
-                trains_copy = {}
-                for train in trains:
-                    trains_copy[train] = {}
-                    for item in trains[train]:
-                        item_data = copy.deepcopy(trains[train][item])
-                        item_data.pop('versions')
-                        trains_copy[train][item] = item_data
-            else:
-                trains_copy = trains
-            self.middleware.call_sync('cache.put', get_cache_key(label, False), trains_copy, 90000)
+            self.middleware.call_sync('cache.put', get_cache_key(label), trains, 90000)
 
         if label == self.middleware.call_sync('catalog.official_catalog_label'):
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
 
         job.set_progress(100, f'Successfully retrieved {label!r} catalog information')
+        self.middleware.loop.call_later(30, functools.partial(job.set_result, None))
         return trains
 
     @private
@@ -203,7 +169,7 @@ class CatalogService(Service):
         total_items = len(items)
         with concurrent.futures.ProcessPoolExecutor(max_workers=(5 if total_items > 10 else 2)) as exc:
             for index, result in enumerate(zip(items, exc.map(
-                functools.partial(item_details, items, location, questions_context, options),
+                functools.partial(item_details, items, location, questions_context),
                 items, chunksize=(10 if total_items > 10 else 5)
             ))):
                 item_key = result[0]

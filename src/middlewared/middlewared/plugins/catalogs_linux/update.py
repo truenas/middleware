@@ -94,22 +94,22 @@ class CatalogService(CRUDService):
                         'retrieve_all_trains': extra.get('retrieve_all_trains', True),
                         'trains': extra.get('trains', []),
                     }),
-                    'cached': label == OFFICIAL_LABEL or await self.middleware.call(
-                        'catalog.cached', label, False
-                    ) or await self.middleware.call('catalog.cached', label, True),
+                    'cached': label == OFFICIAL_LABEL or await self.middleware.call('catalog.cached', label),
                     'normalized_progress': None,
                 }
                 if not catalog_info['cached']:
                     caching_job = filter_list(item_jobs, [['arguments', '=', [row['label'], item_sync_params]]])
-                    if not caching_job:
-                        caching_job_obj = await self.middleware.call('catalog.items', label, item_sync_params)
-                        caching_job = caching_job_obj.__encode__()
-                    else:
+                    if caching_job:
+                        # We will almost certainly always have this except for the case when middleware starts
+                        # it is guaranteed that we will eventually have this anyways as catalog.sync_all is called
+                        # periodically. So let's not trigger a new redundant job for this
                         caching_job = caching_job[0]
+                    else:
+                        caching_job = None
 
                     catalog_info['normalized_progress'] = {
                         'caching_job': caching_job,
-                        'caching_progress': caching_job['progress'],
+                        'caching_progress': caching_job['progress'] if caching_job else None,
                     }
                 context['catalogs_context'][label] = catalog_info
 
@@ -133,9 +133,7 @@ class CatalogService(CRUDService):
                 'healthy': all(
                     app['healthy'] for train in item_job.result for app in item_job.result[train].values()
                 ),
-                'cached': label == OFFICIAL_LABEL or await self.middleware.call(
-                    'catalog.cached', label, False
-                ) or await self.middleware.call('catalog.cached', label, True),
+                'cached': label == OFFICIAL_LABEL or await self.middleware.call('catalog.cached', label),
                 'error': False,
                 'caching_progress': None,
                 'caching_job': None,
@@ -287,8 +285,7 @@ class CatalogService(CRUDService):
 
         # Remove cached content of the catalog in question so that if a catalog is created again
         # with same label but different repo/branch, we don't reuse old cache
-        self.middleware.call_sync('cache.pop', get_cache_key(id, True))
-        self.middleware.call_sync('cache.pop', get_cache_key(id, False))
+        self.middleware.call_sync('cache.pop', get_cache_key(id))
 
         return ret
 

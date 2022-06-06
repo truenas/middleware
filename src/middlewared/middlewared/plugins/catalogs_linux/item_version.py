@@ -5,7 +5,6 @@ from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
 from .items_util import get_item_details
-from .questions_utils import normalise_questions
 
 
 class CatalogService(Service):
@@ -17,7 +16,7 @@ class CatalogService(Service):
         Str('item_name'),
         Dict(
             'item_version_details',
-            Bool('cache', default=True),
+            Bool('cache'),  # TODO: Remove this once UI adapts
             Str('catalog', required=True),
             Str('train', required=True),
         )
@@ -49,21 +48,4 @@ class CatalogService(Service):
             raise CallError(f'{item_location!r} must be a directory')
 
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-        if options['cache'] and self.middleware.call_sync(
-            'cache.has_key', f'catalog_{options["catalog"]}_train_details'
-        ):
-            cached_data = self.middleware.call_sync('cache.get', f'catalog_{options["catalog"]}_train_details')
-            if item := cached_data.get(options['train'], {}).get(item_name):
-                # We need to update enums for refs in schema, cannot rely on cache for the latest values. Those
-                # refer to fields in schema showing us the available interfaces GPUs, Certificates, CAs etc.
-                for version in item['versions']:
-                    versioned_item = item['versions'][version]
-                    needs_normalization = versioned_item['healthy'] and versioned_item['required_features'] and any(
-                        feature.startswith('definitions/')
-                        for feature in versioned_item['required_features']
-                    )
-                    if needs_normalization:
-                        normalise_questions(versioned_item, questions_context)
-                return item
-
         return get_item_details(item_location, questions_context, {'retrieve_versions': True})
