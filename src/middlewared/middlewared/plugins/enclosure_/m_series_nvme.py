@@ -28,7 +28,7 @@ class EnclosureService(Service):
         ctx = pyudev.Context()
         for i in filter(lambda x: x.attributes.get("path") == b"\\_SB_.PC03.BR3A", ctx.list_devices(subsystem="acpi")):
             try:
-                physical_node = pyudev.Devices.from_path(context, f"{i.sys_path}/physical_node")
+                physical_node = pyudev.Devices.from_path(ctx, f"{i.sys_path}/physical_node")
             except pyudev.DeviceNotFoundAtPathError:
                 # happens when there are no rear-nvme drives plugged in
                 pass
