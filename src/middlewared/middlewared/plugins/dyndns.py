@@ -57,6 +57,7 @@ class DynDNSService(SystemServiceService):
         """
         return {
             'default@changeip.com': 'changeip.com',
+            'example.org': 'cloudflare.com',
             'default@cloudxns.net': 'cloudxns.net',
             'default@ddnss.de': 'ddnss.de',
             'default@dhis.org': 'dhis.org',
