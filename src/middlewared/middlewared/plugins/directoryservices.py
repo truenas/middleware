@@ -6,7 +6,7 @@ import tdb
 import errno
 
 from base64 import b64encode, b64decode
-from middlewared.schema import accepts
+from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
 from middlewared.service import Service, private, job
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service_exception import CallError
@@ -139,6 +139,11 @@ class DirectoryServices(Service):
         cli_namespace = "directory_service"
 
     @accepts()
+    @returns(Dict(
+        'directory_services_states',
+        Ref('directoryservice_state', 'activedirectory'),
+        Ref('directoryservice_state', 'ldap')
+    ))
     async def get_state(self):
         """
         `DISABLED` Directory Service is disabled.
@@ -215,14 +220,39 @@ class DirectoryServices(Service):
         return await job.wrap(await self.middleware.call('dscache.refresh'))
 
     @private
+    @returns(List(
+        'ldap_ssl_choices', items=[
+            Str('ldap_ssl_choice', enum=[x.value for x in list(SSL)], default=SSL.USESSL.value, register=True)
+        ]
+    ))
     async def ssl_choices(self, dstype):
         return [x.value for x in list(SSL)]
 
     @private
+    @returns(List(
+        'sasl_wrapping_choices', items=[
+            Str('sasl_wrapping_choice', enum=[x.value for x in list(SASL_Wrapping)], register=True)
+        ]
+    ))
     async def sasl_wrapping_choices(self, dstype):
         return [x.value for x in list(SASL_Wrapping)]
 
     @private
+    @returns(OROperator(
+        List('ad_nss_choices', items=[Str(
+            'nss_info_ad',
+            enum=[x.value[0] for x in NSS_Info if DSType.AD in x.value[1]],
+            default=NSS_Info.SFU.value[0],
+            register=True
+        )]),
+        List('ldap_nss_choices', items=[Str(
+            'nss_info_ldap',
+            enum=[x.value[0] for x in NSS_Info if DSType.LDAP in x.value[1]],
+            default=NSS_Info.RFC2307.value[0],
+            register=True)
+        ]),
+        name='nss_info_choices'
+    ))
     async def nss_info_choices(self, dstype):
         ds = DSType(dstype.lower())
         ret = []
