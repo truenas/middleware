@@ -1,4 +1,4 @@
-from pyudev import Context, Devices, DeviceNotFoundByNameError
+from pyudev import Context, Devices, DeviceNotFoundAtPathError
 
 from middlewared.service import Service, private
 
@@ -32,9 +32,8 @@ class EnclosureService(Service):
         for i in ctx.list_devices(subsystem='acpi'):
             if (path := i.attributes.get('path')) and path in acpi_handles:
                 try:
-                    phys_node = Devices.from_path(ctx, i.sys_path + '/physical_node')
-                except DeviceNotFoundByNameError:
-                    self.logger.error('Failed to find pci slot information')
+                    phys_node = Devices.from_path(ctx, f'{i.sys_path}/physical_node')
+                except DeviceNotFoundAtPathError:
                     return info
 
                 if path == b'\\_SB_.PC00.RP01.PXSX':
