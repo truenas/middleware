@@ -31,7 +31,7 @@ class EnclosureService(Service):
             physical_node_path = f"{i.sys_path}/physical_node"
             try:
                 physical_node = pyudev.Devices.from_path(context, physical_node_path)
-            except pyudev.DeviceNotFoundByNameError:
+            except pyudev.DeviceNotFoundAtPathError:
                 self.logger.error("Failed to find PCI slot information for rear NVME drives at path %r",
                                   physical_node_path)
                 return []
