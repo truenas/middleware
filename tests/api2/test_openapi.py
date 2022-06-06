@@ -6,6 +6,9 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET
 
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
 
 @pytest.mark.parametrize('protocol,force_ssl', [('http', False), ('https', True)])
 def test_protocol_reported_correctly(protocol, force_ssl):

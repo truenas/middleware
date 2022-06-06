@@ -1,12 +1,14 @@
 import pytest
+from pytest_dependency import depends
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, mock
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
-def test_snapshot_total_count_alert():
+def test_snapshot_total_count_alert(request):
+    depends(request, ["pool_04"], scope="session")
     with dataset("snapshot_count") as ds:
         base = call("zfs.snapshot.query", [], {"count": True})
         with mock("pool.snapshottask.max_total_count", return_value=base + 10):
@@ -24,7 +26,8 @@ def test_snapshot_total_count_alert():
             )
 
 
-def test_snapshot_count_alert():
+def test_snapshot_count_alert(request):
+    depends(request, ["pool_04"], scope="session")
     with dataset("snapshot_count") as ds:
         with mock("pool.snapshottask.max_count", return_value=10):
             for i in range(10):

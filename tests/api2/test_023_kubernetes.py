@@ -7,7 +7,7 @@ sys.path.append(apifolder)
 from functions import GET, PUT, wait_on_job
 from auto_config import ha, pool_name, interface, ip, dev_test
 
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 

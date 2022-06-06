@@ -2,7 +2,7 @@ import re
 import time
 
 import pytest
-
+from pytest_dependency import depends
 from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential, local_s3_task, run_task
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
@@ -13,12 +13,13 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import dev_test
-reason = 'Skip for testing'
+reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
-def test_include():
+def test_include(request):
+    depends(request, ["pool_04"], scope="session")
     with local_s3_task({
         "include": ["/office/**", "/work/**"],
     }) as task:
@@ -35,7 +36,8 @@ def test_include():
         assert ssh(f'ls /mnt/{pool}/cloudsync_remote/bucket') == 'office\nwork\n'
 
 
-def test_exclude_recycle_bin():
+def test_exclude_recycle_bin(request):
+    depends(request, ["pool_04"], scope="session")
     with local_s3_task({
         "exclude": ["$RECYCLE.BIN/"],
     }) as task:
@@ -52,7 +54,8 @@ def test_exclude_recycle_bin():
 @pytest.mark.parametrize("anonymous", [True, False])
 @pytest.mark.parametrize("defaultroot", [True, False])
 @pytest.mark.parametrize("has_leading_slash", [True, False])
-def test_ftp_subfolder(anonymous, defaultroot, has_leading_slash):
+def test_ftp_subfolder(request, anonymous, defaultroot, has_leading_slash):
+    depends(request, ["pool_04"], scope="session")
     with dataset("cloudsync_local") as local_dataset:
         config = {"defaultroot": defaultroot}
         with (anonymous_ftp_server if anonymous else ftp_server_with_user_account)(config) as ftp:
@@ -95,7 +98,8 @@ def test_ftp_subfolder(anonymous, defaultroot, has_leading_slash):
 
 
 @pytest.mark.parametrize("has_zvol_sibling", [True, False])
-def test_snapshot(has_zvol_sibling):
+def test_snapshot(request, has_zvol_sibling):
+    depends(request, ["pool_04"], scope="session")
     with dataset("test") as ds:
         ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1")
@@ -127,7 +131,8 @@ def test_snapshot(has_zvol_sibling):
                 ssh(f"zfs destroy -r {pool}/zvol")
 
 
-def test_sync_onetime():
+def test_sync_onetime(request):
+    depends(request, ["pool_04"], scope="session")
     with dataset("cloudsync_local") as local_dataset:
         with local_s3_credential() as c:
             call("cloudsync.sync_onetime", {
@@ -143,7 +148,8 @@ def test_sync_onetime():
             }, job=True)
 
 
-def test_abort():
+def test_abort(request):
+    depends(request, ["pool_04"], scope="session")
     with dataset("test") as ds:
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/blob bs=1M count=1")
 

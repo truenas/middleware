@@ -14,7 +14,7 @@ from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, password, user, dev_test
 from pytest_dependency import depends
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 DATASET = f"{pool_name}/smb-reg"
 DATASET_URL = DATASET.replace('/', '%2F')
@@ -187,11 +187,12 @@ def test_008_test_presets(request, preset):
         assert to_test[k] == new_conf[k]
 
 
-def test_009_reset_smb():
+def test_009_reset_smb(request):
     """
     Remove all parameters that might turn us into
     a MacOS-style SMB server (fruit).
     """
+    depends(request, ["SHARES_CREATED"])
     results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
                   {"purpose": "NO_PRESET", "timemachine": False})
     assert results.status_code == 200, results.text

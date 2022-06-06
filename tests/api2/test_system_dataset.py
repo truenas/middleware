@@ -1,4 +1,9 @@
+import pytest
+from pytest_dependency import depends
 from middlewared.test.integration.utils import call, mock, pool, ssh
+
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def read_log():
@@ -19,7 +24,8 @@ def write_to_log(string):
     assert string in read_log()
 
 
-def test_system_dataset_migrate():
+def test_system_dataset_migrate(request):
+    depends(request, ["pool_04"], scope="session")
     config = call("systemdataset.config")
     assert config["pool"] == pool
     assert config["syslog"]

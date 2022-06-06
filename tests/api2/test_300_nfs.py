@@ -19,7 +19,7 @@ from auto_config import pool_name, ha, hostname
 from auto_config import dev_test, password, user
 from protocols import SSH_NFS
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -77,7 +77,7 @@ def parse_server_config(fname="nfs-kernel-server"):
         if not line or line.startswith("#"):
             continue
 
-        k,v = line.split("=", 1)
+        k, v = line.split("=", 1)
         rv.update({k: v})
 
     return rv
@@ -370,8 +370,8 @@ def test_31_check_nfs_share_network(request):
     file for same path. Sample:
 
     "/mnt/dozer/nfs"\
-    	192.168.0.0/24(sec=sys,rw,subtree_check)\
-    	192.168.1.0/24(sec=sys,rw,subtree_check)
+        192.168.0.0/24(sec=sys,rw,subtree_check)\
+        192.168.1.0/24(sec=sys,rw,subtree_check)
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
     networks_to_test = ["192.168.0.0/24", "192.168.1.0/24"]
@@ -403,8 +403,8 @@ def test_32_check_nfs_share_hosts(request):
     file for same path. Sample:
 
     "/mnt/dozer/nfs"\
-    	192.168.0.69(sec=sys,rw,subtree_check)\
-    	192.168.0.70(sec=sys,rw,subtree_check)
+        192.168.0.69(sec=sys,rw,subtree_check)\
+        192.168.0.70(sec=sys,rw,subtree_check)
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
     hosts_to_test = ["192.168.0.69", "192.168.0.70"]
@@ -425,7 +425,7 @@ def test_32_check_nfs_share_hosts(request):
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
-    exports_hosts= [x['host'] for x in parsed[0]['opts']]
+    exports_hosts = [x['host'] for x in parsed[0]['opts']]
     assert len(exports_hosts) == 1, str(parsed)
 
 
@@ -462,7 +462,7 @@ def test_34_check_nfs_share_maproot(request):
 
     Sample:
     "/mnt/dozer/NFSV4"\
-    	*(sec=sys,rw,anonuid=65534,anongid=65534,subtree_check)
+        *(sec=sys,rw,anonuid=65534,anongid=65534,subtree_check)
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
     payload = {
@@ -533,7 +533,7 @@ def test_35_check_nfs_share_mapall(request):
 
     Sample:
     "/mnt/dozer/NFSV4"\
-    	*(sec=sys,rw,all_squash,anonuid=65534,anongid=65534,subtree_check)
+        *(sec=sys,rw,all_squash,anonuid=65534,anongid=65534,subtree_check)
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
     payload = {
@@ -574,13 +574,14 @@ def test_36_check_nfsdir_subtree_behavior(request):
 
     Sample:
     "/mnt/dozer/NFSV4"\
-    	*(sec=sys,rw,no_subtree_check)
+        *(sec=sys,rw,no_subtree_check)
     "/mnt/dozer/NFSV4/foobar"\
-    	*(sec=sys,rw,subtree_check)
+        *(sec=sys,rw,subtree_check)
     """
+    depends(request, ["pool_04"], scope="session")
     tmp_path = f'{NFS_PATH}/sub1'
     results = POST('/filesystem/mkdir', tmp_path)
-    assert results.status_code ==  200, results.text
+    assert results.status_code == 200, results.text
 
     with nfs_share(tmp_path, {'hosts': ['127.0.0.1']}):
         parsed = parse_exports()
@@ -606,9 +607,10 @@ def test_37_check_nfs_allow_nonroot_behavior(request):
     """
 
     # Verify that NFS server configuration is as expected
+    depends(request, ["pool_04"], scope="session")
     results = GET("/nfs")
     assert results.status_code == 200, results.text
-    assert results.json()['allow_nonroot'] == False, results.text
+    assert results.json()['allow_nonroot'] is False, results.text
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -638,7 +640,7 @@ def test_38_check_nfs_service_v4_parameter(request):
 
     results = GET("/nfs")
     assert results.status_code == 200, results.text
-    assert results.json()['v4'] == True, results.text
+    assert results.json()['v4'] is True, results.text
 
     s = parse_server_config()
     assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
@@ -665,7 +667,7 @@ def test_39_check_nfs_service_udp_parameter(request):
 
     results = GET("/nfs")
     assert results.status_code == 200, results.text
-    assert results.json()['udp'] == False, results.text
+    assert results.json()['udp'] is False, results.text
 
     s = parse_server_config()
     assert "--no-udp" in s["RPCNFSDOPTS"], str(s)
@@ -798,7 +800,7 @@ def test_42_check_nfsv4_acl_support(request):
                         'simplified': False
                     }
                     result = POST('/filesystem/getacl/', payload)
-                    assert result.status_code == 200, results.text
+                    assert result.status_code == 200, result.text
 
                     for idx, ace in enumerate(result.json()['acl']):
                         assert ace == nfsacl[idx], str(ace)
@@ -815,7 +817,7 @@ def test_42_check_nfsv4_acl_support(request):
                         'simplified': False
                     }
                     result = POST('/filesystem/getacl/', payload)
-                    assert result.status_code == 200, results.text
+                    assert result.status_code == 200, result.text
 
                     for idx, ace in enumerate(result.json()['acl']):
                         assert ace == nfsacl[idx], str(ace)
@@ -827,6 +829,7 @@ def test_44_check_nfs_xattr_support(request):
     Mount path via NFS 4.2, create a file and dir,
     and write + read xattr on each.
     """
+    depends(request, ["pool_04"], scope="session")
     xattr_nfs_path = f'/mnt/{pool_name}/test_nfs4_xattr'
     with nfs_dataset("test_nfs4_xattr"):
         with nfs_share(xattr_nfs_path):
@@ -842,7 +845,7 @@ def test_44_check_nfs_xattr_support(request):
                 assert xattr_val == "the_contents2" 
 
 
-def test_44_check_setting_runtime_debug(request):
+def test_45_check_setting_runtime_debug(request):
     """
     This validates that the private NFS debugging API works correctly.
     """

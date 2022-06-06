@@ -13,7 +13,7 @@ from functions import POST, SSH_TEST
 from auto_config import password, user, ip, dev_test
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 invalid_users = [
     {'username': 'root', 'password': '123'},

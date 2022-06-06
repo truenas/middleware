@@ -1,13 +1,17 @@
 import pytest
-
+from pytest_dependency import depends
 from middlewared.service_exception import CallError
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import call, mock, pool
+
+from auto_config import dev_test
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
-def test__does_not_emit_alert():
+def test__does_not_emit_alert(request):
+    depends(request, ["pool_04"], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
-            "name": "tank",
+            "name": pool,
             "properties": {
                 "capacity": {
                     "parsed": "50",
@@ -18,10 +22,11 @@ def test__does_not_emit_alert():
         assert call("alert.run_source", "ZpoolCapacity") == []
 
 
-def test__emits_alert():
+def test__emits_alert(request):
+    depends(request, ["pool_04"], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
-            "name": "tank",
+            "name": pool,
             "properties": {
                 "capacity": {
                     "parsed": "85",
@@ -32,14 +37,15 @@ def test__emits_alert():
         alerts = call("alert.run_source", "ZpoolCapacity")
         assert len(alerts) == 1
         assert alerts[0]["klass"] == "ZpoolCapacityWarning"
-        assert alerts[0]["key"] == '["tank"]'
-        assert alerts[0]["args"] == {"volume": "tank", "capacity": 85}
+        assert alerts[0]["key"] == f'["{pool}"]'
+        assert alerts[0]["args"] == {"volume": pool, "capacity": 85}
 
 
-def test__does_not_flap_alert():
+def test__does_not_flap_alert(request):
+    depends(request, ["pool_04"], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
-            "name": "tank",
+            "name": pool,
             "properties": {
                 "capacity": {
                     "parsed": "79",

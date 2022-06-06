@@ -20,7 +20,7 @@ try:
         LDAPHOSTNAME,
     )
     # comment pytestmark for development testing with --dev-test
-    pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+    pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 except ImportError:
     Reason = 'LDAP* variable are not setup in config.py'
     # comment pytestmark for development testing with --dev-test

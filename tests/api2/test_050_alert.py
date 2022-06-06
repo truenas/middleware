@@ -11,7 +11,7 @@ from functions import GET, POST, SSH_TEST
 from auto_config import ip, password, user, pool_name, dev_test, ha
 
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test_01_get_alert_list():
