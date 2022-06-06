@@ -1416,9 +1416,11 @@ class PoolService(CRUDService):
         # Recursively reset dataset mountpoints for the zpool.
         recursive = True
         for child in await self.middleware.call('zfs.dataset.child_dataset_names', pool_name):
-            if child == os.path.join(pool_name, 'ix-applications'):
+            if child in (os.path.join(pool_name, 'ix-applications'), os.path.join(pool_name, '.system')):
                 # We exclude `ix-applications` dataset since resetting it will
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
+                # Ditto for .system dataset. This may contain sensitive informatoin and should not
+                # be exposed through user permissions misconfiguration
                 continue
             try:
                 # Reset all mountpoints
