@@ -237,7 +237,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'inetd_conf', 'platform': 'FreeBSD'}
         ],
         'motd': [
-            {'type': 'mako', 'path': 'motd'}
+            {'type': 'mako', 'path': 'motd.template'}
         ],
         'mdns': [
             {'type': 'mako', 'path': 'local/avahi/avahi-daemon.conf', 'checkpoint': 'interface_sync'},
