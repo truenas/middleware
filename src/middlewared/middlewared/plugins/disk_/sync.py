@@ -144,7 +144,7 @@ class DiskService(Service, ServiceChangeMixin):
             # xml data that's returned from the system. We'll check to see if we
             # have a match on the normalized data and return the name accordingly
             _norm_value = ' '.join(_value.split())
-            for i in geom_xml.iterfind('.//provider/config/ident'):
+            for i in filter(lambda x: x.text is not None, geom_xml.iterfind('.//provider/config/ident')):
                 if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
                     name = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
                     if name is not None:
