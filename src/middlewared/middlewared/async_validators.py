@@ -10,8 +10,26 @@ from middlewared.plugins.zfs_.utils import ZFSCTL
 async def check_path_resides_within_volume(verrors, middleware, name, path):
 
     # we need to make sure the sharing service is configured within the zpool
-    st = await middleware.call("filesystem.stat", path)
+    def get_file_info(path):
+        """
+        avoid filesytem.stat here because we do not want to fail if path does
+        not exist
+        """
+        rv = {'realpath': None, 'inode': None, 'dev': None, 'is_mountpoint': False}
+        try:
+            st = os.stat(path)
+            rv['inode'] = st.st_ino
+            rv['dev'] = st.st_dev
+        except FileNotFoundError:
+            pass
+
+        rv['realpath'] = os.path.realpath(path)
+        rv['is_mountpoint'] = os.path.ismount(path)
+        return rv
+
+    st = await middleware.run_in_thread(get_file_info, path)
     rp = st["realpath"]
+
     vol_names = [vol["vol_name"] for vol in await middleware.call("datastore.query", "storage.volume")]
     vol_paths = [os.path.join("/mnt", vol_name) for vol_name in vol_names]
     if not path.startswith("/mnt/") or not any(
