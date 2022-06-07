@@ -8,6 +8,7 @@ from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
+from middlewared.utils.functools import cache
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
@@ -18,11 +19,17 @@ class DeviceService(Service):
     DISK_ROTATION_ERROR_LOG_CACHE = set()
 
     @private
+    @cache
+    def host_type(self):
+        return self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+
+    @private
     def get_serials(self):
         return serial_port_choices()
 
     @private
-    def get_disks(self):
+    def get_disks(self, get_partitions=False):
+        host_type = self.host_type()
         ctx = pyudev.Context()
         disks = {}
         for dev in ctx.list_devices(subsystem='block', DEVTYPE='disk'):
@@ -30,7 +37,7 @@ class DeviceService(Service):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev)
+                disks[dev.sys_name] = self.get_disk_details(dev, get_partitions, host_type)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
@@ -75,10 +82,13 @@ class DeviceService(Service):
         return parts
 
     @private
-    def get_disk_details(self, dev, get_partitions=False):
+    def get_disk_details(self, dev, get_partitions=False, host_type=''):
         is_nvme = dev.sys_name.startswith('nvme')
+        is_bhyve = host_type == 'BHYVE'
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
-        ident = serial = self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT' if is_nvme else 'ID_SCSI_SERIAL', '')
+        ident = serial = self.safe_retrieval(
+            dev.properties, 'ID_SERIAL_SHORT' if any((is_nvme, is_bhyve)) else 'ID_SCSI_SERIAL', ''
+        )
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
         driver = self.safe_retrieval(dev.parent.properties, 'DRIVER', '') if not is_nvme else 'nvme'
         sectorsize = self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True)
