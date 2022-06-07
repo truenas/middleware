@@ -14,5 +14,5 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 def test_device_get_disks_size():
     boot_disk = call('boot.get_disks')[0]
-    fdisk_size = int(ssh('fdisk -s /dev/{boot_disk}').strip()) * 1024
+    fdisk_size = int(ssh(f'fdisk -s /dev/{boot_disk}').strip()) * 1024
     assert call('device.get_disks')[boot_disk]['size'] == fdisk_size
