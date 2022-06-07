@@ -468,6 +468,11 @@ class Enclosure(object):
         except (FileNotFoundError, IndexError):
             pass
 
+        try:
+            return os.listdir(f"/sys/class/enclosure/{self.devname[len('bsg/'):]}/Slot {element_number:02X}/device/block")[0]
+        except (FileNotFoundError, IndexError):
+            pass
+
         if slot := glob.glob(f"/sys/class/enclosure/{self.devname[len('bsg/'):]}/slot{element_number:02} *"):
             try:
                 return os.listdir(f"{slot[0]}/device/block")[0]
