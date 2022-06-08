@@ -10,7 +10,7 @@ class EnclosureService(Service):
         mapped = info[-1]
         num_of_nvme_slots = info[-2]
         ctx = Context()
-        for i in filter(lambda x: (x.attributes.get('path') or '') in acpihandles, ctx.list_devices(subsystem='acpi')):
+        for i in filter(lambda x: x.attributes.get('path') in acpihandles, ctx.list_devices(subsystem='acpi')):
             acpi_handle = i.attributes.get('path')
             try:
                 phys_node = Devices.from_path(ctx, f'{i.sys_path}/physical_node')
