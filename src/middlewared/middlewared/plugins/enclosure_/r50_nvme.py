@@ -25,9 +25,6 @@ class EnclosureService(Service):
                 mapped[slot] = None
 
             if len(mapped) == num_of_nvme_slots:
-                # means we've checked all the acpi handles for the the nvme drives
-                # so instead of continually iterating every acpi device on
-                # the system return early
                 return info
 
         return info
