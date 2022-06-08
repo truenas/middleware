@@ -1,7 +1,6 @@
 import errno
 import os
 from pathlib import Path
-from contextlib import suppress
 from glustercli.cli import volume
 
 from middlewared.service import Service, CallError, job
@@ -143,25 +142,55 @@ class CtdbSharedVolumeService(Service):
 
         def __remove_config():
             # keep this inner method so it doesn't get (mis)used anywhere else.
-            files = (
-                CTDBConfig.ETC_GEN_FILE.value,
+            symlinked_files = [
                 CTDBConfig.ETC_REC_FILE.value,
                 CTDBConfig.ETC_PRI_IP_FILE.value,
                 CTDBConfig.ETC_PUB_IP_FILE.value,
-            )
-            with suppress(FileNotFoundError):
-                for i in files:
-                    try:
-                        os.remove(i)
-                    except Exception:
-                        self.logger.warning(f'Failed to remove {i!r}', exc_info=True)
+            ]
+            fuse_mount_files = [
+                CTDBConfig.GM_RECOVERY_FILE.value,
+                CTDBConfig.GM_PRI_IP_FILE.value,
+                CTDBConfig.GM_PUB_IP_FILE.value,
+            ]
+            for i in symlinked_files + fuse_mount_files:
+                try:
+                    os.remove(i)
+                except FileNotFoundError:
+                    pass
+                except Exception:
+                    self.logger.warning('Failed to remove %r', i, exc_info=True)
+
+            persistent_data_dirs = [
+                CTDBConfig.PER_DB_DIR.value,
+                CTDBConfig.STA_DB_DIR.value,
+            ]
+            for _dir in persistent_data_dirs:
+                try:
+                    for _file in Path(_dir).iterdir():
+                        try:
+                            _file.unlink(missing_ok=True)
+                        except Exception:
+                            self.logger.warning('Failed to remove %r', _file, exc_info=True)
+                except FileNotFoundError:
+                    pass
+                except Exception:
+                    self.logger.warning('Failed to remove contents of %r', _dir, exc_info=True)
 
         job.set_progress(75, 'Removing ctdbd configuration data')
         await self.middleware.run_in_thread(__remove_config)
 
-        job.set_progress(99, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem')
+        job.set_progress(85, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem')
         fuse_job = await self.middleware.call('gluster.fuse.umount', {'name': CTDB_VOL_NAME})
         await fuse_job.wait()
+
+        # TODO: This is a stop-gap work-around. ctdb owns the public ip address(es) 100%
+        # and will remove said IP address(es) from the interface(s) when the service is stopped.
+        # This is expected behavior. TC is expecting the user to configure public IP address(es)
+        # via our API and then assign the IP address(es) to the ctdb config. This is wrong design
+        # and will be fixed in next major release.
+        job.set_progress(99, 'Resyncing network interfaces')
+        await self.middleware.call('interface.sync')
+
         job.set_progress(100, 'CTDB shared volume teardown complete.')
 
     @job(lock=CRE_OR_DEL_LOCK)
