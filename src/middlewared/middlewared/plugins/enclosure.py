@@ -446,6 +446,7 @@ class Enclosure(object):
                     dev = ""
                     if element_type == "Array Device Slot":
                         dev = self._array_device_slot_dev(element_number)
+                        element_number += 1  # (webUI expects drives to start at slot 1 and not slot 0)
 
                     element = self._enclosure_element(
                         element_number,
