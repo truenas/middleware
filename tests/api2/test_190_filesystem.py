@@ -10,7 +10,8 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from functions import POST, PUT, SSH_TEST
+from copy import deepcopy
+from functions import POST, PUT, SSH_TEST, wait_on_job
 from auto_config import dev_test, pool_name, ip, user, password
 from middlewared.test.integration.assets.filesystem import directory
 from utils import create_dataset
@@ -277,3 +278,90 @@ def test_09_test_dosmodes():
                 results = POST('/filesystem/get_dosmode', p)
                 assert results.status_code == 200, results
                 assert results.json() == expected_flags
+
+
+def test_10_acl_path_execute_validation():
+    ds_name = 'acl_execute_test'
+    target = f'{pool_name}/{ds_name}'
+    path = f'/mnt/{target}'
+
+    NFSV4_DACL = [
+        {'tag': 'owner@', 'id': -1, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
+        {'tag': 'group@', 'id': -1, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
+        {'tag': 'USER', 'id': 65534, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
+        {'tag': 'GROUP', 'id': 65534, 'type': 'ALLOW', 'perms': {'BASIC': 'FULL_CONTROL'}, 'flags': {'BASIC': 'INHERIT'}},
+    ]
+
+    # Do NFSv4 checks
+    with create_dataset(target, {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}, None, 770):
+        sub_ds_name = f'{ds_name}/sub'
+        sub_target = f'{pool_name}/{sub_ds_name}'
+        sub_path = f'/mnt/{sub_target}'
+
+        """
+        For NFSv4 ACLs four different tags generate user tokens differently:
+        1) owner@ tag will test `uid` from payload
+        2) group@ tag will test `gid` from payload
+        3) GROUP will test the `id` in payload with id_type
+        4) USER will test the `id` in mayload with USER id_type
+        """
+
+        # Start with testing denials
+        with create_dataset(sub_target, {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}):
+            acl = deepcopy(NFSV4_DACL)
+            names = ['daemon', 'apps', 'nobody', 'nogroup']
+            for idx, entry in enumerate(NFSV4_DACL):
+                perm_job = POST('/filesystem/setacl/',
+                                {'path': sub_path, "dacl": acl, 'uid': 1, 'gid': 568})
+                assert perm_job.status_code == 200, perm_job.text
+
+                job_status = wait_on_job(perm_job.json(), 180)
+
+                # all of these tests should fail
+                assert job_status['state'] == 'FAILED', str(job_status['results'])
+                assert names[idx] in job_status['results']['error'], job_status['results']['error']
+                acl.pop(0)
+
+            # when this test starts, we have 770 perms on parent
+            for entry in NFSV4_DACL:
+                # first set permissions on parent dataset
+                if entry['tag'] == 'owner@':
+                    perm_job = POST('/filesystem/chown/', {
+                        'path': path,
+                        'uid': 1,
+                        'gid': 0
+                    })
+                elif entry['tag'] == 'group@':
+                    perm_job = POST('/filesystem/chown/', {
+                        'path': path,
+                        'uid': 0,
+                        'gid': 568
+                    })
+                elif entry['tag'] == 'USER':
+                    perm_job = POST('/filesystem/setacl/', {
+                        'path': path,
+                        'uid': 0,
+                        'gid': 0,
+                        'dacl': [entry]
+                    })
+                elif entry['tag'] == 'GROUP':
+                    perm_job = POST('/filesystem/setacl/', {
+                        'path': path,
+                        'uid': 0,
+                        'gid': 0,
+                        'dacl': [entry]
+                    })
+
+                assert perm_job.status_code == 200, perm_job.text
+                job_status = wait_on_job(perm_job.json(), 180)
+                assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+                # Now set the acl on child dataset. This should succeed
+                perm_job = POST('/filesystem/setacl/', {
+                    'path': sub_path,
+                    'uid': 1,
+                    'gid': 568,
+                    'dacl': [entry]
+                })
+                job_status = wait_on_job(perm_job.json(), 180)
+                assert job_status['state'] == 'SUCCESS', str(job_status['results'])

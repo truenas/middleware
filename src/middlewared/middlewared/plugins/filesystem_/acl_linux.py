@@ -383,6 +383,33 @@ class FilesystemService(Service, ACLBase):
         return ret
 
     @private
+    def setacl_nfs4_internal(self, path, acl, do_canon, verrors):
+        payload = {
+            'acl': ACLType.NFS4.canonicalize(acl) if do_canon else acl,
+        }
+        json_payload = json.dumps(payload)
+        setacl = subprocess.run(
+            ['nfs4xdr_setfacl', '-j', json_payload, path],
+            capture_output=True,
+            check=False
+        )
+        """
+        nfs4xr_setacl with JSON input will return validation
+        errors on exit with EX_DATAERR (65).
+        """
+        if setacl.returncode == 65:
+            err = setacl.stderr.decode()
+            json_verrors = json.loads(err.split(None, 1)[1])
+            for entry in json_verrors:
+                for schema, err in entry.items():
+                    verrors.add(f'filesystem_acl.{schema.replace("acl", "dacl")}', err)
+
+            verrors.check()
+
+        elif setacl.returncode != 0:
+            raise CallError(setacl.stderr.decode())
+
+    @private
     def setacl_nfs4(self, job, data):
         job.set_progress(0, 'Preparing to set acl.')
         verrors = ValidationErrors()
@@ -419,29 +446,12 @@ class FilesystemService(Service, ACLBase):
             self._strip_acl_nfs4(path)
 
         else:
-            payload = {
-                'acl': ACLType.NFS4.canonicalize(data['dacl']) if do_canon else data['dacl'],
-            }
-            json_payload = json.dumps(payload)
-            setacl = subprocess.run(
-                ['nfs4xdr_setfacl', '-j', json_payload, path],
-                capture_output=True,
-                check=False
+            self.middleware.call_sync(
+                'filesystem.check_acl_execute',
+                path, data['dacl'], data['uid'], data['gid']
             )
-            """
-            nfs4xr_setacl with JSON input will return validation
-            errors on exit with EX_DATAERR (65).
-            """
-            if setacl.returncode == 65:
-                err = setacl.stderr.decode()
-                json_verrors = json.loads(err.split(None, 1)[1])
-                for entry in json_verrors:
-                    for schema, err in entry.items():
-                        verrors.add(f'filesystem_acl.{schema.replace("acl", "dacl")}', err)
 
-                verrors.check()
-            elif setacl.returncode != 0:
-                raise CallError(setacl.stderr.decode())
+            self.setacl_nfs4_internal(path, data['dacl'], do_canon, verrors)
 
         if not recursive:
             os.chown(path, uid, gid)
@@ -588,6 +598,21 @@ class FilesystemService(Service, ACLBase):
             )
 
         if not do_strip:
+            try:
+                # check execute on parent paths
+                self.middleware.call_sync(
+                    'filesystem.check_acl_execute',
+                    path, dacl, uid, gid
+                )
+            except CallError as e:
+                if e.errno != errno.EPERM:
+                    raise
+
+                verrors.add(
+                    'filesystem_acl.path',
+                    e.errmsg
+                )
+
             aclstring = self.gen_aclstring_posix1e(dacl, recursive, verrors)
 
         verrors.check()
