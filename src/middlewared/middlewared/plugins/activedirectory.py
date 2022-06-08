@@ -441,8 +441,39 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 else:
                     method = "activedirectory.bindpw"
 
+                try:
+                    msg = e.errmsg.split(":")[-1:][0].strip()
+                except Exception:
+                    raise e
+
+                if msg == 'Cannot read password while getting initial credentials':
+                    # non-interactive kinit fails with KRB5_LIBOS_CANTREADPWD if password is expired
+                    # rather than prompting for password change
+                    if method == 'activedirectory.kerberos_principal':
+                        msg = 'Kerberos keytab is no longer valid.'
+                    else:
+                        msg = f'Active Directory account password for user {new["bindname"]} is expired.'
+
+                elif msg == "Client's credentials have been revoked while getting initial credentials":
+                    # KRB5KDC_ERR_CLIENT_REVOKED means that the account has been locked in AD
+                    msg = 'Active Directory account is locked.'
+
+                elif msg == 'KDC policy rejects request while getting initial credentials':
+                    # KRB5KDC_ERR_POLICY
+                    msg = (
+                        'Active Directory security policy rejected request to obtain kerberos ticket. '
+                        'This may occur if the bind account has been configured to deny interactive '
+                        'logons or require two-factor authentication. Depending on organizational '
+                        'security policies, one may be required to pre-generate a kerberos keytab '
+                        'and upload to TrueNAS server for use during join process.'
+                    )
+
+                if not msg:
+                    # failed to parse, re-raise original error message
+                    raise
+
                 raise ValidationError(
-                    method, f'Failed to validate bind credentials: {e.errmsg.split(":")[-1:][0]}'
+                    method, f'Failed to validate bind credentials: {msg}'
                 )
 
         new = await self.ad_compress(new)
