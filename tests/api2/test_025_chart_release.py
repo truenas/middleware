@@ -50,9 +50,6 @@ if not ha:
         global ipfs_version
         payload = {
             'label': 'OFFICIAL',
-            'options': {
-                'retrieve_versions': True
-            }
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
@@ -357,7 +354,7 @@ if not ha:
         payload = {
             'label': 'UPDATECHARTS',
             'options': {
-                'retrieve_versions': True
+                'retrieve_all_trains': True
             }
         }
         results = POST('/catalog/items/', payload)
