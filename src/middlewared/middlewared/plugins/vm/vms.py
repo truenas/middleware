@@ -36,6 +36,7 @@ class VMModel(sa.Model):
     bootloader = sa.Column(sa.String(50), default='UEFI')
     cores = sa.Column(sa.Integer(), default=1)
     threads = sa.Column(sa.Integer(), default=1)
+    hyperv_enlightenments = sa.Column(sa.Boolean(), default=False)
     shutdown_timeout = sa.Column(sa.Integer(), default=90)
     cpu_mode = sa.Column(sa.Text())
     cpu_model = sa.Column(sa.Text(), nullable=True)
@@ -100,7 +101,8 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @accepts(Dict(
         'vm_create',
-        Str('cpu_mode', default='CUSTOM', enum=['CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
+        Str('cpu_mode', default='CUSTOM', enum=[
+            'CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
         Str('cpu_model', default=None, null=True),
         Str('name', required=True),
         Str('description'),
@@ -112,12 +114,14 @@ class VMService(CRUDService, VMSupervisorMixin):
         Bool('pin_vcpus', default=False),
         Int('memory', required=True, validators=[Range(min=20)]),
         Int('min_memory', null=True, validators=[Range(min=20)]),
+        Bool('hyperv_enlightenments', default=False),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
         Bool('ensure_display_device', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
-        Int('shutdown_timeout', default=90, validators=[Range(min=5, max=300)]),
+        Int('shutdown_timeout', default=90,
+            validators=[Range(min=5, max=300)]),
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
         Str('uuid', null=True, default=None, validators=[UUID()]),
@@ -150,6 +154,9 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         `hide_from_msr` is a boolean which when set will hide the KVM hypervisor from standard MSR based discovery and
         is useful to enable when doing GPU passthrough.
+
+        `hyperv_enlightenments` can be used to enable subset of predefined Hyper-V enlightenments for Windows guests. These
+        enlightenments improve performance and enable otherwise missing features.
         """
         async with LIBVIRT_LOCK:
             await self.middleware.run_in_thread(self._check_setup_connection)
@@ -186,19 +193,22 @@ class VMService(CRUDService, VMSupervisorMixin):
                 )
             elif flags['intel_vmx']:
                 if vcpus > 1 and flags['unrestricted_guest'] is False:
-                    verrors.add(f'{schema_name}.vcpus', 'Only one Virtual CPU is allowed in this system.')
+                    verrors.add(
+                        f'{schema_name}.vcpus', 'Only one Virtual CPU is allowed in this system.')
             elif flags['amd_rvi']:
                 if vcpus > 1 and flags['amd_asids'] is False:
                     verrors.add(
                         f'{schema_name}.vcpus', 'Only one virtual CPU is allowed in this system.'
                     )
             elif not await self.middleware.call('vm.supports_virtualization'):
-                verrors.add(schema_name, 'This system does not support virtualization.')
+                verrors.add(
+                    schema_name, 'This system does not support virtualization.')
 
         if data.get('arch_type') or data.get('machine_type'):
             choices = await self.middleware.call('vm.guest_architecture_and_machine_choices')
             if data.get('arch_type') and data['arch_type'] not in choices:
-                verrors.add(f'{schema_name}.arch_type', 'Specified architecture type is not supported on this system')
+                verrors.add(f'{schema_name}.arch_type',
+                            'Specified architecture type is not supported on this system')
             if data.get('machine_type'):
                 if not data.get('arch_type'):
                     verrors.add(
@@ -216,20 +226,24 @@ class VMService(CRUDService, VMSupervisorMixin):
                 'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
             )
         elif data.get('cpu_model') and data['cpu_model'] not in await self.middleware.call('vm.cpu_model_choices'):
-            verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
+            verrors.add(f'{schema_name}.cpu_model',
+                        'Please select a valid CPU model.')
 
         if 'name' in data:
             filters = [('name', '=', data['name'])]
             if old:
                 filters.append(('id', '!=', old['id']))
             if await self.middleware.call('vm.query', filters):
-                verrors.add(f'{schema_name}.name', 'This name already exists.', errno.EEXIST)
+                verrors.add(f'{schema_name}.name',
+                            'This name already exists.', errno.EEXIST)
             elif not RE_NAME.search(data['name']):
-                verrors.add(f'{schema_name}.name', 'Only alphanumeric characters are allowed.')
+                verrors.add(f'{schema_name}.name',
+                            'Only alphanumeric characters are allowed.')
 
         if data['pin_vcpus']:
             if not data['cpuset']:
-                verrors.add(f'{schema_name}.cpuset', f'Must be specified when "{schema_name}.pin_vcpus" is set.')
+                verrors.add(
+                    f'{schema_name}.cpuset', f'Must be specified when "{schema_name}.pin_vcpus" is set.')
             elif len(parse_numeric_set(data['cpuset'])) != vcpus:
                 verrors.add(
                     f'{schema_name}.pin_vcpus',
@@ -272,7 +286,8 @@ class VMService(CRUDService, VMSupervisorMixin):
         if new['name'] != old['name']:
             await self.middleware.run_in_thread(self._check_setup_connection)
             if old['status']['state'] == 'RUNNING':
-                raise CallError('VM name can only be changed when VM is inactive')
+                raise CallError(
+                    'VM name can only be changed when VM is inactive')
 
             if old['name'] not in self.vms:
                 raise CallError(f'Unable to locate domain for {old["name"]}')
@@ -315,7 +330,8 @@ class VMService(CRUDService, VMSupervisorMixin):
                 # complete it's post vm actions which might require interaction with it's domain
                 await asyncio.sleep(7)
             elif status.get('state') == 'ERROR' and not force_delete:
-                raise CallError('Unable to retrieve VM status. Failed to destroy VM')
+                raise CallError(
+                    'Unable to retrieve VM status. Failed to destroy VM')
 
             if data['zvols']:
                 devices = await self.middleware.call('vm.device.query', [
@@ -343,7 +359,8 @@ class VMService(CRUDService, VMSupervisorMixin):
                 if not force_delete:
                     raise
                 else:
-                    self.logger.error('Failed to un-define %r VM\'s domain', vm['name'], exc_info=True)
+                    self.logger.error(
+                        'Failed to un-define %r VM\'s domain', vm['name'], exc_info=True)
 
             # We remove vm devices first
             for device in vm['devices']:
@@ -370,7 +387,8 @@ class VMService(CRUDService, VMSupervisorMixin):
             - state, RUNNING or STOPPED
             - pid, process id if RUNNING
         """
-        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [
+                                       ['id', '=', id]], {'get': True})
         return self.status_impl(vm)
 
     @private
@@ -380,7 +398,8 @@ class VMService(CRUDService, VMSupervisorMixin):
                 # Whatever happens, query shouldn't fail
                 return self._status(vm['name'])
             except Exception:
-                self.middleware.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
+                self.middleware.logger.debug(
+                    'Failed to retrieve VM status for %r', vm['name'], exc_info=True)
 
         return {
             'state': 'ERROR',
