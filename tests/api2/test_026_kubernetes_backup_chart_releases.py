@@ -19,16 +19,16 @@ if not ha:
     def test_01_get_plex_version():
         global plex_version
         payload = {
-            'label': 'OFFICIAL',
+            "item_name": "plex",
+            "item_version_details": {
+                "catalog": "OFFICIAL",
+                "train": 'charts'
+            }
         }
-        results = POST('/catalog/items/', payload)
+        results = POST('/catalog/get_item_details/', payload)
         assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        results = job_status['results']['result']
-        assert isinstance(results, dict), str(job_status['results'])
-        plex_version = list(results['charts']['plex']['versions'].keys())[0]
+        assert isinstance(results.json(), dict), results.text
+        plex_version = results.json()['latest_version']
 
     @pytest.mark.dependency(name='release_plex')
     def test_02_create_plex_chart_release(request):
