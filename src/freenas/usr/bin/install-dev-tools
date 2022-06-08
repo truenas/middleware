@@ -1,0 +1,25 @@
+#!/bin/bash -ex
+PACKAGES=(
+    # Integration and unit test utils, python package management
+    python3-pip
+    python3-pytest
+    python3-pytest-asyncio
+    python3-pytest-dependency
+    python3-pytest-rerunfailures
+    # `snmpwalk` to test `snmp-agent`
+    snmp
+    # Used by the integration test runner
+    sshpass
+    # Unpack core dumps (https://jira.ixsystems.com/browse/NAS-113855)
+    zstd
+)
+PIP_PACKAGES=(
+    asyncmock
+    asynctest
+    pyfakefs
+)
+
+chmod +x /usr/bin/apt*
+apt update
+apt install -y "${PACKAGES[@]}"
+pip install "${PIP_PACKAGES[@]}"
