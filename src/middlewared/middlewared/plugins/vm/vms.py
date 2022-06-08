@@ -167,6 +167,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
         await self.middleware.run_in_thread(self._add, vm_id)
+        await self.middleware.call('etc.generate', 'libvirt_guests')
 
         return await self.get_instance(vm_id)
 
@@ -305,6 +306,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         if new['name'] != old['name']:
             await self.middleware.run_in_thread(self._rename_domain, old, vm_data)
 
+        if old['shutdown_timeout'] != new['shutdown_timeout']:
+            await self.middleware.call('etc.generate', 'libvirt_guests')
+
         return await self.get_instance(id)
 
     @accepts(
@@ -369,6 +373,8 @@ class VMService(CRUDService, VMSupervisorMixin):
             if not await self.middleware.call('vm.query'):
                 await self.middleware.call('vm.deinitialize_vms')
                 self._clear()
+            else:
+                await self.middleware.call('etc.generate', 'libvirt_guests')
             return result
 
     @item_method

@@ -31,7 +31,7 @@ from .idmap import IdmapService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
-from .pseudo.libvirtd import LibvirtdService
+from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
     DiskService,
@@ -91,6 +91,7 @@ all_services = [
     CollectDService,
     RRDCacheDService,
     LibvirtdService,
+    LibvirtGuestService,
     CronService,
     DiskService,
     KmipService,
