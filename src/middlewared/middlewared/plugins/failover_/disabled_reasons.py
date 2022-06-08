@@ -54,8 +54,10 @@ class FailoverDisabledReasonsService(Service):
         db_ifaces = [i['int_interface'] for i in self.middleware.call_sync('datastore.query', 'network.interfaces')]
         crit_iface = False
         for iface in filter(lambda x: x in db_ifaces, _ifaces):
-            if not _ifaces[iface].get('failover_virtual_aliases'):
-                # if any interface is configured on HA, then it must have VIP
+            if _ifaces[iface]['type'] != 'LINK_AGGREGATION' and not _ifaces[iface].get('failover_virtual_aliases'):
+                # If any interface is configured on HA, then it must have a VIP;
+                # The only exception is bond interfaces since those are
+                # routinely created as "empty" devices (no IP config)
                 reasons.add('NO_VIP')
             if _ifaces[iface].get('failover_critical'):
                 # only need 1 interface marked critical for failover
