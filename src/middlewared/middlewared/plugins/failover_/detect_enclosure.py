@@ -1,6 +1,8 @@
 import subprocess
 import re
 
+from pyudev import Context
+
 from middlewared.service import Service
 from .ha_hardware import HA_HARDWARE
 
@@ -20,24 +22,20 @@ class EnclosureDetectionService(Service):
         # first check to see if this is a BHYVE instance
         manufacturer = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
         if manufacturer == 'BHYVE':
-            # bhyve host configures a 3rd device to be mounted
-            # in the bhyve VM. This device is sg0 and has the
-            # string in it that will inform us if we're the A
-            # or B node respectively
-            proc = subprocess.run(['sg_inq', '/dev/sg0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            proc = proc.stdout.decode() if proc.stdout else ''
-            if any(x in proc for x in ['TrueNAS_A', 'TrueNAS_B']):
-                # we only want to return 'BHYVE' as the hardware
-                # when we're running on internal bhyve hosts that
-                # have been configured a specific way to support
-                # HA functionality. If we return 'BHYVE' willy-nilly
-                # then if a user is running TN CORE and installs a
-                # SCALE VM, then it will be detected as 'BHYVE' and
-                # therefore as 'SCALE_ENTERPRISE' which is wrong.
-                self.HARDWARE = manufacturer
-
-                # finally set the node's position
-                self.NODE = 'A' if 'TrueNAS_A' in proc else 'B'
+            # bhyve host configures a scsi_generic device that when sent an inquiry will
+            # respond with a string that we use to determine the position of the node
+            ctx = Context()
+            for i in ctx.list_devices(subsystem='scsi_generic'):
+                if (model := i.attributes.get('device/model')) is not None:
+                    model = model.decode().strip() if isinstance(model, bytes) else model.strip()
+                    if model == 'TrueNAS_A':
+                        self.NODE = 'A'
+                        self.HARDWARE = manufacturer
+                        break
+                    elif model == 'TrueNAS_B':
+                        self.NODE = 'B'
+                        self.HARDWARE = manufacturer
+                        break
 
             return self.HARDWARE, self.NODE
 
