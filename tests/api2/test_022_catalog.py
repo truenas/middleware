@@ -150,7 +150,6 @@ if not ha:
             'options': {
                 'cache': True,
                 'retrieve_all_trains': True,
-                'retrieve_versions': False,
             },
         }
         results = POST('/catalog/items/', payload)
@@ -182,7 +181,6 @@ if not ha:
             'options': {
                 'cache': True,
                 'retrieve_all_trains': True,
-                'retrieve_versions': False,
             },
         }
         results = POST('/catalog/items/', payload)

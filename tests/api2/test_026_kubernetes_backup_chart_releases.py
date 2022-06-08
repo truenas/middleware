@@ -20,9 +20,6 @@ if not ha:
         global plex_version
         payload = {
             'label': 'OFFICIAL',
-            'options': {
-                'retrieve_versions': True
-            }
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
