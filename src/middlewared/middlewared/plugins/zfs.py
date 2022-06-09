@@ -594,7 +594,7 @@ class ZFSDatasetService(CRUDService):
         def get_attachments():
             extents = self.middleware.call_sync('iscsi.extent.query', [('type', '=', 'DISK')])
             iscsi_zvols = {
-                i['path'][len('zvol/'):]: i for i in extents
+                zvol_path_to_name('/dev/' + i['path']): i for i in extents
             }
 
             vm_devices = self.middleware.call_sync('vm.device.query', [['dtype', '=', 'DISK']])
