@@ -49,19 +49,16 @@ if not ha:
     def test_05_get_ipfs_version():
         global ipfs_version
         payload = {
-            'label': 'OFFICIAL',
-            'options': {
-                'retrieve_versions': True
+            "item_name": "ipfs",
+            "item_version_details": {
+                "catalog": "OFFICIAL",
+                "train": 'charts'
             }
         }
-        results = POST('/catalog/items/', payload)
+        results = POST('/catalog/get_item_details/', payload)
         assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        results = job_status['results']['result']
-        assert isinstance(results, dict), str(job_status['results'])
-        ipfs_version = list(results['charts']['ipfs']['versions'].keys())[0]
+        assert isinstance(results.json(), dict), results.text
+        ipfs_version = list(results.json()['versions'].keys())[0]
 
     @pytest.mark.timeout(600)
     @pytest.mark.dependency(name='release_ipfs')
@@ -355,20 +352,17 @@ if not ha:
         depends(request, ['custom_catalog'])
         global old_plex_version, new_plex_version
         payload = {
-            'label': 'UPDATECHARTS',
-            'options': {
-                'retrieve_versions': True
+            "item_name": "plex",
+            "item_version_details": {
+                "catalog": "UPDATECHARTS",
+                "train": 'charts'
             }
         }
-        results = POST('/catalog/items/', payload)
+        results = POST('/catalog/get_item_details/', payload)
         assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        results = job_status['results']['result']
-        assert isinstance(results, dict), str(job_status['results'])
-        old_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[0]
-        new_plex_version = sorted(list(results['charts']['plex']['versions'].keys()))[-1]
+        assert isinstance(results.json(), dict), results.text
+        old_plex_version = sorted(list(results.json()['versions'].keys()))[0]
+        new_plex_version = sorted(list(results.json()['versions'].keys()))[-1]
         time.sleep(1)
 
     @pytest.mark.timeout(600)
