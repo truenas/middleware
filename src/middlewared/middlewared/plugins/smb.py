@@ -603,7 +603,7 @@ class SMBService(TDBWrapConfigService):
         )
 
         job.set_progress(70, 'Checking SMB server status.')
-        if await self.middleware.call("service.started", "cifs"):
+        if await self.middleware.call("service.started_or_enabled", "cifs"):
             job.set_progress(80, 'Restarting SMB service.')
             await self.middleware.call("service.restart", "cifs")
         job.set_progress(100, 'Finished configuring SMB.')
