@@ -4,6 +4,8 @@ import shlex
 import subprocess
 
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
+from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece
+from middlewared.schema import Cron
 from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -57,48 +59,9 @@ def get_smartd_config(disk):
 
 def get_smartd_schedule(disk):
     return "/".join([
-        get_smartd_schedule_piece(disk['smarttest_month'], 1, 12, dict(zip([
-            "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"
-        ], range(1, 13)))),
-        get_smartd_schedule_piece(disk['smarttest_daymonth'], 1, 31),
-        get_smartd_schedule_piece(disk['smarttest_dayweek'], 1, 7, dict(zip([
-            "mon", "tue", "wed", "thu", "fri", "sat", "sun"
-        ], range(1, 8)))),
-        get_smartd_schedule_piece(disk['smarttest_hour'], 0, 23),
+        smartd_schedule_piece(disk["smarttest_schedule"][piece.key], piece.min, piece.max, piece.enum)
+        for piece in SMARTD_SCHEDULE_PIECES
     ])
-
-
-def get_smartd_schedule_piece(value, min, max, enum=None):
-    enum = enum or {}
-
-    width = len(str(max))
-
-    if value == "*":
-        return "." * width
-    elif m := re.match(r"((?P<min>[0-9]+)-(?P<max>[0-9]+)|\*)/(?P<divisor>[0-9]+)", value):
-        d = int(m.group("divisor"))
-        if m.group("min") is None:
-            if d == 1:
-                return "." * width
-        else:
-            min = int(m.group("min"))
-            max = int(m.group("max"))
-        values = [v for v in range(min, max + 1) if v % d == 0]
-    elif m := re.match(r"((?P<min>[0-9]+)-(?P<max>[0-9]+)|\*)", value):
-        start = int(m.group("min"))
-        end = int(m.group("max"))
-        if end <= start:
-            values = [start]
-        else:
-            values = [i for i in range(start, end + 1)]
-    else:
-        values = list(filter(lambda v: v is not None,
-                             map(lambda s: enum.get(s.lower(), int(s) if re.match("([0-9]+)$", s) else None),
-                                 value.split(","))))
-        if values == list(range(min, max + 1)):
-            return "." * width
-
-    return "(" + "|".join([f"%0{width}d" % v for v in values]) + ")"
 
 
 async def render(service, middleware):
@@ -113,6 +76,9 @@ async def render(service, middleware):
     """)
 
     disks = [dict(disk, **smart_config) for disk in disks]
+
+    for disk in disks:
+        Cron.convert_db_format_to_schedule(disk, "smarttest_schedule", "smarttest_")
 
     devices = await middleware.call("device.get_storage_devices_topology")
     hardware = await middleware.call("system.is_enterprise_ix_hardware")
