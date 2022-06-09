@@ -7,7 +7,6 @@ import pytest
 from middlewared.etc_files.smartd import (
     ensure_smart_enabled, get_smartd_schedule, get_smartd_config
 )
-from middlewared.pytest.unit.middleware import Middleware
 
 
 @pytest.mark.asyncio
@@ -63,54 +62,6 @@ async def test__ensure_smart_enabled__handled_args_properly():
             ["/dev/ada0", "-d", "sat", "-i"], check=False, stderr=subprocess.STDOUT,
             encoding="utf8", errors="ignore",
         )
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_nvd():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    assert await annotate_disk_for_smart(m, {}, "nvd0") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_unknown_device():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    assert await annotate_disk_for_smart(m, {"ada0": {}}, "ada1") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_device_without_args():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = None
-        assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart__skips_device_with_unavailable_smart():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = ["/dev/ada1", "-d", "sat"]
-        with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
-            ensure_smart_enabled.return_value = False
-            assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") is None
-
-
-@pytest.mark.asyncio
-async def test__annotate_disk_for_smart():
-    m = Middleware()
-    m['system.is_enterprise_ix_hardware'] = Mock(return_value=False)
-    with patch("middlewared.etc_files.smartd.get_smartctl_args") as get_smartctl_args:
-        get_smartctl_args.return_value = ["/dev/ada1", "-d", "sat"]
-        with patch("middlewared.etc_files.smartd.ensure_smart_enabled") as ensure_smart_enabled:
-            ensure_smart_enabled.return_value = True
-            assert await annotate_disk_for_smart(m, {"ada1": {"driver": "ata"}}, "ada1") == (
-                "ada1",
-                {"smartctl_args": ["/dev/ada1", "-d", "sat", "-a", "-d", "removable"]},
-            )
 
 
 def test__get_smartd_schedule__need_mapping():
