@@ -23,7 +23,7 @@ async def get_smartctl_args(context, disk):
 
     if disk.startswith(('nvd', 'nvme')):
         try:
-            nvme = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
+            nvme, nsid = await middleware.run_in_thread(get_nsid, f'/dev/{disk}')
         except Exception as e:
             logger.warning('Unable to run nvme.get_nsid for %r: %r', disk, e)
             return

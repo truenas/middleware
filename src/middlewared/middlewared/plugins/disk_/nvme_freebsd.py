@@ -23,7 +23,7 @@ class DiskService(Service):
             if not exists(nvd):
                 continue
 
-            nvme = get_nsid(nvd)
+            nvme, nsid = get_nsid(nvd)
             if nvme:
                 nvme_to_nvd[int(nvme[4:])] = n
 

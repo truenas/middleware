@@ -16,7 +16,7 @@ async def test__get_smartctl_args__disk_nonexistent():
 
 @pytest.mark.asyncio
 async def test__get_smartctl_args__nvd():
-    with patch("middlewared.common.smart.smartctl.get_nsid", Mock(return_value="nvme1")):
+    with patch("middlewared.common.smart.smartctl.get_nsid", Mock(return_value=("nvme1", 1))):
         with patch("middlewared.common.smart.smartctl.osc.IS_LINUX", False):
             assert await get_smartctl_args(Middleware(), {}, "nvd0") == ["/dev/nvme1"]
 

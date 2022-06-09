@@ -436,7 +436,7 @@ class DiskService(CRUDService):
 
     def sed_dev_name(self, disk_name):
         if disk_name.startswith("nvd"):
-            nvme = get_nsid(f"/dev/{disk_name}")
+            nvme, nsid = get_nsid(f"/dev/{disk_name}")
             return f"/dev/{nvme}"
 
         return f"/dev/{disk_name}"
