@@ -697,22 +697,19 @@ class ActiveDirectoryService(TDBWrapConfigService):
         job.set_progress(20, 'Reconfiguring SMB.')
         await self.synchronize()
         await self.middleware.call('idmap.synchronize')
-        await self.middleware.call('service.restart', 'cifs')
+        await self.middleware.call('service.stop', 'cifs')
         job.set_progress(40, 'Reconfiguring pam and nss.')
         await self.middleware.call('etc.generate', 'pam')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(60, 'clearing caches.')
         await self.middleware.call('service.stop', 'dscache')
-        flush = await run([SMBCmd.NET.value, "cache", "flush"], check=False)
-        if flush.returncode != 0:
-            self.logger.warning("Failed to flush samba's general cache after stopping Active Directory service.")
-
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
         if smb_ha_mode == 'CLUSTERED':
             job.set_progress(70, 'Propagating changes to cluster.')
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
             await cl_reload.wait()
 
+        await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')
 
