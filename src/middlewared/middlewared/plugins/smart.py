@@ -1,12 +1,13 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 import functools
 import re
 import time
-from itertools import chain
 
-import asyncio
+from humanize import ordinal
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
+from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece_values
 from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, List, Patch, returns, Str
 from middlewared.service import (
     CRUDService, filterable, filterable_returns, filter_list, job, private, SystemServiceService, ValidationErrors
@@ -112,16 +113,74 @@ def parse_current_smart_selftest(stdout):
         return {"progress": 100 - int(remaining.group(1))}
 
 
+def smart_test_disks_intersect(existing_test, new_test, disk_choices):
+    if existing_test['all_disks']:
+        return (
+            'type',
+            f'There already is an all-disks {existing_test["type"]} test',
+        )
+    elif new_test['all_disks'] and (used_disks := [
+        disk_choices[disk]
+        for disk in existing_test['disks']
+        if disk in disk_choices
+    ]):
+        return (
+            'type',
+            f'The following disks already have {existing_test["type"]} test: {", ".join(used_disks)}'
+        )
+    elif (used_disks := [
+        disk_choices[disk]
+        for disk in set(new_test['disks']) & set(existing_test['disks'])
+        if disk in disk_choices
+    ]):
+        return (
+            'disks',
+            f'The following disks already have {existing_test["type"]} test: {", ".join(used_disks)}'
+        )
+
+
+def smart_test_schedules_intersect_at(a, b):
+    intersections = []
+    for piece in SMARTD_SCHEDULE_PIECES:
+        a_values = set(smartd_schedule_piece_values(a[piece.key], piece.min, piece.max, piece.enum))
+        b_values = set(smartd_schedule_piece_values(b[piece.key], piece.min, piece.max, piece.enum))
+
+        intersection = a_values & b_values
+        if not intersection:
+            return
+
+        first_intersection = sorted(intersection)[0]
+
+        if piece.key == "hour":
+            intersections.append(f"{first_intersection:02d}:00")
+            continue
+
+        if len(intersection) == piece.max - piece.min + 1:
+            continue
+
+        if piece.key == "dom":
+            if intersections:
+                intersections.append(ordinal(first_intersection))
+            else:
+                intersections.append(f"Day {ordinal(first_intersection)} of every month")
+            continue
+
+        intersections.append({v: k for k, v in piece.enum.items()}[first_intersection].title())
+
+    if intersections:
+        return ", ".join(intersections)
+
+
 class SmartTestModel(sa.Model):
     __tablename__ = 'tasks_smarttest'
 
     id = sa.Column(sa.Integer(), primary_key=True)
     smarttest_type = sa.Column(sa.String(2))
     smarttest_desc = sa.Column(sa.String(120))
-    smarttest_hour = sa.Column(sa.String(100), default='*')
-    smarttest_daymonth = sa.Column(sa.String(100), default='*')
-    smarttest_month = sa.Column(sa.String(100), default='*')
-    smarttest_dayweek = sa.Column(sa.String(100), default='*')
+    smarttest_hour = sa.Column(sa.String(100))
+    smarttest_daymonth = sa.Column(sa.String(100))
+    smarttest_month = sa.Column(sa.String(100))
+    smarttest_dayweek = sa.Column(sa.String(100))
     smarttest_all_disks = sa.Column(sa.Boolean(), default=False)
 
     smarttest_disks = sa.relationship('DiskModel', secondary=lambda: SmartTestDiskModel.__table__)
@@ -166,34 +225,33 @@ class SMARTTestService(CRUDService):
         Cron.convert_db_format_to_schedule(data)
         return data
 
-    @private
-    async def validate_data(self, data, schema):
+    async def _validate(self, data, id=None):
         verrors = ValidationErrors()
 
-        smart_tests = await self.query(filters=[('type', '=', data['type'])])
-        configured_disks = [d for test in smart_tests for d in test['disks']]
-        disks_dict = await self.disk_choices()
+        disk_choices = await self.disk_choices()
+        other_tests = await self.query([('id', '!=', id)] if id is not None else [])
 
-        disks = data.get('disks')
-        used_disks = []
-        invalid_disks = []
-        for disk in disks:
-            if disk in configured_disks:
-                used_disks.append(disks_dict[disk])
-            if disk not in disks_dict.keys():
-                invalid_disks.append(disk)
+        if not data['disks'] and not data['all_disks']:
+            verrors.add('disks', 'This field is required')
 
-        if used_disks:
-            verrors.add(
-                f'{schema}.disks',
-                f'The following disks already have tests for this type: {", ".join(used_disks)}'
-            )
+        for i, disk in enumerate(data['disks']):
+            if disk not in disk_choices:
+                verrors.add(f'disks.{i}', 'Invalid disk')
 
-        if invalid_disks:
-            verrors.add(
-                f'{schema}.disks',
-                f'The following disks are invalid: {", ".join(invalid_disks)}'
-            )
+        for test in other_tests:
+            if test['type'] == data['type']:
+                if error := smart_test_disks_intersect(test, data, disk_choices):
+                    verrors.add(*error)
+                    break
+
+        # "As soon as a match is found, the test will be started and no additional matches will be sought for that
+        # device and that polling cycle." (from man smartd.conf).
+        # So if two tests are scheduled to run at the same time, only one will run.
+        for test in other_tests:
+            if smart_test_disks_intersect(test, data, disk_choices):
+                if intersect_at := smart_test_schedules_intersect_at(test['schedule'], data['schedule']):
+                    verrors.add('data.schedule', f'A {test["type"]} test already runs at {intersect_at}')
+                    break
 
         return verrors
 
@@ -257,24 +315,11 @@ class SMARTTestService(CRUDService):
                 }]
             }
         """
+        verrors = ValidationErrors()
+        verrors.add_child('smart_test_create', await self._validate(data))
+        verrors.check()
+
         data['type'] = data.pop('type')[0]
-        verrors = await self.validate_data(data, 'smart_test_create')
-
-        if data['all_disks']:
-            if data.get('disks'):
-                verrors.add(
-                    'smart_test_create.disks',
-                    'This test is already enabled for all disks'
-                )
-        else:
-            if not data.get('disks'):
-                verrors.add(
-                    'smart_test_create.disks',
-                    'This field is required'
-                )
-
-        if verrors:
-            raise verrors
 
         Cron.convert_schedule_to_db_format(data)
 
@@ -297,31 +342,11 @@ class SMARTTestService(CRUDService):
         new = old.copy()
         new.update(data)
 
+        verrors = ValidationErrors()
+        verrors.add_child('smart_test_update', await self._validate(data))
+        verrors.check()
+
         new['type'] = new.pop('type')[0]
-        old['type'] = old.pop('type')[0]
-        new_disks = [disk for disk in new['disks'] if disk not in old['disks']]
-        deleted_disks = [disk for disk in old['disks'] if disk not in new['disks']]
-        if old['type'] == new['type']:
-            new['disks'] = new_disks
-        verrors = await self.validate_data(new, 'smart_test_update')
-
-        new['disks'] = [disk for disk in chain(new_disks, old['disks']) if disk not in deleted_disks]
-
-        if new['all_disks']:
-            if new.get('disks'):
-                verrors.add(
-                    'smart_test_update.disks',
-                    'This test is already enabled for all disks'
-                )
-        else:
-            if not new.get('disks'):
-                verrors.add(
-                    'smart_test_update.disks',
-                    'This field is required'
-                )
-
-        if verrors:
-            raise verrors
 
         Cron.convert_schedule_to_db_format(new)
 
@@ -483,9 +508,10 @@ class SMARTTestService(CRUDService):
             Int('lifetime', required=True),
             Str('lba_of_first_error', null=True, required=True),
         )]),
-        Dict('current_test',
-             Int('progress', required=True),
-             null=True,
+        Dict(
+            'current_test',
+            Int('progress', required=True),
+            null=True,
         ),
     ))
     async def results(self, filters, options):

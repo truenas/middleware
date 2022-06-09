@@ -21,56 +21,6 @@ not_real = (
 )
 
 
-@pytest.fixture(scope='module')
-def smart_dict():
-    return {}
-
-
-def test_01_create_a_new_smarttest(smart_dict):
-    disks = GET('/disk/')
-    assert disks.status_code == 200, disks.text
-    disks = disks.json()
-    assert isinstance(disks, list), disks
-    assert len(disks) > 0, disks
-
-    idents = smart_dict['idents'] = [d['identifier'] for d in disks]
-
-    results = POST('/smart/test/', {
-        'disks': idents,
-        'type': 'LONG',
-        'schedule': {
-            'hour': '*',
-            'dom': '*',
-            'month': '*',
-            'dow': '*',
-        },
-    })
-    assert results.status_code == 200, results.text
-    smart_dict['smarttest'] = results.json()
-
-
-def test_02_check_that_API_reports_new_smarttest(smart_dict):
-    results = GET(f'/smart/test/id/{smart_dict["smarttest"]["id"]}/')
-    assert results.status_code == 200, results.text
-    smarttest = results.json()
-    assert isinstance(smarttest, dict), smarttest
-    print(smarttest['disks'])
-    for disk in smarttest['disks']:
-        assert disk in smart_dict['idents']
-
-
-def test_03_update_smarttest(smart_dict):
-    results = PUT(f'/smart/test/id/{smart_dict["smarttest"]["id"]}/', {
-        'type': 'SHORT',
-    })
-    assert results.status_code == 200, results.text
-
-
-def test_04_delete_smarttest(smart_dict):
-    results = DELETE(f'/smart/test/id/{smart_dict["smarttest"]["id"]}/')
-    assert results.status_code == 200, results.text
-
-
 def test_05_enable_smartd_service_at_boot():
     results = GET('/service/?service=smartd')
     smartid = results.json()[0]['id']
