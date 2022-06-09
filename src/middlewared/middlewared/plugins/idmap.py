@@ -392,6 +392,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             self.logger.warning("clear_idmap_cache is unsafe on clustered smb servers.")
             return
 
+        smb_started = await self.middleware.call('service.started', 'cifs')
         await self.middleware.call('service.stop', 'idmap')
 
         try:
@@ -408,6 +409,8 @@ class IdmapDomainService(TDBWrapCRUDService):
             raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
 
         await self.middleware.call('service.start', 'idmap')
+        if smb_started:
+            await self.middleware.call('service.start', 'cifs')
 
     @private
     async def autodiscover_trusted_domains(self):
