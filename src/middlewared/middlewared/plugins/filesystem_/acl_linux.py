@@ -432,11 +432,11 @@ class FilesystemService(Service, ACLBase):
 
                 verrors.add(v, err[1])
 
-        path_acltype = self.getacl(path)['acltype']
-        if path_acltype != ACLType.NFS4.name:
+        current_acl = self.getacl(path)
+        if current_acl['acltype'] != ACLType.NFS4.name:
             verrors.add(
                 'filesystem_acl.acltype',
-                f'ACL type mismatch. On-disk format is [{path_acltype}], '
+                f'ACL type mismatch. On-disk format is [{current_acl["acltype"]}], '
                 f'but received [{data.get("acltype")}].'
             )
 
@@ -446,9 +446,12 @@ class FilesystemService(Service, ACLBase):
             self._strip_acl_nfs4(path)
 
         else:
+            uid_to_check = current_acl['uid'] if uid == -1 else uid
+            gid_to_check = current_acl['gid'] if gid == -1 else gid
+
             self.middleware.call_sync(
                 'filesystem.check_acl_execute',
-                path, data['dacl'], data['uid'], data['gid']
+                path, data['dacl'], uid_to_check, gid_to_check
             )
 
             self.setacl_nfs4_internal(path, data['dacl'], do_canon, verrors)
@@ -583,11 +586,11 @@ class FilesystemService(Service, ACLBase):
 
                 verrors.add(v, err[1])
 
-        path_acltype = self.getacl(path)['acltype']
-        if path_acltype != ACLType.POSIX1E.name:
+        current_acl = self.getacl(path)
+        if current_acl['acltype'] != ACLType.POSIX1E.name:
             verrors.add(
                 'filesystem_acl.acltype',
-                f'ACL type mismatch. On-disk format is [{path_acltype}], '
+                f'ACL type mismatch. On-disk format is [{current_acl["acltype"]}], '
                 f'but received [{data.get("acltype")}].'
             )
 
@@ -600,9 +603,12 @@ class FilesystemService(Service, ACLBase):
         if not do_strip:
             try:
                 # check execute on parent paths
+                uid_to_check = current_acl['uid'] if uid == -1 else uid
+                gid_to_check = current_acl['gid'] if gid == -1 else gid
+
                 self.middleware.call_sync(
                     'filesystem.check_acl_execute',
-                    path, dacl, uid, gid
+                    path, dacl, uid_to_check, gid_to_check
                 )
             except CallError as e:
                 if e.errno != errno.EPERM:
