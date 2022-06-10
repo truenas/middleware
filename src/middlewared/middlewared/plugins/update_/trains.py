@@ -20,12 +20,16 @@ class UpdateService(Service):
         return trains
 
     @private
-    async def get_scale_update(self, train, current_version):
+    async def get_scale_manifest(self, train):
         async with async_timeout.timeout(INTERNET_TIMEOUT):
             async with aiohttp.ClientSession(
                 raise_for_status=True, trust_env=True,
             ) as session:
-                new_manifest = await (await session.get(f"{scale_update_server()}/{train}/manifest.json")).json()
+                return await (await session.get(f"{scale_update_server()}/{train}/manifest.json")).json()
+
+    @private
+    async def get_scale_update(self, train, current_version):
+        new_manifest = await self.get_scale_manifest(train)
 
         if new_manifest["version"] == current_version:
             return {"status": "UNAVAILABLE"}
