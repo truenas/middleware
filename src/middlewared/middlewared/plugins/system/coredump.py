@@ -19,7 +19,7 @@ class SystemService(Service):
                         'pid': core['COREDUMP_PID'],
                         'uid': core['COREDUMP_UID'],
                         'gid': core['COREDUMP_GID'],
-                        'unit': core['COREDUMP_UNIT'],
+                        'unit': core.get('COREDUMP_UNIT'),
                         'sig': core['COREDUMP_SIGNAL'],
                         'exe': core['COREDUMP_EXE'],
                     }
