@@ -3715,10 +3715,7 @@ class PoolDatasetService(CRUDService):
                     p = parent
                     break
 
-        ds_name = await self.middleware.call("zfs.dataset.path_to_dataset", p.as_posix())
-        if not ds_name:
-            raise CallError(f"Failed to convert path [{path}] to ZFS dataset.", errno.ENOENT)
-
+        ds_name = await self.middleware.call("zfs.dataset.path_to_dataset", p.as_posix(), True)
         return await self.middleware.call(
             "pool.dataset.query",
             [("id", "=", ds_name)],
