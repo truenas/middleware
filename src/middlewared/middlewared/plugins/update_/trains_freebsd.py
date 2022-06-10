@@ -116,8 +116,8 @@ class UpdateService(Service):
                 'sequence': train.LastSequence(),
             }
 
-        # scale_trains = self.middleware.call_sync('update.get_scale_trains_data')
-        # trains.update(**scale_trains['trains'])
+        scale_trains = self.middleware.call_sync('update.get_scale_trains_data')
+        trains.update(**scale_trains['trains'])
 
         return {
             'trains': trains,
