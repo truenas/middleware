@@ -1,4 +1,5 @@
 import json
+import os
 
 from middlewared.schema import Dict, Bool
 from middlewared.service import CallError, Service, accepts, private, filterable
@@ -89,27 +90,10 @@ class CtdbGeneralService(Service):
         return (await self.middleware.call('ctdb.general.wrapper', command))['nodes']
 
     @accepts()
-    async def healthy(self):
+    def healthy(self):
         """
         Returns a boolean if the ctdb cluster is healthy.
         """
-
-        # without ctdbd running, nothing to do
-        if not await self.middleware.call('service.started', 'ctdb'):
-            return False
-
-        # make sure the ctdb shared volume exists and is started
-        info = await self.middleware.call(
-            'gluster.volume.exists_and_started', CTDB_VOL
-        )
-        if not info['exists'] and not info['started']:
-            return False
-
-        # if the ctdb shared volume isn't FUSE mounted locally then
-        # active-active shares will not work so assume the worst
-        if not await self.middleware.call('gluster.fuse.is_mounted', {'name': CTDB_VOL}):
-            return False
-
         # TODO: ctdb has event scripts that can be run when the
         # health of the cluster has changed. We should use this
         # approach and use a lock on a file as a means of knowing
@@ -123,7 +107,20 @@ class CtdbGeneralService(Service):
         #       while not health_file.is_locked():
         #           return bool(open('/file/on/disk', 'r').read())
         # or something...
-        status = await self.middleware.call('ctdb.general.status', {'all_nodes': True})
+        try:
+            # gluster volume root has inode of 1.
+            # if gluster isn't mounted it will be different
+            # if volume is unhealthy this will fail
+            if os.stat(f'/cluster/{CTDB_VOL}').st_ino != 1:
+                return False
+        except Exception:
+            return False
+
+        try:
+            status = self.middleware.call_sync('ctdb.general.status', {'all_nodes': True})
+        except Exception:
+            return False
+
         return not any(map(lambda x: x['flags_str'] != 'OK', status)) if status else False
 
     @accepts()
