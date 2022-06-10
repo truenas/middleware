@@ -14,6 +14,7 @@ from middlewared.service import (
 )
 from middlewared.utils import filter_list, filter_getattrs
 from middlewared.utils.path import is_child
+from middlewared.utils.osc import getmntinfo
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 
@@ -623,18 +624,26 @@ class ZFSDatasetService(CRUDService):
             raise CallError(f'{id} is not encrypted')
 
     def path_to_dataset(self, path):
+        """
+        Convert `path` to a ZFS dataset name. This
+        performs lookup through mountinfo.
+
+        Anticipated error conditions are that path is not
+        on ZFS or if the boot pool underlies the path. In
+        addition to this, all the normal exceptions that
+        can be raised by a failed call to os.stat() are
+        possible.
+        """
         boot_pool = self.middleware.call_sync("boot.pool_name")
 
-        with libzfs.ZFS() as zfs:
-            try:
-                zh = zfs.get_dataset_by_path(path)
-                ds_name = zh.name
-            except libzfs.ZFSException:
-                ds_name = None
+        st = os.stat(path)
+        mntinfo = getmntinfo(st.st_dev)[st.st_dev]
+        ds_name = mntinfo['mount_source']
+        if mntinfo['fs_type'] != 'zfs':
+            raise CallError(f'{path}: path is not a ZFS filesystem')
 
-        if ds_name is not None:
-            if is_child(ds_name, boot_pool):
-                ds_name = None
+        if is_child(ds_name, boot_pool):
+            raise CallError(f'{path}: path is on boot pool')
 
         return ds_name
 
