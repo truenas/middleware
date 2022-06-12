@@ -176,10 +176,3 @@ class iSCSITargetToExtentService(CRUDService):
                 f'{schema_name}.target',
                 'Extent is already in this target.'
             )
-
-
-async def setup(middleware):
-    await middleware.call(
-        'interface.register_listen_delegate',
-        ISCSIPortalListenDelegate(middleware),
-    )

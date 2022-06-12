@@ -34,3 +34,11 @@ class ISCSIPortalListenDelegate(ListenDelegate, ServiceChangeMixin):
 
     async def repr(self, state):
         return {'type': 'SERVICE', 'service': 'iscsi.portal'}
+
+
+
+async def setup(middleware):
+    await middleware.call(
+        'interface.register_listen_delegate',
+        ISCSIPortalListenDelegate(middleware),
+    )
