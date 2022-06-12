@@ -168,6 +168,10 @@ class EtcService(Service):
         'scst': [
             {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import'}
         ],
+        'scst_targets': [
+            {'type': 'mako', 'path': 'initiators.allow', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'initiators.deny', 'checkpoint': 'pool_import'},
+        ],
         'webdav': {
             'ctx': [
                 {'method': 'sharing.webdav.query', 'args': [[('enabled', '=', True)]]},
