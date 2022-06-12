@@ -3,7 +3,7 @@ import re
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.utils import run
 
@@ -19,6 +19,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_name = sa.Column(sa.String(120), unique=True)
     iscsi_target_alias = sa.Column(sa.String(120), nullable=True, unique=True)
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
+    iscsi_target_auth_networks = sa.Column(sa.JSON(), default=[])
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -88,6 +89,7 @@ class iSCSITargetService(CRUDService):
                 Int('auth', default=None, null=True),
             ),
         ]),
+        List('auth_networks', items=[IPAddr('ip', network=True)]),
         register=True
     ))
     async def do_create(self, data):
@@ -97,6 +99,9 @@ class iSCSITargetService(CRUDService):
         `groups` is a list of group dictionaries which provide information related to using a `portal`, `initiator`,
         `authmethod` and `auth` with this target. `auth` represents a valid iSCSI Authorized Access and defaults to
         null.
+
+        `auth_networks` is a list of IP/CIDR addresses which are allowed to use this initiator. If all networks are
+        to be allowed, this field should be left empty.
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsi_target_create')
