@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Dict, Int, IPAddr, List, Patch, Str
+from middlewared.schema import accepts, Dict, Int, List, Patch, Str
 from middlewared.service import CRUDService, private
 
 
@@ -9,7 +9,6 @@ class iSCSITargetAuthorizedInitiatorModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_initiator_initiators = sa.Column(sa.Text(), default="ALL")
-    iscsi_target_initiator_auth_network = sa.Column(sa.Text(), default="ALL")
     iscsi_target_initiator_comment = sa.Column(sa.String(120))
 
 
@@ -25,7 +24,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
     @accepts(Dict(
         'iscsi_initiator_create',
         List('initiators'),
-        List('auth_network', items=[IPAddr('ip', network=True)]),
         Str('comment'),
         register=True
     ))
@@ -35,9 +33,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
 
         `initiators` is a list of initiator hostnames which are authorized to access an iSCSI Target. To allow all
         possible initiators, `initiators` can be left empty.
-
-        `auth_network` is a list of IP/CIDR addresses which are allowed to use this initiator. If all networks are
-        to be allowed, this field should be left empty.
         """
         await self.compress(data)
 
@@ -92,25 +87,13 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
     @private
     async def compress(self, data):
         initiators = data['initiators']
-        auth_network = data['auth_network']
-
         initiators = 'ALL' if not initiators else '\n'.join(initiators)
-        auth_network = 'ALL' if not auth_network else '\n'.join(auth_network)
-
         data['initiators'] = initiators
-        data['auth_network'] = auth_network
-
         return data
 
     @private
     async def extend(self, data):
         initiators = data['initiators']
-        auth_network = data['auth_network']
-
         initiators = [] if initiators == 'ALL' else initiators.split()
-        auth_network = [] if auth_network == 'ALL' else auth_network.split()
-
         data['initiators'] = initiators
-        data['auth_network'] = auth_network
-
         return data
