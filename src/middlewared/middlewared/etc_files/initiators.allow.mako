@@ -3,5 +3,5 @@
     targets = middleware.call_sync('iscsi.target.query', [['auth_networks', '!=', []]])
 %>\
 % for target in targets:
-${base_name}:${target['name']} ${', '.join(targets['auth_networks'])}
+${base_name}:${target['name']} ${', '.join(target['auth_networks'])}
 % endfor

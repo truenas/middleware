@@ -7,7 +7,7 @@ class ISCSITargetService(SimpleService):
     name = "iscsitarget"
     reloadable = True
 
-    etc = ["scst"]
+    etc = ["scst", "scst_targets"]
 
     systemd_unit = "scst"
 
