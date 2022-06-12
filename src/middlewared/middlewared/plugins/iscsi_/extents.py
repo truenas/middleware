@@ -15,7 +15,6 @@ from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
 
-
 class iSCSITargetExtentModel(sa.Model):
     __tablename__ = 'services_iscsitargetextent'
 

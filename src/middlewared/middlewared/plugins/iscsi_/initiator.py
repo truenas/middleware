@@ -15,7 +15,6 @@ class iSCSITargetAuthorizedInitiatorModel(sa.Model):
 
 class iSCSITargetAuthorizedInitiator(CRUDService):
 
-
     class Config:
         namespace = 'iscsi.initiator'
         datastore = 'services.iscsitargetauthorizedinitiator'
