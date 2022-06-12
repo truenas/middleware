@@ -1,10 +1,9 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.common.listen import ListenDelegate
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import (accepts, Bool, Dict, IPAddr, Int, List, Patch,
                                 Str)
-from middlewared.service import CallError, CRUDService, private, ServiceChangeMixin, SharingService, ValidationErrors
+from middlewared.service import CallError, CRUDService, private, SharingService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.path import is_child
@@ -30,38 +29,6 @@ AUTHMETHOD_LEGACY_MAP = bidict.bidict({
     'CHAP Mutual': 'CHAP_MUTUAL',
 })
 RE_TARGET_NAME = re.compile(r'^[-a-z0-9\.:]+$')
-
-
-
-
-
-class ISCSIPortalListenDelegate(ListenDelegate, ServiceChangeMixin):
-    def __init__(self, middleware):
-        self.middleware = middleware
-
-    async def get_listen_state(self, ips):
-        return await self.middleware.call('datastore.query', 'services.iscsitargetportalip', [['ip', 'in', ips]],
-                                          {'prefix': 'iscsi_target_portalip_'})
-
-    async def set_listen_state(self, state):
-        for row in state:
-            await self.middleware.call('datastore.update', 'services.iscsitargetportalip', row['id'],
-                                       {'ip': row['ip']}, {'prefix': 'iscsi_target_portalip_'})
-
-        await self._service_change('iscsitarget', 'reload')
-
-    async def listens_on(self, state, ip):
-        return any(row['ip'] == ip for row in state)
-
-    async def reset_listens(self, state):
-        for row in state:
-            await self.middleware.call('datastore.update', 'services.iscsitargetportalip', row['id'],
-                                       {'ip': '0.0.0.0'}, {'prefix': 'iscsi_target_portalip_'})
-
-        await self._service_change('iscsitarget', 'reload')
-
-    async def repr(self, state):
-        return {'type': 'SERVICE', 'service': 'iscsi.portal'}
 
 
 class iSCSITargetAuthCredentialModel(sa.Model):
