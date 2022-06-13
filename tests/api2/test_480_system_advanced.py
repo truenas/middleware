@@ -54,9 +54,9 @@ def test_04_system_advanced_check_serial_port_using_api(sysadv_dict):
 
 def test_05_system_advanced_check_serial_port_using_ssh(sysadv_dict, request):
     depends(request, ["ssh_password"], scope="session")
-    cmd = f'cat /boot/loader.conf.local | grep "{sysadv_dict["serial_choices"][0]}"'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results
+    results = SSH_TEST('cat /boot/loader.conf.local', user, password, ip)
+    assert results['result'] is True, str(results)
+    assert sysadv_dict["serial_choices"][0] in results['output'], str(results)
 
 
 def test_06_system_advanced_disable_serial_port():
@@ -70,8 +70,9 @@ def test_06_system_advanced_disable_serial_port():
 
 def test_07_system_advanced_check_disabled_serial_port_using_ssh(sysadv_dict, request):
     depends(request, ["ssh_password"], scope="session")
-    results = SSH_TEST(f'cat /boot/loader.conf.local | grep "{sysadv_dict["serial_choices"][0]}"', user, password, ip)
-    assert results['result'] is False, results
+    results = SSH_TEST('cat /boot/loader.conf.local', user, password, ip)
+    assert results['result'] is True, str(results)
+    assert sysadv_dict["serial_choices"][0] not in results['output'], str(results)
 
 
 def test_08_system_advanced_set_motd():
@@ -93,5 +94,6 @@ def test_09_system_advanced_check_motd_using_api():
 
 def test_10_system_advanced_check_motd_using_ssh(request):
     depends(request, ["ssh_password"], scope="session")
-    results = SSH_TEST(f'cat /etc/motd | grep "{MOTD}"', user, password, ip)
-    assert results['result'] is True, results
+    results = SSH_TEST('cat /etc/motd.template', user, password, ip)
+    assert results['result'] is True, str(results)
+    assert MOTD in results['output'], str(results)
