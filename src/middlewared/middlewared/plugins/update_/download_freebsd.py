@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import contextlib
+import json
 import os
 
 from freenasOS import Update
@@ -15,11 +16,12 @@ class UpdateService(Service):
         scale_flag = os.path.join(location, 'scale')
 
         if 'SCALE' in train:
+            scale_manifest = self.middleware.call_sync('update.get_scale_manifest', train)
             result = self.middleware.call_sync('update.download_impl_scale', job, train, location, progress_proportion)
 
             if result:
-                with open(scale_flag, 'w'):
-                    pass
+                with open(scale_flag, 'w') as f:
+                    json.dump(scale_manifest, f)
 
             return result
 

@@ -1,4 +1,7 @@
 # -*- coding=utf-8 -*-
+import json
+import os
+
 from freenasOS import Update
 from freenasOS.Exceptions import (
     UpdateIncompleteCacheException, UpdateInvalidCacheException,
@@ -11,6 +14,26 @@ from middlewared.service import private, Service
 class UpdateService(Service):
     @private
     def get_pending_in_path(self, path):
+        scale_flag = os.path.join(path, 'scale')
+        if os.path.exists(scale_flag):
+            with open(scale_flag) as f:
+                new_manifest = json.load(f)
+
+            old_version = self.middleware.call_sync('system.version').split('-', 1)[1]
+            return [
+                {
+                    "operation": "upgrade",
+                    "old": {
+                        "name": "TrueNAS",
+                        "version": old_version,
+                    },
+                    "new": {
+                        "name": "TrueNAS",
+                        "version": new_manifest["version"],
+                    }
+                }
+            ]
+
         data = []
         try:
             changes = Update.PendingUpdatesChanges(path)
