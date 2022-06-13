@@ -27,7 +27,7 @@ class StorageDevice(Device):
             'disk', type=self.TYPE, device='disk', attribute_dict={
                 'children': [
                     create_element('driver', name='qemu', type='raw', cache='none'),
-                    create_element('source', dev=self.data['attributes']['path']),
+                    self.create_source_element(),
                     create_element(
                         'target', bus='sata' if not virtio else 'virtio',
                         dev=f'{"vd" if virtio else "sd"}{disk_from_number(disk_number)}'
@@ -41,7 +41,8 @@ class StorageDevice(Device):
                 ]
             }
         )
-
+    def create_source_element(self):
+        raise NotImplementedError
 
 class RAW(StorageDevice):
 
@@ -59,6 +60,8 @@ class RAW(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
+    def create_source_element(self):
+        return create_element('source', file=self.data['attributes']['path'])
 
 
 class DISK(StorageDevice):
@@ -75,3 +78,5 @@ class DISK(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
+    def create_source_element(self):
+        return create_element('source', dev=self.data['attributes']['path'])
