@@ -61,6 +61,34 @@ truncate_files ()
 	local IFS='
 	'
 
+	for file in $(find $dir/log -type f -name '*.gz' -print) ; do
+		size=$(stat -c%s "$file")
+		if [ "$size" -lt "1000000" ]; then
+			continue
+		fi
+		tmpfile="$(env TMPDIR="${tmpdir}" mktemp /tmp/XXXXXX)"
+		cat "$file" | gunzip | tail -c $limit - > "$tmpfile" 2>/dev/null
+		if [ $? = 0 ] ; then
+			gzip "$tmpfile"
+			mv "$tmpfile".gz "$file"
+		else
+			rm "$tmpfile"
+		fi
+	done
+	for file in $(find $dir/log -type f -name '*.bz2' -print) ; do
+		size=$(stat -c%s "$file")
+		if [ "$size" -lt "1000000" ]; then
+			continue
+		fi
+		tmpfile="$(env TMPDIR="${tmpdir}" mktemp /tmp/XXXXXX)"
+		cat "$file" | bunzip2 | tail -c $limit - > "$tmpfile" 2>/dev/null
+		if [ $? = 0 ] ; then
+			bzip2 "$tmpfile"
+			mv "$tmpfile".gz "$file"
+		else
+			rm "$tmpfile"
+		fi
+	done
 	for file in $(find $dir -type f -a \
 		! -name '*.tar' -a \
 		! -name '*.tar.gz' -a \
@@ -75,7 +103,7 @@ truncate_files ()
 		! -name 'dump.txt' -a \
 		! -name '*.compressed' -print) ; do
 		tmpfile="$(env TMPDIR="${tmpdir}" mktemp /tmp/XXXXXX)"
-		tail -n $limit "$file" > "$tmpfile" 2>/dev/null
+		tail -c $limit "$file" > "$tmpfile" 2>/dev/null
 		if [ $? = 0 ] ; then
 			mv "$tmpfile" "$file"
 		else
@@ -94,7 +122,7 @@ fi
 has_ticket_info=false
 dont_delete=false
 print=false
-limit=10000
+limit=10000000
 
 while getopts "Fd:psl:" opt ; do
 	case "${opt}" in
