@@ -1,9 +1,3 @@
-# Copyright (c) 2020 iXsystems, Inc.
-# All rights reserved.
-# This file is a part of TrueNAS
-# and may not be copied and/or distributed
-# without the express permission of iXsystems.
-
 from concurrent.futures import ThreadPoolExecutor, wait as fut_wait
 
 import cam
@@ -117,7 +111,8 @@ class Disk(object):
         self.cam = None
 
         if self.name.startswith('nvd'):
-            self.nvme = nvme.NvmeDevice(f'/dev/{name}')
+            ctrl, nsid = nvme.get_nsid(f'/dev/{name}')
+            self.nvme = nvme.NvmeDevice(f'/dev/{ctrl}ns{nsid}')
         else:
             self.cam = cam.CamDevice(f'/dev/{name}')
 
