@@ -41,8 +41,10 @@ class StorageDevice(Device):
                 ]
             }
         )
+
     def create_source_element(self):
         raise NotImplementedError
+
 
 class RAW(StorageDevice):
 
@@ -60,6 +62,7 @@ class RAW(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
+
     def create_source_element(self):
         return create_element('source', file=self.data['attributes']['path'])
 
@@ -78,5 +81,6 @@ class DISK(StorageDevice):
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
     )
+
     def create_source_element(self):
         return create_element('source', dev=self.data['attributes']['path'])
