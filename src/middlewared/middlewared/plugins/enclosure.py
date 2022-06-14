@@ -447,10 +447,9 @@ class Enclosure(object):
                     dev = ""
                     if element_type == "Array Device Slot":
                         dev = self._array_device_slot_dev(element_number)
-                        element_number += 1  # (webUI expects drives to start at slot 1 and not slot 0)
 
                     element = self._enclosure_element(
-                        element_number,
+                        element_number + 1,
                         element_type,
                         self._parse_raw_value(m.group(1)),
                         None,
@@ -1028,7 +1027,7 @@ class ArrayDevSlot(Element):
 
         ok = True
         for cmd in commands:
-            cmd = ["sg_ses", "--index", str(self.slot), cmd, f"/dev/{self.enclosure.devname}"]
+            cmd = ["sg_ses", "--index", str(self.slot - 1), cmd, f"/dev/{self.enclosure.devname}"]
             p = subprocess.run(cmd, encoding="utf-8", errors="ignore", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if p.returncode != 0:
                 logger.warning("%r failed: %s", cmd, p.stderr)
