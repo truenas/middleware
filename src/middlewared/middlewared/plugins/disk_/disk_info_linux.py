@@ -41,8 +41,6 @@ class DiskService(Service, DiskInfoBase):
         if not block_device.children:
             return parts
 
-        logical_sector_size = self.middleware.call_sync('device.logical_sector_size', disk)
-
         for p in filter(
             lambda p: all(
                 p.get(k) for k in (
@@ -52,25 +50,23 @@ class DiskService(Service, DiskInfoBase):
             block_device.children
         ):
             part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
+            start_sector = int(p['ID_PART_ENTRY_OFFSET'])
+            end_sector = int(p['ID_PART_ENTRY_OFFSET']) + int(p['ID_PART_ENTRY_SIZE']) - 1
             part = {
                 'name': part_name,
                 'partition_type': p['ID_PART_ENTRY_TYPE'],
                 'partition_number': int(p['ID_PART_ENTRY_NUMBER']),
                 'partition_uuid': p['ID_PART_ENTRY_UUID'],
                 'disk': disk,
-                'start_sector': int(p['ID_PART_ENTRY_OFFSET']),
-                'start': None,
-                'end_sector': int(p['ID_PART_ENTRY_OFFSET']) + int(p['ID_PART_ENTRY_SIZE']) - 1,
-                'end': None,
-                'size': None,
+                'start_sector': start_sector,
+                'start': start_sector * 512,
+                'end_sector': end_sector,
+                'end': end_sector * 512,
+                'size': int(p['ID_PART_ENTRY_SIZE']) * 512,
                 'id': part_name,
                 'path': os.path.join('/dev', part_name),
                 'encrypted_provider': None,
             }
-            if logical_sector_size:
-                part['start'] = logical_sector_size * part['start_sector']
-                part['end'] = logical_sector_size * part['end_sector']
-                part['size'] = logical_sector_size * int(p['ID_PART_ENTRY_SIZE'])
 
             encrypted_provider = glob.glob(f'/sys/block/dm-*/slaves/{part["name"]}')
             if encrypted_provider:
