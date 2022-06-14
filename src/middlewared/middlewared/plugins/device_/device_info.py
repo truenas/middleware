@@ -1,8 +1,7 @@
-import os
-import pyudev
 import re
 
 import libsgio
+import pyudev
 
 from middlewared.schema import Dict, returns
 from middlewared.service import accepts, private, Service
@@ -93,8 +92,8 @@ class DeviceService(Service):
         sectorsize = self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True)
 
         size = mediasize = None
-        if blocks and sectorsize:
-            size = mediasize = blocks * sectorsize
+        if blocks:
+            size = mediasize = blocks * 512
 
         disk = {
             'name': dev.sys_name,
@@ -196,21 +195,6 @@ class DeviceService(Service):
             return
 
         return str(rotation_rate)
-
-    @private
-    def logical_sector_size(self, name):
-        path = os.path.join('/sys/block', name, 'queue/logical_block_size')
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                size = f.read().strip()
-            if not size.isdigit():
-                self.logger.error(
-                    'Unable to retrieve %r disk logical block size: malformed value %r found', name, size
-                )
-            else:
-                return int(size)
-        else:
-            self.logger.error('Unable to retrieve %r disk logical block size at %r', name, path)
 
     @private
     def get_storage_devices_topology(self):
