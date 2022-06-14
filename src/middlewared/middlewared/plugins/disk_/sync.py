@@ -226,7 +226,7 @@ class DiskService(Service, ServiceChangeMixin):
 
             # we query the db again since we've made changes to it
             job.set_progress(94, 'Emitting disk events')
-            disks = {i['disk_identifier']: i for i in self.middleware.call_sync('datastore.query', 'storage.disk')}
+            disks = {i['identifier']: i for i in self.middleware.call_sync('disk.query')}
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:

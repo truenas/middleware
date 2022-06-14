@@ -58,7 +58,7 @@ class DiskService(Service):
                     )
 
         if events:
-            disks = {i["identifier"]: i for i in await self.middleware.call("disk.query", [], {"prefix": "disk_"})}
+            disks = {i["identifier"]: i for i in await self.middleware.call("disk.query")}
             for event in events:
                 self.middleware.send_event("disk.query", "CHANGED", id=event, fields=disks[event])
 
