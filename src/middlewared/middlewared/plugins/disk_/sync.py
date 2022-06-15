@@ -128,7 +128,7 @@ class DiskService(Service, ServiceChangeMixin):
         _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
         if _type == 'uuid':
             found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
-            if found is not None and found.text.startswith('label'):
+            if found is not None and not found.text.startswith('label'):
                 return found.text
         elif _type == 'label':
             found = next(geom_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
@@ -182,24 +182,28 @@ class DiskService(Service, ServiceChangeMixin):
             raise NotImplementedError(f'Unknown type {_type!r}')
 
     @private
-    def dev_to_ident(self, name, sys_disks, geom_xml, valid_zfs_partition_uuids):
+    def dev_to_ident(self, name, sys_disks, part_geom_xml, valid_zfs_partition_uuids):
         if disk_data := sys_disks.get(name):
             if disk_data['serial_lunid']:
                 return f'{{serial_lunid}}{disk_data["serial_lunid"]}'
             elif disk_data['serial']:
                 return f'{{serial}}{disk_data["serial"]}'
 
-        found = next(geom_xml.iterfind(f'.//config[rawuuid="{name}"]'), None)
+        found = next(part_geom_xml.iterfind(f'.//geom[name="{name}"]'), None)
         if found is not None:
-            if (_type := found.find('rawtype')):
-                if _type.text in valid_zfs_partition_uuids:
-                    # has a label on it AND the label type is a zfs partition type
-                    return f'{{uuid}}{name}'
-            elif (label := found.find('label')) and (label.text):
-                # Why are we doing this? `label` isn't used by us on TrueNAS but
-                # maybe we added this for the situation where someone moved a
-                # disk from a vanilla freeBSD box??
-                return f'{{label}}{name}'
+            for provider in found.iter('provider'):
+                if (config := provider.find('config')) is not None:
+                    if (rawuuid := config.find('rawuuid')) is not None:
+                        if (rawtype := config.find('rawtype')) is not None:
+                            if rawtype.text in valid_zfs_partition_uuids:
+                                return f'{{uuid}}{rawuuid.text}'
+
+                    if (label := config.find('label')) is not None:
+                        if label.text:
+                            # Why are we doing this? `label` isn't used by us on TrueNAS but
+                            # maybe we added this for the situation where someone moved a
+                            # disk from a vanilla freeBSD box??
+                            return f'{{label}}{name}'
 
         if os.path.exists(f'/dev/{name}'):
             return f'{{devicename}}{name}'
@@ -223,7 +227,7 @@ class DiskService(Service, ServiceChangeMixin):
         number_of_disks = self.log_disk_info(sys_disks)
 
         job.set_progress(30, 'Enumerating geom disk XML information')
-        geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
+        part_geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'PART')
 
         job.set_progress(40, 'Enumerating disk information from database')
         db_disks = self.middleware.call_sync('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})
@@ -243,11 +247,11 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
 
             expire = False
-            name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
+            name = self.ident_to_dev(disk['disk_identifier'], part_geom_xml, db_disks)
             if (
                 not name or
                 name in seen_disks or
-                self.dev_to_ident(name, sys_disks, geom_xml, uuids) != disk['disk_identifier']
+                self.dev_to_ident(name, sys_disks, part_geom_xml, uuids) != disk['disk_identifier']
             ):
                 expire = True
 
@@ -299,7 +303,7 @@ class DiskService(Service, ServiceChangeMixin):
         progress_percent = 70
         for name in filter(lambda x: x not in seen_disks, sys_disks):
             progress_percent += increment
-            disk_identifier = self.dev_to_ident(name, sys_disks, geom_xml, uuids)
+            disk_identifier = self.dev_to_ident(name, sys_disks, part_geom_xml, uuids)
             if qs is None:
                 qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 
