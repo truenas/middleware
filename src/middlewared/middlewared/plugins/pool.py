@@ -3931,7 +3931,7 @@ class PoolDatasetService(CRUDService):
         `obj_quota` - the number of objects that may be owned by `id`.
         A value of zero means unlimited.
 
-        'obj_used` - the nubmer of objects currently owned by `id`.
+        `obj_used` - the number of objects currently owned by `id`.
 
         `obj_used_percent` - the percentage of the `obj_quota` currently used.
 
