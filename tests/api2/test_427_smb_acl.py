@@ -108,7 +108,11 @@ def iter_permset(path, share, local_acl):
         job_status = wait_on_job(result.json(), 180)
         assert job_status["state"] == "SUCCESS", str(job_status["results"])
         smbacl = get_windows_sd(share)
-        assert smbacl['acl'][0]['perms'] == permset, f'{perm}: {str(smbacl["acl"][0])}'
+        for ace in smbacl["acl"]:
+            if ace["id"] != 666:
+                continue
+
+            assert ace["perms"] == permset, f'{perm}: {str(ace)}'
 
 
 def iter_flagset(path, share, local_acl):
@@ -116,14 +120,17 @@ def iter_flagset(path, share, local_acl):
     assert smbacl['acl'][0]['flags'] == flagset
     for flag in flagset.keys():
         # we automatically canonicalize entries and so INHERITED shifts to end of list
-        idx = 0 if flag != 'INHERITED' else -1
         flagset[flag] = True
         result = POST("/filesystem/setacl/", {'path': path, "dacl": local_acl})
         assert result.status_code == 200, result.text
         job_status = wait_on_job(result.json(), 180)
         assert job_status["state"] == "SUCCESS", str(job_status["results"])
         smbacl = get_windows_sd(share)
-        assert smbacl['acl'][idx]['flags'] == flagset, f'{flag}: {str(smbacl["acl"][idx])}'
+        for ace in smbacl["acl"]:
+            if ace["id"] != 666:
+                continue
+
+            assert ace["flags"] == flagset, f'{flag}: {str(ace)}'
 
 
 @pytest.mark.dependency(name="SMB_SERVICE_STARTED")
