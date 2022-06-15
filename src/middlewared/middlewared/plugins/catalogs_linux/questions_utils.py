@@ -42,7 +42,7 @@ def normalise_question(question: dict, version_data: dict, context: dict) -> Non
             ]
         elif ref == 'definitions/timezone':
             data.update({
-                'enum': [{'value': t, 'description': f'{t!r} timezone'} for t in context['timezones']],
+                'enum': [{'value': t, 'description': f'{t!r} timezone'} for t in sorted(context['timezones'])],
                 'default': context['system.general.config']['timezone']
             })
         elif ref == 'definitions/nodeIP':
