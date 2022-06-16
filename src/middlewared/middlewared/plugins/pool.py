@@ -299,6 +299,11 @@ class PoolService(CRUDService):
         Bool('healthy', required=True),
         Bool('warning', required=True),
         Str('status_detail', required=True, null=True),
+        Int('size', required=True, null=True),
+        Int('allocated', required=True, null=True),
+        Int('free', required=True, null=True),
+        Int('freeing', required=True, null=True),
+        Str('fragmentation', required=True, null=True),
         Dict(
             'autotrim',
             required=True,
@@ -539,6 +544,11 @@ class PoolService(CRUDService):
                 'healthy': zpool['healthy'],
                 'warning': zpool['warning'],
                 'status_detail': zpool['status_detail'],
+                'size': zpool['properties']['size']['parsed'],
+                'allocated': zpool['properties']['allocated']['parsed'],
+                'free': zpool['properties']['free']['parsed'],
+                'freeing': zpool['properties']['freeing']['parsed'],
+                'fragmentation': zpool['properties']['fragmentation']['parsed'],
                 'autotrim': zpool['properties']['autotrim'],
             })
         else:
@@ -549,6 +559,11 @@ class PoolService(CRUDService):
                 'healthy': False,
                 'warning': False,
                 'status_detail': None,
+                'size': None,
+                'allocated': None,
+                'free': None,
+                'freeing': None,
+                'fragmentation': None,
                 'autotrim': {
                     'parsed': 'off',
                     'rawvalue': 'off',
