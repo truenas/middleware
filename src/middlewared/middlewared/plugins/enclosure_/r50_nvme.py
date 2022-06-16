@@ -18,7 +18,7 @@ class EnclosureService(Service):
                 return info
 
             slot = acpihandles[acpi_handle]
-            for nvme in filter(lambda x: x.sys_name.startswith('nvme'), phys_node.children):
+            for nvme in filter(lambda x: x.sys_name.startswith('nvme') and x.subsystem == 'block', phys_node.children):
                 mapped[slot] = nvme.sys_name
                 break
             else:
