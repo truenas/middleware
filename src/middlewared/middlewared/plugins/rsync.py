@@ -609,18 +609,20 @@ class RsyncTaskService(TaskPathService):
         """
         Update Rsync Task of `id`.
         """
+        data.setdefault('validate_rpath', True)
+
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
+        old.pop(self.locked_field)
         old.pop('job')
 
         new = old.copy()
         new.update(data)
 
-        verrors, data = await self.validate_rsync_task(new, 'rsync_task_update')
+        verrors, new = await self.validate_rsync_task(new, 'rsync_task_update')
         if verrors:
             raise verrors
 
         Cron.convert_schedule_to_db_format(new)
-        new.pop(self.locked_field)
 
         await self.middleware.call(
             'datastore.update',
