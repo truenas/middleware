@@ -103,12 +103,13 @@
                if not line.strip() or line.startswith('#'):
                    continue
 
-               ds_name = middleware.call_sync(
-                   'zfs.dataset.path_to_dataset',
-                   line.rsplit(" ", 1)[0]
-               )
-               if ds_name is None:
-                   middleware.logger.warning("%s: dataset lookup failed", line)
+               try:
+                   ds_name = middleware.call_sync(
+                       'zfs.dataset.path_to_dataset',
+                       line.rsplit(" ", 1)[0]
+                   )
+               except Exception:
+                   middleware.logger.warning("%s: dataset lookup failed", line, exc_info=True)
                    continue
 
                datasets.append(ds_name)
