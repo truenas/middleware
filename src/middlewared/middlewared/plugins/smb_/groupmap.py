@@ -196,7 +196,8 @@ class SMBService(Service):
                 must_reload = True
 
             for key in tdb_handle.keys():
-                if key[:3] == b'GID' and int(key.decode()[4:-3]) < (low_range + 2):
+                # sample key: b'GID 9000020\x00'
+                if key[:3] == b'GID' and int(key.decode()[4:-1]) < (low_range + 2):
                     reverse = tdb_handle.get(key)
                     tdb_handle.transaction_start()
                     tdb_handle.delete(key)
