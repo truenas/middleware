@@ -5,12 +5,16 @@ import contextlib
 import pytest
 import sys
 import os
+import subprocess
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, DELETE, wait_on_job
+from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import (
-    pool_name,
+    ip,
     dev_test,
+    pool_name,
+    password,
+    user,
 )
 from pytest_dependency import depends
 from time import sleep
@@ -234,6 +238,53 @@ def test_005_test_map_modify(request):
             assert dacl[1]['access_mask']['special']['WRITE_EA'], str(dacl[1])
             assert dacl[2]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[2])
             assert dacl[2]['access_mask']['special']['WRITE_EA'], str(dacl[2])
+
+
+def test_006_test_preserve_dynamic_id_mapping(request):
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    def _find_owner_rights(acl):
+        for entry in acl:
+            if 'owner rights' in entry['who']:
+                return True
+
+        return False
+
+    ds = 'nfs4acl_dynmamic_user'
+    path = f'/mnt/{pool_name}/{ds}'
+    with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
+        with smb_share(path, {"name": "DYNAMIC"}):
+            # add an ACL entry that forces generation
+            # of a dynamic idmap entry
+            sleep(5)
+            cmd = [
+                'smbcacls',
+                f'//{ip}/DYNAMIC',
+                '\\',
+                '-a', r'ACL:S-1-3-4:ALLOWED/0x0/FULL',
+                '-d', '0',
+                '-U', f'{SMB_USER}%{SMB_PWD}',
+            ]
+            res = subprocess.run(cmd, capture_output=True)
+            assert res.returncode == 0, res.stderr.decode() or res.stdout.decode()
+
+            # verify "owner rights" entry is present
+            result = POST('/filesystem/getacl/', {'path': path, 'simplified': False, 'resolve_ids': True})
+            assert result.status_code == 200, result.text
+            the_acl = result.json()['acl']
+            has_owner_rights = _find_owner_rights(the_acl)
+            assert has_owner_rights is True, str(the_acl)
+
+            # force re-sync of group mapping database (and winbindd_idmap.tdb)
+            res = SSH_TEST('midclt call smb.synchronize_group_mappings -job', user, password, ip)
+            assert res['result'] is True, res['stderr'] or res['output']
+
+            # verify "owner rights" entry is still present
+            assert res['result'] is True, res['error']
+            result = POST('/filesystem/getacl/', {'path': path, 'simplified': False, 'resolve_ids': True})
+            assert result.status_code == 200, result.text
+            the_acl = result.json()['acl']
+            has_owner_rights = _find_owner_rights(the_acl)
+            assert has_owner_rights is True, str(the_acl)
 
 
 def test_099_delete_smb_user(request):
