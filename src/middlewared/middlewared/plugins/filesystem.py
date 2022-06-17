@@ -14,10 +14,11 @@ import pyinotify
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
-from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
+from middlewared.plugins.filesystem_ import chflags, dosmode
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
+from middlewared.utils.osc import getmntinfo
 from middlewared.plugins.filesystem_.acl_base import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
 
@@ -503,61 +504,28 @@ class FilesystemService(Service):
             raise CallError('Path must include more than "/mnt/"')
 
         try:
-            st = os.statvfs(path)
+            fd = os.open(path, os.O_PATH)
+            try:
+                st = os.fstatvfs(fd)
+                devid = os.fstat(fd).st_dev
+            finally:
+                os.close(fd)
+
         except FileNotFoundError:
             raise CallError('Path not found.', errno.ENOENT)
 
-        # get the closest mountpoint to the path provided
-        mountpoint = pathlib.Path(path)
-        while not mountpoint.is_mount():
-            mountpoint = mountpoint.parent.absolute()
-
-        # strip the `/mnt/` or `/cluster/` prefix from the mountpoint
-        device = mountpoint.as_posix().removeprefix('/mnt/')
-        device = device.removeprefix('/cluster/')
-
-        # get fstype for given path based on major:minor entry in mountinfo
-        stx = stat_x.statx(path)
-        maj_min = f'{stx.stx_dev_major}:{stx.stx_dev_minor}'
-        fstype = None
-        flags = []
-        with open('/proc/self/mountinfo') as f:
-            # example lines look like this. We use `find()` to keep the `.split()` calls to only 2 (instead of 3)
-            # (minor optimization, but still one nonetheless)
-            # "26 1 0:23 / / rw,relatime shared:1 - zfs boot-pool/ROOT/22.02-MASTER-20211129-015838 rw,xattr,posixacl"
-            # OR
-            # "129 26 0:50 / /mnt/data rw,noatime shared:72 - zfs data rw,xattr,posixacl"
-            for line in f:
-                if line.find(maj_min) != -1:
-                    fstype = line.rsplit(' - ')[1].split()[0]
-
-                    """
-                    Following gets mount flags. For filesystems, there are two
-                    varieties. First are flags returned by statfs(2) on Linux which
-                    are defined in manpage. These are located in middle of mountinfo line.
-                    The second info group is at end of mountinfo string and contains
-                    superblock info returned from FS. We attempt to consilidate this
-                    disparate info here.
-                    """
-                    unsorted_info, mount_flags = line.rsplit(' ', 1)
-                    flags = mount_flags.strip().upper().split(',')
-
-                    offset = unsorted_info.find(flags[0].lower())
-                    other_flags = unsorted_info[offset:].split()[0]
-
-                    for f in other_flags.split(','):
-                        flag = f.upper()
-                        if flag in flags:
-                            continue
-
-                        flags.append(flag)
-                    break
+        mntinfo = getmntinfo(devid)[devid]
+        flags = mntinfo['mount_opts']
+        for flag in mntinfo['super_opts']:
+            if flag in flags:
+                continue
+            flags.append(flag)
 
         return {
             'flags': flags,
-            'fstype': fstype,
-            'source': device,
-            'dest': mountpoint.as_posix(),
+            'fstype': mntinfo['fs_type'].lower(),
+            'source': mntinfo['mount_source'],
+            'dest': mntinfo['mountpoint'],
             'blocksize': st.f_frsize,
             'total_blocks': st.f_blocks,
             'free_blocks': st.f_bfree,
@@ -565,7 +533,7 @@ class FilesystemService(Service):
             'files': st.f_files,
             'free_files': st.f_ffree,
             'name_max': st.f_namemax,
-            'fsid': [],
+            'fsid': [str(st.f_fsid)],
             'total_bytes': st.f_blocks * st.f_frsize,
             'free_bytes': st.f_bfree * st.f_frsize,
             'avail_bytes': st.f_bavail * st.f_frsize,
