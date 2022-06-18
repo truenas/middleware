@@ -460,8 +460,11 @@ class FilesystemService(Service):
         else:
             openmode = 'wb+'
 
-        with open(path, openmode) as f:
-            await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
+        try:
+            with open(path, openmode) as f:
+                await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
+        except PermissionError:
+            raise CallError(f'Unable to put contents at {path!r} as the path exists on a locked dataset', errno.EINVAL)
 
         mode = options.get('mode')
         if mode:
