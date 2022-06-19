@@ -11,7 +11,7 @@ class DiskService(Service):
 
     @private
     def _wipe(self, data):
-        with open(f'/dev/{data["dev"]}', 'wb') as f:
+        with open(os.open(f'/dev/{data["dev"]}', os.O_WRONLY | os.O_EXCL), 'wb') as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:
                 # no size means nothing else will work
