@@ -62,7 +62,7 @@ class ChartReleaseService(Service):
                 question=questions[key],
                 parent_attr=dict_obj,
                 var_attr=dict_obj.attrs[key],
-                schema_name=schema_name,
+                schema_name=f'{schema_name}.{questions[key]["variable"]}',
                 release_data=release_data,
             )
 
@@ -71,9 +71,10 @@ class ChartReleaseService(Service):
         return dict_obj
 
     @private
-    async def validate_question(self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, release_data=None):
+    async def validate_question(
+        self, verrors, parent_value, value, question, parent_attr, var_attr, schema_name, release_data=None
+    ):
         schema = question['schema']
-        schema_name = f'{schema_name}.{question["variable"]}'
 
         if schema['type'] == 'dict' and value:
             dict_attrs = {v['variable']: v for v in schema['attrs']}
