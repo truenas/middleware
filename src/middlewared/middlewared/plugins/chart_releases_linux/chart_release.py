@@ -4,6 +4,7 @@ import errno
 import itertools
 import os
 import shutil
+import textwrap
 
 from pkg_resources import parse_version
 
@@ -354,7 +355,20 @@ class ChartReleaseService(CRUDService):
             Dict('values', additional_attrs=True),
             Str('catalog', required=True),
             Str('item', required=True),
-            Str('release_name', required=True, validators=[Match(r'^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')]),
+            Str(
+                'release_name', required=True, validators=[Match(
+                    r'^[a-z]([-a-z0-9]*[a-z0-9])?$',
+                    explanation=textwrap.dedent(
+                        '''
+                        Application name must have the following:
+                        1) Lowercase alphanumeric characters can be specified
+                        2) Name must start with an alphabetic character and can end with alphanumeric character
+                        3) Hyphen '-' is allowed but not as the first or last character
+                        e.g abc123, abc, abcd-1232
+                        '''
+                    )
+                )]
+            ),
             Str('train', default='charts'),
             Str('version', default='latest'),
         )
