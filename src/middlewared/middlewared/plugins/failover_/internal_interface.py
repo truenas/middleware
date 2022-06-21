@@ -2,6 +2,7 @@ import glob
 
 from middlewared.plugins.interface.netif import netif
 from middlewared.service import Service
+from middlewared.utils.functools import cache
 
 
 ZSERIES_PCI_ID = 'PCI_ID=8086:10D3'
@@ -15,6 +16,7 @@ class InternalInterfaceService(Service):
         private = True
         namespace = 'failover.internal_interface'
 
+    @cache
     def detect(self):
         hardware = self.middleware.call_sync('failover.hardware')
         # Return BHYVE heartbeat interface
