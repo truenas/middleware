@@ -10,4 +10,4 @@ class InterfaceService(Service):
 
     @private
     async def internal_interfaces(self):
-        return netif.INTERNAL_INTERFACES
+        return netif.INTERNAL_INTERFACES + await self.middleware.call('failover.internal_interface.detect')
