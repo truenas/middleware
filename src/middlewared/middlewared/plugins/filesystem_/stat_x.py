@@ -1,8 +1,16 @@
 import os
 import ctypes
+from enum import IntFlag
 
-AT_STATX_SYNC_AS_STAT = 0x0000  # Do what stat() does
 AT_FDCWD = -100  # special fd value meaning no FD
+
+
+class ATFlags(IntFlag):
+    # fcntl.h
+    STATX_SYNC_AS_STAT = 0x0000
+    SYMLINK_NOFOLLOW = 0x0100
+    EMPTY_PATH = 0x1000
+    VALID_FLAGS = 0x1100
 
 
 class Mask(ctypes.c_uint):
@@ -75,11 +83,16 @@ class StructStatx(ctypes.Structure):
     ]
 
 
-def statx(path):
-    fd = AT_FDCWD
-    flags = AT_STATX_SYNC_AS_STAT
+def statx(path, options=None):
+    opts = options or {}
+    dirfd = opts.get('dir_fd', AT_FDCWD)
+    flags = opts.get('flags', ATFlags.STATX_SYNC_AS_STAT)
     mask = Mask.BASIC_STATS | Mask.BTIME
     path = path.encode() if isinstance(path, str) else path
+
+    invalid_flags = flags & ~ATFlags.VALID_FLAGS
+    if invalid_flags:
+        raise ValueError(f'{hex(invalid_flags)}: unsupported statx flags')
 
     _libc = ctypes.CDLL('libc.so.6', use_errno=True)
     _func = _libc.statx
@@ -91,7 +104,7 @@ def statx(path):
         ctypes.POINTER(StructStatx)
     )
     data = StructStatx()
-    result = _func(fd, path, flags, mask, ctypes.byref(data))
+    result = _func(dirfd, path, flags, mask, ctypes.byref(data))
     if result < 0:
         err = ctypes.get_errno()
         raise OSError(err, os.strerror(err))
