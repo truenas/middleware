@@ -4,10 +4,10 @@ except ImportError:
     kld = None
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
 from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list, run
-from middlewared.validators import Netmask
+from middlewared.validators import Netmask, PasswordComplexity, Range
 
 import errno
 import os
@@ -90,7 +90,10 @@ class IPMIService(CRUDService):
         IPAddr('ipaddress', v6=False),
         Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
         IPAddr('gateway', v6=False),
-        Str('password', private=True),
+        Password('password', validators=[
+            PasswordComplexity(["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"], 3),
+            Range(8, 16)
+        ]),
         Bool('dhcp'),
         Int('vlan', null=True),
         register=True
@@ -110,12 +113,6 @@ class IPMIService(CRUDService):
             raise CallError('The ipmi device could not be found')
 
         verrors = ValidationErrors()
-
-        if data.get('password') and len(data.get('password')) > 20:
-            verrors.add(
-                'ipmi_update.password',
-                'A maximum of 20 characters are allowed'
-            )
 
         if not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:

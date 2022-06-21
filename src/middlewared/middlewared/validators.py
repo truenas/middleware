@@ -3,6 +3,7 @@ import ipaddress
 import re
 from urllib.parse import urlparse
 import uuid
+from string import digits, ascii_uppercase, ascii_lowercase, punctuation
 
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
@@ -207,6 +208,58 @@ class UUID:
             uuid.UUID(value, version=4)
         except ValueError as e:
             raise ValueError(f'Invalid UUID: {e}')
+
+
+class PasswordComplexity:
+    def __init__(self, required_types, required_cnt=None):
+        self.required_types = required_types
+        self.required_cnt = required_cnt
+
+    def __call__(self, value):
+        cnt = 0
+        reqs = []
+        errstr = ''
+
+        if value and self.required_types:
+            if 'ASCII_LOWER' in self.required_types:
+                reqs.append('lowercase character')
+                if not any(c in ascii_lowercase for c in value):
+                    if self.required_cnt is None:
+                        errstr += 'Must contain at least one lowercase character. '
+                else:
+                    cnt += 1
+
+            if 'ASCII_UPPER' in self.required_types:
+                reqs.append('uppercase character')
+                if not any(c in ascii_uppercase for c in value):
+                    if self.required_cnt is None:
+                        errstr += 'Must contain at least one uppercase character. '
+                else:
+                    cnt += 1
+
+            if 'DIGIT' in self.required_types:
+                reqs.append('digits 0-9')
+                if not any(c in digits for c in value):
+                    if self.required_cnt is None:
+                        errstr += 'Must contain at least one numeric digit (0-9). '
+                else:
+                    cnt += 1
+
+            if 'SPECIAL' in self.required_types:
+                reqs.append('special characters (!, $, #, %, etc.)')
+                if not any(c in punctuation for c in value):
+                    if self.required_cnt is None:
+                        errstr += 'Must contain at least one special character (!, $, #, %, etc.). '
+                else:
+                    cnt += 1
+
+        if self.required_cnt and self.required_cnt > cnt:
+            raise ValueError(
+                f'Must contain at least {self.required_cnt} of the following categories: {", ".join(reqs)}'
+            )
+
+        if errstr:
+            raise ValueError(errstr)
 
 
 def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
