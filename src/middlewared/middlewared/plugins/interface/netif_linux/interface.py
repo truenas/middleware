@@ -1,5 +1,5 @@
 import logging
-from pyroute2 import NDB
+from pyroute2 import NDB, IPRoute
 
 from .address import AddressFamily, AddressMixin
 from .bridge import BridgeMixin
@@ -68,10 +68,10 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
 
     @property
     def nd6_flags(self):
-        return bitmask_to_set(
-            self.iprinfo.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS'),
-            InterfaceV6Flags
-        )
+        with IPRoute() as ipr:
+            dev = ipr.get_links(ifname=self.orig_name)[0]
+            v6flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
+            return bitmask_to_set(v6flags, InterfaceV6Flags)
 
     @property
     def link_state(self):
