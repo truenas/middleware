@@ -876,6 +876,7 @@ class PoolService(CRUDService):
             }})
 
         pool = await self.get_instance(id)
+        await self.middleware.call('disk.sync_zfs_guid', pool)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 
