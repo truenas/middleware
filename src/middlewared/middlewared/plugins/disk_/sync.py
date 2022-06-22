@@ -128,7 +128,7 @@ class DiskService(Service, ServiceChangeMixin):
         _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
         if _type == 'uuid':
             found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
-            if found is not None and found.text.startswith('label'):
+            if found is not None and not found.text.startswith('label'):
                 return found.text
         elif _type == 'label':
             found = next(geom_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
@@ -191,15 +191,17 @@ class DiskService(Service, ServiceChangeMixin):
 
         found = next(geom_xml.iterfind(f'.//config[rawuuid="{name}"]'), None)
         if found is not None:
-            if (_type := found.find('rawtype')):
-                if _type.text in valid_zfs_partition_uuids:
-                    # has a label on it AND the label type is a zfs partition type
-                    return f'{{uuid}}{name}'
-            elif (label := found.find('label')) and (label.text):
-                # Why are we doing this? `label` isn't used by us on TrueNAS but
-                # maybe we added this for the situation where someone moved a
-                # disk from a vanilla freeBSD box??
-                return f'{{label}}{name}'
+            _type = found.find('rawtype')
+            if _type is not None and _type.text in valid_zfs_partition_uuids:
+                # has a label on it AND the label type is a zfs partition type
+                return f'{{uuid}}{name}'
+
+        found = next(geom_xml.iterfind(f'.//config[label="{name}"]'), None)
+        if found is not None:
+            # Why are we doing this? `label` isn't used by us on TrueNAS but
+            # maybe we added this for the situation where someone moved a
+            # disk from a vanilla freeBSD box??
+            return f'{{label}}{found.text}'
 
         if os.path.exists(f'/dev/{name}'):
             return f'{{devicename}}{name}'
