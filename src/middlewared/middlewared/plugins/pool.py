@@ -4272,6 +4272,14 @@ class PoolDatasetService(CRUDService):
     def register_attachment_delegate(self, delegate):
         self.attachment_delegates.append(delegate)
 
+    @private
+    async def query_attachment_delegate(self, name, path, enabled):
+        for delegate in self.attachment_delegates:
+            if delegate.name == name:
+                return await delegate.query(path, enabled)
+
+        raise RuntimeError(f'Unknown attachment delegate {name!r}')
+
 
 class PoolScrubModel(sa.Model):
     __tablename__ = 'storage_scrub'

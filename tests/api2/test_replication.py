@@ -1,6 +1,9 @@
 import pytest
 from pytest_dependency import depends
+
+from middlewared.test.integration.assets.keychain import localhost_ssh_credentials
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.replication import task
 from middlewared.test.integration.utils import call, pool, ssh
 
 import sys
@@ -11,6 +14,45 @@ from auto_config import dev_test
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
+
+
+@pytest.fixture(scope="module")
+def ssh_credentials():
+    with localhost_ssh_credentials(username="root") as c:
+        yield c
+
+
+@pytest.mark.parametrize("data,path,include", [
+    ({"direction": "PUSH", "source_datasets": ["data/child/work"]}, "/mnt/data/child", False),
+    ({"direction": "PUSH", "source_datasets": ["data/child/work"]}, "/mnt/data/child/work", True),
+    ({"direction": "PUSH", "source_datasets": ["data/child/work/ix"]}, "/mnt/data/child/work", False),
+    ({"direction": "PUSH", "source_datasets": ["data/child"], "recursive": True}, "/mnt/data/child/work", True),
+    ({"direction": "PUSH", "source_datasets": ["data/child"], "recursive": True, "exclude": ["data/child/work"]},
+     "/mnt/data/child/work", False),
+    ({"direction": "PULL", "target_dataset": ["data/child"]}, "/mnt/data/child", True),
+])
+def test_query_attachment_delegate(ssh_credentials, data, path, include):
+    data = {
+        "name": "Test",
+        "transport": "SSH",
+        "source_datasets": ["source"],
+        "target_dataset": "target",
+        "recursive": False,
+        "name_regex": ".+",
+        "auto": False,
+        "retention_policy": "NONE",
+        **data,
+    }
+    if data["transport"] == "SSH":
+        data["ssh_credentials"] = ssh_credentials["credentials"]["id"]
+
+    with task(data) as t:
+        result = call("pool.dataset.query_attachment_delegate", "replication", path, True)
+        if include:
+            assert len(result) == 1
+            assert result[0]["id"] == t["id"]
+        else:
+            assert len(result) == 0
 
 
 @pytest.mark.parametrize("exclude_mountpoint_property", [True, False])

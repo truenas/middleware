@@ -9,7 +9,14 @@ from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["is_child", "pathref_open", "pathref_reopen"]
+__all__ = ["belongs_to_tree", "pathref_open", "pathref_reopen", "is_child"]
+
+
+def belongs_to_tree(dataset: str, root: str, recursive: bool, exclude: [str]):
+    if recursive:
+        return is_child(dataset, root) and not should_exclude(dataset, exclude)
+    else:
+        return dataset == root
 
 
 def pathref_reopen(fd_in: int, flags: int, **kwargs) -> int:
@@ -102,3 +109,7 @@ def pathref_open(path: str, **kwargs) -> int:
 def is_child(child: str, parent: str):
     rel = os.path.relpath(child, parent)
     return rel == "." or not rel.startswith("..")
+
+
+def should_exclude(dataset: str, exclude: [str]):
+    return any(is_child(dataset, excl) for excl in exclude)
