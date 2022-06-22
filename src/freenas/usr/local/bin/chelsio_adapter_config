@@ -185,16 +185,16 @@ def detect_chelsio_card():
     out = out.split("\n")
     output = []
     for line in out:
-        if re.search("pci.+:.+:.+:4.+0x00001425", line):
+        if re.search("pci.+:.+:.+:4:.+vendor=0x1425", line):
             output.append(line)
 
     for line in output:
         line = line.split()
-        m = re.search(".+pci.:(.+:.+:4).*", line[0])
+        m = re.search(".+pci.:(.+:.+:4):.*", line[0])
         if not m:
             return (None, None) 
         bus_list.append(m.group(1)[0:-2]+'.0')
-        m = re.search("chip=(0x.+)1425",line[3])
+        m = re.search("device=(0x.+)", line[5])
         if not m:
             return (None, None)
         dev_list.append(int(m.group(1), 16))
