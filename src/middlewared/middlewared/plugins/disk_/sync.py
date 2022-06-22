@@ -227,6 +227,7 @@ class DiskService(Service, ServiceChangeMixin):
         number_of_disks = self.log_disk_info(sys_disks)
 
         job.set_progress(30, 'Enumerating geom disk XML information')
+        geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'DISK')
         part_geom_xml = self.middleware.call_sync('geom.cache.get_class_xml', 'PART')
 
         job.set_progress(40, 'Enumerating disk information from database')
@@ -247,7 +248,7 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
 
             expire = False
-            name = self.ident_to_dev(disk['disk_identifier'], part_geom_xml, db_disks)
+            name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
             if (
                 not name or
                 name in seen_disks or
