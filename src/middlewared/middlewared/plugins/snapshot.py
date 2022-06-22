@@ -6,7 +6,7 @@ from middlewared.schema import accepts, returns, Bool, Cron, Dataset, Dict, Int,
 from middlewared.service import CallError, CRUDService, item_method, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import croniter_for_schedule
-from middlewared.utils.path import is_child
+from middlewared.utils.path import belongs_to_tree, is_child
 from middlewared.validators import ReplicationSnapshotNamingSchema
 
 
@@ -407,20 +407,20 @@ class PeriodicSnapshotTaskService(CRUDService):
         if data['dataset'] not in (await self.middleware.call('pool.filesystem_choices')):
             verrors.add(
                 'dataset',
-                'ZFS dataset or zvol not found'
+                'Dataset not found'
             )
 
         if not data['recursive'] and data['exclude']:
             verrors.add(
                 'exclude',
-                'Excluding datasets or zvols is not necessary for non-recursive periodic snapshot tasks'
+                'Excluding datasets is not necessary for non-recursive periodic snapshot tasks'
             )
 
         for i, v in enumerate(data['exclude']):
             if not v.startswith(f'{data["dataset"]}/'):
                 verrors.add(
                     f'exclude.{i}',
-                    'Excluded dataset or zvol should be a child or other descendant of selected dataset'
+                    'Excluded dataset should be a child or other descendant of the selected dataset'
                 )
 
         return verrors
@@ -432,9 +432,10 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
     resource_name = 'dataset'
 
     async def query(self, path, enabled, options=None):
+        dataset = os.path.relpath(path, '/mnt')
         results = []
         for task in await self.middleware.call('pool.snapshottask.query', [['enabled', '=', enabled]]):
-            if is_child(os.path.join('/mnt', task['dataset']), path):
+            if belongs_to_tree(dataset, task['dataset'], task['recursive'], task['exclude']):
                 results.append(task)
 
         return results
