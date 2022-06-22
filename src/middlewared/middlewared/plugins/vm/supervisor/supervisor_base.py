@@ -328,6 +328,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
                     create_element('synic', state='on'),
                     create_element('ipi', state='on'),
                     create_element('tlbflush', state='on'),
+                    create_element('stimer', state='on')
                 ],
             }
         )
