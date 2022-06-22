@@ -65,10 +65,15 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
 
     @property
     def nd6_flags(self):
-        with IPRoute() as ipr:
-            dev = ipr.get_links(ifname=self.orig_name)[0]
-            v6flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
-            return bitmask_to_set(v6flags, InterfaceV6Flags)
+        try:
+            with IPRoute() as ipr:
+                dev = ipr.get_links(ifname=self.orig_name)[0]
+                v6flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
+                return bitmask_to_set(v6flags, InterfaceV6Flags)
+        except Exception:
+            # these flags aren't currently used anywwhere and are a "feature complete"
+            # addition so don't crash here and instead be safe
+            return set()
 
     @property
     def link_state(self):
