@@ -15,12 +15,12 @@ class ReportingService(Service):
     def setup(self):
         systemdatasetconfig = self.middleware.call_sync('systemdataset.config')
         if not systemdatasetconfig['path']:
-            self.middleware.logger.error('System dataset is not mounted')
+            self.logger.error('System dataset is not mounted')
             return False
 
         rrd_mount = f'{systemdatasetconfig["path"]}/rrd-{systemdatasetconfig["uuid"]}'
         if not os.path.exists(rrd_mount):
-            self.middleware.logger.error(f'{rrd_mount} does not exist or is not a directory')
+            self.logger.error('%r does not exist or is not a directory', rrd_mount)
             return False
 
         # Ensure that collectd working path is a symlink to system dataset
@@ -60,14 +60,26 @@ class ReportingService(Service):
         os.makedirs(os.path.join(pwd, 'localhost'), exist_ok=True)
 
         dst = os.path.join(pwd, self.hostname())
-        while True:
+        for _ in range(100):
             try:
                 os.symlink(os.path.join(pwd, 'localhost'), dst)
+                break
             except FileExistsError:
                 # Running collectd/rrdcached instances might have created this path again
-                rmtree_one_filesystem(dst)
-            else:
-                break
+                for _ in range(100):
+                    try:
+                        rmtree_one_filesystem(dst)
+                        break
+                    except OSError as e:
+                        if "Directory not empty" in e.args[0]:
+                            # This might happen if new elements were created in the directory tree while it was being
+                            # recursively deleted.
+                            pass
+
+                        raise
+        else:
+            self.logger.error('Unable to create collectd symlink to %r', dst)
+            return False
 
         # Let's return a positive value to indicate that necessary collectd operations were performed successfully
         return True
