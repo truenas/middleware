@@ -20,7 +20,7 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
         try:
             s3_ds = await self.middleware.call('zfs.dataset.path_to_dataset', s3_config['storage_path'])
         except Exception:
-            self.logger.warning('%s: failed to look up dataset', s3_config['storage_path'], exc_info=True)
+            self.middleware.logger.warning('%s: failed to look up dataset', s3_config['storage_path'], exc_info=True)
             return []
 
         if is_child(os.path.join('/mnt', s3_ds), path):

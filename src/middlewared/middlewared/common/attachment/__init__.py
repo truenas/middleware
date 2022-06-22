@@ -19,6 +19,7 @@ class FSAttachmentDelegate(ServiceChangeMixin):
 
     def __init__(self, middleware):
         self.middleware = middleware
+        self.logger = middleware.logger
 
     async def query(self, path, enabled, options=None):
         """
