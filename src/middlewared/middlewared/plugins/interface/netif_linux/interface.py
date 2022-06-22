@@ -1,4 +1,3 @@
-import logging
 from pyroute2 import NDB, IPRoute
 
 from .address import AddressFamily, AddressMixin
@@ -9,8 +8,6 @@ from .utils import bitmask_to_set, INTERNAL_INTERFACES, run
 from .vlan import VlanMixin
 from .vrrp import VrrpMixin
 from .ethernet_settings import EthernetHardwareSettings
-
-logger = logging.getLogger(__name__)
 
 __all__ = ["Interface"]
 
