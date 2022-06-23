@@ -7,7 +7,6 @@ from middlewared.utils.mako import get_template
 
 import asyncio
 from collections import defaultdict
-from contextlib import suppress
 import imp
 import os
 import stat
@@ -456,10 +455,11 @@ class EtcService(Service):
                 try:
                     rendered = await renderer.render(path, ctx)
                 except FileShouldNotExist:
-                    self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
-
-                    with suppress(FileNotFoundError):
+                    try:
                         await self.middleware.run_in_thread(os.unlink, outfile)
+                        self.logger.debug(f'{entry["type"]}:{entry["path"]} file removed.')
+                    except FileNotFoundError:
+                        pass
 
                     continue
                 except Exception:
