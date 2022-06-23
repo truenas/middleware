@@ -57,6 +57,7 @@ ZFS_COMPRESSION_ALGORITHM_CHOICES = [
 ]
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
+ZFS_MAX_DATASET_NAME_LEN = 200  # It's really 256, but we should leave some space for snapshot names
 
 
 class ZfsDeadmanAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -3184,6 +3185,11 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         elif not validate_dataset_name(data['name']):
             verrors.add('pool_dataset_create.name', 'Invalid dataset name')
+        elif len(data['name']) > ZFS_MAX_DATASET_NAME_LEN:
+            verrors.add(
+                'pool_dataset_create.name',
+                f'Dataset name length should be less than or equal to {ZFS_MAX_DATASET_NAME_LEN}',
+            )
         else:
             parent_name = data['name'].rsplit('/', 1)[0]
             if data['create_ancestors']:
