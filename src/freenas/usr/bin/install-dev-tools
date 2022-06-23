@@ -6,6 +6,7 @@ PACKAGES=(
     python3-pytest-asyncio
     python3-pytest-dependency
     python3-pytest-rerunfailures
+    python3-pytest-timeout
     # `snmpwalk` to test `snmp-agent`
     snmp
     # Used by the integration test runner
