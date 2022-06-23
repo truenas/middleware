@@ -14,7 +14,7 @@ import pyinotify
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
-from middlewared.plugins.filesystem_ import chflags, dosmode
+from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
 from middlewared.service import private, CallError, filterable_returns, Service, job
 from middlewared.utils import filter_list
@@ -133,33 +133,36 @@ class FilesystemService(Service):
         return data
 
     @private
-    def stat_entry_impl(self, entry, options=None):
+    def statx_entry_impl(self, entry, options=None):
         out = {'st': None, 'etype': None, 'is_ctldir': False}
         opts = options or {"dir_only": False, "file_only": False}
         path = entry.absolute()
 
         try:
-            out['st'] = entry.lstat()
+            out['st'] = stat_x.statx(
+                entry.as_posix(),
+                {"flags": stat_x.ATFlags.STATX_SYNC_AS_STAT | stat_x.ATFlags.SYMLINK_NOFOLLOW}
+            )
         except FileNotFoundError:
             return None
 
-        if statlib.S_ISDIR(out['st'].st_mode):
+        if statlib.S_ISDIR(out['st'].stx_mode):
             out['etype'] = 'DIRECTORY'
 
-        elif statlib.S_ISLNK(out['st'].st_mode):
+        elif statlib.S_ISLNK(out['st'].stx_mode):
             out['etype'] = 'SYMLINK'
             try:
-                out['st'] = entry.stat()
+                out['st'] = stat_x.statx(entry.as_posix())
             except FileNotFoundError:
                 return None
 
-        elif statlib.S_ISREG(out['st'].st_mode):
+        elif statlib.S_ISREG(out['st'].stx_mode):
             out['etype'] = 'FILE'
 
         else:
             out['etype'] = 'OTHER'
 
-        while str(path) != '/':
+        while path.as_posix() != '/':
             if not path.name == '.zfs':
                 path = path.parent
                 continue
@@ -247,7 +250,7 @@ class FilesystemService(Service):
 
         only_top_level = path.absolute() == pathlib.Path('/mnt')
         for entry in path.iterdir():
-            st = self.stat_entry_impl(entry, stat_opts)
+            st = self.statx_entry_impl(entry, stat_opts)
             if st is None:
                 continue
 
@@ -275,11 +278,11 @@ class FilesystemService(Service):
                 ),
                 'realpath': realpath,
                 'type': etype,
-                'size': stat.st_size,
-                'mode': stat.st_mode,
+                'size': stat.stx_size,
+                'mode': stat.stx_mode,
                 'acl': False if self.acl_is_trivial(realpath) else True,
-                'uid': stat.st_uid,
-                'gid': stat.st_gid,
+                'uid': stat.stx_uid,
+                'gid': stat.stx_gid,
                 'is_mountpoint': entry.is_mount(),
                 'is_ctldir': st['is_ctldir'],
             }
@@ -299,6 +302,7 @@ class FilesystemService(Service):
         Float('atime', required=True),
         Float('mtime', required=True),
         Float('ctime', required=True),
+        Float('btime', required=True),
         Int('dev', required=True),
         Int('inode', required=True),
         Int('nlink', required=True),
@@ -321,7 +325,7 @@ class FilesystemService(Service):
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
 
-        st = self.stat_entry_impl(path, None)
+        st = self.statx_entry_impl(path, None)
         if st is None:
             raise CallError(f'Path {_path} not found', errno.ENOENT)
 
@@ -330,16 +334,17 @@ class FilesystemService(Service):
         stat = {
             'realpath': realpath,
             'type': st['etype'],
-            'size': st['st'].st_size,
-            'mode': st['st'].st_mode,
-            'uid': st['st'].st_uid,
-            'gid': st['st'].st_gid,
-            'atime': st['st'].st_atime,
-            'mtime': st['st'].st_mtime,
-            'ctime': st['st'].st_ctime,
-            'dev': st['st'].st_dev,
-            'inode': st['st'].st_ino,
-            'nlink': st['st'].st_nlink,
+            'size': st['st'].stx_size,
+            'mode': st['st'].stx_mode,
+            'uid': st['st'].stx_uid,
+            'gid': st['st'].stx_gid,
+            'atime': float(st['st'].stx_atime.tv_sec),
+            'mtime': float(st['st'].stx_mtime.tv_sec),
+            'ctime': float(st['st'].stx_ctime.tv_sec),
+            'btime': float(st['st'].stx_btime.tv_sec),
+            'dev': os.makedev(st['st'].stx_dev_major, st['st'].stx_dev_minor),
+            'inode': st['st'].stx_ino,
+            'nlink': st['st'].stx_nlink,
             'is_mountpoint': path.is_mount(),
             'is_ctldir': st['is_ctldir'],
         }
