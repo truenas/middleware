@@ -6,7 +6,7 @@ import sys
 
 import sentry_sdk
 
-from .utils import sw_version, sw_version_is_stable
+from .utils import sw_version, sw_version_is_stable, MIDDLEWARE_RUN_DIR
 
 
 # markdown debug is also considered useless
@@ -40,7 +40,7 @@ logging.getLogger('acme.client').setLevel(logging.WARN)
 logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARN)
 
 
-FAILSAFE_LOGFILE = '/tmp/failsafe_middlewared.log'
+FAILSAFE_LOGFILE = f'{MIDDLEWARE_RUN_DIR}/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/root/syslog/failover.log'
