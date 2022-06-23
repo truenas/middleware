@@ -257,7 +257,7 @@ class RealtimeEventSource(EventSource):
                 iface_obj = netif.get_interface(iface_name, True)
                 data['interfaces'][iface_name] = {
                     'speed': last_interface_speeds['speeds'].get(iface_name),
-                    'link_state': iface_obj.link_state.name if iface_obj else 'LINK_STATE_UNKNOWN',
+                    'link_state': iface_obj.link_state,
                 }
                 for stat, name in retrieve_stat.items():
                     with open(f'{i}/{stat}', 'r') as f:
