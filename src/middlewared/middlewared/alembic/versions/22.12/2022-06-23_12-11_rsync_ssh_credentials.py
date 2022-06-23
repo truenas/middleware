@@ -1,7 +1,7 @@
 """rsync SSH credentials
 
 Revision ID: 32a49386d6c3
-Revises: 6e185504ffb5
+Revises: 34df1ca8a04e
 Create Date: 2022-05-31 12:11:48.231515+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '32a49386d6c3'
-down_revision = '6e185504ffb5'
+down_revision = '34df1ca8a04e'
 branch_labels = None
 depends_on = None
 
