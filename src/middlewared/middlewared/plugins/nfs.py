@@ -559,6 +559,7 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'NFS Share'
     service = 'nfs'
     service_class = SharingNFSService
+    resource_name = 'path'
 
     async def restart_reload_services(self, attachments):
         await self._service_change('nfs', 'reload')
