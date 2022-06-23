@@ -81,29 +81,6 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
     def link_address(self):
         return self._link_address
 
-    @link_address.setter
-    def link_address(self, value):
-        with NDB(log='off') as ndb:
-            with ndb.interfaces[self.orig_name] as dev:
-                upit = False
-                if dev['state'] == 'up':
-                    # gotta take down interface first
-                    dev['state'] = 'down'
-                    upit = True
-
-                dev['address'] = value  # change mac
-
-                if upit:
-                    # only bring it back up if the iface
-                    # was up to begin with
-                    dev['state'] = 'up'
-
-        # NDB() synchronizes state but the instantiation
-        # of this class won't reflect the changed MAC
-        # unless a new instance is created. This is a
-        # cheap way of updating the "state".
-        self._link_address = value
-
     def __getstate__(self, address_stats=False, vrrp_config=None):
         state = {
             'name': self.name,
