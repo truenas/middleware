@@ -58,6 +58,12 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
                     dev['state'] = 'down'
                     dev['state'] = 'up'
 
+        # NDB() synchronizes state but the instantiation
+        # of this class won't reflect the changed MTU
+        # unless a new instance is created. This is a
+        # cheap way of updating the "state".
+        self._mtu = value
+
     @property
     def cloned(self):
         return self._cloned
@@ -86,6 +92,12 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
                 if dev['state'] == 'up':
                     dev['state'] = 'down'
                     dev['state'] = 'up'
+
+        # NDB() synchronizes state but the instantiation
+        # of this class won't reflect the changed MAC
+        # unless a new instance is created. This is a
+        # cheap way of updating the "state".
+        self._link_address = value
 
     def __getstate__(self, address_stats=False, vrrp_config=None):
         state = {
