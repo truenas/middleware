@@ -16,7 +16,7 @@ from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
-from middlewared.service import private, CallError, filterable_returns, Service, job
+from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.osc import getmntinfo
 from middlewared.plugins.filesystem_.acl_base import ACLType
@@ -95,6 +95,12 @@ class FilesystemService(Service):
 
         cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
         return cluster_path
+
+    @private
+    @filterable
+    def mount_info(self, filters, options):
+        mntinfo = getmntinfo()
+        return filter_list(list(mntinfo.values()), filters, options)
 
     @accepts(Str('path'))
     @returns(Ref('path_entry'))
