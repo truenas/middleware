@@ -1,10 +1,10 @@
-from pyroute2 import NDB, IPRoute
+from pyroute2 import NDB
 
-from .address import AddressFamily, AddressMixin
+from .address import AddressMixin
 from .bridge import BridgeMixin
-from .bits import InterfaceFlags, InterfaceV6Flags, InterfaceLinkState
+from .bits import InterfaceFlags, InterfaceV6Flags
 from .lagg import LaggMixin
-from .utils import bitmask_to_set, INTERNAL_INTERFACES, run
+from .utils import bitmask_to_set, INTERNAL_INTERFACES
 from .vlan import VlanMixin
 from .vrrp import VrrpMixin
 from .ethernet_settings import EthernetHardwareSettings
@@ -15,8 +15,14 @@ CLONED_PREFIXES = ["br", "vlan", "bond"] + INTERNAL_INTERFACES
 
 
 class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, dev):
+        self.name = dev.get_attr('IFLA_IFNAME')
+        self._mtu = dev.get_attr('IFLA_MTU') or 0
+        self._flags = dev['flags'] or 0
+        self._nd6_flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
+        self._link_state = f'LINK_STATE_{dev.get_attr("IFLA_OPERSTATE")}'
+        self._link_address = dev.get_attr('IFLA_ADDRESS')
+        self._cloned = any((self.name.startswith(i) for i in CLONED_PREFIXES))
 
     def _read(self, name, type=str):
         return self._sysfs_read(f"/sys/class/net/{self.name}/{name}", type)
@@ -41,55 +47,39 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
 
     @property
     def mtu(self):
-        return self._read("mtu", int)
+        return self._mtu
 
     @mtu.setter
-    def mtu(self, mtu):
-        up = InterfaceFlags.UP in self.flags
-        run(["ip", "link", "set", "dev", self.name, "mtu", str(mtu)])
-        if up:
-            self.down()
-            self.up()
+    def mtu(self, value):
+        with NDB(log='off') as ndb:
+            with ndb.interfaces[self.orig_name] as dev:
+                dev['mtu'] = value
+
+        # NDB() synchronizes state but the instantiation
+        # of this class won't reflect the changed MTU
+        # unless a new instance is created. This is a
+        # cheap way of updating the "state".
+        self._mtu = value
 
     @property
     def cloned(self):
-        for i in CLONED_PREFIXES:
-            if self.orig_name.startswith(i):
-                return True
-
-        return False
+        return self._cloned
 
     @property
     def flags(self):
-        return bitmask_to_set(self._read("flags", lambda s: int(s, base=16)), InterfaceFlags)
+        return bitmask_to_set(self._flags, InterfaceFlags)
 
     @property
     def nd6_flags(self):
-        try:
-            with IPRoute() as ipr:
-                dev = ipr.get_links(ifname=self.orig_name)[0]
-                v6flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
-                return bitmask_to_set(v6flags, InterfaceV6Flags)
-        except Exception:
-            # these flags aren't currently used anywwhere and are a "feature complete"
-            # addition so don't crash here and instead be safe
-            return set()
+        return bitmask_to_set(self._nd6_flags, InterfaceV6Flags)
 
     @property
     def link_state(self):
-        operstate = self._read("operstate")
-
-        return {
-            "down": InterfaceLinkState.LINK_STATE_DOWN,
-            "up": InterfaceLinkState.LINK_STATE_UP,
-        }.get(operstate, InterfaceLinkState.LINK_STATE_UNKNOWN)
+        return self._link_state
 
     @property
     def link_address(self):
-        try:
-            return list(filter(lambda x: x.af == AddressFamily.LINK, self.addresses)).pop()
-        except IndexError:
-            return None
+        return self._link_address
 
     def __getstate__(self, address_stats=False, vrrp_config=None):
         state = {
@@ -101,14 +91,14 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
             'flags': [i.name for i in self.flags],
             'nd6_flags': [i.name for i in self.nd6_flags],
             'capabilities': [],
-            'link_state': self.link_state.name,
+            'link_state': self.link_state,
             'media_type': '',
             'media_subtype': '',
             'active_media_type': '',
             'active_media_subtype': '',
             'supported_media': [],
             'media_options': None,
-            'link_address': self.link_address.address.address if self.link_address is not None else '',
+            'link_address': self.link_address or '',
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
             'vrrp_config': vrrp_config,
         }
