@@ -54,9 +54,6 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         with NDB(log='off') as ndb:
             with ndb.interfaces[self.orig_name] as dev:
                 dev['mtu'] = value
-                if dev['state'] == 'up':
-                    dev['state'] = 'down'
-                    dev['state'] = 'up'
 
         # NDB() synchronizes state but the instantiation
         # of this class won't reflect the changed MTU
