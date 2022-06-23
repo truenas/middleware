@@ -2010,6 +2010,7 @@ class PoolDatasetService(CRUDService):
             Str('rawvalue', null=True),
             Str('value', null=True),
             Str('source', null=True),
+            Any('source_info', null=True),
         ) for p in get_props_of_interest_mapping() if (p[1] or p[0]) != 'mountpoint'],
         Str('mountpoint', null=True),
     )
