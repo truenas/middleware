@@ -1005,9 +1005,12 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         """
         dependencies = await self.get_dependencies(id, ignored)
         if dependencies:
-            raise CallError(
-                'This object is being used by other objects', errno.EBUSY, {'dependencies': list(dependencies.values())}
-            )
+            dep_err = 'This object is being used by following service(s):\n'
+            for index, dependency in enumerate(dependencies.values()):
+                key = 'service' if dependency['service'] else 'datastore'
+                dep_err += f'{index + 1}) {dependency[key]!r} {key.capitalize()}\n'
+
+            raise CallError(dep_err, errno.EBUSY, {'dependencies': list(dependencies.values())})
 
     @private
     async def get_dependencies(self, id, ignored=None):
