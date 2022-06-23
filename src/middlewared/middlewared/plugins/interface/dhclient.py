@@ -1,9 +1,8 @@
 import os
 from contextlib import suppress
-from subprocess import PIPE, STDOUT
+from subprocess import run, PIPE, STDOUT
 
 from middlewared.service import private, Service
-from middlewared.utils import Popen
 from middlewared.utils.cgroups import move_to_root_cgroups
 
 
@@ -16,7 +15,7 @@ class InterfaceService(Service):
         namespace_alias = 'interfaces'
 
     @private
-    async def dhclient_start(self, interface, wait=False):
+    def dhclient_start(self, interface, wait=False):
         cmd = ['dhclient']
         if not wait:
             cmd.append('-nw')
@@ -24,10 +23,9 @@ class InterfaceService(Service):
         cmd.extend(['-pf', PIDFILE_TEMPLATE.format(interface)])
         cmd.extend([interface])
 
-        proc = await Popen(cmd, stdout=PIPE, stderr=STDOUT, close_fds=True)
-        output = (await proc.communicate())[0].decode()
+        proc = run(cmd, stdout=PIPE, stderr=STDOUT)
         if proc.returncode != 0:
-            self.logger.error('Failed to run dhclient on %r: %r', interface, output)
+            self.logger.error('Failed to run dhclient on %r: %r', interface, proc.stdout.decode())
         else:
             try:
                 with open(PIDFILE_TEMPLATE.format(interface)) as f:
