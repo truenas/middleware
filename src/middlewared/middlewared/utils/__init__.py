@@ -196,7 +196,7 @@ def filter_list(_list, filters=None, options=None):
                 reverse = True
             else:
                 reverse = False
-            rv = sorted(rv, key=lambda x: x[o], reverse=reverse)
+            rv = sorted(rv, key=lambda x: get(x, o), reverse=reverse)
 
     if options.get('get') is True:
         try:
