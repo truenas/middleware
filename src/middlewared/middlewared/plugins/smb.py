@@ -5,7 +5,8 @@ from middlewared.service import accepts, job, private, SharingService, TDBWrapCo
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, Popen, run
+from middlewared.utils import filter_list, osc, Popen, run
+from middlewared.utils.osc import getmntinfo
 from pathlib import Path
 
 import asyncio
@@ -14,6 +15,7 @@ import enum
 import errno
 import os
 import re
+import stat
 import subprocess
 import uuid
 
@@ -1447,6 +1449,56 @@ class SharingSMBService(SharingService):
             )
 
     @private
+    def validate_mount_info(self, verrors, schema, path):
+        def get_acl_type(sb_info):
+            if 'NFS4ACL' in sb_info:
+                return 'NFSV4'
+
+            if 'POSIXACL' in sb_info:
+                return 'POSIX'
+
+            return 'OFF'
+
+        st = os.lstat(path)
+        if stat.S_ISLNK(st.st_mode):
+            verrors.add(schema, 'f{path}: is symbolic link.')
+            return
+
+        mntinfo = getmntinfo()
+        this_mnt = mntinfo[st.st_dev]
+        if this_mnt['fs_type'] != 'zfs':
+            verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
+
+        if 'XATTR' not in this_mnt['super_opts']:
+            verrors.add(schema, 'Extended attribute support is required for SMB shares')
+
+        current_acltype = get_acl_type(this_mnt['super_opts'])
+        child_mounts = filter_list(list(mntinfo.values()), [['mountpoint', '^', path]])
+        self.logger.debug("acltype: %s, children: %s", current_acltype, child_mounts)
+        for mnt in child_mounts:
+            if '@' in mnt['mount_source']:
+                continue
+
+            child_acltype = get_acl_type(mnt['super_opts'])
+            self.logger.debug("child_acltype: %s", child_acltype)
+            if child_acltype != current_acltype:
+                verrors.add(
+                    schema,
+                    f'ACL type mismatch with child mountpoint at {mnt["mountpoint"]}: '
+                    f'{this_mnt["mount_source"]} - {current_acltype}, {mnt["mount_source"]} - {child_acltype}'
+                )
+
+            if mnt['fs_type'] != 'zfs':
+                verrors.add(
+                    schema, f'{mnt["mountpoint"]}: child mount is not a ZFS dataset.'
+                )
+
+            if 'XATTR' not in mnt['super_opts']:
+                verrors.add(
+                    schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
+                )
+
+    @private
     async def validate(self, data, schema_name, verrors, old=None):
         """
         Path is a required key in almost all cases. There is a special edge case for LDAP
@@ -1476,9 +1528,10 @@ class SharingSMBService(SharingService):
             a situation is undefined.
             """
             if not data['cluster_volname'] and os.path.exists(data['path']):
-                fstype = (await self.middleware.call('filesystem.statfs', data['path']))['fstype']
-                if fstype != 'zfs':
-                    verrors.add(f'{schema_name}.path', f'{fstype}: path is not a ZFS dataset')
+                await self.middleware.run_in_thread(
+                    self.validate_mount_info, verrors, f'{schema_name}.path', data['path']
+                )
+
         elif not data['home']:
             verrors.add(f'{schema_name}.path', 'This field is required.')
         else:
