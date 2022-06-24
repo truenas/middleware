@@ -1,12 +1,8 @@
 import asyncio
 import re
+from datetime import datetime
 
 import async_timeout
-
-try:
-    import cam
-except ImportError:
-    cam = None
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import Dict, Int, returns
@@ -51,6 +47,10 @@ def get_temperature(stdout):
 
 
 class DiskService(Service):
+    temps_result = None
+    temps_probed = datetime.min
+    temp_timeout = 300  # seconds
+
     @private
     async def disks_for_temperature_monitoring(self):
         return [
@@ -81,22 +81,9 @@ class DiskService(Service):
         """
         Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
         """
-        if name.startswith('da'):
-            smartctl_args = await self.middleware.call('disk.smartctl_args', name) or []
-            if not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
-                try:
-                    temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(name).get_temperature())
-                    if temperature is not None:
-                        return temperature
-                except Exception:
-                    pass
-
-        output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()],
-                                            {'silent': True})
-        if output is None:
-            return None
-
-        return get_temperature(output)
+        output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()], {'silent': True})
+        if output is not None:
+            return get_temperature(output)
 
     @accepts(
         List('names', items=[Str('name')]),
@@ -108,16 +95,19 @@ class DiskService(Service):
         Returns temperatures for a list of devices (runs in parallel).
         See `disk.temperature` documentation for more details.
         """
-        if len(names) == 0:
-            names = await self.disks_for_temperature_monitoring()
+        now = datetime.now()
+        if (now - self.temps_probed).total_seconds() > self.temp_timeout:
+            if len(names) == 0:
+                names = await self.disks_for_temperature_monitoring()
 
-        async def temperature(name):
-            try:
-                async with async_timeout.timeout(15):
-                    return await self.middleware.call('disk.temperature', name, powermode)
-            except asyncio.TimeoutError:
-                return None
+            async def temperature(name):
+                try:
+                    async with async_timeout.timeout(15):
+                        return await self.middleware.call('disk.temperature', name, powermode)
+                except asyncio.TimeoutError:
+                    return None
 
-        result = dict(zip(names, await asyncio_map(temperature, names, 8)))
+            self.temps_result = dict(zip(names, await asyncio_map(temperature, names, 8)))
+            self.temps_probed = now
 
-        return result
+        return self.temps_result
