@@ -2960,11 +2960,8 @@ class PoolDatasetService(CRUDService):
         # needs to be hidden from local webUI. (This is managed by TrueCommander)
         filters.extend([
             ['id', 'rnin', '.glusterfs'],
+            ['id', 'rnin', '/ix-applications/'],
         ])
-
-        k8s_config = await self.middleware.call('kubernetes.config')
-        if k8s_config['dataset']:
-            filters.append(['id', '!^', f'{k8s_config["dataset"]}/'])
 
         return filters
 
