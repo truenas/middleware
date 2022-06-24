@@ -3,11 +3,6 @@ import re
 
 import async_timeout
 
-try:
-    import cam
-except ImportError:
-    cam = None
-
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import Dict, Int, returns
 from middlewared.service import accepts, List, private, Service, Str
@@ -81,22 +76,9 @@ class DiskService(Service):
         """
         Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
         """
-        if name.startswith('da'):
-            smartctl_args = await self.middleware.call('disk.smartctl_args', name) or []
-            if not any(s.startswith('/dev/arcmsr') for s in smartctl_args):
-                try:
-                    temperature = await self.middleware.run_in_thread(lambda: cam.CamDevice(name).get_temperature())
-                    if temperature is not None:
-                        return temperature
-                except Exception:
-                    pass
-
-        output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()],
-                                            {'silent': True})
-        if output is None:
-            return None
-
-        return get_temperature(output)
+        output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()], {'silent': True})
+        if output is not None:
+            return get_temperature(output)
 
     @accepts(
         List('names', items=[Str('name')]),
