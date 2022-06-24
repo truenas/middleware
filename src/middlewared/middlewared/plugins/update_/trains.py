@@ -48,6 +48,7 @@ class UpdateService(Service):
             "changelog": new_manifest["changelog"],
             "version": new_manifest["version"],
             "filename": new_manifest["filename"],
+            "filesize": new_manifest["filesize"],
             "checksum": new_manifest["checksum"],
         }
 

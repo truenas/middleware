@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+import errno
 import itertools
 import os
 import subprocess
@@ -37,6 +38,17 @@ class UpdateService(Service):
 
                 self.middleware.logger.warning("Invalid update file checksum %r, re-downloading", checksum)
                 os.unlink(dst)
+
+            st = os.statvfs(location)
+            avail = st.f_bavail * st.f_frsize
+
+            # make sure we have at least as the filesize plus 500MiB
+            required_size = train_check["filesize"] + 500 * 1024**2
+            if required_size > avail:
+                raise CallError(
+                    f"{location}: insufficient available space: {format_size(avail)}, "
+                    f"required: {format_size(required_size)}", errno.ENOSPC
+                )
 
             for i in itertools.count(1):
                 with open(dst, "ab") as f:
