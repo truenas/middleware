@@ -68,7 +68,7 @@ setup(
             'midgdb = middlewared.scripts.gdb:main',
             'sedhelper = middlewared.scripts.sedhelper:main',
             'wait_to_hang_and_dump_core = middlewared.scripts.wait_to_hang_and_dump_core:main',
-            'zpoolhelper = middlewared.scripts.zpoolhelper:main',
+            'wait_on_disks = middlewared.scripts.wait_on_disks:main',
         ],
     },
     cmdclass={
