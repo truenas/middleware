@@ -3096,7 +3096,7 @@ class PoolDatasetService(CRUDService):
         Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
         Int('volsize'),  # IN BYTES
         Str('volblocksize', enum=[
-            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
+            '512', '512B', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
         ]),
         Bool('sparse'),
         Bool('force_size'),
@@ -3583,8 +3583,8 @@ class PoolDatasetService(CRUDService):
 
                 if 'volblocksize' in data:
 
-                    if data['volblocksize'].isdigit():
-                        block_size = int(data['volblocksize'])
+                    if data['volblocksize'][:3] == '512':
+                        block_size = 512
                     else:
                         block_size = int(data['volblocksize'][:-1]) * 1024
 
