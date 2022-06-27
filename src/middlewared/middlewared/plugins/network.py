@@ -614,25 +614,26 @@ class InterfaceService(CRUDService):
 
         await self.__save_datastores()
 
-        interface_id = None
-        if data['type'] == 'BRIDGE':
-            name = data.get('name') or await self.middleware.call('interface.get_next', 'br')
-            try:
-                async for i in self.__create_interface_datastore(data, {'interface': name}):
+        name = data.get('name')
+        if name is None:
+            if data['type'] == 'BRIDGE':
+                prefix = 'br'
+            elif data['type'] == 'LINK_AGGREGATION':
+                prefix = 'bond'
+            elif data['type'] == 'VLAN':
+                prefix = 'vlan'
+
+            name = await self.get_next(prefix)
+
+        interface_id = lag_id = None
+        try:
+            async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
+                if data['type'] == 'BRIDGE':
                     await self.middleware.call('datastore.insert', 'network.bridge', {
-                        'interface': i, 'members': data['bridge_members'], 'stp': data['stp']
+                        'interface': interface_id, 'members': data['bridge_members'], 'stp': data['stp']
                     })
-                    interface_id = i
-            except Exception:
-                if interface_id:
-                    await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
-                raise
-        elif data['type'] == 'LINK_AGGREGATION':
-            name = data.get('name') or await self.middleware.call('interface.get_next', 'bond')
-            lag_id = None
-            lagports_ids = []
-            try:
-                async for interface_id in self.__create_interface_datastore(data, {'interface': name}):
+                elif data['type'] == 'LINK_AGGREGATION':
+                    lagports_ids = []
                     lag_proto = data['lag_protocol'].lower()
                     xmit = lacpdu_rate = None
                     if lag_proto in ('lacp', 'loadbalance'):
@@ -652,30 +653,20 @@ class InterfaceService(CRUDService):
                         'lagg_lacpdu_rate': lacpdu_rate,
                     })
                     lagports_ids += await self.__set_lag_ports(lag_id, data['lag_ports'])
-            except Exception:
-                if lag_id:
-                    with contextlib.suppress(Exception):
-                        await self.middleware.call('datastore.delete', 'network.lagginterface', lag_id)
-                if interface_id:
-                    with contextlib.suppress(Exception):
-                        await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
-                raise
-        elif data['type'] == 'VLAN':
-            name = data.get('name') or await self.middleware.call('interface.get_next', 'vlan')
-            interface_id = None
-            try:
-                async for i in self.__create_interface_datastore(data, {'interface': name}):
-                    interface_id = i
+                elif data['type'] == 'VLAN':
                     await self.middleware.call('datastore.insert', 'network.vlan', {
-                        'vint': name,
-                        'pint': data['vlan_parent_interface'],
-                        'tag': data['vlan_tag'],
-                        'pcp': data.get('vlan_pcp'),
-                    }, {'prefix': 'vlan_'})
-            except Exception:
-                if interface_id:
-                    await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
-                raise
+                        'vlan_vint': name,
+                        'vlan_pint': data['vlan_parent_interface'],
+                        'vlan_tag': data['vlan_tag'],
+                        'vlan_pcp': data.get('vlan_pcp'),
+                    })
+        except Exception:
+            if lag_id:
+                with contextlib.suppress(Exception):
+                    await self.middleware.call('datastore.delete', 'network.lagginterface', lag_id)
+            if interface_id:
+                await self.middleware.call('datastore.delete', 'network.interfaces', interface_id)
+            raise
 
         return await self.get_instance(name)
 
