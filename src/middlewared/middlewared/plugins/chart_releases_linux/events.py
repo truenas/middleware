@@ -45,7 +45,12 @@ class ChartReleaseService(Service):
         """
         Returns kubernetes events for `release_name` Chart Release.
         """
-        return await self.middleware.call('k8s.event.query', [], {'extra': {'namespace': get_namespace(release_name)}})
+        return await self.middleware.call(
+            'k8s.event.query', [], {
+                'extra': {'namespace': get_namespace(release_name)},
+                'order_by': ['metadata.creation_timestamp']
+            }
+        )
 
     @private
     async def refresh_events_state(self, chart_release_name=None):
