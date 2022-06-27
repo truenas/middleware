@@ -76,9 +76,22 @@ class LaggMixin:
     def get_options_path(self, value):
         return str(pathlib.Path(f"/sys/class/net/{self.name}/bonding/").joinpath(value))
 
-    def add_port(self, name):
-        interface.Interface(name).down()
-        run(["ip", "link", "set", name, "master", self.name])
+    def add_port(self, member_port):
+        with NDB(log='off') as ndb:
+            try:
+                with ndb.interfaces[member_port] as mp:
+                    if mp['state'] == 'up':
+                        # caller of this method will up() the interfaces after
+                        # the parent bond interface has been fully configured
+                        mp['state'] = 'down'
+            except KeyError:
+                # interface was added to bond but maybe it no longer exists,
+                # for example, after a reboot
+                self.logger.warning('Member port %r not found for %r', member_port, self.name)
+                return
+
+            with ndb.interfaces[self.name] as bond:
+                bond.add_port(member_port)
 
     def delete_port(self, name):
         run(["ip", "link", "set", name, "nomaster"])
