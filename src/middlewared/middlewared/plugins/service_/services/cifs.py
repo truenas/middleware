@@ -17,6 +17,9 @@ class CIFSService(SimpleService):
                 self.middleware.logger.warning("Cluster is unhealthy. Refusing to start SMB service.")
                 return
 
+        if not await self.middleware.call("smb.configure_wait"):
+            return
+
         await self._systemd_unit("smbd", "start")
 
     async def stop(self):
