@@ -622,6 +622,9 @@ class InterfaceService(CRUDService):
                 prefix = 'bond'
             elif data['type'] == 'VLAN':
                 prefix = 'vlan'
+            else:
+                # should never be reached because it means our schema is broken
+                raise CallError(f'Invalid interface type: {data["type"]!r}')
 
             name = await self.get_next(prefix)
 
