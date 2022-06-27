@@ -2,12 +2,16 @@ import collections
 import errno
 import json
 import os
+import re
 import shutil
 import time
 import yaml
 
 from middlewared.schema import Dict, Bool, returns, Str
 from middlewared.service import accepts, CallError, job, Service
+
+
+RE_POOL = re.compile(r'^.*?(/.*)')
 
 
 class KubernetesService(Service):
@@ -43,6 +47,7 @@ class KubernetesService(Service):
         self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
+        k8s_pool = k8s_config['pool']
         # We will be nuking the docker dataset and re-creating it
         # Motivation behind this action is that docker creates many datasets per image/container and
         # when we re-initialize the k8s cluster, it's possible we are leftover with datasets which are not
@@ -167,11 +172,12 @@ class KubernetesService(Service):
             # as it is created. If this is not done in this order, PVC will request a new dataset and we will lose
             # the mapping with the old dataset.
             self.middleware.call_sync(
-                'chart.release.create_update_storage_class_for_chart_release',
+                'chart.release.recreate_storage_class',
                 chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release, 'volumes')
             )
             failed_pv_restores = []
             for pvc, pv in restored_chart_releases[chart_release]['pv_info'].items():
+                pv['dataset'] = RE_POOL.sub(f'{k8s_pool}\\1', pv['dataset'])
                 if pv['dataset'] not in datasets:
                     failed_pv_restores.append(f'Unable to locate PV dataset {pv["dataset"]!r} for {pvc!r} PVC.')
                     continue
@@ -184,7 +190,7 @@ class KubernetesService(Service):
                         },
                         'spec': {
                             'capacity': zv_details['spec']['capacity'],
-                            'poolName': zv_details['spec']['poolName'],
+                            'poolName': RE_POOL.sub(f'{k8s_pool}\\1', zv_details['spec']['poolName']),
                         },
                     })
                 except Exception as e:
@@ -207,7 +213,9 @@ class KubernetesService(Service):
                             },
                             'csi': {
                                 'volumeAttributes': {
-                                    'openebs.io/poolname': pv_spec['csi']['volume_attributes']['openebs.io/poolname']
+                                    'openebs.io/poolname': RE_POOL.sub(
+                                        f'{k8s_pool}\\1', pv_spec['csi']['volume_attributes']['openebs.io/poolname']
+                                    )
                                 },
                                 'volumeHandle': pv_spec['csi']['volume_handle'],
                             },
