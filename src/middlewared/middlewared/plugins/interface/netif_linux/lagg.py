@@ -94,7 +94,10 @@ class LaggMixin:
                     continue
                 else:
                     with ndb.interfaces[self.name] as bond:
-                        bond.add_port(member)
+                        try:
+                            bond.add_port(member)
+                        except Exception:
+                            self.logger.warning('Failed adding %r to %r', member, self.name, exc_inf=True)
 
     def delete_port(self, member_port):
         return self.delete_ports([member_port])
