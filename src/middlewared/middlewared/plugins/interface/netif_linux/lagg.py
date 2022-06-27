@@ -76,21 +76,38 @@ class LaggMixin:
         return str(pathlib.Path(f"/sys/class/net/{self.name}/bonding/").joinpath(value))
 
     def add_port(self, member_port):
+        self.add_ports([member_port])
+
+    def add_ports(self, member_ports):
         with NDB(log='off') as ndb:
-            try:
-                with ndb.interfaces[member_port] as mp:
-                    if mp['state'] == 'up':
-                        # caller of this method will up() the interfaces after
-                        # the parent bond interface has been fully configured
-                        mp['state'] = 'down'
-            except KeyError:
-                # interface was added to bond but maybe it no longer exists,
-                # for example, after a reboot
-                self.logger.warning('Member port %r not found for %r', member_port, self.name)
-                return
+            for member in member_ports:
+                try:
+                    with ndb.interfaces[member] as mp:
+                        if mp['state'] == 'up':
+                            # caller of this method will up() the interfaces after
+                            # the parent bond interface has been fully configured
+                            mp['state'] = 'down'
+                except KeyError:
+                    # interface was added to bond but maybe it no longer exists,
+                    # for example, after a reboot
+                    self.logger.warning('Failed adding %r to %r. Interface not found', member, self.name)
+                    continue
+                else:
+                    with ndb.interfaces[self.name] as bond:
+                        bond.add_port(member)
 
-            with ndb.interfaces[self.name] as bond:
-                bond.add_port(member_port)
+    def delete_port(self, member_port):
+        return self.delete_ports([member_port])
 
-    def delete_port(self, name):
-        run(["ip", "link", "set", name, "nomaster"])
+    def delete_ports(self, member_ports):
+        with NDB(log='off') as ndb:
+            for to_delete in member_ports:
+                if not ndb.interfaces.get(to_delete):
+                    self.logger.warning('Failed removing %r from %r. Interface not found', to_delete, self.name)
+                else:
+                    try:
+                        with ndb.interfaces[self.name] as bond:
+                            bond.del_port(to_delete)
+                    except Exception:
+                        self.logger.warning('Failed removing %r from %r.', to_delete, self.name, exc_info=True)
+                        continue
