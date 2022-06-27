@@ -3,7 +3,6 @@ import logging
 import pathlib
 from pyroute2 import NDB
 
-import middlewared.plugins.interface.netif_linux.interface as interface
 from .utils import run
 
 logger = logging.getLogger(__name__)
