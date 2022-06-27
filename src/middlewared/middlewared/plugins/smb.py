@@ -22,6 +22,7 @@ import uuid
 from samba import param
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -247,6 +248,15 @@ class SMBService(TDBWrapConfigService):
         cli_namespace = 'service.smb'
 
     LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
+
+    @private
+    def is_configured(self):
+        return os.path.exists(CONFIGURED_SENTINEL)
+
+    @private
+    def set_configured(self):
+        with open(CONFIGURED_SENTINEL, "w"):
+            pass
 
     @private
     async def smb_extend(self, smb):
@@ -590,6 +600,7 @@ class SMBService(TDBWrapConfigService):
         This step is not required when underlying database is clustered (cluster node should
         just recover with info from other nodes on reboot).
         """
+        await self.middleware.call('smb.set_configured')
         job.set_progress(60, 'generating SMB share configuration.')
         await self.middleware.call('sharing.smb.sync_registry')
 
@@ -609,6 +620,35 @@ class SMBService(TDBWrapConfigService):
             job.set_progress(80, 'Restarting SMB service.')
             await self.middleware.call("service.restart", "cifs")
         job.set_progress(100, 'Finished configuring SMB.')
+
+    @private
+    async def configure_wait(self):
+        """
+        This method is possibly called by cifs service and idmap service start
+        depending on whether system dataset setup was successful. Although
+        a partially configured system dataset is a somewhat undefined state,
+        it's best to at least try to get the SMB service working properly.
+
+        Callers use response here to determine whether to make the start / restart
+        operation a no-op.
+        """
+        if await self.middleware.call("smb.is_configured"):
+            return True
+
+        in_progress = await self.middleware.call("core.get_jobs", [
+            ["method", "=", "smb.configure"],
+            ["state", "=", "RUNNING"]
+        ])
+        if in_progress:
+            return False
+
+        self.logger.warning(
+            "SMB service was not properly initialized. "
+            "Attempting to configure SMB service."
+        )
+        conf_job = await self.middleware.call("smb.configure")
+        await conf_job.wait(raise_error=True)
+        return True
 
     @private
     async def get_smb_ha_mode(self):
@@ -1779,6 +1819,14 @@ async def pool_post_import(middleware, pool):
         asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
         return
 
+    smb_is_configured = await middleware.call("smb.is_configured")
+    if not smb_is_configured:
+        middleware.logger.warning(
+            "Skipping SMB share config sync because SMB service "
+            "has not been fully initialized."
+        )
+        return
+
     path = f'/mnt/{pool["name"]}'
     if await middleware.call('sharing.smb.query', [
         ('OR', [
@@ -1804,6 +1852,14 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
         the share being attached.
         """
         await self.middleware.call('smb.disable_acl_if_trivial')
+        smb_is_configured = await self.middleware.call("smb.is_configured")
+        if not smb_is_configured:
+            self.logger.warning(
+                "Skipping SMB share config sync because SMB service "
+                "has not been fully initialized."
+            )
+            return
+
         reg_sync = await self.middleware.call('sharing.smb.sync_registry')
         await reg_sync.wait()
         await self.middleware.call('service.reload', 'mdns')
