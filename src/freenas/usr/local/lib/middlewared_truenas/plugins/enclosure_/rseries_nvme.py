@@ -81,20 +81,8 @@ class EnclosureService(Service):
     @private
     def rseries_nvme_enclosures(self, product):
         if product == 'TRUENAS-R50':
-            info = [
-                'r50_nvme_enclosure',
-                'R50 NVMe enclosure',
-                'R50',
-                3,
-            ]
             nvme_slots = {49: None, 50: None, 51: None}
         elif product == 'TRUENAS-R50B':
-            info = [
-                'r50b_nvme_enclosure',
-                'R50B NVMe enclosure',
-                'R50B',
-                2,
-            ]
             nvme_slots = {49: None, 50: None}
         else:
             # should never get here
