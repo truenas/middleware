@@ -55,6 +55,14 @@ class UpdateService(Service):
         p = subprocess.run(['file', path], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding='ascii',
                            errors='ignore')
         if 'Squashfs filesystem' in p.stdout:
+            if self.middleware.call_sync('system.is_enterprise'):
+                try:
+                    allowed = self.middleware.call_sync('cache.get', 'TRUENAS_ENT_UPGRADE') == 1
+                except KeyError:
+                    allowed = False
+
+                if not allowed:
+                    raise CallError('Enterprise upgrade to SCALE not allowed')
             return self._install_scale(job, path)
 
         job.set_progress(30, 'Extracting file')
