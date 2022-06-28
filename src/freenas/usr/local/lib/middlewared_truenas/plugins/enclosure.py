@@ -54,8 +54,13 @@ class EnclosureService(CRUDService):
         if prod:
             if prod.startswith(('TRUENAS-M50', 'TRUENAS-M60')):
                 enclosures.extend(self.middleware.call_sync('enclosure.mseries_plx_enclosures', prod))
-            elif prod == 'TRUENAS-R50':
-                enclosures.extend(self.middleware.call_sync('enclosure.rseries_nvme_enclosures', prod))
+            elif prod.startswith(('TRUENAS-R50', 'TRUENAS-R50B')):
+                nvme = self.middleware.call_sync('enclosure.rseries_nvme_enclosures', prod)
+                for idx, i in enumerate(enclosures):
+                    if i['controller']:
+                        # this means it's the head-unit and that's where we add the nvme drive slots
+                        enclosures[idx]['elements']['Array Device Slot'].update(nvme['Array Device Slot'])
+                        break
 
         return filter_list(enclosures, filters, options)
 
@@ -98,6 +103,11 @@ class EnclosureService(CRUDService):
             # this is a system where we've "mapped" the drive slots so we need
             # to use the "original" ses device information
             orig_ses_number = info['elements']['Array Device Slot'][slot]['original']['number']
+            if orig_ses_number is None:
+                # the R50 and R50B have rear nvme drive bays that do not support identification
+                # and so the original port information is just filled with null values
+                return
+
             slot = info['elements']['Array Device Slot'][slot]['original']['slot']
             enc = ENC(f'/dev/ses{orig_ses_number}')
         else:
