@@ -509,7 +509,9 @@ def configure_interface():
             print(_("Restarting routing:"), end=' ')
             try:
                 with Client() as c:
-                    c.call('service.reload', 'networkgeneral')
+                    c.call('route.sync')
+                    c.call('etc.generate', 'rc')
+                    c.call('service.restart', 'routing')
             except:
                 print(_("Failed"))
             print(_("ok"))
@@ -551,7 +553,9 @@ def configure_interface():
             print(_("Restarting routing:"), end=' ')
             try:
                 with Client() as c:
-                    c.call('service.reload', 'networkgeneral')
+                    c.call('route.sync')
+                    c.call('etc.generate', 'rc')
+                    c.call('service.restart', 'routing')
             except:
                 print(_("Failed"))
             print(_("ok"))
@@ -863,7 +867,9 @@ Acceptable formats are 255.255.255.0,
         print(_("Restarting routing:"), end=' ')
         try:
             with Client() as c:
-                c.call('service.reload', 'networkgeneral')
+                c.call('route.sync')
+                c.call('etc.generate', 'rc')
+                c.call('service.restart', 'routing')
         except:
             print(_("Failed"))
         print(_("ok"))
@@ -1312,7 +1318,9 @@ def configure_default_route(*args):
         print(_("Restarting routing:"), end=' ')
         try:
             with Client() as c:
-                c.call('service.reload', 'networkgeneral')
+                c.call('route.sync')
+                c.call('etc.generate', 'rc')
+                c.call('service.restart', 'routing')
         except:
             print(_("Failed"))
             return False
@@ -1354,7 +1362,9 @@ def configure_static_routes(*args):
     try:
         print(_("Restarting routing:"), end=' ')
         with Client() as c:
-            c.call('service.reload', 'networkgeneral')
+            c.call('route.sync')
+            c.call('etc.generate', 'rc')
+            c.call('service.restart', 'routing')
     except:
         print(_("Failed"))
         return False
