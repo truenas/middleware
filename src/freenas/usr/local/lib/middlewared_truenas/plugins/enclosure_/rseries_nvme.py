@@ -36,11 +36,11 @@ class EnclosureService(Service):
                     else:
                         continue
                 elif product == 'TRUENAS-R50':
-                    if 'PC01.BR1A.OCL' in location:
+                    if '_SB_.PC01.BR1A' in location:
                         slot = 49
-                    elif 'PC01.BR1B.OCL' in location:
+                    elif '_SB_.PC01.BR1B' in location:
                         slot = 50
-                    elif 'PC00.RP01.PXSX' in location:
+                    elif '_SB_.PC00.RP01' in location:
                         slot = 51
                     else:
                         continue
