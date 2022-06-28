@@ -89,16 +89,11 @@ class InterfaceService(Service):
             sync_interface_opts[member['lagg_physnic']]['skip_mtu'] = True
             members_database.append(member['lagg_physnic'])
 
-        # Remove member configured but not in database
-        for member in (members_configured - set(members_database)):
-            iface.delete_port(member)
+        # Remove member ports configured in bond but do not exist in database
+        iface.delete_ports(list(members_configured - set(members_database)))
 
-        # Add member in database but not configured
-        for member in members_database:
-            if member in members_configured:
-                continue
-
-            iface.add_port(member)
+        # Add member ports that exist in db but not configured in bond
+        iface.add_ports([i for i in members_database if i in members_configured])
 
         for port in iface.ports:
             try:
