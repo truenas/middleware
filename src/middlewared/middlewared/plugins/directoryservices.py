@@ -168,6 +168,15 @@ class DirectoryServices(Service):
                 try:
                     res = await self.middleware.call(f'{srv.value}.started')
                     ds_state[srv.value] = DSStatus.HEALTHY.name if res else DSStatus.DISABLED.name
+
+                except CallError as e:
+                    if e.errno == errno.EINVAL:
+                        self.logger.warning('%s: setting service to DISABLED due to invalid config',
+                                            srv.value.upper(), exc_info=True)
+                        ds_state[srv.value] = DSStatus.DISABLED.name
+                    else:
+                        ds_state[srv.value] = DSStatus.FAULTED.name
+
                 except Exception:
                     ds_state[srv.value] = DSStatus.FAULTED.name
 
