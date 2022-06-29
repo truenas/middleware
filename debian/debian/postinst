@@ -69,7 +69,7 @@ systemctl enable zfs-zed
 # We need to mask libvirtd related sockets so that they don't start automatically
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 
-# We don't use LVM and this service can add significan boot delays
+# We don't use LVM and this service can add significant boot delays
 # on large disk systems
 systemctl mask lvm2-monitor.service
 
