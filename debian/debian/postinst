@@ -71,6 +71,10 @@ systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd
 systemctl mask exim4-base.service exim4.service
 systemctl mask uuidd.service uuidd.socket
 
+# We don't use LVM and this service can add significan boot delays
+# on large disk systems
+systemctl mask lvm2-monitor.service
+
 systemctl set-default truenas.target
 
 sed -i.bak 's/CHARMAP="ISO-8859-15"/CHARMAP="UTF-8"/' /etc/default/console-setup
