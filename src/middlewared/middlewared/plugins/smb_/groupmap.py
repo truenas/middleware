@@ -12,6 +12,8 @@ import struct
 # Output format may change between this and final version accepted
 # upstream, but Samba project has standardized on following version format
 GROUPMAP_JSON_VERSION = {"major": 0, "minor": 1}
+WINBINDD_AUTO_ALLOCATED = ['S-1-5-32-544', 'S-1-5-32-545', 'S-1-5-32-546']
+WINBINDD_WELL_KNOWN_PADDING = 100
 
 
 class SMBService(Service):
@@ -172,6 +174,32 @@ class SMBService(Service):
         await self.batch_groupmap(payload)
 
     @private
+    def initialize_idmap_tdb(self, low_range):
+        tdb_path = f'{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb'
+        tdb_flags = tdb.DEFAULT
+        open_flags = os.O_CREAT | os.O_RDWR
+
+        try:
+            tdb_handle = tdb.Tdb(tdb_path, 0, tdb_flags, open_flags, 0o644)
+        except Exception:
+            self.logger.warning("Failed to create winbindd_idmap.tdb", exc_info=True)
+            return None
+
+        try:
+            for key, val in [
+                (b'IDMAP_VERSION\x00', 2),
+                (b'USER HWM\x00', low_range),
+                (b'GROUP HWM\x00', low_range)
+            ]:
+                tdb_handle.store(key, struct.pack("<L", val))
+        except Exception:
+            self.logger.warning('Failed to initialize winbindd_idmap.tdb', exc_info=True)
+            tdb_handle.close()
+            return None
+
+        return tdb_handle
+
+    @private
     def validate_groupmap_hwm(self, low_range):
         """
         Middleware forces allocation of GIDs for Users, Groups, and Administrators
@@ -179,39 +207,75 @@ class SMBService(Service):
         high-water mark to avoid conflicts with these and remove any mappings that
         conflict. Winbindd will regenerate the removed ones as-needed.
         """
+        def add_key(tdb_handle, gid, sid):
+            gid_val = f'GID {gid}\x00'.encode()
+            sid_val = f'{sid}\x00'.encode()
+            tdb_handle.store(gid_val, sid_val)
+            tdb_handle.store(sid_val, gid_val)
+
+        def remove_key(tdb_handle, key, reverse):
+            tdb_handle.delete(key)
+            if reverse:
+                tdb_handle.delete(reverse)
+
         must_reload = False
-        idmap_file = f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb"
-        tdb_flags = os.O_CREAT | os.O_RDWR
-        tdb_handle = tdb.Tdb(idmap_file, 0, tdb.DEFAULT, tdb_flags, 0o755)
+        len_wb_groups = len(WINBINDD_AUTO_ALLOCATED)
+        builtins = self.middleware.call_sync('idmap.builtins')
 
         try:
+            tdb_handle = tdb.open(f"{SMBPath.STATEDIR.platform()}/winbindd_idmap.tdb")
+        except FileNotFoundError:
+            tdb_handle = self.initialize_idmap_tdb(low_range)
+            if not tdb_handle:
+                return False
+
+        try:
+            tdb_handle.transaction_start()
             group_hwm_bytes = tdb_handle.get(b'GROUP HWM\00')
             hwm = struct.unpack("<L", group_hwm_bytes)[0]
-            if hwm < low_range + 2:
-                tdb_handle.transaction_start()
-                new_hwm_bytes = struct.pack("<L", low_range + 2)
+            if hwm < low_range + len_wb_groups + len(builtins):
+                hwm = low_range + len_wb_groups + len(builtins) + WINBINDD_WELL_KNOWN_PADDING
+                new_hwm_bytes = struct.pack("<L", hwm)
                 tdb_handle.store(b'GROUP HWM\00', new_hwm_bytes)
-                tdb_handle.transaction_commit()
-                self.middleware.call_sync('idmap.snapshot_samba4_dataset')
                 must_reload = True
 
             for key in tdb_handle.keys():
                 # sample key: b'GID 9000020\x00'
-                if key[:3] == b'GID' and int(key.decode()[4:-1]) < (low_range + 2):
+                if key[:3] == b'GID' and int(key.decode()[4:-1]) < (low_range + len_wb_groups):
                     reverse = tdb_handle.get(key)
-                    tdb_handle.transaction_start()
-                    tdb_handle.delete(key)
-                    tdb_handle.delete(reverse)
-                    tdb_handle.transaction_commit()
-                    if not must_reload:
-                        self.middleware.call_sync('idmap.snapshot_samba4_dataset')
+                    remove_key(tdb_handle, key, reverse)
                     must_reload = True
 
+            for entry in builtins:
+                if not entry['set']:
+                    continue
+
+                sid_key = f'{entry["sid"]}\x00'.encode()
+                val = tdb_handle.get(f'{entry["sid"]}\x00'.encode())
+                if val is None or val.decode() != f'GID {entry["gid"]}\x00':
+                    if sid_key in tdb_handle.keys():
+                        self.logger.debug(
+                            "incorrect sid mapping detected %s -> %s"
+                            "replacing with %s -> %s",
+                            entry['sid'], val.decode()[4:-1] if val else "None",
+                            entry['sid'], entry['gid']
+                        )
+                        remove_key(tdb_handle, f'{entry["sid"]}\x00'.encode(), val)
+
+                    add_key(tdb_handle, entry['gid'], entry['sid'])
+                    must_reload = True
+
+            tdb_handle.transaction_commit()
+
         except Exception as e:
+            tdb_handle.transaction_cancel()
             self.logger.warning("TDB maintenace failed: %s", e)
 
         finally:
             tdb_handle.close()
+
+        if must_reload:
+            self.middleware.call_sync('idmap.snapshot_samba4_dataset')
 
         return must_reload
 
