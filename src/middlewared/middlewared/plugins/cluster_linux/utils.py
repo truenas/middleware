@@ -4,6 +4,7 @@ import enum
 import time
 from ipaddress import ip_address
 
+from dns.exception import DNSException
 from middlewared.service import Service, job, ValidationErrors
 from middlewared.service_exception import CallError
 
@@ -33,9 +34,9 @@ class ClusterUtils(Service):
 
         try:
             ans = [i['address'] for i in await self.middleware.call('dnsclient.forward_lookup', {"names": [host]})]
-        except Exception as e:
+        except DNSException as e:
             # failed to resolve the hostname
-            result['error'] = e.errmsg
+            result['error'] = e.msg
         else:
             if not ans:
                 # this shouldn't happen....but paranoia plagues me
