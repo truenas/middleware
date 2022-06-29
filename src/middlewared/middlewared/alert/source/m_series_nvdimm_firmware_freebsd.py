@@ -28,7 +28,7 @@ class TrueNASMNVDIMMFirmwareVersionAlertSource(AlertSource):
             for nvdimm in await self.middleware.call("enterprise.m_series_nvdimm"):
                 model = (nvdimm["size"], nvdimm["clock_speed"])
                 model_to_versions = {
-                    (16, 2666): ["2.2", "2.4"],
+                    (16, 2666): ["2.1", "2.2", "2.4"],
                     (16, 2933): ["2.2"],
                     (32, 2933): ["2.4"],
                 }
