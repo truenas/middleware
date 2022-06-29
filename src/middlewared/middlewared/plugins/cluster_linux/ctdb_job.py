@@ -61,8 +61,8 @@ class ClusterJob(Service):
             return
 
         node = (await self.middleware.call('ctdb.general.status', {'all_nodes': False}))[0]
-        if node['flags_str'] != 'OK':
-            CallError(f'Cannot reload directory service. Node health: {node["flags_str"]}')
+        if node['flags_raw'] != 0:
+            CallError(f'Cannot reload directory service. Node health: {node["flags"]}')
 
         job_list = await self.list()
         for idx, entry in enumerate(job_list.get(node["pnn"], [])):

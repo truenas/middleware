@@ -87,7 +87,7 @@ class ClusterUtils(Service):
     async def time_info(self, job):
         nodes = await self.middleware.call('ctdb.general.status')
         for node in nodes:
-            if not node['flags_str'] == 'OK':
+            if node['flags_raw'] != 0:
                 raise CallError(f'Cluster node {node["pnn"]} is unhealthy. Unable to retrieve time info.')
             if node['this_node']:
                 my_node = node['pnn']
