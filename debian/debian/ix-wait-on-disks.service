@@ -1,0 +1,18 @@
+[Unit]
+Description=Wait on Disk Enumeration
+DefaultDependencies=no
+
+Before=middlewared.service
+Before=ix-syncdisks.service
+Before=ix-zfs.service
+
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=1200
+ExecStart=/usr/bin/wait_on_disks
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

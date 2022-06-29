@@ -2,6 +2,7 @@
 Description=TrueNAS Middleware
 DefaultDependencies=no
 
+Requires=ix-wait-on-disks.service
 Wants=ix-conf.service dbus.socket
 After=ix-conf.service dbus.socket libvirtd.service
 Before=reboot.target shutdown.target halt.target
