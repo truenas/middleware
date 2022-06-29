@@ -11,7 +11,7 @@ Before=ix-zfs.service
 Type=oneshot
 RemainAfterExit=yes
 TimeoutStartSec=1200
-ExecStart=/usr/bin/python3 /usr/bin/wait_on_disks
+ExecStart=/usr/bin/wait_on_disks
 StandardOutput=null
 
 [Install]
