@@ -89,12 +89,25 @@ async def devd_devfs_hook(middleware, data):
             'backoff': True,
         })
     elif (PREV_TASK[-1]['task'].when() - now) <= 0:
-        # We have continually received a stream of events for at least
-        # MAX_WAIT_TIME which means something is misbehaving badly.
-        # This is an edge-case so at least log a warning.
+        # We have continually received a stream of events for at least MAX_WAIT_TIME
+        # (i.e. a user moves a series of disks to other slots consecutively (maybe only
+        # 5-7 seconds apart. This is very common on QE team, for example))
+        PREV_TASK[-1]['task'].cancel()
+        PREV_TASK.append({
+            'task': task(SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware, data['cdev']))),
+            'method': 'reset_cache',
+        })
         middleware.logger.warning(
             f'Continually received disk events for {MAX_WAIT_TIME} seconds. Disk cache was reset during this time.'
         )
+    else:
+        # catch all for anything else and disk.sync_all is cheap enough
+        # where we don't need to worry about this running
+        PREV_TASK[-1]['task'].cancel()
+        PREV_TASK.append({
+            'task': task(SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware, data['cdev']))),
+            'method': 'reset_cache',
+        })
 
 
 def setup(middleware):

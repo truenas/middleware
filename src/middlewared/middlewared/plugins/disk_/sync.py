@@ -305,6 +305,12 @@ class DiskService(Service, ServiceChangeMixin):
         for name in filter(lambda x: x not in seen_disks, sys_disks):
             progress_percent += increment
             disk_identifier = self.dev_to_ident(name, sys_disks, part_geom_xml, uuids)
+            if not disk_identifier:
+                # disk existed when this method was called but was removed by the time
+                # we get here...(i.e. someone moves a drive to a different slot but
+                # quickly moves it to another slot)
+                continue
+
             if qs is None:
                 qs = self.middleware.call_sync('datastore.query', 'storage.disk')
 

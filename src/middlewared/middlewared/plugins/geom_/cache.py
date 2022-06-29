@@ -51,10 +51,11 @@ class GeomCachedObjects:
             return self.cache['xml']
 
     def fill_disks_details(self, xmlelem, topology):
-        name = xmlelem.find('provider/name').text
-        if name.startswith('cd'):
-            # ignore cd devices
+        name = xmlelem.find('provider/name')
+        if name is None or name.text.startswith('cd'):
             return None, None
+
+        name = name.text
 
         # make a copy of disk template
         disk = DISK_TEMPLATE.copy()
