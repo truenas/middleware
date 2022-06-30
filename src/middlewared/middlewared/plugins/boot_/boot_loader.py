@@ -10,7 +10,7 @@ class BootService(Service):
 
     @private
     async def install_loader(self, dev):
-        partition = f'{dev}p2' if 'nvme' in dev else f'{dev}2'
+        partition = await self.middleware.call('disk.get_partition_for_disk', dev, 2)
 
         await run('grub-install', '--target=i386-pc', f'/dev/{dev}')
         await run('mkdosfs', '-F', '32', '-s', '1', '-n', 'EFI', f'/dev/{partition}')
