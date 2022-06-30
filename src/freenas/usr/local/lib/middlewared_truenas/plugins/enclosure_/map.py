@@ -48,7 +48,7 @@ MAPPINGS = [
             MappingSlot(0, 4, False),
             MappingSlot(1, 1, False),
             MappingSlot(1, 2, False),
-            MappingSlot(1, 3, False),
+            MappingSlot(1, 4, False),
         ]),
     ]),
     ProductMapping(re.compile(r"(TRUE|FREE)NAS-MINI-3.0-X\+$"), [
