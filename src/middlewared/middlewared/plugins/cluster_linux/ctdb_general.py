@@ -200,3 +200,11 @@ class CtdbGeneralService(Service):
 
         self.this_node = ctdb.Client().pnn
         return self.this_node
+
+    @accepts()
+    @returns(Int('recmaster'))
+    def recovery_master(self):
+        """
+        Return node number for the recovery master for the cluster.
+        """
+        return ctdb.Client().recmaster()
