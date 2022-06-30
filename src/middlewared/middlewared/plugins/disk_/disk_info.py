@@ -134,15 +134,15 @@ class DiskService(Service):
             return None
         with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
             part_num = f.read().strip()
-        if part_name.startswith('nvme'):
-            # nvme partitions would be like nvmen1p1 where disk is nvmen1
+        if part_name.startswith(('nvme', 'pmem')):
+            # nvme/pmem partitions would be like nvmen1p1 where disk is nvmen1
             part_num = f'p{part_num}'
         return part_name.rsplit(part_num, 1)[0].strip()
 
     @private
     def get_partition_for_disk(self, disk, partition):
-        if disk.startswith('nvme'):
-            # This is a hack for nvme disks, however let's please come up with a better way
+        if disk.startswith(('nvme', 'pmem')):
+            # FIXME: This is a hack for nvme/pmem disks, however let's please come up with a better way
             # to link disks with their partitions
             return f'{disk}p{partition}'
         else:
