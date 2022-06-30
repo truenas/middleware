@@ -46,10 +46,9 @@ class DeviceService(Service):
         parts = []
         keys = tuple('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
         parent = dev.sys_name
-        is_nvme_or_pmem = parent.startswith(('nvme', 'pmem'))
         for i in filter(lambda x: all(x.get(k) for k in keys), dev.children):
             part_num = int(i['ID_PART_ENTRY_NUMBER'])
-            part_name = f'{parent}p{part_num}' if is_nvme_or_pmem else f'{parent}{part_num}'
+            part_name = self.middleware.call_sync('disk.get_partition_for_disk', parent, part_num)
             part = {
                 'name': part_name,
                 'id': part_name,
