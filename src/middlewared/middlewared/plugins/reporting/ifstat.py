@@ -64,9 +64,18 @@ class IfStats(object):
             curr_data[nic]['sent_bytes'] = tx_bytes
 
             # diff between curr_data and self.prev_data
-            new_data[nic]['received_bytes'] = rx_bytes - self.prev_data.get(nic, {}).get('received_bytes', 0)
-            new_data[nic]['sent_bytes'] = tx_bytes - self.prev_data.get(nic, {}).get('sent_bytes', 0)
-            new_data[nic]['received_bytes_rate'] = new_data[nic]['received_bytes'] / self.interval
-            new_data[nic]['sent_bytes_rate'] = new_data[nic]['sent_bytes'] / self.interval
+            if link_state == 'LINK_STATE_UP':
+                new_data[nic]['received_bytes'] = rx_bytes - self.prev_data.get(nic, {}).get('received_bytes', 0)
+                new_data[nic]['sent_bytes'] = tx_bytes - self.prev_data.get(nic, {}).get('sent_bytes', 0)
+                new_data[nic]['received_bytes_rate'] = new_data[nic]['received_bytes'] / self.interval
+                new_data[nic]['sent_bytes_rate'] = new_data[nic]['sent_bytes'] / self.interval
+            else:
+                # nic could have been up and is now down so no reason to do calculation
+                # just fill with zeros
+                new_data[nic]['received_bytes'] = 0
+                new_data[nic]['sent_bytes'] = 0
+                new_data[nic]['received_bytes_rate'] = 0.0
+                new_data[nic]['sent_bytes_rate'] = 0.0
+
 
         return curr_data, new_data
