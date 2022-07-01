@@ -68,7 +68,7 @@ class IfStats(object):
                 curr_data[nic]['received_bytes_rate'] = rx_bytes / self.interval
                 curr_data[nic]['sent_bytes_rate'] = tx_bytes / self.interval
 
-                rx_diff = rx_bytes - self.prev_data.get(nic, {}).get('recevied_bytes', 0)
+                rx_diff = rx_bytes - self.prev_data.get(nic, {}).get('received_bytes', 0)
                 tx_diff = tx_bytes - self.prev_data.get(nic, {}).get('sent_bytes', 0)
                 new_data[nic]['received_bytes'] = rx_diff
                 new_data[nic]['sent_bytes'] = tx_diff
