@@ -14,22 +14,57 @@
 # USA.
 # See avahi-daemon.conf(5).
 <%
-    ipv4_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': True, 'ipv6': False}))
+    hamode = middleware.call_sync('smb.get_smb_ha_mode')
+    if hamode == 'CLUSTERED':
+        ipv4_enabled = False
+        ipv6_enabled = False
+        pnn = middleware.call_sync('ctdb.general.pnn')
+        recmaster = middleware.call_sync('ctdb.general.recovery_master')
+        if pnn != recmaster:
+            raise FileShouldNotExist()
 
-    ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
+        netbiosname = middleware.call_sync('smb.getparm', 'netbios name', 'GLOBAL')
+        allow_interfaces = []
+        deny_interfaces = []
+        ips = middleware.call_sync('ctdb.general.ips')
+        for ip in ips:
+            interface_added = False
+            if ip['pnn'] != pnn:
+                continue
 
-    deny_interfaces = middleware.call_sync("interface.internal_interfaces")
-    failover_int = middleware.call_sync("failover.internal_interfaces")
-    deny_interfaces.extend(failover_int)
+            for i in ip['interfaces']:
+                if i['active']:
+                    allow_interfaces.append(i)
+                    interface_added = True
 
-    allow_interfaces = middleware.call_sync("interface.query", [["name", "!^", "macvtap"]])
+            if interface_added:
+                if ip['alias']['type'] == 'INET':
+                    ipv4_enabled = True
 
-    failover_status = middleware.call_sync('failover.status')
-    if failover_status not in ['SINGLE', 'MASTER']:
-        raise FileShouldNotExist()
+                if ip['alias']['type'] == 'INET6':
+                    ipv6_enabled = True
+
+        if not allow_interfaces:
+            middleware.logger.warning(
+                'No public IPs are assigned to node %d which is acting as '
+                'master for mDNS advertisement purposes.'
+            )
+            raise FileShouldNotExist()
+    else:
+        failover_status = middleware.call_sync('failover.status')
+        if failover_status not in ['SINGLE', 'MASTER']:
+            raise FileShouldNotExist()
+
+        ipv4_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': True, 'ipv6': False}))
+        ipv6_enabled = any(middleware.call_sync('interface.ip_in_use', {'ipv4': False, 'ipv6': True}))
+        deny_interfaces = middleware.call_sync("interface.internal_interfaces")
+        allow_interfaces = middleware.call_sync("interface.query", [["name", "!^", "macvtap"]])
 %>
 
 [server]
+%if hamode == 'CLUSTERED':
+host-name=${netbiosname}
+%endif
 %if ipv4_enabled or ipv6_enabled:
 use-ipv4=${"yes" if ipv4_enabled else "no"}
 use-ipv6=${"yes" if ipv6_enabled else "no"}
