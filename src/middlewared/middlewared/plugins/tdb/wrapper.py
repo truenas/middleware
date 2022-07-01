@@ -1,7 +1,7 @@
 import os
 import tdb
+import ctdb
 import enum
-import errno
 import json
 import copy
 from subprocess import run
@@ -92,7 +92,7 @@ class TDBWrap(object):
 
         return output
 
-    def __init__(self, name, options):
+    def __init__(self, name, options, logger):
         self.name = str(name)
         tdb_type = options.get('backend', 'PERSISTENT')
         tdb_flags = tdb.DEFAULT
@@ -113,48 +113,126 @@ class CTDBWrap(object):
     options = {}
     cached_data = None
     last_read = 0
+    hdl = None
+    skip_trans = False
+    logger = None
 
     def is_clustered(self):
         return True
 
-    def __init__(self, name, dbid, options, **kwargs):
+    def __db_is_persistent(self):
+        return True if self.hdl.db_flags & ctdb.DB_PERSISTENT else False
+
+    def __init__(self, name, dbid, options, logger):
         self.name = name
-        self.dbid = dbid
+        self.dbid = hex(dbid)
         self.options = copy.deepcopy(options)
+        self.hdl = ctdb.Ctdb(ctdb.Client(), self.dbid, os.O_CREAT)
+        self.logger = logger
+        tdb_type = options.get('backend', 'PERSISTENT')
+        if tdb_type == 'PERSISTENT':
+            self.hdl.attach(ctdb.DB_PERSISTENT)
+        else:
+            self.hdl
+
         super().__init__()
 
     def close(self):
-        # no-op to keep closing context manager happy
+        # Closing last reference to pyctdb_client_ctx will
+        # TALLOC_FREE() any talloc'ed memory under the handle.
+        del(self.hdl)
         return
 
-    def get(self, tdb_key):
-        cmd = ['ctdb', 'pfetch', self.dbid, tdb_key]
-        tdb_get = run(cmd, capture_output=True)
-        if tdb_get.returncode != 0:
-            raise CallError(f"{tdb_key}: failed to fetch: {tdb_get.stderr.decode()}")
+    def __persistent_fetch(self, tdb_key):
+        if not self.skip_trans:
+            self.hdl.start_transaction(True)
+        db_entry = self.hdl.fetch(tdb_key)
+        if not self.skip_trans:
+            self.hdl.cancel_transaction()
+        return db_entry.value
 
-        tdb_val = tdb_get.stdout.decode().strip()
-        if not tdb_val:
-            return None
+    def __volatile_fetch(self, tdb_key):
+        db_entry = self.hdl.fetch(tdb_key)
+        db_entry.unlock()
+        return db_entry.value
+
+    def get(self, key):
+        tdb_key = key.encode()
+
+        if self.options['data_type'] == 'BYTES':
+            tdb_key += b"\x00"
+
+        if self.__db_is_persistent():
+            tdb_val = self.__persistent_fetch(tdb_key)
+        else:
+            tdb_val = self.__volatile_fetch(tdb_key)
+
+        if self.options['data_type'] == 'BYTES':
+            return tdb_val
+
+        if tdb_val is not None:
+            tdb_val = tdb_val.decode()
 
         return tdb_val
 
-    def store(self, key, val):
-        tdb_set = run(['ctdb', 'pstore', self.dbid, key, val], capture_output=True)
-        if tdb_set.returncode != 0:
-            raise CallError(f"{key}: failed to set to {val}: {tdb_set.stderr.decode()}")
+    def __persistent_store(self, key, value):
+        if not self.skip_trans:
+            self.hdl.start_transaction(False)
 
+        self.hdl.store(key, value)
+        if not self.skip_trans:
+            self.hdl.commit_transaction()
+
+        return
+
+    def __volatile_store(self, key, value):
+
+        db_entry = self.hdl.fetch(key)
+        db_entry.store(value.encode())
+        db_entry.unlock()
+        return
+
+    def store(self, key, val):
+        tdb_key = key.encode()
+        if self.options['data_type'] == 'BYTES':
+            tdb_key += b"\x00"
+
+        tdb_val = val.encode()
+        if self.__db_is_persistent():
+            self.__persistent_store(tdb_key, tdb_val)
+        else:
+            self.__volatile_store(tdb_key, tdb_val)
+
+        return
+
+    def __persistent_delete(self, key):
+        if not self.skip_trans:
+            self.hdl.start_transaction(False)
+
+        self.hdl.delete(key)
+        if not self.skip_trans:
+            self.hdl.commit_transaction()
+
+        return
+
+    def __volatile_delete(self, key):
+        db_entry = self.hdl.fetch(key)
+        db_entry.delete()
+        db_entry.unlock()
         return
 
     def delete(self, key):
         """
         remove a single entry from tdb file.
         """
-        tdb_del = run(['ctdb', 'pdelete', self.dbid, key], capture_output=True)
-        if tdb_del.returncode != 0:
-            raise CallError(f"{key}: failed to delete: {tdb_del.stderr.decode()}")
-            return None
+        tdb_key = key.encode()
+        if self.options['data_type'] == 'BYTES':
+            tdb_key += b"\x00"
 
+        if self.__db_is_persistent():
+            self.__persistent_delete(tdb_key)
+        else:
+            self.__volatile_delete(tdb_key)
         return
 
     def clear(self):
@@ -164,66 +242,36 @@ class CTDBWrap(object):
 
         return
 
-    def keys(self):
-        trv = run(['ctdb', 'catdb_json', self.dbid], capture_output=True)
-        if trv.returncode != 0:
-            raise CallError(f"{self.dbid}: failed to get_keys: {trv.stderr.decode()}")
+    def __collect_keys_cb(dbentry, keys_out):
+        keys_out.append(dbentry.key)
 
-        tdb_entries = json.loads(trv.stdout.decode())
-        keys = [x['key'] for x in tdb_entries['data']]
+    def keys(self):
+        keys = []
+        self.hdl.traverse(self.__collect_keys_cb, keys)
         return keys
 
     def batch_op(self, ops):
-        input = []
+        output = []
+        self.hdl.transaction_start()
+        self.skip_trans = True
         for op in ops:
-            to_add = None
-            if op['action'] == 'GET':
-                to_add = {
-                    "action": "FETCH",
-                    "key": op["key"],
-                }
-            elif op['action'] == 'SET':
-                to_add = {
-                    "action": "STORE",
-                    "key": op["key"],
-                    "val": op["val"],
-                }
-            elif op['action'] == 'DEL':
-                to_add = {
-                    "action": 'DELETE',
-                    "key": op["key"],
-                }
+            if op["action"] == "SET":
+                tdb_val = json.dumps(op["val"])
+                self.store(op["key"], tdb_val)
+            if op["action"] == "DEL":
+                self.delete(op["key"])
+            if op["action"] == "GET":
+                tdb_val = self.get(op["key"])
+                output.append(json.loads(tdb_val))
 
-            if to_add is None:
-                raise CallError(f'{op["action"]}: unknown action', errno.EINVAL)
-
-            input.append(to_add)
-
-        payload = json.dumps(input)
-        op_run = run(
-            ['ctdb', 'pbatch', self.dbid, '-'],
-            check=False, capture_output=True, encoding='utf8', input=payload
-        )
-        if op_run.returncode != 0:
-            raise CallError(f'{self.dbid}: failed to perform batch operation: {op_run.stderr}')
-
-        if op_run.stdout:
-            output = json.loads(op_run.stdout.strip())
-        else:
-            output = []
+        self.hdl.transaction_commit()
+        self.skip_trans = False
 
         return output
 
     def traverse(self, fn, private_data):
-        ok = True
-        trv = run(['ctdb', 'catdb_json', self.dbid], capture_output=True)
-        if trv.returncode != 0:
-            raise CallError(f"{self.dbid}: failed to traverse: {trv.stderr.decode()}")
+        def _traverse_cb(dbentry, state):
+            fn, private_data = state
+            return fn(dbentry.key.decode(), dbentry.value.decode(), private_data)
 
-        tdb_entries = json.loads(trv.stdout.decode())
-        for i in tdb_entries['data']:
-            ok = fn(i['key'], i['val'], private_data)
-            if not ok:
-                break
-
-        return ok
+        return self.hdl.traverse(_traverse_cb, (fn, private_data), False)
