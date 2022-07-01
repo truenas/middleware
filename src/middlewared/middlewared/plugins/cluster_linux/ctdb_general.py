@@ -53,58 +53,107 @@ class CtdbGeneralService(Service):
         'ctdb_status',
         Bool('all_nodes', default=True)
     ))
-    @returns(List('ctdb_status', items=[Dict(
-        'ctdb_nodemap_entry',
-        Int('pnn'),
+    @returns(Dict(
+        'ctdb_status',
         Dict(
-            'address',
-            Str('type', enum=['INET', 'INET6']),
-            IPAddr("address"),
+            'nodemap',
+            Int('node_count'),
+            Int('deleted_node_count'),
+            List('nodes', items=[Dict(
+                'ctdb_nodemap_entry',
+                Int('pnn'),
+                Dict(
+                    'address',
+                    Str('type', enum=['INET', 'INET6']),
+                    IPAddr("address"),
+                ),
+                List('flags', items=[Str(
+                    'ctdb_status_flag',
+                    enum=[
+                        'DISCONNECTED',
+                        'UNHEALTHY',
+                        'INACTIVE',
+                        'DISABLED',
+                        'STOPPED',
+                        'DELETED',
+                        'BANNED',
+                    ],
+                    register=True
+                )]),
+                Int('flags_raw'),
+                Bool('partially_online'),
+                Bool('this_node'),
+                register=True
+            )])
         ),
-        List('flags', items=[Str(
-            'ctdb_status_flag',
-            enum=[
-                'DISCONNECTED',
-                'UNHEALTHY',
-                'INACTIVE',
-                'DISABLED',
-                'STOPPED',
-                'DELETED',
-                'BANNED',
-            ],
-            register=True
-        )]),
-        Int('flags_raw'),
-        Bool('partially_online'),
-        Bool('this_node'),
-        register=True
-    )]))
+        Dict(
+            'vnnmap',
+            Int('size'),
+            Int('generation'),
+            List('entries', items=[Dict(
+                Int('hash'),
+                Int('lmaster'),
+            )]),
+        ),
+        Int('recovery_mode_raw'),
+        Str('recovery_mode_str', enum=['NORMAL', 'RECOVERY']),
+        Int('recovery_master'),
+        Bool('all_healthy')
+    ))
     def status(self, data):
         """
-        List the status of nodes in the ctdb cluster.
+        List the status of the ctdb cluster.
 
         `all_nodes`: Boolean if True, return status
             for all nodes in the cluster else return
             status of this node.
+
+        `nodemap` contains the current nodemap in-memory for ctdb daemon on
+        this particular cluster node.
+
+        `vnnmap` list of all nodes in the cluster that are participating in
+        hosting the cluster databases. BANNED nodes are excluded from vnnmap.
+
+        `recovery_master` the node number of the cluster node that currently
+        holds the cluster recovery lock in the ctdb shared volume. This node
+        is responsible for performing full cluster checks and cluster node
+        consistency. It is also responsible for performing databse recovery
+        procedures. Database recovery related logs will be primarily located
+        on this node and so troubleshooting cluster health and recovery
+        operations should start here.
+
+        `recovery_mode_str` will be either 'NORMAL' or 'RECOVERY' depending
+        on whether database recovery is in progress in the cluster.
+
+        `recovery_mode_raw` provides raw the internal raw recovery_state of
+        ctdbd. Currently defined values are:
+        CTDB_RECOVERY_NORMAL 0
+        CTDB_RECOVERY_ACTIVE 1
+
+        `all_healthy` provides a summary of whether all nodes in internal
+        nodelist are healthy. This is a convenience feature and not an
+        explicit ctdb client response.
         """
 
         ctdb_status = ctdb.Client().status()
+        all_healthy = not any(x['flags_raw'] != 0 for x in ctdb_status['nodemap']['nodes'])
         if not data['all_nodes']:
+            new_nodes = []
             for node in ctdb_status['nodemap']['nodes']:
                 if node['this_node']:
-                    return [node]
+                    new_nodes = [node]
 
-        return ctdb_status['nodemap']['nodes']
+            ctdb_status['nodemap']['nodes'] = new_nodes
+
+        ctdb_status['all_healthy'] = all_healthy
+        return ctdb_status
 
     @accepts()
     @returns(List('nodelist', items=[Dict(
         'ctdb_node',
         Int('pnn'),
-        Dict(
-            'address',
-            Str('type', enum=['INET', 'INET6']),
-            IPAddr("address"),
-        ),
+        IPAddr('address'),
+        Str('address_type', enum=['INET', 'INET6']),
         Bool('enabled'),
         Bool('this_node')
     )]))
@@ -115,9 +164,11 @@ class CtdbGeneralService(Service):
         nodelist = ctdb.Client().listnodes()
         out = []
         for node in nodelist['nodes']:
+            private_address = node.private_address
             out.append({
                 'pnn': node.pnn,
-                'address': node.private_address,
+                'address': private_address['address'],
+                'address_type': private_address['type'],
                 'enabled': 'DELETED' not in node.flags,
                 'this_node': node.current_node,
             })
@@ -142,6 +193,9 @@ class CtdbGeneralService(Service):
     def ips(self, data):
         """
         Return a list of public ip addresses in the ctdb cluster.
+
+        Public IPs will float between nodes in the cluster and
+        should automatically rebalance as nodes become available.
         """
         return ctdb.Client().ips(data['all_nodes'])
 
@@ -178,13 +232,14 @@ class CtdbGeneralService(Service):
         except Exception:
             return False
 
-        return not any(map(lambda x: x['flags_raw'] != 0, status)) if status else False
+        return status['all_healthy']
 
     @accepts()
     @returns(Int('pnn'))
     def pnn(self):
         """
-        Return node number for this node. This value should be static for life of cluster.
+        Return node number for this node.
+        This value should be static for life of cluster.
         """
         if self.this_node is not None:
             return self.this_node

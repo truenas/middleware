@@ -60,7 +60,7 @@ class ClusterJob(Service):
         if not (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']:
             return
 
-        node = (await self.middleware.call('ctdb.general.status', {'all_nodes': False}))[0]
+        node = (await self.middleware.call('ctdb.general.status', {'all_nodes': False}))['nodemap']['nodes'][0]
         if node['flags_raw'] != 0:
             CallError(f'Cannot reload directory service. Node health: {node["flags"]}')
 
@@ -135,7 +135,7 @@ class ClusterJob(Service):
             'status': CLStatus.ACTIVE.name
         }
         await self.wait_for_method(job, method, 10)
-        for node in await self.middleware.call('ctdb.general.status'):
+        for node in (await self.middleware.call('ctdb.general.status'))['nodemap']['nodes']:
             if node['this_node'] or node['pnn'] == -1:
                 continue
             job.set_progress(50, f'Setting job status indicator for node {node["address"]!r}')
