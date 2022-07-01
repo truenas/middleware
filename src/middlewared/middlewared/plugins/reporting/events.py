@@ -1,22 +1,14 @@
-from collections import defaultdict
-import glob
 import psutil
-import re
 import time
 
 import humanfriendly
 
 from middlewared.event import EventSource
-from middlewared.plugins.interface.netif import netif
 from middlewared.schema import Dict, Float, Int
 from middlewared.validators import Range
 
 from .iostat import DiskStats
-
-
-MEGABIT = 131072
-RE_BASE = re.compile(r'([0-9]+)base')
-RE_MBS = re.compile(r'([0-9]+)Mb/s')
+from .ifstat import IfStats
 
 
 class RealtimeEventSource(EventSource):
@@ -129,47 +121,11 @@ class RealtimeEventSource(EventSource):
             "swap": swap,
         }
 
-    def get_interface_speeds(self):
-        speeds = {}
-
-        interfaces = self.middleware.call_sync('interface.query')
-        for interface in interfaces:
-            if m := RE_BASE.match(interface['state']['active_media_subtype']):
-                speeds[interface['name']] = int(m.group(1)) * MEGABIT
-            elif m := RE_MBS.match(interface['state']['active_media_subtype']):
-                speeds[interface['name']] = int(m.group(1)) * MEGABIT
-
-        types = ['BRIDGE', 'LINK_AGGREGATION', 'VLAN']
-        for interface in sorted([i for i in interfaces if i['type'] in types], key=lambda i: types.index(i['type'])):
-            speed = None
-
-            if interface['type'] == 'BRIDGE':
-                member_speeds = [speeds.get(member) for member in interface['bridge_members'] if speeds.get(member)]
-                if member_speeds:
-                    speed = max(member_speeds)
-
-            if interface['type'] == 'LINK_AGGREGATION':
-                port_speeds = [speeds.get(port) for port in interface['lag_ports'] if speeds.get(port)]
-                if port_speeds:
-                    if interface['lag_protocol'] in ['LACP', 'LOADBALANCE', 'ROUNDROBIN']:
-                        speed = sum(port_speeds)
-                    else:
-                        speed = min(port_speeds)
-
-            if interface['type'] == 'VLAN':
-                speed = speeds.get(interface['vlan_parent_interface'])
-
-            if speed:
-                speeds[interface['name']] = speed
-
-        return speeds
-
     def run_sync(self):
         interval = self.arg['interval']
         cp_time_last = None
         cp_times_last = None
-        last_interface_stats = {}
-        last_interface_speeds = {'time': time.monotonic(), 'speeds': self.get_interface_speeds()}
+        last_iface_stats = {}
         last_disk_stats = {}
         internal_interfaces = tuple(self.middleware.call_sync('interface.internal_interfaces'))
 
@@ -240,45 +196,15 @@ class RealtimeEventSource(EventSource):
             data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures')
             data['cpu']['temperature'] = {k: 2732 + int(v * 10) for k, v in data['cpu']['temperature_celsius'].items()}
 
-            # Interface related statistics
-            if last_interface_speeds['time'] < time.monotonic() - self.INTERFACE_SPEEDS_CACHE_INTERVAL:
-                last_interface_speeds.update({
-                    'time': time.monotonic(),
-                    'speeds': self.get_interface_speeds(),
-                })
-            data['interfaces'] = defaultdict(dict)
-            retrieve_stat = {'rx_bytes': 'received_bytes', 'tx_bytes': 'sent_bytes'}
-            stats_time = time.time()
-            for i in glob.glob('/sys/class/net/*/statistics'):
-                iface_name = i.replace('/sys/class/net/', '').split('/')[0]
-                if iface_name.startswith(internal_interfaces):
-                    continue
-
-                iface_obj = netif.get_interface(iface_name, True)
-                data['interfaces'][iface_name] = {
-                    'speed': last_interface_speeds['speeds'].get(iface_name),
-                    'link_state': iface_obj.link_state.name if iface_obj else 'LINK_STATE_UNKNOWN',
-                }
-                for stat, name in retrieve_stat.items():
-                    with open(f'{i}/{stat}', 'r') as f:
-                        value = int(f.read())
-                    data['interfaces'][iface_name][name] = value
-                    traffic_stats = None
-                    if (
-                        last_interface_stats.get(iface_name) and
-                        name in last_interface_stats[iface_name]
-                    ):
-                        traffic_stats = value - last_interface_stats[iface_name][name]
-                        traffic_stats = int(
-                            traffic_stats / (
-                                stats_time - last_interface_stats[iface_name]['stats_time']
-                            )
-                        )
-                    data['interfaces'][iface_name][f'{retrieve_stat[stat]}_rate'] = traffic_stats
-                last_interface_stats[iface_name] = {
-                    **data['interfaces'][iface_name],
-                    'stats_time': stats_time,
-                }
+            # Interface IO Stats
+            with IfStats(interval, last_iface_stats, internal_interfaces) as ifstat:
+                if not last_iface_stats:
+                    # means this is the first time iface stats are being gathered so
+                    # get the results but don't set anything yet since we need to
+                    # calculate the difference between the iterations
+                    last_iface_stats, new = ifstat
+                else:
+                    last_iface_stats, data['interfaces'] = ifstat
 
             # Disk IO Stats
             if not last_disk_stats:
