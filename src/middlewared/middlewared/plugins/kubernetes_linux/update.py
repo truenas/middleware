@@ -28,6 +28,7 @@ class KubernetesModel(sa.Model):
     cni_config = sa.Column(sa.JSON(type=dict), default={})
     configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
+    validate_host_path = sa.Column(sa.Boolean(), default=True)
 
 
 class KubernetesService(ConfigService):
