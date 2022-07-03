@@ -48,3 +48,9 @@ def render(service, middleware):
             'bridge': 'none',
             **gpu_configuration(middleware),
         }))
+
+    with open('/etc/docker/middleware.json', 'w') as f:
+        f.write(json.dumps({
+            'verifyVolumes': config['validate_host_path'],
+            'appsDataset': config['dataset']
+        }))
