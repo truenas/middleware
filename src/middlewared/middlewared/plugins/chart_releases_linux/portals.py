@@ -32,7 +32,7 @@ class ChartReleaseService(Service):
             self.PORTAL_CACHE.pop(release_name, None)
 
     @private
-    def retrieve_portals_for_chart_release(self, release_data, node_ip=None):
+    def retrieve_portals_for_chart_release(self, release_data, node_ip):
         with PORTAL_LOCK:
             if release_data['name'] not in self.PORTAL_CACHE:
                 self.PORTAL_CACHE[release_data['name']] = self.retrieve_portals_for_chart_release_impl(
@@ -41,21 +41,21 @@ class ChartReleaseService(Service):
             return self.PORTAL_CACHE[release_data['name']]
 
     @private
-    def retrieve_portals_for_chart_release_impl(self, release_data, node_ip=None):
+    def retrieve_portals_for_chart_release_impl(self, release_data, node_ip):
         questions_yaml_path = os.path.join(
             release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
         )
         if not os.path.exists(questions_yaml_path):
             return {}
 
+        if release_data['chart_metadata']['name'] == 'ix-chart':
+            return self.get_ix_chart_portal(release_data, node_ip)
+
         with open(questions_yaml_path, 'r') as f:
             portals = yaml.safe_load(f.read()).get('portals') or {}
 
         if not portals:
             return portals
-
-        if not node_ip:
-            node_ip = self.middleware.call_sync('kubernetes.node_ip')
 
         def tag_func(key):
             return self.parse_tag(release_data, key, node_ip)
@@ -72,6 +72,16 @@ class ChartReleaseService(Service):
             cleaned_portals[portal_type] = t_portals
 
         return cleaned_portals
+
+    @private
+    def get_ix_chart_portal(self, release_data, node_ip):
+        portal_config = release_data['config'].get('portalDetails')
+        if not portal_config or not release_data['config'].get('enableUIPortal'):
+            return {}
+        host = node_ip if portal_config['useNodeIP'] else portal_config['host']
+        return {
+            portal_config['portalName']: [f'{portal_config["protocol"]}://{host}:{portal_config["port"]}']
+        }
 
     @private
     def parse_tag(self, release_data, tag, node_ip):
