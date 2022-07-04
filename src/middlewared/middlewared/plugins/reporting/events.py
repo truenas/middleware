@@ -9,6 +9,7 @@ from middlewared.validators import Range
 
 from .iostat import DiskStats
 from .ifstat import IfStats
+from .arcstat import ZfsArcStats
 
 
 class RealtimeEventSource(EventSource):
@@ -133,26 +134,7 @@ class RealtimeEventSource(EventSource):
             data = {}
 
             # ZFS ARC Size (raw value is in Bytes)
-            hits = 0
-            misses = 0
-            data['zfs'] = {}
-            with open('/proc/spl/kstat/zfs/arcstats') as f:
-                for line in f.readlines()[2:]:
-                    if line.strip():
-                        name, type, value = line.strip().split()
-                        if name == 'hits':
-                            hits = int(value)
-                        if name == 'misses':
-                            misses = int(value)
-                        if name == 'c_max':
-                            data['zfs']['arc_max_size'] = int(value)
-                        if name == 'size':
-                            data['zfs']['arc_size'] = int(value)
-            total = hits + misses
-            if total > 0:
-                data['zfs']['cache_hit_ratio'] = hits / total
-            else:
-                data['zfs']['cache_hit_ratio'] = 0
+            data['zfs'] = ZfsArcStats().read()
 
             # Virtual memory use
             data['memory'] = self.get_memory_info(data['zfs']['arc_size'])
