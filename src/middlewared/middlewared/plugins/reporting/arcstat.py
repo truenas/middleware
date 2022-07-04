@@ -4,13 +4,13 @@ class ZfsArcStats(object):
         self.args = args
         self.kwargs = kwargs
 
-    def read():
+    def read(self):
         hits = misses = total = 0
         fhits = fmisses = fmax = fsize = False
         data = {'arc_max_size': 0, 'arc_size': 0, 'cache_hit_ratio': 0.0}
         with open('/proc/spl/kstat/zfs/arcstats') as f:
             for lineno, line in enumerate(f):
-                if line < 2:
+                if lineno < 2:
                     # skip first 2 lines
                     continue
 
