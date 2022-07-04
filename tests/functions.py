@@ -11,6 +11,7 @@ import websocket
 import uuid
 from subprocess import run, Popen, PIPE
 from time import sleep
+from urllib.parse import urlparse
 
 from auto_config import api_url, user, password
 
@@ -50,16 +51,23 @@ def GET(testpath, payload=None, controller_a=False, **optional):
 def POST(testpath, payload=None, controller_a=False, **optional):
     data = {} if payload is None else payload
     url = controller1_api_url if controller_a else api_url
+    if optional.get("use_ip_only"):
+        parsed = urlparse(url)
+        url = f"{parsed.scheme}://{parsed.netloc}"
     if optional.pop("anonymous", False):
         auth = None
     else:
         auth = authentication
+    files = optional.get("files")
+    headers = dict(({} if optional.get("force_new_headers") else header), **optional.get("headers", {}))
     if payload is None:
-        postit = requests.post(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                               auth=auth)
+        postit = requests.post(
+            f'{url}{testpath}', headers=headers, auth=auth, files=files)
     else:
-        postit = requests.post(f'{url}{testpath}', headers=dict(header, **optional.get("headers", {})),
-                               auth=auth, data=json.dumps(data))
+        postit = requests.post(
+            f'{url}{testpath}', headers=headers, auth=auth,
+            data=json.dumps(data), files=files
+        )
     return postit
 
 
