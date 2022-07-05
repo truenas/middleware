@@ -2,6 +2,7 @@ from middlewared.schema import Any, Str, Ref, Int, Dict, Bool, accepts
 from middlewared.service import Service, private, job, filterable
 from middlewared.utils import filter_list
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.plugins.pwenc import encrypt, decrypt
 
 from collections import namedtuple
 import os
@@ -47,11 +48,12 @@ class ClusterCacheService(Service):
             await self.middleware.call('tdb.remove', payload)
             raise KeyError(f'{key} has expired')
 
-        is_encrypted = bool(int(tdb_value[14]))
+        is_encrypted = bool(int(tdb_value[13]))
         if is_encrypted:
-            raise NotImplementedError
+            data = json.loads(decrypt(tdb_value[18:], False, True))
+        else:
+            data = json.loads(tdb_value[18:])
 
-        data = json.loads(tdb_value[18:])
         return data
 
     @accepts(Str('key'))
@@ -73,8 +75,11 @@ class ClusterCacheService(Service):
             await self.middleware.call('tdb.remove', payload)
             # Will uncomment / add handling for private entries
             # once there's a cluster-wide method for encrypting data
-            # is_encrypted = bool(int(tdb_value[14]))
-            tdb_value = json.loads(tdb_value[18:])
+            is_encrypted = bool(int(tdb_value[13]))
+            if is_encrypted:
+                tdb_value = json.loads(decrypt(tdb_value[18:], False, True))
+            else:
+                tdb_value = json.loads(tdb_value[18:])
 
         return tdb_value
 
@@ -111,8 +116,9 @@ class ClusterCacheService(Service):
         committed to underlying storage backend.
         """
         if options['private']:
-            # will implement in later commit
-            raise NotImplementedError
+            data = encrypt(json.dumps(value), True)
+        else:
+            data = json.dumps(value)
 
         if timeout != 0:
             ts = f'{time.clock_gettime(time.CLOCK_REALTIME) + timeout:.2f}'
@@ -123,7 +129,7 @@ class ClusterCacheService(Service):
 
         # This format must not be changed without careful consideration
         # Zeros are left as padding in middle to expand boolean options if needed
-        tdb_val = f'{ts}{int(options["private"])}0000{json.dumps(value)}'
+        tdb_val = f'{ts}{int(options["private"])}0000{data}'
 
         if options['flag']:
             has_entry = False
@@ -149,11 +155,17 @@ class ClusterCacheService(Service):
     @filterable
     async def query(self, filters, options):
         def cache_convert_fn(tdb_key, tdb_val, entries):
+            is_encrypted = bool(int(tdb_val[13]))
+            if is_encrypted:
+                data = json.loads(decrypt(tdb_val[18:], False, True))
+            else:
+                data = json.loads(tdb_val[18:])
+
             entries.append({
                 "key": tdb_key,
                 "timeout": float(tdb_val[:12]),
-                "private": bool(int(tdb_val[14])),
-                "value": json.loads(tdb_val[18:])
+                "private": is_encrypted,
+                "value": data
             })
             return True
 
