@@ -1,5 +1,5 @@
 import logging
-from pyroute2 import NDB
+from pyroute2 import IPRoute
 
 from .bridge import create_bridge
 from .interface import Interface, CLONED_PREFIXES
@@ -38,5 +38,9 @@ def get_interface(name, safe_retrieval=False):
 
 
 def list_interfaces():
-    with NDB(log="off") as ndb:
-        return {i.ifname: Interface(i.ifname) for i in ndb.interfaces}
+    info = dict()
+    with IPRoute() as ipr:
+        for dev in ipr.get_links():
+            name = dev.get_attr('IFLA_IFNAME')
+            info[name] = Interface(name)
+    return info
