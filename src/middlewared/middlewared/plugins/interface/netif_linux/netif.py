@@ -1,4 +1,3 @@
-import logging
 from pyroute2 import IPRoute
 
 from .bridge import create_bridge
@@ -6,8 +5,6 @@ from .interface import Interface, CLONED_PREFIXES
 from .lagg import AggregationProtocol, create_lagg
 from .utils import run
 from .vlan import create_vlan
-
-logger = logging.getLogger(__name__)
 
 __all__ = ["AggregationProtocol", "create_vlan", "create_interface", "destroy_interface", "get_interface",
            "list_interfaces", "CLONED_PREFIXES"]
