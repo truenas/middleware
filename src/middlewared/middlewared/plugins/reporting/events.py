@@ -60,7 +60,6 @@ class RealtimeEventSource(EventSource):
             Float('cache_hit_ratio'),
         ),
     )
-    INTERFACE_SPEEDS_CACHE_INTERVAL = 300
 
     @staticmethod
     def get_cpu_usages(cp_diff):
