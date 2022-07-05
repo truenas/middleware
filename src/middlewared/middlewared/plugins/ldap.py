@@ -1131,7 +1131,7 @@ class LDAPService(TDBWrapConfigService):
         await self.common_validate(ldap, ldap, verrors)
         try:
             verrors.check()
-        except Exception:
+        except ValidationErrors:
             await super().do_update({"enable": False})
             raise CallError('Automatically disabling LDAP service due to invalid configuration.',
                             errno.EINVAL)
