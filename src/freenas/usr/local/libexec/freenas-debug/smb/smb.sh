@@ -104,6 +104,8 @@ smb_func()
 			getfacl -n "${cifs_path}"
 		fi
 		printf "\n"
+		df -T "${cifs_path}"
+		printf "\n"
 	done
 	section_footer
 
