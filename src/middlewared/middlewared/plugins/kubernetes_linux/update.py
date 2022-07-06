@@ -271,25 +271,26 @@ class KubernetesService(ConfigService):
 
         await self.validate_data(config, 'kubernetes_update', old_config)
 
-        if migrate and config['pool'] != old_config['pool']:
-            job.set_progress(
-                25, f'Migrating {applications_ds_name(old_config["pool"])} to {applications_ds_name(config["pool"])}'
-            )
-            await self.middleware.call(
-                'kubernetes.migrate_ix_applications_dataset', config['pool'], old_config['pool']
-            )
-            job.set_progress(40, 'Migration complete for ix-applications dataset')
-
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             await self.middleware.call('chart.release.clear_update_alerts_for_all_chart_releases')
-            config['cni_config'] = {}
-            await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
-            await self.middleware.call('kubernetes.status_change')
-            if not config['pool'] and config['pool'] != old_config['pool']:
-                # We only want to do this when we don't have any pool configured and would like to use
-                # host catalog repos temporarily. Otherwise, we should call this after k8s datasets have
-                # been initialised
-                await self.middleware.call('catalog.sync_all')
+            if migrate and config['pool'] != old_config['pool']:
+                job.set_progress(
+                    25,
+                    f'Migrating {applications_ds_name(old_config["pool"])} to {applications_ds_name(config["pool"])}'
+                )
+                await self.middleware.call(
+                    'kubernetes.migrate_ix_applications_dataset', job, config, old_config
+                )
+                job.set_progress(100, 'Migration complete for ix-applications dataset')
+            else:
+                config['cni_config'] = {}
+                await self.middleware.call('datastore.update', self._config.datastore, old_config['id'], config)
+                await self.middleware.call('kubernetes.status_change')
+                if not config['pool'] and config['pool'] != old_config['pool']:
+                    # We only want to do this when we don't have any pool configured and would like to use
+                    # host catalog repos temporarily. Otherwise, we should call this after k8s datasets have
+                    # been initialised
+                    await self.middleware.call('catalog.sync_all')
 
         return await self.config()
 
