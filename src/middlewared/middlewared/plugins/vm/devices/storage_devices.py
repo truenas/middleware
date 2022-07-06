@@ -86,4 +86,5 @@ class DISK(StorageDevice):
     )
 
     def create_source_element(self):
+        iotype = self.data['attributes']['iotype']
         return create_element('source', dev=self.data['attributes']['path'], io=iotype.lower())
