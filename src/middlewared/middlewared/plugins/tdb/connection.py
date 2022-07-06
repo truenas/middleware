@@ -2,11 +2,11 @@ from .wrapper import CTDBWrap, TDBWrap
 
 
 class TDBMixin:
-    def _get_handle(self, name, dbid, options):
+    def _get_handle(self, name, dbid, options, logger=None):
         if options['cluster']:
-            return CTDBWrap(name, dbid, options)
+            return CTDBWrap(name, dbid, options, logger)
 
-        return TDBWrap(name, options)
+        return TDBWrap(name, options, logger)
 
     def _close_handle(self, tdb_handle):
         tdb_handle.close()
