@@ -188,6 +188,13 @@ class ChartReleaseService(Service):
         else:
             await self.middleware.call('k8s.storage_class.create', storage_class)
 
+    @private
+    async def recreate_storage_class(self, release_name, volumes_path):
+        storage_class_name = get_storage_class_name(release_name)
+        if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
+            await self.middleware.call('k8s.storage_class.delete', storage_class_name)
+        await self.create_update_storage_class_for_chart_release(release_name, volumes_path)
+
     @accepts(Str('release_name'))
     @returns(Dict(
         Int('available', required=True),
