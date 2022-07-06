@@ -9,9 +9,9 @@ from .wrapper import TDBPath
 import os
 import json
 import errno
+import ctdb
 
 from contextlib import closing
-from subprocess import run
 from base64 import b64encode, b64decode
 
 
@@ -42,26 +42,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
 
     @private
     def _ctdb_get_dbid(self, name, options):
-        dbmap = self.middleware.call_sync(
-            "ctdb.general.getdbmap",
-            [("name", "=", f'{name}.tdb')]
-        )
-        if dbmap:
-            return dbmap[0]['dbid']
-
-        cmd = ["ctdb", "attach", f"{name}.tdb", "persistent"]
-        attach = run(cmd, check=False)
-        if attach.returncode != 0:
-            raise CallError("Failed to attach backend: %s", attach.stderr.decode())
-
-        dbmap = self.middleware.call_sync(
-            "ctdb.general.getdbmap",
-            [("name", "=", f'{name}.tdb')]
-        )
-        if not dbmap:
-            raise CallError(f'{name}: failed to attach to database')
-
-        return dbmap[0]['dbid']
+        db = ctdb.Ctdb(ctdb.Client(), f'{name}.tdb', os.O_CREAT)
+        db.attach(ctdb.DB_PERSISTENT)
+        return db.db_id
 
     @private
     def get_connection(self, name, options):
@@ -84,10 +67,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
 
         if options['cluster']:
             dbid = self._ctdb_get_dbid(name, options)
-            handle = self._get_handle(name, dbid, options)
-            self.handles[name].update({'handle': handle})
+            handle = self._get_handle(name, dbid, options, self.logger)
         else:
-            handle = self._get_handle(name, None, options)
+            handle = self._get_handle(name, None, options, self.logger)
 
         return handle
 
