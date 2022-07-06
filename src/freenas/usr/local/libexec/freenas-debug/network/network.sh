@@ -133,6 +133,10 @@ network_func()
 	iptables-save -c
 	section_footer
 
+	section_header "Nftables Ruleset (nft -a list ruleset)"
+	nft -a list ruleset
+	section_footer
+
 	section_header "IPVS rules (ipvsadm -L)"
 	ipvsadm -L
 	section_footer
