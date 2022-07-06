@@ -69,6 +69,11 @@ class ClusterJob(Service):
             p = (100 / len(job_list) * idx)
             job.set_progress(p, f'Processing queued job for [{entry["method"]}].')
             if entry['status'] == CLStatus.EXPIRED.name:
+                # If an entry has been sitting expired for more than 10 minutes, it probably
+                # means that caller has gone out to lunch and we should clean up.
+                if (time.clock_gettime(time.CLOCK_REALTIME) - entry['timeout']) > 600:
+                    await self.middleware.call('clustercache.pop', entry['key'])
+
                 continue
 
             await self.update_status(entry['key'], CLStatus.RUNNING.name, entry['timeout'])
@@ -138,6 +143,7 @@ class ClusterJob(Service):
         for node in (await self.middleware.call('ctdb.general.status'))['nodemap']['nodes']:
             if node['this_node'] or node['pnn'] == -1:
                 continue
+
             job.set_progress(50, f'Setting job status indicator for node {node["address"]!r}')
             key = f'CLJOB_{method}_{node["pnn"]}'
             await self.middleware.call('clustercache.put', key, payload, timeout)
