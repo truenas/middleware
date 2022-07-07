@@ -15,7 +15,10 @@ class PoolDatasetService(Service):
         Int("snapshot_count"),
         Int("snapshot_task_count"),
     ))
-    async def summary(self, dataset):
+    async def data_protection_summary(self, dataset):
+        """
+        Returns a few dataset metrics used in "Data Protection" UI card.
+        """
         path = f"/mnt/{dataset}"
 
         return {
