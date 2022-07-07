@@ -126,8 +126,8 @@ class SystemDatasetService(ConfigService):
 
     @accepts(Dict(
         'sysdataset_update',
-        Str('pool', null=True),
-        Str('pool_exclude', null=True),
+        Str('pool', null=True, default=None),
+        Str('pool_exclude', null=True, default=None),
         Bool('syslog'),
         update=True
     ))
@@ -168,7 +168,7 @@ class SystemDatasetService(ConfigService):
                     'The system dataset cannot be placed on this pool.'
                 )
         else:
-            for pool in await self._query_pools_names_for_system_dataset():
+            for pool in await self._query_pools_names_for_system_dataset(data['pool_exclude']):
                 if await self.destination_pool_error(pool):
                     continue
 
@@ -200,7 +200,7 @@ class SystemDatasetService(ConfigService):
         if config['pool'] != new['pool']:
             await self.migrate(config['pool'], new['pool'])
 
-        await self.setup(data.get('pool_exclude'))
+        await self.setup(data['pool_exclude'])
 
         if config['syslog'] != new['syslog']:
             await self.middleware.call('service.restart', 'syslogd')
@@ -341,13 +341,10 @@ class SystemDatasetService(ConfigService):
         return await self.config()
 
     async def _query_pool_for_system_dataset(self, exclude_pool):
-        for name in await self._query_pools_names_for_system_dataset():
-            if name == exclude_pool:
-                continue
-
+        for name in await self._query_pools_names_for_system_dataset(exclude_pool):
             return await self.middleware.call('pool.query', [['name', '=', name]], {'get': True})
 
-    async def _query_pools_names_for_system_dataset(self):
+    async def _query_pools_names_for_system_dataset(self, exclude_pool=None):
         return [
             ds['id']
             for ds in await self.middleware.call(
@@ -364,6 +361,7 @@ class SystemDatasetService(ConfigService):
                 ],
                 {'extra': {'retrieve_children': False}},
             )
+            if ds['id'] != exclude_pool
         ]
 
     async def __setup_datasets(self, pool, uuid):
