@@ -13,6 +13,9 @@ class PoolDatasetService(Service):
     @accepts(Str("dataset"))
     @returns(Int())
     def snapshot_count(self, dataset):
+        """
+        Returns snapshot count for specified `dataset`.
+        """
         if mountpoint := self.middleware.call_sync("pool.dataset.mountpoint", dataset, False):
             zfs_dir = Path(mountpoint) / ".zfs/snapshot"
             if zfs_dir.is_dir():
