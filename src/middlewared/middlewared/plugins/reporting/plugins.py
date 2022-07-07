@@ -131,7 +131,6 @@ class MemoryPlugin(RRDBase):
             ('memory-inactive', 'value', '%name%,UN,0,%name%,IF'),
             ('memory-wired', 'value', '%name%,UN,0,%name%,IF'),
             ('memory-laundry', 'value', '%name%,UN,0,%name%,IF'),
-            ('memory-cache', 'value', '%name%,UN,0,%name%,IF'),
             ('memory-free', 'value', '%name%,UN,0,%name%,IF'),
         )
     else:
