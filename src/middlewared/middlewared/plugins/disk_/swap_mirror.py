@@ -38,7 +38,7 @@ class DiskService(Service):
                 if not array.name.split(':')[-1].startswith('swap'):
                     continue
 
-                real_path = os.path.realpath(array.name)
+                real_path = os.path.realpath(array.path)
                 mirror = {
                     'name': array.name,
                     'path': array.path,
