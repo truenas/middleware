@@ -197,6 +197,17 @@ class SMARTTestService(CRUDService):
 
         return verrors
 
+    @accepts(Str('disk'))
+    async def query_for_disk(self, disk):
+        """
+        Query S.M.A.R.T. tests for the specified disk.
+        """
+        return [
+            test
+            for test in await self.query()
+            if test['all_disks'] or disk in test['disks']
+        ]
+
     @accepts(Bool('full_disk', default=False))
     async def disk_choices(self, full_disk):
         """
