@@ -10,7 +10,7 @@ from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate
+from email.utils import formatdate, make_msgid
 import html2text
 from lockfile import LockFile, LockTimeout
 
@@ -397,12 +397,7 @@ class MailService(ConfigService):
 
         local_hostname = self.middleware.call_sync('system.hostname')
 
-        msg['Message-ID'] = "<%s-%s.%s@%s>" % (
-            sw_name.lower(),
-            datetime.utcnow().strftime("%Y%m%d.%H%M%S.%f"),
-            base64.urlsafe_b64encode(os.urandom(3)),
-            local_hostname
-        )
+        msg['Message-ID'] = make_msgid(base64.urlsafe_b64encode(os.urandom(3)).decode("ascii"))
 
         extra_headers = message.get('extra_headers') or {}
         for key, val in list(extra_headers.items()):
