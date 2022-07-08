@@ -102,6 +102,15 @@ def test__parse_smart_selftest_results__scsiprint__1():
         """),
         {"progress": 80},
     ),
+    (
+        textwrap.dedent("""\
+            SMART Self-test log
+            Num  Test              Status                 segment  LifeTime  LBA_first_err [SK ASC ASQ]
+                 Description                              number   (hours)
+            # 1  Background short  Self test in progress ...   -     NOW                 - [-   -    -]
+        """),
+        {"progress": 0},
+    )
 ])
 def test__parse_current_smart_selftest(stdout, result):
     assert parse_current_smart_selftest(stdout) == result
