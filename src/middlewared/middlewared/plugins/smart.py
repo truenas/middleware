@@ -22,7 +22,7 @@ RE_TIME_SCSIPRINT_EXTENDED = re.compile(r'Please wait (\d+) minutes for test to 
 RE_OF_TEST_REMAINING = re.compile(r'([0-9]+)% of test remaining')
 
 
-async def annotate_disk_smart_tests(middleware, devices, disk):
+async def annotate_disk_smart_tests(middleware, tests_filter, disk):
     if disk["disk"] is None:
         return
 
@@ -32,7 +32,7 @@ async def annotate_disk_smart_tests(middleware, devices, disk):
 
     tests = parse_smart_selftest_results(output) or []
     current_test = parse_current_smart_selftest(output)
-    return dict(tests=tests, current_test=current_test, **disk)
+    return dict(tests=filter_list(tests, tests_filter), current_test=current_test, **disk)
 
 
 def parse_smart_selftest_results(stdout):
@@ -503,6 +503,8 @@ class SMARTTestService(CRUDService):
         """
         Get disk(s) S.M.A.R.T. test(s) results.
 
+        `options.extra.tests_filter` is an optional filter for tests results.
+
         .. examples(websocket)::
 
           Get all disks tests results
@@ -585,7 +587,8 @@ class SMARTTestService(CRUDService):
             }
         """
 
-        get = (options or {}).pop("get", False)
+        get = options.pop("get", False)
+        tests_filter = options["extra"].pop("tests_filter", [])
 
         disks = filter_list(
             [dict(disk, disk=disk["name"]) for disk in (await self.disk_choices(True)).values()],
@@ -593,11 +596,12 @@ class SMARTTestService(CRUDService):
             options,
         )
 
-        devices = await self.middleware.call('device.get_storage_devices_topology')
         return filter_list(
             list(filter(
                 None,
-                await asyncio_map(functools.partial(annotate_disk_smart_tests, self.middleware, devices), disks, 16)
+                await asyncio_map(functools.partial(annotate_disk_smart_tests, self.middleware, tests_filter),
+                                  disks,
+                                  16)
             )),
             [],
             {"get": get},
