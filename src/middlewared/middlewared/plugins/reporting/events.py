@@ -49,7 +49,7 @@ class RealtimeEventSource(EventSource):
             k: v if isinstance(v, int) else struct.unpack("I", v)[0] * page_size
             for k, v in [
                 (k, sysctl.filter(f"vm.stats.vm.v_{k}_count")[0].value)
-                for k in ["cache", "laundry", "inactive", "active", "wire", "free"]
+                for k in ["laundry", "inactive", "active", "wire", "free"]
             ]
         }
         classes["os_reserved"] = int(sysctl.filter("hw.physmem")[0].value) - sum(classes.values())
