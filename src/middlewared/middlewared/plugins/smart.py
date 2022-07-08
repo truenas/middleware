@@ -111,6 +111,9 @@ def parse_current_smart_selftest(stdout):
     if remaining := RE_OF_TEST_REMAINING.search(stdout):
         return {"progress": 100 - int(remaining.group(1))}
 
+    if "Self test in progress ..." in stdout:
+        return {"progress": 0}
+
 
 class SmartTestModel(sa.Model):
     __tablename__ = 'tasks_smarttest'
