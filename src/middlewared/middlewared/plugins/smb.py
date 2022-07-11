@@ -1504,8 +1504,7 @@ class SharingSMBService(SharingService):
             verrors.add(schema, 'f{path}: is symbolic link.')
             return
 
-        mntinfo = getmntinfo()
-        this_mnt = mntinfo[st.st_dev]
+        this_mnt = getmntinfo(dev_id=st.st_dev)[st.st_dev]
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
 
