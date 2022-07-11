@@ -15,6 +15,7 @@ class ACLTempateModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     acltemplate_name = sa.Column(sa.String(120), unique=True)
+    acltemplate_comment = sa.Column(sa.Text())
     acltemplate_acltype = sa.Column(sa.String(255))
     acltemplate_acl = sa.Column(sa.JSON(type=list))
     acltemplate_builtin = sa.Column(sa.Boolean())
@@ -61,6 +62,7 @@ class ACLTemplateService(CRUDService):
         "acltemplate_create",
         Str("name", required=True),
         Str("acltype", required=True, enum=["NFS4", "POSIX1E"]),
+        Str("comment"),
         OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', required=True),
         register=True
     ))
@@ -141,33 +143,44 @@ class ACLTemplateService(CRUDService):
         )
 
     @private
-    async def append_builtins(self, data):
+    async def append_builtins_internal(self, ids, data):
         """
         This method ensures that ACL grants some minimum level of permissions
         to our builtin users or builtin admins accounts.
         """
-        bu_id = int(SMBBuiltin.USERS.value[1][9:])
-        ba_id = int(SMBBuiltin.USERS.value[1][9:])
-        has_builtins = any(filter(lambda x: x["id"] in [bu_id, ba_id], data['acl']))
-        if has_builtins:
+        bu_id, ba_id = ids
+        has_bu = bool([x['id'] for x in data['acl'] if x['id'] == bu_id])
+        has_ba = bool([x['id'] for x in data['acl'] if x['id'] == ba_id])
+
+        if (bu_id != -1 and has_bu) or (ba_id != -1 and has_ba):
             return
 
         if data['acltype'] == ACLType.NFS4.name:
-            data['acl'].extend([
-                {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
-                {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
-            ])
+            if bu_id != -1:
+                data['acl'].append(
+                    {"tag": "GROUP", "id": bu_id, "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
+                )
+
+            if ba_id != -1:
+                data['acl'].append([
+                    {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
+                ])
             return
 
         has_default_mask = any(filter(lambda x: x["tag"] == "MASK" and x["default"], data['acl']))
         has_access_mask = any(filter(lambda x: x["tag"] == "MASK" and x["default"], data['acl']))
         all_perms = {"READ": True, "WRITE": True, "EXECUTE": True}
-        data['acl'].extend([
-            {"tag": "GROUP", "id": bu_id, "perms": all_perms, "default": False},
-            {"tag": "GROUP", "id": bu_id, "perms": all_perms, "default": True},
-            {"tag": "GROUP", "id": ba_id, "perms": all_perms, "default": False},
-            {"tag": "GROUP", "id": ba_id, "perms": all_perms, "default": True},
-        ])
+        if bu_id != -1:
+            data['acl'].extend([
+                {"tag": "GROUP", "id": bu_id, "perms": all_perms, "default": False},
+                {"tag": "GROUP", "id": bu_id, "perms": all_perms, "default": True},
+            ])
+
+        if ba_id != -1:
+            data['acl'].extend([
+                {"tag": "GROUP", "id": ba_id, "perms": all_perms, "default": False},
+                {"tag": "GROUP", "id": ba_id, "perms": all_perms, "default": True},
+            ])
 
         if not has_default_mask:
             data['acl'].append({"tag": "MASK", "id": -1, "perms": all_perms, "default": False})
@@ -176,6 +189,34 @@ class ACLTemplateService(CRUDService):
             data['acl'].append({"tag": "MASK", "id": -1, "perms": all_perms, "default": True})
 
         return
+
+    @private
+    async def append_builtins(self, data):
+        bu_id = int(SMBBuiltin.USERS.value[1][9:])
+        ba_id = int(SMBBuiltin.ADMINISTRATORS.value[1][9:])
+        await self.append_builtins_internal((bu_id, ba_id), data)
+
+        ad_state = await self.middleware.call('activedirectory.get_state')
+        if ad_state != 'HEALTHY':
+            return
+
+        domain_info = await self.middleware.call('idmap.domain_info', 'DS_TYPE_ACTIVEDIRECTORY')
+        if not domain_info['active directory']:
+            self.logger.warning(
+                '%s: domain is not identified properly as an Active Directory domain.',
+                domain_info['alt_name']
+            )
+            return
+
+        # If user has explicitly chosen to not include local builtin_users, don't add domain variant
+        has_bu = bool([x['id'] for x in data['acl'] if x['id'] == bu_id])
+        if has_bu:
+            du = await self.middleware.call('idmap.sid_to_unixid', domain_info['sid'] + '-513')
+        else:
+            du = {'id': -1}
+
+        da = await self.middleware.call('idmap.sid_to_unixid', domain_info['sid'] + '-512')
+        await self.append_builtins_internal((du['id'], da['id']), data)
 
     @private
     async def resolve_names(self, uid, gid, data):
@@ -247,7 +288,7 @@ class ACLTemplateService(CRUDService):
 
         if not data['path'] and data['format-options']['resolve_names']:
             verrors.add(
-                "filesystem.acltemplate_by_path.format-options.canonicalize",
+                "filesystem.acltemplate_by_path.format-options.resolve_names",
                 "ACL entry ids may not be resolved into names unless path is provided."
             )
 
@@ -259,7 +300,7 @@ class ACLTemplateService(CRUDService):
                 await self.append_builtins(t)
 
             if data['format-options']['resolve_names']:
-                st = await self.middleware.run_in_thread(os.stat(path))
+                st = await self.middleware.run_in_thread(os.stat, path)
                 await self.resolve_names(st.st_uid, st.st_gid, t)
 
             if data['format-options']['canonicalize'] and t['acltype'] == ACLType.NFS4.name:
