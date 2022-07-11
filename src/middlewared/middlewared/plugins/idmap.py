@@ -333,6 +333,15 @@ class IdmapDomainService(TDBWrapCRUDService):
 
     @private
     async def domain_info(self, domain):
+        def val_convert(val):
+            if val == 'Yes':
+                return True
+
+            elif val == 'No':
+                return False
+
+            return val
+
         ret = {}
 
         if domain == 'DS_TYPE_ACTIVEDIRECTORY':
@@ -351,7 +360,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         for entry in wbinfo.stdout.splitlines():
             kv = entry.decode().split(':')
             val = kv[1].strip()
-            ret.update({kv[0].strip().lower(): val if val not in ('Yes', 'No') else bool(val)})
+            ret.update({kv[0].strip().lower(): val_convert(val)})
 
         return ret
 
