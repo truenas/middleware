@@ -75,8 +75,8 @@ class ReportingService(Service):
                             # This might happen if new elements were created in the directory tree while it was being
                             # recursively deleted.
                             pass
-
-                        raise
+                        else:
+                            raise
         else:
             self.logger.error('Unable to create collectd symlink to %r', dst)
             return False
