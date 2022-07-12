@@ -40,6 +40,26 @@ class RouteService(Service):
         rtable = netif.RoutingTable()
         return filter_list([r.__getstate__() for r in rtable.routes], filters, options)
 
+    @accepts()
+    @returns(Bool())
+    def default_route_will_be_removed(self):
+        """
+        On a fresh install of SCALE, dhclient is started for every interface so IP
+        addresses/routes could be installed via that program. However, when the
+        end-user goes to configure the first interface we tear down all other interfaces
+        configs AND delete the default route. We also remove the default route if the
+        configured gateway doesn't match the one currently installed in kernel.
+        """
+        # FIXME: What about IPv6??
+        ifaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
+        rt = netif.RoutingTable()
+        will_be_removed1 = not ifaces and rt.default_route_ipv4
+
+        dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gatewa']
+        will_be_removed2 = rt.default_route_ipv4 and (dbgw != rt.default_route_ipv4)
+
+        return any((will_be_removed1, will_be_removed2))
+
     @private
     async def configured_default_ipv4_route(self):
         route = netif.RoutingTable().default_route_ipv4
