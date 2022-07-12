@@ -162,9 +162,9 @@ class ACLTemplateService(CRUDService):
                 )
 
             if ba_id != -1:
-                data['acl'].append([
+                data['acl'].append(
                     {"tag": "GROUP", "id": ba_id, "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}, "type": "ALLOW"},
-                ])
+                )
             return
 
         has_default_mask = any(filter(lambda x: x["tag"] == "MASK" and x["default"], data['acl']))
