@@ -10,6 +10,8 @@ from .utils import HTTPS_PROTOCOLS
 
 class SystemGeneralService(Service):
 
+    ui_allowlist = []
+
     class Config:
         namespace = 'system.general'
         cli_namespace = 'system.general'
@@ -190,3 +192,21 @@ class SystemGeneralService(Service):
                         urls.append(https_url)
 
         return sorted(set(urls))
+
+    @private
+    async def get_ui_allowlist(self):
+        """
+        We store this in a state and not read this configuration variable directly from the database so it is
+        synchronized with HTTP service restarts and HTTP configuration commit/rollback works properly.
+        Otherwise, changing `ui_allowlist` would immediately block/unblock new connections (we want to block/unblock
+        them only after explicit HTTP service restart).
+        """
+        return self.ui_allowlist
+
+    @private
+    async def update_ui_allowlist(self):
+        self.ui_allowlist = (await self.middleware.call('system.general.config'))['ui_allowlist']
+
+
+async def setup(middleware):
+    await middleware.call('system.general.update_ui_allowlist')

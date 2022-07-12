@@ -6,7 +6,7 @@ import requests
 
 from middlewared.client import Client
 
-__all__ = ["client", "host", "session", "url"]
+__all__ = ["client", "host", "session", "url", "websocket_url"]
 
 
 @contextlib.contextmanager
@@ -37,3 +37,7 @@ def session():
 
 def url():
     return f"http://{host()}"
+
+
+def websocket_url():
+    return f"ws://{host()}"

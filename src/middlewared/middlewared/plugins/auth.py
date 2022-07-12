@@ -30,12 +30,12 @@ def get_peer_process(remote_addr, remote_port):
                 return None
 
 
-def get_remote_addr_port(app):
-    remote_addr, remote_port = app.request.transport.get_extra_info("peername")
+def get_remote_addr_port(request):
+    remote_addr, remote_port = request.transport.get_extra_info("peername")
     if remote_addr in ["127.0.0.1", "::1"]:
         try:
-            x_real_remote_addr = app.request.headers["X-Real-Remote-Addr"]
-            x_real_remote_port = int(app.request.headers["X-Real-Remote-Port"])
+            x_real_remote_addr = request.headers["X-Real-Remote-Addr"]
+            x_real_remote_port = int(request.headers["X-Real-Remote-Port"])
         except (KeyError, ValueError):
             pass
         else:
@@ -142,7 +142,7 @@ class SessionManager:
         if sock.family == socket.AF_UNIX:
             return "UNIX_SOCKET"
 
-        remote_addr, remote_port = get_remote_addr_port(app)
+        remote_addr, remote_port = get_remote_addr_port(app.request)
 
         if ":" in remote_addr:
             return f"[{remote_addr}]:{remote_port}"
@@ -602,7 +602,7 @@ async def check_permission(middleware, app):
         AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials())
         return
 
-    remote_addr, remote_port = get_remote_addr_port(app)
+    remote_addr, remote_port = get_remote_addr_port(app.request)
     if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
 
