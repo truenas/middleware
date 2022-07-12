@@ -142,7 +142,7 @@ def wait_on_ctdb():
 def add_public_ips_to_ctdb():
     for priv_ip, pub_ip in zip(CLUSTER_IPS, PUBLIC_IPS):
         res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/general/status', data={'all_nodes': False})
-        this_node = res.json()[0]['pnn']
+        this_node = res.json()['nodemap']['nodes'][0]['pnn']
 
         payload = {
             'pnn': this_node,
