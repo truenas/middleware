@@ -13,6 +13,7 @@ from middlewared.utils.asyncio_ import asyncio_map
 
 RE_SED_RDLOCK_EN = re.compile(r'(RLKEna = Y|ReadLockEnabled:\s*1)', re.M)
 RE_SED_WRLOCK_EN = re.compile(r'(WLKEna = Y|WriteLockEnabled:\s*1)', re.M)
+RE_SMART_AVAILABLE = re.compile(r'SMART support is:\s+Available')
 
 
 class DiskModel(sa.Model):
@@ -96,6 +97,7 @@ class DiskService(CRUDService):
         Str('pool', null=True, required=True),
         Str('passwd', private=True),
         Str('kmip_uid', null=True),
+        Bool('supports_smart', null=True),
     )
 
     @filterable
@@ -107,6 +109,8 @@ class DiskService(CRUDService):
 
              include_expired: true - will also include expired disks (default: false)
              passwords: true - will not hide KMIP password for the disks (default: false)
+             supports_smart: true - will query if disks support S.M.A.R.T. (default: false, has performance
+                                    implications, please use with caution)
              pools: true - will join pool name for each disk (default: false)
         """
         filters = filters or []
@@ -134,6 +138,13 @@ class DiskService(CRUDService):
         else:
             disk.pop('passwd')
             disk.pop('kmip_uid')
+
+        disk['supports_smart'] = None
+        if context['supports_smart']:
+            disk['supports_smart'] = disk['name'].startswith('nvme') or bool(RE_SMART_AVAILABLE.search(
+                await self.middleware.call('disk.smartctl', disk['name'], ['-a'], {'silent': True}) or ''
+            ))
+
         if disk['name'] in context['boot_pool_disks']:
             disk['pool'] = context['boot_pool_name']
         else:
@@ -144,6 +155,7 @@ class DiskService(CRUDService):
     async def disk_extend_context(self, rows, extra):
         context = {
             'passwords': extra.get('passwords', False),
+            'supports_smart': extra.get('supports_smart', False),
             'disks_keys': {},
 
             'pools': extra.get('pools', False),

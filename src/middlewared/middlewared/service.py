@@ -963,6 +963,8 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     async def get_instance(self, id, options):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
+
+        Please see `query` method documentation for `options`.
         """
         instance = await self.middleware.call(
             f'{self._config.namespace}.query',
