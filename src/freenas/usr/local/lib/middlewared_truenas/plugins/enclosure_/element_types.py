@@ -225,7 +225,8 @@ ELEMENT_DESC = {
     13: 'reserved [13]',
     14: 'reserved [14]',
     15: 'reserved [15]',
-    17: 'OK, Swapped'
+    17: 'OK, Swapped',
+    21: 'Not Installed, Swapped',
 }
 
 ELEMENT_TYPES = {
