@@ -3,6 +3,16 @@ from ipaddress import ip_address, ip_network
 from aiohttp import web
 
 
+def addr_in_allowlist(remote_addr, allowlist):
+    remote_addr = ip_address(remote_addr)
+    for allowed in allowlist:
+        allowed = ip_network(allowed)
+        if remote_addr == allowed or remote_addr in allowed:
+            return True
+
+    return False
+
+
 class WebUIAuth(object):
 
     def __init__(self, middleware):
@@ -16,14 +26,8 @@ class WebUIAuth(object):
 
         # We are not able to use nginx to allow/deny client for this specific endpoint so we'll have to make that
         # check ourselves.
-        config = await self.middleware.call('system.general.config')
-        if config['ui_allowlist']:
-            remote_addr = ip_address(request.headers['X-Real-Remote-Addr'])
-            for allowed in config['ui_allowlist']:
-                allowed = ip_network(allowed)
-                if remote_addr == allowed or remote_addr in allowed:
-                    break
-            else:
+        if allowlist := await self.middleware.call('system.general.get_ui_allowlist'):
+            if not addr_in_allowlist(request.headers['X-Real-Remote-Addr'], allowlist):
                 return web.Response(status=403)
 
         post = await request.post()

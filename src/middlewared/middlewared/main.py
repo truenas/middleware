@@ -4,6 +4,7 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
+from .plugins.auth import get_remote_addr_port
 from .restful import copy_multipart_to_pipe, RESTfulAPI
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
@@ -17,7 +18,7 @@ from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
 from .utils.threading import set_thread_name, IoThreadPoolExecutor
 from .utils.type import copy_function_metadata
-from .webui_auth import WebUIAuth
+from .webui_auth import addr_in_allowlist, WebUIAuth
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
 from aiohttp import web
@@ -48,6 +49,7 @@ import re
 import queue
 import setproctitle
 import signal
+import socket
 import struct
 import sys
 import termios
@@ -710,6 +712,9 @@ class ShellApplication(object):
     async def ws_handler(self, request):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
+
+        if not await self.middleware.ws_can_access(request, ws):
+            return
 
         conndata = ShellConnectionData()
         conndata.id = str(uuid.uuid4())
@@ -1566,6 +1571,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
+        if not await self.ws_can_access(request, ws):
+            return
+
         connection = Application(self, self.loop, request, ws)
         connection.on_open()
 
@@ -1611,6 +1619,20 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             await connection.on_close()
 
         return ws
+
+    async def ws_can_access(self, request, ws):
+        if ui_allowlist := await self.call('system.general.get_ui_allowlist'):
+            sock = request.transport.get_extra_info('socket')
+            if sock.family != socket.AF_UNIX:
+                remote_addr, remote_port = get_remote_addr_port(request)
+                if not addr_in_allowlist(remote_addr, ui_allowlist):
+                    await ws.close(
+                        code=WSCloseCode.POLICY_VIOLATION,
+                        message='You are not allowed to access this resource'.encode('utf-8'),
+                    )
+                    return False
+
+        return True
 
     _loop_monitor_ignore_frames = (
         LoopMonitorIgnoreFrame(

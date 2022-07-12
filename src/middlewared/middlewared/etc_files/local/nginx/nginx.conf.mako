@@ -229,6 +229,8 @@ http {
         }
 
         location /websocket {
+            allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
+                        # won't allow us to understand that connection error was due to client IP not being allowlisted.
             proxy_pass http://127.0.0.1:6000/websocket;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
@@ -238,6 +240,8 @@ http {
         }
 
         location /websocket/shell {
+            allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
+                        # won't allow us to understand that connection error was due to client IP not being allowlisted.
             proxy_pass http://127.0.0.1:6000/_shell;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;

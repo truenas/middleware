@@ -78,9 +78,11 @@ class HttpService(PseudoServiceBase):
     reloadable = True
 
     async def restart(self):
+        await self.middleware.call_sync("system.general.update_ui_allowlist")
         await systemd_unit("nginx", "restart")
 
     async def reload(self):
+        await self.middleware.call_sync("system.general.update_ui_allowlist")
         await systemd_unit("nginx", "reload")
 
 
