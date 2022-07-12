@@ -949,7 +949,6 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id)
         return rv
 
-    @private
     @accepts(
         Any('id'),
         Patch(
