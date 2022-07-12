@@ -55,7 +55,7 @@ class RouteService(Service):
         rt = netif.RoutingTable()
         will_be_removed1 = not ifaces and rt.default_route_ipv4
 
-        dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gatewa']
+        dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gateway']
         will_be_removed2 = rt.default_route_ipv4 and (dbgw != rt.default_route_ipv4)
 
         return any((will_be_removed1, will_be_removed2))
