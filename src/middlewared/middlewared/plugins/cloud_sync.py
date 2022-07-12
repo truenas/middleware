@@ -201,6 +201,9 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
         args += [cloud_sync["transfer_mode"].lower()]
 
+        if cloud_sync["create_empty_src_dirs"]:
+            args.extend(["--create-empty-src-dirs"])
+
         snapshot = None
         if cloud_sync["direction"] == "PUSH":
             if cloud_sync["snapshot"]:
@@ -726,6 +729,7 @@ class CloudSyncModel(sa.Model):
     include = sa.Column(sa.JSON(type=list))
     exclude = sa.Column(sa.JSON(type=list))
     transfers = sa.Column(sa.Integer(), nullable=True)
+    create_empty_src_dirs = sa.Column(sa.Boolean())
     follow_symlinks = sa.Column(sa.Boolean())
 
 
@@ -907,6 +911,7 @@ class CloudSyncService(TaskPathService):
             defaults={"minute": "00"},
             required=True
         ),
+        Bool("create_empty_src_dirs", default=False),
         Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", items=[Dict("cloud_sync_bwlimit",

@@ -168,3 +168,41 @@ def test_abort(request):
 
             assert "rclone" not in ssh("ps ax")
             assert call("cloudsync.query", [["id", "=", task["id"]]], {"get": True})["job"]["state"] == "ABORTED"
+
+
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
+@pytest.mark.parametrize("create_empty_src_dirs", [True, False])
+def test_create_empty_src_dirs(request, create_empty_src_dirs):
+    depends(request, ["pool_04"], scope="session")
+    with dataset("cloudsync_local") as local_dataset:
+        ssh(f"mkdir /mnt/{local_dataset}/empty-dir")
+        ssh(f"mkdir /mnt/{local_dataset}/non-empty-dir")
+        ssh(f"touch /mnt/{local_dataset}/non-empty-dir/file")
+
+        with anonymous_ftp_server() as ftp:
+            with credential({
+                "name": "Test",
+                "provider": "FTP",
+                "attributes": {
+                    "host": "localhost",
+                    "port": 21,
+                    "user": ftp.username,
+                    "pass": ftp.password,
+                },
+            }) as c:
+                with task({
+                    "direction": "PUSH",
+                    "transfer_mode": "SYNC",
+                    "path": f"/mnt/{local_dataset}",
+                    "credentials": c["id"],
+                    "attributes": {
+                        "folder": "",
+                    },
+                    "create_empty_src_dirs": create_empty_src_dirs,
+                }) as t:
+                    run_task(t)
+
+                    if create_empty_src_dirs:
+                        assert ssh(f'ls /mnt/{ftp.dataset}') == 'empty-dir\nnon-empty-dir\n'
+                    else:
+                        assert ssh(f'ls /mnt/{ftp.dataset}') == 'non-empty-dir\n'
