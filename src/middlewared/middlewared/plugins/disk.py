@@ -141,9 +141,12 @@ class DiskService(CRUDService):
 
         disk['supports_smart'] = None
         if context['supports_smart']:
-            disk['supports_smart'] = disk['name'].startswith('nvme') or bool(RE_SMART_AVAILABLE.search(
-                await self.middleware.call('disk.smartctl', disk['name'], ['-a'], {'silent': True}) or ''
-            ))
+            if await self.middleware.call('system.is_enterprise_ix_hardware'):
+                disk['supports_smart'] = True
+            else:
+                disk['supports_smart'] = disk['name'].startswith('nvme') or bool(RE_SMART_AVAILABLE.search(
+                    await self.middleware.call('disk.smartctl', disk['name'], ['-a'], {'silent': True}) or ''
+                ))
 
         if disk['name'] in context['boot_pool_disks']:
             disk['pool'] = context['boot_pool_name']
