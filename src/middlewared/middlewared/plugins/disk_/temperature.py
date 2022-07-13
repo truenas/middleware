@@ -1,11 +1,11 @@
 import asyncio
 import re
-from datetime import datetime
+import time
 
 import async_timeout
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
-from middlewared.schema import Dict, Int, returns
+from middlewared.schema import Bool, Dict, Int, returns
 from middlewared.service import accepts, List, private, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -47,9 +47,7 @@ def get_temperature(stdout):
 
 
 class DiskService(Service):
-    temps_result = None
-    temps_probed = datetime.min
-    temp_timeout = 300  # seconds
+    cache = {}
 
     @private
     async def disks_for_temperature_monitoring(self):
@@ -60,54 +58,95 @@ class DiskService(Service):
                 [
                     ['name', '!=', None],
                     ['togglesmart', '=', True],
-                    # Polling for disk temperature does not allow them to go to sleep automatically unless
-                    # hddstandby_force is used
-                    [
-                        'OR', [
-                            ['hddstandby', '=', 'ALWAYS ON'],
-                            ['hddstandby_force', '=', True],
-                        ],
-                    ]
+                    # Polling for disk temperature does not allow them to go to sleep automatically
+                    ['hddstandby', '=', 'ALWAYS ON'],
                 ]
             )
         ]
 
     @accepts(
         Str('name'),
-        Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+        Dict(
+            'options',
+            Int('cache', default=None, null=True),
+            Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+        ),
+        deprecated=[
+            (
+                lambda args: len(args) == 2 and isinstance(args[1], str),
+                lambda name, powermode: [name, {'powermode': powermode}],
+            ),
+        ],
     )
     @returns(Int('temperature', null=True))
-    async def temperature(self, name, powermode):
+    async def temperature(self, name, options):
         """
-        Returns temperature for device `name` using specified S.M.A.R.T. `powermode`.
+        Returns temperature for device `name` using specified S.M.A.R.T. `powermode`. If `cache` is not null
+        then the last cached within `cache` seconds value is used.
         """
+        if options['cache'] is not None:
+            if cached := self.cache.get(name):
+                temperature, cache_time = cached
+                if cache_time > time.monotonic() - options['cache']:
+                    return temperature
+
+        temperature = await self.middleware.call('disk.temperature_uncached', name, options['powermode'])
+
+        self.cache[name] = (temperature, time.monotonic())
+        return temperature
+
+    @private
+    async def temperature_uncached(self, name, powermode):
         output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()], {'silent': True})
         if output is not None:
             return get_temperature(output)
 
+    @private
+    async def reset_temperature_cache(self):
+        self.cache = {}
+
     @accepts(
         List('names', items=[Str('name')]),
-        Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+        Dict(
+            'options',
+            # A little less than collectd polling interval of 300 seconds to avoid returning old value when polling
+            # occurs in 299.9 seconds.
+            Int('cache', default=290, null=True),
+            Bool('only_cached', default=False),
+            Str('powermode', enum=SMARTCTL_POWERMODES, default=SMARTCTL_POWERMODES[0]),
+        ),
+        deprecated=[
+            (
+                lambda args: len(args) == 2 and isinstance(args[1], str),
+                lambda name, powermode: [name, {'powermode': powermode}],
+            ),
+        ],
     )
     @returns(Dict('disks_temperatures', additional_attrs=True))
-    async def temperatures(self, names, powermode):
+    async def temperatures(self, names, options):
         """
         Returns temperatures for a list of devices (runs in parallel).
         See `disk.temperature` documentation for more details.
+        If `only_cached` is specified then this method only returns disk temperatures that exist in cache.
         """
-        now = datetime.now()
-        if (now - self.temps_probed).total_seconds() > self.temp_timeout:
-            if len(names) == 0:
-                names = await self.disks_for_temperature_monitoring()
+        if len(names) == 0:
+            names = await self.disks_for_temperature_monitoring()
 
-            async def temperature(name):
-                try:
-                    async with async_timeout.timeout(15):
-                        return await self.middleware.call('disk.temperature', name, powermode)
-                except asyncio.TimeoutError:
-                    return None
+        if options['only_cached']:
+            return {
+                disk: temperature
+                for disk, (temperature, cache_time) in self.cache.items()
+                if (
+                    disk in names and
+                    cache_time > time.monotonic() - 610  # Double collectd polling interval + a little bit
+                )
+            }
 
-            self.temps_result = dict(zip(names, await asyncio_map(temperature, names, 8)))
-            self.temps_probed = now
+        async def temperature(name):
+            try:
+                async with async_timeout.timeout(15):
+                    return await self.middleware.call('disk.temperature', name, options)
+            except asyncio.TimeoutError:
+                return None
 
-        return self.temps_result
+        return dict(zip(names, await asyncio_map(temperature, names, 8)))
