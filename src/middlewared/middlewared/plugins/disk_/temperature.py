@@ -6,7 +6,7 @@ import async_timeout
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import Bool, Dict, Int, returns
-from middlewared.service import accepts, List, private, Service, Str
+from middlewared.service import accepts, List, private, Ref, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -150,3 +150,20 @@ class DiskService(Service):
                 return None
 
         return dict(zip(names, await asyncio_map(temperature, names, 8)))
+
+    @accepts(List('names', items=[Str('name')]))
+    @returns(Ref('alert'))
+    async def temperature_alerts(self, names):
+        """
+        Returns existing temperature alerts for specified disk `names.`
+        """
+        devices = {f'/dev/{name}' for name in names}
+        alerts = await self.middleware.call('alert.list')
+        return [
+            alert for alert in alerts
+            if (
+                alert['klass'] == 'SMART' and
+                alert['args']['device'] in devices and
+                'temperature' in alert['args']['message'].lower()
+            )
+        ]
