@@ -334,6 +334,7 @@ class AlertService(Service):
         Str('level'),
         Str('formatted', null=True, max_length=None),
         Bool('one_shot'),
+        register=True,
     )]))
     async def list(self):
         """
