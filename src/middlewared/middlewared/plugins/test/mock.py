@@ -14,7 +14,10 @@ class TestService(Service):
                 raise CallError("Your mock declaration must include `def mock` or `async def mock`")
         elif isinstance(description, dict):
             keys = set(description.keys())
-            if keys == {"return_value"}:
+            if keys == {"exception"}:
+                def method(*args, **kwargs):
+                    raise Exception()
+            elif keys == {"return_value"}:
                 def method(*args, **kwargs):
                     return description["return_value"]
             else:
