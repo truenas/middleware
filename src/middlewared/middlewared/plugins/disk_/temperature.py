@@ -1,5 +1,7 @@
 import asyncio
+import os
 import re
+import subprocess
 import time
 
 import async_timeout
@@ -8,6 +10,7 @@ from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import Bool, Dict, Int, returns
 from middlewared.service import accepts, List, private, Ref, Service, Str
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.itertools import grouper
 
 
 def get_temperature(stdout):
@@ -150,6 +153,43 @@ class DiskService(Service):
                 return None
 
         return dict(zip(names, await asyncio_map(temperature, names, 8)))
+
+    @accepts(List('names', items=[Str('name')]), Int('days'))
+    @returns(Dict('temperatures', additional_attrs=True))
+    def temperature_agg(self, names, days):
+        """
+        Returns min/max/avg temperature for `names` disks for the last `days` days.
+        """
+        disks = []
+        args = []
+        for name in names:
+            path = f'/var/db/collectd/rrd/localhost/disktemp-{name}/temperature.rrd'
+            if not os.path.exists(path):
+                continue
+
+            disks.append(name)
+            for DEF, VDEF in [('MIN', 'MINIMUM'), ('MAX', 'MAXIMUM'), ('AVERAGE', 'AVERAGE')]:
+                args.extend([
+                    f'DEF:{name}{DEF}=/var/db/collectd/rrd/localhost/disktemp-{name}/temperature.rrd:value:{DEF}',
+                    f'VDEF:v{name}{DEF}={name}{DEF},{VDEF}',
+                    f'PRINT:v{name}{DEF}:%lf',
+                ])
+
+        output = list(map(float, subprocess.check_output(
+            ['rrdtool', 'graph', 'x', '--daemon', 'unix:/var/run/rrdcached.sock', '--start', f'-{days}d', '--end',
+             'now'] + args,
+            encoding='ascii',
+        ).split()[1:]))  # The first line is `0x0`
+
+        result = {}
+        for disk, values in zip(disks, grouper(output, 3)):  # FIXME: `incomplete='strict' when we switch to python 3.10
+            result[disk] = {
+                'min': values[0],
+                'max': values[1],
+                'avg': values[2],
+            }
+
+        return result
 
     @accepts(List('names', items=[Str('name')]))
     @returns(Ref('alert'))
