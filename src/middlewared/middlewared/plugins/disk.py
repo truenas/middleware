@@ -109,8 +109,8 @@ class DiskService(CRUDService):
 
              include_expired: true - will also include expired disks (default: false)
              passwords: true - will not hide KMIP password for the disks (default: false)
-             supports_smart: true - will query if disks support S.M.A.R.T. (default: false, has performance
-                                    implications, please use with caution)
+             supports_smart: true - will query if disks support S.M.A.R.T. Only supported if resulting disks count is
+                                    not larger than one; otherwise, raises an error.
              pools: true - will join pool name for each disk (default: false)
         """
         filters = filters or []
