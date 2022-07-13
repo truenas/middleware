@@ -374,7 +374,7 @@ class UserService(CRUDService):
                                                       [('group', '=', 'builtin_users')],
                                                       {'get': True}))['id'])
 
-        if not data.get('uid'):
+        if data.get('uid') is None:
             data['uid'] = await self.get_next_uid()
 
         # Is this a new directory or not? Let's not nuke existing directories,
