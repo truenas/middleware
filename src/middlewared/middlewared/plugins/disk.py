@@ -167,6 +167,10 @@ class DiskService(CRUDService):
         if context['passwords']:
             context['disks_keys'] = await self.middleware.call('kmip.retrieve_sed_disks_keys')
 
+        if context['supports_smart']:
+            if len(rows) > 1:
+                raise CallError('`supports_smart` cannot be queried if disk count is greater than 1')
+
         if context['pools']:
             context['boot_pool_disks'] = await self.middleware.call('boot.get_disks')
             context['boot_pool_name'] = await self.middleware.call('boot.pool_name')
