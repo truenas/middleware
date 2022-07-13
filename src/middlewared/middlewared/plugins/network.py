@@ -365,11 +365,17 @@ class InterfaceService(CRUDService):
         """
         # FIXME: What about IPv6??
         ifaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
-        rt = netif.RoutingTable()
-        will_be_removed1 = not ifaces and rt.default_route_ipv4
+        rtgw = netif.RoutingTable().default_route_ipv4
+        if rtgw is not None:
+            rtgw = rtgw.gateway.exploded
 
+        # no interfaces are configured in db but a default route exist in kernel
+        will_be_removed1 = not ifaces and rtgw
+
+        # we have a default route in kernel and we have a route specified in the db
+        # and they do not match
         dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gateway']
-        will_be_removed2 = rt.default_route_ipv4 and (dbgw != rt.default_route_ipv4)
+        will_be_removed2 = rtgw and (dbgw != rtgw)
 
         return any((will_be_removed1, will_be_removed2))
 
