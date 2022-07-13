@@ -9,10 +9,9 @@ if [ "$#" -lt 1 -o "$#" -gt 2 -o -z "$1" ]; then
 	exit 1
 fi
 
-# Make sure provided disk is valid and not open by anything
-closed=`geom disk list "${dev}" | grep -c "Mode: r0w0e0"`
-if [ ${closed} -ne 1 ]; then
-	echo "The disk is in use or specified incorrectly, aborting."
+# Make sure provided disk is valid
+if ! grep -q " ${dev}$" /proc/partitions; then
+	echo "The disk is specified incorrectly, aborting."
 	exit 1
 fi
 
@@ -31,7 +30,7 @@ if [ -n "${osize}" ]; then
 			bsize=$(((${gsize} * 1000000000 + ((1 << 30) - 1)) & ~((1 << 30) - 1)))
 		fi
 		# Convert bytes into sectors.
-		sector=`diskinfo /dev/${dev} | cut -w -f 2`
+		sector=`lsblk -rndo phy-sec /dev/${dev}`
 		size=$((${bsize} / ${sector}))
 	elif [ -n "${size}" ]; then
 		# Supplied size in sectors use as-is.
@@ -47,65 +46,61 @@ fi
 
 # ATA, SCSI and NVMe have completely different resize commands.
 # SAT we handle as ATA via pass-through, but with some complications.
-if nvmecontrol nsid ${dev} >/dev/null 2>/dev/null; then
-	devtype="nvme"
-else
-	devtype=`camcontrol devtype ${dev} 2>/dev/null`
-fi
+devtype=`lsblk -rndo tran /dev/${dev}`
 case "$devtype" in
 satl)
+	# TODO
+
 	# For SATL disks we first need to try to enable descriptor format
 	# sense data.  Without it some SATL devices return fixed format,
 	# that provides not enough response data for some ATA commands.
 	echo "Enabling descriptor sense"
 	echo "D_SENSE: 1" | camcontrol modepage ${dev} -m 0x0a -e 2>&1 >/dev/null
 	;&
-ata)
+sata)
 	# Fetch the ATA disk capabilities, since there are many options.
-	ident=`camcontrol identify ${dev}`
-	if [ $? -ne 0 ]; then
-		echo "Can't get ATA identify data"
-		exit 1
-	fi
-	ama=`echo "${ident}" | grep -c "Accessible Max Address Config *yes"`
-	hpa=`echo "${ident}" | grep -c "Host Protected Area (HPA) *yes"`
+	nsect=`hdparm -N /dev/${dev}`
+	maxsect=`echo "${nsect}" | awk -F '[/,]' '/max sectors/ { print $2 }'`
+	ama=`echo "${nsect}" | grep -c "ACCESSIBLE MAX ADDRESS enabled"`
+	hpa=`echo "${nsect}" | grep -c "HPA is enabled"`
 	if [ ${ama} -eq 0 -a ${hpa} -eq 0 ]; then
 		echo "ATA device supports neither HPA nor AMA, can't resize"
 		exit 1
 	fi
-	ssd=`echo "${ident}" | grep -c "media RPM *non-rotating"`
-	block=`echo "${ident}" | grep -c "Sanitize.*block"`
-	crypto=`echo "${ident}" | grep -c "Sanitize.*crypto"`
-	security=`echo "${ident}" | grep -c "security *yes"`
+	ident=`hdparm -I /dev/${dev}`
+	ssd=`echo "${ident}" | grep -c "Nominal Media Rotation Rate: Solid State Device"`
+	block=`echo "${ident}" | grep -c "\*	BLOCK_ERASE_EXT command"`
+	crypto=`echo "${ident}" | grep -c "\*	CRYPTO_SCRAMBLE_EXT command"`
+	security=`echo "${ident}" | grep -c " for SECURITY ERASE UNIT"`
 	if [ ${security} -ne 0 ]; then
-		sfrozen=`camcontrol security ${dev} | grep -c "security config frozen *yes"`
-		if [  ${sfrozen} -ne 0 ]; then
+		snotfrozen=`echo "${ident}" | grep -c "not	frozen"`
+		if [ ${snotfrozen} -eq 0 ]; then
 			security="0"
 		fi
 	fi
-	trim=`diskinfo -v /dev/${dev} | grep -c "Yes.*# TRIM/UNMAP support"`
+	trim=`echo "${ident}" | grep -c "\*	Data Set Management TRIM supported"`
 
 	# When resizing SSD to specified size (down?) deallocate the flash.
 	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
 		err=1
 		if [ ${block} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing block erase sanitize."
-			camcontrol sanitize ${dev} -a block -y
+			hdparm --sanitize-block-erase /dev/${dev}
 			err=$?
 		fi
 		if [ ${crypto} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing cryptograhic erase sanitize."
-			camcontrol sanitize ${dev} -a crypto -y
+			hdparm --sanitize-crypto-scramble /dev/${dev}
 			err=$?
 		fi
 		if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing security erase."
-			camcontrol security ${dev} -q -s MyPass -e MyPass -y
+			hdparm --security-erase MyPass /dev/${dev}
 			err=$?
 		fi
 		if [ ${trim} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing TRIM."
-			trim -fq /dev/${dev}
+			blkdiscard /dev/${dev}
 			err=$?
 		fi
 		if [ ${err} -ne 0 ]; then
@@ -113,23 +108,14 @@ ata)
 		fi
 	fi
 
-	if [ ${ama} -ne 0 ]; then
-		if [ -z "${size}" ]; then
-			size=`echo "${ident}" | awk -F "[ \t/]+" '/Accessible Max Address Config/ { print $8 }'`
-		fi
-		echo "Setting Accessible Max Address to ${size}"
-		camcontrol ama ${dev} -qs ${size}
-		err=$?
-	else
-		if [ -z "${size}" ]; then
-			size=`echo "${ident}" | awk -F "[ \t/]+" '/Host Protected Area/ { print $8 }'`
-		fi
-		echo "Setting Host Protected Area to ${size}"
-		camcontrol hpa ${dev} -qPy -s ${size}
-		err=$?
+	if [ -z "${size}" ]; then
+		size=${maxsect}
 	fi
-	if [ ${err} -eq 0 ]; then
+	echo "Setting Max Sectors to ${size}"
+	hdparm -N p${size} /dev/${dev}	# NB: the p is for persistence
+	if [ $? -eq 0 ]; then
 		if [ ${devtype} = "satl" ]; then
+			# TODO
 			echo "Resetting device"
 			camcontrol reset ${dev}
 			echo "Resize completed successfully.  Reboot may be needed."
