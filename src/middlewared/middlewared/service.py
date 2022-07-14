@@ -1132,9 +1132,13 @@ class SharingTaskService(CRUDService):
             data[self.mount_info_field] = {}
         else:
             # dataset isn't locked so get mount info
-            data[self.mount_info_field] = await self.middleware.run_in_thread(
-                getmntinfo_from_path, data[self.path_field]
-            )
+            try:
+                data[self.mount_info_field] = await self.middleware.run_in_thread(
+                    getmntinfo_from_path, data[self.path_field]
+                )
+            except Exception:
+                # don't crash here since it'll break sharing.query
+                data[self.mount_info_field] = {}
 
         return data
 
