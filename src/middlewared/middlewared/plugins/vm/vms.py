@@ -113,7 +113,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
         Bool('pin_vcpus', default=False),
         Int('memory', required=True, validators=[Range(min=20)]),
-        Int('min_memory', null=True, validators=[Range(min=20)]),
+        Int('min_memory', null=True, validators=[Range(min=20)], default=None),
         Bool('hyperv_enlightenments', default=False),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Bool('autostart', default=True),
