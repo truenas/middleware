@@ -48,16 +48,16 @@ fi
 # SAT we handle as ATA via pass-through, but with some complications.
 devtype=`lsblk -rndo tran /dev/${dev}`
 case "$devtype" in
-satl)
-	# TODO
-
+ata|sata)
 	# For SATL disks we first need to try to enable descriptor format
 	# sense data.  Without it some SATL devices return fixed format,
 	# that provides not enough response data for some ATA commands.
+	# All ATA/SATA disks go through some SATL in Linux, be it libata
+	# or some other hardware/driver.
 	echo "Enabling descriptor sense"
-	echo "D_SENSE: 1" | camcontrol modepage ${dev} -m 0x0a -e 2>&1 >/dev/null
-	;&
-sata)
+	field=`sginfo -C /dev/${dev} | awk '/---/ { start = NR } /D_SENSE/ { print NR - start }'`
+	sginfo -CX /dev/${dev} | awk "$$$field = 1" | xargs sginfo -CXNR /dev/${dev}
+
 	# Fetch the ATA disk capabilities, since there are many options.
 	nsect=`hdparm -N /dev/${dev}`
 	maxsect=`echo "${nsect}" | awk -F '[/,]' '/max sectors/ { print $2 }'`
@@ -114,14 +114,9 @@ sata)
 	echo "Setting Max Sectors to ${size}"
 	hdparm -N p${size} /dev/${dev}	# NB: the p is for persistence
 	if [ $? -eq 0 ]; then
-		if [ ${devtype} = "satl" ]; then
-			# TODO
-			echo "Resetting device"
-			camcontrol reset ${dev}
-			echo "Resize completed successfully.  Reboot may be needed."
-		else
-			echo "Resize completed successfully."
-		fi
+		echo "Resetting device"
+		hdparm -w /dev/${dev}
+		echo "Resize completed successfully.  Reboot may be needed."
 		echo "Note that resize can be done only once per power cycle."
 	else
 		echo "Resize failed."
