@@ -241,7 +241,8 @@ class RsyncModService(SharingService):
         module.update(data)
 
         module = await self.common_validation(module, 'rsyncmod_update')
-        module.pop(self.locked_field)
+        module.pop(self.locked_field, None)
+        module.pop(self.mount_info_field, None)
 
         await self.middleware.call(
             'datastore.update',
@@ -634,7 +635,8 @@ class RsyncTaskService(TaskPathService):
         data.setdefault('validate_rpath', True)
 
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
-        old.pop(self.locked_field)
+        old.pop(self.locked_field, None)
+        old.pop(self.mount_info_field, None)
         old.pop('job')
 
         new = old.copy()

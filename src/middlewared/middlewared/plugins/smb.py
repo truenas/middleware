@@ -1709,6 +1709,7 @@ class SharingSMBService(SharingService):
         data['hostsallow'] = ' '.join(data['hostsallow'])
         data['hostsdeny'] = ' '.join(data['hostsdeny'])
         data.pop(self.locked_field, None)
+        data.pop(self.mount_info_field, None)
         data.pop('path_local', None)
 
         return data

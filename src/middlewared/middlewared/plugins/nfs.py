@@ -536,6 +536,7 @@ class SharingNFSService(SharingService):
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         data.pop(self.locked_field, None)
+        data.pop(self.mount_info_field, None)
         return data
 
 

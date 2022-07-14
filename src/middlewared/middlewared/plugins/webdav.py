@@ -115,7 +115,8 @@ class WebDAVSharingService(SharingService):
         await self.validate_data(new, 'webdav_share_update')
 
         if len(set(old.items()) ^ set(new.items())) > 0:
-            new.pop(self.locked_field)
+            new.pop(self.locked_field, None)
+            new.pop(self.mount_info_field, None)
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,

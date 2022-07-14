@@ -785,6 +785,7 @@ class CloudSyncService(TaskPathService):
 
         cloud_sync.pop('job', None)
         cloud_sync.pop(self.locked_field, None)
+        cloud_sync.pop(self.mount_info_field, None)
 
         return cloud_sync
 
