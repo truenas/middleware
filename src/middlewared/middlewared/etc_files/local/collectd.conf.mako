@@ -208,3 +208,9 @@ LoadPlugin python
 	</Node>
 % endif
 </Plugin>
+
+# Limit how much memory collectd can consume for its write queue when graphite host is down.
+# Normal system has about 1500 metrics (most of them collected every 10 seconds).
+# Hi-end system with 1000 drives and 1000 datasets will have about 10000 metrics.
+WriteQueueLimitLow 50000
+WriteQueueLimitHigh 50000
