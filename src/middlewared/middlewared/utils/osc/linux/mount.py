@@ -30,6 +30,16 @@ def __parse_mntent(line, out_dict):
     }})
 
 
+def getmntinfo_from_path(path):
+    """
+    Try to determine the `dev_id` (st_dev) from `path` and then
+    call `getmntinfo` for O(1) lookups since mount info
+    is keyed on `dev_id`.
+    """
+    dev_id = os.stat(path).st_dev
+    return getmntinfo(dev_id=dev_id)[dev_id]
+
+
 def getmntinfo(dev_id=None):
     """
     Get mount information. returns dictionary indexed by dev_t.
