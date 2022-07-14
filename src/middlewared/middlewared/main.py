@@ -4,7 +4,6 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .plugins.auth import get_remote_addr_port
 from .restful import copy_multipart_to_pipe, RESTfulAPI
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
@@ -13,6 +12,7 @@ from .service_exception import adapt_exception, CallError, CallException, Valida
 from .utils import osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
+from .utils.nginx import get_remote_addr_port
 from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
