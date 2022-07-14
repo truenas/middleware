@@ -111,27 +111,18 @@ class ActiveDirectoryService(Service):
         if ad is None:
             ad = await self.middleware.call('activedirectory.config')
 
-        output = {'kdc': [], 'admin_server': [], 'kpasswd_server': []}
+        res = await self.middleware.call(
+            'activedirectory.get_n_working_servers',
+            ad['domainname'],
+            SRV.KERBEROSDOMAINCONTROLLER.name,
+            ad['site'],
+            3,
+            ad['verbose_logging'],
+        )
+        if len(res) != 3:
+            return None
 
-        for key, srv in [
-            ('kdc', SRV.KERBEROSDOMAINCONTROLLER),
-            ('admin_server', SRV.KERBEROS),
-            ('kpasswd_server', SRV.KPASSWD)
-        ]:
-            res = await self.middleware.call(
-                'activedirectory.get_n_working_servers',
-                ad['domainname'],
-                srv.name,
-                ad['site'],
-                3,
-                ad['verbose_logging'],
-            )
-            if len(res) != 3:
-                return None
-
-            output[key] = [i['host'] for i in res]
-
-        return output
+        return [i['host'] for i in res]
 
     @private
     async def set_kerberos_servers(self, ad=None):
@@ -142,5 +133,5 @@ class ActiveDirectoryService(Service):
             await self.middleware.call(
                 'kerberos.realm.update',
                 ad['kerberos_realm'],
-                site_indexed_kerberos_servers
+                {'kdc': site_indexed_kerberos_servers}
             )

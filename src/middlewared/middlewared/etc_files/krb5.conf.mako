@@ -160,9 +160,9 @@
 % for realm in db_realms:
             ${f'{realm["realm"]}'} = {
                    default_domain = ${realm["realm"]}
-                % if realm["kdc"]:
-                   kdc = ${' '.join(realm["kdc"])}
-                % endif
+                % for k in realm["kdc"]:
+                   kdc = ${k}
+                % endfor
                 % if realm["admin_server"]:
                    admin_server = ${' '.join(realm["admin_server"])}
                 % endif
