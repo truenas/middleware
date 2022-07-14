@@ -123,56 +123,21 @@ ata|sata)
 		exit 1
 	fi
 	;;
-scsi)
-	# Check what block descriptor(s) device supports.
-	echo "Reading existing block descriptor"
-	descr=`camcontrol modepage ${dev} -DEL`
-	if [ $? -ne 0 ]; then
-		echo "MODE SENSE commands failed"
-		exit 1
-	fi
-	ndescr=`echo "${descr}" | grep -c "Logical Block Length"`
-	if [ ${ndescr} -eq 0 ]; then
-		echo "Device does not support block descriptors, can't resize"
-		exit 1
-	fi
-	if [ ${ndescr} -gt 1 ]; then
-		echo "Can't handle more then one (${ndescr}) block descriptor"
-		exit 1
-	fi
-	ldescr=`echo "${descr}" | grep -c "Number of Logical Blocks High"`
-
-	# Do actual resize by editing the block descriptor.
+sas|scsi)
 	echo "Changing number of LBAs in block descriptor"
-	if [ ${ldescr} -eq 0 ]; then
-		if [ -z "${size}" ]; then
-			lsize="0xffffffff"
-		elif [ "${size}" -le 4294967295 ]; then
-			lsize="${size}"
-		else
-			echo "Specified size is too big for the short block descriptor."
-			exit 1
-		fi
-		echo "Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
-		err=$?
+	if [ -z "${size}" ]; then
+		lsize="-1"
 	else
-		if [ -z "${size}" ]; then
-			hsize="0xffffffff"
-			lsize="0xffffffff"
-		else
-			hsize=$((${size} >> 32))
-			lsize=$((${size} & 0xffffffff))
-		fi
-		echo "Number of Logical Blocks High: ${hsize}
-Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
-		err=$?
+		lsize="${size}"
 	fi
+	sg_format --resize -c ${lsize} /dev/${dev}
+	err=$?
 
 	# When resizing SSD to specified size (down?) format to deallocate the flash.
 	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -c "Non-rotating medium"`
-	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
+	if [ ${err} -eq 0 -a ${ssd} -ne 0 -a -n "${size}" ]; then
 		echo "Formatting device."
-		camcontrol format ${dev} -y
+		sg_format --format /dev/${dev}
 	fi
 
 	if [ ${err} -eq 0 ]; then
