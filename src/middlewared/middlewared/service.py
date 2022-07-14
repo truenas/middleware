@@ -33,6 +33,7 @@ from middlewared.logger import Logger, reconfigure_logging, stop_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
+from middlewared.utils.osc.linux.mount import getmntinfo_from_path
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range, IpAddress
 
@@ -1075,6 +1076,7 @@ class SharingTaskService(CRUDService):
     path_field = 'path'
     enabled_field = 'enabled'
     locked_field = 'locked'
+    mount_info_field = 'mount_info'
     locked_alert_class = NotImplemented
     share_task_type = NotImplemented
 
@@ -1126,6 +1128,13 @@ class SharingTaskService(CRUDService):
         data[self.locked_field] = await self.middleware.call(
             f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
         )
+        if data[self.locked_field]:
+            data[self.mount_info_field] = {}
+        else:
+            # dataset isn't locked so get mount info
+            data[self.mount_info_field] = await self.middleware.run_in_thread(
+                getmntinfo_from_path, data[self.path_field]
+            )
 
         return data
 
