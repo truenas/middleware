@@ -126,8 +126,8 @@ class SystemDatasetService(ConfigService):
 
     @accepts(Dict(
         'sysdataset_update',
-        Str('pool', null=True, default=None),
-        Str('pool_exclude', null=True, default=None),
+        Str('pool', null=True),
+        Str('pool_exclude', null=True),
         Bool('syslog'),
         update=True
     ))
@@ -141,6 +141,8 @@ class SystemDatasetService(ConfigService):
         `pool_exclude` can be specified to make sure that we don't place the system dataset on that pool if `pool`
         is not provided.
         """
+        data.setdefault('pool_exclude', None)
+
         config = await self.config()
 
         new = config.copy()
