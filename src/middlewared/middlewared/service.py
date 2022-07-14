@@ -1128,9 +1128,9 @@ class SharingTaskService(CRUDService):
         data[self.locked_field] = await self.middleware.call(
             f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
         )
-        if data[self.locked_field]:
-            data[self.mount_info_field] = {}
-        else:
+        data[self.mount_info_field] = {}
+
+        if not data[self.locked_field]:
             # dataset isn't locked so get mount info
             try:
                 data[self.mount_info_field] = await self.middleware.run_in_thread(
@@ -1138,7 +1138,7 @@ class SharingTaskService(CRUDService):
                 )
             except Exception:
                 # don't crash here since it'll break sharing.query
-                data[self.mount_info_field] = {}
+                pass
 
         return data
 
