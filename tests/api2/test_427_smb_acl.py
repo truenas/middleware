@@ -18,6 +18,7 @@ from auto_config import (
 from pytest_dependency import depends
 from protocols import SMB
 from time import sleep
+from utils import create_dataset
 
 reason = 'Skip for testing'
 # comment pytestmark for development testing with --dev-test
@@ -54,23 +55,6 @@ flagset = {
 
 
 @contextlib.contextmanager
-def smb_dataset(name, options=None):
-    assert "/" not in name
-    dataset = f"{pool_name}/{name}"
-
-    result = POST("/pool/dataset/", {"name": dataset, **(options or {"share_type": "SMB"})})
-    assert result.status_code == 200, result.text
-
-    try:
-        yield dataset
-    finally:
-        # dataset may be busy
-        sleep(10)
-        result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
-        assert result.status_code == 200, result.text
-
-
-@contextlib.contextmanager
 def smb_share(path, options=None):
     results = POST("/sharing/smb/", {
         "path": path,
@@ -91,13 +75,13 @@ def smb_share(path, options=None):
     next_uid = results.json()
 
 
-def get_windows_sd(share):
+def get_windows_sd(share, format="LOCAL"):
     results = POST("/smb/get_remote_acl", {
         "server": "127.0.0.1",
         "share": share,
         "username": SMB_USER,
         "password": SMB_PWD,
-        "options": {"output_format": "LOCAL"}
+        "options": {"output_format": format}
     })
     assert results.status_code == 200, results.text
     return results.json()['acl_data']
@@ -181,7 +165,7 @@ def test_003_test_perms(request):
 
     ds = 'nfs4acl_perms_smb'
     path = f'/mnt/{pool_name}/{ds}'
-    with smb_dataset(ds):
+    with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
         with smb_share(path, {"name": "PERMS"}):
             result = POST('/filesystem/getacl/', {'path': path, 'simplified': False})
             assert result.status_code == 200, results.text
@@ -214,7 +198,7 @@ def test_004_test_flags(request):
 
     ds = 'nfs4acl_flags_smb'
     path = f'/mnt/{pool_name}/{ds}'
-    with smb_dataset(ds):
+    with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
         with smb_share(path, {"name": "FLAGS"}):
             result = POST('/filesystem/getacl/', {'path': path, 'simplified': False})
             assert result.status_code == 200, results.text
@@ -233,6 +217,28 @@ def test_004_test_flags(request):
             job_status = wait_on_job(result.json(), 180)
             assert job_status["state"] == "SUCCESS", str(job_status["results"])
             iter_flagset(path, "FLAGS", the_acl)
+
+
+def test_005_test_map_modify(request):
+    """
+    This test validates that we are generating an appropriate SD when user has
+    'stripped' an ACL from an SMB share. Appropriate in this case means one that
+    grants an access mask equaivalent to MODIFY or FULL depending on whether it's
+    the file owner or group / other.
+    """
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+
+    ds = 'nfs4acl_map_modify'
+    path = f'/mnt/{pool_name}/{ds}'
+    with create_dataset(f'{pool_name}/{ds}', {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}, None, 777):
+        with smb_share(path, {"name": "MAP_MODIFY"}):
+            sd = get_windows_sd("MAP_MODIFY", "SMB")
+            dacl = sd['dacl']
+            assert dacl[0]['access_mask']['standard'] == 'FULL', str(dacl[0])
+            assert dacl[1]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[1])
+            assert dacl[1]['access_mask']['special']['WRITE_EA'], str(dacl[1])
+            assert dacl[2]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[2])
+            assert dacl[2]['access_mask']['special']['WRITE_EA'], str(dacl[2])
 
 
 def test_099_delete_smb_user(request):
