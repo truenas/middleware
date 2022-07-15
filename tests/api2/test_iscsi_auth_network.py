@@ -3,10 +3,11 @@ import sys
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 
 import contextlib
-import pytest
 from auto_config import ip
 
 ZVOL_NAME = 'target343'
@@ -14,10 +15,60 @@ TARGET_NAME = 'target1'
 
 
 @contextlib.contextmanager
-def dependencies():
-    ssh('chmod +x /usr/bin/apt*')
-    ssh('apt install open-iscsi')
-    yield
+def portal():
+    portal_config = call('iscsi.portal.create', {'listen': [{'ip': ip, 'port': 3260}], 'discovery_authmethod': 'NONE'})
+    try:
+        yield portal_config
+    finally:
+        call('iscsi.portal.delete', portal_config['id'])
+
+
+@contextlib.contextmanager
+def initiator():
+    initiator_config = call('iscsi.initiator.create', {})
+    try:
+        yield initiator_config
+    finally:
+        call('iscsi.initiator.delete', initiator_config['id'])
+
+
+@contextlib.contextmanager
+def target(target_name, groups):
+    target_config = call('iscsi.target.create', {'name': target_name, 'groups': groups})
+    try:
+        yield target_config
+    finally:
+        call('iscsi.target.delete', target_config['id'])
+
+
+@contextlib.contextmanager
+def extent(extent_name, zvol_name=None):
+    zvol_name = zvol_name or extent_name
+    with dataset(zvol_name, {'type': 'VOLUME', 'volsize': 51200, 'volblocksize': '512', 'sparse': True}) as zvol:
+        extent_config = call('iscsi.extent.create', {'name': extent_name, 'disk': f'zvol/{zvol}'})
+        try:
+            yield extent_config
+        finally:
+            call('iscsi.extent.delete', extent_config['id'])
+
+
+@contextlib.contextmanager
+def target_extent(target_id, extent_id, lun_id):
+    target_extent_config = call(
+        'iscsi.targetextent.create', {'target': target_id, 'extent': extent_id, 'lunid': lun_id}
+    )
+    try:
+        yield target_extent_config
+    finally:
+        call('iscsi.targetextent.delete', target_extent_config['id'])
+
+
+@contextlib.contextmanager
+def configured_target_to_extent():
+    with portal() as portal_config:
+        with initiator() as initiator_config:
+            with target('test_target', groups=[{'portal': portal_config['id'], 'initiator': initiator_config['id'], 'auth': None, 'authmethod': 'NONE'}]):
+                pass
 
 
 @contextlib.contextmanager
@@ -67,7 +118,6 @@ def unauthorized_ip_login_test(target, global_config, portal):
 
 
 def test_iscsi_target_auth_networks():
-    with dependencies():
-        with iscsi_service() as iscsi:
-            authorized_ip_login_test(iscsi['target'], iscsi['global_config'], iscsi['portal'])
-            unauthorized_ip_login_test(iscsi['target'], iscsi['global_config'], iscsi['portal'])
+    with iscsi_service() as iscsi:
+        authorized_ip_login_test(iscsi['target'], iscsi['global_config'], iscsi['portal'])
+        unauthorized_ip_login_test(iscsi['target'], iscsi['global_config'], iscsi['portal'])
