@@ -1,17 +1,12 @@
 import os
 import subprocess
 
-from typing_extensions import ParamSpec
-
-
-P = ParamSpec('P')
-
 
 class RunOnRunnerException(Exception):
     pass
 
 
-def run_on_runner(*args: P.args, **kwargs: P.kwargs) -> subprocess.CompletedProcess:
+def run_on_runner(*args, **kwargs) -> subprocess.CompletedProcess:
     if isinstance(args[0], list):
         args = tuple(args[0])
     kwargs.setdefault('stdout', subprocess.PIPE)
@@ -19,7 +14,6 @@ def run_on_runner(*args: P.args, **kwargs: P.kwargs) -> subprocess.CompletedProc
     exception_message = kwargs.pop('exception_msg', None)
     check = kwargs.pop('check', True)
     shell = kwargs.pop('shell', False)
-    log = kwargs.pop('log', True)
     env = kwargs.pop('env', None) or os.environ
 
     proc = subprocess.Popen(

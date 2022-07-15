@@ -1,3 +1,5 @@
+import functools
+import ipaddress
 import os
 import sys
 
@@ -5,7 +7,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ssh, run_on_runner, RunOnRunnerException
 
 import contextlib
 from auto_config import ip
@@ -67,57 +69,72 @@ def target_extent(target_id, extent_id, lun_id):
 def configured_target_to_extent():
     with portal() as portal_config:
         with initiator() as initiator_config:
-            with target('test_target', groups=[{'portal': portal_config['id'], 'initiator': initiator_config['id'], 'auth': None, 'authmethod': 'NONE'}]):
-                pass
+            with target(
+                'test-target', groups=[{
+                    'portal': portal_config['id'],
+                    'initiator': initiator_config['id'],
+                    'auth': None,
+                    'authmethod': 'NONE'
+                    }]
+            ) as target_config:
+                with extent('test_extent') as extent_config:
+                    with target_extent(target_config['id'], extent_config['id'], 1):
+                        yield {
+                            'extent': extent_config,
+                            'target': target_config,
+                            'global': call('iscsi.global.config'),
+                            'portal': portal_config,
+                        }
 
 
 @contextlib.contextmanager
-def iscsi_service():
-    global_config = call('iscsi.global.update', {'isns_servers': [f'{ip}:3260']})
-    portal = call('iscsi.portal.create', {'listen': [{'ip': ip, 'port': 3260}],
-                                          'discovery_authmethod': 'NONE'})
-    initiator = call('iscsi.initiator.create', {})
-    target = call('iscsi.target.create', {'name': TARGET_NAME, 'groups': [{'portal': portal['id'],
-                                                                         'initiator': initiator['id'],
-                                                                         'auth': None, 'authmethod': 'NONE'}]})
-    pool_name = call('kubernetes.config')['pool']
-    call('pool.dataset.create', {'name': f'{pool_name}/{ZVOL_NAME}', 'type': 'VOLUME',
-                                 'volsize': 51200, 'volblocksize': '512'})
-    extent = call('iscsi.extent.create', {"name": "target1", "disk": f'zvol/{pool_name}/{ZVOL_NAME}'})
-    call('iscsi.targetextent.create', {"target": target['id'], "extent": extent['id']})
-    call('service.start', 'iscsitarget')
-    yield {'target': target, 'portal': portal, 'global_config': global_config}
-    call('service.stop', 'iscsitarget')
-    call('iscsi.target.delete', target['id'])
-    call('iscsi.initiator.delete', initiator['id'])
-    call('iscsi.portal.delete', portal['id'])
-    call('iscsi.extent.delete', extent['id'])
-    call('pool.dataset.delete', f'{pool_name}/{ZVOL_NAME}')
+def configure_iscsi_service():
+    with configured_target_to_extent() as iscsi_config:
+        try:
+            call('service.start', 'iscsitarget')
+            yield iscsi_config
+        finally:
+            call('service.stop', 'iscsitarget')
 
 
-@contextlib.contextmanager
-def login_iscsi_target(target_name, base_name, portal_ip):
+@functools.cache
+def get_nas_ip_subnet():
+    for interface in call('interface.query'):
+        for alias in (interface.get('state', {}).get('aliases', [])):
+            if alias['address'] == ip:
+                return alias['netmask']
+    else:
+        raise Exception(f'Unable to determine NAS {ip!r} IP subnet')
+
+
+def check_iscsi_target_login(target_name, portal_ip):
     try:
-        ssh(f'iscsiadm -m node --targetname {target_name}:{base_name} --portal {portal_ip} --login')
-        yield True
-        ssh(f'iscsiadm -m node --targetname {target_name}:{base_name} --portal {portal_ip} --logout')
-    except Exception as e:
-        yield False
+        run_on_runner(['iscsiadm', '-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--login'])
+    except RunOnRunnerException as e:
+        return False
+    else:
+        run_on_runner(['iscsiadm', '-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--logout'])
+        return True
 
 
-def authorized_ip_login_test(target, global_config, portal):
-    call('iscsi.target.update', target['id'], {'auth_networks': [f'{ip}/24']})
-    with login_iscsi_target(global_config["basename"], target["name"], ip) as is_login:
-        assert is_login is True
+def iscsi_login_test_impl(valid):
+    with configure_iscsi_service() as config:
+        auth_network = str(ipaddress.ip_network(f'{ip}/{get_nas_ip_subnet()}', False)) if valid else '8.8.8.8/32'
+        call(
+            'iscsi.target.update',
+            config['target']['id'],
+            {'auth_networks': [auth_network]}
+        )
+        portal_listen_details = config['portal']['listen'][0]
+        assert check_iscsi_target_login(
+            f'{config["global"]["basename"]}:{config["target"]["name"]}',
+            f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}'
+        ) is valid
 
 
-def unauthorized_ip_login_test(target, global_config, portal):
-    call('iscsi.target.update', target['id'], {'auth_networks': [f'40.40.40.0/24']})
-    with login_iscsi_target(global_config["basename"], target["name"], ip) as is_login:
-        assert is_login is False
+def test_iscsi_valid_auth_networks():
+    iscsi_login_test_impl(True)
 
 
-def test_iscsi_target_auth_networks():
-    with iscsi_service() as iscsi:
-        authorized_ip_login_test(iscsi['target'], iscsi['global_config'], iscsi['portal'])
-        unauthorized_ip_login_test(iscsi['target'], iscsi['global_config'], iscsi['portal'])
+def test_iscsi_invalid_auth_networks():
+    iscsi_login_test_impl(False)
