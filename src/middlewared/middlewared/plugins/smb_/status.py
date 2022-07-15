@@ -1,9 +1,11 @@
 from middlewared.schema import Bool, Dict, Ref, Str
 from middlewared.service import Service, accepts
 from middlewared.plugins.smb import SMBCmd
-from middlewared.utils import run, filter_list
+from middlewared.utils import filter_list
+
 import enum
 import json
+import subprocess
 import time
 
 
@@ -34,7 +36,7 @@ class SMBService(Service):
              Str('restrict_session', default=''),
              )
     )
-    async def status(self, info_level, filters, options, status_options):
+    def status(self, info_level, filters, options, status_options):
         """
         Returns SMB server status (sessions, open files, locks, notifications).
 
@@ -54,29 +56,24 @@ class SMBService(Service):
             ret = []
             try:
                 with open("/var/log/samba4/auth_audit.log", "r") as f:
-                    logfile_entries = f.read()
+                    for e in f:
+                        entry = json.loads(e.strip())
+                        ts, extra = entry['timestamp'].split('.', 1)
+                        # add timezone info
+                        ts += extra[6:]
+                        usec = extra[:6]
+                        tv_sec = time.mktime(time.strptime(ts, "%Y-%m-%dT%H:%M:%S%z"))
+                        timestamp_tval = {
+                            "tv_sec": tv_sec,
+                            "tv_usec": int(usec)
+                        }
+                        entry['timestamp_tval'] = timestamp_tval
+                        ret.append(entry)
+
             except FileNotFoundError:
                 self.logger.warning("SMB auth audit log does not exist "
                                     "this is expected if users have never "
                                     "authenticated to this server.")
-                return ret
-
-            for e in logfile_entries.splitlines():
-                # sample timestamp entry:
-                # "2021-12-31T05:42:33.954029-0800"
-                entry = json.loads(e.strip())
-                ts, extra = entry['timestamp'].split('.', 1)
-                # add timezone info
-                ts += extra[6:]
-                usec = extra[:6]
-                tv_sec = time.mktime(time.strptime(ts, "%Y-%m-%dT%H:%M:%S%z"))
-                timestamp_tval = {
-                    "tv_sec": tv_sec,
-                    "tv_usec": int(usec)
-                }
-                entry['timestamp_tval'] = timestamp_tval
-
-                ret.append(entry)
 
             return filter_list(ret, filters, options)
 
@@ -107,7 +104,7 @@ class SMBService(Service):
         if status_options['restrict_session']:
             statuscmd.extend(['-s', status_options['restrict_session']])
 
-        smbstatus = await run(statuscmd, check=False)
+        smbstatus = subprocess.run(statuscmd, capture_output=True)
 
         if smbstatus.returncode != 0:
             self.logger.debug('smbstatus [{%s}] failed with error: ({%s})',
@@ -130,8 +127,8 @@ class SMBService(Service):
         return filter_list(output, filters, options)
 
     @accepts()
-    async def client_count(self):
+    def client_count(self):
         """
         Return currently connected clients count.
         """
-        return await self.middleware.call("smb.status", "SESSIONS", [], {"count": True}, {"fast": True})
+        return self.status("SESSIONS", [], {"count": True}, {"fast": True})
