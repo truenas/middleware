@@ -82,9 +82,15 @@ async def devd_listen(middleware):
         if parsed['system'] in ('CAM', 'ACPI'):
             continue
 
-        await middleware.call_hook(
-            f'devd.{parsed["system"]}'.lower(), data=parsed,
-        )
+        if parsed['type'] == 'GEOM::physpath' and parsed.get('devname'):
+            # treat GEOM::physpath as DEVFS (even though it's geom)
+            # to fix a rare race condition between CAM and SES drivers
+            # when disks are moved around
+            # (This was seen when QE team was testing new "Phison" SSDS
+            #   and moving them around between head-unit and jbods)
+            parsed = {'type': 'CREATE', 'system': 'DEVFS', 'subsystem': 'CDEV', 'cdev': parsed['devname']}
+
+        await middleware.call_hook(f'devd.{parsed["system"]}'.lower(), data=parsed)
 
 
 def setup(middleware):
