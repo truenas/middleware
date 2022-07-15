@@ -149,20 +149,26 @@ sas|scsi)
 	;;
 nvme)
 	# Get controller and current namespace ID.
-	ctrlr=`nvmecontrol nsid ${dev}`
-	nsid=${ctrlr##*[[:space:]]}
-	ctrlr=${ctrlr%%[[:space:]]*}
+	ctrlr=/dev/${dev%n*}
+	nsid=${dev##nvme*n}
+
+	# Identify controller and namespace properties.
+	idctrl=`nvme id-ctrl ${ctrlr}`
+	idns=`nvme id-ns -n ${nsid} ${ctrlr}`
 
 	# Check Namespace Management is supported by the controller.
-	nsm=`nvmecontrol identify ${ctrlr} | grep -c "Namespace Management: *Supported"`
+	oacs=`echo "${idctrl}" | awk -F ' +: ' '$1 == "oacs" { print $2 }'`
+	nsm_bit=$((1 << 3))
+	nsm=$(((oacs & nsm_bit) == nsm_bit))
 	if [ ${nsm} -eq 0 ]; then
 		echo "Namespace management not supported, can't resize"
 		exit 1
 	fi
 
 	# Get current LBA format of the namespace.
-	lbaf=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk -F '#' '/Current LBA Format/ { print $2 }'`
-	sector=`nvmecontrol identify -n 0xffffffff ${ctrlr} | awk "/LBA Format #${lbaf}:/ { print \\$6}"`
+	lbafds=`echo "${idns}" | sed -En '/(in use)/s/^lbaf +([[:digit:]]+) .* lbads:([[:digit:]]+) .*$/\1 \2/p'`
+	lbaf=${lbafds%% *}
+	sector=$((1 << ${lbafds##* }))
 	if [ -z "${lbaf}" -o -z "${sector}" ]; then
 		echo "Can't get current LBA format"
 		exit 1
@@ -170,42 +176,47 @@ nvme)
 
 	# Make sure we have enough capacity to not fail after delete.
 	if [ -n "${size}" ]; then
-		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
-		ocap=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^NVM Capacity:/ { print $3}'`
-		if [ "${size}" -gt $(((${ucap} + ${ocap}) / ${sector})) ]; then
+		ucap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "unvmcap" { print $2 }'`
+		ocap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "tnvmcap" { print $2 }'`
+		if [ "${size}" -gt $(((ucap + ocap) / sector)) ]; then
 			echo "Not enough capacity."
 			exit 1
 		fi
 	fi
 
-	echo "Deleting old namespace."
-	nvmecontrol ns delete -n ${nsid} ${ctrlr} >/dev/null
+	echo "Detaching old namespace."
+	nvme detach-ns -n ${nsid} ${ctrlr}
 	if [ $? -ne 0 ]; then
-		echo "Can't delete old namespace, but continue any way"
+		echo "Can't detach old namespace, but continuing anyway"
+	fi
+
+	echo "Deleting old namespace."
+	nvme delete-ns -n ${nsid} ${ctrlr}
+	if [ $? -ne 0 ]; then
+		echo "Can't delete old namespace, but continuing anyway"
 	fi
 	if [ -z "${size}" ]; then
-		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
-		size=$((${ucap} / ${sector}))
+		ucap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "unvmcap" { print $2 }'`
+		size=$((ucap / sector))
 	fi
 
 	echo "Creating new namespace."
-	nsid=`nvmecontrol ns create -s ${size} -f ${lbaf} -n 1 -d 0 ${ctrlr} | awk '/namespace [0-9]+ created/ { print $2 }'`
+	nsid=`nvme create-ns -s ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
 	if [ -z "${nsid}" ]; then
 		echo "Namespace creation failed"
 		exit 1
 	fi
 
 	echo "Attaching new namespace."
-	nvmecontrol ns attach -n ${nsid} -c 0xffffffff ${ctrlr} >/dev/null
+	nvme attach-ns -n ${nsid} ${ctrlr}
 	if [ $? -ne 0 ]; then
 		echo "Namespace attach failed"
 		exit 1
 	fi
 
 	echo "Rescanning namespaces."
-	devctl disable ${ctrlr}
-	devctl enable ${ctrlr}
-	nsize=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^Size:/ { print $2}'`
+	udevadm trigger ${ctrlr}
+	nsize=$((`nvme id-ns -n ${nsid} ${ctrlr} | awk -F ' +: ' '$1 == "nsze" { print $2}'`))
 	if [ ${nsize} -eq ${size} ]; then
 		echo "Resize completed successfully."
 	else
