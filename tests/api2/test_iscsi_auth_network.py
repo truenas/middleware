@@ -12,9 +12,6 @@ from middlewared.test.integration.utils import call, ssh, run_on_runner, RunOnRu
 import contextlib
 from auto_config import ip
 
-ZVOL_NAME = 'target343'
-TARGET_NAME = 'target1'
-
 
 @contextlib.contextmanager
 def portal():

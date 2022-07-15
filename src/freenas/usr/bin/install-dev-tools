@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 PACKAGES=(
+    # open-iscsi is used to test authorized networks for iscsi
+    open-iscsi
     # Integration and unit test utils, python package management
     python3-pip
     python3-pytest
