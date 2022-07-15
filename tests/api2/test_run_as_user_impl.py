@@ -13,8 +13,10 @@ def create_cron_job(owner, ownerGroup, user):
     test_folder = '/tmp/test'
     ssh(f'mkdir {test_folder}')
     ssh(f'chown -R {owner}:{ownerGroup} {test_folder}')
-    cron = call('cronjob.create', {'command': f'touch {test_folder}/test.txt', 'user': user, 'stderr': False,
-                                   'stdout': False})
+    cron = call(
+        'cronjob.create', {
+            'command': f'touch {test_folder}/test.txt', 'user': user, 'stderr': False, 'stdout': False}
+    )
     try:
         yield cron
     finally:
@@ -39,4 +41,4 @@ def test_01_running_as_valid_user():
 def test_02_running_as_invalid_user():
     with create_cron_job(owner='root', ownerGroup='root', user='apps') as cron_job:
         with run_cron_job(cron_job['id']) as job_detail:
-            assert job_detail['results']['error'] is not None, job_detail
+            assert f'"{cron_job["command"]}" exited with 1' in job_detail['results']['error'], job_detail
