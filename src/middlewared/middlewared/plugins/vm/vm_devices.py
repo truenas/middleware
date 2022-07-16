@@ -10,7 +10,7 @@ from middlewared.service import CallError, CRUDService, private, ValidationError
 from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
-from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY
+from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB
 from .utils import LIBVIRT_USER
 
 
@@ -36,6 +36,7 @@ class VMDeviceService(CRUDService):
         'NIC': NIC.schema,
         'PCI': PCI.schema,
         'DISPLAY': DISPLAY.schema,
+        'USB': USB.schema,
     }
 
     ENTRY = Patch(
@@ -146,7 +147,7 @@ class VMDeviceService(CRUDService):
     @accepts(
         Dict(
             'vmdevice_create',
-            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW'],
+            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW', 'USB'],
                 required=True),
             Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
@@ -458,6 +459,14 @@ class VMDeviceService(CRUDService):
                         verrors.add(f'attributes.{key}', 'Specified display port is already in use')
                 else:
                     device['attributes'][key] = new_ports.pop(0)
+        elif device.get('dtype') == 'USB':
+            usb_device = device['attributes'].get('device')
+            device_details = await self.middleware.call('vm.device.usb_passthrough_device', usb_device)
+            if device_details.get('error'):
+                verrors.add(
+                    'attribute.device',
+                    f'Not a valid choice. The device is not available for USB passthrough: {device_details["error"]}'
+                )
 
         if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
                 and not device['attributes'].get('logical_sectorsize'):
