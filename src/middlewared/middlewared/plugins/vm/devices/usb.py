@@ -1,8 +1,7 @@
-from middlewared.service import CallError
 from middlewared.schema import Dict, Str
 
 from .device import Device
-from .utils import create_element, LIBVIRT_URI
+from .utils import create_element
 
 
 class USB(Device):
@@ -31,4 +30,17 @@ class USB(Device):
     def is_available(self):
         return self.get_details()['available']
 
-
+    def xml_linux(self, *args, **kwargs):
+        details = self.get_details()['capability']
+        device_xml = create_element(
+            'hostdev', mode='subsystem', type='usb', managed='yes', attribute_dict={
+                'children': [
+                    create_element('source', attribute_dict={'children': [
+                        create_element('vendor', id=details['vendor_id']),
+                        create_element('product', id=details['product_id']),
+                        create_element('address', bus=details['bus'], device=details['device']),
+                    ]}),
+                ]
+            }
+        )
+        return device_xml
