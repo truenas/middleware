@@ -2,7 +2,7 @@ import re
 
 from xml.etree import ElementTree as etree
 
-from middlewared.schema import accepts, Bool, Dict, List, Str, returns
+from middlewared.schema import accepts, Bool, Dict, List, Ref, Str, returns
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -56,6 +56,7 @@ class VMDeviceService(Service):
         ),
         Bool('available', required=True),
         Str('error', required=True, null=True),
+        register=True,
     ))
     async def usb_passthrough_device(self, device):
         """
@@ -86,8 +87,11 @@ class VMDeviceService(Service):
         }
 
     @accepts()
-    @returns()
+    @returns(List(items=[Ref('usb_passthrough_device')]))
     async def usb_passthrough_choices(self):
+        """
+        Available choices for USB passthrough devices.
+        """
         await self.middleware.call('vm.check_setup_libvirt')
 
         cp = await run(get_virsh_command_args() + ['nodedev-list', 'usb_device'], check=False)
