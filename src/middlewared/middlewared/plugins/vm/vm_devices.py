@@ -147,8 +147,7 @@ class VMDeviceService(CRUDService):
     @accepts(
         Dict(
             'vmdevice_create',
-            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW', 'USB'],
-                required=True),
+            Str('dtype', enum=['NIC', 'DISK', 'CDROM', 'PCI', 'DISPLAY', 'RAW', 'USB'], required=True),
             Int('vm', required=True),
             Dict('attributes', additional_attrs=True, default=None),
             Int('order', default=None, null=True),
