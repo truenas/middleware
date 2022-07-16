@@ -10,7 +10,7 @@ from xml.etree import ElementTree as etree
 
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
-from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY # noqa
+from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB # noqa
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
 
 from .utils import create_element
