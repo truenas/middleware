@@ -48,7 +48,10 @@ fi
 # ATA, SCSI and NVMe have completely different resize commands.
 # SAT we handle as ATA via pass-through, but with some complications.
 devtype=`lsblk -rndo tran /dev/${dev}`
-case "$devtype" in
+if [ "${devtype}" = "sas" -a -e "/sys/block/${dev}/device/vpd_pg89" ]; then
+	devtype="sata"
+fi
+case "${devtype}" in
 ata|sata)
 	# For SATL disks we first need to try to enable descriptor format
 	# sense data.  Without it some SATL devices return fixed format,
