@@ -34,6 +34,7 @@ if [ -n "${osize}" ]; then
 		size=$((${bsize} / ${sector}))
 	elif [ -n "${size}" ]; then
 		# Supplied size in sectors use as-is.
+		:
 	else
 		# Size not in sectors or gigabytes.  Fail.
 		echo "Incorrect size '${osize}'.  Specify in TB, GB or sectors."
