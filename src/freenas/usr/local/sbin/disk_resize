@@ -56,7 +56,7 @@ ata|sata)
 	# or some other hardware/driver.
 	echo "Enabling descriptor sense"
 	field=`sginfo -C /dev/${dev} | awk '/---/ { start = NR } /D_SENSE/ { print NR - start }'`
-	sginfo -CX /dev/${dev} | awk "$$$field = 1" | xargs sginfo -CXNR /dev/${dev}
+	sginfo -CX /dev/${dev} | awk "\$$field = 1" | xargs sginfo -CXNR /dev/${dev}
 
 	# Fetch the ATA disk capabilities, since there are many options.
 	nsect=`hdparm -N /dev/${dev}`
