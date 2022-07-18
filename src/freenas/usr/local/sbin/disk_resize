@@ -215,7 +215,7 @@ nvme)
 	fi
 
 	echo "Rescanning namespaces."
-	udevadm trigger ${ctrlr}
+	udevadm trigger -w ${ctrlr}
 	nsize=$((`nvme id-ns -n ${nsid} ${ctrlr} | awk -F ' +: ' '$1 == "nsze" { print $2}'`))
 	if [ ${nsize} -eq ${size} ]; then
 		echo "Resize completed successfully."
