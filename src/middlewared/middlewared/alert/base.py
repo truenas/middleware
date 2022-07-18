@@ -102,6 +102,7 @@ class DismissableAlertClass:
 class AlertCategory(enum.Enum):
     APPLICATIONS = "APPLICATIONS"
     CERTIFICATES = "CERTIFICATES"
+    CLUSTERING = "CLUSTERING"
     DIRECTORY_SERVICE = "DIRECTORY_SERVICE"
     HA = "HA"
     HARDWARE = "HARDWARE"
@@ -119,6 +120,7 @@ class AlertCategory(enum.Enum):
 alert_category_names = {
     AlertCategory.APPLICATIONS: "Applications",
     AlertCategory.CERTIFICATES: "Certificates",
+    AlertCategory.CLUSTERING: "Clustering",
     AlertCategory.DIRECTORY_SERVICE: "Directory Service",
     AlertCategory.HA: "High-Availability",
     AlertCategory.HARDWARE: "Hardware",

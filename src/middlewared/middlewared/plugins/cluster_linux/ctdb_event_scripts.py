@@ -1,3 +1,5 @@
+import errno
+
 from pathlib import Path
 from enum import Enum
 
@@ -15,6 +17,7 @@ class CtdbAllowedEventScriptsEnum(Enum):
     Many ctdb event scripts exist so we only want these to be exposed, for now.
     """
     INTERFACE = '10.interface.script'
+    MIDDLEWARED = '80.truenas_middlewared.script'
 
 
 class CtdbEventScriptsService(Service):
@@ -33,6 +36,7 @@ class CtdbEventScriptsService(Service):
         # nodes in the cluster
         try:
             await self.middleware.call('ctdb.event.scripts.enable', '10.interface.script')
+            await self.middleware.call('ctdb.event.scripts.enable', '80.truenas_middlewared.script')
         except Exception:
             self.logger.error('Failed to initialize ctdb event scripts', exc_info=True)
 
@@ -48,7 +52,7 @@ class CtdbEventScriptsService(Service):
         """Return the ctdb event scripts that are disabled"""
         return [
             i.name for i in USR_DIR.iterdir() if i.is_file() and (
-                i.name in self.middleware.call_sync('ctdb.event.scripts.enabled')
+                i.name not in self.middleware.call_sync('ctdb.event.scripts.enabled')
             )
         ]
 
@@ -59,6 +63,14 @@ class CtdbEventScriptsService(Service):
 
         symlink_targ = ETC_DIR.joinpath(script)
         symlink_dest = USR_DIR.joinpath(script)
+        if not symlink_dest.exists():
+            raise CallError(
+                f'{symlink_dest}: event script does not exist. These scripts are part '
+                'of the TrueNAS distribution and so their absence may indicate a '
+                'broken or modified base installation. There are no steps to fix this in an '
+                'automated manner. Reinstall of operating system may be required.',
+                errno.ENOENT
+            )
         try:
             symlink_targ.unlink(missing_ok=True)  # make sure we remove a non-symlink if it exists
             symlink_targ.symlink_to(symlink_dest)
