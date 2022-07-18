@@ -60,10 +60,10 @@ ata|sata)
 	sginfo -CX /dev/${dev} | awk "\$$field = 1" | xargs sginfo -CXNR /dev/${dev}
 
 	# Fetch the ATA disk capabilities, since there are many options.
-	nsect=`hdparm -N /dev/${dev}`
-	maxsect=`echo "${nsect}" | awk -F '[/,]' '/max sectors/ { print $2 }'`
-	ama=`echo "${nsect}" | grep -c "ACCESSIBLE MAX ADDRESS enabled"`
-	hpa=`echo "${nsect}" | grep -c "HPA is enabled"`
+	nsect=`hdparm -N /dev/${dev} | awk -F '	= ' '/max sectors/ { print $2 }'`
+	maxsect=`echo "${nsect}" | awk -F '[/,]' '{ print $2 }'`
+	ama=`echo "${nsect}" | grep -c "ACCESSIBLE MAX ADDRESS"`
+	hpa=`echo "${nsect}" | grep -c "HPA"`
 	if [ ${ama} -eq 0 -a ${hpa} -eq 0 ]; then
 		echo "ATA device supports neither HPA nor AMA, can't resize"
 		exit 1
