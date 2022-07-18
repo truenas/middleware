@@ -4,6 +4,7 @@ import ipaddress
 import socket
 from collections import defaultdict
 from itertools import zip_longest
+from ipaddress import ip_address, ip_interface
 
 import middlewared.sqlalchemy as sa
 from middlewared.service import CallError, CRUDService, filterable, pass_app, private
@@ -352,6 +353,97 @@ class InterfaceService(CRUDService):
 
         return iface
 
+    @accepts()
+    @returns(Bool())
+    def default_route_will_be_removed(self):
+        """
+        On a fresh install of SCALE, dhclient is started for every interface so IP
+        addresses/routes could be installed via that program. However, when the
+        end-user goes to configure the first interface we tear down all other interfaces
+        configs AND delete the default route. We also remove the default route if the
+        configured gateway doesn't match the one currently installed in kernel.
+        """
+        # FIXME: What about IPv6??
+        ifaces = self.middleware.call_sync('datastore.query', 'network.interfaces')
+        rtgw = netif.RoutingTable().default_route_ipv4
+        if not ifaces and rtgw:
+            return True
+
+        # we have a default route in kernel and we have a route specified in the db
+        # and they do not match
+        dbgw = self.middleware.call_sync('network.configuration.config')['ipv4gateway']
+        return rtgw and (dbgw != rtgw.gateway.exploded)
+
+    @accepts(IPAddr('gw', v6=False, required=True))
+    @returns()
+    async def save_default_route(self, gw):
+        """
+        This method exists _solely_ to provide a "warning" and therefore
+        a path for remediation for when an end-user modifies an interface
+        and we rip the default gateway out from underneath them without
+        any type of warning.
+
+        NOTE: This makes 2 assumptions
+        1. interface.create/update/delete must have been called before
+            calling this method
+        2. this method must be called before `interface.sync` is called
+
+        This method exists for the predominant scenario for new users...
+        1. fresh install SCALE
+        2. all interfaces start DHCPv4 (v6 is ignored for now)
+        3. 1 of the interfaces receives an IP address
+        4. along with the IP, the kernel receives a default route
+            (by design, of course)
+        5. user goes to configure this interface as having a static
+            IP address
+        6. as we go through and "sync" the changes, we remove the default
+            route because it exists in the kernel FIB but doesn't exist
+            in the database.
+        7. IF the user is connecting via layer3, then they will lose all
+            access to the TrueNAS and never be able to finalize the changes
+            to the network because we ripped out the default route which
+            is how they were communicating to begin with.
+
+        In the above scenario, we're going to try and prevent this by doing
+        the following:
+        1. fresh install SCALE
+        2. all interfaces start DHCPv4
+        3. default route is received
+        4. user configures an interface
+        5. When user pushes "Test Changes" (interface.sync), webUI will call
+            network.configuration.default_route_will_be_removed BEFORE interface.sync
+        6. if network.configuration.default_route_will_be_removed returns True,
+            then webUI will open a new modal dialog that gives the end-user
+            ample warning/verbiage describing the situation. Furthermore, the
+            modal will allow the user to input a default gateway
+        7. if user gives gateway, webUI will call this method providing the info
+            and we'll validate accordingly
+        8. OR if user doesn't give gateway, they will need to "confirm" this is
+            desired
+        9. the default gateway provided to us (if given by end-user) will be stored
+            in the same in-memory cache that we use for storing the interface changes
+            and will be rolledback accordingly in this plugin just like everything else
+
+        There are a few other scenarios where this is beneficial, but the one listed above
+        is seen most often by end-users/support team.
+        """
+        if not self._original_datastores:
+            raise CallError('There are no pending interface changes.')
+
+        gw = ip_address(gw)
+        defgw = {'gc_ipv4gateway': gw.exploded}
+        for iface in await self.middleware.call('datastore.query', 'network.interfaces'):
+            if gw in ip_interface(f'{iface["int_address"]}/{iface["int_netmask"]}').network:
+                await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, defgw)
+                return
+
+        for iface in await self.middleware.call('datastore.query', 'network.alias'):
+            if gw in ip_interface(f'{iface["alias_address"]}/{iface["alias_netmask"]}').network:
+                await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, defgw)
+                return
+
+        raise CallError(f'{str(gw)!r} is not reachable from any interface on the system.')
+
     @private
     async def get_datastores(self):
         datastores = {}
@@ -382,6 +474,12 @@ class InterfaceService(CRUDService):
             i['lagg_interfacegroup'] = i['lagg_interfacegroup']['id']
             datastores['laggmembers'].append(i)
 
+        datastores['ipv4gateway'] = {
+            'gc_ipv4gateway': (
+                await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+            )['gc_ipv4gateway']
+        }
+
         return datastores
 
     async def __save_datastores(self):
@@ -405,6 +503,7 @@ class InterfaceService(CRUDService):
         # Deleting interfaces should cascade to network.alias and network.bridge
         await self.middleware.call('datastore.delete', 'network.interfaces', [])
         await self.middleware.call('datastore.delete', 'network.vlan', [])
+        await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, {'gc_ipv4gateway': ''})
 
         for i in self._original_datastores['interfaces']:
             await self.middleware.call('datastore.insert', 'network.interfaces', i)
@@ -423,6 +522,9 @@ class InterfaceService(CRUDService):
 
         for i in self._original_datastores['laggmembers']:
             await self.middleware.call('datastore.insert', 'network.lagginterfacemembers', i)
+
+        gw = self._original_datastores['ipv4gateway']
+        await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, gw)
 
         self._original_datastores.clear()
 
