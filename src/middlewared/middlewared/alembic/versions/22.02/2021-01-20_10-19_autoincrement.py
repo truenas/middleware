@@ -30,7 +30,9 @@ def upgrade():
         elif m := re.match(r'(CREATE TABLE "?(.+) \((\s*|.+\s)"?id"? integer( NOT NULL|),)(.+)'
                            r'\n\s(CONSTRAINT ([a-z_]+) |)PRIMARY KEY \(id\),?',
                            sql, flags=re.IGNORECASE | re.DOTALL):
-            table_name = m.group(2).rstrip('"')
+            bits = m.group(2).split(' ')
+            bits[0] = bits[0].rstrip('"')
+            table_name = ' '.join(bits)
             new_sql = f'CREATE TABLE {table_name} ({m.group(3)}id integer{m.group(4)} PRIMARY KEY AUTOINCREMENT,' + \
                       m.group(5) + sql[len(m.group(0)):]
             new_sql = new_sql.rstrip().rstrip(')').rstrip().rstrip(',') + '\n)'
