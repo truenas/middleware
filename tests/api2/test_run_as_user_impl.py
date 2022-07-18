@@ -10,8 +10,7 @@ from middlewared.test.integration.utils import call, ssh
 
 @contextmanager
 def create_cron_job(owner, ownerGroup, user):
-    test_folder = '/tmp/test'
-    ssh(f'mkdir {test_folder}')
+    test_folder = ssh('mktemp -d').strip()
     ssh(f'chown -R {owner}:{ownerGroup} {test_folder}')
     cron = call(
         'cronjob.create', {
