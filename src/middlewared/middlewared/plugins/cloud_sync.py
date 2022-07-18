@@ -113,6 +113,8 @@ class RcloneConfig:
 
         self.tmp_file.write("[remote]\n")
         for k, v in config.items():
+            if isinstance(v, bool):
+                v = json.dumps(v)
             self.tmp_file.write(f"{k} = {v}\n")
 
         self.tmp_file.flush()
