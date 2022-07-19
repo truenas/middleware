@@ -68,6 +68,17 @@ class ChartReleaseService(Service):
                     f'which are locked: {", ".join(release["resources"]["locked_host_paths"])}'
                 )
 
+            # We redeploy the chart to re-create the services which we had deleted
+            await self.middleware.call('chart.release.redeploy', release['name'])
+
+        else:
+            for service in await self.middleware.call(
+                'k8s.service.query', [['metadata.namespace', '=', release['namespace']]]
+            ):
+                await self.middleware.call(
+                    'k8s.service.delete', service['metadata']['name'], {'namespace': release['namespace']}
+                )
+
         resources = release['resources']
         replica_counts = await self.get_replica_count_for_resources(resources)
         job.set_progress(20, f'Scaling workload(s) to {options["replica_count"]!r} replica(s)')
