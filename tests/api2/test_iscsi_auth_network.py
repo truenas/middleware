@@ -91,6 +91,7 @@ def configure_iscsi_service():
     with configured_target_to_extent() as iscsi_config:
         try:
             call('service.start', 'iscsitarget')
+            assert call('service.started', 'iscsitarget') is True
             yield iscsi_config
         finally:
             call('service.stop', 'iscsitarget')
