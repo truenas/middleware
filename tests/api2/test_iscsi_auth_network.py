@@ -6,8 +6,9 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
+from middlewared.test.integration.assets.iscsi import target_login_test
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh, run_on_runner, RunOnRunnerException
+from middlewared.test.integration.utils import call, ssh
 
 import contextlib
 from auto_config import ip
@@ -104,16 +105,6 @@ def get_nas_ip_subnet():
         raise Exception(f'Unable to determine NAS {ip!r} IP subnet')
 
 
-def check_iscsi_target_login(target_name, portal_ip):
-    try:
-        run_on_runner(['iscsiadm', '-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--login'])
-    except RunOnRunnerException as e:
-        return False
-    else:
-        run_on_runner(['iscsiadm', '-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--logout'])
-        return True
-
-
 def iscsi_login_test_impl(valid):
     with configure_iscsi_service() as config:
         auth_network = str(ipaddress.ip_network(f'{ip}/{get_nas_ip_subnet()}', False)) if valid else '8.8.8.8/32'
@@ -123,7 +114,7 @@ def iscsi_login_test_impl(valid):
             {'auth_networks': [auth_network]}
         )
         portal_listen_details = config['portal']['listen'][0]
-        assert check_iscsi_target_login(
+        assert target_login_test(
             f'{config["global"]["basename"]}:{config["target"]["name"]}',
             f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}'
         ) is valid
