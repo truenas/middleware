@@ -210,6 +210,14 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     # name_regex
     (dict(name_regex="manual-.+"), None),
     (dict(direction="PULL", name_regex="manual-.+"), None),
+
+    # replicate
+    (dict(source_datasets=["tank/data", "tank/data/work"], periodic_snapshot_tasks=["data-recursive"], replicate=True,
+          recursive=True, properties=True),
+     "source_datasets.1"),
+    (dict(source_datasets=["tank/data"], periodic_snapshot_tasks=["data-recursive", "data-work-nonrecursive"],
+          replicate=True, recursive=True, properties=True),
+     "periodic_snapshot_tasks.1"),
 ])
 def test_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
     depends(request, ["pool_04"], scope="session")
