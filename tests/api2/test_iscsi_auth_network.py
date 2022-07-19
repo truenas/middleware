@@ -107,7 +107,8 @@ def get_nas_ip_subnet():
         raise Exception(f'Unable to determine NAS {ip!r} IP subnet')
 
 
-def iscsi_login_test_impl(valid):
+@pytest.mark.parametrize('valid', [True, False])
+def test_iscsi_auth_networks(valid):
     with configure_iscsi_service() as config:
         auth_network = str(ipaddress.ip_network(f'{ip}/{get_nas_ip_subnet()}', False)) if valid else '8.8.8.8/32'
         call(
@@ -120,8 +121,3 @@ def iscsi_login_test_impl(valid):
             f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}',
             f'{config["global"]["basename"]}:{config["target"]["name"]}',
         ) is valid
-
-
-@pytest.mark.parametrize('valid', [True, False])
-def test_iscsi_auth_networks(valid):
-    iscsi_login_test_impl(valid)
