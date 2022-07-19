@@ -45,7 +45,7 @@ class ZettareplService(Service):
         for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "replication.run")], {"order_by": ["id"]}):
             try:
                 task_id = int(j["arguments"][0])
-            except (IndexError, ValueError):
+            except (IndexError, TypeError, ValueError):
                 continue
 
             jobs[f"replication_task_{task_id}"] = j
