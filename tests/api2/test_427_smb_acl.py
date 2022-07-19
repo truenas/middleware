@@ -1,23 +1,17 @@
 #!/usr/bin/env python3
 
-import urllib.parse
 import contextlib
 import pytest
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
+from functions import POST, GET, DELETE, wait_on_job
 from auto_config import (
-    ip,
     pool_name,
     dev_test,
-    user,
-    password,
 )
 from pytest_dependency import depends
-from protocols import SMB
-from time import sleep
 from utils import create_dataset
 
 reason = 'Skip for testing'
@@ -68,7 +62,6 @@ def smb_share(path, options=None):
     finally:
         result = DELETE(f"/sharing/smb/id/{id}/")
         assert result.status_code == 200, result.text
-
 
     assert results.status_code == 200, results.text
     global next_uid
@@ -168,7 +161,7 @@ def test_003_test_perms(request):
     with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
         with smb_share(path, {"name": "PERMS"}):
             result = POST('/filesystem/getacl/', {'path': path, 'simplified': False})
-            assert result.status_code == 200, results.text
+            assert result.status_code == 200, result.text
             the_acl = result.json()['acl']
             new_entry = {
                 'perms': permset,
@@ -201,7 +194,7 @@ def test_004_test_flags(request):
     with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
         with smb_share(path, {"name": "FLAGS"}):
             result = POST('/filesystem/getacl/', {'path': path, 'simplified': False})
-            assert result.status_code == 200, results.text
+            assert result.status_code == 200, result.text
             the_acl = result.json()['acl']
             new_entry = {
                 'perms': permset,
@@ -230,7 +223,7 @@ def test_005_test_map_modify(request):
 
     ds = 'nfs4acl_map_modify'
     path = f'/mnt/{pool_name}/{ds}'
-    with create_dataset(f'{pool_name}/{ds}', {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}, None, 777):
+    with create_dataset(f'{pool_name}/{ds}', {'aclmode': 'PASSTHROUGH'}, None, 777):
         with smb_share(path, {"name": "MAP_MODIFY"}):
             sd = get_windows_sd("MAP_MODIFY", "SMB")
             dacl = sd['dacl']
