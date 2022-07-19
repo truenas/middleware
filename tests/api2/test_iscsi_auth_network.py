@@ -116,8 +116,8 @@ def iscsi_login_test_impl(valid):
         )
         portal_listen_details = config['portal']['listen'][0]
         assert target_login_test(
+            f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}',
             f'{config["global"]["basename"]}:{config["target"]["name"]}',
-            f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}'
         ) is valid
 
 
