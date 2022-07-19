@@ -1,6 +1,7 @@
 import functools
 import ipaddress
 import os
+import pytest
 import sys
 
 apifolder = os.getcwd()
@@ -120,9 +121,6 @@ def iscsi_login_test_impl(valid):
         ) is valid
 
 
-def test_iscsi_valid_auth_networks():
-    iscsi_login_test_impl(True)
-
-
-def test_iscsi_invalid_auth_networks():
-    iscsi_login_test_impl(False)
+@pytest.mark.parametrize('valid', [True, False])
+def test_iscsi_auth_networks(valid):
+    iscsi_login_test_impl(valid)
