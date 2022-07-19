@@ -223,7 +223,7 @@ def test_005_test_map_modify(request):
 
     ds = 'nfs4acl_map_modify'
     path = f'/mnt/{pool_name}/{ds}'
-    with create_dataset(f'{pool_name}/{ds}', {'acltype': 'NFS4ACL', 'aclmode': 'PASSTHROUGH'}, None, 777):
+    with create_dataset(f'{pool_name}/{ds}', {'aclmode': 'PASSTHROUGH'}, None, 777):
         with smb_share(path, {"name": "MAP_MODIFY"}):
             sd = get_windows_sd("MAP_MODIFY", "SMB")
             dacl = sd['dacl']
