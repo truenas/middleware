@@ -1,11 +1,11 @@
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, returns, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Password, Patch, returns, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable, job
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.utils.osc import IS_FREEBSD
-from middlewared.validators import Email
+from middlewared.validators import Email, PasswordComplexity, Range
 from middlewared.plugins.smb import SMBBuiltin
 
 import binascii
@@ -286,7 +286,10 @@ class UserService(CRUDService):
         Str('shell', default='/bin/csh' if IS_FREEBSD else '/usr/bin/zsh'),
         Str('full_name', required=True),
         Str('email', validators=[Email()], null=True, default=None),
-        Str('password', private=True),
+        Password('password', validators=[
+            PasswordComplexity(["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"], 2),
+            Range(min=8)
+        ]),
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
