@@ -333,7 +333,7 @@ class RsyncTaskService(TaskPathService):
                                             {"order_by": ["id"]}):
             try:
                 task_id = int(j["arguments"][0])
-            except (IndexError, ValueError):
+            except (IndexError, TypeError, ValueError):
                 continue
 
             if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
