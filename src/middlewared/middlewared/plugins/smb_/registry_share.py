@@ -302,10 +302,18 @@ class SharingSMBService(Service):
         self.middleware.call_sync('sharing.smb.strip_comments', data)
         conf = {}
 
-        if data['home'] and gl['ad_enabled']:
-            data['path_suffix'] = '%D/%U'
-        elif data['home'] and data['path']:
-            data['path_suffix'] = '%U'
+        if not data['path_suffix'] and data['home']:
+            """
+            Homes shares must have some macro expansion (to avoid giving users same
+            homedir) unless path is omitted for share.
+
+            Omitting path is special configuration that shares out every user's
+            home directory (regardless of path).
+            """
+            if gl['ad_enabled']:
+                data['path_suffix'] = '%D/%U'
+            elif data['path']:
+                data['path_suffix'] = '%U'
 
         ss = ShareSchema(self.middleware)
         ss.convert_schema_to_registry(data, conf)
