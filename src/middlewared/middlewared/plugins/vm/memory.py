@@ -33,13 +33,12 @@ class VMService(Service, VMSupervisorMixin):
             raise CallError('VM process is running, we won\'t allocate memory')
 
     @private
-    async def teardown_guest_vmemory(self, id):
-        guest_status = await self.middleware.call('vm.status', id)
-        if guest_status.get('state') != 'STOPPED':
+    async def teardown_guest_vmemory(self, vm_id):
+        vm = await self.middleware.call('vm.get_instance', vm_id)
+        if vm['status']['state'] != 'STOPPED':
             return
 
-        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-        guest_memory = vm[0].get('memory', 0) * 1024 * 1024
+        guest_memory = vm['memory'] * 1024 * 1024
         arc_max = await self.middleware.call('sysctl.get_arc_max')
         arc_min = await self.middleware.call('sysctl.get_arc_min')
         new_arc_max = min(
