@@ -42,9 +42,17 @@ class FailoverDisabledReasonsService(Service):
     @private
     def get_reasons(self, app):
         reasons = set()
-        if len(self.middleware.call_sync('zfs.pool.query_imported_fast')) <= 1:
+
+        fenced_running = self.middleware.call('failover.fenced.run_info')['running']
+        num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
+        if fenced_running and num_of_zpools_imported <= 1:
             # returns the boot pool by default
+            # fenced is running which implies it's the master node but we don't have any
+            # zpools imported (or created)
             reasons.add('NO_VOLUME')
+        elif not fenced_running and num_of_zpools_imported > 1:
+            # zpool(s) imported but fenced isn't running which is bad
+            reasons.add('NO_FENCED')
 
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
