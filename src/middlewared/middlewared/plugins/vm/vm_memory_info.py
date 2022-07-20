@@ -44,10 +44,15 @@ class VMService(Service):
         """
         Get the current maximum amount of available memory to be allocated for VMs.
 
-        If `overcommit` is true only the current used memory of running VMs will be accounted for.
-        If false all memory (including unused) of running VMs will be accounted for.
+        In case of `overcommit` being `true`, calculations are done in the following manner:
+        1. If a VM has requested 10G but is only consuming 5G, only 5G will be counted
+        2. System will consider shrinkable ZFS ARC as free memory ( shrinkable ZFS ARC is current ZFS ARC
+           minus ZFS ARC minimum )
 
-        This will include memory shrinking ZFS ARC to the minimum.
+        In case of `overcommit` being `false`, calculations are done in the following manner:
+        1. Complete VM requested memory will be taken into account regardless of how much actual physical
+           memory the VM is consuming
+        2. System will not consider shrinkable ZFS ARC as free memory
 
         Memory is of course a very "volatile" resource, values may change abruptly between a
         second but I deem it good enough to give the user a clue about how much memory is
@@ -65,6 +70,7 @@ class VMService(Service):
         arc_total = await self.middleware.call('sysctl.get_arcstats_size')
         arc_min = await self.middleware.call('sysctl.get_arc_min')
         arc_shrink = max(0, arc_total - arc_min)
+        total_free = free + arc_shrink if overcommit else free
 
         vms_memory_used = 0
         if overcommit is False:
@@ -83,7 +89,7 @@ class VMService(Service):
                     if vm_max_mem > current_vm_mem:
                         vms_memory_used += vm_max_mem - current_vm_mem
 
-        return max(0, free + arc_shrink - vms_memory_used - swap_used)
+        return max(0, total_free - vms_memory_used - swap_used)
 
     @accepts()
     @returns(Str('mac', validators=[MACAddr(separator=':')]),)
