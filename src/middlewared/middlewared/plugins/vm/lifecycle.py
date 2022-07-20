@@ -14,12 +14,6 @@ SHUTDOWN_LOCK = asyncio.Lock()
 
 class VMService(Service, VMSupervisorMixin):
 
-    ZFS_ARC_MAX_INITIAL = None
-
-    @private
-    async def get_initial_arc_max(self):
-        return self.ZFS_ARC_MAX_INITIAL
-
     @private
     async def wait_for_libvirtd(self, timeout):
         async def libvirtd_started(middleware):
@@ -110,10 +104,6 @@ class VMService(Service, VMSupervisorMixin):
     async def terminate_timeout(self):
         return max(map(lambda v: v['shutdown_timeout'], await self.middleware.call('vm.query')), default=10)
 
-    @private
-    async def update_zfs_arc_max_initial(self):
-        self.ZFS_ARC_MAX_INITIAL = await self.middleware.call('sysctl.get_arc_max')
-
 
 async def __event_system_ready(middleware, event_type, args):
     """
@@ -127,8 +117,6 @@ async def __event_system_ready(middleware, event_type, args):
             mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
 
     if args['id'] == 'ready':
-        await middleware.call('vm.update_zfs_arc_max_initial')
-
         await middleware.call('vm.initialize_vms')
 
         # we ignore the 'ready' event on an HA system since the failover event plugin
@@ -152,7 +140,6 @@ async def __event_system_ready(middleware, event_type, args):
 
 
 async def setup(middleware):
-    await middleware.call('vm.update_zfs_arc_max_initial')
     if await middleware.call('system.ready'):
         asyncio.ensure_future(middleware.call('vm.initialize_vms', 5))  # We use a short timeout here deliberately
     middleware.event_subscribe('system', __event_system_ready)
