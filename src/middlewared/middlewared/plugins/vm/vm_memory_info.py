@@ -45,7 +45,7 @@ class VMService(Service):
         Get the current maximum amount of available memory to be allocated for VMs.
 
         If `overcommit` is true only the current used memory of running VMs will be accounted for.
-        If false all memory (including unused) of runnings VMs will be accounted for.
+        If false all memory (including unused) of running VMs will be accounted for.
 
         This will include memory shrinking ZFS ARC to the minimum.
 
@@ -71,13 +71,17 @@ class VMService(Service):
             # If overcommit is not wanted its verified how much physical memory
             # the vm process is currently using and add the maximum memory its
             # supposed to have.
-            for vm in await self.middleware.call('vm.query'):
-                if vm['status']['state'] == 'RUNNING':
-                    try:
-                        vms_memory_used += await self.middleware.call('vm.get_memory_usage_internal', vm)
-                    except Exception:
-                        self.logger.error('Unable to retrieve %r vm memory usage', vm['name'], exc_info=True)
-                        continue
+            for vm in await self.middleware.call('vm.query', [['status.state', '=', 'RUNNING']]):
+                try:
+                    current_vm_mem = await self.middleware.call('vm.get_memory_usage_internal', vm)
+                except Exception:
+                    self.logger.error('Unable to retrieve %r vm memory usage', vm['name'], exc_info=True)
+                    continue
+                else:
+                    vm_max_mem = vm['memory'] * 1024 * 1024
+                    # We handle edge case with vm_max_mem < current_vm_mem
+                    if vm_max_mem > current_vm_mem:
+                        vms_memory_used += vm_max_mem - current_vm_mem
 
         return max(0, free + arc_shrink - vms_memory_used - swap_used)
 
