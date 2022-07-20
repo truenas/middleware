@@ -8,29 +8,27 @@ from .vm_supervisor import VMSupervisorMixin
 
 class VMService(Service, VMSupervisorMixin):
 
-    async def __set_guest_vmemory(self, memory, overcommit):
-        memory_available = await self.middleware.call('vm.get_available_memory', overcommit)
-        memory_bytes = memory * 1024 * 1024
-        if memory_bytes > memory_available:
-            return False
+    async def _set_guest_vmemory(self, vm_id, overcommit):
+        vm = await self.middleware.call('vm.get_instance', vm_id)
+        memory_details = await self.middleware.call('vm.get_vm_memory_info', vm_id)
+        if not memory_details['overcommit_required']:
+            # There really isn't anything to be done if over-committing is not required
+            return
 
-        arc_max = await self.middleware.call('sysctl.get_arc_max')
-        arc_min = await self.middleware.call('sysctl.get_arc_min')
+        if not overcommit:
+            raise CallError(f'Cannot guarantee memory for guest {vm["name"]}', errno.ENOMEM)
 
-        if arc_max > arc_min:
-            new_arc_max = max(arc_min, arc_max - memory_bytes)
-            self.middleware.logger.debug('Setting ARC from %s to %s', arc_max, new_arc_max)
-            await self.middleware.call('sysctl.set_arc_max', new_arc_max)
-        return True
+        if memory_details['current_arc_max'] != memory_details['arc_max_after_shrink']:
+            self.middleware.logger.debug(
+                'Setting ARC from %s to %s', memory_details['current_arc_max'], memory_details['arc_max_after_shrink']
+            )
+            await self.middleware.call('sysctl.set_arc_max', memory_details['arc_max_after_shrink'])
 
     @private
     async def init_guest_vmemory(self, vm, overcommit):
-        guest_memory = vm.get('memory', None)
         guest_status = await self.middleware.call('vm.status', vm['id'])
         if guest_status.get('state') != 'RUNNING':
-            setvmem = await self.__set_guest_vmemory(guest_memory, overcommit)
-            if setvmem is False and not overcommit:
-                raise CallError(f'Cannot guarantee memory for guest {vm["name"]}', errno.ENOMEM)
+            await self._set_guest_vmemory(vm['id'], overcommit)
         else:
             raise CallError('VM process is running, we won\'t allocate memory')
 
