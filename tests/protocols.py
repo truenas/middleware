@@ -2,12 +2,32 @@ from samba.samba3 import libsmb_samba_internal as libsmb
 from samba.dcerpc import security
 from samba.samba3 import param as s3param
 from samba import credentials
+import enum
 import subprocess
 import contextlib
 import os
 from samba import NTSTATUSError
 from functions import SSH_TEST
 libsmb_has_rename = 'rename' in dir(libsmb.Conn)
+
+
+class ACLControl(enum.IntFlag):
+    SEC_DESC_OWNER_DEFAULTED        = 0x0001
+    SEC_DESC_GROUP_DEFAULTED        = 0x0002
+    SEC_DESC_DACL_PRESENT           = 0x0004
+    SEC_DESC_DACL_DEFAULTED         = 0x0008
+    SEC_DESC_SACL_PRESENT           = 0x0010
+    SEC_DESC_SACL_DEFAULTED         = 0x0020
+    SEC_DESC_DACL_TRUSTED           = 0x0040
+    SEC_DESC_SERVER_SECURITY        = 0x0080
+    SEC_DESC_DACL_AUTO_INHERIT_REQ  = 0x0100
+    SEC_DESC_SACL_AUTO_INHERIT_REQ  = 0x0200
+    SEC_DESC_DACL_AUTO_INHERITED    = 0x0400
+    SEC_DESC_SACL_AUTO_INHERITED    = 0x0800
+    SEC_DESC_DACL_PROTECTED         = 0x1000
+    SEC_DESC_SACL_PROTECTED         = 0x2000
+    SEC_DESC_RM_CONTROL_VALID       = 0x4000
+    SEC_DESC_SELF_RELATIVE          = 0x8000
 
 
 class SMB(object):
@@ -266,6 +286,78 @@ class SMB(object):
         smbcquotas = subprocess.run(cmd, capture_output=True)
         quotaout = smbcquotas.stdout.decode().splitlines()
         return self._parse_quota(quotaout)
+
+    def get_sd(self, path):
+        def get_offset_by_key(data, key):
+            for idx, entry in enumerate(data):
+                if entry.startswith(key):
+                    return data[idx:]
+
+            raise ValueError(f'Failed to parse ACL: {data}')
+
+        cmd = [
+            "smbcacls", f"//{self._host}/{self._share}",
+            "-U", f"{self._username}%{self._password}",
+            "--numeric"
+        ]
+
+        if self._smb1:
+            cmd.extend(["-m", "NT1"])
+
+        cmd.append(path)
+
+        cl = subprocess.run(cmd, capture_output=True)
+        if cl.returncode != 0:
+            raise RuntimeError(cl.stdout.decode() or cl.stderr.decode())
+
+        output = get_offset_by_key(cl.stdout.decode().splitlines(), 'REVISION')
+        revision = int(output[0].split(':')[1])
+        control = {"raw": output[1].split(':')[1]}
+        control['parsed'] = [x.name for x in ACLControl if int(control['raw'], 16) & x]
+
+        sd = {
+            "revision": revision,
+            "control": control,
+            "owner": output[2].split(':')[1],
+            "group": output[3].split(':')[1],
+            "acl": []
+        }
+        for l in get_offset_by_key(output, 'ACL'):
+            entry, flags, access_mask = l.split("/")
+            prefix, trustee, ace_type = entry.split(":")
+
+            sd['acl'].append({
+                "trustee": trustee,
+                "type": int(ace_type),
+                "access_mask": int(access_mask, 16),
+                "flags": int(flags, 16),
+            })
+
+        return sd
+
+    def inherit_acl(self, path, action):
+        cmd = [
+            "smbcacls", f"//{self._host}/{self._share}",
+            "-U", f"{self._username}%{self._password}"
+        ]
+
+        if action in ["ALLOW", "REMOVE", "COPY"]:
+            cmd.extend(["-I", action.lower()])
+
+        elif action == "PROPAGATE":
+            cmd.append('--propagate-iheritance')
+
+        else:
+            raise ValueError(f"{action}: invalid action")
+
+        if self._smb1:
+            cmd.extend(["-m", "NT1"])
+
+        cmd.append(path)
+
+        cl = subprocess.run(cmd, capture_output=True)
+        if cl.returncode != 0:
+            raise RuntimeError(cl.stdout.decode() or cl.stderr.decode())
 
 
 class NFS(object):
