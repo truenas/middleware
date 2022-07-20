@@ -456,10 +456,11 @@ class FailoverService(ConfigService):
         DISAGREE_CARP - Nodes CARP states do not agree.
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
+        NO_FENCED - Zpools are imported but fenced isn't running.
         """
-        reasons = set(self._disabled_reasons(app))
-        if reasons != self.LAST_DISABLEDREASONS:
-            self.LAST_DISABLEDREASONS = reasons
+        reasons = self._disabled_reasons(app)
+        if reasons != FailoverService.LAST_DISABLED_REASONS:
+            FailoverService.LAST_DISABLED_REASONS = reasons
             self.middleware.send_event(
                 'failover.disabled_reasons', 'CHANGED',
                 fields={'disabled_reasons': list(reasons)}
@@ -467,28 +468,41 @@ class FailoverService(ConfigService):
         return list(reasons)
 
     def _disabled_reasons(self, app):
-        reasons = []
-        if not self.middleware.call_sync('pool.query'):
-            reasons.append('NO_VOLUME')
+        reasons = set()
 
-        ifaces = {i['name']: i for i in self.middleware.call_sync('interface.query')}
+        fenced_running = self.middleware.call('failover.fenced.run_info')['running']
+        num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
+        if fenced_running and num_of_zpools_imported <= 1:
+            # returns the boot pool by default
+            # fenced is running which implies it's the master node but we don't have any
+            # zpools imported (or created)
+            reasons.add('NO_VOLUME')
+        elif not fenced_running and num_of_zpools_imported > 1:
+            # zpool(s) imported but fenced isn't running which is bad
+            reasons.add('NO_FENCED')
+
+        if self.middleware.call_sync('failover.config')['disabled']:
+            reasons.add('NO_FAILOVER')
+
+        ifaces = self.middleware.call_sync('interface.query')
+        _ifaces = {i['name']: i for i in ifaces}
         db_ifaces = [i['int_interface'] for i in self.middleware.call_sync('datastore.query', 'network.interfaces')]
         crit_iface = False
-        for iface in filter(lambda x: x in db_ifaces, ifaces):
-            if ifaces[iface]['type'] != 'LINK_AGGREGATION' and not ifaces[iface].get('failover_virtual_aliases'):
+        for iface in filter(lambda x: x in db_ifaces, _ifaces):
+            if _ifaces[iface]['type'] != 'LINK_AGGREGATION' and not _ifaces[iface].get('failover_virtual_aliases'):
                 # If any interface is configured on HA, then it must have a VIP;
                 # The only exception is bond interfaces since those are
                 # routinely created as "empty" devices (no IP config)
-                reasons.append('NO_VIP')
-            if ifaces[iface].get('failover_critical'):
+                reasons.add('NO_VIP')
+            if _ifaces[iface].get('failover_critical'):
                 # only need 1 interface marked critical for failover
                 crit_iface = True
 
         if not crit_iface:
-            reasons.append('NO_CRITICAL_INTERFACES')
+            reasons.add('NO_CRITICAL_INTERFACES')
 
         try:
-            assert self.middleware.call_sync('failover.remote_connected') is True
+            assert self.middleware.call_sync('failover.remote_connected')
 
             # if the remote node panic's (this happens on failover event if we cant export the
             # zpool in 4 seconds on freeBSD systems (linux reboots silently by design)
@@ -501,24 +515,21 @@ class FailoverService(ConfigService):
             # manner. To work around this, we place a `timeout` of 5 seconds on the system.ready
             # call. This essentially bypasses the TCP timeout window.
             if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
-                reasons.append('NO_SYSTEM_READY')
+                reasons.add('NO_SYSTEM_READY')
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
-                reasons.append('NO_LICENSE')
+                reasons.add('NO_LICENSE')
 
-            local = self.middleware.call_sync('failover.vip.get_states')
+            local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
-                reasons.append('DISAGREE_CARP')
+                reasons.add('DISAGREE_VIP')
 
             mismatch_disks = self.middleware.call_sync('failover.mismatch_disks')
             if mismatch_disks['missing_local'] or mismatch_disks['missing_remote']:
-                reasons.append('MISMATCH_DISKS')
+                reasons.add('MISMATCH_DISKS')
         except Exception:
-            reasons.append('NO_PONG')
-
-        if self.middleware.call_sync('failover.config')['disabled']:
-            reasons.append('NO_FAILOVER')
+            reasons.add('NO_PONG')
 
         return reasons
 
