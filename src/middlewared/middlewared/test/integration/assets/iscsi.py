@@ -2,13 +2,11 @@ import contextlib
 import json
 import time
 
-from middlewared.utils import osc
-
-from middlewared.test.integration.utils import run_on_runner, RunOnRunnerException
+from middlewared.test.integration.utils import run_on_runner, RunOnRunnerException, IS_LINUX
 
 
 def target_login_test(portal_ip, target_name):
-    if osc.IS_LINUX:
+    if IS_LINUX:
         return target_login_test_linux(portal_ip, target_name)
     else:
         return target_login_test_freebsd(portal_ip, target_name)
