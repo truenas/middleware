@@ -29,6 +29,7 @@ class FailoverDisabledReasonsService(Service):
         DISAGREE_VIP - Nodes Virtual IP states do not agree.
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
+        NO_FENCED - Zpools are imported but fenced isn't running.
         """
         reasons = self.middleware.call_sync('failover.disabled.get_reasons', app)
         if reasons != FailoverDisabledReasonsService.LAST_DISABLED_REASONS:
