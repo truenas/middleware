@@ -39,6 +39,7 @@ class PoolDatasetService(Service):
         mntinfo = getmntinfo()
         nfsshares = self.middleware.call_sync('sharing.nfs.query')
         smbshares = self.middleware.call_sync('sharing.smb.query')
+        iscsishares = self.build_iscsi_share_info()
         repltasks = self.middleware.call_sync('datastore.query', 'storage.replication', [], {'prefix': 'repl_'})
         snaptasks = self.middleware.call_sync('datastore.query', 'storage.task', [], {'prefix': 'task_'})
         cldtasks = self.middleware.call_sync('datastore.query', 'tasks.cloudsync')
@@ -53,6 +54,7 @@ class PoolDatasetService(Service):
             i['locked'] = locked
             i['nfs_shares'] = self.get_nfs_shares(i, nfsshares, mntinfo)
             i['smb_shares'] = self.get_smb_shares(i, smbshares, mntinfo)
+            i['iscsi_shares'] = self.get_iscsi_shares(i, iscsishares, mntinfo)
             i['replication_tasks_count'] = self.get_repl_tasks_count(i, repltasks)
             i['snapshot_tasks_count'] = self.get_snapshot_tasks_count(i, snaptasks)
             i['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(i, cldtasks)
@@ -64,6 +66,23 @@ class PoolDatasetService(Service):
         collapsed.append(dataset)
         for child in dataset.get('children', []):
             self.collapse_datasets(child, collapsed)
+
+    @private
+    def build_iscsi_share_info(self):
+        t_to_e = self.middleware.call_sync('iscsi.targetextent.query')
+        t = {i['id']: i for i in self.middleware.call_sync('iscsi.target.query')}
+        e = {i['id']: i for i in self.middleware.call_sync('iscsi.extent.query')}
+
+        iscsi_shares = []
+        for i in filter(lambda x: x['target'] in t and t[x['target']]['groups'] and x['extent'] in e, t_to_e):
+            """
+            1. make sure target's and extent's id exist in the target to extent table
+            2. make sure the target has `groups` entry since, without it, it's impossible
+                that it's being shared via iscsi
+            """
+            iscsi_shares.append({'extent': e[i['extent']], 'target': t[i['target']]})
+
+        return iscsi_shares
 
     @private
     def get_snapcount_and_encryption_status(self, ds, mntinfo):
@@ -144,6 +163,39 @@ class PoolDatasetService(Service):
                 })
 
         return smb_shares
+
+    @private
+    def get_iscsi_shares(self, ds, iscsishares, mntinfo):
+        iscsi_shares = []
+        thick_provisioned = any((ds['reservation']['value'], ds['refreservation']['value']))
+        for share in iscsishares:
+            if share['extent']['type'] == 'DISK' and share['extent']['path'].removeprefix('zvol/') == ds['id']:
+                # we store extent information prefixed with `zvol/` (i.e. zvol/tank/zvol01).
+                iscsi_shares.append({
+                    'enabled': share['extent']['enabled'],
+                    'type': 'DISK',
+                    'path': f'/dev/{share["extent"]["path"]}',
+                    'thick_provisioned': thick_provisioned,
+                })
+            elif share['extent']['type'] == 'FILE':
+                # this isn't common but possible, you can share a "file"
+                # via iscsi which means it's not a dataset but a file inside
+                # a dataset so we need to find the source dataset for the file
+                try:
+                    devid = os.stat(share['extent']['path']).st_dev
+                except Exception:
+                    # this is a regular file so ignore exceptions for now
+                    pass
+                else:
+                    if devid in mntinfo and mntinfo[devid]['mount_source'] == ds['id']:
+                        iscsi_shares.append({
+                            'enabled': share['extent']['enabled'],
+                            'type': 'FILE',
+                            'path': share['extent']['path'],
+                            'thick_provisioned': thick_provisioned,
+                        })
+
+        return iscsi_shares
 
     @private
     def get_repl_tasks_count(self, ds, repltasks):
