@@ -45,7 +45,7 @@ class VMService(Service, VMSupervisorMixin):
         arc_max = await self.middleware.call('sysctl.get_arc_max')
         arc_min = await self.middleware.call('sysctl.get_arc_min')
         new_arc_max = min(
-            await self.middleware.call('vm.get_initial_arc_max'),
+            await self.middleware.call('sysctl.get_default_arc_max'),
             arc_max + guest_memory
         )
         if arc_max != new_arc_max:
