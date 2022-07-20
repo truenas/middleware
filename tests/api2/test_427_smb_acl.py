@@ -16,6 +16,7 @@ from auto_config import (
     password,
     user,
 )
+from protocols import SMB
 from pytest_dependency import depends
 from time import sleep
 from utils import create_dataset
@@ -287,6 +288,23 @@ def test_006_test_preserve_dynamic_id_mapping(request):
             the_acl = result.json()['acl']
             has_owner_rights = _find_owner_rights(the_acl)
             assert has_owner_rights is True, str(the_acl)
+
+
+def test_007_test_disable_autoinherit(request):
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    ds = 'nfs4acl_disable_inherit'
+    path = f'/mnt/{pool_name}/{ds}'
+    with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
+        with smb_share(path, {'name': 'NFS4_INHERIT'}):
+            c = SMB()
+            c.connect(host=ip, share='NFS4_INHERIT', username=SMB_USER, password=SMB_PWD, smb1=False)
+            c.mkdir('foo')
+            sd = c.get_sd('foo')
+            assert 'SEC_DESC_DACL_PROTECTED' not in sd['control']['parsed'], str(sd)
+            c.inherit_acl('foo', 'COPY')
+            sd = c.get_sd('foo')
+            assert 'SEC_DESC_DACL_PROTECTED' in sd['control']['parsed'], str(sd)
+            c.disconnect()
 
 
 def test_099_delete_smb_user(request):
