@@ -73,19 +73,24 @@ zfs_getacl()
 
 zfs_func()
 {
-	section_header "zfs periodic snapshot"
+	section_header "zfs periodic snapshot tasks"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
 	SELECT *
 	FROM storage_task
-	WHERE id >= '1'
 	ORDER BY +id"
 	section_footer
 
-	section_header "zfs replication"
+	section_header "zfs replication tasks"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
 	SELECT *
 	FROM storage_replication
-	WHERE id >= '1'
+	ORDER BY +id"
+	section_footer
+
+	section_header "zfs replication tasks to periodic snapshot tasks"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} -line "
+	SELECT *
+	FROM storage_replication_repl_periodic_snapshot_tasks
 	ORDER BY +id"
 	section_footer
 
@@ -156,21 +161,4 @@ zfs_func()
 		midclt call -job -jp description pool.dataset.encryption_summary "${pool}" | jq .
 		section_footer
 	done
-
-	section_header  "pool joined to storage"
-	cat  /tmp/pool.normal | ${FREENAS_DEBUG_MODULEDIR}/zfs/join_pool.nawk
-	section_footer
-
-	section_header  "kstat"
-	if is_freebsd; then
-		sysctl kstat.zfs.misc.fletcher_4_bench
-		sysctl kstat.zfs.misc.vdev_raidz_bench
-		sysctl kstat.zfs.misc.dbgmsg
-		for pool in $(zpool list -Ho name); do
-			sysctl kstat.zfs.${pool}.misc.state
-			sysctl kstat.zfs.${pool}.multihost
-			sysctl kstat.zfs.${pool}.txgs
-		done
-	fi
-	section_footer
 }

@@ -609,6 +609,28 @@ class ReplicationService(CRUDService):
             if not data["properties"]:
                 verrors.add("properties", "This option is required for full filesystem replication")
 
+            for i, source_dataset in enumerate(data["source_datasets"]):
+                for j, another_source_dataset in enumerate(data["source_datasets"]):
+                    if j != i:
+                        if is_child(source_dataset, another_source_dataset):
+                            verrors.add(
+                                f"source_datasets.{i}",
+                                "Replication task that replicates the entire filesystem can't replicate both "
+                                f"{another_source_dataset!r} and its child {source_dataset!r}"
+                            )
+
+            for i, periodic_snapshot_task in enumerate(snapshot_tasks):
+                if (
+                    not any(is_child(source_dataset, periodic_snapshot_task["dataset"])
+                            for source_dataset in data["source_datasets"]) or
+                    not periodic_snapshot_task["recursive"]
+                ):
+                    verrors.add(
+                        f"periodic_snapshot_tasks.{i}",
+                        "Replication tasks that replicate the entire filesystem can only use periodic snapshot tasks "
+                        "that take recursive snapshots of the dataset being replicated (or its ancestor)"
+                    )
+
         if data["encryption"]:
             for k in ["encryption_key", "encryption_key_format", "encryption_key_location"]:
                 if data[k] is None:
