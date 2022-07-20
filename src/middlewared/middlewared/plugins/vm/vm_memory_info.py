@@ -1,7 +1,7 @@
 import psutil
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.validators import MACAddr
 
 from .devices import NIC
@@ -90,6 +90,67 @@ class VMService(Service):
                         vms_memory_used += vm_max_mem - current_vm_mem
 
         return max(0, total_free - vms_memory_used - swap_used)
+
+    @accepts(Int('vm_id'))
+    @returns(Dict(
+        Int('minimum_memory_requested', description='Minimum memory requested by the VM'),
+        Int('total_memory_requested', description='Maximum / total memory requested by the VM'),
+        Bool('overcommit_required', description='Overcommit of memory is required to start VM'),
+        Bool(
+            'memory_req_fulfilled_after_overcommit',
+            description='Memory requirements of VM are fulfilled if over-committing memory is specified'
+        ),
+        Int('arc_to_shrink', description='Size of ARC to shrink in bytes', null=True),
+        Int('current_arc_max', description='Current size of max ARC in bytes'),
+        Int('arc_max_after_shrink', description='Size of max ARC in bytes after shrinking'),
+        Int(
+            'actual_vm_requested_memory',
+            description='VM memory in bytes to consider when making calculations for available/required memory.'
+                        ' If VM ballooning is specified for the VM, the minimum VM memory specified by user will'
+                        ' be taken into account otherwise total VM memory requested will be taken into account.'
+        ),
+    ))
+    async def get_vm_memory_info(self, vm_id):
+        """
+        Returns memory information for `vm_id` VM if it is going to be started.
+
+        All memory attributes are expressed in bytes.
+        """
+        vm = await self.middleware.call('vm.get_instance', vm_id)
+        if vm['status']['state'] == 'RUNNING':
+            # TODO: Let's add this later as we have a use case in the UI - could be useful to
+            #  show separate info of each VM in the UI moving on
+            raise CallError(f'Unable to retrieve {vm["name"]!r} VM information as it is already running.')
+
+        arc_max = await self.middleware.call('sysctl.get_arc_max')
+        arc_min = await self.middleware.call('sysctl.get_arc_min')
+        shrinkable_arc_max = 0 if arc_max <= arc_min else arc_max - arc_min
+
+        available_memory = await self.get_available_memory(False)
+        available_memory_with_overcommit = await self.get_available_memory(True)
+        vm_max_memory = vm['memory'] * 1024 * 1024
+        vm_min_memory = vm['min_memory'] * 1024 * 1024 if vm['min_memory'] else None
+        vm_requested_memory = vm_min_memory or vm_max_memory
+
+        overcommit_required = vm_requested_memory > available_memory
+        arc_to_shrink = 0
+        if overcommit_required:
+            more_required = vm_requested_memory - available_memory
+            if shrinkable_arc_max < more_required:
+                arc_to_shrink = shrinkable_arc_max
+            else:
+                arc_to_shrink = shrinkable_arc_max - more_required
+
+        return {
+            'minimum_memory_requested': vm_min_memory,
+            'total_memory_requested': vm_max_memory,
+            'overcommit_required': overcommit_required,
+            'arc_to_shrink': arc_to_shrink,
+            'memory_req_fulfilled_after_overcommit': vm_requested_memory < available_memory_with_overcommit,
+            'current_arc_max': arc_max,
+            'arc_max_after_shrink': arc_max - arc_to_shrink,
+            'actual_vm_requested_memory': vm_requested_memory,
+        }
 
     @accepts()
     @returns(Str('mac', validators=[MACAddr(separator=':')]), )
