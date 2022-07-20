@@ -43,6 +43,7 @@ class PoolDatasetService(Service):
         repltasks = self.middleware.call_sync('datastore.query', 'storage.replication', [], {'prefix': 'repl_'})
         snaptasks = self.middleware.call_sync('datastore.query', 'storage.task', [], {'prefix': 'task_'})
         cldtasks = self.middleware.call_sync('datastore.query', 'tasks.cloudsync')
+        rsynctasks = self.middleware.call_sync('rsynctask.query')
         collapsed = []
         info = self.middleware.call_sync('pool.dataset.query', filters, options)
         for dataset in info:
@@ -58,6 +59,7 @@ class PoolDatasetService(Service):
             i['replication_tasks_count'] = self.get_repl_tasks_count(i, repltasks)
             i['snapshot_tasks_count'] = self.get_snapshot_tasks_count(i, snaptasks)
             i['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(i, cldtasks)
+            i['rsync_tasks_count'] = self.get_rsync_tasks_count(i, rsynctasks)
 
         return info
 
@@ -221,3 +223,7 @@ class PoolDatasetService(Service):
     @private
     def get_snapshot_tasks_count(self, ds, snaptasks):
         return len([i for i in snaptasks if f'/mnt/{i["dataset"]}' == ds['mountpoint']])
+
+    @private
+    def get_rsync_tasks_count(self, ds, rsynctasks):
+        return len([i for i in rsynctasks if i['path'] == ds['mountpoint']])
