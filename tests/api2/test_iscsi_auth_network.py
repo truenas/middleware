@@ -97,7 +97,7 @@ def configure_iscsi_service():
             call('service.stop', 'iscsitarget')
 
 
-@functools.lru_cache
+@functools.lru_cache(maxsize=None)
 def get_nas_ip_subnet():
     for interface in call('interface.query'):
         for alias in (interface.get('state', {}).get('aliases', [])):
