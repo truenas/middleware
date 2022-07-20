@@ -102,6 +102,7 @@ class VMService(Service):
         ),
         Int('arc_to_shrink', description='Size of ARC to shrink in bytes', null=True),
         Int('current_arc_max', description='Current size of max ARC in bytes'),
+        Int('arc_min', description='Minimum size of ARC in bytes'),
         Int('arc_max_after_shrink', description='Size of max ARC in bytes after shrinking'),
         Int(
             'actual_vm_requested_memory',
@@ -148,6 +149,7 @@ class VMService(Service):
             'arc_to_shrink': arc_to_shrink,
             'memory_req_fulfilled_after_overcommit': vm_requested_memory < available_memory_with_overcommit,
             'current_arc_max': arc_max,
+            'arc_min': arc_min,
             'arc_max_after_shrink': arc_max - arc_to_shrink,
             'actual_vm_requested_memory': vm_requested_memory,
         }
