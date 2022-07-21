@@ -38,12 +38,19 @@ def upgrade():
             new_sql = new_sql.rstrip().rstrip(')').rstrip().rstrip(',') + '\n)'
         elif re.match(r'CREATE TABLE "(.+)" \("id" integer (NOT NULL |)PRIMARY KEY AUTOINCREMENT,', sql):
             continue
+        elif re.match(r'CREATE TABLE (.+) \(\s+id integer NOT NULL PRIMARY KEY AUTOINCREMENT,', sql):
+            # saw this on 12.0-U8 core machine upgrading to scale
+            """
+            CREATE TABLE account_bsdgroupmembership (
+                    id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+            """
+            continue
         else:
             assert sql.startswith((
                 'CREATE TABLE sqlite_sequence',
                 'CREATE TABLE alembic_version',
                 'CREATE TABLE "storage_disk"',
-            ))
+            )), sql
             continue
 
         index_sqls = []
