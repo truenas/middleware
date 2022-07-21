@@ -160,7 +160,7 @@ nvme)
 
 	# Identify controller and namespace properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
-	idns=`nvme id-ns -n ${nsid} ${ctrlr}`
+	idns=`nvme id-ns -n -1 ${ctrlr}`
 
 	# Check Namespace Management is supported by the controller.
 	oacs=`echo "${idctrl}" | awk -F ' +: ' '$1 == "oacs" { print $2 }'`
