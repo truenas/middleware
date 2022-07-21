@@ -21,21 +21,22 @@ def get_remote_addr_port(request):
         except (KeyError, ValueError):
             pass
         else:
-            if process := get_peer_process(remote_addr, remote_port):
-                if process.name() == "nginx":
-                    try:
-                        with open("/var/run/nginx.pid") as f:
-                            nginx_pid = int(f.read().strip())
-                    except Exception:
-                        pass
-                    else:
-                        try:
-                            ppid = process.ppid()
-                        except psutil.ProcessNotFound:
-                            pass
-                        else:
-                            if ppid == nginx_pid:
-                                remote_addr = x_real_remote_addr
-                                remote_port = x_real_remote_port
+            try:
+                with open("/var/run/nginx.pid") as f:
+                    nginx_pid = int(f.read().strip())
+            except Exception:
+                pass
+            else:
+                try:
+                    process = psutil.Process(nginx_pid)
+                except psutil.ProcessNotFound:
+                    pass
+                else:
+                    if process.name() == "nginx":
+                        for worker in process.children():
+                            for connection in worker.connections(kind="tcp"):
+                                if connection.laddr == addr(remote_addr, remote_port):
+                                    remote_addr = x_real_remote_addr
+                                    remote_port = x_real_remote_port
 
     return remote_addr, remote_port
