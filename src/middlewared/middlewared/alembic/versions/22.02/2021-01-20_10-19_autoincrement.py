@@ -50,7 +50,7 @@ def upgrade():
                 'CREATE TABLE sqlite_sequence',
                 'CREATE TABLE alembic_version',
                 'CREATE TABLE "storage_disk"',
-            ))
+            )), sql
             continue
 
         index_sqls = []
