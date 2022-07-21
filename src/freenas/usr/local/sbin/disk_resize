@@ -64,8 +64,8 @@ ata|sata)
 
 	# Fetch the ATA disk capabilities, since there are many options.
 	ident=`hdparm -I /dev/${dev}`
-	ama=`echo "${nsect}" | grep -Fc "unknown 119[8]"`
-	hpa=`echo "${nsect}" | grep -Fc "Host Protected Area feature set"`
+	ama=`echo "${ident}" | grep -Fc "unknown 119[8]"`
+	hpa=`echo "${ident}" | grep -Fc "Host Protected Area feature set"`
 	if [ ${ama} -eq 0 -a ${hpa} -eq 0 ]; then
 		echo "ATA device supports neither HPA nor AMA, can't resize"
 		exit 1
