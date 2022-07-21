@@ -125,7 +125,7 @@ class VMService(Service):
 
         arc_max = await self.middleware.call('sysctl.get_arc_max')
         arc_min = await self.middleware.call('sysctl.get_arc_min')
-        shrinkable_arc_max = 0 if arc_max <= arc_min else arc_max - arc_min
+        shrinkable_arc_max = max(0, arc_max - arc_min)
 
         available_memory = await self.get_available_memory(False)
         available_memory_with_overcommit = await self.get_available_memory(True)
@@ -136,11 +136,7 @@ class VMService(Service):
         overcommit_required = vm_requested_memory > available_memory
         arc_to_shrink = 0
         if overcommit_required:
-            more_required = vm_requested_memory - available_memory
-            if shrinkable_arc_max < more_required:
-                arc_to_shrink = shrinkable_arc_max
-            else:
-                arc_to_shrink = shrinkable_arc_max - more_required
+            arc_to_shrink = min(shrinkable_arc_max, vm_requested_memory - available_memory)
 
         return {
             'minimum_memory_requested': vm_min_memory,
