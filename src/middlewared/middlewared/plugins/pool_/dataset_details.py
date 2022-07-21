@@ -3,7 +3,6 @@ import os
 from middlewared.service import Service, private
 from middlewared.schema import accepts, returns, Dict
 from middlewared.plugins.zfs_.utils import ZFSCTL
-from middlewared.utils.path import belongs_to_tree, is_child
 from middlewared.utils.osc.linux.mount import getmntinfo
 
 
@@ -202,17 +201,10 @@ class PoolDatasetService(Service):
     @private
     def get_repl_tasks_count(self, ds, repltasks):
         count = 0
-        for repl in repltasks:
-            if repl['transport'] == 'LOCAL' or repl['direction'] == 'PUSH':
-                if any(
-                    belongs_to_tree(ds, src_ds, repl['recursive'], repl['exclude'])
-                    for src_ds in repl['source_datasets']
-                ):
-                    count += 1
-
-            if repl['transport'] == 'LOCAL' or repl['direction'] == 'PULL':
-                if is_child(ds, repl['target_dataset']):
-                    count += 1
+        for repl in filter(lambda x: x['direction'] == 'PUSH', repltasks):
+            # we only care about replication tasks that are configured to push
+            for src_ds in filter(lambda x: x == ds['id'], repl['source_datasets']):
+                count += 1
 
         return count
 
