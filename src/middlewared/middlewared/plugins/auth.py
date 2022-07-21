@@ -233,12 +233,14 @@ class AuthService(Service):
     @filterable_returns(Dict(
         'session',
         Str('id'),
+        Bool('current'),
         Bool('internal'),
         Str('origin'),
         Str('credentials'),
         Datetime('created_at'),
     ))
-    def sessions(self, filters, options):
+    @pass_app()
+    def sessions(self, app, filters, options):
         """
         Returns list of active auth sessions.
 
@@ -249,6 +251,7 @@ class AuthService(Service):
                 "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
                 "origin": "192.168.0.3:40392",
                 "credentials": "TOKEN",
+                "current": True,
                 "internal": False,
                 "created_at": {"$date": 1545842426070}
             }
@@ -267,7 +270,12 @@ class AuthService(Service):
         """
         return filter_list(
             [
-                dict(id=session_id, internal=is_internal_session(session), **session.dump())
+                dict(
+                    id=session_id,
+                    current=app.session_id == session_id,
+                    internal=is_internal_session(session),
+                    **session.dump()
+                )
                 for session_id, session in sorted(self.session_manager.sessions.items(),
                                                   key=lambda t: t[1].created_at)
             ],
@@ -568,7 +576,8 @@ async def check_permission(middleware, app):
     if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
 
-    if process := get_peer_process(remote_addr, remote_port):
+    # This is an expensive operation, but it is only performed for localhost TCP connections which are rare
+    if process := await middleware.run_in_thread(get_peer_process, remote_addr, remote_port):
         try:
             euid = process.uids().effective
         except psutil.NoSuchProcess:
