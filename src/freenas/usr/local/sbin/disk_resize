@@ -209,7 +209,7 @@ nvme)
 	fi
 
 	echo "Creating new namespace."
-	nsid=`nvme create-ns -s ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
+	nsid=`nvme create-ns -s ${size} -c ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
 	if [ -z "${nsid}" ]; then
 		echo "Namespace creation failed"
 		exit 1
