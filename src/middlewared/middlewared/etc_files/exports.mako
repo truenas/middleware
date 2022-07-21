@@ -81,6 +81,10 @@
         return ','.join(params)
 
     def parse_host(hostname, gaierrors):
+        if hostname.startswith('@'):
+            # This is a netgroup, skip validation
+            return hostname
+
         try:
             addr = ipaddress.ip_address(hostname)
             return addr.compressed
