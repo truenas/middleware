@@ -96,6 +96,13 @@ ata|sata)
 			hdparm --yes-i-know-what-i-am-doing --sanitize-crypto-scramble /dev/${dev}
 			err=$?
 		fi
+		if [ ${err} -eq 0 ]; then
+			echo "Waiting for sanitize to complete."
+			until hdparm --sanitize-status /dev/${dev} | grep -Fq "SD0 Sanitize Idle"
+			do
+				sleep 10
+			done
+		fi
 		if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing security erase."
 			hdparm --yes-i-know-what-i-am-doing --security-erase MyPass /dev/${dev}
