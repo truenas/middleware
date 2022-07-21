@@ -435,10 +435,11 @@ def test_32_check_nfs_share_hosts(request):
 
     "/mnt/dozer/nfs"\
         192.168.0.69(sec=sys,rw,subtree_check)\
-        192.168.0.70(sec=sys,rw,subtree_check)
+        192.168.0.70(sec=sys,rw,subtree_check)\
+        @fakenetgroup(sec=sys,rw,subtree_check)
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
-    hosts_to_test = ["192.168.0.69", "192.168.0.70"]
+    hosts_to_test = ["192.168.0.69", "192.168.0.70", "@fakenetgroup"]
 
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hosts_to_test})
     assert results.status_code == 200, results.text
