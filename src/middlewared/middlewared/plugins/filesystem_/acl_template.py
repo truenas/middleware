@@ -221,7 +221,7 @@ class ACLTemplateService(CRUDService):
     @private
     async def resolve_names(self, uid, gid, data):
         for ace in data['acl']:
-            if ace['id'] != -1:
+            if ace['id'] not in (-1, None):
                 ace['who'] = await self.middleware.call(
                     'idmap.id_to_name', ace['id'], ace['tag']
                 )
