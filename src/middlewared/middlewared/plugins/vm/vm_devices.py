@@ -430,7 +430,6 @@ class VMDeviceService(CRUDService):
                 nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
-            await self.failover_nic_check(device, verrors, 'attributes')
         elif device.get('dtype') == 'PCI':
             pptdev = device['attributes'].get('pptdev')
             device_details = await self.middleware.call('vm.device.passthrough_device', pptdev)
@@ -496,14 +495,3 @@ class VMDeviceService(CRUDService):
             else:
                 devs['vnc'].append(dev)
         return devs
-
-    @private
-    async def failover_nic_check(self, vm_device, verrors, schema):
-        if await self.middleware.call('failover.licensed'):
-            nics = await self.middleware.call('vm.device.nic_capability_checks', [vm_device])
-            if nics:
-                verrors.add(
-                    f'{schema}.nic_attach',
-                    f'Capabilities must be disabled for {",".join(nics)} interface '
-                    'in Network->Interfaces section before using this device with VM.'
-                )
