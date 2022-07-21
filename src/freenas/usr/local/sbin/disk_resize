@@ -124,11 +124,6 @@ ata|sata)
 	echo "Setting Max Sectors to ${size}"
 	hdparm --yes-i-know-what-i-am-doing -N p${size} /dev/${dev}	# NB: the p is for persistence
 	if [ $? -eq 0 ]; then
-		libata=`sg_vpd --page=ai /dev/${dev} | grep -Fc "SAT Product identification: libata"`
-		if [ ${libata} -eq 0 ]; then
-			echo "Resetting device"
-			hdparm -w /dev/${dev}
-		fi
 		echo "Resize completed successfully.  Reboot may be needed."
 		echo "Note that resize can be done only once per power cycle."
 	else
