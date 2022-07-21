@@ -463,7 +463,7 @@ class SharingNFSService(SharingService):
             if share_dev == dev:
                 for host in share["hosts"]:
                     host = dns_cache[host]
-                    if host is None:
+                    if host is None or host.startswith('@'):
                         continue
 
                     try:
@@ -488,6 +488,9 @@ class SharingNFSService(SharingService):
                     used_networks.add(ipaddress.ip_network("::/0"))
 
         for host in set(data["hosts"]):
+            if host.startswith('@'):
+                continue
+
             cached_host = dns_cache[host]
             if cached_host is None:
                 verrors.add(
