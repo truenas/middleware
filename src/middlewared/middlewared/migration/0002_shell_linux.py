@@ -1,8 +1,6 @@
-# -*- coding=utf-8 -*-
-import logging
 import os
 
-logger = logging.getLogger(__name__)
+nologin = "/usr/sbin/nologin"
 
 
 def is_valid_shell(shell):
@@ -12,10 +10,7 @@ def is_valid_shell(shell):
 def migrate(middleware):
     updated = False
     for user in middleware.call_sync("datastore.query", "account.bsdusers", [], {"prefix": "bsdusr_"}):
-        if not user["shell"]:
-            continue
-
-        if is_valid_shell(user["shell"]):
+        if not user["shell"] or is_valid_shell(user["shell"]):
             continue
 
         new_shell = user["shell"].replace("/usr/local/", "/usr/")
@@ -23,17 +18,11 @@ def migrate(middleware):
             if user["username"] == "root":
                 new_shell = "/usr/bin/zsh"
             else:
-                continue
+                new_shell = nologin
 
-        logger.info("Updating user %r shell from %r to %r", user["username"], user["shell"], new_shell)
+        middleware.logger.info("Updating user %r shell from %r to %r", user["username"], user["shell"], new_shell)
         middleware.call_sync(
-            "datastore.update",
-            "account.bsdusers",
-            user["id"],
-            {
-                "shell": new_shell,
-            },
-            {"prefix": "bsdusr_"},
+            "datastore.update", "account.bsdusers", user["id"], {"shell": new_shell}, {"prefix": "bsdusr_"}
         )
         updated = True
 
