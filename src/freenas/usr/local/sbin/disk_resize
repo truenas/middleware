@@ -88,17 +88,17 @@ ata|sata)
 		err=1
 		if [ ${block} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing block erase sanitize."
-			hdparm --sanitize-block-erase /dev/${dev}
+			hdparm --yes-i-know-what-i-am-doing --sanitize-block-erase /dev/${dev}
 			err=$?
 		fi
 		if [ ${crypto} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing cryptograhic erase sanitize."
-			hdparm --sanitize-crypto-scramble /dev/${dev}
+			hdparm --yes-i-know-what-i-am-doing --sanitize-crypto-scramble /dev/${dev}
 			err=$?
 		fi
 		if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing security erase."
-			hdparm --security-erase MyPass /dev/${dev}
+			hdparm --yes-i-know-what-i-am-doing --security-erase MyPass /dev/${dev}
 			err=$?
 		fi
 		if [ ${trim} -ne 0 -a ${err} -ne 0 ]; then
@@ -115,7 +115,7 @@ ata|sata)
 		size=${maxsect}
 	fi
 	echo "Setting Max Sectors to ${size}"
-	hdparm -N p${size} /dev/${dev}	# NB: the p is for persistence
+	hdparm --yes-i-know-what-i-am-doing -N p${size} /dev/${dev}	# NB: the p is for persistence
 	if [ $? -eq 0 ]; then
 		echo "Resetting device"
 		hdparm -w /dev/${dev}
