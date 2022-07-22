@@ -11,6 +11,7 @@ from auto_config import (
     pool_name,
     dev_test,
 )
+from protocols import SMB
 from pytest_dependency import depends
 from utils import create_dataset
 
@@ -232,6 +233,23 @@ def test_005_test_map_modify(request):
             assert dacl[1]['access_mask']['special']['WRITE_EA'], str(dacl[1])
             assert dacl[2]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[2])
             assert dacl[2]['access_mask']['special']['WRITE_EA'], str(dacl[2])
+
+
+def test_007_test_disable_autoinherit(request):
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    ds = 'nfs4acl_disable_inherit'
+    path = f'/mnt/{pool_name}/{ds}'
+    with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
+        with smb_share(path, {'name': 'NFS4_INHERIT'}):
+            c = SMB()
+            c.connect(host=ip, share='NFS4_INHERIT', username=SMB_USER, password=SMB_PWD, smb1=False)
+            c.mkdir('foo')
+            sd = c.get_sd('foo')
+            assert 'SEC_DESC_DACL_PROTECTED' not in sd['control']['parsed'], str(sd)
+            c.inherit_acl('foo', 'COPY')
+            sd = c.get_sd('foo')
+            assert 'SEC_DESC_DACL_PROTECTED' in sd['control']['parsed'], str(sd)
+            c.disconnect()
 
 
 def test_099_delete_smb_user(request):
