@@ -295,9 +295,6 @@ class ChartReleaseService(Service):
                 app_resources[app_name].extend(resources_info[app_name])
 
         for app_name in app_resources:
-            apps[app_name] = [
-                volume['host_path']['path']
-                for volume in await self.middleware.call('chart.release.host_path_volumes', app_resources[app_name])
-            ]
+            apps[app_name] = await self.middleware.call('chart.release.host_path_volumes', app_resources[app_name])
 
         return apps
