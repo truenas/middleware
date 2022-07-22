@@ -19,7 +19,7 @@ class VMService(Service, VMSupervisorMixin):
             raise CallError(f'Cannot guarantee memory for guest {vm["name"]}', errno.ENOMEM)
 
         if memory_details['current_arc_max'] != memory_details['arc_max_after_shrink']:
-            self.middleware.logger.debug(
+            self.logger.debug(
                 'Setting ARC from %s to %s', memory_details['current_arc_max'], memory_details['arc_max_after_shrink']
             )
             await self.middleware.call('sysctl.set_arc_max', memory_details['arc_max_after_shrink'])
