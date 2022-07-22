@@ -12,9 +12,11 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @accepts()
-    @returns(Dict('datasets', additional_attrs=True))
+    @returns(Dict(
+        'datasets',
+        additional_attrs=True,
+    ))
     def details(self):
-        filters = []
         options = {
             'extra': {
                 'flat': False,
@@ -35,7 +37,7 @@ class PoolDatasetService(Service):
             }
         }
         collapsed = []
-        datasets = self.middleware.call_sync('pool.dataset.query', filters, options)
+        datasets = self.middleware.call_sync('pool.dataset.query', [], options)
         for dataset in datasets:
             self.collapse_datasets(dataset, collapsed)
 
@@ -129,10 +131,7 @@ class PoolDatasetService(Service):
             results['rsync'].append(task)
 
         # vm
-        for vm in self.middleware.call_sync('datastore.query', 'vm.device'):
-            if vm['dtype'] not in ('RAW', 'DISK'):
-                continue
-
+        for vm in self.middleware.call_sync('datastore.query', 'vm.device', [['dtype', 'in', ['RAW', 'DISK']]]):
             if vm['dtype'] == 'DISK':
                 # disk type is always a zvol
                 vm['zvol'] = vm['attributes']['path'].removeprefix('/dev/zvol/')
@@ -144,7 +143,12 @@ class PoolDatasetService(Service):
 
         # app
         for app_name, paths in self.middleware.call_sync('chart.release.get_consumed_host_paths').items():
-            for path in filter(lambda x: 'ix-applications/' not in x, paths):
+            # We want to filter out any other paths which might be consumed to improve performance here
+            # and avoid unnecessary mount info calls i.e /proc /sys /etc/ etc
+            for path in filter(
+                lambda x: x.startswith('/mnt/') and 'ix-applications/' not in x,
+                paths
+            ):
                 results['app'].append({
                     'name': app_name,
                     'path': path,
