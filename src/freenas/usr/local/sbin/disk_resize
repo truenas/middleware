@@ -216,7 +216,8 @@ nvme)
 	fi
 
 	echo "Attaching new namespace."
-	nvme attach-ns -n ${nsid} ${ctrlr}
+	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '{ print $2 }' | xargs | tr ' ' ,`
+	nvme attach-ns -n ${nsid} -c ${ctrls} ${ctrlr}
 	if [ $? -ne 0 ]; then
 		echo "Namespace attach failed"
 		exit 1
