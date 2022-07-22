@@ -163,6 +163,7 @@ nvme)
 	# Identify controller and namespace properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
 	idns=`nvme id-ns -n -1 ${ctrlr}`
+	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '{ print $2 }' | xargs | tr ' ' ,`
 
 	# Check Namespace Management is supported by the controller.
 	oacs=`echo "${idctrl}" | awk -F ' +: ' '$1 == "oacs" { print $2 }'`
@@ -193,7 +194,7 @@ nvme)
 	fi
 
 	echo "Detaching old namespace."
-	nvme detach-ns -n ${nsid} ${ctrlr}
+	nvme detach-ns -n ${nsid} -c ${ctrls} ${ctrlr}
 	if [ $? -ne 0 ]; then
 		echo "Can't detach old namespace, but continuing anyway"
 	fi
@@ -219,7 +220,6 @@ nvme)
 	fi
 
 	echo "Attaching new namespace."
-	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '{ print $2 }' | xargs | tr ' ' ,`
 	nvme attach-ns -n ${nsid} -c ${ctrls} ${ctrlr}
 	if [ $? -ne 0 ]; then
 		echo "Namespace attach failed"
