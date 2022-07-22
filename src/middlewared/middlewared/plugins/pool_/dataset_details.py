@@ -143,25 +143,13 @@ class PoolDatasetService(Service):
             results['vm'].append(vm)
 
         # app
-        """
-        FIXME: this call is too expensive. Mostly because it queries entirely too much
-            information when we're only after the container name and any datasets on
-            the host machine that the container is using. Without this method, the total
-            time this method takes in worst case scenario (1k datasets, 15k snapshots,
-            90 smb shares, 36 nfs shares, 20 iscsi shares) takes ~2.2-2.4 seconds. When
-            adding this method, it baloons too ~4.1 seconds (with only 1 app). A separate
-            endpoint will be added (eventually) that will be less expensive than this.
-        options = {'extra': {'retrieve_resources': True}}
-        for app in self.middleware.call_sync('chart.release.query', [], options):
-            for i in app['resources']['host_path_volumes']:
-                path = i['host_path']['path']
-                if 'ix-applications/' in path:
-                    continue
-
-                i['mount_info'] = self.get_mount_info(path, mntinfo)
-
-            results['app'].append(app)
-        """
+        for app_name, paths in self.middleware.call_sync('chart.release.get_consumed_host_paths').items():
+            for path in filter(lambda x: 'ix-applications/' not in x, paths):
+                results['app'].append({
+                    'name': app_name,
+                    'path': path,
+                    'mount_info': self.get_mount_info(path, mntinfo),
+                })
 
         return results
 
@@ -295,12 +283,7 @@ class PoolDatasetService(Service):
     def get_apps(self, ds, _apps):
         apps = []
         for app in _apps:
-            for i in app['resources']['host_path_volumes']:
-                path = i['host_path']['path']
-                if 'ix-applications/' in path:
-                    continue
-
-                if path == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
-                    apps.append({'name': app['name'], 'path': path})
+            if app['path'] == ds['mountpoint'] or app['mount_info'].get('mount_source') == ds['id']:
+                apps.append({'name': app['name'], 'path': app['path']})
 
         return apps
