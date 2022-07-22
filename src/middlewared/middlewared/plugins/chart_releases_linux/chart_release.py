@@ -325,7 +325,7 @@ class ChartReleaseService(CRUDService):
             for volume in filter(
                 lambda v: (v.get('host_path') or {}).get('path'), resource['spec']['template']['spec']['volumes'] or []
             ):
-                host_path_volumes.append(copy.deepcopy(volume))
+                host_path_volumes.append(volume['host_path']['path'])
         return host_path_volumes
 
     @private
