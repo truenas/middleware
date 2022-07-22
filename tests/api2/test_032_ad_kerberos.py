@@ -302,16 +302,19 @@ def test_18_second_realm_krb5_conf_verify(request):
     cmd = 'cat /etc/krb5.conf'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    if results['result'] is True:
-        for entry in results['output'].splitlines():
-            if entry.lstrip() == f"kdc = {' '.join(SAMPLEDOM_REALM['kdc'])}":
-                has_kdc = True
 
-            if entry.lstrip() == f"admin_server = {' '.join(SAMPLEDOM_REALM['admin_server'])}":
-                has_admin_server = True
+    krb5conf_lines = results['output'].splitlines()
+    for idx, entry in enumerate(krb5conf_lines):
+        if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
+            assert krb5conf_lines[idx + 1].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][1]}"
+            assert krb5conf_lines[idx + 2].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][2]}"
+            has_kdc = True
 
-            if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
-                has_kpasswd_server = True
+        if entry.lstrip() == f"admin_server = {' '.join(SAMPLEDOM_REALM['admin_server'])}":
+            has_admin_server = True
+
+        if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
+            has_kpasswd_server = True
 
     assert has_kdc is True, results['output']
     assert has_admin_server is True, results['output']
