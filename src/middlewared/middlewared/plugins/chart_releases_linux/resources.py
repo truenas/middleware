@@ -282,3 +282,22 @@ class ChartReleaseService(Service):
                     workload_status[release_name]['available'] += (r_data['status']['ready_replicas'] or 0)
 
         return {'resources': resources, 'workload_status': workload_status}
+
+    @private
+    async def get_consumed_host_paths(self):
+        apps = {}
+        app_resources = collections.defaultdict(list)
+        resources = await self.get_resources_with_workload_mapping({
+            'resources': [Resources.DEPLOYMENT.name, Resources.STATEFULSET.name]
+        })
+        for resources_info in resources['resources'].values():
+            for app_name in resources_info:
+                app_resources[app_name].extend(resources_info[app_name])
+
+        for app_name in app_resources:
+            apps[app_name] = [
+                volume['host_path']['path']
+                for volume in await self.middleware.call('chart.release.host_path_volumes', app_resources[app_name])
+            ]
+
+        return apps
