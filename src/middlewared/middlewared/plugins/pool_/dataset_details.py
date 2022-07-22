@@ -49,7 +49,7 @@ class PoolDatasetService(Service):
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
             i['iscsi_shares'] = self.get_iscsi_shares(i, info['iscsi'])
             i['vms'] = self.get_vms(i, info['vm'])
-            i['apps'] = self.get_apps(i,  info['app'])
+            i['apps'] = self.get_apps(i, info['app'])
             i['replication_tasks_count'] = self.get_repl_tasks_count(i, info['repl'])
             i['snapshot_tasks_count'] = self.get_snapshot_tasks_count(i, info['snap'])
             i['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(i, info['cloud'])
