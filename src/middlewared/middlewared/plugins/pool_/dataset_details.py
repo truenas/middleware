@@ -17,6 +17,9 @@ class PoolDatasetService(Service):
         additional_attrs=True,
     ))
     def details(self):
+        """
+        Retrieve all dataset(s) details outlining any services/tasks which might be consuming the dataset(s).
+        """
         options = {
             'extra': {
                 'flat': False,
