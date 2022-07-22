@@ -1,11 +1,10 @@
 import errno
-import json
 import os
 import shutil
 
 from datetime import datetime
 
-from middlewared.client.ejson import JSONEncoder
+from middlewared.client import ejson as json
 from middlewared.schema import Dict, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 
@@ -75,7 +74,6 @@ class KubernetesService(Service):
                 # We will store information which maps the pv dataset to a pvc
                 f.write(json.dumps(
                     self.middleware.call_sync('chart.release.retrieve_pv_pvc_mapping_internal', chart_release),
-                    cls=JSONEncoder
                 ))
 
         job.set_progress(95, 'Taking snapshot of ix-applications')
