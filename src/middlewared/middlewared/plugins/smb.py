@@ -953,19 +953,6 @@ class SharingSMBService(SharingService):
     LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
 
     @private
-    async def sharing_task_datasets(self, data):
-        if data[self.path_field]:
-            return [os.path.relpath(data[self.path_field], '/mnt')]
-        else:
-            return []
-
-    @private
-    async def sharing_task_determine_locked(self, data, locked_datasets):
-        return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
-        ) if data[self.path_field] else False
-
-    @private
     async def strip_comments(self, data):
         parsed_config = ""
         for entry in data['auxsmbconf'].splitlines():
@@ -1555,9 +1542,8 @@ class SharingSMBService(SharingService):
 
         await self.cluster_share_validate(data, schema_name, verrors)
 
-        if data['path']:
-            if not data['cluster_volname']:
-                await self.validate_path_field(data, schema_name, verrors)
+        if not data['cluster_volname']:
+            await self.validate_path_field(data, schema_name, verrors)
 
             """
             When path is not a clustervolname, legacy behavior is to make all path components
@@ -1565,17 +1551,10 @@ class SharingSMBService(SharingService):
             unsupported filesystems over SMB as behavior with our default VFS options in such
             a situation is undefined.
             """
-            if not data['cluster_volname'] and os.path.exists(data['path']):
+            if os.path.exists(data['path']):
                 await self.middleware.run_in_thread(
                     self.validate_mount_info, verrors, f'{schema_name}.path', data['path']
                 )
-
-        elif not data['home']:
-            verrors.add(f'{schema_name}.path', 'This field is required.')
-        else:
-            ldap = await self.middleware.call('ldap.config')
-            if not ldap['enable'] or not ldap['has_samba_schema']:
-                verrors.add(f'{schema_name}.path', 'This field is required.')
 
         if data['auxsmbconf']:
             try:
@@ -1769,7 +1748,11 @@ class SharingSMBService(SharingService):
                                 "This may indicate that SMB service has not completed initialization.")
             return
 
-        active_shares = await self.query([('locked', '=', False), ('enabled', '=', True)])
+        active_shares = await self.query([
+            ('locked', '=', False),
+            ('enabled', '=', True),
+            ('path', '!=', '')
+        ])
         for share in active_shares:
             if share['home']:
                 share['name'] = 'homes'
