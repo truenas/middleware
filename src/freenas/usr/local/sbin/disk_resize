@@ -9,10 +9,9 @@ if [ "$#" -lt 1 -o "$#" -gt 2 -o -z "$1" ]; then
 	exit 1
 fi
 
-# Make sure provided disk is valid and not open by anything
-closed=`geom disk list "${dev}" | grep -c "Mode: r0w0e0"`
-if [ ${closed} -ne 1 ]; then
-	echo "The disk is in use or specified incorrectly, aborting."
+# Make sure provided disk is valid
+if ! grep -q " ${dev}$" /proc/partitions; then
+	echo "The disk is specified incorrectly, aborting."
 	exit 1
 fi
 
@@ -31,10 +30,11 @@ if [ -n "${osize}" ]; then
 			bsize=$(((${gsize} * 1000000000 + ((1 << 30) - 1)) & ~((1 << 30) - 1)))
 		fi
 		# Convert bytes into sectors.
-		sector=`diskinfo /dev/${dev} | cut -w -f 2`
+		sector=`lsblk -rndo log-sec /dev/${dev}`
 		size=$((${bsize} / ${sector}))
 	elif [ -n "${size}" ]; then
 		# Supplied size in sectors use as-is.
+		:
 	else
 		# Size not in sectors or gigabytes.  Fail.
 		echo "Incorrect size '${osize}'.  Specify in TB, GB or sectors."
@@ -47,65 +47,70 @@ fi
 
 # ATA, SCSI and NVMe have completely different resize commands.
 # SAT we handle as ATA via pass-through, but with some complications.
-if nvmecontrol nsid ${dev} >/dev/null 2>/dev/null; then
-	devtype="nvme"
-else
-	devtype=`camcontrol devtype ${dev} 2>/dev/null`
+devtype=`lsblk -rndo tran /dev/${dev}`
+if [ "${devtype}" = "sas" -a -e "/sys/block/${dev}/device/vpd_pg89" ]; then
+	devtype="sata"
 fi
-case "$devtype" in
-satl)
+case "${devtype}" in
+ata|sata)
 	# For SATL disks we first need to try to enable descriptor format
 	# sense data.  Without it some SATL devices return fixed format,
 	# that provides not enough response data for some ATA commands.
+	# All ATA/SATA disks go through some SATL in Linux, be it libata
+	# or some other hardware/driver.
 	echo "Enabling descriptor sense"
-	echo "D_SENSE: 1" | camcontrol modepage ${dev} -m 0x0a -e 2>&1 >/dev/null
-	;&
-ata)
+	field=`sginfo -C /dev/${dev} | awk '/---/ { start = NR } /D_SENSE/ { print NR - start }'`
+	sginfo -CX /dev/${dev} | awk "\$$field = 1" | xargs sginfo -CXNR /dev/${dev}
+
 	# Fetch the ATA disk capabilities, since there are many options.
-	ident=`camcontrol identify ${dev}`
-	if [ $? -ne 0 ]; then
-		echo "Can't get ATA identify data"
-		exit 1
-	fi
-	ama=`echo "${ident}" | grep -c "Accessible Max Address Config *yes"`
-	hpa=`echo "${ident}" | grep -c "Host Protected Area (HPA) *yes"`
+	ident=`hdparm -I /dev/${dev}`
+	ama=`echo "${ident}" | grep -Fc "unknown 119[8]"`
+	hpa=`echo "${ident}" | grep -Fc "Host Protected Area feature set"`
 	if [ ${ama} -eq 0 -a ${hpa} -eq 0 ]; then
 		echo "ATA device supports neither HPA nor AMA, can't resize"
 		exit 1
 	fi
-	ssd=`echo "${ident}" | grep -c "media RPM *non-rotating"`
-	block=`echo "${ident}" | grep -c "Sanitize.*block"`
-	crypto=`echo "${ident}" | grep -c "Sanitize.*crypto"`
-	security=`echo "${ident}" | grep -c "security *yes"`
+	ssd=`echo "${ident}" | grep -Fc "Nominal Media Rotation Rate: Solid State Device"`
+	block=`echo "${ident}" | grep -Fc "*	BLOCK_ERASE_EXT command"`
+	crypto=`echo "${ident}" | grep -Fc "*	CRYPTO_SCRAMBLE_EXT command"`
+	security=`echo "${ident}" | grep -Fc " for SECURITY ERASE UNIT"`
 	if [ ${security} -ne 0 ]; then
-		sfrozen=`camcontrol security ${dev} | grep -c "security config frozen *yes"`
-		if [  ${sfrozen} -ne 0 ]; then
+		snotfrozen=`echo "${ident}" | grep -Fc "not	frozen"`
+		if [ ${snotfrozen} -eq 0 ]; then
 			security="0"
 		fi
 	fi
-	trim=`diskinfo -v /dev/${dev} | grep -c "Yes.*# TRIM/UNMAP support"`
+	trim=`echo "${ident}" | grep -Fc "*	Data Set Management TRIM supported"`
+	maxsect=`hdparm -N /dev/${dev} | awk -F '[/,]' '/max sectors/ { print $2 }'`
 
 	# When resizing SSD to specified size (down?) deallocate the flash.
 	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
 		err=1
 		if [ ${block} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing block erase sanitize."
-			camcontrol sanitize ${dev} -a block -y
+			hdparm --yes-i-know-what-i-am-doing --sanitize-block-erase /dev/${dev}
 			err=$?
 		fi
 		if [ ${crypto} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing cryptograhic erase sanitize."
-			camcontrol sanitize ${dev} -a crypto -y
+			hdparm --yes-i-know-what-i-am-doing --sanitize-crypto-scramble /dev/${dev}
 			err=$?
+		fi
+		if [ ${err} -eq 0 ]; then
+			echo "Waiting for sanitize to complete."
+			until hdparm --sanitize-status /dev/${dev} | grep -Fq "SD0 Sanitize Idle"
+			do
+				sleep 1
+			done
 		fi
 		if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing security erase."
-			camcontrol security ${dev} -q -s MyPass -e MyPass -y
+			hdparm --yes-i-know-what-i-am-doing --security-erase MyPass /dev/${dev}
 			err=$?
 		fi
 		if [ ${trim} -ne 0 -a ${err} -ne 0 ]; then
 			echo "Doing TRIM."
-			trim -fq /dev/${dev}
+			blkdiscard /dev/${dev}
 			err=$?
 		fi
 		if [ ${err} -ne 0 ]; then
@@ -113,85 +118,34 @@ ata)
 		fi
 	fi
 
-	if [ ${ama} -ne 0 ]; then
-		if [ -z "${size}" ]; then
-			size=`echo "${ident}" | awk -F "[ \t/]+" '/Accessible Max Address Config/ { print $8 }'`
-		fi
-		echo "Setting Accessible Max Address to ${size}"
-		camcontrol ama ${dev} -qs ${size}
-		err=$?
-	else
-		if [ -z "${size}" ]; then
-			size=`echo "${ident}" | awk -F "[ \t/]+" '/Host Protected Area/ { print $8 }'`
-		fi
-		echo "Setting Host Protected Area to ${size}"
-		camcontrol hpa ${dev} -qPy -s ${size}
-		err=$?
+	if [ -z "${size}" ]; then
+		size=${maxsect}
 	fi
-	if [ ${err} -eq 0 ]; then
-		if [ ${devtype} = "satl" ]; then
-			echo "Resetting device"
-			camcontrol reset ${dev}
-			echo "Resize completed successfully.  Reboot may be needed."
-		else
-			echo "Resize completed successfully."
-		fi
+	echo "Setting Max Sectors to ${size}"
+	hdparm --yes-i-know-what-i-am-doing -N p${size} /dev/${dev}	# NB: the p is for persistence
+	if [ $? -eq 0 ]; then
+		echo "Resize completed successfully.  Reboot may be needed."
 		echo "Note that resize can be done only once per power cycle."
 	else
 		echo "Resize failed."
 		exit 1
 	fi
 	;;
-scsi)
-	# Check what block descriptor(s) device supports.
-	echo "Reading existing block descriptor"
-	descr=`camcontrol modepage ${dev} -DEL`
-	if [ $? -ne 0 ]; then
-		echo "MODE SENSE commands failed"
-		exit 1
-	fi
-	ndescr=`echo "${descr}" | grep -c "Logical Block Length"`
-	if [ ${ndescr} -eq 0 ]; then
-		echo "Device does not support block descriptors, can't resize"
-		exit 1
-	fi
-	if [ ${ndescr} -gt 1 ]; then
-		echo "Can't handle more then one (${ndescr}) block descriptor"
-		exit 1
-	fi
-	ldescr=`echo "${descr}" | grep -c "Number of Logical Blocks High"`
-
-	# Do actual resize by editing the block descriptor.
+sas|scsi)
 	echo "Changing number of LBAs in block descriptor"
-	if [ ${ldescr} -eq 0 ]; then
-		if [ -z "${size}" ]; then
-			lsize="0xffffffff"
-		elif [ "${size}" -le 4294967295 ]; then
-			lsize="${size}"
-		else
-			echo "Specified size is too big for the short block descriptor."
-			exit 1
-		fi
-		echo "Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
-		err=$?
+	if [ -z "${size}" ]; then
+		lsize="-1"
 	else
-		if [ -z "${size}" ]; then
-			hsize="0xffffffff"
-			lsize="0xffffffff"
-		else
-			hsize=$((${size} >> 32))
-			lsize=$((${size} & 0xffffffff))
-		fi
-		echo "Number of Logical Blocks High: ${hsize}
-Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
-		err=$?
+		lsize="${size}"
 	fi
+	sg_format --resize -c ${lsize} /dev/${dev}
+	err=$?
 
 	# When resizing SSD to specified size (down?) format to deallocate the flash.
-	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -c "Non-rotating medium"`
-	if [ ${ssd} -ne 0 -a -n "${size}" ]; then
+	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -Fc "Non-rotating medium"`
+	if [ ${err} -eq 0 -a ${ssd} -ne 0 -a -n "${size}" ]; then
 		echo "Formatting device."
-		camcontrol format ${dev} -y
+		sg_format --format /dev/${dev}
 	fi
 
 	if [ ${err} -eq 0 ]; then
@@ -203,20 +157,29 @@ Number of Logical Blocks: ${lsize}" | camcontrol modepage ${dev} -DELe -P3
 	;;
 nvme)
 	# Get controller and current namespace ID.
-	ctrlr=`nvmecontrol nsid ${dev}`
-	nsid=${ctrlr##*[[:space:]]}
-	ctrlr=${ctrlr%%[[:space:]]*}
+	ctrlr=/dev/${dev%n*}
+	nsid=${dev##nvme*n}
+
+	# Identify controller properties.
+	idctrl=`nvme id-ctrl ${ctrlr}`
+	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '{ print $2 }' | xargs | tr ' ' ,`
 
 	# Check Namespace Management is supported by the controller.
-	nsm=`nvmecontrol identify ${ctrlr} | grep -c "Namespace Management: *Supported"`
+	oacs=`echo "${idctrl}" | awk -F ' +: ' '$1 == "oacs" { print $2 }'`
+	nsm_bit=$((1 << 3))
+	nsm=$(((oacs & nsm_bit) == nsm_bit))
 	if [ ${nsm} -eq 0 ]; then
 		echo "Namespace management not supported, can't resize"
 		exit 1
 	fi
 
+	# Identify namespace properties.
+	idns=`nvme id-ns -n -1 ${ctrlr}`
+
 	# Get current LBA format of the namespace.
-	lbaf=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk -F '#' '/Current LBA Format/ { print $2 }'`
-	sector=`nvmecontrol identify -n 0xffffffff ${ctrlr} | awk "/LBA Format #${lbaf}:/ { print \\$6}"`
+	lbafds=`echo "${idns}" | sed -En '/(in use)/s/^lbaf +([[:digit:]]+) .* lbads:([[:digit:]]+) .*$/\1 \2/p'`
+	lbaf=${lbafds%% *}
+	sector=$((1 << ${lbafds##* }))
 	if [ -z "${lbaf}" -o -z "${sector}" ]; then
 		echo "Can't get current LBA format"
 		exit 1
@@ -224,42 +187,50 @@ nvme)
 
 	# Make sure we have enough capacity to not fail after delete.
 	if [ -n "${size}" ]; then
-		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
-		ocap=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^NVM Capacity:/ { print $3}'`
-		if [ "${size}" -gt $(((${ucap} + ${ocap}) / ${sector})) ]; then
+		ucap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "unvmcap" { print $2 }'`
+		ocap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "tnvmcap" { print $2 }'`
+		if [ "${size}" -gt $(((ucap + ocap) / sector)) ]; then
 			echo "Not enough capacity."
 			exit 1
 		fi
 	fi
 
-	echo "Deleting old namespace."
-	nvmecontrol ns delete -n ${nsid} ${ctrlr} >/dev/null
+	echo "Detaching old namespace."
+	nvme detach-ns -n ${nsid} -c ${ctrls} ${ctrlr}
 	if [ $? -ne 0 ]; then
-		echo "Can't delete old namespace, but continue any way"
+		echo "Can't detach old namespace, but continuing anyway"
 	fi
-	if [ -z "${size}" ]; then
-		ucap=`nvmecontrol identify ${ctrlr} | awk '/Unallocated NVM Capacity:/ { print $4 }'`
-		size=$((${ucap} / ${sector}))
+
+	echo "Deleting old namespace."
+	nvme delete-ns -n ${nsid} ${ctrlr}
+	if [ $? -ne 0 ]; then
+		echo "Can't delete old namespace, but continuing anyway"
 	fi
 
 	echo "Creating new namespace."
-	nsid=`nvmecontrol ns create -s ${size} -f ${lbaf} -n 1 -d 0 ${ctrlr} | awk '/namespace [0-9]+ created/ { print $2 }'`
+	if [ -z "${size}" ]; then
+		idctrl=`nvme id-ctrl ${ctrlr}`
+		ucap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "unvmcap" { print $2 }'`
+		size=$((ucap / sector))
+	fi
+	created=`nvme create-ns -s ${size} -c ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
+	echo "${created}"
+	nsid=`echo "${created}" | awk -F nsid: '{ print $2 }'`
 	if [ -z "${nsid}" ]; then
 		echo "Namespace creation failed"
 		exit 1
 	fi
 
 	echo "Attaching new namespace."
-	nvmecontrol ns attach -n ${nsid} -c 0xffffffff ${ctrlr} >/dev/null
+	nvme attach-ns -n ${nsid} -c ${ctrls} ${ctrlr}
 	if [ $? -ne 0 ]; then
 		echo "Namespace attach failed"
 		exit 1
 	fi
 
 	echo "Rescanning namespaces."
-	devctl disable ${ctrlr}
-	devctl enable ${ctrlr}
-	nsize=`nvmecontrol identify -n ${nsid} ${ctrlr} | awk '/^Size:/ { print $2}'`
+	udevadm trigger -w ${ctrlr}
+	nsize=$((`nvme id-ns -n ${nsid} ${ctrlr} | awk -F ' +: ' '$1 == "nsze" { print $2}'`))
 	if [ ${nsize} -eq ${size} ]; then
 		echo "Resize completed successfully."
 	else
