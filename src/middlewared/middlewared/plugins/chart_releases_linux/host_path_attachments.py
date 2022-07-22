@@ -15,7 +15,7 @@ class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
                 release['status'] == 'STOPPED' if enabled else release['status'] != 'STOPPED'
             ):
                 continue
-            if any(is_child(p['host_path']['path'], path) for p in release['resources']['host_path_volumes']):
+            if any(is_child(p, path) for p in release['resources']['host_path_volumes']):
                 chart_releases_attached.append({
                     'id': release['name'],
                     'name': release['name'],

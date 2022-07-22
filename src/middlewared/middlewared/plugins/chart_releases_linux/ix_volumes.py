@@ -45,8 +45,7 @@ class ChartReleaseService(Service):
         if not await self.middleware.call('zfs.dataset.query', [['id', '=', volume_ds]]):
             raise CallError(f'Unable to locate {volume_name!r} volume', errno=errno.ENOENT)
 
-        used_host_path_volumes = {v['host_path'].get('path', '') for v in release['resources']['host_path_volumes']}
-        if os.path.join('/mnt', volume_ds) in used_host_path_volumes:
+        if os.path.join('/mnt', volume_ds) in release['resources']['host_path_volumes']:
             raise CallError(
                 f'{volume_name!r} is configured as a host path volume for a workload, please remove it from workload'
             )

@@ -241,10 +241,8 @@ class ChartReleaseService(CRUDService):
                 }
                 if get_locked_paths:
                     release_resources['locked_host_paths'] = [
-                        v['host_path']['path'] for v in release_resources['host_path_volumes']
-                        if await self.middleware.call(
-                            'pool.dataset.path_in_locked_datasets', v['host_path']['path'], locked_datasets
-                        )
+                        v for v in release_resources['host_path_volumes']
+                        if await self.middleware.call('pool.dataset.path_in_locked_datasets', v, locked_datasets)
                     ]
 
                 release_data['resources'] = release_resources
