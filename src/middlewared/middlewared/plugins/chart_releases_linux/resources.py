@@ -286,6 +286,9 @@ class ChartReleaseService(Service):
     @private
     async def get_consumed_host_paths(self):
         apps = {}
+        if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
+            return apps
+
         app_resources = collections.defaultdict(list)
         resources = await self.get_resources_with_workload_mapping({
             'resources': [Resources.DEPLOYMENT.name, Resources.STATEFULSET.name]
