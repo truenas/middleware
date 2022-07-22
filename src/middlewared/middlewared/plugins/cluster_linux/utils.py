@@ -166,6 +166,7 @@ class CTDBConfig(enum.Enum):
     GM_RECOVERY_FILE = os.path.join(CTDB_LOCAL_MOUNT, REC_FILE)
     GM_PRI_IP_FILE = os.path.join(CTDB_LOCAL_MOUNT, PRIVATE_IP_FILE)
     GM_PUB_IP_FILE = os.path.join(CTDB_LOCAL_MOUNT, PUBLIC_IP_FILE)
+    GM_CLUSTERED_SERVICES = os.path.join(CTDB_LOCAL_MOUNT, '.clustered_services')
 
     # ctdb etc config
     CTDB_ETC = '/etc/ctdb'
