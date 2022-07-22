@@ -203,13 +203,16 @@ nvme)
 	if [ $? -ne 0 ]; then
 		echo "Can't delete old namespace, but continuing anyway"
 	fi
+
+	echo "Creating new namespace."
 	if [ -z "${size}" ]; then
+		idctrl=`nvme id-ctrl ${ctrlr}`
 		ucap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "unvmcap" { print $2 }'`
 		size=$((ucap / sector))
 	fi
-
-	echo "Creating new namespace."
-	nsid=`nvme create-ns -s ${size} -c ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
+	created=`nvme create-ns -s ${size} -c ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
+	echo "${created}"
+	nsid=`echo "${created}" | awk -F nsid: '{ print $2 }'`
 	if [ -z "${nsid}" ]; then
 		echo "Namespace creation failed"
 		exit 1
