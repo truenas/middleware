@@ -6,7 +6,7 @@
         hamode = middleware.call_sync('smb.get_smb_ha_mode')
         if hamode == 'CLUSTERED':
             pnn = middleware.call_sync('ctdb.general.pnn')
-            recmaster = middleware.call_sync('ctdb.general.recovery_masterr')
+            recmaster = middleware.call_sync('ctdb.general.recovery_master')
             if pnn != recmaster:
                 enabled = False
 

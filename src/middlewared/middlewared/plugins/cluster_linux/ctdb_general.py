@@ -244,15 +244,9 @@ class CtdbGeneralService(Service):
         if self.this_node is not None:
             return self.this_node
 
-        try:
-            # gluster volume root has inode of 1.
-            # if gluster isn't mounted it will be different
-            # if volume is unhealthy this will fail
-            if os.stat(f'/cluster/{CTDB_VOL}').st_ino != 1:
-                return False
-        except Exception:
-            return False
-
+        # since ctdbd will fail to init if ctdb shared volume is
+        # not mounted, we can skip our normal stat() check for
+        # gluster mountpoint
         self.this_node = ctdb.Client().pnn
         return self.this_node
 
@@ -263,3 +257,7 @@ class CtdbGeneralService(Service):
         Return node number for the recovery master for the cluster.
         """
         return ctdb.Client().recmaster()
+
+    @private
+    def is_rec_master(self):
+        return self.pnn() == self.recovery_master()
