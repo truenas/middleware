@@ -1,7 +1,7 @@
 import os
 
 from middlewared.service import Service, private
-from middlewared.schema import accepts, returns, Dict
+from middlewared.schema import accepts, List, returns
 from middlewared.plugins.zfs_.utils import ZFSCTL
 from middlewared.utils.osc.linux.mount import getmntinfo
 
@@ -12,9 +12,102 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @accepts()
-    @returns(Dict(
-        'datasets',
-        additional_attrs=True,
+    @returns(List(
+        'dataset_details',
+        example=[{
+            'id': 'tank',
+            'type': 'FILESYSTEM',
+            'name': 'tank',
+            'pool': 'tank',
+            'encrypted': False,
+            'children': [
+                {
+                    'id': 'tank/soemthing o',
+                    'type': 'VOLUME',
+                    'name': 'tank/soemthing o',
+                    'pool': 'tank',
+                    'encrypted': False,
+                    'children': [],
+                    'reservation': {
+                        'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'refreservation': {
+                        'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'encryption_algorithm': {
+                        'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'used': {
+                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'NONE', 'source_info': None
+                    },
+                    'usedbychildren': {
+                        'parsed': 0, 'rawvalue': '0', 'value': '0B', 'source': 'NONE', 'source_info': None
+                    },
+                    'usedbydataset': {
+                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'NONE', 'source_info': None
+                    },
+                    'usedbysnapshots': {
+                        'parsed': 0, 'rawvalue': '0', 'value': '0B', 'source': 'NONE', 'source_info': None
+                    },
+                    'available': {
+                        'parsed': 14328811520, 'rawvalue': '14328811520',
+                        'value': '13.3G', 'source': 'NONE', 'source_info': None
+                    },
+                    'mountpoint': None,
+                    'user_properties': {},
+                    'snapshot_count': 0,
+                    'locked': False,
+                    'nfs_shares': [],
+                    'smb_shares': [],
+                    'iscsi_shares': [],
+                    'vms': [],
+                    'apps': [],
+                    'replication_tasks_count': 0,
+                    'snapshot_tasks_count': 0,
+                    'cloudsync_tasks_count': 0,
+                    'rsync_tasks_count': 0
+                }
+            ],
+            'mountpoint': '/mnt/tank',
+            'quota': {'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None},
+            'refquota': {'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None},
+            'reservation': {'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None},
+            'refreservation': {
+                'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
+            },
+            'encryption_algorithm': {
+                'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
+            },
+            'used': {
+                'parsed': 3874467840, 'rawvalue': '3874467840', 'value': '3.61G', 'source': 'NONE', 'source_info': None
+            },
+            'usedbychildren': {
+                'parsed': 3874369536, 'rawvalue': '3874369536', 'value': '3.61G', 'source': 'NONE', 'source_info': None
+            },
+            'usedbydataset': {
+                'parsed': 98304, 'rawvalue': '98304', 'value': '96K', 'source': 'NONE', 'source_info': None
+            },
+            'usedbysnapshots': {'parsed': 0, 'rawvalue': '0', 'value': '0B', 'source': 'NONE', 'source_info': None},
+            'available': {
+                'parsed': 14328811520, 'rawvalue': '14328811520',
+                'value': '13.3G', 'source': 'NONE', 'source_info': None
+            },
+            'user_properties': {},
+            'snapshot_count': 0,
+            'locked': False,
+            'nfs_shares': [],
+            'smb_shares': [],
+            'iscsi_shares': [],
+            'vms': [],
+            'apps': [{
+                'name': 'plex',
+                'path': '/mnt/evo/data',
+            }],
+            'replication_tasks_count': 0,
+            'snapshot_tasks_count': 0,
+            'cloudsync_tasks_count': 0,
+            'rsync_tasks_count': 0,
+        }]
     ))
     def details(self):
         """
