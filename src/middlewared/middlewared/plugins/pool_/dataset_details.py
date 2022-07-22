@@ -40,7 +40,7 @@ class PoolDatasetService(Service):
             self.collapse_datasets(dataset, collapsed)
 
         mntinfo = getmntinfo()
-        info = self.build_share_and_task_info(mntinfo)
+        info = self.build_details(mntinfo)
         for i in collapsed:
             snapshot_count, locked = self.get_snapcount_and_encryption_status(i, mntinfo)
             i['snapshot_count'] = snapshot_count
@@ -48,6 +48,8 @@ class PoolDatasetService(Service):
             i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
             i['iscsi_shares'] = self.get_iscsi_shares(i, info['iscsi'])
+            i['vms'] = self.get_vms(i, info['vm'])
+            i['apps'] = self.get_apps(i,  info['app'])
             i['replication_tasks_count'] = self.get_repl_tasks_count(i, info['repl'])
             i['snapshot_tasks_count'] = self.get_snapshot_tasks_count(i, info['snap'])
             i['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(i, info['cloud'])
@@ -76,8 +78,12 @@ class PoolDatasetService(Service):
         return mount_info
 
     @private
-    def build_share_and_task_info(self, mntinfo):
-        results = {'iscsi': [], 'nfs': [], 'smb': [], 'repl': [], 'snap': [], 'cloud': [], 'rsync': []}
+    def build_details(self, mntinfo):
+        results = {
+            'iscsi': [], 'nfs': [], 'smb': [],
+            'repl': [], 'snap': [], 'cloud': [],
+            'rsync': [], 'vm': [], 'app': []
+        }
 
         # iscsi
         t_to_e = self.middleware.call_sync('iscsi.targetextent.query')
@@ -121,6 +127,41 @@ class PoolDatasetService(Service):
         for task in self.middleware.call_sync('rsynctask.query'):
             task['mount_info'] = self.get_mount_info(task['path'], mntinfo)
             results['rsync'].append(task)
+
+        # vm
+        for vm in self.middleware.call_sync('datastore.query', 'vm.device'):
+            if vm['dtype'] not in ('RAW', 'DISK'):
+                continue
+
+            if vm['dtype'] == 'DISK':
+                # disk type is always a zvol
+                vm['zvol'] = vm['attributes']['path'].removeprefix('/dev/zvol/')
+            else:
+                # raw type is always a file
+                vm['mount_info'] = self.get_mount_info(vm['attributes']['path'], mntinfo)
+
+            results['vm'].append(vm)
+
+        # app
+        """
+        FIXME: this call is too expensive. Mostly because it queries entirely too much
+            information when we're only after the container name and any datasets on
+            the host machine that the container is using. Without this method, the total
+            time this method takes in worst case scenario (1k datasets, 15k snapshots,
+            90 smb shares, 36 nfs shares, 20 iscsi shares) takes ~2.2-2.4 seconds. When
+            adding this method, it baloons too ~4.1 seconds (with only 1 app). A separate
+            endpoint will be added (eventually) that will be less expensive than this.
+        options = {'extra': {'retrieve_resources': True}}
+        for app in self.middleware.call_sync('chart.release.query', [], options):
+            for i in app['resources']['host_path_volumes']:
+                path = i['host_path']['path']
+                if 'ix-applications/' in path:
+                    continue
+
+                i['mount_info'] = self.get_mount_info(path, mntinfo)
+
+            results['app'].append(app)
+        """
 
         return results
 
@@ -236,3 +277,30 @@ class PoolDatasetService(Service):
                 count += 1
 
         return count
+
+    @private
+    def get_vms(self, ds, _vms):
+        vms = []
+        for i in _vms:
+            if (
+                'zvol' in i and i['zvol'] == ds['id'] or
+                i['attributes']['path'] == ds['mountpoint'] or
+                i.get('mount_info', {}).get('mount_source') == ds['id']
+            ):
+                vms.append({'name': i['vm']['name'], 'path': i['attributes']['path']})
+
+        return vms
+
+    @private
+    def get_apps(self, ds, _apps):
+        apps = []
+        for app in _apps:
+            for i in app['resources']['host_path_volumes']:
+                path = i['host_path']['path']
+                if 'ix-applications/' in path:
+                    continue
+
+                if path == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
+                    apps.append({'name': app['name'], 'path': path})
+
+        return apps
