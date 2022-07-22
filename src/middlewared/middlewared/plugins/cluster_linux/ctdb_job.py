@@ -78,7 +78,7 @@ class ClusterJob(Service):
 
             await self.update_status(entry['key'], CLStatus.RUNNING.name, entry['timeout'])
             try:
-                if entry['payload']:
+                if entry.get('payload') is not None:
                     rv = await self.middleware.call(entry['method'], entry['payload'])
                 else:
                     rv = await self.middleware.call(entry['method'])
