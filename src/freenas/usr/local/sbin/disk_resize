@@ -70,17 +70,17 @@ ata|sata)
 		echo "ATA device supports neither HPA nor AMA, can't resize"
 		exit 1
 	fi
-	ssd=`echo "${ident}" | grep -c "Nominal Media Rotation Rate: Solid State Device"`
-	block=`echo "${ident}" | grep -c "\*	BLOCK_ERASE_EXT command"`
-	crypto=`echo "${ident}" | grep -c "\*	CRYPTO_SCRAMBLE_EXT command"`
-	security=`echo "${ident}" | grep -c " for SECURITY ERASE UNIT"`
+	ssd=`echo "${ident}" | grep -Fc "Nominal Media Rotation Rate: Solid State Device"`
+	block=`echo "${ident}" | grep -Fc "*	BLOCK_ERASE_EXT command"`
+	crypto=`echo "${ident}" | grep -Fc "*	CRYPTO_SCRAMBLE_EXT command"`
+	security=`echo "${ident}" | grep -Fc " for SECURITY ERASE UNIT"`
 	if [ ${security} -ne 0 ]; then
-		snotfrozen=`echo "${ident}" | grep -c "not	frozen"`
+		snotfrozen=`echo "${ident}" | grep -Fc "not	frozen"`
 		if [ ${snotfrozen} -eq 0 ]; then
 			security="0"
 		fi
 	fi
-	trim=`echo "${ident}" | grep -c "\*	Data Set Management TRIM supported"`
+	trim=`echo "${ident}" | grep -Fc "*	Data Set Management TRIM supported"`
 	maxsect=`hdparm -N /dev/${dev} | awk -F '[/,]' '/max sectors/ { print $2 }'`
 
 	# When resizing SSD to specified size (down?) deallocate the flash.
@@ -142,7 +142,7 @@ sas|scsi)
 	err=$?
 
 	# When resizing SSD to specified size (down?) format to deallocate the flash.
-	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -c "Non-rotating medium"`
+	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -Fc "Non-rotating medium"`
 	if [ ${err} -eq 0 -a ${ssd} -ne 0 -a -n "${size}" ]; then
 		echo "Formatting device."
 		sg_format --format /dev/${dev}
