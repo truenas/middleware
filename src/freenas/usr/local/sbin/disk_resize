@@ -100,7 +100,7 @@ ata|sata)
 			echo "Waiting for sanitize to complete."
 			until hdparm --sanitize-status /dev/${dev} | grep -Fq "SD0 Sanitize Idle"
 			do
-				sleep 10
+				sleep 1
 			done
 		fi
 		if [ ${security} -ne 0 -a ${err} -ne 0 ]; then
