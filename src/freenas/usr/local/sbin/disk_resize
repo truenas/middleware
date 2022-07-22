@@ -160,9 +160,8 @@ nvme)
 	ctrlr=/dev/${dev%n*}
 	nsid=${dev##nvme*n}
 
-	# Identify controller and namespace properties.
+	# Identify controller properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
-	idns=`nvme id-ns -n -1 ${ctrlr}`
 	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '{ print $2 }' | xargs | tr ' ' ,`
 
 	# Check Namespace Management is supported by the controller.
@@ -173,6 +172,9 @@ nvme)
 		echo "Namespace management not supported, can't resize"
 		exit 1
 	fi
+
+	# Identify namespace properties.
+	idns=`nvme id-ns -n -1 ${ctrlr}`
 
 	# Get current LBA format of the namespace.
 	lbafds=`echo "${idns}" | sed -En '/(in use)/s/^lbaf +([[:digit:]]+) .* lbads:([[:digit:]]+) .*$/\1 \2/p'`
