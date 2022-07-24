@@ -94,6 +94,13 @@ class ActiveDirectoryService(Service):
             await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['DISABLED'].name})
             return False
 
+        """
+        Initialize state to "JOINING" until after booted.
+        """
+        if not await self.middleware.call('system.ready'):
+            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['JOINING'].name})
+            return True
+
         await self.middleware.call('activedirectory.common_validate', config, config, verrors)
 
         try:
@@ -102,13 +109,6 @@ class ActiveDirectoryService(Service):
             await self.middleware.call('activedirectory.direct_update', {"enable": False})
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
-
-        """
-        Initialize state to "JOINING" until after booted.
-        """
-        if not await self.middleware.call('system.ready'):
-            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['JOINING'].name})
-            return True
 
         """
         Verify winbindd netlogon connection.
