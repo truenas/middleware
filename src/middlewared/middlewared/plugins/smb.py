@@ -155,7 +155,7 @@ class SMBSharePreset(enum.Enum):
             'ixnas:zfs_auto_homedir=true' if osc.IS_FREEBSD else 'zfs_core:zfs_auto_create=true'
         ])
     }, "cluster": False}
-    READ_ONLY = {"verbose": "Read-only share", "params": {
+    READ_ONLY = {"verbose_name": "Read-only share", "params": {
         'ro': True,
         'shadowcopy': False,
         'auxsmbconf': '',
