@@ -1,4 +1,5 @@
 import os
+import psutil
 
 from middlewared.service import CallError, Service
 from middlewared.utils import run
@@ -17,6 +18,11 @@ class SysctlService(Service):
         if cp.returncode:
             raise CallError(f'Unable to retrieve value of "{sysctl_name}" sysctl : {cp.stderr.decode()}')
         return cp.stdout.decode().split('=')[-1].strip()
+
+    def get_default_arc_max(self):
+        # Default value of arc max on systems
+        # https://github.com/truenas/zfs/blob/f38f3a4a3ee430a15fa221ba9fc2b6b8fd17c040/module/os/linux/zfs/arc_os.c#L85
+        return psutil.virtual_memory().total // 2
 
     def get_arc_max(self):
         return self.get_arcstats()['c_max']
