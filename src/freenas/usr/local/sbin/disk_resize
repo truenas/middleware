@@ -145,7 +145,7 @@ sas|scsi)
 	ssd=`sg_vpd -p bdc /dev/${dev} 2>/dev/null | grep -Fc "Non-rotating medium"`
 	if [ ${err} -eq 0 -a ${ssd} -ne 0 -a -n "${size}" ]; then
 		echo "Formatting device."
-		sg_format --format /dev/${dev}
+		sg_format --format --quick /dev/${dev}
 	fi
 
 	if [ ${err} -eq 0 ]; then
