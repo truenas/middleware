@@ -2412,8 +2412,9 @@ class DNSService(Service):
         resolvconf = ''
         if domain:
             resolvconf += 'domain {}\n'.format(domain)
+            domains.insert(0, domain)  # domain name should be included on search line
         if domains:
-            resolvconf += 'search {}\n'.format(' '.join([domain] + domains).strip())
+            resolvconf += 'search {}\n'.format(' '.join(domains))
 
         resolvconf += self.configure_nameservers(nameservers)
 
