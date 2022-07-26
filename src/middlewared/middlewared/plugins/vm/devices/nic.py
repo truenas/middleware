@@ -1,7 +1,7 @@
 import random
 
 from middlewared.plugins.interface.netif import netif
-from middlewared.schema import Dict, Str
+from middlewared.schema import Bool, Dict, Str
 from middlewared.service import CallError
 from middlewared.validators import MACAddr
 
@@ -13,8 +13,10 @@ class NIC(Device):
 
     schema = Dict(
         'attributes',
+        Bool('trust_guest_rx_filters', default=False),
         Str('type', enum=['E1000', 'VIRTIO'], default='E1000'),
         Str('nic_attach', default=None, null=True),
+        Str('mac', default=None, null=True, validators=[MACAddr(separator=':')]),
         Str('mac', default=None, null=True, validators=[MACAddr(separator=':')]),
     )
 
@@ -78,8 +80,9 @@ class NIC(Device):
                 }
             )
         else:
+            trust_guest_rx_filters = 'yes' if self.data['attributes']['trust_guest_rx_filters'] else 'no'
             return create_element(
-                'interface', type='direct', attribute_dict={
+                'interface', type='direct', trustGuestRxFilters=trust_guest_rx_filters, attribute_dict={
                     'children': [
                         create_element('source', dev=self.nic_attach, mode='bridge')
                     ] + self.xml_children()
