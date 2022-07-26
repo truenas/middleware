@@ -34,7 +34,7 @@ class NTPHealthCheckAlertSource(AlertSource):
         if not active_peer:
             return Alert(
                 NTPHealthCheckAlertClass,
-                {'reason': f'No NTP peers: {[{x["remote"]: x["status"]} for x in peers]}'}
+                {'reason': f'No Active NTP peers: {[{x["remote"]: x["status"]} for x in peers]}'}
             )
 
         peer = active_peer[0]
