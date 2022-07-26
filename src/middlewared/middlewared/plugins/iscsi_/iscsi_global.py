@@ -17,6 +17,7 @@ class ISCSIGlobalModel(sa.Model):
     iscsi_isns_servers = sa.Column(sa.Text())
     iscsi_pool_avail_threshold = sa.Column(sa.Integer(), nullable=True)
     iscsi_alua = sa.Column(sa.Boolean(), default=False)
+    iscsi_listen_port = sa.Column(sa.Integer(), nullable=False, default=3260)
 
 
 class ISCSIGlobalService(SystemServiceService):
@@ -38,6 +39,7 @@ class ISCSIGlobalService(SystemServiceService):
         'iscsiglobal_update',
         Str('basename'),
         List('isns_servers', items=[Str('server')]),
+        Int('listen_port', validators=[Range(min=1025, max=65535)], default=3260),
         Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
         Bool('alua'),
         update=True
