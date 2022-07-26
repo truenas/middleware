@@ -61,12 +61,13 @@ def pathref_open(path: str, **kwargs) -> int:
     fd = -1
 
     try:
-        fd = os.open(path, flags | os.O_NOFOLLOW, dir_fd=dir_fd)
+        fd = os.open(path, flags, dir_fd=dir_fd)
     except FileNotFoundError:
         if not mkdir:
             raise
 
         os.mkdir(path, expected_mode or 0o755, dir_fd=dir_fd)
+        fd = os.open(path, flags, dir_fd=dir_fd)
     except OSError as e:
         # open will fail with ELOOP if last component is symlink
         # due to O_NOFOLLOW
