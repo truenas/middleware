@@ -99,16 +99,13 @@ class ISCSIPortalService(CRUDService):
             system_ips = await self.listen_ip_choices()
             new_ips = set(i['ip'] for i in data['listen']) - set(i['ip'] for i in old['listen']) if old else set()
             for i in data['listen']:
-                filters = [
-                    ('iscsi_target_portalip_ip', '=', i['ip']),
-                    ('iscsi_target_portalip_port', '=', i['port']),
-                ]
+                filters = [('iscsi_target_portalip_ip', '=', i['ip'])]
                 if schema == 'iscsiportal_update':
                     filters.append(('iscsi_target_portalip_portal', '!=', data['id']))
                 if await self.middleware.call(
                     'datastore.query', 'services.iscsitargetportalip', filters
                 ):
-                    verrors.add(f'{schema}.listen', f'{i["ip"]}:{i["port"]} already in use.')
+                    verrors.add(f'{schema}.listen', f'{i["ip"]!r} IP is already in use.')
 
                 if (
                     (i['ip'] in new_ips or not new_ips) and
@@ -139,7 +136,6 @@ class ISCSIPortalService(CRUDService):
             Dict(
                 'listen',
                 IPAddr('ip', required=True),
-                Int('port', default=3260, validators=[Range(min=1, max=65535)]),
             ),
         ]),
         register=True,
@@ -179,7 +175,7 @@ class ISCSIPortalService(CRUDService):
 
     async def __save_listen(self, pk, new, old=None):
         """
-        Update database with a set new listen IP:PORT tuples.
+        Update database with a set new listen IP tuples.
         It will delete no longer existing addresses and add new ones.
         """
         new_listen_set = set([tuple(i.items()) for i in new])
@@ -189,7 +185,7 @@ class ISCSIPortalService(CRUDService):
             await self.middleware.call(
                 'datastore.insert',
                 'services.iscsitargetportalip',
-                {'portal': pk, 'ip': i['ip'], 'port': i['port']},
+                {'portal': pk, 'ip': i['ip']},
                 {'prefix': 'iscsi_target_portalip_'}
             )
 
@@ -198,7 +194,7 @@ class ISCSIPortalService(CRUDService):
             portalip = await self.middleware.call(
                 'datastore.query',
                 'services.iscsitargetportalip',
-                [('portal', '=', pk), ('ip', '=', i['ip']), ('port', '=', i['port'])],
+                [('portal', '=', pk), ('ip', '=', i['ip'])],
                 {'prefix': 'iscsi_target_portalip_'}
             )
             if portalip:
