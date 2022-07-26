@@ -430,6 +430,16 @@ class VMDeviceService(CRUDService):
                 nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
                 if nic not in nic_choices:
                     verrors.add('attributes.nic_attach', 'Not a valid choice.')
+                elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
+                    verrors.add(
+                        'attributes.trust_guest_rx_filters',
+                        'This can only be set when "nic_attach" is not a bridge device'
+                    )
+            if device['attributes']['trust_guest_rx_filters'] and device['attributes']['type'] == 'E1000':
+                verrors.add(
+                    'attributes.trust_guest_rx_filters',
+                    'This can only be set when "type" of NIC device is "VIRTIO"'
+                )
         elif device.get('dtype') == 'PCI':
             pptdev = device['attributes'].get('pptdev')
             device_details = await self.middleware.call('vm.device.passthrough_device', pptdev)
