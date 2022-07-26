@@ -4,7 +4,6 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
-from middlewared.validators import Range
 
 from .utils import AUTHMETHOD_LEGACY_MAP
 
