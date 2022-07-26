@@ -470,7 +470,7 @@ class FailoverService(ConfigService):
     def _disabled_reasons(self, app):
         reasons = set()
 
-        fenced_running = self.middleware.call('failover.fenced.run_info')['running']
+        fenced_running = self.middleware.call_sync('failover.fenced.run_info')['running']
         num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
         if fenced_running and num_of_zpools_imported <= 1:
             # returns the boot pool by default
