@@ -20,7 +20,7 @@ def upgrade():
     conn = op.get_bind()
 
     with op.batch_alter_table('services_iscsitargetglobalconfiguration', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('iscsi_listen_port', sa.INTEGER(), nullable=False))
+        batch_op.add_column(sa.Column('iscsi_listen_port', sa.INTEGER(), nullable=False, server_default='3260'))
 
     listen_port = None
     all_ports = set()
@@ -39,6 +39,10 @@ def upgrade():
     conn.execute("UPDATE services_iscsitargetglobalconfiguration SET iscsi_listen_port = ?", listen_port)
 
     with op.batch_alter_table('services_iscsitargetportalip', schema=None) as batch_op:
+        batch_op.create_index(
+            'services_iscsitargetportalip_iscsi_target_portalip_ip', ['iscsi_target_portalip_ip'], unique=True
+        )
+        batch_op.drop_index('services_iscsitargetportalip_iscsi_target_portalip_ip__iscsi_target_portalip_port')
         batch_op.drop_column('iscsi_target_portalip_port')
 
 
