@@ -1,7 +1,7 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 TITLE = 'Disks Missing On '
-TEXT = 'Disks with serial %(serial)s present on '
+TEXT = 'Disks with serial %(serials)s present on '
 
 
 class DisksAreNotPresentOnStandbyNodeAlertClass(AlertClass):
