@@ -21,9 +21,7 @@ class ISCSIPortalModel(sa.Model):
 class ISCSIPortalIPModel(sa.Model):
     __tablename__ = 'services_iscsitargetportalip'
     __table_args__ = (
-        sa.Index('services_iscsitargetportalip_iscsi_target_portalip_ip__iscsi_target_portalip_port',
-                 'iscsi_target_portalip_ip', 'iscsi_target_portalip_port',
-                 unique=True),
+        sa.Index('services_iscsitargetportalip_iscsi_target_portalip_ip', 'iscsi_target_portalip_ip', unique=True),
     )
 
     id = sa.Column(sa.Integer(), primary_key=True)
