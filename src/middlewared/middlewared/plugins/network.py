@@ -2413,7 +2413,7 @@ class DNSService(Service):
         if domain:
             resolvconf += 'domain {}\n'.format(domain)
         if domains:
-            resolvconf += 'search {}\n'.format(' '.join(domains))
+            resolvconf += 'search {}\n'.format(' '.join([domain] + domains).strip())
 
         resolvconf += self.configure_nameservers(nameservers)
 
