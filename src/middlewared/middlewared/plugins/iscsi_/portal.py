@@ -30,7 +30,6 @@ class ISCSIPortalIPModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     iscsi_target_portalip_portal_id = sa.Column(sa.ForeignKey('services_iscsitargetportal.id'), index=True)
     iscsi_target_portalip_ip = sa.Column(sa.CHAR(15))
-    iscsi_target_portalip_port = sa.Column(sa.SmallInteger(), default=3260)
 
 
 class ISCSIPortalService(CRUDService):
@@ -38,12 +37,19 @@ class ISCSIPortalService(CRUDService):
     class Config:
         datastore = 'services.iscsitargetportal'
         datastore_extend = 'iscsi.portal.config_extend'
+        datastore_extend_context = 'iscsi.portal.config_extend_context'
         datastore_prefix = 'iscsi_target_portal_'
         namespace = 'iscsi.portal'
         cli_namespace = 'sharing.iscsi.portal'
 
     @private
-    async def config_extend(self, data):
+    async def config_extend_context(self, rows, extra):
+        return {
+            'global_config': await self.middleware.call('iscsi.global.config'),
+        }
+
+    @private
+    async def config_extend(self, data, context):
         data['listen'] = []
         for portalip in await self.middleware.call(
             'datastore.query',
@@ -53,7 +59,7 @@ class ISCSIPortalService(CRUDService):
         ):
             data['listen'].append({
                 'ip': portalip['ip'],
-                'port': portalip['port'],
+                'port': context['global_config']['listen_port'],
             })
         data['discovery_authmethod'] = AUTHMETHOD_LEGACY_MAP.get(
             data.pop('discoveryauthmethod')
