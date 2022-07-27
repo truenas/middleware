@@ -52,7 +52,7 @@ class FailoverService(ConfigService):
     HA_MODE = None
     HA_LICENSED = None
     LAST_STATUS = None
-    LAST_DISABLEDREASONS = None
+    LAST_DISABLED_REASONS = None
 
     class Config:
         datastore = 'system.failover'
