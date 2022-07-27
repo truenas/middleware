@@ -142,8 +142,8 @@ class SchemaMixin:
         tdb_key = f'{tdb_handle.name}_{id}'
 
         ops = [
-            {"action": "SET", "key": tdb_key, "val": json.dumps(data)},
-            {"action": "SET", "key": "hwm", "val": str(id)}
+            {"action": "SET", "key": tdb_key, "val": data},
+            {"action": "SET", "key": "hwm", "val": id}
         ]
         tdb_handle.batch_op(ops)
         tdb_handle.last_read = 0
