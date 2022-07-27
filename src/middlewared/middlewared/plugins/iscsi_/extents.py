@@ -284,12 +284,9 @@ class iSCSITargetExtentService(SharingService):
             device = os.path.join('/dev', disk)
 
             zvol_name = zvol_path_to_name(device)
-            zvol = await self.middleware.call('pool.dataset.query', [['id', '=', zvol_name]])
-            if not zvol:
-                verrors.add(f'{schema_name}.disk', f'Volume {zvol_name!r} does not exist')
-
             if not os.path.exists(device):
                 verrors.add(f'{schema_name}.disk', f'Device {device!r} for volume {zvol_name!r} does not exist')
+
         elif extent_type == 'FILE':
             if not path:
                 verrors.add(f'{schema_name}.path', 'This field is required')
