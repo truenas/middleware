@@ -172,7 +172,7 @@ def test_007_validate_dns_records_added(request):
     payload = {
         'msg': 'method',
         'method': 'dnsclient.forward_lookup',
-        'params': [{"names": [f'truenas.{CLUSTER_ADS["DOMAIN"]}']}],
+        'params': [{"names": [f'{CLUSTER_ADS["NETBIOS"]}.{CLUSTER_ADS["DOMAIN"]}']}],
     }
     res = make_ws_request(CLUSTER_IPS[0], payload)
     assert res.get('error') is None, res
