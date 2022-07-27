@@ -1,10 +1,15 @@
-import os
 import asyncio
+import contextlib
+import os
+import re
 
 from middlewared.service import CallError
 from middlewared.utils import run
 
 from .base import SimpleService
+
+
+RE_TOKEN_FORMAT = re.compile(r'^K10.+:.+:.*')
 
 
 class KubernetesService(SimpleService):
@@ -57,6 +62,23 @@ class KubernetesService(SimpleService):
             await self.middleware.call('sysctl.set_value', key, value)
         await self.middleware.call('service.start', 'docker')
         await self._systemd_unit('cni-dhcp', 'start')
+
+        # It is possible server/token got misconfigured somehow ( we have had reports that on unclean shutdown the file
+        # is empty or malformed, in this case we should remove the token as it's generated automatically by k3s again
+        # and it's not useful to us as well per se as it's used for multi-node cluster )
+
+        await self.middleware.run_in_thread(
+            self.check_server_token, (await self.middleware.call('kubernetes.config'))['dataset']
+        )
+
+    def check_server_token(self, k8s_dataset):
+        token_path = os.path.join('/mnt', k8s_dataset, 'k3s/server/token')
+        with contextlib.suppress(FileNotFoundError):
+            with open(token_path, 'r') as f:
+                token = f.read().strip()
+
+            if not RE_TOKEN_FORMAT.findall(token):
+                os.unlink(token_path)
 
     async def start(self):
         await super().start()
