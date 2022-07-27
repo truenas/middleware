@@ -172,7 +172,7 @@ class ISCSIPortalService(CRUDService):
 
     async def __save_listen(self, pk, new, old=None):
         """
-        Update database with a set new listen IP tuples.
+        Update database with new listen IPs.
         It will delete no longer existing addresses and add new ones.
         """
         new_listen_set = set([tuple(i.items()) for i in new])
