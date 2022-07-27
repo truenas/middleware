@@ -152,7 +152,9 @@ class CLPWEncService(PWEncService):
                         'is no longer mounted.'
                     )
 
-                with pathref_open('.cluster_private', force=True, mode=0o700, dir_fd=ctdb_path) as priv:
+                with pathref_open(
+                    '.cluster_private', force=True, mode=0o700, dir_fd=ctdb_path, mkdir=True
+                ) as priv:
                     return os.open(path, flags, dir_fd=priv)
 
         out_file = open('.check_file', flags, opener=opener)
@@ -162,20 +164,22 @@ class CLPWEncService(PWEncService):
             out_file.close()
 
     def check(self):
-        with self.check_file('r') as f:
-            data = f.read()
+        try:
+            with self.check_file('r') as f:
+                data = f.read()
+        except FileNotFoundError:
+            # this error is raise explicitly in case where our check_file
+            # does not exist. Intermediate paths will be made if needed
+            # assuming that the ctdb_shared_volume is mounted. If it's
+            # not mounted then we expect this to fail / exception to
+            # not be blocked here.
+            return False
 
         return self.decrypt(data) == PWENC_CHECK
 
     def _reset_pwenc_check_field(self):
         with self.check_file('w') as f:
             f.write(self.encrypt(PWENC_CHECK))
-
-    def generate_secret(self, reset_passwords=True):
-        if not self.middleware.call_sync('ctdb.general.healthy'):
-            raise CallError('Cluster is unhealthy. Refusing to generate secret')
-
-        super().generate_secret()
 
     def encrypt(self, data):
         return encrypt(data, True)
