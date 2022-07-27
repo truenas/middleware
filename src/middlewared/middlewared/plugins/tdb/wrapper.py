@@ -188,7 +188,7 @@ class CTDBWrap(object):
     def __volatile_store(self, key, value):
 
         db_entry = self.hdl.fetch(key)
-        db_entry.store(value.encode())
+        db_entry.store(value)
         db_entry.unlock()
         return
 
@@ -252,7 +252,7 @@ class CTDBWrap(object):
 
     def batch_op(self, ops):
         output = []
-        self.hdl.transaction_start()
+        self.hdl.start_transaction(False)
         self.skip_trans = True
         for op in ops:
             if op["action"] == "SET":
@@ -264,7 +264,7 @@ class CTDBWrap(object):
                 tdb_val = self.get(op["key"])
                 output.append(json.loads(tdb_val))
 
-        self.hdl.transaction_commit()
+        self.hdl.commit_transaction()
         self.skip_trans = False
 
         return output
