@@ -166,7 +166,7 @@ class EtcService(Service):
         ],
         'scst': [
             {'type': 'mako', 'path': 'scst.conf', 'checkpoint': 'pool_import'},
-            {'type': 'mako', 'path': 'scst.env', 'checkpoint': 'pool_import'},
+            {'type': 'mako', 'path': 'scst.env', 'checkpoint': 'pool_import', 'mode': 0o744},
         ],
         'scst_targets': [
             {'type': 'mako', 'path': 'initiators.allow', 'checkpoint': 'pool_import'},
