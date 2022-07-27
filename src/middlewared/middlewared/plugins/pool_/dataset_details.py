@@ -20,19 +20,32 @@ class PoolDatasetService(Service):
             'name': 'tank',
             'pool': 'tank',
             'encrypted': False,
+            'encryption_root': None,
+            'key_loaded': False,
             'children': [
                 {
-                    'id': 'tank/soemthing o',
+                    'id': 'tank/soemthing',
                     'type': 'VOLUME',
-                    'name': 'tank/soemthing o',
+                    'name': 'tank/soemthing',
                     'pool': 'tank',
                     'encrypted': False,
+                    'encryption_root': None,
+                    'key_loaded': False,
                     'children': [],
+                    'managed_by': {
+                        'value': '10.231.1.155',
+                        'rawvalue': '10.231.1.155',
+                        'source': 'LOCAL',
+                        'parsed': '10.231.1.155'
+                    },
                     'reservation': {
                         'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
                     },
                     'refreservation': {
                         'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'key_format': {
+                        'parsed': 'none', 'rawvalue': 'none', 'value': None, 'source': 'DEFAULT', 'source_info': None
                     },
                     'encryption_algorithm': {
                         'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
@@ -53,15 +66,33 @@ class PoolDatasetService(Service):
                         'parsed': 14328811520, 'rawvalue': '14328811520',
                         'value': '13.3G', 'source': 'NONE', 'source_info': None
                     },
-                    'mountpoint': None,
+                    'mountpoint': '/mnt/tank/something',
                     'user_properties': {},
                     'snapshot_count': 0,
                     'locked': False,
-                    'nfs_shares': [],
-                    'smb_shares': [],
-                    'iscsi_shares': [],
-                    'vms': [],
-                    'apps': [],
+                    'nfs_shares': [{
+                        'enabled': True,
+                        'path': '/mnt/tank/something'
+                    }],
+                    'smb_shares': [{
+                        'enabled': False,
+                        'path': '/mnt/tank/something/smbshare01',
+                        'share_name': 'Home Pictures',
+                    }],
+                    'iscsi_shares': [{
+                        'enabled': False,
+                        'type': 'DISK',
+                        'path': '/mnt/tank/something',
+                        'thick_provisioned': True,
+                    }],
+                    'vms': [{
+                        'name': 'deb01',
+                        'path': '/dev/zvol/tank/something',
+                    }],
+                    'apps': [{
+                        'name': 'diskoverdata',
+                        'path': '/mnt/tank/something'
+                    }],
                     'replication_tasks_count': 0,
                     'snapshot_tasks_count': 0,
                     'cloudsync_tasks_count': 0,
@@ -129,6 +160,9 @@ class PoolDatasetService(Service):
                     'reservation',
                     'mountpoint',
                     'encryption',
+                    'encryptionroot',
+                    'keyformat',
+                    'keystatus',
                 ]
             }
         }
