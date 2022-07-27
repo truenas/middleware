@@ -170,10 +170,9 @@ class UPSService(SystemServiceService):
 
         port = data['port']
         if port:
-            serial_port = os.path.join(
-                '/dev', (await self.middleware.call('system.advanced.config'))['serialport']
-            )
-            if serial_port == port:
+            adv_config = await self.middleware.call('system.advanced.config')
+            serial_port = os.path.join('/dev', adv_config['serialport'])
+            if adv_config['serialconsole'] and serial_port == port:
                 verrors.add(
                     f'{schema}.port',
                     'UPS port must be different then the port specified for '
