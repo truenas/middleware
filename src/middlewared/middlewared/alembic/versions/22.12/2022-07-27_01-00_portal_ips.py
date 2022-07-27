@@ -2,7 +2,7 @@
 Migrate iSCSI Portal IPs
 
 Revision ID: 14899f89b885
-Revises: 3ac384af617f
+Revises: 75d84034adcb
 Create Date: 2022-07-27 01:00:58.755371+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 revision = '14899f89b885'
-down_revision = '3ac384af617f'
+down_revision = '75d84034adcb'
 branch_labels = None
 depends_on = None
 
