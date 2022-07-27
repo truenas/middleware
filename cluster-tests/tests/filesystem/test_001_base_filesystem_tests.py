@@ -7,6 +7,7 @@ from exceptions import JobTimeOut
 from pytest_dependency import depends
 from time import sleep
 
+FUSE_OP_TIMEOUT = CLUSTER_INFO['FUSE_OP_TIMEOUT']
 LOCAL_PATH = f'/cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
 CLUSTER_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
 testfiles = [
@@ -108,7 +109,7 @@ def test_006_filesystem_chown_non_recursive(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[1], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[1], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -144,7 +145,7 @@ def test_007_filesystem_chown_recursive(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[1], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[1], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -179,7 +180,7 @@ def test_008_filesystem_reset_owner(request):
     res = make_request('post', url, data=payload)
     assert res.status_code == 200, res.text
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[1], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[1], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -205,7 +206,7 @@ def test_009_filesystem_setperm_nonrecursive(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[0], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[0], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -244,7 +245,7 @@ def test_010_filesystem_setperm_recursive(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[0], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[0], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -274,7 +275,7 @@ def test_011_filesystem_reset_mode(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[0], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[0], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -303,7 +304,7 @@ def test_012_filesystem_setacl_nonrecursive(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[0], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[0], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -360,7 +361,7 @@ def test_013_filesystem_setacl_recursive(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[0], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[0], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -394,7 +395,7 @@ def test_014_filesystem_reset_acl(request):
     assert res.status_code == 200, res.text
 
     try:
-        status = wait_on_job(res.json(), CLUSTER_IPS[0], 5)
+        status = wait_on_job(res.json(), CLUSTER_IPS[0], FUSE_OP_TIMEOUT)
     except JobTimeOut:
         assert False, JobTimeOut
     else:
