@@ -411,7 +411,7 @@ def test_015_filesystem_statfs(ip, request):
     data = res.json()
 
     assert data['fstype'] == 'fuse.glusterfs'
-    assert data['source'] == CLUSTER_INFO['GLUSTER_VOLUME']
+    assert data['source'] == f'localhost:/{CLUSTER_INFO["GLUSTER_VOLUME"]}'
 
 
 def test_050_remove_test_files(request):
