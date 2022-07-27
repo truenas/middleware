@@ -139,12 +139,14 @@ def test_002_creating_shareuser_to_test_acls(request):
     assert results.status_code == 200, results.text
     global new_id
     new_id = results.json()
+    groupinfo = GET('/group?group=builtin_administrators').json()[0]
 
     global smbuser_id
     payload = {
         "username": SMB_USER,
         "full_name": "SMB User",
         "group_create": True,
+        "groups": [groupinfo["id"]],
         "password": SMB_PWD,
         "uid": new_id,
     }
