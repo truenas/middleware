@@ -84,7 +84,7 @@ class iSCSITargetExtentService(SharingService):
         Bool('xen'),
         Str('rpm', enum=['UNKNOWN', 'SSD', '5400', '7200', '10000', '15000'],
             default='SSD'),
-        Bool('ro'),
+        Bool('ro', default=False),
         Bool('enabled', default=True),
         register=True
     ))
@@ -286,6 +286,9 @@ class iSCSITargetExtentService(SharingService):
             zvol_name = zvol_path_to_name(device)
             if not os.path.exists(device):
                 verrors.add(f'{schema_name}.disk', f'Device {device!r} for volume {zvol_name!r} does not exist')
+
+            if '@' in zvol_name and not data['ro']:
+                verrors.add(f'{schema_name}.ro', 'Must be set when disk is a ZFS Snapshot')
 
         elif extent_type == 'FILE':
             if not path:

@@ -58,8 +58,10 @@ class VMDeviceService(CRUDService):
         """
         out = {}
         zvols = await self.middleware.call(
-            'zfs.dataset.unlocked_zvols_fast',
-            [["OR", [["attachment", "=", None], ["attachment.method", "=", "vm.devices.query"]]]],
+            'zfs.dataset.unlocked_zvols_fast', [
+                ['OR', [['attachment', '=', None], ['attachment.method', '=', 'vm.devices.query']]],
+                ['ro', '=', False],
+            ],
             {}, ['ATTACHMENT']
         )
 
