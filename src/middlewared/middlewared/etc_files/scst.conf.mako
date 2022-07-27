@@ -50,7 +50,6 @@
             extent['t10_dev_id'] = extent['serial'].ljust(31 - len(extent['serial']), ' ')
 
     # FIXME: SSD is not being reflected in the initiator, please look into it
-    # FIXME: Authorized networks for initiators has not been implemented yet, please look for alternatives in SCST
 
     target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
@@ -119,7 +118,6 @@ TARGET_DRIVER iscsi {
                 address = '*'
             else:
                 address = (f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip'])
-                # FIXME: SCST does not seem to respect port values for portals, please look for alternatives
 
             group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
             if not has_per_host_access:
