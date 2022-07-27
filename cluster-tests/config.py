@@ -23,6 +23,7 @@ CLUSTER_INFO = {
     'ZPOOL_DISK': environ.get('ZPOOL_DISK'),
     'ZPOOL': environ.get('ZPOOL'),
     'GLUSTER_VOLUME': environ.get('GLUSTER_VOLUME'),
+    'FUSE_OP_TIMEOUT': environ.get('FUSE_OP_TIMEOUT', 10),
 }
 
 CLUSTER_ADS = {
