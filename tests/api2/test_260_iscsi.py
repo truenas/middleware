@@ -54,7 +54,6 @@ def test_02_Add_iSCSI_portal(request):
         'listen': [
             {
                 'ip': '0.0.0.0',
-                'port': 3260
             }
         ]
     }
