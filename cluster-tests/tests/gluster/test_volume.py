@@ -46,7 +46,7 @@ def test_02_mount_dataset_heirarchy(ip, request):
     assert not res.get('error', {}), res['error'].get('reason', 'NO REASON GIVEN')
 
 
-@pytest.mark.parametrize('volume', GVOL)
+@pytest.mark.parametrize('volume', [GVOL])
 @pytest.mark.dependency(name='CREATE_GVOLUME')
 def test_03_create_gluster_volume(volume, request):
     depends(request, ['MOUNT_DATASETS'])
@@ -74,7 +74,7 @@ def test_03_create_gluster_volume(volume, request):
     assert len(res) > 0 and res[0]['id'] == volume, ans.text
 
 
-@pytest.mark.parametrize('volume', GVOL)
+@pytest.mark.parametrize('volume', [GVOL])
 @pytest.mark.dependency(name='STARTED_GVOLUME')
 def test_04_verify_gluster_volume_is_started(volume, request):
     depends(request, ['CREATE_GVOLUME'])
@@ -102,7 +102,7 @@ def test_05_verify_gluster_volume_is_fuse_mounted(ip, request):
     assert ans.json(), ans.text
 
 
-@pytest.mark.parametrize('volume', GVOL)
+@pytest.mark.parametrize('volume', [GVOL])
 @pytest.mark.dependency(name='STOP_GVOLUME')
 def test_06_stop_gluster_volume(volume, request):
     depends(request, ['START_GVOLUME'])
@@ -129,7 +129,7 @@ def test_07_verify_gluster_volume_is_fuse_umounted(ip, request):
     assert not ans.json(), ans.text
 
 
-@pytest.mark.parametrize('volume', GVOL)
+@pytest.mark.parametrize('volume', [GVOL])
 def test_08_delete_gluster_volume(volume, request):
     depends(request, ['VERIFY_FUSE_UMOUNTED'])
     ans = make_request('delete', f'/gluster/volume/id/{volume}')
