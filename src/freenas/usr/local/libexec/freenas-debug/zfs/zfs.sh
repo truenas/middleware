@@ -70,6 +70,14 @@ zfs_getacl()
 
 	return 0
 }
+zfs_kstat()
+{
+	local kstat=${1}
+
+	section_header "kstat ${kstat}"
+	cat /proc/spl/kstat/zfs/${kstat}
+	section_footer
+}
 
 zfs_func()
 {
@@ -123,11 +131,9 @@ zfs_func()
 	section_footer
 
 	section_header "zpool get all"
-	pools=$(zpool list -H|awk '{ print $1 }'|xargs)
-	for p in ${pools}
-	do
-		section_header "${p}"
-		zpool get all ${p}
+	for pool in $(zpool list -Ho name); do
+		section_header "${pool}"
+		zpool get all ${pool}
 		section_footer
 	done
 	section_footer
@@ -137,11 +143,11 @@ zfs_func()
 	section_footer
 
 	section_header "zfs get all"
-	zfs list -o name -H | while read -r s
+	zfs list -o name -H | while read -r dataset
 	do
-		section_header "${s}"
-		zfs get all "${s}"
-		zfs_getacl "${s}"
+		section_header "${dataset}"
+		zfs get all "${dataset}"
+		zfs_getacl "${dataset}"
 		section_footer
 	done
 	section_footer
@@ -161,4 +167,15 @@ zfs_func()
 		midclt call -job -jp description pool.dataset.encryption_summary "${pool}" | jq .
 		section_footer
 	done
+
+	section_header "kstat"
+	zfs_kstat "fletcher_4_bench"
+	zfs_kstat "vdev_raidz_bench"
+	zfs_kstat "dbgmsg"
+	for pool in $(zpool list -Ho name); do
+		zfs_kstat "${pool}/state"
+		zfs_kstat "${pool}/multihost"
+		zfs_kstat "${pool}/txgs"
+	done
+	section_footer
 }
