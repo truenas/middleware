@@ -140,23 +140,24 @@ def wait_on_ctdb():
 
 
 def add_public_ips_to_ctdb():
-    for priv_ip, pub_ip in zip(CLUSTER_IPS, PUBLIC_IPS):
+    for priv_ip in CLUSTER_IPS:
         res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/general/status', data={'all_nodes': False})
         this_node = res.json()['nodemap']['nodes'][0]['pnn']
 
-        payload = {
-            'pnn': this_node,
-            'ip': pub_ip,
-            'netmask': CLUSTER_INFO['NETMASK'],
-            'interface': CLUSTER_INFO['INTERFACE']
-        }
-        res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/public/ips', data=payload)
-        try:
-            status = wait_on_job(res.json(), priv_ip, 5)
-        except JobTimeOut:
-            assert False, JobTimeOut
-        else:
-            assert status['state'] == 'SUCCESS', status
+        for pub_ip in PUBLIC_IPS:
+            payload = {
+                'pnn': this_node,
+                'ip': pub_ip,
+                'netmask': CLUSTER_INFO['NETMASK'],
+                'interface': CLUSTER_INFO['INTERFACE']
+            }
+            res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/public/ips', data=payload)
+            try:
+                status = wait_on_job(res.json(), priv_ip, 5)
+            except JobTimeOut:
+                assert False, JobTimeOut
+            else:
+                assert status['state'] == 'SUCCESS', status
 
 
 def init():
