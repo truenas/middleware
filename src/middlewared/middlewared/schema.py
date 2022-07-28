@@ -304,7 +304,8 @@ class HostPath(Path):
         if value:
             if not os.path.exists(value):
                 verrors.add(self.name, "This path does not exist.", errno.ENOENT)
-            self.validate_internal(verrors, value)
+            else:
+                self.validate_internal(verrors, value)
 
         verrors.check()
 
