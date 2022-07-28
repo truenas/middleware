@@ -70,6 +70,14 @@ zfs_getacl()
 
 	return 0
 }
+zfs_kstat()
+{
+	local kstat=${1}
+
+	section_header "kstat ${kstat}"
+	cat /proc/spl/kstat/zfs/${kstat}
+	section_footer
+}
 
 zfs_func()
 {
@@ -161,4 +169,15 @@ zfs_func()
 		midclt call -job -jp description pool.dataset.encryption_summary "${pool}" | jq .
 		section_footer
 	done
+
+	section_header "kstat"
+	zfs_kstat "fletcher_4_bench"
+	zfs_kstat "vdev_raidz_bench"
+	zfs_kstat "dbgmsg"
+	for pool in $(zpool list -Ho name); do
+		zfs_kstat "${pool}/state"
+		zfs_kstat "${pool}/multihost"
+		zfs_kstat "${pool}/txgs"
+	done
+	section_footer
 }
