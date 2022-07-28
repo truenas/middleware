@@ -62,5 +62,6 @@ def target_login_test_freebsd(portal_ip, target_name):
         except AssertionError:
             return False
         else:
-            run_on_runner(['iscsictl', '-R', '-t', target_name])
             return True
+        finally:
+            run_on_runner(['iscsictl', '-R', '-t', target_name], check=False)
