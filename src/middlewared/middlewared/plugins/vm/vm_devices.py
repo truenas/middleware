@@ -299,6 +299,10 @@ class VMDeviceService(CRUDService):
             return False
 
     @private
+    async def validate_path_field(self, verrors, schema, path):
+        await check_path_resides_within_volume(verrors, self.middleware, schema, path)
+
+    @private
     async def validate_device(self, device, old=None, vm_instance=None, update=True):
         # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
         # the device checks should be performed with the modified vm_instance object not the one db holds

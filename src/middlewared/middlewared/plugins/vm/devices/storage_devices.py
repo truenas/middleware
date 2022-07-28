@@ -46,6 +46,13 @@ class StorageDevice(Device):
     def create_source_element(self):
         raise NotImplementedError
 
+    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
+            verrors.add(
+                'attributes.path',
+                f'{vm_instance["name"]} has "{self.identity()}" already configured'
+            )
+
 
 class RAW(StorageDevice):
 
@@ -55,7 +62,7 @@ class RAW(StorageDevice):
         'attributes',
         Str('path', required=True, validators=[Match(
             r'^[^{}]*$', explanation='Path should not contain "{", "}" characters'
-        )]),
+        )], empty=False),
         Str('type', enum=['AHCI', 'VIRTIO'], default='AHCI'),
         Bool('exists'),
         Bool('boot', default=False),
@@ -66,6 +73,27 @@ class RAW(StorageDevice):
 
     def create_source_element(self):
         return create_element('source', file=self.data['attributes']['path'])
+
+    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        path = device['attributes']['path']
+        exists = device['attributes'].get('exists', True)
+        if exists and not os.path.exists(path):
+            verrors.add('attributes.path', 'Path must exist when "exists" is set.')
+        elif not exists:
+            if os.path.exists(path):
+                verrors.add('attributes.path', 'Path must not exist when "exists" is unset.')
+            elif not device['attributes'].get('size'):
+                verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
+
+        if (
+            old and old['attributes'].get('size') != device['attributes'].get('size') and
+            not device['attributes'].get('size')
+        ):
+            verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
+
+        self.middleware.call_sync('vm.device.validate_path_field', verrors, 'attributes.path', path)
+
+        super()._validate(device, verrors, old, vm_instance, update)
 
 
 class DISK(StorageDevice):
@@ -117,8 +145,4 @@ class DISK(StorageDevice):
             elif path and not os.path.exists(path):
                 verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
 
-        if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
-            verrors.add(
-                'attributes.path',
-                f'{vm_instance["name"]} has "{path}" already configured'
-            )
+        super()._validate(device, verrors, old, vm_instance, update)
