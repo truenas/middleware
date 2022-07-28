@@ -17,7 +17,7 @@ from auto_config import ip
 
 @contextlib.contextmanager
 def portal():
-    portal_config = call('iscsi.portal.create', {'listen': [{'ip': ip, 'port': 3260}], 'discovery_authmethod': 'NONE'})
+    portal_config = call('iscsi.portal.create', {'listen': [{'ip': ip}], 'discovery_authmethod': 'NONE'})
     try:
         yield portal_config
     finally:
