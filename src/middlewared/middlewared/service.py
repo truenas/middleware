@@ -1261,7 +1261,7 @@ class TDBWrapCRUDService(CRUDService):
             payload.append({
                 "action": "SET",
                 "key": tdb_key,
-                "val": json.dumps(val),
+                "val": val,
             })
 
         await self.middleware.call('tdb.batch_ops', {
