@@ -146,7 +146,6 @@ class ActiveDirectoryService(Service):
                 'sudo': False,
                 'sudo_nopasswd': False,
                 'sudo_commands': [],
-                'microsoft_account': False,
                 'attributes': {},
                 'groups': [],
                 'sshpubkey': None,

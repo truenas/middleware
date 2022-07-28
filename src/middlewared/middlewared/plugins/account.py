@@ -116,7 +116,6 @@ class UserModel(sa.Model):
     bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
     bsdusr_sudo_nopasswd = sa.Column(sa.Boolean())
     bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
-    bsdusr_microsoft_account = sa.Column(sa.Boolean())
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_attributes = sa.Column(sa.JSON())
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
@@ -199,6 +198,7 @@ class UserService(CRUDService):
             'id_type_both',
             'nt_name',
             'sid',
+            'microsoft_account',
         ]
 
         for i in to_remove:
@@ -339,10 +339,6 @@ class UserService(CRUDService):
                 'The home directory is not writable. Leave this field blank.'
             )
 
-        if data.get('microsoft_account') and not data.get('email'):
-            verrors.add('user_create.microsoft_account',
-                        'The Microsoft Account feature requires an email address.')
-
         verrors.check()
 
         groups = data.pop('groups')
@@ -441,10 +437,6 @@ class UserService(CRUDService):
         if data['smb']:
             gm_job = await self.middleware.call('smb.synchronize_passdb')
             await gm_job.wait()
-            if data.get('microsoft_account'):
-                has_username_map = await self.middleware.call('smb.getparm', 'username map', 'GLOBAL')
-                if not has_username_map:
-                    await self.middleware.call('smb.initialize_globals')
 
         if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -500,14 +492,6 @@ class UserService(CRUDService):
             user['group'] = group['id']
 
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
-        updated = user | data
-        if updated['microsoft_account'] and not updated['email']:
-            verrors.add('user_update.microsoft_account',
-                        'The Microsoft Account feature requires an email address.')
-
-        if updated['microsoft_account'] and updated['builtin']:
-            verrors.add('user_update.microsoft_account',
-                        'This property is not permitted for builtin accounts.')
 
         try:
             st = os.stat(user.get("home", "/nonexistent")).st_mode
@@ -652,11 +636,6 @@ class UserService(CRUDService):
         if user['smb'] and must_change_pdb_entry:
             gm_job = await self.middleware.call('smb.synchronize_passdb')
             await gm_job.wait()
-
-        if user.get('microsoft_account'):
-            has_username_map = await self.middleware.call('smb.getparm', 'username map', 'GLOBAL')
-            if not has_username_map:
-                await self.middleware.call('smb.initialize_globals')
 
         return pk
 

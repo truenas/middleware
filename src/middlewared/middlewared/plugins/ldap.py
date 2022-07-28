@@ -1358,7 +1358,6 @@ class LDAPService(TDBWrapConfigService):
                 'sudo': False,
                 'sudo_nopasswd': False,
                 'sudo_commands': [],
-                'microsoft_account': False,
                 'attributes': {},
                 'groups': [],
                 'sshpubkey': None,

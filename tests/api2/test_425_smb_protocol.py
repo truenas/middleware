@@ -694,34 +694,6 @@ def test_155_ssh_read_afp_xattr(request, xat):
     assert AFPXattr[xat]['bytes'] == xat_data, results['output']
 
 
-def test_175_enable_ms_account(request):
-    depends(request, ["SMB_USER_CREATED"])
-    """
-    Verifies that email account specified as microsoft account
-    gets mapped to share user account.
-    """
-    payload = {"microsoft_account": True}
-    results = PUT(f"/user/id/{smbuser_id}/", payload)
-    assert results.status_code == 200, results.text
-
-
-@pytest.mark.parametrize('proto', ["SMB1", "SMB2"])
-def test_176_validate_microsoft_account_behavior(request, proto):
-    """
-    This test creates creates an empty file, sets "delete on close" flag, then
-    closes it. NTStatusError should be raised containing failure details
-    if we are for some reason unable to access the share.
-
-    This test will fail if smb.conf / smb4.conf does not exist on client / server running test.
-    """
-    depends(request, ["SMB_SHARE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=sample_email, password=SMB_PWD, smb1=(proto == 'SMB1'))
-    fd = c.create_file("testfile", "w")
-    c.close(fd, True)
-    c.disconnect()
-
-
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")
 def test_200_delete_smb_user(request):
     depends(request, ["SMB_USER_CREATED"])

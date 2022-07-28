@@ -5,7 +5,7 @@ class CIFSService(SimpleService):
     name = "cifs"
     reloadable = True
 
-    etc = ["smb", "smb_share"]
+    etc = ["smb"]
 
     systemd_unit = "smbd"
 

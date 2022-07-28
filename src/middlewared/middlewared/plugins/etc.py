@@ -81,7 +81,6 @@ class EtcService(Service):
                 {'method': 'group.query'},
             ],
             'entries': [
-                {'type': 'mako', 'path': 'local/smbusername.map'},
                 {'type': 'mako', 'path': 'group'},
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
                 {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
@@ -259,11 +258,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/rsyncd.conf', 'checkpoint': 'pool_import'}
         ],
         'smb': [
-            {'type': 'mako', 'path': 'local/smb4.conf'},
             {'type': 'mako', 'path': 'security/pam_winbind.conf', 'checkpoint': 'pool_import'},
-        ],
-        'smb_share': [
-            {'type': 'mako', 'path': 'local/smb4_share.conf', 'checkpoint': 'pool_import'},
         ],
         'ctdb': [
             {
