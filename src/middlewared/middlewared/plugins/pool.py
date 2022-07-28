@@ -1985,6 +1985,7 @@ def get_props_of_interest_mapping():
         ('special_small_blocks', 'special_small_block_size', None),
         ('pbkdf2iters', None, None),
         ('creation', None, None),
+        ('snapdev', None, None),
     ]
 
 
@@ -3099,6 +3100,7 @@ class PoolDatasetService(CRUDService):
         Bool('force_size'),
         Inheritable(Str('comments')),
         Inheritable(Str('sync', enum=['STANDARD', 'ALWAYS', 'DISABLED'])),
+        Inheritable(Str('snapdev', enum=['HIDDEN', 'VISIBLE']), has_default=False),
         Inheritable(Str('compression', enum=ZFS_COMPRESSION_ALGORITHM_CHOICES)),
         Inheritable(Str('atime', enum=['ON', 'OFF']), has_default=False),
         Inheritable(Str('exec', enum=['ON', 'OFF'])),
@@ -3309,6 +3311,7 @@ class PoolDatasetService(CRUDService):
             ('refreservation', None, _none, False),
             ('reservation', None, _none, False),
             ('snapdir', None, str.lower, True),
+            ('snapdev', None, str.lower, True),
             ('sparse', None, None, False),
             ('sync', None, str.lower, True),
             ('volblocksize', None, None, False),
@@ -3421,6 +3424,21 @@ class PoolDatasetService(CRUDService):
                 if data['volsize'] < dataset[0]['volsize']['parsed']:
                     verrors.add('pool_dataset_update.volsize',
                                 'You cannot shrink a zvol from GUI, this may lead to data loss.')
+            if dataset[0]['type'] == 'VOLUME':
+                existing_snapdev_prop = dataset[0]['snapdev']['parsed'].upper()
+                snapdev_prop = data.get('snapdev') or existing_snapdev_prop
+                if existing_snapdev_prop != snapdev_prop and snapdev_prop in ('INHERIT', 'HIDDEN'):
+                    if await self.middleware.call(
+                        'zfs.dataset.unlocked_zvols_fast',
+                        [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id}@']],
+                        {}, ['RO', 'ATTACHMENT']
+                    ):
+                        verrors.add(
+                            'pool_dataset_update.snapdev',
+                            f'{id!r} has snapshots which have attachments being used. Before marking it '
+                            'as HIDDEN, remove attachment usages.'
+                        )
+
         verrors.check()
 
         properties_definitions = (
@@ -3445,6 +3463,7 @@ class PoolDatasetService(CRUDService):
             ('refreservation', None, _none, False),
             ('copies', None, str, True),
             ('snapdir', None, str.lower, True),
+            ('snapdev', None, str.lower, True),
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x), False),
@@ -3535,7 +3554,7 @@ class PoolDatasetService(CRUDService):
                 if acltype in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
                     verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
 
-            for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
+            for i in ('force_size', 'sparse', 'volsize', 'volblocksize', 'snapdev'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
 
