@@ -1,5 +1,7 @@
 from abc import ABC
 
+from middlewared.schema import Error
+from middlewared.service_exception import ValidationErrors
 from middlewared.utils import osc
 
 
@@ -82,3 +84,24 @@ class Device(ABC):
 
     def pre_start_vm_device_setup_freebsd(self, *args, **kwargs):
         pass
+
+    def validate(self, device, old=None, vm_instance=None, update=True):
+        verrors = ValidationErrors()
+        try:
+            device['attributes'] = self.schema.clean(device['attributes'])
+        except Error as e:
+            verrors.add(f'attributes.{e.attribute}', e.errmsg, e.errno)
+
+        try:
+            self.schema.validate(device['attributes'])
+        except ValidationErrors as e:
+            verrors.extend(e)
+
+        verrors.check()
+
+        self._validate(device, verrors, old, vm_instance, update)
+
+        verrors.check()
+
+    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        raise NotImplementedError
