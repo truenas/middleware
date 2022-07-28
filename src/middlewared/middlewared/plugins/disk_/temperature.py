@@ -135,7 +135,7 @@ class DiskService(Service):
         if len(names) == 0:
             names = await self.disks_for_temperature_monitoring()
 
-        if options['only_cached']:
+        if options.pop('only_cached'):
             return {
                 disk: temperature
                 for disk, (temperature, cache_time) in self.cache.items()
