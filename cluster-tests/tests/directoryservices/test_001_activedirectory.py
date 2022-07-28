@@ -1,4 +1,5 @@
 import pytest
+import socket
 
 from config import CLUSTER_INFO, CLUSTER_IPS, CLUSTER_ADS, PUBLIC_IPS
 from utils import make_request, make_ws_request, ssh_test, wait_on_job
@@ -240,6 +241,11 @@ def test_009_share_is_writable_via_public_ips(ip, request):
     This test will fail if smb.conf / smb4.conf does not exist on client / server running test.
     """
     depends(request, ['DS_CLUSTER_SMB_SHARE_CREATED'])
+
+    # First check whether SMB port is listening
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(5)
+    s.connect((ip, 445))
 
     with smb_connection(
         host=ip,
