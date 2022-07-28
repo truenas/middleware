@@ -111,7 +111,26 @@ class BootService(Service):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.
         """
-        return await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)], {'get': True})
+        info = await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)], {'get': True})
+
+        # WebUI expects this to return the same data as `pool.pool_extend`
+        return {
+            'name': BOOT_POOL_NAME,
+            'status': info['status'],
+            'scan': info['scan'],
+            'topology': await self.middleware.call('pool.transform_topology', info['groups']),
+            'healthy': info['healthy'],
+            'warning': info['warning'],
+            'status_detail': info['status_detail'],
+            'size': info['properties']['size']['parsed'],
+            'allocated': info['properties']['allocated']['parsed'],
+            'free': info['properties']['free']['parsed'],
+            'freeing': info['properties']['freeing']['parsed'],
+            'fragmentation': info['properties']['fragmentation']['parsed'],
+            'autotrim': info['properties']['autotrim'],
+            'encryptkey_path': None,
+            'is_decrypted': True,
+        }
 
     @accepts()
     @returns(List('disks', items=[Str('disk')]))
