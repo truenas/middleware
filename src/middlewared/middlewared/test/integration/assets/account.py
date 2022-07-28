@@ -18,6 +18,6 @@ def group(data):
     group = call("group.create", data)
 
     try:
-        yield call("user.get_instance", group)
+        yield call("group.get_instance", group)
     finally:
         call("group.delete", group)
