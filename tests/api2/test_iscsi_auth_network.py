@@ -1,4 +1,3 @@
-import functools
 import ipaddress
 import os
 import pytest
@@ -97,24 +96,13 @@ def configure_iscsi_service():
             call('service.stop', 'iscsitarget')
 
 
-@functools.lru_cache(maxsize=None)
-def get_nas_ip_subnet():
-    for interface in call('interface.query'):
-        for alias in (interface.get('state', {}).get('aliases', [])):
-            if alias['address'] == ip:
-                return alias['netmask']
-    else:
-        raise Exception(f'Unable to determine NAS {ip!r} IP subnet')
-
-
 @pytest.mark.parametrize('valid', [True, False])
 def test_iscsi_auth_networks(valid):
     with configure_iscsi_service() as config:
-        auth_network = str(ipaddress.ip_network(f'{ip}/{get_nas_ip_subnet()}', False)) if valid else '8.8.8.8/32'
         call(
             'iscsi.target.update',
             config['target']['id'],
-            {'auth_networks': [auth_network]}
+            {'auth_networks': [] if valid else ['8.8.8.8/32']}
         )
         portal_listen_details = config['portal']['listen'][0]
         assert target_login_test(
