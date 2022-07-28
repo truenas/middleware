@@ -10,6 +10,7 @@ from functions import POST, GET, DELETE, wait_on_job
 from auto_config import (
     pool_name,
     dev_test,
+    ip
 )
 from protocols import SMB
 from pytest_dependency import depends
