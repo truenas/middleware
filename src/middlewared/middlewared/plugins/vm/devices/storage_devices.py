@@ -1,3 +1,4 @@
+import errno
 import os
 
 from middlewared.schema import Bool, Dict, Int, Str
@@ -84,3 +85,40 @@ class DISK(StorageDevice):
 
     def create_source_element(self):
         return create_element('source', dev=self.data['attributes']['path'])
+
+    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        create_zvol = device['attributes'].get('create_zvol')
+        path = device['attributes'].get('path')
+
+        if create_zvol:
+            for attr in ('zvol_name', 'zvol_volsize'):
+                if not device['attributes'].get(attr):
+                    verrors.add(f'attributes.{attr}', 'This field is required.')
+
+            verrors.check()
+
+            if zvol := self.middleware.call_sync(
+                'pool.dataset.query', [['id', '=', device['attributes'].get('zvol_name')]]
+            ):
+                verrors.add('attributes.zvol_name', f'{zvol[0]["id"]!r} already exists.')
+
+            parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
+            if parentzvol and not self.middleware.call_sync('pool.dataset.query', [('id', '=', parentzvol)]):
+                verrors.add(
+                    'attributes.zvol_name',
+                    f'Parent dataset {parentzvol} does not exist.', errno.ENOENT
+                )
+        else:
+            for attr in filter(lambda k: device['attributes'].get(k), ('zvol_name', 'zvol_volsize')):
+                verrors.add(f'attributes.{attr}', 'This field should not be specified when "create_zvol" is unset.')
+
+            if not path:
+                verrors.add('attributes.path', 'Disk path is required.')
+            elif path and not os.path.exists(path):
+                verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
+
+        if not self.middleware.call_sync('vm.device.disk_uniqueness_integrity_check', device, vm_instance):
+            verrors.add(
+                'attributes.path',
+                f'{vm_instance["name"]} has "{path}" already configured'
+            )
