@@ -5,7 +5,7 @@ import async_timeout
 from middlewared.service import private, Service
 from middlewared.utils.network import INTERNET_TIMEOUT
 
-from .utils import scale_update_server
+from .utils import can_update, scale_update_server
 
 
 class UpdateService(Service):
@@ -27,7 +27,7 @@ class UpdateService(Service):
             ) as session:
                 new_manifest = await (await session.get(f"{scale_update_server()}/{train}/manifest.json")).json()
 
-        if new_manifest["version"] == current_version:
+        if not can_update(current_version, new_manifest["version"]):
             return {"status": "UNAVAILABLE"}
 
         return {
