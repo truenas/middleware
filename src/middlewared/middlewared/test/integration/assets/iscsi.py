@@ -36,7 +36,7 @@ def iscsi_client_freebsd():
 
 
 def target_login_impl_freebsd(portal_ip, target_name):
-    run_on_runner(['iscsictl', '-A', '-p', portal_ip, '-t', target_name])
+    run_on_runner(['iscsictl', '-A', '-p', portal_ip, '-t', target_name], check=False)
     retries = 5
     connected = False
     connected_clients = None
