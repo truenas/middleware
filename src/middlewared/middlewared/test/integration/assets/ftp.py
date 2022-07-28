@@ -27,6 +27,7 @@ def anonymous_ftp_server(config=None):
         with ftp_server({
             "onlyanonymous": True,
             "anonpath": path,
+            "onlylocal": False,
             **config,
         }):
             yield SimpleNamespace(dataset=ds, username="anonymous", password="")
@@ -49,6 +50,8 @@ def ftp_server_with_user_account(config=None):
                 "groups": [g],
             }):
                 with ftp_server({
+                    "onlyanonymous": False,
+                    "anonpath": None,
                     "onlylocal": True,
                     **config,
                 }):
