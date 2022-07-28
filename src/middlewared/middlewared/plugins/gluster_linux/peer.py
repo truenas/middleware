@@ -11,6 +11,7 @@ from .utils import GlusterConfig
 
 CTDB_VOL = CTDBConfig.CTDB_VOL_NAME.value
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
+MAX_PEERS = GlusterConfig.MAX_PEERS.value
 
 
 class GlusterPeerService(CRUDService):
@@ -77,6 +78,10 @@ class GlusterPeerService(CRUDService):
         if (await self.middleware.call('gluster.volume.exists_and_started', CTDB_VOL))['exists']:
             verbiage = 'Adding to' if schema == 'gluster.peer.create' else 'Removing from'
             verrors.add(schema, f'{verbiage} an existing trusted storage pool is not allowed at this time.')
+
+        if schema == 'gluster.peer.create' and len(await self.query()) == MAX_PEERS:
+            verrors.add(schema, 'Maximum number of peers met ({MAX_PEERS})')
+
         verrors.check()
 
     @accepts(Dict(
