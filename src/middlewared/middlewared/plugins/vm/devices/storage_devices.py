@@ -53,6 +53,12 @@ class StorageDevice(Device):
                 f'{vm_instance["name"]} has "{self.identity()}" already configured'
             )
 
+        if device['attributes'].get('physical_sectorsize') and not device['attributes'].get('logical_sectorsize'):
+            verrors.add(
+                'attributes.logical_sectorsize',
+                'This field must be provided when physical_sectorsize is specified.'
+            )
+
 
 class RAW(StorageDevice):
 
