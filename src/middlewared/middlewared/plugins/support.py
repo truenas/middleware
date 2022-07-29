@@ -1,7 +1,9 @@
 import asyncio
 import errno
 import json
+import shutil
 import socket
+import tempfile
 import time
 
 import aiohttp
@@ -30,10 +32,7 @@ async def post(url, data, timeout=INTERNET_TIMEOUT):
     except asyncio.TimeoutError:
         raise CallError('Connection timed out', errno.ETIMEDOUT)
     except aiohttp.ClientResponseError as e:
-        raise CallError(f'Invalid proxy server response ({req.status}): {e}', errno.EBADMSG)
-
-    if req.status != 200:
-        raise CallError(f'Invalid proxy server response ({req.status})', errno.EBADMSG)
+        raise CallError(f'Invalid proxy server response: {e}', errno.EBADMSG)
 
     try:
         return await req.json()
@@ -141,13 +140,10 @@ class SupportService(ConfigService):
             ("secondary_phone", "Secondary Contact Phone"),
         )
 
-    @accepts(
-        Str('username'),
-        Str('password'),
-    )
-    async def fetch_categories(self, username, password):
+    @accepts(Str('token'))
+    async def fetch_categories(self, token):
         """
-        Fetch all the categories available for `username` using `password`.
+        Fetch issue categories using access token `token`.
         Returns a dict with the category name as a key and id as value.
         """
 
@@ -155,8 +151,7 @@ class SupportService(ConfigService):
         data = await post(
             f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
             data=json.dumps({
-                'user': username,
-                'password': password,
+                'token': token,
             }),
         )
 
@@ -171,8 +166,7 @@ class SupportService(ConfigService):
         Str('body', required=True, max_length=None),
         Str('category', required=True),
         Bool('attach_debug', default=False),
-        Str('username', private=True),
-        Str('password', private=True),
+        Str('token', private=True),
         Str('type', enum=['BUG', 'FEATURE']),
         Str('criticality'),
         Str('environment', max_length=None),
@@ -197,7 +191,7 @@ class SupportService(ConfigService):
         sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if sw_name == 'freenas':
-            required_attrs = ('type', 'username', 'password')
+            required_attrs = ('type', 'token')
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
@@ -212,8 +206,6 @@ class SupportService(ConfigService):
                 raise CallError(f'{i} is required', errno.EINVAL)
 
         data['version'] = (await self.middleware.call('system.version')).split('-', 1)[-1]
-        if 'username' in data:
-            data['user'] = data.pop('username')
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
@@ -235,6 +227,7 @@ class SupportService(ConfigService):
             raise CallError('New ticket number was not informed', errno.EINVAL)
         job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
 
+        has_debug = False
         if debug:
             job.set_progress(60, 'Generating debug file')
 
@@ -250,63 +243,74 @@ class SupportService(ConfigService):
                     time.strftime('%Y%m%d%H%M%S'),
                 )
 
-            job.set_progress(80, 'Attaching debug file')
+            with tempfile.NamedTemporaryFile("w+b") as f:
+                def copy1():
+                    nonlocal has_debug
+                    try:
+                        rbytes = 0
+                        while True:
+                            r = debug_job.pipes.output.r.read(1048576)
+                            if r == b'':
+                                break
 
-            t = {
-                'ticket': ticket,
-                'filename': debug_name,
-            }
-            if 'user' in data:
-                t['username'] = data['user']
-            if 'password' in data:
-                t['password'] = data['password']
-            tjob = await self.middleware.call(
-                'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
-            )
+                            rbytes += len(r)
+                            if rbytes > DEBUG_MAX_SIZE * 1048576:
+                                return
 
-            def copy():
-                try:
-                    rbytes = 0
-                    while True:
-                        r = debug_job.pipes.output.r.read(1048576)
-                        if r == b'':
-                            break
-                        rbytes += len(r)
-                        if rbytes > DEBUG_MAX_SIZE * 1048576:
-                            raise CallError('Debug too large to attach', errno.EFBIG)
-                        tjob.pipes.input.w.write(r)
-                finally:
-                    debug_job.pipes.output.r.read()
-                    tjob.pipes.input.w.close()
+                            f.write(r)
 
-            await self.middleware.run_in_thread(copy)
+                        f.seek(0)
+                        has_debug = True
+                    finally:
+                        debug_job.pipes.output.r.read()
 
-            await debug_job.wait()
-            await tjob.wait()
+                await self.middleware.run_in_thread(copy1)
+                await debug_job.wait()
+
+                if has_debug:
+                    job.set_progress(80, 'Attaching debug file')
+
+                    t = {
+                        'ticket': ticket,
+                        'filename': debug_name,
+                    }
+                    if 'token' in data:
+                        t['token'] = data['token']
+                    tjob = await self.middleware.call(
+                        'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
+                    )
+
+                    def copy2():
+                        try:
+                            shutil.copyfileobj(f, tjob.pipes.input.w)
+                        finally:
+                            tjob.pipes.input.w.close()
+
+                    await self.middleware.run_in_thread(copy2)
+                    await tjob.wait()
         else:
             job.set_progress(100)
 
         return {
             'ticket': ticket,
             'url': url,
+            'has_debug': has_debug,
         }
 
     @accepts(Dict(
         'attach_ticket',
         Int('ticket', required=True),
         Str('filename', required=True, max_length=None),
-        Str('username', private=True),
-        Str('password', private=True),
+        Str('token', private=True),
     ))
     @job(pipes=["input"])
     def attach_ticket(self, job, data):
         """
         Method to attach a file to a existing ticket.
         """
+
         sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
 
-        if 'username' in data:
-            data['user'] = data.pop('username')
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')
 
@@ -330,3 +334,10 @@ class SupportService(ConfigService):
 
         if data['error']:
             raise CallError(data['message'], errno.EINVAL)
+
+    @accepts()
+    async def attach_ticket_max_size(self):
+        """
+        Returns maximum uploaded file size for `support.attach_ticket`
+        """
+        return DEBUG_MAX_SIZE
