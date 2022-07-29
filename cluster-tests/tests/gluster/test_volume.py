@@ -80,7 +80,9 @@ def test_04_verify_gluster_volume_is_started(volume, request):
     depends(request, ['CREATE_GVOLUME'])
     ans = make_request('post', '/gluster/volume/info', data={'name': volume})
     assert ans.status_code == 200, ans.text
-    assert ans.json()['status'] == 'Started', ans.text
+    result = ans.json()
+    assert len(result) > 0, f'Failed to retrieve gluster info for {volume}'
+    assert result[0]['status'].lower() == 'started', result[0]
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
