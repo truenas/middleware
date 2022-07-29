@@ -1,6 +1,6 @@
 import os
 
-from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, Str, returns
+from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, Str, returns, Ref
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 from middlewared.validators import Range
@@ -25,112 +25,13 @@ class BootService(Service):
         return BOOT_POOL_NAME
 
     @accepts()
-    @returns(
-        Dict(
-            'boot_pool_state',
-            Str('name'),
-            Str('id'),
-            Str('guid'),
-            Str('hostname'),
-            Str('status'),
-            Bool('healthy'),
-            Int('error_count'),
-            Dict(
-                'root_dataset',
-                Str('id'),
-                Str('name'),
-                Str('pool'),
-                Str('type'),
-                Dict(
-                    'properties',
-                    additional_attrs=True,
-                ),
-                Str('mountpoint', null=True),
-                Bool('encrypted'),
-                Str('encryption_root', null=True),
-                Bool('key_loaded'),
-            ),
-            Dict(
-                'properties',
-                additional_attrs=True,
-            ),
-            List('features', items=[Dict(
-                'feature_item',
-                Str('name'),
-                Str('guid'),
-                Str('description'),
-                Str('state'),
-            )]),
-            Dict(
-                'scan',
-                Str('function'),
-                Str('state'),
-                Datetime('start_time', null=True),
-                Datetime('end_time', null=True),
-                Float('percentage'),
-                Int('bytes_to_process'),
-                Int('bytes_processed'),
-                Datetime('pause', null=True),
-                Int('errors'),
-                Int('bytes_issued', null=True),
-                Int('total_secs_left', null=True),
-
-            ),
-            Dict(
-                'root_vdev',
-                Str('type'),
-                Str('path', null=True),
-                Str('guid'),
-                Str('status'),
-                Dict(
-                    'stats',
-                    Int('timestamp'),
-                    Int('read_errors'),
-                    Int('write_errors'),
-                    Int('checksum_errors'),
-                    List('ops', items=[Int('op')]),
-                    List('bytes', items=[Int('byte')]),
-                    Int('size'),
-                    Int('allocated'),
-                    Int('fragmentation'),
-                    Int('self_healed'),
-                    Int('configured_ashift'),
-                    Int('logical_ashift'),
-                    Int('physical_ashift'),
-                ),
-            ),
-            Dict(
-                'groups',
-                additional_attrs=True,
-            ),
-            Str('status_code'),
-            Str('status_detail'),
-        ),
-    )
+    @returns(Ref('pool_entry'))     # missing Patch
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.
         """
-        info = await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)], {'get': True})
-
-        # WebUI expects this to return the same data as `pool.pool_extend`
-        return {
-            'name': BOOT_POOL_NAME,
-            'status': info['status'],
-            'scan': info['scan'],
-            'topology': await self.middleware.call('pool.transform_topology', info['groups']),
-            'healthy': info['healthy'],
-            'warning': info['warning'],
-            'status_detail': info['status_detail'],
-            'size': info['properties']['size']['parsed'],
-            'allocated': info['properties']['allocated']['parsed'],
-            'free': info['properties']['free']['parsed'],
-            'freeing': info['properties']['freeing']['parsed'],
-            'fragmentation': info['properties']['fragmentation']['parsed'],
-            'autotrim': info['properties']['autotrim'],
-            'encryptkey_path': None,
-            'is_decrypted': True,
-        }
+        # WebUI expects same data as `pool.pool_extend`
+        return await self.middleware.call('pool.pool_normalize_info', BOOT_POOL_NAME)
 
     @accepts()
     @returns(List('disks', items=[Str('disk')]))
