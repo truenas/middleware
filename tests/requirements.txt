@@ -1,0 +1,6 @@
+pytest
+pytest-dependency
+pytest-rerunfailures
+pytest-timeout
+requests
+websocket-client
