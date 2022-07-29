@@ -25,7 +25,6 @@ class BootService(Service):
         return BOOT_POOL_NAME
 
     @accepts()
-    @returns(Ref('pool_entry'))     # missing Patch
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.

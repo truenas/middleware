@@ -520,7 +520,14 @@ class PoolService(CRUDService):
         return result
 
     @private
-    @returns(Ref('pool_entry'))     # missing Patch
+    @accepts(Str('pool_name'))
+    @returns(Patch(
+        'pool_entry', 'pool_normalize_info',
+        ('rm', {'name': 'id'}),
+        ('rm', {'name': 'guid'}),
+        ('rm', {'name': 'encrypt'}),
+        ('rm', {'name': 'encryptkey'}),
+    ))
     async def pool_normalize_info(self, pool_name):
         """
         Returns the current state of 'pool_name' including all vdevs, properties and datasets.
@@ -529,7 +536,7 @@ class PoolService(CRUDService):
         data structure for its consumers.
         """
         if pool_name == 'boot-pool':
-            path = f'/'
+            path = '/'
         else:
             path = f'/mnt/{pool_name}'
 
@@ -561,7 +568,6 @@ class PoolService(CRUDService):
         }
 
     @private
-    @returns(Ref('pool_entry'))     # missing Patch
     def pool_extend(self, pool, context):
 
         """
