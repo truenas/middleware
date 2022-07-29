@@ -31,3 +31,9 @@ class GlusterConfig(enum.Enum):
     # encode/decode JWT formatted messages. That secret
     # is stored here.
     SECRETS_FILE = os.path.join(WORKDIR, 'events/secret')
+
+    # there are apprehensions for having an unbounded maximum
+    # number of peers in a cluster wrt to ctdb/smb. Since ctdb
+    # nodes are mapped to gluster peers, we cap the max number
+    # of gluster peers for now
+    MAX_PEERS = 20
