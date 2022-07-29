@@ -23,6 +23,8 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         self._link_state = f'LINK_STATE_{dev.get_attr("IFLA_OPERSTATE")}'
         self._link_address = dev.get_attr('IFLA_ADDRESS')
         self._cloned = any((self.name.startswith(i) for i in CLONED_PREFIXES))
+        self._rxq = dev.get_attr('IFLA_NUM_RX_QUEUES') or 1
+        self._txq = dev.get_attr('IFLA_NUM_TX_QUEUES') or 1
 
     def _read(self, name, type=str):
         return self._sysfs_read(f"/sys/class/net/{self.name}/{name}", type)
@@ -81,6 +83,14 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
     def link_address(self):
         return self._link_address
 
+    @property
+    def rx_queues(self):
+        return self._rxq
+
+    @property
+    def tx_queues(self):
+        return self._txq
+
     def __getstate__(self, address_stats=False, vrrp_config=None):
         state = {
             'name': self.name,
@@ -101,6 +111,8 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
             'link_address': self.link_address or '',
             'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
             'vrrp_config': vrrp_config,
+            'rx_queues': self.rx_queues,
+            'tx_queues': self.tx_queues,
         }
 
         with EthernetHardwareSettings(self.name) as dev:
