@@ -60,16 +60,6 @@ class VMDeviceService(CRUDService):
         return out
 
     @private
-    async def create_resource(self, device, old=None):
-        return (
-            (device['dtype'] == 'DISK' and device['attributes'].get('create_zvol')) or (
-                device['dtype'] == 'RAW' and (not device['attributes'].get('exists', True) or (
-                    old and old['attributes'].get('size') != device['attributes'].get('size')
-                ))
-            )
-        )
-
-    @private
     async def extend_device(self, device):
         if device['vm']:
             device['vm'] = device['vm']['id']
@@ -292,17 +282,8 @@ class VMDeviceService(CRUDService):
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
 
     @private
-    async def validate_device(self, device, old=None, vm_instance=None, update=True):
-        # We allow vm_instance to be passed for cases where VM devices are being updated via VM and
-        # the device checks should be performed with the modified vm_instance object not the one db holds
-        # vm_instance should be provided at all times when handled by VMService, if VMDeviceService is interacting,
-        # then it means the device is configured with a VM and we can retrieve the VM's data from db
-        if not vm_instance:
-            vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
-
-        # vm_instance usages SHOULD NOT rely on device `id` field to uniquely identify objects as it's possible
-        # VMService is creating a new VM with devices and the id's don't exist yet
-
+    async def validate_device(self, device, old=None, update=True):
+        vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
         device_obj = getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
         await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
 
