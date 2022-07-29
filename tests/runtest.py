@@ -10,11 +10,7 @@ import getopt
 import sys
 import random
 import string
-from platform import system
 
-major_v = sys.version_info.major
-minor_v = sys.version_info.minor
-version = f"{major_v}" if system() == "Linux" else f"{major_v}.{minor_v}"
 workdir = os.getcwd()
 sys.path.append(workdir)
 workdir = os.getcwd()
@@ -106,7 +102,7 @@ digit = ''.join(random.choices(string.digits, k=2))
 hostname = f'test{digit}'
 domain = f'test{digit}.nb.ixsystems.com'
 
-cfg_content = f"""#!/usr/bin/env python{version}
+cfg_content = f"""#!{sys.executable}
 
 user = "root"
 password = "{passwd}"
@@ -147,9 +143,13 @@ cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
 
 
+# Use the right python version to start pytest with sys.executable
+# So that we can support virtualenv python pytest.
 call([
-    f"pytest-{version}",
-    "-vs",
+    sys.executable,
+    "-m",
+    "pytest"
+    "-v",
     "-o", "junit_family=xunit2",
     "--timeout=300",
     "--junitxml",
