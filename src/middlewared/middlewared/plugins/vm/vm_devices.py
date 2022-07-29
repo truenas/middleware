@@ -1,17 +1,16 @@
-import errno
 import os
 import re
+import sys
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, Str
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
+from middlewared.service import CallError, CRUDService, private
 from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
-from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB
-from .utils import LIBVIRT_USER
+from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB # noqa
 
 
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
@@ -28,16 +27,6 @@ class VMDeviceModel(sa.Model):
 
 
 class VMDeviceService(CRUDService):
-
-    DEVICE_ATTRS = {
-        'CDROM': CDROM.schema,
-        'RAW': RAW.schema,
-        'DISK': DISK.schema,
-        'NIC': NIC.schema,
-        'PCI': PCI.schema,
-        'DISPLAY': DISPLAY.schema,
-        'USB': USB.schema,
-    }
 
     ENTRY = Patch(
         'vmdevice_create', 'vm_device_entry',
@@ -311,186 +300,11 @@ class VMDeviceService(CRUDService):
         if not vm_instance:
             vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
 
-        verrors = ValidationErrors()
-        schema = self.DEVICE_ATTRS.get(device['dtype'])
-        if schema:
-            try:
-                device['attributes'] = schema.clean(device['attributes'])
-            except Error as e:
-                verrors.add(f'attributes.{e.attribute}', e.errmsg, e.errno)
-
-            try:
-                schema.validate(device['attributes'])
-            except ValidationErrors as e:
-                verrors.extend(e)
-
-            if verrors:
-                raise verrors
-
         # vm_instance usages SHOULD NOT rely on device `id` field to uniquely identify objects as it's possible
         # VMService is creating a new VM with devices and the id's don't exist yet
 
-        if device.get('dtype') == 'DISK':
-            create_zvol = device['attributes'].get('create_zvol')
-            path = device['attributes'].get('path')
-            if create_zvol:
-                for attr in ('zvol_name', 'zvol_volsize'):
-                    if not device['attributes'].get(attr):
-                        verrors.add(f'attributes.{attr}', 'This field is required.')
-                parentzvol = (device['attributes'].get('zvol_name') or '').rsplit('/', 1)[0]
-                if parentzvol and not await self.middleware.call('pool.dataset.query', [('id', '=', parentzvol)]):
-                    verrors.add(
-                        'attributes.zvol_name',
-                        f'Parent dataset {parentzvol} does not exist.', errno.ENOENT
-                    )
-                zvol = await self.middleware.call(
-                    'pool.dataset.query', [['id', '=', device['attributes'].get('zvol_name')]]
-                )
-                if not verrors and create_zvol and zvol:
-                    verrors.add(
-                        'attributes.zvol_name', f'{device["attributes"]["zvol_name"]} already exists.'
-                    )
-                elif zvol and zvol[0]['locked']:
-                    verrors.add('attributes.zvol_name', f'{zvol[0]["id"]} is locked.')
-            elif not path:
-                verrors.add('attributes.path', 'Disk path is required.')
-            elif path and not os.path.exists(path):
-                verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
-
-            if not await self.disk_uniqueness_integrity_check(device, vm_instance):
-                verrors.add(
-                    'attributes.path',
-                    f'{vm_instance["name"]} has "{path}" already configured'
-                )
-        elif device.get('dtype') == 'RAW':
-            path = device['attributes'].get('path')
-            exists = device['attributes'].get('exists', True)
-            if not path:
-                verrors.add('attributes.path', 'Path is required.')
-            else:
-                if exists and not os.path.exists(path):
-                    verrors.add('attributes.path', 'Path must exist.')
-                if not exists:
-                    if os.path.exists(path):
-                        verrors.add('attributes.path', 'Path must not exist.')
-                    elif not device['attributes'].get('size'):
-                        verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
-                if (
-                    old and old['attributes'].get('size') != device['attributes'].get('size') and
-                    not device['attributes'].get('size')
-                ):
-                    verrors.add('attributes.size', 'Please provide a valid size for the raw file.')
-                await check_path_resides_within_volume(
-                    verrors, self.middleware, 'attributes.path', path,
-                )
-                if not await self.disk_uniqueness_integrity_check(device, vm_instance):
-                    verrors.add(
-                        'attributes.path',
-                        f'{vm_instance["name"]} has "{path}" already configured'
-                    )
-        elif device.get('dtype') == 'CDROM':
-            path = device['attributes'].get('path')
-            if not path:
-                verrors.add('attributes.path', 'Path is required.')
-            elif not os.path.exists(path):
-                verrors.add('attributes.path', f'Unable to locate CDROM device at {path}')
-            elif not await self.disk_uniqueness_integrity_check(device, vm_instance):
-                verrors.add('attributes.path', f'{vm_instance["name"]} has "{path}" already configured')
-            if not verrors:
-                # We would like to check now if libvirt will actually be able to read the iso file
-                # How this works is that if libvirt user is not able to read the file, libvirt automatically changes
-                # ownership of the iso file to the libvirt user so that it is able to read however there are cases where
-                # even this can fail with perms like 000 or maybe parent path(s) not allowing access.
-                # To mitigate this, we can do the following:
-                # 1) See if owner of the file is libvirt user
-                # 2) If it's not libvirt user:
-                # a) Check if libvirt user can access the file
-                # b) Change ownership of the file to libvirt user as libvirt would eventually do
-                # 3) Check if libvirt user can access the file
-                libvirt_user = await self.middleware.call(
-                    'user.query', [['username', '=', LIBVIRT_USER]], {'get': True}
-                )
-                libvirt_group = await self.middleware.call('group.query', [['group', '=', LIBVIRT_USER]], {'get': True})
-                current_owner = os.stat(path)
-                is_valid = False
-                if current_owner.st_uid != libvirt_user['uid']:
-                    if await self.middleware.call('filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}):
-                        is_valid = True
-                    else:
-                        os.chown(path, libvirt_user['uid'], libvirt_group['gid'])
-                if not is_valid and not await self.middleware.call(
-                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
-                ):
-                    verrors.add(
-                        'attributes.path',
-                        f'{LIBVIRT_USER!r} user cannot read from {path!r} path. Please ensure correct '
-                        'permissions are specified.'
-                    )
-                    # Now that we know libvirt user would not be able to read the file in any case,
-                    # let's rollback the chown change we did
-                    os.chown(path, current_owner.st_uid, current_owner.st_gid)
-
-        elif device.get('dtype') == 'NIC':
-            nic = device['attributes'].get('nic_attach')
-            if nic:
-                nic_choices = await self.middleware.call('vm.device.nic_attach_choices')
-                if nic not in nic_choices:
-                    verrors.add('attributes.nic_attach', 'Not a valid choice.')
-                elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
-                    verrors.add(
-                        'attributes.trust_guest_rx_filters',
-                        'This can only be set when "nic_attach" is not a bridge device'
-                    )
-            if device['attributes']['trust_guest_rx_filters'] and device['attributes']['type'] == 'E1000':
-                verrors.add(
-                    'attributes.trust_guest_rx_filters',
-                    'This can only be set when "type" of NIC device is "VIRTIO"'
-                )
-        elif device.get('dtype') == 'PCI':
-            pptdev = device['attributes'].get('pptdev')
-            device_details = await self.middleware.call('vm.device.passthrough_device', pptdev)
-            if device_details.get('error'):
-                verrors.add(
-                    'attribute.pptdev',
-                    f'Not a valid choice. The PCI device is not available for passthru: {device_details["error"]}'
-                )
-            if not await self.middleware.call('vm.device.iommu_enabled'):
-                verrors.add('attribute.pptdev', 'IOMMU support is required.')
-        elif device.get('dtype') == 'DISPLAY':
-            if vm_instance:
-                if not update:
-                    vm_instance['devices'].append(device)
-
-                await self.validate_display_devices(verrors, vm_instance)
-
-            all_ports = await self.middleware.call(
-                'vm.all_used_display_device_ports', [['id', '!=', device.get('id')]]
-            )
-            new_ports = list((await self.middleware.call('vm.port_wizard')).values())
-            for key in ('port', 'web_port'):
-                if device['attributes'].get(key):
-                    if device['attributes'][key] in all_ports:
-                        verrors.add(f'attributes.{key}', 'Specified display port is already in use')
-                else:
-                    device['attributes'][key] = new_ports.pop(0)
-        elif device.get('dtype') == 'USB':
-            usb_device = device['attributes'].get('device')
-            device_details = await self.middleware.call('vm.device.usb_passthrough_device', usb_device)
-            if device_details.get('error'):
-                verrors.add(
-                    'attribute.device',
-                    f'Not a valid choice. The device is not available for USB passthrough: {device_details["error"]}'
-                )
-
-        if device['dtype'] in ('RAW', 'DISK') and device['attributes'].get('physical_sectorsize')\
-                and not device['attributes'].get('logical_sectorsize'):
-            verrors.add(
-                'attributes.logical_sectorsize',
-                'This field must be provided when physical_sectorsize is specified.'
-            )
-
-        if verrors:
-            raise verrors
+        device_obj = getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
+        await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
 
         return device
 
