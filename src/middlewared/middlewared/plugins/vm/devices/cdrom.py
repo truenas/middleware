@@ -70,7 +70,7 @@ class CDROM(Device):
                 else:
                     os.chown(path, libvirt_user['uid'], libvirt_group['gid'])
             if not is_valid and not self.middleware.call_sync(
-                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
+                'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
             ):
                 verrors.add(
                     'attributes.path',

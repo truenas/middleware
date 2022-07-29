@@ -131,3 +131,6 @@ class DISPLAY(Device):
                     verrors.add(f'attributes.{key}', 'Specified display port is already in use')
             else:
                 device['attributes'][key] = new_ports.pop(0)
+
+        if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
+            verrors.add('attributes.bind', 'Requested bind address is not valid')
