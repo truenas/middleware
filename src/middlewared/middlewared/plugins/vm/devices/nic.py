@@ -87,3 +87,20 @@ class NIC(Device):
                     ] + self.xml_children()
                 }
             )
+
+    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        nic = device['attributes'].get('nic_attach')
+        if nic:
+            nic_choices = self.middleware.call_sync('vm.device.nic_attach_choices')
+            if nic not in nic_choices:
+                verrors.add('attributes.nic_attach', 'Not a valid choice.')
+            elif nic.startswith('br') and device['attributes']['trust_guest_rx_filters']:
+                verrors.add(
+                    'attributes.trust_guest_rx_filters',
+                    'This can only be set when "nic_attach" is not a bridge device'
+                )
+        if device['attributes']['trust_guest_rx_filters'] and device['attributes']['type'] == 'E1000':
+            verrors.add(
+                'attributes.trust_guest_rx_filters',
+                'This can only be set when "type" of NIC device is "VIRTIO"'
+            )
