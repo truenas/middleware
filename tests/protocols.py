@@ -1,10 +1,20 @@
+import sys
+import enum
+import subprocess
+
+# sys.real_prefix only found in virtualenv
+# if detected set local site-packages to use for samba
+if getattr(sys, "real_prefix", None):
+    major_v = sys.version_info.major
+    minor_v = sys.version_info.minor
+    sys.path.append(f'{sys.real_prefix}/lib/python{major_v}.{minor_v}/site-packages')
+
 from samba.samba3 import libsmb_samba_internal as libsmb
 from samba.dcerpc import security
 from samba.samba3 import param as s3param
 from samba import credentials
-import enum
-import subprocess
 from samba import NTSTATUSError
+
 libsmb_has_rename = 'rename' in dir(libsmb.Conn)
 
 
