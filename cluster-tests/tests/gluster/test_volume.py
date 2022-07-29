@@ -107,7 +107,7 @@ def test_05_verify_gluster_volume_is_fuse_mounted(ip, request):
 @pytest.mark.parametrize('volume', [GVOL])
 @pytest.mark.dependency(name='STOP_GVOLUME')
 def test_06_stop_gluster_volume(volume, request):
-    depends(request, ['START_GVOLUME'])
+    depends(request, ['STARTED_GVOLUME'])
     ans = make_request('post', '/gluster/volume/stop', data={'name': volume, 'force': True})
     assert ans.status_code == 200, ans.text
 
