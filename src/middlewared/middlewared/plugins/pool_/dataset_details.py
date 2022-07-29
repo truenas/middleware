@@ -177,7 +177,7 @@ class PoolDatasetService(Service):
             snapshot_count, locked = self.get_snapcount_and_encryption_status(i, mntinfo)
             i['snapshot_count'] = snapshot_count
             i['locked'] = locked
-            i['thick_provisioned'] = any((ds['reservation']['value'], ds['refreservation']['value']))
+            i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
             i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
             i['iscsi_shares'] = self.get_iscsi_shares(i, info['iscsi'])
