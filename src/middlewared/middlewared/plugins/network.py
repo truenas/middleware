@@ -123,6 +123,8 @@ class InterfaceService(CRUDService):
             List('supported_media', required=True),
             List('media_options', required=True, null=True),
             Str('link_address', required=True),
+            Int('rx_queues', required=True),
+            Int('tx_queues', required=True),
             List('aliases', required=True, items=[Dict(
                 'alias',
                 Str('type', required=True),
