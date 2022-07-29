@@ -70,6 +70,7 @@ class PoolDatasetService(Service):
                     'user_properties': {},
                     'snapshot_count': 0,
                     'locked': False,
+                    'thick_provisioned': True,
                     'nfs_shares': [{
                         'enabled': True,
                         'path': '/mnt/tank/something'
@@ -83,7 +84,6 @@ class PoolDatasetService(Service):
                         'enabled': False,
                         'type': 'DISK',
                         'path': '/mnt/tank/something',
-                        'thick_provisioned': True,
                     }],
                     'vms': [{
                         'name': 'deb01',
@@ -177,6 +177,7 @@ class PoolDatasetService(Service):
             snapshot_count, locked = self.get_snapcount_and_encryption_status(i, mntinfo)
             i['snapshot_count'] = snapshot_count
             i['locked'] = locked
+            i['thick_provisioned'] = any((ds['reservation']['value'], ds['refreservation']['value']))
             i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
             i['iscsi_shares'] = self.get_iscsi_shares(i, info['iscsi'])
@@ -343,7 +344,6 @@ class PoolDatasetService(Service):
     @private
     def get_iscsi_shares(self, ds, iscsishares):
         iscsi_shares = []
-        thick_provisioned = any((ds['reservation']['value'], ds['refreservation']['value']))
         for share in iscsishares:
             if share['extent']['type'] == 'DISK' and share['extent']['path'].removeprefix('zvol/') == ds['id']:
                 # we store extent information prefixed with `zvol/` (i.e. zvol/tank/zvol01).
@@ -351,7 +351,6 @@ class PoolDatasetService(Service):
                     'enabled': share['extent']['enabled'],
                     'type': 'DISK',
                     'path': f'/dev/{share["extent"]["path"]}',
-                    'thick_provisioned': thick_provisioned,
                 })
             elif share['extent']['type'] == 'FILE' and share['mount_info'].get('mount_source') == ds['id']:
                 # this isn't common but possible, you can share a "file"
@@ -361,7 +360,6 @@ class PoolDatasetService(Service):
                     'enabled': share['extent']['enabled'],
                     'type': 'FILE',
                     'path': share['extent']['path'],
-                    'thick_provisioned': thick_provisioned,
                 })
 
         return iscsi_shares
