@@ -136,7 +136,12 @@ def test_08_delete_gluster_volume(volume, request):
     depends(request, ['VERIFY_FUSE_UMOUNTED'])
     ans = make_request('delete', f'/gluster/volume/id/{volume}')
     assert ans.status_code == 200, ans.text
-
-    ans = make_request('get', '/gluster/volume/list')
-    assert ans.status_code == 200, ans.text
-    assert volume not in ans.json(), ans.text
+    try:
+        # wait for it to be deleted
+        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 120)
+    except JobTimeOut:
+        assert False, JobTimeOut
+    else:
+        ans = make_request('get', '/gluster/volume/list')
+        assert ans.status_code == 200, ans.text
+        assert volume not in ans.json(), ans.text
