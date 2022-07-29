@@ -29,7 +29,7 @@ def ssh_credentials():
     ({"direction": "PUSH", "source_datasets": ["data/child"], "recursive": True}, "/mnt/data/child/work", True),
     ({"direction": "PUSH", "source_datasets": ["data/child"], "recursive": True, "exclude": ["data/child/work"]},
      "/mnt/data/child/work", False),
-    ({"direction": "PULL", "target_dataset": ["data/child"]}, "/mnt/data/child", True),
+    ({"direction": "PULL", "target_dataset": "data/child"}, "/mnt/data/child", True),
 ])
 def test_query_attachment_delegate(ssh_credentials, data, path, include):
     data = {
