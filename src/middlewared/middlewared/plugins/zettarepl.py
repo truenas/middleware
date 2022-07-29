@@ -787,6 +787,15 @@ class ZettareplService(Service):
     async def _handle_ssh_exceptions(self):
         try:
             yield
+        except paramiko.ssh_exception.BadHostKeyException as e:
+            fingerprint = ":".join([hex(c)[2:] for c in e.key.get_fingerprint()])
+            raise CallError(
+                "Remote host identification has changed. Someone could be eavesdropping on you right now (man-in-the-"
+                "middle attack)! It is also possible that a host key has just been changed. The fingerprint for the "
+                f"RSA key sent by the remote host is {fingerprint}. Please edit your SSH connection and click "
+                "\"Discover Remote Host Key\" to resolve this issue.",
+                errno=errno.EACCES,
+            )
         except (socket.timeout, paramiko.ssh_exception.NoValidConnectionsError, paramiko.ssh_exception.SSHException,
                 IOError, OSError) as e:
             raise CallError(repr(e).replace("[Errno None] ", ""), errno=errno.EACCES)
