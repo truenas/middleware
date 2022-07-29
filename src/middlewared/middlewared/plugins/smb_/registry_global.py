@@ -139,11 +139,6 @@ class SMBService(Service):
             'sharing.smb.query',
             [('enabled', '=', True), ('locked', '=', False)]
         )
-        data['ms_accounts'] = await self.middleware.call(
-            'user.query',
-            [('microsoft_account', '=', True), ('locked', '=', False)],
-            {'count': True}
-        )
         gs = GlobalSchema()
         gs.convert_schema_to_registry(data, to_set)
 
