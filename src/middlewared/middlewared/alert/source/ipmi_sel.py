@@ -145,7 +145,7 @@ class IPMISELAlertSource(AlertSource):
     )
 
     async def check(self):
-        if not has_ipmi():
+        if not await self.middleware.run_in_thread(has_ipmi):
             return
 
         return await self._produce_alerts_for_ipmitool_output(await ipmitool(["-c", "sel", "elist"]))
@@ -208,7 +208,7 @@ class IPMISELSpaceLeftAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
 
     async def check(self):
-        if not has_ipmi():
+        if not await self.middleware.run_in_thread(has_ipmi):
             return
 
         return self._produce_alert_for_ipmitool_output(await ipmitool(["sel", "info"]))
