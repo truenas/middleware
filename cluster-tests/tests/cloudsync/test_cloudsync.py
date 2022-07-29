@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.client import ClientException
+from middlewared.client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.cloud_sync import *
 
 from config import CLUSTER_INFO, CLUSTER_IPS
@@ -46,7 +46,7 @@ def test_invalid_cluster_path():
 
 
 def test_cluster_path_snapshot():
-    with pytest.raises(ClientException) as e:
+    with pytest.raises(ValidationErrors) as e:
         with local_s3_task({
             "path": CLUSTER_PATH,
             "snapshot": True
