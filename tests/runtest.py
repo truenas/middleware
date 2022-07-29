@@ -10,11 +10,7 @@ import getopt
 import sys
 import random
 import string
-from platform import system
 
-major_v = sys.version_info.major
-minor_v = sys.version_info.minor
-version = f"{major_v}" if system() == "Linux" else f"{major_v}.{minor_v}"
 workdir = os.getcwd()
 sys.path.append(workdir)
 workdir = os.getcwd()
@@ -120,7 +116,7 @@ artifacts = f"{workdir}/artifacts/"
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
 
-cfg_content = f"""#!/usr/bin/env python{version}
+cfg_content = f"""#!{sys.executable}
 
 user = "root"
 password = "{passwd}"
@@ -172,8 +168,12 @@ if verbose:
 if exitfirst:
     callargs.append("-x")
 
+# Use the right python version to start pytest with sys.executable
+# So that we can support virtualenv python pytest.
 call([
-    f"pytest-{version}",
+    sys.executable,
+    '-m',
+    'pytest'
 ] + callargs + [
     "-o", "junit_family=xunit2",
     '--timeout=300',
