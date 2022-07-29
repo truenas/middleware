@@ -44,3 +44,12 @@ class USB(Device):
             }
         )
         return device_xml
+
+    def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        usb_device = device['attributes']['device']
+        device_details = self.middleware.call_sync('vm.device.usb_passthrough_device', usb_device)
+        if device_details.get('error'):
+            verrors.add(
+                'attribute.device',
+                f'Not a valid choice. The device is not available for USB passthrough: {device_details["error"]}'
+            )
