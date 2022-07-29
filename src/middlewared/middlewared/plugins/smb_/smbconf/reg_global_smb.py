@@ -35,6 +35,7 @@ class GlobalSchema(RegistrySchema):
             'load printers': {'parsed': False},
             'max log size': {'parsed': 5120},
             'printcap name': {'parsed': '/dev/null'},
+            'fruit:nfs_aces': {'parsed': False},
             'restrict anonymous': {'parsed': 0 if guest_enabled else 2},
         })
 
