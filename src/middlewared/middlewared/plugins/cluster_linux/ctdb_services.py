@@ -5,14 +5,16 @@ import os
 
 from copy import deepcopy
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
-from middlewared.service import filterable, Service
+from middlewared.schema import Dict, Str, Bool
+from middlewared.service import accepts, filterable, Service
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
 CTDB_MONITORED_SERVICES = ['cifs']
 CTDB_SERVICE_DEFAULTS = {srv: {
     'name': srv,
-    'enable': False,
+    'service_enable': False,
+    'monitor_enable': False,
     'cluster_state': []
 } for srv in CTDB_MONITORED_SERVICES}
 
@@ -73,7 +75,8 @@ class CtdbServicesService(Service):
         Get cluster-wide service state for clustered
         services.
 
-        `enable` service is currently monitored by ctdbd
+        `monitor_enable` service is currently monitored by ctdbd
+        `service_enable` monitored service should be enabled
         `pnn` indicates the immutable node number.
         `state` includes following keys:
         `running` - the service is currently running
@@ -98,18 +101,28 @@ class CtdbServicesService(Service):
 
         return filter_list(list(cl.values()), filters, options)
 
-    def set(self, srv, enabled):
+    @accepts(
+        Str('clustered_service', enum=CTDB_MONITORED_SERVICES),
+        Dict(
+            'clustered_service_config',
+            Bool('monitor_enabled'),
+            Bool('service_enabled')
+        )
+    )
+    def set(self, srv, data):
         """
         Private method that enables CTDB monitoring for the specifie
         service. This enables cluster-wide.
         """
-        if srv not in CTDB_MONITORED_SERVICES:
-            raise CallError(f'{srv}: not a CTDB monitored service')
 
         current_state = self.get_global_state()
-
-        if current_state[srv]['enable'] != enabled:
-            current_state[srv]['enable'] = enabled
+        current_service_config = {
+            'monitor_enable': current_state[srv]['monitor_enable'],
+            'service_enable': current_state[srv]['service_enable']
+        }
+        if data != current_service_config:
+            current_state[srv]['monitor_enable'] = data['monitor_enable']
+            current_state[srv]['service_enable'] = data['service_enable']
             with open(CTDBConfig.GM_CLUSTERED_SERVICES.value, 'w') as f:
                 fcntl.lockf(f.fileno(), fcntl.LOCK_EX)
                 try:
