@@ -58,17 +58,14 @@ class CDROM(Device):
             # a) Check if libvirt user can access the file
             # b) Change ownership of the file to libvirt user as libvirt would eventually do
             # 3) Check if libvirt user can access the file
-            libvirt_user = self.middleware.call_sync(
-                'user.query', [['username', '=', LIBVIRT_USER]], {'get': True}
-            )
-            libvirt_group = self.middleware.call_sync('group.query', [['group', '=', LIBVIRT_USER]], {'get': True})
+            libvirt_user = self.middleware.call_sync('user.get_user_obj', {"username": LIBVIRT_USER})
             current_owner = os.stat(path)
             is_valid = False
-            if current_owner.st_uid != libvirt_user['uid']:
+            if current_owner.st_uid != libvirt_user['pw_uid']:
                 if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}):
                     is_valid = True
                 else:
-                    os.chown(path, libvirt_user['uid'], libvirt_group['gid'])
+                    os.chown(path, libvirt_user['pw_uid'], libvirt_group['pw_gid'])
             if not is_valid and not self.middleware.call_sync(
                 'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
             ):
