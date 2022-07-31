@@ -1,4 +1,4 @@
-from middlewared.plugins.vm.devices import CDROM, DISK, DISPLAY, PCI, RAW
+from middlewared.plugins.vm.devices import CDROM, DISK, DISPLAY, RAW
 from middlewared.utils import Nid
 
 from .supervisor_base import VMSupervisorBase

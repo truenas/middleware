@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import middlewared.sqlalchemy as sa
 
@@ -10,7 +9,7 @@ from middlewared.service import CallError, CRUDService, private
 from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
-from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB # noqa
+from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB
 
 
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
@@ -27,6 +26,16 @@ class VMDeviceModel(sa.Model):
 
 
 class VMDeviceService(CRUDService):
+
+    DEVICES = {
+        'CDROM': CDROM,
+        'RAW': RAW,
+        'DISK': DISK,
+        'NIC': NIC,
+        'PCI': PCI,
+        'DISPLAY': DISPLAY,
+        'USB': USB,
+    }
 
     ENTRY = Patch(
         'vmdevice_create', 'vm_device_entry',
@@ -284,7 +293,7 @@ class VMDeviceService(CRUDService):
     @private
     async def validate_device(self, device, old=None, update=True):
         vm_instance = await self.middleware.call('vm.get_instance', device['vm'])
-        device_obj = getattr(sys.modules[__name__], device['dtype'])(device, self.middleware)
+        device_obj = self.DEVICES[device['dtype']](device, self.middleware)
         await self.middleware.run_in_thread(device_obj.validate, device, old, vm_instance, update)
 
         return device

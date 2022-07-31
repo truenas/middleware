@@ -1,7 +1,5 @@
 from abc import ABC
 
-from middlewared.schema import Error
-from middlewared.service_exception import ValidationErrors
 from middlewared.utils import osc
 from middlewared.validators import validate_schema
 
