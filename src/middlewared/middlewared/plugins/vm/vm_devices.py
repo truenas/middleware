@@ -3,6 +3,7 @@ import re
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private
@@ -67,6 +68,16 @@ class VMDeviceService(CRUDService):
             out[zvol['path']] = zvol['name']
 
         return out
+
+    @accepts()
+    @returns(Dict(
+        *[Str(k, enum=[k]) for k in IOTYPE_CHOICES]
+    ))
+    async def iotype_choices(self):
+        """
+        IO-type choices for storage devices.
+        """
+        return {k: k for k in IOTYPE_CHOICES}
 
     @private
     async def extend_device(self, device):

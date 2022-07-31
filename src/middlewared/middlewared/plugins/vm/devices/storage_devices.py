@@ -8,6 +8,9 @@ from .device import Device
 from .utils import create_element, disk_from_number
 
 
+IOTYPE_CHOICES = ['NATIVE', 'THREADS', 'IO_URING']
+
+
 class StorageDevice(Device):
 
     TYPE = NotImplemented
@@ -23,11 +26,12 @@ class StorageDevice(Device):
         virtio = self.data['attributes']['type'] == 'VIRTIO'
         logical_sectorsize = self.data['attributes']['logical_sectorsize']
         physical_sectorsize = self.data['attributes']['physical_sectorsize']
+        iotype = self.data['attributes']['iotype']
 
         return create_element(
             'disk', type=self.TYPE, device='disk', attribute_dict={
                 'children': [
-                    create_element('driver', name='qemu', type='raw', cache='none'),
+                    create_element('driver', name='qemu', type='raw', cache='none', io=iotype.lower()),
                     self.create_source_element(),
                     create_element(
                         'target', bus='sata' if not virtio else 'virtio',
@@ -75,6 +79,7 @@ class RAW(StorageDevice):
         Int('size', default=None, null=True),
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
+        Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
     )
 
     def create_source_element(self):
@@ -115,6 +120,7 @@ class DISK(StorageDevice):
         Int('zvol_volsize'),
         Int('logical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
         Int('physical_sectorsize', enum=[None, 512, 4096], default=None, null=True),
+        Str('iotype', enum=IOTYPE_CHOICES, default='THREADS'),
     )
 
     def create_source_element(self):
