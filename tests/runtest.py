@@ -148,7 +148,7 @@ cfg_file.close()
 call([
     sys.executable,
     "-m",
-    "pytest"
+    "pytest",
     "-v",
     "-o", "junit_family=xunit2",
     "--timeout=300",
