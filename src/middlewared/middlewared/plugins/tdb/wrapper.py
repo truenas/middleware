@@ -20,12 +20,19 @@ class TDBWrap(object):
     options = {}
     cached_data = None
     last_read = 0
+    full_path = None
+    opath_fd = -1
 
     def close(self):
         self.hdl.close()
+        os.close(self.opath_fd)
 
     def is_clustered(self):
         return False
+
+    def validate_handle(self):
+        # if file has been renamed or deleted from under us, readlink will show different path
+        return os.readlink(f'/proc/self/fd/{self.opath_fd}') == self.full_path
 
     def get(self, key):
         tdb_key = key.encode()
@@ -102,7 +109,9 @@ class TDBWrap(object):
         if tdb_type != 'CUSTOM':
             name = f'{TDBPath[tdb_type].value}/{name}.tdb'
 
+        self.full_path = name
         self.hdl = tdb.Tdb(name, 0, tdb_flags, open_flags, open_mode)
+        self.opath_fd = os.open(name, os.O_PATH)
         self.options = copy.deepcopy(options)
         super().__init__()
 
@@ -136,6 +145,9 @@ class CTDBWrap(object):
             self.hdl
 
         super().__init__()
+
+    def validate_handle(self):
+        return True
 
     def close(self):
         # Closing last reference to pyctdb_client_ctx will
