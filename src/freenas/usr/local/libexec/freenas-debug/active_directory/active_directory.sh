@@ -179,6 +179,13 @@ active_directory_func()
 	section_footer
 	fi
 
+	if [ "${enabled}" = "ENABLED" ]
+	then
+	section_header "Active Directory machine account status"
+	midclt call activedirectory.machine_account_status
+	section_footer
+	fi
+
 	#
 	#	Dump results clockskew check
 	#
