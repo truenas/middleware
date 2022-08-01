@@ -178,7 +178,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         if data['min_memory'] and data['min_memory'] > data['memory']:
             verrors.add(
                 f'{schema_name}.min_memory',
-                'Minimum memory should not be greater then defined/maximum memory'
+                'Minimum memory should not be greater than defined/maximum memory'
             )
 
         vcpus = data['vcpus'] * data['cores'] * data['threads']
