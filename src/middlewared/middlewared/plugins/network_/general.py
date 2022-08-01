@@ -55,19 +55,19 @@ class NetworkGeneralService(Service):
                     continue
                 ips[iface['name']][key].append(f'{alias["address"]}/{alias["netmask"]}')
 
-        default_routes = []
+        default_routes = set()
         for route in await self.middleware.call('route.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
             # IPv6 have local addresses that don't have gateways. Make sure we only return a gateway
             # if there is one.
             if route['gateway']:
-                default_routes.append(route['gateway'])
+                default_routes.add(route['gateway'])
 
-        nameservers = []
+        nameservers = set()
         for ns in await self.middleware.call('dns.query'):
-            nameservers.append(ns['nameserver'])
+            nameservers.add(ns['nameserver'])
 
         return {
             'ips': ips,
-            'default_routes': default_routes,
-            'nameservers': nameservers,
+            'default_routes': list(default_routes),
+            'nameservers': list(nameservers),
         }
