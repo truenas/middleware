@@ -258,6 +258,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/rsyncd.conf', 'checkpoint': 'pool_import'}
         ],
         'smb': [
+            {'type': 'mako', 'path': 'local/smb4.conf'},
             {'type': 'mako', 'path': 'security/pam_winbind.conf', 'checkpoint': 'pool_import'},
         ],
         'ctdb': [
