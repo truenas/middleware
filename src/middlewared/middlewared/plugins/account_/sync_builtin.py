@@ -241,7 +241,6 @@ class UserService(Service):
                     "shell": shell,
                     "full_name": gecos,
                     "builtin": True,
-                    "microsoft_account": False,
                     "group": group["id"],
                     "attributes": {},
                     "smb": False,

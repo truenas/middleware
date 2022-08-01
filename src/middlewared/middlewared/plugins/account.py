@@ -198,7 +198,6 @@ class UserService(CRUDService):
             'id_type_both',
             'nt_name',
             'sid',
-            'microsoft_account',
         ]
 
         for i in to_remove:
@@ -289,7 +288,6 @@ class UserService(CRUDService):
         Str('password', private=True),
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
-        Bool('microsoft_account', default=False),
         Bool('smb', default=True),
         Bool('sudo', default=False),
         Bool('sudo_nopasswd', default=False),
