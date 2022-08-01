@@ -1,0 +1,2 @@
+# make the serial = uuid for pmem devices ticket: NAS-116513
+KERNEL=="pmem*", ENV{DEVTYPE}=="disk", ENV{ID_SERIAL_SHORT}="$attr{uuid}"
