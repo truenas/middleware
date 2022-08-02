@@ -735,11 +735,10 @@ class PoolService(CRUDService):
         )
         verrors.check()
 
-        log_disks = sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])
-        if log_disks:
-            adv_config = await self.middleware.call('system.advanced.config')
-            if adv_config['overprovision']:
-                raise CallError('Overprovision not available in this platform')
+        if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
+            if disks := {disk: osize for disk in sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])}:
+                # will log errors if there are any so it won't crash here (this matches CORE behavior)
+                await (await self.middleware.call('disk.resize', disks)).wait()
 
         await self.middleware.call('pool.format_disks', job, disks)
 
