@@ -16,8 +16,8 @@ class NftablesService(Service):
     def generate_rules(self, data):
         """Generate a list of v4 and v6 firewall rules and apply them to nftables"""
         if data['drop']:
-            sshport = (await self.middleware.call('ssh.config'))['tcpport']
-            web = await self.middleware.call('system.general.config')
+            sshport = self.middleware.call_sync('ssh.config')['tcpport']
+            web = self.middleware.call_sync('system.general.config')
 
         for i in ('ip', 'ip6'):
             rules = [
