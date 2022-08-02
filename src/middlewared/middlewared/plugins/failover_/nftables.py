@@ -59,6 +59,8 @@ class NftablesService(Service):
         if rv.returncode:
             raise CallError(f'Failed restoring firewall rules: {rv.stdout}')
 
+        return True
+
     @accepts()
     @job(lock=JOB_LOCK)
     def drop_all(self, job):
@@ -82,9 +84,7 @@ class NftablesService(Service):
         if not vips:
             raise CallError('No VIP addresses detected on system')
 
-        self.generate_rules({'drop': True, 'vips': vips})
-
-        return True
+        return self.generate_rules({'drop': True, 'vips': vips})
 
     @accepts()
     @job(lock=JOB_LOCK)
@@ -93,6 +93,4 @@ class NftablesService(Service):
         if not self.middleware.call_sync('failover.licensed'):
             return False
 
-        self.generate_rules({'drop': False, 'vips': []})
-
-        return True
+        return self.generate_rules({'drop': False, 'vips': []})
