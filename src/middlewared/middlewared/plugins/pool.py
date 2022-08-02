@@ -2310,8 +2310,6 @@ class PoolDatasetService(CRUDService):
             raise CallError('Only datasets which are encrypted with passphrase can be locked')
         elif id != ds['encryption_root']:
             raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
-        elif id == (await self.middleware.call('systemdataset.config'))['pool']:
-            raise CallError(f'Please move system dataset to another pool before locking {id}')
 
         async def detach(delegate):
             await delegate.stop(await delegate.query(self.__attachments_path(ds), True))
