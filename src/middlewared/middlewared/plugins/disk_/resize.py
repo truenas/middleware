@@ -31,15 +31,18 @@ class DiskService(Service):
                 Int('size', required=False, default=None),
             )
         ]),
+        Bool('sync', default=True),
         Bool('raise_error', default=False)
     )
     @job(lock='disk_resize')
     @returns()
-    async def resize(self, job, data, raise_error):
+    async def resize(self, job, data, sync, raise_error):
         """
         Takes a list of disks. Each list entry is a dict that requires a key, value pair.
         `name`: string (the name of the disk (i.e. sda))
         `size`: integer (given in gigabytes)
+        `sync`: boolean, when true (default) will synchronize the new size of the disk(s)
+            with the database cache.
         `raise_error`: boolean
             when true, will raise a `CallError` if any failures occur
             when false, will will log the errors if any failures occur
@@ -65,3 +68,8 @@ class DiskService(Service):
                 raise CallError(err)
             else:
                 self.logger.error(err)
+        elif sync:
+            if len(data) > 1:
+                await (await self.middleware.call('disk.sync_all')).wait()
+            else:
+                await self.middleware.call('disk.sync', data[0]['name'])
