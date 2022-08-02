@@ -12,17 +12,15 @@ class DiskService(Service):
     @private
     async def resize_impl(self, disk):
         cmd = ['disk_resize', disk['name']]
+        err = f'DISK: {disk["name"]!r}'
         if disk['size']:
+            err += f' SIZE: {disk["size"]} gigabytes'
             cmd.append(f'{disk["size"]}G')
 
         cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
         if cp.returncode != 0:
-            err = f'DISK: {disk["name"]!r}'
-            if disk['size']:
-                err += f' SIZE: {disk["size"]} gigabytes'
             err += f' ERROR: {cp.stdout}'
-
-            raise OSError(cp.returncode, os.sterror(cp.returncode), err)
+            raise OSError(cp.returncode, os.strerror(cp.returncode), err)
 
     @accepts(
         List('disks', required=True, items=[
