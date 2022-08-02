@@ -520,6 +520,48 @@ class PoolService(CRUDService):
         return result
 
     @private
+    @accepts(Str('pool_name'))
+    @returns(Patch(
+        'pool_entry', 'pool_normalize_info',
+        ('rm', {'name': 'id'}),
+        ('rm', {'name': 'guid'}),
+        ('rm', {'name': 'encrypt'}),
+        ('rm', {'name': 'encryptkey'}),
+    ))
+    async def pool_normalize_info(self, pool_name):
+        """
+        Returns the current state of 'pool_name' including all vdevs, properties and datasets.
+
+        Common method for `pool.pool_extend` and `boot.get_state` returning a uniform
+        data structure for its consumers.
+        """
+        if pool_name == 'boot-pool':
+            path = '/'
+        else:
+            path = f'/mnt/{pool_name}'
+
+        info = await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)], {'get': True})
+
+        return {
+            'name': pool_name,
+            'path': path,
+            'status': info['status'],
+            'scan': info['scan'],
+            'topology': await self.middleware.call('pool.transform_topology', info['groups']),
+            'healthy': info['healthy'],
+            'warning': info['warning'],
+            'status_detail': info['status_detail'],
+            'size': info['properties']['size']['parsed'],
+            'allocated': info['properties']['allocated']['parsed'],
+            'free': info['properties']['free']['parsed'],
+            'freeing': info['properties']['freeing']['parsed'],
+            'fragmentation': info['properties']['fragmentation']['parsed'],
+            'autotrim': info['properties']['autotrim'],
+            'encryptkey_path': None,            # keeping keys until API 2.1 to
+            'is_decrypted': True,               # maintain backwards compatibility
+        }
+
+    @private
     def pool_extend_context(self, rows, extra):
         return {
             "extra": extra,
@@ -532,56 +574,11 @@ class PoolService(CRUDService):
         If pool is encrypted we need to check if the pool is imported
         or if all geli providers exist.
         """
-        pool['path'] = f'/mnt/{pool["name"]}'
-        try:
-            zpool = self.middleware.call_sync('zfs.pool.query', [('id', '=', pool['name'])])[0]
-        except Exception:
-            zpool = None
-
-        if zpool:
-            pool.update({
-                'status': zpool['status'],
-                'scan': zpool['scan'],
-                'topology': self.transform_topology(zpool['groups']),
-                'healthy': zpool['healthy'],
-                'warning': zpool['warning'],
-                'status_detail': zpool['status_detail'],
-                'size': zpool['properties']['size']['parsed'],
-                'allocated': zpool['properties']['allocated']['parsed'],
-                'free': zpool['properties']['free']['parsed'],
-                'freeing': zpool['properties']['freeing']['parsed'],
-                'fragmentation': zpool['properties']['fragmentation']['parsed'],
-                'autotrim': zpool['properties']['autotrim'],
-            })
-        else:
-            pool.update({
-                'status': 'OFFLINE',
-                'scan': None,
-                'topology': None,
-                'healthy': False,
-                'warning': False,
-                'status_detail': None,
-                'size': None,
-                'allocated': None,
-                'free': None,
-                'freeing': None,
-                'fragmentation': None,
-                'autotrim': {
-                    'parsed': 'off',
-                    'rawvalue': 'off',
-                    'source': 'DEFAULT',
-                    'value': 'off',
-                },
-            })
-
         if context['extra'].get('is_upgraded'):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
-        # Let's keep below keys until api 2.1 to keep backwards compatibility
-        pool.update({
-            'encryptkey_path': None,
-            'is_decrypted': True,
-        })
+        # WebUI expects the same data as in `boot.get_state`
+        pool |= self.middleware.call_sync('pool.pool_normalize_info', pool['name'])
         return pool
 
     @accepts(Dict(
