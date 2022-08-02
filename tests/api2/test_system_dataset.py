@@ -65,3 +65,15 @@ def test_migrate_to_a_pool_with_passphrase_encrypted_root_dataset(request, lock)
         assert ds["properties"]["encryption"]["value"] == "off"
 
         call("systemdataset.update", {"pool": pool}, job=True)
+
+
+def test_lock_passphrase_encrypted_pool_with_system_dataset(request):
+    depends(request, ["pool_04"], scope="session")
+
+    with another_pool({"encryption": True, "encryption_options": {"passphrase": "passphrase"}}):
+        call("systemdataset.update", {"pool": "test"}, job=True)
+
+        call("pool.dataset.lock", "test", job=True)
+
+        ds = call("zfs.dataset.get_instance", "test/.system")
+        assert ds["properties"]["mounted"]["value"] == "yes"
