@@ -7,6 +7,10 @@ from middlewared.service import Service, CallError, private, accepts, returns, j
 from middlewared.schema import Dict, Str, Int, List, Bool
 
 
+class UnexpectedFailure(Exception):
+    pass
+
+
 class DiskService(Service):
 
     @private
@@ -17,10 +21,15 @@ class DiskService(Service):
             err += f' SIZE: {disk["size"]} gigabytes'
             cmd.append(f'{disk["size"]}G')
 
-        cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
-        if cp.returncode != 0:
-            err += f' ERROR: {cp.stdout}'
-            raise OSError(cp.returncode, os.strerror(cp.returncode), err)
+        try:
+            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        except Exception as e:
+            err += f' ERROR: {str(e)}'
+            raise UnexpectedFailure(err)
+        else:
+            if cp.returncode != 0:
+                err += f' ERROR: {cp.stdout}'
+                raise OSError(cp.returncode, os.strerror(cp.returncode), err)
 
     @accepts(
         List('disks', required=True, items=[
@@ -57,8 +66,19 @@ class DiskService(Service):
         disks = [i for idx, i in enumerate(data) if i not in data[idx + 1]]
         exceptions = await asyncio.gather(*[self.resize_impl(disk) for disk in disks], return_exceptions=True)
         failures = []
-        for _, exc in filter(lambda x: isinstance(x[1], OSError), zip(disks, exceptions)):
-            failures.append(str(exc))
+        success = []
+        for disk, exc in zip(disks, exceptions):
+            if isinstance(exc, Exception):
+                failures.append(str(exc))
+            else:
+                self.logger.info('Successfully resized %r', disk['name'])
+                success.append(disk['name'])
+
+        if sync:
+            if len(data) > 1:
+                await (await self.middleware.call('disk.sync_all')).wait()
+            else:
+                await self.middleware.call('disk.sync', data[0]['name'])
 
         if failures:
             err = f'Failure resizing: {", ".join(failures)}'
@@ -66,8 +86,3 @@ class DiskService(Service):
                 raise CallError(err)
             else:
                 self.logger.error(err)
-        elif sync:
-            if len(data) > 1:
-                await (await self.middleware.call('disk.sync_all')).wait()
-            else:
-                await self.middleware.call('disk.sync', data[0]['name'])
