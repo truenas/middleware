@@ -34,8 +34,8 @@ class DiskService(Service):
         Bool('sync', default=True),
         Bool('raise_error', default=False)
     )
-    @job(lock='disk_resize')
     @returns()
+    @job(lock='disk_resize')
     async def resize(self, job, data, sync, raise_error):
         """
         Takes a list of disks. Each list entry is a dict that requires a key, value pair.
