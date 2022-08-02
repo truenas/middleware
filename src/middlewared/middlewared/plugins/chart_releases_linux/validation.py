@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import Dict, NOT_PROVIDED
 from middlewared.service import CallError, private, Service
 from middlewared.utils import filter_list
@@ -15,6 +16,7 @@ validation_mapping = {
     'validations/containerImage': 'container_image',
     'validations/nodePort': 'port_available_on_node',
     'validations/hostPath': 'custom_host_path',
+    'normalize/ixVolume': 'ix_mount_path',
     'validations/lockedHostPath': 'locked_host_path',
     'validations/hostPathAttachments': 'host_path_attachments',
 }
@@ -172,6 +174,14 @@ class ChartReleaseService(Service):
         await self.validate_locked_host_path(verrors, path, question, schema_name, release_data)
         await self.validate_host_path_attachments(verrors, path, question, schema_name, release_data)
         await check_path_resides_within_volume(verrors, self.middleware, schema_name, path)
+
+    @private
+    async def validate_ix_mount_path(self, verrors, value, question, schema_name, release_data):
+        path = value.get('datasetName') if isinstance(value, dict) else value
+        if not path:
+            verrors.add(schema_name, 'Dataset name should not be empty.')
+        elif not validate_dataset_name(path):
+            verrors.add(schema_name, f'Invalid dataset name {path}. "test1, ix-test, ix_test" are valid examples.')
 
     @private
     async def validate_locked_host_path(self, verrors, path, question, schema_name, release_data):
