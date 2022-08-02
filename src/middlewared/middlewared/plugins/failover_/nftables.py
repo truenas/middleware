@@ -1,4 +1,4 @@
-from subprocess import run, STDOUT
+from subprocess import run, PIPE, STDOUT
 
 from middlewared.service import Service, accepts, job, CallError
 
@@ -37,9 +37,9 @@ class NftablesService(Service):
                     # each controller on an HA system. We, obviously, dont want
                     # to block traffic there.
                     if j['type'] == 'INET' and i == 'ip':
-                        rules.append(f'add rules {i} filter INPUT {i} saddr {i["address"]}/32 counter drop')
+                        rules.append(f'add rules {i} filter INPUT {i} saddr {j["address"]}/32 counter drop')
                     elif j['type'] == 'INET6' and i == 'ip6':
-                        rules.append(f'add rules {i} filter INPUT {i} saddr {i["address"]}/128 counter drop')
+                        rules.append(f'add rules {i} filter INPUT {i} saddr {j["address"]}/128 counter drop')
 
             if i == 'ip':
                 v4 = rules
@@ -55,7 +55,7 @@ class NftablesService(Service):
 
         # finally, we load the rulesets into nftables
         # note: this is an atomic operation (-f) so we don't need to worry about obscure race conditions
-        rv = run(['nft', '-f', f'{FW_RULES_FILE}'], stdout=STDOUT, stderr=STDOUT)
+        rv = run(['nft', '-f', FW_RULES_FILE], stdout=PIPE, stderr=STDOUT)
         if rv.returncode:
             raise CallError(f'Failed restoring firewall rules: {rv.stdout}')
 
