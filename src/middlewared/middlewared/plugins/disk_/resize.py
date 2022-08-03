@@ -73,7 +73,7 @@ class DiskService(Service):
         exceptions = await asyncio.gather(*[self.resize_impl(disk) for disk in data], return_exceptions=True)
         failures = []
         success = []
-        for disk, exc in zip(disks, exceptions):
+        for disk, exc in zip(data, exceptions):
             if isinstance(exc, Exception):
                 failures.append(str(exc))
             else:
