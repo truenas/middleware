@@ -3,7 +3,7 @@ import asyncio
 import subprocess
 
 from middlewared.utils import run
-from middlewared.service import Service, CallError, private, accepts, returns, job
+from middlewared.service import Service, CallError, private, accepts, returns, job, ValidationErrors
 from middlewared.schema import Dict, Str, Int, List, Bool
 
 
@@ -60,11 +60,17 @@ class DiskService(Service):
             if `size` is not given, the disk with `name` will be resized
                 to it's original size (unoverprovision).
         """
-        # since it's a list of disks, we could have received duplicate
-        # key,value pairs so ensure we don't try to run `disk_resize` on
-        # the same disk by removing duplicates
-        disks = [i for idx, i in enumerate(data) if i not in data[idx + 1]]
-        exceptions = await asyncio.gather(*[self.resize_impl(disk) for disk in disks], return_exceptions=True)
+        verrors = ValidationErrors()
+        disks = []
+        for disk in data:
+            if disk['name'] in disks:
+                verrors.add('disk.resize', 'Disk {disk["name"]!r} specified more than once.')
+            else:
+                disks.append(disk['name'])
+
+        verrors.check()
+
+        exceptions = await asyncio.gather(*[self.resize_impl(disk) for disk in data], return_exceptions=True)
         failures = []
         success = []
         for disk, exc in zip(disks, exceptions):
