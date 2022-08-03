@@ -17,6 +17,7 @@ install_client:
 	python3 setup_client.py install --single-version-externally-managed --record=/dev/null
 
 install_test:
+	bash install-dev-tools
 	python3 setup_test.py install --single-version-externally-managed --record=/dev/null
 
 migrate:
