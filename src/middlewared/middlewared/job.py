@@ -188,7 +188,7 @@ class JobsDeque(object):
         return self.__dict.get(item)
 
     def all(self):
-        return self.__dict
+        return self.__dict.copy()
 
     def add(self, job):
         self.count += 1
