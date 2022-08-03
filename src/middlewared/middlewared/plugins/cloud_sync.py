@@ -612,7 +612,8 @@ class CredentialsService(CRUDService):
         await self._validate("cloud_sync_credentials_create", data)
 
         async with RcloneConfig({"credentials": data}) as config:
-            proc = await run(["rclone", "--config", config.config_path, "lsjson", "remote:"],
+            proc = await run(["rclone", "--config", config.config_path, "--contimeout", "15s", "--timeout", "30s",
+                              "lsjson", "remote:"],
                              check=False, encoding="utf8")
             if proc.returncode == 0:
                 return {"valid": True}
