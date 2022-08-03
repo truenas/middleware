@@ -1,6 +1,7 @@
 import pytest
 
-from middlewared.client import ClientException, ValidationErrors
+from middlewared.client import ClientException
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.cloud_sync import *
 
 from config import CLUSTER_INFO, CLUSTER_IPS
@@ -53,4 +54,4 @@ def test_cluster_path_snapshot():
         }):
             pass
 
-    assert str(e.value) == f"[EINVAL] cloud_sync_create.snapshot: This option can not be used for cluster paths"
+    assert str(e.value) == f"[EINVAL] cloud_sync_create.snapshot: This option can not be used for cluster paths\n"
