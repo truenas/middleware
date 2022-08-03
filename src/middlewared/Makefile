@@ -1,21 +1,25 @@
-VERSION != cat /etc/version
+export MWPATH=/usr/lib/python3/dist-packages/middlewared
 
+
+stop_service:
+	systemctl stop middlewared
+
+start_service:
+	systemctl restart middlewared
 
 clean:
-	rm -rf build
+	rm -rf $(MWPATH)
 
-reinstall: clean
-	sh -x -c '\
-		path=$$(python3 -c "import sys; sys.path = sys.path[1:]; import middlewared; import os; print(os.path.dirname(middlewared.__spec__.origin))"); \
-		rm -rf $$path; \
-	'
+install:
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
 
-dev: reinstall run
+install_client:
+	python3 setup_client.py install --single-version-externally-managed --record=/dev/null
 
-run:
-	middlewared restart --loop-debug -P --debug-level 'TRACE'
+install_test:
+	python3 setup_test.py install --single-version-externally-managed --record=/dev/null
 
-reinstall-remote:
-	sh -c 'if [ -z "${HOST}" ]; then echo "You need to set HOST"; exit 1; fi;'
-	tar cf - . | ssh root@${HOST} 'cat > /tmp/middleware.tar; set tmpdir=`mktemp -d`; tar xf /tmp/middleware.tar -C $$tmpdir; cd $$tmpdir; make reinstall; service middlewared restart'
+migrate:
+	migrate
+
+reinstall: stop_service clean install install_client install_test migrate start_service
