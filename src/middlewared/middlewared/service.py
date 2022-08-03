@@ -1584,7 +1584,7 @@ class CoreService(Service):
     @accepts(Int('id'))
     @job()
     def job_wait(self, job, id):
-        target_job = self.middleware.jobs.get(id)
+        target_job = self.middleware.jobs[id]
         target_job.wait_sync()
         if target_job.error:
             raise CallError(target_job.error)
@@ -1596,7 +1596,7 @@ class CoreService(Service):
         Dict('progress', additional_attrs=True),
     ))
     def job_update(self, id, data):
-        job = self.middleware.jobs.all()[id]
+        job = self.middleware.jobs[id]
         progress = data.get('progress')
         if progress:
             job.set_progress(
@@ -1631,7 +1631,7 @@ class CoreService(Service):
 
     @accepts(Int('id'))
     def job_abort(self, id):
-        job = self.middleware.jobs.all()[id]
+        job = self.middleware.jobs[id]
         return job.abort()
 
     def _should_list_service(self, name, service, target):
