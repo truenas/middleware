@@ -84,7 +84,7 @@ class DiskService(Service):
             if len(success) > 1:
                 await (await self.middleware.call('disk.sync_all')).wait()
             else:
-                await self.middleware.call('disk.sync', success[0]['name'])
+                await self.middleware.call('disk.sync', success[0])
 
         if failures:
             err = f'Failure resizing: {", ".join(failures)}'
