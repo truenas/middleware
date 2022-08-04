@@ -1,6 +1,6 @@
 import os
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns, Patch
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 from middlewared.validators import Range
@@ -25,6 +25,13 @@ class BootService(Service):
         return BOOT_POOL_NAME
 
     @accepts()
+    @returns(Patch(
+        'pool_entry', 'get_state',
+        ('rm', {'name': 'id'}),
+        ('rm', {'name': 'guid'}),
+        ('rm', {'name': 'encrypt'}),
+        ('rm', {'name': 'encryptkey'})
+    ))
     async def get_state(self):
         """
         Returns the current state of the boot pool, including all vdevs, properties and datasets.
