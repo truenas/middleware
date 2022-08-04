@@ -575,8 +575,6 @@ class PoolService(CRUDService):
                 'freeing': info['properties']['freeing']['parsed'],
                 'fragmentation': info['properties']['fragmentation']['parsed'],
                 'autotrim': info['properties']['autotrim'],
-                'encryptkey_path': None,
-                'is_decrypted': True,
             })
 
         return rv
