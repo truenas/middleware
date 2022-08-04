@@ -19,6 +19,7 @@ from collections import defaultdict
 from io import BytesIO
 
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name, validate_pool_name
 from middlewared.schema import (
@@ -535,31 +536,50 @@ class PoolService(CRUDService):
         Common method for `pool.pool_extend` and `boot.get_state` returning a uniform
         data structure for its consumers.
         """
-        if pool_name == 'boot-pool':
-            path = '/'
-        else:
-            path = f'/mnt/{pool_name}'
-
-        info = await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)], {'get': True})
-
-        return {
+        rv = {
             'name': pool_name,
-            'path': path,
-            'status': info['status'],
-            'scan': info['scan'],
-            'topology': await self.middleware.call('pool.transform_topology', info['groups']),
-            'healthy': info['healthy'],
-            'warning': info['warning'],
-            'status_detail': info['status_detail'],
-            'size': info['properties']['size']['parsed'],
-            'allocated': info['properties']['allocated']['parsed'],
-            'free': info['properties']['free']['parsed'],
-            'freeing': info['properties']['freeing']['parsed'],
-            'fragmentation': info['properties']['fragmentation']['parsed'],
-            'autotrim': info['properties']['autotrim'],
-            'encryptkey_path': None,            # keeping keys until API 2.1 to
-            'is_decrypted': True,               # maintain backwards compatibility
+            'path': '/' if pool_name in BOOT_POOL_NAME_VALID else f'/mnt/{pool_name}',
+            'status': 'OFFLINE',
+            'scan': None,
+            'topology': None,
+            'healthy': False,
+            'warning': False,
+            'status_detail': None,
+            'size': None,
+            'allocated': None,
+            'free': None,
+            'freeing': None,
+            'fragmentation': None,
+            'autotrim': {
+                'parsed': 'off',
+                'rawvalue': 'off',
+                'source': 'DEFAULT',
+                'value': 'off'
+            },
+            'encryptkey_path': None,
+            'is_decrypted': True,
         }
+
+        if info := await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)]):
+            info = info[0]
+            rv.update({
+                'status': info['status'],
+                'scan': info['scan'],
+                'topology': await self.middleware.call('pool.transform_topology', info['groups']),
+                'healthy': info['healthy'],
+                'warning': info['warning'],
+                'status_detail': info['status_detail'],
+                'size': info['properties']['size']['parsed'],
+                'allocated': info['properties']['allocated']['parsed'],
+                'free': info['properties']['free']['parsed'],
+                'freeing': info['properties']['freeing']['parsed'],
+                'fragmentation': info['properties']['fragmentation']['parsed'],
+                'autotrim': info['properties']['autotrim'],
+                'encryptkey_path': None,
+                'is_decrypted': True,
+            })
+
+        return rv
 
     @private
     def pool_extend_context(self, rows, extra):
