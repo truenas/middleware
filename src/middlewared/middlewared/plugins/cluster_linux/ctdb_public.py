@@ -32,16 +32,19 @@ class CtdbPublicIpService(CRUDService):
 
         filters = [['type', 'nin', ['BRIDGE']]]
         options = {'select': ['id', 'aliases']}
-        ifaces = await self.middleware.call('interface.query', filters, options)
-        if exclude and (bad := set(exclude) - set([i['id'] for i in ifaces])):
-            raise CallError(f'Invalid exclude interface(s) {", ".join(bad)}', errno.ENOENT)
+        choices = []
+        for iface in await self.middleware.call('interface.query', filters, options):
+            if iface['id'] in exclude:
+                continue
+            elif any((i['address'] in priv_ips for i in iface['aliases'])):
+                # interface is used for hosting the private ip addresses for ctdb
+                # so we skip it since we're expecting the ctdb private traffic to
+                # be separate than the ctdb public ip traffic
+                continue
 
-        choices = set()
-        for i in ifaces:
-            for j in filter(lambda x: x['type'] != 'LINK' and x['address'] not in priv_ips, i['aliases']):
-                choices.add(i['id'])
+            choices.append(iface['id'])
 
-        return sorted(choices - set(exclude))
+        return sorted(choices)
 
     @filterable
     def query(self, filters, options):
