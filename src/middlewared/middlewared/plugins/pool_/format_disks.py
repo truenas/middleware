@@ -30,4 +30,5 @@ class PoolService(Service):
 
         await asyncio_map(format_disk, disks.items(), limit=16)
 
-        await self.middleware.call('disk.sync_all')
+        disk_sync_job = await self.middleware.call('disk.sync_all')
+        await job.wrap(disk_sync_job)
