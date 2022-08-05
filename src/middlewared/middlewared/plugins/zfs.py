@@ -571,16 +571,28 @@ class ZFSDatasetService(CRUDService):
         return filter_list(datasets, filters, options)
 
     def query_for_quota_alert(self):
-        return [
-            {
-                k: v for k, v in dataset['properties'].items()
-                if k in [
-                    "name", "quota", "available", "refquota", "used", "usedbydataset", "mounted", "mountpoint",
-                    "org.freenas:quota_warning", "org.freenas:quota_critical",
-                    "org.freenas:refquota_warning", "org.freenas:refquota_critical"
+        options = {
+            'extra': {
+                'flat': False,
+                'properties': [
+                    'name',
+                    'quota',
+                    'available',
+                    'refquota',
+                    'used',
+                    'usedbydataset',
+                    'mounted',
+                    'mountpoint',
+                    'org.freenas:quota_warning',
+                    'org.freenas:quota_critical',
+                    'org.freenas:refquota_warning',
+                    'org.freenas:refquota_critial',
                 ]
             }
-            for dataset in self.query()
+        }
+        return [
+            {k: v for k, v in i['properties'].items() if k in options['extra']['properties']}
+            for i in self.query([], options)
         ]
 
     @accepts(
