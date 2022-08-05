@@ -74,6 +74,9 @@ class CtdbEvent:
             except (FileNotFoundError, json.decoder.JSONDecodeError):
                 self.node_status = {}
 
+        except FileNotFoundError:
+            self.cl_services = deepcopy(CTDB_SERVICE_DEFAULTS)
+
         except Exception:
             self.logger.warning('Failed to load clustered services file', exc_info=True)
             self.cl_services = deepcopy(CTDB_SERVICE_DEFAULTS)
@@ -167,12 +170,15 @@ class CtdbEvent:
             self.load_service_file()
             self.init_node_status = deepcopy(self.node_status)
             for srv in self.cl_services.values():
+                if not srv['monitor_enable']:
+                    continue
+
                 srvinfo = self.client.call('service.query', [['service', '=', srv['name']]], {'get': True})
                 final_state = 'STOPPED'
                 ts = time.clock_gettime(time.CLOCK_REALTIME)
                 error = None
 
-                if srv['enable']:
+                if srv['service_enable']:
                     if srvinfo['state'] != 'RUNNING':
                         self.logger.warning('%s: managed service is not running. Attempting to start.',
                                             srv['name'])

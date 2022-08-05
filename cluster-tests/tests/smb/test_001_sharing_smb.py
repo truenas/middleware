@@ -70,24 +70,17 @@ def test_003_verify_smb_share_exists(ip, request):
     assert share['path_local'] == SHARE_FUSE_PATH, res.text
 
 
+@pytest.mark.dependency(name="SMB_SERVICE_STARTED")
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 def test_004_start_smb_service(ip, request):
     depends(request, ['CLUSTER_SMB_SHARE_CREATED'])
-
-    url = f'http://{ip}/api/v2.0/service/start'
-    payload = {"service": "cifs"}
-
-    res = make_request('post', url, data=payload)
-    assert res.status_code == 200, res.text
-
-
-@pytest.mark.dependency(name="SMB_SERVICE_STARTED")
-@pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_005_check_smb_started(ip, request):
-    url = f'http://{ip}/api/v2.0/service?service=cifs'
-    res = make_request('get', url)
-    assert res.status_code == 200, res.text
-    assert res.json()[0]["state"] == "RUNNING", res.text
+    payload = {
+        'msg': 'method',
+        'method': 'service.start',
+        'params': ['cifs', {'silent': False}]
+    }
+    res = make_ws_request(ip, payload)
+    assert res.get('error') is None, res
 
 
 def test_006_enable_recycle(request):
