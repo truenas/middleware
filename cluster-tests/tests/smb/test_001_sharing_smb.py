@@ -77,7 +77,7 @@ def test_004_start_smb_service(ip, request):
     payload = {
         'msg': 'method',
         'method': 'service.start',
-        'params': ['cifs', {'silent': False}]
+        'params': ['cifs']
     }
     res = make_ws_request(ip, payload)
     assert res.get('error') is None, res
