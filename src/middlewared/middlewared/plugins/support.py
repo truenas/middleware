@@ -143,7 +143,7 @@ class SupportService(ConfigService):
             ['secondary_phone', 'Secondary Contact Phone'],
         ]
 
-    @accepts(Str('token'))
+    @accepts(Str('token', default=''))
     @returns(Dict(additional_attrs=True, example={'API': '11008', 'WebUI': '10004'}))
     async def fetch_categories(self, token):
         """
@@ -152,6 +152,9 @@ class SupportService(ConfigService):
         """
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
+
+        if not await self.middleware.call('system.is_enterprise') and not token:
+            raise CallError('token is required')
 
         sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
         data = await post(
