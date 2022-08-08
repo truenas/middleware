@@ -106,6 +106,7 @@ class VMService(Service):
                     if 'port' in item['attributes']:
                         dev_dict = await self.middleware.call('vm.port_wizard')
                         item['attributes']['port'] = dev_dict['port']
+                        item['attributes']['web_port'] = dev_dict['web']
                 if item['dtype'] == 'DISK':
                     zvol = zvol_path_to_name(item['attributes']['path'])
                     item['attributes']['path'] = zvol_name_to_path(
