@@ -47,6 +47,9 @@ class PoolDatasetService(Service):
                     'key_format': {
                         'parsed': 'none', 'rawvalue': 'none', 'value': None, 'source': 'DEFAULT', 'source_info': None
                     },
+                    'volsize': {
+                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'LOCAL', 'source_info': None
+                    },
                     'encryption_algorithm': {
                         'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
                     },
@@ -67,6 +70,18 @@ class PoolDatasetService(Service):
                         'value': '13.3G', 'source': 'NONE', 'source_info': None
                     },
                     'mountpoint': '/mnt/tank/something',
+                    'sync': {
+                        'parsed': 'standard', 'rawvalue': 'standard',
+                        'value': 'STANDARD', 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'compression': {
+                        'parsed': 'lz4', 'rawvalue': 'lz4',
+                        'value': 'LZ4', 'source': 'INHERITED', 'source_info': 'tank',
+                    },
+                    'deduplication': {
+                        'parsed': 'on', 'rawvalue': 'on',
+                        'value': 'ON', 'source': 'LOCAL', 'source_info': None,
+                    },
                     'user_properties': {},
                     'snapshot_count': 0,
                     'locked': False,
@@ -165,6 +180,10 @@ class PoolDatasetService(Service):
                     'encryptionroot',
                     'keyformat',
                     'keystatus',
+                    'volsize',
+                    'sync',
+                    'compression',
+                    'dedup',
                 ]
             }
         }
