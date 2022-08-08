@@ -295,7 +295,7 @@ class UserService(CRUDService):
         Bool('sudo_nopasswd', default=False),
         List('sudo_commands', items=[Str('command', empty=False)]),
         Str('sshpubkey', null=True, max_length=None),
-        List('groups'),
+        List('groups', items=[Int('group')]),
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
