@@ -1,13 +1,13 @@
 import errno
 import contextlib
+import subprocess
 from pathlib import Path
 
-from middlewared.schema import Dict, IPAddr, Int, Str, Bool, List, returns
+from middlewared.schema import Dict, IPAddr, Int, Str, List, returns
 from middlewared.service import (accepts, job, filterable,
                                  CRUDService, ValidationErrors, private)
 from middlewared.utils import filter_list, run
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
-from middlewared.validators import IpAddress
 from middlewared.service_exception import CallError
 
 
@@ -137,6 +137,19 @@ class CtdbPublicIpService(CRUDService):
         return filter_list(list(nodes.values()), filters, options)
 
     @private
+    async def reallocate(self):
+        """
+        Lighter-weight alternative to reloading the public addresses file.
+        Force recovery master to redistribute IP addresses.
+        """
+        if not await self.middleware.call('service.started', 'ctdb'):
+            return
+
+        re = await run(['ctdb', 'ipreallocate'], encoding='utf8', errors='ignore', check=False)
+        if re.returncode:
+            self.logger.warning('Failed to reallocate public ip addresses %r', re.stderr)
+
+    @private
     async def reload(self):
         """
         Reload the public addresses configuration file on the ctdb nodes. When it completes
@@ -152,7 +165,7 @@ class CtdbPublicIpService(CRUDService):
 
     @accepts(Dict(
         'public_create',
-        Int('pnn', required=True),
+        Int('pnn', required=False),
         IPAddr('ip', required=True),
         Int('netmask', required=True),
         Str('interface', required=True),
@@ -170,6 +183,8 @@ class CtdbPublicIpService(CRUDService):
 
         schema_name = 'public_create'
         verrors = ValidationErrors()
+        if 'pnn' not in data:
+            data['pnn'] = await self.middleware.call('ctdb.general.pnn')
 
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
@@ -177,31 +192,42 @@ class CtdbPublicIpService(CRUDService):
 
         return await self.middleware.call('ctdb.public.ips.query', [('id', '=', data['pnn'])])
 
-    @accepts(
-        Int('pnn', required=True),
-        Dict(
-            'public_update',
-            Str('ip', validators=[IpAddress()], required=True),
-            Bool('enable', required=True),
-        )
-    )
+    @private
+    @accepts(Dict(
+        'delip_payload',
+        Int('pnn', required=False),
+        IPAddr('public_ip', required=True)
+    ))
+    def delete_ip(self, data):
+        cmd = ['ctdb', 'delip']
+        if 'pnn' in data:
+            cmd.extend(['-n', str(data['pnn'])])
+
+        cmd.append(data['public_ip'])
+        delip = subprocess.run(cmd, capture_output=True)
+        if delip.returncode != 0:
+            raise CallError(f'Failed to delete IP: {delip.stderr.decode() or delip.stdout.decode()}')
+
+    @accepts(IPAddr('public_ip', required=True), Int('pnn', required=False, default=None))
     @job(lock=PUB_LOCK)
-    async def do_update(self, job, id, option):
+    async def do_delete(self, job, address, pnn):
         """
-        Update Public IP address in the ctdb cluster.
-        `pnn` - cluster node number
-        `ip` string representing the public ip address
-        `enable` boolean. When True, enable the node else disable the node.
+        Remove the specified `address` from the configuration for the node specified by `pnn`.
+        If `pnn` is not specified, then the operation applies to the current node.
+        In order to remove an address cluster-wide, this method must be called on
+        every node where the public IP address is configured.
         """
-
-        schema_name = 'public_update'
+        schema_name = 'public_delete'
         verrors = ValidationErrors()
+        if pnn is None:
+            pnn = await self.middleware.call('ctdb.general.pnn')
 
-        data = await self.get_instance(id)
-        data['enable'] = option['enable']
+        data = (await self.get_instance(pnn))['configured_ips'][address]
+        data['pnn'] = pnn
 
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
-        await self.middleware.call('ctdb.ips.update_file', data, schema_name)
-        await self.middleware.call('ctdb.public.ips.reload')
+        if data['enabled']:
+            await self.middleware.call('ctdb.public.ips.delete_ip', {'public_ip': address})
 
-        return await self.get_instance(id)
+        await self.middleware.call('ctdb.ips.update_file', data, schema_name)
+        await self.reallocate()
