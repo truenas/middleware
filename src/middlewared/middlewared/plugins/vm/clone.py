@@ -109,8 +109,8 @@ class VMService(Service):
                         await self.__clone_zvol(vm['name'], zvol, created_snaps, created_clones)
                     )
                 if item['dtype'] == 'RAW':
-                    item['attributes']['path'] = ''
-                    self.logger.warn('For RAW disk you need copy it manually inside your NAS.')
+                    self.logger.warning('RAW disks must be copied manually. Skipping...')
+                    continue
 
             await self.middleware.call('vm.do_create', vm)
         except Exception as e:
@@ -118,7 +118,7 @@ class VMService(Service):
                 try:
                     await self.middleware.call('zfs.dataset.delete', i)
                 except Exception:
-                    self.logger.warn('Rollback of VM clone left dangling zvol: %s', i)
+                    self.logger.warning('Rollback of VM clone left dangling zvol: %s', i)
             for i in reversed(created_snaps):
                 try:
                     dataset, snap = i.split('@')
