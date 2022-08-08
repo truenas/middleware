@@ -248,7 +248,7 @@ class KubernetesService(Service):
                     'Failed to restore CRD(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_crds)
                 )
 
-            update_jobs.append(self.middleware.call_sync('chart.release.redeploy', chart_release))
+            update_jobs.append(self.middleware.call_sync('chart.release.redeploy_internal', chart_release, True))
 
         for update_job in update_jobs:
             update_job.wait_sync()
