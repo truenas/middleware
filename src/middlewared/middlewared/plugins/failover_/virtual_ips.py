@@ -1,5 +1,4 @@
 from middlewared.service import Service
-from middlewared.utils import filter_list
 from middlewared.plugins.interface.netif import netif
 
 
@@ -53,29 +52,17 @@ class DetectVirtualIpStates(Service):
         if interfaces is None:
             interfaces = await self.middleware.call('interface.query')
 
-        int_ifaces = await self.middleware.call('failover.internal_interfaces')
+        int_ifaces = await self.middleware.call('interface.internal_interfaces')
 
-        crit_ifaces = [
-            i['id'] for i in filter_list(
-                interfaces, [('failover_critical', '=', True)]
-            )
-        ]
+        for i in filter(lambda x: x['name'] not in int_ifaces, interfaces):
+            if not i.get('failover_critical', False) or not i['state']['vrrp_config']:
+                continue
 
-        for iface in interfaces:
-            if iface['name'] in int_ifaces:
-                continue
-            elif iface['name'] not in crit_ifaces:
-                continue
-            elif iface['state']['vrrp_config'][0]['state'] == 'MASTER':
-                masters.append(iface['name'])
-            elif iface['state']['vrrp_config'][0]['state'] == 'BACKUP':
-                backups.append(iface['name'])
-            else:
-                self.logger.warning(
-                    'Unknown VRRP state %s for interface %s',
-                    iface['state']['vrrp_config'][0]['state'],
-                    iface['name'],
-                )
+            vrrp_state = i['state']['vrrp_config'][0]['state']
+            if vrrp_state == 'MASTER':
+                masters.append(i['name'])
+            elif vrrp_state == 'BACKUP':
+                backups.append(i['name'])
 
         return masters, backups, inits
 
