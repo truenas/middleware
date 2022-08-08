@@ -106,6 +106,9 @@ def generate_debugkernel_loader_config(middleware):
     if advanced["debugkernel"]:
         return [
             'kernel="kernel-debug"',
+            # unmute MCA/APEI corrected error logs
+            'hw.mca.log_corrected=1',
+            'hw.acpi.apei.log_corrected=1'
         ]
     else:
         return [
