@@ -47,7 +47,7 @@ def ftp_server_with_user_account(config=None):
                 "home": f"/mnt/{ds}",
                 "full_name": "FTP Test",
                 "password": "pass",
-                "groups": [g],
+                "groups": [g["id"]],
             }):
                 with ftp_server({
                     "onlyanonymous": False,
