@@ -126,6 +126,8 @@ class PoolDatasetService(Service):
             'user_properties': {},
             'snapshot_count': 0,
             'locked': False,
+            'atime': False,
+            'casesensitive': True,
             'nfs_shares': [],
             'smb_shares': [],
             'iscsi_shares': [],
@@ -175,8 +177,11 @@ class PoolDatasetService(Service):
         info = self.build_details(mntinfo)
         for i in collapsed:
             snapshot_count, locked = self.get_snapcount_and_encryption_status(i, mntinfo)
+            atime, case = self.get_atime_and_casesensitivity(i, mntinfo)
             i['snapshot_count'] = snapshot_count
             i['locked'] = locked
+            i['atime'] = atime
+            i['casesensitive'] = case
             i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
             i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
@@ -209,6 +214,15 @@ class PoolDatasetService(Service):
                 mount_info = mntinfo[devid]
 
         return mount_info
+
+    @private
+    def get_atime_and_casesensitivity(self, ds, mntinfo):
+        atime = case = True
+        for devid, info in filter(lambda x: x[1]['mountpoint'] == ds['mountpoint'], mntinfo.items()):
+            atime = not ('NOATIME' in info['super_opts'])
+            case = 'CASESENSITIVE' in info['super_opts']
+
+        return atime, case
 
     @private
     def build_details(self, mntinfo):
