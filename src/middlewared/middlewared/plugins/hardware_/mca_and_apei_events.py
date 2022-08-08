@@ -3,8 +3,8 @@ import sysctl
 
 from middlewared.service import Service
 
-MCA = re.compile(r'.*MCA:.*(COR|UNCOR).*')
-APEI = re.compile(r'.*APEI.*(Recoverable|Fatal|Corrected|Informational).*')
+MCA = re.compile(r'.*MCA:.*(UNCOR).*')
+APEI = re.compile(r'.*APEI.*(Fatal).*')
 
 
 class HardwareService(Service):
@@ -19,7 +19,7 @@ class HardwareService(Service):
 
     def _parse_msgbuf(self, msgbuf=None):
         """
-        Parse `kern.msgbuf` sysctl for any MCA or APEI events.
+        Parse `kern.msgbuf` sysctl for any MCA uncorrectable or APEI fatal events.
         `msgbug` List of strings from kern.msgbuf sysctl output
         """
         if msgbuf is None:
