@@ -63,6 +63,7 @@ fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - 
 271 26 0:39 / /var/lib/systemd/coredump rw,relatime shared:52 - zfs dozer/.system/cores rw,xattr,noacl
 467 26 0:76 / /mnt/tank\040space\040 rw,noatime shared:261 - zfs tank\040space\040 rw,xattr,posixacl
 474 467 0:77 / /mnt/tank\040space\040/Dataset\040With\040a\040space rw,noatime shared:265 - zfs tank\040space\040/Dataset\040With\040a\040space rw,xattr,posixacl
+7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive
 """
 
 
@@ -104,3 +105,13 @@ def test__getmntinfo():
         assert mnt_data['mountpoint'] in line.replace('\\040', ' ')
         assert mnt_data['mount_source'] in line.replace('\\040', ' ')
         assert mnt_data['fs_type'] in line
+
+
+def test__atime_and_casesentivity_in_mntinfo():
+    line = '7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive'
+    data = {}
+    __parse_mntent(line, data)
+    assert 1005 in data
+    mntent = data[1005]
+    assert 'NOATIME' in mntent['super_opts']
+    assert 'CASESENSITIVE' in mntent['super_opts']
