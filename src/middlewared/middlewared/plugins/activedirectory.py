@@ -484,6 +484,19 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         job = None
         if not old['enable'] and new['enable']:
+            ngc = await self.middleware.call('network.configuration.config')
+            if not ngc['domain'] or ngc['domain'] == 'local':
+                try:
+                    await self.middleware.call(
+                        'network.configuration.update',
+                        {'domain': ret['domainname']}
+                    )
+                except CallError:
+                    self.logger.warning(
+                        'Failed to update domain name in network configuration '
+                        'to match active directory value of %s', ret['domainname'], exc_info=True
+                    )
+
             job = (await self.middleware.call('activedirectory.start')).id
 
         elif not new['enable'] and old['enable']:
