@@ -112,6 +112,59 @@ def test__apei_fatal_memory_event():
     assert events == expected_result
 
 
+def test__apei_recoverable_memory_event():
+    apei_event = ("""
+    APEI Recoverable Memory Error:
+     Error Status: 0x0
+     Physical Address: 0x72aed744c0
+     Physical Address Mask: 0x3fffffffffc0
+     Node: 2
+     Card: 1
+     Module: 0
+     Device: 15
+     Row: 8165
+     Column: 184
+     Memory Error Type: 2
+     Rank Number: 0
+     Card Handle: 0xf
+     Module Handle: 0x1a
+     Bank Group: 3
+     Bank Address: 1
+     Chip Identification: 0
+     Flags: 0x1
+     FRU Text: P2-DIMMB1 232891B6
+    BOGUS LINE
+    """).splitlines()
+
+    expected_result = {
+        'MCA_EVENTS': [],
+        'APEI_EVENTS': [
+            {'APEI Recoverable Memory Error:': {
+                'Error Status': '0x0',
+                'Physical Address': '0x72aed744c0',
+                'Physical Address Mask': '0x3fffffffffc0',
+                'Node': '2',
+                'Card': '1',
+                'Module': '0',
+                'Device': '15',
+                'Row': '8165',
+                'Column': '184',
+                'Memory Error Type': '2',
+                'Rank Number': '0',
+                'Card Handle': '0xf',
+                'Module Handle': '0x1a',
+                'Bank Group': '3',
+                'Bank Address': '1',
+                'Chip Identification': '0',
+                'Flags': '0x1',
+                'FRU Text': 'P2-DIMMB1 232891B6',
+            }},
+        ]
+    }
+    events = OBJ._parse_msgbuf(msgbuf=apei_event)
+    assert events == expected_result
+
+
 def test__apei_fatal_pcie_event():
     apei_event = ("""
     APEI Fatal PCIe Error:
