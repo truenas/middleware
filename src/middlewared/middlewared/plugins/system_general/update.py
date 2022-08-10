@@ -33,6 +33,7 @@ class SystemGeneralModel(sa.Model):
     stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
     stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
     stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
+    stg_ds_auth = sa.Column(sa.Boolean(), default=False)
 
 
 class SystemGeneralService(ConfigService):
@@ -71,6 +72,7 @@ class SystemGeneralService(ConfigService):
         Bool('wizardshown', required=True),
         Bool('crash_reporting_is_set', required=True),
         Bool('usage_collection_is_set', required=True),
+        Bool('ds_auth', required=True),
         Int('id', required=True),
     )
 
@@ -207,6 +209,9 @@ class SystemGeneralService(ConfigService):
 
         `ui_allowlist` is a list of IP addresses and networks that are allow to use API and UI. If this list is empty,
         then all IP addresses are allowed to use API and UI.
+
+        `ds_auth` controls whether configured Directory Service users that are granted with Privileges are allowed to
+        log in to the Web UI or use TrueNAS API.
 
         UI configuration is not applied automatically. Call `system.general.ui_restart` to apply new UI settings (all
         HTTP connections will be aborted) or specify `ui_restart_delay` (in seconds) to automatically apply them after

@@ -75,6 +75,7 @@ class ApiKeyService(CRUDService):
                     "allowlist_item",
                     Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
                     Str("resource", required=True),
+                    register=True,
                 ),
             ]),
             register=True,

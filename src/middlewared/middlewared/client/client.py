@@ -8,6 +8,7 @@ from ws4py.client.threadedclient import WebSocketClient
 import argparse
 from base64 import b64decode
 import errno
+import logging
 import os
 import pickle
 import pprint
@@ -25,6 +26,8 @@ except ImportError:
     LIBZFS = False
 else:
     LIBZFS = True
+
+logger = logging.getLogger(__name__)
 
 
 class Event(TEvent):
@@ -289,7 +292,7 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False):
+    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, log_py_exceptions=False):
         """
         Arguments:
            :reserved_ports(bool): should the local socket used a reserved port
@@ -300,6 +303,7 @@ class Client(object):
         self._jobs_watching = False
         self._pings = {}
         self._py_exceptions = py_exceptions
+        self._log_py_exceptions = log_py_exceptions
         self._event_callbacks = defaultdict(list)
         if uri is None:
             uri = 'ws+unix:///var/run/middlewared.sock'
@@ -494,6 +498,8 @@ class Client(object):
 
             if c.errno:
                 if c.py_exception:
+                    if self._log_py_exceptions:
+                        logger.error(c.trace["formatted"])
                     raise c.py_exception
                 if c.trace and c.type == 'VALIDATION':
                     raise ValidationErrors(c.extra)

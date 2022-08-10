@@ -671,6 +671,8 @@ class UserService(CRUDService):
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
+        await self.middleware.call('privilege.before_user_delete', user)
+
         if options['delete_group'] and not user['group']['bsdgrp_builtin']:
             count = await self.middleware.call(
                 'datastore.query', 'account.bsdgroupmembership',
@@ -1441,6 +1443,8 @@ class GroupService(CRUDService):
         group = await self.get_instance(pk)
         if group['builtin']:
             raise CallError('A built-in group cannot be deleted.', errno.EACCES)
+
+        await self.middleware.call('privilege.before_group_delete', group)
 
         nogroup = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', 'nogroup')],
                                              {'prefix': 'bsdgrp_', 'get': True})
