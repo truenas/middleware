@@ -307,6 +307,10 @@ class PoolService(CRUDService):
         Int('free', required=True, null=True),
         Int('freeing', required=True, null=True),
         Str('fragmentation', required=True, null=True),
+        Str('size_str', required=True, null=True),
+        Str('allocated_str', required=True, null=True),
+        Str('free_str', required=True, null=True),
+        Str('freeing_str', required=True, null=True),
         Dict(
             'autotrim',
             required=True,
@@ -544,6 +548,10 @@ class PoolService(CRUDService):
             'free': None,
             'freeing': None,
             'fragmentation': None,
+            'size_str': None,
+            'allocated_str': None,
+            'free_str': None,
+            'freeing_str': None,
             'autotrim': {
                 'parsed': 'off',
                 'rawvalue': 'off',
@@ -568,6 +576,10 @@ class PoolService(CRUDService):
                 'free': info['properties']['free']['parsed'],
                 'freeing': info['properties']['freeing']['parsed'],
                 'fragmentation': info['properties']['fragmentation']['parsed'],
+                'size_str': info['properties']['size']['rawvalue'],
+                'allocated_str': info['properties']['allocated']['rawvalue'],
+                'free_str': info['properties']['free']['rawvalue'],
+                'freeing_str': info['properties']['freeing']['rawvalue'],
                 'autotrim': info['properties']['autotrim'],
             })
 
