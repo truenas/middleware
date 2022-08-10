@@ -570,12 +570,40 @@ class ChartReleaseService(CRUDService):
         # For delete we will uninstall the release first and then remove the associated datasets
         await self.middleware.call('kubernetes.validate_k8s_setup')
         chart_release = await self.get_instance(release_name, {'extra': {'retrieve_resources': True}})
+        namespace = get_namespace(release_name)
 
-        cp = await run(['helm', 'uninstall', release_name, '-n', get_namespace(release_name)], check=False)
+        cp = await run(['helm', 'uninstall', release_name, '-n', namespace], check=False)
         if cp.returncode:
             raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
 
         job.set_progress(50, f'Uninstalled {release_name}')
+
+        # It's possible pre-install jobs failed and in that case the jobs would not be cleaned up
+        pre_install_jobs = [
+            pre_install_job['metadata']['name']
+            for pre_install_job in await self.middleware.call(
+                'k8s.job.query', [
+                    ['metadata.namespace', '=', namespace],
+                    ['metadata.annotations', 'rin', 'helm.sh/hook'],
+                ]
+            )
+        ]
+        for pre_install_job_name in pre_install_jobs:
+            await self.middleware.call('k8s.job.delete', pre_install_job_name, {'namespace': namespace})
+
+        if pre_install_jobs:
+            job.set_progress(60, 'Deleted pre-install jobs')
+            # If we had pre-install jobs, it's possible we have leftover pods which the job did not remove
+            # based on dev specified settings of cleaning it up - let's remove those
+            for pod in await self.middleware.call('k8s.pod.query', [['metadata.namespace', '=', namespace]]):
+                owner_references = pod['metadata'].get('owner_references')
+                if not isinstance(owner_references, list) or all(
+                    owner_reference.get('name') not in pre_install_jobs for owner_reference in owner_references
+                ):
+                    continue
+
+                await self.middleware.call('k8s.pod.delete', pod['metadata']['name'], {'namespace': namespace})
+
         job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
         await self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name))
 
