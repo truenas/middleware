@@ -1,5 +1,6 @@
-export MWPATH=/usr/lib/python3/dist-packages/middlewared
-
+export MWPATH1=/usr/lib/python3/dist-packages/middlewared
+export MWPATH2=/usr/local/lib/python3.9/dist-packages/middlewared
+export BUILD=$(shell pwd)/build
 
 stop_service:
 	systemctl stop middlewared
@@ -8,7 +9,9 @@ start_service:
 	systemctl restart middlewared
 
 clean:
-	rm -rf $(MWPATH)
+	rm -rf $(MWPATH1)*
+	rm -rf $(MWPATH2)*
+	rm -rf $(BUILD)
 
 install:
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
