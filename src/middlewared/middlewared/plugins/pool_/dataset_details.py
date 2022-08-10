@@ -38,6 +38,10 @@ class PoolDatasetService(Service):
                         'source': 'LOCAL',
                         'parsed': '10.231.1.155'
                     },
+                    'quota_warning': {'value': '80', 'rawvalue': '80', 'source': 'LOCAL', 'parsed': '80'},
+                    'quota_critical': {'value': '95', 'rawvalue': '95', 'source': 'LOCAL', 'parsed': '95'},
+                    'refquota_warning': {'value': '80', 'rawvalue': '80', 'source': 'LOCAL', 'parsed': '80'},
+                    'refquota_critical': {'value': '95', 'rawvalue': '95', 'source': 'LOCAL', 'parsed': '95'},
                     'reservation': {
                         'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
                     },
@@ -172,7 +176,11 @@ class PoolDatasetService(Service):
                     'usedbydataset',
                     'usedbychildren',
                     'refquota',
+                    'org.freenas:refquota_critical',
+                    'org.freenas:refquota_warning',
                     'quota',
+                    'org.freenas:quota_critical',
+                    'org.freenas:quota_warning',
                     'refreservation',
                     'reservation',
                     'mountpoint',
