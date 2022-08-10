@@ -480,6 +480,7 @@ class ChartReleaseService(CRUDService):
                 'chart.release.helm_action', data['release_name'], chart_path, new_values, 'install'
             )
         except Exception:
+            job.set_progress(80, f'Failure occurred while installing {data["release_name"]!r}, cleaning up')
             # Do a rollback here
             # Let's uninstall the release as well if it did get installed ( it is possible this might have happened )
             if await self.middleware.call('chart.release.query', [['id', '=', data['release_name']]]):
@@ -488,7 +489,7 @@ class ChartReleaseService(CRUDService):
                 if delete_job.error:
                     self.logger.error('Failed to uninstall helm chart release: %s', delete_job.error)
             else:
-                await self.post_remove_tasks(data['release_name'])
+                await self.post_remove_tasks(data['release_name'], job)
 
             raise
         else:
