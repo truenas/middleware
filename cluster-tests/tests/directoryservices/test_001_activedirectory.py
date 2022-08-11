@@ -5,7 +5,8 @@ from config import CLUSTER_INFO, CLUSTER_IPS, CLUSTER_ADS, PUBLIC_IPS
 from utils import make_request, make_ws_request, ssh_test, wait_on_job
 from exceptions import JobTimeOut
 from pytest_dependency import depends
-from helpers import smb_connection
+from helpers import smb_connection, wait_reconnect
+from time import sleep
 
 SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/ds_smb_share_01'
 
@@ -246,6 +247,7 @@ def test_009_share_is_writable_via_public_ips(ip, request):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(5)
     s.connect((ip, 445))
+    s.close()
 
     with smb_connection(
         host=ip,
@@ -279,6 +281,97 @@ def test_010_xattrs_writable_via_smb(request):
         tcon.close(fd2)
 
     assert(contents.decode() == "test1")
+
+
+def test_030_test_share_failover(request):
+    depends(request, ['DS_SMB_SHARE_IS_WRITABLE'])
+
+    global failover_target
+    ip = CLUSTER_IPS[0]
+    payload = {
+        'msg': 'method',
+        'method': 'ctdb.general.listnodes',
+    }
+    res = make_ws_request(ip, payload)
+    assert res.get('error') is None, res
+
+    # Find our victim
+    for n in res['result']:
+        if n['this_node']:
+            continue
+
+        failover_target = n
+        break
+
+    # Get victim's public address
+    payload = {
+        'msg': 'method',
+        'method': 'ctdb.public.ips.query',
+        'params': [[['pnn', '=', failover_target['pnn']]], {'get': True}]
+    }
+    res = make_ws_request(ip, payload)
+    assert res.get('error') is None, res
+    target_public_ip = list(res['result']['active_ips'].keys())[0]
+
+    # Open SMB session
+    with smb_connection(
+        host=target_public_ip,
+        share="DS_CL_SMB",
+        username=CLUSTER_ADS['USERNAME'],
+        domain=ds_wrk,
+        password=CLUSTER_ADS['PASSWORD'],
+        smb1=False
+    ) as tcon:
+        initial_conn = tcon.show_connection()
+        fd = tcon.create_file("test_failover", "w")
+        sz = tcon.write(fd, b'test_failover', 0)
+
+        # Reboot the victim
+        res = ssh_test(failover_target['address'], 'reboot')
+        assert res['result'], res['output']
+        sleep(5)
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(5)
+            s.connect((failover_target['address'], 22))
+            s.close()
+            assert True, f'Reboot of node: {failover_target} failed'
+        except (ConnectionRefusedError, socket.timeout):
+            pass
+
+        wait_reconnect(tcon)
+        new_conn = tcon.show_connection()
+        assert new_conn['connected'], f'Failed to reconnect. Initial session: {initial_conn}, Final session: {new_conn}'
+
+        fd = tcon.create_file("test_failover", "r")
+        res = tcon.read(fd, 0, sz)
+        assert res == b'test_failover'
+        tcon.close(fd)
+
+
+def test_031_test_share_failover(request):
+    """
+    Give cluster 120 seconds to get back into a healthy state
+    after node reboot
+    """
+    depends(request, ['DS_SMB_SHARE_IS_WRITABLE'])
+    length_to_wait = 120
+
+    while length_to_wait > 0:
+        payload = {
+            'msg': 'method',
+            'method': 'ctdb.general.status',
+        }
+        res = make_ws_request(CLUSTER_IPS[0], payload)
+        assert res.get('error') is None, res
+
+        if res['result']['all_healthy']:
+            break
+
+        length_to_wait -= 10
+        sleep(10)
+
+    assert length_to_wait != 0, str(res['result'])
 
 
 def test_048_delete_clustered_smb_share(request):
