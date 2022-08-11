@@ -3560,7 +3560,7 @@ class PoolDatasetService(CRUDService):
                 if acltype in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
                     verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
 
-            for i in ('force_size', 'sparse', 'volsize', 'volblocksize', 'snapdev'):
+            for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
 
