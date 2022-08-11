@@ -10,6 +10,7 @@ from copy import deepcopy
 from middlewared.client import Client
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from middlewared.plugins.cluster_linux.ctdb_services import CTDB_SERVICE_DEFAULTS
+from middlewared.service import MIDDLEWARE_STARTED_SENTINEL_PATH
 
 CTDB_VOL = os.path.join(
     FuseConfig.FUSE_PATH_BASE.value,
@@ -25,7 +26,8 @@ class CtdbEvent:
 
     def __init__(self, **kwargs):
         self.logger = kwargs.get('logger')
-        self.client = Client()
+        self.client = None
+        self.middleware_started = os.path.exists(MIDDLEWARE_STARTED_SENTINEL_PATH)
         self.clservices = None
         self.pnn = -1
         self.node_status = {}
@@ -35,7 +37,19 @@ class CtdbEvent:
         return self
 
     def __exit__(self, typ, value, traceback):
-        self.client.close()
+        if self.client:
+            self.client.close()
+
+    def init_client(self):
+        if not self.middleware_started:
+            return False
+
+        try:
+            self.client = Client()
+            return True
+        except Exception:
+            self.logger.error("Failed to initialize middleware client", exc_info=True)
+            return False
 
     def check_ctdb_shared_volume(self):
         st = os.stat(CTDB_VOL)
@@ -90,6 +104,10 @@ class CtdbEvent:
         unix domain socket so any ctdb related commands
         and python bindings will fail.
         """
+        if not self.init_client():
+            self.check_ctdb_shared_volume()
+            return
+
         self.client.call('core.ping')
 
         try:
@@ -128,7 +146,7 @@ class CtdbEvent:
         If this fails, CTBDB will retry until it succeeds.
         There is no limit to the times it retires.
         """
-        if not self.client.call('system.ready'):
+        if not self.init_client():
             return
 
         if not os.path.exists(CTDB_SERVICE_FILE):
@@ -136,7 +154,7 @@ class CtdbEvent:
 
         self.load_service_file()
         for srv in self.cl_services.values():
-            if srv['enable']:
+            if srv['monitor_enable'] and srv['service_enable']:
                 self.client.call('service.restart', srv['name'])
 
     def shutdown(self):
@@ -147,7 +165,7 @@ class CtdbEvent:
         return
 
     def monitor(self):
-        if not self.client.call('system.ready'):
+        if not self.init_client():
             self.logger.debug('middlewared is not ready. Skipping monitoring')
             return
 
@@ -253,10 +271,10 @@ class CtdbEvent:
         that recovery has started so that notification can be sent to any
         clustered event subscribers.
         """
-        try:
-            if not self.client.call('system.ready'):
-                return
+        if not self.init_client():
+            return
 
+        try:
             ctdb_status = ctdb.Client().status()
             self.client.call('ctdb.event.process', {
                 'event': 'STARTRECOVERY', 'status': 'SUCCESS', 'ctdb_status': ctdb_status
@@ -273,10 +291,10 @@ class CtdbEvent:
         that recovery has finished so that notification can be sent to any
         clustered event subscribers.
         """
-        try:
-            if not self.client.call('system.ready'):
-                return
+        if not self.init_client():
+            return
 
+        try:
             ctdb_status = ctdb.Client().status()
             self.client.call('ctdb.event.process', {
                 'event': 'RECOVERED', 'status': 'SUCCESS', 'ctdb_status': ctdb_status
@@ -299,10 +317,10 @@ class CtdbEvent:
 
         Failure here causes ip allocation to be retried.
         """
-        try:
-            if not self.client.call('system.ready'):
-                return
+        if not self.init_client():
+            return
 
+        try:
             self.client.call('ctdb.event.process', {'event': 'IPREALLOCATED', 'status': 'SUCCESS'})
         except Exception:
             pass
