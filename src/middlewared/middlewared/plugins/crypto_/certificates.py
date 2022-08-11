@@ -689,7 +689,8 @@ class CertificateService(CRUDService):
 
         certificate = self.middleware.call_sync('certificate.get_instance', id)
 
-        if certificate.get('acme'):
+        if certificate.get('acme') and not certificate['expired']:
+            # We won't try revoking a certificate which has expired already
             client, key = self.middleware.call_sync(
                 'acme.get_acme_client_and_key', certificate['acme']['directory'], True
             )
