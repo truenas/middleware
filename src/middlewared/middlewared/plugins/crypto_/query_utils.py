@@ -141,7 +141,7 @@ def normalize_cert_attrs(cert: dict) -> None:
             key: None for key in [
                 'digest_algorithm', 'lifetime', 'country', 'state', 'city', 'from', 'until',
                 'organization', 'organizational_unit', 'email', 'common', 'san', 'serial',
-                'fingerprint', 'extensions'
+                'fingerprint', 'extensions', 'expired',
             ]
         })
 
