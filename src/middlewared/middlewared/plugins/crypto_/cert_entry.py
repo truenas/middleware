@@ -23,6 +23,7 @@ CERT_ENTRY = Dict(
     Str('csr_path', null=True),
     Str('cert_type'),
     Bool('revoked'),
+    Bool('expired', null=True),
     OROperator(Str('issuer', null=True), Dict('issuer', additional_attrs=True, null=True), name='issuer'),
     List('chain_list', items=[Str('certificate', max_length=None)]),
     Str('country', null=True),

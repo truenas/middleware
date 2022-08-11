@@ -1,3 +1,4 @@
+import datetime
 import dateutil
 import dateutil.parser
 import logging
@@ -60,6 +61,9 @@ def load_certificate(certificate: str, get_issuer: bool = False) -> dict:
             'serial': cert.get_serial_number(),
             'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
             'fingerprint': cert.digest('sha1').decode(),
+            'expired': datetime.datetime.now() > datetime.datetime.strptime(
+                parse_cert_date_string(cert.get_notAfter()), '%a %b %d %H:%M:%S %Y'
+            ),
         })
 
         return cert_info
