@@ -144,7 +144,7 @@ class SystemGeneralService(Service):
                 urls.add(http_url)
                 if https_url:
                     urls.add(https_url)
-            elif i['address'] in config['ui_address']:
+            elif i['address'] in config['ui_address'] or i['address'] in config['ui_v6address']:
                 urls.add(http_url)
                 if https_url:
                     urls.add(https_url)
