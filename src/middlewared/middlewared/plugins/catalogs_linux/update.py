@@ -11,6 +11,7 @@ from middlewared.validators import Match
 
 from .utils import convert_repository_to_path, get_cache_key
 
+OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
 OFFICIAL_LABEL = 'OFFICIAL'
 TMP_IX_APPS_DIR = '/tmp/ix-applications'
 
@@ -292,3 +293,12 @@ class CatalogService(CRUDService):
     @private
     async def official_catalog_label(self):
         return OFFICIAL_LABEL
+
+
+async def enterprise_train_update(middleware, prev_product_type, *args, **kwargs):
+    if prev_product_type != 'ENTERPRISE' and await middleware.call('system.product_type') == 'ENTERPRISE':
+        await middleware.call('catalog.update', OFFICIAL_LABEL, {'preferred_trains': [OFFICIAL_ENTERPRISE_TRAIN]})
+
+
+async def setup(middleware):
+    middleware.register_hook('system.post_license_update', enterprise_train_update)
