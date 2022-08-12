@@ -8,7 +8,7 @@ from middlewared.service import CallError
 
 logger = logging.getLogger(__name__)
 
-run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
 
 
 @contextlib.contextmanager
