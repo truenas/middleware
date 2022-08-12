@@ -66,6 +66,8 @@ from systemd.daemon import notify as systemd_notify
 
 from . import logger
 
+SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
+
 
 @dataclass
 class LoopMonitorIgnoreFrame:
@@ -1053,7 +1055,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             pass
 
     def __notify_startup_progress(self):
-        systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
+        systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
 
     def __notify_startup_complete(self):
         with open(middlewared.service.MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
