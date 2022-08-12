@@ -19,6 +19,17 @@ def test_create_invalid_sysctl():
     assert ve.value.errors[0].attribute == "tunable_create.var"
 
 
+def test_create_invalid_udev():
+    with pytest.raises(ValidationErrors) as ve:
+        call("tunable.create", {
+            "type": "UDEV",
+            "var": "61-truenas-pmem",
+            "value": "# disable built-in truenas rule to enable memory loss",
+        })
+
+    assert ve.value.errors[0].attribute == "tunable_create.var"
+
+
 def test_sysctl_lifecycle():
     def assert_default_value():
         assert ssh("cat /etc/sysctl.d/tunables.conf", check=False) == f""

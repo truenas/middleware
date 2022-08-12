@@ -99,6 +99,14 @@ class TunableService(CRUDService):
             if data['var'] not in await self.middleware.call('tunable.get_sysctls'):
                 verrors.add('tunable_create.var', f'Sysctl {data["var"]!r} does not exist in kernel.', errno.ENOENT)
 
+        if data['type'] == 'UDEV':
+            if 'truenas' in data['var']:
+                verrors.add(
+                    'tunable_create.var',
+                    'Udev rules with `truenas` in their name are not allowed.',
+                    errno.EPERM,
+                )
+
         verrors.check()
 
         data['orig_value'] = ''
