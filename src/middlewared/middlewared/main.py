@@ -66,6 +66,8 @@ from systemd.daemon import notify as systemd_notify
 
 from . import logger
 
+SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
+
 
 @dataclass
 class LoopMonitorIgnoreFrame:
@@ -833,7 +835,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
-        log_handler=None, startup_seq_path=None, trace_malloc=False,
+        log_handler=None, trace_malloc=False,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
     ):
         super().__init__(overlay_dirs)
@@ -849,8 +851,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
-        self.startup_seq = 0
-        self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
         self.__thread_id = threading.get_ident()
@@ -1055,19 +1055,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             pass
 
     def __notify_startup_progress(self):
-        if osc.IS_FREEBSD:
-            if self.startup_seq_path is None:
-                return
-
-            with open(self.startup_seq_path + ".tmp", "w") as f:
-                f.write(f"{self.startup_seq}")
-
-            os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
-
-            self.startup_seq += 1
-
-        if osc.IS_LINUX:
-            systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
+        systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
 
     def __notify_startup_complete(self):
         with open(middlewared.service.MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
@@ -1848,7 +1836,6 @@ def main():
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
-    startup_seq_path = '/tmp/middlewared_startup.seq'
 
     if args.restart:
         if os.path.exists(pidpath):
@@ -1877,7 +1864,6 @@ def main():
         overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
-        startup_seq_path=startup_seq_path,
     ).run()
 
 
