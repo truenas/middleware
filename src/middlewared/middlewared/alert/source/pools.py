@@ -16,16 +16,9 @@ class PoolDisksChecksAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        disks = {disk['name']: disk for disk in await self.middleware.call('disk.query')}
 
         for pool in await self.middleware.call('pool.query'):
-            usb_disks = [
-                disk
-                for disk in filter(
-                    lambda d: d in disks and d['bus'] == 'USB',
-                    await self.middleware.call('pool.get_disks', pool['id'])
-                )
-            ]
+            usb_disks = await self.middleware.call('pool.get_usb_disks', pool['id'])
             if usb_disks:
                 alerts.append(Alert(
                     PoolDisksChecksAlertSource,

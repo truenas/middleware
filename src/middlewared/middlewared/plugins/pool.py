@@ -1058,6 +1058,13 @@ class PoolService(CRUDService):
                 disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
 
+    @private
+    async def get_usb_disks(self, oid):
+        disks = {disk['name']: disk for disk in await self.middleware.call('disk.query')}
+        return [
+            disk for disk in filter(lambda d: d in disks and d['bus'] == 'USB', await self.get_disks(oid))
+        ]
+
     @item_method
     @accepts(Int('id'), Dict(
         'options',
