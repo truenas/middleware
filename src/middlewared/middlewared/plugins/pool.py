@@ -1062,7 +1062,7 @@ class PoolService(CRUDService):
     async def get_usb_disks(self, oid):
         disks = {disk['name']: disk for disk in await self.middleware.call('disk.query')}
         return [
-            disk for disk in filter(lambda d: d in disks and d['bus'] == 'USB', await self.get_disks(oid))
+            disk for disk in filter(lambda d: d in disks and disks[d]['bus'] == 'USB', await self.get_disks(oid))
         ]
 
     @item_method
