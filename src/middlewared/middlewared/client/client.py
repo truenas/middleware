@@ -721,49 +721,6 @@ def main():
             if subscribe_payload['error']:
                 raise ValueError(subscribe_payload['error'])
             sys.exit(0)
-    elif args.name == 'waitready':
-        """
-        This command is supposed to wait until we are able to connect
-        to middleware and perform a simple operation (core.ping)
-
-        Reason behind this is because middlewared starts and we have to
-        wait the boot process until it is ready to serve connections
-        """
-        def waitready(args):
-            while True:
-                try:
-                    with Client(uri=args.uri) as c:
-                        return c.call('core.ping')
-                except socket.error:
-                    time.sleep(0.2)
-                    continue
-
-        seq = -1
-        state_time = time.monotonic()
-        while True:
-            if args.timeout is not None and time.monotonic() - state_time > args.timeout:
-                print(f'Middleware startup is idle for more than {args.timeout} seconds')
-                sys.exit(1)
-
-            thread = Thread(target=waitready, args=[args])
-            thread.daemon = True
-            thread.start()
-            thread.join(args.timeout)
-            if not thread.is_alive():
-                sys.exit(0)
-
-            try:
-                with open('/var/run/middlewared_startup.seq') as f:
-                    new_seq = int(f.read())
-                    if new_seq < seq:
-                        print('Middleware has restarted')
-                        sys.exit(1)
-
-                    if new_seq != seq:
-                        seq = new_seq
-                        state_time = time.monotonic()
-            except IOError:
-                pass
 
 
 if __name__ == '__main__':
