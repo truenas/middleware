@@ -573,7 +573,6 @@ class ZFSDatasetService(CRUDService):
     def query_for_quota_alert(self):
         options = {
             'extra': {
-                'flat': False,
                 'properties': [
                     'name',
                     'quota',
