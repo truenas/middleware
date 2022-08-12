@@ -6,7 +6,7 @@ class PoolUSBDisksAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
     title = 'Pool consuming USB disks'
-    text = '%(pool)r is consuming %(disks)r USB disk(s) which is not advised behavior. ' \
+    text = '%(pool)r is consuming %(disks)r USB disk(s) which is not advised. ' \
            'Please replace the disk(s) immediately.'
 
 
