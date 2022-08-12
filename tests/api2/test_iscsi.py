@@ -49,9 +49,8 @@ def test__iscsi_extent__disk_choices(request):
                 f'zvol/{ds.replace(" ", "+")}@snap-1': f'{ds}@snap-1 [ro]',
             }
             # Verify that zvol is not availabe in VM disk choices
-            assert call("vm.device.disk_choices") == {
-                f'/dev/zvol/{ds.replace(" ", "+")}@snap-1': f'{ds}@snap-1'
-            }
+            # (and snapshot zvol is not available too as it is read-only)
+            assert call("vm.device.disk_choices") == {}
 
 
 def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
