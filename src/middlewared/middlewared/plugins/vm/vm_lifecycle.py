@@ -106,6 +106,30 @@ class VMService(Service, VMSupervisorMixin):
 
         self.start(id, {'overcommit': True})
 
+    @item_method
+    @accepts(Int('id'))
+    @returns()
+    def suspend(self, id):
+        """
+        Suspend `id` VM.
+        """
+        self._check_setup_connection()
+
+        vm = self.middleware.call_sync('vm.get_instance', id)
+        self._suspend(vm['name'])
+
+    @item_method
+    @accepts(Int('id'))
+    @returns()
+    def resume(self, id):
+        """
+        Resume suspended `id` VM.
+        """
+        self._check_setup_connection()
+
+        vm = self.middleware.call_sync('vm.get_instance', id)
+        self._resume(vm['name'])
+
 
 async def _event_vms(middleware, event_type, args):
     vm = await middleware.call('vm.query', [['id', '=', args['id']]])
