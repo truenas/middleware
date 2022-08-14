@@ -6,8 +6,7 @@ class PoolUSBDisksAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
     title = 'Pool consuming USB disks'
-    text = '%(pool)r is consuming %(disks)r USB disk(s) which is not advised. ' \
-           'Please replace the disk(s) immediately.'
+    text = '%(pool)r is consuming USB devices %(disks)r which is not recommended.'
 
 
 class PoolDisksChecksAlertSource(AlertSource):
@@ -24,8 +23,8 @@ class PoolDisksChecksAlertSource(AlertSource):
             usb_disks = await self.middleware.call('pool.get_usb_disks', pool['name'])
             if usb_disks:
                 alerts.append(Alert(
-                    PoolDisksChecksAlertSource,
-                    {'pool': pool['name'], 'disks': usb_disks},
+                    PoolUSBDisksAlertClass,
+                    {'pool': pool['name'], 'disks': ', '.join(usb_disks)},
                 ))
 
         return alerts
