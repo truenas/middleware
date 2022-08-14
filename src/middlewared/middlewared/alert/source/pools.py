@@ -17,8 +17,11 @@ class PoolDisksChecksAlertSource(AlertSource):
     async def check(self):
         alerts = []
 
-        for pool in await self.middleware.call('pool.query'):
-            usb_disks = await self.middleware.call('pool.get_usb_disks', pool['id'])
+        for pool in filter(
+            lambda p: p['state'] == 'ONLINE',
+            (await self.middleware.call('zfs.pool.query_imported_fast')).values()
+        ):
+            usb_disks = await self.middleware.call('pool.get_usb_disks', pool['name'])
             if usb_disks:
                 alerts.append(Alert(
                     PoolDisksChecksAlertSource,

@@ -1059,11 +1059,16 @@ class PoolService(CRUDService):
         return disks
 
     @private
-    async def get_usb_disks(self, oid):
+    async def get_usb_disks(self, name):
         disks = {disk['name']: disk for disk in await self.middleware.call('disk.query')}
+        pool_state = await self.middleware.call('zfs.pool.query_imported_fast', [name])
+
         return [
-            disk for disk in filter(lambda d: d in disks and disks[d]['bus'] == 'USB', await self.get_disks(oid))
-        ]
+            disk for disk in filter(
+                lambda d: d in disks and disks[d]['bus'] == 'USB',
+                await self.middleware.call('zfs.pool.get_disks', name)
+            )
+        ] if pool_state and pool_state.values()[0]['state'] == 'ONLINE' else []
 
     @item_method
     @accepts(Int('id'), Dict(
