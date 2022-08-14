@@ -1068,7 +1068,7 @@ class PoolService(CRUDService):
                 lambda d: d in disks and disks[d]['bus'] == 'USB',
                 await self.middleware.call('zfs.pool.get_disks', name)
             )
-        ] if pool_state and pool_state.values()[0]['state'] == 'ONLINE' else []
+        ] if pool_state and list(pool_state.values())[0]['state'] == 'ONLINE' else []
 
     @item_method
     @accepts(Int('id'), Dict(
