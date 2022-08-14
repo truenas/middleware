@@ -224,6 +224,18 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         self._before_stopping_checks()
         self.domain.destroy()
 
+    def suspend(self):
+        self._before_stopping_checks()
+        self.domain.suspend()
+
+    def _before_resuming_checks(self):
+        if self.status()['state'] != 'PAUSED':
+            raise CallError(f'{self.libvirt_domain_name!r} domain is not paused')
+
+    def resume(self):
+        self._before_resuming_checks()
+        self.domain.resume()
+
     def get_domain_children(self):
         domain_children = [
             create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
