@@ -96,11 +96,13 @@ class ZFSPoolService(CRUDService):
                 pools = [i.__getstate__(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
 
-    def query_imported_fast(self):
+    def query_imported_fast(self, name_filters=None):
         # the equivalent of running `zpool list -H -o guid,name` from cli
+        # name_filters will be a list of pool names
         out = {}
+        name_filters = name_filters or []
         with os.scandir('/proc/spl/kstat/zfs') as it:
-            for entry in it:
+            for entry in filter(lambda entry: not name_filters or entry.name in name_filters, it):
                 if not entry.is_dir() or entry.name == '$import':
                     continue
 
