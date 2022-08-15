@@ -163,10 +163,10 @@ class PrivilegeService(CRUDService):
 
         groups = await self._groups()
         for i, local_group_id in enumerate(data["local_groups"]):
-            if not self._local_groups(groups, [local_group_id]):
+            if not self._local_groups(groups, [local_group_id], include_nonexistent=False):
                 verrors.add(f"{schema_name}.local_groups.{i}", "This local group does not exist")
         for i, ds_group_id in enumerate(data["ds_groups"]):
-            if not await self._ds_groups(groups, [ds_group_id]):
+            if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
                 verrors.add(f"{schema_name}.ds_groups.{i}", "This Directory Service group does not exist")
 
         if verrors:
@@ -182,28 +182,35 @@ class PrivilegeService(CRUDService):
             )
         }
 
-    def _local_groups(self, groups, local_groups):
-        return [
-            groups[group_id]
-            for group_id in local_groups
-            if group_id in groups and groups[group_id]["local"]
-        ]
-
-    async def _ds_groups(self, groups, ds_groups):
+    def _local_groups(self, groups, local_groups, *, include_nonexistent=True):
         result = []
-        for group_id in ds_groups:
-            if (group := groups.get(group_id)) is None:
+        for gid in local_groups:
+            if group := groups.get(gid):
+                if group["local"]:
+                    result.append(group)
+            else:
+                if include_nonexistent:
+                    result.append({"gid": gid})
+
+        return result
+
+    async def _ds_groups(self, groups, ds_groups, *, include_nonexistent=True):
+        result = []
+        for gid in ds_groups:
+            if (group := groups.get(gid)) is None:
                 try:
                     group = await self.middleware.call(
                         "group.query",
-                        [["gid", "=", group_id]],
+                        [["gid", "=", gid]],
                         {
                             "extra": {"additional_information": ["DS"]},
                             "get": True,
                         },
                     )
                 except MatchNotFound:
-                    continue
+                    if include_nonexistent:
+                        result.append({"gid": gid})
+                        continue
 
             if group["local"]:
                 continue
