@@ -8,15 +8,7 @@ from middlewared.utils.python import get_middlewared_dir
 
 
 def load_migrations(middleware):
-    main_sources_dir = os.path.join(get_middlewared_dir(), "migration")
-    sources_dirs = [os.path.join(overlay_dir, "migration") for overlay_dir in middleware.overlay_dirs]
-    sources_dirs.insert(0, main_sources_dir)
-
-    modules = []
-    for sources_dir in sources_dirs:
-        modules.extend(load_modules(sources_dir))
-
-    return sorted(modules, key=lambda module: module.__name__)
+    return sorted(load_modules(os.path.join(get_middlewared_dir(), "migration")), key=lambda x: x.__name___)
 
 
 class MigrationModel(sa.Model):

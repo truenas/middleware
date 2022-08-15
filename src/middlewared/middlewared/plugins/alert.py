@@ -198,25 +198,18 @@ class AlertService(Service):
 
     @private
     async def load(self):
-        main_sources_dir = os.path.join(get_middlewared_dir(), "alert", "source")
-        sources_dirs = [os.path.join(overlay_dir, "alert", "source") for overlay_dir in self.middleware.overlay_dirs]
-        sources_dirs.insert(0, main_sources_dir)
-        for sources_dir in sources_dirs:
-            for module in load_modules(sources_dir):
-                for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
-                    source = cls(self.middleware)
-                    if source.name in ALERT_SOURCES:
-                        raise RuntimeError(f"Alert source {source.name} is already registered")
-                    ALERT_SOURCES[source.name] = source
+        for module in load_modules(os.path.join(get_middlewared_dir(), "alert", "source")):
+            for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
+                source = cls(self.middleware)
+                if source.name in ALERT_SOURCES:
+                    raise RuntimeError(f"Alert source {source.name} is already registered")
+                ALERT_SOURCES[source.name] = source
 
-        main_services_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert",
-                                         "service")
-        services_dirs = [os.path.join(overlay_dir, "alert", "service") for overlay_dir in self.middleware.overlay_dirs]
-        services_dirs.insert(0, main_services_dir)
-        for services_dir in services_dirs:
-            for module in load_modules(services_dir):
-                for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
-                    ALERT_SERVICES_FACTORIES[cls.name()] = cls
+        for module in load_modules(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.path.pardir, "alert", "service")
+        ):
+            for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
+                ALERT_SERVICES_FACTORIES[cls.name()] = cls
 
     @private
     async def initialize(self, load=True):
