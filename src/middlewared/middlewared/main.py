@@ -834,11 +834,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
     def __init__(
-        self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
+        self, loop_debug=False, loop_monitor=True, debug_level=None,
         log_handler=None, trace_malloc=False,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
     ):
-        super().__init__(overlay_dirs)
+        super().__init__()
         self.logger = logger.Logger(
             'middlewared', debug_level, log_format
         ).getLogger()
@@ -1203,9 +1203,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
             max_workers=5,
-            initializer=functools.partial(
-                worker_init, self.overlay_dirs, self.debug_level, self.log_handler
-            ),
+            initializer=functools.partial(worker_init, self.debug_level, self.log_handler)
         )
 
     async def run_in_proc(self, method, *args, **kwargs):
@@ -1861,7 +1859,6 @@ def main():
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
         trace_malloc=args.trace_malloc,
-        overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
     ).run()

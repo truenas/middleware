@@ -20,8 +20,8 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
     Implements same API from real middleware
     """
 
-    def __init__(self, overlay_dirs):
-        super().__init__(overlay_dirs)
+    def __init__(self):
+        super().__init__()
         self.client = None
         _logger = logger.Logger('worker')
         self.logger = _logger.getLogger()
@@ -138,9 +138,9 @@ def receive_events():
     environ_update(c.call('core.environ'))
 
 
-def worker_init(overlay_dirs, debug_level, log_handler):
+def worker_init(debug_level, log_handler):
     global MIDDLEWARE
-    MIDDLEWARE = FakeMiddleware(overlay_dirs)
+    MIDDLEWARE = FakeMiddleware()
     os.environ['MIDDLEWARED_LOADING'] = 'True'
     MIDDLEWARE._load_plugins()
     os.environ['MIDDLEWARED_LOADING'] = 'False'
