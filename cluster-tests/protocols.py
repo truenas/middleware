@@ -37,6 +37,15 @@ class SMB(object):
         self._host = None
         self._smb1 = False
 
+    def reconnect(self):
+        self._connection = libsmb.Conn(
+            self._host,
+            self._share,
+            self._lp,
+            self._cred,
+            force_smb1=self._smb1,
+        )
+
     def connect(self, **kwargs):
         host = kwargs.get("host")
         share = kwargs.get("share")
@@ -82,6 +91,7 @@ class SMB(object):
 
     def show_connection(self):
         return {
+            "libsmb_conn": hex(id(self._connection)),
             "connected": self._connection.chkpath(''),
             "host": self._host,
             "share": self._share,

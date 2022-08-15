@@ -1,9 +1,11 @@
 import contextlib
+
 from time import sleep
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from protocols import SMB
+from samba import NTSTATUSError
 
-from config import CLUSTER_IPS
+from config import CLUSTER_IPS, FAILOVER_WAIT_TIMEOUT
 from utils import make_request
 
 
@@ -57,3 +59,19 @@ def smb_connection(**kwargs):
         yield c
     finally:
         c.disconnect()
+
+
+def wait_reconnect(smb_connection):
+    waited = 0
+    while waited != FAILOVER_WAIT_TIMEOUT:
+        try:
+            conn = smb_connection.show_connection()
+            if conn['connected']:
+                return
+
+            smb_connection.reconnect()
+        except NTSTATUSError:
+            pass
+
+        waited += 1
+        sleep(1)
