@@ -1,7 +1,7 @@
 import asyncio
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns
-from middlewared.service import CallError, item_method, job, Service
+from middlewared.service import CallError, item_method, job, private, Service
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -129,6 +129,22 @@ class VMService(Service, VMSupervisorMixin):
 
         vm = self.middleware.call_sync('vm.get_instance', id)
         self._resume(vm['name'])
+
+    @private
+    def suspend_running_vms(self):
+        for vm in self.middleware.call_sync('vm.query', [['status.state', '=', 'RUNNING']]):
+            try:
+                self.suspend(vm['id'])
+            except Exception:
+                self.logger.error('Failed to suspend %r vm', vm['name'], exc_info=True)
+
+    @private
+    def resume_suspended_vms(self):
+        for vm in self.middleware.call_sync('vm.query', [['status.state', '=', 'PAUSED']]):
+            try:
+                self.resume(vm['id'])
+            except Exception:
+                self.logger.error('Failed to resume %r vm', vm['name'], exc_info=True)
 
 
 async def _event_vms(middleware, event_type, args):
