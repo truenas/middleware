@@ -105,8 +105,8 @@ class CtdbServicesService(Service):
         Str('clustered_service', enum=CTDB_MONITORED_SERVICES),
         Dict(
             'clustered_service_config',
-            Bool('monitor_enabled'),
-            Bool('service_enabled')
+            Bool('monitor_enable'),
+            Bool('service_enable')
         )
     )
     def set(self, srv, data):
