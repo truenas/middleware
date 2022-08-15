@@ -1,6 +1,7 @@
 from xml.etree import ElementTree as etree
 
 
+ACTIVE_STATES = ['PAUSED', 'RUNNING']
 LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
