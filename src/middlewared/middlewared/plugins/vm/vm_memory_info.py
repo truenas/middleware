@@ -5,6 +5,7 @@ from middlewared.service import CallError, Service
 from middlewared.validators import MACAddr
 
 from .devices import NIC
+from .utils import ACTIVE_STATES
 
 
 class VMService(Service):
@@ -29,10 +30,8 @@ class VMService(Service):
         guests = await self.middleware.call('datastore.query', 'vm.vm')
         for guest in guests:
             status = await self.middleware.call('vm.status', guest['id'])
-            if status['state'] == 'RUNNING' and guest['autostart'] is False:
-                memory_allocation['RNP'] += guest['memory'] * 1024 * 1024
-            elif status['state'] == 'RUNNING' and guest['autostart'] is True:
-                memory_allocation['RPRD'] += guest['memory'] * 1024 * 1024
+            if status['state'] in ACTIVE_STATES:
+                memory_allocation['RPRD' if guest['autostart'] else 'RNP'] += guest['memory'] * 1024 * 1024
             elif guest['autostart']:
                 memory_allocation['PRD'] += guest['memory'] * 1024 * 1024
 
@@ -77,7 +76,7 @@ class VMService(Service):
             # If overcommit is not wanted its verified how much physical memory
             # the vm process is currently using and add the maximum memory its
             # supposed to have.
-            for vm in await self.middleware.call('vm.query', [['status.state', '=', 'RUNNING']]):
+            for vm in await self.middleware.call('vm.query', [['status.state', 'in', ACTIVE_STATES]]):
                 try:
                     current_vm_mem = await self.middleware.call('vm.get_memory_usage_internal', vm)
                 except Exception:
@@ -118,7 +117,7 @@ class VMService(Service):
         All memory attributes are expressed in bytes.
         """
         vm = await self.middleware.call('vm.get_instance', vm_id)
-        if vm['status']['state'] == 'RUNNING':
+        if vm['status']['state'] in ACTIVE_STATES:
             # TODO: Let's add this later as we have a use case in the UI - could be useful to
             #  show separate info of each VM in the UI moving on
             raise CallError(f'Unable to retrieve {vm["name"]!r} VM information as it is already running.')
