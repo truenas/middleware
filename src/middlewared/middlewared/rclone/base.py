@@ -4,6 +4,7 @@ class BaseRcloneRemote:
 
     buckets = False
     bucket_title = "Bucket"
+    custom_list_buckets = False
 
     readonly = False
 
@@ -22,6 +23,9 @@ class BaseRcloneRemote:
 
     def __init__(self, middleware):
         self.middleware = middleware
+
+    async def list_buckets(self, credentials):
+        raise NotImplementedError
 
     async def pre_save_task(self, task, credentials, verrors):
         pass
