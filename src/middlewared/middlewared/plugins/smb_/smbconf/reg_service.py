@@ -298,6 +298,12 @@ class ShareSchema(RegistrySchema):
 
         try:
             acltype = entry.middleware.call_sync('filesystem.path_get_acltype', data_in['path'])
+        except FileNotFoundError:
+            entry.middleware.logger.warning(
+                "%s: path does not exist. This is unexpected situation and "
+                "may indicate a failure of pool import.", data_in["path"]
+            )
+            raise ValueError(f"{data_in['path']}: path does not exist")
         except OSError:
             entry.middleware.logger.warning(
                 "%s: failed to determine acltype for path.",
