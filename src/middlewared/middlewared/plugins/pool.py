@@ -1993,7 +1993,7 @@ def get_props_of_interest_mapping():
         ('special_small_blocks', 'special_small_block_size', None),
         ('pbkdf2iters', None, None),
         ('creation', None, None),
-        ('snapdev', None, None),
+        ('snapdev', None, str.upper),
     ]
 
 
