@@ -26,8 +26,8 @@ class VMService(Service, VMSupervisorMixin):
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             # We want to do this before initializing libvirt connection
-            self._open()
-            self._check_connection_alive()
+            await self.middleware.run_in_thread(self._open)
+            await self.middleware.run_in_thread(self._check_connection_alive)
             await self.middleware.call('vm.setup_libvirt_events')
         except (asyncio.TimeoutError, CallError):
             self.middleware.logger.error('Failed to setup libvirt', exc_info=True)
