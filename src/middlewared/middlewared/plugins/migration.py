@@ -8,7 +8,7 @@ from middlewared.utils.python import get_middlewared_dir
 
 
 def load_migrations(middleware):
-    return sorted(load_modules(os.path.join(get_middlewared_dir(), "migration")), key=lambda x: x.__name___)
+    return sorted(load_modules(os.path.join(get_middlewared_dir(), "migration")), key=lambda x: x.__name__)
 
 
 class MigrationModel(sa.Model):
