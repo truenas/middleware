@@ -11,6 +11,7 @@ from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
 from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
+from .utils import ACTIVE_STATES
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -286,9 +287,8 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         if new['name'] != old['name']:
             await self.middleware.run_in_thread(self._check_setup_connection)
-            if old['status']['state'] == 'RUNNING':
-                raise CallError(
-                    'VM name can only be changed when VM is inactive')
+            if old['status']['state'] in ACTIVE_STATES:
+                raise CallError('VM name can only be changed when VM is inactive')
 
             if old['name'] not in self.vms:
                 raise CallError(f'Unable to locate domain for {old["name"]}')
@@ -393,8 +393,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             - state, RUNNING or STOPPED
             - pid, process id if RUNNING
         """
-        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [
-                                       ['id', '=', id]], {'get': True})
+        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
         return self.status_impl(vm)
 
     @private
