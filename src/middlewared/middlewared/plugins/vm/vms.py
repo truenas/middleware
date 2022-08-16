@@ -328,14 +328,13 @@ class VMService(CRUDService, VMSupervisorMixin):
             await self.middleware.run_in_thread(self._check_setup_connection)
             status = await self.middleware.call('vm.status', id)
             force_delete = data.get('force')
-            if status.get('state') == 'RUNNING':
+            if status['state'] in ACTIVE_STATES:
                 await self.middleware.call('vm.poweroff', id)
                 # We would like to wait at least 7 seconds to have the vm
                 # complete it's post vm actions which might require interaction with it's domain
                 await asyncio.sleep(7)
             elif status.get('state') == 'ERROR' and not force_delete:
-                raise CallError(
-                    'Unable to retrieve VM status. Failed to destroy VM')
+                raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
             if data['zvols']:
                 devices = await self.middleware.call('vm.device.query', [
@@ -390,7 +389,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Get the status of `id` VM.
 
         Returns a dict:
-            - state, RUNNING or STOPPED
+            - state, RUNNING / PAUSED / STOPPED
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})

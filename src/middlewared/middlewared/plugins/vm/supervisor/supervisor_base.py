@@ -64,7 +64,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         domain_state = DomainState(domain.state()[0])
         pid_path = os.path.join('/var/run/libvirt', 'qemu', f'{self.libvirt_domain_name}.pid')
         if domain.isActive():
-            state = domain_state.name if domain == DomainState.PAUSED else 'RUNNING'
+            state = domain_state.name if domain_state == DomainState.PAUSED else 'RUNNING'
         else:
             state = 'STOPPED'
 
