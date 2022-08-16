@@ -89,5 +89,5 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
 
     def _memory_info(self, vm_name):
         self._check_setup_connection()
-        self._check_domain_status(vm_name)
+        self._check_domain_status(vm_name, ACTIVE_STATES)
         return self.vms[vm_name].memory_usage()
