@@ -130,7 +130,7 @@ class VMService(Service):
         available_memory = await self.get_available_memory(False)
         available_memory_with_overcommit = await self.get_available_memory(True)
         vm_max_memory = vm['memory'] * 1024 * 1024
-        vm_min_memory = vm['min_memory'] * 1024 * 1024 if vm['min_memory'] else None
+        vm_min_memory = vm.get('min_memory', 0) * 1024 * 1024 or None
         vm_requested_memory = vm_min_memory or vm_max_memory
 
         overcommit_required = vm_requested_memory > available_memory
