@@ -4,7 +4,7 @@ from middlewared.service import CallError
 from middlewared.schema import Dict, Str
 
 from .device import Device
-from .utils import create_element, LIBVIRT_URI
+from .utils import ACTIVE_STATES, create_element, LIBVIRT_URI
 
 
 class PCI(Device):
@@ -57,7 +57,7 @@ class PCI(Device):
 
     def safe_to_reattach(self):
         return not self.get_details()['error'] and all(
-            vm['status']['state'] != 'RUNNING' for vm in self.get_vms_using_device()
+            vm['status']['state'] not in ACTIVE_STATES for vm in self.get_vms_using_device()
         )
 
     def post_stop_vm_linux(self, *args, **kwargs):

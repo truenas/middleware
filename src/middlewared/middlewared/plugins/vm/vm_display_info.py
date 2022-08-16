@@ -4,7 +4,7 @@ from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
 from middlewared.service import pass_app, private, Service
 
 from .devices import DISPLAY
-from .utils import NGINX_PREFIX
+from .utils import ACTIVE_STATES, NGINX_PREFIX
 
 
 class VMService(Service):
@@ -114,8 +114,9 @@ class VMService(Service):
 
     @private
     async def get_running_display_devices(self):
+        # TODO: Verify how to handle paused vms wrt display devices
         devices = []
-        for vm in await self.middleware.call('vm.query', [['status.state', '=', 'RUNNING']]):
+        for vm in await self.middleware.call('vm.query', [['status.state', 'in', ACTIVE_STATES]]):
             devices.extend([
                 dev.get_webui_info() for dev in map(
                     lambda d: DISPLAY(d, middleware=self.middleware),
