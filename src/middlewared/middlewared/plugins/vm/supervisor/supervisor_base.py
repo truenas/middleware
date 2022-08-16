@@ -73,7 +73,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             'pid': None,
             'domain_state': domain_state.name,
         }
-        if domain_state == DomainState.RUNNING:
+        if domain_state in (DomainState.PAUSED, DomainState.RUNNING):
             with contextlib.suppress(FileNotFoundError):
                 # Do not make a stat call to check if file exists or not
                 with open(pid_path, 'r') as f:
