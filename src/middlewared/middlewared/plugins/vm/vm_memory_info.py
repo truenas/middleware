@@ -130,8 +130,7 @@ class VMService(Service):
         available_memory = await self.get_available_memory(False)
         available_memory_with_overcommit = await self.get_available_memory(True)
         vm_max_memory = vm['memory'] * 1024 * 1024
-        vm_min_memory = vm.get('min_memory', 0) * 1024 * 1024 or None
-        vm_requested_memory = vm_min_memory or vm_max_memory
+        vm_requested_memory = vm_max_memory
 
         overcommit_required = vm_requested_memory > available_memory
         arc_to_shrink = 0
@@ -139,7 +138,7 @@ class VMService(Service):
             arc_to_shrink = min(shrinkable_arc_max, vm_requested_memory - available_memory)
 
         return {
-            'minimum_memory_requested': vm_min_memory,
+            'minimum_memory_requested': vm_requested_memory,
             'total_memory_requested': vm_max_memory,
             'overcommit_required': overcommit_required,
             'arc_to_shrink': arc_to_shrink,
