@@ -134,16 +134,16 @@ class VMService(Service, VMSupervisorMixin):
         self._resume(vm['name'])
 
     @private
-    def suspend_running_vms(self):
-        for vm in self.middleware.call_sync('vm.query', [['status.state', '=', 'RUNNING']]):
+    def suspend_vms(self, vm_ids):
+        for vm in vm_ids:
             try:
                 self.suspend(vm['id'])
             except Exception:
                 self.logger.error('Failed to suspend %r vm', vm['name'], exc_info=True)
 
     @private
-    def resume_suspended_vms(self):
-        for vm in self.middleware.call_sync('vm.query', [['status.state', '=', 'PAUSED']]):
+    def resume_suspended_vms(self, vm_ids):
+        for vm in vm_ids:
             try:
                 self.resume(vm['id'])
             except Exception:
