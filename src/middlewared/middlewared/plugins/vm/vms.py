@@ -403,8 +403,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 # Whatever happens, query shouldn't fail
                 return self._status(vm['name'])
             except Exception:
-                self.middleware.logger.debug(
-                    'Failed to retrieve VM status for %r', vm['name'], exc_info=True)
+                self.middleware.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
 
         return {
             'state': 'ERROR',
