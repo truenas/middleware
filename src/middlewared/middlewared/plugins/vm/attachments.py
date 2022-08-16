@@ -10,11 +10,34 @@ from middlewared.utils.path import is_child
 from .utils import ACTIVE_STATES
 
 
+async def determine_recursive_search(recursive, device, child_datasets):
+    # TODO: Add unit tests for this please
+    if recursive:
+        return True
+    elif device['dtype'] == 'DISK':
+        return False
+
+    # What we want to do here is make sure that any raw files or cdrom files are not living in the child
+    # dataset and not affected by the parent snapshot as they live on a different filesystem
+    path = device['attributes']['path'].strip('/mnt/')
+    for split_count in range(path.count('/')):
+        potential_ds = path.rsplit('/', split_count)[0]
+        if potential_ds in child_datasets:
+            return False
+    else:
+        return True
+
+
 class VMService(Service):
 
     @private
     async def query_snapshot_begin(self, dataset, recursive):
         vms = collections.defaultdict(list)
+        datasets = {
+            d['id']: d for d in await self.middleware.call(
+                'pool.dataset.query', [['id', '^', f'{dataset}/']], {'extra': {'properties': []}}
+            )
+        }
         to_ignore_vms = await self.get_vms_to_ignore_for_querying_attachments(True)
         for device in await self.middleware.call(
             'vm.device.query', [
@@ -29,8 +52,7 @@ class VMService(Service):
                 path = os.path.join('/mnt', zvol_path_to_name(path))
 
             dataset_path = os.path.join('/mnt', dataset)
-            recursive_search = recursive or device['dtype'] != 'DISK'
-            if recursive_search:
+            if await determine_recursive_search(recursive, device, datasets):
                 if is_child(path, dataset_path):
                     vms[device['vm']].append(device)
             elif dataset_path == path:
