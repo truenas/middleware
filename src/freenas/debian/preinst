@@ -4,7 +4,8 @@ mkdir -p /var/trash
 for file in \
     /etc/default/inadyn \
     /etc/nsswitch.conf \
-    /lib/systemd/system/smartmontools.service
+    /lib/systemd/system/smartmontools.service \
+    /usr/lib/ntp/ntp-systemd-wrapper
 do
     dpkg-divert --add --package truenas-files --rename --divert "/var/trash/$(echo "$file" | sed "s/\//_/g")" "$file"
 done
