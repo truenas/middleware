@@ -1473,21 +1473,18 @@ class GroupService(CRUDService):
         """
         Get the next available/free gid.
         """
-        last_gid = 999
-        grps = await self.middleware.call(
-            'datastore.query', 'account.bsdgroups',
-            [('builtin', '=', False)], {'order_by': ['gid'], 'prefix': 'bsdgrp_'}
+        used_gids = (
+            {
+                group['bsdgrp_gid']
+                for group in await self.middleware.call('datastore.query', 'account.bsdgroups')
+            } |
+            set((await self.middleware.call('privilege.used_local_gids')).keys())
         )
-        for i in grps:
-            # If the difference between the last gid and the current one is
-            # bigger than 1, it means we have a gap and can use it.
-            if i['gid'] - last_gid > 1:
-                return last_gid + 1
+        next_gid = 1000
+        while next_gid in used_gids:
+            next_gid += 1
 
-            if i['gid'] > last_gid:
-                last_gid = i['gid']
-
-        return last_gid + 1
+        return next_gid
 
     @accepts(Dict(
         'get_group_obj',
@@ -1563,6 +1560,14 @@ class GroupService(CRUDService):
                     f'{schema}.gid',
                     f'The Group ID "{data["gid"]}" already exists.',
                     errno.EEXIST,
+                )
+
+        if data.get('gid'):
+            if privilege := (await self.middleware.call('privilege.used_local_gids')).get(data['gid']):
+                verrors.add(
+                    f'{schema}.gid',
+                    f'A privilege {privilege["name"]!r} already uses this group ID.',
+                    errno.EINVAL,
                 )
 
         if 'users' in data:

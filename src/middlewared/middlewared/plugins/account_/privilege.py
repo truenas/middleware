@@ -190,7 +190,10 @@ class PrivilegeService(CRUDService):
                     result.append(group)
             else:
                 if include_nonexistent:
-                    result.append({"gid": gid})
+                    result.append({
+                        "gid": gid,
+                        "group": None,
+                    })
 
         return result
 
@@ -209,7 +212,10 @@ class PrivilegeService(CRUDService):
                     )
                 except MatchNotFound:
                     if include_nonexistent:
-                        result.append({"gid": gid})
+                        result.append({
+                            "gid": gid,
+                            "group": None,
+                        })
                         continue
 
             if group["local"]:
@@ -234,14 +240,19 @@ class PrivilegeService(CRUDService):
 
     @private
     async def before_group_delete(self, group):
-        for privilege in await self.middleware.call(
-            'datastore.query',
-            'account.privilege',
-            [['builtin_name', '!=', None]],
-        ):
+        for privilege in await self.middleware.call('datastore.query', 'account.privilege'):
             if group['gid'] in privilege['local_groups']:
                 raise CallError(
-                    f'This group has built-in privilege {privilege["name"]!r}. Please remove it from that privilege'
+                    f'This group is used by privilege {privilege["name"]!r}. Please remove it from that privilege'
                     'first, then delete the group.',
                     errno.EACCES,
                 )
+
+    @private
+    async def used_local_gids(self):
+        gids = {}
+        for privilege in await self.middleware.call('datastore.query', 'account.privilege', [], {'order_by': ['id']}):
+            for gid in privilege['local_groups']:
+                gids.setdefault(gid, privilege)
+
+        return gids
