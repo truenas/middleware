@@ -1,13 +1,13 @@
 import pytest
 import stat
 
-from config import CLUSTER_INFO, CLUSTER_IPS
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
 from utils import make_request, ssh_test, wait_on_job
 from exceptions import JobTimeOut
 from pytest_dependency import depends
 from time import sleep
 
-FUSE_OP_TIMEOUT = CLUSTER_INFO['FUSE_OP_TIMEOUT']
+FUSE_OP_TIMEOUT = TIMEOUTS['FUSE_OP_TIMEOUT']
 LOCAL_PATH = f'/cluster/{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
 CLUSTER_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/filesystem_01'
 testfiles = [

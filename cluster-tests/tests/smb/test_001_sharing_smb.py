@@ -1,6 +1,6 @@
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS, MONITOR_TIMEOUT
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS 
 from utils import make_request, ssh_test, make_ws_request
 from pytest_dependency import depends
 from helpers import get_bool
@@ -485,7 +485,7 @@ def test_33_enable_service_monitor(request):
 
     def check_monitored_state(expected):
         waited = 0
-        while waited != MONITOR_TIMEOUT:
+        while waited != TIMEOUTS['MONITOR_TIMEOUT']:
             entry = get_service_state()
 
             if any(x['state'] == 'UNAVAIL' for x in entry['cluster_state']):
