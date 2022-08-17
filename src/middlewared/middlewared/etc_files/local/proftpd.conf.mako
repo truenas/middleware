@@ -123,7 +123,7 @@ AuthOrder mod_auth_unix.c
         LoadModule mod_tls.c
         <IfModule mod_tls.c>
             TLSEngine on
-            TLSProtocol SSLv3 TLSv1.2
+            TLSProtocol TLSv1.2 TLSv1.3
             <%
                 tls_options = []
                 for k, v in [
