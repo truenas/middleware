@@ -1,7 +1,7 @@
 """Account privileges
 
 Revision ID: 79942334975f
-Revises: 9b7127606e2b
+Revises: e3a81e1c2135
 Create Date: 2022-08-09 13:37:57.243188+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '79942334975f'
-down_revision = '9b7127606e2b'
+down_revision = 'e3a81e1c2135'
 branch_labels = None
 depends_on = None
 

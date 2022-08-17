@@ -232,7 +232,8 @@ class PrivilegeService(CRUDService):
             'account.privilege',
             [['builtin_name', '!=', None]],
         ):
-            if not await self.middleware.call('group.has_password_enabled_user', privilege['local_groups'], user['id']):
+            if not await self.middleware.call('group.has_password_enabled_user', privilege['local_groups'],
+                                              [user['id']]):
                 raise CallError(
                     f'After deleting this user no local user will have built-in privilege {privilege["name"]!r}.',
                     errno.EACCES,
