@@ -94,7 +94,9 @@ def test_create_group_with_orphan_privilege_gid(privilege_with_orphan_local_grou
 def test_group_next_gid():
     next_gid = call("group.get_next_gid")
     with mock("privilege.used_local_gids", f"""
-        def mock(self):
-            return {{{next_gid}: None}}
+        async def mock(self):
+            result = await self.used_local_gids()
+            result[{next_gid}] = None
+            return result
     """):
         assert call("group.get_next_gid") == next_gid + 1
