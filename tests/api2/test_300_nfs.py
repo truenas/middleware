@@ -212,6 +212,11 @@ def test_10_perform_basic_nfs_ops(request, vers):
         assert 'testfile' not in contents
 
 
+def test_11_perform_server_side_copy(request):
+    with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
+        n.server_side_copy('ssc1', 'ssc2')
+
+
 def test_19_updating_the_nfs_service(request):
     """
     This test verifies that service can be updated in general,
