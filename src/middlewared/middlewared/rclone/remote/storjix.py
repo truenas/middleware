@@ -50,5 +50,5 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
         return await self.middleware.run_in_thread(list_buckets_sync)
 
-    async def get_task_extra(self, task):
+    async def get_credentials_extra(self, credentials):
         return {"endpoint": "https://gateway.storjshare.io"}
