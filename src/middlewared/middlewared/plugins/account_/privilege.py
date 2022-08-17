@@ -216,7 +216,8 @@ class PrivilegeService(CRUDService):
                             "gid": gid,
                             "group": None,
                         })
-                        continue
+
+                    continue
 
             if group["local"]:
                 continue
