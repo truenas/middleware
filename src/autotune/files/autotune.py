@@ -241,7 +241,7 @@ def guess_vfs_zfs_vdev_sync_write_max_active():
 
 
 def guess_vfs_zfs_zfetch_max_distance():
-    return 32 * MiB
+    return 64 * MiB
 
 
 def main(argv):
