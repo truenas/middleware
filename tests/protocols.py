@@ -560,6 +560,48 @@ class SSH_NFS(NFS):
 
         return
 
+    def mkdir(self, path):
+        mkdir = SSH_TEST(
+            f"mkdir {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if mkdir['result'] == False:
+            raise RuntimeError(mkdir['stderr'])
+
+    def rmdir(self, path):
+        rmdir = SSH_TEST(
+            f"rmdir {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if rmdir['result'] == False:
+            raise RuntimeError(rmdir['stderr'])
+
+    def ls(self, path):
+        ls = SSH_TEST(
+            f"ls {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if ls['result'] == False:
+            raise RuntimeError(ls['stderr'])
+
+        return ls['output']
+
+    def rename(self, src, dst): 
+        mv = SSH_TEST(
+            f"mv {self._localpath}/{path} {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if mv['result'] == False:
+            raise RuntimeError(mv['stderr'])
+
+    def unlink(self, path):
+        rm = SSH_TEST(
+            f"rm {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if rm['result'] == False:
+            raise RuntimeError(rm['stderr'])
+
     def getacl(self, path):
         self.validate(path)
         getfacl = SSH_TEST(
