@@ -9,7 +9,7 @@ from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
-from .utils import osc, sw_version
+from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
@@ -1746,7 +1746,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await runner.setup()
-        await web.UnixSite(runner, '/var/run/middlewared-internal.sock').start()
+        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-internal.sock')).start()
 
         await self.__plugins_setup(setup_funcs)
 
@@ -1754,7 +1754,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self._setup_periodic_tasks()
 
         await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
-        await web.UnixSite(runner, '/var/run/middlewared.sock').start()
+        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')).start()
 
         if self.trace_malloc:
             limit = self.trace_malloc[0]
@@ -1833,7 +1833,8 @@ def main():
     ], default='console')
     args = parser.parse_args()
 
-    pidpath = '/var/run/middlewared.pid'
+    os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
+    pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
     if args.restart:
         if os.path.exists(pidpath):

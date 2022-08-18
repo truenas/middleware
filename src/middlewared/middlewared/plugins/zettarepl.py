@@ -45,7 +45,7 @@ from zettarepl.zettarepl import create_zettarepl
 from middlewared.client import Client, ClientException
 from middlewared.logger import reconfigure_logging, setup_logging
 from middlewared.service import CallError, Service
-from middlewared.utils import start_daemon_thread
+from middlewared.utils import MIDDLEWARE_RUN_DIR, start_daemon_thread
 from middlewared.utils.cgroups import move_to_root_cgroups
 from middlewared.utils.size import format_size
 import middlewared.utils.osc as osc
@@ -165,7 +165,7 @@ class ZettareplProcess:
                 handler.addFilter(LongStringsFilter())
                 handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
-            c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+            c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
             c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging())
 
             definition = Definition.from_data(self.definition, raise_on_error=False)
