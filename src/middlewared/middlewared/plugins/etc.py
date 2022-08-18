@@ -72,8 +72,8 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        'nvdimm': [
-            {'type': 'mako', 'path': 'modprobe.d/nvdimm.conf', 'local_path': 'nvdimm'}
+        'truenas_nvdimm': [
+            {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
         'user': {
             'ctx': [
