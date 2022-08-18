@@ -66,13 +66,13 @@ class PrivilegeService(CRUDService):
         """
         Creates a privilege.
 
-        `name` is a name for privilege.
+        `name` is a name for privilege (must be unique).
 
-        `local_groups` is a list of local user account groups that gain this privilege.
+        `local_groups` is a list of local user account group GIDs that gain this privilege.
 
-        `ds_groups` is list of Directory Service group IDs that will gain this privilege.
+        `ds_groups` is list of Directory Service group GIDs that will gain this privilege.
 
-        `allowlist` is a list of API endpoints allowed for this privilege. Empty list means all endpoints are allowed.
+        `allowlist` is a list of API endpoints allowed for this privilege.
 
         `web_shell` controls whether users with this privilege are allowed to log in to the Web UI.
         """
