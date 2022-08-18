@@ -3984,9 +3984,10 @@ class PoolDatasetService(CRUDService):
         in an on-disk quota of 1 KiB.
         """
         dataset = (await self.get_instance(ds))['name']
-        quota_list = await self.middleware.call(
-            'zfs.dataset.get_quota', dataset, quota_type.lower()
-        )
+        quota_list = await self.middleware.call('zfs.dataset.get_quota', dataset, quota_type.lower())
+        # there is an internal root quota that isn't useful to expose to end-user (it can't be altered)
+        filters.append(['name', '!=', 'root'])
+
         return filter_list(quota_list, filters, options)
 
     @accepts(
