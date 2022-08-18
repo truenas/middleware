@@ -5,6 +5,8 @@ Revises: e3a81e1c2135
 Create Date: 2022-08-09 13:37:57.243188+00:00
 
 """
+import json
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -42,8 +44,9 @@ def upgrade():
 
     root_id = conn.execute("SELECT * FROM account_bsdusers WHERE bsdusr_uid = 0").fetchone()["id"]
 
+    allowlist = [{"method": "*", "resource": "*"}]
     op.execute("INSERT INTO account_privilege (builtin_name, name, local_groups, ds_groups, allowlist, web_shell) "
-               f"VALUES ('LOCAL_ADMINISTRATOR', 'Local Administrator', '[544]', '[]', '[]', 1)")
+               f"VALUES ('LOCAL_ADMINISTRATOR', 'Local Administrator', '[544]', '[]', '{json.dumps(allowlist)}', 1)")
     if not list(conn.execute(
         f"SELECT * FROM account_bsdgroupmembership WHERE bsdgrpmember_group_id = {builtin_administrators_id} AND "
         f"bsdgrpmember_user_id = {root_id}"
