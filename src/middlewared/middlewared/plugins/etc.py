@@ -72,6 +72,9 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
+        'truenas_nvdimm': [
+            {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
+        ],
         'user': {
             'ctx': [
                 {'method': 'user.query'},
