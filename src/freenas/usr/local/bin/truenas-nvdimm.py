@@ -14,7 +14,7 @@ def parse_dmi():
     found_prod = PRODUCT.search(output)
     found_vers = VERSION.search(output)
 
-    prod, vers = ''
+    prod = vers = ''
     if found_prod:
         prod = found_prod.group(0)
     if found_vers:
