@@ -31,6 +31,11 @@ async def determine_recursive_search(recursive, device, child_datasets):
 class VMService(Service):
 
     @private
+    async def periodic_snapshot_task_begin(self, task_id):
+        task = await self.middleware.call('pool.snapshottask.query', [['id', '=', task_id]], {'get': True})
+        return await self.query_snapshot_begin(task['dataset'], task['recursive'])
+
+    @private
     async def query_snapshot_begin(self, dataset, recursive):
         vms = collections.defaultdict(list)
         datasets = {
