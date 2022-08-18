@@ -38,7 +38,7 @@ class VMService(Service):
                 'pool.dataset.query', [['id', '^', f'{dataset}/']], {'extra': {'properties': []}}
             )
         }
-        to_ignore_vms = await self.get_vms_to_ignore_for_querying_attachments(True)
+        to_ignore_vms = await self.get_vms_to_ignore_for_querying_attachments(True, [['pause_on_snapshot', '=', False]])
         for device in await self.middleware.call(
             'vm.device.query', [
                 ['dtype', 'in', ('DISK', 'RAW', 'CDROM')],
@@ -61,10 +61,11 @@ class VMService(Service):
         return vms
 
     @private
-    async def get_vms_to_ignore_for_querying_attachments(self, enabled):
+    async def get_vms_to_ignore_for_querying_attachments(self, enabled, extra_filters=None):
+        extra_filters = extra_filters or []
         return {
             vm['id']: vm for vm in await self.middleware.call(
-                'vm.query', [('status.state', 'nin' if enabled else 'in', ACTIVE_STATES)]
+                'vm.query', [('status.state', 'nin' if enabled else 'in', ACTIVE_STATES)] + extra_filters
             )
         }
 
