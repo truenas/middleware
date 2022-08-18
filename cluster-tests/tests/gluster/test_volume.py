@@ -96,10 +96,12 @@ def test_05_verify_gluster_volume_is_fuse_mounted(ip, request):
         # give each node a little time to actually fuse mount the volume before we claim failure
         ans = make_request('post', f'http://{ip}/api/v2.0/gluster/fuse/is_mounted', data={'name': GVOL})
         assert ans.status_code == 200
-        if not ans.json():
-            total_time_to_wait -= sleepy_time
-            sleep(1)
-        break
+
+        if ans.json():
+            break
+
+        total_time_to_wait -= sleepy_time
+        sleep(1)
 
     assert ans.json(), ans.text
 
