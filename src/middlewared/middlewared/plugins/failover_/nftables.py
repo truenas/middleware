@@ -37,9 +37,9 @@ class NftablesService(Service):
                     # each controller on an HA system. We, obviously, dont want
                     # to block traffic there.
                     if j['type'] == 'INET' and i == 'ip':
-                        rules.append(f'add rules {i} filter INPUT {i} saddr {j["address"]}/32 counter drop')
+                        rules.append(f'add rule {i} filter INPUT {i} saddr {j["address"]}/32 counter drop')
                     elif j['type'] == 'INET6' and i == 'ip6':
-                        rules.append(f'add rules {i} filter INPUT {i} saddr {j["address"]}/128 counter drop')
+                        rules.append(f'add rule {i} filter INPUT {i} saddr {j["address"]}/128 counter drop')
 
             if i == 'ip':
                 v4 = rules
