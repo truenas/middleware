@@ -8,6 +8,7 @@ import setproctitle
 
 from . import logger
 from .common.environ import environ_update
+from .utils import MIDDLEWARE_RUN_DIR
 from .utils.plugins import LoadPluginsMixin
 import middlewared.utils.osc as osc
 from .utils.service.call import MethodNotFoundError, ServiceCallMixin
@@ -30,7 +31,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, job=None):
         try:
-            with Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True) as c:
+            with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True) as c:
                 self.client = c
                 job_options = getattr(methodobj, '_job', None)
                 if job and job_options:
@@ -131,7 +132,7 @@ def reconfigure_logging(mtype, **message):
 
 
 def receive_events():
-    c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+    c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
     c.subscribe('core.environ', lambda *args, **kwargs: environ_update(kwargs['fields']))
     c.subscribe('core.reconfigure_logging', reconfigure_logging)
 

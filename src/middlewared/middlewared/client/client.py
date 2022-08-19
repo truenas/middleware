@@ -1,6 +1,6 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from .utils import ProgressBar
+from .utils import MIDDLEWARE_RUN_DIR, ProgressBar
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
@@ -302,7 +302,7 @@ class Client(object):
         self._py_exceptions = py_exceptions
         self._event_callbacks = defaultdict(list)
         if uri is None:
-            uri = 'ws+unix:///var/run/middlewared.sock'
+            uri = f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared.sock'
         self._closed = Event()
         self._connected = Event()
         self._ws = WSClient(

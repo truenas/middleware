@@ -1,6 +1,9 @@
 import sys
 
 
+MIDDLEWARE_RUN_DIR = '/var/run/middleware'
+
+
 class Struct:
     """
     Simpler wrapper to access using object attributes instead of keys.

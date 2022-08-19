@@ -27,7 +27,7 @@ from middlewared.service_exception import (  # noqa
     CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )
 from middlewared.settings import conf
-from middlewared.utils import filter_list, osc
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.logger import Logger, reconfigure_logging, stop_logging
 from middlewared.job import Job
@@ -40,7 +40,7 @@ PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_
 get_or_insert_lock = asyncio.Lock()
 LOCKS = defaultdict(asyncio.Lock)
 THREADING_LOCKS = defaultdict(threading.Lock)
-MIDDLEWARE_STARTED_SENTINEL_PATH = "/var/run/middlewared-started"
+MIDDLEWARE_STARTED_SENTINEL_PATH = os.path.join(MIDDLEWARE_RUN_DIR, "middlewared-started")
 
 
 def lock(lock_str):
