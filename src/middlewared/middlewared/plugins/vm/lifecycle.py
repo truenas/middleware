@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import functools
 
 from middlewared.schema import accepts, Bool, Dict
 from middlewared.service import CallError, private, Service
@@ -113,17 +112,17 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
-    async def poweroff_stop_vm(mw, vm):
+    async def poweroff_stop_vm(vm):
         if vm['state'] == 'RUNNING':
-            stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
+            stop_job = await middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
             await stop_job.wait()
             if stop_job.error:
-                mw.logger.error('Stopping %r VM failed: %r', vm['name'], stop_job.error)
+                middleware.logger.error('Stopping %r VM failed: %r', vm['name'], stop_job.error)
         else:
             try:
-                await mw.call('vm.poweroff', vm['id'])
+                await middleware.call('vm.poweroff', vm['id'])
             except Exception:
-                mw.logger.error('Powering off %r VM failed', vm['name'], exc_info=True)
+                middleware.logger.error('Powering off %r VM failed', vm['name'], exc_info=True)
 
     if args['id'] == 'ready':
         await middleware.call('vm.initialize_vms')
@@ -138,7 +137,7 @@ async def __event_system_ready(middleware, event_type, args):
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await asyncio_map(
-                functools.partial(poweroff_stop_vm, middleware),
+                poweroff_stop_vm,
                 (await middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])), 16
             )
             middleware.logger.debug('VM(s) stopped successfully')
