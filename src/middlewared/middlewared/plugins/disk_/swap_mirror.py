@@ -11,9 +11,10 @@ class DiskService(Service):
     @private
     async def create_swap_mirror(self, name, options):
         extra = options['extra']
+        await run('mdadm', '--zero-superblock', '--force', *options['paths'], encoding='utf8', check=False)
         cp = await run(
-            'mdadm', '--build', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
-            f'--raid-devices={len(options["paths"])}', *options['paths'], encoding='utf8', check=False,
+            'mdadm', '--create', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
+            f'--raid-devices={len(options["paths"])}', '--meta=1.2', *options['paths'], encoding='utf8', check=False,
         )
         if cp.returncode:
             raise CallError(f'Failed to create mirror {name}: {cp.stderr}')
