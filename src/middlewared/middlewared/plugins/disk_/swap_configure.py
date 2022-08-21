@@ -105,7 +105,7 @@ class DiskService(Service):
                     # If something failed here there is no point in trying to create the mirror
                     continue
 
-                swap_path = await self.middleware.call('disk.new_swap_name')
+                swap_path = await self.new_swap_name()
                 if not swap_path:
                     # Which means maximum has been reached and we can stop
                     break
@@ -192,16 +192,17 @@ class DiskService(Service):
         return existing_swap_devices['partitions'] + existing_swap_devices['mirrors'] + created_swap_devices
 
     @private
-    def new_swap_name(self):
+    async def new_swap_name(self):
         """
         Get a new name for a swap mirror
 
         Returns:
             str: name of the swap mirror
         """
+        used_names = [mirror['name'] for mirror in await self.middleware.call('disk.get_swap_mirrors')]
         for i in range(MIRROR_MAX):
             name = f'swap{i}'
-            if not os.path.exists(os.path.join('/dev/md', name)):
+            if name not in used_names:
                 return name
 
     @private
