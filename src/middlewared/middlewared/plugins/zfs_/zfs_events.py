@@ -169,7 +169,10 @@ async def zfs_events(middleware, data):
         # Swap must be configured only on disks being used by some pool,
         # for this reason we must react to certain types of ZFS events to keep
         # it in sync every time there is a change.
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        if await middleware.call('system.ready'):
+            # We only want to configure swap if system is ready as otherwise when the pools have not been
+            # imported, middleware will remove swap disks as all pools might not have imported
+            asyncio.ensure_future(middleware.call('disk.swaps_configure'))
         if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool') and data.get('pool_guid'):
             # This event is issued whenever a vdev change is done to a pool
             # Checking pool_guid ensures that we do not do this on creation/deletion of pool as we expect the
