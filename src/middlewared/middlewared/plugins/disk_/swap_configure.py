@@ -137,6 +137,7 @@ class DiskService(Service):
                 'path': swap_device['path'],
                 'encrypted_provider': swap_device['encrypted_provider'],
             }
+            await run('mdadm', '--zero-superblock', '--force', swap_device['path'], encoding='utf8', check=False)
 
         created_swap_devices = []
         for swap_path, data in create_swap_devices.items():
