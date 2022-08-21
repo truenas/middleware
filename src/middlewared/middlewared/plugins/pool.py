@@ -1844,6 +1844,8 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
+        # Now finally configure swap to manage any disks which might have been removed
+        self.middleware.call_sync('disk.swaps_configure')
         self.middleware.call_hook_sync('pool.post_import', None)
         job.set_progress(100, 'Pools import completed')
 
