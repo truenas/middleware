@@ -29,6 +29,7 @@ class DiskService(Service):
         mirrors = await self.middleware.call('disk.get_swap_mirrors')
         encrypted_mirrors = {m['encrypted_provider']: m for m in mirrors if m['encrypted_provider']}
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
+        await self.middleware.call('disk.remove_degraded_mirrors')
 
         for device in await self.middleware.call('disk.get_swap_devices'):
             if device in encrypted_mirrors or device.startswith(('/dev/md', '/dev/mirror/')):
