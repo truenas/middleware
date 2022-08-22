@@ -229,7 +229,7 @@ def test_005_test_map_modify(request):
         with smb_share(path, {"name": "MAP_MODIFY"}):
             sd = get_windows_sd("MAP_MODIFY", "SMB")
             dacl = sd['dacl']
-            assert dacl[0]['access_mask']['standard'] == 'FULL', str(dacl[0])
+            assert dacl[0]['access_mask']['hex'] == '0x001f01bf', str(dacl[0])
             assert dacl[1]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[1])
             assert dacl[1]['access_mask']['special']['WRITE_EA'], str(dacl[1])
             assert dacl[2]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[2])
