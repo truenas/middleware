@@ -348,12 +348,13 @@ class SystemDatasetService(ConfigService):
         await self.middleware.call('etc.generate', 'glusterd')
 
         if mounted:
+            await self.middleware.call('smb.setup_directories')
+
             # There is no need to wait this to finish
             # Restarting rrdcached will ensure that we start/restart collectd as well
             asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
             asyncio.ensure_future(self.middleware.call('service.restart', 'syslogd'))
 
-            await self.middleware.call('smb.setup_directories')
             # The following should be backgrounded since they may be quite
             # long-running.
             await self.middleware.call('smb.configure', False)
