@@ -47,7 +47,7 @@ class DiskService(Service):
 
                 real_path = os.path.realpath(array.path)
                 mirror = {
-                    'name': array.name,
+                    'name': array.name.split(':')[-1],
                     'path': array.path,
                     'real_path': real_path,
                     'encrypted_provider': None,
