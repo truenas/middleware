@@ -30,6 +30,12 @@ class DiskService(Service):
         if cp.returncode:
             raise CallError(f'Failed to stop mirror {name!r}: {cp.stderr}')
 
+        await run(
+            'mdadm', '--zero-superblock', '--force',
+            *[os.path.join('/dev', provider['name']) for provider in mirror['providers']],
+            encoding='utf8', check=False
+        )
+
     @private
     @filterable
     def get_swap_mirrors(self, filters, options):
