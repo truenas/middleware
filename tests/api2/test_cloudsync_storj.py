@@ -21,6 +21,9 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason='Storj credential are missing in config.py')
+    STORJ_IX_AWS_ACCESS_KEY_ID = None
+    STORJ_IX_AWS_SECRET_ACCESS_KEY = None
+    STORJ_IX_BUCKET = None
 else:
     # comment pytestmark for development testing with --dev-test
     pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
