@@ -246,8 +246,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if not new["enable"]:
             return
 
-        ds_state = await self.middleware.call('directoryservices.get_state')
-        if ds_state['ldap'] != 'DISABLED':
+        ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
+        if ldap_enabled:
             verrors.add(
                 "activedirectory_update.enable",
                 "Active Directory service may not be enabled while LDAP service is enabled."
