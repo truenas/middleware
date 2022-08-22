@@ -2,6 +2,7 @@ import hashlib
 import os
 import pathlib
 import secrets
+import subprocess
 import uuid
 
 import middlewared.sqlalchemy as sa
@@ -10,7 +11,6 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import CallError, private, SharingService, ValidationErrors
-from middlewared.utils import run
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
@@ -105,11 +105,11 @@ class iSCSITargetExtentService(SharingService):
         `ro` when set to true prevents the initiator from writing to this LUN.
         """
         verrors = ValidationErrors()
-        await self.validate(data)
+        await self.middleware.call('iscsi.extent.validate', data)
         await self.clean(data, 'iscsi_extent_create', verrors)
         verrors.check()
 
-        await self.save(data, 'iscsi_extent_create', verrors)
+        await self.middleware.call('iscsi.extent.save', data, 'iscsi_extent_create', verrors)
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, {**data, 'vendor': 'TrueNAS'},
@@ -136,13 +136,13 @@ class iSCSITargetExtentService(SharingService):
         new = old.copy()
         new.update(data)
 
-        await self.validate(new)
+        await self.middleware.call('iscsi.extent.validate', new)
         await self.clean(
             new, 'iscsi_extent_update', verrors, old=old
         )
         verrors.check()
 
-        await self.save(new, 'iscsi_extent_update', verrors)
+        await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors)
         new.pop(self.locked_field)
 
         await self.middleware.call(
@@ -198,8 +198,8 @@ class iSCSITargetExtentService(SharingService):
             await self._service_change('iscsitarget', 'reload')
 
     @private
-    async def validate(self, data):
-        data['serial'] = await self.extent_serial(data['serial'])
+    def validate(self, data):
+        data['serial'] = self.extent_serial(data['serial'])
         data['naa'] = self.extent_naa(data.get('naa'))
 
     @private
@@ -231,8 +231,8 @@ class iSCSITargetExtentService(SharingService):
     @private
     async def clean(self, data, schema_name, verrors, old=None):
         await self.clean_name(data, schema_name, verrors, old=old)
-        await self.clean_type_and_path(data, schema_name, verrors)
-        await self.clean_size(data, schema_name, verrors)
+        await self.middleware.call('iscsi.extent.clean_type_and_path', data, schema_name, verrors)
+        await self.middleware.call('iscsi.extent.clean_size', data, schema_name, verrors)
 
     @private
     async def clean_name(self, data, schema_name, verrors, old=None):
@@ -265,7 +265,11 @@ class iSCSITargetExtentService(SharingService):
                 verrors.add(f'{schema_name}.name', 'Extent name must be unique')
 
     @private
-    async def clean_type_and_path(self, data, schema_name, verrors):
+    async def validate_path_resides_in_volume(self, verrors, schema, path):
+        await check_path_resides_within_volume(verrors, self.middleware, schema, path)
+
+    @private
+    def clean_type_and_path(self, data, schema_name, verrors):
         if data['type'] is None:
             return data
 
@@ -302,14 +306,15 @@ class iSCSITargetExtentService(SharingService):
                         'You need to specify a filepath not a directory'
                     )
 
-            await check_path_resides_within_volume(
-                verrors, self.middleware, f'{schema_name}.path', path
+            self.middleware.call_sync(
+                'iscsi.extent.validate_path_resides_in_volume',
+                verrors, f'{schema_name}.path', path
             )
 
         return data
 
     @private
-    async def clean_size(self, data, schema_name, verrors):
+    def clean_size(self, data, schema_name, verrors):
         # only applies to files
         if data['type'] != 'FILE':
             return data
@@ -335,9 +340,11 @@ class iSCSITargetExtentService(SharingService):
         return data
 
     @private
-    async def extent_serial(self, serial):
+    def extent_serial(self, serial):
         if serial is None:
-            used_serials = [i['serial'] for i in (await self.query())]
+            used_serials = [i['serial'] for i in (
+                self.middleware.call_sync('iscsi.extent.query')
+            )]
             tries = 5
             for i in range(tries):
                 serial = secrets.token_hex()[:15]
@@ -386,7 +393,7 @@ class iSCSITargetExtentService(SharingService):
         return diskchoices
 
     @private
-    async def save(self, data, schema_name, verrors):
+    def save(self, data, schema_name, verrors):
         if data['type'] == 'FILE':
             path = data['path']
             dirs = '/'.join(path.split('/')[:-1])
@@ -401,7 +408,7 @@ class iSCSITargetExtentService(SharingService):
 
             # create the extent
             if not os.path.exists(path):
-                await run(['truncate', '-s', str(data['filesize']), path])
+                subprocess.run(['truncate', '-s', str(data['filesize']), path])
 
             data.pop('disk', None)
         else:
