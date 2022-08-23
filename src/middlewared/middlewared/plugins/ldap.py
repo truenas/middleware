@@ -1,14 +1,11 @@
 import enum
 import errno
-import fcntl
 import grp
 import ipaddress
 import ldap as pyldap
-import os
 import pwd
 import socket
 import struct
-import sys
 import copy
 
 from ldap.controls import SimplePagedResultsControl
@@ -39,95 +36,6 @@ LDAP_SMBCONF_PARAMS = {
     "domain master": "No",
     "preferred master": "No",
 }
-
-_int32 = struct.Struct('!i')
-
-
-class NlscdConst(enum.Enum):
-    NSLCD_CONF_PATH = '/usr/local/etc/nslcd.conf'
-    NSLCD_PIDFILE = '/var/run/nslcd.pid'
-    NSLCD_SOCKET = '/var/run/nslcd/socket'
-    NSLCD_VERSION = 0x00000002
-    NSLCD_ACTION_STATE_GET = 0x00010002
-    NSLCD_RESULT_BEGIN = 1
-    NSLCD_RESULT_END = 2
-
-
-class NslcdClient(object):
-    def __init__(self, action):
-        # set up the socket (store in class to avoid closing it)
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        fcntl.fcntl(self.sock, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
-        # connect to nslcd
-        self.sock.connect(NlscdConst.NSLCD_SOCKET.value)
-        # self.sock.setblocking(1)
-        self.fp = os.fdopen(self.sock.fileno(), 'r+b', 0)
-        # write a request header with a request code
-        self.action = action
-        self.write_int32(NlscdConst.NSLCD_VERSION.value)
-        self.write_int32(action)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, typ, value, traceback):
-        self.close()
-
-    def write(self, value):
-        self.fp.write(value)
-
-    def write_int32(self, value):
-        self.write(_int32.pack(value))
-
-    def write_bytes(self, value):
-        self.write_int32(len(value))
-        self.write(value)
-
-    def read(self, size):
-        value = b''
-        while len(value) < size:
-            data = self.fp.read(size - len(value))
-            if not data:
-                raise IOError('NSLCD protocol cut short')
-            value += data
-        return value
-
-    def read_int32(self):
-        return _int32.unpack(self.read(_int32.size))[0]
-
-    def read_bytes(self):
-        return self.read(self.read_int32())
-
-    def read_string(self):
-        value = self.read_bytes()
-        if sys.version_info[0] >= 3:
-            value = value.decode('utf-8')
-        return value
-
-    def get_response(self):
-        # complete the request if required and check response header
-        if self.action:
-            # flush the stream
-            self.fp.flush()
-            # read and check response version number
-            if self.read_int32() != NlscdConst.NSLCD_VERSION.value:
-                raise IOError('NSLCD protocol error')
-            if self.read_int32() != self.action:
-                raise IOError('NSLCD protocol error')
-            # reset action to ensure that it is only the first time
-            self.action = None
-        # get the NSLCD_RESULT_* marker and return it
-        return self.read_int32()
-
-    def close(self):
-        if hasattr(self, 'fp'):
-            try:
-                self.fp.close()
-            except IOError:
-                pass
-
-    def __del__(self):
-        self.close()
 
 
 class SAMAccountType(enum.Enum):
@@ -1192,18 +1100,6 @@ class LDAPService(TDBWrapConfigService):
         LDAP service.
         """
         return (await self.middleware.call('directoryservices.get_state'))['ldap']
-
-    @private
-    def get_nslcd_status(self):
-        """
-        Returns internal nslcd state. nslcd will preferentially use the first LDAP server,
-        and only failover if the current LDAP server is unreachable.
-        """
-        with NslcdClient(NlscdConst.NSLCD_ACTION_STATE_GET.value) as ctx:
-            while ctx.get_response() == NlscdConst.NSLCD_RESULT_BEGIN.value:
-                nslcd_status = ctx.read_string()
-
-        return nslcd_status
 
     @private
     async def nslcd_cmd(self, cmd):

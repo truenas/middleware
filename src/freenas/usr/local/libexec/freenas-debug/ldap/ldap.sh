@@ -97,15 +97,6 @@ ldap_func()
 	sc "${NSLCD_CONF}" | grep -iv bindpw
 	section_footer
 
-	#
-	#	Dump nslcd state
-	#
-	if [ "${enabled}" = "ENABLED" ]
-	then
-	section_header "NSLCD health check - midclt call ldap.get_nslcd_status"
-	midclt call ldap.get_nslcd_status | jq
-	section_footer
-
 	section_header "ROOT DSE"
 	midclt call ldap.get_root_DSE | jq
 	section_footer
