@@ -1,5 +1,6 @@
 import errno
 import os
+import shutil
 from pathlib import Path
 from contextlib import suppress
 from glustercli.cli import volume
@@ -139,14 +140,28 @@ class CtdbSharedVolumeService(Service):
 
     @job(lock=CRE_OR_DEL_LOCK)
     async def teardown(self, job):
-        if await self.middleware.call('service.started', 'cifs'):
-            job.set_progress(25, 'Stopping SMB')
-            await self.middleware.call('service.stop', 'cifs')
+        """
+        If this method is called, it's expected that the end-user knows what they're doing. They
+        also expect that this will _PERMANENTLY_ delete all the ctdb shared volume information. We
+        also disable the glusterd service since that's what SMB service uses to determine if the
+        system is in a "clustered" state. This method _MUST_ be called on each node in the cluster
+        to fully "teardown" the cluster config.
 
-        job.set_progress(50, 'Stopping ctdb')
-        await self.middleware.call('service.stop', 'ctdb')
+        NOTE: THERE IS NO COMING BACK FROM THIS.
+        """
+        for vol in await self.middleware.call('gluster.volume.query'):
+            if vol['name'] != CTDB_VOL_NAME:
+                # If someone calls this method, we expect that all other gluster volumes
+                # have been destroyed
+                raise CallError(f'{vol["name"]!r} must be removed before deleting {CTDB_VOL_NAME!r}')
+        else:
+            # we have to stop gluster service because it spawns a bunch of child processes
+            # for the ctdb shared volume. This also stops ctdb, smb and unmounts all the
+            # FUSE mountpoints.
+            job.set_progress(50, 'Stopping cluster services')
+            await self.middleware.call('service.stop', 'glusterd')
 
-        def __remove_config():
+        def __remove_config(ctdb_dir):
             # keep this inner method so it doesn't get (mis)used anywhere else.
             files = (
                 CTDBConfig.ETC_GEN_FILE.value,
@@ -161,12 +176,22 @@ class CtdbSharedVolumeService(Service):
                     except Exception:
                         self.logger.warning(f'Failed to remove {i!r}', exc_info=True)
 
-        job.set_progress(75, 'Removing ctdbd configuration data')
-        await self.middleware.run_in_thread(__remove_config)
+            with os.scandir(ctdb_dir) as contents:
+                for item in contents:
+                    if item.is_dir():
+                        shutil.rmtree(item.path)
+                    else:
+                        os.remove(item.path)
 
-        job.set_progress(99, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem')
-        fuse_job = await self.middleware.call('gluster.fuse.umount', {'name': CTDB_VOL_NAME})
-        await fuse_job.wait()
+        job.set_progress(98, 'Removing ctdbd configuration data')
+        ctdb_dir = (await self.middleware.call(
+            'filesystem.mount_info', [['mount_source', '$', f'.system/{CTDB_VOL_NAME}']]
+        ))[0]['mountpoint']
+        await self.middleware.run_in_thread(__remove_config, ctdb_dir)
+
+        job.set_progress(99, 'Disabling cluster service')
+        await self.middleware.call('service.update', 'glusterd', {'enable': False})
+
         job.set_progress(100, 'CTDB shared volume teardown complete.')
 
     @job(lock=CRE_OR_DEL_LOCK)
