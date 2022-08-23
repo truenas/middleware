@@ -56,7 +56,7 @@ def test_verify_all_gvols_are_fuse_umounted(ip, request):
             if not rv.json():
                 break
 
-            assert retry != retries, f'Waited {retry * retries} seconds on FUSE mount for {i!r} to become umounted.'
+            assert retry != retries, f'Waited {retries} seconds on FUSE mount for {i!r} to become umounted.'
 
 
 @pytest.mark.dependency(name='DELETE_GVOLS')
