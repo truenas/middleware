@@ -93,7 +93,7 @@ class InterfaceService(Service):
         iface.delete_ports(list(members_configured - set(members_database)))
 
         # Add member ports that exist in db but not configured in bond
-        iface.add_ports([i for i in members_database if i in members_configured])
+        iface.add_ports([i for i in members_database if i not in members_configured])
 
         for port in iface.ports:
             try:
