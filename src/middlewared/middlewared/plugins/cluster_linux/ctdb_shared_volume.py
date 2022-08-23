@@ -1,6 +1,8 @@
 import errno
 import os
+import shutil
 from pathlib import Path
+from contextlib import suppress
 from glustercli.cli import volume
 
 from middlewared.service import Service, CallError, job
@@ -133,63 +135,56 @@ class CtdbSharedVolumeService(Service):
 
     @job(lock=CRE_OR_DEL_LOCK)
     async def teardown(self, job):
-        if await self.middleware.call('service.started', 'cifs'):
-            job.set_progress(25, 'Stopping SMB')
-            await self.middleware.call('service.stop', 'cifs')
+        """
+        If this method is called, it's expected that the end-user knows what they're doing. They
+        also expect that this will _PERMANENTLY_ delete all the ctdb shared volume information. We
+        also disable the glusterd service since that's what SMB service uses to determine if the
+        system is in a "clustered" state. This method _MUST_ be called on each node in the cluster
+        to fully "teardown" the cluster config.
+        NOTE: THERE IS NO COMING BACK FROM THIS.
+        """
+        for vol in await self.middleware.call('gluster.volume.query'):
+            if vol['name'] != CTDB_VOL_NAME:
+                # If someone calls this method, we expect that all other gluster volumes
+                # have been destroyed
+                raise CallError(f'{vol["name"]!r} must be removed before deleting {CTDB_VOL_NAME!r}')
+        else:
+            # we have to stop gluster service because it spawns a bunch of child processes
+            # for the ctdb shared volume. This also stops ctdb, smb and unmounts all the
+            # FUSE mountpoints.
+            job.set_progress(50, 'Stopping cluster services')
+            await self.middleware.call('service.stop', 'glusterd')
 
-        job.set_progress(50, 'Stopping ctdb')
-        await self.middleware.call('service.stop', 'ctdb')
-
-        def __remove_config():
+        def __remove_config(ctdb_dir):
             # keep this inner method so it doesn't get (mis)used anywhere else.
-            symlinked_files = [
+            files = (
+                CTDBConfig.ETC_GEN_FILE.value,
                 CTDBConfig.ETC_REC_FILE.value,
                 CTDBConfig.ETC_PRI_IP_FILE.value,
                 CTDBConfig.ETC_PUB_IP_FILE.value,
-            ]
-            fuse_mount_files = [
-                CTDBConfig.GM_RECOVERY_FILE.value,
-                CTDBConfig.GM_PRI_IP_FILE.value,
-                CTDBConfig.GM_PUB_IP_FILE.value,
-            ]
-            for i in symlinked_files + fuse_mount_files:
-                try:
-                    os.remove(i)
-                except FileNotFoundError:
-                    pass
-                except Exception:
-                    self.logger.warning('Failed to remove %r', i, exc_info=True)
+            )
+            with suppress(FileNotFoundError):
+                for i in files:
+                    try:
+                        os.remove(i)
+                    except Exception:
+                        self.logger.warning(f'Failed to remove {i!r}', exc_info=True)
 
-            persistent_data_dirs = [
-                CTDBConfig.PER_DB_DIR.value,
-                CTDBConfig.STA_DB_DIR.value,
-            ]
-            for _dir in persistent_data_dirs:
-                try:
-                    for _file in Path(_dir).iterdir():
-                        try:
-                            _file.unlink(missing_ok=True)
-                        except Exception:
-                            self.logger.warning('Failed to remove %r', _file, exc_info=True)
-                except FileNotFoundError:
-                    pass
-                except Exception:
-                    self.logger.warning('Failed to remove contents of %r', _dir, exc_info=True)
+            with os.scandir(ctdb_dir) as contents:
+                for item in contents:
+                    if item.is_dir():
+                        shutil.rmtree(item.path)
+                    else:
+                        os.remove(item.path)
 
-        job.set_progress(75, 'Removing ctdbd configuration data')
-        await self.middleware.run_in_thread(__remove_config)
+        job.set_progress(98, 'Removing ctdbd configuration data')
+        ctdb_dir = (await self.middleware.call(
+            'filesystem.mount_info', [['mount_source', '$', f'.system/{CTDB_VOL_NAME}']]
+        ))[0]['mountpoint']
+        await self.middleware.run_in_thread(__remove_config, ctdb_dir)
 
-        job.set_progress(85, f'Umounting {CTDB_VOL_NAME!r} fuse filesystem')
-        fuse_job = await self.middleware.call('gluster.fuse.umount', {'name': CTDB_VOL_NAME})
-        await fuse_job.wait()
-
-        # TODO: This is a stop-gap work-around. ctdb owns the public ip address(es) 100%
-        # and will remove said IP address(es) from the interface(s) when the service is stopped.
-        # This is expected behavior. TC is expecting the user to configure public IP address(es)
-        # via our API and then assign the IP address(es) to the ctdb config. This is wrong design
-        # and will be fixed in next major release.
-        job.set_progress(99, 'Resyncing network interfaces')
-        await self.middleware.call('interface.sync')
+        job.set_progress(99, 'Disabling cluster service')
+        await self.middleware.call('service.update', 'glusterd', {'enable': False})
 
         job.set_progress(100, 'CTDB shared volume teardown complete.')
 
