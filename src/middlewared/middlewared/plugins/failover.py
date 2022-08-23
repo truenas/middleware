@@ -484,21 +484,12 @@ class FailoverService(ConfigService):
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
 
-        ifaces = self.middleware.call_sync('interface.query')
-        _ifaces = {i['name']: i for i in ifaces}
-        db_ifaces = [i['int_interface'] for i in self.middleware.call_sync('datastore.query', 'network.interfaces')]
-        crit_iface = False
-        for iface in filter(lambda x: x in db_ifaces, _ifaces):
-            if _ifaces[iface]['type'] != 'LINK_AGGREGATION' and not _ifaces[iface].get('failover_virtual_aliases'):
-                # If any interface is configured on HA, then it must have a VIP;
-                # The only exception is bond interfaces since those are
-                # routinely created as "empty" devices (no IP config)
-                reasons.add('NO_VIP')
-            if _ifaces[iface].get('failover_critical'):
-                # only need 1 interface marked critical for failover
-                crit_iface = True
-
-        if not crit_iface:
+        db = self.middleware.call_sync('datastore.query', 'network.interfaces')
+        if not any((i['int_vip'] for i in db)):
+            # only need 1 interface with a VIP
+            reasons.add('NO_VIP')
+        elif not any((i['int_critical'] for i in db)):
+            # only need 1 interface marked critical for failover
             reasons.add('NO_CRITICAL_INTERFACES')
 
         try:
@@ -520,6 +511,7 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.add('NO_LICENSE')
 
+            ifaces = self.middleware.call_sync('interface.query')
             local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
