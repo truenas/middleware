@@ -1,5 +1,6 @@
 import contextlib
 
+from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call
 
 
@@ -10,7 +11,10 @@ def user(data):
     try:
         yield call("user.get_instance", user)
     finally:
-        call("user.delete", user)
+        try:
+            call("user.delete", user)
+        except InstanceNotFound:
+            pass
 
 
 @contextlib.contextmanager
@@ -20,4 +24,7 @@ def group(data):
     try:
         yield call("group.get_instance", group)
     finally:
-        call("group.delete", group)
+        try:
+            call("group.delete", group)
+        except InstanceNotFound:
+            pass
