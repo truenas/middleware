@@ -1,7 +1,6 @@
 import argparse
 import pathlib
 import subprocess
-from xml.etree import ElementTree as etree
 
 import init_cluster
 import init_gluster
@@ -88,19 +87,6 @@ def main():
 
     print('Running API tests')
     subprocess.call(setup_pytest_command(args, results_path))
-
-    """
-    We have integration tests that _MUST_ be called after all other
-    tests complete. There isn't an "easy" way of doing this that we've
-    found so we simply call pytest again specifying the "cleanup" directory
-    explicitly. Specifying that directory ensures only the tests in that
-    directory run.
-    """
-    with open(results_path) as f:
-        # make sure there were no failures before we continue on running
-        # the cleanup tests
-        err = 'There are previous API failures. Skipping API cleanup tests'
-        assert dict(etree.fromstring(f.read()))['failures'] == '0', err
 
     print('Setting up cleanup API results file')
     cleanup_results_path = setup_api_results_dir(resultsfile='cleanup-results.xml')
