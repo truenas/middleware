@@ -3,7 +3,7 @@ from time import sleep
 import pytest
 from pytest_dependency import depends
 
-from config import CLUSTER_INFO, CLUSTER_IPS
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
 from utils import make_request, make_ws_request, wait_on_job
 from exceptions import JobTimeOut
 
@@ -17,7 +17,7 @@ def test_stop_all_gvols():
 
     # we will try to stop each gluster volume `retries` times waiting at least
     # 1 second between each attempt
-    retries = 20
+    retries = TIMEOUTS['FUSE_OP_TIMEOUT']
     sleeptime = 1
     for i in filter(lambda x: x['status'] == 'Started' and x['name'] not in IGNORE, ans.json()):
         gvol = i['name']
@@ -46,21 +46,17 @@ def test_verify_all_gvols_are_fuse_umounted(ip, request):
 
     # we will try to check if each FUSE mountpoint is umounted `retries` times waiting at
     # least `sleeptime` second between each attempt
-    retries = 10
+    retries = TIMEOUTS['FUSE_OP_TIMEOUT']
     sleeptime = 1
     for i in filter(lambda x: x not in IGNORE, ans.json()):
         for retry in range(retries):
             # give each node a little time to actually umount the fuse volume before we claim failure
             rv = make_request('post', f'http://{ip}/api/v2.0/gluster/fuse/is_mounted', data={'name': i})
             assert rv.status_code == 200
-            mounted = rv.json()
-            if mounted:
-                sleep(sleeptime)
-            elif not mounted:
+            if not rv.json():
                 break
-            elif retry == retries:
-                total = retries * sleeptime
-                assert False, f'Waited {total} seconds on FUSE mount for {i!r} to become umounted.'
+
+            assert retry != retries, f'Waited {retry * retries} seconds on FUSE mount for {i!r} to become umounted.'
 
 
 @pytest.mark.dependency(name='DELETE_GVOLS')
