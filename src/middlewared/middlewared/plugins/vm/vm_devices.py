@@ -61,7 +61,7 @@ class VMDeviceService(CRUDService):
                 ['OR', [['attachment', '=', None], ['attachment.method', '=', 'vm.devices.query']]],
                 ['ro', '=', False],
             ],
-            {}, ['ATTACHMENT']
+            {}, ['ATTACHMENT', 'RO']
         )
 
         for zvol in zvols:

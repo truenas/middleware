@@ -10,6 +10,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
 from auto_config import dev_test, ha
+from middlewared.test.integration.assets.pool import dataset
+
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
@@ -104,3 +106,13 @@ if support_virtualization:
     def test_11_delete_vm(data):
         results = DELETE(f'/vm/id/{data["vmid"]}/')
         assert results.status_code == 200, results.text
+
+
+def test_12_vm__disk_choices(request):
+    with dataset('test zvol', {
+        'type': 'VOLUME',
+        'volsize': 1024000,
+    }) as ds:
+        results = GET('/vm/device/disk_choices')
+        assert isinstance(results.json(), dict) is True
+        assert results.json().get(f'/dev/zvol/{ds.replace(" ", "+")}') == f'{ds}'
