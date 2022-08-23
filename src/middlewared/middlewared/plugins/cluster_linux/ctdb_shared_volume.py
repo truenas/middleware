@@ -140,6 +140,15 @@ class CtdbSharedVolumeService(Service):
 
     @job(lock=CRE_OR_DEL_LOCK)
     async def teardown(self, job):
+        """
+        If this method is called, it's expected that the end-user knows what they're doing. They
+        also expect that this will _PERMANENTLY_ delete all the ctdb shared volume information. We
+        also disable the glusterd service since that's what SMB service uses to determine if the
+        system is in a "clustered" state. This method _MUST_ be called on each node in the cluster
+        to fully "teardown" the cluster config.
+
+        NOTE: THERE IS NO COMING BACK FROM THIS.
+        """
         for vol in await self.middleware.call('gluster.volume.query'):
             if vol['name'] != CTDB_VOL_NAME:
                 # If someone calls this method, we expect that all other gluster volumes
@@ -174,11 +183,14 @@ class CtdbSharedVolumeService(Service):
                     else:
                         os.remove(item.path)
 
-        job.set_progress(99, 'Removing ctdbd configuration data')
+        job.set_progress(98, 'Removing ctdbd configuration data')
         ctdb_dir = (await self.middleware.call(
             'filesystem.mount_info', [['mount_source', '$', f'.system/{CTDB_VOL_NAME}']]
         ))[0]['mountpoint']
         await self.middleware.run_in_thread(__remove_config, ctdb_dir)
+
+        job.set_progress(99, 'Disabling cluster service')
+        await self.middleware.call('service.update', 'glusterd', {'enable': False})
 
         job.set_progress(100, 'CTDB shared volume teardown complete.')
 
