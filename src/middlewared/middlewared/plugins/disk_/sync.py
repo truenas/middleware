@@ -153,7 +153,7 @@ class DiskService(Service, ServiceChangeMixin):
             _norm_value = ' '.join(_value.split())
             for i in filter(lambda x: x.text is not None, disk_xml.iterfind('.//config/ident')):
                 if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
-                    name = next(disk_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
+                    name = next(disk_xml.iterfind(f'.//config[ident="{_ident}"]/../../name'), None)
                     if name is not None:
                         return name.text
 
