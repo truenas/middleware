@@ -80,7 +80,7 @@ class VMSupervisorMixin(LibvirtConnectionMixin):
         self.vms[vm_name].suspend()
 
     def _resume(self, vm_name):
-        self._check_domain_status(vm_name, 'PAUSED')
+        self._check_domain_status(vm_name, 'SUSPENDED')
         self.vms[vm_name].resume()
 
     def _status(self, vm_name):

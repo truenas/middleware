@@ -29,8 +29,8 @@ class VMService(Service, VMSupervisorMixin):
         vm_state = vm['status']['state']
         if vm_state == 'RUNNING':
             raise CallError(f'{vm["name"]!r} is already running')
-        if vm_state == 'PAUSED':
-            raise CallError(f'{vm["name"]!r} VM is paused and can only be resumed/powered off')
+        if vm_state == 'SUSPENDED':
+            raise CallError(f'{vm["name"]!r} VM is suspended and can only be resumed/powered off')
 
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
