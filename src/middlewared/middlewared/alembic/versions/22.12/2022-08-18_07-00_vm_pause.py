@@ -2,7 +2,7 @@
 Add option to enable pausing vms when taking snapshot
 
 Revision ID: daaf691ed483
-Revises: e3a81e1c2135
+Revises: 79942334975f
 Create Date: 2022-08-18 07:00:09.81180300:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 revision = 'daaf691ed483'
-down_revision = 'e3a81e1c2135'
+down_revision = '79942334975f'
 branch_labels = None
 depends_on = None
 
