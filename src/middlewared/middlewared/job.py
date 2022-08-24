@@ -564,6 +564,7 @@ class Job:
         if self.logs_path is not None:
             fd = self.logs_fd
             os.makedirs(LOGS_DIR, exist_ok=True)
+            os.chmod(LOGS_DIR, 0o700)
             self.logs_fd = open(self.logs_path, 'ab', buffering=0)
             if fd is not None:
                 fd.close()
