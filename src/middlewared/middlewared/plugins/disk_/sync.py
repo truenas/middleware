@@ -127,22 +127,22 @@ class DiskService(Service, ServiceChangeMixin):
         return number_of_disks
 
     @private
-    def ident_to_dev(self, ident, geom_xml, disks_in_db):
+    def ident_to_dev(self, ident, disk_xml, disks_in_db, part_xml):
         if not ident or not (search := RE_IDENT.search(ident)):
             return
 
         _type = search.group('type')
         _value = search.group('value').replace('\'', '%27')  # escape single quotes to html entity
         if _type == 'uuid':
-            found = next(geom_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
+            found = next(part_xml.iterfind(f'.//config[rawuuid="{_value}"]/../../name'), None)
             if found is not None and not found.text.startswith('label'):
                 return found.text
         elif _type == 'label':
-            found = next(geom_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
+            found = next(part_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
             if found is not None:
                 return found.text
         elif _type == 'serial':
-            found = next(geom_xml.iterfind(f'.//provider/config[ident="{_value}"]/../../name'), None)
+            found = next(part_xml.iterfind(f'.//provider/config[ident="{_value}"]/../../name'), None)
             if found is not None:
                 return found.text
 
@@ -151,9 +151,9 @@ class DiskService(Service, ServiceChangeMixin):
             # xml data that's returned from the system. We'll check to see if we
             # have a match on the normalized data and return the name accordingly
             _norm_value = ' '.join(_value.split())
-            for i in filter(lambda x: x.text is not None, geom_xml.iterfind('.//provider/config/ident')):
+            for i in filter(lambda x: x.text is not None, disk_xml.iterfind('.//provider/config/ident')):
                 if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
-                    name = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
+                    name = next(disk_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
                     if name is not None:
                         return name.text
 
@@ -174,9 +174,9 @@ class DiskService(Service, ServiceChangeMixin):
                 _lunid = info[-1]
                 _ident = _value[:-len(_lunid)].rstrip('_')
 
-            found_ident = next(geom_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
+            found_ident = next(disk_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
             if found_ident is not None:
-                found_lunid = next(geom_xml.iterfind(f'.//provider/config[lunid="{_lunid}"]/../../name'), None)
+                found_lunid = next(disk_xml.iterfind(f'.//provider/config[lunid="{_lunid}"]/../../name'), None)
                 if found_lunid is not None:
                     # means the identifier and lunid given to us
                     # matches a disk on the system so just return
@@ -255,7 +255,7 @@ class DiskService(Service, ServiceChangeMixin):
             original_disk = disk.copy()
 
             expire = False
-            name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks)
+            name = self.ident_to_dev(disk['disk_identifier'], geom_xml, db_disks, part_geom_xml)
             if (
                 not name or
                 name in seen_disks or
