@@ -135,19 +135,27 @@ class VMService(Service, VMSupervisorMixin):
 
     @private
     def suspend_vms(self, vm_ids):
-        for vm in vm_ids:
+        vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
+        for vm_id in filter(
+            lambda vm_id: vms.get(vm_id).get('status', {}).get('state') == 'RUNNING',
+            map(int, vm_ids)
+        ):
             try:
-                self.suspend(vm['id'])
+                self.suspend(vm_id)
             except Exception:
-                self.logger.error('Failed to suspend %r vm', vm['name'], exc_info=True)
+                self.logger.error('Failed to suspend %r vm', vms[vm_id]['name'], exc_info=True)
 
     @private
     def resume_suspended_vms(self, vm_ids):
-        for vm in vm_ids:
+        vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
+        for vm_id in filter(
+            lambda vm_id: vms.get(vm_id).get('status', {}).get('state') == 'SUSPENDED',
+            map(int, vm_ids)
+        ):
             try:
-                self.resume(vm['id'])
+                self.resume(vm_id)
             except Exception:
-                self.logger.error('Failed to resume %r vm', vm['name'], exc_info=True)
+                self.logger.error('Failed to resume %r vm', vms[vm_id]['name'], exc_info=True)
 
 
 async def _event_vms(middleware, event_type, args):
