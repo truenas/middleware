@@ -12,6 +12,9 @@ from middlewared.service import Service
 from middlewared.utils import osc
 
 
+USAGE_URL = 'https://usage.truenas.com/submit'
+
+
 class UsageService(Service):
 
     FAILED_RETRIES = 3
@@ -65,7 +68,7 @@ class UsageService(Service):
     async def submit_stats(self, data):
         async with aiohttp.ClientSession(raise_for_status=True) as session:
             await session.post(
-                'https://usage.truenas.com/submit',
+                USAGE_URL,
                 data=json.dumps(data, sort_keys=True),
                 headers={'Content-type': 'application/json'},
                 proxy=os.environ.get('http_proxy'),
