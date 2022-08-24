@@ -1380,10 +1380,7 @@ class SharingSMBService(SharingService):
             'insecure wide links'
         ]
         freebsd_vfs_objects = [
-            'zfsacl',
-            'zfs_space',
             'noacl',
-            'ixnas',
         ]
         for entry in data.splitlines():
             if entry == '' or entry.startswith(('#', ';')):
