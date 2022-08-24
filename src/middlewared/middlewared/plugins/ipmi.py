@@ -188,10 +188,13 @@ class IPMIService(CRUDService):
     def query_sel(self, job, filters, options):
         """Query IPMI system extended event log."""
         results = []
+        job.set_progress(50, 'Enumerating extended event log')
         cp = run(['ipmitool', '-c', 'sel', 'elist'], capture_output=True)  # this is slowwww
         if cp.returncode == 0 and cp.stdout:
+            job.set_progress(95, 'Parsing extended event log')
             for record in parse_ipmitool_output(cp.stdout.decode()):
                 results.append(record._asdict())
+            job.set_progress(100, 'Parsing extended event log complete')
 
         return filter_list(results, filters, options)
 
