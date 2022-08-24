@@ -294,6 +294,10 @@ class CatalogService(CRUDService):
     async def official_catalog_label(self):
         return OFFICIAL_LABEL
 
+    @private
+    async def official_enterprise_train(self):
+        return OFFICIAL_ENTERPRISE_TRAIN
+
 
 async def enterprise_train_update(middleware, prev_product_type, *args, **kwargs):
     if prev_product_type != 'SCALE_ENTERPRISE' and await middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
