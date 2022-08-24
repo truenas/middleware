@@ -132,8 +132,7 @@ class VMDeviceService(CRUDService):
                 )
                 ds_options['volblocksize'] = zvol_blocksize
 
-                new_zvol = (await self.middleware.call('pool.dataset.create', ds_options))['id']
-                data['attributes']['path'] = f'/dev/zvol/{new_zvol}'
+                await self.middleware.call('pool.dataset.create', ds_options)
         elif data['dtype'] == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']
