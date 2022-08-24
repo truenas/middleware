@@ -138,11 +138,11 @@ class DiskService(Service, ServiceChangeMixin):
             if found is not None and not found.text.startswith('label'):
                 return found.text
         elif _type == 'label':
-            found = next(part_xml.iterfind(f'.//provider[name="{_value}"]/../name'), None)
+            found = next(part_xml.iterfind(f'.//config[label="{_value}"]/../../name'), None)
             if found is not None:
                 return found.text
         elif _type == 'serial':
-            found = next(part_xml.iterfind(f'.//provider/config[ident="{_value}"]/../../name'), None)
+            found = next(disk_xml.iterfind(f'.//config[ident="{_value}"]/../../name'), None)
             if found is not None:
                 return found.text
 
@@ -151,7 +151,7 @@ class DiskService(Service, ServiceChangeMixin):
             # xml data that's returned from the system. We'll check to see if we
             # have a match on the normalized data and return the name accordingly
             _norm_value = ' '.join(_value.split())
-            for i in filter(lambda x: x.text is not None, disk_xml.iterfind('.//provider/config/ident')):
+            for i in filter(lambda x: x.text is not None, disk_xml.iterfind('.//config/ident')):
                 if (_ident := ' '.join(i.text.split())) and _ident == _norm_value:
                     name = next(disk_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
                     if name is not None:
@@ -174,9 +174,9 @@ class DiskService(Service, ServiceChangeMixin):
                 _lunid = info[-1]
                 _ident = _value[:-len(_lunid)].rstrip('_')
 
-            found_ident = next(disk_xml.iterfind(f'.//provider/config[ident="{_ident}"]/../../name'), None)
+            found_ident = next(disk_xml.iterfind(f'.//config[ident="{_ident}"]/../../name'), None)
             if found_ident is not None:
-                found_lunid = next(disk_xml.iterfind(f'.//provider/config[lunid="{_lunid}"]/../../name'), None)
+                found_lunid = next(disk_xml.iterfind(f'.//config[lunid="{_lunid}"]/../../name'), None)
                 if found_lunid is not None:
                     # means the identifier and lunid given to us
                     # matches a disk on the system so just return
