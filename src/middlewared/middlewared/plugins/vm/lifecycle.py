@@ -113,7 +113,7 @@ async def __event_system_ready(middleware, event_type, args):
     flagged that way.
     """
     async def poweroff_stop_vm(vm):
-        if vm['state'] == 'RUNNING':
+        if vm['status']['state'] == 'RUNNING':
             stop_job = await middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
             await stop_job.wait()
             if stop_job.error:
