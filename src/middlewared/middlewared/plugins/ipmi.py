@@ -1,5 +1,5 @@
 import os
-from subprocess import run as sync_run, DEVNULL, CalledProcessError
+from subprocess import run as sync_run, DEVNULL
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
@@ -16,7 +16,6 @@ class IPMIService(CRUDService):
         cli_namespace = 'network.ipmi'
 
     CHANNELS = None
-    # TODO: Test me please
     ENTRY = Patch(
         'ipmi_update', 'ipmi_entry',
         ('add', Int('id', required=True)),
@@ -48,23 +47,16 @@ class IPMIService(CRUDService):
         return self.CHANNELS
 
     @filterable
-    async def query(self, filters, options):
-        """
-        Query all IPMI Channels with `query-filters` and `query-options`.
-        """
+    def query(self, filters, options):
+        """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
-        for channel in await self.middleware.call('ipmi.channels'):
-            try:
-                cp = await run('ipmitool', 'lan', 'print', str(channel))
-            except CalledProcessError as e:
-                raise CallError(f'Failed to get details from channel {channel}: {e}')
+        for channel in self.channels():
+            cp = run(['ipmitool', 'lan', 'print', f'{channel}'], capture_output=True)
+            if cp.returncode != 0:
+                raise CallError(f'Failed to get details from channel {channel}: {cp.stderr}')
 
-            output = cp.stdout.decode()
             data = {'channel': channel, 'id': channel}
-            for line in output.split('\n'):
-                if ':' not in line:
-                    continue
-
+            for line in filter(lambda x: ':' in line, cp.stdout.decode().split('\n')):
                 name, value = line.split(':', 1)
                 if not name:
                     continue
@@ -85,7 +77,9 @@ class IPMIService(CRUDService):
                         data['vlan'] = value
                 elif name == 'IP Address Source':
                     data['dhcp'] = False if value == 'Static Address' else True
-            result.append(data)
+
+                result.append(data)
+
         return filter_list(result, filters, options)
 
     @accepts(Int('channel'), Dict(
