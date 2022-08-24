@@ -42,6 +42,7 @@ class KubernetesService(ConfigService):
         'kubernetes_entry',
         Bool('servicelb', required=True),
         Bool('configure_gpus', required=True),
+        Bool('validate_host_path', required=True),
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),
         IPAddr('service_cidr', required=True, cidr=True, empty=True),
