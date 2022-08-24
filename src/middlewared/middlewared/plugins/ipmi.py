@@ -1,15 +1,9 @@
-try:
-    from bsd import kld
-except ImportError:
-    kld = None
-
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
 from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list, run
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
-import errno
 import os
 import subprocess
 
@@ -202,16 +196,6 @@ class IPMIService(CRUDService):
 
 
 async def setup(middleware):
-
-    try:
-        if kld:
-            kld.kldload('/boot/kernel/ipmi.ko')
-    except OSError as e:
-        # Only skip if not already loaded
-        if e.errno != errno.EEXIST:
-            middleware.logger.warn(f'Cannot load IPMI module: {e}')
-            return
-
     # Scan available channels
     for i in range(1, 17):
         try:
