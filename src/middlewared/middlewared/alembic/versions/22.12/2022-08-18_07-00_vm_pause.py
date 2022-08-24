@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('vm_vm', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('pause_on_snapshot', sa.Boolean(), nullable=False, server_default='0'))
+        batch_op.add_column(sa.Column('suspend_on_snapshot', sa.Boolean(), nullable=False, server_default='0'))
 
 
 def downgrade():

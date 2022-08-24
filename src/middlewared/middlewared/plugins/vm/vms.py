@@ -45,7 +45,7 @@ class VMModel(sa.Model):
     nodeset = sa.Column(sa.Text(), default=None, nullable=True)
     pin_vcpus = sa.Column(sa.Boolean(), default=False)
     hide_from_msr = sa.Column(sa.Boolean(), default=False)
-    pause_on_snapshot = sa.Column(sa.Boolean(), default=False)
+    suspend_on_snapshot = sa.Column(sa.Boolean(), default=False)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
@@ -114,7 +114,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('cpuset', default=None, null=True, validators=[NumericSet()]),
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
         Bool('pin_vcpus', default=False),
-        Bool('pause_on_snapshot', default=False),
+        Bool('suspend_on_snapshot', default=False),
         Int('memory', required=True, validators=[Range(min=20)]),
         Int('min_memory', null=True, validators=[Range(min=20)], default=None),
         Bool('hyperv_enlightenments', default=False),
@@ -161,7 +161,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         `hyperv_enlightenments` can be used to enable subset of predefined Hyper-V enlightenments for Windows guests.
         These enlightenments improve performance and enable otherwise missing features.
 
-        `pause_on_snapshot` is a boolean attribute which when enabled will automatically pause/suspend VMs when
+        `suspend_on_snapshot` is a boolean attribute which when enabled will automatically pause/suspend VMs when
         a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
         be paused, they will be in that case.
         """
@@ -408,7 +408,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 # Whatever happens, query shouldn't fail
                 return self._status(vm['name'])
             except Exception:
-                self.middleware.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
+                self.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
 
         return {
             'state': 'ERROR',
