@@ -1,6 +1,7 @@
 import errno
 import os
 
+from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Match
 
@@ -134,11 +135,16 @@ class DISK(StorageDevice):
             for attr in ('zvol_name', 'zvol_volsize'):
                 if not device['attributes'].get(attr):
                     verrors.add(f'attributes.{attr}', 'This field is required.')
+            if device['attributes'].get('path'):
+                verrors.add('attributes.path', 'Must not be specified when creating zvol')
 
             verrors.check()
 
+            # Add normalized path for the zvol
+            device['attributes']['path'] = zvol_name_to_path(device['attributes']['zvol_name'])
+
             if zvol := self.middleware.call_sync(
-                'pool.dataset.query', [['id', '=', device['attributes'].get('zvol_name')]]
+                'pool.dataset.query', [['id', '=', device['attributes']['zvol_name']]]
             ):
                 verrors.add('attributes.zvol_name', f'{zvol[0]["id"]!r} already exists.')
 
