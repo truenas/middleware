@@ -25,14 +25,17 @@
 # SUCH DAMAGE.
 #
 
-import pickle as pickle
+import contextlib
+import json
 import os
 import re
 import sys
 
 from lockfile import LockFile, LockTimeout
+from middlewared.utils import MIDDLEWARE_RUN_DIR
 
-COLLECTD_FILE = '/tmp/.collectdalert'
+
+COLLECTD_FILE = os.path.join(MIDDLEWARE_RUN_DIR, '.collectdalert')
 
 
 def main():
@@ -45,11 +48,11 @@ def main():
             lock.break_lock()
 
     data = {}
-    if os.path.exists(COLLECTD_FILE):
-        with open(COLLECTD_FILE, 'rb') as f:
+    with contextlib.suppress(FileNotFoundError):
+        with open(COLLECTD_FILE, 'r') as f:
             try:
-                data = pickle.loads(f.read())
-            except:
+                data = json.loads(f.read())
+            except Exception:
                 pass
 
     text = sys.stdin.read().replace('\n\n', '\nMessage: ', 1)
@@ -65,10 +68,10 @@ def main():
     if v["Severity"] == "OKAY":
         data.pop(k, None)
     else:
-        data[k] = v;
+        data[k] = v
 
-    with open(COLLECTD_FILE, 'wb') as f:
-        f.write(pickle.dumps(data))
+    with open(COLLECTD_FILE, 'w') as f:
+        f.write(json.dumps(data))
 
     lock.release()
 

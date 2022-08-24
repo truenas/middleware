@@ -5,6 +5,7 @@ from middlewared.utils import osc
 from middlewared.utils.mako import get_template
 from middlewared.validators import Email
 
+from collections import deque
 from datetime import datetime, timedelta
 from email.header import Header
 from email.message import Message
@@ -12,14 +13,13 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
 import html2text
-from lockfile import LockFile, LockTimeout
+from threading import Lock
 
 import base64
 import errno
 import html
 import json
 import os
-import pickle
 import smtplib
 import syslog
 
@@ -33,52 +33,22 @@ class QueueItem(object):
 
 class MailQueue(object):
 
-    QUEUE_FILE = '/tmp/mail.queue'
     MAX_ATTEMPTS = 3
+    MAX_QUEUE_LIMIT = 20
 
     def __init__(self):
-        self.queue = None
+        self.queue = deque(maxlen=self.MAX_QUEUE_LIMIT)
+        self.lock = Lock()
 
     def append(self, message):
         self.queue.append(QueueItem(message))
 
-    @classmethod
-    def is_empty(cls):
-        if not os.path.exists(cls.QUEUE_FILE):
-            return True
-        try:
-            return os.stat(cls.QUEUE_FILE).st_size == 0
-        except OSError:
-            return True
-
-    def _get_queue(self):
-        try:
-            with open(self.QUEUE_FILE, 'rb') as f:
-                self.queue = pickle.loads(f.read())
-        except (pickle.PickleError, EOFError):
-            self.queue = []
-
     def __enter__(self):
-        self._lock = LockFile(self.QUEUE_FILE)
-        while not self._lock.i_am_locking():
-            try:
-                self._lock.acquire(timeout=330)
-            except LockTimeout:
-                self._lock.break_lock()
-
-        if not os.path.exists(self.QUEUE_FILE):
-            open(self.QUEUE_FILE, 'a').close()
-
-        self._get_queue()
+        self.lock.acquire()
         return self
 
     def __exit__(self, typ, value, traceback):
-
-        with open(self.QUEUE_FILE, 'wb+') as f:
-            if self.queue:
-                f.write(pickle.dumps(self.queue))
-
-        self._lock.release()
+        self.lock.release()
         if typ is not None:
             raise
 
@@ -100,6 +70,7 @@ class MailModel(sa.Model):
 
 class MailService(ConfigService):
 
+    mail_queue = MailQueue()
     oauth_access_token = None
     oauth_access_token_expires_at = None
 
@@ -443,7 +414,7 @@ class MailService(ConfigService):
                 )
             self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
             if message['queue']:
-                with MailQueue() as mq:
+                with self.mail_queue as mq:
                     mq.append(msg)
             raise CallError(f'Failed to send email: {e}')
         return True
@@ -480,7 +451,7 @@ class MailService(ConfigService):
     @periodic(600, run_on_start=False)
     @private
     def send_mail_queue(self):
-        with MailQueue() as mq:
+        with self.mail_queue as mq:
             for queue in list(mq.queue):
                 try:
                     config = self.middleware.call_sync('mail.config')
