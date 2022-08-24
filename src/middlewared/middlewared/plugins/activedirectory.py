@@ -608,8 +608,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.direct_update({"kerberos_realm": realm_id})
             ad = await self.config()
 
-        if not await self.middleware.call('kerberos._klist_test'):
-            await self.middleware.call('kerberos.start')
+        await self.middleware.call('kerberos.start')
 
         """
         'workgroup' is the 'pre-Windows 2000 domain name'. It must be set to the nETBIOSName value in Active Directory.
