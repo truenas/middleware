@@ -1,10 +1,10 @@
 import os
-from subprocess import run as sync_run, DEVNULL
+from subprocess import run, DEVNULL
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
-from middlewared.utils import filter_list, run
+from middlewared.service import CallError, CRUDService, filterable, filterable_returns, ValidationErrors, job
+from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
 IPMI_DEV = '/dev/ipmi0'
@@ -37,7 +37,7 @@ class IPMIService(CRUDService):
         elif self.CHANNELS is None:
             self.CHANNELS = []
             for i in range(1, 17):
-                rc = sync_run(['ipmitool', 'lan', 'print', f'{i}'], stdout=DEVNULL, stderr=DEVNULL).returncode
+                rc = run(['ipmitool', 'lan', 'print', f'{i}'], stdout=DEVNULL, stderr=DEVNULL).returncode
                 if rc == 0:
                     self.CHANNELS.append(i)
                 else:
@@ -160,7 +160,7 @@ class IPMIService(CRUDService):
 
     @accepts(Dict(
         'options',
-        Int('seconds', default=15, validatiors=[Range(min=0, max=3600)]),
+        Int('seconds', default=15, validators=[Range(min=0, max=3600)]),
         Bool('force', default=False),
     ))
     @returns()
@@ -182,21 +182,21 @@ class IPMIService(CRUDService):
 
         run(['ipmitool', 'chassis', 'identify', 'force' if force else seconds], stdout=DEVNULL, stderr=DEVNULL)
 
-    # TODO: Document me as well please
     @filterable
-    async def query_sel(self, filters, options):
-        """
-        Query IPMI System Event Log
-        """
-        return filter_list([
-            record._asdict()
-            for record in parse_ipmitool_output(await run('ipmitool', '-c', 'sel', 'elist'))
-        ], filters, options)
+    @filterable_returns(List('events_log', items=[Dict('event', additional_attrs=True)]))
+    @job(lock='query_sel', lock_queue_size=3)
+    def query_sel(self, job, filters, options):
+        """Query IPMI system extended event log."""
+        results = []
+        cp = run(['ipmitool', '-c', 'sel', 'elist'], capture_output=True)  # this is slowwww
+        if cp.returncode == 0 and cp.stdout:
+            for record in parse_ipmitool_output(cp.stdout.decode()):
+                results.append(record._asdict())
+
+        return filter_list(results, filters, options)
 
     @accepts()
     @returns()
-    async def clear_sel(self):
-        """
-        Clear IPMI System Event Log
-        """
-        await run('ipmitool', 'sel', 'clear')
+    def clear_sel(self):
+        """Clear IPMI system event log."""
+        run(['ipmitool', 'sel', 'clear'], stdout=DEVNULL, stderr=DEVNULL)
