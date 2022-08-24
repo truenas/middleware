@@ -8,6 +8,7 @@ from middlewared.utils import filter_list, run
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
 channels = []
+IPMI_DEV = '/dev/ipmi0'
 
 
 class IPMIService(CRUDService):
@@ -24,11 +25,9 @@ class IPMIService(CRUDService):
 
     @accepts()
     @returns(Bool('ipmi_loaded'))
-    async def is_loaded(self):
-        """
-        Returns a boolean true value indicating if ipmi device is loaded.
-        """
-        return os.path.exists('/dev/ipmi0')
+    def is_loaded(self):
+        """Returns a boolean value indicating if `IPMI_DEV` is loaded."""
+        return os.path.exists(IPMI_DEV)
 
     @accepts()
     @returns(List('ipmi_channels', items=[Int('ipmi_channel')]))
@@ -103,7 +102,7 @@ class IPMIService(CRUDService):
         `dhcp` is a boolean value which if unset means that `ipaddress`, `netmask` and `gateway` must be set.
         """
 
-        if not await self.is_loaded():
+        if not await self.middleware.call('ipmi.is_loaded'):
             raise CallError('The ipmi device could not be found')
 
         verrors = ValidationErrors()
