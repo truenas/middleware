@@ -160,25 +160,27 @@ class IPMIService(CRUDService):
 
     @accepts(Dict(
         'options',
-        Int('seconds'),
-        Bool('force'),
+        Int('seconds', default=15, validatiors=[Range(min=0, max=3600)]),
+        Bool('force', default=False),
     ))
     @returns()
-    async def identify(self, options):
+    def identify(self, options):
         """
-        Turn on IPMI chassis identify light.
+        Turn on chassis identify light.
 
-        To turn off specify 0 as `seconds`.
+        `seconds` is an integer representing the number of seconds to leave the chassis identify light turned on.
+            - default is 15 seconds
+            - to turn it off, specify `seconds` as 0
+        `force` is a boolean. When True, turn on chassis identify light indefinitely.
         """
-        options = options or {}
-        if options.get('force') and options.get('seconds'):
-            raise CallError('You have to use either "seconds" or "force" option, not both')
+        verrors = ValidationErrors()
+        force = options['force']
+        seconds = options["seconds"]
+        if force and seconds:
+            verrors.add('ipmi.identify', f'Seconds: ({seconds}) and Force: ({force}) are exclusive.')
+        verrors.check()
 
-        if options.get('force'):
-            cmd = 'force'
-        else:
-            cmd = str(options.get('seconds'))
-        await run('ipmitool', 'chassis', 'identify', cmd)
+        run(['ipmitool', 'chassis', 'identify', 'force' if force else seconds], stdout=DEVNULL, stderr=DEVNULL)
 
     # TODO: Document me as well please
     @filterable
