@@ -65,7 +65,7 @@ class UsageService(Service):
     async def submit_stats(self, data):
         async with aiohttp.ClientSession(raise_for_status=True) as session:
             await session.post(
-                'https://usage.freenas.org/submit',
+                'https://usage.truenas.com/submit',
                 data=json.dumps(data, sort_keys=True),
                 headers={'Content-type': 'application/json'},
                 proxy=os.environ.get('http_proxy'),
