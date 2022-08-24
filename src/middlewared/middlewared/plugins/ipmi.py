@@ -1,5 +1,5 @@
 import os
-import subprocess
+from subprocess import run as sync_run, DEVNULL, CalledProcessError
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
@@ -7,7 +7,6 @@ from middlewared.service import CallError, CRUDService, filterable, ValidationEr
 from middlewared.utils import filter_list, run
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
-channels = []
 IPMI_DEV = '/dev/ipmi0'
 
 
@@ -16,6 +15,7 @@ class IPMIService(CRUDService):
     class Config:
         cli_namespace = 'network.ipmi'
 
+    CHANNELS = None
     # TODO: Test me please
     ENTRY = Patch(
         'ipmi_update', 'ipmi_entry',
@@ -31,11 +31,21 @@ class IPMIService(CRUDService):
 
     @accepts()
     @returns(List('ipmi_channels', items=[Int('ipmi_channel')]))
-    async def channels(self):
-        """
-        Return a list with the IPMI channels available.
-        """
-        return channels
+    def channels(self):
+        """Return a list of available IPMI channels."""
+        if not self.is_loaded():
+            return []
+        elif self.CHANNELS is None:
+            self.CHANNELS = []
+            for i in range(1, 17):
+                rc = sync_run(['ipmitool', 'lan', 'print', f'{i}'], stdout=DEVNULL, stderr=DEVNULL).returncode
+                if rc == 0:
+                    self.CHANNELS.append(i)
+                else:
+                    # no reason to continue to check the other channel numbers
+                    break
+
+        return self.CHANNELS
 
     @filterable
     async def query(self, filters, options):
@@ -43,10 +53,10 @@ class IPMIService(CRUDService):
         Query all IPMI Channels with `query-filters` and `query-options`.
         """
         result = []
-        for channel in await self.channels():
+        for channel in await self.middleware.call('ipmi.channels'):
             try:
                 cp = await run('ipmitool', 'lan', 'print', str(channel))
-            except subprocess.CalledProcessError as e:
+            except CalledProcessError as e:
                 raise CallError(f'Failed to get details from channel {channel}: {e}')
 
             output = cp.stdout.decode()
@@ -192,13 +202,3 @@ class IPMIService(CRUDService):
         Clear IPMI System Event Log
         """
         await run('ipmitool', 'sel', 'clear')
-
-
-async def setup(middleware):
-    # Scan available channels
-    for i in range(1, 17):
-        try:
-            await run('ipmitool', 'lan', 'print', str(i))
-        except subprocess.CalledProcessError:
-            continue
-        channels.append(i)
