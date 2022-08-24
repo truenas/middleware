@@ -395,7 +395,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Get the status of `id` VM.
 
         Returns a dict:
-            - state, RUNNING / PAUSED / STOPPED
+            - state, RUNNING / STOPPED / SUSPENDED
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
