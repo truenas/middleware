@@ -3,7 +3,7 @@ import subprocess
 import time
 
 from middlewared.plugins.interface.netif import netif
-from middlewared.service import ConfigService
+from middlewared.service import CallError, ConfigService
 
 from .k8s import api_client, service_accounts
 from .utils import KUBEROUTER_RULE_PRIORITY, KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME
@@ -23,14 +23,19 @@ class KubernetesCNIService(ConfigService):
 
     async def setup_cni(self):
         kube_config = await self.middleware.call('datastore.query', 'services.kubernetes', [], {'get': True})
+        if not await self.middleware.call('k8s.node.get_cluster_ca'):
+            raise CallError('Unable to determine Kubernetes Cluster CA')
+
         config = await self.config()
         async with api_client() as (api, context):
             cni_config = kube_config['cni_config']
             for cni in config:
                 if not await self.validate_cni_integrity(cni, kube_config):
-                    cni_config[cni] = await service_accounts.get_service_account_details(
-                        context['core_api'], config[cni]['service_account']
-                    )
+                    cni_config[cni] = {
+                        'token': await service_accounts.get_service_account_details(
+                            context['core_api'], config[cni]['service_account']
+                        ),
+                    }
 
         await self.middleware.call(
             'datastore.update', 'services.kubernetes', kube_config['id'], {'cni_config': cni_config}
@@ -52,7 +57,7 @@ class KubernetesCNIService(ConfigService):
 
     async def validate_cni_integrity(self, cni, config=None):
         config = config or await self.middleware.call('datastore.query', 'services.kubernetes', [], {'get': True})
-        return all(k in (config['cni_config'].get(cni) or {}) for k in ('ca', 'token'))
+        return 'token' in (config['cni_config'].get(cni) or {})
 
     async def kube_router_config(self):
         config = await self.middleware.call('kubernetes.config')

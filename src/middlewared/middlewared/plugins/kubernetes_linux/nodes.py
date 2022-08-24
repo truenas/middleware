@@ -1,10 +1,12 @@
 import asyncio
+import contextlib
+import yaml
 
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
 from .k8s import api_client, nodes
-from .utils import NODE_NAME, KUBERNETES_WORKER_NODE_PASSWORD
+from .utils import KUBECONFIG_FILE, KUBERNETES_WORKER_NODE_PASSWORD, NODE_NAME
 
 
 class KubernetesNodeService(ConfigService):
@@ -25,6 +27,15 @@ class KubernetesNodeService(ConfigService):
                 }
         except Exception as e:
             return {'node_configured': False, 'error': str(e)}
+
+    def get_cluster_ca(self):
+        with contextlib.suppress(FileNotFoundError):
+            with open(KUBECONFIG_FILE, 'r') as f:
+                config = yaml.safe_load(f.read())
+
+        if config.get('clusters') and isinstance(config.get('clusters'), list):
+            if 'cluster' in config['clusters'][0]:
+                return config['clusters'][0]['cluster'].get('certificate-authority-data')
 
     @accepts(
         List(
