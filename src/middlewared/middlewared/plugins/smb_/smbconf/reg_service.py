@@ -55,7 +55,7 @@ class ShareSchema(RegistrySchema):
                                    'acl_xattr', 'nfs4acl_xattr', 'glusterfs',
                                    'winmsa', 'recycle', 'crossrename', 'zfs_core', 'aio_fbsd', 'io_uring')
 
-            invalid_vfs_objects = ['zfsacl', 'ixnas', 'noacl', 'zfs_space']
+            invalid_vfs_objects = ['noacl']
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
 
             vfs_objects_ordered = []
