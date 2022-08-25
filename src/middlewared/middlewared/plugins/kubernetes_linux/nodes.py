@@ -29,6 +29,7 @@ class KubernetesNodeService(ConfigService):
             return {'node_configured': False, 'error': str(e)}
 
     def get_cluster_ca(self):
+        config = {}
         with contextlib.suppress(FileNotFoundError):
             with open(KUBECONFIG_FILE, 'r') as f:
                 config = yaml.safe_load(f.read())
