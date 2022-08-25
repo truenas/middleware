@@ -129,23 +129,23 @@ class IPMIService(CRUDService):
         if data.get('dhcp'):
             rc |= run(get_cmd(id, ['dhcp']), **options).returncode
         else:
-            rc |= run(get_cmd(['ipsrc', 'static'], **options)).returncode
-            rc |= run(get_cmd(['ipaddr', data['ipaddress']], **options)).returncode
-            rc |= run(get_cmd(['netmask', data['netmask']], **options)).returncode
-            rc |= run(get_cmd(['defgw', 'ipaddr', data['gateway']], **options)).returncode
+            rc |= run(get_cmd(['ipsrc', 'static']), **options).returncode
+            rc |= run(get_cmd(['ipaddr', data['ipaddress']]), **options).returncode
+            rc |= run(get_cmd(['netmask', data['netmask']]), **options).returncode
+            rc |= run(get_cmd(['defgw', 'ipaddr', data['gateway']]), **options).returncode
 
-        rc |= run(get_cmd(['vlan', 'id', f'{data.get("vlan", "off")}'], **options)).returncode
+        rc |= run(get_cmd(['vlan', 'id', f'{data.get("vlan", "off")}']), **options).returncode
 
-        rc |= run(get_cmd(['access', 'on'], **options)).returncode
-        rc |= run(get_cmd(['auth', 'USER', 'MD2,MD5'], **options)).returncode
-        rc |= run(get_cmd(['auth', 'OPERATOR', 'MD2,MD5'], **options)).returncode
-        rc |= run(get_cmd(['auth', 'ADMIN', 'MD2,MD5'], **options)).returncode
-        rc |= run(get_cmd(['auth', 'CALLBACK', 'MD2,MD5'], **options)).returncode
+        rc |= run(get_cmd(['access', 'on']), **options).returncode
+        rc |= run(get_cmd(['auth', 'USER', 'MD2,MD5']), **options).returncode
+        rc |= run(get_cmd(['auth', 'OPERATOR', 'MD2,MD5']), **options).returncode
+        rc |= run(get_cmd(['auth', 'ADMIN', 'MD2,MD5']), **options).returncode
+        rc |= run(get_cmd(['auth', 'CALLBACK', 'MD2,MD5']), **options).returncode
 
         # Apparently tickling these ARP options can "fail" on certain hardware
         # which isn't fatal so we ignore returncode in this instance. See #15578.
-        run(get_cmd(['arp', 'respond', 'on'], **options))
-        run(get_cmd(['arp', 'generate', 'on'], **options))
+        run(get_cmd(['arp', 'respond', 'on']), **options)
+        run(get_cmd(['arp', 'generate', 'on']), **options)
 
         if passwd := data.get('password'):
             cp = run(get_cmd(['ipmitool', 'user', 'set', 'password', '2', passwd]), capture_output=True)
