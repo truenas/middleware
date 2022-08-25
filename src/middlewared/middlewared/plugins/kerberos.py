@@ -165,6 +165,30 @@ class KerberosService(TDBWrapConfigService):
         return True
 
     @private
+    def generate_stub_config(self, realm, kdc=None):
+        if os.path.exists('/etc/krb5.conf'):
+            return
+
+        def write_libdefaults(krb_file):
+            krb_file.write('[libdefaults]\n')
+            krb_file.write(f'\tdefault_realm = {realm}\n')
+            krb_file.write('\tdns_lookup_realm = false\n')
+            krb_file.write(f'\tdns_lookup_kdc = {"false" if kdc else "true"}\n')
+
+        def write_realms(krb_file):
+            krb_file.write('[realms]\n')
+            krb_file.write(f'\t{realm} =' + '{\n')
+            if kdc:
+                krb_file.write(f'\t\tkdc = {kdc}\n')
+            krb_file.write('\t}\n')
+
+        with open('/etc/krb5.conf', 'w') as f:
+            write_libdefaults(f)
+            write_realms(f)
+            f.flush()
+            os.fsync(f.fileno())
+
+    @private
     async def check_ticket(self):
         valid_ticket = await self._klist_test()
         if not valid_ticket:
