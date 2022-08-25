@@ -150,11 +150,13 @@ class IPMIService(CRUDService):
         if passwd := data.get('password'):
             cp = run(get_cmd(['ipmitool', 'user', 'set', 'password', '2', passwd]), capture_output=True)
             if cp.returncode != 0:
-                raise CallError(f'Failed setting password: {cp.stderr.decode()!r}')
+                err = '\n'.join(cp.stderr.decode().split('\n'))
+                raise CallError(f'Failed setting password: {err!r}')
 
         cp = run(['ipmitool', 'user', 'enable', '2'], capture_output=True)
         if cp.returncode != 0:
-            raise CallError(f'Failed enabling user: {cp.stderr.decode()!r}')
+            err = '\n'.join(cp.stderr.decode().split('\n'))
+            raise CallError(f'Failed enabling user: {err!r}')
 
         return rc
 
