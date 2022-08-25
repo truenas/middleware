@@ -27,6 +27,7 @@ from .glusterd import GlusterdService
 from .glustereventsd import GlusterEventsdService
 from .ctdb import CtdbService
 from .idmap import IdmapService
+from .openipmi import OpenIpmiService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
 from .pseudo.collectd import CollectDService, RRDCacheDService
@@ -79,6 +80,7 @@ all_services = [
     LdapService,
     NisService,
     IdmapService,
+    OpenIpmiService,
     KeepalivedService,
     GlusterdService,
     GlusterEventsdService,
