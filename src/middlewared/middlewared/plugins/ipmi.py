@@ -1,5 +1,6 @@
 import os
 from subprocess import run, DEVNULL
+from functools import cache
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
@@ -7,7 +8,19 @@ from middlewared.service import CallError, CRUDService, filterable, filterable_r
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
-IPMI_DEV = '/dev/ipmi0'
+
+@cache
+def ipmi_channels():
+    channels = []
+    for i in range(1, 17):
+        rc = run(['ipmitool', 'lan', 'print', f'{i}'], stdout=DEVNULL, stderr=DEVNULL).returncode
+        if rc == 0:
+            channels.append(i)
+        else:
+            # no reason to continue to check the other channel numbers
+            break
+
+    return channels
 
 
 class IPMIService(CRUDService):
@@ -15,7 +28,7 @@ class IPMIService(CRUDService):
     class Config:
         cli_namespace = 'network.ipmi'
 
-    CHANNELS = None
+    IPMI_DEV = '/dev/ipmi0'
     ENTRY = Patch(
         'ipmi_update', 'ipmi_entry',
         ('add', Int('id', required=True)),
@@ -26,7 +39,7 @@ class IPMIService(CRUDService):
     @returns(Bool('ipmi_loaded'))
     def is_loaded(self):
         """Returns a boolean value indicating if `IPMI_DEV` is loaded."""
-        return os.path.exists(IPMI_DEV)
+        return os.path.exists(IPMIService.IPMI_DEV)
 
     @accepts()
     @returns(List('ipmi_channels', items=[Int('ipmi_channel')]))
@@ -34,17 +47,8 @@ class IPMIService(CRUDService):
         """Return a list of available IPMI channels."""
         if not self.is_loaded():
             return []
-        elif self.CHANNELS is None:
-            self.CHANNELS = []
-            for i in range(1, 17):
-                rc = run(['ipmitool', 'lan', 'print', f'{i}'], stdout=DEVNULL, stderr=DEVNULL).returncode
-                if rc == 0:
-                    self.CHANNELS.append(i)
-                else:
-                    # no reason to continue to check the other channel numbers
-                    break
-
-        return self.CHANNELS
+        else:
+            return ipmi_channels()
 
     @filterable
     def query(self, filters, options):
@@ -111,7 +115,7 @@ class IPMIService(CRUDService):
         """
         verrors = ValidationErrors()
         if not self.is_loaded():
-            verrors.add('ipmi.update', f'{IPMI_DEV!r} could not be found')
+            verrors.add('ipmi.update', f'{IPMIService.IPMI_DEV!r} could not be found')
         elif id not in self.channels():
             verrors.add('ipmi.update', f'IPMI channel number {id!r} not found')
         elif not data.get('dhcp'):
