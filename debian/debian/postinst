@@ -39,6 +39,7 @@ systemctl disable smbd
 systemctl disable winbind
 systemctl disable wsdd
 systemctl disable walinuxagent
+systemctl disable openipmi
 
 # nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced
@@ -70,7 +71,6 @@ systemctl enable zfs-zed
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 systemctl mask exim4-base.service exim4.service
 systemctl mask uuidd.service uuidd.socket
-systemctl mask openipmi.service
 
 # We don't use LVM and this service can add significant boot delays
 # on large disk systems
