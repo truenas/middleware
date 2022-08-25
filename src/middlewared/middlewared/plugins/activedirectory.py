@@ -46,6 +46,7 @@ class neterr(enum.Enum):
     def to_status(errstr):
         errors_to_rejoin = [
             '0xfffffff6',
+            'LDAP_INVALID_CREDENTIALS',
             'The name provided is not a properly formed account name',
             'The attempted logon is invalid.'
         ]
@@ -434,7 +435,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 )
 
             try:
-                await self.validate_credentials(new)
+                await self.validate_credentials(new, domain_info['KDC server'])
             except CallError as e:
                 if new['kerberos_principal']:
                     method = "activedirectory.kerberos_principal"
@@ -739,7 +740,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 os.unlink('/etc/krb5.keytab')
 
     @private
-    async def validate_credentials(self, ad=None):
+    async def validate_credentials(self, ad=None, kdc=None):
         """
         Kinit with user-provided credentials is sufficient to determine
         whether the credentials are good. A testbind here is unnecessary.
@@ -750,6 +751,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         if ad is None:
             ad = await self.middleware.call('activedirectory.config')
+
+        await self.middleware.call('kerberos.generate_stub_config', ad['domainname'], kdc)
 
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
@@ -803,6 +806,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         cmd.append(ad['domainname'])
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
+            self.logger.warning("AD JOIN FAILED: %s", netads.stderr.decode())
             await self.set_state(DSStatus['FAULTED'].name)
             await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
@@ -873,9 +877,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         `Last machine account password change`. timestamp
         """
-        cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
         if domain:
-            cmd.extend(['-S', domain])
+            cmd = [SMBCmd.NET.value, '-S', domain, '--json', '--option', f'realm={domain}', 'ads', 'info']
+        else:
+            cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
 
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
