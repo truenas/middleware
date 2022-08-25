@@ -56,7 +56,7 @@ class IPMIService(CRUDService):
                 raise CallError(f'Failed to get details from channel {channel}: {cp.stderr}')
 
             data = {'channel': channel, 'id': channel}
-            for line in filter(lambda x: ':' in line, cp.stdout.decode().split('\n')):
+            for line in filter(lambda x: ':' in x, cp.stdout.decode().split('\n')):
                 name, value = line.split(':', 1)
                 if not name:
                     continue
