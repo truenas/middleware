@@ -78,7 +78,7 @@ class IPMIService(CRUDService):
                 elif name == 'IP Address Source':
                     data['dhcp'] = False if value == 'Static Address' else True
 
-                result.append(data)
+            result.append(data)
 
         return filter_list(result, filters, options)
 
