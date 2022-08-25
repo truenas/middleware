@@ -1,8 +1,8 @@
 import enum
 import asyncio
 import errno
-import os
 import datetime
+
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
 from middlewared.plugins.directoryservices import SSL
@@ -320,18 +320,6 @@ class IdmapDomainService(TDBWrapCRUDService):
                                                            'name': f'wbc-{ts}'})
 
     @private
-    async def remove_winbind_idmap_tdb(self):
-        await self.snapshot_samba4_dataset()
-        try:
-            os.remove('/var/db/system/samba4/winbindd_idmap.tdb')
-
-        except FileNotFoundError:
-            self.logger.trace("winbindd_idmap.tdb does not exist. Skipping removal.")
-
-        except Exception:
-            self.logger.debug("Failed to remove winbindd_idmap.tdb.", exc_info=True)
-
-    @private
     async def domain_info(self, domain):
         def val_convert(val):
             if val == 'Yes':
@@ -429,7 +417,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         return (hash % max_slices) * range_size + range_size
 
     @accepts()
-    @job(lock='clear_idmap_cache')
+    @job(lock='clear_idmap_cache', lock_queue_size=1)
     async def clear_idmap_cache(self, job):
         """
         Stop samba, remove the winbindd_cache.tdb file, start samba, flush samba's cache.
@@ -437,14 +425,17 @@ class IdmapDomainService(TDBWrapCRUDService):
         """
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if ha_mode == 'CLUSTERED':
-            self.logger.warning("clear_idmap_cache is unsafe on clustered smb servers.")
+            await self.middleware.call('service.restart', 'idmap')
             return
 
         smb_started = await self.middleware.call('service.started', 'cifs')
         await self.middleware.call('service.stop', 'idmap')
 
         try:
-            os.remove('/var/db/system/samba4/winbindd_cache.tdb')
+            await self.middleware.call('tdb.wipe', {
+                'name': '/var/db/system/samba4/winbindd_idmap.tdb',
+                'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
+            })
 
         except FileNotFoundError:
             self.logger.debug("Failed to remove winbindd_cache.tdb. File not found.")
@@ -930,7 +921,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         await super().do_update(id, new)
 
         out = await self.query([('id', '=', id)], {'get': True})
-        await self.synchronize()
+        await self.synchronize(False)
         cache_job = await self.middleware.call('idmap.clear_idmap_cache')
         await cache_job.wait()
         return out
@@ -1244,10 +1235,11 @@ class IdmapDomainService(TDBWrapCRUDService):
         }
 
     @private
-    async def synchronize(self):
+    async def synchronize(self, restart=True):
         config_idmap = await self.query()
         idmaps = await self.idmap_to_smbconf(config_idmap)
         to_check = (await self.middleware.call('smb.reg_globals'))['idmap']
         diff = await self.diff_conf_and_registry(idmaps, to_check)
         await self.middleware.call('sharing.smb.apply_conf_diff', 'GLOBAL', diff)
-        await self.middleware.call('service.restart', 'idmap')
+        if restart:
+            await self.middleware.call('service.restart', 'idmap')
