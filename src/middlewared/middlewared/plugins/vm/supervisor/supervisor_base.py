@@ -12,6 +12,7 @@ from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
 from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB # noqa
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
+from middlewared.plugins.vm.utils import ACTIVE_STATES
 
 from .utils import create_element
 
@@ -200,7 +201,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             raise CallError(f'{self.libvirt_domain_name} domain is not active')
 
     def run_post_stop_actions(self):
-        while self.status()['state'] == 'RUNNING':
+        while self.status()['state'] in ACTIVE_STATES:
             time.sleep(5)
 
         errors = []
