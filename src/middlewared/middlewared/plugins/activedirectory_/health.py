@@ -6,7 +6,6 @@ from middlewared.plugins.activedirectory_.dns import SRV
 from middlewared.schema import accepts
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.service_exception import CallError
-from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
 
 
@@ -14,6 +13,67 @@ class ActiveDirectoryService(Service):
 
     class Config:
         service = "activedirectory"
+
+    @private
+    def winbind_status(self, check_trust=False):
+        netlogon_ping = subprocess.run([
+            SMBCmd.WBINFO.value, '-t' if check_trust else '-P'
+        ], capture_output=True)
+        if netlogon_ping.returncode != 0:
+            wberr = netlogon_ping.stderr.decode().strip('\n')
+            err = errno.EFAULT
+            for wb in WBCErr:
+                if wb.err() in wberr:
+                    wberr = wberr.replace(wb.err(), wb.value[0])
+                    err = wb.value[1] if wb.value[1] else errno.EFAULT
+                    break
+
+            raise CallError(wberr, err)
+
+    @private
+    def machine_account_status(self, dc=None):
+        def parse_result(data, out):
+            if ':' not in data:
+                return
+
+            key, value = data.split(':', 1)
+            if key not in out:
+                # This is not a line we're interested in
+                return
+
+            if type(out[key]) == list:
+                out[key].append(value.strip())
+            elif out[key] == -1:
+                out[key] = int(value.strip())
+            else:
+                out[key] = value.strip()
+
+            return
+
+        cmd = [SMBCmd.NET.value, '-P', 'ads', 'status']
+        if dc:
+            cmd.extend(['-S', dc])
+
+        results = subprocess.run(cmd, capture_output=True)
+        if results.returncode != 0:
+            raise CallError(
+                'Failed to retrieve machine account status: '
+                f'{results.stderr.decode().strip()}'
+            )
+
+        output = {
+            'userAccountControl': -1,
+            'objectSid': None,
+            'sAMAccountName': None,
+            'dNSHostName': None,
+            'servicePrincipalName': [],
+            'msDS-SupportedEncryptionTypes': -1
+        }
+
+        for line in results.stdout.decode().splitlines():
+            parse_result(line, output)
+
+        return output
 
     @private
     def validate_domain(self, data=None):
@@ -42,23 +102,27 @@ class ActiveDirectoryService(Service):
         We only check a single DC because domains can have a significantly large number
         of domain controllers in a given site.
         """
-        if data is None:
-            data = self.middleware.call_sync("activedirectory.config")
-        if dc is None:
+        def get_dc(ad):
+            found_dc = None
             res = self.middleware.call_sync(
                 'activedirectory.get_n_working_servers',
-                data['domainname'],
+                ad['domainname'],
                 SRV.DOMAINCONTROLLER.name,
-                data['site'],
+                ad['site'],
                 2,
-                data['timeout'],
-                data['verbose_logging']
+                ad['timeout'],
+                ad['verbose_logging']
             )
-            if len(res) != 2:
+            if len(res) == 0:
+                self.logger.debug("No results")
+                return found_dc
+
+            if len(res) == 1:
                 self.logger.warning("Less than two Domain Controllers are in our "
                                     "Active Directory Site. This may result in production "
                                     "outage if the currently connected DC is unreachable.")
-                return False
+
+                return res[0]['host']
 
             """
             In some pathologically bad cases attempts to get the DC that winbind is currently
@@ -69,16 +133,26 @@ class ActiveDirectoryService(Service):
                                        capture_output=True, check=False)
             if wb_dcinfo.returncode == 0:
                 # output "FQDN (ip address)"
-                our_dc = wb_dcinfo.stdout.decode().split()[0]
+                our_dc = f'{wb_dcinfo.stdout.decode().split()[0]}.'
                 for dc_to_check in res:
                     thehost = dc_to_check['host']
                     if thehost.casefold() != our_dc.casefold():
-                        dc = thehost
+                        found_dc = thehost
             else:
                 self.logger.warning("Failed to get DC info from winbindd: %s", wb_dcinfo.stderr.decode())
-                dc = res[0]['host']
+                found_dc = res[0]['host']
 
-        return True
+            return found_dc
+
+        if data is None:
+            data = self.middleware.call_sync("activedirectory.config")
+
+        to_check = dc or get_dc(data)
+        if to_check is None:
+            raise CallError('Failed to find connectable Domain Controller')
+
+        # TODO: evaluate  UAC to determine account status
+        self.machine_account_status(dc)
 
     @accepts()
     async def started(self):
@@ -113,17 +187,7 @@ class ActiveDirectoryService(Service):
         """
         Verify winbindd netlogon connection.
         """
-        netlogon_ping = await run([SMBCmd.WBINFO.value, '-P'], check=False)
-        if netlogon_ping.returncode != 0:
-            wberr = netlogon_ping.stderr.decode().strip('\n')
-            err = errno.EFAULT
-            for wb in WBCErr:
-                if wb.err() in wberr:
-                    wberr = wberr.replace(wb.err(), wb.value[0])
-                    err = wb.value[1] if wb.value[1] else errno.EFAULT
-                    break
-
-            raise CallError(wberr, err)
+        await self.middleware.call('activedirectory.winbind_status')
 
         if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
             state_method = 'clustercache.get'
