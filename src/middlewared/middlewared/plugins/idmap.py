@@ -433,7 +433,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         try:
             await self.middleware.call('tdb.wipe', {
-                'name': '/var/db/system/samba4/winbindd_idmap.tdb',
+                'name': '/var/db/system/samba4/winbindd_cache.tdb',
                 'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
             })
 
