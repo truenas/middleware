@@ -499,14 +499,29 @@ class InterfaceService(CRUDService):
         if not is_freenas:
             internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
         for name, iface in netif.list_interfaces().items():
-            if iface.cloned and name not in configs:
-                continue
-            if not is_freenas and name in internal_ifaces:
-                continue
             try:
-                data[name] = self.iface_extend(iface.__getstate__(), configs, is_freenas)
-            except OSError:
-                self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
+                cloned = iface.cloned
+            except FileNotFoundError:
+                # errno 2 is set here if the interface is dying or
+                # no longer exists. Just ignore it anyways
+                continue
+
+            if cloned and name not in configs:
+                continue
+            elif not is_freenas and name in internal_ifaces:
+                continue
+
+            try:
+                getstate = iface.__getstate__()
+            except FileNotFoundError:
+                # errno 2 is set here if the interface is dying or
+                # no longer exists. Just ignore it anyways
+                continue
+            except Exception:
+                self.logger.warning('Failed to get interface state for %s', name, exc_info=True)
+            else:
+                data[name] = self.iface_extend(getstate, configs, is_freenas)
+
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
             data[name] = self.iface_extend({
                 'name': config['int_interface'],
