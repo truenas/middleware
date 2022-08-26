@@ -9,6 +9,7 @@ from middlewared.schema import accepts, Bool, Dict, Error, Int, Patch, returns, 
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 from middlewared.utils import osc, run
 from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.plugins.zfs_.utils import zvol_name_to_path
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY
 from .utils import LIBVIRT_USER
@@ -130,7 +131,7 @@ class VMDeviceService(CRUDService):
                 ds_options['volblocksize'] = zvol_blocksize
 
                 new_zvol = (await self.middleware.call('pool.dataset.create', ds_options))['id']
-                data['attributes']['path'] = f'/dev/zvol/{new_zvol}'
+                data['attributes']['path'] = zvol_name_to_path(new_zvol)
         elif data['dtype'] == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']
