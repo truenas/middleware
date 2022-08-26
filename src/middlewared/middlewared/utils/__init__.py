@@ -14,6 +14,7 @@ from middlewared.utils.threading import start_daemon_thread  # noqa
 BUILDTIME = None
 VERSION = None
 MID_PID = None
+MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 
 logger = logging.getLogger(__name__)
 
