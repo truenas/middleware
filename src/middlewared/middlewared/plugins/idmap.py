@@ -2,6 +2,7 @@ import enum
 import asyncio
 import errno
 import datetime
+import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
@@ -9,7 +10,7 @@ from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Range
-from middlewared.plugins.smb import SMBCmd, WBCErr
+from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
 
 
 SID_LOCAL_USER_PREFIX = "S-1-22-1-"
@@ -320,6 +321,24 @@ class IdmapDomainService(TDBWrapCRUDService):
                                                            'name': f'wbc-{ts}'})
 
     @private
+    @filterable
+    def online_status(self, query_filters, query_options):
+        def parse_entry(entry):
+            domain, status = entry.split(':')
+            return {
+                'domain': domain.strip(),
+                'online': 'no active connection' not in status
+            }
+
+        wbinfo = subprocess.run(['wbinfo', '--online-status'], capture_output=True)
+        if wbinfo.returncode != 0:
+            raise CallError("Failed to get winbindd online status: %s",
+                            wbinfo.stderr.decode())
+
+        entries = [parse_entry(entry) for entry in wbinfo.stdout.decode().splitlines()]
+        return filter_list(entries, query_filters, query_options)
+
+    @private
     async def domain_info(self, domain):
         def val_convert(val):
             if val == 'Yes':
@@ -433,7 +452,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         try:
             await self.middleware.call('tdb.wipe', {
-                'name': '/var/db/system/samba4/winbindd_cache.tdb',
+                'name': f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb',
                 'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
             })
 

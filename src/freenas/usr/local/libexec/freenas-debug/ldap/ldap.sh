@@ -100,7 +100,6 @@ ldap_func()
 	section_header "ROOT DSE"
 	midclt call ldap.get_root_DSE | jq
 	section_footer
-	fi
 
 	if [ "${enabled}" = "ENABLED" ] && [ "${has_samba_schema}" = "true" ]
 	then

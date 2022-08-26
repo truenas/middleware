@@ -8,6 +8,7 @@ import tdb
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service import Service, private, job
 from middlewared.service_exception import CallError
+from time import sleep
 
 
 class ActiveDirectoryService(Service):
@@ -118,11 +119,29 @@ class ActiveDirectoryService(Service):
     @private
     @job(lock='fill_ad_cache')
     def fill_cache(self, job, force=False):
+        def online_check_wait():
+            waited = 0
+            while waited <= 60:
+                offline_domains = self.middleware.call_sync(
+                    'idmap.online_status',
+                    [['online', '=', False]]
+                )
+                if not offline_domains:
+                    return
+
+                self.logger.debug('Waiting for the following domains to come online: %s',
+                                  ', '.join([x['domain'] for x in offline_domains]))
+                sleep(1)
+                waited += 1
+
+            raise CallError('Timed out while waiting for domain to come online')
+
         ad = self.middleware.call_sync('activedirectory.config')
         id_type_both_backends = [
             'RID',
             'AUTORID'
         ]
+        online_check_wait()
 
         users = self.get_entries({'entry_type': 'USER', 'cache_enabled': not ad['disable_freenas_cache']})
         for u in users:
