@@ -130,6 +130,8 @@ class DeviceService(Service):
         if disk['serial'] and disk['lunid']:
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
+        disk['dif'] = self.is_dif_formatted(ctx, {'subsystem': disk['subsystem'], 'hctl': disk['hctl']})
+
         return disk
 
     @private
