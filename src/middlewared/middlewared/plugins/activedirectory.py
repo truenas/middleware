@@ -247,6 +247,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if not new["enable"]:
             return
 
+        if await self.middleware.call('smb.get_smb_ha_mode') == 'CLUSTERED':
+            if not await self.middleware.call('ctdb.general.ips'):
+                verrors.add(
+                    'activedirectory_update.enable',
+                    'At least one public IP address must be configured prior to joining '
+                    'Active Directory.'
+                )
+
         ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
         if ldap_enabled:
             verrors.add(
