@@ -27,5 +27,3 @@ class VolumeVersionAlertSource(AlertSource):
 
         if pools_needing_upgrade:
             return Alert(VolumeVersionAlertClass, ', '.join(pools_needing_upgrade))
-
-        return alerts
