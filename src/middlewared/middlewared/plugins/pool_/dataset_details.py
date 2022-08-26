@@ -424,7 +424,7 @@ class PoolDatasetService(Service):
         count = 0
         for i in filter(lambda x: x['direction'] == 'PUSH', cldtasks):
             # we only care about cloud sync tasks that are configured to push
-            if i['mountpoint'] == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
+            if i['path'] == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
                 count += 1
 
         return count
