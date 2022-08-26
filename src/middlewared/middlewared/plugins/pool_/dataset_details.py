@@ -38,6 +38,10 @@ class PoolDatasetService(Service):
                         'source': 'LOCAL',
                         'parsed': '10.231.1.155'
                     },
+                    'quota_warning': {'value': '80', 'rawvalue': '80', 'source': 'LOCAL', 'parsed': '80'},
+                    'quota_critical': {'value': '95', 'rawvalue': '95', 'source': 'LOCAL', 'parsed': '95'},
+                    'refquota_warning': {'value': '80', 'rawvalue': '80', 'source': 'LOCAL', 'parsed': '80'},
+                    'refquota_critical': {'value': '95', 'rawvalue': '95', 'source': 'LOCAL', 'parsed': '95'},
                     'reservation': {
                         'parsed': None, 'rawvalue': '0', 'value': None, 'source': 'DEFAULT', 'source_info': None
                     },
@@ -46,6 +50,9 @@ class PoolDatasetService(Service):
                     },
                     'key_format': {
                         'parsed': 'none', 'rawvalue': 'none', 'value': None, 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'volsize': {
+                        'parsed': 57344, 'rawvalue': '57344', 'value': '56K', 'source': 'LOCAL', 'source_info': None
                     },
                     'encryption_algorithm': {
                         'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
@@ -67,6 +74,18 @@ class PoolDatasetService(Service):
                         'value': '13.3G', 'source': 'NONE', 'source_info': None
                     },
                     'mountpoint': '/mnt/tank/something',
+                    'sync': {
+                        'parsed': 'standard', 'rawvalue': 'standard',
+                        'value': 'STANDARD', 'source': 'DEFAULT', 'source_info': None
+                    },
+                    'compression': {
+                        'parsed': 'lz4', 'rawvalue': 'lz4',
+                        'value': 'LZ4', 'source': 'INHERITED', 'source_info': 'tank',
+                    },
+                    'deduplication': {
+                        'parsed': 'on', 'rawvalue': 'on',
+                        'value': 'ON', 'source': 'LOCAL', 'source_info': None,
+                    },
                     'user_properties': {},
                     'snapshot_count': 0,
                     'locked': False,
@@ -126,6 +145,8 @@ class PoolDatasetService(Service):
             'user_properties': {},
             'snapshot_count': 0,
             'locked': False,
+            'atime': False,
+            'casesensitive': True,
             'nfs_shares': [],
             'smb_shares': [],
             'iscsi_shares': [],
@@ -155,7 +176,11 @@ class PoolDatasetService(Service):
                     'usedbydataset',
                     'usedbychildren',
                     'refquota',
+                    'org.freenas:refquota_critical',
+                    'org.freenas:refquota_warning',
                     'quota',
+                    'org.freenas:quota_critical',
+                    'org.freenas:quota_warning',
                     'refreservation',
                     'reservation',
                     'mountpoint',
@@ -163,6 +188,10 @@ class PoolDatasetService(Service):
                     'encryptionroot',
                     'keyformat',
                     'keystatus',
+                    'volsize',
+                    'sync',
+                    'compression',
+                    'dedup',
                 ]
             }
         }
@@ -175,8 +204,11 @@ class PoolDatasetService(Service):
         info = self.build_details(mntinfo)
         for i in collapsed:
             snapshot_count, locked = self.get_snapcount_and_encryption_status(i, mntinfo)
+            atime, case = self.get_atime_and_casesensitivity(i, mntinfo)
             i['snapshot_count'] = snapshot_count
             i['locked'] = locked
+            i['atime'] = atime
+            i['casesensitive'] = case
             i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
             i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
@@ -209,6 +241,15 @@ class PoolDatasetService(Service):
                 mount_info = mntinfo[devid]
 
         return mount_info
+
+    @private
+    def get_atime_and_casesensitivity(self, ds, mntinfo):
+        atime = case = True
+        for devid, info in filter(lambda x: x[1]['mountpoint'] == ds['mountpoint'], mntinfo.items()):
+            atime = not ('NOATIME' in info['super_opts'])
+            case = 'CASESENSITIVE' in info['super_opts']
+
+        return atime, case
 
     @private
     def build_details(self, mntinfo):
@@ -383,7 +424,7 @@ class PoolDatasetService(Service):
         count = 0
         for i in filter(lambda x: x['direction'] == 'PUSH', cldtasks):
             # we only care about cloud sync tasks that are configured to push
-            if i['mountpoint'] == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
+            if i['path'] == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
                 count += 1
 
         return count

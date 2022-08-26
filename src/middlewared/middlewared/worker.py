@@ -8,6 +8,7 @@ import setproctitle
 
 from . import logger
 from .common.environ import environ_update
+from .utils import MIDDLEWARE_RUN_DIR
 from .utils.plugins import LoadPluginsMixin
 import middlewared.utils.osc as osc
 from .utils.service.call import MethodNotFoundError, ServiceCallMixin
@@ -20,8 +21,8 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
     Implements same API from real middleware
     """
 
-    def __init__(self, overlay_dirs):
-        super().__init__(overlay_dirs)
+    def __init__(self):
+        super().__init__()
         self.client = None
         _logger = logger.Logger('worker')
         self.logger = _logger.getLogger()
@@ -30,7 +31,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
 
     def _call(self, name, serviceobj, methodobj, params=None, app=None, pipes=None, job=None):
         try:
-            with Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True) as c:
+            with Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True) as c:
                 self.client = c
                 job_options = getattr(methodobj, '_job', None)
                 if job and job_options:
@@ -131,16 +132,16 @@ def reconfigure_logging(mtype, **message):
 
 
 def receive_events():
-    c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+    c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
     c.subscribe('core.environ', lambda *args, **kwargs: environ_update(kwargs['fields']))
     c.subscribe('core.reconfigure_logging', reconfigure_logging)
 
     environ_update(c.call('core.environ'))
 
 
-def worker_init(overlay_dirs, debug_level, log_handler):
+def worker_init(debug_level, log_handler):
     global MIDDLEWARE
-    MIDDLEWARE = FakeMiddleware(overlay_dirs)
+    MIDDLEWARE = FakeMiddleware()
     os.environ['MIDDLEWARED_LOADING'] = 'True'
     MIDDLEWARE._load_plugins()
     os.environ['MIDDLEWARED_LOADING'] = 'False'

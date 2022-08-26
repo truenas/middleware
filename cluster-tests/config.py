@@ -23,7 +23,6 @@ CLUSTER_INFO = {
     'ZPOOL_DISK': environ.get('ZPOOL_DISK'),
     'ZPOOL': environ.get('ZPOOL'),
     'GLUSTER_VOLUME': environ.get('GLUSTER_VOLUME'),
-    'FUSE_OP_TIMEOUT': environ.get('FUSE_OP_TIMEOUT', 10),
 }
 
 CLUSTER_ADS = {
@@ -43,6 +42,13 @@ CLUSTER_LDAP = {
     'TEST_GROUPNAME': environ.get('LDAP_TEST_GROUPNAME'),
 }
 
+TIMEOUTS = {
+    'FUSE_OP_TIMEOUT': environ.get('FUSE_OP_TIMEOUT', 10),
+    'FAILOVER_WAIT_TIMEOUT': environ.get('FAILOVER_WAIT_TIMEOUT', 10),
+    'MONITOR_TIMEOUT': environ.get('MONITOR_TIMEOUT', 20)
+}
+
+CLEANUP_TEST_DIR = 'tests/cleanup'
 INTERNAL_DS = '.glusterfs'
 BRICK_NAME = 'brick0'
 DATASET_HIERARCHY = f'{CLUSTER_INFO["ZPOOL"]}/{INTERNAL_DS}/{CLUSTER_INFO["GLUSTER_VOLUME"]}/{BRICK_NAME}'

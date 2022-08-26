@@ -72,8 +72,8 @@ class PyRenderer(object):
 class EtcService(Service):
 
     GROUPS = {
-        'nvdimm': [
-            {'type': 'mako', 'path': 'modprobe.d/nvdimm.conf', 'local_path': 'nvdimm'}
+        'truenas_nvdimm': [
+            {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
         'user': {
             'ctx': [
@@ -151,7 +151,7 @@ class EtcService(Service):
             {'type': 'py', 'path': 'systemd'},
         ],
         'sysctl': [
-            {'type': 'py', 'path': 'sysctl'},
+            {'type': 'mako', 'path': 'sysctl.d/tunables.conf'},
         ],
         's3': [
             {'type': 'py', 'path': 'local/minio/configure', 'checkpoint': 'pool_import'},
@@ -170,6 +170,9 @@ class EtcService(Service):
         'scst_targets': [
             {'type': 'mako', 'path': 'initiators.allow', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'initiators.deny', 'checkpoint': 'pool_import'},
+        ],
+        'udev': [
+            {'type': 'py', 'path': 'udev'},
         ],
         'webdav': {
             'ctx': [

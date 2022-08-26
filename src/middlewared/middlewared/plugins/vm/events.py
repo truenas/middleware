@@ -42,7 +42,7 @@ class VMService(Service, LibvirtConnectionMixin):
                 0: 'NOSTATE',
                 1: 'RUNNING',
                 2: 'BLOCKED',
-                3: 'PAUSED',
+                3: 'SUSPENDED',  # Actual libvirt event here is PAUSED
                 4: 'SHUTDOWN',
                 5: 'SHUTOFF',
                 6: 'CRASHED',

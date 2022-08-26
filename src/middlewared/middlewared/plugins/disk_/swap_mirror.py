@@ -11,9 +11,10 @@ class DiskService(Service):
     @private
     async def create_swap_mirror(self, name, options):
         extra = options['extra']
+        await run('mdadm', '--zero-superblock', '--force', *options['paths'], encoding='utf8', check=False)
         cp = await run(
-            'mdadm', '--build', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
-            f'--raid-devices={len(options["paths"])}', *options['paths'], encoding='utf8', check=False,
+            'mdadm', '--create', os.path.join('/dev/md', name), f'--level={extra.get("level", 1)}',
+            f'--raid-devices={len(options["paths"])}', '--meta=1.2', *options['paths'], encoding='utf8', check=False,
         )
         if cp.returncode:
             raise CallError(f'Failed to create mirror {name}: {cp.stderr}')
@@ -29,6 +30,12 @@ class DiskService(Service):
         if cp.returncode:
             raise CallError(f'Failed to stop mirror {name!r}: {cp.stderr}')
 
+        await run(
+            'mdadm', '--zero-superblock', '--force',
+            *[os.path.join('/dev', provider['name']) for provider in mirror['providers']],
+            encoding='utf8', check=False
+        )
+
     @private
     @filterable
     def get_swap_mirrors(self, filters, options):
@@ -40,7 +47,7 @@ class DiskService(Service):
 
                 real_path = os.path.realpath(array.path)
                 mirror = {
-                    'name': array.name,
+                    'name': array.name.split(':')[-1],
                     'path': array.path,
                     'real_path': real_path,
                     'encrypted_provider': None,

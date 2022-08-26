@@ -105,8 +105,7 @@ class SchemasMixin:
 
 class LoadPluginsMixin(SchemasMixin):
 
-    def __init__(self, overlay_dirs=None):
-        self.overlay_dirs = overlay_dirs or []
+    def __init__(self):
         self._services = {}
         self._services_aliases = {}
         super().__init__()
@@ -115,29 +114,22 @@ class LoadPluginsMixin(SchemasMixin):
         from middlewared.service import Service, CompoundService, ABSTRACT_SERVICES
 
         services = []
-        main_plugins_dir = os.path.realpath(os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            '..',
-            'plugins',
-        ))
-        plugins_dirs = [os.path.join(overlay_dir, 'plugins') for overlay_dir in self.overlay_dirs]
-        plugins_dirs.insert(0, main_plugins_dir)
-        for plugins_dir in plugins_dirs:
+        plugins_dir = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'plugins'))
+        if not os.path.exists(plugins_dir):
+            raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-            if not os.path.exists(plugins_dir):
-                raise ValueError(f'plugins dir not found: {plugins_dir}')
+        for mod in load_modules(plugins_dir, depth=1):
+            if on_module_begin:
+                on_module_begin(mod)
 
-            for mod in load_modules(plugins_dir, depth=1):
-                if on_module_begin:
-                    on_module_begin(mod)
+            services.extend(load_classes(mod, Service, ABSTRACT_SERVICES))
 
-                services.extend(load_classes(mod, Service, ABSTRACT_SERVICES))
-
-                if on_module_end:
-                    on_module_end(mod)
+            if on_module_end:
+                on_module_end(mod)
 
         def key(service):
             return service._config.namespace
+
         for name, parts in itertools.groupby(sorted(set(services), key=key), key=key):
             parts = list(parts)
 

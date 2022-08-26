@@ -55,7 +55,7 @@ class ShareSchema(RegistrySchema):
                                    'acl_xattr', 'nfs4acl_xattr', 'glusterfs',
                                    'winmsa', 'recycle', 'crossrename', 'zfs_core', 'aio_fbsd', 'io_uring')
 
-            invalid_vfs_objects = ['zfsacl', 'ixnas', 'noacl', 'zfs_space']
+            invalid_vfs_objects = ['noacl']
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
 
             vfs_objects_ordered = []
@@ -298,6 +298,12 @@ class ShareSchema(RegistrySchema):
 
         try:
             acltype = entry.middleware.call_sync('filesystem.path_get_acltype', data_in['path'])
+        except FileNotFoundError:
+            entry.middleware.logger.warning(
+                "%s: path does not exist. This is unexpected situation and "
+                "may indicate a failure of pool import.", data_in["path"]
+            )
+            raise ValueError(f"{data_in['path']}: path does not exist")
         except OSError:
             entry.middleware.logger.warning(
                 "%s: failed to determine acltype for path.",

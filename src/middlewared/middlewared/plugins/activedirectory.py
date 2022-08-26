@@ -46,6 +46,7 @@ class neterr(enum.Enum):
     def to_status(errstr):
         errors_to_rejoin = [
             '0xfffffff6',
+            'LDAP_INVALID_CREDENTIALS',
             'The name provided is not a properly formed account name',
             'The attempted logon is invalid.'
         ]
@@ -254,8 +255,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     'Active Directory.'
                 )
 
-        ds_state = await self.middleware.call('directoryservices.get_state')
-        if ds_state['ldap'] != 'DISABLED':
+        ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
+        if ldap_enabled:
             verrors.add(
                 "activedirectory_update.enable",
                 "Active Directory service may not be enabled while LDAP service is enabled."
@@ -442,7 +443,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 )
 
             try:
-                await self.validate_credentials(new)
+                await self.validate_credentials(new, domain_info['KDC server'])
             except CallError as e:
                 if new['kerberos_principal']:
                     method = "activedirectory.kerberos_principal"
@@ -492,6 +493,19 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         job = None
         if not old['enable'] and new['enable']:
+            ngc = await self.middleware.call('network.configuration.config')
+            if not ngc['domain'] or ngc['domain'] == 'local':
+                try:
+                    await self.middleware.call(
+                        'network.configuration.update',
+                        {'domain': ret['domainname']}
+                    )
+                except CallError:
+                    self.logger.warning(
+                        'Failed to update domain name in network configuration '
+                        'to match active directory value of %s', ret['domainname'], exc_info=True
+                    )
+
             job = (await self.middleware.call('activedirectory.start')).id
 
         elif not new['enable'] and old['enable']:
@@ -603,8 +617,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.direct_update({"kerberos_realm": realm_id})
             ad = await self.config()
 
-        if not await self.middleware.call('kerberos._klist_test'):
-            await self.middleware.call('kerberos.start')
+        await self.middleware.call('kerberos.start')
 
         """
         'workgroup' is the 'pre-Windows 2000 domain name'. It must be set to the nETBIOSName value in Active Directory.
@@ -735,7 +748,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 os.unlink('/etc/krb5.keytab')
 
     @private
-    async def validate_credentials(self, ad=None):
+    async def validate_credentials(self, ad=None, kdc=None):
         """
         Kinit with user-provided credentials is sufficient to determine
         whether the credentials are good. A testbind here is unnecessary.
@@ -746,6 +759,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         if ad is None:
             ad = await self.middleware.call('activedirectory.config')
+
+        await self.middleware.call('kerberos.generate_stub_config', ad['domainname'], kdc)
 
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
@@ -799,6 +814,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         cmd.append(ad['domainname'])
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
+            self.logger.warning("AD JOIN FAILED: %s", netads.stderr.decode())
             await self.set_state(DSStatus['FAULTED'].name)
             await self._parse_join_err(netads.stdout.decode().split(':', 1))
 
@@ -869,9 +885,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         `Last machine account password change`. timestamp
         """
-        cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
         if domain:
-            cmd.extend(['-S', domain])
+            cmd = [SMBCmd.NET.value, '-S', domain, '--json', '--option', f'realm={domain}', 'ads', 'info']
+        else:
+            cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
 
         netads = await run(cmd, check=False)
         if netads.returncode != 0:

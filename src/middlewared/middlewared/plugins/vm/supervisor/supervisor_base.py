@@ -12,6 +12,7 @@ from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
 from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB # noqa
 from middlewared.plugins.vm.numeric_set import parse_numeric_set
+from middlewared.plugins.vm.utils import ACTIVE_STATES
 
 from .utils import create_element
 
@@ -63,12 +64,17 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         domain = self.domain
         domain_state = DomainState(domain.state()[0])
         pid_path = os.path.join('/var/run/libvirt', 'qemu', f'{self.libvirt_domain_name}.pid')
+        if domain.isActive():
+            state = 'SUSPENDED' if domain_state == DomainState.PAUSED else 'RUNNING'
+        else:
+            state = 'STOPPED'
+
         data = {
-            'state': 'STOPPED' if not domain.isActive() else 'RUNNING',
+            'state': state,
             'pid': None,
             'domain_state': domain_state.name,
         }
-        if domain_state == DomainState.RUNNING:
+        if domain_state in (DomainState.PAUSED, DomainState.RUNNING):
             with contextlib.suppress(FileNotFoundError):
                 # Do not make a stat call to check if file exists or not
                 with open(pid_path, 'r') as f:
@@ -195,7 +201,7 @@ class VMSupervisorBase(LibvirtConnectionMixin):
             raise CallError(f'{self.libvirt_domain_name} domain is not active')
 
     def run_post_stop_actions(self):
-        while self.status()['state'] == 'RUNNING':
+        while self.status()['state'] in ACTIVE_STATES:
             time.sleep(5)
 
         errors = []
@@ -223,6 +229,18 @@ class VMSupervisorBase(LibvirtConnectionMixin):
     def poweroff(self):
         self._before_stopping_checks()
         self.domain.destroy()
+
+    def suspend(self):
+        self._before_stopping_checks()
+        self.domain.suspend()
+
+    def _before_resuming_checks(self):
+        if self.status()['state'] != 'SUSPENDED':
+            raise CallError(f'{self.libvirt_domain_name!r} domain is not paused')
+
+    def resume(self):
+        self._before_resuming_checks()
+        self.domain.resume()
 
     def get_domain_children(self):
         domain_children = [

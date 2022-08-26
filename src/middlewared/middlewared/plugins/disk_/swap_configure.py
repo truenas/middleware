@@ -29,6 +29,7 @@ class DiskService(Service):
         mirrors = await self.middleware.call('disk.get_swap_mirrors')
         encrypted_mirrors = {m['encrypted_provider']: m for m in mirrors if m['encrypted_provider']}
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
+        await self.middleware.call('disk.remove_degraded_mirrors')
 
         for device in await self.middleware.call('disk.get_swap_devices'):
             if device in encrypted_mirrors or device.startswith(('/dev/md', '/dev/mirror/')):
@@ -105,7 +106,7 @@ class DiskService(Service):
                     # If something failed here there is no point in trying to create the mirror
                     continue
 
-                swap_path = await self.middleware.call('disk.new_swap_name')
+                swap_path = await self.new_swap_name()
                 if not swap_path:
                     # Which means maximum has been reached and we can stop
                     break
@@ -137,6 +138,7 @@ class DiskService(Service):
                 'path': swap_device['path'],
                 'encrypted_provider': swap_device['encrypted_provider'],
             }
+            await run('mdadm', '--zero-superblock', '--force', swap_device['path'], encoding='utf8', check=False)
 
         created_swap_devices = []
         for swap_path, data in create_swap_devices.items():
@@ -191,16 +193,17 @@ class DiskService(Service):
         return existing_swap_devices['partitions'] + existing_swap_devices['mirrors'] + created_swap_devices
 
     @private
-    def new_swap_name(self):
+    async def new_swap_name(self):
         """
         Get a new name for a swap mirror
 
         Returns:
             str: name of the swap mirror
         """
+        used_names = [mirror['name'] for mirror in await self.middleware.call('disk.get_swap_mirrors')]
         for i in range(MIRROR_MAX):
             name = f'swap{i}'
-            if not os.path.exists(os.path.join('/dev/md', name)):
+            if name not in used_names:
                 return name
 
     @private

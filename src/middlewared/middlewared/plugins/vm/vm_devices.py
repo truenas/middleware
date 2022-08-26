@@ -11,6 +11,7 @@ from middlewared.utils import run
 from middlewared.async_validators import check_path_resides_within_volume
 
 from .devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB
+from .utils import ACTIVE_STATES
 
 
 RE_PPTDEV_NAME = re.compile(r'([0-9]+/){2}[0-9]+')
@@ -61,7 +62,7 @@ class VMDeviceService(CRUDService):
                 ['OR', [['attachment', '=', None], ['attachment.method', '=', 'vm.devices.query']]],
                 ['ro', '=', False],
             ],
-            {}, ['ATTACHMENT']
+            {}, ['ATTACHMENT', 'RO']
         )
 
         for zvol in zvols:
@@ -131,8 +132,7 @@ class VMDeviceService(CRUDService):
                 )
                 ds_options['volblocksize'] = zvol_blocksize
 
-                new_zvol = (await self.middleware.call('pool.dataset.create', ds_options))['id']
-                data['attributes']['path'] = f'/dev/zvol/{new_zvol}'
+                await self.middleware.call('pool.dataset.create', ds_options)
         elif data['dtype'] == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']
@@ -229,8 +229,8 @@ class VMDeviceService(CRUDService):
         """
         device = await self.get_instance(id)
         status = await self.middleware.call('vm.status', device['vm'])
-        if status.get('state') == 'RUNNING':
-            raise CallError('Please stop associated VM before deleting VM device.')
+        if status['state'] in ACTIVE_STATES:
+            raise CallError('Please stop/resume associated VM before deleting VM device.')
 
         try:
             await self.delete_resource(options, device)

@@ -4,6 +4,7 @@
         middleware.logger.debug('Kube-router CNI configuration not generated due to missing credentials.')
         raise FileShouldNotExist()
     kube_router = config['cni_config']['kube_router']
+    cluster_ca = middleware.call_sync('k8s.node.get_cluster_ca')
 %>\
 apiVersion: v1
 clusterCIDR: ${config["cluster_cidr"]}
@@ -12,7 +13,7 @@ clusters:
 - name: cluster
   cluster:
     server: https://127.0.0.1:6443
-    certificate-authority-data: ${kube_router['ca']}
+    certificate-authority-data: ${cluster_ca}
 users:
 - name: kube-router
   user:

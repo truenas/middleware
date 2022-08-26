@@ -560,6 +560,48 @@ class SSH_NFS(NFS):
 
         return
 
+    def mkdir(self, path):
+        mkdir = SSH_TEST(
+            f"mkdir {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if mkdir['result'] == False:
+            raise RuntimeError(mkdir['stderr'])
+
+    def rmdir(self, path):
+        rmdir = SSH_TEST(
+            f"rmdir {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if rmdir['result'] == False:
+            raise RuntimeError(rmdir['stderr'])
+
+    def ls(self, path):
+        ls = SSH_TEST(
+            f"ls {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if ls['result'] == False:
+            raise RuntimeError(ls['stderr'])
+
+        return ls['output']
+
+    def rename(self, src, dst): 
+        mv = SSH_TEST(
+            f"mv {self._localpath}/{path} {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if mv['result'] == False:
+            raise RuntimeError(mv['stderr'])
+
+    def unlink(self, path):
+        rm = SSH_TEST(
+            f"rm {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if rm['result'] == False:
+            raise RuntimeError(rm['stderr'])
+
     def getacl(self, path):
         self.validate(path)
         getfacl = SSH_TEST(
@@ -609,6 +651,32 @@ class SSH_NFS(NFS):
         )
         if create['result'] == False:
             raise RuntimeError(create['stderr'])
+
+    def server_side_copy(self, path1, path2):
+        """
+        Currently this is a hack and so writes a default payload to fd1 and then
+        does copy_file_range() to duplicate to fd2
+        """
+        self.validate(path1)
+        self.validate(path2)
+
+        python_script = [
+            "import os",
+            f"file1 = open('{self._localpath}/{path1}', 'w')",
+            "file1.write('canary')",
+            "file1.flush()",
+            "os.fsync(file1.fileno())",
+            f"srcfd = os.open('{self._localpath}/{path1}', os.O_CREAT | os.O_RDWR)",
+            f"dstfd = os.open('{self._localpath}/{path2}', os.O_CREAT | os.O_RDWR)",
+            "written = os.copy_file_range(srcfd, dstfd, len('canary'))",
+            "assert written == len('canary')"
+        ]
+        cmd = ['python3', '-c']
+        cmd.append(f'"{";".join(python_script)}"')
+
+        rv = SSH_TEST(' '.join(cmd), self._user, self._password, self._ip)
+        if rv['result'] == False:
+            raise RuntimeError(rv['stderr'])
 
     def mount(self):
         mkdir = SSH_TEST(f"mkdir {self._localpath}", self._user, self._password, self._ip)

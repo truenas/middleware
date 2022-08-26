@@ -3,6 +3,7 @@ import errno
 from middlewared.schema import accepts, Int, returns
 from middlewared.service import CallError, private, Service
 
+from .utils import ACTIVE_STATES
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -27,7 +28,7 @@ class VMService(Service, VMSupervisorMixin):
     @private
     async def init_guest_vmemory(self, vm, overcommit):
         guest_status = await self.middleware.call('vm.status', vm['id'])
-        if guest_status.get('state') != 'RUNNING':
+        if guest_status.get('state') not in ACTIVE_STATES:
             await self._set_guest_vmemory(vm['id'], overcommit)
         else:
             raise CallError('VM process is running, we won\'t allocate memory')

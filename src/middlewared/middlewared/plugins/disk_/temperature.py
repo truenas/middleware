@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import time
+import math
 
 import async_timeout
 
@@ -154,6 +155,12 @@ class DiskService(Service):
 
         return dict(zip(names, await asyncio_map(temperature, names, 8)))
 
+    @private
+    def get_temp_value(self, value):
+        if math.isnan(value):
+            value = None
+        return value
+
     @accepts(List('names', items=[Str('name')]), Int('days'))
     @returns(Dict('temperatures', additional_attrs=True))
     def temperature_agg(self, names, days):
@@ -184,9 +191,9 @@ class DiskService(Service):
         result = {}
         for disk, values in zip(disks, grouper(output, 3)):  # FIXME: `incomplete='strict' when we switch to python 3.10
             result[disk] = {
-                'min': values[0],
-                'max': values[1],
-                'avg': values[2],
+                'min': self.get_temp_value(values[0]),
+                'max': self.get_temp_value(values[1]),
+                'avg': self.get_temp_value(values[2]),
             }
 
         return result

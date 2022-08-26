@@ -3,7 +3,7 @@ from dateutil.parser import parse, ParserError
 from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
-from middlewared.schema import Dict, Int, Str
+from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 from middlewared.validators import Range
@@ -37,6 +37,17 @@ class KubernetesPodService(CRUDService):
                     pod['events'] = events[pod['metadata']['uid']]
 
         return filter_list(pods, filters, options)
+
+    @accepts(
+        Str('pod_name', empty=False),
+        Dict(
+            'k8s.pod.delete',
+            Str('namespace', required=True, empty=False),
+        )
+    )
+    async def do_delete(self, pod_name, options):
+        async with api_client() as (api, context):
+            await context['core_api'].delete_namespaced_pod(pod_name, namespace=options['namespace'])
 
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
         async with api_client() as (api, context):

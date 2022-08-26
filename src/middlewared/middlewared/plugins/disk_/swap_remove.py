@@ -1,4 +1,5 @@
 import asyncio
+import glob
 
 from middlewared.schema import Bool, Dict, List, Str
 from middlewared.service import accepts, lock, private, Service
@@ -6,6 +7,13 @@ from middlewared.utils import run
 
 
 class DiskService(Service):
+
+    @private
+    async def remove_degraded_mirrors(self):
+        available_mirrors = [mirror['real_path'] for mirror in await self.middleware.call('disk.get_swap_mirrors')]
+        for real_path in await self.middleware.run_in_thread(glob.glob, '/dev/md*'):
+            if real_path != '/dev/md' and real_path not in available_mirrors:
+                await run('mdadm', '--stop', real_path, encoding='utf8')
 
     @private
     @lock('swaps_configure')

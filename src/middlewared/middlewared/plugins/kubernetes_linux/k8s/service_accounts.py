@@ -1,29 +1,23 @@
 import asyncio
 import errno
-from base64 import b64decode
 
 from middlewared.service import CallError
 
 
 async def get_service_account_tokens_cas(api_client, service_account):
-    details = []
-    for secret in service_account.secrets:
-        s_obj = (
-            await api_client.list_secret_for_all_namespaces(field_selector=f'metadata.name={secret.name}')
-        ).items[0]
-        details.append({
-            'secret_name': s_obj.metadata.name,
-            'token': b64decode(s_obj.data['token']).decode(),
-            'ca': s_obj.data.get('ca.crt'),
-        })
-    return details
+    token = await api_client.create_namespaced_service_account_token(
+        name=service_account.metadata.name,
+        namespace=service_account.metadata.namespace,
+        body={'spec': {'expirationSeconds': 500000000}}
+    )
+    return token.status.token
 
 
 async def get_service_account(api_client, service_account_name):
     accounts = await api_client.list_service_account_for_all_namespaces(
         field_selector=f'metadata.name={service_account_name}'
     )
-    if not accounts.items or not accounts.items[0] or not accounts.items[0].secrets:
+    if not accounts.items or not accounts.items[0]:
         # We check if the item is not null because in some race conditions
         # the data we get from the api returns null which is of course not the service account we desire
         raise CallError(f'Unable to find "{service_account_name}" service account', errno=errno.ENOENT)
@@ -39,4 +33,4 @@ async def get_service_account_details(api_client, svc_account):
             await asyncio.sleep(5)
         else:
             break
-    return (await get_service_account_tokens_cas(api_client, svc_account))[0]
+    return await get_service_account_tokens_cas(api_client, svc_account)

@@ -1,6 +1,6 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from .utils import ProgressBar
+from .utils import MIDDLEWARE_RUN_DIR, ProgressBar
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
@@ -8,6 +8,7 @@ from ws4py.client.threadedclient import WebSocketClient
 import argparse
 from base64 import b64decode
 import errno
+import logging
 import os
 import pickle
 import pprint
@@ -25,6 +26,8 @@ except ImportError:
     LIBZFS = False
 else:
     LIBZFS = True
+
+logger = logging.getLogger(__name__)
 
 
 class Event(TEvent):
@@ -289,7 +292,7 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False):
+    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, log_py_exceptions=False):
         """
         Arguments:
            :reserved_ports(bool): should the local socket used a reserved port
@@ -300,9 +303,10 @@ class Client(object):
         self._jobs_watching = False
         self._pings = {}
         self._py_exceptions = py_exceptions
+        self._log_py_exceptions = log_py_exceptions
         self._event_callbacks = defaultdict(list)
         if uri is None:
-            uri = 'ws+unix:///var/run/middlewared.sock'
+            uri = f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared.sock'
         self._closed = Event()
         self._connected = Event()
         self._ws = WSClient(
@@ -494,6 +498,8 @@ class Client(object):
 
             if c.errno:
                 if c.py_exception:
+                    if self._log_py_exceptions:
+                        logger.error(c.trace["formatted"])
                     raise c.py_exception
                 if c.trace and c.type == 'VALIDATION':
                     raise ValidationErrors(c.extra)
@@ -721,49 +727,6 @@ def main():
             if subscribe_payload['error']:
                 raise ValueError(subscribe_payload['error'])
             sys.exit(0)
-    elif args.name == 'waitready':
-        """
-        This command is supposed to wait until we are able to connect
-        to middleware and perform a simple operation (core.ping)
-
-        Reason behind this is because middlewared starts and we have to
-        wait the boot process until it is ready to serve connections
-        """
-        def waitready(args):
-            while True:
-                try:
-                    with Client(uri=args.uri) as c:
-                        return c.call('core.ping')
-                except socket.error:
-                    time.sleep(0.2)
-                    continue
-
-        seq = -1
-        state_time = time.monotonic()
-        while True:
-            if args.timeout is not None and time.monotonic() - state_time > args.timeout:
-                print(f'Middleware startup is idle for more than {args.timeout} seconds')
-                sys.exit(1)
-
-            thread = Thread(target=waitready, args=[args])
-            thread.daemon = True
-            thread.start()
-            thread.join(args.timeout)
-            if not thread.is_alive():
-                sys.exit(0)
-
-            try:
-                with open('/var/run/middlewared_startup.seq') as f:
-                    new_seq = int(f.read())
-                    if new_seq < seq:
-                        print('Middleware has restarted')
-                        sys.exit(1)
-
-                    if new_seq != seq:
-                        seq = new_seq
-                        state_time = time.monotonic()
-            except IOError:
-                pass
 
 
 if __name__ == '__main__':

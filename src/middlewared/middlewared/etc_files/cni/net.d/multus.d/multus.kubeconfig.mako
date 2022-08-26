@@ -4,6 +4,7 @@
         middleware.logger.debug('Multus CNI configuration not generated due to missing credentials.')
         raise FileShouldNotExist()
     multus = config['cni_config']['multus']
+    cluster_ca = middleware.call_sync('k8s.node.get_cluster_ca')
 %>\
 apiVersion: v1
 kind: Config
@@ -11,7 +12,7 @@ clusters:
 - name: local
   cluster:
     server: https://127.0.0.1:6443
-    certificate-authority-data: ${multus['ca']}
+    certificate-authority-data: ${cluster_ca}
 users:
 - name: multus
   user:

@@ -49,7 +49,7 @@ def user():
 def test_root_api_key_websocket(request):
     depends(request, ["ssh_password"], scope="session")
     """We should be able to call a method with root API key using Websocket."""
-    with api_key([]) as key:
+    with api_key([{"method": "*", "resource": "*"}]) as key:
         with user():
             cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
             results = SSH_TEST(cmd, user_, password, ip)
@@ -80,7 +80,7 @@ def test_denied_api_key_websocket(request):
 
 def test_root_api_key_rest():
     """We should be able to call a method with root API key using REST API."""
-    with api_key([]) as key:
+    with api_key([{"method": "*", "resource": "*"}]) as key:
         results = GET('/system/info/', anonymous=True, headers={"Authorization": f"Bearer {key}"})
         assert results.status_code == 200, results.text
 
@@ -108,7 +108,7 @@ def test_denied_api_key_rest():
 
 def test_root_api_key_upload():
     """We should be able to call a method with root API key using file upload endpoint."""
-    with api_key([]) as key:
+    with api_key([{"method": "*", "resource": "*"}]) as key:
         r = requests.post(
             f"http://{ip}/_upload",
             headers={"Authorization": f"Bearer {key}"},

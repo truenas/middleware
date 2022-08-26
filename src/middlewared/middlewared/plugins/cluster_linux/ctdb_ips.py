@@ -59,6 +59,10 @@ class CtdbIpService(Service):
                         f'{schema_name}.{data["interface"]}',
                         f'"{data["interface"]}" not found on this system.',
                     )
+
+        elif schema_name == 'public_delete':
+            return
+
         else:
             address = data.get('address') or data['public_ip']
 
@@ -196,7 +200,11 @@ class CtdbIpService(Service):
                         new_entry = '#' + old_entry if not old_entry.startswith('#') else old_entry.split('#')[1]
 
                     # replace our old entry with the new one
-                    lines[index] = new_entry
+                    # if we're deleting a public IP address, remove the entry completely.
+                    if schema_name != 'public_delete':
+                        lines[index] = new_entry
+                    else:
+                        lines.pop(index)
                 except ValueError as e:
                     raise CallError(f'Failed finding entry in file with error: {e}')
 

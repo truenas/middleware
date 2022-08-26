@@ -38,9 +38,9 @@ class ApiKey:
                 self.exact[method].add(resource)
 
     def authorize(self, method, resource):
-        if not self.api_key["allowlist"]:
-            return True
+        return self._authorize_internal("*", resource) or self._authorize_internal(method, resource)
 
+    def _authorize_internal(self, method, resource):
         if (exact := self.exact.get(method)) and resource in exact:
             return True
 
@@ -73,8 +73,9 @@ class ApiKeyService(CRUDService):
             List("allowlist", items=[
                 Dict(
                     "allowlist_item",
-                    Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE"]),
+                    Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
                     Str("resource", required=True),
+                    register=True,
                 ),
             ]),
             register=True,

@@ -9,7 +9,7 @@ from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
 from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
-from .utils import osc, sw_version
+from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
@@ -65,6 +65,8 @@ import tracemalloc
 from systemd.daemon import notify as systemd_notify
 
 from . import logger
+
+SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
 @dataclass
@@ -832,11 +834,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
 
     def __init__(
-        self, loop_debug=False, loop_monitor=True, overlay_dirs=None, debug_level=None,
-        log_handler=None, startup_seq_path=None, trace_malloc=False,
+        self, loop_debug=False, loop_monitor=True, debug_level=None,
+        log_handler=None, trace_malloc=False,
         log_format='[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s',
     ):
-        super().__init__(overlay_dirs)
+        super().__init__()
         self.logger = logger.Logger(
             'middlewared', debug_level, log_format
         ).getLogger()
@@ -849,8 +851,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.debug_level = debug_level
         self.log_handler = log_handler
         self.log_format = log_format
-        self.startup_seq = 0
-        self.startup_seq_path = startup_seq_path
         self.app = None
         self.loop = None
         self.__thread_id = threading.get_ident()
@@ -1055,19 +1055,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             pass
 
     def __notify_startup_progress(self):
-        if osc.IS_FREEBSD:
-            if self.startup_seq_path is None:
-                return
-
-            with open(self.startup_seq_path + ".tmp", "w") as f:
-                f.write(f"{self.startup_seq}")
-
-            os.rename(self.startup_seq_path + ".tmp", self.startup_seq_path)
-
-            self.startup_seq += 1
-
-        if osc.IS_LINUX:
-            systemd_notify(f'EXTEND_TIMEOUT_USEC={int(240 * 1e6)}')
+        systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
 
     def __notify_startup_complete(self):
         with open(middlewared.service.MIDDLEWARE_STARTED_SENTINEL_PATH, 'w'):
@@ -1215,9 +1203,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     def __init_procpool(self):
         self.__procpool = concurrent.futures.ProcessPoolExecutor(
             max_workers=5,
-            initializer=functools.partial(
-                worker_init, self.overlay_dirs, self.debug_level, self.log_handler
-            ),
+            initializer=functools.partial(worker_init, self.debug_level, self.log_handler)
         )
 
     async def run_in_proc(self, method, *args, **kwargs):
@@ -1760,7 +1746,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         runner = web.AppRunner(app, handle_signals=False, access_log=None)
         await runner.setup()
-        await web.UnixSite(runner, '/var/run/middlewared-internal.sock').start()
+        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared-internal.sock')).start()
 
         await self.__plugins_setup(setup_funcs)
 
@@ -1768,7 +1754,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self._setup_periodic_tasks()
 
         await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
-        await web.UnixSite(runner, '/var/run/middlewared.sock').start()
+        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')).start()
 
         if self.trace_malloc:
             limit = self.trace_malloc[0]
@@ -1847,8 +1833,8 @@ def main():
     ], default='console')
     args = parser.parse_args()
 
-    pidpath = '/var/run/middlewared.pid'
-    startup_seq_path = '/tmp/middlewared_startup.seq'
+    os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
+    pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
     if args.restart:
         if os.path.exists(pidpath):
@@ -1874,10 +1860,8 @@ def main():
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
         trace_malloc=args.trace_malloc,
-        overlay_dirs=args.overlay_dirs,
         debug_level=args.debug_level,
         log_handler=args.log_handler,
-        startup_seq_path=startup_seq_path,
     ).run()
 
 

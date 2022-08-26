@@ -45,7 +45,7 @@ from zettarepl.zettarepl import create_zettarepl
 from middlewared.client import Client, ClientException
 from middlewared.logger import reconfigure_logging, setup_logging
 from middlewared.service import CallError, Service
-from middlewared.utils import start_daemon_thread
+from middlewared.utils import MIDDLEWARE_RUN_DIR, start_daemon_thread
 from middlewared.utils.cgroups import move_to_root_cgroups
 from middlewared.utils.size import format_size
 import middlewared.utils.osc as osc
@@ -141,6 +141,7 @@ class ZettareplProcess:
 
         self.zettarepl = None
 
+        self.vm_contexts = {}
         self.vmware_contexts = {}
 
     def __call__(self):
@@ -165,7 +166,7 @@ class ZettareplProcess:
                 handler.addFilter(LongStringsFilter())
                 handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
-            c = Client('ws+unix:///var/run/middlewared-internal.sock', py_exceptions=True)
+            c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
             c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging())
 
             definition = Definition.from_data(self.definition, raise_on_error=False)
@@ -200,9 +201,13 @@ class ZettareplProcess:
                 if isinstance(message, PeriodicSnapshotTaskStart):
                     with Client() as c:
                         context = None
+                        vm_context = None
                         if begin_context := c.call("vmware.periodic_snapshot_task_begin", task_id):
                             context = c.call("vmware.periodic_snapshot_task_proceed", begin_context, job=True)
+                        if vm_context := c.call("vm.periodic_snapshot_task_begin", task_id):
+                            c.call("vm.suspend_vms", list(vm_context))
 
+                    self.vm_contexts[task_id] = vm_context
                     self.vmware_contexts[task_id] = context
 
                     if context and context["vmsynced"]:
@@ -213,9 +218,13 @@ class ZettareplProcess:
 
                 if isinstance(message, (PeriodicSnapshotTaskSuccess, PeriodicSnapshotTaskError)):
                     context = self.vmware_contexts.pop(task_id, None)
-                    if context:
+                    vm_context = self.vm_contexts.pop(task_id, None)
+                    if context or vm_context:
                         with Client() as c:
-                            c.call("vmware.periodic_snapshot_task_end", context, job=True)
+                            if context:
+                                c.call("vmware.periodic_snapshot_task_end", context, job=True)
+                            if vm_context:
+                                c.call("vm.resume_suspended_vms", list(vm_context))
 
         except ClientException as e:
             if e.error:

@@ -307,6 +307,10 @@ class PoolService(CRUDService):
         Int('free', required=True, null=True),
         Int('freeing', required=True, null=True),
         Str('fragmentation', required=True, null=True),
+        Str('size_str', required=True, null=True),
+        Str('allocated_str', required=True, null=True),
+        Str('free_str', required=True, null=True),
+        Str('freeing_str', required=True, null=True),
         Dict(
             'autotrim',
             required=True,
@@ -544,6 +548,10 @@ class PoolService(CRUDService):
             'free': None,
             'freeing': None,
             'fragmentation': None,
+            'size_str': None,
+            'allocated_str': None,
+            'free_str': None,
+            'freeing_str': None,
             'autotrim': {
                 'parsed': 'off',
                 'rawvalue': 'off',
@@ -568,6 +576,10 @@ class PoolService(CRUDService):
                 'free': info['properties']['free']['parsed'],
                 'freeing': info['properties']['freeing']['parsed'],
                 'fragmentation': info['properties']['fragmentation']['parsed'],
+                'size_str': info['properties']['size']['rawvalue'],
+                'allocated_str': info['properties']['allocated']['rawvalue'],
+                'free_str': info['properties']['free']['rawvalue'],
+                'freeing_str': info['properties']['freeing']['rawvalue'],
                 'autotrim': info['properties']['autotrim'],
             })
 
@@ -604,7 +616,7 @@ class PoolService(CRUDService):
             Bool('generate_key', default=False),
             Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
             Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
-            Str('passphrase', default=None, null=True, empty=False, private=True),
+            Str('passphrase', default=None, null=True, validators=[Range(min=8)], empty=False, private=True),
             Str('key', default=None, null=True, validators=[Range(min=64, max=64)], private=True),
             register=True
         ),
@@ -1045,6 +1057,18 @@ class PoolService(CRUDService):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
                 disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
+
+    @private
+    async def get_usb_disks(self, name):
+        disks = {disk['name']: disk for disk in await self.middleware.call('disk.query')}
+        pool_state = await self.middleware.call('zfs.pool.query_imported_fast', [name])
+
+        return [
+            disk for disk in filter(
+                lambda d: d in disks and disks[d]['bus'] == 'USB',
+                await self.middleware.call('zfs.pool.get_disks', name)
+            )
+        ] if pool_state and list(pool_state.values())[0]['state'] == 'ONLINE' else []
 
     @item_method
     @accepts(Int('id'), Dict(
@@ -1820,6 +1844,8 @@ class PoolService(CRUDService):
         if os.path.exists(ZPOOL_CACHE_FILE):
             shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
 
+        # Now finally configure swap to manage any disks which might have been removed
+        self.middleware.call_sync('disk.swaps_configure')
         self.middleware.call_hook_sync('pool.post_import', None)
         job.set_progress(100, 'Pools import completed')
 
@@ -1993,7 +2019,7 @@ def get_props_of_interest_mapping():
         ('special_small_blocks', 'special_small_block_size', None),
         ('pbkdf2iters', None, None),
         ('creation', None, None),
-        ('snapdev', None, None),
+        ('snapdev', None, str.upper),
     ]
 
 
@@ -3560,7 +3586,7 @@ class PoolDatasetService(CRUDService):
                 if acltype in ['POSIX', 'OFF'] and to_check.get('aclmode', 'DISCARD') != 'DISCARD':
                     verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
 
-            for i in ('force_size', 'sparse', 'volsize', 'volblocksize', 'snapdev'):
+            for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
                 if i in data:
                     verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
 

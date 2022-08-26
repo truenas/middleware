@@ -3,9 +3,23 @@
 set vm [lindex $argv 0];
 set logfilepath [lindex $argv 1];
 log_file -noappend "$logfilepath"
-set timeout 1200
+set timeout 600
 set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
+
+# boot serial
+expect {
+  "Press enter to boot" {
+    sleep .5
+    send "j"
+  }
+
+  timeout {
+    send_user "Grub timeout\n"
+    exit 1
+  }
+}
+
 
 # ┌───────────FreeNAS 11.3-MASTER-201810170704 Console Setup──────────────┐
 # │ ┌───────────────────────────────────────────────────────────────────┐ │

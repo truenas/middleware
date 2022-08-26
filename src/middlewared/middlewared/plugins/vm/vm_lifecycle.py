@@ -1,7 +1,7 @@
 import asyncio
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns
-from middlewared.service import CallError, item_method, job, Service
+from middlewared.service import CallError, item_method, job, private, Service
 
 from .vm_supervisor import VMSupervisorMixin
 
@@ -26,8 +26,11 @@ class VMService(Service, VMSupervisorMixin):
         await self.middleware.run_in_thread(self._check_setup_connection)
 
         vm = await self.middleware.call('vm.get_instance', id)
-        if vm['status']['state'] == 'RUNNING':
-            raise CallError(f'{vm["name"]} is already running')
+        vm_state = vm['status']['state']
+        if vm_state == 'RUNNING':
+            raise CallError(f'{vm["name"]!r} is already running')
+        if vm_state == 'SUSPENDED':
+            raise CallError(f'{vm["name"]!r} VM is suspended and can only be resumed/powered off')
 
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
@@ -105,6 +108,54 @@ class VMService(Service, VMSupervisorMixin):
             raise CallError(f'Failed to stop {vm["name"]!r} vm: {stop_job.error}')
 
         self.start(id, {'overcommit': True})
+
+    @item_method
+    @accepts(Int('id'))
+    @returns()
+    def suspend(self, id):
+        """
+        Suspend `id` VM.
+        """
+        self._check_setup_connection()
+
+        vm = self.middleware.call_sync('vm.get_instance', id)
+        self._suspend(vm['name'])
+
+    @item_method
+    @accepts(Int('id'))
+    @returns()
+    def resume(self, id):
+        """
+        Resume suspended `id` VM.
+        """
+        self._check_setup_connection()
+
+        vm = self.middleware.call_sync('vm.get_instance', id)
+        self._resume(vm['name'])
+
+    @private
+    def suspend_vms(self, vm_ids):
+        vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
+        for vm_id in filter(
+            lambda vm_id: vms.get(vm_id).get('status', {}).get('state') == 'RUNNING',
+            map(int, vm_ids)
+        ):
+            try:
+                self.suspend(vm_id)
+            except Exception:
+                self.logger.error('Failed to suspend %r vm', vms[vm_id]['name'], exc_info=True)
+
+    @private
+    def resume_suspended_vms(self, vm_ids):
+        vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
+        for vm_id in filter(
+            lambda vm_id: vms.get(vm_id).get('status', {}).get('state') == 'SUSPENDED',
+            map(int, vm_ids)
+        ):
+            try:
+                self.resume(vm_id)
+            except Exception:
+                self.logger.error('Failed to resume %r vm', vms[vm_id]['name'], exc_info=True)
 
 
 async def _event_vms(middleware, event_type, args):

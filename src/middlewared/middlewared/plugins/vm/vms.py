@@ -11,6 +11,7 @@ from middlewared.service import CallError, CRUDService, item_method, private
 from middlewared.validators import Range, UUID
 from middlewared.plugins.vm.numeric_set import parse_numeric_set, NumericSet
 
+from .utils import ACTIVE_STATES
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -44,6 +45,7 @@ class VMModel(sa.Model):
     nodeset = sa.Column(sa.Text(), default=None, nullable=True)
     pin_vcpus = sa.Column(sa.Boolean(), default=False)
     hide_from_msr = sa.Column(sa.Boolean(), default=False)
+    suspend_on_snapshot = sa.Column(sa.Boolean(), default=False)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
@@ -112,6 +114,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('cpuset', default=None, null=True, validators=[NumericSet()]),
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
         Bool('pin_vcpus', default=False),
+        Bool('suspend_on_snapshot', default=False),
         Int('memory', required=True, validators=[Range(min=20)]),
         Int('min_memory', null=True, validators=[Range(min=20)], default=None),
         Bool('hyperv_enlightenments', default=False),
@@ -155,8 +158,12 @@ class VMService(CRUDService, VMSupervisorMixin):
         `hide_from_msr` is a boolean which when set will hide the KVM hypervisor from standard MSR based discovery and
         is useful to enable when doing GPU passthrough.
 
-        `hyperv_enlightenments` can be used to enable subset of predefined Hyper-V enlightenments for Windows guests. These
-        enlightenments improve performance and enable otherwise missing features.
+        `hyperv_enlightenments` can be used to enable subset of predefined Hyper-V enlightenments for Windows guests.
+        These enlightenments improve performance and enable otherwise missing features.
+
+        `suspend_on_snapshot` is a boolean attribute which when enabled will automatically pause/suspend VMs when
+        a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
+        be paused, they will be in that case.
         """
         async with LIBVIRT_LOCK:
             await self.middleware.run_in_thread(self._check_setup_connection)
@@ -286,9 +293,8 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         if new['name'] != old['name']:
             await self.middleware.run_in_thread(self._check_setup_connection)
-            if old['status']['state'] == 'RUNNING':
-                raise CallError(
-                    'VM name can only be changed when VM is inactive')
+            if old['status']['state'] in ACTIVE_STATES:
+                raise CallError('VM name can only be changed when VM is inactive')
 
             if old['name'] not in self.vms:
                 raise CallError(f'Unable to locate domain for {old["name"]}')
@@ -328,14 +334,13 @@ class VMService(CRUDService, VMSupervisorMixin):
             await self.middleware.run_in_thread(self._check_setup_connection)
             status = await self.middleware.call('vm.status', id)
             force_delete = data.get('force')
-            if status.get('state') == 'RUNNING':
+            if status['state'] in ACTIVE_STATES:
                 await self.middleware.call('vm.poweroff', id)
                 # We would like to wait at least 7 seconds to have the vm
                 # complete it's post vm actions which might require interaction with it's domain
                 await asyncio.sleep(7)
             elif status.get('state') == 'ERROR' and not force_delete:
-                raise CallError(
-                    'Unable to retrieve VM status. Failed to destroy VM')
+                raise CallError('Unable to retrieve VM status. Failed to destroy VM')
 
             if data['zvols']:
                 devices = await self.middleware.call('vm.device.query', [
@@ -390,11 +395,10 @@ class VMService(CRUDService, VMSupervisorMixin):
         Get the status of `id` VM.
 
         Returns a dict:
-            - state, RUNNING or STOPPED
+            - state, RUNNING / STOPPED / SUSPENDED
             - pid, process id if RUNNING
         """
-        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [
-                                       ['id', '=', id]], {'get': True})
+        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
         return self.status_impl(vm)
 
     @private
@@ -404,8 +408,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 # Whatever happens, query shouldn't fail
                 return self._status(vm['name'])
             except Exception:
-                self.middleware.logger.debug(
-                    'Failed to retrieve VM status for %r', vm['name'], exc_info=True)
+                self.logger.debug('Failed to retrieve VM status for %r', vm['name'], exc_info=True)
 
         return {
             'state': 'ERROR',

@@ -1,11 +1,11 @@
 import asyncio
 import contextlib
-import functools
 
 from middlewared.schema import accepts, Bool, Dict
 from middlewared.service import CallError, private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 
+from .utils import ACTIVE_STATES
 from .vm_supervisor import VMSupervisorMixin
 
 
@@ -26,8 +26,8 @@ class VMService(Service, VMSupervisorMixin):
             if not await self.middleware.call('service.started', 'libvirtd'):
                 await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
             # We want to do this before initializing libvirt connection
-            self._open()
-            self._check_connection_alive()
+            await self.middleware.run_in_thread(self._open)
+            await self.middleware.run_in_thread(self._check_connection_alive)
             await self.middleware.call('vm.setup_libvirt_events')
         except (asyncio.TimeoutError, CallError):
             self.middleware.logger.error('Failed to setup libvirt', exc_info=True)
@@ -112,11 +112,17 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
-    async def stop_vm(mw, vm):
-        stop_job = await mw.call('vm.stop', vm['id'], {'force_after_timeout': True})
-        await stop_job.wait()
-        if stop_job.error:
-            mw.logger.error(f'Stopping VM {vm["name"]} failed: {stop_job.error}')
+    async def poweroff_stop_vm(vm):
+        if vm['status']['state'] == 'RUNNING':
+            stop_job = await middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
+            await stop_job.wait()
+            if stop_job.error:
+                middleware.logger.error('Stopping %r VM failed: %r', vm['name'], stop_job.error)
+        else:
+            try:
+                await middleware.call('vm.poweroff', vm['id'])
+            except Exception:
+                middleware.logger.error('Powering off %r VM failed', vm['name'], exc_info=True)
 
     if args['id'] == 'ready':
         await middleware.call('vm.initialize_vms')
@@ -131,8 +137,8 @@ async def __event_system_ready(middleware, event_type, args):
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await asyncio_map(
-                functools.partial(stop_vm, middleware),
-                (await middleware.call('vm.query', [('status.state', '=', 'RUNNING')])), 16
+                poweroff_stop_vm,
+                (await middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])), 16
             )
             middleware.logger.debug('VM(s) stopped successfully')
             # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to

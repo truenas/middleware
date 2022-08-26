@@ -25,13 +25,16 @@ class GlusterdService(SimpleService):
         await self.middleware.call('service.restart', 'glustereventsd')
 
     async def before_stop(self):
+        svcs = ('cifs', 'ctdb', 'glustereventsd')
+        for svc in svcs:
+            if await self.middleware.call('service.started', svc):
+                await self.middleware.call('service.stop', svc)
+
         await self.middleware.call('service.stop', 'ctdb')
         umount_job = await self.middleware.call('gluster.fuse.umount', {'all': True})
         await umount_job.wait()
 
     async def after_stop(self):
-        await self.middleware.call('service.stop', 'glustereventsd')
-
         # systemd[1]: glusterd.service: Unit process 1376703 (glusterfsd) remains running after unit stopped.
         # systemd[1]: glusterd.service: Unit process 1376720 (glusterfs) remains running after unit stopped.
         # This prevents from tank/.system/ctdb_shared_vol from being unmounted
@@ -41,9 +44,9 @@ class GlusterdService(SimpleService):
             await asyncio.wait(futures)
 
     def _glusterd_pids(self):
-        pids = []
-        for process in psutil.process_iter(attrs=['cmdline']):
-            if process.info['cmdline']:
-                if process.info['cmdline'][0].endswith(('/glusterd', '/glusterfs', '/glusterfsd')):
-                    pids.append(process.pid)
-        return pids
+        pids = set()
+        for process in filter(lambda x: x.info['cmdline'], psutil.process_iter(attrs=['cmdline'])):
+            if process.info['cmdline'][0].endswith(('/glusterd', '/glusterfs', '/glusterfsd')):
+                pids.add(process.pid)
+
+        return list(pids)

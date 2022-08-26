@@ -14,6 +14,6 @@
         ])
 
 %>\
-% for group in filter_list(render_ctx['group.query'], [], {'order_by': ['-builtin', 'gid']}):
+% for group in filter_list(render_ctx['group.query'], [], {'order_by': ['-builtin', 'gid', 'group']}):
 ${group['group']}:x:${group['gid']}:${get_usernames(group)}
 % endfor

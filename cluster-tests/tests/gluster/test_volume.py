@@ -2,7 +2,7 @@ from time import sleep
 
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
 from utils import make_request, make_ws_request, wait_on_job
 from exceptions import JobTimeOut
 from pytest_dependency import depends
@@ -90,16 +90,18 @@ def test_04_verify_gluster_volume_is_started(volume, request):
 def test_05_verify_gluster_volume_is_fuse_mounted(ip, request):
     depends(request, ['STARTED_GVOLUME'])
 
-    total_time_to_wait = 10
+    total_time_to_wait = (TIMEOUTS['FUSE_OP_TIMEOUT'] * 2)
     sleepy_time = 1
     while total_time_to_wait > 0:
         # give each node a little time to actually fuse mount the volume before we claim failure
         ans = make_request('post', f'http://{ip}/api/v2.0/gluster/fuse/is_mounted', data={'name': GVOL})
         assert ans.status_code == 200
-        if not ans.json():
-            total_time_to_wait -= sleepy_time
-            sleep(1)
-        break
+
+        if ans.json():
+            break
+
+        total_time_to_wait -= sleepy_time
+        sleep(1)
 
     assert ans.json(), ans.text
 

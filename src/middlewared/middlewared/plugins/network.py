@@ -563,19 +563,35 @@ class InterfaceService(CRUDService):
 
         await self.sync()
 
+    @private
+    async def checkin_impl(self, clear_cache=True):
+        if self._rollback_timer:
+            self._rollback_timer.cancel()
+        self._rollback_timer = None
+
+        if clear_cache:
+            self._original_datastores = {}
+
     @accepts()
     @returns()
     async def checkin(self):
         """
-        After interfaces changes are committed with checkin timeout this method needs to be called
-        within that timeout limit to prevent reverting the changes.
-
-        This is to ensure user verifies the changes went as planned and its working.
+        If this method is called after interface changes have been committed and within the checkin timeout,
+        then the task that automatically rollsback any interface changes is cancelled and the in-memory snapshot
+        of database tables for the various interface tables will be cleared. The idea is that the end-user has
+        verified the changes work as intended and need to be committed permanently.
         """
-        if self._rollback_timer:
-            self._rollback_timer.cancel()
-        self._rollback_timer = None
-        self._original_datastores = {}
+        return await self.checkin_impl(clear_cache=True)
+
+    @accepts()
+    @returns()
+    async def cancel_rollback(self):
+        """
+        If this method is called after interface changes have been committed and within the checkin timeout,
+        then the task that automatically rollsback any interface changes is cancelled and the in-memory snapshot
+        of database tables for the various interface tables will NOT be cleared.
+        """
+        return await self.checkin_impl(clear_cache=False)
 
     @accepts()
     @returns(Int('remaining_seconds', null=True))

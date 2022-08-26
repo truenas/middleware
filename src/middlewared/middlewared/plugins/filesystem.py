@@ -483,12 +483,18 @@ class FilesystemService(Service):
         Int('total_blocks', required=True),
         Int('free_blocks', required=True),
         Int('avail_blocks', required=True),
+        Str('total_blocks_str', required=True),
+        Str('free_blocks_str', required=True),
+        Str('avail_blocks_str', required=True),
         Int('files', required=True),
         Int('free_files', required=True),
         Int('name_max', required=True),
         Int('total_bytes', required=True),
         Int('free_bytes', required=True),
         Int('avail_bytes', required=True),
+        Str('total_bytes_str', required=True),
+        Str('free_bytes_str', required=True),
+        Str('avail_bytes_str', required=True),
     ))
     def statfs(self, path):
         """
@@ -535,7 +541,7 @@ class FilesystemService(Service):
                 continue
             flags.append(flag)
 
-        return {
+        result = {
             'flags': flags,
             'fstype': mntinfo['fs_type'].lower(),
             'source': mntinfo['mount_source'],
@@ -552,6 +558,9 @@ class FilesystemService(Service):
             'free_bytes': st.f_bfree * st.f_frsize,
             'avail_bytes': st.f_bavail * st.f_frsize,
         }
+        for k in ['total_blocks', 'free_blocks', 'avail_blocks', 'total_bytes', 'free_bytes', 'avail_bytes']:
+            result[f'{k}_str'] = str(result[k])
+        return result
 
     @accepts(Str('path'))
     @returns(Bool('paths_acl_is_trivial'))
