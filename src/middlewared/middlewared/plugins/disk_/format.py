@@ -16,6 +16,9 @@ class DiskService(Service):
         if not dd:
             raise CallError(f'Unable to retrieve disk details for {disk!r}')
 
+        if dd['dif']:
+            raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
+
         size = dd['size']
         if not size:
             raise CallError(f'Unable to determine size of {disk!r}')
