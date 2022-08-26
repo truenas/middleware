@@ -24,10 +24,12 @@ def parse_digest_from_schema(response):
     """
     media_type = response['response']['mediaType']
     if media_type == DOCKER_MANIFEST_SCHEMA_V2:
-        return response['response']['config']['digest']
+        digest_value = response['response']['config']['digest']
+        return [digest_value] if isinstance(digest_value, str) else digest_value
     elif media_type == DOCKER_MANIFEST_LIST_SCHEMA_V2:
-        if (manifests := response['response']['manifests']):
-            return manifests[0]['digest']
+        if manifests := response['response']['manifests']:
+            return [digest['digest'] for digest in manifests]
+    return []
 
 
 def parse_auth_header(header: str):
@@ -87,6 +89,8 @@ class DockerClientMixin:
                     # quay.io registry returns malformed content type header which aiohttp fails to parse
                     # even though the content returned by registry is valid json
                     response['error'] = f'Unable to parse response: {e}'
+                except asyncio.TimeoutError:
+                    response['error'] = 'Timed out waiting for a response'
         return response
 
     async def _get_token(self, scope, auth_url=DOCKER_AUTH_URL, service=DOCKER_AUTH_SERVICE):
@@ -124,22 +128,14 @@ class DockerClientMixin:
             headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull")}'
         return headers
 
-    async def _get_latest_digest(self, registry, image, tag):
-        headers = await self.get_manifest_call_headers(registry, image, {
-            'Accept': DOCKER_MANIFEST_SCHEMA_V2,
-        })
-        response = await self._get_manifest_response(
-            registry, image, tag, headers, 'get', True
-        )
-        return parse_digest_from_schema(response)
-
     async def _get_repo_digest(self, registry, image, tag):
         response = await self._get_manifest_response(
             registry, image, tag, await self.get_manifest_call_headers(registry, image, {
                 'Accept': (f'{DOCKER_MANIFEST_SCHEMA_V2}, '
                            f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
                            f'{DOCKER_MANIFEST_SCHEMA_V1}')
-            }), 'head', False
+            }), 'get', True
         )
-        if not response['error']:
-            return response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER)
+        digests = parse_digest_from_schema(response)
+        digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
+        return digests

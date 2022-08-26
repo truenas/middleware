@@ -1,10 +1,12 @@
+import contextlib
+
 from collections import defaultdict
 from typing import Dict, List
 
 from middlewared.service import CallError, private, Service
 
 from .client import DockerClientMixin
-from .utils import normalize_reference, DEFAULT_DOCKER_REGISTRY
+from .utils import normalize_reference
 
 
 class DockerImagesService(Service, DockerClientMixin):
@@ -35,19 +37,16 @@ class DockerImagesService(Service, DockerClientMixin):
 
     @private
     async def retrieve_image_digest(self, reference: str):
-        repo_digest = None
+        repo_digests = []
         parsed_reference = self.normalize_reference(reference=reference)
-        registry, image_str, tag_str = parsed_reference['registry'], parsed_reference['image'], parsed_reference['tag']
-        if registry == DEFAULT_DOCKER_REGISTRY:
-            repo_digest = await self._get_repo_digest(registry, image_str, tag_str)
+        with contextlib.suppress(CallError):
+            repo_digests = await self._get_repo_digest(
+                parsed_reference['registry'],
+                parsed_reference['image'],
+                parsed_reference['tag'],
+            )
 
-        if not repo_digest:
-            try:
-                repo_digest = await self._get_latest_digest(registry, image_str, tag_str)
-            except CallError as e:
-                raise CallError(f'Failed to retrieve digest: {e}')
-
-        return repo_digest
+        return repo_digests
 
     @private
     async def parse_tags(self, references: List[str]) -> List[Dict[str, str]]:
@@ -72,18 +71,12 @@ class DockerImagesService(Service, DockerClientMixin):
         """
         Returns whether an update is available for an image.
         """
-        repo_digest = None
-        if registry == DEFAULT_DOCKER_REGISTRY:
-            repo_digest = await self._get_repo_digest(registry, image_str, tag_str)
-        if not repo_digest:
-            try:
-                digest = await self._get_latest_digest(registry, image_str, tag_str)
-            except CallError as e:
-                raise CallError(f'Failed to retrieve digest: {e}')
-
-            return digest != image_details['id']
-        else:
-            return not any(digest.split('@', 1)[-1] == repo_digest for digest in image_details['repo_digests'])
+        digest = await self._get_repo_digest(registry, image_str, tag_str)
+        return not any(
+            digest.split('@', 1)[-1] == upstream_digest
+            for upstream_digest in digest
+            for digest in image_details['repo_digests']
+        ) if image_details['repo_digests'] else False
 
     @private
     async def remove_image_from_cache(self, image):
