@@ -495,8 +495,10 @@ class SMBService(Service):
             await self.middleware.call("clustercache.pop", "PASSDB_LOCK")
 
         if must_remove_cache:
-            if os.path.exists(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb'):
-                os.remove(f'{SMBPath.STATEDIR.platform()}/winbindd_cache.tdb')
+            await self.middleware.call('tdb.wipe', {
+                'name': f'{SMBPath.CACHE_DIR.platform()}/winbindd_cache.tdb',
+                'tdb-options': {'data_type': 'STRING', 'backend': 'CUSTOM'}
+            })
             flush = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
             if flush.returncode != 0:
                 self.logger.debug('Attempt to flush cache failed: %s', flush.stderr.decode().strip())
