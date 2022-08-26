@@ -527,6 +527,8 @@ class SystemDatasetService(ConfigService):
             restart.append('open-vm-tools')
         if await self.middleware.call('service.started', 'idmap'):
             restart.append('idmap')
+        if await self.middleware.call('service.started', 'nmbd'):
+            restart.append('nmbd')
 
         try:
             await self.middleware.call('cache.put', 'use_syslog_dataset', False)
