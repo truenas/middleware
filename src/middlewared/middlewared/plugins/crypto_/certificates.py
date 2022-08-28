@@ -53,11 +53,11 @@ class CertificateService(CRUDService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_functions = {
-            'CERTIFICATE_CREATE_INTERNAL': self.create_internal,
-            'CERTIFICATE_CREATE_IMPORTED': self.create_imported_certificate,
-            'CERTIFICATE_CREATE_IMPORTED_CSR': self.create_imported_csr,
-            'CERTIFICATE_CREATE_CSR': self.create_csr,
-            'CERTIFICATE_CREATE_ACME': self.create_acme_certificate,
+            'CERTIFICATE_CREATE_INTERNAL': 'create_internal',
+            'CERTIFICATE_CREATE_IMPORTED': 'create_imported_certificate',
+            'CERTIFICATE_CREATE_IMPORTED_CSR': 'create_imported_csr',
+            'CERTIFICATE_CREATE_CSR': 'create_csr',
+            'CERTIFICATE_CREATE_ACME': 'create_acme_certificate',
         }
 
     @private
@@ -313,16 +313,10 @@ class CertificateService(CRUDService):
             data.pop('cert_extensions')
             data.pop('san')
 
-        if create_type == 'CERTIFICATE_CREATE_ACME':
-            data = await self.middleware.run_in_thread(
-                self.map_functions[create_type],
-                job, data
-            )
-        else:
-            data = await self.map_functions[create_type](job, data)
-
         data = {
-            k: v for k, v in data.items()
+            k: v for k, v in (
+                await self.middleware.call(f'certificate.{self.map_functions[create_type]}', job, data)
+            ).items()
             if k in [
                 'name', 'certificate', 'CSR', 'privatekey', 'type', 'signedby', 'acme', 'acme_uri',
                 'domains_authenticators', 'renew_days'
