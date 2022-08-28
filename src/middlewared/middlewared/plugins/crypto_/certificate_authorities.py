@@ -43,9 +43,9 @@ class CertificateAuthorityService(CRUDService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.map_create_functions = {
-            'CA_CREATE_INTERNAL': self.create_internal,
-            'CA_CREATE_IMPORTED': self.create_imported_ca,
-            'CA_CREATE_INTERMEDIATE': self.create_intermediate_ca,
+            'CA_CREATE_INTERNAL': 'create_internal',
+            'CA_CREATE_IMPORTED': 'create_imported_ca',
+            'CA_CREATE_INTERMEDIATE': 'create_intermediate_ca',
         }
 
     @private
@@ -280,13 +280,12 @@ class CertificateAuthorityService(CRUDService):
             verrors, 'certificate_authority_create.name'
         )
 
-        if verrors:
-            raise verrors
-
-        data = await self.map_create_functions[create_type](data)
+        verrors.check()
 
         data = {
-            k: v for k, v in data.items()
+            k: v for k, v in (
+                await self.middleware.call(f'certificateauthority.{self.map_create_functions[create_type]}', data)
+            ).items()
             if k in ['name', 'certificate', 'privatekey', 'type', 'signedby']
         }
 
