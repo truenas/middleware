@@ -394,7 +394,7 @@ class CertificateService(CRUDService):
     )
     @private
     @skip_arg(count=1)
-    async def create_csr(self, job, data):
+    def create_csr(self, job, data):
         # no signedby, lifetime attributes required
         verrors = ValidationErrors()
         cert_info = get_cert_info_from_data(data)
@@ -428,7 +428,7 @@ class CertificateService(CRUDService):
     )
     @private
     @skip_arg(count=1)
-    async def create_imported_csr(self, job, data):
+    def create_imported_csr(self, job, data):
 
         # TODO: We should validate csr with private key ?
 
@@ -455,13 +455,13 @@ class CertificateService(CRUDService):
     )
     @private
     @skip_arg(count=1)
-    async def create_imported_certificate(self, job, data):
+    def create_imported_certificate(self, job, data):
         verrors = ValidationErrors()
 
         csr_id = data.pop('csr_id', None)
         if csr_id:
-            csr_obj = await self.query(
-                [
+            csr_obj = self.middleware.call_sync(
+                'certificate.query', [
                     ['id', '=', csr_id],
                     ['type', '=', CERT_TYPE_CSR]
                 ],
