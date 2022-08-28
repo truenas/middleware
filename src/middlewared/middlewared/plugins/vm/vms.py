@@ -1,5 +1,6 @@
 import asyncio
 import errno
+import os
 import re
 import uuid
 
@@ -415,3 +416,15 @@ class VMService(CRUDService, VMSupervisorMixin):
             'pid': None,
             'domain_state': 'ERROR',
         }
+
+    @accepts(Int('id'))
+    @returns(Str(null=True))
+    def log_file_path(self, vm_id):
+        """
+        Retrieve log file path of `id` VM.
+
+        It will return path of the log file if it exists and `null` otherwise.
+        """
+        vm = self.middleware.call_sync('vm.get_instance', vm_id)
+        path = f'/var/log/libvirt/qemu/{vm["id"]}_{vm["name"]}.log'
+        return path if os.path.exists(path) else None
