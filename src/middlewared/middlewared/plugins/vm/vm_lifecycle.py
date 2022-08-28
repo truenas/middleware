@@ -57,7 +57,7 @@ class VMService(Service, VMSupervisorMixin):
         ),
     )
     @returns()
-    @job(lock=lambda args: f'stop_vm_{args[0]}_{args[1].get("force") if len(args) == 2 else False}')
+    @job(lock=lambda args: f'stop_vm_{args[0]}')
     def stop(self, job, id, options):
         """
         Stops a VM.
