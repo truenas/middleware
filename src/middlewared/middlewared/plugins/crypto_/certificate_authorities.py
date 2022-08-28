@@ -341,7 +341,7 @@ class CertificateAuthorityService(CRUDService):
         )
     )
     @private
-    async def create_imported_ca(self, data):
+    def create_imported_ca(self, data):
         data['type'] = CA_TYPE_EXISTING
 
         if all(k in data for k in ('passphrase', 'privatekey')):
