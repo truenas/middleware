@@ -1,6 +1,6 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from .utils import MIDDLEWARE_RUN_DIR, ProgressBar
+from .utils import MIDDLEWARE_RUN_DIR, undefined, ProgressBar
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
@@ -292,11 +292,18 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, log_py_exceptions=False):
+    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, log_py_exceptions=False,
+                 call_timeout=undefined):
         """
         Arguments:
            :reserved_ports(bool): should the local socket used a reserved port
         """
+        if uri is None:
+            uri = f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared.sock'
+
+        if call_timeout is undefined:
+            call_timeout = CALL_TIMEOUT
+
         self._calls = {}
         self._jobs = defaultdict(dict)
         self._jobs_lock = Lock()
@@ -304,9 +311,8 @@ class Client(object):
         self._pings = {}
         self._py_exceptions = py_exceptions
         self._log_py_exceptions = log_py_exceptions
+        self._call_timeout = call_timeout
         self._event_callbacks = defaultdict(list)
-        if uri is None:
-            uri = f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared.sock'
         self._closed = Event()
         self._connected = Event()
         self._ws = WSClient(
@@ -468,7 +474,10 @@ class Client(object):
         self._jobs_watching = True
         self.subscribe('core.get_jobs', self._jobs_callback, sync=True)
 
-    def call(self, method, *params, background=False, callback=None, job=False, timeout=CALL_TIMEOUT):
+    def call(self, method, *params, background=False, callback=None, job=False, timeout=undefined):
+        if timeout is undefined:
+            timeout = self._call_timeout
+
         # We need to make sure we are subscribed to receive job updates
         if job and not self._jobs_watching:
             self._jobs_subscribe()
@@ -491,7 +500,10 @@ class Client(object):
             if not background:
                 self._unregister_call(c)
 
-    def wait(self, c, *, callback=None, job=False, timeout=CALL_TIMEOUT):
+    def wait(self, c, *, callback=None, job=False, timeout=undefined):
+        if timeout is undefined:
+            timeout = self._call_timeout
+
         try:
             if not c.returned.wait(timeout):
                 raise CallTimeout("Call timeout")
