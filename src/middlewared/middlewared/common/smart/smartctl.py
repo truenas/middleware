@@ -1,7 +1,7 @@
-from collections import namedtuple
 import logging
 import shlex
 import subprocess
+from collections import namedtuple
 
 from middlewared.utils import run
 
