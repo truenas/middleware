@@ -1,4 +1,3 @@
-from asyncio import Lock
 from collections import namedtuple
 import logging
 import re
@@ -7,13 +6,11 @@ import subprocess
 
 from middlewared.utils import run
 
-from .areca import annotate_devices_with_areca_dev_id
 
 logger = logging.getLogger(__name__)
 
 SMARTCTL_POWERMODES = ['NEVER', 'SLEEP', 'STANDBY', 'IDLE']
 SMARTCTX = namedtuple('smartctl_args', ['devices', 'enterprise_hardware'])
-areca_lock = Lock()
 
 
 async def get_smartctl_args(context, disk, smartoptions):
@@ -35,16 +32,6 @@ async def get_smartctl_args(context, disk, smartoptions):
     driver = device["driver"]
     controller_id = device["controller_id"]
     channel_no = device["channel_no"]
-
-    # Areca Controller support(at least the 12xx family, possibly others)
-    if driver.startswith("arcmsr"):
-        # As we might be doing this in parallel, we don't want to have N `annotate_devices_with_areca_enclosure`
-        # calls doing the same thing.
-        async with areca_lock:
-            if "enclosure" not in device:
-                await annotate_devices_with_areca_dev_id(devices)
-
-        return [f"/dev/arcmsr{controller_id}", "-d", f"areca,{device['areca_dev_id']}"] + smartoptions
 
     # Highpoint Rocket Raid 27xx controller
     if driver == "rr274x_3x":
@@ -91,9 +78,6 @@ async def get_smartctl_args(context, disk, smartoptions):
 
 async def smartctl(args, **kwargs):
     lock = None
-    if any(arg.startswith("/dev/arcmsr") for arg in args):
-        lock = areca_lock
-
     try:
         if lock is not None:
             await lock.acquire()

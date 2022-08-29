@@ -18,34 +18,6 @@ async def test__get_smartctl_args__nvme():
     assert await get_smartctl_args(context, "nvme0n1", "") == ["/dev/nvme0n1", "-d", "nvme"]
 
 
-@pytest.mark.parametrize("enclosure,dev", [
-    (811, "areca,811"),
-    ("811/2", "areca,811/2"),
-])
-@pytest.mark.asyncio
-async def test__get_smartctl_args__arcmsr(enclosure, dev):
-    context = SMARTCTX(
-        devices={
-            "ada0": {
-                "driver": "arcmsrX",
-                "controller_id": 1000,
-                "bus": 0,
-                "channel_no": 100,
-                "lun_id": 10,
-            }
-        },
-        enterprise_hardware=False,
-    )
-
-    async def annotate_devices_with_areca_dev_id(devices):
-        for v in devices.values():
-            v["areca_dev_id"] = enclosure
-
-    func_str = "middlewared.common.smart.smartctl.annotate_devices_with_areca_dev_id"
-    with patch(func_str, annotate_devices_with_areca_dev_id):
-        assert await get_smartctl_args(context, "ada0", "") == ["/dev/arcmsr1000", "-d", dev]
-
-
 @pytest.mark.asyncio
 async def test__get_smartctl_args__rr274x_3x():
     context = SMARTCTX(
