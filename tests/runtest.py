@@ -125,7 +125,7 @@ cfg_file = open("auto_config.py", 'w')
 cfg_file.writelines(cfg_content)
 cfg_file.close()
 
-from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
+from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
 from functions import SSH_TEST
 # Setup ssh agent before starting test.
 setup_ssh_agent()
@@ -159,19 +159,10 @@ call([
 
 # get useful logs
 artifacts = f"{workdir}/artifacts/"
-logs_list = [
-    "/var/log/daemon.log",
-    "/var/log/debug",
-    "/var/log/middlewared.log",
-    "/var/log/messages",
-    "/var/log/syslog",
-]
-
 if not os.path.exists(artifacts):
     os.makedirs(artifacts)
 
-for log in logs_list:
-    get_file(log, artifacts, 'root', 'testing', ip)
+get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
 
 # get dmesg and put it in artifacts
 results = SSH_TEST('dmesg -a', 'root', 'testing', ip)
