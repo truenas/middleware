@@ -28,10 +28,6 @@ async def get_smartctl_args(context, disk, smartoptions):
     if device is None:
         return
 
-    driver = device["driver"]
-    controller_id = device["controller_id"]
-    channel_no = device["channel_no"]
-
     args = [f"/dev/{disk}"] + smartoptions
     if not enterprise_hardware:
         p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
@@ -42,12 +38,4 @@ async def get_smartctl_args(context, disk, smartoptions):
 
 
 async def smartctl(args, **kwargs):
-    lock = None
-    try:
-        if lock is not None:
-            await lock.acquire()
-
-        return await run(["smartctl"] + args, **kwargs)
-    finally:
-        if lock is not None:
-            lock.release()
+    return await run(["smartctl"] + args, **kwargs)
