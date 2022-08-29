@@ -27,3 +27,5 @@ migrate:
 	migrate
 
 reinstall: stop_service clean install install_client install_test migrate start_service
+
+reinstall_container: clean install install_client install_test migrate
