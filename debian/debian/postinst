@@ -39,6 +39,7 @@ systemctl disable smbd
 systemctl disable winbind
 systemctl disable wsdd
 systemctl disable walinuxagent
+systemctl disable openipmi
 
 # nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced

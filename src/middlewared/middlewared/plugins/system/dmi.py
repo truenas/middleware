@@ -15,12 +15,13 @@ class SystemService(Service):
         'system-product-name': None,
         'system-serial-number': None,
         'system-version': None,
+        'has-ipmi': None,
     }
 
     @private
     def dmidecode_info(self):
         if all(v is None for k, v in SystemService.CACHE.items()):
-            cp = subprocess.run(['dmidecode', '-t', '0,1,2,16'], encoding='utf8', capture_output=True)
+            cp = subprocess.run(['dmidecode', '-t', '0,1,2,16,38'], encoding='utf8', capture_output=True)
             self._parse_dmi(cp.stdout.splitlines())
 
         return SystemService.CACHE
@@ -28,7 +29,7 @@ class SystemService(Service):
     @private
     def _parse_dmi(self, lines):
         SystemService.CACHE = {i: '' for i in SystemService.CACHE}
-        SystemService.CACHE['ecc-memory'] = False
+        SystemService.CACHE['has-ipmi'] = SystemService.CACHE['ecc-memory'] = False
         for line in lines:
             if 'DMI type 0,' in line:
                 _type = 'RELEASE_DATE'
@@ -36,6 +37,8 @@ class SystemService(Service):
                 _type = 'SYSINFO'
             if 'DMI type 2,' in line:
                 _type = 'BBINFO'
+            if 'DMI type 38,' in line:
+                _type = 'IPMI'
 
             if not line or ':' not in line:
                 # "sections" are separated by the category name and then
@@ -53,12 +56,12 @@ class SystemService(Service):
                 SystemService.CACHE['system-serial-number'] = val
             elif sect == 'Version' and _type == 'SYSINFO':
                 SystemService.CACHE['system-version'] = val
+            elif sect == 'I2C Slave Address':
+                SystemService.CACHE['has-ipmi'] = True
             elif sect == 'Error Correction Type':
                 SystemService.CACHE['ecc-memory'] = 'ECC' in val
                 # we break the for loop here since "16" is the last section
-                # that gets processed and dmidecode always list the data in
-                # the same order as requested (1,2,16) and "Error Correction Type"
-                # doesn't appear in any of the other sections
+                # that gets processed
                 break
 
     @private

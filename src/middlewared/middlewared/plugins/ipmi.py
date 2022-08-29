@@ -1,19 +1,26 @@
-try:
-    from bsd import kld
-except ImportError:
-    kld = None
+import os
+from subprocess import run, DEVNULL
+from functools import cache
 
 from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
-from middlewared.utils import filter_list, run
+from middlewared.service import CallError, CRUDService, filterable, filterable_returns, ValidationErrors, job
+from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
-import errno
-import os
-import subprocess
 
-channels = []
+@cache
+def ipmi_channels():
+    channels = []
+    for i in range(1, 17):
+        rc = run(['ipmitool', 'lan', 'print', f'{i}'], stdout=DEVNULL, stderr=DEVNULL).returncode
+        if rc == 0:
+            channels.append(i)
+        else:
+            # no reason to continue to check the other channel numbers
+            break
+
+    return channels
 
 
 class IPMIService(CRUDService):
@@ -21,7 +28,7 @@ class IPMIService(CRUDService):
     class Config:
         cli_namespace = 'network.ipmi'
 
-    # TODO: Test me please
+    IPMI_DEV = '/dev/ipmi0'
     ENTRY = Patch(
         'ipmi_update', 'ipmi_entry',
         ('add', Int('id', required=True)),
@@ -30,38 +37,30 @@ class IPMIService(CRUDService):
 
     @accepts()
     @returns(Bool('ipmi_loaded'))
-    async def is_loaded(self):
-        """
-        Returns a boolean true value indicating if ipmi device is loaded.
-        """
-        return os.path.exists('/dev/ipmi0')
+    def is_loaded(self):
+        """Returns a boolean value indicating if `IPMI_DEV` is loaded."""
+        return os.path.exists(IPMIService.IPMI_DEV)
 
     @accepts()
     @returns(List('ipmi_channels', items=[Int('ipmi_channel')]))
-    async def channels(self):
-        """
-        Return a list with the IPMI channels available.
-        """
-        return channels
+    def channels(self):
+        """Return a list of available IPMI channels."""
+        if not self.is_loaded():
+            return []
+        else:
+            return ipmi_channels()
 
     @filterable
-    async def query(self, filters, options):
-        """
-        Query all IPMI Channels with `query-filters` and `query-options`.
-        """
+    def query(self, filters, options):
+        """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
-        for channel in await self.channels():
-            try:
-                cp = await run('ipmitool', 'lan', 'print', str(channel))
-            except subprocess.CalledProcessError as e:
-                raise CallError(f'Failed to get details from channel {channel}: {e}')
+        for channel in self.channels():
+            cp = run(['ipmitool', 'lan', 'print', f'{channel}'], capture_output=True)
+            if cp.returncode != 0:
+                raise CallError(f'Failed to get details from channel {channel}: {cp.stderr}')
 
-            output = cp.stdout.decode()
             data = {'channel': channel, 'id': channel}
-            for line in output.split('\n'):
-                if ':' not in line:
-                    continue
-
+            for line in filter(lambda x: ':' in x, cp.stdout.decode().split('\n')):
                 name, value = line.split(':', 1)
                 if not name:
                     continue
@@ -82,140 +81,140 @@ class IPMIService(CRUDService):
                         data['vlan'] = value
                 elif name == 'IP Address Source':
                     data['dhcp'] = False if value == 'Static Address' else True
+
             result.append(data)
+
         return filter_list(result, filters, options)
 
-    @accepts(Int('channel'), Dict(
-        'ipmi_update',
-        IPAddr('ipaddress', v6=False),
-        Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
-        IPAddr('gateway', v6=False),
-        Password('password', validators=[
-            PasswordComplexity(["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"], 3),
-            Range(8, 16)
-        ]),
-        Bool('dhcp'),
-        Int('vlan', null=True),
-        register=True
-    ))
-    async def do_update(self, id, data):
+    @accepts(
+        Int('channel'),
+        Dict(
+            'ipmi_update',
+            IPAddr('ipaddress', v6=False),
+            Str('netmask', validators=[Netmask(ipv6=False, prefix_length=False)]),
+            IPAddr('gateway', v6=False),
+            Password('password', validators=[
+                PasswordComplexity(["ASCII_UPPER", "ASCII_LOWER", "DIGIT", "SPECIAL"], 3),
+                Range(8, 16)
+            ]),
+            Bool('dhcp'),
+            Int('vlan', null=True),
+            register=True
+        )
+    )
+    def do_update(self, id, data):
         """
-        Update `id` IPMI Configuration.
+        Update IPMI configuration on channel number `id`.
 
-        `ipaddress` is a valid ip which will be used to connect to the IPMI interface.
-
+        `ipaddress` is an IPv4 address to be assigned to channel number `id`.
         `netmask` is the subnet mask associated with `ipaddress`.
-
-        `dhcp` is a boolean value which if unset means that `ipaddress`, `netmask` and `gateway` must be set.
+        `gateway` is an IPv4 address used by `ipaddress` to reach outside the local subnet.
+        `password` is a password to be assigned to channel number `id`
+        `dhcp` is a boolean. If False, `ipaddress`, `netmask` and `gateway` must be set.
+        `vlan` is an integer representing the vlan tag number.
         """
-
-        if not await self.is_loaded():
-            raise CallError('The ipmi device could not be found')
-
         verrors = ValidationErrors()
-
-        if not data.get('dhcp'):
+        if not self.is_loaded():
+            verrors.add('ipmi.update', f'{IPMIService.IPMI_DEV!r} could not be found')
+        elif id not in self.channels():
+            verrors.add('ipmi.update', f'IPMI channel number {id!r} not found')
+        elif not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:
                 if not data.get(k):
-                    verrors.add(
-                        f'ipmi_update.{k}',
-                        'This field is required when dhcp is not given'
-                    )
+                    verrors.add(f'ipmi_update.{k}', 'This field is required when dhcp is false.')
+        verrors.check()
 
-        if verrors:
-            raise verrors
+        def get_cmd(cmds):
+            nonlocal id
+            return ['ipmitool', 'lan', 'set', f'{id}'] + cmds
 
-        args = ['ipmitool', 'lan', 'set', str(id)]
-        rv = 0
+        rc = 0
+        options = {'stdout': DEVNULL, 'stderr': DEVNULL}
         if data.get('dhcp'):
-            rv |= (await run(*args, 'ipsrc', 'dhcp', check=False)).returncode
+            rc |= run(get_cmd(id, ['dhcp']), **options).returncode
         else:
-            rv |= (await run(*args, 'ipsrc', 'static', check=False)).returncode
-            rv |= (await run(*args, 'ipaddr', data['ipaddress'], check=False)).returncode
-            rv |= (await run(*args, 'netmask', data['netmask'], check=False)).returncode
-            rv |= (await run(*args, 'defgw', 'ipaddr', data['gateway'], check=False)).returncode
-        rv |= (await run(
-            *args, 'vlan', 'id', str(data['vlan']) if data.get('vlan') else 'off'
-        )).returncode
+            rc |= run(get_cmd(['ipsrc', 'static']), **options).returncode
+            rc |= run(get_cmd(['ipaddr', data['ipaddress']]), **options).returncode
+            rc |= run(get_cmd(['netmask', data['netmask']]), **options).returncode
+            rc |= run(get_cmd(['defgw', 'ipaddr', data['gateway']]), **options).returncode
 
-        rv |= (await run(*args, 'access', 'on', check=False)).returncode
-        rv |= (await run(*args, 'auth', 'USER', 'MD2,MD5', check=False)).returncode
-        rv |= (await run(*args, 'auth', 'OPERATOR', 'MD2,MD5', check=False)).returncode
-        rv |= (await run(*args, 'auth', 'ADMIN', 'MD2,MD5', check=False)).returncode
-        rv |= (await run(*args, 'auth', 'CALLBACK', 'MD2,MD5', check=False)).returncode
-        # Setting arp have some issues in some hardwares
-        # Do not fail if setting these couple settings do not work
-        # See #15578
-        await run(*args, 'arp', 'respond', 'on', check=False)
-        await run(*args, 'arp', 'generate', 'on', check=False)
-        if data.get('password'):
-            rv |= (await run(
-                'ipmitool', 'user', 'set', 'password', '2', data.get('password'),
-            )).returncode
-        rv |= (await run('ipmitool', 'user', 'enable', '2')).returncode
-        # XXX: according to dwhite, this needs to be executed off the box via
-        # the lanplus interface.
-        # rv |= (await run('ipmitool', 'sol', 'set', 'enabled', 'true', '1')).returncode
-        # )
-        return rv
+        rc |= run(get_cmd(['vlan', 'id', f'{data.get("vlan", "off")}']), **options).returncode
+
+        rc |= run(get_cmd(['access', 'on']), **options).returncode
+        rc |= run(get_cmd(['auth', 'USER', 'MD2,MD5']), **options).returncode
+        rc |= run(get_cmd(['auth', 'OPERATOR', 'MD2,MD5']), **options).returncode
+        rc |= run(get_cmd(['auth', 'ADMIN', 'MD2,MD5']), **options).returncode
+        rc |= run(get_cmd(['auth', 'CALLBACK', 'MD2,MD5']), **options).returncode
+
+        # Apparently tickling these ARP options can "fail" on certain hardware
+        # which isn't fatal so we ignore returncode in this instance. See #15578.
+        run(get_cmd(['arp', 'respond', 'on']), **options)
+        run(get_cmd(['arp', 'generate', 'on']), **options)
+
+        if passwd := data.get('password'):
+            cp = run(get_cmd(['ipmitool', 'user', 'set', 'password', '2', passwd]), capture_output=True)
+            if cp.returncode != 0:
+                err = '\n'.join(cp.stderr.decode().split('\n'))
+                raise CallError(f'Failed setting password: {err!r}')
+
+        cp = run(['ipmitool', 'user', 'enable', '2'], capture_output=True)
+        if cp.returncode != 0:
+            err = '\n'.join(cp.stderr.decode().split('\n'))
+            raise CallError(f'Failed enabling user: {err!r}')
+
+        return rc
 
     @accepts(Dict(
         'options',
-        Int('seconds'),
-        Bool('force'),
+        Int('seconds', default=15, validators=[Range(min=0, max=3600)]),
+        Bool('force', default=False),
     ))
     @returns()
-    async def identify(self, options):
+    def identify(self, options):
         """
-        Turn on IPMI chassis identify light.
+        Turn on chassis identify light.
 
-        To turn off specify 0 as `seconds`.
+        `seconds` is an integer representing the number of seconds to leave the chassis identify light turned on.
+            - default is 15 seconds
+            - to turn it off, specify `seconds` as 0
+        `force` is a boolean. When True, turn on chassis identify light indefinitely.
         """
-        options = options or {}
-        if options.get('force') and options.get('seconds'):
-            raise CallError('You have to use either "seconds" or "force" option, not both')
+        verrors = ValidationErrors()
+        force = options['force']
+        seconds = options["seconds"]
+        if force and seconds:
+            verrors.add('ipmi.identify', f'Seconds: ({seconds}) and Force: ({force}) are exclusive.')
+        verrors.check()
 
-        if options.get('force'):
-            cmd = 'force'
-        else:
-            cmd = str(options.get('seconds'))
-        await run('ipmitool', 'chassis', 'identify', cmd)
+        run(['ipmitool', 'chassis', 'identify', 'force' if force else seconds], stdout=DEVNULL, stderr=DEVNULL)
 
-    # TODO: Document me as well please
     @filterable
-    async def query_sel(self, filters, options):
-        """
-        Query IPMI System Event Log
-        """
-        return filter_list([
-            record._asdict()
-            for record in parse_ipmitool_output(await run('ipmitool', '-c', 'sel', 'elist'))
-        ], filters, options)
+    @filterable_returns(List('events_log', items=[Dict('event', additional_attrs=True)]))
+    @job(lock='query_sel', lock_queue_size=3)
+    def query_sel(self, job, filters, options):
+        """Query IPMI system extended event log."""
+        results = []
+        job.set_progress(50, 'Enumerating extended event log')
+        cp = run(['ipmitool', '-c', 'sel', 'elist'], capture_output=True)  # this is slowwww
+        if cp.returncode == 0 and cp.stdout:
+            job.set_progress(95, 'Parsing extended event log')
+            for record in parse_ipmitool_output(cp.stdout.decode()):
+                results.append(record._asdict())
+            job.set_progress(100, 'Parsing extended event log complete')
+
+        return filter_list(results, filters, options)
 
     @accepts()
     @returns()
-    async def clear_sel(self):
-        """
-        Clear IPMI System Event Log
-        """
-        await run('ipmitool', 'sel', 'clear')
+    def clear_sel(self):
+        """Clear IPMI system event log."""
+        run(['ipmitool', 'sel', 'clear'], stdout=DEVNULL, stderr=DEVNULL)
 
 
 async def setup(middleware):
-
-    try:
-        if kld:
-            kld.kldload('/boot/kernel/ipmi.ko')
-    except OSError as e:
-        # Only skip if not already loaded
-        if e.errno != errno.EEXIST:
-            middleware.logger.warn(f'Cannot load IPMI module: {e}')
-            return
-
-    # Scan available channels
-    for i in range(1, 17):
-        try:
-            await run('ipmitool', 'lan', 'print', str(i))
-        except subprocess.CalledProcessError:
-            continue
-        channels.append(i)
+    if await middleware.call('system.ready') and (await middleware.call('system.dmidecode_info'))['has-ipmi']:
+        # systemd generates a unit file that doesn't honor presets so when it's started on a system without a
+        # BMC device, it always reports as a failure which is expected since no IPMI device exists. Instead
+        # we check to see if dmidecode reports an ipmi device via type "38" of the SMBIOS spec. It's not
+        # fool-proof but it's the best we got atm.
+        await middleware.call('service.start', 'openipmi')
