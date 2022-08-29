@@ -1,6 +1,5 @@
 from collections import namedtuple
 import logging
-import re
 import shlex
 import subprocess
 
@@ -55,17 +54,6 @@ async def get_smartctl_args(context, disk, smartoptions):
         p = await smartctl(args + ["-i"], check=False)
         if (p.returncode & 0b11) == 0:
             return args
-
-    if driver.startswith(("twa", "twe", "tws")):
-        p = await run(["/usr/local/sbin/tw_cli", f"/c{controller_id}", "show"], encoding="utf8")
-
-        units = {}
-        re_port = re.compile(r"^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b", re.S | re.M)
-        for port, unit in re_port.findall(p.stdout):
-            units[int(unit)] = int(port)
-
-        port = units.get(channel_no, -1)
-        return [f"/dev/{driver}{controller_id}", "-d", f"3ware,{port}"] + smartoptions
 
     args = [f"/dev/{disk}"] + smartoptions
     if not enterprise_hardware:

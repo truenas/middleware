@@ -87,28 +87,6 @@ async def test__get_smartctl_args__hpt():
 
 
 @pytest.mark.asyncio
-async def test__get_smartctl_args__twa():
-    context = SMARTCTX(
-        devices={
-            "ada0": {
-                "driver": "twaX",
-                "controller_id": 1,
-                "bus": 0,
-                "channel_no": 2,
-                "lun_id": 10,
-            },
-        },
-        enterprise_hardware=False,
-    )
-    with patch("middlewared.common.smart.smartctl.run") as run:
-        run.return_value = Mock(stdout="p28 u1\np29 u2")
-
-        assert await get_smartctl_args(context, "ada0", "") == ["/dev/twaX1", "-d", "3ware,29"]
-
-        run.assert_called_once_with(["/usr/local/sbin/tw_cli", "/c1", "show"], encoding="utf8")
-
-
-@pytest.mark.asyncio
 async def test_get_disk__unknown_usb_bridge():
     context = SMARTCTX(
         devices={
