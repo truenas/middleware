@@ -2,6 +2,7 @@ import sys
 
 
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
+undefined = object()
 
 
 class Struct:
