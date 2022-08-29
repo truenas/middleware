@@ -8,7 +8,7 @@ After=middlewared.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=-midclt call disk.sed_unlock_all
+ExecStartPre=-midclt call disk.sed_unlock_all
 ExecStart=midclt call -job --job-print description pool.import_on_boot
 StandardOutput=null
 TimeoutStartSec=15min
