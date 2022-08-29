@@ -32,13 +32,6 @@ async def get_smartctl_args(context, disk, smartoptions):
     controller_id = device["controller_id"]
     channel_no = device["channel_no"]
 
-    # HP Smart Array Controller
-    if driver.startswith("ciss"):
-        args = [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"] + smartoptions
-        p = await smartctl(args + ["-i"], check=False)
-        if (p.returncode & 0b11) == 0:
-            return args
-
     args = [f"/dev/{disk}"] + smartoptions
     if not enterprise_hardware:
         p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
