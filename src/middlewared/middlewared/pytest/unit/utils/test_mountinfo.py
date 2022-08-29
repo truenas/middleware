@@ -108,10 +108,10 @@ def test__getmntinfo():
 
 
 def test__atime_and_casesentivity_in_mntinfo():
-    line = '7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive'
+    line = r'7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive'
     data = {}
     __parse_mntent(line, data)
-    assert 1005 in data
-    mntent = data[1005]
-    assert 'NOATIME' in mntent['super_opts']
+    assert 3145965 in data
+    mntent = data[3145965]
+    assert 'NOATIME' in mntent['mount_opts']
     assert 'CASESENSITIVE' in mntent['super_opts']
