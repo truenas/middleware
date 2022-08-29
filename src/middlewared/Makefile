@@ -27,3 +27,7 @@ migrate:
 	migrate
 
 reinstall: stop_service clean install install_client install_test migrate start_service
+
+# this is to be called in github actions running in a container (no systemd (pid 1))
+# so it's the same as `reinstall` but without the start/stop{_service} calls
+reinstall_container: clean install install_client install_test migrate
