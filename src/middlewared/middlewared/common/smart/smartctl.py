@@ -32,22 +32,6 @@ async def get_smartctl_args(context, disk, smartoptions):
     controller_id = device["controller_id"]
     channel_no = device["channel_no"]
 
-    # Highpoint Rocket Raid 27xx controller
-    if driver == "rr274x_3x":
-        controller_id = controller_id + 1
-        channel_no = channel_no + 1
-        if channel_no > 16:
-            channel_no = channel_no - 16
-        elif channel_no > 8:
-            channel_no = channel_no - 8
-        return [f"/dev/{driver}", "-d", f"hpt,{controller_id}/{channel_no}"] + smartoptions
-
-    # Highpoint Rocket Raid controller
-    if driver.startswith("hpt"):
-        controller_id = controller_id + 1
-        channel_no = channel_no + 1
-        return [f"/dev/{driver}", "-d", f"hpt,{controller_id}/{channel_no}"] + smartoptions
-
     # HP Smart Array Controller
     if driver.startswith("ciss"):
         args = [f"/dev/{driver}{controller_id}", "-d", f"cciss,{channel_no}"] + smartoptions
