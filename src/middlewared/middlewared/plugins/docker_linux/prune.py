@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, returns
-from middlewared.service import Service
+from middlewared.service import job, Service
 
 from .utils import get_docker_client
 
@@ -62,7 +62,8 @@ class ContainerService(Service):
             }
         }
     ))
-    def prune(self, options):
+    @job(lock='container_prune')
+    def prune(self, job, options):
         """
         Prune unused images/containers. This will by default remove any dangling images.
 
@@ -75,7 +76,10 @@ class ContainerService(Service):
         client = get_docker_client()
         if options['remove_stopped_containers']:
             pruned_objects['containers'] = client.containers.prune()
+            job.set_progress(50, 'Stopped containers pruned')
+
         # Reasoning for the parameters to image prune
         # https://github.com/docker/docker-py/issues/1939#issuecomment-392112015
         pruned_objects['images'] = client.images.prune({'dangling': not options['remove_unused_images']})
+        job.set_progress(100, 'Successfully pruned images/containers')
         return pruned_objects
