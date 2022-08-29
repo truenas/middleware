@@ -158,7 +158,7 @@ class DeviceService(Service):
 
         try:
             dev = pyudev.Devices.from_path(ctx, f'/sys/class/scsi_disk/{info["hctl"]}')
-        except pyudev.DeviceNotFoundByPathError:
+        except pyudev.DeviceNotFoundAtPathError:
             return dif
         except Exception:
             # logging this is painful because it'll spam so
