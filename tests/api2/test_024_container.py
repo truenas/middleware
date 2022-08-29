@@ -65,7 +65,7 @@ if not ha:
     def test_pruning_existing_chart_release_images(request):
         depends(request, ['setup_kubernetes'], scope='session')
         with chart_release("prune-test1", {"image": {"repository": "nginx"}}) as chart_release_data:
-            call("container.prune", {"remove_unused_images": True})
+            call("container.prune", {"remove_unused_images": True}, job=True)
             assert_images_exist_for_chart_release(chart_release_data)
 
     def test_pruning_for_deleted_chart_release_images(request):
@@ -75,7 +75,7 @@ if not ha:
             before_deletion_images = get_num_of_images(container_images)
             assert before_deletion_images != 0
 
-        call("container.prune", {"remove_unused_images": True})
+        call("container.prune", {"remove_unused_images": True}, job=True)
         assert get_num_of_images(container_images) == 0
 
     def test_01_get_container():
