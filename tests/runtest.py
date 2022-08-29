@@ -145,7 +145,7 @@ cfg_file.close()
 os.environ["MIDDLEWARE_TEST_IP"] = ip
 os.environ["MIDDLEWARE_TEST_PASSWORD"] = passwd
 
-from functions import setup_ssh_agent, create_key, add_ssh_key, get_file
+from functions import setup_ssh_agent, create_key, add_ssh_key, get_folder
 from functions import SSH_TEST
 # Setup ssh agent before starting test.
 setup_ssh_agent()
@@ -191,8 +191,7 @@ logs_list = [
     "/var/log/syslog",
 ]
 
-for log in logs_list:
-    get_file(log, artifacts, 'root', 'testing', ip)
+get_folder('/var/log', f'{artifacts}/log', 'root', 'testing', ip)
 
 # get dmesg and put it in artifacts
 results = SSH_TEST('dmesg', 'root', 'testing', ip)
