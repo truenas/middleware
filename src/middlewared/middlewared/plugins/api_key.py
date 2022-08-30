@@ -1,7 +1,5 @@
 from datetime import datetime
-import fnmatch
 import random
-import re
 import string
 
 from passlib.hash import pbkdf2_sha256
@@ -9,6 +7,7 @@ from passlib.hash import pbkdf2_sha256
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Patch
 from middlewared.service import CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.allowlist import Allowlist
 
 
 class APIKeyModel(sa.Model):
@@ -24,31 +23,10 @@ class APIKeyModel(sa.Model):
 class ApiKey:
     def __init__(self, api_key):
         self.api_key = api_key
-
-        self.exact = {}
-        self.patterns = {}
-        for entry in self.api_key["allowlist"]:
-            method = entry["method"]
-            resource = entry["resource"]
-            if "*" in resource:
-                self.patterns.setdefault(method, [])
-                self.patterns[method].append(re.compile(fnmatch.translate(resource)))
-            else:
-                self.exact.setdefault(method, set())
-                self.exact[method].add(resource)
+        self.allowlist = Allowlist(self.api_key["allowlist"])
 
     def authorize(self, method, resource):
-        return self._authorize_internal("*", resource) or self._authorize_internal(method, resource)
-
-    def _authorize_internal(self, method, resource):
-        if (exact := self.exact.get(method)) and resource in exact:
-            return True
-
-        if patterns := self.patterns.get(method):
-            if any(pattern.match(resource) for pattern in patterns):
-                return True
-
-        return False
+        return self.allowlist.authorize(method, resource)
 
 
 class ApiKeyService(CRUDService):

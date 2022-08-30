@@ -258,3 +258,17 @@ class PrivilegeService(CRUDService):
                 gids.setdefault(gid, privilege)
 
         return gids
+
+    @private
+    async def compose_privilege(self, privileges):
+        compose = {
+            'allowlist': [],
+            'web_shell': False,
+        }
+        for privilege in privileges:
+            for item in privilege['allowlist']:
+                compose['allowlist'].append(item)
+
+            compose['web_shell'] |= privilege['web_shell']
+
+        return compose

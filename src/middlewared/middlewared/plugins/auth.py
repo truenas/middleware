@@ -1,8 +1,7 @@
-import crypt
 from datetime import datetime, timedelta
-import hmac
 import re
 import socket
+import struct
 import time
 import warnings
 
@@ -14,7 +13,9 @@ from middlewared.service import (
     ConfigService, Service, filterable, filterable_returns, filter_list, no_auth_required,
     pass_app, private, cli_private, CallError,
 )
+from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
+from middlewared.utils.allowlist import Allowlist
 from middlewared.utils.nginx import get_peer_process, get_remote_addr_port
 from middlewared.utils.crypto import generate_token
 from middlewared.validators import Range
@@ -163,7 +164,16 @@ class SessionManagerCredentials:
         pass
 
 
-class UnixSocketSessionManagerCredentials(SessionManagerCredentials):
+class UserSessionManagerCredentials(SessionManagerCredentials):
+    def __init__(self, user):
+        self.user = user
+        self.allowlist = Allowlist(user["privilege"]["allowlist"])
+
+    def authorize(self, method, resource):
+        return self.allowlist.authorize(method, resource)
+
+
+class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
 
@@ -171,7 +181,7 @@ class RootTcpSocketSessionManagerCredentials(SessionManagerCredentials):
     pass
 
 
-class LoginPasswordSessionManagerCredentials(SessionManagerCredentials):
+class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):
     pass
 
 
@@ -286,10 +296,9 @@ class AuthService(Service):
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_user(self, username, password):
         """
-        Verify username and password (this will only validate root user's password and
-        would return `false` for any other user)
+        Verify username and password
         """
-        return False if username != 'root' else await self.check_password(username, password)
+        return await self.check_password(username, password)
 
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
@@ -297,14 +306,7 @@ class AuthService(Service):
         """
         Verify username and password
         """
-        try:
-            user = await self.middleware.call('datastore.query', 'account.bsdusers',
-                                              [('bsdusr_username', '=', username)], {'get': True})
-        except IndexError:
-            return False
-        if user['bsdusr_unixhash'] in ('x', '*'):
-            return False
-        return hmac.compare_digest(crypt.crypt(password, user['bsdusr_unixhash']), user['bsdusr_unixhash'])
+        return await self.middleware.call('auth.authenticate', username, password) is not None
 
     @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
     @returns(Str('token'))
@@ -350,23 +352,25 @@ class AuthService(Service):
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
-        Currently only root user is allowed.
         `otp_token` must be specified if two factor authentication is enabled.
         """
-        valid = await self.check_user(username, password)
+        user = await self.middleware.call('auth.authenticate', username, password)
         twofactor_auth = await self.middleware.call('auth.twofactor.config')
 
         if twofactor_auth['enabled']:
             # We should run auth.twofactor.verify nevertheless of check_user result to prevent guessing
             # passwords with a timing attack
-            valid &= await self.middleware.call(
+            if not await self.middleware.call(
                 'auth.twofactor.verify',
                 otp_token
-            )
+            ):
+                user = None
 
-        if valid:
-            self.session_manager.login(app, LoginPasswordSessionManagerCredentials())
-        return valid
+        if user is not None:
+            self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
+            return True
+
+        return False
 
     @cli_private
     @no_auth_required
@@ -564,8 +568,20 @@ def check_permission(middleware, app):
     """Authenticates connections coming from loopback and from root user."""
     sock = app.request.transport.get_extra_info('socket')
     if sock.family == socket.AF_UNIX:
-        # Unix socket is only allowed for root
-        AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials())
+        peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
+        pid, uid, gid = struct.unpack('3i', peercred)
+        try:
+            local_user = middleware.call_sync(
+                'datastore.query',
+                'account.bsdusers',
+                [['bsdusr_uid', '=', uid]],
+                {'get': True, 'prefix': 'bsdusr_'},
+            )
+        except MatchNotFound:
+            return
+
+        user = middleware.call_sync('auth.authenticate_local_user', local_user['id'], local_user['username'])
+        AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
         return
 
     remote_addr, remote_port = get_remote_addr_port(app.request)
