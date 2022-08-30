@@ -9,7 +9,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, POST  # , RC_TEST
+from functions import PUT, GET, POST
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -47,8 +47,3 @@ def test_05_Starting_ftp_service():
 def test_06_Checking_to_see_if_FTP_service_is_enabled():
     results = GET('/service?service=ftp')
     assert results.json()[0]["state"] == "RUNNING"
-
-
-# def test_04_Fetching_file_via_FTP():
-#     cmd = "ftp -o /tmp/ftpfile ftp://testuser:test@" + ip + "/.cshrc"
-#     RC_TEST(cmd) is True
