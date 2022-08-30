@@ -1,3 +1,4 @@
+from middlewared.plugins.sysdataset import SYSDATASET_PATH
 from middlewared.service import Service, private
 from middlewared.schema import accepts, Bool, Dict, Ref, List, Str, Int
 from middlewared.service_exception import CallError, MatchNotFound
@@ -272,6 +273,17 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     def show_handles(self):
         ret = {h['name']: h['options'] for h in self.handles.values()}
         return ret
+
+    @private
+    def close_sysdataset_handles(self):
+        for name in list(self.handles.keys()):
+            if not name.startswith(SYSDATASET_PATH):
+                continue
+
+            entry = self.handles[name]
+            with entry['lock']:
+                if entry['handle_internal'].validate_handle():
+                    entry['handle_internal'].close()
 
     @private
     async def setup(self):

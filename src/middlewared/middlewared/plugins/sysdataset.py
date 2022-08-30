@@ -542,6 +542,7 @@ class SystemDatasetService(ConfigService):
             for i in restart:
                 await self.middleware.call('service.stop', i)
 
+            await self.middleware.call('tdb.close_sysdataset_handles')
             yield
         finally:
             await self.middleware.call('cache.pop', 'use_syslog_dataset')
