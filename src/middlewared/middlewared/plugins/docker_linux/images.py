@@ -1,4 +1,5 @@
 import aiodocker
+import contextlib
 import errno
 import itertools
 import os
@@ -34,7 +35,7 @@ class DockerImagesService(CRUDService):
         Bool('dangling'),
         Bool('update_available'),
         Bool('system_image'),
-        Datetime('created'),
+        Datetime('created', null=True),
         List('parsed_repo_tags', items=[Dict(
             'parsed_repo_tag',
             Str('image'),
@@ -66,13 +67,18 @@ class DockerImagesService(CRUDService):
             for image in await docker.images.list():
                 repo_tags = image['RepoTags'] or []
                 system_image = any(tag in system_images for tag in repo_tags)
+                created_at = None
+                with contextlib.suppress(ValueError):
+                    # We have seen cases where docker returns N/A for created so let's handle this safely
+                    created_at = datetime.fromtimestamp(int(image['Created']))
+
                 result = {
                     'id': image['Id'],
                     'labels': image['Labels'] or {},
                     'repo_tags': repo_tags,
                     'repo_digests': image.get('RepoDigests') or [],
                     'size': image['Size'],
-                    'created': datetime.fromtimestamp(int(image['Created'])),
+                    'created': created_at,
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
                     'update_available': not system_image and any(update_cache[r] for r in repo_tags),
                     'system_image': system_image,
