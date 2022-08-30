@@ -162,6 +162,28 @@ def get_file(file, destination, username, passwrd, host):
         return {'result': True, 'output': output}
 
 
+def get_folder(folder, destination, username, passwrd, host):
+    cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
+    cmd += [
+        "scp",
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "VerifyHostKeyDNS=no",
+        "-r",
+        f"{username}@{host}:{folder}",
+        destination
+    ]
+    process = run(cmd, stdout=PIPE, universal_newlines=True)
+    output = process.stdout
+    if process.returncode != 0:
+        return {'result': False, 'output': output}
+    else:
+        return {'result': True, 'output': output}
+
+
 def RC_TEST(command):
     process = run(command, shell=True)
     if process.returncode != 0:
