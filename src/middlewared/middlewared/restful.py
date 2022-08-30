@@ -23,6 +23,10 @@ async def authenticate(middleware, req, method, resource):
         raise web.HTTPUnauthorized()
 
     if auth.startswith('Basic '):
+        twofactor_auth = await middleware.call('auth.twofactor.config')
+        if twofactor_auth['enabled']:
+            raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
+
         try:
             username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
         except UnicodeDecodeError:
