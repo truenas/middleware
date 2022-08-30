@@ -1770,8 +1770,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if await self.call('system.state') == 'READY':
             self._setup_periodic_tasks()
 
+        unix_socket_path = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')
         await web.TCPSite(runner, '0.0.0.0', 6000, reuse_address=True, reuse_port=True).start()
-        await web.UnixSite(runner, os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')).start()
+        await web.UnixSite(runner, unix_socket_path).start()
+        os.chmod(unix_socket_path, 0o666)
 
         if self.trace_malloc:
             limit = self.trace_malloc[0]

@@ -1644,9 +1644,11 @@ class CoreService(Service):
 
         return True
 
+    @no_auth_required
     @accepts(Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
     @private
-    def get_services(self, target):
+    @pass_app()
+    def get_services(self, app, target):
         """Returns a list of all registered services."""
         services = {}
         for k, v in list(self.middleware.get_services().items()):
@@ -1673,9 +1675,11 @@ class CoreService(Service):
 
         return services
 
+    @no_auth_required
     @accepts(Str('service', default=None, null=True), Str('target', enum=['WS', 'CLI', 'REST'], default='WS'))
     @private
-    def get_methods(self, service, target):
+    @pass_app()
+    def get_methods(self, app, service, target):
         """
         Return methods metadata of every available service.
 
@@ -1690,7 +1694,6 @@ class CoreService(Service):
                 continue
 
             for attr in dir(svc):
-
                 if attr.startswith('_'):
                     continue
 
@@ -1744,6 +1747,18 @@ class CoreService(Service):
                 # terminate is a private method used to clean up a service on shutdown
                 if attr == 'terminate':
                     continue
+
+                method_name = f'{name}.{attr}'
+                no_auth_required = hasattr(method, '_no_auth_required')
+
+                # Skip methods that are not allowed for the currently authenticated credentials
+                if app is not None:
+                    if not no_auth_required:
+                        if not app.authenticated_credentials:
+                            continue
+
+                        if not app.authenticated_credentials.authorize('CALL', method_name):
+                            continue
 
                 examples = defaultdict(list)
                 doc = inspect.getdoc(method)
@@ -1809,8 +1824,6 @@ class CoreService(Service):
                             d,
                         )[0]
 
-                method_name = f'{name}.{attr}'
-
                 if method_schemas['accepts'] is None:
                     raise RuntimeError(f'Method {method_name} is public but has no @accepts()')
 
@@ -1819,7 +1832,7 @@ class CoreService(Service):
                     'cli_description': (doc or '').split('\n\n')[0].split('.')[0].replace('\n', ' '),
                     'examples': examples,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
-                    'no_auth_required': hasattr(method, '_no_auth_required'),
+                    'no_auth_required': no_auth_required,
                     'filterable': hasattr(method, '_filterable'),
                     'filterable_schema': filterable_schema,
                     'pass_application': hasattr(method, '_pass_app'),
