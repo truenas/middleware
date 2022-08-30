@@ -468,6 +468,10 @@ class FileApplication(object):
         auth = request.headers.get('Authorization')
         if auth:
             if auth.startswith('Basic '):
+                twofactor_auth = await self.middleware.call('auth.twofactor.config')
+                if twofactor_auth['enabled']:
+                    return web.Response(status=401, body='HTTP Basic Auth is unavailable when OTP is enabled')
+
                 try:
                     auth = binascii.a2b_base64(auth[6:]).decode()
                     if ':' in auth:
