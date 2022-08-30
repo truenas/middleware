@@ -159,7 +159,7 @@ def get_folder(folder, destination, username, passwrd, host):
         "UserKnownHostsFile=/dev/null",
         "-o",
         "VerifyHostKeyDNS=no",
-        "-f"
+        "-r",
         f"{username}@{host}:{folder}",
         destination
     ]
