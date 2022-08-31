@@ -8,7 +8,7 @@ class DifFormattedAlertClass(AlertClass, OneShotAlertClass):
     text = 'Disk(s): %s are formatted with Data Integrity Feature (DIF) which is unsupported.'
 
     async def create(self, disks):
-        return Alert(DifFormattedAlertClass, ', '.join(disks))
+        return Alert(DifFormattedAlertClass, ', '.join(disks), key=None)
 
     async def delete(self, alerts, query):
         return []
