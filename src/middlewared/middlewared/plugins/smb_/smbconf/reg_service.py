@@ -209,15 +209,10 @@ class ShareSchema(RegistrySchema):
         if not kernel_oplocks['parsed']:
             conf.pop('kernel oplocks', None)
 
-        kernel_share_modes = conf.get('kernel share modes', {'parsed': True})
-        if not kernel_share_modes['parsed']:
-            conf.pop('kernel share modes', None)
-
         return not val['parsed']
 
     def durable_set(entry, val, data_in, data_out):
         data_out['posix locking'] = {"parsed": not val}
-        data_out['kernel share modes'] = {"parsed": not val}
         data_out['kernel oplocks'] = {"parsed": not val}
         return
 
