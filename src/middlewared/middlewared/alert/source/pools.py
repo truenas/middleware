@@ -24,21 +24,28 @@ class PoolsChecksAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)  # every 24 hours
     run_on_backup_node = False
 
+    async def get_usb_disks(self, pool_name, disks):
+        return [disk for disk in filter(
+            lambda d: d in disks and disks[d]['bus'] == 'USB',
+            await self.middleware.call('zfs.pool.get_disks', pool_name)
+        )]
+
     async def check(self):
         alerts = []
-        usb_disks = {}
+        pools_with_usb_disks = {}
         not_upgraded_zpools = []
+        disks = await self.middleware.call('device.get_disks')
 
         for guid, info in (await self.middleware.call('zfs.pool.query_imported_fast')).items():
             pool_name = info['name']
-            if (usb_disks := await self.middleware.call('pool.get_usb_disks', pool_name)):
-                usb_disks[pool_name] = usb_disks
+            if (usb_disks := await self.get_usb_disks(pool_name, disks)):
+                pools_with_usb_disks[pool_name] = usb_disks
 
             if not await self.middleware.call('zfs.pool.is_upgraded', pool_name):
                 not_upgraded_zpools.append(pool_name)
 
-        for pool, usb_disks in usb_disks.items():
-            alerts.append(Alert(PoolUSBDisksAlertClass, {'pool': pool, 'disks': ', '.join(usb_disks)}))
+        for pool, usb in pools_with_usb_disks.items():
+            alerts.append(Alert(PoolUSBDisksAlertClass, {'pool': pool, 'disks': ', '.join(usb)}))
 
         if not_upgraded_zpools:
             alerts.append(Alert(PoolsVersionAlertClass, ', '.join(not_upgraded_zpools)))
