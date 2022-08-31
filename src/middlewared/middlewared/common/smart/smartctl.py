@@ -1,6 +1,5 @@
 import logging
 import shlex
-import subprocess
 from collections import namedtuple
 
 from middlewared.utils import run
@@ -29,10 +28,8 @@ async def get_smartctl_args(context, disk, smartoptions):
         return
 
     args = [f"/dev/{disk}"] + smartoptions
-    if not enterprise_hardware:
-        p = await smartctl(args + ["-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore")
-        if "Unknown USB bridge" in p.stdout:
-            args = args + ["-d", "sat"]
+    if not enterprise_hardware and device['bus'] == 'USB':
+        args = args + ["-d", "sat"]
 
     return args
 
