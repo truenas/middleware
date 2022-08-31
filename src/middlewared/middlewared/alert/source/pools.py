@@ -30,9 +30,6 @@ class PoolsChecksAlertSource(AlertSource):
         not_upgraded_zpools = []
 
         for guid, info in (await self.middleware.call('zfs.pool.query_imported_fast')).items():
-            if info['state'] != 'ONLINE':
-                continue
-
             pool_name = info['name']
             if (usb_disks := await self.middleware.call('pool.get_usb_disks', pool_name)):
                 usb_disks[pool_name] = usb_disks
