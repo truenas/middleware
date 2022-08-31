@@ -425,7 +425,7 @@ class SMARTTestService(CRUDService):
             )
         else:
             supported_disks = await self.disk_choices(True)
-            devices = await self.middleware.call('device.get_storage_devices_topology')
+            devices = await self.middleware.call('device.get_disks')
             valid_disks = [
                 disk['identifier']
                 for disk in await self.middleware.call('disk.query', [
