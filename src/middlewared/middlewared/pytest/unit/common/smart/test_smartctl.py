@@ -1,7 +1,5 @@
-import subprocess
-
-from mock import Mock, patch
 import pytest
+from mock import Mock, patch
 
 from middlewared.common.smart.smartctl import get_smartctl_args, SMARTCTX
 
@@ -23,23 +21,32 @@ async def test_get_disk__unknown_usb_bridge():
     context = SMARTCTX(
         devices={
             "sda": {
+                "name": "sda",
+                "sectorsize": 4096,
+                "number": 2048,
+                "subsystem": "scsi",
                 "driver": "sd",
-                "controller_id": 17,
-                "bus": 0,
-                "channel_no": 0,
-                "lun_id": 0,
+                "hctl": "17:0:0:0",
+                "size": 10000831348736,
+                "mediasize": 10000831348736,
+                "ident": "ZZBBBAAA",
+                "serial": "ZZBBBAAA",
+                "model": "USB MODEL",
+                "descr": "USB MODEL",
+                "lunid": "5000cca251214158",
+                "bus": "USB",
+                "type": "SSD",
+                "blocks": 19532873728,
+                "serial_lunid": "ZZBBBAAA_5000cca251214158",
+                "rotationrate": None,
+                "stripesize": None,
+                "parts": [],
+                "dif": False
             },
         },
         enterprise_hardware=False,
     )
-    stdout = "/dev/sda: Unknown USB bridge [0x0930:0x6544 (0x100)]\nPlease specify device type with the -d option."
-    with patch("middlewared.common.smart.smartctl.run") as run:
-        run.return_value = Mock(stdout=stdout)
-        assert await get_smartctl_args(context, "sda", "") == ["/dev/sda", "-d", "sat"]
-
-    run.assert_called_once_with(
-        ["smartctl", "/dev/sda", "-i"], stderr=subprocess.STDOUT, check=False, encoding="utf8", errors="ignore"
-    )
+    assert await get_smartctl_args(context, "sda", "") == ["/dev/sda", "-d", "sat"]
 
 
 @pytest.mark.asyncio
@@ -47,11 +54,27 @@ async def test_get_disk__generic():
     context = SMARTCTX(
         devices={
             "sda": {
+                "name": "sda",
+                "sectorsize": 4096,
+                "number": 2048,
+                "subsystem": "scsi",
                 "driver": "sd",
-                "controller_id": 17,
-                "bus": 0,
-                "channel_no": 0,
-                "lun_id": 0,
+                "hctl": "17:0:0:0",
+                "size": 10000831348736,
+                "mediasize": 10000831348736,
+                "ident": "ZZBBBAAA",
+                "serial": "ZZBBBAAA",
+                "model": "USB MODEL",
+                "descr": "USB MODEL",
+                "lunid": "5000cca251214158",
+                "bus": "scsi",
+                "type": "HDD",
+                "blocks": 19532873728,
+                "serial_lunid": "ZZBBBAAA_5000cca251214158",
+                "rotationrate": "7200",
+                "stripesize": None,
+                "parts": [],
+                "dif": False
             },
         },
         enterprise_hardware=False,

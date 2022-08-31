@@ -18,7 +18,7 @@ class DiskService(Service):
             try:
                 disks = await self.middleware.call("disk.query", [["name", "!=", None]])
 
-                devices = await self.middleware.call("device.get_storage_devices_topology")
+                devices = await self.middleware.call("device.get_disks")
                 hardware = await self.middleware.call("system.is_enterprise_ix_hardware")
                 context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
                 self.smartctl_args_for_disk = dict(zip(
@@ -54,7 +54,7 @@ class DiskService(Service):
             if options['cache']:
                 smartctl_args = await self.middleware.call('disk.smartctl_args', disk)
             else:
-                devices = await self.middleware.call('device.get_storage_devices_topology')
+                devices = await self.middleware.call('device.get_disks')
                 hardware = await self.middleware.call('system.is_enterprise_ix_hardware')
                 context = SMARTCTX(devices=devices, enterprise_hardware=hardware)
                 if disks := await self.middleware.call('disk.query', [['name', '=', disk]]):
