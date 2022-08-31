@@ -11,32 +11,41 @@ ZFS_PARTHEX = 'BF01'
 class DiskService(Service):
 
     @private
-    def format(self, disk, swapgb, sync=True):
-        disk_details = self.middleware.call_sync('device.get_disk', disk)
-        if not disk_details:
-            raise CallError(f'Unable to retrieve disk details for {disk}')
-        size = disk_details['size']
+    def validate_disk(self, disk, swapgb):
+        dd = self.middleware.call_sync('device.get_disk', disk)
+        if not dd:
+            raise CallError(f'Unable to retrieve disk details for {disk!r}')
+
+        if dd['dif']:
+            raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
+
+        size = dd['size']
         if not size:
-            self.logger.error(f'Unable to determine size of {disk}')
-        else:
+            raise CallError(f'Unable to determine size of {disk!r}')
+
+        swapsize = swapgb * 1024 * 1024 * 1024
+        if (size - 102400) <= swapsize:
             # The GPT header takes about 34KB + alignment, round it to 100
-            if size - 102400 <= swapgb * 1024 * 1024 * 1024:
-                raise CallError(f'Your disk size must be higher than {swapgb}GB')
+            raise CallError(f'Disk: {disk!r} must be larger than {swapgb}GB')
+
+        sectorsize = dd['sectorsize'] or 512
+        alignment = int(4096 / sectorsize)
+
+        # round up to the nearest whole integral multiple of 128 so next
+        # partition starts at multiple of 128
+        swapsize = int(((swapsize / sectorsize) + 127) / 128) * 128
+
+        return swapsize, alignment
+
+    @private
+    def format(self, disk, swapgb, sync=True):
+        swapsize, alignment = self.validate_disk(disk, swapgb)
 
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
         if job.error:
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
-        sectorsize = disk_details['sectorsize'] or 512
-
-        # Calculate swap size.
-        swapsize = swapgb * 1024 * 1024 * 1024 / sectorsize
-        # Round up to nearest whole integral multiple of 128
-        # so next partition starts at mutiple of 128.
-        swapsize = (int((swapsize + 127) / 128)) * 128
-
-        alignment = int(4096 / sectorsize)
         if swapsize > 0:
             commands = [
                 ('sgdisk', f'-a{alignment}', f'-n1:128:{swapsize}', f'-t1:{SWAP_PARTHEX}', f'/dev/{disk}'),

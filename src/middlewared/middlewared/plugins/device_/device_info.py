@@ -35,7 +35,7 @@ class DeviceService(Service):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(dev, get_partitions)
+                disks[dev.sys_name] = self.get_disk_details(ctx, dev, get_partitions)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
@@ -79,7 +79,7 @@ class DeviceService(Service):
         return parts
 
     @private
-    def get_disk_details(self, dev, get_partitions=False):
+    def get_disk_details(self, ctx, dev, get_partitions=False):
         is_nvme = dev.sys_name.startswith('nvme')
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
         ident = serial = (
@@ -130,7 +130,43 @@ class DeviceService(Service):
         if disk['serial'] and disk['lunid']:
             disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
 
+        disk['dif'] = self.is_dif_formatted(ctx, {'subsystem': disk['subsystem'], 'hctl': disk['hctl']})
+
         return disk
+
+    @private
+    def is_dif_formatted(self, ctx, info):
+        """
+        DIF is a feature added to the SCSI Standard. It adds 8 bytes to the end of each sector on disk.
+        It increases the size of the commonly-used 512-byte disk block from 512 to 520 bytes. The extra bytes comprise
+        the Data Integrity Field (DIF). The basic idea is that the HBA will calculate a checksum value for the data
+        block on writes, and store it in the DIF. The storage device will confirm the checksum on receive, and store
+        the data plus checksum. On a read, the checksum will be checked by the storage device and by the receiving HBA.
+
+        The Data Integrity Extension (DIX) allows this check to move up the stack: the application calculates the
+        checksum and passes it to the HBA, to be appended to the 512 byte data block. This provides a full end-to-end
+        data integrity check.
+
+        With support from the HBA, this means checksums will be computed/verified by the HBA for every block. This is
+        redundant and a waste of bus bandwidth with ZFS. These disks should be reformatted to use a normal sector size
+        without protection information before a pool can be created.
+        """
+        dif = False
+        if (info['subsystem'] != 'scsi') or (info['hctl'].count(':') != 3):
+            # only check scsi devices
+            return dif
+
+        try:
+            dev = pyudev.Devices.from_path(ctx, f'/sys/class/scsi_disk/{info["hctl"]}')
+        except pyudev.DeviceNotFoundAtPathError:
+            return dif
+        except Exception:
+            # logging this is painful because it'll spam so
+            # ignore it for now...
+            return dif
+        else:
+            # 0 == disabled, > 0 == enabled
+            return bool(self.safe_retrieval(dev.attributes, 'protection_type', 0, asint=True))
 
     @private
     def safe_retrieval(self, prop, key, default, asint=False):
@@ -152,7 +188,7 @@ class DeviceService(Service):
         except pyudev.DeviceNotFoundByNameError:
             return None
 
-        return self.get_disk_details(block_device)
+        return self.get_disk_details(context, block_device)
 
     def _get_type_and_rotation_rate(self, disk_data, device_path):
         if disk_data['rota']:
