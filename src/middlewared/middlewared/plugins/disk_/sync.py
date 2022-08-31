@@ -49,6 +49,11 @@ class DiskService(Service, ServiceChangeMixin):
         else:
             disk['disk_identifier'] = await self.middleware.call('datastore.insert', 'storage.disk', disk)
 
+        if disks[name]['dif']:
+            await self.middleware.call('alert.oneshot_create', 'DifFormatted', [name])
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'DifFormatted', None)
+
         await self.restart_services_after_sync()
 
         await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
@@ -129,6 +134,7 @@ class DiskService(Service, ServiceChangeMixin):
         seen_disks = {}
         changed = set()
         deleted = set()
+        dif_formatted_disks = []
         increment = round((40 - 20) / number_of_disks, 3)  # 20% of the total percentage
         progress_percent = 40
         encs = self.middleware.call_sync('enclosure.query')
@@ -163,6 +169,9 @@ class DiskService(Service, ServiceChangeMixin):
                 disk['disk_name'] = name
 
             if name in sys_disks:
+                if sys_disks[name]['dif']:
+                    dif_formatted_disks.append(name)
+
                 self._map_device_disk_to_db(disk, sys_disks[name])
 
             if name not in sys_disks and not disk['disk_expiretime']:
@@ -203,6 +212,9 @@ class DiskService(Service, ServiceChangeMixin):
             disk['disk_name'] = name
             self._map_device_disk_to_db(disk, sys_disks[name])
 
+            if sys_disks[name]['dif']:
+                dif_formatted_disks.append(name)
+
             if not new:
                 if self._disk_changed(disk, original_disk):
                     self.middleware.call_sync(
@@ -219,6 +231,11 @@ class DiskService(Service, ServiceChangeMixin):
                 self.logger.error(
                     'Unhandled exception in enclosure.sync_disk for %r', disk['disk_identifier'], exc_info=True
                 )
+
+        if dif_formatted_disks:
+            self.middleware.call_sync('alert.oneshot_create', 'DifFormatted', dif_formatted_disks)
+        else:
+            self.middleware.call_sync('alert.oneshot_delete', 'DifFormatted', None)
 
         if changed or deleted:
             job.set_progress(92, 'Restarting necessary services')

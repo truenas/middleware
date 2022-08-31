@@ -1,22 +1,14 @@
-from middlewared.alert.base import Alert, AlertSource, AlertClass, AlertCategory, AlertLevel
-from middlewared.alert.schedule import CrontabSchedule
+from middlewared.alert.base import Alert, AlertClass, AlertCategory, OneShotAlertClass, AlertLevel
 
 
-class DifFormattedAlertClass(AlertClass):
+class DifFormattedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = 'Disk(s) Are Formatted With Data Integrity Feature (DIF).'
     text = 'Disk(s): %s are formatted with Data Integrity Feature (DIF) which is unsupported.'
 
+    async def create(self, disks):
+        return Alert(DifFormattedAlertClass, ', '.join(disks))
 
-class DifFormattedAlertSource(AlertSource):
-    schedule = CrontabSchedule(hour=0)  # every 24 hours
-    run_on_backup_node = False
-
-    async def check(self):
-        dif = []
-        for disk, info in filter(lambda x: x[1]['dif'], (await self.middleware.call('device.get_disks')).items()):
-            dif.append(disk)
-
-        if dif:
-            return Alert(DifFormattedAlertClass, ', '.join(dif))
+    async def delete(self, alerts, query):
+        return []
