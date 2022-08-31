@@ -196,20 +196,6 @@ class DeviceService(Service):
         return str(rotation_rate)
 
     @private
-    def get_storage_devices_topology(self):
-        topology = {}
-        for disk in filter(lambda d: d['subsystem'] == 'scsi', self.get_disks().values()):
-            if disk['hctl'].count(':') == 3:
-                hctl = disk['hctl'].split(':')
-                topology[disk['name']] = {
-                    'driver': disk['driver'], **{
-                        k: int(v) for k, v in zip(('controller_id', 'channel_no', 'target', 'lun_id'), hctl)
-                    }
-                }
-
-        return topology
-
-    @private
     def get_gpus(self):
         gpus = get_gpus()
         to_isolate_gpus = self.middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
