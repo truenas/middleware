@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import math
 import psutil
+import os
 
 from middlewared.utils.serial import serial_port_choices
 from middlewared.utils.db import query_config_table
@@ -19,18 +20,24 @@ if __name__ == "__main__":
     # 22.02-RC.2 use real hostid. We need to be able to boot both of these configurations.
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
+        'GRUB_TIMEOUT=10',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 amd_iommu=on iommu=pt '
         'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on zfsforce=1'
         f'{f" {kernel_extra_options}" if kernel_extra_options else ""}"',
     ]
 
-    terminal = ["console"]
+    terminal_output = ["console"]
+    terminal_input = ["console"]
     cmdline = []
     if advanced["serialconsole"]:
-        config.append(f'GRUB_SERIAL_COMMAND="serial --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"')
-        terminal.append("serial")
         port = get_serial_ports().get(advanced['serialport'], advanced['serialport'])
-        cmdline.append(f"console={port},{advanced['serialspeed']} console=tty1")
+        port_nr = port.replace('ttyS', '')
+        config.append(f'GRUB_SERIAL_COMMAND="serial --unit={port_nr} --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"')
+        if os.path.exists("/sys/firmware/efi"):
+            terminal_output = ["gfxterm"]
+        terminal_output.append("serial")
+        terminal_input.append("serial")
+        cmdline.append(f"console=tty1 console={port},{advanced['serialspeed']}")
 
     if advanced.get("kdump_enabled"):
         # (memory in kb) / 16 / 1024 / 1024
@@ -47,7 +54,8 @@ if __name__ == "__main__":
         current_mem = psutil.virtual_memory().total / 1024
         cmdline.append(f"crashkernel={400 + math.ceil(current_mem / 16 / 1024 / 1024)}M")
 
-    config.append(f'GRUB_TERMINAL="{" ".join(terminal)}"')
+    config.append(f'GRUB_TERMINAL_INPUT="{" ".join(terminal_input)}"')
+    config.append(f'GRUB_TERMINAL_OUTPUT="{" ".join(terminal_output)}"')
     config.append(f'GRUB_CMDLINE_LINUX="{" ".join(cmdline)}"')
     config.append("")
 
