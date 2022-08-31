@@ -12,7 +12,7 @@ class PoolUSBDisksAlertClass(AlertClass):
 class PoolsVersionAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
-    title = "New Feature Flags Are Available for Pool"
+    title = "New Feature Flags Are Available for Pool(s)"
     text = (
         "New ZFS version or feature flags are available for pool(s) %s. Upgrading pools is a one-time process that can "
         "prevent rolling the system back to an earlier TrueNAS version. It is recommended to read the TrueNAS release "
