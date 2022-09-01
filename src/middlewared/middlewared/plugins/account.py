@@ -820,7 +820,8 @@ class UserService(CRUDService):
         """
         Get the next available/free uid.
         """
-        last_uid = 999
+        # We want to create new users from 3000 to avoid potential conflicts - Reference: NAS-117892
+        last_uid = 2999
         builtins = await self.middleware.call(
             'datastore.query', 'account.bsdusers',
             [('builtin', '=', False)], {'order_by': ['uid'], 'prefix': 'bsdusr_'}
@@ -1480,7 +1481,8 @@ class GroupService(CRUDService):
             } |
             set((await self.middleware.call('privilege.used_local_gids')).keys())
         )
-        next_gid = 1000
+        # We should start gid from 3000 to avoid potential conflicts - Reference: NAS-117892
+        next_gid = 3000
         while next_gid in used_gids:
             next_gid += 1
 
