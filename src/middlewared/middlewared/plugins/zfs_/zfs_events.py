@@ -7,7 +7,7 @@ import time
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.utils import osc, start_daemon_thread
+from middlewared.utils import start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 
@@ -107,15 +107,6 @@ async def scrub_finished(middleware, pool_name):
     await middleware.call('alert.oneshot_delete', 'ScrubFinished', pool_name)
     await middleware.call('alert.oneshot_create', 'ScrubFinished', pool_name)
 
-
-async def devd_zfs_hook(middleware, data):
-    if data.get('type') in (
-        'ATTACH',
-        'DETACH',
-        'resource.fs.zfs.removed',
-        'sysevent.fs.zfs.config_sync',
-    ):
-        asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
 
 deadman_throttle = defaultdict(list)
 
@@ -238,5 +229,3 @@ async def zfs_events(middleware, data):
 def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
-    if osc.IS_FREEBSD:
-        middleware.register_hook('devd.zfs', devd_zfs_hook)
