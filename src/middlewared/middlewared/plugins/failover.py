@@ -238,16 +238,15 @@ class FailoverService(ConfigService):
             # connection is "up" but the default TCP window hasn't elapsed so
             # the connection remains alive. Without the timeout, this could take
             # 20+ seconds to return which is unacceptable during a failover event.
-            remote_imported = await self.middleware.call(
-                'failover.call_remote', 'pool.query', [[['status', '!=', 'OFFLINE']]], {'timeout': 5}
-            )
-
-            # Other node has the pool
-            if remote_imported:
-                return 'BACKUP'
-            # Other node has no pool
-            else:
+            remote_imported = len(await self.middleware.call(
+                'failover.call_remote', 'zfs.pool.query_imported_fast', [], {'timeout': 5}
+            ))
+            if remote_imported <= 1:
+                # getting here means we dont have a pool and neither does remote node
                 return 'ERROR'
+            else:
+                # Other node has the pool (excluding boot pool)
+                return 'BACKUP'
         except Exception as e:
             # Anything other than ClientException is unexpected and should be logged
             if not isinstance(e, CallError):
