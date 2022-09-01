@@ -170,9 +170,10 @@ async def zfs_events(middleware, data):
         alerts = ('PoolUSBDisks', 'PoolUpgraded')
         if pool_name:
             disks = await middleware.call('device.get_disks')
+            args = {'pool_name': pool_name, 'disks': disks}
             if event_id.endswith('pool_import'):
                 for i in alerts:
-                    await middleware.call('alert.oneshot_create', i, {'pool_name': pool_name, 'disks': disks})
+                    await middleware.call('alert.oneshot_create', i, args)
             elif event_id.endswith('pool_destroy'):
                 for i in alerts:
                     await middleware.call('alert.oneshot_delete', i, pool_name)
@@ -187,7 +188,7 @@ async def zfs_events(middleware, data):
 
                 for i in alerts:
                     await middleware.call('alert.oneshot_delete', i, pool_name)
-                    await middleware.call('alert.oneshot_create', i, {'pool_name': pool_name, 'disks': disks})
+                    await middleware.call('alert.oneshot_create', i, args)
     elif (
         event_id == 'sysevent.fs.zfs.history_event' and data.get('history_dsname') and data.get('history_internal_name')
     ):
