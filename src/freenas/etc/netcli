@@ -969,7 +969,7 @@ def create_lagg_interface():
     lagg_index = 0
     lagg_interfaces = LAGGInterface.objects.all()
     for li in lagg_interfaces:
-        lagg_index = int(re.split('([0-9]+)$', str(li.lagg_interface))[1]) + 1
+        lagg_index = int(re.split('([0-9]+)$', li.lagg_interface.int_interface)[1]) + 1
 
     lagg_proto = get_lagg_proto()
     if not lagg_proto:
@@ -1050,7 +1050,7 @@ def delete_lagg_interface():
         print()
 
         for idx, li in enumerate(lagg_interfaces):
-            lagg_index = int(re.split('([0-9]+)$', str(li.lagg_interface))[1]) + 1
+            lagg_index = int(re.split('([0-9]+)$', li.lagg_interface.int_interface)[1]) + 1
             lagg_map[idx + 1] = li
 
             print("%d) lagg%s" % (idx + 1, re.split('([0-9]+)$', str(li.lagg_interface))[1]))
