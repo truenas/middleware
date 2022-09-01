@@ -166,23 +166,38 @@ async def zfs_events(middleware, data):
         'sysevent.fs.zfs.pool_destroy',
         'sysevent.fs.zfs.pool_import',
     ):
-        # Swap must be configured only on disks being used by some pool,
-        # for this reason we must react to certain types of ZFS events to keep
-        # it in sync every time there is a change.
+        pool_name = data.get('pool')
+        pool_guid = data.get('guid')
         if await middleware.call('system.ready'):
-            # We only want to configure swap if system is ready as otherwise when the pools have not been
-            # imported, middleware will remove swap disks as all pools might not have imported
+            # Swap must be configured only on disks being used by some pool,
+            # for this reason we must react to certain types of ZFS events to keep
+            # it in sync every time there is a change. Also, we only want to configure swap
+            # if system is ready as otherwise when the pools have not been imported,
+            # middleware will remove swap disks as all pools might not have imported
             asyncio.ensure_future(middleware.call('disk.swaps_configure'))
-        if event_id == 'sysevent.fs.zfs.config_sync' and data.get('pool') and data.get('pool_guid'):
+
+            alerts = ('PoolUSBDisks', 'PoolUpgraded')
+            if pool_name:
+                disks = await middleware.call('device.get_disks')
+                if event_id.endswith('pool_import'):
+                    for i in alerts:
+                        await middleware.call('alert.oneshot_create', i, {'pool_name': pool_name, 'disks': disks})
+                elif event_id.endswith('pool_destroy'):
+                    for i in alerts:
+                        await middleware.call('alert.oneshot_delete', i, pool_name)
+                elif event_id.endswith('config_sync'):
+                    for i in alerts:
+                        await middleware.call('alert.oneshot_delete', i, pool_name)
+                        await middleware.call('alert.oneshot_create', i, {'pool_name': pool_name, 'disks': disks})
+
+        if event_id == 'sysevent.fs.zfs.config_sync' and pool_name and pool_guid:
             # This event is issued whenever a vdev change is done to a pool
             # Checking pool_guid ensures that we do not do this on creation/deletion of pool as we expect the
             # relevant event to be handled from the service endpoints because there are other operations related
             # to create/delete which when done, we consider the create/delete operation as complete
-            pool = await retrieve_pool_from_db(middleware, data['pool'])
-            if not pool:
-                return
+            if (pool := await retrieve_pool_from_db(middleware, pool_name)):
+                middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
 
-            middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
     elif (
         event_id == 'sysevent.fs.zfs.history_event' and data.get('history_dsname') and data.get('history_internal_name')
     ):
