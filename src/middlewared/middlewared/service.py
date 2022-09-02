@@ -2119,14 +2119,26 @@ class CoreService(Service):
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, job, method, params, description):
         """
-        Will loop on a list of items for the given method, returning a list of
-        dicts containing a result and error key.
+        Will sequentially call `method` with arguments from the `params` list. For example, running
+
+            call("core.bulk", "zfs.snapshot.delete", [["tank@snap-1", true], ["tank@snap-2", false]])
+
+        will call
+
+            call("zfs.snapshot.delete", "tank@snap-1", true)
+            call("zfs.snapshot.delete", "tank@snap-2", false)
+
+        If the first call fails and the seconds succeeds (returning `true`), the result of the overall call will be:
+
+            [
+                {"result": null, "error": "Error deleting snapshot"},
+                {"result": true, "error": null}
+            ]
+
+        Important note: the execution status of `core.bulk` will always be a `SUCCESS` (unless an unlikely internal
+        error occurs). Caller must check for individual call results to ensure the absence of any call errors.
 
         `description` contains format string for job progress (e.g. "Deleting snapshot {0[dataset]}@{0[name]}")
-
-        Result will be the message returned by the method being called,
-        or a string of an error, in which case the error key will be the
-        exception
         """
         statuses = []
         if not params:
