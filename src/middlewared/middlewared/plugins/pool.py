@@ -3160,6 +3160,11 @@ class PoolDatasetService(CRUDService):
 
         if '/' not in data['name']:
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
+        elif data['name'][-1] == ' ':
+            verrors.add(
+                'pool_dataset_create.name',
+                'Trailing spaces are not permitted in dataset names'
+            )
         else:
             parent_name = data['name'].rsplit('/', 1)[0]
             if data['create_ancestors']:
