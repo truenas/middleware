@@ -239,15 +239,14 @@ class FailoverService(ConfigService):
             # the connection remains alive. Without the timeout, this could take
             # 20+ seconds to return which is unacceptable during a failover event.
             remote_imported = await self.middleware.call(
-                'failover.call_remote', 'pool.query', [[['status', '!=', 'OFFLINE']]], {'timeout': 5}
+                'failover.call_remote', 'zfs.pool.query_imported_fast', [], {'timeout': 5}
             )
-
-            # Other node has the pool
-            if remote_imported:
-                return 'BACKUP'
-            # Other node has no pool
-            else:
+            if len(remote_imported) <= 1:
+                # getting here means we dont have a pool and neither does remote node
                 return 'ERROR'
+            else:
+                # Other node has the pool (excluding boot pool)
+                return 'BACKUP'
         except Exception as e:
             # Anything other than ClientException is unexpected and should be logged
             if not isinstance(e, CallError):
@@ -1323,10 +1322,6 @@ def remote_status_event(middleware, *args, **kwargs):
 async def setup(middleware):
     middleware.event_register('failover.setup', 'Sent when failover is being setup.')
     middleware.event_register('failover.status', 'Sent when failover status changes.')
-    middleware.event_register(
-        'failover.disabled.reasons',
-        'Sent when the reasons for failover being disabled have changed.'
-    )
     middleware.event_register('failover.upgrade_pending', textwrap.dedent('''\
         Sent when system is ready and HA upgrade is pending.
 

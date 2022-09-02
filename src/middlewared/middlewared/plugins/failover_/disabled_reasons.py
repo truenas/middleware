@@ -98,3 +98,7 @@ class FailoverDisabledReasonsService(Service):
             reasons.add('NO_PONG')
 
         return reasons
+
+
+async def setup(middleware):
+    middleware.event_register('failover.disabled.reasons', 'Sent when failover status reasons change.')
