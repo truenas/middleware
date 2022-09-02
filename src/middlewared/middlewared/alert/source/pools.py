@@ -41,11 +41,13 @@ class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
         try:
             return await self.middleware.call('zfs.pool.is_upgraded', pool_name)
         except Exception:
-            return False
+            return
 
     async def create(self, args):
         pool = args['pool_name']
-        if await self.is_upgraded(pool):
+        if await self.is_upgraded(pool) is False:
+            # only alert if it's False explicitly since None means
+            # the pool couldn't be found
             return Alert(PoolUpgradedAlertClass, pool, key=pool)
 
     async def delete(self, alerts, query):
