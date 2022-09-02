@@ -3210,6 +3210,11 @@ class PoolDatasetService(CRUDService):
                 'pool_dataset_create.name',
                 f'Dataset name length should be less than or equal to {ZFS_MAX_DATASET_NAME_LEN}',
             )
+        elif data['name'][-1] == ' ':
+            verrors.add(
+                'pool_dataset_create.name',
+                'Trailing spaces are not permitted in dataset names'
+            )
         else:
             parent_name = data['name'].rsplit('/', 1)[0]
             if data['create_ancestors']:
