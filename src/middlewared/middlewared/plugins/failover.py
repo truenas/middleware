@@ -290,26 +290,8 @@ class FailoverService(ConfigService):
     @returns(List('ips', items=[Str('ip')]))
     @pass_app()
     async def get_ips(self, app):
-        """
-        Get a list of IPs for which the webUI can be accessed.
-        """
-        data = await self.middleware.call('system.general.config')
-        v4addrs = data['ui_address']
-        v6addrs = data['ui_v6address']
-        all_ip4 = '0.0.0.0' in v4addrs
-        all_ip6 = '::' in v6addrs
-
-        addrs = []
-        if all_ip4 or all_ip6:
-            for i in await self.middleware.call('interface.query', [('failover_vhid', '!=', None)]):
-                # user can bind to a single v4 address but all v6 addresses
-                # or vice versa
-                addrs.extend([
-                    x['address'] for x in i.get('failover_virtual_aliases', [])
-                    if (x['type'] == 'INET' and all_ip4) or (x['type'] == 'INET6' and all_ip6)
-                ])
-
-        return [i for i in set(addrs + v4addrs + v6addrs) if i not in ('0.0.0.0', '::')]
+        """Get a list of IPs for which the webUI can be accessed."""
+        return await self.middleware.call('system.general.get_ui_urls')
 
     @accepts()
     @returns(Bool())
