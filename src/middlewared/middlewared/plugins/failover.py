@@ -1322,10 +1322,6 @@ def remote_status_event(middleware, *args, **kwargs):
 async def setup(middleware):
     middleware.event_register('failover.setup', 'Sent when failover is being setup.')
     middleware.event_register('failover.status', 'Sent when failover status changes.')
-    middleware.event_register(
-        'failover.disabled.reasons',
-        'Sent when the reasons for failover being disabled have changed.'
-    )
     middleware.event_register('failover.upgrade_pending', textwrap.dedent('''\
         Sent when system is ready and HA upgrade is pending.
 
