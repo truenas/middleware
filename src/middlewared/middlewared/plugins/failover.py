@@ -288,7 +288,7 @@ class FailoverService(ConfigService):
     @throttle(seconds=2, condition=throttle_condition)
     @accepts()
     @returns(List('ips', items=[Str('ip')]))
-    @pass_app()
+    @pass_app(rest=True)
     async def get_ips(self, app):
         """Get a list of IPs for which the webUI can be accessed."""
         return await self.middleware.call('system.general.get_ui_urls')
