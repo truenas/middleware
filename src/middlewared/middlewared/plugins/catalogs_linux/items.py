@@ -91,7 +91,7 @@ class CatalogService(Service):
             List('trains', items=[Str('train_name')]),
         )
     )
-    @job(lock=lambda args: f'catalog_item_retrieval_internal_{json.dumps(args)}', lock_queue_size=1)
+    @job(lock=lambda args: f'catalog_item_retrieval_internal_{json.dumps(args)}', lock_queue_size=1, transient=True)
     def items_internal(self, job, label, options):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
