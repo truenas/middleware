@@ -84,12 +84,12 @@ class CatalogService(CRUDService):
         if extra.get('item_details'):
             item_sync_params = await self.middleware.call('catalog.sync_items_params')
             item_jobs = await self.middleware.call(
-                'core.get_jobs', [['method', '=', 'catalog.items'], ['state', '=', 'RUNNING']]
+                'core.get_jobs', [['method', '=', 'catalog.items_internal'], ['state', '=', 'RUNNING']]
             )
             for row in rows:
                 label = row['label']
                 catalog_info = {
-                    'item_job': await self.middleware.call('catalog.items', label, {
+                    'item_job': await self.middleware.call('catalog.items_internal', label, {
                         'cache': True,
                         'cache_only': await self.official_catalog_label() != row['label'],
                         'retrieve_all_trains': extra.get('retrieve_all_trains', True),
