@@ -38,7 +38,7 @@ class CatalogService(Service):
             job.set_progress(5, 'Updating catalog repository')
             await self.middleware.call('catalog.update_git_repository', catalog)
             job.set_progress(15, 'Reading catalog information')
-            item_job = await self.middleware.call('catalog.items', catalog_label, await self.sync_items_params())
+            item_job = await self.middleware.call('catalog.items_internal', catalog_label, await self.sync_items_params())
             await item_job.wait(raise_error=True)
         except Exception as e:
             await self.middleware.call(
