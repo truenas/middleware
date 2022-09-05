@@ -61,7 +61,7 @@ class CatalogService(Service):
         }
     ))
     @job(lock=lambda args: f'catalog_item_retrieval_{json.dumps(args)}', lock_queue_size=1)
-    def items(self, job, label, options):
+    async def items(self, job, label, options):
         """
         Retrieve item details for `label` catalog.
 
@@ -78,6 +78,21 @@ class CatalogService(Service):
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
+        return await job.wrap(await self.middleware.call('catalog.items_internal', label, options))
+
+    @private
+    @accepts(
+        Str('label'),
+        Dict(
+            'options',
+            Bool('cache', default=True),
+            Bool('cache_only', default=False),
+            Bool('retrieve_all_trains', default=True),
+            List('trains', items=[Str('train_name')]),
+        )
+    )
+    @job(lock=lambda args: f'catalog_item_retrieval_internal_{json.dumps(args)}', lock_queue_size=1)
+    def items_internal(self, job, label, options):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
         cache_key = get_cache_key(label)
