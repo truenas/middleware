@@ -186,11 +186,7 @@ def test_08_test_pool_property_normalization(request):
 
 def test_09_export_test_pool_with_destroy_true(request):
     depends(request, ["pool_04"])
-    payload = {
-        'cascade': True,
-        'restart_services': True,
-        'destroy': True
-    }
+    payload = {'cascade': True, 'restart_services': True, 'destroy': True}
     results = POST(f'/pool/id/{tp["id"]}/export/', payload)
     assert results.status_code == 200, results.text
     job_id = results.json()
@@ -199,3 +195,20 @@ def test_09_export_test_pool_with_destroy_true(request):
 
     results = GET(f'/pool/id/{tp["id"]}')
     assert results.status_code == 404, results.text
+
+
+def test_10_test_get_unused_before_pool_export_and_after_pool_export(request):
+    depends(request, ["pool_04"])
+
+    with another_pool() as temp:
+        # disk should not show up in `exported_zpool` keys
+        results = POST('/disk/get_unused/', False)
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), list), results.text
+        assert not any((i['exported_zpool'] == temp['name'] for i in results.json())), results.json()
+
+    results = POST('/disk/get_unused/', False)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), list), results.text
+    # disk should show up in `exported_zpool` keys
+    assert any((i['exported_zpool'] == temp['name'] for i in results.json())), results.json()
