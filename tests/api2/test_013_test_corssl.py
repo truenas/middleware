@@ -30,7 +30,7 @@ def test_01_check_corssl_installed(request):
 def test_02_check_base_ssl_module_cert_path(request):
     depends(request, ["CORSSL_INSTALLED"])
     default_dir = '/usr/lib/ssl/certs'
-    cmd = "python3 -c 'import ssl; print(ssl.get_default_verify_paths().capath'"
+    cmd = "python3 -c 'import ssl; print(ssl.get_default_verify_paths().capath)'"
     rv = SSH_TEST(cmd, user, password, ip)
     assert rv['output'].strip() == default_dir, rv['output']
 
