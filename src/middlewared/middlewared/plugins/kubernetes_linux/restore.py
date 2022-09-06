@@ -53,8 +53,9 @@ class KubernetesService(Service):
         # when we re-initialize the k8s cluster, it's possible we are leftover with datasets which are not
         # being used by any container. Images will be pulled again by k8s, so that shouldn't be a concern
         # in this regard.
-        docker_ds = os.path.join(k8s_config['dataset'], 'docker')
-        self.middleware.call_sync('zfs.dataset.delete', docker_ds, {'force': True, 'recursive': True})
+        fresh_datasets = self.middleware.call_sync('kubernetes.to_ignore_datasets_on_backup', k8s_config['dataset'])
+        for dataset in fresh_datasets:
+            self.middleware.call_sync('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})
 
         job.set_progress(20, f'Rolling back {backup["snapshot_name"]}')
         self.middleware.call_sync(
@@ -65,8 +66,9 @@ class KubernetesService(Service):
                 'recursive_rollback': True,
             }
         )
-        self.middleware.call_sync('zfs.dataset.create', {'name': docker_ds, 'type': 'FILESYSTEM'})
-        self.middleware.call_sync('zfs.dataset.mount', docker_ds)
+        for dataset in fresh_datasets:
+            self.middleware.call_sync('zfs.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
+            self.middleware.call_sync('zfs.dataset.mount', dataset)
 
         # FIXME: Remove this sleep, sometimes the k3s dataset fails to umount
         #  After discussion with mav, it sounds like a bug to him in zfs, so until that is fixed, we have this sleep
