@@ -158,7 +158,7 @@ if not ha:
     def test_10_pull_a_public_container_image(request):
         depends(request, ['setup_kubernetes'], scope='session')
         payload = {
-            'from_image': 'ixsystems/truecommand',
+            'from_image': 'minio/minio',
             'tag': 'latest'
         }
         results = POST('/container/image/pull/', payload)
@@ -172,7 +172,7 @@ if not ha:
         global public_image_id
         results = GET('/container/image/')
         for result in results.json():
-            if result['repo_tags'] == ['ixsystems/truecommand:latest']:
+            if result['repo_tags'] == ['minio/minio:latest']:
                 public_image_id = result['id']
                 assert True, result
                 break
@@ -192,12 +192,12 @@ if not ha:
         payload = {
             'catalog': 'OFFICIAL',
             'item': 'ix-chart',
-            'release_name': 'truecommand',
+            'release_name': 'minio',
             'train': 'charts',
             'values': {
                 'workloadType': 'Deployment',
                 'image': {
-                    'repository': 'ixsystems/truecommand',
+                    'repository': 'minio/minio',
                     'tag': 'latest'
                 },
                 'hostNetwork': False
@@ -210,26 +210,26 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
         tc_release_id = job_status['results']['result']['id']
 
-    def test_14_get_truecommand_ix_chart_catalog(request):
+    def test_14_get_minio_ix_chart_catalog(request):
         depends(request, ['tc_chart_release'])
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()['catalog'] == 'OFFICIAL', results.text
 
-    def test_15_get_truecommand_ix_chart_train(request):
+    def test_15_get_minio_ix_chart_train(request):
         depends(request, ['tc_chart_release'])
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()['catalog_train'] == 'charts', results.text
 
-    def test_16_get_truecommand_ix_chart_name(request):
+    def test_16_get_minio_ix_chart_name(request):
         depends(request, ['tc_chart_release'])
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['name'] == 'truecommand', results.text
+        assert results.json()['name'] == 'minio', results.text
 
     def test_17_verify_ix_chart_config_workloadtype(request):
         depends(request, ['tc_chart_release'])
@@ -250,13 +250,13 @@ if not ha:
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['config']['image']['repository'] == 'ixsystems/truecommand', results.text
+        assert results.json()['config']['image']['repository'] == 'minio/minio', results.text
         assert results.json()['config']['image']['tag'] == 'latest', results.text
 
     def test_20_set_ix_chart_chart_release_scale_up(request):
         depends(request, ['tc_chart_release'])
         payload = {
-            'release_name': 'truecommand',
+            'release_name': 'minio',
             'scale_options': {
                 'replica_count': 1
             }
@@ -327,7 +327,7 @@ if not ha:
     def test_25_pull_container_images_and_set_redeploy_to_true(request):
         depends(request, ['tc_chart_release'])
         payload = {
-            'release_name': 'truecommand',
+            'release_name': 'minio',
             'pull_container_images_options': {
                 'redeploy': True
             }
@@ -339,13 +339,13 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     @pytest.mark.dependency(name='tc_portforwarding')
-    def test_26_set_truecommand_ix_chart_portforwarding(request):
+    def test_26_set_minio_ix_chart_portforwarding(request):
         depends(request, ['tc_chart_release'])
         payload = {
             'values': {
                 'portForwardingList': [
                     {
-                        'containerPort': 80,
+                        'containerPort': 9000,
                         'nodePort': 20345,
                         'protocol': 'TCP'
                     }
@@ -369,7 +369,7 @@ if not ha:
         assert portForwardingList['protocol'] == 'TCP', results.text
 
     @pytest.mark.dependency(name='tc_updatestrategy')
-    def test_28_change_truecommand_ix_chart_updatestrategy_to_recreate(request):
+    def test_28_change_minio_ix_chart_updatestrategy_to_recreate(request):
         depends(request, ['tc_chart_release'])
         payload = {
             'values': {
@@ -390,7 +390,7 @@ if not ha:
         assert results.json()['config']['updateStrategy'] == 'Recreate', results.text
 
     @pytest.mark.dependency(name='tc_dnsConfig')
-    def test_30_set_truecommand_ix_chart_dnsConfig(request):
+    def test_30_set_minio_ix_chart_dnsConfig(request):
         depends(request, ['tc_chart_release'])
         global nameservers_list
         results = GET('/network/general/summary/')
@@ -420,7 +420,7 @@ if not ha:
         assert dnsConfig['searches'] == [], results.text
 
     @pytest.mark.dependency(name='tc_livenessProbe')
-    def test_32_set_truecommand_ix_chart_livenessProbe(request):
+    def test_32_set_minio_ix_chart_livenessProbe(request):
         depends(request, ['tc_chart_release'])
         payload = {
             'values': {
@@ -448,7 +448,7 @@ if not ha:
         assert livenessProbe['periodSeconds'] == 15, results.text
 
     @pytest.mark.dependency(name='tc_containerCAE')
-    def test_34_set_truecommand_ix_chart_tc_container_Command_Args_EnvironmentVariables(request):
+    def test_34_set_minio_ix_chart_tc_container_Command_Args_EnvironmentVariables(request):
         depends(request, ['tc_chart_release'])
         payload = {
             'values': {
@@ -485,7 +485,7 @@ if not ha:
         assert result.status_code == 200, result.text
 
     @pytest.mark.dependency(name='tc_volumes')
-    def test_37_set_truecommand_ix_chart_volumes(request):
+    def test_37_set_minio_ix_chart_volumes(request):
         depends(request, ['tc_chart_release'])
         global payload
         payload = {
@@ -513,7 +513,7 @@ if not ha:
         assert payload_volume in results.json()['config']['volumes'], results.text
 
     @pytest.mark.dependency(name='tc_hostPathVolumes')
-    def test_39_set_truecommand_ix_chart_hostPathVolumes(request):
+    def test_39_set_minio_ix_chart_hostPathVolumes(request):
         depends(request, ['tc_chart_release', 'hostpath-dataset'])
         global payload
         payload = {
@@ -557,7 +557,7 @@ if not ha:
         host_path_volumes = str(results.json()[0]['resources']['host_path_volumes'])
         assert f'/mnt/{pool_name}/tc-hostpath' in host_path_volumes, host_path_volumes
 
-    def test_42_delete_truecommand_chart_release(request):
+    def test_42_delete_minio_chart_release(request):
         depends(request, ['tc_chart_release'])
         results = DELETE(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
