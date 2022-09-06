@@ -6,27 +6,71 @@ from middlewared.schema import Bool
 
 
 class DiskService(Service):
+
+    @private
+    async def get_exported_disks(self, info, disks=None):
+        disks = set() if disks is None else disks
+        if isinstance(info, dict):
+            path = info.get('path')
+            if path and path.startswith('/dev/'):
+                path = path.removeprefix('/dev/')
+                if disk := await self.middleware.call('disk.label_to_disk', path):
+                    disks.add(disk)
+
+            for key in info:
+                await self.get_exported_disks(info[key], disks)
+        elif isinstance(info, list):
+            for idx, entry in enumerate(info):
+                await self.get_exported_disks(info[idx], disks)
+
+        return disks
+
+    @private
+    async def get_unused_impl(self):
+        in_use_disks_imported = []
+        for guid, info in (await self.middleware.call('zfs.pool.query_imported_fast')).items():
+            in_use_disks_imported.extend(await self.middleware.call('zfs.pool.get_disks', info['name']))
+
+        in_use_disks_exported = {}
+        for i in await self.middleware.call('zfs.pool.find_import'):
+            for in_use_disk in await self.get_exported_disks(i['groups']):
+                in_use_disks_exported[in_use_disk] = i['name']
+
+        unused = []
+        serial_to_disk = defaultdict(list)
+        for i in await self.middleware.call('datastore.query', 'storage.disk', [], {'prefix': 'disk_'}):
+            if i['name'] in in_use_disks_imported:
+                # exclude disks that are currently in use by imported zpool(s)
+                continue
+
+            # disk is "technically" not "in use" but the zpool is exported
+            # and can be imported so the disk would be "in use" if the zpool
+            # was imported so we'll mark this disk specially so that end-user
+            # can be warned appropriately
+            i['exported_zpool'] = in_use_disks_exported.get(i['name'])
+
+            serial_to_disk[(i['serial'], i['lunid'])].append(i)
+            unused.append(i)
+
+        for i in unused:
+            # need to add a `duplicate_serial` key so that webUI can give an appropriate warning to end-user
+            # about disks with duplicate serial numbers (I'm looking at you USB "disks")
+            i['duplicate_serial'] = [
+                j['name'] for j in serial_to_disk[(i['serial'], i['lunid'])] if j['name'] != i['name']
+            ]
+
+            # backwards compatibility
+            i['devname'] = i['name']
+
+        return unused
+
     @accepts(Bool('join_partitions', default=False))
     async def get_unused(self, join_partitions):
         """
-        Helper method to get all disks that are not in use, either by the boot
-        pool or the user pools.
+        Return disks that are not in use by any zpool that is currently imported. It will
+        also return disks that are in use by any zpool that is exported.
         """
-        all_disks = await self.middleware.call('disk.query')
-
-        serial_to_disk = defaultdict(list)
-        for disk in all_disks:
-            serial_to_disk[(disk['serial'], disk['lunid'])].append(disk)
-
-        reserved = await self.middleware.call('disk.get_reserved')
-        disks = [disk for disk in all_disks if disk['devname'] not in reserved]
-
-        for disk in disks:
-            disk['duplicate_serial'] = [
-                d['devname']
-                for d in serial_to_disk[(disk['serial'], disk['lunid'])]
-                if d['devname'] != disk['devname']
-            ]
+        disks = await self.get_unused_impl()
 
         if join_partitions:
             for disk in disks:
