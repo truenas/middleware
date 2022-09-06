@@ -345,7 +345,7 @@ if not ha:
             'values': {
                 'portForwardingList': [
                     {
-                        'containerPort': 80,
+                        'containerPort': 9000,
                         'nodePort': 20345,
                         'protocol': 'TCP'
                     }
