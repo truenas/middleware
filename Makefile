@@ -4,6 +4,7 @@ CATEGORIES=	devel
 
 MAINTAINER=	ports@FreeBSD.org
 COMMENT=	Library to abstract vnc, rdp and spice protocols
+WWW=		https://github.com/freenas/libhyve-remote
 
 LICENSE=	BSD2CLAUSE GPLv2
 LICENSE_COMB=	dual
