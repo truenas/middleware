@@ -269,12 +269,12 @@ if not ha:
         results = job_status['results']['result']
         assert isinstance(results, dict), str(job_status['results'])
 
-    def test_21_verify_truecomand_ix_chart_pod_status_desired_is_1(request):
+    def test_21_verify_truecomand_ix_chart_pod_status_desired_is_a_number(request):
         depends(request, ['tc_chart_release'])
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['pod_status']['desired'] == 1, results.text
+        assert isinstance(results.json()['pod_status']['desired'], int), results.text
 
     @pytest.mark.dependency(name='tc_externalInterfaces')
     def test_22_set_externalInterfaces(request):
@@ -364,7 +364,7 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         portForwardingList = results.json()['config']['portForwardingList'][0]
-        assert portForwardingList['containerPort'] == 80, results.texts.text
+        assert portForwardingList['containerPort'] == 9000, results.text
         assert portForwardingList['nodePort'] == 20345, results.text
         assert portForwardingList['protocol'] == 'TCP', results.text
 
