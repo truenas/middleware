@@ -1,6 +1,7 @@
+from middlewared.plugins.sysdataset import SYSDATASET_PATH
 from middlewared.schema import Bool, Dict, List, Str, Int
 from middlewared.service import (accepts, filterable, private, periodic, CRUDService)
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd
 
@@ -35,6 +36,48 @@ class ShareSec(CRUDService):
     class Config:
         namespace = 'smb.sharesec'
         cli_namespace = 'sharing.smb.sharesec'
+
+    tdb_options = {
+        'backend': 'CUSTOM',
+        'data_type': 'BYTES'
+    }
+
+    @private
+    async def dup_share_acl(self, src, dst):
+        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
+            return
+
+        val = await self.middleware.call('tdb.fetch', {
+            'name': f'{SYSDATASET_PATH}/samba4/share_info.tdb',
+            'key': f'SECDESC/{src.lower()}',
+            'tdb-options': self.tdb_options
+        })
+
+        await self.middleware.call('tdb.store', {
+            'name': f'{SYSDATASET_PATH}/samba4/share_info.tdb',
+            'key': f'SECDESC/{dst.lower()}',
+            'value': {'payload': val},
+            'tdb-options': self.tdb_options
+        })
+
+    @private
+    async def toggle_share(self, share_name, enable):
+        # We intentionally leave cleanup of old share ACL to libsmbconf
+        # so that there's not potential to leave share unprotected
+        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
+            return
+
+        if enable:
+            old = f'#{share_name.lower()}'
+            new = share_name.lower()
+        else:
+            old = share_name.lower()
+            new = f'#{share_name.lower()}'
+
+        try:
+            await self.dup_share_acl(old, new)
+        except MatchNotFound:
+            return
 
     @private
     async def parse_share_sd(self, sd, options=None):
@@ -406,4 +449,15 @@ class ShareSec(CRUDService):
             new_acl.update({'share_name': old_acl['share_name']})
 
         await self.setacl(new_acl)
+
+        try:
+            # remove in-tdb backup of this ACL
+            await self.middleware.call('tdb.fetch', {
+                'name': f'{SYSDATASET_PATH}/samba4/share_info.tdb',
+                'key': f'SECDESC/#{new_acl["share_name"]}',
+                'tdb-options': self.tdb_options
+            })
+        except MatchNotFound:
+            pass
+
         return old_acl
