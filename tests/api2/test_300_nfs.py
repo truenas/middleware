@@ -558,7 +558,7 @@ def test_38_check_nfs_service_v4_parameter(request):
     This test verifies that toggling the `v4` option generates expected changes
     in nfs kernel server config.
     """
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["pool_04"], scope="session")
 
     results = GET("/nfs")
     assert results.status_code == 200, results.text
@@ -569,15 +569,17 @@ def test_38_check_nfs_service_v4_parameter(request):
 
     results = PUT("/nfs/", {"v4": False})
     assert results.status_code == 200, results.text
-
     s = parse_server_config()
     assert "-N 4" in s["RPCNFSDOPTS"], str(s)
+    sleep(1)
 
     results = PUT("/nfs/", {"v4": True})
     assert results.status_code == 200, results.text
 
     s = parse_server_config()
     assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+    # sleep to avoid spamming Systemd.
+    sleep(5)
 
 
 def test_39_check_nfs_service_udp_parameter(request):
@@ -585,7 +587,7 @@ def test_39_check_nfs_service_udp_parameter(request):
     This test verifies that toggling the `udp` option generates expected changes
     in nfs kernel server config.
     """
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["pool_04"], scope="session")
 
     results = GET("/nfs")
     assert results.status_code == 200, results.text
@@ -596,15 +598,14 @@ def test_39_check_nfs_service_udp_parameter(request):
 
     results = PUT("/nfs/", {"udp": True})
     assert results.status_code == 200, results.text
-
     s = parse_server_config()
     assert "--no-udp" not in s["RPCNFSDOPTS"], str(s)
-
+    sleep(2)
     results = PUT("/nfs/", {"udp": False})
     assert results.status_code == 200, results.text
-
     s = parse_server_config()
     assert "--no-udp" in s["RPCNFSDOPTS"], str(s)
+    sleep(2)
 
 
 def test_40_check_nfs_service_ports(request):
@@ -616,7 +617,7 @@ def test_40_check_nfs_service_ports(request):
     This test verifies that the custom ports we specified in
     earlier NFS tests are set in the relevant files.
     """
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["pool_04"], scope="session")
 
     results = GET("/nfs")
     assert results.status_code == 200, results.text
@@ -638,7 +639,7 @@ def test_41_check_nfs_client_status(request):
     of counts over NFSv3 protcol (specifically with regard to decrementing
     sessions) we only verify that count is non-zero for NFSv3.
     """
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, ["pool_04"], scope="session")
 
     with SSH_NFS(ip, NFS_PATH, vers=3, user=user, password=password, ip=ip):
         results = GET('/nfs/get_nfs3_clients/', payload={
@@ -759,12 +760,12 @@ def test_44_check_nfs_xattr_support(request):
                 n.create("testfile")
                 n.setxattr("testfile", "user.testxattr", "the_contents")
                 xattr_val = n.getxattr("testfile", "user.testxattr")
-                assert xattr_val == "the_contents" 
+                assert xattr_val == "the_contents"
 
                 n.create("testdir", True)
                 n.setxattr("testdir", "user.testxattr2", "the_contents2")
                 xattr_val = n.getxattr("testdir", "user.testxattr2")
-                assert xattr_val == "the_contents2" 
+                assert xattr_val == "the_contents2"
 
 
 def test_45_check_setting_runtime_debug(request):
@@ -778,7 +779,7 @@ def test_45_check_setting_runtime_debug(request):
     set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [["NFSD"], ["ALL"]]}
     res = make_ws_request(ip, get_payload)
     assert res['result'] == disabled, res
-    
+
     make_ws_request(ip, set_payload)
     res = make_ws_request(ip, get_payload)
     assert res['result']['NFSD'] == ["ALL"], res
