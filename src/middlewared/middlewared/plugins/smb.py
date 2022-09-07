@@ -1182,6 +1182,11 @@ class SharingSMBService(SharingService):
                 # Forcibly closes any existing SMB sessions.
                 await self.close_share(oldname)
                 try:
+                    await self.middleware.call('smb.sharesec.dup_share_acl', oldname, newname)
+                except MatchNotFound:
+                    pass
+
+                try:
                     await self.middleware.call('sharing.smb.reg_delshare', oldname)
                 except MatchNotFound:
                     pass
@@ -1206,9 +1211,11 @@ class SharingSMBService(SharingService):
             to add it.
             """
             check_mdns = True
+            await self.middleware.call('smb.sharesec.toggle_share', newname, True)
             await self.middleware.call('sharing.smb.reg_addshare', new)
 
         elif not old_is_locked and new_is_locked:
+            await self.middleware.call('smb.sharesec.toggle_share', newname, False)
             try:
                 await self.middleware.call('sharing.smb.reg_delshare', oldname)
                 check_mdns = True
@@ -1217,6 +1224,7 @@ class SharingSMBService(SharingService):
                                     old['name'], exc_info=True)
 
         if new['enabled'] != old['enabled']:
+            await self.middleware.call('smb.sharesec.toggle_share', newname, new['enabled'])
             check_mdns = True
 
         if do_global_reload:

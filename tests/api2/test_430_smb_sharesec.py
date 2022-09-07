@@ -256,7 +256,7 @@ def test_25_verify_share_info_tdb_is_deleted(request):
     assert results['result'] is False, results['output']
 
 
-def test_26_verify_smb_sharesec_is_reseted(request):
+def test_26_verify_smb_sharesec_is_restored(request):
     depends(request, ["pool_04"], scope="session")
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
@@ -265,7 +265,7 @@ def test_26_verify_smb_sharesec_is_reseted(request):
     assert ae_result != 'S-1-5-32-546', results.text
 
 
-def test_27_restort_sharesec_with_flush_share_info(request):
+def test_27_restore_sharesec_with_flush_share_info(request):
     depends(request, ["pool_04", "ssh_password"], scope="session")
     cmd = 'midclt call smb.sharesec._flush_share_info'
     results = SSH_TEST(cmd, user, password, ip)
@@ -288,26 +288,54 @@ def test_29_verify_share_info_tdb_is_created(request):
     assert results['result'] is True, results['output']
 
 
-def test_30_delete_share_acl(request):
+def test_30_rename_smb_share_and_verify_share_info_moved(request):
+    results = PUT(f"/sharing/smb/id/{smb_id}/",
+                  {"name": "my_sharesec2"})
+    assert results.status_code == 200, results.text
+
+    results = GET(f"/smb/sharesec/id/{sharesec_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    ae_result = results.json()['share_acl'][0]['ae_who_sid']
+    assert ae_result == 'S-1-5-32-546', results.text
+
+
+def test_31_toggle_share_and_verify_acl_preserved(request):
+    results = PUT(f"/sharing/smb/id/{smb_id}/",
+                  {"enabled": False})
+    assert results.status_code == 200, results.text
+
+    results = PUT(f"/sharing/smb/id/{smb_id}/",
+                  {"enabled": True})
+    assert results.status_code == 200, results.text
+
+    results = GET(f"/smb/sharesec/id/{sharesec_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    ae_result = results.json()['share_acl'][0]['ae_who_sid']
+    assert ae_result == 'S-1-5-32-546', results.text
+
+
+def test_32_delete_share_acl(request):
     depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
 
 
-def test_31_starting_cifs_service(request):
+def test_33_starting_cifs_service(request):
     depends(request, ["pool_04"], scope="session")
     payload = {"service": "cifs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
 
 
-def test_32_delete_cifs_share(request):
+def test_34_delete_cifs_share(request):
     depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/sharing/smb/id/{smb_id}")
     assert results.status_code == 200, results.text
 
 
-def test_33_destroying_smb_sharesec_dataset(request):
+def test_35_destroying_smb_sharesec_dataset(request):
     depends(request, ["pool_04"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
