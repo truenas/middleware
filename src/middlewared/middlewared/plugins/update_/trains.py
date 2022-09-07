@@ -4,6 +4,7 @@ from aiohttp import ClientSession, ClientTimeout
 
 from middlewared.service import private, Service
 from middlewared.utils.network import INTERNET_TIMEOUT
+from middlewared.utils.functools import cache
 from .utils import can_update, scale_update_server, SCALE_MANIFEST_FILE
 
 
@@ -12,6 +13,7 @@ class UpdateService(Service):
     update_srv = scale_update_server()
 
     @private
+    @cache
     def get_manifest_file(self):
         with open(SCALE_MANIFEST_FILE) as f:
             return json.load(f)
