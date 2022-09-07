@@ -4,6 +4,7 @@ import re
 from pyudev import Context
 
 from middlewared.service import Service
+from middlewared.utils.functools import cache
 from .ha_hardware import HA_HARDWARE
 
 ENCLOSURES_DIR = '/sys/class/enclosure/'
@@ -17,6 +18,7 @@ class EnclosureDetectionService(Service):
 
     HARDWARE = NODE = 'MANUAL'
 
+    @cache
     def detect(self):
 
         # first check to see if this is a BHYVE instance
