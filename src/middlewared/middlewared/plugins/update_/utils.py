@@ -3,7 +3,7 @@ import configparser
 import itertools
 import re
 
-DEFAULT_SCALE_UPDATE_SERVER = "https://update.freenas.org/scale"
+DEFAULT_SCALE_UPDATE_SERVER = "https://update.ixsystems.com/scale"
 SCALE_MANIFEST_FILE = "/data/manifest.json"
 
 UPLOAD_LOCATION = "/var/tmp/firmware"
