@@ -372,18 +372,22 @@ class UPSBase:
         ups_config = self.middleware.call_sync('ups.config')
         if ups_config['mode'] == 'SLAVE':
             remote_host = os.path.join(RRD_BASE_DIR_PATH, ups_config['remotehost'])
-            files = os.listdir(remote_host)
-            if not any(f.endswith('.rrd') for f in files):
-                remote_host = next(
-                    (
-                        f for f in sorted(
-                            filter(os.path.isdir, map(lambda f: os.path.join(remote_host, f), files)),
-                            key=lambda f: os.path.getmtime(f), reverse=True
-                        )
-                    ),
-                    remote_host
-                )
-            return remote_host
+            try:
+                files = os.listdir(remote_host)
+            except FileNotFoundError:
+                return super()._base_path
+            else:
+                if not any(f.endswith('.rrd') for f in files):
+                    remote_host = next(
+                        (
+                            f for f in sorted(
+                                filter(os.path.isdir, map(lambda f: os.path.join(remote_host, f), files)),
+                                key=lambda f: os.path.getmtime(f), reverse=True
+                            )
+                        ),
+                        remote_host
+                    )
+                return remote_host
         else:
             return super()._base_path
 
