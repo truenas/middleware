@@ -51,7 +51,7 @@ def test_00_firstboot_checks():
     mounts = {x['mount_source']: x for x in req['result']}
     for ds in expected_datasets:
         assert ds in mounts, str(mounts)
-        assert mounts[ds]['super_opts'] == ['RW', 'XATTR', 'NOACL', 'CASESENSITIVE'], str(mounts[ds])
+        assert mounts[ds]['super_opts'] == ['RW', 'XATTR', 'NOACL'], str(mounts[ds])
 
     # now verify we don't have any unexpected services running
     payload = {'msg': 'method', 'method': 'service.query', 'params': []}
