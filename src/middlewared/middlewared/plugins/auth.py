@@ -346,8 +346,24 @@ class AuthService(Service):
             return None
 
     @private
+    def get_token_for_action(self, token_id, method, resource):
+        if (token := self.token_manager.tokens.get(token_id)) is None:
+            return None
+
+        if token.attributes:
+            return None
+
+        if not token.parent_credentials.authorize(method, resource):
+            return None
+
+        return self.get_token(token_id)
+
+    @private
     def get_token_for_shell_application(self, token_id):
         if (token := self.token_manager.tokens.get(token_id)) is None:
+            return None
+
+        if token.attributes:
             return None
 
         if not isinstance(token.parent_credentials, UserSessionManagerCredentials):
