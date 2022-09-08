@@ -763,24 +763,25 @@ class ShellApplication(object):
         return ws
 
     async def worker_kill(self, t_worker):
-        # If connection has been closed lets make sure shell is killed
-        if t_worker.shell_pid:
-            with contextlib.suppress(psutil.NoSuchProcess):
-                shell = psutil.Process(t_worker.shell_pid)
-                to_terminate = [shell] + shell.children(recursive=True)
+        def worker_kill_impl():
+            # If connection has been closed lets make sure shell is killed
+            if t_worker.shell_pid:
+                with contextlib.suppress(psutil.NoSuchProcess):
+                    shell = psutil.Process(t_worker.shell_pid)
+                    to_terminate = [shell] + shell.children(recursive=True)
 
-                for p in to_terminate:
-                    with contextlib.suppress(psutil.NoSuchProcess):
-                        p.terminate()
-                gone, alive = psutil.wait_procs(to_terminate, timeout=2)
+                    for p in to_terminate:
+                        with contextlib.suppress(psutil.NoSuchProcess):
+                            p.terminate()
+                    gone, alive = psutil.wait_procs(to_terminate, timeout=2)
 
-                for p in alive:
-                    with contextlib.suppress(psutil.NoSuchProcess):
-                        p.kill()
+                    for p in alive:
+                        with contextlib.suppress(psutil.NoSuchProcess):
+                            p.kill()
 
-        # Wait thread join in yet another thread to avoid event loop blockage
-        # There may be a simpler/better way to do this?
-        await self.middleware.run_in_thread(t_worker.join)
+            t_worker.join()
+
+        await self.middleware.run_in_thread(worker_kill_impl)
 
 
 class PreparedCall:
