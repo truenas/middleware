@@ -60,6 +60,7 @@ import urllib.parse
 import uuid
 import tracemalloc
 
+import psutil
 from systemd.daemon import notify as systemd_notify
 
 from . import logger
@@ -794,29 +795,25 @@ class ShellApplication(object):
         return ws
 
     async def worker_kill(self, t_worker):
-        # If connection has been closed lets make sure shell is killed
-        if t_worker.shell_pid:
+        def worker_kill_impl():
+            # If connection has been closed lets make sure shell is killed
+            if t_worker.shell_pid:
+                with contextlib.suppress(psutil.NoSuchProcess):
+                    shell = psutil.Process(t_worker.shell_pid)
+                    to_terminate = [shell] + shell.children(recursive=True)
 
-            try:
-                pid_waiter = osc.PidWaiter(self.middleware, t_worker.shell_pid)
+                    for p in to_terminate:
+                        with contextlib.suppress(psutil.NoSuchProcess):
+                            p.terminate()
+                    gone, alive = psutil.wait_procs(to_terminate, timeout=2)
 
-                os.kill(t_worker.shell_pid, signal.SIGTERM)
+                    for p in alive:
+                        with contextlib.suppress(psutil.NoSuchProcess):
+                            p.kill()
 
-                # If process has not died in 2 seconds, try the big gun
-                if not await pid_waiter.wait(2):
-                    os.kill(t_worker.shell_pid, signal.SIGKILL)
+            t_worker.join()
 
-                    # If process has not died even with the big gun
-                    # There is nothing else we can do, leave it be and
-                    # release the worker thread
-                    if not await pid_waiter.wait(2):
-                        t_worker.die()
-            except ProcessLookupError:
-                pass
-
-        # Wait thread join in yet another thread to avoid event loop blockage
-        # There may be a simpler/better way to do this?
-        await self.middleware.run_in_thread(t_worker.join)
+        await self.middleware.run_in_thread(worker_kill_impl)
 
 
 class PreparedCall:
