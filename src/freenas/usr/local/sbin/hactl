@@ -83,9 +83,10 @@ def handle_status_command(client, status):
     reasons = client.call('failover.disabled.reasons')
     if not reasons:
         print(BASE_FAILOVER + DisabledEnum.HEALTHY.value)
+    elif len(reasons) == 1:
+        print(BASE_FAILOVER + getattr(DisabledEnum, reasons[0], DisabledEnum.UNKNOWN).value)
     else:
-        print(BASE_FAILOVER)
-        for idx, reason in enumerate(reasons):
+        for idx, reason in enumerate(reasons, start=1):
             print(f'    {idx}: {getattr(DisabledEnum, reason, DisabledEnum.UNKNOWN).value}')
 
     # end this section with a newline
@@ -106,7 +107,7 @@ def handle_enable_or_disable_command(command, client, status, config):
         except Exception as e:
             print_msg_and_exit(f'Unexpected failure enabling HA: {e}.')
         else:
-            print_msg_and_exit('Failover enabled.', exit_code=0)
+            print_msg_and_exit(f'Failover {command}d.', exit_code=0)
 
 
 def handle_takeover_or_giveback_command(command, client, status, config):
