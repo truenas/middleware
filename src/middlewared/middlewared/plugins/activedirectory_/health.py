@@ -1,12 +1,14 @@
 import errno
 import subprocess
+import wbclient
 
-from middlewared.plugins.smb import SMBCmd, WBCErr
+from middlewared.plugins.smb import SMBCmd
 from middlewared.plugins.activedirectory_.dns import SRV
 from middlewared.schema import accepts
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DSStatus
+from middlewared.plugins.idmap_.utils import WBClient, WBCErr
 
 
 class ActiveDirectoryService(Service):
@@ -16,19 +18,13 @@ class ActiveDirectoryService(Service):
 
     @private
     def winbind_status(self, check_trust=False):
-        netlogon_ping = subprocess.run([
-            SMBCmd.WBINFO.value, '-t' if check_trust else '-P'
-        ], capture_output=True)
-        if netlogon_ping.returncode != 0:
-            wberr = netlogon_ping.stderr.decode().strip('\n')
-            err = errno.EFAULT
-            for wb in WBCErr:
-                if wb.err() in wberr:
-                    wberr = wberr.replace(wb.err(), wb.value[0])
-                    err = wb.value[1] if wb.value[1] else errno.EFAULT
-                    break
-
-            raise CallError(wberr, err)
+        try:
+            if check_trust:
+                return WBClient().check_trust()
+            else:
+                return WBClient().ping_dc()
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
     @private
     def machine_account_status(self, dc=None):
@@ -129,17 +125,14 @@ class ActiveDirectoryService(Service):
             communicating with can time out. For this particular health check, the winbind
             error should not be considered fatal.
             """
-            wb_dcinfo = subprocess.run([SMBCmd.WBINFO.value, "--dc-info", data["domainname"]],
-                                       capture_output=True, check=False)
-            if wb_dcinfo.returncode == 0:
-                # output "FQDN (ip address)"
-                our_dc = f'{wb_dcinfo.stdout.decode().split()[0]}.'
+            try:
+                our_dc = self.winbind_status()
                 for dc_to_check in res:
                     thehost = dc_to_check['host']
                     if thehost.casefold() != our_dc.casefold():
                         found_dc = thehost
-            else:
-                self.logger.warning("Failed to get DC info from winbindd: %s", wb_dcinfo.stderr.decode())
+            except Exception:
+                self.logger.warning("Failed to retrieve current DC.", exc_info=True)
                 found_dc = res[0]['host']
 
             return found_dc

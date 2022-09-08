@@ -331,12 +331,8 @@ class SMBService(TDBWrapConfigService):
         List of domains visible to winbindd. Returns empty list if winbindd is
         stopped.
         """
-        domains = []
-        wb = await run([SMBCmd.WBINFO.value, '-m'], check=False)
-        if wb.returncode == 0:
-            domains = wb.stdout.decode().splitlines()
-
-        return domains
+        domains = await self.middleware.call('idmap.known_domains')
+        return [dom['netbios_domain'] for dom in domains]
 
     @private
     async def common_charset_choices(self):
