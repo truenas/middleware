@@ -620,7 +620,6 @@ def check_permission_impl(app):
                 return
 
 
-
 async def check_permission(middleware, app):
     """Authenticates connections coming from loopback and from root user."""
     sock = app.request.transport.get_extra_info('socket')
