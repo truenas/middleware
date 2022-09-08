@@ -441,6 +441,9 @@ class AuthService(Service):
         if token is None:
             return False
 
+        if token.attributes:
+            return None
+
         self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
         return True
 
