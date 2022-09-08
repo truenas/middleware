@@ -480,7 +480,7 @@ class FileApplication(object):
                 auth_token = auth.split(" ", 1)[1]
                 token = await self.middleware.call('auth.get_token', auth_token)
 
-                if token:
+                if token and not token['attributes']:
                     denied = False
             elif auth.startswith('Bearer '):
                 key = auth.split(' ', 1)[1]
@@ -492,7 +492,7 @@ class FileApplication(object):
             if 'auth_token' in qs:
                 auth_token = qs.get('auth_token')[0]
                 token = await self.middleware.call('auth.get_token', auth_token)
-                if token:
+                if token and not token['attributes']:
                     denied = False
 
         if denied:
