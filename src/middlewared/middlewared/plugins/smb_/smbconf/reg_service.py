@@ -52,8 +52,8 @@ class ShareSchema(RegistrySchema):
         """
         def order_vfs_objects(vfs_objects, is_clustered, fruit_enabled, purpose):
             vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
-                                   'acl_xattr', 'nfs4acl_xattr', 'glusterfs',
-                                   'winmsa', 'recycle', 'crossrename', 'zfs_core', 'aio_fbsd', 'io_uring')
+                                   'acl_xattr', 'ixnas', 'winmsa', 'recycle', 'crossrename',
+                                   'zfs_core', 'aio_fbsd', 'io_uring', 'glusterfs')
 
             invalid_vfs_objects = ['noacl']
             cluster_safe_objects = ['catia', 'fruit', 'streams_xattr', 'acl_xattr', 'recycle', 'glusterfs', 'io_ring']
@@ -307,14 +307,8 @@ class ShareSchema(RegistrySchema):
             acltype = "DISABLED"
 
         if acltype == "NFS4":
-            data_out['vfs objects']['parsed'].append("nfs4acl_xattr")
-            data_out.update({
-                "nfs4acl_xattr:nfs4_id_numeric": {"parsed": True},
-                "nfs4acl_xattr:validate_mode": {"parsed": False},
-                "nfs4acl_xattr:xattr_name": {"parsed": "system.nfs4_acl_xdr"},
-                "nfs4acl_xattr:encoding": {"parsed": "xdr"},
-                "nfs4:chown": {"parsed": True}
-            })
+            data_out['vfs objects']['parsed'].append("ixnas")
+            data_out.update({"nfs4:chown": {"parsed": True}})
         elif acltype == 'POSIX1E':
             data_out['vfs objects']['parsed'].append("acl_xattr")
 
