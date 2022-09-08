@@ -6,6 +6,7 @@ import copy
 import errno
 import traceback
 import types
+import urllib.parse
 
 from aiohttp import web
 
@@ -14,33 +15,45 @@ from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
+from .utils.allowlist import Allowlist
 
 
-async def authenticate(middleware, req, method, resource):
-
-    auth = req.headers.get('Authorization')
+async def authenticate(middleware, request, method, resource):
+    auth = request.headers.get('Authorization')
     if auth is None:
-        raise web.HTTPUnauthorized()
+        qs = urllib.parse.parse_qs(request.query_string)
+        if 'auth_token' in qs:
+            token = qs.get('auth_token')[0]
+        else:
+            raise web.HTTPUnauthorized()
+    elif auth.startswith('Token '):
+        token = auth.split(' ', 1)[1]
+    else:
+        token = None
 
-    if auth.startswith('Basic '):
+    if token is not None:
+        token = await middleware.call('auth.get_token_for_action', token, method, resource)
+        if token is None:
+            raise web.HTTPForbidden()
+    elif auth.startswith('Basic '):
         twofactor_auth = await middleware.call('auth.twofactor.config')
         if twofactor_auth['enabled']:
             raise web.HTTPUnauthorized(text='HTTP Basic Auth is unavailable when OTP is enabled')
 
         try:
-            username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
+            username, password = base64.b64decode(auth[6:]).decode('utf-8').split(':', 1)
         except UnicodeDecodeError:
             raise web.HTTPBadRequest()
         except binascii.Error:
             raise web.HTTPUnauthorized()
 
-        try:
-            if not await middleware.call('auth.check_user', username, password):
-                raise web.HTTPUnauthorized()
-        except web.HTTPUnauthorized:
-            raise
-        except Exception:
+        user = await middleware.call('auth.authenticate', username, password)
+        if user is None:
             raise web.HTTPUnauthorized()
+
+        allowlist = Allowlist(user['privilege']['allowlist'])
+        if not allowlist.authorize(method, resource):
+            raise web.HTTPForbidden()
     elif auth.startswith('Bearer '):
         key = auth.split(' ', 1)[1]
 

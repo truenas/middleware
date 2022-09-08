@@ -42,7 +42,7 @@ def GET(testpath, payload=None, controller_a=False, **optional):
         if optional.pop("anonymous", False):
             auth = None
         else:
-            auth = authentication
+            auth = optional.pop("auth", authentication)
         getit = requests.get(complete_uri, headers=dict(header, **optional.get("headers", {})),
                              auth=auth, data=json.dumps(data), verify=False)
     return getit

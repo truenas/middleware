@@ -4,49 +4,17 @@ import json
 import logging
 import re
 import time
-import types
 
 import pytest
 import websocket
 
 from middlewared.client import ClientException
-from middlewared.test.integration.assets.account import user, group
-from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call, client, mock, ssh, websocket_url
+from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
+from middlewared.test.integration.utils import client, ssh, websocket_url
 
 logger = logging.getLogger(__name__)
 
 ansi_escape_8bit = re.compile(br"(?:\x1B[<-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[<-~])")
-
-
-@contextlib.contextmanager
-def unprivileged_user_template(*, username, group_name, privilege_name, web_shell):
-    with group({
-        "name": group_name,
-    }) as g:
-        with privilege({
-            "name": privilege_name,
-            "local_groups": [g["gid"]],
-            "ds_groups": [],
-            "allowlist": [{"method": "CALL", "resource": "system.info"}],
-            "web_shell": web_shell,
-        }):
-            with dataset(f"{username}_homedir") as homedir:
-                if web_shell:
-                    # To prevent `zsh-newuser-install` interactive prompt
-                    ssh(f"touch /mnt/{homedir}/.zshrc")
-
-                password = "test1234"
-                with user({
-                    "username": username,
-                    "full_name": "Unprivileged user",
-                    "group_create": True,
-                    "groups": [g["id"]],
-                    "home": f"/mnt/{homedir}",
-                    "password": password,
-                }):
-                    yield types.SimpleNamespace(username=username, password=password)
 
 
 @pytest.fixture(scope="module")
@@ -55,6 +23,7 @@ def unprivileged_user():
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
+        allowlist=[{"method": "CALL", "resource": "system.info"}],
         web_shell=False,
     ) as t:
         yield t
@@ -72,6 +41,7 @@ def unprivileged_user_with_web_shell():
         username="unprivilegedws",
         group_name="unprivileged_users_ws",
         privilege_name="Unprivileged users with web shell",
+        allowlist=[],
         web_shell=True,
     ) as t:
         yield t

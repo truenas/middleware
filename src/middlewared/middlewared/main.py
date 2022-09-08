@@ -4,7 +4,7 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .restful import copy_multipart_to_pipe, RESTfulAPI
+from .restful import authenticate, copy_multipart_to_pipe, RESTfulAPI
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
@@ -472,47 +472,6 @@ class FileApplication(object):
         return resp
 
     async def upload(self, request):
-        denied = True
-        api_key = None
-        auth = request.headers.get('Authorization')
-        if auth:
-            if auth.startswith('Basic '):
-                twofactor_auth = await self.middleware.call('auth.twofactor.config')
-                if twofactor_auth['enabled']:
-                    return web.Response(status=401, body='HTTP Basic Auth is unavailable when OTP is enabled')
-
-                try:
-                    auth = binascii.a2b_base64(auth[6:]).decode()
-                    if ':' in auth:
-                        user, password = auth.split(':', 1)
-                        if await self.middleware.call('auth.check_user', user, password):
-                            denied = False
-                except binascii.Error:
-                    pass
-            elif auth.startswith('Token '):
-                auth_token = auth.split(" ", 1)[1]
-                token = await self.middleware.call('auth.get_token', auth_token)
-
-                if token:
-                    denied = False
-            elif auth.startswith('Bearer '):
-                key = auth.split(' ', 1)[1]
-
-                if api_key := await self.middleware.call('api_key.authenticate', key):
-                    denied = False
-        else:
-            qs = urllib.parse.parse_qs(request.query_string)
-            if 'auth_token' in qs:
-                auth_token = qs.get('auth_token')[0]
-                token = await self.middleware.call('auth.get_token', auth_token)
-                if token:
-                    denied = False
-
-        if denied:
-            resp = web.Response()
-            resp.set_status(401)
-            return resp
-
         reader = await request.multipart()
 
         part = await reader.next()
@@ -534,11 +493,7 @@ class FileApplication(object):
         if 'method' not in data:
             return web.Response(status=422)
 
-        if api_key is not None:
-            if not api_key.authorize('CALL', data['method']):
-                resp = web.Response()
-                resp.set_status(403)
-                return resp
+        await authenticate(self.middleware, request, 'CALL', data['method'])
 
         filepart = await reader.next()
 
