@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import errno
 import re
 import socket
 import struct
@@ -25,11 +26,11 @@ class TokenManager:
     def __init__(self):
         self.tokens = {}
 
-    def create(self, ttl, attributes=None):
+    def create(self, ttl, attributes, parent_credentials):
         attributes = attributes or {}
 
         token = generate_token(48, url_safe=True)
-        self.tokens[token] = Token(self, token, ttl, attributes)
+        self.tokens[token] = Token(self, token, ttl, attributes, parent_credentials)
         return self.tokens[token]
 
     def get(self, token):
@@ -48,11 +49,12 @@ class TokenManager:
 
 
 class Token:
-    def __init__(self, manager, token, ttl, attributes):
+    def __init__(self, manager, token, ttl, attributes, parent_credentials):
         self.manager = manager
         self.token = token
         self.ttl = ttl
         self.attributes = attributes
+        self.parent_credentials = parent_credentials
 
         self.last_used_at = time.monotonic()
 
@@ -201,6 +203,9 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     def is_valid(self):
         return self.token.is_valid()
 
+    def authorize(self, method, resource):
+        return self.token.parent_credentials.authorize(method, resource)
+
     def notify_used(self):
         self.token.notify_used()
 
@@ -308,9 +313,11 @@ class AuthService(Service):
         """
         return await self.middleware.call('auth.authenticate', username, password) is not None
 
+    @no_auth_required
     @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
     @returns(Str('token'))
-    def generate_token(self, ttl, attrs):
+    @pass_app()
+    def generate_token(self, app, ttl, attrs):
         """
         Generate a token to be used for authentication.
 
@@ -319,10 +326,13 @@ class AuthService(Service):
 
         `attrs` is a general purpose object/dictionary to hold information about the token.
         """
+        if not app.authenticated:
+            raise CallError('Not authenticated', errno.EACCESS)
+
         if ttl is None:
             ttl = 600
 
-        token = self.token_manager.create(ttl, attrs)
+        token = self.token_manager.create(ttl, attrs, app.authenticated_credentials)
 
         return token.token
 
@@ -334,6 +344,21 @@ class AuthService(Service):
             }
         except KeyError:
             return None
+
+    @private
+    def get_token_for_shell_application(self, token_id):
+        if (token := self.token_manager.tokens.get(token_id)) is None:
+            return None
+
+        if not isinstance(token.parent_credentials, UserSessionManagerCredentials):
+            return None
+
+        if not token.parent_credentials.user['privilege']['web_shell']:
+            return None
+
+        return {
+            'username': token.parent_credentials.user['username'],
+        }
 
     @no_auth_required
     @accepts()

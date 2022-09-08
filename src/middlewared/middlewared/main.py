@@ -579,43 +579,41 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, middleware, ws, input_queue, loop, options):
+    def __init__(self, middleware, ws, input_queue, loop, username, options):
         self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
-        self.command = self.get_command(options)
+        self.command = self.get_command(username, options)
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
-    def get_command(self, options):
+    def get_command(self, username, options):
         allowed_options = ('chart_release', 'vm_id')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
         if options.get('vm_id'):
-            if osc.IS_FREEBSD:
-                return ['/usr/bin/cu', '-l', f'nmdm{options["vm_id"]}B']
-            else:
-                return [
-                    '/usr/bin/virsh', '-c', 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock',
-                    'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
-                ]
+            return [
+                '/usr/bin/sudo', '-H', '-u', username,
+                '/usr/bin/virsh', '-c', 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock',
+                'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
+            ]
         elif options.get('chart_release'):
             return [
+                '/usr/bin/sudo', '-H', '-u', username,
                 '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],
                 f'pod/{options["pod_name"]}', '--container', options['container_name'], '-it', '--',
                 options.get('command', '/bin/bash'),
             ]
         else:
-            return ['/usr/bin/login', '-p', '-f', 'root']
+            return ['/usr/bin/login', '-p', '-f', username]
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
 
     def run(self):
-
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
             osc.close_fds(3)
@@ -763,7 +761,7 @@ class ShellApplication(object):
                 if not token:
                     continue
 
-                token = await self.middleware.call('auth.get_token', token)
+                token = await self.middleware.call('auth.get_token_for_shell_application', token)
                 if not token:
                     await ws.send_json({
                         'msg': 'failed',
@@ -789,7 +787,7 @@ class ShellApplication(object):
 
                 conndata.t_worker = ShellWorkerThread(
                     middleware=self.middleware, ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(),
-                    options=options,
+                    username=token['username'], options=options,
                 )
                 conndata.t_worker.start()
 
