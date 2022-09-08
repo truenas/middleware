@@ -80,12 +80,16 @@ class KubernetesService(Service):
 
         self.middleware.call_sync(
             'zettarepl.create_recursive_snapshot_with_exclude', k8s_config['dataset'],
-            snap_name, [os.path.join(k8s_config['dataset'], 'docker')]
+            snap_name, self.to_ignore_datasets_on_backup(k8s_config['dataset'])
         )
 
         job.set_progress(100, f'Backup {name!r} complete')
 
         return name
+
+    @private
+    def to_ignore_datasets_on_backup(self, k8s_dataset):
+        return [os.path.join(k8s_dataset, ds_name) for ds_name in ('catalogs', 'docker')]
 
     @accepts()
     @returns(Dict('backups', additional_attrs=True))
