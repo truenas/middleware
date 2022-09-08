@@ -57,7 +57,8 @@ option_list = [
     "ha",
     "update",
     "dev-test",
-    "debug-mode"
+    "debug-mode",
+    "log-cli-level=",
 ]
 
 # look if all the argument are there.
@@ -77,6 +78,7 @@ dev_test = False
 debug_mode = False
 verbose = 0
 exitfirst = ''
+callargs = []
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -102,6 +104,9 @@ for output, arg in myopts:
         verbose += 1
     elif output == '-x':
         exitfirst = True
+    elif output == '--log-cli-level':
+        callargs.append('--log-cli-level')
+        callargs.append(arg)
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -162,7 +167,6 @@ cfg_file = open("auto_config.py", 'a')
 cfg_file.writelines(f'sshKey = "{Key}"\n')
 cfg_file.close()
 
-callargs = []
 if verbose:
     callargs.append("-" + "v" * verbose)
 if exitfirst:
