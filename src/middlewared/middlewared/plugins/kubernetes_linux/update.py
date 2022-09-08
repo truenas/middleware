@@ -192,6 +192,12 @@ class KubernetesService(ConfigService):
                     'Specified value is not present on any network cidr in use by the system'
                 )
 
+        if not data['validate_host_path'] and await self.middleware.call('failover.hardware') != 'MANUAL':
+            verrors.add(
+                f'{schema}.validate_host_path',
+                'Host path validation cannot be switched off for SCALE ENTERPRISE users'
+            )
+
         verrors.check()
 
     @private
