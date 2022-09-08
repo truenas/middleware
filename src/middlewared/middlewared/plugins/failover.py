@@ -1120,7 +1120,12 @@ async def ha_permission(middleware, app):
         return
 
     # We only care for remote connections (IPv4), in the interlink
-    sock = app.request.transport.get_extra_info('socket')
+    try:
+        sock = app.request.transport.get_extra_info('socket')
+    except AttributeError:
+        # app.request or app.request.transport can be None
+        return
+
     if sock.family != socket.AF_INET:
         return
 
