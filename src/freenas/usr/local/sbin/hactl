@@ -89,6 +89,7 @@ def handle_status_command(client, status):
     elif len(reasons) == 1:
         print(BASE_FAILOVER + getattr(DisabledEnum, reasons[0], DisabledEnum.UNKNOWN).value)
     else:
+        print(BASE_FAILOVER)
         for idx, reason in enumerate(reasons, start=1):
             print(f'    {idx}: {getattr(DisabledEnum, reason, DisabledEnum.UNKNOWN).value}')
 
