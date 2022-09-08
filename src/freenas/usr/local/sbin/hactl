@@ -1,166 +1,181 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import argparse
 import os
 import sys
+import enum
+import errno
 
-from middlewared.client import Client
+from middlewared.client import Client, ClientException
+
+BASE_NODE = 'Node status: '
+BASE_FAILOVER = 'Failover status: '
+
+
+class StatusEnum(enum.Enum):
+    NOT_HA = BASE_NODE + 'Not an HA node'
+    MASTER = BASE_NODE + 'Active'
+    BACKUP = BASE_NODE + 'Standby'
+    ELECTING = BASE_NODE + 'Electing active node'
+    IMPORTING = BASE_NODE + 'Becoming active node'
+    ERROR = BASE_NODE + 'Faulted'
+    UNKNOWN = BASE_NODE + 'Unknown'
+
+
+class DisabledEnum(enum.Enum):
+    NO_CRITICAL_INTERFACES = 'No network interfaces are marked critical for failover.'
+    MISMATCH_DISKS = 'The quantity of disks do not match between the nodes.'
+    DISAGREE_VIP = 'Nodes Virtual IP states do not agree.'
+    NO_LICENSE = 'Other node has no license.'
+    NO_FAILOVER = 'Administratively Disabled.'
+    NO_PONG = 'Unable to contact remote node via the heartbeat interface.'
+    NO_VOLUME = 'No zpools have been configured.'
+    NO_VIP = 'No interfaces have been configured with a Virtual IP.'
+    NO_SYSTEM_READY = 'Other node has not finished booting.'
+    NO_FENCED = 'Fenced is not running.'
+    HEALTHY = 'Failover is healthy.'
+    UNKNOWN = 'UNKNOWN'
+
+
+def get_client():
+    try:
+        return Client()
+    except Exception as e:
+        print_msg_and_exit(f'Unexpected failure enumerating websocket client: {e}')
+
+
+def get_failover_info(client):
+    is_ha = client.call('failover.licensed')
+    failover = client.call('failover.config')
+    return is_ha, failover
+
+
+def get_failover_status(client):
+    return client.call('failover.status')
+
+
+def print_msg_and_exit(msg, exit_code=1):
+    if msg:
+        print(msg)
+    sys.exit(exit_code)
+
+
+def handle_status_command(client, status):
+    # print failover status
+    failover_status = getattr(StatusEnum, status, StatusEnum.UNKNOWN).value
+    print(failover_status)
+
+    # print local and remote serial info
+    local_serial = client.call('system.dmidecode_info')['system-serial-number']
+    timeout = 2
+    try:
+        remote_serial = client.call('failover.call_remote', 'system.dmidecode_info', [], {'timeout': timeout})
+        remote_serial = remote_serial['system-serial-number']
+    except Exception as e:
+        remote_serial = 'UNKNOWN'
+        if isinstance(e, ClientException):
+            if e.errno in (errno.ECONNREFUSED, errno.EHOSTUNREACH):
+                remote_serial = 'Failed to connect to remote node after 20 seconds.'
+            elif e.errno == errno.EFAULT and 'Call timeout' in str(e):
+                remote_serial = f'Timed out after {timeout} seconds waiting on response from remote node.'
+
+        if remote_serial == 'UNKNOWN':
+            remote_serial = f'{e}'
+
+    print(f'This node serial: {local_serial}')
+    print(f'Other node serial: {remote_serial}')
+
+    # print failover disabled reason(s) (if any)
+    reasons = client.call('failover.disabled.reasons')
+    if not reasons:
+        print(BASE_FAILOVER + DisabledEnum.HEALTHY.value)
+    elif len(reasons) == 1:
+        print(BASE_FAILOVER + getattr(DisabledEnum, reasons[0], DisabledEnum.UNKNOWN).value)
+    else:
+        print(BASE_FAILOVER)
+        for idx, reason in enumerate(reasons, start=1):
+            print(f'    {idx}: {getattr(DisabledEnum, reason, DisabledEnum.UNKNOWN).value}')
+
+    # end this section with a newline
+    print()
+
+
+def handle_enable_or_disable_command(command, client, status, config):
+    if not config['disabled'] and command == 'enable':
+        print_msg_and_exit('Failover already enabled.')
+    elif config['disabled'] and command == 'disable':
+        print_msg_and_exit('Failover already disabled.')
+    elif status != 'MASTER':
+        print_msg_and_exit('This command can only be run on the Active node.')
+    else:
+        disabled = command == 'disable'
+        try:
+            client.call('failover.update', {'disabled': disabled})
+        except Exception as e:
+            print_msg_and_exit(f'Unexpected failure enabling HA: {e}.')
+        else:
+            print_msg_and_exit(f'Failover {command}d.', exit_code=0)
+
+
+def handle_takeover_or_giveback_command(command, client, status, config):
+    if config['disabled']:
+        print_msg_and_exit('Failover must be enabled before running this command.')
+    elif command == 'takeover' and status != 'BACKUP':
+        print_msg_and_exit('This command can only be run on the standby node.')
+    elif command == 'giveback' and status != 'MASTER':
+        print_msg_and_exit('This command can only be run on the active node.')
+    elif client.call('failover.disabled.reasons'):
+        print_msg_and_exit('This command can only be run when HA is healthy.')
+    else:
+        if command == 'takeover':
+            reboot_ourself = False
+            print('This will likely cause the active node to reboot.')
+        else:
+            reboot_ourself = True
+            print('This node will reboot.')
+
+        while True:
+            ans = input(f'Proceed with {command}? (y/n): ')
+            ans = ans.lower()
+            if ans in ('y', 'yes'):
+                break
+            elif ans in ('n', 'no'):
+                print_msg_and_exit(f'Command: {command!r} cancelled.')
+            else:
+                print('Invalid input')
+                continue
+
+        if reboot_ourself:
+            client.call('failover.become_passive')
+            os.system('shutdown -r now')
+        else:
+            client.call('failover.call_remote', 'failover.become_passive')
 
 
 def main(command, quiet):
-    client = Client()
-    failover = client.call('datastore.query', 'system.failover')
-    fo_exists = len(failover) > 0
-    if fo_exists:
-        failover = failover[0]
-    if command == "status":
-        ret = client.call('failover.status')
-        if ret == "MASTER":
-            print("Node status: Active")
-        elif ret == "BACKUP":
-            print("Node status: Standby")
-        elif ret == "ELECTING":
-            print("Node status: Electing active node")
-        elif ret == "IMPORTING":
-            print("Node status: Transitioning to Active")
-        elif ret == "ERROR":
-            print("Node status: Faulted")
-        elif ret == "SINGLE":
-            if not quiet:
-                print("Node status: Not an HA node")
-            sys.exit(0)
-        elif ret == "UNKNOWN" and fo_exists:
-            print("Node status: Standby (Active node unreachable)")
+    client = get_client()
+    is_ha, failover_config = get_failover_info(client)
+    if not is_ha:
+        # not an HA system so no reason to continue
+        print_msg_and_exit(StatusEnum.NOT_HA.value if not quiet else '')
 
-        if fo_exists:
-            serial = client.call('system.dmidecode_info')['system-serial-number']
-            serial += f"{' (ACTIVE)' if ret == 'MASTER' else ''}"
-            print(f"Node serial: {serial}")
-            if ret != "UNKNOWN":
-                try:
-                    other_serial = client.call('failover.call_remote', 'system.dmidecode_info')['system-serial-number']
-                except Exception as e:
-                    other_serial = f'ERROR: {e}'
-                print(f"Other node serial: {other_serial}{' (ACTIVE)' if ret == 'BACKUP' else ''}")
-
-            ret = client.call('failover.disabled.reasons')
-            if 'NO_CRITICAL_INTERFACES' in ret:
-                print("Failover status: Unavailable (no network interfaces are marked critical for failover)")
-            elif 'MISMATCH_DISKS' in ret:
-                print("Failover status: Unavailable (disks do not match between storage controllers)")
-            elif 'DISAGREE_VIP' in ret:
-                print("Failover status: Unavailable (nodes Virtual IP states do not agree)")
-            elif 'NO_LICENSE' in ret:
-                print("Failover status: Unavailable (standby storage controller has no license)")
-            elif 'NO_FAILOVER' in ret:
-                print("Failover status: Administratively Disabled")
-            elif 'NO_PONG' in ret:
-                print("Failover status: Unavailable (remote node not responding)")
-            elif 'NO_VOLUME' in ret or 'NO_VIP' in ret:
-                print("Failover status: Unavailable (failover not configured)")
-            else:
-                print("Failover status: Enabled")
-        else:
-            print("Failover status: Not configured")
-
-    elif command == "enable":
-        if not fo_exists:
-            print("Not configured for failover. "
-                  "There's nothing to enable here.")
-            sys.exit(7)
-        if failover['disabled'] is True:
-            try:
-                client.call('failover.call_remote', 'failover.control', ['ENABLE'])
-                client.call('datastore.update', 'system.failover', failover['id'], {'disabled': False})
-                print("Failover enabled.")
-                sys.exit(0)
-            except Exception as e:
-                print("Unable to contact remote node.  Failover not enabled.")
-                print(e)
-                sys.exit(2)
-        else:
-            print("Failover not disabled.  Cannot enable!")
-            sys.exit(3)
-    elif command == "disable":
-        if not fo_exists:
-            print("Not configured for failover. "
-                  "There's nothing to disable here.")
-            sys.exit(8)
-        if failover['disabled'] is False:
-            failover_status = client.call('failover.status')
-            if failover_status in ("MASTER", "IMPORTING"):
-                status = "master"
-                try:
-                    ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': False}])
-                except Exception:
-                    ret = False
-            else:
-                status = "passive"
-                try:
-                    ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': True}])
-                except Exception:
-                    ret = False
-            if ret is not False:
-                client.call('failover.control', 'DISABLE', {'active': status == 'master'})
-                print("Failover disabled.")
-                sys.exit(0)
-            else:
-                print("Unable to contact remote node.  Failover not disabled.")
-                sys.exit(3)
-        else:
-            print("Failover not enabled.  Cannot disable!")
-
-    elif command == "takeover":
-        ret = client.call('failover.status')
-        if ret != "BACKUP":
-            print("Cannot takeover volume, not standby")
-            sys.exit(5)
-        print("This will likely cause the active node to reboot.")
-        while True:
-            ret = input(
-                "Are you sure you wish to proceed with making this node active? (y/n): "
-            )
-            if ret.lower() == "y":
-                break
-            elif ret.lower() == "n":
-                print("Takeover cancelled.")
-                sys.exit(1)
-            else:
-                continue
-        client.call('failover.force_master', timeout=100)
-    elif command == "giveback":
-        ret = client.call('failover.status')
-        if ret == "BACKUP":
-            print("Cannot giveback volume.  This unit is not Active!")
-            sys.exit(6)
-        print("Volume giveback will reboot this node.")
-        while True:
-            ret = input(
-                "Are you sure you wish to proceed with making the other node active? (y/n): "
-            )
-            if ret.lower() == "y":
-                break
-            elif ret.lower() == "n":
-                print("Giveback cancelled.")
-                sys.exit(1)
-            else:
-                continue
-        os.system("shutdown -r now")
+    failover_status = get_failover_status(client)
+    if command == 'status':
+        handle_status_command(client, failover_status)
+    elif command in ('enable', 'disable'):
+        handle_enable_or_disable_command(command, client, failover_status, failover_config)
+    elif command in ('takeover', 'giveback'):
+        handle_takeover_or_giveback_command(command, client, failover_status, failover_config)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='HA CLI control utility.')
-    parser.add_argument('command',
-                        default="status",
-                        nargs='?',
-                        help=("subcommand: enable disable status takeover "
-                              "giveback"),
-                        choices=['enable', 'disable', 'status',
-                                 'takeover', 'giveback'],
-                        )
-    parser.add_argument('-q',
-                        help="Be silent if this is a non HA node",
-                        action='store_true'
-                        )
-
+    parser.add_argument(
+        'command',
+        default='status',
+        nargs='?',
+        help=('subcommand: enable disable status takeover giveback'),
+        choices=['enable', 'disable', 'status', 'takeover', 'giveback'],
+    )
+    parser.add_argument('-q', help='Be silent if this is a non HA node', action='store_true')
     args = parser.parse_args()
     main(args.command, args.q)
