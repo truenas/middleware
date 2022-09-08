@@ -561,11 +561,8 @@ class TwoFactorAuthService(ConfigService):
         return pyotp.random_base32()
 
 
-async def check_permission(middleware, app):
-    """
-    Authenticates connections coming from loopback and from
-    root user.
-    """
+def check_permission(middleware, app):
+    """Authenticates connections coming from loopback and from root user."""
     sock = app.request.transport.get_extra_info('socket')
     if sock.family == socket.AF_UNIX:
         # Unix socket is only allowed for root
@@ -577,7 +574,7 @@ async def check_permission(middleware, app):
         return
 
     # This is an expensive operation, but it is only performed for localhost TCP connections which are rare
-    if process := await middleware.run_in_thread(get_peer_process, remote_addr, remote_port):
+    if process := get_peer_process(remote_addr, remote_port):
         try:
             euid = process.uids().effective
         except psutil.NoSuchProcess:
