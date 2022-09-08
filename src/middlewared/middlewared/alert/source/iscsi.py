@@ -15,8 +15,15 @@ class ISCSIPortalIPAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=60))
 
     async def check(self):
-        if not await self.middleware.call('service.started', 'iscsitarget'):
+        try:
+            started = await self.middleware.call('service.started', 'iscsitarget')
+        except Exception:
+            # during upgrade this crashed in `pystemd.dbusexc.DBusTimeoutError: [err -110]: b'Connection timed out'`
+            # so don't pollute the webUI with tracebacks
             return
+        else:
+            if not started:
+                return
 
         in_use_ips = {i['address'] for i in await self.middleware.call('interface.ip_in_use', {'any': True})}
         portals = {p['id']: p for p in await self.middleware.call('iscsi.portal.query')}
