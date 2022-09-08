@@ -37,7 +37,7 @@ def test_02_check_base_ssl_module_cert_path(request):
 
 def test_03_check_connection_to_update_server(request):
     depends(request, ["SSL_CERT_PATH_IS_SET"])
-    rv = make_ws_request(ip, {'msg': 'method', 'method': 'update.get_scale_trains_data', 'params': []})
+    rv = make_ws_request(ip, {'msg': 'method', 'method': 'update.get_trains_data', 'params': []})
     assert isinstance(rv['result'], dict), rv['result']
     assert 'trains' in rv['result'], rv['result']
     assert 'trains_redirection' in rv['result'], rv['result']
