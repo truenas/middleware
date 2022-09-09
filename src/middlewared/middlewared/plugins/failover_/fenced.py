@@ -5,6 +5,7 @@ import os
 import signal
 
 from middlewared.service import Service, CallError
+from middlewared.utils.cgroups import move_to_root_cgroups
 from fenced.fence import ExitCode as FencedExitCodes
 
 
@@ -45,6 +46,13 @@ class FencedService(Service):
             stderr=subprocess.PIPE,
         )
         out, err = proc.communicate()
+
+        if proc.returncode == 0:
+            # move out from underneath middlewared (parent) cgroup so
+            # that when middlewared is restarted via the cli, the signal
+            # doesn't get sent to fenced causing fenced process to also
+            # receive the same signal....so gross
+            move_to_root_cgroups(self.run_info()['pid'])
 
         return proc.returncode
 
