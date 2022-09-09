@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 
-from .rrd_utils import RRDBase, RRD_BASE_DIR_PATH, RRDType
+from .rrd_utils import RRDBase, RRDType
 
 
 class CPUPlugin(RRDBase):
