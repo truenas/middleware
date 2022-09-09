@@ -9,10 +9,11 @@ from collections import defaultdict
 from functools import partial
 
 from middlewared.client import Client, ClientException, CallTimeout, CALL_TIMEOUT
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, returns
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import start_daemon_thread
 from middlewared.utils.threading import set_thread_name
+from middlewared.validators import Range
 
 
 logger = logging.getLogger('failover.remote')
@@ -121,7 +122,7 @@ class RemoteClient(object):
 
     def call(self, *args, **kwargs):
         try:
-            if not self.connected.wait(timeout=20):
+            if not self.connected.wait(timeout=kwargs.pop('connect_timeout')):
                 if self.remote_ip is None:
                     raise CallError('Unable to determine remote node IP', errno.EHOSTUNREACH)
                 raise CallError('Remote connection unavailable', errno.ECONNREFUSED)
@@ -225,12 +226,29 @@ class FailoverService(Service):
             Bool('job', default=False),
             Bool('job_return', default=None, null=True),
             Any('callback', default=None, null=True),
+            Float('connect_timeout', default=2.0, validators=[Range(min=2.0, max=1800.0)]),
         ),
     )
     @returns(Any(null=True))
     def call_remote(self, method, args, options):
         """
-        Call a method in the other node.
+        Call a method on the other node.
+
+        `method` name of the method to be called
+        `args` list of arguments to be passed to `method`
+        `options` dictionary with following keys
+            `timeout`: time to wait for `method` to return
+                NOTE: This parameter _ONLY_ applies if the remote
+                    client is connected to the other node.
+            `job`: whether or not the `method` being called is a job
+            `job_return`: if true, will return immediately and not wait
+                for the job to complete, otherwise will wait for the
+                job to complete
+            `callback`: a function that will be called as a callback
+                on completion/failure of `method`.
+                NOTE: Only applies if `method` is a job
+            `connect_timeout`: Maximum amount of time in seconds to wait
+                for remote connection to become available.
         """
         options = options or {}
         if options.pop('job_return'):
