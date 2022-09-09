@@ -44,27 +44,39 @@ class FailoverDisabledReasonsService(Service):
     def get_reasons(self, app):
         reasons = set()
 
-        fenced_running = self.middleware.call_sync('failover.fenced.run_info')['running']
-        num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
-        if fenced_running and num_of_zpools_imported <= 1:
-            # returns the boot pool by default
-            # fenced is running which implies it's the master node but we don't have any
-            # zpools imported (or created)
-            reasons.add('NO_VOLUME')
-        elif not fenced_running and num_of_zpools_imported > 1:
-            # zpool(s) imported but fenced isn't running which is bad
-            reasons.add('NO_FENCED')
-
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
 
-        db = self.middleware.call_sync('datastore.query', 'network.interfaces')
-        if not any((i['int_vip'] for i in db)):
-            # only need 1 interface with a VIP
-            reasons.add('NO_VIP')
-        elif not any((i['int_critical'] for i in db)):
-            # only need 1 interface marked critical for failover
+        ifaces = self.middleware.call_sync('interface.query')
+        crit_iface = vip = master = False
+        for iface in ifaces:
+            if iface['failover_critical']:
+                # only need 1 interface marked critical for failover
+                crit_iface = True
+
+            if iface['failover_virtual_aliases']:
+                # only need 1 interface with a virtual IP
+                vip = True
+
+            if any((i['state'] == 'MASTER' for i in iface['state'].get('vrrp_config') or [])):
+                # means this interface is MASTER
+                master = True
+
+        if not crit_iface:
             reasons.add('NO_CRITICAL_INTERFACES')
+        elif not vip:
+            reasons.add('NO_VIP')
+        elif master:
+            fenced_running = self.middleware.call_sync('failover.fenced.run_info')['running']
+            num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
+            if num_of_zpools_imported > 1:
+                # boot pool is returned by default which is why we check > 1
+                if not fenced_running:
+                    # zpool(s) imported but fenced isn't running which is bad
+                    reasons.add('NO_FENCED')
+            else:
+                # we've got interfaces marked as master but we have no zpool(s) imported
+                reasons.add('NO_VOLUME')
 
         try:
             assert self.middleware.call_sync('failover.remote_connected')
@@ -82,10 +94,12 @@ class FailoverDisabledReasonsService(Service):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
                 reasons.add('NO_SYSTEM_READY')
 
+            if len(self.middleware.call_sync('failover.call_remote', 'zfs.pool.query_imported_fast')) <= 1:
+                reasons.add('NO_VOLUME')
+
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.add('NO_LICENSE')
 
-            ifaces = self.middleware.call_sync('interface.query')
             local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
