@@ -63,18 +63,10 @@ class FailoverDisabledReasonsService(Service):
                 master = True
 
         if not crit_iface:
-            # If we don't have at least 1 interface marked critical for failover,
-            # then the entire failover process will not work. There is no reason
-            # to continue
             reasons.add('NO_CRITICAL_INTERFACES')
         elif not vip:
-            # If we don't have at least 1 interface with a virtual ip address,
-            # then the entire failover process will not work. There is no reason
-            # to continue
             reasons.add('NO_VIP')
         elif master:
-            # okay at least 1 interface is marked as master so we can determine the
-            # status locally without having to contact remote node
             fenced_running = self.middleware.call_sync('failover.fenced.run_info')['running']
             num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
             if num_of_zpools_imported > 1:
