@@ -31,9 +31,6 @@
 		cpu_plugin_options = ''
 		aggregation_plugin_cpu_type = 'cpu'
 
-	ups_config = middleware.call_sync('ups.config')
-	ups_service = middleware.call_sync('service.query', [['service', '=', 'ups']], {'get': True})
-
 	has_internal_graphite_server = middleware.call_sync('reporting.has_internal_graphite_server')
 %>
 Hostname "${hostname}"
@@ -50,7 +47,6 @@ LoadPlugin exec
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
-LoadPlugin nut
 LoadPlugin processes
 LoadPlugin rrdcached
 LoadPlugin swap
@@ -61,11 +57,6 @@ LoadPlugin zfs_arc
 LoadPlugin write_graphite
 LoadPlugin python
 
-% if ups_service['state'] == 'RUNNING' or ups_service['enable']:
-<Plugin "nut">
-	UPS "${ups_config['complete_identifier']}"
-</Plugin>
-% endif
 <Plugin "syslog">
 	LogLevel err
 </Plugin>
