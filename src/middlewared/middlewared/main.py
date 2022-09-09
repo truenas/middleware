@@ -1149,7 +1149,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         for hook in self.__hooks[name]:
             try:
-                yield hook, hook['method'](self, *args, **kwargs)
+                if asyncio.iscoroutinefunction(hook['method']) or hook['inline']:
+                    fut = hook['method'](self, *args, **kwargs)
+                else:
+                    fut = self.run_in_thread(hook['method'], self, *args, **kwargs)
+
+                yield hook, fut
             except Exception:
                 if hook['raise_error']:
                     raise
