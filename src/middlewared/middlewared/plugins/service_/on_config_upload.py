@@ -3,11 +3,7 @@ import subprocess
 import sqlite3
 
 
-async def on_config_upload(middleware, path):
-    await middleware.run_in_thread(on_config_upload_sync, middleware, path)
-
-
-def on_config_upload_sync(middleware, path):
+def on_config_upload(middleware, path):
     # For SCALE, we have to enable/disable services based on the uploaded database
     enable_disable_units = {'enable': [], 'disable': []}
     conn = sqlite3.connect(path)
