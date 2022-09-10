@@ -1,6 +1,8 @@
 from pathlib import Path
+from contextlib import suppress
 
 from middlewared.utils import run
+from middlewared.utils.cgroups import move_to_root_cgroups
 from middlewared.service import (Service, CallError, job,
                                  accepts, Dict, Str, Bool,
                                  ValidationErrors, private)
@@ -51,6 +53,23 @@ class GlusterFuseService(Service):
             )
 
         verrors.check()
+
+    @private
+    def move_fuse_mounts_to_root_cgroups(self):
+        sysfs = '/sys/fs/cgroup/system.slice/middlewared.service/cgroup.procs'
+        pids_to_move = set()
+        with open(sysfs) as child_cgroup_pids:
+            for child_pid in child_cgroup_pids:
+                child_pid = child_pid.strip()
+                if child_pid.isdigit():
+                    with suppress(FileNotFoundError):
+                        with open(f'/proc/{child_pid}/cmdline') as cmdline:
+                            cmdline = cmdline.read().strip()
+                            if cmdline.startswith('/usr/sbin/glusterfs') and 'fuse' in cmdline:
+                                pids_to_move.add(int(child_pid))
+
+        for pid in pids_to_move:
+            move_to_root_cgroups(pid)
 
     @accepts(Dict(
         'gluserfuse_mount',
@@ -134,6 +153,8 @@ class GlusterFuseService(Service):
                     else:
                         self.logger.error('Unhandled exception', exc_info=True)
                         continue
+
+            await self.middleware.call('gluster.fuse.move_fuse_mounts_to_root_cgroups')
 
             # always start it back up
             await self.middleware.call('service.start', 'glustereventsd')
