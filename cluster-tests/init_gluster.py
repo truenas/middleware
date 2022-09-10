@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import CLUSTER_INFO, BRICK_PATH, GLUSTER_PEERS_DNS, CLUSTER_IPS, PUBLIC_IPS
+from config import CLUSTER_INFO, BRICK_PATH, GLUSTER_PEERS_DNS, CLUSTER_IPS, PUBLIC_IPS, TIMEOUTS
 from utils import make_request, wait_on_job
 from helpers import ctdb_healthy
 from exceptions import JobTimeOut
@@ -69,7 +69,7 @@ def add_peers():
 
         # wait on the peer to be added
         try:
-            status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 10)
+            status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['CTDB_IP_TIMEOUT'])
         except JobTimeOut:
             assert False, JobTimeOut
         else:
@@ -122,7 +122,7 @@ def create_volume():
 
     # wait on the gluster volume to be created
     try:
-        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 20)
+        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['VOLUME_TIMEOUT'])
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -153,7 +153,7 @@ def add_public_ips_to_ctdb():
             }
             res = make_request('post', f'http://{priv_ip}/api/v2.0/ctdb/public/ips', data=payload)
             try:
-                status = wait_on_job(res.json(), priv_ip, 5)
+                status = wait_on_job(res.json(), priv_ip, TIMEOUTS['CTDB_IP_TIMEOUT'])
             except JobTimeOut:
                 assert False, JobTimeOut
             else:

@@ -60,7 +60,7 @@ def test_03_create_gluster_volume(volume, request):
 
     # wait on the gluster volume to be created
     try:
-        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 120)
+        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['VOLUME_TIMEOUT'])
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -150,7 +150,7 @@ def test_09_delete_gluster_volume(volume, request):
     assert ans.status_code == 200, ans.text
     try:
         # wait for it to be deleted
-        wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 120)
+        wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['VOLUME_TIMEOUT'])
     except JobTimeOut:
         assert False, JobTimeOut
     else:
