@@ -3,7 +3,7 @@ from time import sleep
 import pytest
 
 from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
-from utils import make_request, make_ws_request, wait_on_job
+from utils import make_request, make_ws_request, wait_on_job, ssh_test
 from exceptions import JobTimeOut
 from pytest_dependency import depends
 
@@ -60,7 +60,7 @@ def test_03_create_gluster_volume(volume, request):
 
     # wait on the gluster volume to be created
     try:
-        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 120)
+        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['VOLUME_TIMEOUT'])
     except JobTimeOut:
         assert False, JobTimeOut
     else:
@@ -106,9 +106,19 @@ def test_05_verify_gluster_volume_is_fuse_mounted(ip, request):
     assert ans.json(), ans.text
 
 
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
+def test_06_verify_gluster_volume_fuse_cgroup(ip, request):
+    # the fuse mounts locally should not be attached to the
+    # parent middlewared process
+    depends(request, ['VERIFY_FUSE_MOUNTED'])
+    rv = ssh_test(ip, 'systemctl status middlewared')
+    assert rv['output'], rv
+    assert '/usr/sbin/glusterfs' not in rv['output'], rv
+
+
 @pytest.mark.parametrize('volume', [GVOL])
 @pytest.mark.dependency(name='STOP_GVOLUME')
-def test_06_stop_gluster_volume(volume, request):
+def test_07_stop_gluster_volume(volume, request):
     depends(request, ['STARTED_GVOLUME'])
     ans = make_request('post', '/gluster/volume/stop', data={'name': volume, 'force': True})
     assert ans.status_code == 200, ans.text
@@ -116,7 +126,7 @@ def test_06_stop_gluster_volume(volume, request):
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='VERIFY_FUSE_UMOUNTED')
-def test_07_verify_gluster_volume_is_fuse_umounted(ip, request):
+def test_08_verify_gluster_volume_is_fuse_umounted(ip, request):
     depends(request, ['STOP_GVOLUME'])
 
     total_time_to_wait = 10
@@ -134,13 +144,13 @@ def test_07_verify_gluster_volume_is_fuse_umounted(ip, request):
 
 
 @pytest.mark.parametrize('volume', [GVOL])
-def test_08_delete_gluster_volume(volume, request):
+def test_09_delete_gluster_volume(volume, request):
     depends(request, ['VERIFY_FUSE_UMOUNTED'])
     ans = make_request('delete', f'/gluster/volume/id/{volume}')
     assert ans.status_code == 200, ans.text
     try:
         # wait for it to be deleted
-        status = wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], 120)
+        wait_on_job(ans.json(), CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['VOLUME_TIMEOUT'])
     except JobTimeOut:
         assert False, JobTimeOut
     else:
