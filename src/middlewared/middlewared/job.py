@@ -297,7 +297,7 @@ class Job(object):
         if timeout is None:
             await self._finished.wait()
         else:
-            await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
+            await asyncio.wait_for(self._finished.wait(), timeout)
         if raise_error:
             if self.error:
                 if isinstance(self.exc_info[1], CallError):
