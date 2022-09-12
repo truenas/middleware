@@ -5,7 +5,7 @@ import os
 import requests
 
 from middlewared.client import Client
-from middlewared.utils.lang import undefined
+from middlewared.client.utils import undefined
 
 __all__ = ["client", "host", "session", "url"]
 
