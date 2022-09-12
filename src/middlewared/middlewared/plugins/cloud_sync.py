@@ -1029,6 +1029,20 @@ class CloudSyncService(TaskPathService):
         if not provider.buckets:
             raise CallError("This provider does not use buckets")
 
+        if provider.custom_list_buckets:
+            return [
+                {
+                    "Path": bucket["name"],
+                    "Name": bucket["name"],
+                    "Size": -1,
+                    "MimeType": "inode/directory",
+                    "ModTime": bucket["time"],
+                    "IsDir": True,
+                    "IsBucket": True
+                }
+                for bucket in await provider.list_buckets(credentials)
+            ]
+
         return await self.ls({"credentials": credentials}, "")
 
     @accepts(Dict(
