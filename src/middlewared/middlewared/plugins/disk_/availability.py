@@ -38,7 +38,9 @@ class DiskService(Service):
 
         unused = []
         serial_to_disk = defaultdict(list)
-        for i in await self.middleware.call('datastore.query', 'storage.disk', [], {'prefix': 'disk_'}):
+        for i in await self.middleware.call(
+            'datastore.query', 'storage.disk', [['disk_expiretime', '=', None]], {'prefix': 'disk_'}
+        ):
             if i['name'] in in_use_disks_imported:
                 # exclude disks that are currently in use by imported zpool(s)
                 continue
