@@ -250,6 +250,7 @@ class Job:
         self.time_finished = None
         self.loop = self.middleware.loop
         self.future = None
+        self.wrapped = None
 
         self.logs_path = None
         self.logs_fd = None
@@ -349,6 +350,9 @@ class Job:
 
         if changed:
             self.send_event('CHANGED', encoded)
+
+        if self.wrapped:
+            self.wrapped.set_progress(**self.progress)
 
     async def wait(self, timeout=None, raise_error=False):
         if timeout is None:
@@ -534,15 +538,13 @@ class Job:
 
         :param subjob: The job to wrap.
         """
-        while not subjob.time_finished:
-            try:
-                await subjob.wait(1)
-            except asyncio.TimeoutError:
-                pass
-            self.set_progress(**subjob.progress)
-        if subjob.exception:
-            raise CallError(subjob.exception)
-        return subjob.result
+        if subjob.wrapped is not None:
+            raise RuntimeError(f"Job {subjob!r} is already wrapped by {subjob.wrapped!r}")
+
+        self.set_progress(**subjob.progress)
+        subjob.wrapped = self
+
+        return await subjob.wait(raise_error=True)
 
     def cleanup(self):
         if self.logs_path:
