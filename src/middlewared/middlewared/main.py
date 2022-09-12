@@ -232,6 +232,16 @@ class Application(object):
                     extra_log_files,
                 )
 
+    def can_subscribe(self, name):
+        if event := self.middleware.events.get_event(name):
+            if event['no_auth_required']:
+                return True
+
+        if not self.authenticated:
+            return False
+
+        return self.authenticated_credentials.authorize('SUBSCRIBE', name)
+
     async def subscribe(self, ident, name):
         shortname, arg = self.middleware.event_source_manager.short_name_arg(name)
         if shortname in self.middleware.event_source_manager.event_sources:
@@ -341,10 +351,8 @@ class Application(object):
             if 'id' in message:
                 pong['id'] = message['id']
             self._send(pong)
-        elif not self.authenticated:
-            self.send_error(message, errno.EACCES, 'Not authenticated')
         elif message['msg'] == 'sub':
-            if not self.authenticated_credentials.authorize('SUBSCRIBE', message['name']):
+            if not self.can_subscribe(message['name']):
                 self.send_error(message, errno.EACCES, 'Not authorized')
             else:
                 await self.subscribe(message['id'], message['name'])
@@ -862,7 +870,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         multiprocessing.set_start_method('spawn')  # Spawn new processes for ProcessPool instead of forking
         self.__init_procpool()
         self.__wsclients = {}
-        self.__events = Events()
+        self.events = Events()
         self.event_source_manager = EventSourceManager(self)
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
@@ -1404,7 +1412,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def get_events(self):
         return itertools.chain(
-            self.__events, map(
+            self.events, map(
                 lambda n: (
                     n[0],
                     {
@@ -1425,23 +1433,23 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, private=False, returns=None):
+    def event_register(self, name, description, *, private=False, returns=None, no_auth_required=False):
         """
         All events middleware can send should be registered so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
-        self.__events.register(name, description, private, returns)
+        self.events.register(name, description, private, returns, no_auth_required)
 
     def send_event(self, name, event_type, **kwargs):
 
-        if name not in self.__events:
+        if name not in self.events:
             # We should eventually deny events that are not registered to ensure every event is
             # documented but for backward-compatibility and safety just log it for now.
             self.logger.warning(f'Event {name!r} not registered.')
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
-        event_data = self.__events.get_event(name)
+        event_data = self.events.get_event(name)
         # TODO: Temporarily skip events which are CHANGED but have cleared set for validation as CHANGED
         # will be removed in next release and this case wouldn't be applicable
         if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED') and 'cleared' not in kwargs:
