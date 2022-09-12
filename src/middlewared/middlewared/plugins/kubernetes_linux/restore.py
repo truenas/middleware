@@ -285,4 +285,10 @@ class KubernetesService(Service):
                 chart_release['replica_counts'], True,
             )
 
+        job.set_progress(99, 'Syncing catalogs')
+        sync_job = self.middleware.call_sync('catalog.sync_all')
+        sync_job.wait_sync()
+        if sync_job.error:
+            self.logger.error('Failed to sync catalogs after restoring kubernetes backup')
+
         job.set_progress(100, f'Restore of {backup_name!r} backup complete')
