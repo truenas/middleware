@@ -290,8 +290,7 @@ class CallTimeout(ClientException):
     pass
 
 
-class Client(object):
-
+class Client:
     def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, log_py_exceptions=False,
                  call_timeout=undefined):
         """
@@ -350,8 +349,7 @@ class Client(object):
             if ping_event:
                 ping_event.set()
         elif _id is not None and msg == 'result':
-            call = self._calls.get(_id)
-            if call:
+            if call := self._calls.get(_id):
                 call.result = message.get('result')
                 if 'error' in message:
                     call.errno = message['error'].get('error')
@@ -366,6 +364,14 @@ class Client(object):
                         ))
                 call.returned.set()
                 self._unregister_call(call)
+            else:
+                if 'error' in message:
+                    for events in self._event_callbacks.values():
+                        for event in events:
+                            if event['id'] == _id:
+                                event['error'] = message['error']
+                                event['ready'].set()
+                                break
         elif msg in ('added', 'changed', 'removed'):
             if self._event_callbacks:
                 if '*' in self._event_callbacks:

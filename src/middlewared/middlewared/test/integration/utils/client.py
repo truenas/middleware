@@ -5,19 +5,24 @@ import os
 import requests
 
 from middlewared.client import Client
+from middlewared.client.utils import undefined
 
 __all__ = ["client", "host", "session", "url", "websocket_url"]
 
 
 @contextlib.contextmanager
-def client(py_exceptions=True, log_py_exceptions=True):
-    if "NODE_A_IP" in os.environ:
-        password = os.environ["APIPASS"]
-    else:
-        password = os.environ["MIDDLEWARE_TEST_PASSWORD"]
+def client(*, auth=undefined, py_exceptions=True, log_py_exceptions=True):
+    if auth is undefined:
+        if "NODE_A_IP" in os.environ:
+            password = os.environ["APIPASS"]
+        else:
+            password = os.environ["MIDDLEWARE_TEST_PASSWORD"]
 
-    with Client(f"ws://{host()}/websocket", py_exceptions=py_exceptions, log_py_exceptions=True) as c:
-        c.call("auth.login", "root", password)
+        auth = ("root", password)
+
+    with Client(f"ws://{host()}/websocket", py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
+        if auth is not None:
+            c.call("auth.login", *auth)
         yield c
 
 
