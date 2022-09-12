@@ -352,7 +352,7 @@ class PoolService(CRUDService):
         Int('id', required=True),
         Str('action', enum=['START', 'STOP', 'PAUSE'], required=True)
     )
-    @job()
+    @job(transient=True)
     async def scrub(self, job, oid, action):
         """
         Performs a scrub action to pool of `id`.
