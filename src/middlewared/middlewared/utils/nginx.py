@@ -13,7 +13,12 @@ def get_peer_process(remote_addr, remote_port):
 
 
 def get_remote_addr_port(request):
-    remote_addr, remote_port = request.transport.get_extra_info("peername")
+    try:
+        remote_addr, remote_port = request.transport.get_extra_info("peername")
+    except Exception:
+        # request can be NoneType or request.transport could be NoneType as well
+        return '', ''
+
     if remote_addr in ["127.0.0.1", "::1"]:
         try:
             x_real_remote_addr = request.headers["X-Real-Remote-Addr"]
