@@ -872,7 +872,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             self.middleware.event_register(
                 f'{self._config.namespace}.query',
                 f'Sent on {self._config.namespace} changes.',
-                self._config.private,
+                private=self._config.private,
                 returns=Ref(self.ENTRY.name),
             )
 

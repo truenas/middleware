@@ -115,4 +115,5 @@ class FailoverDisabledReasonsService(Service):
 
 
 async def setup(middleware):
-    middleware.event_register('failover.disabled.reasons', 'Sent when failover status reasons change.')
+    middleware.event_register('failover.disabled.reasons', 'Sent when failover status reasons change.',
+                              no_auth_required=True)
