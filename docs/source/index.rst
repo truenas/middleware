@@ -10,6 +10,7 @@ Welcome to TrueNAS developer documentation!
    middleware/index.rst
    services/index.rst
    testing/integration-tests/index.rst
+   simulating/index.rst
 
 
 
