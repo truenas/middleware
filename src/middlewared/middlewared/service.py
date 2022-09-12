@@ -88,8 +88,8 @@ def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, 
         Lock namespace is global. That way, if the method `"disk.wipe"` obtains a lock `"disk:sdb"`, then the method
         `"disk.format"` will have to wait for the same lock `"disk:sdb"` to be released.
 
-        `lock` can be a constant string (for example, `lock='boot_scrub'`) or a callable that will accept the job's arguments
-        and produce a lock name, e.g.:
+        `lock` can be a constant string (for example, `lock='boot_scrub'`) or a callable that will accept the job's
+        arguments and produce a lock name, e.g.:
 
         .. code-block:: python
 
