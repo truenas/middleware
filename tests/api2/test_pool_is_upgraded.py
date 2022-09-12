@@ -32,5 +32,4 @@ def test_is_outdated_in_list(outdated_pool):
 
 def test_is_outdated_alert(outdated_pool):
     alerts = call("alert.list")
-    assert len(alerts) == 1
     assert any((i["klass"] == "PoolUpgraded" and i["args"] == outdated_pool["name"] for i in alerts))
