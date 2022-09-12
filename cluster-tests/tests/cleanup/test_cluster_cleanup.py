@@ -56,6 +56,7 @@ def test_verify_all_gvols_are_fuse_umounted(ip, request):
             if not rv.json():
                 break
 
+            sleep(sleeptime)
             assert retry != retries, f'Waited {retries} seconds on FUSE mount for {i!r} to become umounted.'
 
 
@@ -103,9 +104,7 @@ def test_verify_ctdb_teardown(ip, request):
     assert ans.get('error') is None, ans
     assert isinstance(ans['result'], dict), ans
 
-    dataset_url = ans['result']['basename'] + '/ctdb_shared_vol'  # TODO: dont hard-code this
-    dataset_url = dataset_url.replace('/', '%2F')
-    url = f'http://{ip}/api/v2.0/pool/dataset/?id={dataset_url}'
-    ans = make_request('get', url)
-    assert ans.status_code == 200, ans.text
-    assert not ans.json(), f'zfs dataset for ctdb shared volume still exists: {ans.json()}'
+    path = ans['result']['path'] + '/ctdb_shared_vol'  # TODO: dont hard-code this
+    ans = make_request('post', f'http://{ip}/api/v2.0/filesystem/listdir', data={'path': path})
+    assert ans.status_code == 200 and isinstance(ans.json(), list), ans.text
+    assert len(ans.json()) == 0, ans.text
