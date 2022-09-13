@@ -179,3 +179,8 @@ class TunableService(CRUDService):
             await self.middleware.call('tunable.reset_sysctl', entry)
         else:
             await self.handle_tunable_change(entry)
+
+
+async def setup(middleware):
+    # make sure we're using all the available power for each cpu core
+    await run(['cpupower', 'frequency-set', '-g', 'performance'], check=False)
