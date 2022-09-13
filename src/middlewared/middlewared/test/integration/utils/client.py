@@ -11,7 +11,7 @@ __all__ = ["client", "host", "session", "url"]
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, py_exceptions=True, log_py_exceptions=True):
+def client(*, auth=undefined, py_exceptions=True):
     if auth is undefined:
         if "NODE_A_IP" in os.environ:
             password = os.environ["APIPASS"]
@@ -20,7 +20,7 @@ def client(*, auth=undefined, py_exceptions=True, log_py_exceptions=True):
 
         auth = ("root", password)
 
-    with Client(f"ws://{host()}/websocket", py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
+    with Client(f"ws://{host()}/websocket", py_exceptions=py_exceptions) as c:
         if auth is not None:
             c.call("auth.login", *auth)
         yield c
