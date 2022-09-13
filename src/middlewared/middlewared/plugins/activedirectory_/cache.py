@@ -2,10 +2,10 @@ import grp
 import os
 import pwd
 import shutil
-import subprocess
 import tdb
 
-from middlewared.plugins.smb import SMBCmd, SMBPath
+from middlewared.plugins.smb import SMBPath
+from middlewared.plugins.idmap_.utils import WBClient
 from middlewared.service import Service, private, job
 from middlewared.service_exception import CallError
 from time import sleep
@@ -72,13 +72,10 @@ class ActiveDirectoryService(Service):
         dom_by_sid = {x['domain_info']['sid']: x for x in domain_info}
 
         if do_wbinfo:
-            wb = subprocess.run(
-                [SMBCmd.WBINFO.value, f'-{entry_type[0].lower()}'], capture_output=True
-            )
-            if wb.returncode != 0:
-                raise CallError(f'Failed to retrieve {entry_type} from active directory: '
-                                f'{wb.stderr.decode().strip()}')
-            entries = wb.stdout.decode().splitlines()
+            if entry_type == 'USER':
+                entries = WBClient().users()
+            else:
+                entries = WBClient().groups()
 
         else:
             entries = self.get_gencache_names(domain_info)

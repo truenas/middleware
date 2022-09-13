@@ -85,6 +85,7 @@ class ShareSec(CRUDService):
         Parses security descriptor text returned from 'sharesec'.
         Optionally will resolve the SIDs in the SD to names.
         """
+        wb_is_running = True
 
         if len(sd) == 0:
             return {}
@@ -105,7 +106,7 @@ class ShareSec(CRUDService):
                 continue
 
             acl_entry.update(m.groupdict())
-            if (options.get('resolve_sids', True)) is True:
+            if wb_is_running and (options.get('resolve_sids', True)) is True:
                 try:
                     who = await self.middleware.call('idmap.sid_to_name', acl_entry['ae_who_sid'])
                     if '\\' in who['name']:
@@ -119,6 +120,9 @@ class ShareSec(CRUDService):
                     acl_entry['ae_who_name']['name'] = name
                     acl_entry['ae_who_name']['sidtype'] = SIDType(who['type']).name
                 except CallError as e:
+                    if e.errno == errno.ENOTCONN:
+                        wb_is_running = False
+
                     self.logger.debug('%s: failed to resolve SID to name: %s', acl_entry['ae_who_sid'], e)
 
             parsed_share_sd['share_acl'].append(acl_entry)
@@ -203,10 +207,7 @@ class ShareSec(CRUDService):
 
         if not ae['ae_who_sid']:
             name = f'{ae["ae_who_name"]["domain"]}\\{ae["ae_who_name"]["name"]}'
-            wbinfo = await run([SMBCmd.WBINFO.value, '--name-to-sid', name], check=False)
-            if wbinfo.returncode != 0:
-                raise CallError(f'SID lookup for {name} failed: {wbinfo.stderr.decode()}')
-            ae['ae_who_sid'] = (wbinfo.stdout.decode().split())[0]
+            ae['ae_who_sid'] = (await self.middleware.call('idmap.name_to_sid', name))['sid']
 
         return f'{ae["ae_who_sid"]}:{ae["ae_type"]}/0x0/{ae["ae_perm"]}'
 

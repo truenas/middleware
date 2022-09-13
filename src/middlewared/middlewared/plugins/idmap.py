@@ -2,15 +2,17 @@ import enum
 import asyncio
 import errno
 import datetime
-import subprocess
+import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
+from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.directoryservices import SSL
+from middlewared.plugins.idmap_.utils import IDType, WBClient, WBCErr
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Range
-from middlewared.plugins.smb import SMBCmd, SMBPath, WBCErr
+from middlewared.plugins.smb import SMBPath
 
 
 SID_LOCAL_USER_PREFIX = "S-1-22-1-"
@@ -72,12 +74,6 @@ class DSType(enum.Enum):
 
     def choices():
         return [x.name for x in DSType]
-
-
-class IDType(enum.Enum):
-    USER = "USER"
-    GROUP = "GROUP"
-    BOTH = "BOTH"
 
 
 class IdmapBackend(enum.Enum):
@@ -322,54 +318,37 @@ class IdmapDomainService(TDBWrapCRUDService):
 
     @private
     @filterable
-    def online_status(self, query_filters, query_options):
-        def parse_entry(entry):
-            domain, status = entry.split(':')
-            return {
-                'domain': domain.strip(),
-                'online': 'no active connection' not in status
-            }
-
-        wbinfo = subprocess.run(['wbinfo', '--online-status'], capture_output=True)
-        if wbinfo.returncode != 0:
-            raise CallError("Failed to get winbindd online status: %s",
-                            wbinfo.stderr.decode())
-
-        entries = [parse_entry(entry) for entry in wbinfo.stdout.decode().splitlines()]
+    def known_domains(self, query_filters, query_options):
+        entries = [entry.domain_info() for entry in WBClient().all_domains()]
         return filter_list(entries, query_filters, query_options)
 
     @private
-    async def domain_info(self, domain):
-        def val_convert(val):
-            if val == 'Yes':
-                return True
+    @filterable
+    def online_status(self, query_filters, query_options):
+        try:
+            all_info = self.known_domains()
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
-            elif val == 'No':
-                return False
+        entries = [{
+            'domain': dom_info['netbios_domain'],
+            'online': dom_info['online']
+        } for dom_info in all_info]
 
-            return val
+        return filter_list(entries, query_filters, query_options)
 
-        ret = {}
-
+    @private
+    def domain_info(self, domain):
         if domain == 'DS_TYPE_ACTIVEDIRECTORY':
-            domain = (await self.middleware.call('smb.config'))['workgroup']
+            return WBClient().domain_info()
 
-        wbinfo = await run(['wbinfo', '-D', domain], check=False)
-        if wbinfo.returncode != 0:
-            if 'WBC_ERR_DOMAIN_NOT_FOUND' in wbinfo.stderr.decode():
-                err = errno.ENOENT
-            else:
-                err = errno.EFAULT
+        elif domain == 'DS_TYPE_DEFAULT_DOMAIN':
+            return WBClient().domain_info('BUILTIN')
 
-            raise CallError(f'Failed to get domain info for {domain}: '
-                            f'{wbinfo.stderr.decode().strip()}', err)
+        elif domain == 'DS_TYPE_LDAP':
+            return None
 
-        for entry in wbinfo.stdout.splitlines():
-            kv = entry.decode().split(':')
-            val = kv[1].strip()
-            ret.update({kv[0].strip().lower(): val_convert(val)})
-
-        return ret
+        return WBClient().domain_info(domain)
 
     @private
     async def get_sssd_low_range(self, domain, sssd_config=None, seed=0xdeadbeef):
@@ -384,7 +363,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         RID 0. With the default settings in SSSD this will be deterministic as long as
         the domain has less than 200,000 RIDs.
         """
-        sid = (await self.domain_info(domain))['sid']
+        sid = (await self.middleware.call('idmap.domain_info', domain))['sid']
         sssd_config = {} if not sssd_config else sssd_config
         range_size = sssd_config.get('range_size', 200000)
         range_low = sssd_config.get('range_low', 10001)
@@ -479,21 +458,27 @@ class IdmapDomainService(TDBWrapCRUDService):
             self.logger.trace('Skipping auto-generation of trusted domains due to AutoRID being enabled.')
             return
 
-        wbinfo = await run(['wbinfo', '-m', '--verbose'], check=False)
-        if wbinfo.returncode != 0:
-            raise CallError(f'wbinfo -m failed with error: {wbinfo.stderr.decode().strip()}')
+        try:
+            domains = await self.middleware.run_in_thread(self.known_domains)
+        except wbclient.WBCError:
+            self.logger.warning("Failed to retrieve domain list.", exc_info=True)
+            return
 
-        for entry in wbinfo.stdout.decode().splitlines():
-            c = entry.split()
+        for entry in domains:
+            if 'ACTIVE_DIRECTORY' not in entry['domain_flags']['parsed']:
+                continue
+
+            if entry['netbios_domain'].casefold() == smb['workgroup'].casefold():
+                continue
+
             range_low, range_high = await self.get_next_idmap_range()
-            if len(c) == 6 and c[0] != smb['workgroup']:
-                await self.middleware.call('idmap.create', {
-                    'name': c[0],
-                    'dns_domain_name': c[1],
-                    'range_low': range_low,
-                    'range_high': range_high,
-                    'idmap_backend': 'RID'
-                })
+            await self.middleware.call('idmap.create', {
+                'name': entry['netbios_domain'],
+                'dns_domain_name': entry['dns_name'],
+                'range_low': range_low,
+                'range_high': range_high,
+                'idmap_backend': 'RID'
+            })
 
     @accepts()
     async def backend_options(self):
@@ -649,9 +634,12 @@ class IdmapDomainService(TDBWrapCRUDService):
             for entry in ret:
                 try:
                     domain_info = await self.middleware.call('idmap.domain_info', entry['name'])
-                except CallError as e:
-                    if e.errno != errno.ENOENT:
-                        self.logger.debug("Failed to retrieve domain info: %s", e)
+                except wbclient.WBCError as e:
+                    if e.error_code != wbclient.WBC_ERR_DOMAIN_NOT_FOUND:
+                        self.logger.debug(
+                            "Failed to retrieve domain info for domain %s: %s",
+                            entry['name'], e
+                        )
                     domain_info = None
 
                 entry.update({'domain_info': domain_info})
@@ -959,55 +947,62 @@ class IdmapDomainService(TDBWrapCRUDService):
         await self.synchronize()
         return ret
 
+    def _pyuidgid_to_dict(self, entry):
+        if entry.id_type == IDType.USER.wbc_const():
+            idtype = 'USER'
+        elif entry.id_type == IDType.GROUP.wbc_const():
+            idtype = 'GROUP'
+        else:
+            idtype = 'BOTH'
+        return {
+            'id_type': idtype,
+            'id': entry.id,
+            'sid': entry.sid
+        }
+
     @private
     async def name_to_sid(self, name):
-        wb = await run([SMBCmd.WBINFO.value, '--name-to-sid', name], check=False)
-        if wb.returncode != 0:
-            self.logger.debug("wbinfo failed with error: %s",
-                              wb.stderr.decode().strip())
+        try:
+            entry = WBClient().name_to_uidgid_entry(name)
 
-        return wb.stdout.decode().strip()
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
-    @private
-    async def sid_to_name(self, sid):
-        """
-        Last two characters of name string encode the account type.
-        """
-        wb = await run([SMBCmd.WBINFO.value, '--sid-to-name', sid], check=False)
-        if wb.returncode != 0:
-            raise CallError(f'wbinfo failed with error: {wb.stderr.decode().strip()}')
+        except MatchNotFound:
+            return {'sid': None, 'type': wbclient.SID_TYPE_NAME_INVALID}
 
-        out = wb.stdout.decode().strip()
-        return {"name": out[:-2], "type": int(out[-2:])}
+        return {
+            'sid': entry.sid,
+            'type': entry.sid_type['raw']
+        }
 
     @private
-    async def sid_to_unixid(self, sid_str):
-        rv = None
-        gid = None
-        uid = None
+    def sid_to_name(self, sid):
+        try:
+            client = WBClient()
+            entry = client.sid_to_uidgid_entry(sid)
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
+        return {
+            'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
+            'type': entry.sid_type['raw']
+        }
+
+    @private
+    def sid_to_unixid(self, sid_str):
         if sid_str.startswith(SID_LOCAL_USER_PREFIX):
             return {"id_type": "USER", "id": int(sid_str.strip(SID_LOCAL_USER_PREFIX))}
 
         elif sid_str.startswith(SID_LOCAL_GROUP_PREFIX):
             return {"id_type": "GROUP", "id": int(sid_str.strip(SID_LOCAL_GROUP_PREFIX))}
 
-        wb = await run([SMBCmd.WBINFO.value, '--sid-to-gid', sid_str], check=False)
-        if wb.returncode == 0:
-            gid = int(wb.stdout.decode().strip())
+        try:
+            entry = WBClient().sid_to_uidgid_entry(sid_str)
+        except MatchNotFound:
+            return None
 
-        wb = await run([SMBCmd.WBINFO.value, '--sid-to-uid', sid_str], check=False)
-        if wb.returncode == 0:
-            uid = int(wb.stdout.decode().strip())
-
-        if gid and (gid == uid):
-            rv = {"id_type": "BOTH", "id": gid}
-        elif gid:
-            rv = {"id_type": "GROUP", "id": gid}
-        elif uid:
-            rv = {"id_type": "USER", "id": uid}
-
-        return rv
+        return self._pyuidgid_to_dict(entry)
 
     @private
     @filterable
@@ -1068,7 +1063,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         return name
 
     @private
-    async def unixid_to_sid(self, data):
+    def unixid_to_sid(self, data):
         """
         Samba generates SIDs for local accounts that lack explicit mapping in
         passdb.tdb or group_mapping.tdb with a prefix of S-1-22-1 (users) and
@@ -1077,27 +1072,24 @@ class IdmapDomainService(TDBWrapCRUDService):
         """
         unixid = data.get("id")
         id = IDType[data.get("id_type", "GROUP")]
-
-        if id == IDType.USER:
-            wb = await run([SMBCmd.WBINFO.value, '--uid-to-sid', str(unixid)], check=False)
-        else:
-            wb = await run([SMBCmd.WBINFO.value, '--gid-to-sid', str(unixid)], check=False)
-
-        if wb.returncode != 0:
-            self.logger.warning("Could not convert [%d] to SID: %s",
-                                unixid, wb.stderr.decode().strip())
-            if WBCErr.DOMAIN_NOT_FOUND.err() in wb.stderr.decode():
-                is_local = await self.middleware.call(
-                    f'{"user" if id == IDType.USER else "group"}.query',
-                    [("uid" if id == IDType.USER else "gid", '=', unixid)],
-                    {"count": True}
-                )
-                if is_local:
-                    return f'S-1-22-{1 if id == IDType.USER else 2}-{unixid}'
+        payload = {
+            'id_type': id.wbc_str(),
+            'id': unixid
+        }
+        try:
+            entry = WBClient().uidgid_to_sid(payload)
+        except MatchNotFound:
+            is_local = self.middleware.call_sync(
+                f'{"user" if id == IDType.USER else "group"}.query',
+                [("uid" if id == IDType.USER else "gid", '=', unixid)],
+                {"count": True}
+            )
+            if is_local:
+                return f'S-1-22-{1 if id == IDType.USER else 2}-{unixid}'
 
             return None
 
-        return wb.stdout.decode().strip()
+        return self._pyuidgid_to_dict(entry)['sid']
 
     @private
     async def get_idmap_info(self, ds, id):
@@ -1122,7 +1114,7 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     async def synthetic_user(self, ds, passwd):
         idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
-        sid = await self.unixid_to_sid({"id": passwd['pw_uid'], "id_type": "USER"})
+        sid = await self.middleware.run_in_thread(self.unixid_to_sid, {"id": passwd['pw_uid'], "id_type": "USER"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
             'id': 100000 + idmap_info[0] + rid,
@@ -1151,7 +1143,7 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     async def synthetic_group(self, ds, grp):
         idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
-        sid = await self.unixid_to_sid({"id": grp['gr_gid'], "id_type": "GROUP"})
+        sid = await self.middleware.run_in_thread(self.unixid_to_sid, {"id": grp['gr_gid'], "id_type": "GROUP"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
             'id': 100000 + idmap_info[0] + rid,
