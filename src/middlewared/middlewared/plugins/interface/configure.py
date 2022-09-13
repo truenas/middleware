@@ -65,7 +65,7 @@ class InterfaceService(Service):
         if has_ipv6 and not [i for i in map(str, iface.addresses) if i.startswith('fe80::')]:
             # https://tools.ietf.org/html/rfc4291#section-2.5.1
             # add an EUI64 link-local ipv6 address if one doesn't already exist
-            mac = iface.link_address.address.address.replace(':', '')
+            mac = iface.link_address.replace(':', '')
             mac = mac[0:6] + 'fffe' + mac[6:]
             mac = hex(int(mac[0:2], 16) ^ 2)[2:].zfill(2) + mac[2:]
             link_local = {'address': 'fe80::' + ':'.join(textwrap.wrap(mac, 4)), 'netmask': '64'}
