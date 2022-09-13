@@ -1,6 +1,6 @@
 import asyncio
 import contextlib
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import copy
 from datetime import datetime
 import enum
@@ -254,6 +254,7 @@ class Job:
 
         self.logs_path = None
         self.logs_fd = None
+        self.logs_cnt = 0
         self.logs_excerpt = None
 
         if self.options["check_pipes"]:
@@ -455,7 +456,30 @@ class Job:
         if self.progress['percent'] != 100:
             self.set_progress(100, '')
 
+    async def write_logs(self, data):
+        if isinstance(self.logs_fd, dict):
+            if self.logs_fd['target']) is self.logfs_fd['head']:
+                if len(self.logs_fd) == self.logs_fd.maxlen:
+                    self.logs_fd['tail'] = deque(self.logs_fd['head'].max_len)
+                    self.logs_fd['target'] = self.logs_fd['tail']
+
+            self.logs_fd['target'].append(data)
+            self.logs_cnt += 1
+            return
+
+        return self.middleware.run_in_thread(self.logs_fd.write(data)
+
     async def __close_logs(self):
+        if isinstance(self.logs_fd, dict):
+            head = self.logs_fd['head']
+            tail = self.logs_fd['tail']
+
+            if tail:
+                    excerpt = "%s... %d more lines ...\n%s" % ("".join(head), self.logs_cnt - head.maxlen, "".join(tail))
+            else:
+                    excerpt = "".join(head)
+            return
+
         if self.logs_fd:
             self.logs_fd.close()
 
@@ -547,7 +571,7 @@ class Job:
         return await subjob.wait(raise_error=True)
 
     def cleanup(self):
-        if self.logs_path:
+        if self.logs_path and not self.logs_path.startswith('MEMORY'):
             try:
                 os.unlink(self.logs_path)
             except Exception:
@@ -555,6 +579,9 @@ class Job:
 
     def stop_logging(self):
         fd = self.logs_fd
+        if isinstance(fd, dict):
+            return
+
         if fd is not None:
             # This is only for a short amount of time when moving system dataset
             # We could use io.BytesIO() for a temporary buffer but if a bad job produces lots of logs
@@ -563,6 +590,20 @@ class Job:
             fd.close()
 
     def start_logging(self):
+        if self.logs_path.startswith('MEMORY'):
+            limit = 10
+            parts = self.logs_path.split(':')
+            if len(parts) > 1:
+                limit = int(parts[1])
+
+            dq = deque(maxlen=limit)
+            self.logs_fd = {
+                'target': dq,
+                'head': dq,
+                'tail': None
+            }
+            return
+
         if self.logs_path is not None:
             fd = self.logs_fd
             os.makedirs(LOGS_DIR, exist_ok=True)
