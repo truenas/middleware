@@ -47,7 +47,8 @@ def run_with_user_context(func: Callable, user_details: dict, func_args: Optiona
         return exc.submit(func, *(func_args or [])).result()
 
 
-def run_command_with_user_context(commandline: str, user: str, callback: Callable) -> subprocess.CompletedProcess:
+def run_command_with_user_context(commandline: str, user: str, callback: Callable,
+                                  output: bool = True) -> subprocess.CompletedProcess:
     p = subprocess.Popen(["sudo", "-H", "-u", user, "sh", "-c", commandline],
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -57,7 +58,8 @@ def run_command_with_user_context(commandline: str, user: str, callback: Callabl
         if not line:
             break
 
-        stdout += line
+        if output:
+            stdout += line
         callback(line)
 
     p.communicate()

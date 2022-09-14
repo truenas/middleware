@@ -714,7 +714,7 @@ class RsyncTaskService(TaskPathService):
         commandline = self.middleware.call_sync('rsynctask.commandline', id)
 
         cp = run_command_with_user_context(
-            commandline, rsync['user'], lambda v: job.logs_fd.write(v)
+            commandline, rsync['user'], lambda v: job.logs_fd.write(v), False,
         )
 
         for klass in ('RsyncSuccess', 'RsyncFailed') if not rsync['quiet'] else ():
