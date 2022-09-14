@@ -527,6 +527,7 @@ class SMBService(TDBWrapConfigService):
         """
         data = await self.config()
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
+        system_ready = await self.middleware.call('system.ready')
         job.set_progress(0, 'Setting up SMB directories.')
         if create_paths:
             await self.setup_directories()
@@ -609,11 +610,12 @@ class SMBService(TDBWrapConfigService):
         wiped our secrets.tdb file. Re-import directory service secrets
         if they are missing from the current running configuration.
         """
-        job.set_progress(65, 'Initializing directory services')
-        await self.middleware.call(
-            "directoryservices.initialize",
-            {"activedirectory": ad_enabled, "ldap": ldap_enabled}
-        )
+        if system_ready:
+            job.set_progress(65, 'Initializing directory services')
+            await self.middleware.call(
+                "directoryservices.initialize",
+                {"activedirectory": ad_enabled, "ldap": ldap_enabled}
+            )
 
         job.set_progress(70, 'Checking SMB server status.')
         if await self.middleware.call("service.started_or_enabled", "cifs"):

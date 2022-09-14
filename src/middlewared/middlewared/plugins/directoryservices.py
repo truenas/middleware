@@ -513,5 +513,14 @@ class DirectoryServices(Service):
         await refresh.wait()
 
 
+async def __directory_services_ready(middleware, event_type, args):
+
+    if args['id'] != 'ready':
+        return
+
+    await middleware.call('directoryservices.initialize')
+
+
 def setup(middleware):
     middleware.event_register('directoryservices.status', 'Sent on directory service state changes.')
+    middleware.event_subscribe('system', __directory_services_ready)

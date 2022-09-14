@@ -463,6 +463,10 @@ class DSCache(Service):
         This is called from a cronjob every 24 hours and when a user clicks on the
         UI button to 'rebuild directory service cache'.
         """
+        if not await self.middleware.call('system.ready'):
+            self.logger.debug("Skipping directory services cache setup because system not ready.")
+            return
+
         for ds in ['activedirectory', 'ldap']:
             await self.middleware.call('tdb.wipe', {'name': f'{ds}_user'})
             await self.middleware.call('tdb.wipe', {'name': f'{ds}_group'})
