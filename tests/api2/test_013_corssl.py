@@ -39,5 +39,11 @@ def test_03_check_connection_to_update_server(request):
     depends(request, ["SSL_CERT_PATH_IS_SET"])
     rv = make_ws_request(ip, {'msg': 'method', 'method': 'update.get_trains_data', 'params': []})
     assert isinstance(rv['result'], dict), rv['result']
-    assert 'trains' in rv['result'], rv['result']
-    assert 'trains_redirection' in rv['result'], rv['result']
+    assert all((i for i in ('trains', 'trains_redirection') if i in rv['result'])), rv['result']
+
+    rv = make_ws_request(ip, {'msg': 'method', 'method': 'update.get_trains', 'params': []})
+    assert isinstance(rv['result'], dict), rv['result']
+    assert all((i for i in ('trains', 'current', 'selected') if i in rv['result'])), rv['result']
+    assert isinstance(rv['result']['trains'], dict), rv['result']['trains']
+    assert isinstance(rv['result']['current'], str), rv['result']['current']
+    assert isinstance(rv['result']['selected'], str), rv['result']['selected']
