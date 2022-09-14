@@ -13,6 +13,8 @@ from middlewared.service import Service, job, accepts
 from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
+from libzfs import Error as libzfs_errnos
+
 
 logger = logging.getLogger('failover')
 
@@ -386,7 +388,10 @@ class FailoverEventsService(Service):
                     'zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name, import_options
                 )
             except Exception as e:
-                if e.errno == errno.ENOENT:
+                error = next((i.name for i in libzfs_errnos if i.value == e.errno), '')
+                if error == 'NOENT' or e.errno == errno.ENOENT:
+                    # NOENT when cachefile exists and zpool isn't found from contents in cachefile
+                    # ENONENT when the cachefile doesn't exist on disk
                     logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
                     try_again = True
                 else:
