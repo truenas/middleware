@@ -693,12 +693,13 @@ class RsyncTaskService(TaskPathService):
             if rsync['extra']:
                 line.append(' '.join(rsync['extra']))
 
-            # Do not use username if one is specified in host field
-            # See #5096 for more details
-            if '@' in rsync['remotehost']:
-                remote = rsync['remotehost']
-            else:
-                remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
+            if not rsync['ssh_credentials']:
+                # Do not use username if one is specified in host field
+                # See #5096 for more details
+                if '@' in rsync['remotehost']:
+                    remote = rsync['remotehost']
+                else:
+                    remote = f'"{rsync["user"]}"@{rsync["remotehost"]}'
 
             if rsync['mode'] == 'MODULE':
                 module_args = [path, f'{remote}::"{rsync["remotemodule"]}"']
