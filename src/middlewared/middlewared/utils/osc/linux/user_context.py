@@ -48,27 +48,27 @@ def run_with_user_context(func: Callable, user_details: dict, func_args: Optiona
 
 
 def run_command_with_user_context(
-    commandline: str, user: str, callback: Optional[Callable] = None, output: bool = True,
+    commandline: str, user: str, *, output: bool = True, callback: Optional[Callable] = None,
     timeout: Optional[int] = None,
 ) -> subprocess.CompletedProcess:
-    if output and not callback:
-        raise ValueError("Callback must be specified when output is desired")
-
-    kwargs = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL} if not output else {
-        "stdout": subprocess.PIPE, "stderr": subprocess.STDOUT
-    }
+    if output or callback:
+        kwargs = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT}
+    else:
+        kwargs = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
     timeout_args = ["timeout", "-k", str(timeout), str(timeout)] if timeout else []
     p = subprocess.Popen(timeout_args + ["sudo", "-H", "-u", user, "sh", "-c", commandline], **kwargs)
 
     stdout = b""
-    if output:
+    if output or callback:
         while True:
             line = p.stdout.readline()
             if not line:
                 break
 
-            stdout += line
-            callback(line)
+            if output:
+                stdout += line
+            if callback:
+                callback(line)
 
     p.communicate()
     return subprocess.CompletedProcess(commandline, stdout=stdout, returncode=p.returncode)
