@@ -428,8 +428,8 @@ class FailoverEventsService(Service):
         if len(failed) == len(fobj['volumes']):
             for i in failed:
                 logger.error(
-                    'Failed to import volume with name "%s" with guid "%s" '
-                    'with error "%s"', failed['name'], failed['guid'], failed['error'],
+                    'Failed to import volume with name %r with guid %r with error:\n %r',
+                    i['name'], i['guid'], i['error'],
                 )
 
             logger.error('All volumes failed to import!')
@@ -440,8 +440,8 @@ class FailoverEventsService(Service):
         elif len(failed):
             for i in failed:
                 logger.error(
-                    'Failed to import volume with name "%s" with guid "%s" '
-                    'with error "%s"', failed['name'], failed['guid'], failed['error'],
+                    'Failed to import volume with name %r with guid %r with error:\n %r',
+                    i['name'], i['guid'], i['error'],
                 )
                 logger.error(
                     'However, other zpools imported so the failover process continued.'
