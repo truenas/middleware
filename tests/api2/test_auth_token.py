@@ -20,7 +20,7 @@ def download_token():
 
 def test_download_auth_token_cannot_be_used_for_restful_api_call(download_token):
     results = GET("/user/id/1/", anonymous=True, headers={"Authorization": f"Token {download_token}"})
-    assert results.status_code == 403, results.text
+    assert results.status_code == 401, results.text
 
 
 def test_download_auth_token_cannot_be_used_for_upload(download_token):
@@ -38,7 +38,7 @@ def test_download_auth_token_cannot_be_used_for_upload(download_token):
         },
         timeout=10
     )
-    assert r.status_code == 403
+    assert r.status_code == 401
 
 
 def test_download_auth_token_cannot_be_used_for_websocket_auth(download_token):
