@@ -166,8 +166,6 @@ def test_ssh_credentials_key(cleanup, localuser, remoteuser, src, dst, ssh_crede
         "path": f"{src}/",
         "user": "localuser",
         "ssh_credentials": ssh_credentials["credentials"]["id"],
-        "remotehost": "remoteuser@localhost",
-        "remoteport": 22,
         "mode": "SSH",
         "remotepath": dst,
     }) as t:
@@ -183,8 +181,6 @@ def test_ssh_credentials_delete(cleanup, localuser, remoteuser, src, dst):
             "path": path,
             "user": "localuser",
             "ssh_credentials": c["credentials"]["id"],
-            "remotehost": "remoteuser@localhost",
-            "remoteport": 22,
             "mode": "SSH",
             "remotepath": dst,
         }) as t:
