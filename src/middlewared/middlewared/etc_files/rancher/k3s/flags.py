@@ -41,6 +41,9 @@ def render(service, middleware):
             'cluster-dns': config['cluster_dns_ip'],
             'data-dir': os.path.join('/mnt', config['dataset'], 'k3s'),
             'node-ip': config['node_ip'],
+            'node-external-ip': ','.join([
+                interface['address'] for interface in middleware.call_sync('interface.ip_in_use', {'ipv6': False})
+            ]),
             'kube-controller-manager-arg': kube_controller_args,
             'kube-apiserver-arg': kube_api_server_args,
             'kubelet-arg': kubelet_args,
