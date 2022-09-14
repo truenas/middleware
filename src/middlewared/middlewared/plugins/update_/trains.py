@@ -54,7 +54,7 @@ class UpdateService(Service):
     @private
     async def get_trains_data(self):
         return {
-            "current_train": await self.middleware.call("update.get_manifest_file"),
+            "current_train": (await self.middleware.call("update.get_manifest_file"))["train"],
             **(await self.fetch(f"{self.update_srv}/trains.json"))
         }
 
