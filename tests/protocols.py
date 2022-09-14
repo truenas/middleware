@@ -1,16 +1,26 @@
 import sys
 import enum
 import subprocess
-import contextlib
-import os
 from functions import SSH_TEST
+from platform import system
 
-# sys.real_prefix only found in virtualenv
+# sys.real_prefix only found in old virtualenv
 # if detected set local site-packages to use for samba
+# In recent virtual version sys.base_prefix is to be use.
 if getattr(sys, "real_prefix", None):
     major_v = sys.version_info.major
     minor_v = sys.version_info.minor
-    sys.path.append(f'{sys.real_prefix}/lib/python{major_v}.{minor_v}/site-packages')
+    if system() == 'Linux':
+        sys.path.append(f'{sys.real_prefix}/lib/python{major_v}/dist-packages')
+    else:
+        sys.path.append(f'{sys.real_prefix}/lib/python{major_v}.{minor_v}/site-packages')
+elif sys.prefix != sys.base_prefix:
+    major_v = sys.version_info.major
+    minor_v = sys.version_info.minor
+    if system() == 'Linux':
+        sys.path.append(f'{sys.base_prefix}/lib/python{major_v}/dist-packages')
+    else:
+        sys.path.append(f'{sys.base_prefix}/lib/python{major_v}.{minor_v}/site-packages')
 
 from samba.samba3 import libsmb_samba_internal as libsmb
 from samba.dcerpc import security
