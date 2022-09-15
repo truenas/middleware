@@ -8,7 +8,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, PUT, DELETE
+from functions import GET, POST, PUT, DELETE, wait_on_job
 from auto_config import dev_test, ha
 from middlewared.test.integration.assets.pool import dataset
 
@@ -46,14 +46,13 @@ if support_virtualization:
             'name': 'vmtest',
             'description': 'desc',
             'vcpus': 1,
-            'memory': 1000,
+            'memory': 512,
             'bootloader': 'UEFI',
-            'devices': [],
             'autostart': False,
         }
         results = POST('/vm/', payload)
         assert results.status_code == 200, results.text
-        data['vmid'] = results.json()
+        data['vmid'] = results.json()['id']
 
     def test_03_get_vm_query(data):
         results = GET(f'/vm/?id={data["vmid"]}')
@@ -63,34 +62,36 @@ if support_virtualization:
         vmware_query = results
 
     @pytest.mark.parametrize('dkey', ['name', 'description', 'vcpus', 'memory',
-                                      'bootloader', 'devices', 'autostart'])
+                                      'bootloader', 'autostart'])
     def test_04_look_vm_query_(dkey):
         assert vmware_query.json()[0][dkey] == payload[dkey], vmware_query.text
 
     def test_05_start_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/start/')
         assert results.status_code == 200, results.text
-        assert isinstance(results.json(), bool) is True, results.text
+        assert isinstance(results.json(), type(None)), results.text
 
     def test_06_vm_status(data):
         results = POST(f'/vm/id/{data["vmid"]}/status/')
         assert results.status_code == 200, results.text
         status = results.json()
-        assert isinstance(status, dict) is True, results.text
+        assert isinstance(status, dict), results.text
 
     def test_07_stop_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/stop/')
         assert results.status_code == 200, results.text
-        assert isinstance(results.json(), bool) is True, results.text
+        assert isinstance(results.json(), int), results.text
+        job_status = wait_on_job(results.json(), 180)
+        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_08_update_vm(data):
         global payload
         payload = {
-            'memory': 1100,
+            'memory': 768,
         }
         results = PUT(f'/vm/id/{data["vmid"]}/', payload)
         assert results.status_code == 200, results.text
-        assert GET(f'/vm?id={data["vmid"]}').json()[0]['memory'] == 1100
+        assert GET(f'/vm?id={data["vmid"]}').json()[0]['memory'] == 768
 
     def test_09_get_vm_query(data):
         results = GET(f'/vm/?id={data["vmid"]}')
@@ -108,7 +109,7 @@ if support_virtualization:
         assert results.status_code == 200, results.text
 
 
-def test_12_vm__disk_choices(request):
+def test_12_vm_disk_choices(request):
     with dataset('test zvol', {
         'type': 'VOLUME',
         'volsize': 1024000,
