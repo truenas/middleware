@@ -28,8 +28,7 @@ def test_01_get_device_info(dtype):
 
 def test_02_look_at_device_serial():
     results = all_results['SERIAL']
-    for serial in results.json():
-        assert serial['drivername'] == 'uart', results.text
+    assert any((i["drivername"] == "uart" for i in results.json()))
 
 
 @pytest.mark.parametrize('disk', disk_list)
