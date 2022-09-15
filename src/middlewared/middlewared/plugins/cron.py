@@ -238,7 +238,7 @@ class CronJobService(CRUDService):
         syslog.syslog(syslog.LOG_INFO, f'({cron_task["user"]}) CMD ({cron_cmd})')
 
         cp = run_command_with_user_context(
-            cron_cmd, cron_task['user'], __cron_log
+            cron_cmd, cron_task['user'], callback=__cron_log,
         )
 
         syslog.closelog()
