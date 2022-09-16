@@ -140,67 +140,25 @@ class DiskTempPlugin(RRDBase):
         return ids
 
 
-class InterfacePacketsPlugin(RRDBase):
+class InterfacePlugin(RRDBase):
     plugin = 'ifstat'
-    vertical_label = 'Packets'
+    vertical_label = 'Stats'
     rrd_types = (
-        RRDType('ifstat-rx_packets', 'value'),
-        RRDType('ifstat-tx_packets', 'value'),
+        RRDType('ifstat-rx_packets', 'value', name='rx_packets'),
+        RRDType('ifstat-tx_packets', 'value', name='tx_packets'),
+        RRDType('ifstat-rx_bytes', 'value', '%name%,8,*', name='rx_bits'),
+        RRDType('ifstat-tx_bytes', 'value', '%name%,8,*', name='tx_bits'),
+        RRDType('ifstat-rx_errors', 'value', name='rx_errors'),
+        RRDType('ifstat-tx_errors', 'value', name='tx_errors'),
+        RRDType('ifstat-rx_dropped', 'value', name='rx_dropped'),
+        RRDType('ifstat-tx_dropped', 'value', name='tx_dropped'),
     )
 
     def get_title(self):
-        return 'Interface Packets ({identifier})'
+        return 'Interface Statistics ({identifier})'
 
     def get_identifiers(self):
-        return [i['name'] for i in self.middleware.call('interface.query')]
-
-
-class InterfaceBitsPlugin(RRDBase):
-    plugin = 'ifstat'
-    vertical_label = 'Bits/s'
-    rrd_types = (
-        RRDType('ifstat-rx_bytes', 'value', '%name%,8,*'),
-        RRDType('ifstat-tx_bytes', 'value', '%name%,8,*'),
-    )
-
-    def get_title(self):
-        return 'Interface Bits/s ({identifier})'
-
-
-    def get_identifiers(self):
-        return [i['name'] for i in self.middleware.call('interface.query')]
-
-
-class InterfaceErrorsPlugin(RRDBase):
-    plugin = 'ifstat'
-    vertical_label = 'Errors'
-    rrd_types = (
-        RRDType('ifstat-rx_errors', 'value'),
-        RRDType('ifstat-tx_errors', 'value'),
-    )
-
-    def get_title(self):
-        return 'Interface Errors ({identifier})'
-
-
-    def get_identifiers(self):
-        return [i['name'] for i in self.middleware.call('interface.query')]
-
-
-class InterfaceDroppedPlugin(RRDBase):
-    plugin = 'ifstat'
-    vertical_label = 'Dropped'
-    rrd_types = (
-        RRDType('ifstat-rx_dropped', 'value'),
-        RRDType('ifstat-tx_dropped', 'value'),
-    )
-
-    def get_title(self):
-        return 'Interface Dropped ({identifier})'
-
-    def get_identifiers(self):
-        return [i['name'] for i in self.middleware.call('interface.query')]
-
+        return [i['name'] for i in self.middleware.call_sync('interface.query')]
 
 
 class MemoryPlugin(RRDBase):
