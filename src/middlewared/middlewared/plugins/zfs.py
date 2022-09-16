@@ -1113,6 +1113,8 @@ class ZFSSnapshot(CRUDService):
         """
         Query all ZFS Snapshots with `query-filters` and `query-options`.
 
+        `query-options.extra.holds` specifies whether hold tags for snapshots should be retrieved (false by default)
+
         `query-options.extra.min_txg` can be specified to limit snapshot retrieval based on minimum transaction group.
 
         `query-options.extra.max_txg` can be specified to limit snapshot retrieval based on maximum transaction group.
@@ -1155,10 +1157,11 @@ class ZFSSnapshot(CRUDService):
             if 'id' not in filter_getattrs(filters) and not options.get('limit'):
                 raise CallError('`id` or `limit` is required if `retention` is requested', errno.EINVAL)
 
+        holds = extra.get('holds', False)
         properties = extra.get('properties')
         with libzfs.ZFS() as zfs:
             # Handle `id` filter to avoid getting all snapshots first
-            kwargs = dict(holds=False, mounted=False, props=properties, min_txg=min_txg, max_txg=max_txg)
+            kwargs = dict(holds=holds, mounted=False, props=properties, min_txg=min_txg, max_txg=max_txg)
             if filters and len(filters) == 1 and len(filters[0]) == 3 and filters[0][0] in (
                 'id', 'name'
             ) and filters[0][1] == '=':
@@ -1431,3 +1434,32 @@ class ZFSSnapshot(CRUDService):
             )
         except subprocess.CalledProcessError as e:
             raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
+
+    @accepts(Str('id'))
+    def hold(self, id):
+        """
+        Holds snapshot `id`.
+
+        `truenas` tag will be added to the snapshot's tag namespace.
+        """
+        try:
+            with libzfs.ZFS() as zfs:
+                snapshot = zfs.get_snapshot(id)
+                snapshot.hold('truenas')
+        except libzfs.ZFSException as err:
+            raise CallError(f'Failed to hold snapshot: {err}')
+
+    @accepts(Str('id'))
+    def release(self, id):
+        """
+        Release held snapshot `id`.
+
+        Will remove all hold tags from the specified snapshot.
+        """
+        try:
+            with libzfs.ZFS() as zfs:
+                snapshot = zfs.get_snapshot(id)
+                for tag in snapshot.holds:
+                    snapshot.release(tag)
+        except libzfs.ZFSException as err:
+            raise CallError(f'Failed to release snapshot: {err}')

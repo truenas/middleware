@@ -66,3 +66,17 @@ def dataset(name, data=None, pool=pool):
             call("pool.dataset.delete", dataset, {"recursive": True})
         except InstanceNotFound:
             pass
+
+
+@contextlib.contextmanager
+def snapshot(dataset, name, **kwargs):
+    call("zfs.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
+
+    id = f"{dataset}@{name}"
+    try:
+        yield id
+    finally:
+        try:
+            call("zfs.snapshot.delete", id)
+        except InstanceNotFound:
+            pass
