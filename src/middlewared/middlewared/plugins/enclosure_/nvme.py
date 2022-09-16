@@ -101,7 +101,7 @@ class EnclosureService(Service):
         )
 
     @private
-    def map_nvme(self, info, acpihandles):
+    def map_r50_or_r50b_impl(self, info, acpihandles):
         mapped = info[-1]
         num_of_nvme_slots = info[-2]
         ctx = Context()
@@ -125,12 +125,8 @@ class EnclosureService(Service):
         return info
 
     @private
-    def r50_nvme_enclosures(self):
-        prod = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        if prod not in ('TRUENAS-R50', 'TRUENAS-R50B'):
-            return []
-
-        if prod == 'TRUENAS-R50':
+    def map_r50_or_r50b(self, prod):
+        if prod.endswith('R50'):
             info = [
                 'r50_nvme_enclosure',
                 'R50 NVMe Enclosure',
@@ -149,4 +145,15 @@ class EnclosureService(Service):
             ]
             acpihandles = {b'\\_SB_.PC03.BR3A': 2, b'\\_SB_.PC00.RP01.PXSX': 1}
 
-        return self.middleware.call_sync('enclosure.fake_nvme_enclosure', *self.map_nvme(info, acpihandles))
+        return self.fake_nvme_enclosure(*self.map_r50_or_r50b_impl(info, acpihandles))
+
+    @private
+    def map_nvme(self):
+        prod = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+        if not prod.endswith(('R50', 'R50B', 'R50BM', 'M50', 'M60')):
+            return []
+
+        if prod.endswith(('R50', 'R50B')):
+            return self.map_r50_or_r50b(prod)
+        else:
+            return self.map_plx_nvme(prod)
