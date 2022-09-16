@@ -176,6 +176,18 @@ class InterfaceErrorsPlugin(RRDBase):
         return 'Interface Errors ({identifier})'
 
 
+class InterfaceDroppedPlugin(RRDBase):
+    plugin = 'ifstat'
+    vertical_label = 'Dropped'
+    rrd_types = (
+        RRDType('ifstat-rx_dropped', 'value'),
+        RRDType('ifstat-tx_dropped', 'value'),
+    )
+
+    def get_title(self):
+        return 'Interface Dropped ({identifier})'
+
+
 class MemoryPlugin(RRDBase):
 
     title = 'Physical memory utilization'
