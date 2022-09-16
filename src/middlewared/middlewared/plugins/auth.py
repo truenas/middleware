@@ -74,6 +74,7 @@ class SessionManager:
     def login(self, app, credentials):
         if app.authenticated:
             self.sessions[app.session_id].credentials = credentials
+            app.authenticated_credentials = credentials
             return
 
         origin = self._get_origin(app)
