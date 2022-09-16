@@ -57,19 +57,14 @@ class EnclosureService(Service):
         ]
 
     @private
-    def m_series_nvme_enclosures(self):
-        product = self.middleware.call_sync("system.dmidecode_info")["system-product-name"]
-        if product is None or not ("TRUENAS-M50" in product or "TRUENAS-M60" in product):
-            return []
-
-        enclosure_id = f"{product.split('-')[1].lower()}_plx_enclosure"
-        enclosure_model = f"{product.split('-')[1]} Series"
-
+    def map_plx_nvme_impl(self, prod):
+        enc_name = prod.split('-')[1]
+        enclosure_id = f"{enc_name.lower()}_plx_enclosure"
+        enclosure_model = f"{enc_name} Series"
         addresses_to_slots = {
             (slot / "address").read_text().strip(): slot.name
             for slot in Path("/sys/bus/pci/slots").iterdir()
         }
-
         slot_to_nvme = {}
         ctx = Context()
         for i in filter(lambda x: x.attributes.get("path") == b"\\_SB_.PC03.BR3A", ctx.list_devices(subsystem="acpi")):
@@ -91,14 +86,17 @@ class EnclosureService(Service):
 
                     slot_to_nvme[int(m.group(1))] = child.sys_name
 
-        return self.middleware.call_sync(
-            "enclosure.fake_nvme_enclosure",
+        return [
             enclosure_id,
-            "Rear NVME U.2 Hotswap Bays",
+            'Rear NVME U.2 Hotswap Bays',
             enclosure_model,
-            4,
+            4,  # nvme plx bridge used on m50/60 and r50bm have 4 nvme drive bays
             slot_to_nvme
-        )
+        ]
+
+    @private
+    def map_plx_nvme(self, prod):
+        return self.fake_nvme_enclosure(*self.map_plx_nvme_impl(prod))
 
     @private
     def map_r50_or_r50b_impl(self, info, acpihandles):
@@ -156,4 +154,5 @@ class EnclosureService(Service):
         if prod.endswith(('R50', 'R50B')):
             return self.map_r50_or_r50b(prod)
         else:
+            # M50/60 and R50BM use same plx nvme bridge
             return self.map_plx_nvme(prod)
