@@ -151,6 +151,9 @@ class InterfacePacketsPlugin(RRDBase):
     def get_title(self):
         return 'Interface Packets ({identifier})'
 
+    def get_identifiers(self):
+        return [i['name'] for i in self.middleware.call('interface.query')]
+
 
 class InterfaceBitsPlugin(RRDBase):
     plugin = 'ifstat'
@@ -162,6 +165,10 @@ class InterfaceBitsPlugin(RRDBase):
 
     def get_title(self):
         return 'Interface Bits/s ({identifier})'
+
+
+    def get_identifiers(self):
+        return [i['name'] for i in self.middleware.call('interface.query')]
 
 
 class InterfaceErrorsPlugin(RRDBase):
@@ -176,6 +183,10 @@ class InterfaceErrorsPlugin(RRDBase):
         return 'Interface Errors ({identifier})'
 
 
+    def get_identifiers(self):
+        return [i['name'] for i in self.middleware.call('interface.query')]
+
+
 class InterfaceDroppedPlugin(RRDBase):
     plugin = 'ifstat'
     vertical_label = 'Dropped'
@@ -186,6 +197,10 @@ class InterfaceDroppedPlugin(RRDBase):
 
     def get_title(self):
         return 'Interface Dropped ({identifier})'
+
+    def get_identifiers(self):
+        return [i['name'] for i in self.middleware.call('interface.query')]
+
 
 
 class MemoryPlugin(RRDBase):
