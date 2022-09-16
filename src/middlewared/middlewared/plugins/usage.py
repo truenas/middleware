@@ -10,6 +10,7 @@ from datetime import datetime
 
 from middlewared.service import Service
 from middlewared.utils import osc
+from middlewared.utils.aiohttp import client_session
 
 
 USAGE_URL = 'https://usage.truenas.com/submit'
@@ -66,7 +67,7 @@ class UsageService(Service):
         return True
 
     async def submit_stats(self, data):
-        async with aiohttp.ClientSession(raise_for_status=True) as session:
+        async with client_session(raise_for_status=True) as session:
             await session.post(
                 USAGE_URL,
                 data=json.dumps(data, sort_keys=True),

@@ -3,6 +3,8 @@ import async_timeout
 import asyncio
 import json
 
+from middlewared.utils.aiohttp import client_session
+
 
 class TruecommandAPIMixin:
 
@@ -15,9 +17,7 @@ class TruecommandAPIMixin:
         response = {'error': None, 'response': {}}
         try:
             async with async_timeout.timeout(timeout):
-                async with aiohttp.ClientSession(
-                    raise_for_status=True, trust_env=True,
-                ) as session:
+                async with client_session(raise_for_status=True) as session:
                     req = await session.post(
                         self.PORTAL_URI,
                         data=json.dumps(payload or {}),

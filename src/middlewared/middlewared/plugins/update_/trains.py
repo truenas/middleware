@@ -1,15 +1,15 @@
 import json
 
-from aiohttp import ClientSession, ClientTimeout
-
 from middlewared.service import private, Service
-from middlewared.utils.network import INTERNET_TIMEOUT
+from middlewared.utils.aiohttp import client_session
 from middlewared.utils.functools import cache
 from .utils import can_update, scale_update_server, SCALE_MANIFEST_FILE
 
 
 class UpdateService(Service):
-    opts = {'raise_for_status': True, 'trust_env': True, 'timeout': ClientTimeout(INTERNET_TIMEOUT)}
+    opts = {
+        'raise_for_status': True,
+    }
     update_srv = scale_update_server()
 
     @private
@@ -20,7 +20,7 @@ class UpdateService(Service):
 
     @private
     async def fetch(self, url):
-        async with ClientSession(**self.opts) as client:
+        async with client_session(**self.opts) as client:
             async with client.get(url) as resp:
                 return await resp.json()
 

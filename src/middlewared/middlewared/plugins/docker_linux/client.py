@@ -68,9 +68,7 @@ class DockerClientMixin:
         response = {'error': None, 'response': {}, 'response_obj': None}
         try:
             async with async_timeout.timeout(timeout):
-                async with aiohttp.ClientSession(
-                    raise_for_status=True, trust_env=True,
-                ) as session:
+                async with aiohttp.ClientSession(raise_for_status=True) as session:
                     req = await getattr(session, mode)(url, headers=headers)
         except asyncio.TimeoutError:
             response['error'] = f'Unable to connect with {url} in {timeout} seconds.'

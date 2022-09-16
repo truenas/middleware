@@ -15,6 +15,7 @@ from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.aiohttp import client_session
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.validators import Email
 
@@ -24,9 +25,7 @@ ADDRESS = 'support-proxy.ixsystems.com'
 async def post(url, data, timeout=INTERNET_TIMEOUT):
     try:
         async with async_timeout.timeout(timeout):
-            async with aiohttp.ClientSession(
-                raise_for_status=True, trust_env=True,
-            ) as session:
+            async with client_session(raise_for_status=True) as session:
                 req = await session.post(url, headers={"Content-Type": "application/json"}, data=data)
     except asyncio.TimeoutError:
         raise CallError('Connection timed out', errno.ETIMEDOUT)
