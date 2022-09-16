@@ -1435,31 +1435,48 @@ class ZFSSnapshot(CRUDService):
         except subprocess.CalledProcessError as e:
             raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
 
-    @accepts(Str('id'))
-    def hold(self, id):
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+        ),
+    )
+    def hold(self, id, options):
         """
         Holds snapshot `id`.
 
         `truenas` tag will be added to the snapshot's tag namespace.
+
+        `options.recursive` will hold snapshots recursively.
         """
         try:
             with libzfs.ZFS() as zfs:
                 snapshot = zfs.get_snapshot(id)
-                snapshot.hold('truenas')
+                snapshot.hold('truenas', options['recursive'])
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to hold snapshot: {err}')
 
-    @accepts(Str('id'))
-    def release(self, id):
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('recursive', default=False),
+        ),
+    )
+    def release(self, id, options):
         """
         Release held snapshot `id`.
 
         Will remove all hold tags from the specified snapshot.
+
+        `options.recursive` will release snapshots recursively. Please note that only the tags that are present on the
+        parent snapshot will be removed.
         """
         try:
             with libzfs.ZFS() as zfs:
                 snapshot = zfs.get_snapshot(id)
                 for tag in snapshot.holds:
-                    snapshot.release(tag)
+                    snapshot.release(tag, options['recursive'])
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to release snapshot: {err}')
