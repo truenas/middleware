@@ -164,6 +164,18 @@ class InterfaceBitsPlugin(RRDBase):
         return 'Interface Bits/s ({identifier})'
 
 
+class InterfaceErrorsPlugin(RRDBase):
+    plugin = 'ifstat'
+    vertical_label = 'Errors'
+    rrd_types = (
+        RRDType('ifstat-rx_errors', 'value'),
+        RRDType('ifstat-tx_errors', 'value'),
+    )
+
+    def get_title(self):
+        return 'Interface Errors ({identifier})'
+
+
 class MemoryPlugin(RRDBase):
 
     title = 'Physical memory utilization'
