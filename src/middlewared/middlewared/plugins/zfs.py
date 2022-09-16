@@ -9,7 +9,7 @@ import libzfs
 
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, unlocked_zvols_fast
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, returns, Any, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, job, private,
 )
@@ -1442,6 +1442,7 @@ class ZFSSnapshot(CRUDService):
             Bool('recursive', default=False),
         ),
     )
+    @returns()
     def hold(self, id, options):
         """
         Holds snapshot `id`.
@@ -1464,6 +1465,7 @@ class ZFSSnapshot(CRUDService):
             Bool('recursive', default=False),
         ),
     )
+    @returns()
     def release(self, id, options):
         """
         Release held snapshot `id`.

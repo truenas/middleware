@@ -77,6 +77,6 @@ def snapshot(dataset, name, **kwargs):
         yield id
     finally:
         try:
-            call("zfs.snapshot.delete", id)
+            call("zfs.snapshot.delete", id, {"recursive": True})
         except InstanceNotFound:
             pass
