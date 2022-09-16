@@ -1,1 +1,2 @@
 nfsstat                 value:DERIVE:0:U
+ifstat                  value:DERIVE:0:U
