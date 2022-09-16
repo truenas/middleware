@@ -3,7 +3,7 @@ import pytest
 from middlewared.test.integration.utils import call, mock
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+pytestmark = pytest.mark.skipif(dev_test, reason="Skipping for test development testing")
 
 
 def test_cputemp():
@@ -25,3 +25,15 @@ def test_cputemp():
                 break
         else:
             assert False, result
+
+
+def test_interface_stats():
+    plugins = ("interfacepackets", "interfacebits", "interfaceerrors", "interfacedropped")
+    for i in call("interface.query"):
+        args = [{"name": j, "identifier": i} for j in plugins]
+        opts = {"unit": "HOUR"}
+
+        # need to make sure we can query each interface and the associated
+        # plugins rrd file and ensure there is data being returned
+        result = call("reporting.get_data", args, opts)
+        assert result, result
