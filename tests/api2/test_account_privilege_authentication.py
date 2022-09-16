@@ -107,6 +107,17 @@ def test_token_auth_fails_to_call_forbidden_method(unprivileged_user_token):
         assert ve.value.errno == errno.EACCES
 
 
+def test_drop_privileges(unprivileged_user_token):
+    with client() as c:
+        # This should drop privileges for the current root session
+        assert c.call("auth.login_with_token", unprivileged_user_token)
+
+        with pytest.raises(ClientException) as ve:
+            c.call("pool.create")
+
+        assert ve.value.errno == errno.EACCES
+
+
 def test_token_auth_working_not_working_web_shell(unprivileged_user_token):
     ws = websocket.create_connection(websocket_url() + "/websocket/shell")
     try:
