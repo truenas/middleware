@@ -140,32 +140,16 @@ class DiskTempPlugin(RRDBase):
         return ids
 
 
-class InterfacePlugin(RRDBase):
-
-    vertical_label = 'Bits/s'
+class InterfacePacketsPlugin(RRDBase):
+    plugin = 'ifstat'
+    vertical_label = 'Packets'
     rrd_types = (
-        RRDType('if_octets', 'rx', '%name%,8,*', 'rx'),
-        RRDType('if_octets', 'tx', '%name%,8,*', 'tx'),
+        RRDType('ifstat-rx_packets', 'value'),
+        RRDType('ifstat-tx_packets', 'value'),
     )
-    rrd_data_extra = """
-        CDEF:overlap=%name_0%,%name_1%,LT,%name_0%,%name_1%,IF
-        XPORT:overlap:overlap
-    """
 
     def get_title(self):
-        return 'Interface Traffic ({identifier})'
-
-    def get_identifiers(self):
-        ids = []
-        ifaces = [i['name'] for i in self.middleware.call_sync('interface.query')]
-        for entry in glob.glob(f'{self._base_path}/interface-*'):
-            ident = entry.rsplit('-', 1)[-1]
-            if ident not in ifaces:
-                continue
-            if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
-                ids.append(ident)
-        ids.sort(key=RRDBase._sort_disks)
-        return ids
+        return 'Interface Packets ({identifier})'
 
 
 class MemoryPlugin(RRDBase):
