@@ -44,7 +44,6 @@ LoadPlugin cpu
 LoadPlugin df
 LoadPlugin disk
 LoadPlugin exec
-LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
 LoadPlugin processes
@@ -91,18 +90,6 @@ LoadPlugin python
 
 <Plugin "exec">
 	NotificationExec "nobody" "/usr/local/libexec/collectd_alert.py"
-</Plugin>
-
-<Plugin "interface">
-	Interface "lo"
-	Interface "lo0"
-	Interface "ipfw0"
-	Interface "pflog0"
-	Interface "pfsync0"
-	Interface "plip0"
-	Interface "/^usbus/"
-	Interface "/^veth/"
-	IgnoreSelected true
 </Plugin>
 
 <Plugin "rrdcached">
@@ -161,12 +148,15 @@ LoadPlugin python
 	Import "cputemp"
 	Import "disktemp"
 	Import "nfsstat"
+	Import "ifstat"
 
 	<Module "cputemp">
 	</Module>
 	<Module "disktemp">
 	</Module>
 	<Module "nfsstat">
+	</Module>
+	<Module "ifstat">
 	</Module>
 </Plugin>
 
