@@ -867,6 +867,13 @@ class AlertService(Service):
                 deleted = True
 
         if deleted:
+            # We need to flush alerts to the database immediately after deleting oneshot alerts.
+            # Some oneshot alerts can only de deleted programmatically (i.e. cloud sync oneshot alerts are deleted
+            # when deleting cloud sync task). If we delete a cloud sync task and then reboot the system abruptly,
+            # the alerts won't be flushed to the database and on next boot an alert for nonexisting cloud sync task
+            # will appear, and it won't be deletable.
+            await self.middleware.call("alert.flush_alerts")
+
             await self.middleware.call("alert.send_alerts")
 
     @private
