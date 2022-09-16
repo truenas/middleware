@@ -152,6 +152,18 @@ class InterfacePacketsPlugin(RRDBase):
         return 'Interface Packets ({identifier})'
 
 
+class InterfaceBitsPlugin(RRDBase):
+    plugin = 'ifstat'
+    vertical_label = 'Bits/s'
+    rrd_types = (
+        RRDType('ifstat-rx_bytes', 'value', '%name%,8,*'),
+        RRDType('ifstat-tx_bytes', 'value', '%name%,8,*'),
+    )
+
+    def get_title(self):
+        return 'Interface Bits/s ({identifier})'
+
+
 class MemoryPlugin(RRDBase):
 
     title = 'Physical memory utilization'
