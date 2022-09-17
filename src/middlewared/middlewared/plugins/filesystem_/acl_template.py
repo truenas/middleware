@@ -201,7 +201,7 @@ class ACLTemplateService(CRUDService):
             return
 
         domain_info = await self.middleware.call('idmap.domain_info', 'DS_TYPE_ACTIVEDIRECTORY')
-        if not domain_info['active directory']:
+        if 'ACTIVE_DIRECTORY' not in domain_info['domain_flags']['parsed']:
             self.logger.warning(
                 '%s: domain is not identified properly as an Active Directory domain.',
                 domain_info['alt_name']
