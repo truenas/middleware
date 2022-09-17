@@ -10,9 +10,15 @@ class BootService(Service):
 
     @private
     async def install_loader(self, dev):
-        partition = await self.middleware.call('disk.get_partition_for_disk', dev, 2)
-
         await run('grub-install', '--target=i386-pc', f'/dev/{dev}')
+
+        if (
+            (await self.middleware.call('disk.list_partitions', dev))[1]['partition_type'] !=
+            await self.middleware.call('disk.get_efi_part_type')
+        ):
+            return
+
+        partition = await self.middleware.call('disk.get_partition_for_disk', dev, 2)
         await run('mkdosfs', '-F', '32', '-s', '1', '-n', 'EFI', f'/dev/{partition}')
         with tempfile.TemporaryDirectory() as tmpdirname:
             efi_dir = os.path.join(tmpdirname, 'efi')

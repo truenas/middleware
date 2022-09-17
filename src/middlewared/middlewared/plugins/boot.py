@@ -96,6 +96,9 @@ class BootService(Service):
         swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
         if swap_part:
             format_opts['swap_size'] = swap_part['size']
+
+        format_opts['use_legacy_schema'] = await self.uses_legacy_schema(disks[0])
+
         await self.middleware.call('boot.format', dev, format_opts)
 
         pool = await self.middleware.call('zfs.pool.query', [['name', '=', BOOT_POOL_NAME]], {'get': True})
@@ -140,6 +143,8 @@ class BootService(Service):
         swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
         if swap_part:
             format_opts['swap_size'] = swap_part['size']
+
+        format_opts['use_legacy_schema'] = await self.uses_legacy_schema(disks[0])
 
         job.set_progress(0, f'Formatting {dev}')
         await self.middleware.call('boot.format', dev, format_opts)
@@ -252,6 +257,16 @@ class BootService(Service):
         await run('sgdisk', '-N', '3', f'/dev/{disk}', encoding='utf-8', errors='ignore')
         await run('partprobe', encoding='utf-8', errors='ignore')
         await run('zpool', 'online', '-e', 'boot-pool', device, encoding='utf-8', errors='ignore')
+
+    @private
+    async def uses_legacy_schema(self, disk):
+        if await self.middleware.call('boot.get_boot_type') == 'EFI':
+           return False
+
+        partitions = await self.middleware.call('disk.list_partitions', disk)
+        swap_types = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
+        partitions_without_swap = [p for p in partitions if p['partition_type'] not in swap_types]
+        return len(partitions_without_swap) == 2 and partitions[0]['size'] == 524288
 
 
 async def setup(middleware):

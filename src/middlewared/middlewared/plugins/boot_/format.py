@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -11,6 +11,7 @@ class BootService(Service):
             'options',
             Int('size'),
             Int('swap_size'),
+            Bool('use_legacy_schema', default=False),
         )
     )
     @private
@@ -30,10 +31,15 @@ class BootService(Service):
         swap_size = options.get('swap_size')
         commands = []
         partitions = []
-        partitions.extend([
-            ('BIOS boot partition', 1048576),  # We allot 1MiB to bios boot partition
-            ('EFI System', 536870912)   # We allot 512MiB for EFI partition
-        ])
+        if options['use_legacy_schema']:
+            partitions.extend([
+                ('BIOS boot partition', 524288),
+            ])
+        else:
+            partitions.extend([
+                ('BIOS boot partition', 1048576),  # We allot 1MiB to bios boot partition
+                ('EFI System', 536870912)   # We allot 512MiB for EFI partition
+            ])
         if swap_size:
             partitions.append(('Linux swap', swap_size))
         if options.get('size'):
@@ -61,18 +67,31 @@ class BootService(Service):
             )
 
         zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
-        commands.extend((
-            ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
-            ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
-            ['sgdisk', f'-n3:0:{zfs_part_size}', f'-t3:BF01', f'/dev/{dev}'],
-        ))
+        if options['use_legacy_schema']:
+            commands.extend((
+                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
+                ['sgdisk', f'-n2:0:{zfs_part_size}', f'-t2:BF01', f'/dev/{dev}'],
+            ))
 
-        if swap_size:
-            commands.insert(2, [
-                'sgdisk',
-                f'-n4:0:+{int(swap_size / 1024)}K',
-                '-t4:8200', f'/dev/{dev}'
-            ])
+            if swap_size:
+                commands.append([
+                    'sgdisk',
+                    f'-n3:0:+{int(swap_size / 1024)}K',
+                    '-t3:8200', f'/dev/{dev}'
+                ])
+        else:
+            commands.extend((
+                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
+                ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
+                ['sgdisk', f'-n3:0:{zfs_part_size}', f'-t3:BF01', f'/dev/{dev}'],
+            ))
+
+            if swap_size:
+                commands.append([
+                    'sgdisk',
+                    f'-n4:0:+{int(swap_size / 1024)}K',
+                    '-t4:8200', f'/dev/{dev}'
+                ])
 
         for command in commands:
             p = await run(*command, check=False)
