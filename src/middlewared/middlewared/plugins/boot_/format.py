@@ -69,8 +69,8 @@ class BootService(Service):
         zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
         if options['use_legacy_schema']:
             commands.extend((
-                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
-                ['sgdisk', f'-n2:0:{zfs_part_size}', f'-t2:BF01', f'/dev/{dev}'],
+                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
+                ['sgdisk', f'-n2:0:{zfs_part_size}', '-t2:BF01', f'/dev/{dev}'],
             ))
 
             if swap_size:
@@ -81,9 +81,9 @@ class BootService(Service):
                 ])
         else:
             commands.extend((
-                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
+                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
                 ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
-                ['sgdisk', f'-n3:0:{zfs_part_size}', f'-t3:BF01', f'/dev/{dev}'],
+                ['sgdisk', f'-n3:0:{zfs_part_size}', '-t3:BF01', f'/dev/{dev}'],
             ))
 
             if swap_size:
