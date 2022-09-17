@@ -94,6 +94,10 @@ class DiskService(Service):
         return f'disk/by-partuuid/{part}'
 
     @private
+    async def get_efi_part_type(self):
+        return 'c12a7328-f81f-11d2-ba4b-00a0c93ec93b'
+
+    @private
     async def get_zfs_part_type(self):
         return '6a898cc3-1dd2-11b2-99a6-080020736631'
 

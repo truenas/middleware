@@ -343,7 +343,7 @@ class ZFSPoolService(CRUDService):
                 pool = zfs.get(name)
                 target = find_vdev(pool, label)
                 if target is None:
-                    raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+                    raise CallError(f'Failed to find vdev for {label!r}', errno.EINVAL)
 
                 newvdev = libzfs.ZFSVdev(zfs, 'disk')
                 newvdev.path = f'/dev/{dev}'
