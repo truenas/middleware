@@ -47,13 +47,14 @@ class BootService(Service):
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
             partitions = [
-                '%s, %s blocks' % (p[0], '{:,}'.format(int(p[1] / disk_details['sectorsize']))) for p in partitions
+                '%s: %s blocks' % (p[0], '{:,}'.format(int(p[1] / disk_details['sectorsize']))) for p in partitions
             ]
             partitions.append(
                 'total of %s blocks' % '{:,}'.format(int(total_partition_size / disk_details['sectorsize']))
             )
+            disk_blocks = '{:,}'.format(disk_details["blocks"])
             raise CallError(
-                f'The new device ({dev}, {disk_details["size"]/(1024**3)} GB, {disk_details["blocks"]} blocks) '
+                f'The new device ({dev}, {disk_details["size"] / (1024 ** 3)} GB, {disk_blocks} blocks) '
                 f'does not have enough space to to hold the required new partitions ({", ".join(partitions)}). '
                 'New mirrored devices might require more space than existing devices due to changes in the '
                 'booting procedure.'

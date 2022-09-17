@@ -26,8 +26,12 @@ class DiskService(Service):
             p_uuid = await self.middleware.call('disk.get_swap_part_type')
         else:
             p_uuid = await self.middleware.call('disk.get_zfs_part_type')
+        return await self.get_partition_with_uuids(disk, [p_uuid])
+
+    @private
+    async def get_partition_with_uuids(self, disk, uuids):
         part = next(
-            (p for p in await self.middleware.call('disk.list_partitions', disk) if p['partition_type'] == p_uuid),
+            (p for p in await self.middleware.call('disk.list_partitions', disk) if p['partition_type'] in uuids),
             None
         )
         return part
