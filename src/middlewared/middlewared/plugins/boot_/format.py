@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CallError, private, Service
-from middlewared.utils import osc, run
+from middlewared.utils import run
 
 
 class BootService(Service):
@@ -30,32 +30,19 @@ class BootService(Service):
         swap_size = options.get('swap_size')
         commands = []
         partitions = []
-        efi_boot = (await self.middleware.call('boot.get_boot_type')) == 'EFI'
-        if osc.IS_FREEBSD:
-            commands.append(('gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'))
-            # 272629760 bytes ( 260 mb ) are required by FreeBSD
-            # for EFI partition and 524288 bytes ( 512kb ) if it's bios
-            partitions.append(
-                ('efi' if efi_boot else 'freebsd-boot', 272629760 if efi_boot else 524288),
-            )
-            if options.get('swap_size'):
-                partitions.append(('freebsd-swap', options['swap_size']))
-            if options.get('size'):
-                partitions.append(('freebsd-zfs', options['size']))
-        else:
-            partitions.extend([
-                ('BIOS boot partition', 1048576),  # We allot 1MiB to bios boot partition
-                ('EFI System', 536870912)   # We allot 512MiB for EFI partition
-            ])
-            if swap_size:
-                partitions.append(('Linux swap', swap_size))
-            if options.get('size'):
-                partitions.append(('Solaris /usr & Mac ZFS', options['size']))
+        partitions.extend([
+            ('BIOS boot partition', 1048576),  # We allot 1MiB to bios boot partition
+            ('EFI System', 536870912)   # We allot 512MiB for EFI partition
+        ])
+        if swap_size:
+            partitions.append(('Linux swap', swap_size))
+        if options.get('size'):
+            partitions.append(('Solaris /usr & Mac ZFS', options['size']))
 
-        # Around 80 sectors are reserved by Linux/FreeBSD for GPT tables and
+        # 73 sectors are reserved by Linux for GPT tables and
         # our 4096 bytes alignment offset for the boot disk
         partitions.append((
-            'GPT partition table', (73 if osc.IS_LINUX else 80) * disk_details['sectorsize']
+            'GPT partition table', 73 * disk_details['sectorsize']
         ))
         total_partition_size = sum(map(lambda y: y[1], partitions))
         if disk_details['size'] < total_partition_size:
@@ -72,45 +59,19 @@ class BootService(Service):
                 'booting procedure.'
             )
 
-        if osc.IS_LINUX:
-            zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
-            commands.extend((
-                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
-                ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
-                ['sgdisk', f'-n3:0:{zfs_part_size}', f'-t3:BF01', f'/dev/{dev}'],
-            ))
-        else:
-            if efi_boot:
-                efi_size = 260
-                commands.extend((
-                    ['gpart', 'add', '-t', 'efi', '-i', '1', '-s', f'{efi_size}m', dev],
-                    ['newfs_msdos', '-F', '16', f'/dev/{dev}p1'],
-                ))
-            else:
-                commands.extend((
-                    ['gpart', 'add', '-t', 'freebsd-boot', '-i', '1', '-s', '512k', dev],
-                    ['gpart', 'set', '-a', 'active', dev],
-                ))
+        zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
+        commands.extend((
+            ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', f'-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
+            ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
+            ['sgdisk', f'-n3:0:{zfs_part_size}', f'-t3:BF01', f'/dev/{dev}'],
+        ))
 
         if swap_size:
-            if osc.IS_LINUX:
-                commands.insert(2, [
-                    'sgdisk',
-                    f'-n4:0:+{int(swap_size / 1024)}K',
-                    '-t4:8200', f'/dev/{dev}'
-                ])
-            else:
-                commands.append([
-                    'gpart', 'add', '-t', 'freebsd-swap', '-i', '3',
-                    '-s', str(options['swap_size']) + 'B', dev
-                ])
-
-        if osc.IS_FREEBSD:
-            commands.append(
-                ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
-                    ['-s', str(options['size']) + 'B'] if options.get('size') else []
-                ) + [dev]
-            )
+            commands.insert(2, [
+                'sgdisk',
+                f'-n4:0:+{int(swap_size / 1024)}K',
+                '-t4:8200', f'/dev/{dev}'
+            ])
 
         for command in commands:
             p = await run(*command, check=False)
@@ -119,5 +80,4 @@ class BootService(Service):
                     '{} failed:\n{}{}'.format(' '.join(command), p.stdout.decode('utf-8'), p.stderr.decode('utf-8'))
                 )
 
-        if osc.IS_LINUX:
-            await self.middleware.call('device.settle_udev_events')
+        await self.middleware.call('device.settle_udev_events')
