@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, returns, Patch
@@ -11,6 +12,7 @@ except ImportError:
     geom = None
 
 
+BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
 BOOT_POOL_NAME = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
 
@@ -66,7 +68,7 @@ class BootService(Service):
         ),
     )
     @returns()
-    @job(lock='boot_attach')
+    @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def attach(self, job, dev, options):
         """
         Attach a disk to the boot pool, turning a stripe into a mirror.
@@ -125,7 +127,8 @@ class BootService(Service):
 
     @accepts(Str('label'), Str('dev'))
     @returns()
-    async def replace(self, label, dev):
+    @job(lock=BOOT_ATTACH_REPLACE_LOCK)
+    async def replace(self, job, label, dev):
         """
         Replace device `label` on boot pool with `dev`.
         """
@@ -135,9 +138,29 @@ class BootService(Service):
         if swap_part:
             format_opts['swap_size'] = swap_part['size']
 
+        job.set_progress(0, f'Formatting {dev}')
         await self.middleware.call('boot.format', dev, format_opts)
+
+        job.set_progress(0, f'Replacing {label} with {dev}')
         zfs_dev_part = await self.middleware.call('disk.get_partition', dev, 'ZFS')
         await self.middleware.call('zfs.pool.replace', BOOT_POOL_NAME, label, zfs_dev_part['name'])
+
+        # We need to wait for pool resilver after replacing a device, otherwise grub might
+        # fail with `unknown filesystem` error
+        while True:
+            state = await self.get_state()
+            if (
+                state['scan'] and
+                state['scan']['function'] == 'RESILVER' and
+                state['scan']['state'] == 'SCANNING'
+            ):
+                left = int(state['scan']['total_secs_left']) if state['scan']['total_secs_left'] else 'unknown'
+                job.set_progress(int(state['scan']['percentage']), f'Resilvering boot pool, {left} seconds left')
+                await asyncio.sleep(5)
+            else:
+                break
+
+        job.set_progress(100, 'Installing boot loader')
         await self.middleware.call('boot.install_loader', dev)
         await self.update_initramfs()
 
