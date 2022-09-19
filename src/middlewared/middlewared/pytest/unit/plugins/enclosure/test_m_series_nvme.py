@@ -42,7 +42,7 @@ def test__m_series_nvme_enclosures(fs):
             )
         )
 
-        EnclosureService(middleware).map_nvme()\
+        EnclosureService(middleware).map_nvme()
 
         fake_nvme_enclosure.assert_called_once_with(
             "m60_plx_enclosure",
