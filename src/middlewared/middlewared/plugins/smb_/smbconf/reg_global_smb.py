@@ -67,7 +67,7 @@ class GlobalSchema(RegistrySchema):
         return val['raw'] == "NT1"
 
     def set_min_protocol(entry, val, data_in, data_out):
-        data_out[entry.smbconf] = {"parsed": "NT1" if val else "SMB2_10"}
+        data_out[entry.smbconf] = {"parsed": "NT1" if val else "SMB2_02"}
         return
 
     def log_level_transform(entry, conf):
