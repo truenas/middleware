@@ -705,5 +705,7 @@ class CertificateService(CRUDService):
 
         self.middleware.call_sync('service.start', 'ssl')
 
+        self.middleware.call_sync('alert.alert_source_clear_run', 'CertificateChecks')
+
         job.set_progress(100)
         return response
