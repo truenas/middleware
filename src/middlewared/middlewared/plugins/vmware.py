@@ -240,9 +240,9 @@ class VMWareService(CRUDService):
                 zvol = extent["path"][len("zvol/"):]
                 iscsi_extents[zvol].append(f"naa.{extent['naa'][2:]}")
         filesystems = []
-        for fs in self.middleware.call_sync("pool.dataset.query", [
-            ("pool", "in", [vol["name"] for vol in self.middleware.call_sync("pool.query")]),
-        ]):
+        zpools = [v["name"] for k, v in self.middleware.call_sync("zfs.pool.query_imported_fast").items()]
+        options = {"extra": {"retrieve_properties": False}}
+        for fs in self.middleware.call_sync("pool.dataset.query", [("pool", "in", zpools)], options):
             if fs["type"] == "FILESYSTEM":
                 filesystems.append({
                     "type": "FILESYSTEM",
@@ -532,7 +532,9 @@ class VMWareService(CRUDService):
                             if snap:
                                 VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
                         except Exception as e:
-                            self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
+                            self.logger.debug(
+                                "Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True
+                            )
                             self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotDeleteFailed", {
                                 "hostname": vmsnapobj["hostname"],
                                 "vm": vm.name,
