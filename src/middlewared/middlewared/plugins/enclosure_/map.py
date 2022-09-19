@@ -296,6 +296,63 @@ MAPPINGS = [
             MappingSlot(2, 1, False),  # rear nvme
         ]),
     ]),
+    # R50BM has 4 rear nvme drives (uses same plx bridge as m50/60 series)
+    ProductMapping(re.compile(r"TRUENAS-R50BM$"), [
+        VersionMapping(re.compile(".*"), [
+            MappingSlot(0, 0, False),
+            MappingSlot(0, 1, False),
+            MappingSlot(0, 2, False),
+            MappingSlot(0, 3, False),
+            MappingSlot(0, 4, False),
+            MappingSlot(0, 5, False),
+            MappingSlot(0, 6, False),
+            MappingSlot(0, 7, False),
+            MappingSlot(0, 8, False),
+            MappingSlot(0, 9, False),
+            MappingSlot(0, 10, False),
+            MappingSlot(0, 11, False),
+            MappingSlot(0, 12, False),
+            MappingSlot(0, 13, False),
+            MappingSlot(0, 14, False),
+            MappingSlot(0, 15, False),
+            MappingSlot(0, 16, False),
+            MappingSlot(0, 17, False),
+            MappingSlot(0, 18, False),
+            MappingSlot(0, 19, False),
+            MappingSlot(0, 20, False),
+            MappingSlot(0, 21, False),
+            MappingSlot(0, 22, False),
+            MappingSlot(0, 23, False),
+            MappingSlot(1, 0, False),
+            MappingSlot(1, 1, False),
+            MappingSlot(1, 2, False),
+            MappingSlot(1, 3, False),
+            MappingSlot(1, 4, False),
+            MappingSlot(1, 5, False),
+            MappingSlot(1, 6, False),
+            MappingSlot(1, 7, False),
+            MappingSlot(1, 8, False),
+            MappingSlot(1, 9, False),
+            MappingSlot(1, 10, False),
+            MappingSlot(1, 11, False),
+            MappingSlot(1, 12, False),
+            MappingSlot(1, 13, False),
+            MappingSlot(1, 14, False),
+            MappingSlot(1, 15, False),
+            MappingSlot(1, 16, False),
+            MappingSlot(1, 17, False),
+            MappingSlot(1, 18, False),
+            MappingSlot(1, 19, False),
+            MappingSlot(1, 20, False),
+            MappingSlot(1, 21, False),
+            MappingSlot(1, 22, False),
+            MappingSlot(1, 23, False),
+            MappingSlot(2, 0, False),  # rear nvme
+            MappingSlot(2, 1, False),  # rear nvme
+            MappingSlot(2, 2, False),  # rear nvme
+            MappingSlot(2, 3, False),  # rear nvme
+        ]),
+    ]),
 ]
 
 

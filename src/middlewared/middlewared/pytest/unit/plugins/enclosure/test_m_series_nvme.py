@@ -17,7 +17,7 @@ def test__m_series_nvme_enclosures(fs):
 
     fs.create_file("/sys/bus/pci/slots/0-1/address", contents="0000:60:00\n")
 
-    with patch("middlewared.plugins.enclosure_.m_series_nvme.pyudev") as pyudev:
+    with patch("middlewared.plugins.enclosure_.nvme.pyudev") as pyudev:
         pyudev.Context = Mock(
             return_value=Mock(
                 list_devices=Mock(
@@ -42,7 +42,7 @@ def test__m_series_nvme_enclosures(fs):
             )
         )
 
-        EnclosureService(middleware).m_series_nvme_enclosures()\
+        EnclosureService(middleware).map_nvme()
 
         fake_nvme_enclosure.assert_called_once_with(
             "m60_plx_enclosure",
