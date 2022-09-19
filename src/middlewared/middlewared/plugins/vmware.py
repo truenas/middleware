@@ -531,7 +531,9 @@ class VMWareService(CRUDService):
                             if snap:
                                 VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
                         except Exception as e:
-                            self.logger.debug("Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True)
+                            self.logger.debug(
+                                "Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True
+                            )
                             self.middleware.call_sync("alert.oneshot_create", "VMWareSnapshotDeleteFailed", {
                                 "hostname": vmsnapobj["hostname"],
                                 "vm": vm.name,
