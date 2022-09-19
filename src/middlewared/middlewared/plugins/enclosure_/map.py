@@ -297,7 +297,7 @@ MAPPINGS = [
         ]),
     ]),
     # R50BM has 4 rear nvme drives (uses same plx bridge as m50/60 series)
-    ProductMapping(re.compile(r"TRUENAS-R50B$"), [
+    ProductMapping(re.compile(r"TRUENAS-R50BM$"), [
         VersionMapping(re.compile(".*"), [
             MappingSlot(0, 0, False),
             MappingSlot(0, 1, False),
