@@ -3,8 +3,11 @@ import pytest
 from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
 
-from auto_config import dev_test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import dev_test, ha
+pytestmark = [
+    pytest.mark.skipif(dev_test, reason='Skipping for test development testing'),
+    pytest.mark.skipif(ha, reason='Skipping for HA testing'),
+]
 
 
 def disks(topology):
