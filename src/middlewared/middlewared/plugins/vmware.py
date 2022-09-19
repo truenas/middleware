@@ -240,9 +240,8 @@ class VMWareService(CRUDService):
                 zvol = extent["path"][len("zvol/"):]
                 iscsi_extents[zvol].append(f"naa.{extent['naa'][2:]}")
         filesystems = []
-        for fs in self.middleware.call_sync("pool.dataset.query", [
-            ("pool", "in", [vol["name"] for vol in self.middleware.call_sync("pool.query")]),
-        ]):
+        zpools = [v["name"] for k, v in self.middleware.call_sync("zfs.pool.query_imported_fast").items()]
+        for fs in self.middleware.call_sync("pool.dataset.query", [("pool", "in", zpools)]):
             if fs["type"] == "FILESYSTEM":
                 filesystems.append({
                     "type": "FILESYSTEM",
