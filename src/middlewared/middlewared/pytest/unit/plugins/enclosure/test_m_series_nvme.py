@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 
-from middlewared.plugins.enclosure_.m_series_nvme import EnclosureService
+from middlewared.plugins.enclosure_.nvme import EnclosureService
 
 
 def test__m_series_nvme_enclosures(fs):
@@ -17,8 +17,8 @@ def test__m_series_nvme_enclosures(fs):
 
     fs.create_file("/sys/bus/pci/slots/0-1/address", contents="0000:60:00\n")
 
-    with patch("middlewared.plugins.enclosure_.m_series_nvme.pyudev") as pyudev:
-        pyudev.Context = Mock(
+    with patch("middlewared.plugins.enclosure_.nvme.Context") as context:
+        context = Mock(
             return_value=Mock(
                 list_devices=Mock(
                     return_value=[
