@@ -732,9 +732,10 @@ async def setup(middleware):
             if os.path.exists('/var/cache/nscd'):
                 shutil.rmtree('/var/cache/nscd')
 
-            os.makedirs('/tmp/cache/nscd', exist_ok=True)
+            os.makedirs('/var/run/nscd/cache', exist_ok=True)
+
         if not os.path.islink('/var/cache/nscd'):
-            os.symlink('/tmp/cache/nscd', '/var/cache/nscd')
+            os.symlink('/var/run/nscd/cache', '/var/cache/nscd')
 
     middleware.register_hook('pool.post_create', pool_post_create)
     # Reconfigure system dataset first thing after we import a pool.

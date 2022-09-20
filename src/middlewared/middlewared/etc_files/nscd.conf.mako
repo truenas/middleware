@@ -36,10 +36,7 @@
 #
 <%
     import os
-    from contextlib import suppress
-
-    with suppress(FileExistsError):
-        os.mkdir("/var/run/nscd", mode=0o755)
+    os.makedirs('/var/run/nscd/cache', mode=0o755, exist_ok=True)
 %>\
 
 
