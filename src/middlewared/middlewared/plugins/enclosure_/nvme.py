@@ -58,7 +58,7 @@ class EnclosureService(Service):
 
     @private
     def map_plx_nvme_impl(self, prod):
-        enc_name = prod.split('-')[1]
+        enc_name = prod
         enclosure_id = f"{enc_name.lower()}_plx_enclosure"
         enclosure_model = f"{enc_name} Series"
         addresses_to_slots = {
@@ -136,7 +136,7 @@ class EnclosureService(Service):
 
     @private
     def map_r50_or_r50b(self, prod):
-        if prod.endswith('R50'):
+        if prod == 'R50':
             info = [
                 'r50_nvme_enclosure',
                 'R50 NVMe Enclosure',
@@ -158,12 +158,19 @@ class EnclosureService(Service):
         return self.fake_nvme_enclosure(*self.map_r50_or_r50b_impl(info, acpihandles))
 
     @private
+    def valid_hardware(self, prod):
+        prefix = 'TRUENAS-'
+        models = ['R50', 'R50B', 'R50BM', 'M50', 'M60']
+        if prod != 'TRUENAS-' and any((j in prod for j in [f'{prefix}{i}' for i in models])):
+            return prod.split('-')[1]
+
+    @private
     def map_nvme(self):
-        prod = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        if not prod.endswith(('R50', 'R50B', 'R50BM', 'M50', 'M60')):
+        prod = self.valid_hardware(self.middleware.call_sync('system.dmidecode_info')['system-product-name'])
+        if not prod:
             return []
 
-        if prod.endswith(('R50', 'R50B')):
+        if prod == 'R50' or prod == 'R50B':
             return self.map_r50_or_r50b(prod)
         else:
             # M50/60 and R50BM use same plx nvme bridge
