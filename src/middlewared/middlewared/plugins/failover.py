@@ -287,22 +287,41 @@ class FailoverService(ConfigService):
         return await self.middleware.call('system.general.get_ui_urls')
 
     @accepts()
-    @returns(Bool())
-    async def become_passive(self):
+    @returns()
+    def become_passive(self):
         """
-        Restart the keepavlived service which will cause any VIP addresses
-        on this controller to be migrated to the other controller. This will
-        cause a failover event if run on the master controller. If this is
-        run on the passive controller it will do 1 of 2 things:
+        This method is only called manually by the end-user so we fully expect that they
+        know what they're doing. Furthermore, this method will only run if failover has NOT
+        been administratively disabled. The reason why we only allow this in that scenario
+        is because the failover logic (on the other node) will ignore any failover "event"
+        that comes in if failover has been administratively disabled. This immediately causes
+        the HA system to go into a "faulted" state because the other node will get the VIPs
+        but it will not import the zpool and it will not start fenced. Only way out of that
+        situation is to manually fix things (import zpool, migrate VIPs, start fenced, etc).
 
-        1: if there are no VIP(s) on the passive controller, then this will
-            do nothing.
-        2: if there are VIP(s) on the passive controller, then the VIP(s)
-            will be migrated to the active controller. A failover event
-            will be triggered but it will do nothing since the active will
-            already have the zpool(s) imported.
+        NOTE: The only "safe" way to "become passive" is to use the STCNITH method (similar to STONITH).
+        (i.e. Shoot The Current Node In The Head)
+
+        This ensures that the current node gets out of the way _completely_ so there is no chance
+        of the zpool being imported at the same time on both nodes (which can ultimately end in data corruption).
         """
-        return await self.middleware.call('service.restart', 'keepalived', {'ha_propagate': False})
+        if self.middleware.call_sync('failover.config')['disabled'] is True:
+            raise ValidationErrors('failover.become_passive', 'Failover must be enabled.')
+        else:
+            try:
+                # have to enable the "magic" sysrq triggers
+                with open('/proc/sys/kernel/sysrq', 'w') as f:
+                    f.write('1')
+
+                # now violently reboot
+                with open('/proc/sysrq-trigger', 'w') as f:
+                    f.write('b')
+            except Exception:
+                # yeah...this isn't good
+                self.logger.error('Unexpected failure in failover.become_passive', exc_info=True)
+            finally:
+                # this shouldn't be reached but better safe than sorry
+                os.system('shutdown -r now')
 
     @accepts()
     @returns(Bool())
