@@ -36,4 +36,8 @@ hardware_func()
 	section_header "sensors -j"
 	sensors -j
 	section_footer
+
+	section_header "Enclosures (midclt call enclosure.query)"
+	midclt call enclosure.query |jq .
+	section_footer
 }
