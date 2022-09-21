@@ -1,10 +1,16 @@
 from collections import defaultdict
+import re
 
 from middlewared.client import ejson
 from middlewared.service import periodic, Service
+from middlewared.utils.service.task_state import TaskStateMixin
+
+RE_REPLICATION_TASK_ID = re.compile(r"replication_task_([0-9]+)$")
 
 
-class ZettareplService(Service):
+class ZettareplService(Service, TaskStateMixin):
+
+    task_state_methods = ["replication.run"]
 
     class Config:
         private = True
@@ -41,16 +47,7 @@ class ZettareplService(Service):
         return set(self.state.keys()) | set(self.definition_errors.keys()) | set(self.hold_tasks.keys())
 
     def _get_state_context(self):
-        jobs = {}
-        for j in self.middleware.call_sync("core.get_jobs", [("method", "=", "replication.run")], {"order_by": ["id"]}):
-            try:
-                task_id = int(j["arguments"][0])
-            except (IndexError, TypeError, ValueError):
-                continue
-
-            jobs[f"replication_task_{task_id}"] = j
-
-        return {"jobs": jobs}
+        return self.middleware.call_sync("zettarepl.get_task_state_context")
 
     def _get_task_state(self, task_id, context):
         if self.error:
@@ -64,8 +61,8 @@ class ZettareplService(Service):
 
         state = self.state.get(task_id, {}).copy()
 
-        if task_id.startswith("replication_task_"):
-            state["job"] = context["jobs"].get(task_id)
+        if m := RE_REPLICATION_TASK_ID.match(task_id):
+            state["job"] = self.middleware.call_sync("zettarepl.get_task_state_job", context, int(m.group(1)))
             state["last_snapshot"] = self.last_snapshot.get(task_id)
 
         return state

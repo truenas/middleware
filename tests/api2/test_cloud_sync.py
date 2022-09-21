@@ -12,7 +12,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test
+from auto_config import dev_test, ha
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
@@ -144,7 +144,6 @@ def test_sync_onetime(request):
                     "bucket": "bucket",
                     "folder": "",
                 },
-                "snapshot": True,
             }, job=True)
 
 
@@ -156,7 +155,6 @@ def test_abort(request):
         with local_s3_task({
             "path": f"/mnt/{ds}",
             "bwlimit": [{"time": "00:00", "bandwidth": 1024 * 100}],  # So it'll take 10 seconds
-            "snapshot": True,
         }) as task:
             job_id = call("cloudsync.sync", task["id"])
 
@@ -206,3 +204,35 @@ def test_create_empty_src_dirs(request, create_empty_src_dirs):
                         assert ssh(f'ls /mnt/{ftp.dataset}') == 'empty-dir\nnon-empty-dir\n'
                     else:
                         assert ssh(f'ls /mnt/{ftp.dataset}') == 'non-empty-dir\n'
+
+
+def test_state_persist():
+    with dataset("test") as ds:
+        with local_s3_task({
+            "path": f"/mnt/{ds}",
+        }) as task:
+            call("cloudsync.sync", task["id"], job=True)
+
+            row = call("datastore.query", "tasks.cloudsync", [["id", "=", task["id"]]], {"get": True})
+            assert row["job"]["state"] == "SUCCESS"
+
+
+if ha:
+    def test_state_failover():
+        with dataset("test") as ds:
+            with local_s3_task({
+                "path": f"/mnt/{ds}",
+            }) as task:
+                call("cloudsync.sync", task["id"], job=True)
+
+                time.sleep(5)  # Job sending is not synchronous, allow it to propagate
+
+                local_job = call("cloudsync.get_instance", task["id"])["job"]
+                local_logs_path = local_job["logs_path"]
+                local_logs = call("filesystem.file_get_contents", local_logs_path)
+
+                remote_job = call("failover.call_remote", "cloudsync.get_instance", [task["id"]])["job"]
+                remote_logs_path = remote_job["logs_path"]
+                remote_logs = call("failover.call_remote", "filesystem.file_get_contents", [remote_logs_path])
+
+                assert local_logs == remote_logs

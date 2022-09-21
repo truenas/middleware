@@ -3,13 +3,14 @@ from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, filterable, item_method, job, private, TaskPathService,
+    CallError, CRUDService, ValidationErrors, item_method, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
+from middlewared.utils.service.task_state import TaskStateMixin
 from middlewared.validators import Range, Time
 from middlewared.validators import validate_schema
 
@@ -734,51 +735,33 @@ class CloudSyncModel(sa.Model):
     transfers = sa.Column(sa.Integer(), nullable=True)
     create_empty_src_dirs = sa.Column(sa.Boolean())
     follow_symlinks = sa.Column(sa.Boolean())
+    job = sa.Column(sa.JSON(type=None))
 
 
-class CloudSyncService(TaskPathService):
+class CloudSyncService(TaskPathService, TaskStateMixin):
 
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
     share_task_type = 'CloudSync'
+    task_state_methods = ['cloudsync.sync', 'cloudsync.restore']
 
     class Config:
         datastore = "tasks.cloudsync"
         datastore_extend = "cloudsync.extend"
+        datastore_extend_context = "cloudsync.extend_context"
         cli_namespace = "task.cloud_sync"
 
-    @filterable
-    async def query(self, filters, options):
-        """
-        Query all Cloud Sync Tasks with `query-filters` and `query-options`.
-        """
-        tasks_or_task = await super().query(filters, options)
-
-        jobs = {}
-        for j in await self.middleware.call("core.get_jobs", [('OR', [("method", "=", "cloudsync.sync"),
-                                                                      ("method", "=", "cloudsync.restore")])],
-                                            {"order_by": ["id"]}):
-            try:
-                task_id = int(j["arguments"][0])
-            except (IndexError, TypeError, ValueError):
-                continue
-
-            if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
-                continue
-
-            jobs[task_id] = j
-
-        if isinstance(tasks_or_task, list):
-            for task in tasks_or_task:
-                task["job"] = jobs.get(task["id"])
-        else:
-            tasks_or_task["job"] = jobs.get(tasks_or_task["id"])
-
-        return tasks_or_task
+    @private
+    async def extend_context(self, rows, extra):
+        return {
+            "task_state": await self.get_task_state_context(),
+        }
 
     @private
-    async def extend(self, cloud_sync):
+    async def extend(self, cloud_sync, context):
         cloud_sync["credentials"] = cloud_sync.pop("credential")
+        if job := await self.get_task_state_job(context["task_state"], cloud_sync["id"]):
+            cloud_sync["job"] = job
 
         Cron.convert_db_format_to_schedule(cloud_sync)
 
@@ -977,8 +960,7 @@ class CloudSyncService(TaskPathService):
         cloud_sync["id"] = await self.middleware.call("datastore.insert", "tasks.cloudsync", cloud_sync)
         await self.middleware.call("service.restart", "cron")
 
-        cloud_sync = await self.extend(cloud_sync)
-        return cloud_sync
+        return await self.get_instance(cloud_sync["id"])
 
     @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
     async def do_update(self, id, data):
@@ -1352,3 +1334,4 @@ async def setup(middleware):
 
     await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))
     await middleware.call('network.general.register_activity', 'cloud_sync', 'Cloud sync')
+    await middleware.call('cloudsync.persist_task_state_on_job_complete')

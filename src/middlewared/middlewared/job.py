@@ -167,6 +167,9 @@ class JobsQueue(object):
             job = await self.next()
             asyncio.ensure_future(job.run(self))
 
+    async def receive(self, job, logs):
+        await self.deque.receive(self.middleware, job, logs)
+
 
 class JobsDeque(object):
     """
@@ -190,9 +193,12 @@ class JobsDeque(object):
     def all(self):
         return self.__dict.copy()
 
-    def add(self, job):
+    def _get_next_id(self):
         self.count += 1
-        job.set_id(self.count)
+        return self.count
+
+    def add(self, job):
+        job.set_id(self._get_next_id())
         if len(self.__dict) > self.maxlen:
             for old_job_id, old_job in self.__dict.items():
                 if old_job.state in (State.SUCCESS, State.FAILED, State.ABORTED):
@@ -206,6 +212,11 @@ class JobsDeque(object):
         if job_id in self.__dict:
             self.__dict[job_id].cleanup()
             del self.__dict[job_id]
+
+    async def receive(self, middleware, job_dict, logs):
+        job_dict['id'] = self._get_next_id()
+        job = await Job.receive(middleware, job_dict, logs)
+        self.__dict[job.id] = job
 
 
 class Job:
@@ -400,7 +411,7 @@ class Job:
         """
 
         if self.options["logs"]:
-            self.logs_path = os.path.join(LOGS_DIR, f"{self.id}.log")
+            self.logs_path = self._logs_path()
             self.start_logging()
 
         try:
@@ -454,6 +465,9 @@ class Job:
         self.set_state('SUCCESS')
         if self.progress['percent'] != 100:
             self.set_progress(100, '')
+
+    def _logs_path(self):
+        return os.path.join(LOGS_DIR, f"{self.id}.log")
 
     async def __close_logs(self):
         if self.logs_fd:
@@ -530,6 +544,37 @@ class Job:
             'time_started': self.time_started,
             'time_finished': self.time_finished,
         }
+
+    @staticmethod
+    async def receive(middleware, job_dict, logs):
+        service_name, method_name = job_dict['method'].rsplit(".", 1)
+        serviceobj = middleware._services[service_name]
+        methodobj = getattr(serviceobj, method_name)
+        job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
+                  None)
+        job.id = job_dict['id']
+        job.description = job_dict['description']
+        if logs is not None:
+            job.logs_path = job._logs_path()
+        job.logs_excerpt = job_dict['logs_excerpt']
+        job.progress = job_dict['progress']
+        job.result = job_dict['result']
+        job.error = job_dict['error']
+        job.error = job_dict['exception']
+        job.state = State.__members__[job_dict['state']]
+        job.time_started = job_dict['time_started']
+        job.time_finished = job_dict['time_finished']
+
+        if logs is not None:
+            def write_logs():
+                os.makedirs(LOGS_DIR, exist_ok=True)
+                os.chmod(LOGS_DIR, 0o700)
+                with open(job.logs_path, "wb") as f:
+                    f.write(logs)
+
+            await middleware.run_in_thread(write_logs)
+
+        return job
 
     async def wrap(self, subjob):
         """

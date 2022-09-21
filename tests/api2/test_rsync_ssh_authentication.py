@@ -192,3 +192,17 @@ def test_ssh_credentials_delete(cleanup, localuser, remoteuser, src, dst):
 
             t = call("rsynctask.get_instance", t["id"])
             assert not t["enabled"]
+
+
+def test_state_persist(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": dst,
+    }) as t:
+        run_task(t)
+
+        row = call("datastore.query", "tasks.rsync", [["id", "=", t["id"]]], {"get": True})
+        assert row["rsync_job"]["state"] == "SUCCESS"
