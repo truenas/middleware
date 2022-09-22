@@ -1,5 +1,4 @@
 import datetime
-import json
 
 import isodate
 from sqlalchemy import (
@@ -10,6 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship  # noqa
 from sqlalchemy.types import UserDefinedType
 
+from middlewared.client import ejson as json
 from middlewared.plugins.pwenc import encrypt, decrypt
 
 

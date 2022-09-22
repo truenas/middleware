@@ -23,6 +23,7 @@ class VMWareModel(sa.Model):
     password = sa.Column(sa.EncryptedText())
     filesystem = sa.Column(sa.String(200))
     datastore = sa.Column(sa.String(200))
+    state = sa.Column(sa.JSON())
 
 
 class VMWareService(CRUDService):
@@ -90,12 +91,12 @@ class VMWareService(CRUDService):
 
         `datastore` is a valid datastore name which exists on the VMWare host.
         """
-        await self.validate_data(data, 'vmware_create')
+        await self.middleware.call('vmware.validate_data', data, 'vmware_create')
 
         data['id'] = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
-            data
+            {**data, 'state': {'state': 'PENDING'}},
         )
 
         return await self.get_instance(data['id'])
@@ -109,17 +110,18 @@ class VMWareService(CRUDService):
         Update VMWare snapshot of `id`.
         """
         old = await self.get_instance(id)
+        old.pop('state')
         new = old.copy()
 
         new.update(data)
 
-        await self.validate_data(new, 'vmware_update')
+        await self.middleware.call('vmware.validate_data', new, 'vmware_update')
 
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
             id,
-            new,
+            {**new, 'state': {'state': 'PENDING'}},
         )
 
         return await self.get_instance(id)
@@ -416,8 +418,8 @@ class VMWareService(CRUDService):
                 si = self.connect(vmsnapobj)
                 content = si.RetrieveContent()
             except Exception as e:
-                self.logger.warn("VMware login to %s failed", vmsnapobj["hostname"], exc_info=True)
-                self._alert_vmware_login_failed(vmsnapobj, e)
+                self.logger.warning("VMware login to %s failed", vmsnapobj["hostname"], exc_info=True)
+                self.alert_vmware_login_failed(vmsnapobj, e)
                 continue
 
             # There's no point to even consider VMs that are paused or powered off.
@@ -497,10 +499,12 @@ class VMWareService(CRUDService):
 
             try:
                 si = self.connect(vmsnapobj)
-                self._delete_vmware_login_failed_alert(vmsnapobj)
+                self.delete_vmware_login_failed_alert(vmsnapobj)
             except Exception as e:
                 self.logger.warning("VMware login failed to %s", vmsnapobj["hostname"])
-                self._alert_vmware_login_failed(vmsnapobj, e)
+                self.alert_vmware_login_failed(vmsnapobj, e)
+                for vm_uuid in elem["snapvms"]:
+                    self.middleware.call_sync("vmware.defer_deleting_snapshot", vmsnapobj, vm_uuid, vmsnapname)
                 continue
 
             # vm is an object, so we'll dereference that object anywhere it's user facing.
@@ -519,6 +523,7 @@ class VMWareService(CRUDService):
                                 "snapshot": vmsnapname,
                                 "error": self._vmware_exception_message(e),
                             })
+                            self.middleware.call_sync("vmware.defer_deleting_snapshot", vmsnapobj, vm_uuid, vmsnapname)
 
             self.disconnect(si)
 
@@ -645,14 +650,44 @@ class VMWareService(CRUDService):
         else:
             return str(e)
 
-    def _alert_vmware_login_failed(self, vmsnapobj, e):
+    @private
+    def alert_vmware_login_failed(self, vmsnapobj, e):
+        error = self._vmware_exception_message(e)
         self.middleware.call_sync("alert.oneshot_create", "VMWareLoginFailed", {
             "hostname": vmsnapobj["hostname"],
-            "error": self._vmware_exception_message(e),
+            "error": error,
+        })
+        self.set_vmsnapobj_state(vmsnapobj, {
+            "state": "ERROR",
+            "error": error,
         })
 
-    def _delete_vmware_login_failed_alert(self, vmsnapobj):
+    @private
+    def delete_vmware_login_failed_alert(self, vmsnapobj):
         self.middleware.call_sync("alert.oneshot_delete", "VMWareLoginFailed", vmsnapobj["hostname"])
+        self.set_vmsnapobj_state(vmsnapobj, {
+            "state": "SUCCESS",
+        })
+
+    @private
+    def set_vmsnapobj_state(self, vmsnapobj, state):
+        for vmware in self.middleware.call_sync(
+            "datastore.query",
+            "storage.vmwareplugin",
+            [["hostname", "=", vmsnapobj["hostname"]],
+             ["username", "=", vmsnapobj["username"]]],
+        ):
+            if vmware["password"] == vmsnapobj["password"]:  # These need to be decoded to be compared
+                self.set_vmsnapobj_state_by_id(vmware["id"], state)
+
+    @private
+    def set_vmsnapobj_state_by_id(self, id, state):
+        self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id, {
+            "state": {
+                **state,
+                "datetime": datetime.utcnow(),
+            },
+        })
 
 
 async def setup(middleware):
