@@ -465,7 +465,7 @@ class VMWareService(CRUDService):
 
                     snapvms.append(vm.config.uuid)
 
-            connect.Disconnect(si)
+            self.disconnect(si)
 
             vmsnapobjs.append({
                 "vmsnapobj": vmsnapobj,
@@ -505,12 +505,10 @@ class VMWareService(CRUDService):
 
             # vm is an object, so we'll dereference that object anywhere it's user facing.
             for vm_uuid in elem["snapvms"]:
-                for vm in si.content.searchIndex.FindAllByUuid(None, vm_uuid, True):
+                for vm in self.find_vms_by_uuid(si, vm_uuid):
                     if [vm_uuid, vm.name] not in elem["snapvmfails"] and [vm_uuid, vm.name] not in elem["snapvmskips"]:
-                        snap = self._findVMSnapshotByName(vm, vmsnapname)
                         try:
-                            if snap:
-                                VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
+                            self.delete_snapshot(vm, vmsnapname)
                         except Exception as e:
                             self.logger.debug(
                                 "Exception removing snapshot %s on %s", vmsnapname, vm.name, exc_info=True
@@ -522,7 +520,7 @@ class VMWareService(CRUDService):
                                 "error": self._vmware_exception_message(e),
                             })
 
-            connect.Disconnect(si)
+            self.disconnect(si)
 
     @private
     def periodic_snapshot_task_begin(self, task_id):
@@ -562,6 +560,20 @@ class VMWareService(CRUDService):
         si = connect.SmartConnect(host=vmsnapobj["hostname"], user=vmsnapobj["username"],
                                   pwd=vmsnapobj["password"], sslContext=ssl_context)
         return si
+
+    @private
+    def disconnect(self, si):
+        connect.Disconnect(si)
+
+    @private
+    def find_vms_by_uuid(self, si, vm_uuid):
+        return si.content.searchIndex.FindAllByUuid(None, vm_uuid, True)
+
+    @private
+    def delete_snapshot(self, vm, vmsnapname):
+        snap = self._findVMSnapshotByName(vm, vmsnapname)
+        if snap:
+            VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
 
     # Check if a VM is using a certain datastore
     def _doesVMDependOnDataStore(self, vm, dataStore):
