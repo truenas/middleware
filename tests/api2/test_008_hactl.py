@@ -45,7 +45,7 @@ def test_03_check_hactl_takeover(request):
     rv = SSH_TEST('hactl takeover', user, password, ip)
     output = rv['output'].strip()
     if ha:
-        assert 'This command can only be run on the standby node.' in ouput, output
+        assert 'This command can only be run on the standby node.' in output, output
     else:
         assert 'Not an HA node' in output, output
 
@@ -57,7 +57,7 @@ def test_04_check_hactl_enable(request):
     rv = SSH_TEST('hactl enable', user, password, ip)
     output = rv['output'].strip()
     if ha:
-        assert 'Failover already enabled.' in ouput, output
+        assert 'Failover already enabled.' in output, output
     else:
         assert 'Not an HA node' in output, output
 
@@ -68,7 +68,7 @@ def test_05_check_hactl_disable(request):
     rv = SSH_TEST('hactl disable', user, password, ip)
     output = rv['output'].strip()
     if ha:
-        assert 'Failover disabled.' in ouput, output
+        assert 'Failover disabled.' in output, output
 
         rv = make_ws_request(ip, {'msg': 'method', 'method': 'failover.config', 'params': []})
         assert isinstance(rv['result'], dict), rv['result']
@@ -76,7 +76,7 @@ def test_05_check_hactl_disable(request):
 
         rv = SSH_TEST('hactl enable', user, password, ip)
         output = rv['output'].strip()
-        assert 'Failover enabled.' in ouput, output
+        assert 'Failover enabled.' in output, output
 
         rv = make_ws_request(ip, {'msg': 'method', 'method': 'failover.config', 'params': []})
         assert isinstance(rv['result'], dict), rv['result']
