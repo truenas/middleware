@@ -1,5 +1,6 @@
 import pytest
 
+from time import sleep
 from middlewared.test.integration.assets.pool import another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
 
@@ -38,7 +39,13 @@ def test_pool_replace_disk(topology, i):
             "force": True,
         }, job=True)
 
-        pool = call("pool.get_instance", pool["id"])
+        # Sometimes the VM is to slow so look 5 times with 1 second in between
+        for _ in range(5):
+            pool = call("pool.get_instance", pool["id"])
+            if len(disks(pool["topology"])) == count:
+                assert len(disks(pool["topology"])) == count
+                break
+            sleep(1)
 
         assert len(disks(pool["topology"])) == count
         assert disks(pool["topology"])[i]["disk"] == new_disk["devname"]
