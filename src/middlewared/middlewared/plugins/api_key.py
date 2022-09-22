@@ -76,7 +76,7 @@ class ApiKeyService(CRUDService):
                     Str("method", required=True, enum=["GET", "POST", "PUT", "DELETE", "CALL", "SUBSCRIBE", "*"]),
                     Str("resource", required=True),
                 ),
-            ]),
+            ], default=[{"method": "*", "resource": "*"}]),
             register=True,
         )
     )
