@@ -94,9 +94,6 @@ class FailoverDisabledReasonsService(Service):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
                 reasons.add('NO_SYSTEM_READY')
 
-            if len(self.middleware.call_sync('failover.call_remote', 'zfs.pool.query_imported_fast')) <= 1:
-                reasons.add('NO_VOLUME')
-
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.add('NO_LICENSE')
 
