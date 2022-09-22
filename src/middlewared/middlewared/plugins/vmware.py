@@ -280,14 +280,7 @@ class VMWareService(CRUDService):
         self.middleware.call_sync('network.general.will_perform_activity', 'vmware')
 
         try:
-            ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            ssl_context.verify_mode = ssl.CERT_NONE
-            server_instance = connect.SmartConnect(
-                host=data['hostname'],
-                user=data['username'],
-                pwd=data['password'],
-                sslContext=ssl_context,
-            )
+            server_instance = self.connect(data)
         except (vim.fault.InvalidLogin, vim.fault.NoPermission, vim.fault.RestrictedVersion) as e:
             raise CallError(e.msg, errno.EPERM)
         except vmodl.RuntimeFault as e:
@@ -354,14 +347,7 @@ class VMWareService(CRUDService):
 
         item = await self.query([('id', '=', pk)], {'get': True})
 
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ssl_context.verify_mode = ssl.CERT_NONE
-        server_instance = connect.SmartConnect(
-            host=item['hostname'],
-            user=item['username'],
-            pwd=item['password'],
-            sslContext=ssl_context,
-        )
+        server_instance = self.connect(item)
 
         content = server_instance.RetrieveContent()
         objview = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
@@ -427,10 +413,7 @@ class VMWareService(CRUDService):
             snapvmskips = []
 
             try:
-                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-                ssl_context.verify_mode = ssl.CERT_NONE
-                si = connect.SmartConnect(host=vmsnapobj["hostname"], user=vmsnapobj["username"],
-                                          pwd=vmsnapobj["password"], sslContext=ssl_context)
+                si = self.connect(vmsnapobj)
                 content = si.RetrieveContent()
             except Exception as e:
                 self.logger.warn("VMware login to %s failed", vmsnapobj["hostname"], exc_info=True)
@@ -513,10 +496,7 @@ class VMWareService(CRUDService):
             vmsnapobj = elem["vmsnapobj"]
 
             try:
-                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-                ssl_context.verify_mode = ssl.CERT_NONE
-                si = connect.SmartConnect(host=vmsnapobj["hostname"], user=vmsnapobj["username"],
-                                          pwd=vmsnapobj["password"], sslContext=ssl_context)
+                si = self.connect(vmsnapobj)
                 self._delete_vmware_login_failed_alert(vmsnapobj)
             except Exception as e:
                 self.logger.warning("VMware login failed to %s", vmsnapobj["hostname"])
@@ -574,6 +554,14 @@ class VMWareService(CRUDService):
     @job()
     def periodic_snapshot_task_end(self, job, context):
         return self.snapshot_end(context)
+
+    @private
+    def connect(self, vmsnapobj):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ssl_context.verify_mode = ssl.CERT_NONE
+        si = connect.SmartConnect(host=vmsnapobj["hostname"], user=vmsnapobj["username"],
+                                  pwd=vmsnapobj["password"], sslContext=ssl_context)
+        return si
 
     # Check if a VM is using a certain datastore
     def _doesVMDependOnDataStore(self, vm, dataStore):
