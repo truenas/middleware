@@ -1023,20 +1023,12 @@ class SharingSMBService(SharingService):
         await self.middleware.call("smb.cluster_check")
 
         verrors = ValidationErrors()
-        path = data['path']
 
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
         await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
 
         verrors.check()
-
-        if not data['cluster_volname']:
-            if path and not os.path.exists(path):
-                try:
-                    os.makedirs(path)
-                except OSError as e:
-                    raise CallError(f'Failed to create {path}: {e}')
 
         await self.apply_presets(data)
         await self.compress(data)
@@ -1552,10 +1544,12 @@ class SharingSMBService(SharingService):
             unsupported filesystems over SMB as behavior with our default VFS options in such
             a situation is undefined.
             """
-            if os.path.exists(data['path']):
+            try:
                 await self.middleware.run_in_thread(
                     self.validate_mount_info, verrors, f'{schema_name}.path', data['path']
                 )
+            except FileNotFoundError:
+                verrors.add(f'{schema_name}.path', 'Path does not exist.')
 
         if data['auxsmbconf']:
             try:
