@@ -537,8 +537,11 @@ class IdmapDomainService(TDBWrapCRUDService):
         idmap_backend = data.get('idmap_backend')
         for i in configured_domains:
             # Do not generate validation error comparing to oneself.
-            if i['name'] == data['name']:
+            if i['id'] == data['id']:
                 continue
+
+            if i['name'] == data['name']:
+                verrors.add(f'{schema_name}.name', 'Name must be unique.')
 
             # Do not generate validation errors for overlapping with a disabled DS.
             if not ldap_enabled and i['name'] == 'DS_TYPE_LDAP':
