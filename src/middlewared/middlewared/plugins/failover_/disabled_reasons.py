@@ -30,6 +30,7 @@ class FailoverDisabledReasonsService(Service):
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         NO_FENCED - Zpools are imported but fenced isn't running.
+        REM_FAILOVER_ONGOING - Other node is currently processing a failover event.
         """
         reasons = self.middleware.call_sync('failover.disabled.get_reasons', app)
         if reasons != FailoverDisabledReasonsService.LAST_DISABLED_REASONS:
@@ -41,13 +42,11 @@ class FailoverDisabledReasonsService(Service):
         return list(reasons)
 
     @private
-    def get_reasons(self, app):
-        reasons = set()
-
+    def get_local_reasons(self, app, ifaces, reasons):
+        """This method checks the local node to try and determine its failover status."""
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
 
-        ifaces = self.middleware.call_sync('interface.query')
         crit_iface = vip = master = False
         for iface in ifaces:
             if iface['failover_critical']:
@@ -78,20 +77,21 @@ class FailoverDisabledReasonsService(Service):
                 # we've got interfaces marked as master but we have no zpool(s) imported
                 reasons.add('NO_VOLUME')
 
+    @private
+    def get_remote_reasons(self, app, ifaces, reasons):
+        """This method checks the remote node to try and determine its failover status."""
         try:
             assert self.middleware.call_sync('failover.remote_connected')
-
-            # if the remote node panic's (this happens on failover event if we cant export the
-            # zpool in 4 seconds on freeBSD systems (linux reboots silently by design)
-            # then the p2p interface stays "UP" and the websocket remains open.
-            # At this point, we have to wait for the TCP timeout (60 seconds default).
-            # This means the assert line up above will return `True`.
-            # However, any `call_remote` method will hang because the websocket is still
-            # open but hasn't closed due to the default TCP timeout window. This can be painful
-            # on failover events because it delays the process of restarting services in a timely
-            # manner. To work around this, we place a `timeout` of 5 seconds on the system.ready
-            # call. This essentially bypasses the TCP timeout window.
             if not self.middleware.call_sync('failover.call_remote', 'system.ready', [], {'timeout': 5}):
+                # if the remote node panic's (this happens on failover event if we cant export the
+                # zpool in 4 seconds (linux reboots silently by design) then the p2p interface stays
+                # "UP" and the websocket remains open. At this point, we have to wait for the TCP
+                # timeout (60 seconds default). This means the assert line up above will return `True`.
+                # However, any `call_remote` method will hang because the websocket is still
+                # open but hasn't closed due to the default TCP timeout window. This can be painful
+                # on failover events because it delays the process of restarting services in a timely
+                # manner. To work around this, we place a `timeout` of 5 seconds on the system.ready
+                # call. This essentially bypasses the TCP timeout window.
                 reasons.add('NO_SYSTEM_READY')
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
@@ -107,6 +107,13 @@ class FailoverDisabledReasonsService(Service):
                 reasons.add('MISMATCH_DISKS')
         except Exception:
             reasons.add('NO_PONG')
+
+    @private
+    def get_reasons(self, app):
+        reasons = set()
+        ifaces = self.middleware.call_sync('interface.query')
+        self.get_local_reasons(app, ifaces, reasons)
+        self.get_remote_reasons(app, ifaces, reasons)
 
         return reasons
 
