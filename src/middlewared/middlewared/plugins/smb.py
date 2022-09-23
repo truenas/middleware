@@ -12,7 +12,6 @@ from pathlib import Path
 import asyncio
 import codecs
 import enum
-import errno
 import os
 import re
 import stat
@@ -67,29 +66,30 @@ class SMBBuiltin(enum.Enum):
 
 
 class SMBPath(enum.Enum):
-    GLOBALCONF = ('/usr/local/etc/smb4.conf', '/etc/smb4.conf', 0o755, False)
-    SHARECONF = ('/usr/local/etc/smb4_share.conf', '/etc/smb4_share.conf', 0o755, False)
-    STATEDIR = ('/var/db/system/samba4', '/var/db/system/samba4', 0o755, True)
-    PRIVATEDIR = ('/var/db/system/samba4/private', '/var/db/system/samba4/private', 0o700, True)
-    LEGACYSTATE = ('/root/samba', '/root/samba', 0o755, True)
-    LEGACYPRIVATE = ('/root/samba/private', '/root/samba/private', 0o700, True)
-    CACHE_DIR = ('/var/run/samba4', '/var/run/samba-cache', 0o755, True)
-    PASSDB_DIR = ('/var/run/samba4/private', '/var/run/samba-cache/private', 0o700, True)
-    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', '/var/db/system/samba4/private/msg.sock', 0o700, False)
-    RUNDIR = ('/var/run/samba4', '/var/run/samba', 0o755, True)
-    LOCKDIR = ('/var/run/samba4', '/var/run/samba-lock', 0o755, True)
-    LOGDIR = ('/var/log/samba4', '/var/log/samba4', 0o755, True)
-    IPCSHARE = ('/var/tmp', '/tmp', 0o1777, True)
-    WINBINDD_PRIVILEGED = ('/var/db/system/samba4/winbindd_privileged', '/var/db/system/samba4/winbindd_privileged', 0o750, True)
+    GLOBALCONF = ('/etc/smb4.conf', 0o755, False)
+    STUBCONF = ('/usr/local/etc/smb4.conf', 0o755, False)
+    SHARECONF = ('/etc/smb4_share.conf', 0o755, False)
+    STATEDIR = ('/var/db/system/samba4', 0o755, True)
+    PRIVATEDIR = ('/var/db/system/samba4/private', 0o700, True)
+    LEGACYSTATE = ('/root/samba', 0o755, True)
+    LEGACYPRIVATE = ('/root/samba/private', 0o700, True)
+    CACHE_DIR = ('/var/run/samba-cache', 0o755, True)
+    PASSDB_DIR = ('/var/run/samba-cache/private', 0o700, True)
+    MSG_SOCK = ('/var/db/system/samba4/private/msg.sock', 0o700, False)
+    RUNDIR = ('/var/run/samba', 0o755, True)
+    LOCKDIR = ('/var/run/samba-lock', 0o755, True)
+    LOGDIR = ('/var/log/samba4', 0o755, True)
+    IPCSHARE = ('/tmp', 0o1777, True)
+    WINBINDD_PRIVILEGED = ('/var/db/system/samba4/winbindd_privileged', 0o750, True)
 
     def platform(self):
-        return self.value[1] if osc.IS_LINUX else self.value[0]
+        return self.value[0]
 
     def mode(self):
-        return self.value[2]
+        return self.value[1]
 
     def is_dir(self):
-        return self.value[3]
+        return self.value[2]
 
 
 class SMBSharePreset(enum.Enum):
@@ -196,21 +196,6 @@ class SMBModel(sa.Model):
     cifs_srv_multichannel = sa.Column(sa.Boolean, default=False)
 
 
-class WBCErr(enum.Enum):
-    SUCCESS = ('Winbind operation successfully completed.', None)
-    NOT_IMPLEMENTED = ('Function is not implemented.', errno.ENOSYS)
-    UNKNOWN_FAILURE = ('Generic failure.', errno.EFAULT)
-    ERR_NO_MEMORY = ('Memory allocation error.', errno.ENOMEM)
-    WINBIND_NOT_AVAILABLE = ('Winbind daemon is not available.', errno.EFAULT)
-    DOMAIN_NOT_FOUND = ('Domain is not trusted or cannot be found.', errno.EFAULT)
-    INVALID_RESPONSE = ('Winbind returned an invalid response.', errno.EINVAL)
-    AUTH_ERROR = ('Authentication failed.', errno.EPERM)
-    PWD_CHANGE_FAILED = ('Password change failed.', errno.EFAULT)
-
-    def err(self):
-        return f'WBC_ERR_{self.name}'
-
-
 class SMBService(TDBWrapConfigService):
 
     tdb_defaults = {
@@ -247,7 +232,7 @@ class SMBService(TDBWrapConfigService):
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
 
-    LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
+    LP_CTX = param.LoadParm(SMBPath.STUBCONF.platform())
 
     @private
     def is_configured(self):
@@ -459,6 +444,16 @@ class SMBService(TDBWrapConfigService):
 
     @private
     async def setup_directories(self):
+        def create_dirs(spec, path):
+            try:
+                os.chmod(path, spec.mode())
+                if os.stat(path).st_uid != 0:
+                    self.logger.warning("%s: invalid owner for path. Correcting.", path)
+                    os.chown(path, 0, 0)
+            except FileNotFoundError:
+                if spec.is_dir():
+                    os.mkdir(path, spec.mode())
+
         await self.reset_smb_ha_mode()
         await self.middleware.call('etc.generate', 'smb')
 
@@ -481,16 +476,7 @@ class SMBService(TDBWrapConfigService):
                 # Currently only time CallError is raise here is on ENOENT, which may be expected
                 pass
 
-            if not os.path.exists(path):
-                if p.is_dir():
-                    os.mkdir(path, p.mode())
-            else:
-                os.chmod(path, p.mode())
-                owner = os.stat(path).st_uid
-                if owner != 0:
-                    self.logger.warning("%s: invalid owner [%s] for path. Correcting.",
-                                        path, owner)
-                    os.chown(path, 0, 0)
+            await self.middleware.run_in_thread(create_dirs, p, path)
 
     @private
     async def import_conf_to_registry(self):
@@ -946,7 +932,7 @@ class SharingSMBService(SharingService):
         datastore_extend = 'sharing.smb.extend'
         cli_namespace = 'sharing.smb'
 
-    LP_CTX = param.LoadParm(SMBPath.GLOBALCONF.value[0])
+    LP_CTX = param.LoadParm(SMBPath.STUBCONF.platform())
 
     @private
     async def strip_comments(self, data):
@@ -1076,8 +1062,6 @@ class SharingSMBService(SharingService):
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
 
         verrors = ValidationErrors()
-        path = data.get('path')
-
         old = await self.query([('id', '=', id)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
         new = old.copy()
@@ -1095,13 +1079,6 @@ class SharingSMBService(SharingService):
         verrors.check()
 
         guest_changed = old['guestok'] != new['guestok']
-
-        if not new['cluster_volname']:
-            if path and not os.path.exists(path):
-                try:
-                    os.makedirs(path)
-                except OSError as e:
-                    raise CallError(f'Failed to create {path}: {e}')
 
         if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
@@ -1738,7 +1715,7 @@ class SharingSMBService(SharingService):
         file. This method simply reconciles lists of shares, removing from and adding to
         the registry as-needed.
         """
-        if not os.path.exists(SMBPath.GLOBALCONF.platform()):
+        if not await self.middleware.run_in_thread(os.path.exists, SMBPath.GLOBALCONF.platform()):
             self.logger.warning("smb.conf does not exist. Skipping registry synchronization."
                                 "This may indicate that SMB service has not completed initialization.")
             return
@@ -1761,11 +1738,12 @@ class SharingSMBService(SharingService):
 
         for share in to_add:
             share_conf = list(filter(lambda x: x['name'].casefold() == share.casefold(), active_shares))
-            if ha_mode != 'CLUSTERED' and not os.path.exists(share_conf[0]['path']):
-                self.logger.warning("Path [%s] for share [%s] does not exist. "
-                                    "Refusing to add share to SMB configuration.",
-                                    share_conf[0]['path'], share_conf[0]['name'])
-                continue
+            if ha_mode != 'CLUSTERED':
+                if not await self.middleware.run_in_thread(os.path.exists, share_conf[0]['path']):
+                    self.logger.warning("Path [%s] for share [%s] does not exist. "
+                                        "Refusing to add share to SMB configuration.",
+                                        share_conf[0]['path'], share_conf[0]['name'])
+                    continue
 
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
