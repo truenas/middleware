@@ -1,5 +1,9 @@
 <%
     sysdataset_path = middleware.call_sync('systemdataset.config')['path']
+    if not sysdataset_path:
+        middleware.logger.error("glusterd.conf: system dataset is not mounted")
+        raise FileShouldNotExist()
+
     work_dir = sysdataset_path + '/glusterd'
 %>\
 

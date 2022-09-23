@@ -2968,12 +2968,13 @@ class PoolDatasetService(CRUDService):
     async def internal_datasets_filters(self):
         # We get filters here which ensure that we don't match an internal dataset
         filters = []
-        sys_config = await self.middleware.call('systemdataset.config')
-        if sys_config['basename']:
-            filters.extend([
-                ['id', '!=', sys_config['basename']],
-                ['id', '!^', f'{sys_config["basename"]}/'],
-            ])
+        try:
+            sysds = (await self.middleware.call('cache.get', 'SYSDATASET_PATH'))['dataset']
+        except KeyError:
+            sysds = (await self.middleware.call('systemdataset.config'))['basename']
+
+        if sysds:
+            filters.extend([['id', '!=', sysds], ['id', '!^', f'{sysds}/']])
 
         filters.append(['pool', '!=', await self.middleware.call('boot.pool_name')])
 

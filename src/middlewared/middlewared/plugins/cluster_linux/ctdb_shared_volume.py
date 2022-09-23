@@ -70,6 +70,9 @@ class CtdbSharedVolumeService(Service):
 
             # get the system dataset location
             ctdb_sysds_path = (await self.middleware.call('systemdataset.config'))['path']
+            if not ctdb_sysds_path:
+                raise CallError("System dataset is not properly mounted")
+
             ctdb_sysds_path = str(Path(ctdb_sysds_path).joinpath(CTDB_VOL_NAME))
 
             bricks = []
