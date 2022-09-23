@@ -537,7 +537,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         idmap_backend = data.get('idmap_backend')
         for i in configured_domains:
             # Do not generate validation error comparing to oneself.
-            if i['id'] == data['id']:
+            if i['id'] == data.get('id', -1):
                 continue
 
             if i['name'] == data['name']:
