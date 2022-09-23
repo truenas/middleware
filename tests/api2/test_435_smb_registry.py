@@ -99,9 +99,14 @@ def test_004_creating_a_smb_share_path(request, smb_share):
     """
     depends(request, ["SMB_DATASET_CREATED", "ACL_SET"])
     global SHARE_DICT
+
+    target = f'{SMB_PATH}/{smb_share}'
+    results = POST('/filesystem/mkdir', target)
+    assert results.status_code == 200, results.text
+
     payload = {
         "comment": "My Test SMB Share",
-        "path": f"{SMB_PATH}/{smb_share}",
+        "path": target,
         "home": False,
         "name": smb_share,
     }
@@ -276,9 +281,14 @@ def test_010_test_aux_param_on_update(request):
 def test_011_test_aux_param_on_create(request):
     depends(request, ["SHARES_CREATED", "ssh_password"], scope="session")
     smb_share = "AUX_CREATE"
+
+    target = f'{SMB_PATH}/{smb_share}'
+    results = POST('/filesystem/mkdir', target)
+    assert results.status_code == 200, results.text
+
     payload = {
         "comment": "My Test SMB Share",
-        "path": f"{SMB_PATH}/{smb_share}",
+        "path": target,
         "home": False,
         "name": smb_share,
         "purpose": "ENHANCED_TIMEMACHINE",
@@ -386,9 +396,14 @@ def test_015_create_homes_share(request):
     depends(request, ["SMB_DATASET_CREATED"])
     smb_share = "HOME_CREATE"
     global home_id
+
+    target = f'{SMB_PATH}/{smb_share}'
+    results = POST('/filesystem/mkdir', target)
+    assert results.status_code == 200, results.text
+
     payload = {
         "comment": "My Test SMB Share",
-        "path": f"{SMB_PATH}/{smb_share}",
+        "path": target,
         "home": True,
         "purpose": "NO_PRESET",
         "name": smb_share,
