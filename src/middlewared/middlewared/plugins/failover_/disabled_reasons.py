@@ -97,6 +97,14 @@ class FailoverDisabledReasonsService(Service):
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.add('NO_LICENSE')
 
+            args = [
+                [["method", "in", ["failover.events.vrrp_master", "failover.events.vrrp_backup"]]],
+                {"order_by": ["-id"]}
+            ]
+            if rv := self.middleware.call_sync('failover.call_remote', 'core.get_jobs', args):
+                if rv[0]['state'] == 'RUNNING':
+                    reasons.add('REM_FAILOVER_ONGOING')
+
             local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
             if self.middleware.call_sync('failover.vip.check_states', local, remote):
