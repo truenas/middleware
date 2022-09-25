@@ -8,6 +8,11 @@ from .vm_supervisor import VMSupervisorMixin
 
 class VMService(Service, VMSupervisorMixin):
 
+    @private
+    async def lifecycle_action_check(self):
+        if not await self.middleware.call('vm.license_active'):
+            raise CallError('Requested action cannot be performed as system is not licensed to use VMs')
+
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
     @returns()
@@ -23,6 +28,7 @@ class VMService(Service, VMSupervisorMixin):
 
             ENOMEM(12): not enough free memory to run the VM without overcommit
         """
+        await self.lifecycle_action_check()
         await self.middleware.run_in_thread(self._check_setup_connection)
 
         vm = await self.middleware.call('vm.get_instance', id)
@@ -107,7 +113,7 @@ class VMService(Service, VMSupervisorMixin):
         if stop_job.error:
             raise CallError(f'Failed to stop {vm["name"]!r} vm: {stop_job.error}')
 
-        self.start(id, {'overcommit': True})
+        self.middleware.call_sync('vm.start', id, {'overcommit': True})
 
     @item_method
     @accepts(Int('id'))
