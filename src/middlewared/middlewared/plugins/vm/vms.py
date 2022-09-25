@@ -211,7 +211,8 @@ class VMService(CRUDService, VMSupervisorMixin):
                     )
             elif not await self.middleware.call('vm.supports_virtualization'):
                 verrors.add(
-                    schema_name, 'This system does not support virtualization.')
+                    schema_name, 'This system does not support virtualization.'
+                )
 
         if data.get('arch_type') or data.get('machine_type'):
             choices = await self.middleware.call('vm.guest_architecture_and_machine_choices')
@@ -243,16 +244,22 @@ class VMService(CRUDService, VMSupervisorMixin):
             if old:
                 filters.append(('id', '!=', old['id']))
             if await self.middleware.call('vm.query', filters):
-                verrors.add(f'{schema_name}.name',
-                            'This name already exists.', errno.EEXIST)
+                verrors.add(
+                    f'{schema_name}.name',
+                    'This name already exists.', errno.EEXIST
+                )
             elif not RE_NAME.search(data['name']):
-                verrors.add(f'{schema_name}.name',
-                            'Only alphanumeric characters are allowed.')
+                verrors.add(
+                    f'{schema_name}.name',
+                    'Only alphanumeric characters are allowed.'
+                )
 
         if data['pin_vcpus']:
             if not data['cpuset']:
                 verrors.add(
-                    f'{schema_name}.cpuset', f'Must be specified when "{schema_name}.pin_vcpus" is set.')
+                    f'{schema_name}.cpuset',
+                    f'Must be specified when "{schema_name}.pin_vcpus" is set.'
+                )
             elif len(parse_numeric_set(data['cpuset'])) != vcpus:
                 verrors.add(
                     f'{schema_name}.pin_vcpus',

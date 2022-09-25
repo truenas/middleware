@@ -4,7 +4,7 @@ import subprocess
 from xml.etree import ElementTree as etree
 
 from middlewared.schema import Bool, Dict, Int, returns, Str
-from middlewared.service import accepts, Service
+from middlewared.service import accepts, private, Service
 from middlewared.utils import run
 
 from .connection import LibvirtConnectionMixin
@@ -27,6 +27,15 @@ class VMService(Service, LibvirtConnectionMixin):
         Returns "true" if system supports virtualization, "false" otherwise
         """
         return self._is_kvm_supported()
+
+    @private
+    async def license_active(self):
+        # This is supposed to return true if system is either not enterprise
+        # or it is enterprise and has VM feature enabled/configured
+        if not await self.middleware.call('system.is_ha_capable'):
+            return True
+
+        return 'VM' in (await self.middleware.call('system.license'))['features']
 
     @accepts()
     @returns(Dict(
