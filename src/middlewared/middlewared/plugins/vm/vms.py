@@ -183,6 +183,12 @@ class VMService(CRUDService, VMSupervisorMixin):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
 
+        if not await self.middleware.call('vm.license_active'):
+            verrors.add(
+                f'{schema_name}.name',
+                'System is not licensed to use VMs'
+            )
+
         if data['min_memory'] and data['min_memory'] > data['memory']:
             verrors.add(
                 f'{schema_name}.min_memory',
