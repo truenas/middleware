@@ -139,7 +139,10 @@ class TruecommandService(Service):
             ):
                 await self.middleware.call('service.start', 'truecommand')
                 await self.middleware.call('service.reload', 'http')
-                asyncio.ensure_future(self.middleware.call('truecommand.health_check'))
+                asyncio.get_event_loop().call_later(
+                    HEALTH_CHECK_SECONDS,
+                    lambda: asyncio.ensure_future(self.middleware.call('truecommand.health_check')),
+                )
             else:
                 # start polling iX Portal to see what's up and why we don't have these values set
                 # This can happen in instances where system was polling and then was rebooted,
