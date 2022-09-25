@@ -1,5 +1,6 @@
 import gzip
 import json
+import os
 
 from base64 import b64decode
 from collections import defaultdict
@@ -74,6 +75,11 @@ class ChartReleaseService(Service):
                 'retrieve_secret_metadata': True,
             }
         )
+        release_instance = await self.middleware.call('chart.release.get_instance', release)
+        volume_dataset = os.path.join(release_instance['dataset'], 'volumes')
+        snapshots = await self.middleware.call(
+            'zfs.snapshot.query', [['dataset', '=', volume_dataset]], {'select': ['name']}
+        )
         # We want to delete any secret which only contains configuration changes for the same chart version.
         # Helm right now by default tracks only past 10 changes for a chart release. This means if user changes
         # any value 10 ten times, that's the only history we have. Ideally we would like to only keep history for
@@ -81,13 +87,23 @@ class ChartReleaseService(Service):
         # have a different chart version.
         to_remove = []
         seen_versions = set()
+        to_remove_snaps = {
+            snap['name'] for snap in filter(lambda snap: snap['name'].split('@', 1)[-1].isdigit(), snapshots)
+        }
+
         current_version = secrets_data[release]['releases'][0]['chart_metadata']['version']
         for release_data in secrets_data[release]['releases']:
             rel_version = release_data['chart_metadata']['version']
             if parse_version(rel_version) > parse_version(current_version) or rel_version in seen_versions:
                 to_remove.append(release_data['secret_metadata']['name'])
+            elif f'{volume_dataset}@{release_data["version"]}' in to_remove_snaps:
+                to_remove_snaps.remove(f'{volume_dataset}@{release_data["version"]}')
 
             seen_versions.add(rel_version)
+
+        for remove_snapshot in to_remove_snaps:
+            # Now available snapshots only contains snaps for which we don't have a secret associated
+            await self.middleware.call('zfs.snapshot.delete', remove_snapshot, {'recursive': True})
 
         for remove_secret in to_remove:
             await self.middleware.call('k8s.secret.delete', remove_secret, {'namespace': get_namespace(release)})
