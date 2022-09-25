@@ -77,6 +77,14 @@ class KubernetesService(ConfigService):
     async def validate_data(self, data, schema, old_data):
         verrors = ValidationErrors()
 
+        if await self.middleware.call('system.is_ha_capable') and 'JAILS' not in (await self.middleware.call(
+            'system.license'
+        ))['features']:
+            verrors.add(
+                f'{schema}.pool',
+                'System is not licensed to use Applications'
+            )
+
         if data.pop('migrate_applications', False):
             if data['pool'] == old_data['pool']:
                 verrors.add(
