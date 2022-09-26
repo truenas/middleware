@@ -32,6 +32,9 @@ class DisabledEnum(enum.Enum):
     NO_VIP = 'No interfaces have been configured with a Virtual IP.'
     NO_SYSTEM_READY = 'Other node has not finished booting.'
     NO_FENCED = 'Fenced is not running.'
+    REM_FAILOVER_ONGOING = 'Other node is currently processing a failover event.'
+    NO_JOURNAL_SYNC = 'Thread responsible for syncing db transactions not running on this node.'
+    REM_NO_JOURNAL_SYNC = 'Thread responsible for syncing db transactions not running on other node.'
     HEALTHY = 'Failover is healthy.'
     UNKNOWN = 'UNKNOWN'
 
@@ -67,14 +70,16 @@ def handle_status_command(client, status):
     # print local and remote serial info
     local_serial = client.call('system.dmidecode_info')['system-serial-number']
     timeout = 2
+    connect_timeout = 2.0
+    options = {'timeout': timeout, 'connect_timeout': connect_timeout}
     try:
-        remote_serial = client.call('failover.call_remote', 'system.dmidecode_info', [], {'timeout': timeout})
+        remote_serial = client.call('failover.call_remote', 'system.dmidecode_info', [], options)
         remote_serial = remote_serial['system-serial-number']
     except Exception as e:
         remote_serial = 'UNKNOWN'
         if isinstance(e, ClientException):
             if e.errno in (errno.ECONNREFUSED, errno.EHOSTUNREACH):
-                remote_serial = 'Failed to connect to remote node after 20 seconds.'
+                remote_serial = f'Failed to connect to remote node after {connect_timeout} seconds.'
             elif e.errno == errno.EFAULT and 'Call timeout' in str(e):
                 remote_serial = f'Timed out after {timeout} seconds waiting on response from remote node.'
 
