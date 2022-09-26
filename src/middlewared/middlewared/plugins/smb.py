@@ -173,7 +173,6 @@ class SMBModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     cifs_srv_netbiosname = sa.Column(sa.String(120))
-    cifs_srv_netbiosname_b = sa.Column(sa.String(120), nullable=True)
     cifs_srv_netbiosalias = sa.Column(sa.String(120), nullable=True)
     cifs_srv_workgroup = sa.Column(sa.String(120))
     cifs_srv_description = sa.Column(sa.String(120))
@@ -201,7 +200,6 @@ class SMBService(TDBWrapConfigService):
     tdb_defaults = {
         "id": 1,
         "netbiosname": "truenas",
-        "netbiosname_b": "truenas-b",
         "netbiosalias": [],
         "workgroup": "WORKGROUP",
         "description": "TrueNAS Server",
@@ -246,22 +244,10 @@ class SMBService(TDBWrapConfigService):
     @private
     async def smb_extend(self, smb):
         """Extend smb for netbios."""
-
-        ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
-
-        if ha_mode in [SMBHAMODE.STANDALONE, SMBHAMODE.CLUSTERED]:
-            smb['netbiosname_local'] = smb['netbiosname']
-
-        elif ha_mode == SMBHAMODE.UNIFIED:
-            ngc = await self.middleware.call('network.configuration.config')
-            smb['netbiosname_local'] = ngc['hostname_virtual']
-
+        smb['netbiosname_local'] = smb['netbiosname']
         smb['netbiosalias'] = (smb['netbiosalias'] or '').split()
-
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
-
         smb.pop('secrets', None)
-
         return smb
 
     @private
@@ -699,7 +685,7 @@ class SMBService(TDBWrapConfigService):
                 'Please provide a valid value for unixcharset'
             )
 
-        for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
+        for i in ('workgroup', 'netbiosname', 'netbiosalias'):
             """
             There are two cases where NetBIOS names must be rejected:
             1. They contain invalid characters for NetBIOS protocol
@@ -752,17 +738,6 @@ class SMBService(TDBWrapConfigService):
 
         if not new.get('netbiosname'):
             verrors.add('smb_update.netbiosname', 'NetBIOS name is required.')
-
-        ha_mode = SMBHAMODE[(await self.get_smb_ha_mode())]
-        if ha_mode == SMBHAMODE.UNIFIED:
-            if not new.get('netbiosname_local'):
-                verrors.add('smb_update.netbiosname',
-                            'Virtual Hostname is required for SMB configuration '
-                            'on high-availability servers.')
-
-            elif not await self.validate_netbios_name(new['netbiosname_local']):
-                verrors.add('smb_update.netbiosname',
-                            'Virtual hostname does not conform to NetBIOS naming standards.')
 
         for i in ('filemask', 'dirmask'):
             if not new[i]:
@@ -841,7 +816,7 @@ class SMBService(TDBWrapConfigService):
         # Skip this check if we're joining AD
         ad_state = await self.middleware.call('activedirectory.get_state')
         if ad_state in ['HEALTHY', 'FAULTED']:
-            for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
+            for i in ('workgroup', 'netbiosname', 'netbiosalias'):
                 if old[i] != new[i]:
                     verrors.add(f'smb_update.{i}',
                                 'This parameter may not be changed after joining Active Directory (AD). '
@@ -883,6 +858,7 @@ class SMBService(TDBWrapConfigService):
     @private
     async def compress(self, data):
         data.pop('netbiosname_local', None)
+        data.pop('netbiosname_b', None)
         data.pop('next_rid')
         data['loglevel'] = LOGLEVEL_MAP.inv.get(data['loglevel'], 1)
         return data

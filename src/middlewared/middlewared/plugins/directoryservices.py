@@ -299,16 +299,14 @@ class DirectoryServices(Service):
         if ha_mode == "CLUSTERED":
             return
 
-        if ha_mode == "UNIFIED":
-            if self.middleware.call_sync("failover.status") != "MASTER":
-                self.logger.debug("Skipping secrets backup on standby controller.")
+        elif ha_mode == "UNIFIED":
+            failover_status = self.middleware.call_sync("failover.status")
+            if failover_status != "MASTER":
+                self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
+                                  failover_status)
                 return
 
-            ngc = self.middleware.call_sync("network.configuration.config")
-            netbios_name = ngc["hostname_virtual"]
-        else:
-            netbios_name = self.middleware.call_sync('smb.config')['netbiosname_local']
-
+        netbios_name = self.middleware.call_sync('smb.config')['netbiosname']
         db_secrets = self.get_db_secrets()
         id = db_secrets.pop('id')
 
@@ -339,16 +337,14 @@ class DirectoryServices(Service):
             return True
 
         if ha_mode == "UNIFIED":
-            if self.middleware.call_sync("failover.status") != "MASTER":
-                self.logger.debug("Skipping secrets restore on standby controller.")
+            failover_status = self.middleware.call_sync("failover.status")
+            if failover_status != "MASTER":
+                self.logger.debug("Current failover status [%s]. Skipping secrets backup.",
+                                  failover_status)
                 return
 
-            if netbios_name is None:
-                ngc = self.middleware.call_sync("network.configuratoin.config")
-                netbios_name = ngc["hostname_virtual"]
-
-        elif netbios_name is None:
-            netbios_name = self.middleware.call_sync('smb.config')['netbiosname_local']
+        if netbios_name is None:
+            netbios_name = self.middleware.call_sync('smb.config')['netbiosname']
 
         db_secrets = self.get_db_secrets()
 
