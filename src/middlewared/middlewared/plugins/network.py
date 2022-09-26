@@ -853,7 +853,7 @@ class InterfaceService(CRUDService):
                 for port in (v.get('bridge_members') or []):
                     bridge_used[port] = k
             elif k.startswith('vlan'):
-                vlan_used[v['vlan_parent_interface']] = k
+                vlan_used[k] = v['vlan_parent_interface']
             elif k.startswith('bond'):
                 for port in (v.get('lag_ports') or []):
                     lag_used[port] = k
