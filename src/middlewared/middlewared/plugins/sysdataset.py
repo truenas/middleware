@@ -99,6 +99,9 @@ class SystemDatasetService(ConfigService):
 
         try:
             fsid = os.statvfs(SYSDATASET_PATH).f_fsid
+        except FileNotFoundError:
+            # SYSDATASET_PATH may not exist on first boot. Do not log.
+            return None
         except OSError:
             self.logger.warning('Failed to stat sysdataset fd', exc_info=True)
             return None
