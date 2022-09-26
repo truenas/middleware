@@ -93,6 +93,20 @@ INTERFACES_WITH_BRIDGE = INTERFACES + [
 ]
 
 
+def mock_datastore_query_side_effect():
+    return Mock(
+        side_effect=lambda method, *args: {
+            'network.interfaces': Mock(return_value=[]),
+            'network.alias': Mock(return_value=[]),
+            'network.bridge': Mock(return_value=[]),
+            'network.lagginterface': Mock(return_value=[]),
+            'network.vlan': Mock(return_value=[]),
+            'network.lagginterfacemembers': Mock(return_value=[]),
+            'network.globalconfiguration': Mock(return_value={'gc_ipv4gateway': ''}),
+        }[method](*args)
+    )
+
+
 @pytest.mark.asyncio
 async def test__interfaces_service__create_bridge_invalid_ports():
 
@@ -152,7 +166,8 @@ async def test__interfaces_service__create_lagg_invalid_ports_cloned():
     m = Middleware()
     m['interface.query'] = Mock(return_value=INTERFACES_WITH_VLAN)
     m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
-    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.query'] = mock_datastore_query_side_effect()
+    m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None})
     m['network.common.check_failover_disabled'] = Mock()
 
@@ -191,7 +206,7 @@ async def test__interfaces_service__create_lagg():
     m['interface.query'] = Mock(return_value=INTERFACES)
     m['interface.lag_supported_protocols'] = Mock(return_value=['LACP'])
     m['interface.validate_name'] = Mock()
-    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.query'] = mock_datastore_query_side_effect()
     m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None})
     m['network.common.check_failover_disabled'] = Mock()
@@ -270,7 +285,7 @@ async def test__interfaces_service__create_vlan():
     m = Middleware()
     m['interface.query'] = Mock(return_value=INTERFACES)
     m['interface.validate_name'] = Mock()
-    m['datastore.query'] = Mock(return_value=[])
+    m['datastore.query'] = mock_datastore_query_side_effect()
     m['datastore.insert'] = Mock(return_value=5)
     m['kubernetes.config'] = Mock(return_value={'dataset': None})
     m['network.common.check_failover_disabled'] = Mock()
