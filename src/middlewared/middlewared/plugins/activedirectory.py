@@ -151,18 +151,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
     @private
     async def ad_extend(self, ad):
         smb = await self.middleware.call('smb.config')
-        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if smb_ha_mode in ['STANDALONE', 'CLUSTERED']:
-            ad.update({
-                'netbiosname': smb['netbiosname_local'],
-                'netbiosalias': smb['netbiosalias']
-            })
-        elif smb_ha_mode == 'UNIFIED':
-            ngc = await self.middleware.call('network.configuration.config')
-            ad.update({
-                'netbiosname': ngc['hostname_virtual'],
-                'netbiosalias': smb['netbiosalias']
-            })
+
+        ad.update({
+            'netbiosname': smb['netbiosname_local'],
+            'netbiosalias': smb['netbiosalias']
+        })
 
         if ad.get('nss_info'):
             ad['nss_info'] = ad['nss_info'].upper()
@@ -179,7 +172,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
+        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias']:
             if key in ad:
                 ad.pop(key)
 
@@ -198,9 +191,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
     @private
     async def update_netbios_data(self, old, new):
-        smb_ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         must_update = False
-        for key in ['netbiosname', 'netbiosalias', 'netbiosname_a', 'netbiosname_b']:
+        for key in ['netbiosname', 'netbiosalias']:
             if key in new and old[key] != new[key]:
                 if old['enable']:
                     raise ValidationError(
@@ -214,25 +206,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if not must_update:
             return
 
-        if smb_ha_mode != 'UNIFIED':
-            await self.middleware.call(
-                'smb.update',
-                {
-                    'netbiosname': new['netbiosname'],
-                    'netbiosalias': new['netbiosalias']
-                }
-            )
-
-        # updating hostname virtual does not go through same valiation as netbios name
-        # in smb.update and so perform additional validation here
-        elif not await self.middleware.call('smb.validate_netbios_name', new['netbiosname']):
-            raise ValidationError('activedirectory_update.netbiosname', 'Invalid NetBIOS name')
-
-        else:
-            await self.middleware.call('smb.update', {'netbiosalias': new['netbiosalias']})
-            await self.middleware.call('network.configuration.update', {'hostname_virtual': new['netbiosname']})
-
-        return
+        await self.middleware.call('smb.update', {
+            'netbiosname': new['netbiosname'],
+            'netbiosalias': new['netbiosalias']
+        })
 
     @private
     async def common_validate(self, new, old, verrors):
