@@ -1,5 +1,6 @@
 <%
     import json
+    import os
 
     enabled = middleware.call_sync('network.configuration.config')['service_announcement']['wsd']
     if enabled:
@@ -16,5 +17,12 @@
         "workgroup": middleware.call_sync('smb.getparm', 'workgroup', 'GLOBAL'),
         "enabled": middleware.call_sync('network.configuration.config')['service_announcement']['wsd']
     }
+
+    try:
+        os.chown('/var/log/wsdd.log', 1, 1)
+    except FileNotFoundError:
+        with open('/var/log/wsdd.log', 'w') as f:
+            os.fchown(f.fileno(), 1, 1)
+
 %>
 ${json.dumps(conf)}
