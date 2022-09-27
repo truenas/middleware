@@ -170,7 +170,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             await self.middleware.run_in_thread(self._check_setup_connection)
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_create', data)
+        await self.common_validation(verrors, 'vm_create', data)
         verrors.check()
 
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
@@ -179,7 +179,8 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         return await self.get_instance(vm_id)
 
-    async def __common_validation(self, verrors, schema_name, data, old=None):
+    @private
+    async def common_validation(self, verrors, schema_name, data, old=None):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
 
@@ -314,7 +315,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 raise CallError(f'Unable to locate domain for {old["name"]}')
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_update', new, old=old)
+        await self.common_validation(verrors, 'vm_update', new, old=old)
         if verrors:
             raise verrors
 
