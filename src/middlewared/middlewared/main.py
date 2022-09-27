@@ -1836,7 +1836,7 @@ def main():
     parser.add_argument('--loop-debug', action='store_true')
     parser.add_argument('--trace-malloc', '-tm', action='store', nargs=2, type=int, default=False)
     parser.add_argument('--overlay-dirs', '-o', action='append')
-    parser.add_argument('--disable-debug-mode', action='store_true', default=False)
+    parser.add_argument('--debug-mode', action='store_true', default=False)
     parser.add_argument('--debug-level', choices=[
         'TRACE',
         'DEBUG',
@@ -1871,7 +1871,7 @@ def main():
         with open(pidpath, "w") as _pidfile:
             _pidfile.write(f"{str(os.getpid())}\n")
 
-    conf.debug_mode = not args.disable_debug_mode
+    conf.debug_mode = args.debug_mode
 
     Middleware(
         loop_debug=args.loop_debug,
