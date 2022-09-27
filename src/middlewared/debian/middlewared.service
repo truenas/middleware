@@ -10,7 +10,7 @@ Conflicts=reboot.target shutdown.target halt.target
 
 [Service]
 Type=notify
-ExecStart=/usr/bin/middlewared --log-handler=file --disable-debug-mode
+ExecStart=/usr/bin/middlewared --log-handler=file
 TimeoutStartSec=240
 Restart=always
 # SIGTERM will only happen if systemd kills process that timed out booting (it is the only case in which we don't
