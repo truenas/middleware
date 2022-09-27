@@ -9,7 +9,7 @@ sys.path.append(apifolder)
 from functions import POST, GET, PUT, SSH_TEST, wait_on_job
 from auto_config import ha, dev_test, hostname, user, password
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+#pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
@@ -319,7 +319,7 @@ def test_13_get_reporing_graph_data_before_moving_system_dataset_to_the_second_p
     results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_1'] = results.json()[0]
+    reporing_data['graph_data_3'] = results.json()[0]
 
 
 def test_14_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_data):
@@ -381,10 +381,10 @@ def test_17_verify_reporing_graph_data_still_get_collected_after_moveing_the_sys
     results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_2'] = results.json()[0]
+    reporing_data['graph_data_4'] = results.json()[0]
 
-    assert reporing_data['graph_data_1']['data'][-2] in reporing_data['graph_data_2']['data']
-    assert reporing_data['graph_data_1']['data'] != reporing_data['graph_data_2']['data']
+    assert reporing_data['graph_data_3']['data'][-2] in reporing_data['graph_data_4']['data']
+    assert reporing_data['graph_data_3']['data'] != reporing_data['graph_data_4']['data']
 
 
 def test_18_system_dataset_can_be_moved_to_another_pool_successfully_when_all_services_running(request):
