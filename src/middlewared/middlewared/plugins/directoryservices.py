@@ -505,9 +505,56 @@ class DirectoryServices(Service):
                                     "not work correctly.", exc_info=True)
 
         await self.middleware.call(health_check)
-        refresh = await self.middleware.call('dscache.refresh')
-        await refresh.wait()
+
+    @private
+    @job(lock='ds_init', lock_queue_size=1)
+    def setup(self, job):
+        def restart_dependent_services():
+            to_check = ['cifs', 'nfs']
+            for svc in self.middleware.call_sync('service.query'):
+                if not svc['enable'] or svc['service'] not in to_check:
+                    continue
+
+                self.middleware.call_sync('service.restart', svc['service'])
+
+        config_in_progress = self.middleware.call_sync("core.get_jobs", [
+            ["method", "=", "smb.configure"],
+            ["state", "=", "RUNNING"]
+        ])
+        if config_in_progress:
+            job.set_progress(0, "waiting for smb.configure to complete")
+            wait_id = self.middleware.call_sync('core.job_wait', config_in_progress[0]['id'])
+            wait_id.wait()
+
+        ldap_enabled = self.middleware.call_sync('ldap.config')['enable']
+        ad_enabled = self.middleware.call_sync('activedirectory.config')['enable']
+        if not ldap_enabled and not ad_enabled:
+            job.set_progress(100, "No directory services enabled.")
+            return
+
+        # Started methods will transition us from JOINING to HEALTHY
+        # which allows the cache refresh to proceed
+        if ad_enabled:
+            self.middleware.call_sync('activedirectory.started')
+        else:
+            self.middleware.call_sync('ldap.started')
+
+        job.set_progress(10, 'Refreshing cache'),
+        cache_refresh = self.middleware.call_sync('dscache.refresh')
+        cache_refresh.wait()
+
+        job.set_progress(75, 'Restarting dependent services')
+        restart_dependent_services()
+        job.set_progress(100, 'Setup complete')
 
 
-def setup(middleware):
+async def __init_directory_services(middleware, event_type, args):
+    if args['id'] != 'ready':
+        return
+
+    await middleware.call('directoryservices.setup')
+
+
+async def setup(middleware):
+    middleware.event_subscribe('system', __init_directory_services)
     middleware.event_register('directoryservices.status', 'Sent on directory service state changes.')
