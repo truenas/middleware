@@ -3,7 +3,9 @@
 import pytest
 import sys
 import os
+import time
 from pytest_dependency import depends
+from middlewared.test.integration.utils import call
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, PUT, SSH_TEST, wait_on_job
@@ -104,7 +106,10 @@ def test_03_verify_the_first_pool_created_with_encrypted_root_dataset_become_the
 
 
 def test_04_get_reporing_graph_data_before_moving_system_dataset_to_an_encrypted_root_dataset(reporing_data):
-    results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
+    now = int(time.time())
+    result = call("reporting.get_data", [{"name": "cpu"}], {"start": now - 3600, "end": now})
+    assert result[0]["data"], result
+    results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}], "reporting_query": {"start": now - 3600, "end": now}})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     reporing_data['graph_data_1'] = results.json()[0]
