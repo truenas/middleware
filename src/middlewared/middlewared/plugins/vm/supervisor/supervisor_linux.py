@@ -1,3 +1,5 @@
+import shlex
+
 from middlewared.plugins.vm.devices import CDROM, DISK, DISPLAY, RAW
 from middlewared.utils import Nid
 
@@ -13,7 +15,11 @@ class VMSupervisor(VMSupervisorBase):
         )
 
     def commandline_xml(self):
-        return []
+        return [create_element(
+            'commandline', xmlns='http://libvirt.org/schemas/domain/qemu/1.0', attribute_dict={
+                'children': [create_element('arg', value=arg) for arg in shlex.split(self.vm_data['command_line_args'])]
+            }
+        )]
 
     def os_xml(self):
         children = [create_element(
