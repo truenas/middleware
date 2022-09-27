@@ -22,3 +22,47 @@ async def test_vm_license_active_response(ha_capable, license_features, should_w
     m['system.license'] = lambda *args: {'features': license_features}
 
     assert await vm_svc.license_active() is should_work
+
+
+@pytest.mark.parametrize('license_active', [
+    True,
+    False,
+])
+@pytest.mark.asyncio
+async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
+    m = Middleware()
+    vm_svc = VMService(m)
+    vm_payload = {
+        'name': 'test_vm',
+        'description': '',
+        'vcpus': 0,
+        'memory': 14336,
+        'min_memory': None,
+        'autostart': False,
+        'time': 'LOCAL',
+        'bootloader': 'UEFI',
+        'cores': 1,
+        'threads': 1,
+        'hyperv_enlightenments': False,
+        'shutdown_timeout': 90,
+        'cpu_mode': 'HOST-PASSTHROUGH',
+        'cpu_model': None,
+        'cpuset': None,
+        'nodeset': None,
+        'pin_vcpus': False,
+        'hide_from_msr': False,
+        'ensure_display_device': True,
+        'arch_type': None,
+        'machine_type': None,
+        'uuid': '64e31dd7-8c76-4dca-8b4b-0126b8853c5b',
+    }
+
+    m['vm.license_active'] = lambda *args: license_active
+    m['vm.query'] = lambda *args: []
+
+    verrors = ValidationErrors()
+    await vm_svc.common_validation(verrors, 'vm_create', vm_payload)
+
+    assert [e.errmsg for e in verrors.errors] == (
+        [] if license_active else ['System is not licensed to use VMs']
+    )

@@ -35,7 +35,7 @@ async def test_kubernetes_configuration_for_licensed_and_unlicensed_systems(ha_c
     m['interface.choices'] = lambda *args: []
     m['interface.ip_in_use'] = lambda *args: [{
         'type': 'INET',
-        'address': '0.0.0.0', 
+        'address': '0.0.0.0',
         'netmask': 0,
         'broadcast': '255.255.255.255'
     }]
