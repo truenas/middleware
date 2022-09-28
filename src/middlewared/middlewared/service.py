@@ -1994,7 +1994,8 @@ class CoreService(Service):
         Str('filename'),
         Bool('buffered', default=False),
     )
-    async def download(self, method, args, filename, buffered):
+    @pass_app(rest=True)
+    async def download(self, app, method, args, filename, buffered):
         """
         Core helper to call a job marked for download.
 
@@ -2005,7 +2006,7 @@ class CoreService(Service):
         Returns the job id and the URL for download.
         """
         job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe(buffered)))
-        token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id}, app=app)
         self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 

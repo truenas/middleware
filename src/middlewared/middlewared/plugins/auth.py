@@ -317,7 +317,7 @@ class AuthService(Service):
     @no_auth_required
     @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
     @returns(Str('token'))
-    @pass_app()
+    @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs):
         """
         Generate a token to be used for authentication.
@@ -328,7 +328,7 @@ class AuthService(Service):
         `attrs` is a general purpose object/dictionary to hold information about the token.
         """
         if not app.authenticated:
-            raise CallError('Not authenticated', errno.EACCESS)
+            raise CallError('Not authenticated', errno.EACCES)
 
         if ttl is None:
             ttl = 600
