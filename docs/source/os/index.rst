@@ -8,3 +8,4 @@ OS
    boot-cd.rst
    boot-process.rst
    python.rst
+   root-filesystem.rst
