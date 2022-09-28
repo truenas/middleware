@@ -1,7 +1,6 @@
 from middlewared.schema import accepts, returns, List, Str
 from middlewared.service import Service, throttle, pass_app, no_auth_required, private
 from middlewared.plugins.failover_.utils import throttle_condition
-from middlewared.plugins.failover_.journal import JOURNAL_THREAD
 from middlewared.service import CallError
 
 
@@ -46,16 +45,12 @@ class FailoverDisabledReasonsService(Service):
         return list(reasons)
 
     @private
-    def journal_thread_running(self, app):
-        return JOURNAL_THREAD is not None and JOURNAL_THREAD.is_alive()
-
-    @private
     def get_local_reasons(self, app, ifaces, reasons):
         """This method checks the local node to try and determine its failover status."""
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
 
-        if not self.journal_thread_running(self, app):
+        if not self.middleware.call_sync('failover.journal.thread_running'):
             reasons.add('NO_JOURNAL_SYNC')
 
         crit_iface = vip = master = False
@@ -117,7 +112,7 @@ class FailoverDisabledReasonsService(Service):
                     reasons.add('REM_FAILOVER_ONGOING')
 
             try:
-                rv = self.middleware.call_sync('failover.call_remote', 'failover.disabled.journal_thread_running', app)
+                rv = self.middleware.call_sync('failover.call_remote', 'failover.journal.thread_running')
                 if not rv:
                     reasons.add('REM_NO_JOURNAL_SYNC')
             except CallError as e:

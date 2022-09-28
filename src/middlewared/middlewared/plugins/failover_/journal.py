@@ -9,7 +9,7 @@ from contextlib import suppress
 from time import sleep
 from prctl import set_name
 
-from middlewared.service import CallError
+from middlewared.service import CallError, Service
 from middlewared.plugins.failover_.journal_exceptions import UnableToDetermineOSVersion, OSVersionMismatch
 
 logger = getLogger(__name__)
@@ -231,6 +231,23 @@ class JournalSyncThread(Thread):
             sleep(retry_timeout)
 
 
+class JournalSyncService(Service):
+    THREAD = None
+
+    class Config:
+        private = True
+        namespace = 'failover.journal'
+
+    def thread_running(self):
+        return JournalSyncService.THREAD is not None and JournalSyncService.THREAD.is_alive()
+
+    def setup(self):
+        licensed = self.middleware.call_sync('failover.licensed')
+        if licensed and (JournalSyncService.THREAD is None or not JournalSyncService.THREAD.is_alive()):
+            JournalSyncService.THREAD = JournalSyncThread(middleware=self.middleware, sql_queue=SQL_QUEUE)
+            JournalSyncService.THREAD.start()
+
+
 def hook_datastore_execute_write(middleware, sql, params, options):
     if not options['ha_sync']:
         return
@@ -239,11 +256,7 @@ def hook_datastore_execute_write(middleware, sql, params, options):
 
 
 async def _event_system(middleware, *args, **kwargs):
-    global JOURNAL_THREAD
-    licensed = await middleware.call('failover.licensed')
-    if licensed and (JOURNAL_THREAD is None or not JOURNAL_THREAD.is_alive()):
-        JOURNAL_THREAD = JournalSyncThread(middleware=middleware, sql_queue=SQL_QUEUE)
-        JOURNAL_THREAD.start()
+    await middleware.call('failover.journal.setup')
 
 
 async def setup(middleware):
@@ -252,4 +265,5 @@ async def setup(middleware):
 
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
     middleware.register_hook('system.post_license_update', _event_system)  # catch license change
+    middleware.register_hook('system', _event_system)  # catch middlewared service restart
     ensure_future(_event_system(middleware))  # start thread on middlewared service start/restart
