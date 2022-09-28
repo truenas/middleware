@@ -148,6 +148,9 @@ sas|scsi)
 		sg_format --format --quick /dev/${dev}
 	fi
 
+	# Tell the kernel to refresh the device properties.
+	echo 1 > /sys/block/${dev}/device/rescan
+
 	if [ ${err} -eq 0 ]; then
 		echo "Resize completed successfully."
 	else
