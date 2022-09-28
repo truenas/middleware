@@ -13,21 +13,9 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
-    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
-    CMD_AD_USER = fr"AD02\\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     ad_test = pytest.mark.skip(reason=Reason)
-
-
-BOOT_POOL_DISKS = GET('/boot/get_disks/', controller_a=ha).json()
-ALL_DISKS = list(POST('/device/get_info/', 'DISK', controller_a=ha).json().keys())
-POOL_DISKS = sorted(list(set(ALL_DISKS) - set(BOOT_POOL_DISKS)))
-FIRST_POOL_DISK = [POOL_DISKS[0]]
-ENCRYPTED_POOL_DISK = [POOL_DISKS[1]]
-SECOND_POOL_DISK = [POOL_DISKS[2]]
-SERVICES = []
-
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["controller1_ip"]
@@ -76,6 +64,7 @@ def test_02_get_initial_logs(logs_data):
 
 
 def test_03_verify_the_first_pool_created_with_encrypted_root_dataset_become_the_system_dataset(request, pool_data):
+    pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         'name': 'encrypted',
         'encryption': True,
@@ -85,7 +74,7 @@ def test_03_verify_the_first_pool_created_with_encrypted_root_dataset_become_the
         },
         'topology': {
             'data': [
-                {'type': 'STRIPE', 'disks': ENCRYPTED_POOL_DISK}
+                {'type': 'STRIPE', 'disks': pool_disk}
             ],
         }
     }
@@ -190,12 +179,13 @@ def test_07_verify_logs_collection_still_work_after_enrcripted_dataset_is_delete
 
 @pytest.mark.dependency(name="first_pool")
 def test_08_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool(request, pool_data):
+    pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         "name": 'first_pool',
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": FIRST_POOL_DISK}
+                {"type": "STRIPE", "disks": pool_disk}
             ],
         },
         "allow_duplicate_serials": True,
@@ -217,12 +207,13 @@ def test_08_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool
 @pytest.mark.dependency(name="second_pool")
 def test_09_creating_a_second_pool_and_verify_system_dataset_does_not_move_to_the_new_pool(request, pool_data):
     depends(request, ["first_pool"])
+    pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         "name": 'second_pool',
         "encryption": False,
         "topology": {
             "data": [
-                {"type": "STRIPE", "disks": SECOND_POOL_DISK}
+                {"type": "STRIPE", "disks": pool_disk}
             ],
         },
         "allow_duplicate_serials": True,
