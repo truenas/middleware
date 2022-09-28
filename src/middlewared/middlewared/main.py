@@ -493,7 +493,11 @@ class FileApplication(object):
         if 'method' not in data:
             return web.Response(status=422)
 
-        await authenticate(self.middleware, request, 'CALL', data['method'])
+        authenticated_credentials = await authenticate(self.middleware, request, 'CALL', data['method'])
+        if authenticated_credentials is None:
+            raise web.HTTPUnauthorized()
+        if not authenticated_credentials.authorize('CALL', data['method']):
+            raise web.HTTPForbidden()
 
         filepart = await reader.next()
 
