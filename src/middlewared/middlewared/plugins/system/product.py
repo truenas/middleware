@@ -39,7 +39,7 @@ class SystemService(Service):
         SCALE_ENTERPRISE - TrueNAS SCALE Enterprise, appliance version
         """
         if SystemService.PRODUCT_TYPE is None:
-            if await self.middleware.call('failover.hardware') != 'MANUAL':
+            if await self.is_ha_capable():
                 # HA capable hardware
                 SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
             else:
@@ -56,6 +56,10 @@ class SystemService(Service):
                     SystemService.PRODUCT_TYPE = 'SCALE'
 
         return SystemService.PRODUCT_TYPE
+
+    @private
+    async def is_ha_capable(self):
+        return await self.middleware.call('failover.hardware') != 'MANUAL'
 
     @private
     async def is_enterprise(self):

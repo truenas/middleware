@@ -170,7 +170,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             await self.middleware.run_in_thread(self._check_setup_connection)
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_create', data)
+        await self.common_validation(verrors, 'vm_create', data)
         verrors.check()
 
         vm_id = await self.middleware.call('datastore.insert', 'vm.vm', data)
@@ -179,9 +179,16 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         return await self.get_instance(vm_id)
 
-    async def __common_validation(self, verrors, schema_name, data, old=None):
+    @private
+    async def common_validation(self, verrors, schema_name, data, old=None):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
+
+        if not await self.middleware.call('vm.license_active'):
+            verrors.add(
+                f'{schema_name}.name',
+                'System is not licensed to use VMs'
+            )
 
         if data['min_memory'] and data['min_memory'] > data['memory']:
             verrors.add(
@@ -211,7 +218,8 @@ class VMService(CRUDService, VMSupervisorMixin):
                     )
             elif not await self.middleware.call('vm.supports_virtualization'):
                 verrors.add(
-                    schema_name, 'This system does not support virtualization.')
+                    schema_name, 'This system does not support virtualization.'
+                )
 
         if data.get('arch_type') or data.get('machine_type'):
             choices = await self.middleware.call('vm.guest_architecture_and_machine_choices')
@@ -243,16 +251,22 @@ class VMService(CRUDService, VMSupervisorMixin):
             if old:
                 filters.append(('id', '!=', old['id']))
             if await self.middleware.call('vm.query', filters):
-                verrors.add(f'{schema_name}.name',
-                            'This name already exists.', errno.EEXIST)
+                verrors.add(
+                    f'{schema_name}.name',
+                    'This name already exists.', errno.EEXIST
+                )
             elif not RE_NAME.search(data['name']):
-                verrors.add(f'{schema_name}.name',
-                            'Only alphanumeric characters are allowed.')
+                verrors.add(
+                    f'{schema_name}.name',
+                    'Only alphanumeric characters are allowed.'
+                )
 
         if data['pin_vcpus']:
             if not data['cpuset']:
                 verrors.add(
-                    f'{schema_name}.cpuset', f'Must be specified when "{schema_name}.pin_vcpus" is set.')
+                    f'{schema_name}.cpuset',
+                    f'Must be specified when "{schema_name}.pin_vcpus" is set.'
+                )
             elif len(parse_numeric_set(data['cpuset'])) != vcpus:
                 verrors.add(
                     f'{schema_name}.pin_vcpus',
@@ -301,7 +315,7 @@ class VMService(CRUDService, VMSupervisorMixin):
                 raise CallError(f'Unable to locate domain for {old["name"]}')
 
         verrors = ValidationErrors()
-        await self.__common_validation(verrors, 'vm_update', new, old=old)
+        await self.common_validation(verrors, 'vm_update', new, old=old)
         if verrors:
             raise verrors
 
