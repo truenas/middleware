@@ -102,20 +102,10 @@ def test_03_verify_the_first_pool_created_with_encrypted_root_dataset_become_the
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert results.json()['pool'] == 'encrypted', results.text
-    assert results.json()['basename'] == 'encrypted/.system', results.text
+    assert results.json()['basename'] == 'encrypted/.system', results.textZ
 
 
-def test_04_get_reporing_graph_data_before_moving_system_dataset_to_an_encrypted_root_dataset(reporing_data):
-    now = int(time.time())
-    result = call("reporting.get_data", [{"name": "cpu"}], {"start": now - 3600, "end": now})
-    assert result[0]["data"], result
-    results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}], "reporting_query": {"start": now - 3600, "end": now}})
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_1'] = results.json()[0]
-
-
-def test_05_verify_the_system_dataset_can_move_to_an_encrypted_root_dataset(request):
+def test_04_verify_the_system_dataset_can_move_to_an_encrypted_root_dataset(request):
     results = PUT("/systemdataset/", {'pool': 'boot-pool'})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
@@ -135,7 +125,7 @@ def test_05_verify_the_system_dataset_can_move_to_an_encrypted_root_dataset(requ
     assert results.json()['basename'] == 'encrypted/.system', results.text
 
 
-def test_06_verify_logs_collection_still_work_after_enrcripted_dataset_is_moved_to_system_dataset(logs_data):
+def test_05_verify_logs_collection_still_work_after_enrcripted_dataset_is_moved_to_system_dataset(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
@@ -158,17 +148,7 @@ def test_06_verify_logs_collection_still_work_after_enrcripted_dataset_is_moved_
     assert logs_data['syslog_1'] != logs_data['syslog_2']
 
 
-def test_07_verify_reporing_graph_data_still_get_collected_after_enrcripted_dataset_is_moved_to_system_dataset(reporing_data):
-    results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_2'] = results.json()[0]
-
-    assert reporing_data['graph_data_1']['data'][-2] in reporing_data['graph_data_2']['data']
-    assert reporing_data['graph_data_1']['data'] != reporing_data['graph_data_2']['data']
-
-
-def test_08_delete_the_encrypted_pool_and_verify_the_system_dataset(request, pool_data):
+def test_06_delete_the_encrypted_pool_and_verify_the_system_dataset(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -187,7 +167,7 @@ def test_08_delete_the_encrypted_pool_and_verify_the_system_dataset(request, poo
     assert results.json()['basename'] == 'boot-pool/.system', results.text
 
 
-def test_09_verify_logs_collection_still_work_after_enrcripted_dataset_is_deleted_still_work(logs_data):
+def test_07_verify_logs_collection_still_work_after_enrcripted_dataset_is_deleted_still_work(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
@@ -211,7 +191,7 @@ def test_09_verify_logs_collection_still_work_after_enrcripted_dataset_is_delete
 
 
 @pytest.mark.dependency(name="first_pool")
-def test_10_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool(request, pool_data):
+def test_08_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool(request, pool_data):
     payload = {
         "name": 'first_pool',
         "encryption": False,
@@ -237,7 +217,7 @@ def test_10_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool
 
 
 @pytest.mark.dependency(name="second_pool")
-def test_11_creating_a_second_pool_and_verify_system_dataset_does_not_move_to_the_new_pool(request, pool_data):
+def test_09_creating_a_second_pool_and_verify_system_dataset_does_not_move_to_the_new_pool(request, pool_data):
     depends(request, ["first_pool"])
     payload = {
         "name": 'second_pool',
@@ -263,7 +243,7 @@ def test_11_creating_a_second_pool_and_verify_system_dataset_does_not_move_to_th
     assert results.json()['basename'] == 'first_pool/.system', results.text
 
 
-def test_12_verify_changing_a_system_dataset_is_impossible_while_AD_is_running(request):
+def test_10_verify_changing_a_system_dataset_is_impossible_while_AD_is_running(request):
     depends(request, ["second_pool"])
 
     results = GET("/network/configuration/")
@@ -320,14 +300,7 @@ def test_12_verify_changing_a_system_dataset_is_impossible_while_AD_is_running(r
     assert results.status_code == 200, results.text
 
 
-def test_13_get_reporing_graph_data_before_moving_system_dataset_to_the_second_pool(reporing_data):
-    results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_3'] = results.json()[0]
-
-
-def test_14_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_data):
+def test_11_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
@@ -344,7 +317,7 @@ def test_14_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_da
     logs_data['syslog_4'] = syslog['output'].splitlines()[-1]
 
 
-def test_15_a_system_dataset_can_be_moved_to_second_pool_root_dataset(request):
+def test_12_a_system_dataset_can_be_moved_to_second_pool_root_dataset(request):
     depends(request, ["second_pool"])
     results = PUT("/systemdataset/", {'pool': 'second_pool'})
     assert results.status_code == 200, results.text
@@ -359,7 +332,7 @@ def test_15_a_system_dataset_can_be_moved_to_second_pool_root_dataset(request):
     assert results.json()['basename'] == 'second_pool/.system', results.text
 
 
-def test_16_verify_logs_collection_still_work_after_moving_the_system_dataset_to_the_second_pool(logs_data):
+def test_13_verify_logs_collection_still_work_after_moving_the_system_dataset_to_the_second_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
@@ -382,17 +355,7 @@ def test_16_verify_logs_collection_still_work_after_moving_the_system_dataset_to
     assert logs_data['syslog_4'] != logs_data['syslog_5']
 
 
-def test_17_verify_reporing_graph_data_still_get_collected_after_moveing_the_system_dataset_to_the_second_pool(reporing_data):
-    results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_4'] = results.json()[0]
-
-    assert reporing_data['graph_data_3']['data'][-2] in reporing_data['graph_data_4']['data']
-    assert reporing_data['graph_data_3']['data'] != reporing_data['graph_data_4']['data']
-
-
-def test_18_system_dataset_can_be_moved_to_another_pool_successfully_when_all_services_running(request):
+def test_14_system_dataset_can_be_moved_to_another_pool_successfully_when_all_services_running(request):
     depends(request, ["second_pool"])
     services = {i['service']: i for i in GET('/service').json()}
     services_list = list(services.keys())
@@ -419,7 +382,7 @@ def test_18_system_dataset_can_be_moved_to_another_pool_successfully_when_all_se
             assert results.status_code == 200, results.text
 
 
-def test_19_delete_the_second_pool_and_verify_the_system_dataset(request, pool_data):
+def test_15_delete_the_second_pool_and_verify_the_system_dataset(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -438,7 +401,7 @@ def test_19_delete_the_second_pool_and_verify_the_system_dataset(request, pool_d
     assert results.json()['basename'] == 'first_pool/.system', results.text
 
 
-def test_20_delete_the_firs_pool_and_verify_the_system_dataset_moved_to_the_boot_pool(request, pool_data):
+def test_16_delete_the_firs_pool_and_verify_the_system_dataset_moved_to_the_boot_pool(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
