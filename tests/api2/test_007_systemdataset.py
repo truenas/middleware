@@ -3,15 +3,13 @@
 import pytest
 import sys
 import os
-import time
 from pytest_dependency import depends
-from middlewared.test.integration.utils import call
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, PUT, SSH_TEST, wait_on_job
 from auto_config import ha, dev_test, hostname, user, password
 # comment pytestmark for development testing with --dev-test
-#pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
@@ -32,7 +30,7 @@ SERVICES = []
 
 
 if ha and "virtual_ip" in os.environ:
-    ip = os.environ["virtual_ip"]
+    ip = os.environ["controller1_ip"]
 else:
     from auto_config import ip
 
