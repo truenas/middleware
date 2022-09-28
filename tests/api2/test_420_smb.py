@@ -4,6 +4,7 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
+import contextlib
 import pytest
 import sys
 import os
@@ -11,6 +12,7 @@ from pytest_dependency import depends
 import json
 import re
 from datetime import datetime
+from protocols import SMB
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -43,6 +45,16 @@ root_path_verification = {
     "group": "root",
     "acl": False
 }
+
+@contextlib.contextmanager
+def smb_connection(**kwargs):
+    c = SMB()
+    c.connect(**kwargs)
+
+    try:
+        yield c
+    finally:
+        c.disconnect()
 
 
 @pytest.mark.dependency(name="smb_001")
@@ -129,49 +141,44 @@ def test_011_verify_smbclient_127_0_0_1_connection(request):
     assert 'My Test SMB Share' in results['output'], results['output']
 
 
-def test_012_create_a_file_and_put_on_the_active_directory_share(request):
-    depends(request, ["stating_cifs_service"], scope="session")
-    cmd_test('touch testfile.txt')
-    command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
-        ' -m NT1 -c "put testfile.txt testfile.txt"'
-    results = cmd_test(command)
-    cmd_test('rm testfile.txt')
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+@pytest.mark.parametrize('params', [
+    ('SMB1', 'GUEST'),
+    ('SMB2', 'GUEST'),
+    ('SMB1', 'SHAREUSER'),
+    ('SMB2', 'SHAREUSER')
+])
+def test_012_test_basic_smb_ops(request, params):
+    depends(request, ["service_cifs_running"], scope="session")
+    proto, runas = params
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username=runas,
+        password='testing',
+        smb1=(proto == 'SMB1')
+    ) as c:
+        filename1 = f'testfile1_{proto.lower()}_{runas}.txt'
+        filename2 = f'testfile2_{proto.lower()}_{runas}.txt'
+        dirname = f'testdir_{proto.lower()}_{runas}.txt'
 
+        fd = c.create_file(filename1, 'w')
+        c.write(fd, b'foo')
+        val = c.read(fd, 0, 3)
+        c.close(fd, True)
+        assert val == b'foo'
 
-def test_013_verify_testfile_is_on_the_active_directory_share(request):
-    depends(request, ["stating_cifs_service"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
-    assert results.status_code == 200, results.text
+        c.mkdir(dirname)
+        fd = c.create_file(f'{dirname}/{filename2}', 'w')
+        c.write(fd, b'foo2')
+        val = c.read(fd, 0, 4)
+        c.close(fd, True)
+        assert val == b'foo2'
 
+        c.rmdir(dirname)
 
-def test_014_create_a_directory_on_the_active_directory_share(request):
-    depends(request, ["stating_cifs_service"], scope="session")
-    command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
-        ' -m NT1 -c "mkdir testdir"'
-    results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
-
-def test_015_verify_testdir_exist_on_the_active_directory_share(request):
-    depends(request, ["stating_cifs_service"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
-    assert results.status_code == 200, results.text
-
-
-def test_016_copy_testfile_in_testdir_on_the_active_directory_share(request):
-    depends(request, ["stating_cifs_service"], scope="session")
-    command = f'smbclient //{ip}/{SMB_NAME} -U guest%none' \
-        ' -m NT1 -c "scopy testfile.txt testdir/testfile2.txt"'
-    results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
-
-def test_017_verify_testfile2_exist_in_testdir_on_the_active_directory_share(request):
-    depends(request, ["stating_cifs_service"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
-    assert results.status_code == 200, results.text
-    sleep(10)
+        # DELETE_ON_CLOSE flag was set prior to closing files
+        # and so root directory should be empty
+        assert c.ls('/') == []
 
 
 def test_018_setting_enable_smb1_to_false(request):
@@ -248,48 +255,6 @@ def test_027_checking_to_see_if_nfs_service_is_running(request):
     depends(request, ["service_cifs_running"], scope="session")
     results = GET("/service?service=cifs")
     assert results.json()[0]["state"] == "RUNNING", results.text
-
-
-def test_028_delete_testfile_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        ' -c "rm testfile.txt"'
-    results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
-
-def test_029_verify_testfile_is_deleted_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
-    assert results.status_code == 422, results.text
-
-
-def test_030_delele_testfile_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        ' -c "rm testdir/testfile2.txt"'
-    results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
-
-def test_031_verify_testfile2_is_deleted_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir/testfile2.txt')
-    assert results.status_code == 422, results.text
-
-
-def test_032_delete_testdir_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        ' -c "rmdir testdir"'
-    results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
-
-def test_033_verify_testdir_is_deleted_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testdir')
-    assert results.status_code == 422, results.text
 
 
 def test_034_change_timemachine_to_true(request):
@@ -375,40 +340,22 @@ def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     assert vfs_object in results['output'], results['output']
 
 
-def test_042_create_a_file_and_put_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    cmd_test('touch testfile.txt')
-    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        ' -c "put testfile.txt testfile.txt"'
-    results = cmd_test(command)
-    cmd_test('rm testfile.txt')
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+def test_042_recyclebin_functional_test(request):
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username='shareuser',
+        password='testing',
+    ) as c:
+        fd = c.create_file('testfile.txt', 'w')
+        c.write(fd, b'foo')
+        c.close(fd, True)
 
-
-def test_043_verify_testfile_is_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
-    assert results.status_code == 200, results.text
-
-
-def test_044_delete_testfile_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    command = f'smbclient //{ip}/{SMB_NAME} -U shareuser%testing' \
-        ' -c "rm testfile.txt"'
-    results = cmd_test(command)
-    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
-
-def test_045_verify_testfile_is_deleted_on_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/testfile.txt')
-    assert results.status_code == 422, results.text
-
-
-def test_046_verify_testfile_is_on_recycle_bin_in_the_active_directory_share(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = POST('/filesystem/stat/', f'{SMB_PATH}/.recycle/shareuser/testfile.txt')
-    assert results.status_code == 200, results.text
+        # Above close op also deleted the file and so
+        # we expect file to now exist in the user's .recycle directory
+        fd = c.create_file('./recycle/shareuser/testfile.txt', 'r')
+        val = c.read(fd, 0, 3)
+        assert val == b'foo'
 
 
 @windows_host_cred
