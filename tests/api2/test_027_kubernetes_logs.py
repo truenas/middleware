@@ -39,6 +39,8 @@ def get_chart_release_pods(release_name, timeout=90):
         time_spend += 6
         status = call('chart.release.pod_status', release_name)
 
+    # Give some time for the pods to actually propagate some logs
+    sleep(10)
     chart_pods = call('chart.release.pod_logs_choices', release_name)
     yield chart_pods
 
@@ -46,8 +48,8 @@ def get_chart_release_pods(release_name, timeout=90):
 def test_get_chart_release_logs(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-logs'
-    with official_chart_release('ipfs', release_name) as chart_release:
-        with get_chart_release_pods(release_name, 100) as pods:
+    with official_chart_release('qbittorent', release_name) as chart_release:
+        with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
                     logs = call('k8s.pod.get_logs', pod_name, container, chart_release['namespace'])
@@ -57,8 +59,8 @@ def test_get_chart_release_logs(request):
 def test_get_chart_exec_result(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-exec'
-    with official_chart_release('ipfs', release_name) as chart_release:
-        with get_chart_release_pods(release_name, 100) as pods:
+    with official_chart_release('qbittorent', release_name) as chart_release:
+        with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
                     result = ssh(
