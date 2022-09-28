@@ -46,7 +46,6 @@ def token_auth(allowlist):
     ) as t:
         with client(auth=(t.username, t.password)) as c:
             token = c.call("auth.generate_token")
-            print(token)
             yield dict(anonymous=True, headers={"Authorization": f"Token {token}"})
 
 

@@ -13,9 +13,10 @@ from aiohttp import web
 from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
+from .plugins.auth import (ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
+                           RootTcpSocketSessionManagerCredentials)
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
-from .utils.allowlist import Allowlist
 
 
 async def authenticate(middleware, request, method, resource):
@@ -35,6 +36,8 @@ async def authenticate(middleware, request, method, resource):
         token = await middleware.call('auth.get_token_for_action', token, method, resource)
         if token is None:
             raise web.HTTPForbidden()
+
+        return RootTcpSocketSessionManagerCredentials()  # FIXME
     elif auth.startswith('Basic '):
         twofactor_auth = await middleware.call('auth.twofactor.config')
         if twofactor_auth['enabled']:
@@ -51,9 +54,7 @@ async def authenticate(middleware, request, method, resource):
         if user is None:
             raise web.HTTPUnauthorized()
 
-        allowlist = Allowlist(user['privilege']['allowlist'])
-        if not allowlist.authorize(method, resource):
-            raise web.HTTPForbidden()
+        return LoginPasswordSessionManagerCredentials(user)
     elif auth.startswith('Bearer '):
         key = auth.split(' ', 1)[1]
 
@@ -61,10 +62,9 @@ async def authenticate(middleware, request, method, resource):
         if api_key is None:
             raise web.HTTPUnauthorized()
 
-        if not api_key.authorize(method, resource):
-            raise web.HTTPForbidden()
+        return ApiKeySessionManagerCredentials(api_key)
     else:
-        raise web.HTTPUnauthorized()
+        return None
 
 
 def normalize_query_parameter(value):
@@ -76,11 +76,13 @@ def normalize_query_parameter(value):
 
 class Application:
 
-    def __init__(self, host, remote_port):
+    def __init__(self, host, remote_port, authenticated_credentials):
         self.host = host
         self.remote_port = remote_port
         self.websocket = False
-        self.rest = self.authenticated = True
+        self.rest = True
+        self.authenticated = authenticated_credentials is not None
+        self.authenticated_credentials = authenticated_credentials
 
 
 class RESTfulAPI(object):
@@ -492,10 +494,14 @@ class Resource(object):
                     resource = info["formatter"][len("/api/v2.0"):]
                 else:
                     resource = None
+                authenticated_credentials = await authenticate(self.middleware, req, method.upper(), resource)
                 if not self.rest._methods[getattr(self, method)]['no_auth_required']:
-                    await authenticate(self.middleware, req, method.upper(), resource)
+                    if authenticated_credentials is None:
+                        raise web.HTTPUnauthorized()
+                    if not authenticated_credentials.authorize(method.upper(), resource):
+                        raise web.HTTPForbidden()
                 kwargs.update(dict(req.match_info))
-                return await do(method, req, resp, *args, **kwargs)
+                return await do(method, req, resp, authenticated_credentials, *args, **kwargs)
 
             return on_method
         return object.__getattribute__(self, attr)
@@ -568,7 +574,7 @@ class Resource(object):
 
         return [filters, options] if filters or options else []
 
-    async def do(self, http_method, req, resp, **kwargs):
+    async def do(self, http_method, req, resp, authenticated_credentials, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
 
         methodname = getattr(self, http_method)
@@ -579,6 +585,7 @@ class Resource(object):
             method_kwargs['app'] = Application(
                 req.headers.get('X-Real-Remote-Addr'),
                 req.headers.get('X-Real-Remote-Port'),
+                authenticated_credentials,
             )
 
         has_request_body = False
