@@ -10,11 +10,11 @@ import urllib.parse
 
 from aiohttp import web
 
+from .auth import (ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
+                   RootTcpSocketSessionManagerCredentials)
 from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
-from .plugins.auth import (ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
-                           RootTcpSocketSessionManagerCredentials)
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
 
