@@ -3509,6 +3509,22 @@ class PoolDatasetService(CRUDService):
         if data.get('user_properties_update'):
             props.update(await self.get_create_update_user_props(data['user_properties_update'], True))
 
+        if 'acltype' in props and (acltype_value := props['acltype'].get('value')):
+            if acltype_value == 'nfsv4':
+                props.update({
+                    'aclinherit': {'value': 'passthrough'}
+                })
+            elif acltype_value in ['posix', 'off']:
+                props.update({
+                    'aclmode': {'value': 'discard'},
+                    'aclinherit': {'value': 'discard'}
+                })
+            elif props['acltype'].get('source') == 'INHERIT':
+                props.update({
+                    'aclmode': {'source': 'INHERIT'},
+                    'aclinherit': {'source': 'INHERIT'}
+                })
+
         try:
             await self.middleware.call('zfs.dataset.update', id, {'properties': props})
         except ZFSSetPropertyError as e:
