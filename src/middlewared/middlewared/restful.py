@@ -26,7 +26,7 @@ async def authenticate(middleware, request, method, resource):
         if 'auth_token' in qs:
             token = qs.get('auth_token')[0]
         else:
-            raise web.HTTPUnauthorized()
+            return None
     elif auth.startswith('Token '):
         token = auth.split(' ', 1)[1]
     else:
