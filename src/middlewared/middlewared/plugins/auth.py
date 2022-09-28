@@ -9,6 +9,9 @@ import warnings
 import psutil
 import pyotp
 
+from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCredentials,
+                              UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
+                              LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials)
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, returns, Str
 from middlewared.service import (
     ConfigService, Service, filterable, filterable_returns, filter_list, no_auth_required,
@@ -16,7 +19,6 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils.allowlist import Allowlist
 from middlewared.utils.nginx import get_peer_process, get_remote_addr_port
 from middlewared.utils.crypto import generate_token
 from middlewared.validators import Range
@@ -148,52 +150,6 @@ class Session:
             ).lstrip("_").upper(),
             "created_at": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.created_at),
         }
-
-
-class SessionManagerCredentials:
-    def login(self):
-        pass
-
-    def is_valid(self):
-        return True
-
-    def authorize(self, method, resource):
-        return True
-
-    def notify_used(self):
-        pass
-
-    def logout(self):
-        pass
-
-
-class UserSessionManagerCredentials(SessionManagerCredentials):
-    def __init__(self, user):
-        self.user = user
-        self.allowlist = Allowlist(user["privilege"]["allowlist"])
-
-    def authorize(self, method, resource):
-        return self.allowlist.authorize(method, resource)
-
-
-class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
-    pass
-
-
-class RootTcpSocketSessionManagerCredentials(SessionManagerCredentials):
-    pass
-
-
-class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):
-    pass
-
-
-class ApiKeySessionManagerCredentials(SessionManagerCredentials):
-    def __init__(self, api_key):
-        self.api_key = api_key
-
-    def authorize(self, method, resource):
-        return self.api_key.authorize(method, resource)
 
 
 class TokenSessionManagerCredentials(SessionManagerCredentials):
