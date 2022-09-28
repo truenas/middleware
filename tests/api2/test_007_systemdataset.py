@@ -13,8 +13,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
-    AD_USER = fr"AD02\{ADUSERNAME.lower()}"
-    CMD_AD_USER = fr"AD02\\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     ad_test = pytest.mark.skip(reason=Reason)
