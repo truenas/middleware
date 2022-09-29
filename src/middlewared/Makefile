@@ -6,6 +6,7 @@ stop_service:
 	systemctl stop middlewared
 
 start_service:
+	systemctl daemon-reload
 	systemctl restart middlewared
 
 clean:
@@ -15,6 +16,7 @@ clean:
 
 install:
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
+	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
 install_client:
 	python3 setup_client.py install --single-version-externally-managed --record=/dev/null
