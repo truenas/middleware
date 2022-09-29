@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+
+
 class PortDelegate:
 
     def __init__(self, middleware):
@@ -13,6 +16,13 @@ class ServicePortDelegate(PortDelegate):
     port_fields = NotImplementedError
     service = NotImplementedError
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.port_fields is NotImplementedError:
+            raise ValueError('Port fields must be set for Service port delegate')
+        elif not isinstance(self.port_fields, Iterable):
+            raise ValueError('Port fields must be an iterable')
+
     async def get_ports(self):
         config = await self.middleware.call(f'{self.service}.config')
-        return [config[k] for k in self.port_fields]
+        return [config[k] for k in filter(lambda k: config.get(k), self.port_fields)]
