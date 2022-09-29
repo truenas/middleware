@@ -1627,7 +1627,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if ui_allowlist := await self.call('system.general.get_ui_allowlist'):
             sock = request.transport.get_extra_info('socket')
             if sock.family != socket.AF_UNIX:
-                remote_addr, remote_port = get_remote_addr_port(request)
+                remote_addr, remote_port = await self.run_in_thread(get_remote_addr_port, request)
                 if not addr_in_allowlist(remote_addr, ui_allowlist):
                     await ws.close(
                         code=WSCloseCode.POLICY_VIOLATION,
