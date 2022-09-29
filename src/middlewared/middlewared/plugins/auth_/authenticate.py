@@ -69,3 +69,10 @@ class AuthService(Service):
             'username': username,
             'privilege': await self.middleware.call('privilege.compose_privilege', privileges),
         }
+
+    @private
+    async def authenticate_root(self):
+        return {
+            'username': 'root',
+            'privilege': await self.middleware.call('privilege.full_privilege'),
+        }

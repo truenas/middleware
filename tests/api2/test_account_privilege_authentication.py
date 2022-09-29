@@ -9,7 +9,8 @@ import pytest
 import websocket
 
 from middlewared.client import ClientException
-from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
+from middlewared.test.integration.assets.account import user, unprivileged_user as unprivileged_user_template
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import client, ssh, websocket_url
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,20 @@ def test_unix_socket_auth_calls_allowed_method(unprivileged_user):
 def test_unix_socket_auth_fails_to_call_forbidden_method(unprivileged_user):
     result = ssh(f"sudo -u {unprivileged_user.username} midclt call pool.create", check=False, complete_response=True)
     assert "Not authorized" in result["stderr"]
+
+
+def test_unix_socket_auth_fails_when_user_has_no_privilege():
+    with dataset(f"noconnect_homedir") as homedir:
+        with user({
+            "username": "noconnect",
+            "full_name": "Noconnect",
+            "group_create": True,
+            "groups": [],
+            "home": f"/mnt/{homedir}",
+            "password": "test1234",
+        }):
+            result = ssh(f"sudo -u noconnect midclt call pool.create", check=False, complete_response=True)
+            assert "Not authenticated" in result["stderr"]
 
 
 def test_token_auth_calls_allowed_method(unprivileged_user_token):
