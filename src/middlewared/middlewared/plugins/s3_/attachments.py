@@ -59,6 +59,7 @@ class S3CertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
 class S3ServicePortDelegate(ServicePortDelegate):
 
+    port_fields = ['bindport', 'console_bindport']
     service = 's3'
 
 
