@@ -571,17 +571,23 @@ def check_permission(middleware, app):
     if sock.family == socket.AF_UNIX:
         peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
         pid, uid, gid = struct.unpack('3i', peercred)
-        try:
-            local_user = middleware.call_sync(
-                'datastore.query',
-                'account.bsdusers',
-                [['bsdusr_uid', '=', uid]],
-                {'get': True, 'prefix': 'bsdusr_'},
-            )
-        except MatchNotFound:
-            return
+        if uid == 0:
+            user = middleware.call_sync('auth.authenticate_root')
+        else:
+            try:
+                local_user = middleware.call_sync(
+                    'datastore.query',
+                    'account.bsdusers',
+                    [['bsdusr_uid', '=', uid]],
+                    {'get': True, 'prefix': 'bsdusr_'},
+                )
+            except MatchNotFound:
+                return
 
-        user = middleware.call_sync('auth.authenticate_local_user', local_user['id'], local_user['username'])
+            user = middleware.call_sync('auth.authenticate_local_user', local_user['id'], local_user['username'])
+            if user is None:
+                return
+
         AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
         return
 

@@ -272,3 +272,10 @@ class PrivilegeService(CRUDService):
             compose['web_shell'] |= privilege['web_shell']
 
         return compose
+
+    @private
+    async def full_privilege(self):
+        return {
+            'allowlist': [{'method': '*', 'resource': '*'}],
+            'web_shell': True,
+        }
