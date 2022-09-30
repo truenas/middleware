@@ -74,6 +74,15 @@ class KubernetesService(ConfigService):
         ]
 
     @private
+    async def licensed_for_apps(self):
+        can_run_apps = True
+        if await self.middleware.call('system.is_ha_capable'):
+            license = await self.middleware.call('system.license')
+            can_run_apps = license is not None and 'JAILS' in license['features']
+
+        return can_run_apps
+
+    @private
     async def validate_data(self, data, schema, old_data):
         verrors = ValidationErrors()
 
