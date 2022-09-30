@@ -3,6 +3,9 @@ from collections.abc import Iterable
 
 class PortDelegate:
 
+    name = NotImplementedError
+    title = NotImplementedError
+
     def __init__(self, middleware):
         self.middleware = middleware
         self.logger = middleware.logger

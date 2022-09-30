@@ -59,8 +59,10 @@ class S3CertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
 class S3ServicePortDelegate(ServicePortDelegate):
 
+    name = 's3'
     port_fields = ['bindport', 'console_bindport']
     service = 's3'
+    title = 'S3 Service'
 
 
 async def setup(middleware):

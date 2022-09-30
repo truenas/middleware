@@ -238,8 +238,10 @@ class SSHService(SystemServiceService):
 
 class SSHServicePortDelegate(ServicePortDelegate):
 
+    name = 'ssh'
     port_fields = ['tcpport']
     service = 'ssh'
+    title = 'SSH Service'
 
 
 async def setup(middleware):
