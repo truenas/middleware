@@ -1,6 +1,7 @@
 import os
 
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.common.ports import ServicePortDelegate
 
 
 class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
@@ -48,6 +49,16 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
             await self.middleware.call('service.start', 'kubernetes')
         except Exception:
             self.middleware.logger.error('Failed to start kubernetes')
+
+
+class OpenVPNClientServicePortDelegate(ServicePortDelegate):
+
+    name = 'apps'
+    service = 'kubernetes'
+    title = 'Kubernetes Service'
+
+    async def get_ports(self):
+        return [6443]
 
 
 async def setup(middleware):
