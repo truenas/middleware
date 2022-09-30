@@ -1,9 +1,10 @@
-from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.schema import accepts, returns, Bool, Dict, Dir, Int, Patch, Str
-from middlewared.validators import IpAddress
-from middlewared.service import SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.validators import Match, Port
+
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.common.ports import ServicePortDelegate
+from middlewared.schema import accepts, returns, Bool, Dict, Dir, Int, Patch, Str
+from middlewared.service import SystemServiceService, ValidationErrors
+from middlewared.validators import IpAddress, Match, Port
 
 
 class TFTPModel(sa.Model):
@@ -84,3 +85,13 @@ class TFTPService(SystemServiceService):
         await self._update_service(old, new)
 
         return await self.config()
+
+
+class TFTPServicePortDelegate(ServicePortDelegate):
+
+    port_fields = ['port']
+    service = 'tftp'
+
+
+async def setup(middleware):
+    await middleware.call('port.register_attachment_delegate', TFTPServicePortDelegate(middleware))

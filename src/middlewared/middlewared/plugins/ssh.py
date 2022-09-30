@@ -4,10 +4,12 @@ import os
 import subprocess
 import syslog
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
-from middlewared.validators import Range
-from middlewared.service import private, SystemServiceService
 import middlewared.sqlalchemy as sa
+
+from middlewared.common.ports import ServicePortDelegate
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, ValidationErrors
+from middlewared.service import private, SystemServiceService
+from middlewared.validators import Range
 
 
 class SSHModel(sa.Model):
@@ -234,7 +236,14 @@ class SSHService(SystemServiceService):
             self.middleware.call_sync('datastore.update', 'services.ssh', old['id'], update, {'ha_sync': False})
 
 
+class SSHServicePortDelegate(ServicePortDelegate):
+
+    port_fields = ['tcpport']
+    service = 'ssh'
+
+
 async def setup(middleware):
+    await middleware.call('port.register_attachment_delegate', SSHServicePortDelegate(middleware))
     if await middleware.call('core.is_starting_during_boot'):
         await middleware.call('ssh.cleanup_keys')
         await middleware.call('ssh.generate_keys')
