@@ -506,7 +506,7 @@ class OpenVPNClientModel(sa.Model):
     __tablename__ = 'services_openvpnclient'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    port = sa.Column(sa.Integer(), default=1194)
+    port = sa.Column(sa.Integer(), default=1195)
     protocol = sa.Column(sa.String(4), default='UDP')
     device_type = sa.Column(sa.String(4), default='TUN')
     nobind = sa.Column(sa.Boolean(), default=True)
