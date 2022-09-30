@@ -30,12 +30,16 @@ class VMService(Service, LibvirtConnectionMixin):
 
     @private
     async def license_active(self):
-        # This is supposed to return true if system is either not enterprise
-        # or it is enterprise and has VM feature enabled/configured
-        if not await self.middleware.call('system.is_ha_capable'):
-            return True
+        """
+        If this is HA capable hardware and has NOT been licensed to run VMs
+        then this will return False. Otherwise this will return true.
+        """
+        can_run_vms = True
+        if await self.middleware.call('system.is_ha_capable'):
+            license = await self.middleware.call('system.license')
+            can_run_vms = license is not None and 'VM' in license['features']
 
-        return 'VM' in (await self.middleware.call('system.license'))['features']
+        return can_run_vms
 
     @accepts()
     @returns(Dict(
