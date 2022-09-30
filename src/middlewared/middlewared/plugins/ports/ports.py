@@ -16,3 +16,16 @@ class PortService(Service):
         for delegate in self.DELEGATES:
             ports.extend(await delegate.get_ports())
         return ports
+
+    async def get_in_use(self):
+        # TODO: Remove either this or the above one probably
+        ports = []
+        for delegate in self.DELEGATES:
+            used_ports = await delegate.get_ports()
+            if used_ports:
+                ports.append({
+                    'type': delegate.title,
+                    'ports': used_ports,
+                })
+
+        return ports
