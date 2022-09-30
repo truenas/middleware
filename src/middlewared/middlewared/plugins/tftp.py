@@ -89,8 +89,10 @@ class TFTPService(SystemServiceService):
 
 class TFTPServicePortDelegate(ServicePortDelegate):
 
+    name = 'tftp'
     port_fields = ['port']
     service = 'tftp'
+    title = 'TFTP Service'
 
 
 async def setup(middleware):

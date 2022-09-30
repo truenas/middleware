@@ -3,8 +3,10 @@ from middlewared.common.ports import ServicePortDelegate
 
 class RsyncdServicePortDelegate(ServicePortDelegate):
 
+    name = 'rsyncd'
     port_fields = ['port']
     service = 'rsyncd'
+    title = 'Rsyncd Service'
 
 
 async def setup(middleware):
