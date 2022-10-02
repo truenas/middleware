@@ -3,8 +3,9 @@ import os
 import socket
 from pathlib import Path
 
-from middlewared.validators import IpAddress
+from middlewared.service import ValidationErrors
 from middlewared.plugins.zfs_.utils import ZFSCTL
+from middlewared.validators import IpAddress
 
 
 async def check_path_resides_within_volume(verrors, middleware, name, path):
@@ -99,3 +100,12 @@ async def validate_country(middleware, country_name, verrors, v_field_name):
             v_field_name,
             f'{country_name} not in countries recognized by the system'
         )
+
+
+async def validate_ports(middleware, schema, value):
+    verrors = ValidationErrors()
+    for port_attachment in await middleware.call('port.get_in_use'):
+        if value in port_attachment['ports']:
+            verrors.add(schema, f'The port is being used by {port_attachment["type"]!r}')
+
+    return verrors
