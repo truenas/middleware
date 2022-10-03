@@ -240,7 +240,7 @@ class SSHServicePortDelegate(ServicePortDelegate):
 
     name = 'ssh'
     port_fields = ['tcpport']
-    service = 'ssh'
+    namespace = 'ssh'
     title = 'SSH Service'
 
 

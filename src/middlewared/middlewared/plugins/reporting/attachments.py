@@ -4,6 +4,7 @@ from middlewared.common.ports import ServicePortDelegate
 class ReportingServicePortDelegate(ServicePortDelegate):
 
     name = 'reporting'
+    namespace = 'reporting'
     title = 'Reporting Service'
 
     async def get_ports(self):

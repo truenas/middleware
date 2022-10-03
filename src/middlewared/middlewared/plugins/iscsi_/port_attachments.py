@@ -5,7 +5,7 @@ class ISCSIGlobalServicePortDelegate(ServicePortDelegate):
 
     name = 'iSCSI'
     port_fields = ['listen_port']
-    service = 'iscsi.global'
+    namespace = 'iscsi.global'
     title = 'iSCSI Service'
 
 

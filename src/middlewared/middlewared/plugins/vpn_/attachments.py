@@ -5,7 +5,7 @@ class OpenVPNServerServicePortDelegate(ServicePortDelegate):
 
     name = 'Openvpn Server'
     port_fields = ['port']
-    service = 'openvpn.server'
+    namespace = 'openvpn.server'
     title = 'Openvpn Server Service'
 
 
@@ -13,7 +13,7 @@ class OpenVPNClientServicePortDelegate(ServicePortDelegate):
 
     name = 'Openvpn Client'
     port_fields = ['port']
-    service = 'openvpn.client'
+    namespace = 'openvpn.client'
     title = 'Openvpn Client Service'
 
 

@@ -4,6 +4,7 @@ from middlewared.common.ports import PortDelegate
 class ChartReleasePortDelegate(PortDelegate):
 
     name = 'applications'
+    namespace = 'chart.release'
     title = 'Applications'
 
     async def get_ports(self):

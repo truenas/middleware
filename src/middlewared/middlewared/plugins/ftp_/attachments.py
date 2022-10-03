@@ -5,7 +5,7 @@ class FTPServicePortDelegate(ServicePortDelegate):
 
     name = 'FTP'
     port_fields = ['port']
-    service = 'ftp'
+    namespace = 'ftp'
     title = 'FTP Service'
 
 

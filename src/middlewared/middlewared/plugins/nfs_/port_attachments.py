@@ -5,7 +5,7 @@ class NFSServicePortDelegate(ServicePortDelegate):
 
     name = 'nfs'
     port_fields = ['mountd_port', 'rpcstatd_port', 'rpclockd_port']
-    service = 'nfs'
+    namespace = 'nfs'
     title = 'NFS Service'
 
 

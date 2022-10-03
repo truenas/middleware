@@ -5,7 +5,7 @@ class RsyncdServicePortDelegate(ServicePortDelegate):
 
     name = 'rsyncd'
     port_fields = ['port']
-    service = 'rsyncd'
+    namespace = 'rsyncd'
     title = 'Rsyncd Service'
 
 
