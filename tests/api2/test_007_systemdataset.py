@@ -42,7 +42,7 @@ def test_01_verify_system_dataset_is_set_to_boot_pool():
     assert results.json()['basename'] == 'boot-pool/.system', results.text
 
 
-def test_02_verify_the_first_pool_created_with_encrypted_root_dataset_is_not_to_the_system_dataset(request, pool_data):
+def test_02_verify_sysds_is_moved_after_first_pool_with_encrytion_is_created(request, pool_data):
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         'name': 'encrypted',
@@ -71,7 +71,7 @@ def test_02_verify_the_first_pool_created_with_encrypted_root_dataset_is_not_to_
     assert results.json()['basename'] == 'boot-pool/.system', results.text
 
 
-def test_03_verify_the_system_dataset_cant_move_to_an_encrypted_root_dataset(request):
+def test_03_verify_sysds_cant_move_to_a_passphrase_encrypted_pool(request):
     results = PUT("/systemdataset/", {'pool': 'encrypted'})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
@@ -85,7 +85,7 @@ def test_03_verify_the_system_dataset_cant_move_to_an_encrypted_root_dataset(req
     assert results.json()['basename'] == 'boot-pool/.system', results.text
 
 
-def test_04_delete_the_encrypted_pool_and_verify_the_system_dataset(request, pool_data):
+def test_04_delete_the_encrypted_pool_and_verify_the_sysds(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -105,7 +105,7 @@ def test_04_delete_the_encrypted_pool_and_verify_the_system_dataset(request, poo
 
 
 @pytest.mark.dependency(name="first_pool")
-def test_05_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool(request, pool_data):
+def test_05_verify_the_first_pool_created_become_sysds(request, pool_data):
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         "name": 'first_pool',
@@ -132,7 +132,7 @@ def test_05_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool
 
 
 @pytest.mark.dependency(name="second_pool")
-def test_06_creating_a_second_pool_and_verify_system_dataset_does_not_move_to_the_new_pool(request, pool_data):
+def test_06_creating_a_second_pool_and_verify_it_doesnt_become_sysds(request, pool_data):
     depends(request, ["first_pool"])
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
@@ -214,14 +214,14 @@ def test_07_verify_changing_a_system_dataset_is_impossible_while_AD_is_running(r
     assert results.status_code == 200, results.text
 
 
-def test_08_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_data):
+def test_08_get_logs_before_moving_the_sysds_to_the_second_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
     logs_data['middleware_log_4'] = middlewared_log['output'].splitlines()[-1]
 
 
-def test_09_a_system_dataset_can_be_moved_to_second_pool_root_dataset(request):
+def test_09_move_sysds_to_second_pool(request):
     depends(request, ["second_pool"])
     results = PUT("/systemdataset/", {'pool': 'second_pool'})
     assert results.status_code == 200, results.text
@@ -236,7 +236,7 @@ def test_09_a_system_dataset_can_be_moved_to_second_pool_root_dataset(request):
     assert results.json()['basename'] == 'second_pool/.system', results.text
 
 
-def test_10_verify_logs_collection_still_work_after_moving_the_system_dataset_to_the_second_pool(logs_data):
+def test_10_verify_logs_after_sysds_is_moved_to_second_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
@@ -245,7 +245,7 @@ def test_10_verify_logs_collection_still_work_after_moving_the_system_dataset_to
     assert logs_data['middleware_log_4'] != logs_data['middleware_log_5']
 
 
-def test_11_system_dataset_can_be_moved_to_another_pool_successfully_when_all_services_running(request):
+def test_11_verify_sysds_can_be_moved_while_services_are_running(request):
     depends(request, ["second_pool"])
     services = {i['service']: i for i in GET('/service').json()}
     services_list = list(services.keys())
@@ -272,7 +272,7 @@ def test_11_system_dataset_can_be_moved_to_another_pool_successfully_when_all_se
             assert results.status_code == 200, results.text
 
 
-def test_12_delete_the_second_pool_and_verify_the_system_dataset(request, pool_data):
+def test_12_delete_second_pool_and_verify_sysds_is_moved_to_first_pool(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
@@ -291,7 +291,7 @@ def test_12_delete_the_second_pool_and_verify_the_system_dataset(request, pool_d
     assert results.json()['basename'] == 'first_pool/.system', results.text
 
 
-def test_13_delete_the_firs_pool_and_verify_the_system_dataset_moved_to_the_boot_pool(request, pool_data):
+def test_13_delete_first_pool_and_verify_sysds_moved_to_the_boot_pool(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
