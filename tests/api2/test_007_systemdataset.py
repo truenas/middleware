@@ -89,7 +89,7 @@ def test_03_verify_the_first_pool_created_with_encrypted_root_dataset_become_the
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
     assert results.json()['pool'] == 'encrypted', results.text
-    assert results.json()['basename'] == 'encrypted/.system', results.textZ
+    assert results.json()['basename'] == 'encrypted/.system', results.text
 
 
 def test_04_verify_the_system_dataset_can_move_to_an_encrypted_root_dataset(request):
