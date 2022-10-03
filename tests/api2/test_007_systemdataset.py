@@ -321,7 +321,7 @@ def test_12_move_sysds_to_second_pool(request):
     assert results.json()['basename'] == 'second_pool/.system', results.text
 
 
-def test_13_verify_logs_collection_still_work_after_moving_the_system_dataset_to_the_second_pool(logs_data):
+def test_13_verify_logs_after_sysds_is_moved_to_second_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
