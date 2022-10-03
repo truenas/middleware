@@ -135,7 +135,7 @@ def test_05_verify_logs_after_sysds_is_moved_to_a_passphrase_encrypted_pool(logs
     assert logs_data['syslog_1'] != logs_data['syslog_2']
 
 
-def test_06_delete_the_encrypted_pool_and_verify_the_system_dataset(request, pool_data):
+def test_06_verify_sysds_after_passphrase_encrypted_pool_is_deleted(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
