@@ -47,7 +47,7 @@ def test_02_wipe_all_pool_disk():
 
 
 @pytest.mark.dependency(name="pool_04")
-def test_04_creating_a_pool():
+def test_04_creating_a_pool(pool_data):
     global payload
     payload = {
         "name": pool_name,
@@ -63,39 +63,38 @@ def test_04_creating_a_pool():
     job_id = results.json()
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    pool_data['id'] = job_status['results']['result']['id']
 
 
-def test_05_get_pool_id(request, pool_data):
+def test_05_get_pool_info_by_name(request):
     depends(request, ["pool_04"])
     results = GET(f"/pool?name={pool_name}")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    pool_data['id'] = results.json()[0]['id']
+    assert results.json(), results.text
 
 
-def test_06_get_pool_id_info(request, pool_data):
+def test_06_get_pool_info_by_id(request, pool_data):
     depends(request, ["pool_04"])
     results = GET(f"/pool/id/{pool_data['id']}/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
-    global pool_info
-    pool_info = results
+    pool_data['results'] = results
 
 
 @pytest.mark.parametrize('pool_keys', ["name", "topology:data:disks"])
-def test_07_looking_pool_info_of_(request, pool_keys):
+def test_07_looking_pool_info_of_(request, pool_keys, pool_data):
     depends(request, ["pool_04"])
-    results = pool_info
     if ':' in pool_keys:
         keys_list = pool_keys.split(':')
         if 'disks' in keys_list:
-            info = results.json()[keys_list[0]][keys_list[1]]
+            info = pool_data['results'].json()[keys_list[0]][keys_list[1]]
             disk_list = payload[keys_list[0]][keys_list[1]][0][keys_list[2]]
             for props in info:
                 device = props['device'].partition('p')[0]
-                assert device in disk_list, results.text
-                assert props['disk'] in disk_list, results.text
+                assert device in disk_list, pool_data['results'].text
+                assert props['disk'] in disk_list, pool_data['results'].text
         else:
-            info = results.json()[keys_list[0]][keys_list[1]][keys_list[2]]
+            info = pool_data['results'].json()[keys_list[0]][keys_list[1]][keys_list[2]]
     else:
-        assert payload[pool_keys] == results.json()[pool_keys], results.text
+        assert payload[pool_keys] == pool_data['results'].json()[pool_keys], pool_data['results'].text
