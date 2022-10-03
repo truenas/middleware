@@ -33,6 +33,7 @@ import os
 import shlex
 import tempfile
 
+from middlewared.async_validators import validate_port
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
 from middlewared.validators import Range, Match
@@ -113,6 +114,10 @@ class RsyncdService(SystemServiceService):
 
         new = old.copy()
         new.update(data)
+
+        verrors = ValidationErrors()
+        verrors.extend(await validate_port(self.middleware, 'rscynd.port', new['port'], 'rsyncd'))
+        verrors.check()
 
         await self._update_service(old, new)
 

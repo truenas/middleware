@@ -1,10 +1,13 @@
 import asyncio
 import os
 
+import middlewared.sqlalchemy as sa
+
+from middlewared.async_validators import validate_port
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, returns, Bool, Dict, Int, Patch, Str, ValidationErrors
 from middlewared.service import SharingService, SystemServiceService, private
-import middlewared.sqlalchemy as sa
+
 
 WEBDAV_USER = 'webdav'
 
@@ -244,6 +247,9 @@ class WebDAVService(SystemServiceService):
     @private
     async def validate(self, data, schema_name):
         verrors = ValidationErrors()
+
+        for k in ('tcpport', 'tcpportssl'):
+            verrors.extend(await validate_port(self.middleware, f'{schema_name}.{k}', data[k], 'webdav'))
 
         if data.get('protocol') == 'httphttps' and data.get('tcpport') == data.get('tcpportssl'):
             verrors.add(

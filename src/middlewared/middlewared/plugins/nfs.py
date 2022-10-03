@@ -7,12 +7,11 @@ import socket
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.validators import Match, Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.path import is_child
 
 
 class NFSModel(sa.Model):
@@ -176,6 +175,9 @@ class NFSService(SystemServiceService):
 
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         new_v4_krb_enabled = new["v4_krb"] or keytab_has_nfs
+
+        for k in ['mountd_port', 'rpcstatd_port', 'rpclockd_port']:
+            verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs'))
 
         if await self.middleware.call("failover.licensed") and new["v4"] and new_v4_krb_enabled:
             gc = await self.middleware.call("datastore.config", "network.globalconfiguration")

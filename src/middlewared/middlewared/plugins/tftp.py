@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.common.ports import ServicePortDelegate
 from middlewared.schema import accepts, returns, Bool, Dict, Dir, Int, Patch, Str
 from middlewared.service import SystemServiceService, ValidationErrors
@@ -79,8 +79,8 @@ class TFTPService(SystemServiceService):
         if new['host'] not in await self.host_choices():
             verrors.add('tftp_update.host', 'Please provide a valid ip address')
 
-        if verrors:
-            raise verrors
+        verrors.extend(await validate_port(self.middleware, 'tftp_update.port', new['port'], 'tftp'))
+        verrors.check()
 
         await self._update_service(old, new)
 
@@ -90,8 +90,8 @@ class TFTPService(SystemServiceService):
 class TFTPServicePortDelegate(ServicePortDelegate):
 
     name = 'tftp'
-    port_fields = ['port']
     namespace = 'tftp'
+    port_fields = ['port']
     title = 'TFTP Service'
 
 

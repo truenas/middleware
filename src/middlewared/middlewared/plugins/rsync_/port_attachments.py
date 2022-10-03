@@ -4,8 +4,8 @@ from middlewared.common.ports import ServicePortDelegate
 class RsyncdServicePortDelegate(ServicePortDelegate):
 
     name = 'rsyncd'
-    port_fields = ['port']
     namespace = 'rsyncd'
+    port_fields = ['port']
     title = 'Rsyncd Service'
 
 

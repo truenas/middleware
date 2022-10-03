@@ -1,4 +1,4 @@
-from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
 from middlewared.validators import Range, Hostname
@@ -104,6 +104,9 @@ class S3Service(SystemServiceService):
                 verrors.add(
                     f's3_update.{attr}', f'Attribute should be {minlen} to {maxlen} in length'
                 )
+
+        for k in ('bindport', 'console_bindport'):
+            verrors.extend(await validate_port(self.middleware, f's3_update.{k}', new[k], 's3'))
 
         if not new['storage_path'] and await self.middleware.call('service.started', 's3'):
             verrors.add('s3_update.storage_path', 'S3 must be stopped before unsetting storage path.')
