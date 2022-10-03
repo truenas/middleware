@@ -344,7 +344,7 @@ def test_13_verify_logs_after_sysds_is_moved_to_second_pool(logs_data):
     assert logs_data['syslog_4'] != logs_data['syslog_5']
 
 
-def test_14_system_dataset_can_be_moved_to_another_pool_successfully_when_all_services_running(request):
+def test_14_verify_sysds_can_be_moved_while_services_are_running(request):
     depends(request, ["second_pool"])
     services = {i['service']: i for i in GET('/service').json()}
     services_list = list(services.keys())
