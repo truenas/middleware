@@ -154,7 +154,7 @@ def test_06_delete_the_encrypted_pool_and_verify_the_system_dataset(request, poo
     assert results.json()['basename'] == 'boot-pool/.system', results.text
 
 
-def test_07_verify_logs_collection_still_work_after_enrcripted_dataset_is_deleted_still_work(logs_data):
+def test_07_verify_logs_after_passphrase_encrypted_pool_is_deleted(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
