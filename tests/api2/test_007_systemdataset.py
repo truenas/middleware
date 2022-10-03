@@ -112,7 +112,7 @@ def test_04_verify_the_system_dataset_can_move_to_an_encrypted_root_dataset(requ
     assert results.json()['basename'] == 'encrypted/.system', results.text
 
 
-def test_05_verify_logs_collection_still_work_after_enrcripted_dataset_is_moved_to_system_dataset(logs_data):
+def test_05_verify_logs_after_sysds_is_moved_to_a_passphrase_encrypted_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
