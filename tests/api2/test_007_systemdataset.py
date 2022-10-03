@@ -306,7 +306,7 @@ def test_11_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_da
     logs_data['syslog_4'] = syslog['output'].splitlines()[-1]
 
 
-def test_12_a_system_dataset_can_be_moved_to_second_pool_root_dataset(request):
+def test_12_move_sysds_to_second_pool(request):
     depends(request, ["second_pool"])
     results = PUT("/systemdataset/", {'pool': 'second_pool'})
     assert results.status_code == 200, results.text
