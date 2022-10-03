@@ -7,7 +7,7 @@ class PortService(Service):
 
     DELEGATES = {}
     SYSTEM_USED_PORTS = [
-        {'type': 'System', 'ports': [6000]},
+        {'title': 'System', 'ports': [6000], 'namespace': 'system'},
     ]
 
     class Config:
@@ -30,7 +30,7 @@ class PortService(Service):
             if used_ports:
                 ports.append({
                     'namespace': delegate.namespace,
-                    'type': delegate.title,
+                    'title': delegate.title,
                     'ports': used_ports,
                 })
 
