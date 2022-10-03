@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.pytest.unit.helpers import load_compound_service
@@ -45,8 +46,8 @@ async def test_create_schema_formation():
 
     m['chart.release.validate_locked_host_path'] = chart_release_svc.validate_locked_host_path
     m['pool.dataset.path_in_locked_datasets'] = lambda *args: True
-
-    with pytest.raises(ValidationErrors) as verrors:
-        await chart_release_svc.validate_values(QUESTION_DATA, values, False)
-
+    with patch('middlewared.schema.HostPath.validate') as validation:
+        validation.return_value = ValidationErrors()
+        with pytest.raises(ValidationErrors) as verrors:
+            await chart_release_svc.validate_values(QUESTION_DATA, values, False)
     assert 'chart_release_create.appVolumeMounts.transcode.hostPath' in verrors.value
