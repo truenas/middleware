@@ -371,7 +371,7 @@ def test_14_verify_sysds_can_be_moved_while_services_are_running(request):
             assert results.status_code == 200, results.text
 
 
-def test_15_delete_the_second_pool_and_verify_the_system_dataset(request, pool_data):
+def test_15_delete_second_pool_and_verify_sysds_is_moved_to_first_pool(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
