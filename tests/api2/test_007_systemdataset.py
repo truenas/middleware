@@ -232,7 +232,7 @@ def test_09_verify_sysds_does_not_move_after_second_pool_is_created(request, poo
     assert results.json()['basename'] == 'first_pool/.system', results.text
 
 
-def test_10_verify_changing_a_system_dataset_is_impossible_while_AD_is_running(request):
+def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(request):
     depends(request, ["second_pool"])
 
     results = GET("/network/configuration/")
