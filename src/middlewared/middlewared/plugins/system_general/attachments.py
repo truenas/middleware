@@ -5,7 +5,7 @@ class SystemGeneralServicePortDelegate(ServicePortDelegate):
 
     name = 'webui'
     port_fields = ['ui_port', 'ui_httpsport']
-    service = 'system.general'
+    namespace = 'system.general'
     title = 'WebUI Service'
 
 

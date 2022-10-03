@@ -51,10 +51,10 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
             self.middleware.logger.error('Failed to start kubernetes')
 
 
-class OpenVPNClientServicePortDelegate(ServicePortDelegate):
+class KubernetesServicePortDelegate(ServicePortDelegate):
 
     name = 'apps'
-    service = 'kubernetes'
+    namespace = 'kubernetes'
     title = 'Kubernetes Service'
 
     async def get_ports(self):

@@ -4,13 +4,14 @@ from collections.abc import Iterable
 class PortDelegate:
 
     name = NotImplementedError
+    namespace = NotImplementedError
     title = NotImplementedError
 
     def __init__(self, middleware):
         self.middleware = middleware
         self.logger = middleware.logger
-        for k in ('name', 'title'):
-            if not getattr(self, k):
+        for k in ('name', 'namespace', 'title'):
+            if getattr(self, k) is NotImplementedError:
                 raise ValueError(f'{k!r} must be specified for port delegate')
 
     async def get_ports(self):
@@ -20,7 +21,6 @@ class PortDelegate:
 class ServicePortDelegate(PortDelegate):
     # service object
     port_fields = NotImplementedError
-    service = NotImplementedError
 
     async def basic_checks(self):
         if self.port_fields is NotImplementedError:
@@ -30,5 +30,5 @@ class ServicePortDelegate(PortDelegate):
 
     async def get_ports(self):
         await self.basic_checks()
-        config = await self.middleware.call(f'{self.service}.config')
+        config = await self.middleware.call(f'{self.namespace}.config')
         return [config[k] for k in filter(lambda k: config.get(k), self.port_fields)]

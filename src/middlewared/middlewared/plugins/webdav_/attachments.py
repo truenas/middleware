@@ -5,7 +5,7 @@ class WebdavServicePortDelegate(ServicePortDelegate):
 
     name = 'webdav'
     port_fields = ['tcpport', 'tcpportssl']
-    service = 'webdav'
+    namespace = 'webdav'
     title = 'Webdav Service'
 
 

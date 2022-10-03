@@ -12,7 +12,7 @@ class KMIPServicePortDelegate(ServicePortDelegate):
 
     name = 'kmip'
     port_fields = ['port']
-    service = 'kmip'
+    namespace = 'kmip'
     title = 'KMIP Service'
 
 

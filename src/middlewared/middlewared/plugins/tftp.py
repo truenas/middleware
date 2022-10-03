@@ -91,7 +91,7 @@ class TFTPServicePortDelegate(ServicePortDelegate):
 
     name = 'tftp'
     port_fields = ['port']
-    service = 'tftp'
+    namespace = 'tftp'
     title = 'TFTP Service'
 
 

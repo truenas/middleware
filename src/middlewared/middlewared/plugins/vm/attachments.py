@@ -129,6 +129,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 class VMPortDelegate(PortDelegate):
 
     name = 'vms'
+    namespace = 'vm'
     title = 'VM Service'
 
     async def get_ports(self):
