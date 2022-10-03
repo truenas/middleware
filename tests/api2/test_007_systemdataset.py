@@ -178,7 +178,7 @@ def test_07_verify_logs_after_passphrase_encrypted_pool_is_deleted(logs_data):
 
 
 @pytest.mark.dependency(name="first_pool")
-def test_08_creating_a_first_pool_and_verify_system_dataset_move_to_the_new_pool(request, pool_data):
+def test_08_verify_sysds_moves_to_first_created_zpool(request, pool_data):
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         "name": 'first_pool',
