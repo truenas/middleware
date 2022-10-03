@@ -289,7 +289,7 @@ def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(request):
     assert results.status_code == 200, results.text
 
 
-def test_11_get_logs_before_moving_the_system_dataset_to_the_second_pool(logs_data):
+def test_11_get_logs_before_moving_the_sysds_to_the_second_pool(logs_data):
     cmd = "cat /var/log/middlewared.log"
     middlewared_log = SSH_TEST(cmd, user, password, ip)
     assert middlewared_log['result'] is True, str(middlewared_log)
