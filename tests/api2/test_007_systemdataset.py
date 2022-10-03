@@ -92,7 +92,7 @@ def test_03_verify_sysds_is_moved_after_first_pool_is_created(request, pool_data
     assert results.json()['basename'] == 'encrypted/.system', results.text
 
 
-def test_04_verify_the_system_dataset_can_move_to_an_encrypted_root_dataset(request):
+def test_04_verify_sysds_can_move_to_a_passphrase_encrypted_pool(request):
     results = PUT("/systemdataset/", {'pool': 'boot-pool'})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), int), results.text
