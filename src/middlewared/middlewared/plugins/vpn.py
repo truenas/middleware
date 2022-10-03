@@ -3,10 +3,12 @@ import os
 import subprocess
 import tempfile
 
+import middlewared.sqlalchemy as sa
+
+from middlewared.async_validators import validate_port
 from middlewared.common.listen import SystemServiceListenSingleDelegate
 from middlewared.service import CallError, SystemServiceService, private
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, Patch, Ref, returns, Str, ValidationErrors
-import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, run
 from middlewared.validators import Port, Range
 
@@ -180,6 +182,8 @@ class OpenVPN:
     @staticmethod
     async def common_validation(middleware, data, schema, mode):
         verrors = ValidationErrors()
+
+        verrors.extend(await validate_port(middleware, f'{schema}.port', data['port'], f'openvpn.{schema}'))
 
         if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
             verrors.add(

@@ -4,8 +4,8 @@ from middlewared.common.ports import ServicePortDelegate
 class FTPServicePortDelegate(ServicePortDelegate):
 
     name = 'FTP'
-    port_fields = ['port']
     namespace = 'ftp'
+    port_fields = ['port']
     title = 'FTP Service'
 
 

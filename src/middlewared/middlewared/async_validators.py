@@ -102,10 +102,10 @@ async def validate_country(middleware, country_name, verrors, v_field_name):
         )
 
 
-async def validate_ports(middleware, schema, value):
+async def validate_port(middleware, schema, value, whitelist_namespace=None):
     verrors = ValidationErrors()
     for port_attachment in await middleware.call('port.get_in_use'):
-        if value in port_attachment['ports']:
+        if value in port_attachment['ports'] and port_attachment['namespace'] != whitelist_namespace:
             verrors.add(schema, f'The port is being used by {port_attachment["type"]!r}')
 
     return verrors

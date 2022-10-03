@@ -4,16 +4,16 @@ from middlewared.common.ports import ServicePortDelegate
 class OpenVPNServerServicePortDelegate(ServicePortDelegate):
 
     name = 'Openvpn Server'
-    port_fields = ['port']
     namespace = 'openvpn.server'
+    port_fields = ['port']
     title = 'Openvpn Server Service'
 
 
 class OpenVPNClientServicePortDelegate(ServicePortDelegate):
 
     name = 'Openvpn Client'
-    port_fields = ['port']
     namespace = 'openvpn.client'
+    port_fields = ['port']
     title = 'Openvpn Client Service'
 
 

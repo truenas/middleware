@@ -1,5 +1,6 @@
 import middlewared.sqlalchemy as sa
 
+from middlewared.async_validators import validate_port
 from middlewared.schema import Bool, Dict, Int, Patch, Str
 from middlewared.service import accepts, CallError, ConfigService, job, private, returns, ValidationErrors
 from middlewared.validators import Port
@@ -106,6 +107,8 @@ class KMIPService(ConfigService):
             verrors.extend((await self.middleware.call(
                 'certificate.cert_services_validation', new['certificate'], 'kmip_update.certificate', False
             )))
+
+        verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
 
         ca = await self.middleware.call('certificateauthority.query', [['id', '=', new['certificate_authority']]])
         if ca and not verrors:

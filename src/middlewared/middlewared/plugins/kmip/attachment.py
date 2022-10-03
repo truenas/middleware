@@ -11,8 +11,8 @@ class KmipCertificateAttachment(CertificateServiceAttachmentDelegate):
 class KMIPServicePortDelegate(ServicePortDelegate):
 
     name = 'kmip'
-    port_fields = ['port']
     namespace = 'kmip'
+    port_fields = ['port']
     title = 'KMIP Service'
 
 

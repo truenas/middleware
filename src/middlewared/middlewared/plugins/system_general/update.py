@@ -1,9 +1,11 @@
 import asyncio
 import syslog
 
+import middlewared.sqlalchemy as sa
+
+from middlewared.async_validators import validate_port
 from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, returns, Str
-import middlewared.sqlalchemy as sa
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import run
 from middlewared.validators import Range
@@ -107,6 +109,9 @@ class SystemGeneralService(ConfigService):
     @private
     async def validate_general_settings(self, data, schema):
         verrors = ValidationErrors()
+
+        for k in ('ui_port', 'ui_httpsport'):
+            verrors.extend(await validate_port(self.middleware, f'{schema}.{k}', data[k], 'system.general'))
 
         language = data.get('language')
         system_languages = await self.middleware.call('system.general.language_choices')

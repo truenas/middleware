@@ -1,4 +1,4 @@
-from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname
+from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
 from middlewared.schema import Bool, Dict, Dir, Int, Str
 from middlewared.validators import Exact, Match, Or, Range
 from middlewared.service import private, SystemServiceService, ValidationErrors
@@ -213,6 +213,8 @@ class FTPService(SystemServiceService):
 
         if new["masqaddress"]:
             await resolve_hostname(self.middleware, verrors, "ftp_update.masqaddress", new["masqaddress"])
+
+        verrors.extend(await validate_port(self.middleware, "ftp_update.port", new["port"], "ftp"))
 
         if verrors:
             raise verrors

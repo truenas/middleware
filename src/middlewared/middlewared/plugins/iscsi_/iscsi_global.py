@@ -2,6 +2,7 @@ import re
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.async_validators import validate_port
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, SystemServiceService, ValidationErrors
 from middlewared.validators import IpAddress, Range
@@ -69,6 +70,10 @@ class ISCSIGlobalService(SystemServiceService):
                 except ValueError:
                     pass
             verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
+
+        verrors.extend(await validate_port(
+            self.middleware, 'iscsiglobal_update.listen_port', new['listen_port'], 'iscsi.global'
+        ))
 
         if verrors:
             raise verrors

@@ -60,8 +60,8 @@ class S3CertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 class S3ServicePortDelegate(ServicePortDelegate):
 
     name = 's3'
-    port_fields = ['bindport', 'console_bindport']
     namespace = 's3'
+    port_fields = ['bindport', 'console_bindport']
     title = 'S3 Service'
 
 
