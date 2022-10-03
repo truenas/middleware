@@ -38,7 +38,7 @@ def reporing_data():
     return {}
 
 
-def test_01_verify_system_dataset_is_set_to_boot_pool():
+def test_01_verify_sysds_is_set_to_boot_pool():
     results = GET("/systemdataset/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
