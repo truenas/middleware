@@ -63,7 +63,7 @@ def test_02_get_initial_logs(logs_data):
     logs_data['syslog_1'] = syslog['output'].splitlines()[-1]
 
 
-def test_03_verify_the_first_pool_created_with_encrypted_root_dataset_become_the_system_dataset(request, pool_data):
+def test_03_verify_sysds_is_moved_after_first_pool_is_created(request, pool_data):
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
         'name': 'encrypted',
