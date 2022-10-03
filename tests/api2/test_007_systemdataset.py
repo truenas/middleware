@@ -205,7 +205,7 @@ def test_08_verify_sysds_moves_to_first_created_zpool(request, pool_data):
 
 
 @pytest.mark.dependency(name="second_pool")
-def test_09_creating_a_second_pool_and_verify_system_dataset_does_not_move_to_the_new_pool(request, pool_data):
+def test_09_verify_sysds_does_not_move_after_second_pool_is_created(request, pool_data):
     depends(request, ["first_pool"])
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {
