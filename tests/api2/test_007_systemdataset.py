@@ -390,7 +390,7 @@ def test_15_delete_second_pool_and_verify_sysds_is_moved_to_first_pool(request, 
     assert results.json()['basename'] == 'first_pool/.system', results.text
 
 
-def test_16_delete_the_firs_pool_and_verify_the_system_dataset_moved_to_the_boot_pool(request, pool_data):
+def test_16_delete_first_pool_and_verify_sysds_moved_to_the_boot_pool(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
