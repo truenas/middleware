@@ -85,7 +85,7 @@ def test_03_verify_sysds_cant_move_to_a_passphrase_encrypted_pool(request):
     assert results.json()['basename'] == 'boot-pool/.system', results.text
 
 
-def test_04_delete_the_encrypted_pool_and_verify_the_sysds(request, pool_data):
+def test_04_verify_sysds_after_passphrase_encrypted_pool_is_deleted(request, pool_data):
     payload = {
         'cascade': True,
         'restart_services': True,
