@@ -524,7 +524,7 @@ class DirectoryServices(Service):
         if config_in_progress:
             job.set_progress(0, "waiting for smb.configure to complete")
             wait_id = self.middleware.call_sync('core.job_wait', config_in_progress[0]['id'])
-            wait_id.wait()
+            wait_id.wait_sync()
 
         ldap_enabled = self.middleware.call_sync('ldap.config')['enable']
         ad_enabled = self.middleware.call_sync('activedirectory.config')['enable']
@@ -541,7 +541,7 @@ class DirectoryServices(Service):
 
         job.set_progress(10, 'Refreshing cache'),
         cache_refresh = self.middleware.call_sync('dscache.refresh')
-        cache_refresh.wait()
+        cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')
         restart_dependent_services()
