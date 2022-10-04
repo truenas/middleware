@@ -29,6 +29,7 @@ class FailoverDisabledReasonsService(Service):
         NO_LICENSE - Other storage controller has no license.
         DISAGREE_VIP - Nodes Virtual IP states do not agree.
         MISMATCH_DISKS - The storage controllers do not have the same quantity of disks.
+        MISMATCH_VERSIONS - TrueNAS software versions do not match between storage controllers.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         NO_FENCED - Zpools are imported but fenced isn't running.
         REM_FAILOVER_ONGOING - Other node is currently processing a failover event.
@@ -102,6 +103,11 @@ class FailoverDisabledReasonsService(Service):
 
             if not self.middleware.call_sync('failover.call_remote', 'failover.licensed'):
                 reasons.add('NO_LICENSE')
+
+            lsw = self.middleware.call_sync('system.version')
+            rsw = self.middleware.call_sync('failover.call_remote', 'system.version')
+            if lsw != rsw:
+                reasons.add('MISMATCH_VERSIONS')
 
             args = [
                 [["method", "in", ["failover.events.vrrp_master", "failover.events.vrrp_backup"]]],
