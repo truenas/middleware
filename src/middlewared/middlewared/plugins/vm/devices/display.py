@@ -123,12 +123,21 @@ class DISPLAY(Device):
 
             self.middleware.call_sync('vm.device.validate_display_devices', verrors, vm_instance)
 
-        all_ports = self.middleware.call_sync('vm.all_used_display_device_ports', [['id', '!=', device.get('id')]])
+        display_devices_ports = self.middleware.call_sync(
+            'vm.all_used_display_device_ports', [['id', '!=', device.get('id')]]
+        )
         new_ports = list((self.middleware.call_sync('vm.port_wizard')).values())
         for key in ('port', 'web_port'):
             if device['attributes'].get(key):
-                if device['attributes'][key] in all_ports:
-                    verrors.add(f'attributes.{key}', 'Specified display port is already in use')
+                if device['attributes'][key] in display_devices_ports:
+                    verrors.add(
+                        f'attributes.{key}',
+                        'Specified display port is already in use by another Display device'
+                    )
+                else:
+                    verrors.extend(self.middleware.call_sync(
+                        'port.validate_port', f'attributes.{key}', device['attributes'][key], 'vm.device'
+                    ))
             else:
                 device['attributes'][key] = new_ports.pop(0)
 
