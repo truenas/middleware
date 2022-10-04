@@ -607,7 +607,7 @@ class PoolService(CRUDService):
 
     @accepts(Dict(
         'pool_create',
-        Str('name', required=True),
+        Str('name', max_length=50, required=True),
         Bool('encryption', default=False),
         Str('deduplication', enum=[None, 'ON', 'VERIFY', 'OFF'], default=None, null=True),
         Str('checksum', enum=[None] + ZFS_CHECKSUM_CHOICES, default=None, null=True),
