@@ -1,7 +1,9 @@
-from middlewared.schema import Bool, Dict, Int, Str
-from middlewared.validators import Email, Match, Or, Range
-from middlewared.service import SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
+
+from middlewared.common.ports import ServicePortDelegate
+from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.service import SystemServiceService, ValidationErrors
+from middlewared.validators import Email, Match, Or, Range
 
 
 class SNMPModel(sa.Model):
@@ -88,3 +90,17 @@ class SNMPService(SystemServiceService):
         await self._update_service(old, new)
 
         return await self.config()
+
+
+class SNMPServicePortDelegate(ServicePortDelegate):
+
+    name = 'snmp'
+    namespace = 'snmp'
+    title = 'SNMP Service'
+
+    async def get_ports(self):
+        return [160, 161]
+
+
+async def setup(middleware):
+    await middleware.call('port.register_attachment_delegate', SNMPServicePortDelegate(middleware))

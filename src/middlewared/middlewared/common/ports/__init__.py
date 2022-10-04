@@ -19,7 +19,6 @@ class PortDelegate:
 
 
 class ServicePortDelegate(PortDelegate):
-    # service object
     port_fields = NotImplementedError
 
     async def basic_checks(self):
