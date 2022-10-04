@@ -86,8 +86,8 @@ class ZFSPoolService(CRUDService):
         # We should not get datasets, there is zfs.dataset.query for that
         state_kwargs = {'datasets_recursive': False}
         with libzfs.ZFS() as zfs:
-            # Handle `id` filter specially to avoiding getting all pool
-            if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            # Handle `id` or `name` filter specially to avoiding getting every property for all zpools
+            if filters and len(filters) == 1 and list(filters[0][:2]) in (['id', '='], ['name', '=']):
                 try:
                     pools = [zfs.get(filters[0][2]).__getstate__(**state_kwargs)]
                 except libzfs.ZFSException:
@@ -553,12 +553,12 @@ class ZFSDatasetService(CRUDService):
             props = []
 
         with libzfs.ZFS() as zfs:
-            # Handle `id` filter specially to avoiding getting all datasets
+            # Handle `id` or `name` filter specially to avoiding getting all datasets
             kwargs = dict(
                 props=props, user_props=user_properties, snapshots=snapshots, retrieve_children=retrieve_children,
                 snapshots_recursive=snapshots_recursive, snapshot_props=snapshots_properties
             )
-            if filters and filters[0][0] == 'id':
+            if filters and filters[0][0] in ('id', 'name'):
                 if filters[0][1] == '=':
                     kwargs['datasets'] = [filters[0][2]]
                 if filters[0][1] == 'in':
