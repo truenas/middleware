@@ -1,4 +1,5 @@
 import ipaddress
+import itertools
 
 from middlewared.schema import accepts, Dict, Int, List, Ref, returns, Str
 from middlewared.service import pass_app, private, Service
@@ -21,7 +22,9 @@ class VMService(Service):
 
         Returns a dict with two keys `port` and `web`.
         """
-        all_ports = await self.all_used_display_device_ports()
+        all_ports = list(itertools.chain(
+            *[entry['ports'] for entry in await self.middleware.call('port.get_in_use')]
+        ))
 
         def get_next_port():
             for i in filter(lambda i: i not in all_ports, range(5900, 65535)):
