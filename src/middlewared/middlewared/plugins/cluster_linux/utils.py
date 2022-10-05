@@ -140,24 +140,24 @@ class ClusterUtils(Service):
         However, this is called by ctdb.shared.volume.teardown to maintain
         backwards compatbility with TrueCommand.
         """
-        for files, dirs in self.state_to_be_removed():
-            for _file in files:
-                try:
-                    os.remove(_file)
-                except FileNotFoundError:
-                    pass
-                except Exception:
-                    self.logger.error('Failed removing %r', _file, exc_info=True)
+        files, dirs = self.state_to_be_removed()
+        for _file in files:
+            try:
+                os.remove(_file)
+            except FileNotFoundError:
+                pass
+            except Exception:
+                self.logger.error('Failed removing %r', _file, exc_info=True)
 
-            for _dir in dirs:
-                with os.scandir(_dir) as contents:
-                    for item in contents:
-                        try:
-                            shutil.rmtree(item.path) if item.is_dir() else os.remove(item.path)
-                        except FileNotFoundError:
-                            pass
-                        except Exception:
-                            self.logger.error('Failed removing %r', item.path, exc_info=True)
+        for _dir in dirs:
+            with os.scandir(_dir) as contents:
+                for item in contents:
+                    try:
+                        shutil.rmtree(item.path) if item.is_dir() else os.remove(item.path)
+                    except FileNotFoundError:
+                        pass
+                    except Exception:
+                        self.logger.error('Failed removing %r', item.path, exc_info=True)
 
 
 class FuseConfig(enum.Enum):
