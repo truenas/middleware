@@ -40,7 +40,7 @@ def test_001_check_initial_smb_config(request):
     assert not data['server multi channel support']['parsed']
     assert not data['ntlm auth']['parsed']
     assert data['idmap config * : range']['raw'] == '90000001 - 100000000'
-    assert data['server min protocol']['raw'] == 'SMB2_10'
+    assert data['server min protocol']['raw'] == 'SMB2_02'
     assert data['guest account']['raw'] == 'nobody'
 
 
