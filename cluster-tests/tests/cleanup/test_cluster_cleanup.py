@@ -78,10 +78,48 @@ def test_delete_gvols(request):
             assert status['state'] == 'SUCCESS', status
 
 
+@pytest.mark.dependency(name='CTDB_VOL_DELETE')
+def test_delete_ctdb_shared_vol(request):
+    depends(request, ['DELETE_GVOLS'])
+
+    payload = {'msg': 'method', 'method': 'ctdb.shared.volume.delete'}
+    ip = CLUSTER_INFO['NODE_A_IP']
+    ans = make_ws_request(ip, payload)
+    assert ans.get('error') is None, ans
+    assert isinstance(ans['result'], int), ans
+    try:
+        status = wait_on_job(ans['result'], ip, 120)
+    except JobTimeOut:
+        assert False, f'Timed out waiting for ctdb shared volume to be deleted on {ip!r}'
+    else:
+        assert status['state'] == 'SUCCESS', status
+
+
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
+@pytest.mark.dependency(name='VERIFY_CTDB_UNMOUNTED')
+def test_verify_ctdb_shared_vol_is_umounted(ip, request):
+    depends(request, ['CTDB_VOL_DELETE'])
+    # we will try to check if each FUSE mountpoint is umounted `retries` times waiting at
+    # least `sleeptime` second between each attempt
+    retries = TIMEOUTS['FUSE_OP_TIMEOUT']
+    sleeptime = 1
+    ip = CLUSTER_INFO['NODE_A_IP']
+    ctdb = IGNORE[0]
+    for retry in range(retries):
+        # give each node a little time to actually umount the fuse volume before we claim failure
+        rv = make_request('post', f'http://{ip}/api/v2.0/gluster/fuse/is_mounted', data={'name': ctdb})
+        assert rv.status_code == 200
+        if not rv.json():
+            break
+
+        sleep(sleeptime)
+        assert retry != retries, f'Waited {retries} seconds for /cluster/{ctdb} to become umounted.'
+
+
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='CTDB_TEARDOWN')
-def test_ctdb_teardown(ip, request):
-    depends(request, ['DELETE_GVOLS'])
+def test_ctdb_shared_vol_teardown(ip, request):
+    depends(request, ['VERIFY_CTDB_UNMOUNTED'])
 
     payload = {'msg': 'method', 'method': 'ctdb.shared.volume.teardown'}
     ans = make_ws_request(ip, payload)
