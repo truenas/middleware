@@ -102,11 +102,20 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
         auth_provider.load_session(**credentials)
         auth_provider.refresh_token()
 
-        client = onedrivesdk.OneDriveClient("https://graph.microsoft.com/v1.0/", auth_provider, http_provider, loop=object())
-        result = []
-        for drive in client.drives.get().drives():
-            result.append({
+        def process_drive(drive):
+            return {
                 "drive_type": DRIVES_TYPES.inverse.get(drive.drive_type, ""),
                 "drive_id": drive.id,
-            })
+            }
+
+        client = onedrivesdk.OneDriveClient("https://graph.microsoft.com/v1.0/me/", auth_provider, http_provider,
+                                            loop=object())
+        result = []
+        for drive in client.drives.get().drives():
+            result.append(process_drive(drive))
+        # Also call /me/drive as sometimes /me/drives doesn't return it
+        # see https://github.com/rclone/rclone/issues/4068
+        me_drive = process_drive(client.drive.get())
+        if me_drive not in result:
+            result.insert(0, me_drive)
         return result
