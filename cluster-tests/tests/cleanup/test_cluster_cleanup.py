@@ -137,12 +137,22 @@ def test_ctdb_shared_vol_teardown(ip, request):
 def test_verify_ctdb_teardown(ip, request):
     depends(request, ['CTDB_TEARDOWN'])
 
-    payload = {'msg': 'method', 'method': 'systemdataset.config'}
+    payload = {'msg': 'method', 'method': 'cluster.utils.state_to_be_removed'}
     ans = make_ws_request(ip, payload)
     assert ans.get('error') is None, ans
-    assert isinstance(ans['result'], dict), ans
+    assert isinstance(ans['result'], list), ans
 
-    path = ans['result']['path'] + '/ctdb_shared_vol'  # TODO: dont hard-code this
-    ans = make_request('post', f'http://{ip}/api/v2.0/filesystem/listdir', data={'path': path})
-    assert ans.status_code == 200 and isinstance(ans.json(), list), ans.text
-    assert len(ans.json()) == 0, ans.text
+    files, dirs = ans['result']
+    payload = {'msg': 'method', 'method': 'filesystem.stat'}
+    for _file in files:
+        payload.update({'params': [_file]})
+        ans = make_ws_request(ip, payload)
+        assert ans.get('error'), ans
+        assert '[ENOENT]' in ans['error']['reason']
+
+    payload = {'msg': 'method', 'method': 'filesystem.listdir'}
+    for _dir in dirs:
+        payload.update({'params': [_dir]})
+        ans = make_ws_request(ip, payload)
+        assert ans.get('error') is None, ans
+        assert len(ans['result']) == 0, ans['result']

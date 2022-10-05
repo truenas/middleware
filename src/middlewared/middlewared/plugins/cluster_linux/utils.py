@@ -2,6 +2,7 @@ import os
 import asyncio
 import enum
 import time
+import shutil
 from ipaddress import ip_address
 
 from dns.exception import DNSException
@@ -116,6 +117,48 @@ class ClusterUtils(Service):
         })
         return responses
 
+    def state_to_be_removed(self):
+        """
+        This methods purpose is to consolidate the various gluster and ctdb
+        files/dirs that must be removed when a cluster is "torn down".
+        """
+        files = CTDBConfig.CTDB_FILES_TO_REMOVE.value
+        dirs = CTDBConfig.CTDB_DIRS_TO_REMOVE.value
+
+        interest = (f'.system/{CTDBConfig.CTDB_VOL_NAME.value}', '.system/glusterd')
+        mount_info = self.middleware.call_sync('filesystem.mount_info')
+        for i in filter(lambda x: x['mountpoint'].endswith(interest), mount_info):
+            dirs.append(i['mountpoint'])
+
+        return files, dirs
+
+    @job(lock='teardown_cluster', lock_queue_size=1)
+    def teardown_cluster(self, job):
+        """
+        This can be called on its own after all the gluster volumes
+        have been stopped and deleted (including the ctdb shared volume).
+        However, this is called by ctdb.shared.volume.teardown to maintain
+        backwards compatbility with TrueCommand.
+        """
+        files, dirs = self.state_to_be_removed()
+        for _file in files:
+            try:
+                os.remove(_file)
+            except FileNotFoundError:
+                pass
+            except Exception:
+                self.logger.error('Failed removing %r', _file, exc_info=True)
+
+        for _dir in dirs:
+            with os.scandir(_dir) as contents:
+                for item in contents:
+                    try:
+                        shutil.rmtree(item.path) if item.is_dir() else os.remove(item.path)
+                    except FileNotFoundError:
+                        pass
+                    except Exception:
+                        self.logger.error('Failed removing %r', item.path, exc_info=True)
+
 
 class FuseConfig(enum.Enum):
     """
@@ -181,3 +224,19 @@ class CTDBConfig(enum.Enum):
     # ctdb event scripts directories
     CTDB_ETC_EVENT_SCRIPT_DIR = os.path.join(CTDB_ETC, 'events/legacy')
     CTDB_USR_EVENT_SCRIPT_DIR = '/usr/share/ctdb/events/legacy/'
+
+    # used in the ctdb.shared.volume.teardown method
+    CTDB_FILES_TO_REMOVE = [
+        ETC_GEN_FILE,
+        ETC_REC_FILE,
+        ETC_PRI_IP_FILE,
+        ETC_PUB_IP_FILE,
+    ]
+
+    # used in the ctdb.shared.volume.teardown method
+    # ctdb daemon will core dump immediately if someone tears down the cluster
+    # and then tries to recreate one without rebooting (the contents of this dir are on tmpfs)
+    # ctdb, in this scenario, sees that the files aren't empty and then hits an assert
+    CTDB_DIRS_TO_REMOVE = [
+        '/var/run/ctdb/',
+    ]

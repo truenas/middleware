@@ -1,8 +1,5 @@
 import errno
-import os
-import shutil
 from pathlib import Path
-from contextlib import suppress
 from glustercli.cli import volume
 
 from middlewared.service import Service, CallError, job
@@ -164,33 +161,9 @@ class CtdbSharedVolumeService(Service):
             job.set_progress(50, 'Stopping cluster services')
             await self.middleware.call('service.stop', 'glusterd')
 
-        def __remove_config(ctdb_dir):
-            # keep this inner method so it doesn't get (mis)used anywhere else.
-            files = (
-                CTDBConfig.ETC_GEN_FILE.value,
-                CTDBConfig.ETC_REC_FILE.value,
-                CTDBConfig.ETC_PRI_IP_FILE.value,
-                CTDBConfig.ETC_PUB_IP_FILE.value,
-            )
-            with suppress(FileNotFoundError):
-                for i in files:
-                    try:
-                        os.remove(i)
-                    except Exception:
-                        self.logger.warning(f'Failed to remove {i!r}', exc_info=True)
-
-            with os.scandir(ctdb_dir) as contents:
-                for item in contents:
-                    if item.is_dir():
-                        shutil.rmtree(item.path)
-                    else:
-                        os.remove(item.path)
-
-        job.set_progress(98, 'Removing ctdbd configuration data')
-        ctdb_dir = (await self.middleware.call(
-            'filesystem.mount_info', [['mount_source', '$', f'.system/{CTDB_VOL_NAME}']]
-        ))[0]['mountpoint']
-        await self.middleware.run_in_thread(__remove_config, ctdb_dir)
+        job.set_progress(75, 'Removing cluster related configuration files and directories.')
+        teardown_job = await self.middleware.call('cluster.utils.teardown_cluster')
+        await teardown_job.wait()
 
         job.set_progress(99, 'Disabling cluster service')
         await self.middleware.call('service.update', 'glusterd', {'enable': False})
