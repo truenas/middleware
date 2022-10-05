@@ -4,7 +4,7 @@ from middlewared.test.integration.utils import call
 
 
 @contextlib.contextmanager
-def task(data):
+def snapshot_task(data):
     task = call("pool.snapshottask.create", data)
 
     try:

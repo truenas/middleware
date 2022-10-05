@@ -2,7 +2,7 @@ import pytest
 from pytest_dependency import depends
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.snapshot_task import task
+from middlewared.test.integration.assets.snapshot_task import snapshot_task
 from middlewared.test.integration.utils import call
 
 import sys
@@ -41,7 +41,7 @@ def test_query_attachment_delegate(ds, data, path, include):
         **data,
     }
 
-    with task(data) as t:
+    with snapshot_task(data) as t:
         result = call("pool.dataset.query_attachment_delegate", "snapshottask", path, True)
         if include:
             assert len(result) == 1
