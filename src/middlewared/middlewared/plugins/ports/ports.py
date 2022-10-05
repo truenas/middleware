@@ -1,5 +1,3 @@
-import copy
-
 from middlewared.service import Service, ValidationErrors
 
 
@@ -17,7 +15,7 @@ class PortService(Service):
         self.DELEGATES[delegate.namespace] = delegate
 
     async def get_in_use(self):
-        ports = copy.deepcopy(self.SYSTEM_USED_PORTS)
+        ports = self.SYSTEM_USED_PORTS.copy()
         for delegate in self.DELEGATES.values():
             used_ports = await delegate.get_ports()
             if used_ports:
