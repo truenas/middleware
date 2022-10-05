@@ -178,10 +178,7 @@ class ConfigService(Service):
                     if found:
                         break
                 else:
-                    raise CallError(
-                        'Failed to upload config, version newer than the '
-                        'current installed.'
-                    )
+                    raise CallError('Uploaded config file version is newer than the currently installed.')
         except Exception as e:
             os.unlink(config_file_name)
             if isinstance(e, CallError):
