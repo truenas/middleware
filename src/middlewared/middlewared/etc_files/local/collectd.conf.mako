@@ -144,6 +144,7 @@ LoadPlugin python
 	Mountpoint "/^\/mnt\/[^/]+\/ix-applications/"
 	Mountpoint "/^\/var\/db\/system/"
 	Mountpoint "/^\/var\/lib\/kubelet/"
+	Mountpoint "/\/\.zfs\/snapshot\//"
 	FSType "tmpfs"
 	FSType "bindfs"
 	FSType "devtmpfs"
