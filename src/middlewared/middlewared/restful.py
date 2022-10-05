@@ -37,9 +37,7 @@ async def authenticate(middleware, request, method, resource):
         if token is None:
             raise web.HTTPForbidden()
 
-        # FIXME: the token is only authorized to call the specified `method` and `resource`, but subsequent calls
-        #        to `.authorize` will always return True
-        return RootTcpSocketSessionManagerCredentials()
+        return token
     elif auth.startswith('Basic '):
         twofactor_auth = await middleware.call('auth.twofactor.config')
         if twofactor_auth['enabled']:

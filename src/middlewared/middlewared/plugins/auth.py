@@ -313,7 +313,7 @@ class AuthService(Service):
         if not token.parent_credentials.authorize(method, resource):
             return None
 
-        return self.get_token(token_id)
+        return TokenSessionManagerCredentials(self.token_manager, token)
 
     @private
     def get_token_for_shell_application(self, token_id):
