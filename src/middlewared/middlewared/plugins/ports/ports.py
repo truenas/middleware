@@ -7,7 +7,7 @@ class PortService(Service):
 
     DELEGATES = {}
     SYSTEM_USED_PORTS = [
-        {'title': 'System', 'ports': [6000], 'namespace': 'system'},
+        {'title': 'System', 'ports': [67, 123, 3702, 5353, 6000], 'namespace': 'system'},
     ]
 
     class Config:
