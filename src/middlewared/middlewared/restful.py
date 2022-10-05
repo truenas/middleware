@@ -10,8 +10,7 @@ import urllib.parse
 
 from aiohttp import web
 
-from .auth import (ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials,
-                   RootTcpSocketSessionManagerCredentials)
+from .auth import ApiKeySessionManagerCredentials, LoginPasswordSessionManagerCredentials
 from .client import ejson as json
 from .job import Job
 from .pipe import Pipes
