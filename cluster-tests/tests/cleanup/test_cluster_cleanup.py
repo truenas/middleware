@@ -148,7 +148,7 @@ def test_verify_ctdb_teardown(ip, request):
         payload.update({'params': [_file]})
         ans = make_ws_request(ip, payload)
         assert ans.get('error'), ans
-        assert 'not found' in ans['error']
+        assert '[ENOENT]' in ans['error']['reason']
 
     payload = {'msg': 'method', 'method': 'filesystem.listdir'}
     for _dir in dirs:
