@@ -28,8 +28,8 @@ def test_change_retention(request):
             "dataset": ds,
             "recursive": True,
             "exclude": [],
-            "lifetime_value": 1,
-            "lifetime_unit": "WEEK",
+            "lifetime_value": 50,
+            "lifetime_unit": "YEAR",
             "naming_schema": "auto-%Y-%m-%d-%H-%M-1y",
             "schedule": {
                 "minute": "*",
@@ -48,7 +48,7 @@ def test_change_retention(request):
         assert result.status_code == 200, result.text
         assert result.json()[0]["retention"] == {
             "datetime": {
-                "$date": (datetime(2021, 4, 19, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
+                "$date": (datetime(2071, 3, 31, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
             },
             "source": "periodic_snapshot_task",
             "periodic_snapshot_task_id": task_id,
@@ -71,18 +71,16 @@ def test_change_retention(request):
     
         job_status = wait_on_job(job.id, 180)
         assert job_status["state"] == "SUCCESS", str(job_status["results"])
-
-        time.sleep(2)  # Successfully set ZFS properties might not update immediately, give them some time
     
         result = GET(f"/zfs/snapshot/?id={ds}@auto-2021-04-12-06-30-1y&extra.retention=true")
         assert result.status_code == 200, result.text
         assert result.json()
         properties = [v for k, v in result.json()[0]["properties"].items() if k.startswith("org.truenas:destroy_at_")]
         assert properties, result.json()[0]["properties"]
-        assert properties[0]["value"] == "2021-04-19T06:30:00"
+        assert properties[0]["value"] == "2071-03-31T06:30:00"
         assert result.json()[0]["retention"] == {
             "datetime": {
-                "$date": (datetime(2021, 4, 19, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
+                "$date": (datetime(2071, 3, 31, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
             },
             "source": "property",
         }
@@ -98,8 +96,8 @@ def test_delete_retention(request):
             "dataset": ds,
             "recursive": True,
             "exclude": [],
-            "lifetime_value": 1,
-            "lifetime_unit": "WEEK",
+            "lifetime_value": 50,
+            "lifetime_unit": "YEAR",
             "naming_schema": "auto-%Y-%m-%d-%H-%M-1y",
             "schedule": {
                 "minute": "*",
@@ -128,18 +126,16 @@ def test_delete_retention(request):
 
         job_status = wait_on_job(job.id, 180)
         assert job_status["state"] == "SUCCESS", str(job_status["results"])
-
-        time.sleep(2)  # Successfully set ZFS properties might not update immediately, give them some time
     
         result = GET(f"/zfs/snapshot/?id={ds}@auto-2021-04-12-06-30-1y&extra.retention=true")
         assert result.status_code == 200, result.text
         assert result.json()
         properties = [v for k, v in result.json()[0]["properties"].items() if k.startswith("org.truenas:destroy_at_")]
         assert properties, result.json()[0]["properties"]
-        assert properties[0]["value"] == "2021-04-19T06:30:00"
+        assert properties[0]["value"] == "2071-03-31T06:30:00"
         assert result.json()[0]["retention"] == {
             "datetime": {
-                "$date": (datetime(2021, 4, 19, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
+                "$date": (datetime(2071, 3, 31, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
             },
             "source": "property",
         }
