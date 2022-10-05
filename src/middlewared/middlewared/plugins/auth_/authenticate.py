@@ -25,7 +25,11 @@ class AuthService(Service):
             user = await self.middleware.call(
                 'datastore.query',
                 'account.bsdusers',
-                [('bsdusr_username', '=', username)],
+                [
+                    ('bsdusr_username', '=', username),
+                    ('bsdusr_password_disabled', '=', False),
+                    ('bsdusr_locked', '=', False),
+                ],
                 {'get': True},
             )
         except IndexError:
