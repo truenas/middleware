@@ -14,18 +14,16 @@ import pathlib
 
 
 def parse_train_name(name):
-    split = name.split('-')
-    version = split[1].split('.')
-    branch = split[2]
+    split = (name + '-').split('-')
+    version = split[2]
+    branch = split[3]
 
-    return [int(v) if v.isdigit() else v for v in version] + [branch]
+    return [version, branch]
 
 
 class CompareTrainsResult(enum.Enum):
     MAJOR_DOWNGRADE = "MAJOR_DOWNGRADE"
     MAJOR_UPGRADE = "MAJOR_UPGRADE"
-    MINOR_DOWNGRADE = "MINOR_DOWNGRADE"
-    MINOR_UPGRADE = "MINOR_UPGRADE"
     NIGHTLY_DOWNGRADE = "NIGHTLY_DOWNGRADE"
     NIGHTLY_UPGRADE = "NIGHTLY_UPGRADE"
 
@@ -36,13 +34,8 @@ BAD_UPGRADES = {
         If you have an existing boot environment that uses that train, boot into it in order to upgrade
         that train.
     """),
-    CompareTrainsResult.MINOR_DOWNGRADE: textwrap.dedent("""\
-        Changing minor version is considered a downgrade, thus not a supported operation.
-        If you have an existing boot environment that uses that train, boot into it in order to upgrade
-        that train.
-    """),
     CompareTrainsResult.MAJOR_DOWNGRADE: textwrap.dedent("""\
-        Changing major version is considered a downgrade, thus not a supported operation.
+        Downgrading TrueNAS installation is not supported.
         If you have an existing boot environment that uses that train, boot into it in order to upgrade
         that train.
     """),
@@ -50,42 +43,22 @@ BAD_UPGRADES = {
 
 
 def compare_trains(t1, t2):
-    if 'scale' in t1.lower() and 'scale' not in t2.lower():
-        return CompareTrainsResult.MAJOR_DOWNGRADE
-    if 'scale' not in t1.lower() and 'scale' in t2.lower():
-        return CompareTrainsResult.MAJOR_UPGRADE
-
     v1 = parse_train_name(t1)
     v2 = parse_train_name(t2)
 
-    if v1[0] != v2[0]:
-        if v1[0] > v2[0]:
-            return CompareTrainsResult.MAJOR_DOWNGRADE
-        else:
-            return CompareTrainsResult.MAJOR_UPGRADE
-
-    branch1 = v1[-1].lower().replace("-sdk", "")
-    branch2 = v2[-1].lower().replace("-sdk", "")
+    branch1 = v1[1].lower()
+    branch2 = v2[1].lower()
     if branch1 != branch2:
         if branch2 == "nightlies":
             return CompareTrainsResult.NIGHTLY_UPGRADE
         elif branch1 == "nightlies":
             return CompareTrainsResult.NIGHTLY_DOWNGRADE
 
-    if (
-        # [11, "STABLE"] -> [11, 1, "STABLE"]
-        not isinstance(v1[1], int) and isinstance(v2[1], int) or
-        # [11, 1, "STABLE"] -> [11, 2, "STABLE"]
-        isinstance(v1[1], int) and isinstance(v2[1], int) and v1[1] < v2[1]
-    ):
-        return CompareTrainsResult.MINOR_UPGRADE
-
-    if isinstance(v1[1], int):
-        if (
-            isinstance(v2[1], int) and v1[1] > v2[1] or
-            not isinstance(v2[1], int) and v1[1] > 0
-        ):
-            return CompareTrainsResult.MINOR_DOWNGRADE
+    if v1[0] != v2[0]:
+        if v1[0] > v2[0]:
+            return CompareTrainsResult.MAJOR_DOWNGRADE
+        else:
+            return CompareTrainsResult.MAJOR_UPGRADE
 
 
 class UpdateModel(sa.Model):
