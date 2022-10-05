@@ -12,24 +12,9 @@ from protocols import SMB
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import (
-    PUT,
-    POST,
-    GET,
-    DELETE,
-    SSH_TEST,
-    wait_on_job,
-    cmd_test,
-    send_file
-)
-from auto_config import (
-    ip,
-    pool_name,
-    password,
-    user,
-    hostname,
-    dev_test
-)
+from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test, send_file
+from utils import create_dataset
+from auto_config import ip, pool_name, password, user, hostname, dev_test
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
@@ -393,21 +378,43 @@ def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
 
 
 def test_042_recyclebin_functional_test(request):
-    with smb_connection(
-        host=ip,
-        share=SMB_NAME,
-        username='shareuser',
-        password='testing',
-    ) as c:
-        fd = c.create_file('testfile.txt', 'w')
-        c.write(fd, b'foo')
-        c.close(fd, True)
+    with create_dataset(f'{dataset}/subds', {'share_type': 'SMB'}):
+        with smb_connection(
+            host=ip,
+            share=SMB_NAME,
+            username='shareuser',
+            password='testing',
+        ) as c:
+            # Our recycle repository should be auto-created on connect.
+            fd = c.create_file('testfile.txt', 'w')
+            c.write(fd, b'foo')
+            c.close(fd, True)
 
-        # Above close op also deleted the file and so
-        # we expect file to now exist in the user's .recycle directory
-        fd = c.create_file('./recycle/shareuser/testfile.txt', 'r')
-        val = c.read(fd, 0, 3)
-        assert val == b'foo'
+            # Above close op also deleted the file and so
+            # we expect file to now exist in the user's .recycle directory
+            fd = c.create_file('.recycle/shareuser/testfile.txt', 'r')
+            val = c.read(fd, 0, 3)
+            c.close(fd)
+            assert val == b'foo'
+
+            # re-open so that we can set DELETE_ON_CLOSE
+            # this verifies that SMB client can purge file from recycle bin
+            c.close(c.create_file('.recycle/shareuser/testfile.txt', 'w'), True)
+            assert c.ls('.recycle/shareuser/') == []
+
+            # nested datasets get their own recycle bin to preserve atomicity of
+            # rename op.
+            fd = c.create_file('subds/testfile2.txt', 'w')
+            c.write(fd, b'boo')
+            c.close(fd, True)
+
+            fd = c.create_file('subds/.recycle/shareuser/testfile2.txt', 'r')
+            val = c.read(fd, 0, 3)
+            c.close(fd)
+            assert val == b'boo'
+
+            c.close(c.create_file('subds/.recycle/shareuser/testfile2.txt', 'w'), True)
+            assert c.ls('subds/.recycle/shareuser/') == []
 
 
 @windows_host_cred
