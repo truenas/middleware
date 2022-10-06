@@ -116,7 +116,7 @@ class RsyncdService(SystemServiceService):
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.extend(await validate_port(self.middleware, 'rscynd.port', new['port'], 'rsyncd'))
+        verrors.extend(await validate_port(self.middleware, 'rsyncd.port', new['port'], 'rsyncd'))
         verrors.check()
 
         await self._update_service(old, new)
