@@ -104,7 +104,7 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
                 async with self.watch.stream(
                     context['core_api'].read_namespaced_pod_log, name=pod, container=container,
                     namespace=release_data['namespace'], tail_lines=tail_lines, limit_bytes=limit_bytes,
-                    timestamps=True,
+                    timestamps=True, _request_timeout=1800
                 ) as stream:
                     async for event in stream:
                         # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
