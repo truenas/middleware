@@ -2,6 +2,7 @@ import asyncio
 import errno
 import os
 import re
+import shlex
 import uuid
 
 import middlewared.sqlalchemy as sa
@@ -51,6 +52,7 @@ class VMModel(sa.Model):
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
     uuid = sa.Column(sa.String(255))
+    command_line_args = sa.Column(sa.Text(), default='', nullable=False)
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -104,6 +106,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @accepts(Dict(
         'vm_create',
+        Str('command_line_args', default=''),
         Str('cpu_mode', default='CUSTOM', enum=[
             'CUSTOM', 'HOST-MODEL', 'HOST-PASSTHROUGH']),
         Str('cpu_model', default=None, null=True),
@@ -194,6 +197,14 @@ class VMService(CRUDService, VMSupervisorMixin):
             verrors.add(
                 f'{schema_name}.min_memory',
                 'Minimum memory should not be greater than defined/maximum memory'
+            )
+
+        try:
+            shlex.split(data['command_line_args'])
+        except ValueError as e:
+            verrors.add(
+                f'{schema_name}.command_line_args',
+                f'Parse error: {e.args[0]}'
             )
 
         vcpus = data['vcpus'] * data['cores'] * data['threads']
