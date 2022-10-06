@@ -5,4 +5,5 @@ Simulating real-world conditions
    :maxdepth: 1
    :caption: Contents:
 
+   cpu-temperature-reporting.rst
    scrub.rst
