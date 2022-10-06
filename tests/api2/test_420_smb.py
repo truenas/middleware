@@ -12,7 +12,7 @@ from pytest_dependency import depends
 import json
 import re
 from datetime import datetime
-from protocols import SMB
+from protocols import smb_connection
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -46,17 +46,6 @@ root_path_verification = {
     "group": "root",
     "acl": False
 }
-
-@contextlib.contextmanager
-def smb_connection(**kwargs):
-    c = SMB()
-    c.connect(**kwargs)
-
-    try:
-        yield c
-    finally:
-        c.disconnect()
-
 
 @pytest.mark.dependency(name="smb_001")
 def test_001_setting_auxilary_parameters_for_mount_smbfs(request):
