@@ -24,7 +24,7 @@ Please note the difference between `truenas`, `truenas_files` and `middleware` c
 * `truenas` component is a metapackage that only contains systemd units and performs post-installation tasks (it is
   built from `debian/rules` file of the middleware repository).
 * `truenas_files` component builds the `truenas-files` debian package that contains all the :doc:`TrueNAS filesystem
-  assets <../os/root-filesystem>`_ (it is built from `src/freenas/debian/rules` file of the middleware repository).
+  assets <../os/root-filesystem>` (it is built from `src/freenas/debian/rules` file of the middleware repository).
 * `middleware` component only contains TrueNAS middleware python code, systemd unit and factory database.
 
 After a build succeeds, `.iso` and `.update` files can be accessed using the "Build Artifacts" link on the build page.
