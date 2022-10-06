@@ -15,7 +15,7 @@ class PortService(Service):
         self.DELEGATES[delegate.namespace] = delegate
 
     async def get_in_use(self):
-        ports = self.SYSTEM_USED_PORTS.copy()
+        ports = []
         for delegate in self.DELEGATES.values():
             used_ports = await delegate.get_ports()
             if used_ports:
@@ -25,7 +25,7 @@ class PortService(Service):
                     'ports': used_ports,
                 })
 
-        return ports
+        return ports + self.SYSTEM_USED_PORTS
 
     async def validate_port(self, schema, value, whitelist_namespace=None):
         verrors = ValidationErrors()
