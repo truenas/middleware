@@ -44,6 +44,16 @@ class PortService(Service):
         verrors = ValidationErrors()
         for port_attachment in await self.middleware.call('port.get_in_use'):
             if value in port_attachment['ports'] and port_attachment['namespace'] != whitelist_namespace:
-                verrors.add(schema, f'The port is being used by {port_attachment["type"]!r}')
+                for port_entry in filter(
+                    lambda p: value in p['ports'],
+                    port_attachment['port_details']
+                ):
+                    err = 'The port is being used by '
+                    if port_entry['description']:
+                        err += f'{port_entry["description"]!r} in {port_attachment["type"]!r}'
+                    else:
+                        err += f'{port_attachment["type"]!r}'
+
+                    verrors.add(schema, err)
 
         return verrors
