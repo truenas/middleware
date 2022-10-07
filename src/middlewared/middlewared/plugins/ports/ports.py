@@ -12,6 +12,8 @@ class PortService(Service):
         private = True
 
     async def register_attachment_delegate(self, delegate):
+        if delegate.namespace in self.DELEGATES:
+            raise ValueError(f'{delegate.namespace!r} delegate is already registered with Port Service')
         self.DELEGATES[delegate.namespace] = delegate
 
     async def get_in_use(self):
