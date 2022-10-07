@@ -8,8 +8,8 @@ class NFSServicePortDelegate(ServicePortDelegate):
     port_fields = ['mountd_port', 'rpcstatd_port', 'rpclockd_port']
     title = 'NFS Service'
 
-    async def get_ports(self):
-        return [2049] + await super().get_ports()
+    async def get_ports_internal(self):
+        return [2049] + await super().get_ports_internal()
 
 
 async def setup(middleware):

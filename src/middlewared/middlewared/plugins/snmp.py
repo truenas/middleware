@@ -98,7 +98,7 @@ class SNMPServicePortDelegate(ServicePortDelegate):
     namespace = 'snmp'
     title = 'SNMP Service'
 
-    async def get_ports(self):
+    async def get_ports_internal(self):
         return [160, 161]
 
 
