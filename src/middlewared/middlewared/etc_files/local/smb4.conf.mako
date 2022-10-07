@@ -7,6 +7,8 @@
 %>
 
 [global]
+    rpc_daemon:mdssd = disabled
+    rpc_server:mdssvc = disabled
     % if failover_status in ('SINGLE', 'MASTER'):
     % if smb_ha_mode == "CLUSTERED":
     clustering = Yes
