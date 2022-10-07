@@ -132,6 +132,16 @@ class KubernetesService(ConfigService):
                         f'{schema}.migrate_applications',
                         f'{applications_ds_name(old_data["pool"])!r} does not exist, migration not possible.'
                     )
+                if not verrors and (
+                    await self.middleware.call(
+                        'pool.dataset.get_instance', old_data['pool'], {'extra': {'retrieve_children': False}}
+                    )
+                )['encrypted']:
+                    verrors.add(
+                        f'{schema}.migrate_applications',
+                        f'Source {old_data["pool"]!r} is encrypted and it is not supported '
+                        'migrating encrypted applications data'
+                    )
 
         network_cidrs = set([
             ipaddress.ip_network(f'{ip_config["address"]}/{ip_config["netmask"]}', False)
