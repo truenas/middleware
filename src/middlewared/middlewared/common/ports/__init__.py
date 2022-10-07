@@ -27,7 +27,11 @@ class ServicePortDelegate(PortDelegate):
         elif not isinstance(self.port_fields, Iterable):
             raise ValueError('Port fields must be an iterable')
 
-    async def get_ports(self):
+    async def get_ports_internal(self):
         await self.basic_checks()
         config = await self.middleware.call(f'{self.namespace}.config')
         return [config[k] for k in filter(lambda k: config.get(k), self.port_fields)]
+
+    async def get_ports(self):
+        ports = await self.get_ports_internal()
+        return [{'description': None, 'ports': ports}] if ports else []

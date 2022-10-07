@@ -1,11 +1,21 @@
+import itertools
+
 from middlewared.service import Service, ValidationErrors
+
+
+SYSTEM_PORTS = [67, 123, 3702, 5353, 6000]
 
 
 class PortService(Service):
 
     DELEGATES = {}
     SYSTEM_USED_PORTS = [
-        {'title': 'System', 'ports': [67, 123, 3702, 5353, 6000], 'namespace': 'system'},
+        {
+            'title': 'System',
+            'ports': SYSTEM_PORTS,
+            'port_details': [{'description': None, 'ports': SYSTEM_PORTS}],
+            'namespace': 'system',
+        },
     ]
 
     class Config:
@@ -24,7 +34,8 @@ class PortService(Service):
                 ports.append({
                     'namespace': delegate.namespace,
                     'title': delegate.title,
-                    'ports': used_ports,
+                    'ports': list(itertools.chain(*[entry['ports'] for entry in used_ports])),
+                    'port_details': used_ports,
                 })
 
         return ports + self.SYSTEM_USED_PORTS

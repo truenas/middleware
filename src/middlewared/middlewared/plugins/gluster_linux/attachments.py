@@ -7,7 +7,7 @@ class GlusterServicePortDelegate(ServicePortDelegate):
     namespace = 'gluster.fuse'
     title = 'Gluster Service'
 
-    async def get_ports(self):
+    async def get_ports_internal(self):
         return [24007, 24008]
 
 

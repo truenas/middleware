@@ -134,11 +134,15 @@ class VMPortDelegate(PortDelegate):
 
     async def get_ports(self):
         ports = []
+        vms = {vm['id']: vm['name'] for vm in await self.middleware.call('vm.query')}
         for device in await self.middleware.call('vm.device.query', [['dtype', '=', 'DISPLAY']]):
-            ports.extend([
-                device['attributes']['port'],
-                device['attributes']['web_port'],
-            ])
+            ports.append({
+                'description': f'{vms[device["vm"]]!r} VM',
+                'ports': [
+                    device['attributes']['port'],
+                    device['attributes']['web_port'],
+                ]
+            })
 
         return ports
 
