@@ -100,6 +100,13 @@ def generate_svc_filters():
         log { source(s_src); filter(f_containerd); destination(d_containerd); };
 
         #####################
+        # filter kube-router messages
+        #####################
+        filter f_kube_router { program("kube-router"); };
+        destination d_kube_router { file("/var/log/kube_router.log"); };
+        log { source(s_src); filter(f_kube_router); destination(d_kube_router); };
+
+        #####################
         # filter haproxy messages
         #####################
         filter f_haproxy { program("haproxy");; };
@@ -119,7 +126,9 @@ def generate_syslog_conf(middleware):
     ):
         syslog_conf = syslog_conf.replace(
             line, RE_K3S_FILTER.sub(
-                r'\1not filter(f_k3s) and not filter(f_containerd) and not filter(f_haproxy) and ', line
+                r'\1not filter(f_k3s) and not filter(f_containerd) and not filter(f_haproxy)'
+                r' and not filter(f_kube_router) and ',
+                line
             )
         )
 
