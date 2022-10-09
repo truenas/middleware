@@ -14,7 +14,7 @@ class USB(Device):
             Str('product_id', empty=False),
             default=None,
         ),
-        Str('device', required=True, empty=False),
+        Str('device', empty=False, null=True),
     )
 
     @property
@@ -52,6 +52,37 @@ class USB(Device):
         return device_xml
 
     def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
+        if device['attributes']['device'] and device['attributes']['usb']:
+            verrors.add(
+                'attributes.usb',
+                'Either device must be specified or USB details but not both'
+            )
+
+        if verrors:
+            return
+
+        if device['attributes']['device']:
+            self._validate_usb_port(device, verrors)
+        else:
+            self._validate_usb_details(device, verrors)
+
+    def _validate_usb_details(self, device, verrors):
+        usb_details = device['attributes']['usb']
+        for k in filter(lambda k: not usb_details.get(k), ('product_id', 'vendor_id')):
+            verrors.add(
+                f'attribute.usb.{k}',
+                'This is required'
+            )
+        if verrors:
+            return
+
+        if not self.middleware.call_sync('vm.device.get_usb_port_from_usb_details', usb_details):
+            verrors.add(
+                f'attributes.usb',
+                'Unable to locate USB, please confirm its present in a USB port'
+            )
+
+    def _validate_usb_port(self, device, verrors):
         usb_device = device['attributes']['device']
         device_details = self.middleware.call_sync('vm.device.usb_passthrough_device', usb_device)
         if device_details.get('error'):
