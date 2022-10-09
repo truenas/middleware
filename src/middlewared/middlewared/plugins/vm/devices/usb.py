@@ -21,6 +21,10 @@ class USB(Device):
     def usb_device(self):
         return self.data['attributes']['device']
 
+    @property
+    def usb_details(self):
+        return self.data['attributes']['usb']
+
     def identity(self):
         return self.usb_device
 
@@ -31,7 +35,13 @@ class USB(Device):
         return self.middleware.call_sync('vm.query', [['id', 'in', [dev['vm'] for dev in devs]]])
 
     def get_details(self):
-        return self.middleware.call_sync('vm.device.usb_passthrough_device', self.usb_device)
+        usb_device = self.usb_device
+        if not usb_device and self.usb_details:
+            usb_device = self.middleware.call_sync('vm.device.get_usb_port_from_usb_details', self.usb_details)
+        if usb_device:
+            return self.middleware.call_sync('vm.device.usb_passthrough_device', usb_device)
+        else:
+            return self.middleware.call_sync('vm.device.usb_passthrough_device', str(usb_device))
 
     def is_available(self):
         return self.get_details()['available']
