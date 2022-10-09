@@ -26,11 +26,15 @@ class USB(Device):
         return self.data['attributes']['usb']
 
     def identity(self):
-        return self.usb_device
+        return self.usb_device or f'{self.usb_details["product_id"]}--{self.usb_details["vendor_id"]}'
 
     def get_vms_using_device(self):
+        if self.usb_device:
+            device_filter = ['attributes.device', '=', self.usb_device]
+        else:
+            device_filter = ['attributes.usb', '=', self.usb_details]
         devs = self.middleware.call_sync(
-            'vm.device.query', [['attributes.device', '=', self.usb_device], ['dtype', '=', 'USB']]
+            'vm.device.query', [device_filter, ['dtype', '=', 'USB']]
         )
         return self.middleware.call_sync('vm.query', [['id', 'in', [dev['vm'] for dev in devs]]])
 
@@ -88,7 +92,7 @@ class USB(Device):
 
         if not self.middleware.call_sync('vm.device.get_usb_port_from_usb_details', usb_details):
             verrors.add(
-                f'attributes.usb',
+                'attributes.usb',
                 'Unable to locate USB, please confirm its present in a USB port'
             )
 
