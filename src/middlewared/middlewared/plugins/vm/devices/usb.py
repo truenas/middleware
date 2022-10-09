@@ -8,6 +8,12 @@ class USB(Device):
 
     schema = Dict(
         'attributes',
+        Dict(
+            'usb',
+            Str('vendor_id', empty=False),
+            Str('product_id', empty=False),
+            default=None,
+        ),
         Str('device', required=True, empty=False),
     )
 
