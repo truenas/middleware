@@ -107,3 +107,13 @@ class VMDeviceService(Service):
             mapping[device] = details
 
         return mapping
+
+    @private
+    async def get_usb_port_from_usb_details(self, usb_data):
+        if any(not usb_data.get(k) for k in ('product_id', 'vendor_id')):
+            raise CallError('Product / Vendor ID must be specified for USBs')
+
+        for device, device_details in (await self.usb_passthrough_choices()).items():
+            capability = device_details['capability']
+            if all(usb_data[k] == capability[k] for k in ('product_id', 'vendor_id')):
+                return device
