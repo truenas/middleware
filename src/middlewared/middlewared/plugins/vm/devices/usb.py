@@ -29,6 +29,10 @@ class USB(Device):
         return self.data['attributes']['device']
 
     @property
+    def controller_type(self):
+        return self.data['attributes']['controller_type']
+
+    @property
     def usb_details(self):
         return self.data['attributes']['usb']
 
@@ -58,8 +62,9 @@ class USB(Device):
         return self.get_details()['available']
 
     def xml_linux(self, *args, **kwargs):
+        controller_mapping = kwargs.pop('controller_mapping')
         details = self.get_details()['capability']
-        device_xml = create_element(
+        return create_element(
             'hostdev', mode='subsystem', type='usb', managed='yes', attribute_dict={
                 'children': [
                     create_element('source', attribute_dict={'children': [
@@ -67,10 +72,12 @@ class USB(Device):
                         create_element('product', id=details['product_id']),
                         create_element('address', bus=details['bus'], device=details['device']),
                     ]}),
+                    create_element('address', type='usb', bus=str(controller_mapping[self.controller_type])),
                 ]
             }
+        ), create_element(
+            'controller', type='usb', model=self.controller_type, index=str(controller_mapping[self.controller_type])
         )
-        return device_xml
 
     def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
         if device['attributes']['device'] and device['attributes']['usb']:

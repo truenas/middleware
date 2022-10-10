@@ -39,6 +39,8 @@ class VMSupervisor(VMSupervisorBase):
     def devices_xml(self):
         boot_no = Nid(1)
         scsi_device_no = Nid(1)
+        usb_controller_no = Nid(1)
+        usb_controllers = {}
         virtual_device_no = Nid(1)
         devices = []
         for device in filter(lambda d: d.is_available(), self.devices):
@@ -49,7 +51,9 @@ class VMSupervisor(VMSupervisorBase):
                     disk_no = scsi_device_no()
                 device_xml = device.xml(disk_number=disk_no, boot_number=boot_no())
             elif isinstance(device, USB):
-                pass
+                if device.controller_type not in usb_controllers:
+                    usb_controllers[device.controller_type] = usb_controller_no()
+                device_xml = device.xml(controller_mapping=usb_controllers)
             else:
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
