@@ -75,8 +75,6 @@ class USB(Device):
                     create_element('address', type='usb', bus=str(controller_mapping[self.controller_type])),
                 ]
             }
-        ), create_element(
-            'controller', type='usb', model=self.controller_type, index=str(controller_mapping[self.controller_type])
         )
 
     def _validate(self, device, verrors, old=None, vm_instance=None, update=True):

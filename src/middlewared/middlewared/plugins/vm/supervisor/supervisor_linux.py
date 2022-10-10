@@ -51,9 +51,17 @@ class VMSupervisor(VMSupervisorBase):
                     disk_no = scsi_device_no()
                 device_xml = device.xml(disk_number=disk_no, boot_number=boot_no())
             elif isinstance(device, USB):
+                device_xml = []
                 if device.controller_type not in usb_controllers:
                     usb_controllers[device.controller_type] = usb_controller_no()
-                device_xml = device.xml(controller_mapping=usb_controllers)
+                    device_xml.append(create_element(
+                        'address', type='usb', bus=str(usb_controllers[device.controller_type])
+                    ))
+                usb_device_xml = device.xml(controller_mapping=usb_controllers)
+                if isinstance(usb_device_xml, (tuple, list)):
+                    device_xml.extend(usb_device_xml)
+                else:
+                    device_xml.append(usb_device_xml)
             else:
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
