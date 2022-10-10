@@ -22,6 +22,10 @@ def upgrade():
     }
 
     for device_id, device_attrs in devices.items():
+        device_attrs.update({
+            'controller_type': 'nec-xhci',
+            'usb': None,
+        })
         device_attrs['usb'] = None
         conn.execute('UPDATE vm_device SET attributes = ? WHERE id = ?', (
             json.dumps(device_attrs), device_id

@@ -1,6 +1,6 @@
 import shlex
 
-from middlewared.plugins.vm.devices import CDROM, DISK, DISPLAY, RAW
+from middlewared.plugins.vm.devices import CDROM, DISK, DISPLAY, RAW, USB
 from middlewared.utils import Nid
 
 from .supervisor_base import VMSupervisorBase
@@ -48,6 +48,8 @@ class VMSupervisor(VMSupervisorBase):
                 else:
                     disk_no = scsi_device_no()
                 device_xml = device.xml(disk_number=disk_no, boot_number=boot_no())
+            elif isinstance(device, USB):
+                pass
             else:
                 device_xml = device.xml()
             devices.extend(device_xml if isinstance(device_xml, (tuple, list)) else [device_xml])
