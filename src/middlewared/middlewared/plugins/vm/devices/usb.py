@@ -5,8 +5,8 @@ from .utils import create_element
 
 
 USB_CONTROLLER_CHOICES = [
-    'piix3-uhci', 'piix4-uhci', 'ehci', 'ich9-ehci1', 'ich9-uhci1', 'ich9-uhci2',
-    'ich9-uhci3', 'vt82c686b-uhci', 'pci-ohci', 'nec-xhci', 'qusb1', 'qemu-xhci',
+    'piix3-uhci', 'piix4-uhci', 'ehci', 'ich9-ehci1',
+    'vt82c686b-uhci', 'pci-ohci', 'nec-xhci', 'qemu-xhci',
 ]
 
 
