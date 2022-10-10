@@ -52,3 +52,10 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     async def get_credentials_extra(self, credentials):
         return {"endpoint": "https://gateway.storjshare.io"}
+
+    async def get_task_extra(self, task):
+        # Storj recommended these settings
+        return {
+            "chunk_size": "64M",
+            "upload_cutoff": "64M",
+        }
