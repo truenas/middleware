@@ -40,7 +40,8 @@ class VMSupervisor(VMSupervisorBase):
         boot_no = Nid(1)
         scsi_device_no = Nid(1)
         usb_controller_no = Nid(1)
-        usb_controllers = {}
+        # nec-xhci is added by default for each domain by libvirt so we update our mapping accordingly
+        usb_controllers = {'nec-xhci': 0}
         virtual_device_no = Nid(1)
         devices = []
         for device in filter(lambda d: d.is_available(), self.devices):
@@ -55,8 +56,9 @@ class VMSupervisor(VMSupervisorBase):
                 if device.controller_type not in usb_controllers:
                     usb_controllers[device.controller_type] = usb_controller_no()
                     device_xml.append(create_element(
-                        'address', type='usb', bus=str(usb_controllers[device.controller_type])
-                    ))
+                        'controller', type='usb', index=str(usb_controllers[device.controller_type]),
+                        model=device.controller_type)
+                    )
                 usb_device_xml = device.xml(controller_mapping=usb_controllers)
                 if isinstance(usb_device_xml, (tuple, list)):
                     device_xml.extend(usb_device_xml)
