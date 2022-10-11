@@ -63,11 +63,7 @@ class VMDeviceService(Service):
         Retrieve details about `device` USB device.
         """
         await self.middleware.call('vm.check_setup_libvirt')
-        data = {
-            'capability': self.get_capability_keys(),
-            'available': False,
-            'error': None,
-        }
+        data = await self.get_basic_usb_passthrough_device_data()
         cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
         if cp.returncode:
             data['error'] = cp.stderr.decode()
@@ -84,6 +80,14 @@ class VMDeviceService(Service):
         return {
             **data,
             'available': not data['error'],
+        }
+
+    @private
+    async def get_basic_usb_passthrough_device_data(self):
+        return {
+            'capability': self.get_capability_keys(),
+            'available': False,
+            'error': None,
         }
 
     @accepts()
