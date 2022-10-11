@@ -19,6 +19,7 @@ class USB(Device):
             Str('vendor_id', empty=False, required=True),
             Str('product_id', empty=False, required=True),
             default=None,
+            null=True,
         ),
         Str('controller_type', empty=False, default='nec-xhci', enum=USB_CONTROLLER_CHOICES),
         Str('device', empty=False, null=True),
@@ -56,7 +57,10 @@ class USB(Device):
         if usb_device:
             return self.middleware.call_sync('vm.device.usb_passthrough_device', usb_device)
         else:
-            return self.middleware.call_sync('vm.device.usb_passthrough_device', str(usb_device))
+            return {
+                **self.middleware.call_sync('vm.device.get_basic_usb_passthrough_device_data'),
+                'error': 'Could not find matching device as no usb device has been specified',
+            }
 
     def is_available(self):
         return self.get_details()['available']
