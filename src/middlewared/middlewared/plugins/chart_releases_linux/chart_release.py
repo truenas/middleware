@@ -545,6 +545,9 @@ class ChartReleaseService(CRUDService):
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 
+        if release_orig['status'] == 'STOPPED':
+            await self.middleware.call('chart.release.scale', chart_release, {'replica_count': 0})
+
         job.set_progress(90, 'Syncing secrets for chart release')
         await self.middleware.call('chart.release.sync_secrets_for_release', chart_release)
         await self.middleware.call('chart.release.refresh_events_state', chart_release)
