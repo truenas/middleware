@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import random
 import sys
 
 apifolder = os.getcwd()
@@ -22,10 +21,12 @@ def test_port_delegate_validation_with_invalid_ports():
     for entry in call('port.get_in_use'):
         in_use_ports.extend(filter(lambda i: i > 1024, entry['ports']))
 
+    assert in_use_ports != [], 'No in use ports retrieved'
+
     for config_method, method, keys, payload in PAYLOAD:
         validation_error = None
-        for key in keys:
-            payload[key] = in_use_ports[random.randint(0, len(in_use_ports) - 1)]
+        for index, key in enumerate(keys):
+            payload[key] = in_use_ports[index] if len(in_use_ports) > index else in_use_ports[0]
         try:
             call(method, payload, client_args={'py_exceptions': False})
         except ValidationErrors as ve:
@@ -42,12 +43,17 @@ def test_port_delegate_validation_with_valid_ports():
     for entry in call('port.get_in_use'):
         in_use_ports.extend(entry['ports'])
 
+    assert in_use_ports != [], 'No in use ports retrieved'
+
     for config_method, method, keys, payload in PAYLOAD:
         validation_error = None
         old_config = call(config_method)
         to_restore_config = {}
+        used_ports = []
         for key in keys:
-            payload[key] = next(i for i in range(random.randint(1025, 50000), 60000) if i not in in_use_ports)
+            port = next(i for i in range(20000, 60000) if i not in in_use_ports and i not in used_ports)
+            payload[key] = port
+            used_ports.append(port)
             to_restore_config[key] = old_config[key]
         try:
             call(method, payload, client_args={'py_exceptions': False})
