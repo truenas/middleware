@@ -43,9 +43,9 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
                 {
                     "name": bucket.find(f"{ns}Name").text,
                     "time": bucket.find(f"{ns}CreationDate").text,
+                    "enabled": bucket.find(f"{ns}Attribution").text == "ix-storj-1",
                 }
                 for bucket in ET.parse(io.StringIO(r.text)).iter(f"{ns}Bucket")
-                if bucket.find(f"{ns}Attribution").text == "ix-storj-1"
             ]
 
         return await self.middleware.run_in_thread(list_buckets_sync)
