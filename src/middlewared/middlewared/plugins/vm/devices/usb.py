@@ -87,7 +87,12 @@ class USB(Device):
         if verrors:
             return
 
-        if device['attributes']['device']:
+        if not device['attributes']['device'] and not device['attributes']['usb']:
+            verrors.add(
+                'attributes.device',
+                'Either device or attributes.usb must be specified'
+            )
+        elif device['attributes']['device']:
             self._validate_usb_port(device, verrors)
         else:
             self._validate_usb_details(device, verrors)
