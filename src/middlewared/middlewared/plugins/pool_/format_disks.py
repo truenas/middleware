@@ -19,9 +19,10 @@ class PoolService(Service):
         async def format_disk(arg):
             nonlocal formatted
             disk, config = arg
-            await self.middleware.call(
-                'disk.format', disk, swapgb if config['create_swap'] else 0, False,
-            )
+            swap_size = 0
+            if config['create_swap'] and not await self.middleware.call('system.is_ha_capable'):
+                swap_size = swapgb
+            await self.middleware.call('disk.format', disk, swap_size, False)
             devname = await self.middleware.call(
                 'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
             )
