@@ -16,8 +16,8 @@ class USB(Device):
         'attributes',
         Dict(
             'usb',
-            Str('vendor_id', empty=False),
-            Str('product_id', empty=False),
+            Str('vendor_id', empty=False, required=True),
+            Str('product_id', empty=False, required=True),
             default=None,
         ),
         Str('controller_type', empty=False, default='nec-xhci', enum=USB_CONTROLLER_CHOICES),
@@ -83,30 +83,22 @@ class USB(Device):
                 'attributes.usb',
                 'Either device must be specified or USB details but not both'
             )
-
-        if verrors:
-            return
-
-        if not device['attributes']['device'] and not device['attributes']['usb']:
+        elif not device['attributes']['device'] and not device['attributes']['usb']:
             verrors.add(
                 'attributes.device',
                 'Either device or attributes.usb must be specified'
             )
-        elif device['attributes']['device']:
+
+        if verrors:
+            return
+
+        if device['attributes']['device']:
             self._validate_usb_port(device, verrors)
         else:
             self._validate_usb_details(device, verrors)
 
     def _validate_usb_details(self, device, verrors):
         usb_details = device['attributes']['usb']
-        for k in filter(lambda k: not usb_details.get(k), ('product_id', 'vendor_id')):
-            verrors.add(
-                f'attribute.usb.{k}',
-                'This is required'
-            )
-        if verrors:
-            return
-
         if not self.middleware.call_sync('vm.device.get_usb_port_from_usb_details', usb_details):
             verrors.add(
                 'attributes.usb',
