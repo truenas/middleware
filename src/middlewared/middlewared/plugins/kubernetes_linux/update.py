@@ -122,26 +122,28 @@ class KubernetesService(ConfigService):
                         f'possible as {applications_ds_name(data["pool"])} already exists.'
                     )
 
-                if not await self.middleware.call(
+                ix_apps_ds = await self.middleware.call(
                     'zfs.dataset.query', [['id', '=', applications_ds_name(old_data['pool'])]], {
-                        'extra': {'retrieve_children': False, 'retrieve_properties': False}
+                        'extra': {'retrieve_children': False, 'retrieve_properties': True}
                     }
-                ):
+                )
+                if not ix_apps_ds:
                     # Edge case but handled just to be sure
                     verrors.add(
                         f'{schema}.migrate_applications',
                         f'{applications_ds_name(old_data["pool"])!r} does not exist, migration not possible.'
                     )
-                if not verrors and (
-                    await self.middleware.call(
+                if not verrors:
+                    source_root_ds = await self.middleware.call(
                         'pool.dataset.get_instance', old_data['pool'], {'extra': {'retrieve_children': False}}
                     )
-                )['encrypted']:
-                    verrors.add(
-                        f'{schema}.migrate_applications',
-                        f'Source {old_data["pool"]!r} is encrypted and it is not supported '
-                        'migrating encrypted applications data'
-                    )
+                    ix_apps_ds = ix_apps_ds[0]
+                    if source_root_ds['encrypted'] and ix_apps_ds['encrypted']:
+                        verrors.add(
+                            f'{schema}.migrate_applications',
+                            f'Source {applications_ds_name(old_data["pool"])!r} is encrypted and it is not supported '
+                            'migrating encrypted applications data'
+                        )
 
         network_cidrs = set([
             ipaddress.ip_network(f'{ip_config["address"]}/{ip_config["netmask"]}', False)
