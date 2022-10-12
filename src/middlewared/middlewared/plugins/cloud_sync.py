@@ -991,7 +991,8 @@ class CloudSyncService(TaskPathService):
                     "MimeType": "inode/directory",
                     "ModTime": bucket["time"],
                     "IsDir": True,
-                    "IsBucket": True
+                    "IsBucket": True,
+                    "Enabled": bucket["enabled"],
                 }
                 for bucket in await provider.list_buckets(credentials)
             ]
@@ -1047,6 +1048,9 @@ class CloudSyncService(TaskPathService):
                              check=False, encoding="utf8", errors="ignore")
             if proc.returncode == 0:
                 result = json.loads(proc.stdout)
+
+                for item in result:
+                    item["Enabled"] = True
 
                 if decrypt_filenames:
                     if result:
