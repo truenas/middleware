@@ -254,7 +254,7 @@ class NISService(ConfigService):
 
         local_users = list(u['username'] for u in self.middleware.call_sync('user.query'))
         local_groups = list(g['group'] for g in self.middleware.call_sync('group.query'))
-        cache_data = {'users': [], 'groups': []}
+        cache_data = {'users': {}, 'groups': {}}
 
         for nis_user in nis_users:
             if nis_user in local_users:
@@ -262,7 +262,7 @@ class NISService(ConfigService):
                 continue
 
             u = pwd.getpwnam(nis_user)
-            cache_data['users'].append({u.pw_name: {
+            cache_data['users'].update({u.pw_name: {
                 'id': user_next_index,
                 'uid': u.pw_uid,
                 'username': u.pw_name,
@@ -293,7 +293,7 @@ class NISService(ConfigService):
                 continue
 
             g = grp.getgrnam(nis_group)
-            cache_data['groups'].append({g.gr_name: {
+            cache_data['groups'].update({g.gr_name: {
                 'id': group_next_index,
                 'gid': g.gr_gid,
                 'group': g.gr_name,
