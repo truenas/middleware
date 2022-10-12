@@ -1,7 +1,7 @@
 """VMware pending snapshot delete
 
 Revision ID: ae2a519c8b9a
-Revises: dc9ffe67a56f
+Revises: d388b0e9a50d
 Create Date: 2022-09-22 09:21:29.691045+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'ae2a519c8b9a'
-down_revision = 'dc9ffe67a56f'
+down_revision = 'd388b0e9a50d'
 branch_labels = None
 depends_on = None
 
