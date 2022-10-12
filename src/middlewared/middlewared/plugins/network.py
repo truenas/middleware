@@ -176,11 +176,11 @@ class NetworkConfigurationService(ConfigService):
     @private
     async def propagate_changes_to_remote(self, remote_actions, local_config, licensed):
         """
-        On the internal HA VM used for integration tests, we're seeing that propagating db changes
-        that have been written to the active node are taking up to 4 seconds to propagate to the
-        standby node and be flushed to disk. This means we'll restart the dns "service" on the remote
-        node before the db changes have been flushed which has the perception that the db changes aren't
-        actually getting propagating...but they are we just have a race...because of an unfortunate design.
+        On the internal HA VM used for integration tests, we're seeing that db changes that have
+        been written to the active node are taking up to 4 seconds to propagate to the standby node
+        and be flushed to disk. This means we'll restart the dns "service" on the remote node before
+        the db changes have been flushed which has the perception that the db changes aren't actually
+        getting propagated...but they are...we just have a race...because of an unfortunate design.
         """
         if not licensed:
             return
@@ -192,7 +192,7 @@ class NetworkConfigurationService(ConfigService):
             try:
                 remote_config = await self.middleware.call('failover.call_remote', 'network.configuration.config')
             except Exception:
-                self.logger.error('Failed to determine network config on remote node', exc_info=True)
+                self.logger.error('Failed to determine network config on remote controller', exc_info=True)
             else:
                 if all((remote_config[k] == local_config[k] for k in remote_config if k != 'hostname_local')):
                     # the db changes have been propagated to the standby node AND they
@@ -205,7 +205,7 @@ class NetworkConfigurationService(ConfigService):
 
         if not run_remote_actions:
             self.logger.warning(
-                'Waited %r seconds for standby node to come in sync with active. Not syncing network config.',
+                'Waited %r seconds for standby controller to come in sync with active. Not syncing network config.',
                 exc_info=True
             )
             return
