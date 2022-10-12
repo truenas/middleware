@@ -12,7 +12,7 @@ from .utils import applications_ds_name, MIGRATION_NAMING_SCHEMA
 class KubernetesService(Service):
 
     @private
-    async def migrate_ix_applications_dataset(self, job, config, old_config):
+    async def migrate_ix_applications_dataset(self, job, config, old_config, migration_options):
         new_pool = config['pool']
         backup_name = f'backup_to_{new_pool}_{datetime.utcnow().strftime("%F_%T")}'
         job.set_progress(30, 'Creating kubernetes cluster backup')
