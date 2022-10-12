@@ -23,7 +23,7 @@ class KubernetesService(Service):
 
         try:
             job.set_progress(40, f'Replicating datasets from {old_config["pool"]!r} to {new_pool!r} pool')
-            await self.replicate_apps_dataset(new_pool, old_config['pool'])
+            await self.replicate_apps_dataset(new_pool, old_config['pool'], migration_options)
 
             await self.middleware.call('datastore.update', 'services.kubernetes', old_config['id'], config)
 
@@ -36,7 +36,7 @@ class KubernetesService(Service):
             await self.middleware.call('kubernetes.delete_backup', backup_name)
 
     @private
-    async def replicate_apps_dataset(self, new_pool, old_pool):
+    async def replicate_apps_dataset(self, new_pool, old_pool, migration_options):
         snap_details = await self.middleware.call(
             'zfs.snapshot.create', {
                 'dataset': applications_ds_name(old_pool),
@@ -65,11 +65,57 @@ class KubernetesService(Service):
             await migrate_job.wait()
             if migrate_job.error:
                 raise CallError(f'Failed to migrate {old_ds} to {new_ds}: {migrate_job.error}')
+
+            await self.handle_encrypted_ix_apps_dataset(new_pool, old_pool, migration_options)
         finally:
             await self.middleware.call('zfs.snapshot.delete', snap_details['id'], {'recursive': True})
             snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
             if await self.middleware.call('zfs.snapshot.query', [['id', '=', snap_name]]):
                 await self.middleware.call('zfs.snapshot.delete', snap_name, {'recursive': True})
+
+    @private
+    async def handle_encrypted_ix_apps_dataset(self, new_pool, old_pool, migration_options):
+        # If new-pool/ix-apps is encrypted here, it means that old-pool is encrypted and we want
+        # to unlock new-pool/ix-apps and have it inherit new-pool properties
+        new_apps_ds = await self.middleware.call(
+            'zfs.dataset.query', [['id', '=', applications_ds_name(new_pool['pool'])]], {
+                'extra': {'retrieve_children': False, 'retrieve_properties': True},
+                'get': True,
+            }
+        )
+        if not new_apps_ds['encrypted']:
+            return
+
+        if not new_apps_ds['locked']:
+            # This is a sanity check
+            raise CallError(f'{new_apps_ds["id"]!r} must be locked after replicating from source pool')
+
+        # We will rename apps dataset as ix-applications is filtered out by pool.dataset.query
+        # and we won't be able to unlock it in this manner
+        new_name = os.path.join(new_pool, 'ix-applications-migration_enc_temp')
+        await self.middleware.call('zfs.dataset.rename', new_apps_ds['id'], {'new_name': new_name})
+
+        unlock_options = {
+            'passphrase': migration_options['passphrase'],
+        } if new_apps_ds['key_format']['value'] == 'PASSPHRASE' else {
+            'key': (await self.middleware.call(
+                'datastore.query', 'storage.encrypteddataset', [['name', '=', old_pool]]
+            ))['encryption_key']
+        }
+
+        unlock_job = await self.middleware.call('pool.dataset.unlock', new_name, {
+            'datasets': [{
+                'name': new_name,
+                'recursive': True,
+                **unlock_options,
+            }]
+        })
+        await unlock_job.wait()
+        if unlock_job.error:
+            raise CallError(f'Failed to unlock migrated ix-applications dataset: {unlock_job.error!r}')
+
+        await self.middleware.call('pool.dataset.inherit_parent_encryption_properties', new_name)
+        await self.middleware.call('zfs.dataset.rename', new_name, {'new_name': new_name})
 
     @private
     def update_server_credentials(self, apps_dataset):
