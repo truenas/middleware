@@ -210,6 +210,8 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
     # name_regex
     (dict(name_regex="manual-.+"), None),
     (dict(direction="PULL", name_regex="manual-.+"), None),
+    (dict(name_regex="manual-.+",
+          retention_policy="CUSTOM", lifetime_value=2, lifetime_unit="WEEK"), "retention_policy"),
 
     # replicate
     (dict(source_datasets=["tank/data", "tank/data/work"], periodic_snapshot_tasks=["data-recursive"], replicate=True,

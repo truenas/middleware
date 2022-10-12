@@ -652,6 +652,12 @@ class ReplicationService(CRUDService):
             if data["naming_schema"] or data["also_include_naming_schema"]:
                 verrors.add("name_regex", "Naming regex can't be used with Naming schema")
 
+            if data["retention_policy"] not in ["SOURCE", "NONE"]:
+                verrors.add(
+                    "retention_policy",
+                    "Only `Same as Source` and `None` retention policies can be used with Naming regex",
+                )
+
         if data["retention_policy"] == "CUSTOM":
             if data["lifetime_value"] is None:
                 verrors.add("lifetime_value", "This field is required for custom retention policy")
