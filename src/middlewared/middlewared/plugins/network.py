@@ -173,6 +173,60 @@ class NetworkConfigurationService(ConfigService):
 
             await self.middleware.call(f'service.{verb}', service_name)
 
+    @private
+    async def propagate_changes_to_remote(self, remote_actions, local_config, licensed):
+        """
+        On the internal HA VM used for integration tests, we're seeing that propagating db changes
+        that have been written to the active node are taking up to 4 seconds to propagate to the
+        standby node and be flushed to disk. This means we'll restart the dns "service" on the remote
+        node before the db changes have been flushed which has the perception that the db changes aren't
+        actually getting propagating...but they are we just have a race...because of an unfortunate design.
+        """
+        if not licensed:
+            return
+
+        time_to_wait_seconds = 5
+        sleepy_time = 1
+        run_remote_actions = False
+        while time_to_wait_seconds != 0:
+            try:
+                remote_config = await self.middleware.call('failover.call_remote', 'network.configuration.config')
+            except Exception:
+                self.logger.error('Failed to determine network config on remote node', exc_info=True)
+            else:
+                if all((remote_config[k] == local_config[k] for k in remote_config if k != 'hostname_local')):
+                    # the db changes have been propagated to the standby node AND they
+                    # have been flushed to disk
+                    run_remote_actions = True
+                    break
+
+            await asyncio.sleep(sleepy_time)
+            time_to_wait_seconds -= sleepy_time
+
+        if not run_remote_actions:
+            self.logger.warning(
+                'Waited %r seconds for standby node to come in sync with active. Not syncing network config.',
+                exc_info=True
+            )
+            return
+
+        try:
+            for key, values in remote_actions.items():
+                if key == 1:
+                    for method in values:
+                        # middleware specific methods for generating configs
+                        await self.middleware.call('failover.call_remote', method)
+                elif key == 2:
+                    for etc_file in values:
+                        # etc plugin for generating configs
+                        await self.middleware.call('failover.call_remote', 'etc.generate', [etc_file])
+                elif key == 3:
+                    for verb, service_name in values:
+                        # restarting the actual services
+                        await self.middleware.call('failover.call_remote', f'service.{verb}', [service_name])
+        except Exception:
+            self.logger.warning('Failed to configure network global config on standby controller', exc_info=True)
+
     @accepts(
         Dict(
             'global_configuration_update',
@@ -376,23 +430,9 @@ class NetworkConfigurationService(ConfigService):
                     # restarting the actual services
                     await self.middleware.call(f'service.{verb}', service_name, {'ha_propagate': False})
 
-        # this is the exact same methodology as above but for the remote node (only on HA)
-        try:
-            for key, values in remote_actions.items():
-                if key == 1:
-                    for method in values:
-                        # middleware specific methods for generating configs
-                        await self.middleware.call('failover.call_remote', [method])
-                elif key == 2:
-                    for etc_file in values:
-                        # etc plugin for generating configs
-                        await self.middleware.call('failover.call_remote', 'etc.generate', [etc_file])
-                elif key == 3:
-                    for verb, service_name in values:
-                        # restarting the actual services
-                        await self.middleware.call('failover.call_remote', f'service.{verb}', [service_name])
-        except Exception:
-            self.logger.warning('Failed to configure network global config on standby controller', exc_info=True)
+        new_config = await self.config()
+
+        await self.propagate_changes_to_remote(remote_actions, new_config, licensed)
 
         # virtual hostname on an HA system changed
         if vhost_changed:
@@ -400,7 +440,7 @@ class NetworkConfigurationService(ConfigService):
             await self.middleware.call("smb.set_database_sid", (await self.middleware.call("smb.get_system_sid")))
             await self.middleware.call("smb.synchronize_group_mappings")
 
-        return await self.config()
+        return new_config
 
 
 class NetworkAliasModel(sa.Model):
