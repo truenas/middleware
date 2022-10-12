@@ -82,9 +82,12 @@ class NISService(ConfigService):
 
         if must_reload:
             if new['enable']:
-                await self.middleware.call('nis.start')
+                op = 'nis.start_impl'
             else:
-                await self.middleware.call('nis.stop')
+                op = 'nis.stop_impl'
+
+        start_stop = await self.middleware.call(op)
+        await start_stop.wait()
 
         return await self.config()
 
@@ -101,7 +104,8 @@ class NISService(ConfigService):
         return (await self.middleware.call('directoryservices.get_state'))['nis']
 
     @private
-    async def start(self):
+    @job(lock='nis_start', lock_queue_size=1)
+    async def start_impl(self, job):
         """
         Refuse to start service if the service is alreading in process of starting or stopping.
         If state is 'HEALTHY' or 'FAULTED', then stop the service first before restarting it to ensure
@@ -110,13 +114,13 @@ class NISService(ConfigService):
         state = await self.get_state()
         nis = await self.config()
         if state in ['FAULTED', 'HEALTHY']:
-            await self.stop()
+            stop_job = await self.middleware.call('nis.stop_impl', True)
+            await stop_job.wait()
 
         if state in ['EXITING', 'JOINING']:
             raise CallError(f'Current state of NIS service is: [{state}]. Wait until operation completes.', errno.EBUSY)
 
         await self.set_state(DSStatus['JOINING'])
-        await self.middleware.call('datastore.update', 'directoryservice.nis', nis['id'], {'nis_enable': True})
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'pam')
         await self.middleware.call('etc.generate', 'hostname')
@@ -133,7 +137,7 @@ class NISService(ConfigService):
             raise CallError(f'ypbind failed: {ypbind.stderr.decode()}')
 
         await self.set_state(DSStatus['HEALTHY'])
-        self.logger.debug(f'NIS service successfully started. Setting state to HEALTHY.')
+        self.logger.debug('NIS service successfully started. Setting state to HEALTHY.')
         await self.middleware.call('nis.fill_cache')
         return True
 
@@ -163,25 +167,28 @@ class NISService(ConfigService):
         ypwhich = await run(['/usr/bin/ypwhich'], check=False)
 
         if ypwhich.stderr:
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'NIS status check returned [{ypwhich.stderr.decode().strip()}]. Setting state to FAULTED.')
         return True
 
     @private
     async def started(self):
-        ret = False
-        if not (await self.config())['enable']:
-            return ret
-
-        """
-        Initialize state to "JOINING" until after booted.
-        """
-        if not await self.middleware.call('system.ready'):
+        enabled = (await self.config())['enable']
+        if enabled and not await self.middleware.call('system.ready'):
             await self.set_state(DSStatus['JOINING'])
             return True
+
+        # ypbind is not sufficient to show health of NIS service
+        # but ypwhich will hang indefinitely if ypbind service isn't
+        # running
+        ypbind = await run(['/usr/sbin/service', 'ypbind', 'onestatus'], check=False)
+        if ypbind.returncode != 0:
+            return False
 
         try:
             ret = await asyncio.wait_for(self.__ypwhich(), timeout=5.0)
         except asyncio.TimeoutError:
+            await self.set_state(DSStatus['FAULTED'])
             raise CallError('nis.started check timed out after 5 seconds.')
 
         try:
@@ -195,20 +202,18 @@ class NISService(ConfigService):
         return ret
 
     @private
-    async def stop(self, force=False):
+    @job(lock='nis_stop', lock_queue_size=1)
+    async def stop_impl(self, job, force=False):
         """
         Remove NIS_state entry entirely after stopping ypbind. This is so that the 'enable' checkbox
         becomes the sole source of truth regarding a service's state when it is disabled.
         """
         state = await self.get_state()
-        nis = await self.config()
         if not force:
             if state in ['LEAVING', 'JOINING']:
                 raise CallError(f'Current state of NIS service is: [{state}]. Wait until operation completes.', errno.EBUSY)
 
         await self.set_state(DSStatus['LEAVING'])
-        await self.middleware.call('datastore.update', 'directoryservice.nis', nis['id'], {'nis_enable': False})
-
         ypbind = await run(['/usr/sbin/service', 'ypbind', 'onestop'], check=False)
         if ypbind.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
@@ -223,8 +228,18 @@ class NISService(ConfigService):
         await self.middleware.call('etc.generate', 'nss')
         await self.middleware.call('etc.generate', 'user')
         await self.set_state(DSStatus['DISABLED'])
-        self.logger.debug(f'NIS service successfully stopped. Setting state to DISABLED.')
+        self.logger.debug('NIS service successfully stopped. Setting state to DISABLED.')
         return True
+
+    @private
+    async def start(self):
+        job = await self.middleware.call('nis.start_impl')
+        await job.wait()
+
+    @private
+    async def stop(self):
+        job = await self.middleware.call('nis.stop_impl')
+        await job.wait()
 
     @private
     @job(lock=lambda args: 'fill_nis_cache')
