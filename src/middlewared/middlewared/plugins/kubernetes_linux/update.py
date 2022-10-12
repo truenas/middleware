@@ -94,6 +94,9 @@ class KubernetesService(ConfigService):
                 'System is not licensed to use Applications'
             )
 
+        if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
+            verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
+
         if data.pop('migrate_applications', False):
             if data['pool'] == old_data['pool']:
                 verrors.add(
@@ -139,11 +142,39 @@ class KubernetesService(ConfigService):
                     )
                     ix_apps_ds = ix_apps_ds[0]
                     if source_root_ds['encrypted'] and ix_apps_ds['encrypted']:
-                        verrors.add(
-                            f'{schema}.migrate_applications',
-                            f'Source {applications_ds_name(old_data["pool"])!r} is encrypted and it is not supported '
-                            'migrating encrypted applications data'
+                        # We would like to allow migrating encrypted ix-apps dataset but set
+                        # some restrictions to make the migration simpler
+                        destination_root_ds = await self.middleware.call(
+                            'pool.dataset.get_instance', data['pool'], {
+                                'extra': {'retrieve_children': False}, 'get': True,
+                            }
                         )
+                        if not destination_root_ds['encrypted']:
+                            verrors.add(
+                                f'{schema}.migrate_applications',
+                                f'Destination {data["pool"]!r} root dataset must be "KEY" encrypted as '
+                                f'{ix_apps_ds["id"]!r} is encrypted and it is not supported migrating encrypted '
+                                'applications dataset to a non-encrypted pool.'
+                            )
+                        elif destination_root_ds['key_format'] == 'PASSPHRASE':
+                            verrors.add(
+                                f'{schema}.migrate_applications',
+                                f'{ix_apps_ds["id"]!r} can only be migrated to a destination pool '
+                                'which is "KEY" encrypted.'
+                            )
+                        elif destination_root_ds['locked']:
+                            verrors.add(
+                                f'{schema}.migrate_applications',
+                                f'Migration not possible as {data["pool"]!r} is locked'
+                            )
+                        elif not await self.middleware.call(
+                            'datastore.query', 'storage.encrypteddataset', [['name', '=', data['pool']]]
+                        ):
+                            verrors.add(
+                                f'{schema}.migrate_applications',
+                                f'Migration not possible as system does not has encryption key for {data["pool"]!r} '
+                                'stored'
+                            )
 
         network_cidrs = set([
             ipaddress.ip_network(f'{ip_config["address"]}/{ip_config["netmask"]}', False)
@@ -171,9 +202,6 @@ class KubernetesService(ConfigService):
                 data['cluster_dns_ip'] = str(list(ipaddress.ip_network(data['service_cidr'], False).hosts())[9])
             else:
                 verrors.add(f'{schema}.cluster_dns_ip', 'Please specify cluster_dns_ip.')
-
-        if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
-            verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
 
         for k in ('cluster_cidr', 'service_cidr'):
             if not data[k]:
