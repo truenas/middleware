@@ -24,7 +24,6 @@ def upgrade():
     sa.Column('vm_uuid', sa.String(length=200), nullable=False),
     sa.Column('snapshot_name', sa.String(length=200), nullable=False),
     sa.Column('datetime', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['vmware_id'], ['storage_vmwareplugin.id'], name=op.f('fk_storage_vmwarependingsnapshotdelete_vmware_id_storage_vmwareplugin'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_storage_vmwarependingsnapshotdelete')),
     sqlite_autoincrement=True
     )
