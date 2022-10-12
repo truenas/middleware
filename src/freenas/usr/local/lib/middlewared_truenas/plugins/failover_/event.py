@@ -616,6 +616,10 @@ class FailoverService(Service):
                 # Now we restart the appropriate services to ensure it's using correct certs.
                 self.run_call('service.restart', 'http')
 
+                if self.run_call('nis.config')['enable']:
+                    if not self.run_call('nis.started'):
+                        self.run_call('service.restart', 'nis', {'ha_propagate': False})
+
                 # restart the critical services first
                 # each service is restarted concurrently and given a timeout value of 15
                 # seconds to restart. This is done to prevent the possibility of a service
