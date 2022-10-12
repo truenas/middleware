@@ -107,7 +107,9 @@ class VMDeviceService(Service):
 
         node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
         error_str = ''
-        if not node_info['iommu_group'].get('number'):
+
+        group = node_info['iommu_group'].get('number')
+        if not isinstance(group, int) or group < 0:
             error_str += 'Unable to determine iommu group\n'
         if any(not node_info['capability'].get(k) for k in ('domain', 'bus', 'slot', 'function')):
             error_str += 'Unable to determine PCI device address\n'
