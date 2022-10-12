@@ -270,6 +270,8 @@ class NetworkConfigurationService(ConfigService):
         local_actions = OrderedDict([(1, set()), (2, set()), (3, set())])
         remote_actions = OrderedDict([(1, set()), (2, set()), (3, set())])
 
+        licensed = await self.middleware.call('failover.licensed')
+
         # anything related to resolv.conf changed
         dnssearch_changed = config['domains'] != new_config['domains']
         dns1_changed = config['nameserver1'] != new_config['nameserver1']
@@ -278,9 +280,10 @@ class NetworkConfigurationService(ConfigService):
         dnsservers_changed = any((dns1_changed, dns2_changed, dns3_changed))
         if dnssearch_changed or dnsservers_changed:
             local_actions[1].add('dns.sync')
+            if licensed:
+                remote_actions[1].add('dns.sync')
 
         # system domain name changed
-        licensed = await self.middleware.call('failover.licensed')
         domainname_changed = config['domain'] != new_config['domain']
         if domainname_changed:
             local_actions[2].add('rc')
