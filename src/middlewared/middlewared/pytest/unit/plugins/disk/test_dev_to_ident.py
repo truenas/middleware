@@ -57,8 +57,77 @@ BY_SERIAL = (
     },
     "{serial}AAAAAAAA",
 )
+DUPLICATE_SERIAL_LUNID = (
+    "sda",
+    {
+        "sda": {
+            "name": "sda",
+            "serial": None,
+            "serial_lunid": "1234_XXXX",
+            "parts": []
+        },
+        "sdb": {
+            "name": "sdb",
+            "serial": None,
+            "serial_lunid": "1234_XXXX",
+            "parts": []
+        },
+    },
+    "{devicename}sda",
+)
+DUPLICATE_SERIAL_BUT_HAS_PARTS = (
+    "sda",
+    {
+        "sda": {
+            "name": "sda",
+            "serial": "1234",
+            "serial_lunid": None,
+            "parts": [{
+                "partition_type": "516e7cba-6ecf-11d6-8ff8-00022d09712b",
+                "partition_uuid": "b9253137-a0a4-11ec-b194-3cecef615fde",
+            }],
+        },
+        "sdb": {
+            "name": "sdb",
+            "serial": "1234",
+            "serial_lunid": None,
+            "parts": [{
+                "partition_type": "516e7cba-6ecf-11d6-8ff8-00022d09712b",
+                "partition_uuid": "b9253137-a0a4-11ec-b194-3cecef615fdf",
+            }],
+        },
+    },
+    "{uuid}b9253137-a0a4-11ec-b194-3cecef615fde",
+)
+DUPLICATE_UUID = (
+    "sdb",
+    {
+        "sda": {
+            "name": "sda",
+            "serial": "1234",
+            "serial_lunid": "1234_XXXX",
+            "parts": [{
+                "partition_type": "516e7cba-6ecf-11d6-8ff8-00022d09712b",
+                "partition_uuid": "b9253137-a0a4-11ec-b194-3cecef615fde",
+            }],
+        },
+        "sdb": {
+            "name": "sdb",
+            "serial": "1234",
+            "serial_lunid": "1234_XXXX",
+            "parts": [{
+                "partition_type": "516e7cba-6ecf-11d6-8ff8-00022d09712b",
+                "partition_uuid": "b9253137-a0a4-11ec-b194-3cecef615fde",
+            }],
+        },
+    },
+    "{devicename}sdb",
+)
 
 
-@pytest.mark.parametrize('disk_name, sys_disks, result', [BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL])
+@pytest.mark.parametrize('disk_name,sys_disks,result', [
+    BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL, DUPLICATE_SERIAL_LUNID, DUPLICATE_SERIAL_BUT_HAS_PARTS,
+    DUPLICATE_UUID,
+])
 def test_dev_to_ident(disk_name, sys_disks, result):
     assert result == OBJ.dev_to_ident(disk_name, sys_disks, UUIDS)

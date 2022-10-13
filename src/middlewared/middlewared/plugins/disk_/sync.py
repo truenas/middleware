@@ -101,13 +101,19 @@ class DiskService(Service, ServiceChangeMixin):
         else:
             dev = sys_disks[name]
 
-        if dev['serial_lunid']:
+        if dev['serial_lunid'] and len([d for d in sys_disks.values() if d['serial_lunid'] == dev['serial_lunid']]) == 1:
             return f'{{serial_lunid}}{dev["serial_lunid"]}'
-        elif dev['serial']:
+        elif dev['serial'] and len([d for d in sys_disks.values() if d['serial'] == dev['serial']]) == 1:
             return f'{{serial}}{dev["serial"]}'
         elif dev['parts']:
+            all_parts = [
+                part['partition_uuid']
+                for d in sys_disks.values()
+                for part in filter(lambda x: x['partition_type'] in uuids, d['parts'])
+            ]
             for part in filter(lambda x: x['partition_type'] in uuids, dev['parts']):
-                return f'{{uuid}}{part["partition_uuid"]}'
+                if len([p for p in all_parts if p == part['partition_uuid']]) == 1:
+                    return f'{{uuid}}{part["partition_uuid"]}'
 
         return f'{{devicename}}{name}'
 
