@@ -10,7 +10,7 @@ class EnclosureService(Service):
     RE_SLOT = re.compile(r'slot=([0-9]+)')
 
     @private
-    def mseries_plx_enclosures(self, product):
+    def map_plx(self, product):
         slot_to_nvd = {}
         for nvme, nvd in self.middleware.call_sync('disk.nvme_to_nvd_map', True).items():
             pci = sysctl.filter(f'dev.nvme.{nvme}.%parent')[0].value
@@ -23,8 +23,12 @@ class EnclosureService(Service):
             if not m:
                 continue
 
+            vendor_info = (
+                'vendor=0x10b5 device=0x8717',  # M series
+                'vendor=0x10b5 device=0x9733',  # R50BM
+            )
             pnpinfo = sysctl.filter(f'dev.pcib.{m.group(1)}.%pnpinfo')[0].value
-            if 'vendor=0x10b5 device=0x8717' not in pnpinfo:
+            if not any((i for i in vendor_info if i in pnpinfo)):
                 continue
 
             location = sysctl.filter(f'dev.pcib.{m.group(1)}.%location')[0].value
