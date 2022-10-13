@@ -203,7 +203,9 @@ class OpenVPN:
                 f'{mode}_certificate': None,
             })
         else:
-            for k in filter(lambda k: not data.get(k), ('root_ca', f'{mode}_certificate')):
+            for k in filter(
+                lambda k: not data.get(k), ['root_ca'] + ([] if mode == 'client' else ['server_certificate'])
+            ):
                 verrors.add(
                     f'{schema}.{k}',
                     'This is required'
