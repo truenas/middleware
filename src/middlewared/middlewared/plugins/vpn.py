@@ -197,6 +197,18 @@ class OpenVPN:
                 'Please specify a valid authentication_algorithm.'
             )
 
+        if data.pop('remove_certificates'):
+            data.update({
+                'root_ca': None,
+                f'{mode}_certificate': None,
+            })
+        else:
+            for k in filter(lambda k: not data.get(k), ('root_ca', f'{mode}_certificate')):
+                verrors.add(
+                    f'{schema}.{k}',
+                    'This is required'
+                )
+
         if data['root_ca']:
             verrors = await OpenVPN.cert_validation(middleware, data, schema, mode, verrors)
 
