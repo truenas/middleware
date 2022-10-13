@@ -52,8 +52,9 @@ class EnclosureService(CRUDService):
 
         # need to map the nvme disks
         if prod:
-            if prod.startswith(('TRUENAS-M50', 'TRUENAS-M60')):
-                enclosures.extend(self.middleware.call_sync('enclosure.mseries_plx_enclosures', prod))
+            if prod.startswith(('TRUENAS-M50', 'TRUENAS-M60', 'TRUENAS-R50BM')):
+                # R50BM platform has same plx bridge (different OEM) as the M series
+                enclosures.extend(self.middleware.call_sync('enclosure.map_plx', prod))
             elif prod.startswith(('TRUENAS-R50', 'TRUENAS-R50B')):
                 nvme = self.middleware.call_sync('enclosure.rseries_nvme_enclosures', prod)
                 for idx, i in enumerate(enclosures):
