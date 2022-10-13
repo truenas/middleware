@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from middlewared.schema import accepts, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 
-RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
+RE_IDENT = re.compile(r'^{(?P<type>.+?)\}(?P<value>.+)$')
 
 
 class DiskService(Service, ServiceChangeMixin):
@@ -25,7 +25,8 @@ class DiskService(Service, ServiceChangeMixin):
         # Abort if the disk is not recognized as an available disk
         if name not in disks:
             return
-        ident = await self.middleware.call('disk.device_to_identifier', name, disks)
+        uuids = await self.middleware.call('disk.get_valid_zfs_partition_type_uuids')
+        ident = await self.middleware.call('disk.dev_to_ident', name, disks, uuids)
         qs = await self.middleware.call(
             'datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']}
         )
