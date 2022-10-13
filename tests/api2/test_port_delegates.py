@@ -5,7 +5,9 @@ import sys
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from middlewared.test.integration.utils import call, ValidationErrors
+
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.utils import call
 
 
 PAYLOAD = (
@@ -28,7 +30,7 @@ def test_port_delegate_validation_with_invalid_ports():
         for index, key in enumerate(keys):
             payload[key] = in_use_ports[index] if len(in_use_ports) > index else in_use_ports[0]
         try:
-            call(method, payload, client_args={'py_exceptions': False})
+            call(method, payload)
         except ValidationErrors as ve:
             validation_error = ve
 
@@ -56,7 +58,7 @@ def test_port_delegate_validation_with_valid_ports():
             used_ports.append(port)
             to_restore_config[key] = old_config[key]
         try:
-            call(method, payload, client_args={'py_exceptions': False})
+            call(method, payload)
         except ValidationErrors as ve:
             validation_error = ve
         else:
