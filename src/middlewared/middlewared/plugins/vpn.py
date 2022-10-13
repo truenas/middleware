@@ -476,6 +476,7 @@ class OpenVPNServerService(SystemServiceService):
     @accepts(
         Patch(
             'openvpn_server_entry', 'openvpn_server_update',
+            ('add', Bool('remove_certificates', default=False)),
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'interface'}),
             ('attr', {'update': True}),
@@ -651,6 +652,7 @@ class OpenVPNClientService(SystemServiceService):
     @accepts(
         Patch(
             'openvpn_client_entry', 'openvpn_client_update',
+            ('add', Bool('remove_certificates', default=False)),
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'interface'}),
             ('attr', {'update': True}),
