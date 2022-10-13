@@ -1,11 +1,15 @@
+import errno
 import io
 import xml.etree.ElementTree as ET
 
 from aws_requests_auth.aws_auth import AWSRequestsAuth
+import boto3
+import botocore
 import requests
 
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.schema import Str
+from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
@@ -14,6 +18,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
     title = "Storj iX"
 
     buckets = True
+    can_create_bucket = True
     custom_list_buckets = True
 
     fast_list = True
@@ -26,6 +31,22 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
     ]
 
     task_schema = []
+
+    async def create_bucket(self, credentials, name):
+        def create_bucket_sync():
+            s3_client = boto3.client(
+                "s3",
+                config=botocore.config.Config(user_agent="ix-storj-1"),
+                endpoint_url="https://gateway.storjshare.io",
+                aws_access_key_id=credentials["attributes"]["access_key_id"],
+                aws_secret_access_key=credentials["attributes"]["secret_access_key"],
+            )
+            try:
+                s3_client.create_bucket(Bucket=name)
+            except s3_client.exceptions.BucketAlreadyExists as e:
+                raise CallError(str(e), errno=errno.EEXIST)
+
+        return await self.middleware.run_in_thread(create_bucket_sync)
 
     async def list_buckets(self, credentials):
         def list_buckets_sync():
