@@ -183,7 +183,7 @@ class OpenVPN:
     async def common_validation(middleware, data, schema, mode):
         verrors = ValidationErrors()
 
-        verrors.extend(await validate_port(middleware, f'{schema}.port', data['port'], f'openvpn.{schema}'))
+        verrors.extend(await validate_port(middleware, f'{schema}.port', data['port'], f'openvpn.{mode}'))
 
         if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
             verrors.add(
