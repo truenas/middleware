@@ -50,9 +50,9 @@ class PortService(Service):
                 ):
                     err = 'The port is being used by '
                     if port_entry['description']:
-                        err += f'{port_entry["description"]!r} in {port_attachment["type"]!r}'
+                        err += f'{port_entry["description"]!r} in {port_attachment["title"]!r}'
                     else:
-                        err += f'{port_attachment["type"]!r}'
+                        err += f'{port_attachment["title"]!r}'
 
                     verrors.add(schema, err)
 
