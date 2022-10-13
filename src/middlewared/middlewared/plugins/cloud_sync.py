@@ -1023,6 +1023,22 @@ class CloudSyncService(TaskPathService):
         await self.middleware.call("service.restart", "cron")
         return rv
 
+    @accepts(Int("credentials_id"), Str("name"))
+    async def create_bucket(self, credentials_id, name):
+        """
+        Creates a new bucket `name` using ` credentials_id`.
+        """
+        credentials = await self._get_credentials(credentials_id)
+        if not credentials:
+            raise CallError("Invalid credentials")
+
+        provider = REMOTES[credentials["provider"]]
+
+        if not provider.can_create_bucket:
+            raise CallError("This provider can't create buckets")
+
+        await provider.create_bucket(credentials, name)
+
     @accepts(Int("credentials_id"))
     async def list_buckets(self, credentials_id):
         credentials = await self._get_credentials(credentials_id)
