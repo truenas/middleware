@@ -90,11 +90,6 @@ class KubernetesService(Service):
             # This is a sanity check
             raise CallError(f'{new_apps_ds["id"]!r} must be locked after replicating from source pool')
 
-        # We will rename apps dataset as ix-applications is filtered out by pool.dataset.query
-        # and we won't be able to unlock it in this manner
-        new_name = os.path.join(new_pool, 'ix-applications-migration_enc_temp')
-        await self.middleware.call('zfs.dataset.rename', new_apps_ds['id'], {'new_name': new_name})
-
         unlock_options = {
             'passphrase': migration_options['passphrase'],
         } if new_apps_ds['key_format']['value'] == 'PASSPHRASE' else {
@@ -103,9 +98,9 @@ class KubernetesService(Service):
             ))['encryption_key']
         }
 
-        unlock_job = await self.middleware.call('pool.dataset.unlock', new_name, {
+        unlock_job = await self.middleware.call('pool.dataset.unlock', new_apps_ds['id'], {
             'datasets': [{
-                'name': new_name,
+                'name': new_apps_ds['id'],
                 'recursive': True,
                 **unlock_options,
             }]
@@ -114,8 +109,7 @@ class KubernetesService(Service):
         if unlock_job.error:
             raise CallError(f'Failed to unlock migrated ix-applications dataset: {unlock_job.error!r}')
 
-        await self.middleware.call('pool.dataset.inherit_parent_encryption_properties', new_name)
-        await self.middleware.call('zfs.dataset.rename', new_name, {'new_name': new_name})
+        await self.middleware.call('pool.dataset.inherit_parent_encryption_properties', new_apps_ds['id'])
 
     @private
     def update_server_credentials(self, apps_dataset):
