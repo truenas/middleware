@@ -71,6 +71,11 @@ async def rename_interface(middleware, db_interface, name):
 
 
 async def setup(middleware):
+    if await middleware.call("system.is_ha_capable"):
+        # HA hardware has static network cards configuration and does not need this feature. Moreover, it will yield
+        # unexpected results as MAC addresses for the same interface are different on each node.
+        return
+
     try:
         real_interfaces = RealInterfaceCollection(await middleware.call("interface.query", [["fake", "!=", True]]))
         db_interfaces = DatabaseInterfaceCollection(
