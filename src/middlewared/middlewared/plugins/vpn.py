@@ -644,16 +644,13 @@ class OpenVPNClientService(SystemServiceService):
             ):
                 raise CallError('Root CA has been revoked. Please select another Root CA.')
 
-        if not config['client_certificate']:
-            raise CallError('Please configure client certificate first.')
-        else:
-            if not await self.middleware.call(
-                'certificate.query', [
-                    ['id', '=', config['client_certificate']],
-                    ['revoked', '=', False]
-                ]
-            ):
-                raise CallError('Client certificate has been revoked. Please select another Client certificate.')
+        if config['client_certificate'] and not await self.middleware.call(
+            'certificate.query', [
+                ['id', '=', config['client_certificate']],
+                ['revoked', '=', False]
+            ]
+        ):
+            raise CallError('Client certificate has been revoked. Please select another Client certificate.')
 
         if not config['remote']:
             raise CallError('Please configure remote first.')
