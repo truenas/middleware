@@ -506,8 +506,10 @@ class OpenVPNServerService(SystemServiceService):
         old_config = await self.config()
         old_config.pop('interface')
         config = old_config.copy()
-
-        config.update(data)
+        config.update({
+            'remove_certificates': False,
+            **data,
+        })
 
         # If tls_crypt_auth_enabled is set and we don't have a tls_crypt_auth key,
         # let's generate one please
@@ -606,6 +608,16 @@ class OpenVPNClientService(SystemServiceService):
                 'This field is required.'
             )
 
+        auth_flags = ('auth-user-pass', 'pkcs12')
+        if not data['client_certificate'] and not any(
+            flag in data['additional_parameters'] for flag in auth_flags
+        ):
+            verrors.add(
+                f'{schema_name}.client_certificate',
+                'Either client certificate or one of the "pkcs12" / "auth-user-pass" options '
+                'must be specified in additional parameters'
+            )
+
         if not await self.validate_nobind(data):
             verrors.add(
                 f'{schema_name}.nobind',
@@ -652,6 +664,15 @@ class OpenVPNClientService(SystemServiceService):
         ):
             raise CallError('Client certificate has been revoked. Please select another Client certificate.')
 
+        auth_flags = ('auth-user-pass', 'pkcs12')
+        if not config['client_certificate'] and not any(
+            flag in config['additional_parameters'] for flag in auth_flags
+        ):
+            raise CallError(
+                'You must either specify client certificate or one of --pkcs12 / '
+                '--auth-user-pass params in additional parameters'
+            )
+
         if not config['remote']:
             raise CallError('Please configure remote first.')
 
@@ -680,8 +701,10 @@ class OpenVPNClientService(SystemServiceService):
         old_config = await self.config()
         old_config.pop('interface')
         config = old_config.copy()
-
-        config.update(data)
+        config.update({
+            'remove_certificates': False,
+            **data,
+        })
 
         config = await self.validate(config, 'openvpn_client_update')
 
