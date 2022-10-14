@@ -117,7 +117,6 @@ def test__atime_and_casesentivity_in_mntinfo():
     assert 'NOATIME' in mntent['mount_opts']
     assert 'CASESENSITIVE' in mntent['super_opts']
 
-
     line = r'8069 306 0:1214 / /mnt/tank/mixy rw,noatime shared:4507 - zfs tank/mixy rw,xattr,posixacl,casemixed'
     data = {}
     __parse_mntent(line, data)

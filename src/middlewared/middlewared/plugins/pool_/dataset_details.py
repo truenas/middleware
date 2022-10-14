@@ -247,7 +247,7 @@ class PoolDatasetService(Service):
         atime = case = True
         for devid, info in filter(lambda x: x[1]['mountpoint'] == ds['mountpoint'], mntinfo.items()):
             atime = not ('NOATIME' in info['mount_opts'])
-            case = any((i for i in ('CASESENSITIVE', 'CASEMIXED') if i in info['super_opts'])
+            case = any((i for i in ('CASESENSITIVE', 'CASEMIXED') if i in info['super_opts']))
 
         # case sensitivity is either on or off (sensitive or insensitve)
         # the "mixed" property is silently ignored in our use case because it
