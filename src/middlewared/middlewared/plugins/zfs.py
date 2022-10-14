@@ -440,7 +440,7 @@ class ZFSDatasetService(CRUDService):
         `query-options.extra.retrieve_properties` which if set to false will make sure that no property is retrieved
         whatsoever and overrides any other property retrieval attribute.
 
-        Please note that `query-options.extra` are not available using the REST protocol.
+        Please note that `query-options.extra` are not available using the REST protocol but are available using the websocket protocol.
         """
         options = options or {}
         extra = options.get('extra', {}).copy()
