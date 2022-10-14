@@ -12,13 +12,9 @@
 		client_cert = None
 %>\
 client
-% if IS_LINUX:
+
 dev ${config['interface']}
 dev-type ${config['device_type'].lower()}
-% else:
-dev ${config['device_type'].lower()}
-#dev-type ${config['device_type'].lower()} -FIXME: This does not work, it is an openvpn issue in FreeBSD
-% endif
 proto ${config['protocol'].lower()}
 port ${config['port']}
 remote ${config['remote']}
