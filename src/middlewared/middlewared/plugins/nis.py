@@ -136,10 +136,14 @@ class NISService(ConfigService):
             await self.set_state(DSStatus['FAULTED'])
             raise CallError(f'ypbind failed: {ypbind.stderr.decode()}')
 
-        await self.set_state(DSStatus['HEALTHY'])
-        self.logger.debug('NIS service successfully started. Setting state to HEALTHY.')
-        await self.middleware.call('nis.fill_cache')
-        return True
+        try:
+            started = await self.started()
+            await self.middleware.call('nis.fill_cache')
+        except Exception:
+            await self.middleware.call('etc.generate', 'nss')
+            started = False
+
+        return started
 
     @private
     def ypcat_names(self, mapname):
@@ -242,13 +246,9 @@ class NISService(ConfigService):
         await job.wait()
 
     @private
-    @job(lock=lambda args: 'fill_nis_cache')
+    @job(lock='fill_nis_cache', lock_queue_size=1)
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 200000000
-        if self.middleware.call_sync('cache.has_key', 'NIS_cache') and not force:
-            raise CallError('NIS cache already exists. Refusing to generate cache.')
-
-        self.middleware.call_sync('cache.pop', 'NIS_cache')
         nis_users = self.ypcat_names("PASSWD")
         nis_groups = self.ypcat_names("GROUP")
 
