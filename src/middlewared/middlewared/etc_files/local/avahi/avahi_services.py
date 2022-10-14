@@ -3,12 +3,12 @@ import enum
 import xml.etree.ElementTree as xml
 import socket
 
-from middlewared.utils import filter_list, osc
+from io import StringIO
+from middlewared.utils import filter_list
 
 GENERATE_SERVICE_FILTER = ['OR', [('state', '=', 'RUNNING'), ('enable', '=', True)]]
 AVAHI_SERVICE_PATH = '/etc/avahi/services'
-if osc.IS_FREEBSD:
-    AVAHI_SERVICE_PATH = f'/usr/local{AVAHI_SERVICE_PATH}'
+SVC_HDR = '<?xml version="1.0" standalone="no"?><!DOCTYPE service-group SYSTEM "avahi-service.dtd">'
 
 
 class DevType(enum.Enum):
@@ -188,6 +188,8 @@ class mDNSService(object):
 
     def generate_services(self):
         mDNSServices = {}
+        configured_services = []
+
         for srv in ServiceType:
             mDNSServices.update({srv.name: {}})
             self.service = srv.name
@@ -205,12 +207,6 @@ class mDNSService(object):
                 'Registering mDNS service host: %s,  regtype: %s, port: %s, interface: %s, TXTRecord: %s',
                 self.hostname, self.regtype, port, interfaceIndex, txtrecord
             )
-            # write header of service file
-            config_file = f"{AVAHI_SERVICE_PATH}/{srv.name}.service"
-            with open(config_file, "w") as f:
-                f.write('<?xml version="1.0" standalone="no"?>')
-                f.write('<!DOCTYPE service-group SYSTEM "avahi-service.dtd">')
-
             root = xml.Element("service-group")
             srv_name = xml.Element('name')
             srv_name.text = self.hostname
@@ -229,16 +225,47 @@ class mDNSService(object):
                 for t, v in txtrecord.items():
                     txt = xml.SubElement(service, 'txt-record')
                     txt.text = f'{t}={v}'
+
+            # Avahi daemon sets an inotify watch on the
+            # services directory, and therefore we should
+            # check whether the contents of the SRV record
+            # will be changed before commiting a write.
             xml_service_config = xml.ElementTree(root)
-            with open(config_file, "a") as f:
-                xml_service_config.write(f, 'unicode')
-                f.write('\n')
+            with StringIO(SVC_HDR) as buf:
+                xml_service_config.write(buf, 'unicode')
+                buf.write('\n')
+                buf.seek(0)
+                new = buf.read()
+
+            config_file = f"{AVAHI_SERVICE_PATH}/{srv.name}.service"
+            try:
+                with open(config_file, 'r') as f:
+                    old = f.read()
+            except FileNotFoundError:
+                old = None
+
+            configured_services.append(config_file)
+            if new == old:
+                continue
+
+            with open(config_file, 'w') as f:
+                f.write(new)
+                f.flush()
+                os.fsync(f.fileno())
+
+        return configured_services
 
 
-def remove_service_configs(middleware):
+def remove_service_configs(middleware, expected):
     for file in os.listdir(AVAHI_SERVICE_PATH):
         servicefile = f'{AVAHI_SERVICE_PATH}/{file}'
+
+        if servicefile in expected:
+            continue
+
         if os.path.isfile(servicefile):
+            middleware.logger.debug("Removing unexpected avahi service file: %s", servicefile)
+
             try:
                 os.unlink(servicefile)
             except Exception as e:
@@ -272,7 +299,6 @@ def generate_avahi_config(middleware):
     if hostname is None:
         return
 
-    remove_service_configs(middleware)
     announce = middleware.call_sync('network.configuration.config')['service_announcement']
     if not announce['mdns']:
         return
@@ -281,7 +307,8 @@ def generate_avahi_config(middleware):
         hostname=hostname,
         service_info=service_info
     )
-    mdns_configs.generate_services()
+    configured_services = mdns_configs.generate_services()
+    remove_service_configs(middleware, configured_services)
 
 
 def render(service, middleware):
