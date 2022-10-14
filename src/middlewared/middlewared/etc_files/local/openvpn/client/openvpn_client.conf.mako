@@ -6,7 +6,10 @@
 
 	config = middleware.call_sync('openvpn.client.config')
 	root_ca = middleware.call_sync('certificateauthority.query', [['id', '=', config['root_ca']]], {'get': True})
-	client_cert = middleware.call_sync('certificate.query', [['id', '=', config['client_certificate']]], {'get': True})
+	if config['client_certificate']:
+		client_cert = middleware.call_sync('certificate.query', [['id', '=', config['client_certificate']]], {'get': True})
+	else:
+		client_cert = None
 %>\
 client
 % if IS_LINUX:
@@ -24,8 +27,10 @@ group ${"nobody" if IS_FREEBSD else "nogroup"}
 persist-key
 persist-tun
 ca ${root_ca['certificate_path']}
+% if client_cert:
 cert ${client_cert['certificate_path']}
 key ${client_cert['privatekey_path']}
+% endif
 verb 3
 remote-cert-tls server
 % if config['compression']:
