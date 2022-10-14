@@ -246,9 +246,13 @@ class PoolDatasetService(Service):
     def get_atime_and_casesensitivity(self, ds, mntinfo):
         atime = case = True
         for devid, info in filter(lambda x: x[1]['mountpoint'] == ds['mountpoint'], mntinfo.items()):
-            atime = not ('NOATIME' in info['super_opts'])
-            case = 'CASESENSITIVE' in info['super_opts']
+            atime = not ('NOATIME' in info['mount_opts'])
+            case = any((i for i in ('CASESENSITIVE', 'CASEMIXED') if i in info['super_opts']))
 
+        # case sensitivity is either on or off (sensitive or insensitve)
+        # the "mixed" property is silently ignored in our use case because it
+        # only applies to illumos kernel when using the in-kernel SMB server.
+        # if it's set to "mixed" on linux, it's treated as case sensitive.
         return atime, case
 
     @private
