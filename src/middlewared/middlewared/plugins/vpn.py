@@ -92,12 +92,12 @@ class OpenVPN:
                     'Root CA must have CA=TRUE set for BasicConstraints extension.'
                 )
 
-            for k in ('Certificate Sign', 'CRL Sign'):
-                if k not in (extensions.get('KeyUsage') or ''):
-                    verrors.add(
-                        f'{schema}.root_ca',
-                        f'Root CA must have {k} set for KeyUsage extension.'
-                    )
+            key_usage_check = 'Certificate Sign'
+            if key_usage_check not in (extensions.get('KeyUsage') or ''):
+                verrors.add(
+                    f'{schema}.root_ca',
+                    f'Root CA must have {key_usage_check!r} set for KeyUsage extension.'
+                )
 
         cert_id = data[f'{mode}_certificate']
         if not cert_id:
