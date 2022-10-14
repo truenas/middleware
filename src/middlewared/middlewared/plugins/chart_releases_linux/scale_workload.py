@@ -68,16 +68,21 @@ class ChartReleaseService(Service):
                     f'which are locked: {", ".join(release["resources"]["locked_host_paths"])}'
                 )
 
-            # We redeploy the chart to re-create the services which we had deleted
+            # We redeploy the chart to re-create the services/cronjobs which we had deleted
             await self.middleware.call('chart.release.redeploy', release['name'])
 
         else:
-            for service in await self.middleware.call(
-                'k8s.service.query', [['metadata.namespace', '=', release['namespace']]]
-            ):
-                await self.middleware.call(
-                    'k8s.service.delete', service['metadata']['name'], {'namespace': release['namespace']}
-                )
+            for resource_type in ('service', 'cronjob'):
+                for resource in await self.middleware.call(
+                    f'k8s.{resource_type}.query', [['metadata.namespace', '=', release['namespace']]]
+                ):
+                    try:
+                        await self.middleware.call(
+                            f'k8s.{resource_type}.delete', resource['metadata']['name'],
+                            {'namespace': release['namespace']}
+                        )
+                    except CallError:
+                        self.logger.error('Unable to remove resource %r', resource_type, exc_info=True)
 
         resources = release['resources']
         replica_counts = await self.get_replica_count_for_resources(resources)
