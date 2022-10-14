@@ -78,23 +78,23 @@ class KubernetesService(Service):
         # If new-pool/ix-apps is encrypted here, it means that old-pool is encrypted and we want
         # to unlock new-pool/ix-apps and have it inherit new-pool properties
         new_apps_ds = await self.middleware.call(
-            'zfs.dataset.query', [['id', '=', applications_ds_name(new_pool['pool'])]], {
+            'zfs.dataset.get_instance', applications_ds_name(new_pool), {
                 'extra': {'retrieve_children': False, 'retrieve_properties': True},
-                'get': True,
             }
         )
+
         if not new_apps_ds['encrypted']:
             return
 
-        if not new_apps_ds['locked']:
+        if new_apps_ds['key_loaded']:
             # This is a sanity check
             raise CallError(f'{new_apps_ds["id"]!r} must be locked after replicating from source pool')
 
         unlock_options = {
             'passphrase': migration_options['passphrase'],
-        } if new_apps_ds['key_format']['value'] == 'PASSPHRASE' else {
+        } if new_apps_ds['properties']['keyformat']['value'] == 'passphrase' else {
             'key': (await self.middleware.call(
-                'datastore.query', 'storage.encrypteddataset', [['name', '=', old_pool]]
+                'datastore.query', 'storage.encrypteddataset', [['name', '=', old_pool]], {'get': True}
             ))['encryption_key']
         }
 

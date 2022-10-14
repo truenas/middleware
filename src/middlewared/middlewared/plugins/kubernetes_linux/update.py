@@ -196,7 +196,7 @@ class KubernetesService(ConfigService):
                         # Now let's add some validation for destination
                         destination_root_ds = await self.middleware.call(
                             'pool.dataset.get_instance', data['pool'], {
-                                'extra': {'retrieve_children': False}, 'get': True,
+                                'extra': {'retrieve_children': False}
                             }
                         )
                         if not destination_root_ds['encrypted']:
@@ -389,9 +389,8 @@ class KubernetesService(ConfigService):
         migrate = config.get('migrate_applications')
 
         await self.validate_data(config, 'kubernetes_update', old_config)
-
+        migration_options = config.pop('migration_options', {})
         if len(set(old_config.items()) ^ set(config.items())) > 0:
-            migration_options = config.pop('migration_options')
             await self.middleware.call('chart.release.clear_update_alerts_for_all_chart_releases')
             if migrate and config['pool'] != old_config['pool']:
                 job.set_progress(
