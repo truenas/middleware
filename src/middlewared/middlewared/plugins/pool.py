@@ -3141,7 +3141,7 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('checksum', enum=ZFS_CHECKSUM_CHOICES)),
         Inheritable(Str('readonly', enum=['ON', 'OFF'])),
         Inheritable(Str('recordsize'), has_default=False),
-        Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']), has_default=False),
+        Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE']), has_default=False),
         Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
         Inheritable(Str('acltype', enum=['OFF', 'NFSV4', 'POSIX']), has_default=False),
         Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB']),
