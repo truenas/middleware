@@ -2814,7 +2814,7 @@ class PoolDatasetService(CRUDService):
         The second type is hierarchical, where only top level datasets are returned in the list. They contain all the
         children in the `children` key. This retrieval type is slightly faster.
         These options are controlled by the `query-options.extra.flat` attribute (default true). Please note that
-        this option is not available using the REST protocol but is available using the websocket protocol.
+        this option is not available using the REST protocol but are available using the websocket protocol.
         """
         # Optimization for cases in which they can be filtered at zfs.dataset.query
         zfsfilters = []
