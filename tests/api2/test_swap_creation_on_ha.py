@@ -5,7 +5,9 @@ import sys
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from middlewared.test.integration.utils import another_pool, call
+
+from middlewared.test.integration.assets.pool import another_pool
+from middlewared.test.integration.utils import call
 from auto_config import ha
 
 
