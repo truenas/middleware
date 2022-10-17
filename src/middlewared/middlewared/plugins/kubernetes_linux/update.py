@@ -98,7 +98,7 @@ class KubernetesService(ConfigService):
             verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
 
         if data.pop('migrate_applications', False):
-            migration_options = data['migration_options']
+            migration_options = data.get('migration_options', {})
             if data['pool'] == old_data['pool']:
                 verrors.add(
                     f'{schema}.migrate_applications',
