@@ -43,7 +43,10 @@ class LibvirtConnectionMixin:
             # We see isAlive call failed for a user in NAS-109072, it would be better
             # if we handle this to ensure that system recognises libvirt  connection
             # is no longer active and a new one should be initiated.
-            return self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+            return (
+                self.LIBVIRT_CONNECTION and self.LIBVIRT_CONNECTION.isAlive()
+                and isinstance(self.LIBVIRT_CONNECTION.listAllDomains(), list)
+            )
         return False
 
     def _is_connection_alive(self):
