@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.utils.plugins import load_modules
 from middlewared.utils.python import get_middlewared_dir
 
@@ -70,3 +70,14 @@ class KubernetesMigrationsService(Service):
         applied_migrations['migrations'].extend(new_applied_migrations)
         with open(self.migration_file_path, 'w') as f:
             f.write(json.dumps(applied_migrations))
+
+    def scale_version_check(self):
+        available_migrations = [module.__name__ for module in load_migrations()]
+        unavailable_ones = [
+            applied for applied in self.applied()['migrations'] if applied not in available_migrations
+        ]
+        if unavailable_ones:
+            raise CallError(
+                'SCALE version does not contain already applied kubernetes '
+                f'migrations ( {", ".join(unavailable_ones)!r} )'
+            )

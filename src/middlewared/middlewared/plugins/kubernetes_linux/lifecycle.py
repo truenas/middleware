@@ -206,8 +206,7 @@ class KubernetesService(Service):
         if errors:
             raise CallError(str(errors))
 
-        # TODO: Add logic here to ensure that we don't run SCALE which does not support the migrations
-        #  already applied to the k8s cluster in question and error out neatly
+        await self.middleware.call('k8s.migration.scale_version_check')
 
     @private
     def status_change(self):
