@@ -48,7 +48,7 @@ class KubernetesMigrationsService(Service):
                 data = json.loads(f.read())
             jsonschema.validate(data, MIGRATION_MANIFEST_SCHEMA)
         except FileNotFoundError:
-            self.logger.error('%r migration file not found, creating one', self.migration_file_path)
+            pass
         except (json.JSONDecodeError, jsonschema.ValidationError):
             self.logger.error('Malformed %r migration file found, re-creating', self.migration_file_path, exc_info=True)
 
