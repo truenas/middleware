@@ -59,7 +59,7 @@ class KubernetesMigrationsService(Service):
                     await self.middleware.run_in_thread(module.migrate, self.middleware)
             except Exception:
                 self.logger.error('Error running kubernetes migration %r', name, exc_info=True)
-                continue
+                break
 
             applied_migrations.append(name)
 
