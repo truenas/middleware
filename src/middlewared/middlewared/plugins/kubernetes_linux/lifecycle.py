@@ -18,7 +18,6 @@ class KubernetesService(Service):
 
     @private
     async def post_start(self):
-        # TODO: Add support for migrations
         async with START_LOCK:
             return await self.post_start_impl()
 
