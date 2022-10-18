@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -35,7 +36,37 @@ class KubernetesMigrationsService(Service):
         except json.JSONDecodeError:
             self.logger.error('Malformed %r migration file found, re-creating', self.migration_file_path)
 
+        migrations = {'migrations': []}
         with open(self.migration_file_path, 'w') as f:
-            f.write(json.dumps({
-                'migrations': [],
-            }))
+            f.write(json.dumps(migrations))
+
+        return migrations
+
+    async def run(self):
+        executed_migrations = (await self.middleware.call('k8s.migration.applied'))['migrations']
+        applied_migrations = []
+
+        for module in load_migrations():
+            name = module.__name__
+            if name in executed_migrations:
+                continue
+
+            self.logger.info('Running kubernetes migration %r', name)
+            try:
+                if asyncio.iscoroutinefunction(module.migrate):
+                    await module.migrate(self.middleware)
+                else:
+                    await self.middleware.run_in_thread(module.migrate, self.middleware)
+            except Exception:
+                self.logger.error('Error running kubernetes migration %r', name, exc_info=True)
+                continue
+
+            applied_migrations.append(name)
+
+        await self.middleware.call('k8s.migration.update_migrations', applied_migrations)
+
+    def update_migrations(self, new_applied_migrations):
+        applied_migrations = self.applied()
+        applied_migrations['migrations'].extend(new_applied_migrations)
+        with open(self.migration_file_path, 'w') as f:
+            f.write(json.dumps(applied_migrations))
