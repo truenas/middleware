@@ -248,6 +248,7 @@ class KubernetesService(Service):
     @private
     async def status_change_internal(self):
         await self.validate_k8s_fs_setup()
+        await self.middleware.call('k8s.migration.run')
         await self.middleware.call('service.start', 'docker')
         await self.middleware.call('container.image.load_default_images')
         await self.middleware.call('service.start', 'kubernetes')
@@ -332,6 +333,11 @@ class KubernetesService(Service):
         }
         return props.get(ds, dict())
 
+    @private
+    async def start_service(self):
+        await self.middleware.call('k8s.migration.run')
+        await self.middleware.call('service.start', 'kubernetes')
+
 
 async def _event_system(middleware, event_type, args):
     # we ignore the 'ready' event on an HA system since the failover event plugin
@@ -341,7 +347,7 @@ async def _event_system(middleware, event_type, args):
             await middleware.call('kubernetes.config')
         )['pool']
     ):
-        asyncio.ensure_future(middleware.call('service.start', 'kubernetes'))
+        asyncio.ensure_future(middleware.call('kubernetes.start_service'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
         asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))
 
