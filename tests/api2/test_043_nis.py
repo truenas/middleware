@@ -5,6 +5,7 @@
 import pytest
 import sys
 import os
+from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET
@@ -19,6 +20,7 @@ else:
     from auto_config import dev_test
     # comment pytestmark for development testing with --dev-test
     pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+
 
 @contextmanager
 def enable_nis_domain():
@@ -40,6 +42,7 @@ def enable_nis_domain():
         })
         assert results.status_code == 200, results.text
 
+
 def test_01_check_nis():
     with enable_nis_domain() as c:
         # Verify that parameters set as expected
@@ -50,6 +53,7 @@ def test_01_check_nis():
         results = GET('/nis/get_state')
         assert results.status_code == 200, results.text
         assert results.json() == 'HEALTHY'
+        sleep(5)
 
         # Verify that NIS users are in cache
         results = GET('/user', payload={
@@ -66,7 +70,6 @@ def test_01_check_nis():
         })
         assert results.status_code == 200, results.text
         assert len(results.json()) > 0, results.text
-
 
     results = GET('/nis/')
     assert results.status_code == 200, results.text
