@@ -335,6 +335,7 @@ class KubernetesService(Service):
 
     @private
     async def start_service(self):
+        await self.middleware.call('k8s.migration.scale_version_check')
         await self.middleware.call('k8s.migration.run')
         await self.middleware.call('service.start', 'kubernetes')
 
