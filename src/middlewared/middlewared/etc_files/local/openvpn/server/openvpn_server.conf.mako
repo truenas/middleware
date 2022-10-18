@@ -15,13 +15,8 @@
 %>\
 proto ${config['protocol'].lower()}
 port ${config['port']}
-% if IS_LINUX:
 dev ${config['interface']}
 dev-type ${config['device_type'].lower()}
-% else:
-dev ${config['device_type'].lower()}
-#dev-type ${config['device_type'].lower()} -FIXME: This does not work, it is an openvpn issue in FreeBSD
-% endif
 ca ${root_ca['certificate_path']}
 cert ${server_cert['certificate_path']}
 key ${server_cert['privatekey_path']}
@@ -29,7 +24,7 @@ dh ${middleware.call_sync('certificate.dhparam')}
 crl-verify ${root_ca['crl_path']}
 server ${config['server']} ${ip(f'{config["server"]}/{config["netmask"]}', strict=False).netmask}
 user nobody
-group ${"nobody" if IS_FREEBSD else "nogroup"}
+group nogroup
 status /var/log/openvpn/openvpn-status.log
 log-append  /var/log/openvpn/openvpn.log
 verb 3
