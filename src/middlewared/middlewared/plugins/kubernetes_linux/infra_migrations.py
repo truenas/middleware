@@ -36,7 +36,6 @@ class KubernetesMigrationsService(Service):
         namespace = 'k8s.migration'
         private = True
 
-    @property
     def migration_file_path(self):
         return os.path.join(
             '/mnt', self.middleware.call_sync('kubernetes.config')['dataset'], self.MIGRATIONS_FILE_NAME
@@ -44,16 +43,18 @@ class KubernetesMigrationsService(Service):
 
     def applied(self):
         try:
-            with open(self.migration_file_path, 'r') as f:
+            with open(self.migration_file_path(), 'r') as f:
                 data = json.loads(f.read())
             jsonschema.validate(data, MIGRATION_MANIFEST_SCHEMA)
         except FileNotFoundError:
             pass
         except (json.JSONDecodeError, jsonschema.ValidationError):
-            self.logger.error('Malformed %r migration file found, re-creating', self.migration_file_path, exc_info=True)
+            self.logger.error(
+                'Malformed %r migration file found, re-creating', self.migration_file_path(), exc_info=True
+            )
 
         migrations = {'migrations': []}
-        with open(self.migration_file_path, 'w') as f:
+        with open(self.migration_file_path(), 'w') as f:
             f.write(json.dumps(migrations))
 
         return migrations
@@ -84,7 +85,7 @@ class KubernetesMigrationsService(Service):
     def update_migrations(self, new_applied_migrations):
         applied_migrations = self.applied()
         applied_migrations['migrations'].extend(new_applied_migrations)
-        with open(self.migration_file_path, 'w') as f:
+        with open(self.migration_file_path(), 'w') as f:
             f.write(json.dumps(applied_migrations))
 
     def scale_version_check(self):
