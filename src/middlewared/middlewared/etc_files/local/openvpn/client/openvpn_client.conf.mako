@@ -19,7 +19,7 @@ proto ${config['protocol'].lower()}
 port ${config['port']}
 remote ${config['remote']}
 user nobody
-group ${"nobody" if IS_FREEBSD else "nogroup"}
+group nogroup
 persist-key
 persist-tun
 ca ${root_ca['certificate_path']}
