@@ -64,7 +64,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
                 {
                     "name": bucket.find(f"{ns}Name").text,
                     "time": bucket.find(f"{ns}CreationDate").text,
-                    "enabled": bucket.find(f"{ns}Attribution").text == "ix-storj-1",
+                    "enabled": "ix-storj-1" in bucket.find(f"{ns}Attribution").text,
                 }
                 for bucket in ET.parse(io.StringIO(r.text)).iter(f"{ns}Bucket")
             ]
