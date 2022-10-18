@@ -95,6 +95,7 @@ class VMService(Service, VMSupervisorMixin):
             'connected': self._is_connection_alive(),
             'connection_initialised': bool(self.LIBVIRT_CONNECTION),
             'domains': list(self.vms.keys()),
+            'libvirt_domains': self._list_domains() if self.LIBVIRT_CONNECTION else None,
         }
 
     @private
