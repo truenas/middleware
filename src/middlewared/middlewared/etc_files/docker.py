@@ -46,6 +46,7 @@ def render(service, middleware):
             'exec-opts': ['native.cgroupdriver=cgroupfs'],
             'iptables': False,
             'bridge': 'none',
+            'storage-driver': 'overlay2',
             **gpu_configuration(middleware),
         }))
 
