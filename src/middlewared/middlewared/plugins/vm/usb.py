@@ -6,6 +6,7 @@ from middlewared.schema import accepts, Bool, Dict, List, Ref, Str, returns
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
+from .devices.usb import USB_CONTROLLER_CHOICES
 from .utils import get_virsh_command_args
 
 
@@ -16,6 +17,14 @@ class VMDeviceService(Service):
 
     class Config:
         namespace = 'vm.device'
+
+    @accepts()
+    @returns(Dict(*[Str(k, enum=[k]) for k in USB_CONTROLLER_CHOICES]))
+    async def usb_controller_choices(self):
+        """
+        Retrieve USB controller type choices
+        """
+        return {k: k for k in USB_CONTROLLER_CHOICES}
 
     @private
     def retrieve_usb_device_information(self, xml_str):
