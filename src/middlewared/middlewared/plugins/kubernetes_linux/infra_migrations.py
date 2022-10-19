@@ -52,6 +52,8 @@ class KubernetesMigrationsService(Service):
             self.logger.error(
                 'Malformed %r migration file found, re-creating', self.migration_file_path(), exc_info=True
             )
+        else:
+            return data
 
         migrations = {'migrations': []}
         with open(self.migration_file_path(), 'w') as f:
