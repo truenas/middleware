@@ -44,7 +44,7 @@ class TruecommandService(Service):
         # The purpose of this method is to ensure that the wireguard connection
         # is active. If wireguard service is running, we want to make sure that the last
         # handshake we have had was under 30 minutes.
-        if Status(
+        if not await self.middleware.call('failover.is_single_master_node') or Status(
             (await self.middleware.call('datastore.config', 'system.truecommand'))['api_key_state']
         ) != Status.CONNECTED:
             await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
