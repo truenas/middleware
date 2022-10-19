@@ -87,10 +87,17 @@ class PCI(Device):
     def _validate(self, device, verrors, old=None, vm_instance=None, update=True):
         pptdev = device['attributes'].get('pptdev')
         device_details = self.middleware.call_sync('vm.device.passthrough_device', pptdev)
-        if device_details.get('error'):
+        if device_details['error']:
             verrors.add(
                 'attribute.pptdev',
                 f'Not a valid choice. The PCI device is not available for passthru: {device_details["error"]}'
             )
+        elif device_details['critical']:
+            verrors.add(
+                'attribute.pptdev',
+                f'{device_details["controller_type"]!r} based PCI devices are critical for system function '
+                'and cannot be used for PCI passthrough'
+            )
+
         if not self.middleware.call_sync('vm.device.iommu_enabled'):
             verrors.add('attribute.pptdev', 'IOMMU support is required.')

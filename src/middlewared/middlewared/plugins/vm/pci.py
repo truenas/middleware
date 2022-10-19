@@ -1,5 +1,6 @@
 import os
 import re
+
 from xml.etree import ElementTree as etree
 
 from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
@@ -11,9 +12,19 @@ from .utils import get_virsh_command_args
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 RE_IOMMU_ENABLED = re.compile(r'QEMU.*if IOMMU is enabled.*:\s*PASS.*')
+RE_PCI_CONTROLLER_TYPE = re.compile(r'^[\w:.]+\s+([\w\s]+)\s+\[')
+RE_PCI_NAME = re.compile(r'^([\w:.]+)\s+')
 
 
 class VMDeviceService(Service):
+
+    PCI_DEVICES = None
+    SENSITIVE_PCI_DEVICE_TYPES = (
+        'Host bridge',
+        'Bridge',
+        'RAM memory',
+        'SMBus',
+    )
 
     class Config:
         namespace = 'vm.device'
@@ -79,6 +90,9 @@ class VMDeviceService(Service):
         Retrieve details about `device` PCI device.
         """
         await self.middleware.call('vm.check_setup_libvirt')
+        pci_id = RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)
+        controller_type = (await self.get_pci_devices()).get(pci_id)
+
         data = {
             'capability': {
                 'class': None,
@@ -89,11 +103,13 @@ class VMDeviceService(Service):
                 'product': 'Not Available',
                 'vendor': 'Not Available',
             },
+            'controller_type': controller_type,
+            'critical': controller_type in self.SENSITIVE_PCI_DEVICE_TYPES,
             'iommu_group': {},
             'available': False,
             'drivers': [],
             'error': None,
-            'device_path': os.path.join('/sys/bus/pci/devices', RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)),
+            'device_path': os.path.join('/sys/bus/pci/devices', pci_id),
             'reset_mechanism_defined': False,
         }
         cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
@@ -115,9 +131,9 @@ class VMDeviceService(Service):
 
         return {
             **node_info,
-            'device_path': data['device_path'],
+            **{k: data[k] for k in ('controller_type', 'critical', 'device_path')},
             'drivers': drivers,
-            'available': not error_str and all(d == 'vfio-pci' for d in drivers),
+            'available': not error_str and all(d == 'vfio-pci' for d in drivers) and not data['critical'],
             'error': f'Following errors were found with the device:\n{error_str}' if error_str else None,
             'reset_mechanism_defined': os.path.exists(os.path.join(data['device_path'], 'reset')),
         }
@@ -144,6 +160,20 @@ class VMDeviceService(Service):
             mapping[pci] = details
 
         return mapping
+
+    @private
+    async def get_pci_devices(self):
+        if self.PCI_DEVICES is None:
+            self.PCI_DEVICES = {}
+            cp = await run(['lspci', '-nnD'], check=False, encoding='utf8', errors='ignore')
+            if not cp.returncode:
+                for pci_device_str in cp.stdout.splitlines():
+                    pci_id = RE_PCI_NAME.findall(pci_device_str)
+                    controller_type = RE_PCI_CONTROLLER_TYPE.findall(pci_device_str)
+                    if pci_id:
+                        self.PCI_DEVICES[pci_id[0]] = controller_type[0] if controller_type else None
+
+        return self.PCI_DEVICES
 
     @accepts()
     @returns(Ref('passthrough_device_choices'))
