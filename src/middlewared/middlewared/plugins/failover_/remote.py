@@ -150,7 +150,7 @@ class RemoteClient(object):
             except Exception:
                 logger.warning('Failed to run callback for %s', name, exc_info=True)
 
-    def sendfile(self, token, local_path, remote_path):
+    def send_file(self, token, local_path, remote_path):
         # No reason to honor proxy settings in this
         # method since we're sending across the
         # heartbeat interface which is point-to-point
@@ -265,8 +265,8 @@ class FailoverService(Service):
             return self.CLIENT.get_remote_os_version()
 
     @private
-    def sendfile(self, token, src, dst):
-        self.CLIENT.sendfile(token, src, dst)
+    def send_file(self, token, src, dst):
+        self.CLIENT.send_file(token, src, dst)
 
     @private
     async def ensure_remote_client(self):

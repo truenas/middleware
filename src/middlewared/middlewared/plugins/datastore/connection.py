@@ -7,6 +7,8 @@ from middlewared.service import private, Service
 
 from middlewared.plugins.config import FREENAS_DATABASE
 
+thread_pool = ThreadPoolExecutor(1)
+
 
 def regexp(expr, item):
     if item is None:
@@ -21,7 +23,7 @@ class DatastoreService(Service):
     class Config:
         private = True
 
-    thread_pool = ThreadPoolExecutor(1)
+    thread_pool = thread_pool
 
     engine = None
     connection = None
