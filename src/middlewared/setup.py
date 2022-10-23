@@ -48,7 +48,8 @@ setup(
             ['alembic.ini'] +
             get_assets('assets') +
             get_assets('etc_files') +
-            get_assets('migration')
+            get_assets('migration') +
+            get_assets('plugins/kubernetes_linux/migrations')
         ),
     },
     include_package_data=True,
