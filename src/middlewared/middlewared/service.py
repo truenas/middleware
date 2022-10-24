@@ -355,7 +355,8 @@ class ServiceBase(type):
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - service: system service `name` option used by `SystemServiceService`
-      - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
+      - service_model: system service datastore model option used by `SystemServiceService`
+                       (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
       - namespace_alias: another namespace identifier of the service, mostly used to rename and
@@ -2094,7 +2095,8 @@ class CoreService(Service):
         options:
           - secret: password for PTVS
           - host: required for PYDEV, hostname of local computer (developer workstation)
-          - local_path: required for PYDEV, path for middlewared source in local computer (e.g. /home/user/freenas/src/middlewared/middlewared
+          - local_path: required for PYDEV, path for middlewared source in local computer
+                        (e.g. /home/user/freenas/src/middlewared/middlewared
           - threaded: run debugger in a new thread instead of event loop
         """
         if options['threaded']:
