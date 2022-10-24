@@ -1469,25 +1469,31 @@ class CoreService(Service):
         """
         Get currently open websocket sessions.
         """
-        return filter_list([
-            {
-                'id': i.session_id,
-                'socket_family': socket.AddressFamily(
-                    i.request.transport.get_extra_info('socket').family
-                ).name,
-                'address': (
-                    (
-                        i.request.headers.get('X-Real-Remote-Addr'),
-                        i.request.headers.get('X-Real-Remote-Port')
-                    ) if i.request.headers.get('X-Real-Remote-Addr') else (
-                        i.request.transport.get_extra_info("peername")
-                    )
-                ),
-                'authenticated': i.authenticated,
-                'call_count': i._softhardsemaphore.counter,
-            }
-            for i in self.middleware.get_wsclients().values()
-        ], filters, options)
+        sessions = []
+        for i in self.middleware.get_wsclients().values():
+            try:
+                sessions.append({
+                    'id': i.session_id,
+                    'socket_family': socket.AddressFamily(i.request.transport.get_extra_info('socket').family).name,
+                    'address': (
+                        (
+                            i.request.headers.get('X-Real-Remote-Addr'),
+                            i.request.headers.get('X-Real-Remote-Port')
+                        ) if i.request.headers.get('X-Real-Remote-Addr') else (
+                            i.request.transport.get_extra_info("peername")
+                        )
+                    ),
+                    'authenticated': i.authenticated,
+                    'call_count': i._softhardsemaphore.counter
+                })
+            except AttributeError:
+                # underlying websocket connection can be ripped down in process
+                # of enumerating this information. This is non-fatal, so ignore it.
+                pass
+            except Exception:
+                self.logger.warning('Failed enumarting websocket session.', exc_info=True)
+
+        return filter_list(sessions, filters, options)
 
     @accepts(Bool('debug_mode'))
     async def set_debug_mode(self, debug_mode):
