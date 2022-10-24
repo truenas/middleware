@@ -18,11 +18,16 @@ if __name__ == "__main__":
     # We need to allow tpm in grub as sedutil-cli requires it
     # `zfsforce=1` is needed because FreeBSD bootloader imports boot pool with hostid=0 while SCALE releases up to
     # 22.02-RC.2 use real hostid. We need to be able to boot both of these configurations.
+    # `nvme_core.multipath=N` is needed to disable NVMe multipath support. Otherwise, multipath-capable NVMe
+    # devices will be exposed to udev as nvme0c0n1, meanwhile actual block devices `nvme0n1` will be created
+    # as virtual devices with no straightforward way to map between those two. We don't use NVMe multipath
+    # so we can sacrifice it to achieve consistent behavior between multipath-capable and non-multipath-capable
+    # devices and avoid mapping actual hardware devices and virtual block devices.
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_TIMEOUT=10',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 amd_iommu=on iommu=pt '
-        'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on zfsforce=1'
+        'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on zfsforce=1 nvme_core.multipath=N'
         f'{f" {kernel_extra_options}" if kernel_extra_options else ""}"',
     ]
 
