@@ -369,7 +369,7 @@ class KubernetesService(ConfigService):
         data.pop('dataset')
 
         try:
-            await self.validate_data(data, 'kubernetes', data)
+            await self.validate_data({**data, 'force': True}, 'kubernetes', data)
         except ValidationErrors as e:
             return e
 
