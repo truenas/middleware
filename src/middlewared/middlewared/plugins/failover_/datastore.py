@@ -40,7 +40,7 @@ class FailoverDatastoreService(Service):
             self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
 
             def send_retry():
-                set_thread_name("failover_datastore")
+                set_thread_name('failover_datastore')
 
                 while True:
                     time.sleep(60)
@@ -50,14 +50,14 @@ class FailoverDatastoreService(Service):
                         return
 
                     if (failover_status := self.middleware.call_sync('failover.status')) != 'MASTER':
-                        self.middleware.logger.warning(
+                        self.logger.warning(
                             'Failover status changed to %s while retrying database send', failover_status,
                         )
                         self.failure = False
                         break
 
                     try:
-                        self.middleware.call_sync("failover.datastore.send")
+                        self.middleware.call_sync('failover.datastore.send')
                     except Exception:
                         pass
 
