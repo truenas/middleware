@@ -220,10 +220,14 @@ class KubernetesService(Service):
         clean_start = True
         if os.path.exists(config_path):
             with open(config_path, 'r') as f:
-                on_disk_config = json.loads(f.read())
-            clean_start = not all(
-                config[k] == on_disk_config.get(k) for k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
-            )
+                try:
+                    on_disk_config = json.loads(f.read())
+                except json.JSONDecodeError:
+                    pass
+                else:
+                    clean_start = not all(
+                        config[k] == on_disk_config.get(k) for k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
+                    )
 
         if clean_start and self.middleware.call_sync(
             'zfs.dataset.query', [['id', '=', config['dataset']]], {

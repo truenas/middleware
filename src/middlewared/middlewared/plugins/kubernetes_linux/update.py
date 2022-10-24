@@ -1,6 +1,8 @@
 import asyncio
 import ipaddress
 import itertools
+import json
+import os.path
 
 import middlewared.sqlalchemy as sa
 
@@ -81,6 +83,45 @@ class KubernetesService(ConfigService):
             can_run_apps = license is not None and 'JAILS' in license['features']
 
         return can_run_apps
+
+    @private
+    def check_config_on_apps_dataset(self, pool, verrors, force, schema_name):
+        apps_ds = applications_ds_name(pool)
+        if force or not self.middleware.call_sync(
+            'zfs.dataset.query', [['id', '=', apps_ds]], {'extra': {'retrieve_children': False}}
+        ):
+            return
+
+        missing = []
+        for ds_name in self.middleware.call_sync('kubernetes.kubernetes_datasets', apps_ds):
+            if not self.middleware.call_sync(
+                'zfs.dataset.query', [['id', '=', ds_name]], {'extra': {'retrieve_children': False}}
+            ):
+                missing.append(ds_name)
+
+        force_str = 'Specify force to override this and let system re-initialize applications.'
+        if missing:
+            verrors.add(
+                f'{schema_name}.force',
+                f'Apps have been partially initialized on {pool!r} pool but '
+                f'it is missing {", ".join(missing)!r} datasets. {force_str}'
+            )
+
+        config_path = os.path.join('/mnt', applications_ds_name(pool), 'config.json')
+        if not verrors:
+            try:
+                with open(config_path, 'r') as f:
+                    json.loads(f.read())
+            except FileNotFoundError:
+                verrors.add(
+                    f'{schema_name}.force',
+                    f'Missing {config_path!r} configuration file. {force_str}'
+                )
+            except json.JSONDecodeError:
+                verrors.add(
+                    f'{schema_name}.force',
+                    f'{config_path!r} configuration file is an invalid JSON file. {force_str}'
+                )
 
     @private
     async def validate_data(self, data, schema, old_data):
@@ -305,6 +346,10 @@ class KubernetesService(ConfigService):
                 'Host path validation cannot be switched off for SCALE ENTERPRISE users'
             )
 
+        force = data.pop('force', False)
+        if data['pool'] and not verrors:
+            await self.middleware.call('kubernetes.check_config_on_apps_dataset', data['pool'], verrors, force, schema)
+
         verrors.check()
 
     @private
@@ -332,6 +377,7 @@ class KubernetesService(ConfigService):
         Patch(
             'kubernetes_entry', 'kubernetes_update',
             ('add', Bool('migrate_applications')),
+            ('add', Bool('force')),
             ('add', Dict(
                 'migration_options',
                 Str('passphrase', empty=False),
