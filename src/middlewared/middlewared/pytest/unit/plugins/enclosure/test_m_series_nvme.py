@@ -18,8 +18,10 @@ def test__m_series_nvme_enclosures(fs):
         )
 
         with patch("middlewared.plugins.enclosure_.nvme.Devices") as Devices:
-            child = Mock(sys_name="nvme1")
-            child.parent = Mock(sys_name="0000:60:00.0")
+            child = Mock(properties={"SUBSYSTEM": "block"},
+                         sys_name="nvme1n1")
+            child.parent = Mock(sys_name="nvmen1")
+            child.parent.parent = Mock(sys_name="0000:60:00.0")
             Devices.from_path = Mock(
                 side_effect=lambda context, path: {
                     "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:03/device:c5/physical_node": Mock(
@@ -39,5 +41,5 @@ def test__m_series_nvme_enclosures(fs):
                 "Rear NVME U.2 Hotswap Bays",
                 "M60 Series",
                 4,
-                {1: "nvme1"},
+                {1: "nvme1n1"},
             )
