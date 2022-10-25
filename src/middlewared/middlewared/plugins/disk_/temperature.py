@@ -263,11 +263,13 @@ class DiskService(Service):
                     f'PRINT:v{name}{DEF}:%lf',
                 ])
 
-        output = list(map(float, subprocess.check_output(
+        output = list(map(float, subprocess.run(
             ['rrdtool', 'graph', 'x', '--daemon', 'unix:/var/run/rrdcached.sock', '--start', f'-{days}d', '--end',
              'now'] + args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
             encoding='ascii',
-        ).split()[1:]))  # The first line is `0x0`
+        ).stdout.split()[1:]))  # The first line is `0x0`
 
         result = {}
         for disk, values in zip(disks, grouper(output, 3)):  # FIXME: `incomplete='strict' when we switch to python 3.10
