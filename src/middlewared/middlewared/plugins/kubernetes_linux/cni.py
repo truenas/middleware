@@ -1,4 +1,5 @@
 import ipaddress
+import pyroute2
 import subprocess
 import time
 
@@ -113,10 +114,15 @@ class KubernetesCNIService(ConfigService):
         kube_router_table = rt.routing_tables[KUBEROUTER_TABLE_NAME]
         for k in filter(lambda k: config[f'{k}_gateway'] and config[f'{k}_interface'], ('route_v4', 'route_v6')):
             factory = ipaddress.IPv4Address if k.endswith('v4') else ipaddress.IPv6Address
-            rt.add(netif.Route(
-                factory(0), factory(0), ipaddress.ip_address(config[f'{k}_gateway']), config[f'{k}_interface'],
-                table_id=kube_router_table.table_id,
-            ))
+            try:
+                rt.add(netif.Route(
+                    factory(0), factory(0), ipaddress.ip_address(config[f'{k}_gateway']), config[f'{k}_interface'],
+                    table_id=kube_router_table.table_id,
+                ))
+            except pyroute2.netlink.exceptions.NetlinkError as e:
+                # ignore error if the route already exists in the routing table.
+                if e.code != 17:
+                    raise
 
     def cleanup_cni(self):
         # We want to remove all CNI related configuration when k8s stops
