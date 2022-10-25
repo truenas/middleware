@@ -1032,11 +1032,6 @@ class LDAPService(ConfigService):
         user_next_index = group_next_index = 100000000
         cache_data = {'users': {}, 'groups': {}}
 
-        if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
-            raise CallError('LDAP cache already exists. Refusing to generate cache.')
-
-        self.middleware.call_sync('cache.pop', 'LDAP_cache')
-
         if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
             self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
             self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
@@ -1105,4 +1100,5 @@ class LDAPService(ConfigService):
             await self.middleware.call('ldap.fill_cache')
             self.logger.debug('cache fill is in progress.')
             return {'users': {}, 'groups': {}}
+
         return await self.middleware.call('cache.get', 'LDAP_cache')
