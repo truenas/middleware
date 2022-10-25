@@ -6,15 +6,27 @@ import shutil
 from ipaddress import ip_address
 
 from dns.exception import DNSException
-from middlewared.service import Service, job, ValidationErrors
+from middlewared.schema import Bool, returns
+from middlewared.service import Service, job, ValidationErrors, private, accepts
 from middlewared.service_exception import CallError
 
 
 class ClusterUtils(Service):
+
     class Config:
         namespace = 'cluster.utils'
-        private = True
 
+    @accepts()
+    @returns(Bool('is_clustered'))
+    async def is_clustered(self):
+        """
+        Returns a boolean value on whether this system is clustered.
+        `True` means this system is clustered
+        `False` means this system is not clustered.
+        """
+        return (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
+
+    @private
     async def _resolve_hostname(self, host, avail_ips):
         result = {'ip': '', 'error': ''}
         try:
@@ -50,6 +62,7 @@ class ClusterUtils(Service):
 
         return result
 
+    @private
     async def resolve_hostnames(self, hostnames):
         """
         Takes a list of hostnames to be asynchronously resolved to their respective IP address.
@@ -70,6 +83,7 @@ class ClusterUtils(Service):
 
         return list(set(ips))
 
+    @private
     async def time_callback(self, prefix):
         my_time = time.clock_gettime(time.CLOCK_REALTIME)
         my_node = await self.middleware.call('ctdb.general.pnn')
@@ -84,6 +98,7 @@ class ClusterUtils(Service):
         }
         await self.middleware.call('clustercache.put', key, payload)
 
+    @private
     @job("cluster_time_info")
     async def time_info(self, job):
         nodes = (await self.middleware.call('ctdb.general.status'))['nodemap']['nodes']
@@ -117,6 +132,7 @@ class ClusterUtils(Service):
         })
         return responses
 
+    @private
     def state_to_be_removed(self):
         """
         This methods purpose is to consolidate the various gluster and ctdb
@@ -132,6 +148,7 @@ class ClusterUtils(Service):
 
         return files, dirs
 
+    @private
     @job(lock='teardown_cluster', lock_queue_size=1)
     def teardown_cluster(self, job):
         """
