@@ -271,7 +271,7 @@ class KubernetesService(Service):
         return {
             attr: value
             for attr, value in props.items()
-            if attr not in ('casesensitivity', 'mountpoint')
+            if attr not in ('casesensitivity', 'mountpoint', 'encryption')
         }
 
     @private
