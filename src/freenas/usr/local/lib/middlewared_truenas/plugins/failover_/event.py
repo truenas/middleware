@@ -616,9 +616,14 @@ class FailoverService(Service):
                 # Now we restart the appropriate services to ensure it's using correct certs.
                 self.run_call('service.restart', 'http')
 
+                # Directory services restart prior to criticial ones
+                # because latter may depend on nsswitch / pam functioning properly
                 if self.run_call('nis.config')['enable']:
                     if not self.run_call('nis.started'):
                         self.run_call('service.restart', 'nis', {'ha_propagate': False})
+
+                elif self.run_call('ldap.config')['enable']:
+                    self.run_call('service.restart', 'ldap', {'ha_propagate': False})
 
                 # restart the critical services first
                 # each service is restarted concurrently and given a timeout value of 15
