@@ -45,7 +45,7 @@ class GlusterVolumeService(CRUDService):
     )
 
     @filterable
-    async def query(self, filters, options):
+    async def query(self, filters, filter_options):
         vols = []
         if await self.middleware.call('service.started', 'glusterd'):
             method = volume.status_detail
@@ -53,7 +53,7 @@ class GlusterVolumeService(CRUDService):
             vols = await self.middleware.call('gluster.method.run', method, options['kwargs'])
             vols = list(map(lambda i: dict(i, id=i['name']), vols))
 
-        return filter_list(vols, filters, options)
+        return filter_list(vols, filters, filter_options)
 
     @private
     async def exists_and_started(self, vol):
