@@ -32,9 +32,9 @@ class FailoverDatastoreService(Service):
         self.failure = True
         try:
             self.send()
-        except Exception as e:
-            self.middleware.logger.warning(
-                'Error sending database to the remote node on first replication failure: %r', e,
+        except Exception:
+            self.logger.warning(
+                'Error sending database to the remote node on first replication failure', exc_info=True,
             )
 
             self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
