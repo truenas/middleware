@@ -77,7 +77,12 @@ class EnclosureService(Service):
                     if child.properties.get("SUBSYSTEM") != "block":
                         continue
 
-                    if (slot := addresses_to_slots.get(child.parent.parent.sys_name.split(".")[0])) is None:
+                    try:
+                        controller_sys_name = child.parent.parent.sys_name
+                    except AttributeError:
+                        continue
+
+                    if (slot := addresses_to_slots.get(controller_sys_name.split(".")[0])) is None:
                         continue
 
                     if not (m := re.match(self.RE_SLOT, slot)):
