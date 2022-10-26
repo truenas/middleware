@@ -55,6 +55,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
         'arch_type': None,
         'machine_type': None,
         'uuid': '64e31dd7-8c76-4dca-8b4b-0126b8853c5b',
+        'command_line_args': '',
     }
 
     m['vm.license_active'] = lambda *args: license_active
