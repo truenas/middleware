@@ -103,28 +103,15 @@ class CtdbEvent:
         At this point ctdb is not listening on its
         unix domain socket so any ctdb related commands
         and python bindings will fail.
+
+        The glusterfs fuse mount of ctdb_shared_vol is no
+        longer needed since a cluster mutex helper is being
+        used to maintain the recovery lock.
         """
         if not self.init_client():
-            self.check_ctdb_shared_volume()
             return
 
         self.client.call('core.ping')
-
-        try:
-            self.check_ctdb_shared_volume()
-        except Exception as e:
-            self.client.call('ctdb.event.process', {
-                'event': 'INIT',
-                'status': 'FAILURE',
-                'reason': str(e),
-            })
-
-            raise
-
-        self.client.call('ctdb.event.process', {
-            'event': 'INIT',
-            'status': 'SUCCESS',
-        })
 
     def setup(self):
         """
@@ -145,6 +132,8 @@ class CtdbEvent:
 
         If this fails, CTBDB will retry until it succeeds.
         There is no limit to the times it retires.
+
+        This fails if the ctdb_shared_vol is not mounted.
         """
         if not self.init_client():
             return
@@ -152,10 +141,26 @@ class CtdbEvent:
         if not os.path.exists(CTDB_SERVICE_FILE):
             return
 
+        try:
+            self.check_ctdb_shared_volume()
+        except Exception as e:
+            self.client.call('ctdb.event.process', {
+                'event': 'STARTUP',
+                'status': 'FAILURE',
+                'reason': str(e),
+            })
+
+            raise
+
         self.load_service_file()
         for srv in self.cl_services.values():
             if srv['monitor_enable'] and srv['service_enable']:
                 self.client.call('service.restart', srv['name'])
+
+        self.client.call('ctdb.event.process', {
+            'event': 'STARTUP',
+            'status': 'SUCCESS',
+        })
 
     def shutdown(self):
         """

@@ -4,9 +4,9 @@ from middlewared.service import job, Service
 
 
 EVENT_FN_MAP = {
-    'INIT': 'event_init',
+    'INIT': 'event_not_implemented',
     'SETUP': 'event_not_implemented',
-    'STARTUP': 'event_not_implemented',
+    'STARTUP': 'event_startup',
     'SHUTDOWN': 'event_not_implemented',
     'MONITOR': 'event_monitor',
     'STARTRECOVERY': 'event_recovery',
@@ -54,7 +54,7 @@ class CtdbEventService(Service):
             'ctdb.status', 'CHANGED', fields={'event': data['event'], 'data': public_ips}
         )
 
-    def event_init(self, data):
+    def event_startup(self, data):
         """
         This event gets triggered when CTDB is starting.
         Expected failure mode is when ctdb_shared_volume isn't properly mounted.
