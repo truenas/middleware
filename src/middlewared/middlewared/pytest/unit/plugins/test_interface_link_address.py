@@ -53,6 +53,8 @@ async def test__interface_link_address_setup(test):
     real_interfaces, database, result = test
 
     async with datastore_test() as ds:
+        ds.middleware["system.is_ha_capable"] = AsyncMock(return_value=False)
+
         query = ds.middleware["datastore.query"]
 
         async def mock_query(table, *args):
