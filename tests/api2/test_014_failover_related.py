@@ -96,10 +96,16 @@ def test_06_test_failover_get_ips():
 
 if ha:
     def test_07_failover_replicate():
-        old_nameserver3 = call('network.configuration.config')['nameserver3']
+        old_ns = call('network.configuration.config')['nameserver3']
+        new_ns = '1.1.1.1'
         try:
-            call('network.configuration.update', {'nameserver3': '1.1.1.1'})
+            call('network.configuration.update', {'nameserver3': new_ns})
 
-            assert call('failover.call_remote', 'network.configuration.config')['nameserver3'] == '1.1.1.1'
+            remote = call('failover.call_remote', 'network.configuration.config')
+            assert remote['nameserver3'] == new_ns
+            assert remote['state']['nameserver3'] == new_ns
         finally:
-            call('network.configuration.update', {'nameserver3': old_nameserver3})
+            call('network.configuration.update', {'nameserver3': old_ns})
+            remote = call('failover.call_remote', 'network.configuration.config')
+            assert remote['nameserver3'] == old_ns
+            assert remote['state']['nameserver3'] == old_ns
