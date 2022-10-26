@@ -17,6 +17,8 @@ if ha and "virtual_ip" in os.environ:
 else:
     from auto_config import ip
 
+from middlewared.test.integration.utils import call
+
 
 @pytest.mark.dependency(name='hactl_install_dir')
 def test_01_check_hactl_installed(request):
@@ -90,3 +92,20 @@ def test_06_test_failover_get_ips():
     assert (isinstance(rv, list)), rv
     if ha:
         assert rv
+
+
+if ha:
+    def test_07_failover_replicate():
+        old_ns = call('network.configuration.config')['nameserver3']
+        new_ns = '1.1.1.1'
+        try:
+            call('network.configuration.update', {'nameserver3': new_ns})
+
+            remote = call('failover.call_remote', 'network.configuration.config')
+            assert remote['nameserver3'] == new_ns
+            assert remote['state']['nameserver3'] == new_ns
+        finally:
+            call('network.configuration.update', {'nameserver3': old_ns})
+            remote = call('failover.call_remote', 'network.configuration.config')
+            assert remote['nameserver3'] == old_ns
+            assert remote['state']['nameserver3'] == old_ns

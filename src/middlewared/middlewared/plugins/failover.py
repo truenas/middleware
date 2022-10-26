@@ -10,7 +10,6 @@ import textwrap
 import time
 from functools import partial
 
-from middlewared.plugins.failover_.journal import SQL_QUEUE
 from middlewared.plugins.failover_.utils import throttle_condition
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
@@ -19,7 +18,6 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
-from middlewared.plugins.datastore.connection import DatastoreService
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 
@@ -360,7 +358,7 @@ class FailoverService(ConfigService):
         """
         standby = ' standby controller.'
         self.logger.debug('Syncing database to' + standby)
-        self.middleware.call_sync('failover.send_database')
+        self.middleware.call_sync('failover.datastore.send')
 
         self.logger.debug('Syncing cached encryption keys to' + standby)
         self.middleware.call_sync('failover.sync_keys_to_remote_node')
@@ -393,26 +391,6 @@ class FailoverService(ConfigService):
         Sync database and files from the other controller.
         """
         self.middleware.call_sync('failover.call_remote', 'failover.sync_to_peer')
-
-    @private
-    async def send_database(self):
-        await self.middleware.run_in_executor(DatastoreService.thread_pool, self._send_database)
-
-    def _send_database(self):
-        # We are in the `DatastoreService` thread so until the end of this method an item that we put into `SQL_QUEUE`
-        # will be the last one and no one else is able to write neither to the database nor to the journal.
-
-        # Journal thread will see that this is special value and will clear journal.
-        SQL_QUEUE.put(None)
-
-        token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-        self.middleware.call_sync('failover.sendfile', token, FREENAS_DATABASE, FREENAS_DATABASE + '.sync')
-        self.middleware.call_sync('failover.call_remote', 'failover.receive_database')
-
-    @private
-    def receive_database(self):
-        os.rename(FREENAS_DATABASE + '.sync', FREENAS_DATABASE)
-        self.middleware.call_sync('datastore.setup')
 
     @private
     def send_small_file(self, path, dest=None):
@@ -732,7 +710,7 @@ class FailoverService(ConfigService):
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
                 for f in os.listdir(local_path):
                     self.middleware.call_sync(
-                        'failover.sendfile',
+                        'failover.send_file',
                         token,
                         os.path.join(local_path, f),
                         os.path.join(remote_path, f)
@@ -1113,7 +1091,7 @@ async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
         middleware.logger.debug('[HA] Failed to contact standby controller', exc_info=True)
         return
 
-    await middleware.call('failover.send_database')
+    await middleware.call('failover.datastore.send')
 
     middleware.logger.debug('[HA] Successfully sent database to standby controller')
 
@@ -1166,7 +1144,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
             # an interface, we need to sync the database over to the
             # standby node before we call `interface.sync`
             middleware.logger.debug('[HA] Sending database to standby node')
-            await middleware.call('failover.send_database')
+            await middleware.call('failover.datastore.send')
 
             # Need to send the zpool cachefile to the other node so it matches
             # when a failover event occurs

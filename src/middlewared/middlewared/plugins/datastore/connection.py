@@ -7,6 +7,8 @@ from middlewared.service import private, Service
 
 from middlewared.plugins.config import FREENAS_DATABASE
 
+thread_pool = ThreadPoolExecutor(1)
+
 
 def regexp(expr, item):
     if item is None:
@@ -20,17 +22,13 @@ class DatastoreService(Service):
 
     class Config:
         private = True
-
-    thread_pool = ThreadPoolExecutor(1)
+        thread_pool = thread_pool
 
     engine = None
     connection = None
 
     @private
-    async def setup(self):
-        await self.middleware.run_in_executor(self.thread_pool, self._setup)
-
-    def _setup(self):
+    def setup(self):
         if self.engine is not None:
             self.engine.dispose()
 
@@ -45,11 +43,11 @@ class DatastoreService(Service):
         self.connection.connection.execute("VACUUM")
 
     @private
-    async def execute(self, *args):
-        return await self.middleware.run_in_executor(self.thread_pool, self.connection.execute, *args)
+    def execute(self, *args):
+        return self.connection.execute(*args)
 
     @private
-    async def execute_write(self, stmt, options=None):
+    def execute_write(self, stmt, options=None):
         options = options or {}
         options.setdefault('ha_sync', True)
         options.setdefault('return_last_insert_rowid', False)
@@ -67,23 +65,17 @@ class DatastoreService(Service):
             else:
                 binds.append(value)
 
-        return await self.middleware.run_in_executor(self.thread_pool, self._execute_write, sql, binds, options)
-
-    def _execute_write(self, sql, binds, options):
         result = self.connection.execute(sql, binds)
 
         self.middleware.call_hook_inline("datastore.post_execute_write", sql, binds, options)
 
         if options['return_last_insert_rowid']:
-            return self._fetchall("SELECT last_insert_rowid()")[0][0]
+            return self.fetchall("SELECT last_insert_rowid()")[0][0]
 
         return result
 
     @private
-    async def fetchall(self, *args):
-        return await self.middleware.run_in_executor(self.thread_pool, self._fetchall, *args)
-
-    def _fetchall(self, query, params=None):
+    def fetchall(self, query, params=None):
         cursor = self.connection.execute(query, params or [])
         try:
             return cursor.fetchall()
