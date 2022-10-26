@@ -33,6 +33,11 @@ class EnclosureService(Service):
                     'value': 'None',
                     'value_raw': value_raw,
                     'dev': device,
+                    'original': {
+                        'enclosure_id': None,
+                        'number': None,
+                        'slot': None,
+                    }
                 }
             })
 
