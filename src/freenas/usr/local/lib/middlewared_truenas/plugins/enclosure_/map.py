@@ -311,7 +311,6 @@ MAPPINGS = [
     # R50BM has 4 rear nvme drives (uses same plx bridge as m50/60 series)
     ProductMapping(re.compile(r"TRUENAS-R50BM$"), [
         VersionMapping(re.compile(".*"), [
-            MappingSlot(2, 0, False),
             MappingSlot(2, 1, False),
             MappingSlot(2, 2, False),
             MappingSlot(2, 3, False),
@@ -335,7 +334,7 @@ MAPPINGS = [
             MappingSlot(2, 21, False),
             MappingSlot(2, 22, False),
             MappingSlot(2, 23, False),
-            MappingSlot(3, 0, False),
+            MappingSlot(2, 24, False),
             MappingSlot(3, 1, False),
             MappingSlot(3, 2, False),
             MappingSlot(3, 3, False),
@@ -359,6 +358,7 @@ MAPPINGS = [
             MappingSlot(3, 21, False),
             MappingSlot(3, 22, False),
             MappingSlot(3, 23, False),
+            MappingSlot(3, 24, False),
         ]),
     ]),
 ]
