@@ -14,8 +14,7 @@ class FailoverDatastoreService(Service):
     class Config:
         namespace = 'failover.datastore'
         private = True
-
-    thread_pool = thread_pool
+        thread_pool = thread_pool
 
     def sql(self, data, sql, params):
         if self.middleware.call_sync('system.version') != data['version']:
