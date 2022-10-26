@@ -15,6 +15,7 @@ class ClusterUtils(Service):
 
     class Config:
         namespace = 'cluster.utils'
+        cli_namespace = 'service.cluster.utils'
 
     @accepts()
     @returns(Bool('is_clustered'))
