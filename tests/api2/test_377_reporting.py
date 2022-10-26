@@ -7,12 +7,7 @@ from auto_config import dev_test, pool_name
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
-@pytest.fixture(scope='module')
-def reporing_data():
-    return {}
-
-
-def test_reporting_still_working_after_the_system_dataset_changes(request, reporing_data):
+def test_reporting_still_working_after_the_system_dataset_changes(request):
     depends(request, ["pool_04"], scope="session")
 
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
@@ -42,7 +37,7 @@ def test_reporting_still_working_after_the_system_dataset_changes(request, repor
     results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_1'] = results.json()[0]
+    assert len(results.json()) > 0, results.json()
     time.sleep(1)
 
     results = PUT("/systemdataset/", {'pool': 'second_pool'})
@@ -60,10 +55,7 @@ def test_reporting_still_working_after_the_system_dataset_changes(request, repor
     results = POST('/reporting/get_data/', {'graphs': [{'name': 'cpu'}]})
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
-    reporing_data['graph_data_2'] = results.json()[0]
-
-    assert reporing_data['graph_data_1']['data'][-2] in reporing_data['graph_data_2']['data']
-    assert reporing_data['graph_data_1']['data'] != reporing_data['graph_data_2']['data']
+    assert len(results.json()) > 0, results.json()
 
     payload = {
         'cascade': True,
