@@ -44,6 +44,7 @@ async def test_kubernetes_configuration_for_licensed_and_unlicensed_systems(ha_c
     m['route.configured_default_ipv4_route'] = lambda *args: '192.168.0.1'
     m['system.is_ha_capable'] = lambda *args: ha_capable
     m['system.license'] = lambda *args: {'features': license_features}
+    m['kubernetes.check_config_on_apps_dataset'] = lambda *args: None
 
     k8s_schema = 'kubernetes_update'
     if should_work:
