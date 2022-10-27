@@ -1,6 +1,6 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from .utils import ProgressBar
+from .utils import ProgressBar, undefined
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
@@ -255,7 +255,7 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False):
+    def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, call_timeout=undefined):
         """
         Arguments:
            :reserved_ports(bool): should the local socket used a reserved port
@@ -269,6 +269,11 @@ class Client(object):
         self._event_callbacks = {}
         if uri is None:
             uri = 'ws+unix:///var/run/middlewared.sock'
+
+        if call_timeout is undefined:
+            call_timeout = CALL_TIMEOUT
+
+        self._call_timeout = call_timeout
         self._closed = Event()
         self._connected = Event()
         self._ws = WSClient(
@@ -423,7 +428,10 @@ class Client(object):
         self.subscribe('core.get_jobs', self._jobs_callback)
 
     def call(self, method, *params, **kwargs):
-        timeout = kwargs.pop('timeout', CALL_TIMEOUT)
+        timeout = kwargs.pop('timeout', undefined)
+        if timeout is undefined:
+            timeout = self._call_timeout
+
         job = kwargs.pop('job', False)
 
         # We need to make sure we are subscribed to receive job updates

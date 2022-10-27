@@ -1,5 +1,7 @@
 import sys
 
+undefined = object()
+
 
 class Struct:
     """
