@@ -23,3 +23,4 @@ class CtdbService(SimpleService):
     async def after_stop(self):
         await self.middleware.call('smb.reset_smb_ha_mode')
         await self.middleware.call('etc.generate', 'smb')
+        await self.middleware.call('tdb.close_cluster_handles')

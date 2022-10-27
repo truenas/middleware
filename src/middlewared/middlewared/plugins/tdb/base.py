@@ -64,16 +64,19 @@ class TDBService(Service, TDBMixin, SchemaMixin):
             raise CallError(f'{name}: Internal Error - tdb options mismatch', errno.EINVAL)
 
         with entry['lock']:
+            dbid = None
             if entry['handle_internal'] is None:
                 if options['cluster']:
                     dbid = self._ctdb_get_dbid(name, options)
-                    entry['handle_internal'] = self._get_handle(name, dbid, options, self.logger)
-                else:
-                    entry['handle_internal'] = self._get_handle(name, None, options, self.logger)
+
+                entry['handle_internal'] = self._get_handle(name, dbid, options, self.logger)
 
             elif not entry['handle_internal'].validate_handle():
                 entry['handle_internal'].close()
-                entry['handle_internal'] = self._get_handle(name, None, options, self.logger)
+                if options['cluster']:
+                    dbid = self._ctdb_get_dbid(name, options)
+
+                entry['handle_internal'] = self._get_handle(name, dbid, options, self.logger)
 
             yield entry['handle_internal']
 
@@ -273,6 +276,16 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     def show_handles(self):
         ret = {h['name']: h['options'] for h in self.handles.values()}
         return ret
+
+    @private
+    def close_cluster_handles(self):
+        for entry in list(self.handles.values()):
+            if not entry['options']['cluster']:
+                continue
+
+            with entry['lock']:
+                if entry['handle_internal'].validate_handle():
+                    entry['handle_internal'].close()
 
     @private
     def close_sysdataset_handles(self):
