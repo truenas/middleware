@@ -1,6 +1,7 @@
 import os
 import asyncio
 import enum
+import errno
 import time
 import shutil
 from ipaddress import ip_address
@@ -90,7 +91,15 @@ class ClusterUtils(Service):
         my_node = await self.middleware.call('ctdb.general.pnn')
         key = f'{prefix}_cluster_time_req_{my_node}'
         tz = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
-        ntp_peer = await self.middleware.call('system.ntpserver.peers', [('status', '$', 'PEER')])
+        try:
+            ntp_peer = await self.middleware.call('system.ntpserver.peers', [('status', '$', 'PEER')])
+        except CallError as e:
+            if e.errno != errno.ECONNREFUSED:
+                raise
+
+            ntp_peer = None
+            self.logger.debug('Failed to determine NTP peers', exc_info=True)
+
         payload = {
             "clock_realtime": my_time,
             "tz": tz,

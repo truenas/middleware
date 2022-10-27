@@ -4,6 +4,7 @@ from middlewared.utils import filter_list
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 
+import errno
 import ntplib
 import subprocess
 
@@ -152,7 +153,11 @@ class NTPServerService(CRUDService):
 
         resp = subprocess.run(['ntpq', '-np'], capture_output=True)
         if resp.returncode != 0 or resp.stderr:
-            raise CallError(resp.stderr.decode().strip())
+            errmsg = resp.stderr.decode().strip()
+            raise CallError(
+                errmsg,
+                errno.ECONNREFUSED if "Connection refused" in errmsg else errno.EFAULT
+            )
 
         for entry in resp.stdout.decode().splitlines()[2:]:
             c = None
