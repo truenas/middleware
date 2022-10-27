@@ -18,20 +18,21 @@ class DNSService(Service):
         """
         Query Name Servers with `query-filters` and `query-options`.
         """
-        ips = set()
+        ips = []
         with contextlib.suppress(Exception):
             with open('/etc/resolv.conf') as f:
-                for line in f:
-                    if line.startswith('nameserver'):
-                        ip = line[len('nameserver'):].strip()
-                        try:
-                            IPAddr().validate(ip)  # make sure it's a valid IP (better safe than sorry)
-                            ips.add(ip)
-                        except ValidationErrors:
-                            self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
-                            continue
+                for line in filter(lambda x: x.startswith('nameserver'), f):
+                    ip = line[len('nameserver'):].strip()
+                    try:
+                        IPAddr().validate(ip)  # make sure it's a valid IP (better safe than sorry)
+                    except ValidationErrors:
+                        self.logger.warning('IP %r in resolv.conf does not seem to be valid', ip)
+                    else:
+                        ip = {'nameserver': ip}
+                        if ip not in ips:
+                            ips.append(ip)
 
-        return filter_list([{'nameserver': i} for i in ips], filters, options)
+        return filter_list(ips, filters, options)
 
     @private
     def sync(self):
