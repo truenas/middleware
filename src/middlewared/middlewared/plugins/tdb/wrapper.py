@@ -151,12 +151,13 @@ class CTDBWrap(object):
         super().__init__()
 
     def validate_handle(self):
-        return True
+        return self.hdl is not None
 
     def close(self):
         # Closing last reference to pyctdb_client_ctx will
         # TALLOC_FREE() any talloc'ed memory under the handle.
         del(self.hdl)
+        self.hdl = None
         return
 
     def __persistent_fetch(self, tdb_key):
