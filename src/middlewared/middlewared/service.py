@@ -2238,5 +2238,5 @@ class CoreService(Service):
         }
 
 
-ABSTRACT_SERVICES = (ConfigService, CRUDService, SystemServiceService, SharingTaskService, SharingService,
-                     TaskPathService, TDBWrapConfigService, TDBWrapCRUDService)
+ABSTRACT_SERVICES = (CompoundService, ConfigService, CRUDService, SystemServiceService, SharingTaskService,
+                     SharingService, TaskPathService, TDBWrapConfigService, TDBWrapCRUDService)

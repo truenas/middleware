@@ -42,6 +42,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
+from middlewared.utils.service.task_state import TaskStateMixin
 
 
 RSYNC_PATH_LIMIT = 1023
@@ -297,11 +298,13 @@ class RsyncTaskModel(sa.Model):
     rsync_remotepath = sa.Column(sa.String(255))
     rsync_direction = sa.Column(sa.String(10), default='PUSH')
     rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
+    rsync_job = sa.Column(sa.JSON(type=None))
 
 
-class RsyncTaskService(TaskPathService):
+class RsyncTaskService(TaskPathService, TaskStateMixin):
 
     share_task_type = 'Rsync'
+    task_state_methods = ['rsynctask.run']
 
     class Config:
         datastore = 'tasks.rsync'
@@ -332,26 +335,14 @@ class RsyncTaskService(TaskPathService):
         for field in ('mode', 'direction'):
             data[field] = data[field].upper()
         Cron.convert_db_format_to_schedule(data)
-        data['job'] = context['jobs'].get(data['id'])
+        if job := await self.get_task_state_job(context['task_state'], data['id']):
+            data['job'] = job
         return data
 
     @private
     async def rsync_task_extend_context(self, rows, extra):
-        jobs = {}
-        for j in await self.middleware.call("core.get_jobs", [("method", "=", "rsynctask.run")],
-                                            {"order_by": ["id"]}):
-            try:
-                task_id = int(j["arguments"][0])
-            except (IndexError, TypeError, ValueError):
-                continue
-
-            if task_id in jobs and jobs[task_id]["state"] == "RUNNING":
-                continue
-
-            jobs[task_id] = j
-
         return {
-            "jobs": jobs,
+            'task_state': await self.get_task_state_context(),
         }
 
     @private
@@ -850,3 +841,4 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', RsyncModuleFSAttachmentDelegate(middleware))
     await middleware.call('pool.dataset.register_attachment_delegate', RsyncFSAttachmentDelegate(middleware))
     await middleware.call('network.general.register_activity', 'rsync', 'Rsync')
+    await middleware.call('rsynctask.persist_task_state_on_job_complete')
