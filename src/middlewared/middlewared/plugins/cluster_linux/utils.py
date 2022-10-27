@@ -7,6 +7,7 @@ import shutil
 from ipaddress import ip_address
 
 from dns.exception import DNSException
+from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.schema import Bool, returns
 from middlewared.service import Service, job, ValidationErrors, private, accepts
 from middlewared.service_exception import CallError
@@ -150,6 +151,8 @@ class ClusterUtils(Service):
         """
         files = CTDBConfig.CTDB_FILES_TO_REMOVE.value
         dirs = CTDBConfig.CTDB_DIRS_TO_REMOVE.value
+
+        files.extend(GlusterConfig.FILES_TO_REMOVE.value.copy())
 
         interest = (f'.system/{CTDBConfig.CTDB_VOL_NAME.value}', '.system/glusterd')
         mount_info = self.middleware.call_sync('filesystem.mount_info')

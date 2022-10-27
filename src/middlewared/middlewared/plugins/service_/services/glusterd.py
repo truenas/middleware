@@ -4,6 +4,8 @@ import psutil
 
 from .base import SimpleService
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
+from middlewared.plugins.gluster_linux.utils import check_glusterd_info
+from middlewared.service_exception import CallError
 
 CTDB_VOL = CTDBConfig.CTDB_VOL_NAME.value
 
@@ -23,6 +25,13 @@ class GlusterdService(SimpleService):
 
     async def after_restart(self):
         await self.middleware.call('service.restart', 'glustereventsd')
+
+    async def before_start(self):
+        if not await self.middleware.run_in_thread(check_glusterd_info):
+            await self.middleware.call('alert.oneshot_create', 'GlusterdUUIDChanged', None)
+            raise CallError("glusterd host UUID changed unexpectedly. Refusing to start service.")
+
+        await self.middleware.call('alert.oneshot_delete', 'GlusterdUUIDChanged', None)
 
     async def before_stop(self):
         svcs = ('cifs', 'ctdb', 'glustereventsd')

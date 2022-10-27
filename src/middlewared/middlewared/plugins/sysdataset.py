@@ -5,6 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.size import format_size
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
+from middlewared.plugins.gluster_linux.utils import get_gluster_workdir_dataset, set_gluster_workdir_dataset
 
 try:
     from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -638,6 +639,9 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
 
         self.__mount(_to, config['uuid'], path=path)
+
+        if get_gluster_workdir_dataset() is not None:
+            set_gluster_workdir_dataset(_to)
 
         # context manager handles service stop / restart
         with self.release_system_dataset():
