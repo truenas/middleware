@@ -1,0 +1,180 @@
+#!/usr/bin/python3
+
+import argparse
+import errno
+import fcntl
+import json
+import os
+import pyglfs
+import signal
+import sys
+
+from time import sleep
+
+"""
+See design document at ctdb/doc/cluster_mutex_helper.txt for
+implementation details.
+
+Sample configuration file:
+
+{
+  "liveness_timeout": 10,
+  "check_interval": 1,
+  "reclock_path": "testfile",
+  "volume_name": "ctdb_shared_vol",
+  "volfile_servers": [{"host": "127.0.0.1", "proto": "tcp", "port": 0}],
+  "log_file": "/var/log/foo.log", "log_level": 10
+}
+
+It is generally advisable to have multiple volfile servers configured.
+"""
+
+
+class GlusterConn:
+    reclock_uuid = None
+    reclock_fd = None
+
+    def __init__(self, **kwargs):
+        self.reclock_path = kwargs.pop('reclock_path')
+        self.glusterhdl = pyglfs.Volume(**kwargs)
+        return
+
+    def take_reclock(self):
+        lock_file = self.glusterhdl.get_root_handle().lookup(self.reclock_path)
+        self.reclock_fd = lock_file.open(os.O_RDWR)
+        lock_info = self.reclock_fd.posix_lock(
+            fcntl.F_SETLK,
+            fcntl.F_WRLCK,
+            len=1
+        )
+        self.reclock_uuid = lock_file.uuid
+
+    def liveness_check(self):
+        """
+        Currently just fstat() the underlying gluster fd
+        and double-check our cached uuid vs the file currently at that
+        path. Second check is for off chance that someone replaced our
+        lock file.
+        """
+        self.reclock_fd.fstat()
+        if self.glusterhdl.get_root_handle().lookup(self.reclock_path).uuid != self.reclock_uuid:
+            raise ValueError('Recovery lock file changed')
+
+        self.reclock_fd.fsetxattr('user.test_xat', b'CANARY', 0)
+        self.reclock_fd.fremovexattr('user.test_xat')
+
+
+CONFIG_FILE_HELP = """
+Configuration file to use, must be JSON-formatted and
+contain the following keys:
+`reclock_path` - path relative to root of gluster volume where recovery lock is located
+`volume_name` - name of gluster volume
+`volfile_servers` - list of volfile servers. Each item must contain following keys:
+(`host` - IP or hostname of server, `proto` - either TCP or RDMA, `port` - numeric port)
+`log_file` - path of glusterfs volume logfile
+`log_level` - numeric value of log level.
+"""
+
+
+def process_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-c', '--config',
+        action='store',
+        help=CONFIG_FILE_HELP,
+        default='/var/run/ctdb/gluster_reclock.conf'
+    )
+    return parser.parse_args()
+
+
+def write_stdout(code):
+    sys.stdout.write(str(code))
+    sys.stdout.flush()
+
+
+def write_stderr(msg):
+    sys.stderr.write(str(msg))
+    sys.stderr.flush()
+
+
+def sigterm_handler(signum, frame):
+    sys.exit(1)
+
+
+def sigalarm_handler(signum, frame):
+    write_stderr("timed out during liveness check")
+    sys.exit(1)
+
+
+def liveness_check(vol, timeout=10):
+    """
+    This checks whether the gluster volume is responsive.
+    We set a timeout for the operation as a sanity check
+    in case we experience unexpected hangs rather than
+    graceful errors.
+    """
+    signal.alarm(timeout)
+    vol.liveness_check()
+    signal.alarm(0)
+
+
+def lock_check_loop(volume, ppid, check_interval, timeout):
+    volume.take_reclock()
+    write_stdout(0)
+
+    while True:
+        try:
+            liveness_check(volume, timeout)
+        except Exception as e:
+            write_stderr(e)
+            break
+
+        try:
+            os.kill(ppid, 0)
+        except ProcessLookupError:
+            break
+
+        sleep(check_interval)
+
+
+def main():
+    args = process_args()
+    try:
+        with open(args.config, 'r') as f:
+            conf = json.loads(f.read())
+    except Exception as e:
+        write_stderr(e)
+        write_stdout(3)
+        sys.exit(1)
+
+    ppid = os.getppid()
+    if ppid == 1:
+        write_stderr("Unexpected ppid of 1")
+        sys.exit(1)
+
+    check_interval = conf.pop('check_interval', 1)
+    timeout = conf.pop('liveness_timeout', 10)
+    try:
+        lock_check_loop(GlusterConn(**conf), ppid, check_interval, timeout)
+        exit_code = 1
+    except pyglfs.GLFSError as e:
+        if e.errno == errno.EAGAIN:
+            write_stdout(1)
+            exit_code = 0
+        else:
+            write_stderr(e)
+            write_stdout(3)
+
+        exit_code = 1
+    except Exception as e:
+        write_stderr(e)
+        write_stdout(3)
+        exit_code = 1
+
+    sys.exit(exit_code)
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGALRM, sigalarm_handler)
+    main()
