@@ -5,6 +5,12 @@ import errno
 from concurrent.futures import ThreadPoolExecutor
 from middlewared.client import Client, ClientException
 
+# A particular Kioxia PM6 drive has shown us that it takes longer than
+# 60 seconds to unlock/setup SED. Specifically, the "sedutil-cli --initialSetup"
+# command took ~135 seconds to complete. Note the other PM6 drives took < 30 secs.
+# (60 secs is default websocket timeout so bump this to 300 secs (5mins) to be safe)
+TIMEOUT = 300
+
 
 def setup(password, disk=None):
 
@@ -20,7 +26,7 @@ def setup(password, disk=None):
             pass
         return disk_name, rv
 
-    with Client() as c:
+    with Client(call_timeout=TIMEOUT) as c:
 
         disk_filter = []
         if disk:
@@ -59,7 +65,7 @@ def setup(password, disk=None):
 
 
 def unlock():
-    with Client() as c:
+    with Client(call_timeout=TIMEOUT) as c:
         try:
             c.call('disk.sed_unlock_all')
         except ClientException as e:
