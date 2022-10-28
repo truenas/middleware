@@ -40,7 +40,18 @@ class GlusterConn:
         return
 
     def take_reclock(self):
-        lock_file = self.glusterhdl.get_root_handle().lookup(self.reclock_path)
+        try:
+            lock_file = self.glusterhdl.get_root_handle().lookup(self.reclock_path)
+        except pyglfs.GLFSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+            lock_file = self.glusterhdl.get_root_handle().create(
+                self.reclock_path,
+                os.O_CREAT | os.O_RDWR,
+                mode = 0o600,
+            )
+
         self.reclock_fd = lock_file.open(os.O_RDWR)
         lock_info = self.reclock_fd.posix_lock(
             fcntl.F_SETLK,
