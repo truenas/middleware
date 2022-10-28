@@ -503,6 +503,9 @@ class FailoverEventsService(Service):
             # start any VMs (this will log errors if the vm(s) fail to start)
             self.run_call('vm.start_on_boot')
 
+        if self.run_call('kubernetes.license_active') and self.run_call('kubernetes.config')['dataset']:
+            self.run_call('kubernetes.start_service')
+
         self.run_call('truecommand.start_truecommand_service')
 
         logger.info('Initializing alert system')
