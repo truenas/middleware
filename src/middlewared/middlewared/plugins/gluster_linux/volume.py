@@ -4,7 +4,7 @@ from middlewared.utils import filter_list
 from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
 from middlewared.schema import Dict, Str, Int, Bool, List, Ref, returns
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
-from .utils import GlusterConfig
+from .utils import GlusterConfig, set_gluster_workdir_dataset, get_gluster_workdir_dataset
 
 
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
@@ -78,6 +78,20 @@ class GlusterVolumeService(CRUDService):
 
         verrors.check()
 
+    @private
+    def store_workdir(self):
+        if get_gluster_workdir_dataset() is not None:
+            return
+
+        sysdataset = self.middleware.call_sync('systemdataset.config')
+        if not sysdataset['basename']:
+            self.logger.warning(
+                'Systemdataset not properly configured when gluster volume created'
+            )
+            return
+
+        set_gluster_workdir_dataset(sysdataset['basename'])
+
     @accepts(Dict(
         'glustervolume_create',
         Str('name', required=True),
@@ -134,7 +148,7 @@ class GlusterVolumeService(CRUDService):
         options = {'args': (name, bricks,), 'kwargs': data}
         await self.middleware.call('gluster.method.run', volume.create, options)
         await self.middleware.call('gluster.volume.start', {'name': name})
-
+        await self.middleware.call('gluster.volume.store_workdir')
         return await self.middleware.call('gluster.volume.query', [('id', '=', name)])
 
     @accepts(Dict(

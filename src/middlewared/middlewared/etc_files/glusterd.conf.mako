@@ -1,9 +1,22 @@
 <%
-    sysdataset_path = middleware.call_sync('systemdataset.config')['path']
+    from middlewared.plugins.gluster_linux.utils import get_gluster_workdir_dataset
+
+    try:
+        ds = get_gluster_workdir_dataset()
+    except FileNotFoundError:
+        ds = None
+
+    if ds is not None:
+        sysdataset_path = middleware.call_sync('systemdataset.sysdataset_path', ds)
+    else:
+        sysdataset_path = middleware.call_sync('systemdataset.config')['path']
+
     if not sysdataset_path:
         middleware.logger.error("glusterd.conf: system dataset is not mounted")
+        middleware.call_sync('alert.oneshot_create', 'GlusterdWorkdirUnavail', None)
         raise FileShouldNotExist()
 
+    middleware.call_sync('alert.oneshot_delete', 'GlusterdWorkdirUnavail', None)
     work_dir = sysdataset_path + '/glusterd'
 %>\
 
