@@ -1490,7 +1490,8 @@ class CoreService(Service):
                     port = i.request.headers.get('X-Real-Remote-Port')
                     address = f'{addr}:{port}' if all((addr, port)) else address
                 else:
-                    address = i.request.transport.get_extra_info('peername')
+                    if (info := i.request.transport.get_extra_info('peername')) and len(info) == 2:
+                        address = f'{info[0]}:{info[1]}'
             except AttributeError:
                 # underlying websocket connection can be ripped down in process
                 # of enumerating this information. This is non-fatal, so ignore it.
