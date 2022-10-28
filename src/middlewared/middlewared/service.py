@@ -1486,8 +1486,7 @@ class CoreService(Service):
                 call_count = i._softhardsemaphore.counter
                 socket_family = socket.AddressFamily(i.request.transport.get_extra_info('socket').family).name
                 address = ''
-                if socket_family == 'AF_INET':
-                    addr = i.request.headers.get('X-Real-Remote-Addr')
+                if addr := i.request.headers.get('X-Real-Remote-Addr'):
                     port = i.request.headers.get('X-Real-Remote-Port')
                     address = f'{addr}:{port}' if all((addr, port)) else address
                 else:
