@@ -76,7 +76,7 @@ class KubernetesService(ConfigService):
         ]
 
     @private
-    async def licensed_for_apps(self):
+    async def license_active(self):
         can_run_apps = True
         if await self.middleware.call('system.is_ha_capable'):
             license = await self.middleware.call('system.license')
@@ -127,9 +127,7 @@ class KubernetesService(ConfigService):
     async def validate_data(self, data, schema, old_data):
         verrors = ValidationErrors()
 
-        if await self.middleware.call('system.is_ha_capable') and 'JAILS' not in (await self.middleware.call(
-            'system.license'
-        ))['features']:
+        if not await self.license_active():
             verrors.add(
                 f'{schema}.pool',
                 'System is not licensed to use Applications'
