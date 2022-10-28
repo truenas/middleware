@@ -65,8 +65,15 @@ def set_gluster_workdir_dataset(dataset_name):
 
 
 def check_glusterd_info():
-    with open(f'{GlusterConfig.WORKDIR.value}/glusterd.info', 'r') as f:
-        current_uuid = f.readline()
+    try:
+        with open(f'{GlusterConfig.WORKDIR.value}/glusterd.info', 'r') as f:
+            current_uuid = f.readline()
+    except FileNotFoundError:
+        if not os.path.exists(GlusterConfig.UUID_BACKUP.value):
+            # Glusterd is most likely starting for the first time.
+            return True
+
+        raise
 
     if not current_uuid.startswith('UUID'):
         raise ValueError(f'Invalid glusterd.info file: {current_uuid}')
