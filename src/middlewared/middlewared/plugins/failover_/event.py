@@ -499,8 +499,9 @@ class FailoverEventsService(Service):
         logger.info('Restarting remaining services')
         self.run_call('failover.events.restart_services', {'critical': False, 'timeout': 60})
 
-        # start any VMs (this will log errors if the vm(s) fail to start)
-        self.run_call('vm.start_on_boot')
+        if self.run_call('vm.license_active'):
+            # start any VMs (this will log errors if the vm(s) fail to start)
+            self.run_call('vm.start_on_boot')
 
         self.run_call('truecommand.start_truecommand_service')
 
