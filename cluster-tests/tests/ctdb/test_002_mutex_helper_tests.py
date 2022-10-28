@@ -52,32 +52,51 @@ def test_002_reclock_helper(ip, request):
 
     Error messages are printed to stderr.
     """
-    depends(request, ['INIT_NODEMAP_GLOBAL'])
+    depends(request, ['INIT_NODEMAP_RECLOCK'])
     res = ssh_test(ip, '/usr/local/sbin/ctdb_glfs_lock')
     assert res['result'] is False, str(res)
 
 
 def test_003_change_recovery_master(request):
-    depends(request, ['INIT_NODEMAP_GLOBAL'])
+    depends(request, ['INIT_NODEMAP_RECLOCK'])
 
     target = address_from_pnn(recmaster)
     assert target is not None, str({'recmaster': recmaster, 'nodemap': ifaces_reclock_nodemap})
+    check_target = None
+
+    for ip in CLUSTER_IPS:
+        if ip == target:
+            continue
+
+        check_target = ip
+        break
+
+
     res = ssh_test(target, 'reboot')
     assert res['result'], str(res)
+
+    # wait for reboot prcess to begin
+    sleep(5)
     slept = 0
 
-    # This will take as long as node takes to reboot
+    # wait for cluster to become healthy
     while slept < TIMEOUTS['LEADER_FAILOVER_TIMEOUT']:
         payload = {
             'msg': 'method',
-            'method': 'ctdb.general.recovery_master',
+            'method': 'ctdb.general.healthy',
         }
-        res = make_ws_request(ip, payload)
-        if res.get('error') is None:
-            break
+        res = make_ws_request(check_target, payload)
+        assert res.get('error') is None, res
+        if res['result'] is True:
+            break 
 
         sleep(1)
         slept += 1
 
+    payload = {
+        'msg': 'method',
+        'method': 'ctdb.general.recovery_master',
+    }
+    res = make_ws_request(check_target, payload)
     assert res.get('error') is None, res
     assert res['result'] != recmaster
