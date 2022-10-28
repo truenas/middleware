@@ -1466,6 +1466,14 @@ class CoreService(Service):
         shell.resize(cols, rows)
 
     @filterable
+    @filterable_returns(Dict(
+        'session',
+        Str('id'),
+        Str('socket_family'),
+        List('address', items=[Str('addr'), Int('port')]),
+        Bool('authenticated'),
+        Int('call_count'),
+    ))
     def sessions(self, filters, options):
         """
         Get currently open websocket sessions.
