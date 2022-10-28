@@ -499,13 +499,7 @@ class FailoverEventsService(Service):
         logger.info('Restarting remaining services')
         self.run_call('failover.events.restart_services', {'critical': False, 'timeout': 60})
 
-        if self.run_call('vm.license_active'):
-            # start any VMs (this will log errors if the vm(s) fail to start)
-            self.run_call('vm.start_on_boot')
-
-        if self.run_call('kubernetes.license_active') and self.run_call('kubernetes.config')['dataset']:
-            self.run_call('kubernetes.start_service')
-
+        self.run_call('failover.events.start_apps_vms')
         self.run_call('truecommand.start_truecommand_service')
 
         logger.info('Initializing alert system')
@@ -530,6 +524,16 @@ class FailoverEventsService(Service):
         self.FAILOVER_RESULT = 'SUCCESS'
 
         return self.FAILOVER_RESULT
+
+    async def start_apps_vms(self):
+        if await self.middleware.call('vm.license_active'):
+            # start any VMs (this will log errors if the vm(s) fail to start)
+            asyncio.ensure_future(self.middleware.call('vm.start_on_boot'))
+
+        if await self.middleware.call('kubernetes.license_active') and (
+            await self.middleware.call('kubernetes.config')
+        )['dataset']:
+            asyncio.ensure_future(self.middleware.call('kubernetes.start_service'))
 
     @job(lock='vrrp_backup')
     def vrrp_backup(self, job, fobj, ifname, event):
