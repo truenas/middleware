@@ -1470,7 +1470,7 @@ class CoreService(Service):
         'session',
         Str('id'),
         Str('socket_family'),
-        List('address', items=[Str('addr'), Int('port')]),
+        Str('address'),
         Bool('authenticated'),
         Int('call_count'),
     ))
@@ -1481,20 +1481,17 @@ class CoreService(Service):
         sessions = []
         for i in self.middleware.get_wsclients().values():
             try:
-                sessions.append({
-                    'id': i.session_id,
-                    'socket_family': socket.AddressFamily(i.request.transport.get_extra_info('socket').family).name,
-                    'address': (
-                        (
-                            i.request.headers.get('X-Real-Remote-Addr'),
-                            i.request.headers.get('X-Real-Remote-Port')
-                        ) if i.request.headers.get('X-Real-Remote-Addr') else (
-                            i.request.transport.get_extra_info("peername")
-                        )
-                    ),
-                    'authenticated': i.authenticated,
-                    'call_count': i._softhardsemaphore.counter
-                })
+                session_id = i.session_id
+                authenticated = i.authenticated
+                call_count = i._softhardsemaphore.counter
+                socket_family = socket.AddressFamily(i.request.transport.get_extra_info('socket').family).name
+                address = ''
+                if socket_family == 'AF_INET':
+                    addr = i.request.headers.get('X-Real-Remote-Addr')
+                    port = i.request.headers.get('X-Real-Remote-Port')
+                    address = f'{addr}:{port}' if all((addr, port)) else address
+                else:
+                    address = i.request.transport.get_extra_info('peername')
             except AttributeError:
                 # underlying websocket connection can be ripped down in process
                 # of enumerating this information. This is non-fatal, so ignore it.
@@ -1502,6 +1499,14 @@ class CoreService(Service):
             except Exception:
                 self.logger.warning('Failed enumerating websocket session.', exc_info=True)
                 break
+            else:
+                sessions.append({
+                    'id': session_id,
+                    'socket_family': socket_family,
+                    'address': address,
+                    'authenticated': authenticated,
+                    'call_count': call_count,
+                })
 
         return filter_list(sessions, filters, options)
 
