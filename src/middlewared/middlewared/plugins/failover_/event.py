@@ -94,9 +94,6 @@ class FailoverEventsService(Service):
             to_restart = [i for i in to_restart if i in self.CRITICAL_SERVICES]
         else:
             to_restart = [i for i in to_restart if i not in self.CRITICAL_SERVICES]
-            # restart any kubernetes applications
-            if (await self.middleware.call('kubernetes.config'))['dataset']:
-                to_restart.append('kubernetes')
 
         exceptions = await asyncio.gather(
             *[self.restart_service(svc, data['timeout']) for svc in to_restart],
