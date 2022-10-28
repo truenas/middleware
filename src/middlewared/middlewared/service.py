@@ -1492,7 +1492,8 @@ class CoreService(Service):
                 # of enumerating this information. This is non-fatal, so ignore it.
                 pass
             except Exception:
-                self.logger.warning('Failed enumarting websocket session.', exc_info=True)
+                self.logger.warning('Failed enumerating websocket session.', exc_info=True)
+                break
 
         return filter_list(sessions, filters, options)
 
