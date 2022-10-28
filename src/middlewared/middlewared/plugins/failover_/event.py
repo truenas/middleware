@@ -526,12 +526,15 @@ class FailoverEventsService(Service):
         return self.FAILOVER_RESULT
 
     async def start_apps_vms(self):
+        async def start_vms():
+            await self.middleware.call('vm.initialize_vms')
+            await self.middleware.call('vm.start_on_boot')
+
         if await self.middleware.call('vm.license_active'):
             # start any VMs (this will log errors if the vm(s) fail to start)
             # Initialize VMs first to make sure system has relevant
             # objects for each VM initialized
-            await self.middleware.call('vm.initialize_vms')
-            asyncio.ensure_future(self.middleware.call('vm.start_on_boot'))
+            asyncio.ensure_future(start_vms())
 
         if await self.middleware.call('kubernetes.license_active') and (
             await self.middleware.call('kubernetes.config')
