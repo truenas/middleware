@@ -54,7 +54,8 @@ def test_002_reclock_helper(ip, request):
     """
     depends(request, ['INIT_NODEMAP_RECLOCK'])
     res = ssh_test(ip, '/usr/local/sbin/ctdb_glfs_lock')
-    assert res['result'] is False, str(res)
+    assert res['result'] is True, str(res)
+    assert res['output'] == '1', str(res)
 
 
 def test_003_change_recovery_master(request):
@@ -79,7 +80,7 @@ def test_003_change_recovery_master(request):
     })
     assert res.get('error') is None, res
 
-    ssh_test('python3 /usr/local/sbin/ctdb_reclock_helper --kill')
+    ssh_test(target, 'python3 /usr/local/sbin/ctdb_reclock_helper --kill')
     assert res['result'], str(res)
 
     while slept < TIMEOUTS['LEADER_FAILOVER_TIMEOUT']:
