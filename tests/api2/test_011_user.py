@@ -287,6 +287,7 @@ def test_26_get_next_uid_for_shareuser(request):
 @pytest.mark.dependency(name="shareuser")
 def test_27_creating_shareuser_to_test_sharing(request):
     depends(request, ["user_02", "user_01"])
+    global share_user_db_id
     payload = {
         "username": "shareuser",
         "full_name": "Share User",
@@ -298,6 +299,7 @@ def test_27_creating_shareuser_to_test_sharing(request):
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
+    share_user_db_id = results.json()
 
 
 def test_28_verify_post_user_do_not_leak_password_in_middleware_log(request):
@@ -499,21 +501,18 @@ def test_42_verify_locked_smb_user_is_disabled(request):
         assert my_entry["Account Flags"] == "[DU         ]", str(my_entry)
 
 
-def test_43_convert_to_non_smb_user(request):
-    depends(request, ["USER_CREATED"])
+def test_43_verify_absent_from_passdb(request):
+    """
+    This test verifies that the user no longer appears
+    in Samba's passdb after "smb" is set to False.
+    """
+    depends(request, ["USER_CREATED"], scope="session")
     payload = {
         "smb": False,
     }
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 200, results.text
 
-
-def test_44_verify_absent_from_passdb(request):
-    """
-    This test verifies that the user no longer appears
-    in Samba's passdb after "smb" is set to False.
-    """
-    depends(request, ["USER_CREATED"], scope="session")
     result = GET(
         '/user', payload={
             'query-filters': [['username', '=', 'testuser2']],
@@ -526,6 +525,18 @@ def test_44_verify_absent_from_passdb(request):
     assert result.status_code == 200, result.text
     assert result.json()['sid'] == "", result.text
     assert result.json()['nt_name'] == "", result.text
+
+
+def test_44_homedir_collision(request):
+    """
+    Verify that validation error is raised if homedir collides with existing one.
+    """
+    depends(request, ["HOMEDIR2_EXISTS", "shareuser"])
+    payload = {
+        "home": f'/mnt/{dataset}/new_home',
+    }
+    results = PUT(f"/user/id/{share_user_db_id}", payload)
+    assert results.status_code == 422, results.text
 
 
 def test_45_deleting_homedir_user(request):
