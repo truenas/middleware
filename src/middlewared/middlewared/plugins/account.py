@@ -919,17 +919,23 @@ class UserService(CRUDService):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
 
+        users = await self.middleware.call(
+            'datastore.query',
+            'account.bsdusers',
+            exclude_filter,
+            {'prefix': 'bsdusr_'}
+        )
+
         if 'username' in data:
             pw_checkname(verrors, f'{schema}.username', data['username'])
 
-            if await self.middleware.call('datastore.query', 'account.bsdusers', [
-                ('username', '=', data['username'])
-            ] + exclude_filter, {'prefix': 'bsdusr_'}):
+            if filter_list(users, [('username', '=', data['username'])]):
                 verrors.add(
                     f'{schema}.username',
                     f'The username "{data["username"]}" already exists.',
                     errno.EEXIST
                 )
+
             if data.get('smb'):
                 smb_users = await self.middleware.call('datastore.query',
                                                        'account.bsdusers',
@@ -967,6 +973,14 @@ class UserService(CRUDService):
                 verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
 
             if data['home'] != '/nonexistent':
+                in_use = filter_list(users, [('home', '=', data['home'])])
+                if in_use:
+                    verrors.add(
+                        f'{schema}.home',
+                        f'{data["home"]}: homedir already used by {in_use[0]["username"]}.',
+                        errno.EEXIST
+                    )
+
                 if not data['home'].startswith('/mnt/'):
                     verrors.add(
                         f'{schema}.home',
