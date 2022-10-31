@@ -97,6 +97,10 @@ def test_003_change_recovery_master(request):
         'msg': 'method',
         'method': 'ctdb.general.recovery_master',
     }
+
     res = make_ws_request(check_target, payload)
     assert res.get('error') is None, res
     assert res['result'] != recmaster
+
+    # resettle after reboot
+    sleep(30)
