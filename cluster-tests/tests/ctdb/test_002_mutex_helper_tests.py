@@ -63,6 +63,7 @@ def test_003_change_recovery_master(request):
     target = address_from_pnn(recmaster)
     assert target is not None, str({'recmaster': recmaster, 'nodemap': ifaces_reclock_nodemap})
     check_target = None
+    slept = 0
 
     for ip in CLUSTER_IPS:
         if ip == target:
@@ -71,36 +72,50 @@ def test_003_change_recovery_master(request):
         check_target = ip
         break
 
+    res = make_ws_request(target, {
+        'msg': 'method',
+        'method': 'service.stop',
+        'params': ['ctdb']
+    })
+    assert res.get('error') is None, res
 
-    res = ssh_test(target, 'reboot')
+    ssh_test('python3 /usr/local/sbin/ctdb_reclock_helper --kill')
     assert res['result'], str(res)
 
-    # wait for reboot prcess to begin
-    sleep(5)
-    slept = 0
-
-    # wait for cluster to become healthy
     while slept < TIMEOUTS['LEADER_FAILOVER_TIMEOUT']:
         payload = {
             'msg': 'method',
-            'method': 'ctdb.general.healthy',
+            'method': 'ctdb.general.recovery_master',
         }
+
         res = make_ws_request(check_target, payload)
         assert res.get('error') is None, res
-        if res['result'] is True:
+        if res['result'] != recmaster:
             break 
 
         sleep(1)
         slept += 1
 
-    payload = {
-        'msg': 'method',
-        'method': 'ctdb.general.recovery_master',
-    }
 
-    res = make_ws_request(check_target, payload)
-    assert res.get('error') is None, res
     assert res['result'] != recmaster
 
-    # resettle after reboot
-    sleep(30)
+    res = make_ws_request(target, {
+        'msg': 'method',
+        'method': 'service.start',
+        'params': ['ctdb']
+    })
+    assert res.get('error') is None, res
+
+    slept = 0
+    while slept < TIMEOUTS['LEADER_FAILOVER_TIMEOUT']:
+        payload = {
+            'msg': 'method',
+            'method': 'ctdb.general.healthy',
+        }
+
+        res = make_ws_request(check_target, payload)
+        assert res.get('error') is None, res
+        if res['result'] is True:
+            break
+
+    assert res['result'] == True

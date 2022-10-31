@@ -29,6 +29,9 @@ Sample configuration file:
 It is generally advisable to have multiple volfile servers configured.
 """
 
+RECLOCK_HELPER_PIDFILE = '/var/run/ctdb/reclock_helper.pid'
+PID_UNKNOWN = -2
+
 
 class GlusterConn:
     reclock_uuid = None
@@ -95,6 +98,12 @@ def process_args():
         help=CONFIG_FILE_HELP,
         default='/var/run/ctdb/gluster_reclock.conf'
     )
+    parser.add_argument(
+        '-k', '--kill',
+        action=argparse.BooleanOptionalAction,
+        help='kill any currently running reclock helper',
+        default=False
+    )
     return parser.parse_args()
 
 
@@ -108,13 +117,21 @@ def write_stderr(msg):
     sys.stderr.flush()
 
 
-def sigterm_handler(signum, frame):
+def do_exit(code):
+    try:
+        os.remove(RECLOCK_HELPER_PIDFILE)
+    except FileNotFoundError:
+        pass
+
     sys.exit(1)
+
+def sigterm_handler(signum, frame):
+    do_exit(1)
 
 
 def sigalarm_handler(signum, frame):
     write_stderr("timed out during liveness check")
-    sys.exit(1)
+    do_exit(1)
 
 
 def liveness_check(vol, timeout=10):
@@ -132,6 +149,9 @@ def liveness_check(vol, timeout=10):
 def lock_check_loop(volume, ppid, check_interval, timeout):
     volume.take_reclock()
     write_stdout(0)
+
+    with open(RECLOCK_HELPER_PIDFILE, 'w') as f:
+        f.write(str(os.getpid()))
 
     while True:
         try:
@@ -158,6 +178,37 @@ def main():
         write_stdout(3)
         sys.exit(1)
 
+    try:
+        with open(RECLOCK_HELPER_PIDFILE, 'r') as f:
+            existing_pid = int(f.read())
+    except (ValueError, FileNotFoundError):
+        existing_pid = PID_UNKNOWN
+
+    if args.kill:
+        if existing_pid == -2:
+            sys.exit(0)
+
+        if existing_pid == -1:
+            raise ValueError('Invalid pid in pidfile!')
+
+        os.kill(existing_pid, signal.SIGTERM)
+        os.remove(RECLOCK_HELPER_PIDFILE)
+        sys.exit(0)
+
+    if existing_pid != PID_UNKNOWN:
+        # optimization to avoid opining glusterfs handle if
+        # we already own the process
+        try:
+            with open(f'/proc/{existing_pid}/status', 'r') as f:
+                proc_name = f.readline().split(':')[1].strip()
+        except FileNotFoundError:
+            os.remove(RECLOCK_HELPER_PIDFILE)
+            proc_name = ''
+
+        if sys.argv[0].split('/')[-1] == proc_name:
+            write_stdout(1)
+            sys.exit(0)
+
     ppid = os.getppid()
     if ppid == 1:
         write_stderr("Unexpected ppid of 1")
@@ -171,7 +222,7 @@ def main():
     except pyglfs.GLFSError as e:
         if e.errno == errno.EAGAIN:
             write_stdout(1)
-            exit_code = 0
+            sys.exit(0)
         else:
             write_stderr(e)
             write_stdout(3)
@@ -182,7 +233,7 @@ def main():
         write_stdout(3)
         exit_code = 1
 
-    sys.exit(exit_code)
+    do_exit(exit_code)
 
 
 if __name__ == "__main__":
