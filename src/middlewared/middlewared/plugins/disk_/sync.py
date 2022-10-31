@@ -119,8 +119,10 @@ class DiskService(Service, ServiceChangeMixin):
         """
         # Skip sync disks on standby node
         licensed = self.middleware.call_sync('failover.licensed')
-        if licensed and self.middleware.call_sync('failover.status') == 'BACKUP':
-            return
+        if licensed:
+            status = self.middleware.call_sync('failover.status')
+            if status == 'BACKUP':
+                return
 
         job.set_progress(10, 'Enumerating system disks')
         sys_disks = self.middleware.call_sync('device.get_disks', True)
@@ -249,12 +251,12 @@ class DiskService(Service, ServiceChangeMixin):
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
-        if licensed:
+        if licensed and status == 'MASTER':
             job.set_progress(96, 'Synchronizing database to standby controller')
             # there could be, literally, > 1k database changes in this method on large systems
-            # so we've forgoed queuing up the number of db changes in the HA journal thread
-            # in favor of just sync'ing the database to the remote node after we're done. The
-            # (potential) speed improvement this provides is substantial
+            # so we're not sync'ing these db changes synchronously. Instead we're sync'ing the
+            # entire database to the remote node after we're done. The (potential) speed
+            # improvement this provides is substantial
             try:
                 self.middleware.call_sync('failover.datastore.send')
             except Exception:
