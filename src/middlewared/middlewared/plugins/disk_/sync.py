@@ -223,8 +223,10 @@ class DiskService(Service, ServiceChangeMixin):
         Synchronize all disks with the cache in database.
         """
         licensed = self.middleware.call_sync('failover.licensed')
-        if licensed and self.middleware.call_sync('failover.status') == 'BACKUP':
-            return
+        if licensed:
+            status = self.middleware.call_sync('failover.status')
+            if status == 'BACKUP':
+                return
 
         job.set_progress(10, 'Waiting on devd connection')
         self.wait_on_devd()
@@ -369,12 +371,12 @@ class DiskService(Service, ServiceChangeMixin):
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
 
-        if licensed:
+        if licensed and status == 'MASTER':
             job.set_progress(97, 'Synchronizing database to standby node')
-            # there could be, literally, > 1k databse changes in this method on large systems
-            # so we've forgoed from queuing up the number of db changes in the HA journal thread
-            # in favor of just sync'ing the database to the remote node after we're done. The
-            # speed improvement this provides is substantial
+            # there could be, literally, > 1k database changes in this method on large systems
+            # so we're not sync'ing these db changes synchronously. Instead we're sync'ing the
+            # entire database to the remote node after we're done. The (potential) speed
+            # improvement this provides is substantial
             try:
                 self.middleware.call_sync('failover.send_database')
             except Exception:
