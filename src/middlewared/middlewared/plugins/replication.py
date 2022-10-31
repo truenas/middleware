@@ -6,7 +6,7 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, returns, Str
 from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.path import belongs_to_tree, is_child
+from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
 
 
@@ -890,16 +890,15 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
     title = 'Replication'
 
     async def query(self, path, enabled, options=None):
-        dataset = os.path.relpath(path, '/mnt')
         results = []
         for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
             if replication['transport'] == 'LOCAL' or replication['direction'] == 'PUSH':
-                if any(belongs_to_tree(dataset, source_dataset, replication['recursive'], replication['exclude'])
+                if any(is_child(os.path.join('/mnt', source_dataset), path)
                        for source_dataset in replication['source_datasets']):
                     results.append(replication)
 
             if replication['transport'] == 'LOCAL' or replication['direction'] == 'PULL':
-                if is_child(dataset, replication['target_dataset']):
+                if is_child(os.path.join('/mnt', replication['target_dataset']), path):
                     results.append(replication)
 
         return results
