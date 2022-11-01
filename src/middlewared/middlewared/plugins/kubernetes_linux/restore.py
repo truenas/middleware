@@ -48,6 +48,23 @@ class KubernetesService(Service):
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
         k8s_pool = k8s_config['pool']
+        catalog_sync_jobs = self.middleware.call_sync('core.get_jobs', [
+            ['OR', [
+                ['method', '=', 'catalog.sync'], ['method', '=', 'catalog.sync_all'],
+                ['method', '=', 'catalog.items_internal'], ['method', '=', 'catalog.items']
+            ]],
+            ['OR', [['state', '=', 'RUNNING'], ['state', '=', 'WAITING']]]
+        ])
+
+        for sync_job in filter(lambda j: j['state'] == 'WAITING', catalog_sync_jobs):
+            self.middleware.call_sync('core.job_abort', sync_job['id'])
+
+        job.set_progress(17, 'Waiting for catalog sync jobs to complete')
+        for sync_job in filter(lambda j: j['state'] == 'RUNNING', catalog_sync_jobs):
+            if sync_job_obj := self.middleware.jobs.get(sync_job['id']):
+                if sync_job_obj.state.name == 'RUNNING':
+                    sync_job_obj.wait_sync()
+
         # We will be nuking the docker dataset and re-creating it
         # Motivation behind this action is that docker creates many datasets per image/container and
         # when we re-initialize the k8s cluster, it's possible we are leftover with datasets which are not
