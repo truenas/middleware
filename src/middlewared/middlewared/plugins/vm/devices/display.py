@@ -62,7 +62,7 @@ class DISPLAY(Device):
     def resolution(self):
         return self.data['attributes']['resolution']
 
-    def xml_linux(self, *args, **kwargs):
+    def xml(self, *args, **kwargs):
         # FIXME: Resolution is not respected when we have more then 1 display device as we are not able to bind
         #  video element to a graphic element
         attrs = self.data['attributes']
@@ -94,7 +94,7 @@ class DISPLAY(Device):
             'server_addr': f'{bind}:{port}'
         }
 
-    def post_start_vm_linux(self, *args, **kwargs):
+    def post_start_vm(self, *args, **kwargs):
         start_args = self.get_start_attrs()
         self.web_process = subprocess.Popen(
             [

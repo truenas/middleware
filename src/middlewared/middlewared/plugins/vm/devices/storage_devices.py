@@ -22,7 +22,7 @@ class StorageDevice(Device):
     def is_available(self):
         return os.path.exists(self.identity())
 
-    def xml_linux(self, *args, **kwargs):
+    def xml(self, *args, **kwargs):
         disk_number = kwargs.pop('disk_number')
         virtio = self.data['attributes']['type'] == 'VIRTIO'
         logical_sectorsize = self.data['attributes']['logical_sectorsize']
