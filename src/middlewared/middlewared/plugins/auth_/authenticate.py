@@ -1,6 +1,8 @@
 import crypt
 import hmac
 
+import pam
+
 from middlewared.service import Service, private
 
 
@@ -13,7 +15,7 @@ class AuthService(Service):
     async def authenticate(self, username, password):
         if '@' in username:
             if (await self.middleware.call('datastore.config', 'system.settings'))['stg_ds_auth']:
-                return await self.ds_authenticate(username, password)
+                return await self.ds_authenticate(username.split('@')[0], password)
             else:
                 return None
         else:
@@ -64,7 +66,14 @@ class AuthService(Service):
 
     @private
     async def ds_authenticate(self, username, password):
-        return None  # FIXME
+        if await self.middleware.call('auth.libpam_authenticate', username, password):
+            user = await self.middleware.call('user.get_user_obj', {'username': username, 'get_groups': True})
+            return await self.common_authenticate(username, 'ds_groups', set(user['grouplist']))
+
+    @private
+    def libpam_authenticate(self, username, password):
+        p = pam.pam()
+        return p.authenticate(username, password)
 
     @private
     async def common_authenticate(self, username, groups_key, groups):

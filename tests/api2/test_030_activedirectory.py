@@ -15,6 +15,9 @@ from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
 from protocols import smb_connection, smb_share
 
+from middlewared.test.integration.assets.privilege import privilege
+from middlewared.test.integration.utils import call, client
+
 if ha and "hostname_virtual" in os.environ:
     hostname = os.environ["hostname_virtual"]
 else:
@@ -353,3 +356,29 @@ def test_08_activedirectory_smb_ops(request):
             assert results.status_code == 200, results.text
             acl = results.json()
             assert acl['trivial'] is False, str(acl)
+
+
+def test_10_account_privilege_authentication(request):
+    depends(request, ["ad_works"], scope="session")
+
+    with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
+        netbiosname=hostname,
+        dns_timeout=15
+    ):
+        call("system.general.update", {"ds_auth": True})
+        try:
+            gid = call("user.get_user_obj", {"username": ADUSERNAME})["pw_gid"]
+            with privilege({
+                "name": "AD privilege",
+                "local_groups": [],
+                "ds_groups": [gid],
+                "allowlist": [{"method": "CALL", "resource": "system.info"}],
+                "web_shell": False,
+            }):
+                with client(auth=(f"{ADUSERNAME}@", ADPASSWORD)) as c:
+                    methods = c.call("core.get_methods")
+
+                assert "system.info" in methods
+                assert "pool.create" not in methods
+        finally:
+            call("system.general.update", {"ds_auth": False})

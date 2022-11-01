@@ -21,6 +21,9 @@ from auto_config import pool_name, ip, user, password, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
+from middlewared.test.integration.assets.privilege import privilege
+from middlewared.test.integration.utils import call, client
+
 try:
     from config import (
         LDAPBASEDN,
@@ -93,6 +96,28 @@ def test_08_verify_ldap_enable_is_true(request):
     depends(request, ["setup_ldap"], scope="session")
     results = GET("/ldap/")
     assert results.json()["enable"] is True, results.text
+
+
+def test_09_account_privilege_authentication(request):
+    depends(request, ["setup_ldap"], scope="session")
+
+    call("system.general.update", {"ds_auth": True})
+    try:
+        gid = call("user.get_user_obj", {"username": LDAPUSER})["pw_gid"]
+        with privilege({
+            "name": "LDAP privilege",
+            "local_groups": [],
+            "ds_groups": [gid],
+            "allowlist": [{"method": "CALL", "resource": "system.info"}],
+            "web_shell": False,
+        }):
+            with client(auth=(f"{LDAPUSER}@", LDAPPASSWORD)) as c:
+                methods = c.call("core.get_methods")
+
+            assert "system.info" in methods
+            assert "pool.create" not in methods
+    finally:
+        call("system.general.update", {"ds_auth": False})
 
 
 @pytest.mark.dependency(name="ldap_dataset")
