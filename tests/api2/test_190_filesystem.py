@@ -14,6 +14,8 @@ from copy import deepcopy
 from functions import POST, PUT, SSH_TEST, wait_on_job
 from auto_config import dev_test, pool_name, ip, user, password
 from middlewared.test.integration.assets.filesystem import directory
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call, ssh
 from utils import create_dataset
 
 # comment pytestmark for development testing with --dev-test
@@ -365,3 +367,23 @@ def test_10_acl_path_execute_validation():
                 })
                 job_status = wait_on_job(perm_job.json(), 180)
                 assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+@pytest.fixture(scope="module")
+def file_and_directory():
+    with dataset("test") as ds:
+        ssh(f"mkdir /mnt/{ds}/test-directory")
+        ssh(f"touch /mnt/{ds}/test-file")
+        yield ds
+
+
+@pytest.mark.parametrize("query,result", [
+    ([], {"test-directory", "test-file"}),
+    ([["type", "=", "DIRECTORY"]], {"test-directory"}),
+    ([["type", "!=", "DIRECTORY"]], {"test-file"}),
+    ([["type", "=", "FILE"]], {"test-file"}),
+    ([["type", "!=", "FILE"]], {"test-directory"}),
+])
+def test_type_filter(file_and_directory, query, result):
+    listdir = call("filesystem.listdir", f"/mnt/{file_and_directory}", query)
+    assert {item["name"] for item in listdir} == result, listdir
