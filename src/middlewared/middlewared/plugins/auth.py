@@ -91,7 +91,7 @@ class SessionManager:
 
         origin = self._get_origin(app)
 
-        session = Session(self, origin, credentials)
+        session = Session(self, origin, credentials, app)
         self.sessions[app.session_id] = session
 
         app.authenticated = True
@@ -142,22 +142,30 @@ class SessionManager:
         self.logout(app)
 
 
+def dump_credentials(credentials):
+    return {
+        "credentials": re.sub(
+            "([A-Z])",
+            "_\\1",
+            credentials.__class__.__name__.replace("SessionManagerCredentials", "")
+        ).lstrip("_").upper(),
+        "credentials_data": credentials.dump(),
+    }
+
+
 class Session:
-    def __init__(self, manager, origin, credentials):
+    def __init__(self, manager, origin, credentials, app):
         self.manager = manager
         self.origin = origin
         self.credentials = credentials
+        self.app = app
 
         self.created_at = time.monotonic()
 
     def dump(self):
         return {
             "origin": self.origin,
-            "credentials": re.sub(
-                "([A-Z])",
-                "_\\1",
-                self.credentials.__class__.__name__.replace("SessionManagerCredentials", "")
-            ).lstrip("_").upper(),
+            **dump_credentials(self.credentials),
             "created_at": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.created_at),
         }
 
@@ -178,6 +186,11 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
     def logout(self):
         self.token_manager.destroy(self.token)
+
+    def dump(self):
+        return {
+            "parent": dump_credentials(self.token.parent_credentials),
+        }
 
 
 def is_internal_session(session):
@@ -231,15 +244,19 @@ class AuthService(Service):
             {
                 "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
                 "origin": "192.168.0.3:40392",
-                "credentials": "TOKEN",
+                "credentials": "LOGIN_PASSWORD",
+                "credentials_data": {"username": "root"},
                 "current": True,
                 "internal": False,
                 "created_at": {"$date": 1545842426070}
             }
         ]
 
-        `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `TRUENAS_NODE`, `LOGIN_PASSWORD` or `TOKEN`,
+        `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `LOGIN_PASSWORD`, `API_KEY` or `TOKEN`,
         depending on what authentication method was used.
+        For `UNIX_SOCKET` and `LOGIN_PASSWORD` logged-in `username` field will be provided in `credentials_data`.
+        For `API_KEY` corresponding `api_key` will be provided in `credentials_data`.
+        For `TOKEN` its `parent` credential will be provided in `credentials_data`.
 
         If you want to exclude all internal connections from the list, call this method with following arguments:
 
@@ -263,6 +280,40 @@ class AuthService(Service):
             filters,
             options,
         )
+
+    @accepts(Str('id'))
+    @returns(Bool(description='Is `true` if `session was terminated successfully'))
+    async def terminate_session(self, id):
+        """
+        Terminates session `id`.
+        """
+        session = self.session_manager.sessions.get(id)
+        if session is None:
+            return False
+
+        await session.app.response.close()
+
+    @accepts()
+    @pass_app()
+    async def terminate_other_sessions(self, app):
+        """
+        Terminates all other sessions (except the current one).
+        """
+        errors = []
+        for session_id, session in list(self.session_manager.sessions.items()):
+            if session_id == app.session_id:
+                continue
+
+            if is_internal_session(session):
+                continue
+
+            try:
+                await self.terminate_session(session_id)
+            except Exception as e:
+                errors.append(str(e))
+
+        if errors:
+            raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
