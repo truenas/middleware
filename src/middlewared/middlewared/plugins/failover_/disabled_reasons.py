@@ -125,9 +125,10 @@ class FailoverDisabledReasonsService(Service):
     @private
     def get_reasons(self, app):
         reasons = set()
-        ifaces = self.middleware.call_sync('interface.query')
-        self.get_local_reasons(app, ifaces, reasons)
-        self.get_remote_reasons(app, ifaces, reasons)
+        if self.middleware.call_sync('failover.licensed'):
+            ifaces = self.middleware.call_sync('interface.query')
+            self.get_local_reasons(app, ifaces, reasons)
+            self.get_remote_reasons(app, ifaces, reasons)
 
         return reasons
 
