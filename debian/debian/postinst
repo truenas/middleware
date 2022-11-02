@@ -69,7 +69,7 @@ systemctl enable zfs-zed
 
 # We need to mask certain services so that they don't start automatically
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
-systemctl mask exim4-base.service exim4.service
+systemctl mask exim4-base.service exim4.service exim4-base.timer
 systemctl mask uuidd.service uuidd.socket
 systemctl mask ndctl-monitor.service
 
