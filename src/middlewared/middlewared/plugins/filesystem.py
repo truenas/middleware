@@ -242,13 +242,15 @@ class FilesystemService(Service):
             if filter[0] not in ['type']:
                 continue
 
-            if filter[1] != '=' and filter[2] not in ['DIRECTORY', 'FILE']:
+            if filter[1] != '=':
                 continue
 
             if filter[2] == 'DIRECTORY':
                 stat_opts["dir_only"] = True
-            else:
+            elif filter[2] == 'FILE':
                 stat_opts["file_only"] = True
+            else:
+                continue
 
         rv = []
         if stat_opts["dir_only"] and stat_opts["file_only"]:
