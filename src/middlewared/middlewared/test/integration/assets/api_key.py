@@ -8,7 +8,7 @@ __all__ = ["api_key"]
 
 @contextlib.contextmanager
 def api_key(allowlist):
-    key = call("api_key.create", {"name": "Test API KEY", "allowlist": allowlist})
+    key = call("api_key.create", {"name": "Test API Key", "allowlist": allowlist})
     try:
         yield key["key"]
     finally:

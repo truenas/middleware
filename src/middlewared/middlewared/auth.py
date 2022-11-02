@@ -17,6 +17,9 @@ class SessionManagerCredentials:
     def logout(self):
         pass
 
+    def dump(self):
+        return {}
+
 
 class UserSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, user):
@@ -25,6 +28,11 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
 
     def authorize(self, method, resource):
         return self.allowlist.authorize(method, resource)
+
+    def dump(self):
+        return {
+            "username": self.user["username"],
+        }
 
 
 class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
@@ -45,3 +53,11 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
 
     def authorize(self, method, resource):
         return self.api_key.authorize(method, resource)
+
+    def dump(self):
+        return {
+            "api_key": {
+                "id": self.api_key.api_key["id"],
+                "name": self.api_key.api_key["name"],
+            }
+        }
