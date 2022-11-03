@@ -53,7 +53,7 @@ class EnclosureStatusAlertSource(AlertSource):
                                 value['descriptor'],
                                 slot,
                                 hex(slot),
-                                value['value']
+                                value['status']
                             ]))
 
         return alerts
