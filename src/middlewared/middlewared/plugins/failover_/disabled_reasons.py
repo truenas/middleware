@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, returns, List, Str
 from middlewared.service import Service, throttle, pass_app, no_auth_required, private
 from middlewared.plugins.failover_.utils import throttle_condition
+from middlewared.plugins.interface.netif import netif
 
 
 class FailoverDisabledReasonsService(Service):
@@ -32,6 +33,8 @@ class FailoverDisabledReasonsService(Service):
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         NO_FENCED - Zpools are imported but fenced isn't running.
         REM_FAILOVER_ONGOING - Other node is currently processing a failover event.
+        NO_HEARTBEAT_IFACE - Local heartbeat interface does not exist.
+        NO_CARRIER_ON_HEARTBEAT - Local heartbeat interfae is down.
         """
         reasons = self.middleware.call_sync('failover.disabled.get_reasons', app)
         if reasons != FailoverDisabledReasonsService.LAST_DISABLED_REASONS:
@@ -43,10 +46,31 @@ class FailoverDisabledReasonsService(Service):
         return list(reasons)
 
     @private
+    def heartbeat_health(self, app, reasons):
+        try:
+            heartbeat_iface_name = self.middleware.call_sync('failover.internal_interface.detect')[0]
+        except IndexError:
+            # if something calls this directly from cli on a non-ha machine, don't
+            # crash since it's easily avoided
+            return
+
+        try:
+            iface = netif.list_interfaces()[heartbeat_iface_name]
+            if iface.link_state != 'LINK_STATE_UP':
+                reasons.add('NO_CARRIER_ON_HEARTBEAT')
+        except KeyError:
+            # saw this on an internal m50 because the systemd-modules-load.service
+            # timed out and was subsequently killed so the ntb kernel module didn't
+            # get loaded
+            reasons.add('NO_HEARTBEAT_IFACE')
+
+    @private
     def get_local_reasons(self, app, ifaces, reasons):
         """This method checks the local node to try and determine its failover status."""
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
+
+        self.heartbeat_health(app, reasons)
 
         crit_iface = vip = master = False
         for iface in ifaces:
