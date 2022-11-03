@@ -155,7 +155,7 @@ class KubernetesService(Service):
                 self.logger.error('Failed to remove %r daemonset', daemonset['metadata']['name'], exc_info=True)
 
         # Let helm re-create load balancer services for scaled up apps
-        chart_releases = await self.middleware.call('chart.release.query', [['status', '=', 'DEPLOYING']])
+        chart_releases = await self.middleware.call('chart.release.query', [['status', 'in', ('ACTIVE', 'DEPLOYING')]])
         bulk_job = await self.middleware.call(
             'core.bulk', 'chart.release.redeploy', [[r['name']] for r in chart_releases]
         )
