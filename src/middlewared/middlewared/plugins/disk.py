@@ -315,6 +315,27 @@ class DiskService(CRUDService):
         return True
 
     @private
+    async def sed_disable_mbr(self, password, devname, validate=True):
+        """
+        Run sedutil-cli --setMBREnable off on `devname`.
+
+        If `validate` is True, verify sed MBR functionality is turned
+        on for the disk before turning it off.
+        """
+        mbr = True
+        if validate:
+            cp = await run('sedutil-cli', '--query', devname, check=False)
+            if cp.returncode == 0:
+                output = cp.stdout.decode(errors='ignore')
+                mbr = 'MBREnabled = Y' in output
+
+        if mbr:
+            cp = await run('sedutil-cli', '--setMBREnable', 'off', password, devname, check=False)
+            if cp.returncode:
+                error = cp.stderr.decode()
+                self.logger.error('Failed to set MBREnable for %r to "off": %s', devname, error)
+
+    @private
     async def sed_unlock(self, disk_name, disk=None, _advconfig=None):
         # on an HA system, if both controllers manage to send
         # SED commands at the same time, then it can cause issues
@@ -357,6 +378,10 @@ class DiskService(CRUDService):
                     unlocked = True
             elif 'Locked = N' in output:
                 locked = False
+
+            if 'MBREnabled = Y' in output:
+                # we dont support booting from sed disks, so disable mbr feature
+                await self.sed_disable_mbr(password, devname, validate=False)
 
         # Try ATA Security if SED was not unlocked and its not locked by OPAL
         if not unlocked and not locked:
@@ -424,6 +449,9 @@ class DiskService(CRUDService):
         except subprocess.CalledProcessError as e:
             self.logger.debug(f'initialSetup failed for {disk_name}:\n{e.stdout}{e.stderr}')
             return 'SETUP_FAILED'
+        else:
+            # we dont support booting from sed disks, so disable mbr feature
+            await self.sed_disable_mbr(password, devname)
 
         # OPAL 2.0 disks do not enable locking range on setup like Enterprise does
         try:
