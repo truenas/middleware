@@ -7,7 +7,11 @@ from middlewared.service import CallError, item_method, private, Service, Valida
 class PoolService(Service):
 
     @private
-    def find_disk_from_topology(self, label, pool, include_top_level_vdev=False):
+    def find_disk_from_topology(self, label, pool, options=None):
+        options = options or {}
+        include_top_level_vdev = options.get('include_top_level_vdev', False)
+        include_siblings = options.get('include_siblings', False)
+
         check = []
         found = None
         for root, children in pool['topology'].items():
@@ -26,6 +30,10 @@ class PoolService(Service):
 
                 if c['children']:
                     check.append((root, c['children']))
+
+            if found is not None and include_siblings:
+                found = (found[0], found[1], children)
+
         return found
 
     @item_method
