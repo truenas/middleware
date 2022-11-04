@@ -1234,7 +1234,9 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
 
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, True)
+        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, {
+            'include_top_level_vdev': True,
+        })
         if not found:
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
 

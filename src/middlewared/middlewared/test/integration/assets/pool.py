@@ -4,17 +4,19 @@ from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, pool
 
 
+mirror_topology = (2, lambda disks: {
+    "data": [
+        {"type": "MIRROR", "disks": disks[0:2]}
+    ],
+})
+
 another_pool_topologies = [
     (1, lambda disks: {
         "data": [
             {"type": "STRIPE", "disks": disks[0:1]},
         ],
     }),
-    (2, lambda disks: {
-        "data": [
-            {"type": "MIRROR", "disks": disks[0:2]}
-        ],
-    }),
+    mirror_topology,
     (4, lambda disks: {
         "data": [
             {
