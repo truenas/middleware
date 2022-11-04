@@ -22,7 +22,7 @@ class PoolService(Service):
             swap_size = 0
             if config['create_swap'] and not await self.middleware.call('system.is_ha_capable'):
                 swap_size = swapgb
-            await self.middleware.call('disk.format', disk, swap_size, False)
+            await self.middleware.call('disk.format', disk, config.get('min_size'), swap_size, False)
             devname = await self.middleware.call(
                 'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
             )
