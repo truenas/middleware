@@ -1,5 +1,6 @@
 <%
     import random
+    import shlex
 
     system_advanced = middleware.call_sync("system.advanced.config")
     resilver = middleware.call_sync("pool.resilver.config")
@@ -43,7 +44,7 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"
     % endfor
 
     % for job in middleware.call_sync("pool.scrub.query", [["enabled", "=", True]]):
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call pool.scrub.run {job['pool_name']} {job['threshold']}"))}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call pool.scrub.run {shlex.quote(job['pool_name'])} {job['threshold']}"))}
     % endfor
 
     % if resilver["enabled"]:
