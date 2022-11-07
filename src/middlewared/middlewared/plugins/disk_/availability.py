@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from middlewared.service import accepts, private, Service
 from middlewared.service_exception import ValidationErrors
-from middlewared.schema import Bool
+from middlewared.schema import Bool, List, Str
 
 
 class DiskService(Service):
@@ -117,20 +117,36 @@ class DiskService(Service):
             )
 
         if not allow_duplicate_serials and not verrors:
-            serial_to_disk = defaultdict(set)
-            for disk in disks:
-                serial_to_disk[(disks_cache[disk]['serial'], disks_cache[disk]['lunid'])].add(disk)
-            for reserved_disk in disks_reserved:
-                reserved_disk_cache = disks_cache.get(reserved_disk)
-                if not reserved_disk_cache:
-                    continue
-
-                serial_to_disk[(reserved_disk_cache['serial'], reserved_disk_cache['lunid'])].add(reserved_disk)
-
-            if duplicate_serials := {serial for serial, serial_disks in serial_to_disk.items()
-                                     if len(serial_disks) > 1}:
+            duplicate_serials, serial_to_disk = self._duplicate_serials(disks, disks_cache, disks_reserved)
+            if duplicate_serials:
                 error = ', '.join(map(lambda serial: f'{serial[0]!r} ({", ".join(sorted(serial_to_disk[serial]))})',
                                       duplicate_serials))
                 verrors.add('topology', f'Disks have duplicate serial numbers: {error}.')
 
         return verrors
+
+    @accepts(List('disks', items=[Str('disk')]))
+    async def have_duplicate_serials(self, disks):
+        """
+        Returns whether any of `disks` has a duplicate serial with any of the other `disks` or any used disk
+        (and, therefore, `allow_duplicate_serials` option must be used on pool creation).
+        """
+        return bool(self._duplicate_serials(
+            disks,
+            dict(map(lambda x: (x['devname'], x), await self.middleware.call('disk.query'))),
+            await self.middleware.call('disk.get_reserved'),
+        )[0])
+
+    @private
+    def _duplicate_serials(self, disks, disks_cache, disks_reserved):
+        serial_to_disk = defaultdict(set)
+        for disk in disks:
+            serial_to_disk[(disks_cache[disk]['serial'], disks_cache[disk]['lunid'])].add(disk)
+        for reserved_disk in disks_reserved:
+            reserved_disk_cache = disks_cache.get(reserved_disk)
+            if not reserved_disk_cache:
+                continue
+
+            serial_to_disk[(reserved_disk_cache['serial'], reserved_disk_cache['lunid'])].add(reserved_disk)
+
+        return {serial for serial, serial_disks in serial_to_disk.items() if len(serial_disks) > 1}, serial_to_disk
