@@ -1,3 +1,5 @@
+import os.path
+
 import aiohttp
 import aiohttp.client_exceptions
 import asyncio
@@ -34,3 +36,16 @@ class ClientMixin:
                 raise ApiException(f'Malformed response received from {endpoint!r} endpoint')
             except asyncio.TimeoutError:
                 raise ApiException(f'Timed out waiting for response from {endpoint!r}')
+
+
+class K8sClientBase(ClientMixin):
+
+    NAMESPACE = NotImplementedError
+    OBJECT_ENDPOINT = NotImplementedError
+    OBJECT_TYPE = NotImplementedError
+
+    def uri(self, namespace, object_name):
+        if namespace:
+            return os.path.join(self.NAMESPACE, namespace, self.OBJECT_TYPE, *([object_name] if object_name else []))
+        else:
+            return self.OBJECT_ENDPOINT
