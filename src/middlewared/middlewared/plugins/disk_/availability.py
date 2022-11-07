@@ -42,6 +42,8 @@ class DiskService(Service):
         for i in await self.middleware.call(
             'datastore.query', 'storage.disk', [['disk_expiretime', '=', None]], {'prefix': 'disk_'}
         ):
+            serial_to_disk[(i['serial'], i['lunid'])].append(i)
+
             if i['name'] in in_use_disks_imported:
                 # exclude disks that are currently in use by imported zpool(s)
                 continue
@@ -55,7 +57,6 @@ class DiskService(Service):
             # partitions which are being used by different md devices so this value will be a list or null
             i['unsupported_md_devices'] = unsupported_md_devices_mapping.get(i['name'])
 
-            serial_to_disk[(i['serial'], i['lunid'])].append(i)
             unused.append(i)
 
         for i in unused:
