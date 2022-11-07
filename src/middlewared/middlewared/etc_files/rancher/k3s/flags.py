@@ -34,7 +34,14 @@ def render(service, middleware):
     kubelet_args = [
         'max-pods=250',
     ]
+
+    disabled_features = []
+    if not config['servicelb']:
+        disabled_features.append("servicelb")
+    if not config['metric_server']:
+        disabled_features.append("metrics-server")
     os.makedirs('/etc/rancher/k3s', exist_ok=True)
+
     with open(FLAGS_PATH, 'w') as f:
         f.write(yaml.dump({
             'cluster-cidr': config['cluster_cidr'],
@@ -49,7 +56,7 @@ def render(service, middleware):
             'kube-apiserver-arg': kube_api_server_args,
             'kubelet-arg': kubelet_args,
             'protect-kernel-defaults': True,
-            'disable': [] if config['servicelb'] else ['servicelb'],
+            'disable': disabled_features
         }))
 
     with open('/etc/containerd.json', 'w') as f:

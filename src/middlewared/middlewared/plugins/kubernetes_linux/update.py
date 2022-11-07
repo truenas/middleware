@@ -31,6 +31,7 @@ class KubernetesModel(sa.Model):
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
     validate_host_path = sa.Column(sa.Boolean(), default=True)
     passthrough_mode = sa.Column(sa.Boolean(), default=False)
+    metrics_server = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 class KubernetesService(ConfigService):
@@ -43,6 +44,7 @@ class KubernetesService(ConfigService):
     ENTRY = Dict(
         'kubernetes_entry',
         Bool('servicelb', required=True),
+        Bool('metrics_server', required=True),
         Bool('configure_gpus', required=True),
         Bool('validate_host_path', required=True),
         Bool('passthrough_mode', required=True),
@@ -406,6 +408,9 @@ class KubernetesService(ConfigService):
 
         `servicelb` is a boolean to enable or disable the integrated k3s Service Loadbalancer called "Klipper".
         This can be set to disabled to enable the user to run another LoadBalancer or no LoadBalancer at all.
+
+        `metrics_server` is a boolean to enable or disable the integrated k3s Metrics Server.
+        This can be set to enabled to enable the user to use of Kubernetes Horizontal/Vertical Pod Autoscalers.
 
         `cluster_cidr` is the CIDR to be used for default NAT network between workloads.
 
