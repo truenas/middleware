@@ -23,7 +23,7 @@ class Config:
         self.ssl_context: Optional[str] = None
         self.initialize_context()
 
-    def initialize_context(self):
+    def initialize_context(self) -> None:
         with open(KUBECONFIG_FILE, 'r') as f:
             k8s_config = yaml.safe_load(f.read())
 
@@ -47,7 +47,7 @@ class Config:
                 os.unlink(k)
 
 
-def get_config(recreate=False):
+def get_config(recreate=False) -> Config:
     global CONFIG_OBJ
     CONFIG_OBJ = CONFIG_OBJ if CONFIG_OBJ and not recreate else Config()
     return CONFIG_OBJ
