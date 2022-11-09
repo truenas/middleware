@@ -132,5 +132,5 @@ class ServiceAccount(CoreAPI):
 
         return await cls.create_token(
             service_account_name, {'spec': {'expirationSeconds': 500000000}},
-            namespace=service_account_details['metadata']['name'],
+            namespace=service_account_details['metadata']['namespace'],
         )

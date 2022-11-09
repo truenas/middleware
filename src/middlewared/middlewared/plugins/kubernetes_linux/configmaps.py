@@ -13,6 +13,6 @@ class KubernetesSecretService(CRUDService):
     @filterable
     async def query(self, filters, options):
         options = options or {}
-        label_selector = options.get('extra', {}).get('label_selector')
-        kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}
+        label_selector = options.get('extra', {}).get('labelSelector')
+        kwargs = {k: v for k, v in [('labelSelector', label_selector)] if v}
         return filter_list((await Configmap.query(**kwargs))['items'], filters, options)

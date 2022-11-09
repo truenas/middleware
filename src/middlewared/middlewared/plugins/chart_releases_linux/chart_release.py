@@ -203,7 +203,7 @@ class ChartReleaseService(CRUDService):
                 for container in pod['spec']['containers']:
                     ports_used[name].extend([
                         {'port': p['hostPort'], 'protocol': p['protocol']}
-                        for p in (container['ports'] or []) if p['hostPort']
+                        for p in (container['ports'] or []) if p.get('hostPort')
                     ])
 
             release_data.update({
