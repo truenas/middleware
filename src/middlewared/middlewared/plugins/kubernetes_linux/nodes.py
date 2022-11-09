@@ -5,7 +5,7 @@ import yaml
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
-from .k8s import api_client, nodes
+from .k8s_new import Node
 from .utils import KUBECONFIG_FILE, KUBERNETES_WORKER_NODE_PASSWORD, NODE_NAME
 
 
@@ -17,14 +17,13 @@ class KubernetesNodeService(ConfigService):
 
     async def config(self):
         try:
-            async with api_client({'node': True}) as (api, context):
-                return {
-                    'node_configured': True,
-                    'events': await self.middleware.call('k8s.event.query', [], {
-                        'extra': {'field_selector': f'involvedObject.uid={NODE_NAME}'}
-                    }),
-                    **(context['node'].to_dict())
-                }
+            return {
+                'node_configured': True,
+                'events': await self.middleware.call('k8s.event.query', [], {
+                    'extra': {'field_selector': f'involvedObject.uid={NODE_NAME}'}
+                }),
+                **(Node.get_instance())
+            }
         except Exception as e:
             return {'node_configured': False, 'error': str(e)}
 
@@ -50,9 +49,8 @@ class KubernetesNodeService(ConfigService):
         )
     )
     async def add_taints(self, taints):
-        async with api_client({'node': True}) as (api, context):
-            for taint in taints:
-                await nodes.add_taint(context['core_api'], taint, context['node'])
+        for taint in taints:
+            await Node.add_taint(taint)
 
         remaining_taints = {t['key'] for t in taints}
         timeout = 600
@@ -70,14 +68,8 @@ class KubernetesNodeService(ConfigService):
         List('remove_taints', items=[Str('taint_key')]),
     )
     async def remove_taints(self, taint_keys):
-        async with api_client({'node': True}) as (api, context):
-            for taint_key in taint_keys:
-                await nodes.remove_taint(context['core_api'], taint_key, context['node'])
-
-    @accepts()
-    async def delete_node(self):
-        async with api_client({'node': True}) as (api, context):
-            await context['core_api'].delete_node(NODE_NAME)
+        for taint_key in taint_keys:
+            await Node.remove_taint(taint_key)
 
     @accepts()
     async def worker_node_password(self):
