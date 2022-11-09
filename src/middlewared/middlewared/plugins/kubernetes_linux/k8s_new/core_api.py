@@ -9,36 +9,6 @@ class CoreAPI(K8sClientBase):
 
     NAMESPACE = '/api/v1/namespaces'
 
-    @classmethod
-    async def get_instance(cls, name: str) -> dict:
-        instance = await cls.query(fieldSelector=f'metadata.name={name}')
-        if not instance.get('items'):
-            raise ApiException(f'Unable to find "{name!r}" {cls.OBJECT_HUMAN_NAME}')
-        else:
-            return instance['items'][0]
-
-    @classmethod
-    async def query(cls, *args, **kwargs):
-        return await cls.call(cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get')
-
-    @classmethod
-    async def create(cls, data: dict, **kwargs):
-        return await cls.call(cls.uri(
-            namespace=kwargs.pop('namespace', None), parameters=kwargs,
-        ), body=data, mode='post')
-
-    @classmethod
-    async def update(cls, name: str, data: dict, **kwargs):
-        return await cls.call(cls.uri(
-            namespace=kwargs.pop('namespace', None), parameters=kwargs, object_name=name,
-        ), body=data, mode='patch', headers=UPDATE_HEADERS)
-
-    @classmethod
-    async def delete(cls, name: str, **kwargs):
-        return await cls.call(cls.uri(
-            object_name=name, namespace=kwargs.pop('namespace', None), parameters=kwargs,
-        ), mode='delete')
-
 
 class Namespace(CoreAPI):
 
