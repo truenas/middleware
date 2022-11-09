@@ -1,10 +1,7 @@
-from kubernetes_asyncio import client
-
 from middlewared.schema import Dict, Ref, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import api_client
 from .k8s_new import ApiException, DaemonSet
 
 
