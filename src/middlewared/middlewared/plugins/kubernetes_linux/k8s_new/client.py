@@ -25,7 +25,7 @@ class ClientMixin:
                     async with await getattr(session, mode)(
                         urllib.parse.urljoin(get_config().server, endpoint), json=body, headers=headers
                     ) as req:
-                        if req.status != 200:
+                        if req.status not in (200, 201):
                             raise ApiException(f'Received {req.status!r} response code from {endpoint!r}')
 
                         return await req.json() if response_type == 'json' else await req.text()
