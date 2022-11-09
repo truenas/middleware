@@ -3970,16 +3970,16 @@ class PoolDatasetService(CRUDService):
     # TODO: Document this please
     @accepts(
         Str('ds', required=True),
-        Str('quota_type', enum=['USER', 'GROUP', 'DATASET']),
+        Str('quota_type', enum=['USER', 'GROUP', 'DATASET', 'PROJECT']),
         Ref('query-filters'),
         Ref('query-options'),
     )
     @item_method
     async def get_quota(self, ds, quota_type, filters, options):
         """
-        Return a list of the specified `quota_type` of  quotas on the ZFS dataset `ds`.
-        Support `query-filters` and `query-options`. used_bytes and used_percentage
-        may not instantly update as space is used.
+        Return a list of the specified `quota_type` of quotas on the ZFS dataset `ds`.
+        Support `query-filters` and `query-options`. used_bytes may not instantly
+        update as space is used.
 
         When quota_type is not DATASET, each quota entry has these fields:
 
@@ -3989,19 +3989,15 @@ class PoolDatasetService(CRUDService):
         null if the id in the quota cannot be resolved to a user or group. This
         indicates that the user or group does not exist on the server.
 
-        `quota` - the quota size in bytes.
+        `quota` - the quota size in bytes.  Absent if no quota is set.
 
         `used_bytes` - the amount of bytes the user has written to the dataset.
         A value of zero means unlimited.
 
-        `used_percentage` - the percentage of the user or group quota consumed.
-
         `obj_quota` - the number of objects that may be owned by `id`.
-        A value of zero means unlimited.
+        A value of zero means unlimited.  Absent if no objquota is set.
 
         `obj_used` - the number of objects currently owned by `id`.
-
-        `obj_used_percent` - the percentage of the `obj_quota` currently used.
 
         Note: SMB client requests to set a quota granting no space will result
         in an on-disk quota of 1 KiB.
@@ -4065,7 +4061,6 @@ class PoolDatasetService(CRUDService):
         the user or group quota.
         """
         MAX_QUOTAS = 100
-        dataset = (await self.get_instance(ds))['name']
         verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
             verrors.add(
@@ -4073,12 +4068,11 @@ class PoolDatasetService(CRUDService):
                 f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
             )
 
-        quota_list = []
-        dataset_quotas = {}
+        quotas = {}
 
         for i, q in enumerate(data):
-            quota_type = q["quota_type"].lower()
-            if q["quota_type"] == 'DATASET':
+            quota_type = q['quota_type'].lower()
+            if q['quota_type'] == 'DATASET':
                 if q['id'] not in ['QUOTA', 'REFQUOTA']:
                     verrors.add(
                         f'quotas.{i}.id',
@@ -4086,39 +4080,34 @@ class PoolDatasetService(CRUDService):
                     )
                     continue
 
-                if dataset_quotas.get(q['id'].lower()) is not None:
+                xid = q['id'].lower()
+                if xid in quotas:
                     verrors.add(
                         f'quotas.{i}.id',
-                        f'Setting multiple values for {q["id"]} for quota_type "DATASET" is not permitted'
+                        f'Setting multiple values for {xid} for quota_type "DATASET" is not permitted'
                     )
                     continue
 
-                dataset_quotas.update({
-                    q['id'].lower(): q['quota_value']
-                })
-
-                continue
-
-            if q["quota_type"] not in ['PROJECT', 'PROJECTOBJ']:
+            elif q['quota_type'] not in ['PROJECT', 'PROJECTOBJ']:
                 if q['quota_value'] is None:
                     q['quota_value'] = 'none'
 
                 xid = None
 
                 id_type = 'user' if quota_type.startswith('user') else 'group'
-                if not q["id"].isdigit():
+                if not q['id'].isdigit():
                     try:
                         xid_obj = await self.middleware.call(f'{id_type}.get_{id_type}_obj',
-                                                             {f'{id_type}name': q["id"]})
+                                                             {f'{id_type}name': q['id']})
                         xid = xid_obj['pw_uid'] if id_type == 'user' else xid_obj['gr_gid']
                     except Exception:
-                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q["id"], exc_info=True)
+                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q['id'], exc_info=True)
                         verrors.add(
                             f'quotas.{i}.id',
                             f'{quota_type} {q["id"]} is not valid.'
                         )
                 else:
-                    xid = int(q["id"])
+                    xid = int(q['id'])
 
                 if xid == 0:
                     verrors.add(
@@ -4126,20 +4115,18 @@ class PoolDatasetService(CRUDService):
                         f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted.'
                     )
             else:
-                if not q["id"].isdigit():
+                if not q['id'].isdigit():
                     verrors.add(
                         f'quotas.{i}.id',
                         f'{quota_type} {q["id"]} must be a numeric project id.'
                     )
+                xid = int(q['id'])
 
-            quota_list.append(f'{quota_type}quota@{q["id"]}={q["quota_value"]}')
+            quotas[xid] = q
 
         verrors.check()
-        if dataset_quotas:
-            await self.middleware.call('pool.dataset.update', ds, dataset_quotas)
-
-        if quota_list:
-            await self.middleware.call('zfs.dataset.set_quota', dataset, quota_list)
+        if quotas:
+            await self.middleware.call('zfs.dataset.set_quota', ds, quotas)
 
     @accepts(Str('pool'))
     @returns(Str())
