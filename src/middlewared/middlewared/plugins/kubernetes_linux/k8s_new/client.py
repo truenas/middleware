@@ -12,20 +12,18 @@ from .exceptions import ApiException
 
 class ClientMixin:
 
-    def __init__(self):
-        self.config: Config = get_config()
-
+    @classmethod
     async def api_call(
-        self, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None,
+        cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None,
         response_type: str = 'json', timeout: int = 50
     ) -> typing.Union[dict, str]:
         try:
             async with async_timeout.timeout(timeout):
                 async with aiohttp.ClientSession(
-                    connector=aiohttp.TCPConnector(ssl=self.config.ssl_context)
+                    connector=aiohttp.TCPConnector(ssl=get_config().ssl_context)
                 ) as session:
                     req = await getattr(session, mode)(
-                        urllib.parse.urljoin(self.config.server, endpoint), json=body, headers=headers
+                        urllib.parse.urljoin(get_config().server, endpoint), json=body, headers=headers
                     )
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
@@ -47,18 +45,21 @@ class K8sClientBase(ClientMixin):
     OBJECT_ENDPOINT: str = NotImplementedError
     OBJECT_TYPE: str = NotImplementedError
 
-    def query_selectors(self, parameters: typing.Optional[dict]) -> str:
+    @classmethod
+    def query_selectors(cls, parameters: typing.Optional[dict]) -> str:
         return f'?{urllib.parse.urlencode(parameters)}' if parameters else ''
 
+    @classmethod
     def uri(
-        self, namespace: typing.Optional[str] = None, object_name: typing.Optional[str] = None,
+        cls, namespace: typing.Optional[str] = None, object_name: typing.Optional[str] = None,
         parameters: typing.Optional[dict] = None,
     ) -> str:
         return (os.path.join(
-            self.NAMESPACE, namespace, self.OBJECT_TYPE, *([object_name] if object_name else [])
-        ) if namespace else self.OBJECT_ENDPOINT) + self.query_selectors(parameters)
+            cls.NAMESPACE, namespace, cls.OBJECT_TYPE, *([object_name] if object_name else [])
+        ) if namespace else cls.OBJECT_ENDPOINT) + cls.query_selectors(parameters)
 
+    @classmethod
     def call(
-        self, uri: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, **kwargs
+        cls, uri: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, **kwargs
     ):
-        return self.api_call(uri, mode, body, headers, **kwargs)
+        return cls.api_call(uri, mode, body, headers, **kwargs)

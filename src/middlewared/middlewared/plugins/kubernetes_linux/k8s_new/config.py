@@ -3,9 +3,10 @@ import contextlib
 import os
 import ssl
 import tempfile
-import yaml
 
 from typing import Optional
+
+from middlewared.plugins.kubernetes_linux.yaml import yaml
 
 from .utils import KUBECONFIG_FILE
 
