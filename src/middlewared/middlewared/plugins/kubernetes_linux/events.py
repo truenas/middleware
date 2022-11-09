@@ -9,6 +9,7 @@ from middlewared.service import CRUDService, filterable, private
 from middlewared.utils import filter_list
 
 from .k8s import api_client
+from .k8s_new import Event
 from .utils import NODE_NAME
 
 
@@ -21,25 +22,17 @@ class KubernetesEventService(CRUDService):
     @filterable
     async def query(self, filters, options):
         options = options or {}
-        label_selector = options.get('extra', {}).get('label_selector')
-        field_selector = options.get('extra', {}).get('field_selector')
+        label_selector = options.get('extra', {}).get('labelSelector')
+        field_selector = options.get('extra', {}).get('fieldSelector')
         namespace = options.get('extra', {}).get('namespace')
         kwargs = {
             k: v for k, v in [
-                ('label_selector', label_selector),
-                ('field_selector', field_selector),
+                ('labelSelector', label_selector),
+                ('fieldSelector', field_selector),
                 ('namespace', namespace),
             ] if v
         }
-        async with api_client() as (api, context):
-            if namespace:
-                method = context['core_api'].list_namespaced_event
-            else:
-                method = context['core_api'].list_event_for_all_namespaces
-            return filter_list(
-                [d.to_dict() for d in (await method(**kwargs)).items],
-                filters, options
-            )
+        return filter_list((await Event.query(**kwargs))['items'], filters, options)
 
     @private
     async def setup_k8s_events(self):
