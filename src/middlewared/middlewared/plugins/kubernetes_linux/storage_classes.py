@@ -1,11 +1,9 @@
 import os
 
-from kubernetes_asyncio import client
-
 from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import api_client
+from .k8s_new import ApiException, StorageClass
 
 
 DEFAULT_STORAGE_CLASS = 'openebs-zfspv-default'
@@ -20,38 +18,25 @@ class KubernetesStorageClassService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['storage_api'].list_storage_class()).items],
-                filters, options
-            )
+        return filter_list((await StorageClass.query())['items'], filters, options)
 
     async def do_create(self, data):
-        async with api_client() as (api, context):
-            try:
-                await context['storage_api'].create_storage_class(data)
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Failed to create storage class: {e}')
-            else:
-                return data
+        try:
+            await StorageClass.create(data)
+        except ApiException as e:
+            raise CallError(f'Unable to create storage class: {e}')
 
     async def do_update(self, name, data):
-        async with api_client() as (api, context):
-            try:
-                await context['storage_api'].patch_storage_class(name, data)
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Failed to create storage class: {e}')
-            else:
-                return data
+        try:
+            await StorageClass.update(name, data)
+        except ApiException as e:
+            raise CallError(f'Unable to update storage class: {e}')
 
     async def do_delete(self, name):
-        async with api_client() as (api, context):
-            try:
-                await context['storage_api'].delete_storage_class(name)
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Failed to delete storage class: {e}')
-            else:
-                return True
+        try:
+            await StorageClass.delete(name)
+        except ApiException as e:
+            raise CallError(f'Failed to delete storage class: {e}')
 
     async def setup_default_storage_class(self):
         try:
