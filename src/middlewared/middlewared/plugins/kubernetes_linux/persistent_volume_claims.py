@@ -2,7 +2,7 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import api_client
+from .k8s_new import PersistentVolumeClaim
 
 
 class KubernetesPersistentVolumeClaimService(CRUDService):
@@ -14,15 +14,7 @@ class KubernetesPersistentVolumeClaimService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [
-                    d.to_dict() for d in (
-                        await context['core_api'].list_persistent_volume_claim_for_all_namespaces()
-                    ).items
-                ],
-                filters, options
-            )
+        return filter_list((await PersistentVolumeClaim.query())['items'], filters, options)
 
     @accepts(
         Str('pvc_name'),
@@ -32,7 +24,5 @@ class KubernetesPersistentVolumeClaimService(CRUDService):
         )
     )
     async def do_delete(self, pvc_name, options):
-        async with api_client() as (api, context):
-            await context['core_api'].delete_namespaced_persistent_volume_claim(pvc_name, options['namespace'])
-
+        await PersistentVolumeClaim.delete(pvc_name, **options)
         return True

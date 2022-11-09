@@ -3,6 +3,7 @@ from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
 from .k8s import api_client
+from .k8s_new import PersistentVolume
 
 
 class KubernetesPersistentVolumesService(CRUDService):
@@ -14,15 +15,7 @@ class KubernetesPersistentVolumesService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [
-                    d.to_dict() for d in (
-                        await context['core_api'].list_persistent_volume()
-                    ).items
-                ],
-                filters, options
-            )
+        return filter_list((await PersistentVolume.query())['items'], filters, options)
 
     @accepts(
         Dict(
@@ -67,11 +60,7 @@ class KubernetesPersistentVolumesService(CRUDService):
         )
     )
     async def do_create(self, data):
-        async with api_client() as (api, context):
-            await context['core_api'].create_persistent_volume(data)
-        return data
+        await PersistentVolume.create(data)
 
     async def do_delete(self, pv_name):
-        async with api_client() as (api, context):
-            await context['core_api'].delete_persistent_volume(pv_name)
-        return True
+        await PersistentVolume.delete(pv_name)
