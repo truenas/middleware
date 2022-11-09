@@ -1,3 +1,5 @@
+import asyncio
+
 from .client import K8sClientBase
 from .exceptions import ApiException
 from .utils import NODE_NAME, UPDATE_HEADERS
@@ -128,3 +130,34 @@ class ServicesAccount(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/serviceaccounts'
     OBJECT_TYPE = 'serviceaccounts'
+
+    @classmethod
+    async def get_instance(cls, service_account_name: str):
+        accounts = await cls.query(fieldSelector=f'metadata.name={service_account_name}')
+        if not accounts.get('items'):
+            # We check if the item is not null because in some race conditions
+            # the data we get from the api returns null which is of course not the service account we desire
+            raise ApiException(f'Unable to find "{service_account_name}" service account')
+        else:
+            return accounts['items'][0]
+
+    @classmethod
+    async def create_token(cls, name: str, data: dict, **kwargs) -> str:
+        return await cls.call(cls.uri(
+            object_name=name + '/token', namespace=kwargs.pop('namespace', None), parameters=kwargs,
+        ), body=data, mode='post')
+
+    @classmethod
+    async def safely_create_token(cls, service_account_name: str) -> str:
+        while True:
+            try:
+                service_account_details = await cls.get_instance(service_account_name)
+            except Exception:
+                await asyncio.sleep(5)
+            else:
+                break
+
+        return await cls.create_token(
+            service_account_name, {'spec': {'expirationSeconds': 500000000}},
+            namespace=service_account_details['metadata']['name'],
+        )
