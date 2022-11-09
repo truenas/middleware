@@ -2,7 +2,7 @@ import asyncio
 
 from .client import K8sClientBase
 from .exceptions import ApiException
-from .utils import NODE_NAME, UPDATE_HEADERS
+from .utils import NODE_NAME
 
 
 class CoreAPI(K8sClientBase):
