@@ -673,81 +673,118 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             raise CallError(f'Failed retrieving child datsets for {path} with error {e}')
 
+    # quota_type in ('USER', 'GROUP', 'DATASET', 'PROJECT')
     def get_quota(self, ds, quota_type):
-        if quota_type == 'dataset':
+        quota_type = quota_type.upper()
+        if quota_type == 'DATASET':
             dataset = self.query([('id', '=', ds)], {'get': True})
             return [{
-                'quota_type': 'DATASET',
+                'quota_type': quota_type,
                 'id': ds,
                 'name': ds,
                 'quota': int(dataset['properties']['quota']['rawvalue']),
                 'refquota': int(dataset['properties']['refquota']['rawvalue']),
                 'used_bytes': int(dataset['properties']['used']['rawvalue']),
             }]
+        elif quota_type == 'USER':
+            quota_props = [
+                libzfs.UserquotaProp.USERUSED,
+                libzfs.UserquotaProp.USERQUOTA,
+                libzfs.UserquotaProp.USEROBJUSED,
+                libzfs.UserquotaProp.USEROBJQUOTA
+            ]
+        elif quota_type == 'GROUP':
+            quota_props = [
+                libzfs.UserquotaProp.GROUPUSED,
+                libzfs.UserquotaProp.GROUPQUOTA,
+                libzfs.UserquotaProp.GROUPOBJUSED,
+                libzfs.UserquotaProp.GROUPOBJQUOTA
+            ]
+        elif quota_type == 'PROJECT':
+            quota_props = [
+                libzfs.UserquotaProp.PROJECTUSED,
+                libzfs.UserquotaProp.PROJECTQUOTA,
+                libzfs.UserquotaProp.PROJECTOBJUSED,
+                libzfs.UserquotaProp.PROJECTOBJQUOTA
+            ]
+        else:
+            raise CallError(f'Unknown quota type {quota_type}')
 
-        quota_list = []
-        quota_get = subprocess.run(
-            ['zfs', f'{quota_type}space', '-H', '-n', '-p', '-o', 'name,used,quota,objquota,objused', ds],
-            capture_output=True,
-            check=False,
-        )
-        if quota_get.returncode != 0:
-            raise CallError(
-                f'Failed to get {quota_type} quota for {ds}: [{quota_get.stderr.decode()}]'
-            )
+        try:
+            with libzfs.ZFS() as zfs:
+                resource = zfs.get_object(ds)
+                quotas = resource.userspace(quota_props)
+        except libzfs.ZFSException:
+            raise CallError(f'Failed retreiving {quota_type} quotas for {ds}')
 
-        for quota in quota_get.stdout.decode().splitlines():
-            m = quota.split('\t')
-            if len(m) != 5:
-                self.logger.debug('Invalid %s quota: %s',
-                                  quota_type.lower(), quota)
-                continue
+        # We get the quotas in separate lists for each prop.  Collect these into
+        # a single list of objects containing all the requested props.  Each
+        # object is unique by (domain, rid), and we only work with POSIX ids,
+        # so we use rid as a dict key and update the values as we iterate
+        # through all the quotas.
+        keymap = {
+            libzfs.UserquotaProp.USERUSED: 'used_bytes',
+            libzfs.UserquotaProp.GROUPUSED: 'used_bytes',
+            libzfs.UserquotaProp.PROJECTUSED: 'used_bytes',
+            libzfs.UserquotaProp.USERQUOTA: 'quota',
+            libzfs.UserquotaProp.GROUPQUOTA: 'quota',
+            libzfs.UserquotaProp.PROJECTQUOTA: 'quota',
+            libzfs.UserquotaProp.USEROBJUSED: 'obj_used',
+            libzfs.UserquotaProp.GROUPOBJUSED: 'obj_used',
+            libzfs.UserquotaProp.PROJECTOBJUSED: 'obj_used',
+            libzfs.UserquotaProp.USEROBJQUOTA: 'obj_quota',
+            libzfs.UserquotaProp.GROUPOBJQUOTA: 'obj_quota',
+            libzfs.UserquotaProp.PROJECTOBJQUOTA: 'obj_quota',
+        }
+        collected = {}
+        for quota_prop, quota_list in quotas.items():
+            for quota in quota_list:
+                # We only use POSIX ids, skip anything with a domain.
+                if quota['domain'] != '':
+                    continue
+                rid = quota['rid']
+                entry = collected.get(rid, {
+                    'quota_type': quota_type,
+                    'id': rid
+                })
+                key = keymap[quota_prop]
+                entry[key] = quota['space']
+                collected[rid] = entry
 
-            entry = {
-                'quota_type': quota_type.upper(),
-                'id': int(m[0]),
-                'name': None,
-                'quota': int(m[2]) if m[2] != '-' else 0,
-                'used_bytes': int(m[1]) if m[1] != '-' else 0,
-                'used_percent': 0,
-                'obj_quota': int(m[3]) if m[3] != '-' else 0,
-                'obj_used': int(m[4]) if m[4] != '-' else 0,
-                'obj_used_percent': 0,
-            }
-            if entry['quota'] > 0:
-                entry['used_percent'] = entry['used_bytes'] / entry['quota'] * 100
-
-            if entry['obj_quota'] > 0:
-                entry['obj_used_percent'] = entry['obj_used'] / entry['obj_quota'] * 100
-
+        # Do name lookups last so we aren't repeating for all the quota props
+        # for each entry.
+        def add_name(entry):
             try:
-                if entry['quota_type'] == 'USER':
+                if quota_type == 'USER':
                     entry['name'] = (
                         self.middleware.call_sync('user.get_user_obj',
                                                   {'uid': entry['id']})
                     )['pw_name']
-                else:
+                elif quota_type == 'GROUP':
                     entry['name'] = (
                         self.middleware.call_sync('group.get_group_obj',
                                                   {'gid': entry['id']})
                     )['gr_name']
-
             except Exception:
                 self.logger.debug('Unable to resolve %s id %d to name',
                                   quota_type.lower(), entry['id'])
                 pass
+            return entry
 
-            quota_list.append(entry)
+        return [add_name(entry) for entry in collected.values()]
 
-        return quota_list
-
-    def set_quota(self, ds, quota_list):
-        cmd = ['zfs', 'set']
-        cmd.extend(quota_list)
-        cmd.append(ds)
-        quota_set = subprocess.run(cmd, check=False)
-        if quota_set.returncode != 0:
-            raise CallError(f'Failed to set userspace quota on {ds}: [{quota_set.stderr.decode()}]')
+    def set_quota(self, ds, quotas):
+        properties = {}
+        for xid, quota in quotas.items():
+            quota_type = quota['quota_type'].lower()
+            quota_value = {'value': quota['quota_value']}
+            if quota_type == 'dataset':
+                properties[xid] = quota_value
+            else:
+                properties[f'{quota_type}quota@{xid}'] = quota_value
+        with libzfs.ZFS() as zfs:
+            dataset = zfs.get_dataset(ds)
+            dataset.update_properties(properties)
 
     @accepts(
         Str('id'),
