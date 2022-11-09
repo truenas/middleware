@@ -39,6 +39,7 @@ class K8sClientBase(ClientMixin):
 
     NAMESPACE: str = NotImplementedError
     OBJECT_ENDPOINT: str = NotImplementedError
+    OBJECT_HUMAN_NAME: str = NotImplementedError
     OBJECT_TYPE: str = NotImplementedError
 
     @classmethod

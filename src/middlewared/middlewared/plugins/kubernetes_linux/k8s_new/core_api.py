@@ -10,6 +10,14 @@ class CoreAPI(K8sClientBase):
     NAMESPACE = '/api/v1/namespaces'
 
     @classmethod
+    async def get_instance(cls, name: str) -> dict:
+        instance = await cls.query(fieldSelector=f'metadata.name={name}')
+        if not instance.get('items'):
+            raise ApiException(f'Unable to find "{name!r}" {cls.OBJECT_HUMAN_NAME}')
+        else:
+            return instance['items'][0]
+
+    @classmethod
     async def query(cls, *args, **kwargs):
         return await cls.call(cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get')
 
@@ -40,14 +48,11 @@ class Namespace(CoreAPI):
 class Node(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/nodes'
+    OBJECT_HUMAN_NAME = 'Node'
 
     @classmethod
-    async def get_instance(cls) -> dict:
-        node_object = (await cls.query(fieldSelector=f'metadata.name={NODE_NAME}'))
-        if not node_object['items']:
-            raise ApiException(f'Unable to find "{NODE_NAME}" node.')
-        else:
-            return node_object['items'][0]
+    async def get_instance(cls, name: str = NODE_NAME) -> dict:
+        return await super().get_instance(name)
 
     @classmethod
     async def add_taint(cls, taint_dict: dict) -> None:
@@ -87,59 +92,57 @@ class Node(CoreAPI):
 class Service(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/services'
+    OBJECT_HUMAN_NAME = 'Service'
     OBJECT_TYPE = 'services'
 
 
 class Pod(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/pods'
+    OBJECT_HUMAN_NAME = 'Pod'
     OBJECT_TYPE = 'pods'
 
 
 class Event(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/events'
+    OBJECT_HUMAN_NAME = 'Event'
     OBJECT_TYPE = 'events'
 
 
 class Secret(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/secrets'
+    OBJECT_HUMAN_NAME = 'Secret'
     OBJECT_TYPE = 'secrets'
 
 
 class PersistentVolume(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/persistentvolumes'
+    OBJECT_HUMAN_NAME = 'Persistent Volume'
     OBJECT_TYPE = 'persistentvolumes'
 
 
 class PersistentVolumeClaim(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/persistentvolumeclaims'
+    OBJECT_HUMAN_NAME = 'Persistent Volume Claim'
     OBJECT_TYPE = 'persistentvolumeclaims'
 
 
 class Configmap(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/configmaps'
+    OBJECT_HUMAN_NAME = 'Configmap'
     OBJECT_TYPE = 'configmaps'
 
 
 class ServiceAccount(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/serviceaccounts'
+    OBJECT_HUMAN_NAME = 'Service Account'
     OBJECT_TYPE = 'serviceaccounts'
-
-    @classmethod
-    async def get_instance(cls, service_account_name: str):
-        accounts = await cls.query(fieldSelector=f'metadata.name={service_account_name}')
-        if not accounts.get('items'):
-            # We check if the item is not null because in some race conditions
-            # the data we get from the api returns null which is of course not the service account we desire
-            raise ApiException(f'Unable to find "{service_account_name}" service account')
-        else:
-            return accounts['items'][0]
 
     @classmethod
     async def create_token(cls, name: str, data: dict, **kwargs) -> str:
