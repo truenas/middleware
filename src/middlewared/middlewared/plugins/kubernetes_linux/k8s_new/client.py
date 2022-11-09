@@ -22,21 +22,17 @@ class ClientMixin:
                 async with aiohttp.ClientSession(
                     connector=aiohttp.TCPConnector(ssl=get_config().ssl_context)
                 ) as session:
-                    req = await getattr(session, mode)(
+                    async with await getattr(session, mode)(
                         urllib.parse.urljoin(get_config().server, endpoint), json=body, headers=headers
-                    )
+                    ) as req:
+                        if req.status != 200:
+                            raise ApiException(f'Received {req.status!r} response code from {endpoint!r}')
+
+                        return await req.json() if response_type == 'json' else await req.text()
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
-        else:
-            if req.status != 200:
-                raise ApiException(f'Received {req.status!r} response code from {endpoint!r}')
-
-            try:
-                return await req.json() if response_type == 'json' else await req.text()
-            except aiohttp.client_exceptions.ContentTypeError as e:
-                raise ApiException(f'Malformed response received from {endpoint!r} endpoint')
-            except asyncio.TimeoutError:
-                raise ApiException(f'Timed out waiting for response from {endpoint!r}')
+        except aiohttp.client_exceptions.ContentTypeError as e:
+            raise ApiException(f'Malformed response received from {endpoint!r} endpoint')
 
 
 class K8sClientBase(ClientMixin):
@@ -56,10 +52,12 @@ class K8sClientBase(ClientMixin):
     ) -> str:
         return (os.path.join(
             cls.NAMESPACE, namespace, cls.OBJECT_TYPE, *([object_name] if object_name else [])
-        ) if namespace else cls.OBJECT_ENDPOINT) + cls.query_selectors(parameters)
+        ) if namespace else os.path.join(cls.OBJECT_ENDPOINT, *(
+            [object_name] if object_name else []
+        ))) + cls.query_selectors(parameters)
 
     @classmethod
-    def call(
+    async def call(
         cls, uri: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, **kwargs
     ):
-        return cls.api_call(uri, mode, body, headers, **kwargs)
+        return await cls.api_call(uri, mode, body, headers, **kwargs)
