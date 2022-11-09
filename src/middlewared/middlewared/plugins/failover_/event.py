@@ -474,6 +474,9 @@ class FailoverEventsService(Service):
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})
 
+        # setup directory services. This is backgrounded job
+        self.run_call('directoryservices.setup')
+
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
         fw_accept_job.wait_sync()
