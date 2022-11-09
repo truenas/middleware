@@ -1,12 +1,10 @@
 import yaml
 
-from kubernetes_asyncio import client
-
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import api_client
+from .k8s_new import ApiException, Namespace
 
 
 class KubernetesNamespaceService(CRUDService):
@@ -17,11 +15,7 @@ class KubernetesNamespaceService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['core_api'].list_namespace()).items],
-                filters, options
-            )
+        return filter_list((await Namespace.query())['items'], filters, options)
 
     @accepts(
         Dict(
@@ -30,13 +24,12 @@ class KubernetesNamespaceService(CRUDService):
         )
     )
     async def do_create(self, data):
-        async with api_client() as (api, context):
-            try:
-                await context['core_api'].create_namespace(body=data['body'])
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to create namespace: {e}')
-            else:
-                return await self.query([['metadata.name', '=', data['body']['metadata']['name']]], {'get': True})
+        try:
+            await Namespace.create(data['body'])
+        except ApiException as e:
+            raise CallError(f'Unable to create namespace: {e}')
+        else:
+            return await Namespace.get_instance(data['metadata']['name'])
 
     @accepts(
         Str('namespace'),
@@ -46,23 +39,21 @@ class KubernetesNamespaceService(CRUDService):
         )
     )
     async def do_update(self, namespace, data):
-        async with api_client() as (api, context):
-            try:
-                await context['core_api'].patch_namespace(namespace, body=data['body'])
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to update namespace: {e}')
-            else:
-                return await self.query([['metadata.name', '=', namespace]], {'get': True})
+        try:
+            await Namespace.update(namespace, data['body'])
+        except ApiException as e:
+            raise CallError(f'Unable to update namespace: {e}')
+        else:
+            return await Namespace.get_instance(namespace)
 
     @accepts(Str('namespace'))
     async def do_delete(self, namespace):
-        async with api_client() as (api, context):
-            try:
-                await context['core_api'].delete_namespace(namespace)
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to delete namespace: {e}')
-            else:
-                return True
+        try:
+            await Namespace.delete(namespace)
+        except ApiException as e:
+            raise CallError(f'Unable delete namespace: {e}')
+        else:
+            return True
 
     async def namespace_names(self):
         return [n['metadata']['name'] for n in await self.query()]
