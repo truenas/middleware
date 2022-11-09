@@ -126,7 +126,7 @@ class Configmap(CoreAPI):
     OBJECT_TYPE = 'configmaps'
 
 
-class ServicesAccount(CoreAPI):
+class ServiceAccount(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/serviceaccounts'
     OBJECT_TYPE = 'serviceaccounts'

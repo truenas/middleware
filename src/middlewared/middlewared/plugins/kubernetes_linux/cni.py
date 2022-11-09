@@ -6,7 +6,7 @@ import time
 from middlewared.plugins.interface.netif import netif
 from middlewared.service import CallError, ConfigService
 
-from .k8s import api_client, service_accounts
+from .k8s_new import ServiceAccount
 from .utils import KUBEROUTER_RULE_PRIORITY, KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME
 
 
@@ -28,15 +28,12 @@ class KubernetesCNIService(ConfigService):
             raise CallError('Unable to determine Kubernetes Cluster CA')
 
         config = await self.config()
-        async with api_client() as (api, context):
-            cni_config = kube_config['cni_config']
-            for cni in config:
-                if not await self.validate_cni_integrity(cni, kube_config):
-                    cni_config[cni] = {
-                        'token': await service_accounts.get_service_account_details(
-                            context['core_api'], config[cni]['service_account']
-                        ),
-                    }
+        cni_config = kube_config['cni_config']
+        for cni in config:
+            if not await self.validate_cni_integrity(cni, kube_config):
+                cni_config[cni] = {
+                    'token': await ServiceAccount.safely_create_token(config[cni]['service_account']),
+                }
 
         await self.middleware.call(
             'datastore.update', 'services.kubernetes', kube_config['id'], {'cni_config': cni_config}
