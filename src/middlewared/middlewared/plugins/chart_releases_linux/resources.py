@@ -24,7 +24,7 @@ class ChartReleaseService(Service):
         for pod in release['resources']['pods']:
             choices[pod['metadata']['name']] = []
             for container in (
-                (pod['status']['container_statuses'] or []) + (pod['status']['init_container_statuses'] or [])
+                (pod['status'].get('containerStatuses') or []) + (pod['status'].get('initContainerStatuses') or [])
             ):
                 choices[pod['metadata']['name']].append(container['name'])
 
