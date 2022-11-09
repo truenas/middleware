@@ -4,7 +4,7 @@ from middlewared.schema import Dict, Ref, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import api_client
+from .k8s_new import Job
 
 
 class KubernetesJobService(CRUDService):
@@ -15,49 +15,7 @@ class KubernetesJobService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['batch_api'].list_job_for_all_namespaces()).items],
-                filters, options
-            )
-
-    @accepts(
-        Dict(
-            'k8s_job_create',
-            Str('namespace', required=True),
-            Dict('body', additional_attrs=True, required=True),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        async with api_client() as (api, context):
-            try:
-                await context['batch_api'].create_namespaced_job(namespace=data['namespace'], body=data['body'])
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to create job: {e}')
-            else:
-                return await self.query([
-                    ['metadata.name', '=', data['metadata.name']],
-                    ['metadata.namespace', '=', data['namespace']],
-                ], {'get': True})
-
-    @accepts(
-        Str('name'),
-        Ref('k8s_job_create'),
-    )
-    async def do_update(self, name, data):
-        async with api_client() as (api, context):
-            try:
-                await context['batch_api'].patch_namespaced_job(
-                    name, namespace=data['namespace'], body=data['body']
-                )
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to patch {name} job: {e}')
-            else:
-                return await self.query([
-                    ['metadata.name', '=', name],
-                    ['metadata.namespace', '=', data['namespace']],
-                ], {'get': True})
+        return filter_list((await Job.query())['items'], filters, options)
 
     @accepts(
         Str('name'),
@@ -67,13 +25,7 @@ class KubernetesJobService(CRUDService):
         )
     )
     async def do_delete(self, name, options):
-        async with api_client() as (api, context):
-            try:
-                await context['batch_api'].delete_namespaced_job(name, options['namespace'])
-            except client.exceptions.ApiException as e:
-                raise CallError(f'Unable to delete job: {e}')
-            else:
-                return True
+        await Job.delete(name, **options)
 
 
 class KubernetesCronJobService(CRUDService):
