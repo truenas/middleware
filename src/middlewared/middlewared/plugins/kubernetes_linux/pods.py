@@ -26,7 +26,7 @@ class KubernetesPodService(CRUDService):
         force_all_pods = extra.get('retrieve_all_pods')
         pods = [
             d for d in (await Pod.query(**kwargs))['items']
-            if force_all_pods or not any(o.kind == 'DaemonSet' for o in (d.metadata.owner_references or []))
+            if force_all_pods or not any(o['kind'] == 'DaemonSet' for o in (d['metadata']['ownerReferences'] or []))
         ]
         if options['extra'].get('events'):
             events = await self.middleware.call(

@@ -22,7 +22,7 @@ class KubernetesNodeService(ConfigService):
                 'events': await self.middleware.call('k8s.event.query', [], {
                     'extra': {'field_selector': f'involvedObject.uid={NODE_NAME}'}
                 }),
-                **(Node.get_instance())
+                **(await Node.get_instance())
             }
         except Exception as e:
             return {'node_configured': False, 'error': str(e)}
