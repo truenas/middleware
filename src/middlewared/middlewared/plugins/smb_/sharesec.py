@@ -125,6 +125,9 @@ class ShareSec(CRUDService):
 
                     self.logger.debug('%s: failed to resolve SID to name: %s', acl_entry['ae_who_sid'], e)
 
+                except MatchNotFound:
+                    self.logger.warning('Foreign SID: %r in share ACL that cannot be resolved to name.', acl_entry['ae_who_sid'])
+
             parsed_share_sd['share_acl'].append(acl_entry)
 
         return parsed_share_sd
