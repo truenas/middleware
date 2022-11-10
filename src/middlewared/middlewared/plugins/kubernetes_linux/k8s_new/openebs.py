@@ -8,8 +8,8 @@ class OPENEBSBase(CustomObject):
     VERSION = NotImplementedError
 
     @classmethod
-    async def query(cls):
-        return await super().query(cls.GROUP, cls.VERSION, cls.PLURAL)
+    async def query(cls, **kwargs):
+        return await super().query(cls.GROUP, cls.VERSION, cls.PLURAL, **kwargs)
 
     @classmethod
     async def create(cls, data: dict, **kwargs):

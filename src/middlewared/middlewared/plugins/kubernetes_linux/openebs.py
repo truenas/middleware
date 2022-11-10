@@ -7,16 +7,13 @@ from middlewared.schema import accepts, Dict, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list, run
 
-from .k8s import api_client
-from .utils import OPENEBS_ZFS_GROUP_NAME, NODE_NAME, KUBECONFIG_FILE
+from .k8s_new import ZFSSnapshot, ZFSVolume, ZFSVolumeSnapshot, ZFSVolumeSnapshotClass
+from .utils import NODE_NAME, KUBECONFIG_FILE
 
 
 class KubernetesZFSVolumesService(CRUDService):
 
-    GROUP = 'zfs.openebs.io'
     NAMESPACE = 'openebs'
-    PLURAL = 'zfsvolumes'
-    VERSION = 'v1'
 
     class Config:
         namespace = 'k8s.zv'
@@ -24,17 +21,7 @@ class KubernetesZFSVolumesService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [
-                    d for d in (
-                        await context['custom_object_api'].list_cluster_custom_object(
-                            group=OPENEBS_ZFS_GROUP_NAME, version=self.VERSION, plural=self.PLURAL
-                        )
-                    )['items']
-                ],
-                filters, options
-            )
+        return filter_list((await ZFSVolume.query())['items'], filters, options)
 
     @accepts(
         Dict(
@@ -60,7 +47,7 @@ class KubernetesZFSVolumesService(CRUDService):
         # FIXME: API Client is not working - let's please change this to create ZV via api client
         data.update({
             'kind': 'ZFSVolume',
-            'apiVersion': f'zfs.openebs.io/{self.VERSION}',
+            'apiVersion': f'zfs.openebs.io/{ZFSVolume.VERSION}',
         })
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(data))
@@ -76,20 +63,12 @@ class KubernetesZFSVolumesService(CRUDService):
 
     @accepts(Str('volume_name'))
     async def do_delete(self, volume_name):
-        async with api_client() as (api, context):
-            await context['custom_object_api'].delete_namespaced_custom_object(
-                group=self.GROUP, version=self.VERSION, plural=self.PLURAL,
-                namespace=self.NAMESPACE, name=volume_name,
-            )
-        return True
+        return await ZFSVolume.delete(volume_name, namespace=self.NAMESPACE)
 
 
 class KubernetesZFSSnapshotClassService(CRUDService):
 
     DEFAULT_SNAPSHOT_CLASS_NAME = 'zfspv-default-snapshot-class'
-    GROUP = 'snapshot.storage.k8s.io'
-    PLURAL = 'volumesnapshotclasses'
-    VERSION = 'v1'
 
     class Config:
         namespace = 'k8s.zfs.snapshotclass'
@@ -97,28 +76,14 @@ class KubernetesZFSSnapshotClassService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [
-                    d for d in (
-                        await context['custom_object_api'].list_cluster_custom_object(
-                            group=self.GROUP, version=self.VERSION, plural=self.PLURAL
-                        )
-                    )['items']
-                ],
-                filters, options
-            )
+        return filter_list((await ZFSVolumeSnapshotClass.query())['items'], filters, options)
 
     async def do_create(self, data):
         data.update({
             'kind': 'VolumeSnapshotClass',
-            'apiVersion': f'snapshot.storage.k8s.io/{self.VERSION}',
+            'apiVersion': f'snapshot.storage.k8s.io/{ZFSVolumeSnapshotClass.VERSION}',
         })
-        async with api_client() as (api, context):
-            await context['custom_object_api'].create_cluster_custom_object(
-                group=self.GROUP, version=self.VERSION, plural=self.PLURAL, body=data
-            )
-
+        await ZFSVolumeSnapshotClass.create(data)
         return data
 
     async def default_snapshot_class_name(self):
@@ -142,29 +107,19 @@ class KubernetesZFSSnapshotClassService(CRUDService):
 
 class KubernetesSnapshotService(CRUDService):
 
-    GROUP = 'snapshot.storage.k8s.io'
-    PLURAL = 'volumesnapshots'
-    VERSION = 'v1'
-
     class Config:
         namespace = 'k8s.volume.snapshot'
         private = True
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                list(itertools.chain(*[
-                    [
-                        d for d in (
-                            await context['custom_object_api'].list_namespaced_custom_object(
-                                group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace
-                            )
-                        )['items']
-                    ] for namespace in await self.middleware.call('k8s.namespace.namespace_names')
-                ])),
-                filters, options
-            )
+        return filter_list(
+            list(itertools.chain(*[
+                (await ZFSVolumeSnapshot.query(namespace=namespace))['items']
+                for namespace in await self.middleware.call('k8s.namespace.namespace_names')
+            ])),
+            filters, options
+        )
 
     @accepts(
         Dict(
@@ -190,7 +145,7 @@ class KubernetesSnapshotService(CRUDService):
     async def do_create(self, data):
         data.update({
             'kind': 'VolumeSnapshot',
-            'apiVersion': f'snapshot.storage.k8s.io/{self.VERSION}'
+            'apiVersion': f'snapshot.storage.k8s.io/{ZFSVolumeSnapshot.VERSION}'
         })
         namespace = data.pop('namespace')
         verrors = ValidationErrors()
@@ -216,10 +171,7 @@ class KubernetesSnapshotService(CRUDService):
 
         verrors.check()
 
-        async with api_client() as (api, context):
-            await context['custom_object_api'].create_namespaced_custom_object(
-                group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace=namespace, body=data
-            )
+        await ZFSVolumeSnapshot.create(data, namespace=namespace)
         return data
 
     @accepts(
@@ -230,11 +182,7 @@ class KubernetesSnapshotService(CRUDService):
         )
     )
     async def do_delete(self, snapshot_name, options):
-        async with api_client() as (api, context):
-            await context['custom_object_api'].delete_namespaced_custom_object(
-                group=self.GROUP, version=self.VERSION, plural=self.PLURAL,
-                namespace=options['namespace'], name=snapshot_name,
-            )
+        await ZFSVolumeSnapshot.delete(snapshot_name, **options)
         return True
 
 
@@ -250,12 +198,4 @@ class KubernetesZFSSnapshotService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list([
-                d for d in (
-                    await context['custom_object_api'].list_namespaced_custom_object(
-                        group=self.GROUP, version=self.VERSION, plural=self.PLURAL, namespace='openebs'
-                    )
-                )['items']
-            ], filters, options
-            )
+        return filter_list((await ZFSSnapshot.query(namespace='openebs')), filters, options)
