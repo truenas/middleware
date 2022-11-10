@@ -1505,6 +1505,9 @@ class SharingSMBService(SharingService):
                 )
             except FileNotFoundError:
                 verrors.add(f'{schema_name}.path', 'Path does not exist.')
+        else:
+            if data.get('path') == '/':
+                verrors.add(f'{schema_name}.path', 'Sharing root of gluster volume is not permitted.')
 
         if data['auxsmbconf']:
             try:
