@@ -1,5 +1,5 @@
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s_new import Job
+from .k8s_new import CronJob, Job
 
 
 class KubernetesJobService(KubernetesBaseResource):
@@ -8,4 +8,13 @@ class KubernetesJobService(KubernetesBaseResource):
 
     class Config:
         namespace = 'k8s.job'
+        private = True
+
+
+class KubernetesCronjobService(KubernetesBaseResource):
+
+    KUBERNETES_RESOURCE = CronJob
+
+    class Config:
+        namespace = 'k8s.cronjob'
         private = True
