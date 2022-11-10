@@ -27,6 +27,10 @@ class DiskService(Service):
         if mirror['encrypted_provider']:
             await self.middleware.call('disk.remove_encryption', mirror['encrypted_provider'])
 
+        for provider in mirror['providers']:
+            await run('mdadm', mirror['real_path'], '--fail', provider['id'], check=False)
+            await run('mdadm', mirror['real_path'], '--remove', provider['id'], check=False)
+
         await self.stop_md_device(mirror['path'])
         await self.clean_superblocks_on_md_device([p['name'] for p in mirror['providers']], True)
 
