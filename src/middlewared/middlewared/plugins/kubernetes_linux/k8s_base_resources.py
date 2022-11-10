@@ -25,7 +25,7 @@ class KubernetesBaseResource(CRUDService):
 
         resources = [
             d for d in (await self.KUBERNETES_RESOURCE.query(**kwargs))['items']
-            if await self.conditional_filtering_in_query(options)
+            if await self.conditional_filtering_in_query(d, options)
         ]
         if self.QUERY_EVENTS and self.QUERY_EVENTS_RESOURCE_NAME is not NotImplementedError and extra.get('events'):
             events = await self.middleware.call(
@@ -37,7 +37,7 @@ class KubernetesBaseResource(CRUDService):
 
         return filter_list(resources, filters, options)
 
-    async def conditional_filtering_in_query(self, options):
+    async def conditional_filtering_in_query(self, entry, options):
         return True
 
     @accepts(
