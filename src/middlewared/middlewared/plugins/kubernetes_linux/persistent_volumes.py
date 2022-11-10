@@ -2,7 +2,6 @@ from middlewared.schema import accepts, Dict, List, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import api_client
 from .k8s_new import PersistentVolume
 
 
