@@ -5,34 +5,21 @@ from datetime import datetime
 from dateutil.tz import tzutc
 from kubernetes_asyncio import watch
 
-from middlewared.service import CRUDService, filterable, private
-from middlewared.utils import filter_list
+from middlewared.service import private
 
 from .k8s import api_client
+from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import Event
 from .utils import NODE_NAME
 
 
-class KubernetesEventService(CRUDService):
+class KubernetesEventService(KubernetesBaseResource):
+
+    KUBERNETES_RESOURCE = Event
 
     class Config:
         namespace = 'k8s.event'
         private = True
-
-    @filterable
-    async def query(self, filters, options):
-        options = options or {}
-        label_selector = options.get('extra', {}).get('labelSelector')
-        field_selector = options.get('extra', {}).get('fieldSelector')
-        namespace = options.get('extra', {}).get('namespace')
-        kwargs = {
-            k: v for k, v in [
-                ('labelSelector', label_selector),
-                ('fieldSelector', field_selector),
-                ('namespace', namespace),
-            ] if v
-        }
-        return filter_list((await Event.query(**kwargs))['items'], filters, options)
 
     @private
     async def setup_k8s_events(self):
