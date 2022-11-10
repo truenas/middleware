@@ -32,7 +32,7 @@ class KubernetesService(Service):
         if resource_uids:
             filters.append(['involved_object.uid', 'in', resource_uids])
         for event in await self.middleware.call(
-            'k8s.event.query', filters, {'extra': {'field_selector': f'involvedObject.kind={resource}'}}
+            'k8s.event.query', filters, {'extra': {'fieldSelector': f'involvedObject.kind={resource}'}}
         ):
             events[event['involved_object']['uid']].append(event)
 

@@ -17,7 +17,9 @@ class KubernetesBaseResource(CRUDService):
         extra = options.get('extra', {})
         kwargs = {
             k: v for k, v in [
-                ('labelSelector', extra.get('labelSelector')), ('fieldSelector', extra.get('fieldSelector'))
+                ('labelSelector', extra.get('labelSelector')),
+                ('fieldSelector', extra.get('fieldSelector')),
+                ('namespace', extra.get('namespace')),
             ] if v
         }
         if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0])[:2] == ['metadata.namespace', '=']:
