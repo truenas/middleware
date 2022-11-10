@@ -34,7 +34,7 @@ class FailoverDisabledReasonsService(Service):
         NO_FENCED - Zpools are imported but fenced isn't running.
         REM_FAILOVER_ONGOING - Other node is currently processing a failover event.
         NO_HEARTBEAT_IFACE - Local heartbeat interface does not exist.
-        NO_CARRIER_ON_HEARTBEAT - Local heartbeat interfae is down.
+        NO_CARRIER_ON_HEARTBEAT - Local heartbeat interface is down.
         """
         reasons = self.middleware.call_sync('failover.disabled.get_reasons', app)
         if reasons != FailoverDisabledReasonsService.LAST_DISABLED_REASONS:
