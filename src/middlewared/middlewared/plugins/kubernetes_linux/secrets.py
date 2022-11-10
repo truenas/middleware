@@ -1,55 +1,18 @@
 import yaml
 
-from middlewared.schema import Dict, List, Str
-from middlewared.service import accepts, CallError, CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.schema import accepts, Dict, List, Str
 
-from .k8s_new import ApiException, Secret
+from .k8s_base_resources import KubernetesBaseResource
+from .k8s_new import Secret
 
 
-class KubernetesSecretService(CRUDService):
+class KubernetesSecretService(KubernetesBaseResource):
+
+    KUBERNETES_RESOURCE = Secret
 
     class Config:
         namespace = 'k8s.secret'
         private = True
-
-    @filterable
-    async def query(self, filters, options):
-        options = options or {}
-        extra = options.get('extra', {})
-        kwargs = {
-            k: v for k, v in [
-                ('labelSelector', extra.get('labelSelector')), ('fieldSelector', extra.get('fieldSelector'))
-            ] if v
-        }
-        if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0])[:2] == ['metadata.namespace', '=']:
-            kwargs['namespace'] = filters[0][2]
-
-        return filter_list((await Secret.query(**kwargs))['items'], filters, options)
-
-    @accepts(
-        Dict(
-            'secret_create',
-            Str('namespace', required=True),
-            Dict('body', additional_attrs=True, required=True),
-            register=True
-        )
-    )
-    async def do_create(self, data):
-        try:
-            await Secret.create(data['body'], namespace=data['namespace'])
-        except ApiException as e:
-            raise CallError(f'Unable to create secret: {e}')
-
-    @accepts(
-        Str('name'),
-        Dict(
-            'secret_delete_options',
-            Str('namespace', required=True),
-        )
-    )
-    async def do_delete(self, name, options):
-        await Secret.delete(name, **options)
 
     @accepts(
         Str('secret_name'),
