@@ -1,8 +1,10 @@
+from middlewared.service import CRUDService
+
 from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import CronJob, Job
 
 
-class KubernetesJobService(KubernetesBaseResource):
+class KubernetesJobService(KubernetesBaseResource, CRUDService):
 
     KUBERNETES_RESOURCE = Job
 
@@ -11,7 +13,7 @@ class KubernetesJobService(KubernetesBaseResource):
         private = True
 
 
-class KubernetesCronjobService(KubernetesBaseResource):
+class KubernetesCronjobService(KubernetesBaseResource, CRUDService):
 
     KUBERNETES_RESOURCE = CronJob
 

@@ -1,12 +1,13 @@
 import yaml
 
 from middlewared.schema import accepts, Dict, List, Str
+from middlewared.service import CRUDService
 
 from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import Secret
 
 
-class KubernetesSecretService(KubernetesBaseResource):
+class KubernetesSecretService(KubernetesBaseResource, CRUDService):
 
     KUBERNETES_RESOURCE = Secret
 

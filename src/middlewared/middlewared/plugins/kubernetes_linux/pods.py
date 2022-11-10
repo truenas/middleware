@@ -4,6 +4,7 @@ from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Int, Str
+from middlewared.service import CRUDService
 from middlewared.validators import Range
 
 from .k8s import api_client
@@ -11,7 +12,7 @@ from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import Pod
 
 
-class KubernetesPodService(KubernetesBaseResource):
+class KubernetesPodService(KubernetesBaseResource, CRUDService):
 
     QUERY_EVENTS = True
     QUERY_EVENTS_RESOURCE_NAME = 'Pod'
