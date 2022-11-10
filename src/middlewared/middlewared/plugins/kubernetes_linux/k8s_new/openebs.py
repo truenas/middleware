@@ -16,7 +16,7 @@ class OPENEBSBase(CustomObject):
         return await super().create(cls.GROUP, cls.VERSION, cls.PLURAL, data, **kwargs)
 
     @classmethod
-    async def delete(cls, name: str,  **kwargs):
+    async def delete(cls, name: str, **kwargs):
         return await super().delete(cls.GROUP, cls.VERSION, cls.PLURAL, name, **kwargs)
 
 

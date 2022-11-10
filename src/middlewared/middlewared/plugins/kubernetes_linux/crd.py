@@ -1,19 +1,13 @@
-from middlewared.service import CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.service import CRUDService
 
-from .k8s import api_client
+from .k8s_base_resources import KubernetesBaseResource
+from .k8s_new import CRD
 
 
-class KubernetesCRDService(CRUDService):
+class KubernetesCRDService(KubernetesBaseResource, CRUDService):
+
+    KUBERNETES_RESOURCE = CRD
 
     class Config:
         namespace = 'k8s.crd'
         private = True
-
-    @filterable
-    async def query(self, filters, options):
-        async with api_client() as (api, context):
-            return filter_list(
-                [d.to_dict() for d in (await context['extensions_api'].list_custom_resource_definition()).items],
-                filters, options
-            )
