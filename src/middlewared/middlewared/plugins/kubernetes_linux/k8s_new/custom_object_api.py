@@ -4,7 +4,6 @@ from .client import K8sClientBase
 
 
 class CustomObject(K8sClientBase):
-    OBJECT_HUMAN_NAME = 'Openebs'
 
     @classmethod
     def uri(
