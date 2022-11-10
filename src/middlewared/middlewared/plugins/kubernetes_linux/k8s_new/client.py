@@ -33,7 +33,7 @@ class ClientMixin:
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
         except aiohttp.client_exceptions.ContentTypeError as e:
-            raise ApiException(f'Malformed response received from {endpoint!r} endpoint')
+            raise ApiException(f'Malformed response received from {endpoint!r} endpoint: {e}')
 
 
 class K8sClientBase(ClientMixin):

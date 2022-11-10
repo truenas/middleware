@@ -30,7 +30,7 @@ class CustomObject(K8sClientBase):
         )
 
     @classmethod
-    async def delete(cls, group: str, version: str, plural: str, name: str,  **kwargs):
+    async def delete(cls, group: str, version: str, plural: str, name: str, **kwargs):
         return await cls.call(
             cls.uri(group, version, plural, name, namespace=kwargs.pop('namespace', None), parameters=kwargs),
             mode='delete',
