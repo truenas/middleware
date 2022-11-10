@@ -1,11 +1,11 @@
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import CallError, CRUDService, filterable
+from middlewared.service import CallError, filterable
 from middlewared.utils import filter_list
 
 from .k8s_new import ApiException, K8sClientBase
 
 
-class KubernetesBaseResource(CRUDService):
+class KubernetesBaseResource:
 
     QUERY_EVENTS: bool = False
     QUERY_EVENTS_RESOURCE_NAME: str = NotImplementedError
@@ -47,7 +47,6 @@ class KubernetesBaseResource(CRUDService):
             'k8s_resource_create',
             Str('namespace', required=True),
             Dict('body', additional_attrs=True, required=True),
-            register=True
         )
     )
     async def do_create(self, data):
@@ -62,7 +61,6 @@ class KubernetesBaseResource(CRUDService):
             'k8s_resource_update',
             Str('namespace', required=True),
             Dict('body', additional_attrs=True, required=True),
-            register=True
         )
     )
     async def do_update(self, name, data):

@@ -1,8 +1,10 @@
+from middlewared.service import CRUDService
+
 from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import PersistentVolumeClaim
 
 
-class KubernetesPersistentVolumeClaimService(KubernetesBaseResource):
+class KubernetesPersistentVolumeClaimService(KubernetesBaseResource, CRUDService):
 
     KUBERNETES_RESOURCE = PersistentVolumeClaim
 

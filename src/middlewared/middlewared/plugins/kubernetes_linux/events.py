@@ -5,7 +5,7 @@ from datetime import datetime
 from dateutil.tz import tzutc
 from kubernetes_asyncio import watch
 
-from middlewared.service import private
+from middlewared.service import CRUDService
 
 from .k8s import api_client
 from .k8s_base_resources import KubernetesBaseResource
@@ -13,7 +13,7 @@ from .k8s_new import Event
 from .utils import NODE_NAME
 
 
-class KubernetesEventService(KubernetesBaseResource):
+class KubernetesEventService(KubernetesBaseResource, CRUDService):
 
     KUBERNETES_RESOURCE = Event
 
@@ -21,7 +21,6 @@ class KubernetesEventService(KubernetesBaseResource):
         namespace = 'k8s.event'
         private = True
 
-    @private
     async def setup_k8s_events(self):
         if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
@@ -34,7 +33,6 @@ class KubernetesEventService(KubernetesBaseResource):
                 return
             raise
 
-    @private
     async def k8s_events_internal(self):
         chart_namespace_prefix = await self.middleware.call('chart.release.get_chart_namespace_prefix')
         async with api_client() as (api, context):
