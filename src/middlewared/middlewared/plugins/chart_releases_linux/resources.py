@@ -216,8 +216,8 @@ class ChartReleaseService(Service):
                 # https://stackoverflow.com/questions/66317251/couldnt-understand-availablereplicas-
                 # readyreplicas-unavailablereplicas-in-dep
                 status.update({
-                    'available': (r_data['status']['ready_replicas'] or 0),
-                    'desired': (r_data['status']['replicas'] or 0),
+                    'available': (r_data['status'].get('readyReplicas') or 0),
+                    'desired': (r_data['status'].get('replicas') or 0),
                 })
         pod_diff = status['available'] - status['desired']
         r_status = 'ACTIVE'
@@ -280,8 +280,8 @@ class ChartReleaseService(Service):
                 release_name = r_data['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
                 resources[resource.value][release_name].append(r_data)
                 if resource in (Resources.DEPLOYMENT, Resources.STATEFULSET):
-                    workload_status[release_name]['desired'] += (r_data['status']['replicas'] or 0)
-                    workload_status[release_name]['available'] += (r_data['status']['ready_replicas'] or 0)
+                    workload_status[release_name]['desired'] += (r_data['status'].get('replicas') or 0)
+                    workload_status[release_name]['available'] += (r_data['status'].get('readyReplicas') or 0)
 
         return {'resources': resources, 'workload_status': workload_status}
 
