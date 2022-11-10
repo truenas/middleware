@@ -3,49 +3,28 @@ from dateutil.parser import parse, ParserError
 from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.schema import Dict, Int, Str
 from middlewared.validators import Range
 
 from .k8s import api_client
+from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import Pod
 
 
-class KubernetesPodService(CRUDService):
+class KubernetesPodService(KubernetesBaseResource):
+
+    QUERY_EVENTS = True
+    QUERY_EVENTS_RESOURCE_NAME = 'Pod'
+    KUBERNETES_RESOURCE = Pod
 
     class Config:
         namespace = 'k8s.pod'
         private = True
 
-    @filterable
-    async def query(self, filters, options):
-        options = options or {}
-        extra = options.get('extra', {})
-        kwargs = {k: v for k, v in [('labelSelector', extra.get('labelSelector'))] if v}
-        force_all_pods = extra.get('retrieve_all_pods')
-        pods = [
-            d for d in (await Pod.query(**kwargs))['items']
-            if force_all_pods or not any(o['kind'] == 'DaemonSet' for o in (d['metadata']['ownerReferences'] or []))
-        ]
-        if options['extra'].get('events'):
-            events = await self.middleware.call(
-                'kubernetes.get_events_of_resource_type', 'Pod', [p['metadata']['uid'] for p in pods]
-            )
-            for pod in pods:
-                pod['events'] = events[pod['metadata']['uid']]
-
-        return filter_list(pods, filters, options)
-
-    @accepts(
-        Str('pod_name', empty=False),
-        Dict(
-            'k8s.pod.delete',
-            Str('namespace', required=True, empty=False),
+    async def conditional_filtering_in_query(self, entry, options):
+        return options['extra'].get('retrieve_all_pods') or not any(
+            o['kind'] == 'DaemonSet' for o in (entry['metadata']['ownerReferences'] or [])
         )
-    )
-    async def do_delete(self, pod_name, options):
-        await Pod.delete(pod_name, **options)
 
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
         async with api_client() as (api, context):
