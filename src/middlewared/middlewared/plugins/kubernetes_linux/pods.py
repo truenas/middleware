@@ -28,11 +28,10 @@ class KubernetesPodService(KubernetesBaseResource, CRUDService):
         )
 
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
-        async with api_client() as (api, context):
-            return await context['core_api'].read_namespaced_pod_log(
-                name=pod, container=container, namespace=namespace, tail_lines=tail_lines, limit_bytes=limit_bytes,
-                timestamps=True,
-            )
+        # TODO: Confirm taillines/limit bytes
+        return await Pod.logs(
+            pod, namespace, container=container, tail_lines=tail_lines, limit_bytes=limit_bytes, timestamps=True
+        )
 
 
 class KubernetesPodLogsFollowTailEventSource(EventSource):
