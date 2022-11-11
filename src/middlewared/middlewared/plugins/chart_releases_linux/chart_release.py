@@ -150,12 +150,17 @@ class ChartReleaseService(CRUDService):
             resources_filters = [['metadata.namespace', '^', CHART_NAMESPACE_PREFIX]]
 
         ports_used = collections.defaultdict(list)
-        for node_port_svc in await self.middleware.call(
-            'k8s.service.query', [['spec.type', '=', 'NodePort']] + resources_filters
+        service_filters = [['spec.type', '=', 'LoadBalancer']] if k8s_config['servicelb'] else []
+        for k8s_svc in await self.middleware.call(
+            'k8s.service.query', [['OR', [['spec.type', '=', 'NodePort']] + service_filters]] + resources_filters
         ):
-            release_name = node_port_svc['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
+            release_name = k8s_svc['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
             ports_used[release_name].extend([
-                {'port': p['node_port'], 'protocol': p['protocol']} for p in node_port_svc['spec']['ports']
+                {
+                    'port': p['port' if k8s_svc['spec']['type'] == 'LoadBalancer' else 'node_port'],
+                    'protocol': p['protocol']
+                }
+                for p in k8s_svc['spec']['ports']
             ])
 
         if get_resources:
