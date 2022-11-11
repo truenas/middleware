@@ -19,6 +19,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.osc import getmntinfo
+from middlewared.utils.path import path_location
 from middlewared.plugins.filesystem_.acl_base import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
 
@@ -76,7 +77,7 @@ class FilesystemService(Service):
 
     @private
     def is_cluster_path(self, path):
-        return path.startswith(FuseConfig.FUSE_PATH_SUBST.value)
+        return path_location(path) == 'CLUSTER'
 
     @private
     def resolve_cluster_path(self, path, ignore_ctdb=False):
@@ -333,6 +334,9 @@ class FilesystemService(Service):
         in the directory 'data' in the clustered volume `smb01`, the
         path should be specified as `CLUSTER:smb01/data`.
         """
+        if path_location(_path) == 'EXTERNAL':
+            raise CallError(f'{_path} is external to TrueNAS', errno.EXDEV)
+
         path = pathlib.Path(self.resolve_cluster_path(_path))
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)

@@ -7,6 +7,7 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.utils.osc import getmntinfo
+from middlewared.utils.path import path_location
 from pathlib import Path
 
 import asyncio
@@ -1472,6 +1473,19 @@ class SharingSMBService(SharingService):
                 )
 
     @private
+    async def validate_external_path(self, verrors, name, path):
+        proxy_list = path.split(',')
+        for proxy in proxy_list:
+            if len(proxy.split('\\')) != 2:
+                verrors.add(name, f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
+
+            if proxy.startswith('\\') or proxy.endswith('\\'):
+                verrors.add(name, f'{proxy}: DFS proxy must be of format SERVER\\SHARE')
+
+        if len(proxy_list) == 0:
+            verrors.add(name, 'At least one DFS proxy must be specified')
+
+    @private
     async def validate(self, data, schema_name, verrors, old=None):
         """
         Path is a required key in almost all cases. There is a special edge case for LDAP
@@ -1490,9 +1504,10 @@ class SharingSMBService(SharingService):
 
         await self.cluster_share_validate(data, schema_name, verrors)
 
-        if not data['cluster_volname']:
-            await self.validate_path_field(data, schema_name, verrors)
+        loc = path_location(data['path'])
 
+        await self.validate_path_field(data, schema_name, verrors, permitted_locations=['LOCAL', 'EXTERNAL'])
+        if loc == 'LOCAL':
             """
             When path is not a clustervolname, legacy behavior is to make all path components
             so skip this step here. This is a very rough check is to prevent users from sharing

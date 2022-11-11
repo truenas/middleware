@@ -5,6 +5,7 @@ from pathlib import Path
 
 from middlewared.service import ValidationErrors
 from middlewared.plugins.zfs_.utils import ZFSCTL
+from middlewared.utils.path import path_location
 from middlewared.validators import IpAddress
 
 
@@ -27,6 +28,11 @@ async def check_path_resides_within_volume(verrors, middleware, name, path):
         rv['realpath'] = os.path.realpath(path)
         rv['is_mountpoint'] = os.path.ismount(path)
         return rv
+
+    loc = path_location(name)
+
+    if loc == 'EXTERNAL':
+        verrors.add(name, "Path is external to TrueNAS.")
 
     st = await middleware.run_in_thread(get_file_info, path)
     rp = st["realpath"]
