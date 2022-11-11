@@ -11,6 +11,9 @@ from typing import Dict
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
+from .k8s_new.config import reinitialize_config
+
+
 START_LOCK = asyncio.Lock()
 
 
@@ -18,6 +21,7 @@ class KubernetesService(Service):
 
     @private
     async def post_start(self):
+        reinitialize_config()
         async with START_LOCK:
             return await self.post_start_impl()
 

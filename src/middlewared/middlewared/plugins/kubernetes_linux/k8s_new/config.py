@@ -52,3 +52,8 @@ def get_config(recreate=False) -> Config:
     global CONFIG_OBJ
     CONFIG_OBJ = CONFIG_OBJ if CONFIG_OBJ and not recreate else Config()
     return CONFIG_OBJ
+
+
+def reinitialize_config() -> None:
+    global CONFIG_OBJ
+    CONFIG_OBJ = Config()
