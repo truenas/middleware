@@ -1,5 +1,5 @@
 <%
-    devices = middleware.call_sync('vm.get_running_display_devices')
+    devices = middleware.call_sync('vm.get_display_devices_ui_info')
 %>\
 global
     log /dev/log local0 emerg emerg
