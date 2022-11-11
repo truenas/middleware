@@ -122,7 +122,7 @@ class ChartReleaseService(Service):
 
 async def chart_release_event(middleware, event_type, args):
     args = args['fields']
-    if args['involvedObject']['kind'] != 'Pod' or not is_ix_namespace(args['involvedObject']['namespace']):
+    if args['involved_object']['kind'] != 'Pod' or not is_ix_namespace(args['involved_object']['namespace']):
         return
 
     await middleware.call('chart.release.handle_k8s_event', args)
