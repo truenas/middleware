@@ -28,8 +28,6 @@ class KubernetesNamespaceService(CRUDService):
             await Namespace.create(data['body'])
         except ApiException as e:
             raise CallError(f'Unable to create namespace: {e}')
-        else:
-            return await Namespace.get_instance(data['metadata']['name'])
 
     @accepts(
         Str('namespace'),
@@ -43,8 +41,6 @@ class KubernetesNamespaceService(CRUDService):
             await Namespace.update(namespace, data['body'])
         except ApiException as e:
             raise CallError(f'Unable to update namespace: {e}')
-        else:
-            return await Namespace.get_instance(namespace)
 
     @accepts(Str('namespace'))
     async def do_delete(self, namespace):

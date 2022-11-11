@@ -74,7 +74,7 @@ class ChartReleaseService(Service):
 
     @private
     async def handle_k8s_event(self, k8s_event):
-        name = get_chart_release_from_namespace(k8s_event['involved_object']['namespace'])
+        name = get_chart_release_from_namespace(k8s_event['involvedObject']['namespace'])
         async with EVENT_LOCKS[name]:
             if name not in self.CHART_RELEASES:
                 # It's possible the chart release got deleted
@@ -122,7 +122,7 @@ class ChartReleaseService(Service):
 
 async def chart_release_event(middleware, event_type, args):
     args = args['fields']
-    if args['involved_object']['kind'] != 'Pod' or not is_ix_namespace(args['involved_object']['namespace']):
+    if args['involvedObject']['kind'] != 'Pod' or not is_ix_namespace(args['involvedObject']['namespace']):
         return
 
     await middleware.call('chart.release.handle_k8s_event', args)

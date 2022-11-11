@@ -72,6 +72,12 @@ class Pod(CoreAPI):
     OBJECT_HUMAN_NAME = 'Pod'
     OBJECT_TYPE = 'pods'
 
+    @classmethod
+    async def logs(cls, pod_name: str, namespace: str, **kwargs) -> str:
+        return await cls.call(
+            cls.uri(namespace, pod_name + '/log', parameters=kwargs), mode='get', response_type='text'
+        )
+
 
 class Event(CoreAPI):
 
@@ -116,9 +122,9 @@ class ServiceAccount(CoreAPI):
 
     @classmethod
     async def create_token(cls, name: str, data: dict, **kwargs) -> str:
-        return await cls.call(cls.uri(
+        return (await cls.call(cls.uri(
             object_name=name + '/token', namespace=kwargs.pop('namespace', None), parameters=kwargs,
-        ), body=data, mode='post')
+        ), body=data, mode='post'))['status']['token']
 
     @classmethod
     async def safely_create_token(cls, service_account_name: str) -> str:
