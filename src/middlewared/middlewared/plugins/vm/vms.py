@@ -357,7 +357,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         """
         async with LIBVIRT_LOCK:
             vm = await self.get_instance(id)
-            await self.middleware.run_in_thread(self._check_setup_connection)
+            # Deletion should be allowed even if host does not support virtualization
+            if self._is_kvm_supported():
+                await self.middleware.run_in_thread(self._check_setup_connection)
             status = await self.middleware.call('vm.status', id)
             force_delete = data.get('force')
             if status['state'] in ACTIVE_STATES:
