@@ -124,12 +124,12 @@ class IPMISELAlertSource(AlertSource):
             record for record in records
             if (
                 (
-                    any(record.sensor.startswith(f"{sensor} #0x")
+                    any(record.sensor.startswith(sensor)
                         for sensor in self.IPMI_SENSORS) or
-                    any(record.sensor.startswith(f"{sensor} #0x") and record.event == event
+                    any(record.sensor.startswith(sensor) and record.event == event
                         for sensor, event in self.IPMI_EVENTS_WHITELIST)
                 ) and
-                not any(record.sensor.startswith(f"{sensor} #0x") and record.event == event
+                not any(record.sensor.startswith(sensor) and record.event == event
                         for sensor, event in self.IPMI_EVENTS_BLACKLIST)
             )
         ]
