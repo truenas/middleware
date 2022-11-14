@@ -1,6 +1,8 @@
 import asyncio
 import typing
 
+from dateutil.parser import parse as datetime_parse
+
 from .client import K8sClientBase
 from .exceptions import ApiException
 from .utils import NODE_NAME
@@ -97,6 +99,16 @@ class Event(CoreAPI, Watch):
     OBJECT_ENDPOINT = '/api/v1/events'
     OBJECT_HUMAN_NAME = 'Event'
     OBJECT_TYPE = 'events'
+
+    @classmethod
+    def sanitize_data(cls, data: bytes, response_type: str) -> typing.Union[dict, str]:
+        sanitized = super().sanitize_data(data, response_type)
+        for event in filter(lambda e: e['metadata'].get('creationTimestamp'), sanitized):
+            # TODO: Let's remove this in next major release as this is required right now for backwards
+            #  compatibility with existing consumers i.e UI
+            event['metadata']['creation_timestamp'] = datetime_parse(event['metadata']['creationTimestamp'])
+
+        return sanitized
 
     @classmethod
     async def stream(cls, **kwargs) -> typing.Generator[dict, str]:

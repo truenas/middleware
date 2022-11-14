@@ -42,7 +42,7 @@ class KubernetesEventService(KubernetesBaseResource, CRUDService):
             )
 
             if not check_time or start_time > check_time or event['type'] != 'ADDED' or (
-                event_obj.involved_object.uid != NODE_NAME and not event_obj.metadata.namespace.startswith(
+                event_obj['involvedObject']['uid'] != NODE_NAME and not event_obj['metadata']['namespace'].startswith(
                     chart_namespace_prefix
                 )
             ):
