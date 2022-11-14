@@ -1,8 +1,10 @@
 import asyncio
+import typing
 
 from .client import K8sClientBase
 from .exceptions import ApiException
 from .utils import NODE_NAME
+from .watch import Watch
 
 
 class CoreAPI(K8sClientBase):
@@ -79,11 +81,19 @@ class Pod(CoreAPI):
         )
 
 
-class Event(CoreAPI):
+class Event(CoreAPI, Watch):
 
     OBJECT_ENDPOINT = '/api/v1/events'
     OBJECT_HUMAN_NAME = 'Event'
     OBJECT_TYPE = 'events'
+
+    @classmethod
+    async def stream(cls, **kwargs) -> typing.Union[dict, str]:
+        async with super().stream(
+            cls.uri(namespace=kwargs.pop('namespace', None), parameters={**kwargs, 'watch': True, 'timestamp': True}),
+            'get', 'json',
+        ) as stream:
+            yield stream
 
 
 class Secret(CoreAPI):
