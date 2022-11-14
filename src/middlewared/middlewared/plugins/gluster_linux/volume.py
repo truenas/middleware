@@ -4,7 +4,7 @@ from middlewared.utils import filter_list
 from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
 from middlewared.schema import Dict, Str, Int, Bool, List, Ref, returns
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
-from .utils import GlusterConfig, set_gluster_workdir_dataset, get_gluster_workdir_dataset
+from .utils import GlusterConfig, set_gluster_workdir_dataset, get_gluster_workdir_dataset, format_bricks
 
 
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
@@ -140,12 +140,9 @@ class GlusterVolumeService(CRUDService):
         await ctdb_job.wait(raise_error=True)
 
         name = data.pop('name')
-
-        bricks = []
-        for i in data.pop('bricks'):
-            bricks.append(i['peer_name'] + ':' + i['peer_path'])
-
+        bricks = await format_bricks(data.pop('bricks'))
         options = {'args': (name, bricks,), 'kwargs': data}
+
         await self.middleware.call('gluster.method.run', volume.create, options)
         await self.middleware.call('gluster.volume.start', {'name': name})
         await self.middleware.call('gluster.volume.store_workdir')
