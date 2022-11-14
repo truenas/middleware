@@ -38,7 +38,7 @@ class CtdbRootDirService(Service):
             root_handle.mkdir(ROOT_DIR_NAME)
         except pyglfs.GLFSError as e:
             if e.errno != errno.EEXIST:
-                raise CallError(f'Failed to create {ROOT_DIR_NAME!r}')
+                raise CallError(f'Failed to create {ROOT_DIR_NAME!r}: {e}')
 
         # set perms
         dir_fd = root_handle.lookup(ROOT_DIR_NAME).open(os.O_DIRECTORY)
