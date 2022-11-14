@@ -10,7 +10,7 @@ from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
-from .k8s import api_client
+from .k8s_new import ApiException, Node
 from .utils import applications_ds_name
 
 
@@ -490,9 +490,8 @@ class KubernetesService(ConfigService):
 
         if not error:
             try:
-                async with api_client({'node': True}, {'request_timeout': 2}) as (api, context):
-                    pass
-            except asyncio.exceptions.TimeoutError:
+                await Node.get_instance(request_kwargs={'timeout': 2})
+            except ApiException:
                 error = 'Unable to connect to kubernetes cluster'
 
         if error and raise_exception:
