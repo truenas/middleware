@@ -68,7 +68,7 @@ class Service(CoreAPI):
     OBJECT_TYPE = 'services'
 
 
-class Pod(CoreAPI):
+class Pod(CoreAPI, Watch):
 
     OBJECT_ENDPOINT = '/api/v1/pods'
     OBJECT_HUMAN_NAME = 'Pod'
@@ -79,6 +79,17 @@ class Pod(CoreAPI):
         return await cls.call(
             cls.uri(namespace, pod_name + '/log', parameters=kwargs), mode='get', response_type='text'
         )
+
+    @classmethod
+    async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> str:
+        async with cls.stream(
+            cls.uri(namespace, pod_name + '/log', parameters={
+                'follow': True,
+                'timestamp': True,
+                **kwargs,
+            }), mode='get', response_type='text',
+        ) as stream:
+            yield stream
 
 
 class Event(CoreAPI, Watch):
