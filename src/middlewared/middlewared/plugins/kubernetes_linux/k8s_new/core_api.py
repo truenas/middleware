@@ -38,7 +38,7 @@ class Node(CoreAPI):
         node_object = await cls.get_instance()
         existing_taints = []
         for taint in (node_object['spec']['taints'] if node_object['spec'].get('taints') else []):
-            if all(taint[k] == taint_dict[k] for k in ('key', 'effect', 'value')):
+            if all(taint.get(k) == taint_dict.get(k) for k in ('key', 'effect', 'value')):
                 return
             existing_taints.append(taint)
 
@@ -85,16 +85,16 @@ class Pod(CoreAPI, Watch):
         )
 
     @classmethod
-    async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> typing.Generator[str]:
+    async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> typing.AsyncIterable[str]:
         with contextlib.suppress(ClientConnectionError):
-            async with cls.stream(
+            async for log in cls.stream(
                 cls.uri(namespace, pod_name + '/log', parameters={
                     'follow': True,
-                    'timestamp': True,
+                    'timestamps': True,
                     **kwargs,
                 }), mode='get', response_type='text',
-            ) as stream:
-                yield stream
+            ):
+                yield log
 
 
 class Event(CoreAPI, Watch):
@@ -104,22 +104,34 @@ class Event(CoreAPI, Watch):
     OBJECT_TYPE = 'events'
 
     @classmethod
-    def sanitize_data(cls, data: bytes, response_type: str) -> typing.Union[dict, str]:
+    async def query(cls, *args, **kwargs) -> list:
+        events = await super().query(*args, **kwargs)
+        for event in events['items']:
+            cls.sanitize_data_internal(event)
+        return events
+
+    @classmethod
+    def sanitize_data(cls, data: bytes, response_type: str) -> dict:
         sanitized = super().sanitize_data(data, response_type)
-        for event in filter(lambda e: e['metadata'].get('creationTimestamp'), sanitized):
+        sanitized['object'] = cls.sanitize_data_internal(sanitized['object'])
+        return sanitized
+
+    @classmethod
+    def sanitize_data_internal(cls, sanitized: dict) -> dict:
+        if sanitized['metadata'].get('creationTimestamp'):
             # TODO: Let's remove this in next major release as this is required right now for backwards
             #  compatibility with existing consumers i.e UI
-            event['metadata']['creation_timestamp'] = datetime_parse(event['metadata']['creationTimestamp'])
+            sanitized['metadata']['creation_timestamp'] = datetime_parse(sanitized['metadata']['creationTimestamp'])
 
         return sanitized
 
     @classmethod
-    async def stream(cls, **kwargs) -> typing.Generator[dict, str]:
-        async with super().stream(
+    async def stream(cls, **kwargs) -> typing.AsyncIterable[dict]:
+        async for event in super().stream(
             cls.uri(namespace=kwargs.pop('namespace', None), parameters={**kwargs, 'watch': True, 'timestamp': True}),
             'get', 'json',
-        ) as stream:
-            yield stream
+        ):
+            yield event
 
 
 class Secret(CoreAPI):

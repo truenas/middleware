@@ -25,10 +25,13 @@ class KubernetesPodService(KubernetesBaseResource, CRUDService):
         )
 
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
-        # TODO: Confirm taillines/limit bytes
-        return await Pod.logs(
-            pod, namespace, container=container, tailLines=tail_lines, limitBytes=limit_bytes, timestamps=True,
-        )
+        kwargs = {
+            'timestamps': True,
+            'tailLines': tail_lines,
+            'container': container,
+            **({'limitBytes': limit_bytes} if limit_bytes else {}),
+        }
+        return await Pod.logs(pod, namespace, **kwargs)
 
 
 class KubernetesPodLogsFollowTailEventSource(EventSource):
@@ -65,16 +68,18 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
     async def run(self):
         release = self.arg['release_name']
         pod = self.arg['pod_name']
-        container = self.arg['container_name']
-        tail_lines = self.arg['tail_lines']
-        limit_bytes = self.arg['limit_bytes']
+        kwargs = {
+            k: self.arg[v] for k, v in (
+                ('container', 'container_name'),
+                ('tailLines', 'tail_lines'),
+                ('limitBytes', 'limit_bytes'),
+            ) if self.arg[v]
+        }
 
-        await self.middleware.call('chart.release.validate_pod_log_args', release, pod, container)
+        await self.middleware.call('chart.release.validate_pod_log_args', release, pod, self.arg['container_name'])
         release_data = await self.middleware.call('chart.release.get_instance', release)
 
-        async for event in Pod.stream_logs(
-            pod, release_data['namespace'], container=container, tailLines=tail_lines, limitBytes=limit_bytes,
-        ):
+        async for event in Pod.stream_logs(pod, release_data['namespace'], **kwargs):
             # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
             # separately so UI can highlight the timestamp giving us a cleaner view of the logs
             timestamp = event.split(maxsplit=1)[0].strip()

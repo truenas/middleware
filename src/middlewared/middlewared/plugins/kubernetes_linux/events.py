@@ -41,8 +41,9 @@ class KubernetesEventService(KubernetesBaseResource, CRUDService):
                 event_obj['eventTime'] or event_obj['lastTimestamp'] or event_obj['firstTimestamp']
             )
 
-            if not check_time or start_time > check_time or event['type'] != 'ADDED' or (
-                event_obj['involvedObject']['uid'] != NODE_NAME and not event_obj['metadata']['namespace'].startswith(
+            involved_obj = event_obj['involvedObject']
+            if not involved_obj.get('uid') or not check_time or start_time > check_time or event['type'] != 'ADDED' or (
+                involved_obj['uid'] != NODE_NAME and not event_obj['metadata']['namespace'].startswith(
                     chart_namespace_prefix
                 )
             ):

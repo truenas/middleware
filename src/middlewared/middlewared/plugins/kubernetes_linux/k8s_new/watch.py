@@ -16,7 +16,9 @@ class Watch(ClientMixin):
             return data
 
     @classmethod
-    async def stream(cls, endpoint: str, mode: str, response_type: str) -> typing.Generator[dict, str]:
+    async def stream(cls, endpoint: str, mode: str, response_type: str) -> typing.Union[
+        typing.AsyncIterable[dict], typing.AsyncIterable[str]
+    ]:
         async with cls.request(endpoint, mode, timeout=1800) as req:
             async for line in req.content:
                 yield cls.sanitize_data(line, response_type)
