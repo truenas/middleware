@@ -107,7 +107,7 @@ class KubernetesService(Service):
         while True:
             config = self.middleware.call_sync('k8s.node.config')
             if (
-                config['node_configured'] and not config['spec']['taints'] and (
+                config['node_configured'] and not config['spec'].get('taints') and (
                     not options['wait_for_csi'] or self.middleware.call_sync('k8s.csi.config')['csi_ready']
                 )
             ):
@@ -152,15 +152,18 @@ class KubernetesService(Service):
             # First we will restore namespace and then the secrets
             with open(os.path.join(r_backup_dir, 'namespace.yaml'), 'r') as f:
                 namespace_body = yaml.load(f.read(), Loader=yaml.FullLoader)
+                namespace_body['metadata'].pop('resourceVersion', None)
                 self.middleware.call_sync('k8s.namespace.create', {'body': namespace_body})
 
             secrets_dir = os.path.join(r_backup_dir, 'secrets')
             for secret in sorted(os.listdir(secrets_dir)):
                 with open(os.path.join(secrets_dir, secret)) as f:
+                    secret_body = yaml.load(f.read(), Loader=yaml.FullLoader)
+                    secret_body['metadata'].pop('resourceVersion', None)
                     self.middleware.call_sync(
                         'k8s.secret.create', {
                             'namespace': namespace_body['metadata']['name'],
-                            'body': yaml.load(f.read(), Loader=yaml.FullLoader),
+                            'body': secret_body,
                         }
                     )
 

@@ -20,6 +20,7 @@ class KubernetesBaseResource:
                 ('labelSelector', extra.get('labelSelector')),
                 ('fieldSelector', extra.get('fieldSelector')),
                 ('namespace', extra.get('namespace')),
+                ('timestamp', extra.get('timestamp')),
             ] if v
         }
         if len(filters) == 1 and len(filters[0]) == 3 and list(filters[0])[:2] == ['metadata.namespace', '=']:

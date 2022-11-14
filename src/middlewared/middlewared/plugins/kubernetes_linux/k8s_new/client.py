@@ -2,6 +2,7 @@ import aiohttp
 import aiohttp.client_exceptions
 import asyncio
 import async_timeout
+import contextlib
 import os
 import typing
 import urllib.parse
@@ -14,6 +15,7 @@ from .utils import UPDATE_HEADERS
 class ClientMixin:
 
     @classmethod
+    @contextlib.asynccontextmanager
     async def request(
         cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, timeout: int = 50
     ) -> aiohttp.client._RequestContextManager:
@@ -76,7 +78,9 @@ class K8sClientBase(ClientMixin):
 
     @classmethod
     async def get_instance(cls, name: str, **kwargs) -> dict:
-        instance = await cls.query(fieldSelector=f'metadata.name={name}', request_kwargs=kwargs.pop('request_kwargs'))
+        instance = await cls.query(
+            fieldSelector=f'metadata.name={name}', request_kwargs=kwargs.pop('request_kwargs', None)
+        )
         if not instance.get('items'):
             raise ApiException(f'Unable to find "{name!r}" {cls.OBJECT_HUMAN_NAME}')
         else:
@@ -84,7 +88,7 @@ class K8sClientBase(ClientMixin):
 
     @classmethod
     async def query(cls, *args, **kwargs):
-        request_kwargs = kwargs.pop('request_kwargs')
+        request_kwargs = kwargs.pop('request_kwargs', None) or {}
         return await cls.call(
             cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get', **request_kwargs,
         )

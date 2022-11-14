@@ -47,8 +47,11 @@ class ChartReleaseService(Service):
         """
         return await self.middleware.call(
             'k8s.event.query', [], {
-                'extra': {'namespace': get_namespace(release_name)},
-                'order_by': ['metadata.creation_timestamp']
+                'extra': {
+                    'namespace': get_namespace(release_name),
+                    'timestamp': True,
+                },
+                'order_by': ['metadata.creation_timestamp'],
             }
         )
 
