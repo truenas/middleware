@@ -2,12 +2,11 @@ import asyncio
 
 from aiohttp import client_exceptions
 from datetime import datetime
+from dateutil.parser import parse as datetime_parse
 from dateutil.tz import tzutc
-from kubernetes_asyncio import watch
 
 from middlewared.service import CRUDService
 
-from .k8s import api_client
 from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import Event
 from .utils import NODE_NAME
@@ -35,24 +34,23 @@ class KubernetesEventService(KubernetesBaseResource, CRUDService):
 
     async def k8s_events_internal(self):
         chart_namespace_prefix = await self.middleware.call('chart.release.get_chart_namespace_prefix')
-        async with api_client() as (api, context):
-            watch_obj = watch.Watch()
-            start_time = datetime.now(tz=tzutc())
-            async with watch_obj.stream(context['core_api'].list_event_for_all_namespaces) as stream:
-                async for event in stream:
-                    event_obj = event['object']
-                    check_time = event_obj.event_time or event_obj.last_timestamp or event_obj.first_timestamp
+        start_time = datetime.now(tz=tzutc())
+        async for event in Event.stream():
+            event_obj = event['object']
+            check_time = datetime_parse(
+                event_obj['eventTime'] or event_obj['lastTimestamp'] or event_obj['firstTimestamp']
+            )
 
-                    if not check_time or start_time > check_time or event['type'] != 'ADDED' or (
-                        event_obj.involved_object.uid != NODE_NAME and not event_obj.metadata.namespace.startswith(
-                            chart_namespace_prefix
-                        )
-                    ):
-                        continue
+            if not check_time or start_time > check_time or event['type'] != 'ADDED' or (
+                event_obj.involved_object.uid != NODE_NAME and not event_obj.metadata.namespace.startswith(
+                    chart_namespace_prefix
+                )
+            ):
+                continue
 
-                    self.middleware.send_event(
-                        'kubernetes.events', 'ADDED', uid=event_obj.involved_object.uid, fields=event_obj.to_dict()
-                    )
+            self.middleware.send_event(
+                'kubernetes.events', 'ADDED', uid=event_obj['involvedObject']['uid'], fields=event_obj
+            )
 
 
 async def setup(middleware):
