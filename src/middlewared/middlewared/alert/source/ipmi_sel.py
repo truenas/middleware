@@ -107,6 +107,7 @@ class IPMISELAlertSource(AlertSource):
         ("Redundancy State", "Fully Redundant"),
         ("Processor", "Presence detected"),
         ("Power Supply", "Presence detected"),
+        ("Power Supply", "Fully Redundant"),
     )
 
     async def check(self):
