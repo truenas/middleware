@@ -14,9 +14,8 @@ from .utils import UPDATE_HEADERS
 class ClientMixin:
 
     @classmethod
-    async def api_call(
-        cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None,
-        response_type: str = 'json', timeout: int = 50
+    async def request(
+        cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, timeout: int = 50
     ) -> typing.Union[dict, str]:
         try:
             async with async_timeout.timeout(timeout):
@@ -29,7 +28,18 @@ class ClientMixin:
                         if req.status not in (200, 201):
                             raise ApiException(f'Received {req.status!r} response code from {endpoint!r}')
 
-                        return await req.json() if response_type == 'json' else await req.text()
+                        yield req
+        except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
+            raise ApiException(f'Failed {endpoint!r} call: {e!r}')
+
+    @classmethod
+    async def api_call(
+        cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None,
+        response_type: str = 'json', timeout: int = 50
+    ) -> typing.Union[dict, str]:
+        try:
+            async with cls.request(endpoint, mode, body, headers, timeout) as req:
+                return await req.json() if response_type == 'json' else await req.text()
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
         except aiohttp.client_exceptions.ContentTypeError as e:
