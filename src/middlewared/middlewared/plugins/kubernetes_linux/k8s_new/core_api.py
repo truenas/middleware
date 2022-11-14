@@ -1,6 +1,8 @@
 import asyncio
+import contextlib
 import typing
 
+from aiohttp.client_exceptions import ClientConnectionError
 from dateutil.parser import parse as datetime_parse
 
 from .client import K8sClientBase
@@ -84,14 +86,15 @@ class Pod(CoreAPI, Watch):
 
     @classmethod
     async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> typing.Generator[str]:
-        async with cls.stream(
-            cls.uri(namespace, pod_name + '/log', parameters={
-                'follow': True,
-                'timestamp': True,
-                **kwargs,
-            }), mode='get', response_type='text',
-        ) as stream:
-            yield stream
+        with contextlib.suppress(ClientConnectionError):
+            async with cls.stream(
+                cls.uri(namespace, pod_name + '/log', parameters={
+                    'follow': True,
+                    'timestamp': True,
+                    **kwargs,
+                }), mode='get', response_type='text',
+            ) as stream:
+                yield stream
 
 
 class Event(CoreAPI, Watch):
