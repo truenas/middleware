@@ -81,7 +81,7 @@ class Pod(CoreAPI, Watch):
         )
 
     @classmethod
-    async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> str:
+    async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> typing.Generator[str]:
         async with cls.stream(
             cls.uri(namespace, pod_name + '/log', parameters={
                 'follow': True,
@@ -99,7 +99,7 @@ class Event(CoreAPI, Watch):
     OBJECT_TYPE = 'events'
 
     @classmethod
-    async def stream(cls, **kwargs) -> typing.Union[dict, str]:
+    async def stream(cls, **kwargs) -> typing.Generator[dict, str]:
         async with super().stream(
             cls.uri(namespace=kwargs.pop('namespace', None), parameters={**kwargs, 'watch': True, 'timestamp': True}),
             'get', 'json',
