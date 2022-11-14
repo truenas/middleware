@@ -75,8 +75,8 @@ class K8sClientBase(ClientMixin):
         return await cls.api_call(uri, mode, body, headers, **kwargs)
 
     @classmethod
-    async def get_instance(cls, name: str) -> dict:
-        instance = await cls.query(fieldSelector=f'metadata.name={name}')
+    async def get_instance(cls, name: str, **kwargs) -> dict:
+        instance = await cls.query(fieldSelector=f'metadata.name={name}', request_kwargs=kwargs.pop('request_kwargs'))
         if not instance.get('items'):
             raise ApiException(f'Unable to find "{name!r}" {cls.OBJECT_HUMAN_NAME}')
         else:
@@ -84,7 +84,10 @@ class K8sClientBase(ClientMixin):
 
     @classmethod
     async def query(cls, *args, **kwargs):
-        return await cls.call(cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get')
+        request_kwargs = kwargs.pop('request_kwargs')
+        return await cls.call(
+            cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get', **request_kwargs,
+        )
 
     @classmethod
     async def create(cls, data: dict, **kwargs):

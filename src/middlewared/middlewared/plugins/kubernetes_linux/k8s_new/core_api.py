@@ -27,8 +27,8 @@ class Node(CoreAPI):
     OBJECT_HUMAN_NAME = 'Node'
 
     @classmethod
-    async def get_instance(cls, name: str = NODE_NAME) -> dict:
-        return await super().get_instance(name)
+    async def get_instance(cls, **kwargs) -> dict:
+        return await super().get_instance(NODE_NAME, **kwargs)
 
     @classmethod
     async def add_taint(cls, taint_dict: dict) -> None:
