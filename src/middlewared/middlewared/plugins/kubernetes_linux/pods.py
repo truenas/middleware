@@ -1,13 +1,10 @@
-from aiohttp.client_exceptions import ClientConnectionError
 from dateutil.parser import parse, ParserError
-from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Int, Str
 from middlewared.service import CRUDService
 from middlewared.validators import Range
 
-from .k8s import api_client
 from .k8s_base_resources import KubernetesBaseResource
 from .k8s_new import Pod
 
@@ -30,7 +27,7 @@ class KubernetesPodService(KubernetesBaseResource, CRUDService):
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
         # TODO: Confirm taillines/limit bytes
         return await Pod.logs(
-            pod, namespace, container=container, tail_lines=tail_lines, limit_bytes=limit_bytes, timestamps=True
+            pod, namespace, container=container, tailLines=tail_lines, limitBytes=limit_bytes, timestamps=True,
         )
 
 
@@ -75,28 +72,20 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
         await self.middleware.call('chart.release.validate_pod_log_args', release, pod, container)
         release_data = await self.middleware.call('chart.release.get_instance', release)
 
-        async with api_client() as (api, context):
-            self.watch = Watch()
+        async for event in Pod.stream_logs(
+            pod, release_data['namespace'], container=container, tailLines=tail_lines, limitBytes=limit_bytes,
+        ):
+            # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
+            # separately so UI can highlight the timestamp giving us a cleaner view of the logs
+            timestamp = event.split(maxsplit=1)[0].strip()
             try:
-                async with self.watch.stream(
-                    context['core_api'].read_namespaced_pod_log, name=pod, container=container,
-                    namespace=release_data['namespace'], tail_lines=tail_lines, limit_bytes=limit_bytes,
-                    timestamps=True, _request_timeout=1800
-                ) as stream:
-                    async for event in stream:
-                        # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
-                        # separately so UI can highlight the timestamp giving us a cleaner view of the logs
-                        timestamp = event.split(maxsplit=1)[0].strip()
-                        try:
-                            timestamp = str(parse(timestamp))
-                        except (TypeError, ParserError):
-                            timestamp = None
-                        else:
-                            event = event.split(maxsplit=1)[-1].lstrip()
+                timestamp = str(parse(timestamp))
+            except (TypeError, ParserError):
+                timestamp = None
+            else:
+                event = event.split(maxsplit=1)[-1].lstrip()
 
-                        self.send_event('ADDED', fields={'data': event, 'timestamp': timestamp})
-            except ClientConnectionError:
-                pass
+            self.send_event('ADDED', fields={'data': event, 'timestamp': timestamp})
 
     async def cancel(self):
         await super().cancel()
