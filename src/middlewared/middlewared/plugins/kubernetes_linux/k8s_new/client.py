@@ -16,7 +16,7 @@ class ClientMixin:
     @classmethod
     async def request(
         cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, timeout: int = 50
-    ) -> typing.Union[dict, str]:
+    ) -> aiohttp.client._RequestContextManager:
         try:
             async with async_timeout.timeout(timeout):
                 async with aiohttp.ClientSession(
