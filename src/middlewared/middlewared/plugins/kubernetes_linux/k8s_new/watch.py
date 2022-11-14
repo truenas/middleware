@@ -17,6 +17,6 @@ class Watch(ClientMixin):
 
     @classmethod
     async def stream(cls, endpoint: str, mode: str, response_type: str) -> typing.Union[dict, str]:
-        async with cls.request(endpoint, mode) as req:
+        async with cls.request(endpoint, mode, timeout=1800) as req:
             async for line in req.content:
                 yield cls.sanitize_data(line, response_type)
