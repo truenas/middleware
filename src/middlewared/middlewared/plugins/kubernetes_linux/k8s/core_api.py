@@ -91,6 +91,7 @@ class Pod(CoreAPI, Watch):
                 cls.uri(namespace, pod_name + '/log', parameters={
                     'follow': True,
                     'timestamps': True,
+                    'timeoutSeconds': 1800,
                     **kwargs,
                 }), mode='get', response_type='text',
             ):
