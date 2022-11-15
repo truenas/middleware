@@ -1,9 +1,7 @@
-from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import Service
+from middlewared.schema import accepts, Str
+from middlewared.service import CallError, Service
 
-from .k8s import api_client
-from .k8s.cluster import create_from_yaml
-from .k8s.exceptions import FailToCreateError
+from .k8s_new import apply_yaml_file
 
 
 class KubernetesClusterService(Service):
@@ -12,17 +10,8 @@ class KubernetesClusterService(Service):
         namespace = 'k8s.cluster'
         private = True
 
-    @accepts(
-        Str('file_path'),
-        Dict(
-            'options',
-            Bool('suppress_already_created_exception', default=True)
-        )
-    )
-    async def apply_yaml_file(self, file_path, options):
-        async with api_client() as (api, context):
-            try:
-                await create_from_yaml(api, file_path)
-            except FailToCreateError:
-                if not options['suppress_already_created_exception']:
-                    raise
+    @accepts(Str('file_path'))
+    async def apply_yaml_file(self, file_path):
+        cp = await apply_yaml_file(file_path)
+        if cp.returncode:
+            raise CallError(f'Failed to apply kubernetes yaml {file_path!r} file: {cp.stderr.decode()}')

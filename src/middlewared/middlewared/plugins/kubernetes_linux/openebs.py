@@ -1,14 +1,13 @@
 import itertools
-import os
 import tempfile
 import yaml
 
 from middlewared.schema import accepts, Dict, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, filterable
-from middlewared.utils import filter_list, run
+from middlewared.utils import filter_list
 
-from .k8s_new import ZFSSnapshot, ZFSVolume, ZFSVolumeSnapshot, ZFSVolumeSnapshotClass
-from .utils import NODE_NAME, KUBECONFIG_FILE
+from .k8s_new import apply_yaml_file, ZFSSnapshot, ZFSVolume, ZFSVolumeSnapshot, ZFSVolumeSnapshotClass
+from .utils import NODE_NAME
 
 
 class KubernetesZFSVolumesService(CRUDService):
@@ -52,7 +51,7 @@ class KubernetesZFSVolumesService(CRUDService):
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(yaml.dump(data))
             f.flush()
-            cp = await run(['k3s', 'kubectl', 'apply', '-f', f.name], env=dict(os.environ, KUBECONFIG=KUBECONFIG_FILE))
+            cp = await apply_yaml_file(f.name)
             if cp.returncode:
                 raise CallError(f'Failed to create ZFS Volume: {cp.stderr.decode()}')
 
