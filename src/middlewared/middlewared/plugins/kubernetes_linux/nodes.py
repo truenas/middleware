@@ -5,7 +5,7 @@ import yaml
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 
-from .k8s_new import Node
+from .k8s import Node
 from .utils import KUBECONFIG_FILE, KUBERNETES_WORKER_NODE_PASSWORD, NODE_NAME
 
 

@@ -2,7 +2,7 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import CallError, filterable
 from middlewared.utils import filter_list
 
-from .k8s_new import ApiException, K8sClientBase
+from .k8s import ApiException, K8sClientBase
 
 
 class KubernetesBaseResource:

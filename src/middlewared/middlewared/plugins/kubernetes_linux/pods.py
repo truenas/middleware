@@ -6,7 +6,7 @@ from middlewared.service import CRUDService
 from middlewared.validators import Range
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s_new import Pod
+from .k8s import Pod
 
 
 class KubernetesPodService(KubernetesBaseResource, CRUDService):

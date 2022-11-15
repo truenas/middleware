@@ -11,7 +11,7 @@ from typing import Dict
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
-from .k8s_new.config import reinitialize_config
+from .k8s.config import reinitialize_config
 
 
 START_LOCK = asyncio.Lock()

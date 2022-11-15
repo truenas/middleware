@@ -4,7 +4,7 @@ from middlewared.schema import accepts, Dict, List, Str
 from middlewared.service import CRUDService
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s_new import Secret
+from .k8s import Secret
 
 
 class KubernetesSecretService(KubernetesBaseResource, CRUDService):

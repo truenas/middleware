@@ -1,7 +1,7 @@
 from middlewared.service import CRUDService
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s_new import Deployment
+from .k8s import Deployment
 
 
 class KubernetesDeploymentService(KubernetesBaseResource, CRUDService):

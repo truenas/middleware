@@ -4,7 +4,7 @@ from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s_new import ApiException, Namespace
+from .k8s import ApiException, Namespace
 
 
 class KubernetesNamespaceService(CRUDService):
