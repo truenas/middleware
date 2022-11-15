@@ -6,7 +6,7 @@ import time
 from middlewared.plugins.interface.netif import netif
 from middlewared.service import CallError, ConfigService
 
-from .k8s_new import ServiceAccount
+from .k8s import ServiceAccount
 from .utils import KUBEROUTER_RULE_PRIORITY, KUBEROUTER_TABLE_ID, KUBEROUTER_TABLE_NAME
 
 

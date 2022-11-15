@@ -1,7 +1,7 @@
 from middlewared.schema import accepts, Str
 from middlewared.service import CallError, Service
 
-from .k8s_new import apply_yaml_file
+from .k8s import apply_yaml_file
 
 
 class KubernetesClusterService(Service):

@@ -1,7 +1,7 @@
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s_new import Configmap
+from .k8s import Configmap
 
 
 class KubernetesSecretService(CRUDService):

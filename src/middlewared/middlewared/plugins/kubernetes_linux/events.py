@@ -8,7 +8,7 @@ from dateutil.tz import tzutc
 from middlewared.service import CRUDService
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s_new import Event
+from .k8s import Event
 from .utils import NODE_NAME
 
 

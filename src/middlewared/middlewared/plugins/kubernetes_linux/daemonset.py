@@ -1,7 +1,7 @@
 from middlewared.service import CRUDService
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s_new import DaemonSet
+from .k8s import DaemonSet
 
 
 class KubernetesDaemonsetService(KubernetesBaseResource, CRUDService):

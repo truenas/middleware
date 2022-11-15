@@ -3,7 +3,7 @@ import os
 from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s_new import ApiException, StorageClass
+from .k8s import ApiException, StorageClass
 
 
 DEFAULT_STORAGE_CLASS = 'openebs-zfspv-default'

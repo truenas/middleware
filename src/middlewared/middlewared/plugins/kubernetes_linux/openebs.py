@@ -6,7 +6,7 @@ from middlewared.schema import accepts, Dict, Str, ValidationErrors
 from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s_new import apply_yaml_file, ZFSSnapshot, ZFSVolume, ZFSVolumeSnapshot, ZFSVolumeSnapshotClass
+from .k8s import apply_yaml_file, ZFSSnapshot, ZFSVolume, ZFSVolumeSnapshot, ZFSVolumeSnapshotClass
 from .utils import NODE_NAME
 
 

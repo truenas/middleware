@@ -9,7 +9,7 @@ from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
-from .k8s_new import ApiException, Node
+from .k8s import ApiException, Node
 from .utils import applications_ds_name
 
 
