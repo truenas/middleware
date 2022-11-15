@@ -88,6 +88,17 @@ class GlusterFilesystemService(Service):
             yield entry['handle_internal']
 
     @private
+    def show_volume_handles(self):
+        return {h['name']: h['options'] for h in self.handles.values()}
+
+    @private
+    def close_volume_handles(self):
+        for entry in list(self.handles.values()):
+            with entry['lock']:
+                # Volume closes automatically in dealloc function
+                entry['handle_internal'] = None
+
+    @private
     def glfs_object_handle_to_dict(self, obj):
         """
         Convert the glfs object into something JSON serializable.
