@@ -154,6 +154,12 @@ class KubernetesService(Service):
             except CallError:
                 self.logger.error('Failed to remove %r daemonset', daemonset['metadata']['name'], exc_info=True)
 
+        await self.middleware.call(
+            'k8s.node.remove_taints', [
+                k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
+            ]
+        )
+
         # Let helm re-create load balancer services for scaled up apps
         chart_releases = await self.middleware.call('chart.release.query', [['status', 'in', ('ACTIVE', 'DEPLOYING')]])
         bulk_job = await self.middleware.call(
@@ -169,11 +175,6 @@ class KubernetesService(Service):
         # be consuming a locked host path volume
         await self.middleware.call('chart.release.scale_down_resources_consuming_locked_paths')
 
-        await self.middleware.call(
-            'k8s.node.remove_taints', [
-                k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
-            ]
-        )
         while not await self.middleware.call('k8s.pod.query', [['status.phase', '=', 'Running']]):
             await asyncio.sleep(5)
 
