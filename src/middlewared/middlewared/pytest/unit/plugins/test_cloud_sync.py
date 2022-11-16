@@ -294,9 +294,13 @@ def test__lsjson_error_excerpt(error, excerpt):
     assert lsjson_error_excerpt(error) == excerpt
 
 
-def INFO(v):
+def INFO(v=None):
+    if v is None:
+        prefix = "<6>"
+    else:
+        prefix = f"2020/01/22 22:32:{v:02d} "
     return textwrap.dedent(f"""\
-        2020/01/22 22:32:{v:02d} INFO  : 
+        {prefix}INFO  : 
         Transferred:   	  752.465G / 27.610 TBytes, 3%, 7.945 MBytes/s, ETA 5w6d1h16m55s
         Errors:               478 (retrying may help)
         Checks:                89 / 89, 100%
@@ -319,7 +323,8 @@ def INFO(v):
      f"WELCOME TO RCLONE\n{INFO(1)}{INFO(2)[:300]}\nKilled (9)"),
     (f"2020/01/27 13:16:15 INFO  : S3 bucket ixsystems: Waiting for transfers to finish\n"
      f"{INFO(1)}{INFO(2)}{INFO(3)}{INFO(4)}{INFO(5)}{INFO(6)}BYE!\n",
-     f"2020/01/27 13:16:15 INFO  : S3 bucket ixsystems: Waiting for transfers to finish\n{INFO(1)}{INFO(6)}BYE!\n")
+     f"2020/01/27 13:16:15 INFO  : S3 bucket ixsystems: Waiting for transfers to finish\n{INFO(1)}{INFO(6)}BYE!\n"),
+    (f"WELCOME TO RCLONE\n{INFO()}{INFO()}BYE!\n", f"WELCOME TO RCLONE\n{INFO()}BYE!\n"),
 ])
 def test__RcloneVerboseLogCutter(input, output):
     cutter = RcloneVerboseLogCutter(5)
