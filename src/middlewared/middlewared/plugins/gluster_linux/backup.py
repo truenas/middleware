@@ -24,8 +24,12 @@ class GlusterBackupService(Service):
 
     @job(pipes=['input'])
     def upload(self, job):
-        # stop service and clean out any existing config
-        self.middleware.call_sync('service.stop', 'glusterd')
+        # stop service if necessary
+        start_or_stop = self.middleware.call_sync('service.started', 'glusterd')
+        if start_or_stop:
+            self.middleware.call_sync('service.stop', 'glusterd')
+
+        # clean out any existing config
         shutil.rmtree(GlusterConfig.WORKDIR.value)
 
         # save the archive file provided to us to a temp file
@@ -60,4 +64,5 @@ class GlusterBackupService(Service):
 
         # now clean up
         shutil.rmtree(src, ignore_errors=True)
-        self.middleware.call_sync('service.start', 'glusterd')
+        if start_or_stop:
+            self.middleware.call_sync('service.start', 'glusterd')
