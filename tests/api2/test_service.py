@@ -19,7 +19,12 @@ def test_non_silent_service_start_failure():
     # Starting UPS service with invalid configuration will fail, let's use this to our advantage to test
     # service startup failure error reporting.
     call("service.stop", "ups")
+
+    time.sleep(5)
+
     call("datastore.update", "services.ups", 1, {"ups_monuser": ""})
+
+    time.sleep(5)
 
     with pytest.raises(CallError) as e:
         call("service.start", "ups", {"silent": False})
@@ -27,8 +32,8 @@ def test_non_silent_service_start_failure():
     lines = e.value.errmsg.splitlines()
     first_entry_timestamp = " ".join(lines[0].split()[:3])
     first_length = len(lines)
-    assert any("upsmon[" in line for line in lines), lines
-    assert any("systemd[" in line for line in lines), lines
+    assert any("upsmon[" in line for line in lines), str(lines)
+    assert any("systemd[" in line for line in lines), str(lines)
 
     time.sleep(5)
 
