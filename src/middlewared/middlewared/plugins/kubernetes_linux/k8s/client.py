@@ -18,7 +18,7 @@ class ClientMixin:
     @contextlib.asynccontextmanager
     async def request(
         cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, timeout: int = 50
-    ) -> aiohttp.client._RequestContextManager:
+    ) -> aiohttp.ClientResponse:
         try:
             async with async_timeout.timeout(timeout):
                 async with aiohttp.ClientSession(
