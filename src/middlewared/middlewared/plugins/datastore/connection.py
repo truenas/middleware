@@ -39,7 +39,14 @@ class DatastoreService(Service):
 
         self.connection = self.engine.connect()
         self.connection.connection.create_function("REGEXP", 2, regexp)
+
         self.connection.connection.execute("PRAGMA foreign_keys=ON")
+
+        for row in self.connection.execute("PRAGMA foreign_key_check").fetchall():
+            self.logger.warning("Deleting row %d in table %s that violates foreign key constraint on table %s",
+                                row.rowid, row.table, row.parent)
+            self.connection.execute(f"DELETE FROM {row.table} WHERE rowid = {row.rowid}")
+
         self.connection.connection.execute("VACUUM")
 
     @private
