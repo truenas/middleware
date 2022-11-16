@@ -42,18 +42,15 @@ class ConfigService(Service):
     @job(pipes=["output"])
     async def save(self, job, options):
         """
-        Create a bundle of security-sensitive information. These options select which information
-        is included in the bundle:
+        Create a tar file of security-sensitive information. These options select which information
+        is included in the tar file:
 
-        `secretseed`: include password secret seed.
+        `secretseed` bool: When true, include password secret seed.
+        `pool_keys` bool: IGNORED and DEPRECATED as it does not apply on SCALE systems.
+        `root_authorized_keys` bool: When true, include "/root/.ssh/authorized_keys" file for the root user.
 
-        `pool_keys`: include GELI encryption keys.
-
-        `root_authorized_keys`: include "authorized_keys" file for the root user.
-
-        If none of these options are set, the bundle is not generated and the database file is provided.
+        If none of these options are set, the tar file is not generated and the database file is returned.
         """
-
         if all(not options[k] for k in options):
             bundle = False
             filename = FREENAS_DATABASE
