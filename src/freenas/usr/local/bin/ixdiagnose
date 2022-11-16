@@ -103,7 +103,11 @@ truncate_files ()
 		! -name 'dump.txt' -a \
 		! -name '*.compressed' -print) ; do
 		tmpfile="$(env TMPDIR="${tmpdir}" mktemp /tmp/XXXXXX)"
-		tail -c $limit "$file" > "$tmpfile" 2>/dev/null
+		if echo "$file" | grep -q "log/jobs/"; then
+			tail -c 100000 "$file" > "$tmpfile" 2>/dev/null
+		else
+			tail -c $limit "$file" > "$tmpfile" 2>/dev/null
+		fi
 		if [ $? = 0 ] ; then
 			mv "$tmpfile" "$file"
 		else
