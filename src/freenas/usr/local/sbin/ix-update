@@ -8,20 +8,39 @@ then
 fi
 
 REBOOT_SYSTEM=0
-TRUENAS_CONFIG="/data/freenas-v1.db"
-if [ -f /data/uploaded.db ]; then
-    echo "Saving current ${TRUENAS_CONFIG} to ${TRUENAS_CONFIG}.bak"
-    cp ${TRUENAS_CONFIG} ${TRUENAS_CONFIG}.bak
+TRUENAS_DB="/data/freenas-v1.db"
+TRUENAS_DB_UPLOADED="/data/uploaded.db"
+PWENC="/data/pwenc_secret"
+PWENC_UPLOADED="/data/pwenc_secret_uploaded"
+ROOT_KEYS="/root/.ssh/authorized_keys"
+ROOT_KEYS_UPLOADED="/data/authorized_keys_uploaded"
 
-    echo "Moving uploaded config to ${TRUENAS_CONFIG}"
-    mv /data/uploaded.db ${TRUENAS_CONFIG}
-    if [ -f /data/pwenc_secret_uploaded ]; then
-        if [ -f /data/pwenc_secret ]; then
-            echo "Saving current pwenc secret to /data/pwenc_secret.bak"
-            cp /data/pwenc_secret /data/pwenc_secret.bak
+# our api is gated on the fact that at minimum, a database
+# file has to be uploaded so that's why all these other checks
+# are inside this one "if" branch 
+if [ -f ${TRUENAS_DB_UPLOADED} ]; then
+    echo "Saving current ${TRUENAS_DB} to ${TRUENAS_DB}.bak"
+    cp ${TRUENAS_DB} ${TRUENAS_DB}.bak
+
+    echo "Moving ${TRUENAS_DB_UPLOADED} to ${TRUENAS_DB}"
+    mv ${TRUENAS_DB_UPLOADED} ${TRUENAS_DB}
+
+    if [ -f ${PWENC_UPLOADED} ]; then
+        if [ -f ${PWENC} ]; then
+            echo "Saving current ${PWENC} to ${PWENC}.bak"
+            cp ${PWENC} ${PWENC}.bak
         fi
-    echo "Moving uploaded pwenc secret to /data/pwenc_secret"
-    mv /data/pwenc_secret_uploaded /data/pwenc_secret
+        echo "Moving ${PWENC_UPLOADED} to ${PWENC}"
+        mv ${PWENC_UPLOADED} ${PWENC}
+    fi
+
+    if [ -f ${ROOT_KEYS_UPLOADED} ]; then
+	if [ -f ${ROOT_KEYS} ]; then
+	    echo "Saving current ${ROOT_KEYS} to ${ROOT_KEYS}.bak"
+	    mv ${ROOT_KEYS} ${ROOT_KEYS}.bak
+	fi
+	echo "Moving ${ROOT_KEYS_UPLOADED} to ${ROOT_KEYS}"
+	mv ${ROOT_KEYS_UPLOADED} ${ROOT_KEYS}
     fi
 fi
 
