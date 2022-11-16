@@ -8,7 +8,7 @@ from dateutil.tz import tzutc
 from middlewared.service import CRUDService
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s import Event
+from .k8s import Event, Watch
 from .utils import NODE_NAME
 
 
@@ -35,7 +35,7 @@ class KubernetesEventService(KubernetesBaseResource, CRUDService):
     async def k8s_events_internal(self):
         chart_namespace_prefix = await self.middleware.call('chart.release.get_chart_namespace_prefix')
         start_time = datetime.now(tz=tzutc())
-        async for event in Event.stream():
+        async for event in Watch(Event).watch():
             event_obj = event['object']
             check_time = datetime_parse(
                 event_obj['eventTime'] or event_obj['lastTimestamp'] or event_obj['firstTimestamp']

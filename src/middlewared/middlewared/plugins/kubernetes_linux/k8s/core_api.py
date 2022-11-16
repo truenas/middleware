@@ -104,7 +104,7 @@ class Pod(CoreAPI, Watch):
         return data
 
 
-class Event(CoreAPI, Watch):
+class Event(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/events'
     OBJECT_HUMAN_NAME = 'Event'
@@ -118,12 +118,6 @@ class Event(CoreAPI, Watch):
         for event in events['items']:
             cls.sanitize_data_internal(event)
         return events
-
-    @classmethod
-    def sanitize_data(cls, data: bytes, response_type: str) -> dict:
-        sanitized = super().sanitize_data(data, response_type)
-        sanitized['object'] = cls.sanitize_data_internal(sanitized['object'])
-        return sanitized
 
     @classmethod
     def normalize_data(cls, sanitized: dict) -> dict:
@@ -144,11 +138,6 @@ class Event(CoreAPI, Watch):
         return cls.uri(
             namespace=kwargs.pop('namespace', None), parameters={**kwargs, 'watch': 'true', 'timestamp': 'true'}
         )
-
-    @classmethod
-    async def stream(cls, **kwargs) -> typing.AsyncIterable[dict]:
-        async for event in super().stream(await cls.stream_uri(**kwargs), 'get', 'json'):
-            yield event
 
 
 class Secret(CoreAPI):

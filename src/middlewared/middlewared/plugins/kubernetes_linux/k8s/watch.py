@@ -11,7 +11,10 @@ from .core_api import Event, Pod
 
 class Watch(ClientMixin):
 
-    def __init__(self, resource: typing.Union[Event, Pod], resource_uri_args: typing.Optional[dict] = None):
+    def __init__(
+        self, resource: typing.Union[typing.Type[Event], typing.Type[Pod]],
+        resource_uri_args: typing.Optional[dict] = None,
+    ):
         self.resource: typing.Union[Event, Pod] = resource
         self.resource_ui_args: typing.Optional[dict] = resource_uri_args or {}
         self._stop: bool = False
