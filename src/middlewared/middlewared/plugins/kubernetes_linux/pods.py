@@ -6,7 +6,7 @@ from middlewared.service import CRUDService
 from middlewared.validators import Range
 
 from .k8s_base_resources import KubernetesBaseResource
-from .k8s import Pod
+from .k8s import Pod, Watch
 
 
 class KubernetesPodService(KubernetesBaseResource, CRUDService):
@@ -68,18 +68,22 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
     async def run(self):
         release = self.arg['release_name']
         pod = self.arg['pod_name']
-        kwargs = {
-            k: self.arg[v] for k, v in (
-                ('container', 'container_name'),
-                ('tailLines', 'tail_lines'),
-                ('limitBytes', 'limit_bytes'),
-            ) if self.arg[v]
-        }
 
         await self.middleware.call('chart.release.validate_pod_log_args', release, pod, self.arg['container_name'])
         release_data = await self.middleware.call('chart.release.get_instance', release)
+        kwargs = {
+            'namespace': release_data['namespace'], **{
+                k: self.arg[v] for k, v in (
+                    ('container', 'container_name'),
+                    ('tailLines', 'tail_lines'),
+                    ('limitBytes', 'limit_bytes'),
+                    ('pod_name', 'pod_name'),
+                ) if self.arg[v]
+            }
+        }
+        self.watch = Watch(Pod, kwargs)
 
-        async for event in Pod.stream_logs(pod, release_data['namespace'], **kwargs):
+        async for event in self.watch.watch():
             # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
             # separately so UI can highlight the timestamp giving us a cleaner view of the logs
             timestamp = event.split(maxsplit=1)[0].strip()
@@ -95,7 +99,7 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
     async def cancel(self):
         await super().cancel()
         if self.watch:
-            await self.watch.close()
+            await self.watch.stop()
 
     async def on_finish(self):
         self.watch = None
