@@ -77,6 +77,7 @@ class Pod(CoreAPI, Watch):
     OBJECT_ENDPOINT = '/api/v1/pods'
     OBJECT_HUMAN_NAME = 'Pod'
     OBJECT_TYPE = 'pods'
+    STREAM_RESPONSE_TIMEOUT = 30
     STREAM_RESPONSE_TYPE = 'text'
 
     @classmethod
@@ -98,12 +99,17 @@ class Pod(CoreAPI, Watch):
             ):
                 yield log
 
+    @classmethod
+    async def normalize_data(cls, data: str) -> str:
+        return data
+
 
 class Event(CoreAPI, Watch):
 
     OBJECT_ENDPOINT = '/api/v1/events'
     OBJECT_HUMAN_NAME = 'Event'
     OBJECT_TYPE = 'events'
+    STREAM_RESPONSE_TIMEOUT = 5
     STREAM_RESPONSE_TYPE = 'json'
 
     @classmethod
@@ -116,6 +122,11 @@ class Event(CoreAPI, Watch):
     @classmethod
     def sanitize_data(cls, data: bytes, response_type: str) -> dict:
         sanitized = super().sanitize_data(data, response_type)
+        sanitized['object'] = cls.sanitize_data_internal(sanitized['object'])
+        return sanitized
+
+    @classmethod
+    def normalize_data(cls, sanitized: dict) -> dict:
         sanitized['object'] = cls.sanitize_data_internal(sanitized['object'])
         return sanitized
 

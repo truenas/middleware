@@ -17,8 +17,10 @@ class ClientMixin:
     @classmethod
     @contextlib.asynccontextmanager
     async def request(
-        cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None, timeout: int = 50
+        cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None,
+        timeout: int = 50, handle_timeout: bool = True,
     ) -> aiohttp.ClientResponse:
+        exceptions = [aiohttp.ClientResponseError] + ([asyncio.TimeoutError] if handle_timeout else [])
         try:
             async with async_timeout.timeout(timeout):
                 async with aiohttp.ClientSession(
@@ -31,7 +33,7 @@ class ClientMixin:
                             raise ApiException(f'Received {req.status!r} response code from {endpoint!r}')
 
                         yield req
-        except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
+        except tuple(exceptions) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
 
     @classmethod

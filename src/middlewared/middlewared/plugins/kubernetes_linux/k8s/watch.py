@@ -1,4 +1,5 @@
-import aiohttp
+import contextlib
+
 import asyncio
 import json
 import typing
@@ -13,7 +14,6 @@ class Watch(ClientMixin):
     def __init__(self, resource: typing.Union[Event, Pod], resource_uri_args: typing.Optional[dict] = None):
         self.resource: typing.Union[Event, Pod] = resource
         self.resource_ui_args: typing.Optional[dict] = resource_uri_args or {}
-        self.response: typing.Optional[aiohttp.ClientResponse] = None
         self._stop: bool = False
 
     def stop(self) -> None:
@@ -35,58 +35,15 @@ class Watch(ClientMixin):
             async for line in req.content:
                 yield cls.sanitize_data(line, response_type)
 
-    async def request_args(self, *args, **kwargs):
-        raise NotImplementedError
+    async def watch(self) -> typing.Union[typing.AsyncIterable[dict], typing.AsyncIterable[str]]:
+        while not self._stop:
+            with contextlib.suppress(asyncio.TimeoutError):
+                async with self.request(
+                    await self.resource.stream_uri(**self.resource_ui_args), 'get',
+                    timeout=self.resource.STREAM_RESPONSE_TIMEOUT,
+                ) as response:
+                    async for line in response.content:
+                        if self._stop:
+                            raise StopAsyncIteration
 
-    async def __aenter__(self):
-        return self
-
-    async def __anext__(self):
-        try:
-            return await self.next()
-        except Exception:
-            await self.close()
-            raise
-
-    async def __aexit__(self, exc_type, exc_value, traceback):
-        await self.close()
-
-    async def close(self):
-        if self.response is not None:
-            self.response.release()
-
-    async def next(self):
-        while True:
-            if self.response is None:
-                self.response = None
-
-            # Abort at the current iteration if the user has called `stop` on this
-            # stream instance.
-            if self._stop:
-                raise StopAsyncIteration
-
-            # Fetch the next K8s response.
-            try:
-                line = await self.resp.content.readline()
-            except asyncio.TimeoutError:
-                if 'timeout_seconds' not in self.func.keywords:
-                    self.resp.close()
-                    self.resp = None
-                    if self.resource_version:
-                        self.func.keywords['resource_version'] = self.resource_version
-                    continue
-                else:
-                    raise
-
-            line = line.decode('utf8')
-
-            # Stop the iterator if K8s sends an empty response. This happens when
-            # eg the supplied timeout has expired.
-            if line == '':
-                raise StopAsyncIteration
-
-            # Special case for faster log streaming
-            if self.return_type == 'str':
-                return line
-
-            return self.unmarshal_event(line, self.return_type)
+                        yield self.resource.normalize_data(self.sanitize_data(line, self.resource.STREAM_RESPONSE_TYPE))
