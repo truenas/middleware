@@ -7,3 +7,4 @@ from .extensions_api import * # noqa
 from .openebs import * # noqa
 from .storage_api import * # noqa
 from .utils import apply_yaml_file # noqa
+from .watch import Watch # noqa

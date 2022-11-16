@@ -15,11 +15,11 @@ class Watch(ClientMixin):
         self, resource: typing.Union[typing.Type[Event], typing.Type[Pod]],
         resource_uri_args: typing.Optional[dict] = None,
     ):
-        self.resource: typing.Union[Event, Pod] = resource
+        self.resource: typing.Union[typing.Type[Event], typing.Type[Pod]] = resource
         self.resource_ui_args: typing.Optional[dict] = resource_uri_args or {}
         self._stop: bool = False
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         self._stop = True
 
     @classmethod
@@ -43,7 +43,7 @@ class Watch(ClientMixin):
             with contextlib.suppress(asyncio.TimeoutError):
                 async with self.request(
                     await self.resource.stream_uri(**self.resource_ui_args), 'get',
-                    timeout=self.resource.STREAM_RESPONSE_TIMEOUT,
+                    timeout=self.resource.STREAM_RESPONSE_TIMEOUT * 60, handle_timeout=False,
                 ) as response:
                     async for line in response.content:
                         if self._stop:

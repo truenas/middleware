@@ -1,14 +1,10 @@
 import asyncio
-import contextlib
-import typing
 
-from aiohttp.client_exceptions import ClientConnectionError
 from dateutil.parser import parse as datetime_parse
 
 from .client import K8sClientBase
 from .exceptions import ApiException
 from .utils import NODE_NAME
-from .watch import Watch
 
 
 class CoreAPI(K8sClientBase):
@@ -72,7 +68,7 @@ class Service(CoreAPI):
     OBJECT_TYPE = 'services'
 
 
-class Pod(CoreAPI, Watch):
+class Pod(CoreAPI):
 
     OBJECT_ENDPOINT = '/api/v1/pods'
     OBJECT_HUMAN_NAME = 'Pod'
@@ -87,20 +83,16 @@ class Pod(CoreAPI, Watch):
         )
 
     @classmethod
-    async def stream_logs(cls, pod_name: str, namespace: str, **kwargs) -> typing.AsyncIterable[str]:
-        with contextlib.suppress(ClientConnectionError):
-            async for log in cls.stream(
-                cls.uri(namespace, pod_name + '/log', parameters={
-                    'follow': True,
-                    'timestamps': True,
-                    'timeoutSeconds': 1800,
-                    **kwargs,
-                }), mode='get', response_type='text',
-            ):
-                yield log
+    async def stream_uri(cls, **kwargs) -> str:
+        return cls.uri(kwargs.pop('namespace'), kwargs.pop('pod_name') + '/log', parameters={
+            'follow': 'true',
+            'timestamps': 'true',
+            'timeoutSeconds': 1800,
+            **kwargs,
+        })
 
     @classmethod
-    async def normalize_data(cls, data: str) -> str:
+    def normalize_data(cls, data: str) -> str:
         return data
 
 
