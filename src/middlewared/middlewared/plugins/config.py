@@ -51,7 +51,9 @@ class ConfigService(Service):
 
         If none of these options are set, the tar file is not generated and the database file is returned.
         """
-        if all(not options[k] for k in options):
+        options.pop('pool_keys')  # ignored, doesn't apply on SCALE
+
+        if not any(options.values()):
             bundle = False
             filename = FREENAS_DATABASE
         else:
