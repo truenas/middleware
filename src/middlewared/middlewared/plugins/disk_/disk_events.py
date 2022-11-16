@@ -6,6 +6,7 @@ from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 async def added_disk(middleware, disk_name):
     await middleware.call('disk.sync', disk_name)
     await middleware.call('disk.sed_unlock', disk_name)
+    await middleware.call('disk.remove_degraded_mirrors')
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
 
 
