@@ -19,8 +19,7 @@ from middlewared.utils.python import get_middlewared_dir
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
-    'geli': GELI_KEYPATH,
-    'root_authorized_keys': '/root/.ssh/authorized_keys',
+    'root_authorized_keys': '/root/.ssh/authorized_keys'
 }
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
@@ -63,8 +62,6 @@ class ConfigService(Service):
                 files['pwenc_secret'] = None
             if not options['root_authorized_keys'] or not os.path.exists(files['root_authorized_keys']):
                 files['root_authorized_keys'] = None
-            if not options['pool_keys'] or not os.path.exists(files['geli']) or not os.listdir(files['geli']):
-                files['geli'] = None
 
             fd, filename = tempfile.mkstemp()
             os.close(fd)
