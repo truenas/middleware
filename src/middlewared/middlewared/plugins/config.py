@@ -5,6 +5,7 @@ import shutil
 import sqlite3
 import tarfile
 import tempfile
+import pathlib
 
 from datetime import datetime
 
@@ -21,6 +22,8 @@ CONFIG_FILES = {
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
+PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
+ROOT_KEYS_UPLOADED = '/data/authorized_keys_uploaded'
 
 
 class ConfigService(Service):
@@ -91,123 +94,58 @@ class ConfigService(Service):
                     else:
                         f.write(data_in)
 
-            self.__upload(stf.name)
+            is_tar = tarfile.is_tarfile(stf.name)
+            self.upload_impl(stf.name, is_tar_file=is_tar)
 
         self.middleware.run_coroutine(self.middleware.call('system.reboot', {'delay': 10}), wait=False)
 
-    def __upload(self, config_file_name):
-        tar_error = None
-        try:
-            """
-            First we try to open the file as a tar file.
-            We expect the tar file to contain at least the freenas-v1.db.
-            It can also contain the pwenc_secret file.
-            If we cannot open it as a tar, we try to proceed as it was the
-            raw database file.
-            """
-            try:
-                with tarfile.open(config_file_name) as tar:
-                    bundle = True
-                    tmpdir = tempfile.mkdtemp(dir='/var/tmp/firmware')
-                    tar.extractall(path=tmpdir)
-                    config_file_name = os.path.join(tmpdir, 'freenas-v1.db')
-            except tarfile.ReadError as e:
-                tar_error = str(e)
-                bundle = False
-            # Currently we compare only the number of migrations for south and django
-            # of new and current installed database.
-            # This is not bullet proof as we can eventually have more migrations in a stable
-            # release compared to a older nightly and still be considered a downgrade, however
-            # this is simple enough and works in most cases.
-            alembic_version = None
-            conn = sqlite3.connect(config_file_name)
-            try:
-                cur = conn.cursor()
-                try:
-                    cur.execute(
-                        "SELECT version_num FROM alembic_version"
-                    )
-                    alembic_version = cur.fetchone()[0]
-                except sqlite3.OperationalError as e:
-                    if e.args[0] == "no such table: alembic_version":
-                        # FN/TN < 12
-                        # Let's just ensure it's not a random SQLite file
-                        cur.execute("SELECT 1 FROM django_migrations")
-                    else:
-                        raise
-                finally:
-                    cur.close()
-            except sqlite3.OperationalError as e:
-                if tar_error:
-                    raise CallError(
-                        f"Uploaded file is neither a valid .tar file ({tar_error}) nor valid FreeNAS/TrueNAS database "
-                        f"file ({e})."
-                    )
-                else:
-                    raise CallError(f"Uploaded file is not a valid FreeNAS/TrueNAS database file ({e}).")
-            finally:
-                conn.close()
-            if alembic_version is not None:
-                for root, dirs, files in os.walk(os.path.join(get_middlewared_dir(), "alembic", "versions")):
-                    found = False
-                    for name in files:
-                        if name.endswith(".py"):
-                            with open(os.path.join(root, name)) as f:
-                                if any(
-                                    line.strip() == f"Revision ID: {alembic_version}"
-                                    for line in f.read().splitlines()
-                                ):
-                                    found = True
-                                    break
-                    if found:
-                        break
-                else:
-                    raise CallError('Uploaded config file version is newer than the currently installed.')
-        except Exception as e:
-            os.unlink(config_file_name)
-            if isinstance(e, CallError):
-                raise
+    @private
+    def upload_impl(self, file_or_tar, is_tar_file=False):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
+            if is_tar_file:
+                with tarfile.open(file_or_tar, 'r') as tar:
+                    tar.extractall(temp_dir.name)
             else:
-                raise CallError(f'The uploaded file is not valid: {e}')
+                # if it's just the db then copy it to the same
+                # temp directory to keep the logic simple(ish)
+                shutil.copy2(file_or_tar, temp_dir.name)
 
-        upload = []
+            pathobj = pathlib.Path(temp_dir.name)
+            if not any((FREENAS_DATABASE == i.name for i in pathobj.iterdir())):
+                raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
-        def move(src, dst):
-            shutil.move(src, dst)
-            upload.append(dst)
+            self.validate_uploaded_db(pathobj)
 
-        move(config_file_name, UPLOADED_DB_PATH)
-        if bundle:
-            for filename, destination in CONFIG_FILES.items():
-                file_path = os.path.join(tmpdir, filename)
-                if os.path.exists(file_path):
-                    if filename == 'geli':
-                        # Let's only copy the geli keys and not overwrite the entire directory
-                        os.makedirs(CONFIG_FILES['geli'], exist_ok=True)
-                        for key_path in os.listdir(file_path):
-                            move(
-                                os.path.join(file_path, key_path), os.path.join(destination, key_path)
-                            )
-                    elif filename == 'pwenc_secret':
-                        move(file_path, '/data/pwenc_secret_uploaded')
-                    else:
-                        move(file_path, destination)
+            # now copy uploaded files/dirs to respective location
+            send_to_remote = []
+            for i in pathobj.iterdir():
+                abspath = i.absolute()
+                if i.name == FREENAS_DATABASE:
+                    shutil.move(str(abspath), UPLOADED_DB_PATH)
+                    send_to_remote.append(UPLOADED_DB_PATH)
 
-        # Now we must run the migrate operation in the case the db is older
-        open(NEED_UPDATE_SENTINEL, 'w+').close()
-        upload.append(NEED_UPDATE_SENTINEL)
+                if i.name == 'pwenc_secret':
+                    shutil.move(str(abspath), PWENC_UPLOADED)
+                    send_to_remote.append(PWENC_UPLOADED)
+
+                if i.name == 'root_authorized_keys':
+                    shutil.move(str(abspath), ROOT_KEYS_UPLOADED)
+                    send_to_remote.append(ROOT_KEYS_UPLOADED)
+
+        # Create this file so on reboot, system will migrate the provided
+        # database which will catch the scenario if the database is from
+        # an older version
+        with open(NEED_UPDATE_SENTINEL, 'w+'):
+            send_to_remote.append(NEED_UPDATE_SENTINEL)
 
         self.middleware.call_hook_sync('config.on_upload', UPLOADED_DB_PATH)
-
         if self.middleware.call_sync('failover.licensed'):
             try:
-                for path in upload:
-                    self.middleware.call_sync('failover.send_small_file', path)
-
+                for _file in send_to_remote:
+                    self.middleware.call_sync('failover.send_small_file', _file)
                 self.middleware.call_sync(
-                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]],
+                    'failover.call_remote', 'core.call_hook', ['config.on_upload', [UPLOADED_DB_PATH]]
                 )
-
                 self.middleware.run_coroutine(
                     self.middleware.call('failover.call_remote', 'system.reboot'),
                     wait=False,
@@ -218,6 +156,57 @@ class ConfigService(Service):
                     f'Please use Sync to Peer on the System/Failover page to perform a manual sync after reboot.',
                     CallError.EREMOTENODEERROR,
                 )
+
+    @private
+    def validate_uploaded_db(self, pathobj):
+        conn = sqlite3.connect(f'{pathobj / FREENAS_DATABASE}')
+
+        # Currently we compare only the number of migrations for south and django
+        # of new and current installed database. This is not bullet proof as we can
+        # eventually have more migrations in a stable release compared to a older
+        # nightly and still be considered a downgrade, however this is simple enough
+        # and works in most cases.
+        alembic_version = None
+        try:
+            cur = conn.cursor()
+            try:
+                cur.execute("SELECT version_num FROM alembic_version")
+                alembic_version = cur.fetchone()[0]
+            except sqlite3.OperationalError as e:
+                if e.args[0] == "no such table: alembic_version":
+                    # FN/TN < 12 so ensure it's not a random SQLite file
+                    cur.execute("SELECT 1 FROM django_migrations")
+                else:
+                    raise
+            finally:
+                cur.close()
+        except sqlite3.OperationalError as e:
+            raise CallError(f'TrueNAS database file is invalid: {e}')
+        except Exception as e:
+            raise CallError(f'Unexpected failure: {e}')
+        finally:
+            conn.close()
+
+        self.validate_alembic(alembic_version)
+
+    @private
+    def validate_alembic(self, alembic_version):
+        if alembic_version is None:
+            return
+
+        for root, _, files in os.walk(os.path.join(get_middlewared_dir(), 'alembic', 'versions')):
+            found = False
+            for name in filter(lambda x: x.endswith('.py'), files):
+                with open(os.path.join(root, name)) as f:
+                    search_string = f'Revision ID: {alembic_version}'
+                    for line in f.read():
+                        if line.strip() == search_string:
+                            found = True
+                            break
+            if found:
+                break
+        else:
+            raise CallError('Uploaded TrueNAS database file is newer than the current database.')
 
     @accepts(Dict('options', Bool('reboot', default=True)))
     @returns()
