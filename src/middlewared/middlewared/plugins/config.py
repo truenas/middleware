@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import glob
 import os
@@ -13,7 +12,6 @@ from datetime import datetime
 from middlewared.schema import accepts, Bool, Dict, returns
 from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
-from middlewared.plugins.pool import GELI_KEYPATH
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.python import get_middlewared_dir
 
@@ -30,6 +28,11 @@ class ConfigService(Service):
 
     class Config:
         cli_namespace = 'system.config'
+
+    @private
+    def save_db_only(self, job):
+        with open(FREENAS_DATABASE, 'rb') as f:
+            shutil.copyfileobj(f, job.pipes.output.w)
 
     @accepts(Dict(
         'configsave',
@@ -53,8 +56,7 @@ class ConfigService(Service):
         options.pop('pool_keys')  # ignored, doesn't apply on SCALE
 
         if not any(options.values()):
-            bundle = False
-            filename = FREENAS_DATABASE
+            await self.middleware.run_in_thread(self.save_db_only, job)
         else:
             bundle = True
             files = CONFIG_FILES.copy()
