@@ -1,4 +1,3 @@
-import contextlib
 import glob
 import os
 import re
@@ -81,25 +80,18 @@ class ConfigService(Service):
         """
         Accepts a configuration file via job pipe.
         """
-        filename = tempfile.mktemp(dir='/var/tmp/firmware')
-
-        try:
-            nreads = 0
-            with open(filename, 'wb') as f_tmp:
+        chunk = 1024
+        _10MB = 1048576 * 10  # if size is > 10MB, rolls over to disk instead of storing all in memory
+        with tempfile.SpooledTemporaryFile(max_size=_10MB) as stf:
+            with open(stf.name, 'wb') as f:
                 while True:
-                    read = job.pipes.input.r.read(1024)
-                    if read == b'':
+                    data_in = job.pipes.inpur.r.read(chunk)
+                    if data_in == b'':
                         break
-                    f_tmp.write(read)
-                    nreads += 1
-                    if nreads > 10240:
-                        # FIXME: transfer to a file on disk
-                        raise ValueError('File is bigger than 10MiB')
+                    else:
+                        f.write(data_in)
 
-            self.__upload(filename)
-        finally:
-            with contextlib.suppress(OSError):
-                os.unlink(filename)
+            self.__upload(stf.name)
 
         self.middleware.run_coroutine(self.middleware.call('system.reboot', {'delay': 10}), wait=False)
 
