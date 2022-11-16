@@ -30,9 +30,25 @@ class ConfigService(Service):
         cli_namespace = 'system.config'
 
     @private
-    def save_db_only(self, job):
+    def save_db_only(self, options, job):
         with open(FREENAS_DATABASE, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
+
+    @private
+    def save_tar_file(self, options, job):
+        with tempfile.NamedTemporaryFile(delete=True) as ntf:
+            with tarfile.open(ntf.name, 'w') as tar:
+                files = {'freenas-v1.db': FREENAS_DATABASE}
+                if options['secretseed']:
+                    files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
+                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
+                    files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
+
+                for arcname, path in files.items():
+                    tar.add(path, arcname=arcname)
+
+            with open(ntf.name, 'rb') as f:
+                shutil.copyfileobj(f, job.pipes.output.w)
 
     @accepts(Dict(
         'configsave',
@@ -55,30 +71,8 @@ class ConfigService(Service):
         """
         options.pop('pool_keys')  # ignored, doesn't apply on SCALE
 
-        if not any(options.values()):
-            await self.middleware.run_in_thread(self.save_db_only, job)
-        else:
-            bundle = True
-            files = CONFIG_FILES.copy()
-            if not options['secretseed']:
-                files['pwenc_secret'] = None
-            if not options['root_authorized_keys'] or not os.path.exists(files['root_authorized_keys']):
-                files['root_authorized_keys'] = None
-
-            fd, filename = tempfile.mkstemp()
-            os.close(fd)
-            os.chmod(filename, 0o600)
-            with tarfile.open(filename, 'w') as tar:
-                tar.add(FREENAS_DATABASE, arcname='freenas-v1.db')
-                for arcname, path in files.items():
-                    if path:
-                        tar.add(path, arcname=arcname)
-
-        with open(filename, 'rb') as f:
-            await self.middleware.run_in_thread(shutil.copyfileobj, f, job.pipes.output.w)
-
-        if bundle:
-            os.remove(filename)
+        method = self.save_db_only if not any(options.values()) else self.save_tar_file
+        await self.middleware.run_in_thread(method, options, job)
 
     @accepts()
     @returns()
