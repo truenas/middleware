@@ -77,6 +77,7 @@ class Pod(CoreAPI, Watch):
     OBJECT_ENDPOINT = '/api/v1/pods'
     OBJECT_HUMAN_NAME = 'Pod'
     OBJECT_TYPE = 'pods'
+    STREAM_RESPONSE_TYPE = 'text'
 
     @classmethod
     async def logs(cls, pod_name: str, namespace: str, **kwargs) -> str:
@@ -103,6 +104,7 @@ class Event(CoreAPI, Watch):
     OBJECT_ENDPOINT = '/api/v1/events'
     OBJECT_HUMAN_NAME = 'Event'
     OBJECT_TYPE = 'events'
+    STREAM_RESPONSE_TYPE = 'json'
 
     @classmethod
     async def query(cls, *args, **kwargs) -> list:
@@ -127,11 +129,14 @@ class Event(CoreAPI, Watch):
         return sanitized
 
     @classmethod
+    async def stream_uri(cls, **kwargs) -> str:
+        return cls.uri(
+            namespace=kwargs.pop('namespace', None), parameters={**kwargs, 'watch': 'true', 'timestamp': 'true'}
+        )
+
+    @classmethod
     async def stream(cls, **kwargs) -> typing.AsyncIterable[dict]:
-        async for event in super().stream(
-            cls.uri(namespace=kwargs.pop('namespace', None), parameters={**kwargs, 'watch': True, 'timestamp': True}),
-            'get', 'json',
-        ):
+        async for event in super().stream(await cls.stream_uri(**kwargs), 'get', 'json'):
             yield event
 
 
