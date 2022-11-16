@@ -47,6 +47,6 @@ class Watch(ClientMixin):
                 ) as response:
                     async for line in response.content:
                         if self._stop:
-                            raise StopAsyncIteration
+                            return
 
                         yield self.resource.normalize_data(self.sanitize_data(line, self.resource.STREAM_RESPONSE_TYPE))
