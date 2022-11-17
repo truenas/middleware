@@ -84,15 +84,18 @@ class ConfigService(Service):
         Accepts a configuration file via job pipe.
         """
         chunk = 1024
-        _10MB = 1048576 * 10  # if size is > 10MB, rolls over to disk instead of storing all in memory
-        with tempfile.SpooledTemporaryFile(max_size=_10MB) as stf:
+        max_size = 10485760  # 10MB
+        with tempfile.NamedTemporaryFile() as stf:
             with open(stf.name, 'wb') as f:
                 while True:
-                    data_in = job.pipes.inpur.r.read(chunk)
+                    data_in = job.pipes.input.r.read(chunk)
                     if data_in == b'':
                         break
                     else:
                         f.write(data_in)
+
+                    if f.tell() > max_size:
+                        raise CallError(f'Uploaded config is greater than maximum allowed size ({max_size} Bytes)')
 
             is_tar = tarfile.is_tarfile(stf.name)
             self.upload_impl(stf.name, is_tar_file=is_tar)
@@ -101,17 +104,33 @@ class ConfigService(Service):
 
     @private
     def upload_impl(self, file_or_tar, is_tar_file=False):
-        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as temp_dir:
+        with tempfile.TemporaryDirectory() as temp_dir:
             if is_tar_file:
                 with tarfile.open(file_or_tar, 'r') as tar:
-                    tar.extractall(temp_dir.name)
+                    tar.extractall(temp_dir)
             else:
                 # if it's just the db then copy it to the same
                 # temp directory to keep the logic simple(ish)
-                shutil.copy2(file_or_tar, temp_dir.name)
+                shutil.copy2(file_or_tar, temp_dir)
 
-            pathobj = pathlib.Path(temp_dir.name)
-            if not any((FREENAS_DATABASE == i.name for i in pathobj.iterdir())):
+            pathobj = pathlib.Path(temp_dir)
+            db_name = FREENAS_DATABASE.split('/')[-1]
+            found_db_file = False
+            for i in pathobj.iterdir():
+                if i.name == db_name or i.suffix == '.db':
+                    # when user saves their config, we put the db in the
+                    # archive using the same name as the db on the local
+                    # filesystem, however, in the past we did not do this
+                    # so the db was named in an unstructured mannner. We
+                    # already make the assumption that the user doesn't
+                    # change the name of the pwenc_secret file so we'll
+                    # make the assumption that the user can change the
+                    # name of the db but doesn't change the suffix.
+                    db_name == i.name
+                    found_db_file = True
+                    break
+
+            if not found_db_file:
                 raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
             self.validate_uploaded_db(pathobj)
@@ -120,7 +139,7 @@ class ConfigService(Service):
             send_to_remote = []
             for i in pathobj.iterdir():
                 abspath = i.absolute()
-                if i.name == FREENAS_DATABASE:
+                if i.name == db_name:
                     shutil.move(str(abspath), UPLOADED_DB_PATH)
                     send_to_remote.append(UPLOADED_DB_PATH)
 
@@ -159,7 +178,7 @@ class ConfigService(Service):
 
     @private
     def validate_uploaded_db(self, pathobj):
-        conn = sqlite3.connect(f'{pathobj / FREENAS_DATABASE}')
+        conn = sqlite3.connect(f'{pathobj / FREENAS_DATABASE.split("/")[-1]}')
 
         # Currently we compare only the number of migrations for south and django
         # of new and current installed database. This is not bullet proof as we can
@@ -195,18 +214,14 @@ class ConfigService(Service):
             return
 
         for root, _, files in os.walk(os.path.join(get_middlewared_dir(), 'alembic', 'versions')):
-            found = False
             for name in filter(lambda x: x.endswith('.py'), files):
                 with open(os.path.join(root, name)) as f:
                     search_string = f'Revision ID: {alembic_version}'
-                    for line in f.read():
+                    for line in f:
                         if line.strip() == search_string:
-                            found = True
-                            break
-            if found:
-                break
-        else:
-            raise CallError('Uploaded TrueNAS database file is newer than the current database.')
+                            return
+
+        raise CallError('Uploaded TrueNAS database file is newer than the current database.')
 
     @accepts(Dict('options', Bool('reboot', default=True)))
     @returns()
