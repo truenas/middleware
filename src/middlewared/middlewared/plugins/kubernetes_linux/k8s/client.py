@@ -28,11 +28,11 @@ class ClientMixin:
                 ) as session:
                     async with await getattr(session, mode)(
                         urllib.parse.urljoin(get_config().server, endpoint), json=body, headers=headers
-                    ) as req:
-                        if req.status not in (200, 201):
-                            raise ApiException(f'Received {req.status!r} response code from {endpoint!r}')
+                    ) as resp:
+                        if resp.status not in (200, 201):
+                            raise ApiException(f'Received {resp.status!r} response code from {endpoint!r}')
 
-                        yield req
+                        yield resp
         except tuple(exceptions) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
 
@@ -42,8 +42,8 @@ class ClientMixin:
         response_type: str = 'json', timeout: int = 50
     ) -> typing.Union[dict, str]:
         try:
-            async with cls.request(endpoint, mode, body, headers, timeout) as req:
-                return await req.json() if response_type == 'json' else await req.text()
+            async with cls.request(endpoint, mode, body, headers, timeout) as resp:
+                return await resp.json() if response_type == 'json' else await resp.text()
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {endpoint!r} call: {e!r}')
         except aiohttp.client_exceptions.ContentTypeError as e:

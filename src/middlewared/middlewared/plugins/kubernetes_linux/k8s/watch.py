@@ -31,14 +31,6 @@ class Watch(ClientMixin):
         except json.JSONDecodeError:
             raise ApiException(f'Failed to parse watch response: {data!r}')
 
-    @classmethod
-    async def stream(cls, endpoint: str, mode: str, response_type: str) -> typing.Union[
-        typing.AsyncIterable[dict], typing.AsyncIterable[str]
-    ]:
-        async with cls.request(endpoint, mode, timeout=1800) as req:
-            async for line in req.content:
-                yield cls.sanitize_data(line, response_type)
-
     async def watch(self) -> typing.Union[typing.AsyncIterable[dict], typing.AsyncIterable[str]]:
         while not self._stop:
             with contextlib.suppress(asyncio.TimeoutError):
