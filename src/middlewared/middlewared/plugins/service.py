@@ -136,6 +136,16 @@ class ServiceService(CRUDService):
 
         await self.middleware.call('service.generate_etc', service_object)
 
+        try:
+            await service_object.check_configuration()
+        except CallError:
+            if options['silent']:
+                self.logger.warning('%s: service failed configuration check',
+                                    service_object.name, exc_info=True)
+                return False
+
+            raise
+
         await service_object.before_start()
         await service_object.start()
         state = await service_object.get_state()
