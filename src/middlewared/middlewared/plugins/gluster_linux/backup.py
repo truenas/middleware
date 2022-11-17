@@ -14,7 +14,7 @@ class GlusterBackupService(Service):
         # NOTE: this method is called from config.upload and within
         # context of a `with tempfile` so the src is decompressed and
         # on disk to be manipulated. We don't restart the glusterd
-        # service because it's expectet that this method is _only_
+        # service because it's expected that this method is _only_
         # called from config.upload and the calling method has logic
         # to reboot this node, which will start back the necessary
         # services at boot time
