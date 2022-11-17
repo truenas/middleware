@@ -68,7 +68,7 @@ class NIC(Device):
             ),
         ]
 
-    def xml_linux(self, *args, **kwargs):
+    def xml(self, *args, **kwargs):
         self.setup_nic_attach()
         if self.nic_attach.startswith('br'):
             return create_element(

@@ -65,7 +65,7 @@ class USB(Device):
     def is_available(self):
         return self.get_details()['available']
 
-    def xml_linux(self, *args, **kwargs):
+    def xml(self, *args, **kwargs):
         controller_mapping = kwargs.pop('controller_mapping')
         details = self.get_details()['capability']
         return create_element(

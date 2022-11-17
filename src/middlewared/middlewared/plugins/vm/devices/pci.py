@@ -35,7 +35,7 @@ class PCI(Device):
         if cp.returncode:
             raise CallError(f'Unable to re-attach {self.passthru_device()} PCI device: {stderr.decode()}')
 
-    def pre_start_vm_device_setup_linux(self, *args, **kwargs):
+    def pre_start_vm_device_setup(self, *args, **kwargs):
         device = self.get_details()
         if not device['error'] and not device['available']:
             self.detach_device()
@@ -60,7 +60,7 @@ class PCI(Device):
             vm['status']['state'] not in ACTIVE_STATES for vm in self.get_vms_using_device()
         )
 
-    def post_stop_vm_linux(self, *args, **kwargs):
+    def post_stop_vm(self, *args, **kwargs):
         if self.safe_to_reattach():
             try:
                 self.reattach_device()
@@ -70,7 +70,7 @@ class PCI(Device):
     def get_details(self):
         return self.middleware.call_sync('vm.device.passthrough_device', self.passthru_device())
 
-    def xml_linux(self, *args, **kwargs):
+    def xml(self, *args, **kwargs):
         address_info = {
             k: hex(int(v)) for k, v in self.get_details()['capability'].items()
             if k in ('domain', 'bus', 'slot', 'function')

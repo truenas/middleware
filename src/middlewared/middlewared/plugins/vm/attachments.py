@@ -20,7 +20,7 @@ async def determine_recursive_search(recursive, device, child_datasets):
 
     # What we want to do here is make sure that any raw files or cdrom files are not living in the child
     # dataset and not affected by the parent snapshot as they live on a different filesystem
-    path = device['attributes']['path'].strip('/mnt/')
+    path = device['attributes']['path'].removeprefix('/mnt/')
     for split_count in range(path.count('/')):
         potential_ds = path.rsplit('/', split_count)[0]
         if potential_ds in child_datasets:

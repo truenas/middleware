@@ -1,5 +1,4 @@
 import contextlib
-import enum
 import itertools
 import libvirt
 import os
@@ -11,24 +10,13 @@ from xml.etree import ElementTree as etree
 from middlewared.service import CallError
 from middlewared.plugins.vm.connection import LibvirtConnectionMixin
 from middlewared.plugins.vm.devices import CDROM, DISK, NIC, PCI, RAW, DISPLAY, USB # noqa
-from middlewared.plugins.vm.numeric_set import parse_numeric_set
 from middlewared.plugins.vm.utils import ACTIVE_STATES
 
-from .utils import create_element
+from .domain_xml import domain_children
+from .utils import create_element, DomainState
 
 
-class DomainState(enum.Enum):
-    NOSTATE = libvirt.VIR_DOMAIN_NOSTATE
-    RUNNING = libvirt.VIR_DOMAIN_RUNNING
-    BLOCKED = libvirt.VIR_DOMAIN_BLOCKED
-    PAUSED = libvirt.VIR_DOMAIN_PAUSED
-    SHUTDOWN = libvirt.VIR_DOMAIN_SHUTDOWN
-    SHUTOFF = libvirt.VIR_DOMAIN_SHUTOFF
-    CRASHED = libvirt.VIR_DOMAIN_CRASHED
-    PMSUSPENDED = libvirt.VIR_DOMAIN_PMSUSPENDED
-
-
-class VMSupervisorBase(LibvirtConnectionMixin):
+class VMSupervisor(LibvirtConnectionMixin):
 
     def __init__(self, vm_data, middleware=None):
         self.vm_data = vm_data
@@ -243,166 +231,13 @@ class VMSupervisorBase(LibvirtConnectionMixin):
         self.domain.resume()
 
     def get_domain_children(self):
-        domain_children = [
-            create_element('name', attribute_dict={'text': self.libvirt_domain_name}),
-            create_element('uuid', attribute_dict={'text': self.vm_data['uuid']}),
-            create_element('title', attribute_dict={'text': self.vm_data['name']}),
-            create_element('description', attribute_dict={'text': self.vm_data['description']}),
-            # OS/boot related xml - returns an iterable
-            *self.os_xml(),
-            # VCPU related xml
-            self.vcpu_xml(),
-            self.cpu_xml(),
-            # Memory related xml
-            *self.memory_xml(),
-            # Add features
-            self.get_features_xml(),
-            # Clock offset
-            self.get_clock_xml(),
-            # Devices
-            self.devices_xml(),
-            # Command line args
-            *self.commandline_xml(),
-        ]
-
-        if self.vm_data['pin_vcpus'] and self.vm_data['cpuset']:
-            domain_children.append(self.cputune_xml())
-        if self.vm_data['nodeset']:
-            domain_children.append(self.numatune_xml())
-
-        # Wire memory if PCI passthru device is configured
-        #   Implicit configuration for now.
-        #
-        #   To avoid surprising side effects from implicit configuration, wiring of memory
-        #   should preferably be an explicit vm configuration option and trigger error
-        #   message if not selected when PCI passthru is configured.
-        #
-        if any(isinstance(device, PCI) for device in self.devices):
-            domain_children.append(
-                create_element(
-                    'memoryBacking', attribute_dict={
-                        'children': [
-                            create_element('locked'),
-                        ]
-                    }
-                )
-            )
-
-        return domain_children
-
-    def get_features_xml(self):
-        features = []
-        if self.vm_data['hide_from_msr']:
-            features.append(
-                create_element('kvm', attribute_dict={'children': [create_element('hidden', state='on')]})
-            )
-
-        if self.vm_data['hyperv_enlightenments']:
-            features.append(self.get_hyperv_xml())
-
-        return create_element(
-            'features', attribute_dict={
-                'children': [
-                    create_element('acpi'),
-                    create_element('apic'),
-                    create_element('msrs', unknown='ignore'),
-                ] + features,
-            }
-        )
-
-    def memory_xml(self):
-        memory_xml = [create_element('memory', unit='M', attribute_dict={'text': str(self.vm_data['memory'])})]
-        # Memory Ballooning - this will be memory which will always be allocated to the VM
-        # If not specified, this defaults to `memory`
-        if self.vm_data['min_memory']:
-            memory_xml.append(
-                create_element('currentMemory', unit='M', attribute_dict={'text': str(self.vm_data['min_memory'])})
-            )
-        return memory_xml
-
-    def get_clock_xml(self):
-        timers = []
-        if self.vm_data['hyperv_enlightenments']:
-            timers = [create_element('timer', name='hypervclock', present='yes')]
-
-        return create_element(
-            'clock', attribute_dict={'children': timers},
-            offset='localtime' if self.vm_data['time'] == 'LOCAL' else 'utc'
-        )
-
-    # Documentation for each enlightenment can be found from:
-    # https://github.com/qemu/qemu/blob/master/docs/system/i386/hyperv.rst
-    def get_hyperv_xml(self):
-        return create_element(
-            'hyperv', attribute_dict={
-                'children': [
-                    create_element('relaxed', state='on'),
-                    create_element('vapic', state='on'),
-                    create_element('spinlocks', state='on', retries='8191'),
-                    create_element('reset', state='on'),
-                    create_element('frequencies', state='on'),
-                    # All enlightenments under vpindex depend on it.
-                    create_element('vpindex', state='on'),
-                    create_element('synic', state='on'),
-                    create_element('ipi', state='on'),
-                    create_element('tlbflush', state='on'),
-                    create_element('stimer', state='on')
-                ],
-            }
-        )
-
-    def cpu_xml(self):
-        features = []
-        if self.vm_data['cpu_mode'] == 'HOST-PASSTHROUGH':
-            features.append(create_element('cache', mode='passthrough'))
-
-        return create_element(
-            'cpu', attribute_dict={
-                'children': [
-                    create_element(
-                        'topology', sockets=str(self.vm_data['vcpus']), cores=str(self.vm_data['cores']),
-                        threads=str(self.vm_data['threads'])
-                    ),
-                ] + features,
-            }, mode=self.vm_data['cpu_mode'].lower(),
-        )
-
-    def vcpu_xml(self):
-        vcpu_xml = create_element(
-            'vcpu',
-            attribute_dict={
-                'text': str(self.vm_data['vcpus'] * self.vm_data['cores'] * self.vm_data['threads']),
-            },
-        )
-        if self.vm_data['cpuset']:
-            vcpu_xml.set('cpuset', self.vm_data['cpuset'])
-
-        return vcpu_xml
-
-    def cputune_xml(self):
-        vcpus = []
-        for i, cpu in enumerate(parse_numeric_set(self.vm_data['cpuset'])):
-            vcpus.append(create_element('vcpupin', vcpu=str(i), cpuset=str(cpu)))
-
-        return create_element('cputune', attribute_dict={'children': vcpus})
-
-    def numatune_xml(self):
-        return create_element(
-            'numatune', attribute_dict={
-                'children': [
-                    create_element('memory', nodeset=self.vm_data['nodeset']),
-                ]
-            },
-        )
+        context = {
+            'cpu_model_choices': self.middleware.call_sync('vm.cpu_model_choices'),
+            'devices': self.devices,
+        }
+        return domain_children(self.vm_data, context)
 
     def construct_xml(self):
-        raise NotImplementedError
-
-    def commandline_xml(self):
-        raise NotImplementedError
-
-    def os_xml(self):
-        raise NotImplementedError
-
-    def devices_xml(self):
-        raise NotImplementedError
+        return create_element(
+            'domain', type='kvm', id=str(self.vm_data['id']), attribute_dict={'children': self.get_domain_children()}
+        )
