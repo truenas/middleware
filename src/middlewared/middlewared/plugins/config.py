@@ -131,19 +131,19 @@ class ConfigService(Service):
                     # change the name of the pwenc_secret file so we'll
                     # make the assumption that the user can change the
                     # name of the db but doesn't change the suffix.
-                    found_db_file = i.name
+                    found_db_file = i
                     break
 
             if found_db_file is None:
                 raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
-            self.validate_uploaded_db(pathobj)
+            self.validate_uploaded_db(found_db_file)
 
             # now copy uploaded files/dirs to respective location
             send_to_remote = []
             for i in pathobj.iterdir():
                 abspath = i.absolute()
-                if i.name == found_db_file:
+                if i.name == found_db_file.name:
                     shutil.move(str(abspath), UPLOADED_DB_PATH)
                     send_to_remote.append(UPLOADED_DB_PATH)
 
@@ -182,7 +182,7 @@ class ConfigService(Service):
 
     @private
     def validate_uploaded_db(self, pathobj):
-        conn = sqlite3.connect(f'{pathobj / FREENAS_DATABASE.split("/")[-1]}')
+        conn = sqlite3.connect(str(pathobj.absolute()))
 
         # Currently we compare only the number of migrations for south and django
         # of new and current installed database. This is not bullet proof as we can
