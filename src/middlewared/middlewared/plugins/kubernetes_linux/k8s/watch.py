@@ -7,6 +7,7 @@ import typing
 
 from .client import ClientMixin
 from .core_api import Event, Pod
+from .exceptions import ApiException
 
 
 class Watch(ClientMixin):
@@ -25,10 +26,10 @@ class Watch(ClientMixin):
     @classmethod
     def sanitize_data(cls, data: bytes, response_type: str) -> typing.Union[dict, str]:
         try:
-            data = data.decode()
+            data = data.decode(errors='ignore')
             return json.loads(data) if response_type == 'json' else data
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return data
+        except json.JSONDecodeError:
+            raise ApiException(f'Failed to parse watch response: {data!r}')
 
     @classmethod
     async def stream(cls, endpoint: str, mode: str, response_type: str) -> typing.Union[
