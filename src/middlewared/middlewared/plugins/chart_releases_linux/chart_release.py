@@ -203,7 +203,7 @@ class ChartReleaseService(CRUDService):
                 for container in pod['spec']['containers']:
                     ports_used[name].extend([
                         {'port': p['hostPort'], 'protocol': p['protocol']}
-                        for p in (container['ports'] or []) if p.get('hostPort')
+                        for p in (container.get('ports') or []) if p.get('hostPort')
                     ])
 
             release_data.update({
@@ -326,7 +326,9 @@ class ChartReleaseService(CRUDService):
         host_path_volumes = []
         for resource in resources:
             for volume in filter(
-                lambda v: (v.get('host_path') or {}).get('path'), resource['spec']['template']['spec']['volumes'] or []
+                lambda v: (
+                    v.get('host_path') or {}
+                ).get('path'), resource['spec']['template']['spec'].get('volumes') or []
             ):
                 host_path_volumes.append(volume['host_path']['path'])
         return host_path_volumes
