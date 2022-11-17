@@ -66,6 +66,16 @@ class Token:
     def notify_used(self):
         self.last_used_at = time.monotonic()
 
+    def root_credentials(self):
+        credentials = self.parent_credentials
+        while True:
+            if isinstance(credentials, TokenSessionManagerCredentials):
+                credentials = credentials.token.parent_credentials
+            elif credentials is None:
+                return None
+            else:
+                return credentials
+
 
 class SessionManager:
     def __init__(self):
@@ -323,14 +333,15 @@ class AuthService(Service):
         if token.attributes:
             return None
 
-        if not isinstance(token.parent_credentials, UserSessionManagerCredentials):
+        root_credentials = token.root_credentials()
+        if not isinstance(root_credentials, UserSessionManagerCredentials):
             return None
 
-        if not token.parent_credentials.user['privilege']['web_shell']:
+        if not root_credentials.user['privilege']['web_shell']:
             return None
 
         return {
-            'username': token.parent_credentials.user['username'],
+            'username': root_credentials.user['username'],
         }
 
     @no_auth_required

@@ -1,9 +1,6 @@
-import contextlib
 import errno
 import json
 import logging
-import re
-import time
 
 import pytest
 import websocket
@@ -12,10 +9,9 @@ from middlewared.client import ClientException
 from middlewared.test.integration.assets.account import user, unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import client, ssh, websocket_url
+from middlewared.test.integration.utils.shell import assert_shell_works
 
 logger = logging.getLogger(__name__)
-
-ansi_escape_8bit = re.compile(br"(?:\x1B[<-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[<-~])")
 
 
 @pytest.fixture(scope="module")
@@ -145,29 +141,4 @@ def test_token_auth_working_not_working_web_shell(unprivileged_user_token):
 
 @pytest.mark.timeout(30)
 def test_token_auth_working_web_shell(unprivileged_user_with_web_shell_token):
-    ws = websocket.create_connection(websocket_url() + "/websocket/shell")
-    try:
-        ws.send(json.dumps({"token": unprivileged_user_with_web_shell_token}))
-        resp_opcode, msg = ws.recv_data()
-        assert json.loads(msg.decode())["msg"] == "connected"
-
-        for i in range(60):
-            resp_opcode, msg = ws.recv_data()
-            msg = ansi_escape_8bit.sub(b"", msg).decode("ascii")
-            logger.debug("Received 1 %r", msg)
-            if msg.endswith("% "):  # ZSH prompt
-                break
-
-        ws.send_binary(b"whoami\n")
-
-        for i in range(60):
-            resp_opcode, msg = ws.recv_data()
-            msg = ansi_escape_8bit.sub(b"", msg).decode("ascii")
-            logger.debug("Received 2 %r", msg)
-            if "unprivilegedws" in msg.split():
-                break
-    finally:
-        ws.close()
-        # Give middleware time to kill user's zsh on connection close (otherwise, it will prevent user's home directory
-        # dataset from being destroyed)
-        time.sleep(5)
+    assert_shell_works(unprivileged_user_with_web_shell_token, "unprivilegedws")

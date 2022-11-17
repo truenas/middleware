@@ -11,6 +11,7 @@ from functions import GET
 from auto_config import ip
 
 from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils.shell import assert_shell_works
 
 
 @pytest.fixture(scope="module")
@@ -44,3 +45,15 @@ def test_download_auth_token_cannot_be_used_for_upload(download_token):
 def test_download_auth_token_cannot_be_used_for_websocket_auth(download_token):
     with client(auth=None) as c:
         assert not c.call("auth.login_with_token", download_token)
+
+
+@pytest.mark.timeout(30)
+def test_token_created_by_token_can_use_shell():
+    with client() as c:
+        token = c.call("auth.generate_token")
+
+        with client(auth=None) as c2:
+            assert c2.call("auth.login_with_token", token)
+
+            token2 = c2.call("auth.generate_token")
+            assert_shell_works(token2, "root")
