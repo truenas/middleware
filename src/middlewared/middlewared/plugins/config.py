@@ -14,10 +14,12 @@ from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.python import get_middlewared_dir
+from middlewared.plugins.gluster_linux.utils import GlusterConfig
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
-    'root_authorized_keys': '/root/.ssh/authorized_keys'
+    'root_authorized_keys': '/root/.ssh/authorized_keys',
+    GlusterConfig.ARCNAME.value: GlusterConfig.WORKDIR.value
 }
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
@@ -46,6 +48,9 @@ class ConfigService(Service):
                     files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                     files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
+                if options[GlusterConfig.ARCNAME.value]:
+                    arcname = GlusterConfig.ARCNAME.value
+                    files[arcname] = CONFIG_FILES[arcname]
 
                 for arcname, path in files.items():
                     tar.add(path, arcname=arcname)
@@ -58,6 +63,7 @@ class ConfigService(Service):
         Bool('secretseed', default=False),
         Bool('pool_keys', default=False),
         Bool('root_authorized_keys', default=False),
+        Bool('gluster_config', default=False),
     ))
     @returns()
     @job(pipes=["output"])
@@ -69,6 +75,7 @@ class ConfigService(Service):
         `secretseed` bool: When true, include password secret seed.
         `pool_keys` bool: IGNORED and DEPRECATED as it does not apply on SCALE systems.
         `root_authorized_keys` bool: When true, include "/root/.ssh/authorized_keys" file for the root user.
+        `gluster_config` bool: When true, include the directory that stores the gluster configuration files.
 
         If none of these options are set, the tar file is not generated and the database file is returned.
         """
@@ -142,18 +149,21 @@ class ConfigService(Service):
             # now copy uploaded files/dirs to respective location
             send_to_remote = []
             for i in pathobj.iterdir():
-                abspath = i.absolute()
+                abspath = str(i.absolute())
                 if i.name == found_db_file.name:
-                    shutil.move(str(abspath), UPLOADED_DB_PATH)
+                    shutil.move(abspath, UPLOADED_DB_PATH)
                     send_to_remote.append(UPLOADED_DB_PATH)
 
                 if i.name == 'pwenc_secret':
-                    shutil.move(str(abspath), PWENC_UPLOADED)
+                    shutil.move(abspath, PWENC_UPLOADED)
                     send_to_remote.append(PWENC_UPLOADED)
 
                 if i.name == 'root_authorized_keys':
-                    shutil.move(str(abspath), ROOT_KEYS_UPLOADED)
+                    shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
+
+                if i.name == GlusterConfig.ARCNAME.value:
+                    self.middleware.call_sync('gluster.backup.restore', abspath)
 
         # Create this file so on reboot, system will migrate the provided
         # database which will catch the scenario if the database is from

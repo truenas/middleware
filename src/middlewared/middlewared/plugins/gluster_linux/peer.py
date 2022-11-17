@@ -199,3 +199,31 @@ class GlusterPeerService(CRUDService):
         Return list of VIP(v4/v6) addresses available on the system
         """
         return [d['address'] for d in await self.middleware.call('interface.ip_in_use', {'static': True})]
+
+    @accepts(Dict(
+        'init_as_replacement',
+        Str('zpool', required=True),
+        Str('gvol', required=True),
+    ))
+    @private
+    @job(lock='init_lock')
+    async def initialize_as_replacement(self, job, data):
+        """
+        Initialize this peer as a node that will be replacing another
+        node in a cluster. It is expected that this is called explicitly
+        by end-user.
+        `zpool` str: the name of the zpool on this node to create the brick
+            ---must match the zpool name of the node that is being replaced
+        `gvol` str: the name of the gluster volume
+            ---must match the gluster volume name of the node that is being
+                replaced
+        """
+        hiearchy = f'{data["zpool"]}/.glusterfs/{data["gvol"]}/brick0'
+        info = {
+            'name': hiearchy,
+            'type': 'FILESYSTEM',
+            'create_ancestors': True,
+            'properties': {'acltype': 'posix'}
+        }
+        self.middleware.call_sync('zfs.dataset.create', info)
+        self.middleware.call_sync('zfs.dataset.mount', hiearchy)

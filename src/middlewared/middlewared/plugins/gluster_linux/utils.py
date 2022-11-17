@@ -8,6 +8,10 @@ class GlusterConfig(enum.Enum):
     Various configuration settings for gluster and friends.
     """
 
+    # archive name to be used when user calls config.save
+    # specifying the api argument to backup the gluster config
+    ARCNAME = 'gluster_config'
+
     # used to ensure that only one gluster
     # operation runs at any given time.
     # gluster CLI commands need to be run synchronously.
