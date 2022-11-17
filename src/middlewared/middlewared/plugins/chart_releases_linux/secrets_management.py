@@ -1,3 +1,4 @@
+import binascii
 import gzip
 import json
 import os
@@ -13,6 +14,8 @@ from .utils import CHART_NAMESPACE_PREFIX, get_namespace
 
 
 class ChartReleaseService(Service):
+
+    LOGGED_SECRET = set()
 
     class Config:
         namespace = 'chart.release'
@@ -36,7 +39,15 @@ class ChartReleaseService(Service):
         official_catalog_label = self.middleware.call_sync('catalog.official_catalog_label')
         for release_secret in secrets:
             data = release_secret.pop('data')
-            release = json.loads(gzip.decompress(b64decode(b64decode(data['release']))).decode())
+            try:
+                release = json.loads(gzip.decompress(b64decode(b64decode(data['release']))).decode())
+            except binascii.Error:
+                # We ignore this keeping in line with helm behaviour where the secret malformed is ignored by helm
+                if release_secret['metadata']['name'] not in self.LOGGED_SECRET:
+                    self.logger.error('Failed to parse %r secret', release_secret['metadata']['name'])
+                    self.LOGGED_SECRET.add(release_secret['metadata']['name'])
+                continue
+
             name = release['name']
             release_namespace_name = get_namespace(name)
 
