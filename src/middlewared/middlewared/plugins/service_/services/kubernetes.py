@@ -3,6 +3,7 @@ import contextlib
 import os
 import re
 
+from middlewared.plugins.kubernetes_linux.k8s.config import remove_initialized_config
 from middlewared.service import CallError
 from middlewared.utils import run
 
@@ -109,3 +110,4 @@ class KubernetesService(SimpleService):
         await asyncio.sleep(5)
         await self.middleware.call('k8s.cni.cleanup_cni')
         await self.unmount_kubelet_dataset()
+        remove_initialized_config()
