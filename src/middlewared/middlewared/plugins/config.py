@@ -149,18 +149,21 @@ class ConfigService(Service):
             # now copy uploaded files/dirs to respective location
             send_to_remote = []
             for i in pathobj.iterdir():
-                abspath = i.absolute()
+                abspath = str(i.absolute())
                 if i.name == found_db_file.name:
-                    shutil.move(str(abspath), UPLOADED_DB_PATH)
+                    shutil.move(abspath, UPLOADED_DB_PATH)
                     send_to_remote.append(UPLOADED_DB_PATH)
 
                 if i.name == 'pwenc_secret':
-                    shutil.move(str(abspath), PWENC_UPLOADED)
+                    shutil.move(abspath, PWENC_UPLOADED)
                     send_to_remote.append(PWENC_UPLOADED)
 
                 if i.name == 'root_authorized_keys':
-                    shutil.move(str(abspath), ROOT_KEYS_UPLOADED)
+                    shutil.move(abspath, ROOT_KEYS_UPLOADED)
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
+
+                if i.name == GlusterConfig.ARCNAME.value:
+                    self.middleware.call_sync('gluster.backup.upload', abspath)
 
         # Create this file so on reboot, system will migrate the provided
         # database which will catch the scenario if the database is from
