@@ -9,7 +9,7 @@ import urllib.parse
 
 from .config import get_config
 from .exceptions import ApiException
-from .utils import UPDATE_HEADERS
+from .utils import RequestMode, UPDATE_HEADERS
 
 
 class ClientMixin:
@@ -92,23 +92,24 @@ class K8sClientBase(ClientMixin):
     async def query(cls, *args, **kwargs):
         request_kwargs = kwargs.pop('request_kwargs', None) or {}
         return await cls.call(
-            cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get', **request_kwargs,
+            cls.uri(namespace=kwargs.pop('namespace', None), parameters=kwargs),
+            mode=RequestMode.GET.value, **request_kwargs,
         )
 
     @classmethod
     async def create(cls, data: dict, **kwargs):
         return await cls.call(cls.uri(
             namespace=kwargs.pop('namespace', None), parameters=kwargs,
-        ), body=data, mode='post')
+        ), body=data, mode=RequestMode.POST.value)
 
     @classmethod
     async def update(cls, name: str, data: dict, **kwargs):
         return await cls.call(cls.uri(
             namespace=kwargs.pop('namespace', None), parameters=kwargs, object_name=name,
-        ), body=data, mode='patch', headers=UPDATE_HEADERS)
+        ), body=data, mode=RequestMode.PATCH.value, headers=UPDATE_HEADERS)
 
     @classmethod
     async def delete(cls, name: str, **kwargs):
         return await cls.call(cls.uri(
             object_name=name, namespace=kwargs.pop('namespace', None), parameters=kwargs,
-        ), mode='delete')
+        ), mode=RequestMode.DELETE.value)

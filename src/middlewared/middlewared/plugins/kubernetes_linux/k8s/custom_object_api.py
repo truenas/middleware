@@ -1,6 +1,7 @@
 from typing import Optional
 
 from .client import K8sClientBase
+from .utils import RequestMode
 
 
 class CustomObject(K8sClientBase):
@@ -20,18 +21,20 @@ class CustomObject(K8sClientBase):
     @classmethod
     async def query(cls, group: str, version: str, plural: str, **kwargs):
         return await cls.call(
-            cls.uri(group, version, plural, namespace=kwargs.pop('namespace', None), parameters=kwargs), mode='get'
+            cls.uri(group, version, plural, namespace=kwargs.pop('namespace', None), parameters=kwargs),
+            mode=RequestMode.GET.value
         )
 
     @classmethod
     async def create(cls, group: str, version: str, plural: str, data: dict, **kwargs):
         return await cls.call(cls.uri(
-            group, version, plural, namespace=kwargs.pop('namespace', None), parameters=kwargs), body=data, mode='post'
+            group, version, plural, namespace=kwargs.pop('namespace', None), parameters=kwargs), body=data,
+            mode=RequestMode.POST.value
         )
 
     @classmethod
     async def delete(cls, group: str, version: str, plural: str, name: str, **kwargs):
         return await cls.call(
             cls.uri(group, version, plural, name, namespace=kwargs.pop('namespace', None), parameters=kwargs),
-            mode='delete',
+            mode=RequestMode.DELETE.value,
         )

@@ -1,3 +1,4 @@
+import enum
 import os
 import subprocess
 
@@ -8,6 +9,14 @@ from middlewared.utils import run
 UPDATE_HEADERS = {
     'Content-Type': 'application/merge-patch+json',
 }
+
+
+class RequestMode(enum.Enum):
+
+    DELETE: str = 'delete'
+    GET: str = 'get'
+    PATCH: str = 'patch'
+    POST: str = 'post'
 
 
 async def apply_yaml_file(file_path: str) -> subprocess.CompletedProcess:

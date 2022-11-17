@@ -4,7 +4,7 @@ from dateutil.parser import parse as datetime_parse
 
 from .client import K8sClientBase
 from .exceptions import ApiException
-from .utils import NODE_NAME
+from .utils import NODE_NAME, RequestMode
 
 
 class CoreAPI(K8sClientBase):
@@ -79,7 +79,7 @@ class Pod(CoreAPI):
     @classmethod
     async def logs(cls, pod_name: str, namespace: str, **kwargs) -> str:
         return await cls.call(
-            cls.uri(namespace, pod_name + '/log', parameters=kwargs), mode='get', response_type='text'
+            cls.uri(namespace, pod_name + '/log', parameters=kwargs), mode=RequestMode.GET.value, response_type='text'
         )
 
     @classmethod
@@ -170,7 +170,7 @@ class ServiceAccount(CoreAPI):
     async def create_token(cls, name: str, data: dict, **kwargs) -> str:
         return (await cls.call(cls.uri(
             object_name=name + '/token', namespace=kwargs.pop('namespace', None), parameters=kwargs,
-        ), body=data, mode='post'))['status']['token']
+        ), body=data, mode=RequestMode.POST.value))['status']['token']
 
     @classmethod
     async def safely_create_token(cls, service_account_name: str) -> str:
