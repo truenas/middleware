@@ -9,4 +9,4 @@
 #enable_smart="/dev/hda /dev/hdb"
 
 # uncomment to pass additional options to smartd on startup
-smartd_opts="--interval=${config["interval"] * 60}"
+smartd_opts="--interval=${config["interval"] * 60} -q nodev"
