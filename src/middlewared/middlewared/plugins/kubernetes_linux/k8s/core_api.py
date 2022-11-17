@@ -87,7 +87,7 @@ class Pod(CoreAPI):
         return cls.uri(kwargs.pop('namespace'), kwargs.pop('pod_name') + '/log', parameters={
             'follow': 'true',
             'timestamps': 'true',
-            'timeoutSeconds': 1800,
+            'timeoutSeconds': cls.STREAM_RESPONSE_TIMEOUT * 60,
             **kwargs,
         })
 
