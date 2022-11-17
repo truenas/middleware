@@ -163,7 +163,7 @@ class ConfigService(Service):
                     send_to_remote.append(ROOT_KEYS_UPLOADED)
 
                 if i.name == GlusterConfig.ARCNAME.value:
-                    self.middleware.call_sync('gluster.backup.upload', abspath)
+                    self.middleware.call_sync('gluster.backup.restore', abspath)
 
         # Create this file so on reboot, system will migrate the provided
         # database which will catch the scenario if the database is from
