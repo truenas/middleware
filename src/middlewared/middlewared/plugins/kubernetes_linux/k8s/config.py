@@ -50,10 +50,23 @@ class Config:
 
 def get_config(recreate=False) -> Config:
     global CONFIG_OBJ
-    CONFIG_OBJ = CONFIG_OBJ if CONFIG_OBJ and not recreate else Config()
+    if CONFIG_OBJ and not recreate:
+        return CONFIG_OBJ
+    elif CONFIG_OBJ and recreate:
+        remove_initialized_config()
+
+    CONFIG_OBJ = Config()
     return CONFIG_OBJ
 
 
 def reinitialize_config() -> None:
     global CONFIG_OBJ
+    remove_initialized_config()
     CONFIG_OBJ = Config()
+
+
+def remove_initialized_config() -> None:
+    global CONFIG_OBJ
+    if CONFIG_OBJ:
+        del CONFIG_OBJ
+        CONFIG_OBJ = None
