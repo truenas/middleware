@@ -24,7 +24,7 @@ RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
 PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
 ROOT_KEYS_UPLOADED = '/data/authorized_keys_uploaded'
-DATABASE_NAME = os.path.basenane(FREENAS_DATABASE)
+DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
 
 
 class ConfigService(Service):
