@@ -24,6 +24,7 @@ RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
 PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
 ROOT_KEYS_UPLOADED = '/data/authorized_keys_uploaded'
+DATABASE_NAME = FREENAS_DATABASE.split('/')[-1]
 
 
 class ConfigService(Service):
@@ -110,14 +111,18 @@ class ConfigService(Service):
                     tar.extractall(temp_dir)
             else:
                 # if it's just the db then copy it to the same
-                # temp directory to keep the logic simple(ish)
-                shutil.copy2(file_or_tar, temp_dir)
+                # temp directory to keep the logic simple(ish).
+                # it's also important that we add a '.db' suffix
+                # since we're assuming (since this is a single file)
+                # that this is the database only and our logic below
+                # assumes the name of the file is freenas-v1.db OR a
+                # file that has a '.db' suffix
+                shutil.copy2(file_or_tar, f'{temp_dir}/{DATABASE_NAME}')
 
             pathobj = pathlib.Path(temp_dir)
-            db_name = FREENAS_DATABASE.split('/')[-1]
-            found_db_file = False
+            found_db_file = None
             for i in pathobj.iterdir():
-                if i.name == db_name or i.suffix == '.db':
+                if i.name == DATABASE_NAME or i.suffix == '.db':
                     # when user saves their config, we put the db in the
                     # archive using the same name as the db on the local
                     # filesystem, however, in the past we did not do this
@@ -126,11 +131,10 @@ class ConfigService(Service):
                     # change the name of the pwenc_secret file so we'll
                     # make the assumption that the user can change the
                     # name of the db but doesn't change the suffix.
-                    db_name == i.name
-                    found_db_file = True
+                    found_db_file = i.name
                     break
 
-            if not found_db_file:
+            if found_db_file is None:
                 raise CallError('Neither a valid tar or TrueNAS database file was provided.')
 
             self.validate_uploaded_db(pathobj)
@@ -139,7 +143,7 @@ class ConfigService(Service):
             send_to_remote = []
             for i in pathobj.iterdir():
                 abspath = i.absolute()
-                if i.name == db_name:
+                if i.name == found_db_file:
                     shutil.move(str(abspath), UPLOADED_DB_PATH)
                     send_to_remote.append(UPLOADED_DB_PATH)
 
