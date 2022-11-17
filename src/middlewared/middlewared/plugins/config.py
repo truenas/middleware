@@ -14,10 +14,12 @@ from middlewared.service import CallError, Service, job, private
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.utils.db import FREENAS_DATABASE
 from middlewared.utils.python import get_middlewared_dir
+from middlewared.plugins.gluster_linux.utils import GlusterConfig
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
-    'root_authorized_keys': '/root/.ssh/authorized_keys'
+    'root_authorized_keys': '/root/.ssh/authorized_keys',
+    GlusterConfig.ARCNAME.value: GlusterConfig.WORKDIR.value
 }
 NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
