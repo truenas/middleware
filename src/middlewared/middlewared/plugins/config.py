@@ -48,6 +48,9 @@ class ConfigService(Service):
                     files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                     files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
+                if options[GlusterConfig.ARCNAME.value]:
+                    arcname = GlusterConfig.ARCNAME.value
+                    files[arcname] = CONFIG_FILES[arcname]
 
                 for arcname, path in files.items():
                     tar.add(path, arcname=arcname)
@@ -60,6 +63,7 @@ class ConfigService(Service):
         Bool('secretseed', default=False),
         Bool('pool_keys', default=False),
         Bool('root_authorized_keys', default=False),
+        Bool('gluster_config', default=False),
     ))
     @returns()
     @job(pipes=["output"])
@@ -71,6 +75,7 @@ class ConfigService(Service):
         `secretseed` bool: When true, include password secret seed.
         `pool_keys` bool: IGNORED and DEPRECATED as it does not apply on SCALE systems.
         `root_authorized_keys` bool: When true, include "/root/.ssh/authorized_keys" file for the root user.
+        `gluster_config` bool: When true, include the directory that stores the gluster configuration files.
 
         If none of these options are set, the tar file is not generated and the database file is returned.
         """
