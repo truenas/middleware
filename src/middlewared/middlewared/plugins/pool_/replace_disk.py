@@ -69,11 +69,8 @@ class PoolService(Service):
 
         swap_disks = [disk['devname']]
         # If the disk we are replacing is still available, remove it from swap as well
-        if found[1] and os.path.exists(found[1]['path']):
-            from_disk = await self.middleware.call(
-                'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
-            )
-            if from_disk:
+        if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
+            if from_disk := await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', '')):
                 swap_disks.append(from_disk)
 
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
