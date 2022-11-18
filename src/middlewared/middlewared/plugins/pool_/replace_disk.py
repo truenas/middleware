@@ -60,11 +60,10 @@ class PoolService(Service):
 
         old_disk = None
         if options['preserve_settings']:
+            filters = [['zfs_guid', '=', options['label']]]
+            options = {'extra': {'include_expired': True}, 'get': True}
             try:
-                old_disk = await self.middleware.call('disk.query', [['zfs_guid', '=', options['label']]], {
-                    'extra': {'include_expired': True},
-                    'get': True
-                })
+                old_disk = await self.middleware.call('disk.query', filters, options)
             except MatchNotFound:
                 pass
 
