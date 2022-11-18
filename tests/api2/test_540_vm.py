@@ -40,6 +40,7 @@ def test_01_looking_vm_flags():
 
 # Only run if the system support virtualization
 if support_virtualization:
+
     def test_02_creating_vm(data):
         global payload
         payload = {
@@ -93,16 +94,12 @@ if support_virtualization:
         assert results.status_code == 200, results.text
         assert GET(f'/vm?id={data["vmid"]}').json()[0]['memory'] == 768
 
-    def test_09_get_vm_query(data):
-        results = GET(f'/vm/?id={data["vmid"]}')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), list) is True, results.text
-        global vmware_query
-        vmware_query = results
-
     @pytest.mark.parametrize('dkey', ['memory'])
-    def test_10_look_vm_query_(dkey):
-        assert vmware_query.json()[0][dkey] == payload[dkey], vmware_query.text
+    def test_09_get_vm_query(data, dkey):
+        results = GET(f'/vm/id/{data["vmid"]}')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict) is True, results.text
+        assert results.json()[dkey] == payload[dkey], results.text
 
     def test_11_delete_vm(data):
         results = DELETE(f'/vm/id/{data["vmid"]}/')
