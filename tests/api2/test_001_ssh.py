@@ -63,10 +63,9 @@ def test_00_firstboot_checks():
     for srv in services:
         if srv['service'] == 'smartd':
             assert srv['enable'] is True, str(srv)
-            assert srv['state'] == 'RUNNING', str(srv)
-            continue
+        else:
+            assert srv['enable'] is False, str(srv)
 
-        assert srv['enable'] is False, str(srv)
         assert srv['state'] == 'STOPPED', str(srv)
 
 
