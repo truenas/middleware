@@ -26,19 +26,25 @@ class AuthService(Service):
                 'datastore.query',
                 'account.bsdusers',
                 [
-                    ('bsdusr_username', '=', username),
-                    ('bsdusr_password_disabled', '=', False),
-                    ('bsdusr_locked', '=', False),
+                    ('username', '=', username),
+                    ('locked', '=', False),
                 ],
-                {'get': True},
+                {'get': True, 'prefix': 'bsdusr_'},
             )
         except IndexError:
             return None
 
-        if user['bsdusr_unixhash'] in ('x', '*'):
+        if user['unixhash'] in ('x', '*'):
             return None
 
-        if not hmac.compare_digest(crypt.crypt(password, user['bsdusr_unixhash']), user['bsdusr_unixhash']):
+        if user['password_disabled']:
+            if user['username'] == 'root':
+                if not await self.middleware.call('privilege.always_has_root_password_enabled'):
+                    return None
+            else:
+                return None
+
+        if not hmac.compare_digest(crypt.crypt(password, user['unixhash']), user['unixhash']):
             return None
 
         return await self.authenticate_local_user(user['id'], username)

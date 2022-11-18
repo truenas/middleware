@@ -279,3 +279,45 @@ class PrivilegeService(CRUDService):
             'allowlist': [{'method': '*', 'resource': '*'}],
             'web_shell': True,
         }
+
+    previous_always_has_root_password_enabled_value = None
+
+    @private
+    async def always_has_root_password_enabled(self):
+        root_user = await self.middleware.call(
+            'datastore.query',
+            'account.bsdusers',
+            [['username', '=', 'root']],
+            {'get': True, 'prefix': 'bsdusr_'},
+        )
+        local_administrator_privilege = await self.middleware.call(
+            'datastore.query',
+            'account.privilege',
+            [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
+            {'get': True},
+        )
+        users = await self.middleware.call(
+            'group.get_password_enabled_users',
+            local_administrator_privilege['local_groups'],
+            [root_user['id']],
+        )
+        if not users:
+            value = True
+        else:
+            value = False
+
+            if self.previous_always_has_root_password_enabled_value:
+                usernames = [user['username'] for user in users]
+                self.middleware.send_event(
+                    'user.web_ui_login_disabled', 'ADDED', id=None, fields={'usernames': usernames},
+                )
+
+        self.previous_always_has_root_password_enabled_value = value
+        return value
+
+
+async def setup(middleware):
+    middleware.event_register(
+        'user.web_ui_login_disabled',
+        'Sent when root user login to the Web UI is disabled.'
+    )

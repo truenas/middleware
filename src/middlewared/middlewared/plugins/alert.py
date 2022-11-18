@@ -880,7 +880,7 @@ class AlertService(Service):
     def alert_source_clear_run(self, name):
         alert_source = ALERT_SOURCES.get(name)
         if not alert_source:
-            raise CallError("Alert source {name!r} not found.", errno.ENOENT)
+            raise CallError(f"Alert source {name!r} not found.", errno.ENOENT)
 
         self.alert_source_last_run[alert_source.name] = datetime.min
 

@@ -85,7 +85,8 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
                 {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
                 {'type': 'mako', 'path': 'local/sudoers'},
-                {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
+                {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'},
+                {'type': 'py', 'path': 'web_ui_root_login_alert'},
             ]
         },
         'fstab': [
