@@ -5,7 +5,6 @@ import os
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import item_method, job, Service, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import osc
 
 
 class PoolService(Service):
@@ -45,26 +44,19 @@ class PoolService(Service):
             }
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-
         verrors = ValidationErrors()
-
         unused_disks = await self.middleware.call('disk.get_unused')
-        disk = list(filter(lambda x: x['identifier'] == options['disk'], unused_disks))
-        if not disk:
+        if not disk := list(filter(lambda x: x['identifier'] == options['disk'], unused_disks)):
             verrors.add('options.disk', 'Disk not found.', errno.ENOENT)
         else:
             disk = disk[0]
-
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
                 verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
-        found = await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)
-
-        if not found:
+        if not found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         old_disk = None
         if options['preserve_settings']:
