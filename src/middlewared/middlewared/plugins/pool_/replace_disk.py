@@ -46,14 +46,14 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         verrors = ValidationErrors()
         unused_disks = await self.middleware.call('disk.get_unused')
-        if not disk := list(filter(lambda x: x['identifier'] == options['disk'], unused_disks)):
+        if not (disk := list(filter(lambda x: x['identifier'] == options['disk'], unused_disks))):
             verrors.add('options.disk', 'Disk not found.', errno.ENOENT)
         else:
             disk = disk[0]
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
                 verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
-        if not found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool):
+        if not (found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
         verrors.check()
@@ -67,8 +67,6 @@ class PoolService(Service):
             except MatchNotFound:
                 pass
 
-        create_swap = found[0] in ('data', 'spare')
-
         swap_disks = [disk['devname']]
         # If the disk we are replacing is still available, remove it from swap as well
         if found[1] and os.path.exists(found[1]['path']):
@@ -81,9 +79,8 @@ class PoolService(Service):
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
 
         vdev = []
-        await self.middleware.call(
-            'pool.format_disks', job, {disk['devname']: {'vdev': vdev, 'create_swap': create_swap}},
-        )
+        format_opts = {disk['devname']: {'vdev': vdev, 'create_swap': found[0] in ('data', 'spare')}}
+        await self.middleware.call('pool.format_disks', job, format_opts)
 
         new_devname = vdev[0].replace('/dev/', '')
 
