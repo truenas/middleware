@@ -2,7 +2,7 @@ import enum
 import errno
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str, Patch
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 
@@ -283,12 +283,16 @@ class PrivilegeService(CRUDService):
     previous_always_has_root_password_enabled_value = None
 
     @private
-    async def always_has_root_password_enabled(self):
-        root_user = await self.middleware.call(
-            'datastore.query',
-            'account.bsdusers',
+    async def always_has_root_password_enabled(self, users=None, groups=None):
+        if users is None:
+            users = await self.middleware.call('user.query')
+        if groups is None:
+            groups = await self.middleware.call('group.query')
+
+        root_user = filter_list(
+            users,
             [['username', '=', 'root']],
-            {'get': True, 'prefix': 'bsdusr_'},
+            {'get': True},
         )
         local_administrator_privilege = await self.middleware.call(
             'datastore.query',
@@ -300,6 +304,7 @@ class PrivilegeService(CRUDService):
             'group.get_password_enabled_users',
             local_administrator_privilege['local_groups'],
             [root_user['id']],
+            groups,
         )
         if not users:
             value = True

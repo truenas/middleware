@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, List
-from middlewared.service import private, Service
+from middlewared.service import filter_list, Service, private
 
 
 class GroupService(Service):
@@ -15,17 +15,13 @@ class GroupService(Service):
         return len(await self.get_password_enabled_users(gids, exclude_user_ids)) > 0
 
     @private
-    async def get_password_enabled_users(self, gids, exclude_user_ids):
+    async def get_password_enabled_users(self, gids, exclude_user_ids, groups=None):
+        if groups is None:
+            groups = await self.middleware.call('group.query')
+
         result = []
 
-        groups = await self.middleware.call(
-            "datastore.query",
-            "account.bsdgroups",
-            [
-                ["gid", "in", gids],
-            ],
-            {"prefix": "bsdgrp_"},
-        )
+        groups = filter_list(groups, [["gid", "in", gids]])
         for membership in await self.middleware.call(
             "datastore.query",
             "account.bsdgroupmembership",
