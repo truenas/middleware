@@ -80,12 +80,14 @@ class PoolService(Service):
         await self.middleware.call('pool.format_disks', job, format_opts)
 
         job.set_progress(30, 'Replacing disk')
+        new_devname = vdev[0].replace('/dev/', '')
+        await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
+
         try:
-            new_devname = vdev[0].replace('/dev/', '')
-            await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
             try:
                 vdev = await self.middleware.call('zfs.pool.get_vdev', pool['name'], options['label'])
                 if vdev['status'] not in ('ONLINE', 'DEGRADED'):
+                    job.set_progress(80, 'Detaching old disk')
                     # If we are replacing a faulted disk, kick it right after replace is initiated.
                     await self.middleware.call('zfs.pool.detach', pool['name'], options['label'])
             except Exception:
@@ -96,6 +98,7 @@ class PoolService(Service):
             asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
         if old_disk:
+            job.set_progress(98, 'Copying old disk settings to new')
             await self.middleware.call('disk.copy_settings', old_disk, disk)
 
         return True
