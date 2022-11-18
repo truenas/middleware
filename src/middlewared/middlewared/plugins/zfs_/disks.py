@@ -13,7 +13,11 @@ class ZFSPoolService(Service):
     def get_disks(self, name):
         sys_devices = {}
         for dev in pyudev.Context().list_devices(subsystem='block'):
-            if dev.sys_name.startswith('sr') or dev.properties['DEVTYPE'] not in ('disk', 'partition'):
+            if dev.sys_name.startswith('sr'):
+                continue
+
+            devtype = dev.properties.get('DEVTYPE', '')
+            if not devtype or devtype not in ('disk', 'partition'):
                 continue
 
             # this is "sda/sda1/sda2/sda3" etc
