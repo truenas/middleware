@@ -79,23 +79,17 @@ class PoolService(Service):
         format_opts = {disk['devname']: {'vdev': vdev, 'create_swap': found[0] in ('data', 'spare')}}
         await self.middleware.call('pool.format_disks', job, format_opts)
 
-        new_devname = vdev[0].replace('/dev/', '')
-
         job.set_progress(30, 'Replacing disk')
         try:
-            await self.middleware.call(
-                'zfs.pool.replace', pool['name'], options['label'], new_devname
-            )
-            # If we are replacing a faulted disk, kick it right after replace
-            # is initiated.
+            new_devname = vdev[0].replace('/dev/', '')
+            await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
             try:
-                vdev = await self.middleware.call(
-                    'zfs.pool.get_vdev', pool['name'], options['label'],
-                )
+                vdev = await self.middleware.call('zfs.pool.get_vdev', pool['name'], options['label'])
                 if vdev['status'] not in ('ONLINE', 'DEGRADED'):
+                    # If we are replacing a faulted disk, kick it right after replace is initiated.
                     await self.middleware.call('zfs.pool.detach', pool['name'], options['label'])
             except Exception:
-                self.logger.warn('Failed to detach device', exc_info=True)
+                self.logger.warning('Failed to detach device with label %r', options['label'], exc_info=True)
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
