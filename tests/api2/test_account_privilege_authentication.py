@@ -1,4 +1,3 @@
-import contextlib
 import errno
 import json
 import logging

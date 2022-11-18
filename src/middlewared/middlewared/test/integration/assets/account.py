@@ -8,11 +8,16 @@ from middlewared.test.integration.utils import call, ssh
 
 
 @contextlib.contextmanager
-def user(data):
+def user(data, *, get_instance=True):
     user = call("user.create", data)
 
     try:
-        yield call("user.get_instance", user)
+        value = None
+
+        if get_instance:
+            value = call("user.get_instance", user)
+
+        yield value
     finally:
         try:
             call("user.delete", user)
