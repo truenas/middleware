@@ -1,3 +1,5 @@
+from middlewared.plugins.truecommand.utils import WIREGUARD_INTERFACE_NAME
+
 from .base import SimpleService
 
 
@@ -6,4 +8,4 @@ class TruecommandService(SimpleService):
 
     etc = ['rc', 'truecommand']
 
-    systemd_unit = 'wg-quick@wg0'
+    systemd_unit = f'wg-quick@{WIREGUARD_INTERFACE_NAME}'
