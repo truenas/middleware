@@ -58,15 +58,6 @@ class PoolService(Service):
 
         verrors.check()
 
-        old_disk = None
-        if options['preserve_settings']:
-            filters = [['zfs_guid', '=', options['label']]]
-            options = {'extra': {'include_expired': True}, 'get': True}
-            try:
-                old_disk = await self.middleware.call('disk.query', filters, options)
-            except MatchNotFound:
-                pass
-
         swap_disks = [disk['devname']]
         # If the disk we are replacing is still available, remove it from swap as well
         if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
@@ -97,8 +88,14 @@ class PoolService(Service):
             # removed from swap prior to replacement
             asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
 
-        if old_disk:
-            job.set_progress(98, 'Copying old disk settings to new')
-            await self.middleware.call('disk.copy_settings', old_disk, disk)
+        if options['preserve_settings']:
+            filters = [['zfs_guid', '=', options['label']]]
+            options = {'extra': {'include_expired': True}, 'get': True}
+            try:
+                old_disk = await self.middleware.call('disk.query', filters, options)
+                job.set_progress(98, 'Copying old disk settings to new')
+                await self.middleware.call('disk.copy_settings', old_disk, disk)
+            except MatchNotFound:
+                pass
 
         return True
