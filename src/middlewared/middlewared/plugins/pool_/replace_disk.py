@@ -59,9 +59,9 @@ class PoolService(Service):
         verrors.check()
 
         swap_disks = [disk['devname']]
-        # If the disk we are replacing is still available, remove it from swap as well
         if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
             if from_disk := await self.middleware.call('disk.label_to_disk', found[1]['path'].replace('/dev/', '')):
+                # If the disk we are replacing is still available, remove it from swap as well
                 swap_disks.append(from_disk)
 
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
@@ -70,11 +70,10 @@ class PoolService(Service):
         format_opts = {disk['devname']: {'vdev': vdev, 'create_swap': found[0] in ('data', 'spare')}}
         await self.middleware.call('pool.format_disks', job, format_opts)
 
-        job.set_progress(30, 'Replacing disk')
-        new_devname = vdev[0].replace('/dev/', '')
-        await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
-
         try:
+            job.set_progress(30, 'Replacing disk')
+            new_devname = vdev[0].replace('/dev/', '')
+            await self.middleware.call('zfs.pool.replace', pool['name'], options['label'], new_devname)
             try:
                 vdev = await self.middleware.call('zfs.pool.get_vdev', pool['name'], options['label'])
                 if vdev['status'] not in ('ONLINE', 'DEGRADED'):
