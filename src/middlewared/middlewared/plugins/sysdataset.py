@@ -356,11 +356,9 @@ class SystemDatasetService(ConfigService):
                 ds = self.middleware.call_sync('zfs.dataset.query', [['id', '=', config['basename']]])
                 if not ds:
                     # Pool is not mounted (e.g. HA node B), temporary set up system dataset on the boot pool
-                    self.logger.debug(
-                        'Root dataset for pool %r is not available, and dataset %r does not exist, ',
-                        'temporarily setting up system dataset on boot pool',
-                        config['pool'], config['basename'],
-                    )
+                    msg = 'Root dataset for pool %r is not available, and dataset %r does not exist, '
+                    msg += 'temporarily setting up system dataset on boot pool'
+                    self.logger.debug(msg, config['pool'], config['basename'])
                     self.force_pool = boot_pool
                     config = self.middleware.call_sync('systemdataset.config')
                 elif ds[0]['encrypted'] and ds[0]['locked'] and ds[0]['key_format']['value'] != 'PASSPHRASE':
