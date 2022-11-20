@@ -127,7 +127,6 @@ class KubernetesService(Service):
     @private
     async def post_start_internal(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
-        node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.gpu.setup')
         try:
@@ -157,10 +156,11 @@ class KubernetesService(Service):
                 )
             except CallError:
                 self.logger.error('Failed to remove %r daemonset', daemonset['metadata']['name'], exc_info=True)
-
+        node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call(
             'k8s.node.remove_taints', [
-                k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
+                k['key'] for k in (node_config['spec'].get('taints') or [])
+                if k['key'] in ('ix-svc-start', 'ix-svc-stop')
             ]
         )
 

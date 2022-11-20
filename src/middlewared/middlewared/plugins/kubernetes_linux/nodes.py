@@ -62,7 +62,7 @@ class KubernetesNodeService(ConfigService):
             if not config['node_configured']:
                 break
 
-            remaining_taints -= {t['key'] for t in (config['spec']['taints'] or [])}
+            remaining_taints -= {t['key'] for t in (config['spec'].get('taints') or [])}
 
     @accepts(
         List('remove_taints', items=[Str('taint_key')]),

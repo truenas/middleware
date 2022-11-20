@@ -45,7 +45,7 @@ class Node(CoreAPI):
     @classmethod
     async def remove_taint(cls, taint_key: str) -> None:
         node_object = await cls.get_instance()
-        taints = node_object['spec']['taints'] or []
+        taints = node_object['spec'].get('taints') or []
 
         indexes = []
         for index, taint in enumerate(taints):
