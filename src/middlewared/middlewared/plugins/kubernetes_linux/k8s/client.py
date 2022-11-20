@@ -66,6 +66,11 @@ class K8sClientBase(ClientMixin):
         cls, namespace: typing.Optional[str] = None, object_name: typing.Optional[str] = None,
         parameters: typing.Optional[dict] = None,
     ) -> str:
+        """
+        Kubernetes API URI docs ( https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-uris )
+
+        Based on namespace we deduce the URI going to be used for K8s resource.
+        """
         return (os.path.join(
             cls.NAMESPACE, namespace, cls.OBJECT_TYPE, *([object_name] if object_name else [])
         ) if namespace else os.path.join(cls.OBJECT_ENDPOINT, *(

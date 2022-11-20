@@ -160,7 +160,7 @@ class ChartReleaseService(CRUDService):
                     'port': p['port' if k8s_svc['spec']['type'] == 'LoadBalancer' else 'nodePort'],
                     'protocol': p['protocol']
                 }
-                for p in k8s_svc['spec']['ports']
+                for p in k8s_svc['spec'].get('ports') or []
             ])
 
         if get_resources:
@@ -327,10 +327,10 @@ class ChartReleaseService(CRUDService):
         for resource in resources:
             for volume in filter(
                 lambda v: (
-                    v.get('host_path') or {}
+                    v.get('hostPath') or {}
                 ).get('path'), resource['spec']['template']['spec'].get('volumes') or []
             ):
-                host_path_volumes.append(volume['host_path']['path'])
+                host_path_volumes.append(volume['hostPath']['path'])
         return host_path_volumes
 
     @private
