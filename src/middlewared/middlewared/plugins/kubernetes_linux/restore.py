@@ -32,7 +32,6 @@ class KubernetesService(Service):
         It should be noted that a rollback will be initiated which will destroy any newer snapshots/clones
         of `ix-applications` dataset then the snapshot in question of `backup_name`.
         """
-        self.middleware.call_sync('kubernetes.validate_k8s_setup')
         backup = self.middleware.call_sync('kubernetes.list_backups').get(backup_name)
         if not backup:
             raise CallError(f'Backup {backup_name!r} does not exist', errno=errno.ENOENT)
