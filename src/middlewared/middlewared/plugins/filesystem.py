@@ -383,6 +383,8 @@ class FilesystemService(Service):
             'options',
             Bool('append', default=False),
             Int('mode'),
+            Int('uid'),
+            Int('gid'),
         ),
     )
     def file_receive(self, path, content, options):
@@ -400,9 +402,10 @@ class FilesystemService(Service):
             openmode = 'wb+'
         with open(path, openmode) as f:
             f.write(binascii.a2b_base64(content))
-        mode = options.get('mode')
-        if mode:
+        if mode := options.get('mode'):
             os.chmod(path, mode)
+        if (uid := options.get('uid')) is not None and (gid := options.get('gid')) is not None:
+            os.chown(path, uid, gid)
         if path == PWENC_FILE_SECRET:
             self.middleware.call_sync('pwenc.reset_secret_cache')
         return True
