@@ -493,16 +493,20 @@ class UserService(CRUDService):
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
 
         try:
-            st = os.stat(user.get("home", "/nonexistent")).st_mode
+            st = (await self.middleware.run_in_thread(os.stat, user.get("home", "/nonexistent"))).st_mode
             old_mode = f'{stat.S_IMODE(st):03o}'
         except FileNotFoundError:
             old_mode = None
 
         home = data.get('home') or user['home']
         has_home = home != '/nonexistent'
-        # root user (uid 0) is an exception to the rule
-        if data.get('sshpubkey') and not home.startswith('/mnt') and user['uid'] != 0:
-            verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
+        # root user and admin users are an exception to the rule
+        if data.get('sshpubkey'):
+            if not (
+                home in ['/home/admin', '/root'] or
+                await self.middleware.call('filesystem.is_dataset_path', home)
+            ):
+                verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
 
         # Do not allow attributes to be changed for builtin user
         if user['builtin']:
