@@ -3,8 +3,6 @@
 
     ftp = middleware.call_sync("ftp.config")
     network_configuration = middleware.call_sync("network.configuration.config")
-
-    root_group = "wheel" if IS_FREEBSD else "root"
 %>
 
 ServerName "${network_configuration['hostname_local']} FTP Server"
@@ -78,7 +76,7 @@ AuthOrder mod_auth_unix.c
     <Limit LOGIN>
         AllowGroup ftp
         % if ftp['rootlogin']:
-            AllowGroup ${root_group}
+            AllowGroup root
         % endif
         DenyAll
     </Limit>
@@ -87,7 +85,7 @@ AuthOrder mod_auth_unix.c
 <Global>
     RequireValidShell off
     % if ftp['defaultroot']:
-        DefaultRoot ~ !${root_group}
+        DefaultRoot ~ !root
     % endif
     % if ftp['rootlogin']:
         RootLogin on
@@ -159,7 +157,7 @@ AuthOrder mod_auth_unix.c
 
 <IfModule mod_ban.c>
     BanEngine off
-    BanControlsACLs all allow group ${root_group}
+    BanControlsACLs all allow group root
     BanLog /var/log/proftpd/ban.log
     BanMessage Host %a has been banned
     # -m "mod_ban/rule"
