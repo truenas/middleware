@@ -20,6 +20,7 @@ import shutil
 import string
 import stat
 import time
+import warnings
 from pathlib import Path
 from contextlib import suppress
 
@@ -838,18 +839,23 @@ class UserService(CRUDService):
         return last_uid + 1
 
     @no_auth_required
+    @private
+    async def has_root_password(self):
+        warnings.warn("`account.has_root_password` has been deprecated. Use `account.has_local_administrator_set_up`",
+                      DeprecationWarning)
+        return await self.has_local_administrator_set_up()
+
+    @no_auth_required
     @accepts()
     @returns(Bool())
-    async def has_root_password(self):
+    async def has_local_administrator_set_up(self):
         """
-        Return whether the root user has a valid password set.
+        Return whether a local administrator with a valid password exists.
 
         This is used when the system is installed without a password and must be set on
         first use/login.
         """
-        return (await self.middleware.call(
-            'datastore.query', 'account.bsdusers', [('bsdusr_username', '=', 'root')], {'get': True}
-        ))['bsdusr_unixhash'] != '*'
+        return len(await self.middleware.call('privilege.local_administrators')) > 0
 
     @no_auth_required
     @accepts(

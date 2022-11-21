@@ -41,6 +41,7 @@ if __name__ == "__main__":
         user["bsdusr_unixhash"] = password
         user["bsdusr_home"] = home
         user["bsdusr_full_name"] = "Local Administrator"
+        user["bsdusr_builtin"] = 0
         user["bsdusr_sudo"] = 1
         user["bsdusr_group_id"] = group_id
         c.execute(f"""
