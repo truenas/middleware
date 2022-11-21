@@ -24,7 +24,7 @@ class ChartReleaseService(Service):
         'events', items=[Dict(
             'event',
             Dict(
-                'involved_object',
+                'involvedObject',
                 Str('kind'),
                 Str('name'),
                 Str('namespace'),
