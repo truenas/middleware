@@ -126,17 +126,32 @@ class FailoverEventsService(Service):
             raise
 
     def event(self, ifname, event):
-
         refresh = True
         try:
-            return self._event(ifname, event)
+            event_job = self._event(ifname, event)
         except IgnoreFailoverEvent:
-            refresh = False
-        finally:
             # refreshing the failover status can cause delays in failover
             # there is no reason to refresh it if the event has been ignored
+            refresh = False
+        finally:
             if refresh:
                 self.run_call('failover.status_refresh')
+
+                event_job.wait_sync()
+                if event_job.result == 'SUCCESS' and event == 'BACKUP':
+                    logger.info('Triggering failover status refresh on active node')
+                    try:
+                        # the webUI no longer polls the middleware for the HA status
+                        # and instead depends on us to send a proper event. If we get here,
+                        # it means this is the backup node and we have successfully became
+                        # the backup node so we need to tell the active controller to update
+                        # the HA status which triggers an event that the webUI will parse.
+                        # This allows the dashboard in the webUI to update and not show
+                        # "stale" information.
+                        self.run_call('failover.call_remote', 'failover.status_refresh')
+                    except Exception:
+                        logger.warning('Failed triggering failover status refresh on active node', exc_info=True)
+                        pass
 
     def _export_zpools(self, volumes):
 
