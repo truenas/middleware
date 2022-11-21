@@ -15,16 +15,7 @@ from middlewared.test.integration.assets.pool import dataset
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
-global vmware_query, real_device
-vmware_query = None
-message = "This system does not support virtualization."
-payload = {
-    'name': 'nested_vm',
-    'memory': 250,
-    'autostart': False,
-}
-results = POST('/vm/', payload, controller_a=ha)
-support_virtualization = False if message in results.text else True
+support_virtualization = GET('/vm/supports_virtualization/', controller_a=ha).json()
 
 bootloader = {'UEFI': 'UEFI', 'UEFI_CSM': 'Legacy BIOS'}
 
