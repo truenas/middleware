@@ -845,7 +845,7 @@ class UserService(CRUDService):
     @no_auth_required
     @private
     async def has_root_password(self):
-        warnings.warn("`account.has_root_password` has been deprecated. Use `account.has_local_administrator_set_up`",
+        warnings.warn("`user.has_root_password` has been deprecated. Use `user.has_local_administrator_set_up`",
                       DeprecationWarning)
         return await self.has_local_administrator_set_up()
 
