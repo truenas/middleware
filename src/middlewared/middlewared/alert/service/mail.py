@@ -14,15 +14,16 @@ class MailAlertService(AlertService):
     html = True
 
     async def send(self, alerts, gone_alerts, new_alerts):
-        email = self.attributes["email"]
-        if not email:
-            email = (await self.middleware.call("user.query", [("username", "=", "root")], {"get": True}))["email"]
-        if not email:
-            self.logger.trace("Email address for root not configured, not sending email")
-            return
+        if self.attributes["email"]:
+            emails = [self.attributes["email"]]
+        else:
+            emails = await self.middleware.call("mail.local_administrators_emails")
+            if not emails:
+                self.logger.trace("No e-mail address configured for any of the local administrators, not sending email")
+                return
 
         await self.middleware.call("mail.send", {
             "subject": "Alerts",
             "html": await self._format_alerts(alerts, gone_alerts, new_alerts),
-            "to": [email],
+            "to": emails,
         })
