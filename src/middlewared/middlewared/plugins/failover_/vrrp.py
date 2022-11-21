@@ -16,19 +16,19 @@ class VrrpThreadService(Service):
     VTHR = None
 
     def start(self):
-        with RLOCK.acquire():
+        with RLOCK:
             if VrrpThreadService.VTHR is not None and not VrrpThreadService.VTHR.is_alive():
                 VrrpThreadService.VTHR = VrrpFifoThread(middleware=self.middleware)
                 VrrpThreadService.VTHR.start()
 
     def stop(self):
-        with RLOCK.acquire():
+        with RLOCK:
             if VrrpThreadService.VTHR is not None and VrrpThreadService.VTHR.is_alive():
                 VrrpThreadService.VTHR.shutdown()
 
     def start_or_stop(self, middleware_is_shutting_down=False):
         is_ha = self.middleware.call_sync('failover.licensed')
-        with RLOCK.acquire():
+        with RLOCK:
             cur_thr = VrrpThreadService.VTHR
             if is_ha and (cur_thr is None or not cur_thr.is_alive()):
                 self.start()
