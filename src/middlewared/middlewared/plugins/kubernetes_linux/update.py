@@ -481,8 +481,7 @@ class KubernetesService(ConfigService):
     @private
     async def validate_k8s_setup(self, raise_exception=True):
         error = None
-        k8s_config = await self.middleware.call('kubernetes.config')
-        if not k8s_config['dataset']:
+        if not await self.pool_configured():
             error = 'Please configure kubernetes pool.'
         if not error and not await self.middleware.call('service.started', 'kubernetes'):
             error = 'Kubernetes service is not running.'
@@ -496,6 +495,10 @@ class KubernetesService(ConfigService):
         if error and raise_exception:
             raise CallError(error)
         return not error
+
+    @private
+    async def pool_configured(self):
+        return bool((await self.middleware.call('kubernetes.config'))['dataset'])
 
     @accepts()
     @returns(Str('kubernetes_node_ip', null=True))
