@@ -5,8 +5,6 @@ from prctl import set_name
 from time import sleep
 from asyncio import ensure_future
 
-
-VRRP_THREAD = None
 VRRP_THREAD_NAME = 'vrrp_fifo'
 
 
@@ -62,26 +60,26 @@ class VrrpFifoThread(threading.Thread):
                     sleep(self._retry_timeout)
 
 
+def start_or_stop_vrrp_thread(middleware, licensed, shutting_down):
+    try:
+        vthread = [i for i in threading.enumerate() if i.name == VRRP_THREAD_NAME][0]
+    except IndexError:
+        vthread = None
+
+    if licensed and (not vthread or not vthread.is_alive()):
+        VrrpFifoThread(middleware=middleware).start()
+    elif (vthread and vthread.is_alive()) and not licensed or shutting_down:
+        vthread.shutdown()
+
+
 async def _event_system(middleware, *args, **kwargs):
-    global VRRP_THREAD
     try:
         shutting_down = args[1]['id'] == 'shutdown'
     except (IndexError, KeyError):
         shutting_down = False
 
     licensed = await middleware.call('failover.licensed')
-    if licensed and (VRRP_THREAD is None or not VRRP_THREAD.is_alive()):
-        # if this is a system that is being licensed for HA for the
-        # first time (without being rebooted) then we need to make
-        # sure we start this.
-        VRRP_THREAD = VrrpFifoThread(middleware=middleware)
-        VRRP_THREAD.start()
-    elif (VRRP_THREAD is not None and VRRP_THREAD.is_alive()) and not licensed or shutting_down:
-        # maybe the system is being downgraded to non-HA
-        # (this is rare but still need to handle it) or
-        # system is being restarted/shutdown etc
-        await middleware.run_in_thread(VRRP_THREAD.shutdown)
-        VRRP_THREAD = None
+    await middleware.run_in_thread(start_or_stop_vrrp_thread, middleware, licensed, shutting_down)
 
 
 async def setup(middleware):
