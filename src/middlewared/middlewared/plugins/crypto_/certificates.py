@@ -355,10 +355,11 @@ class CertificateService(CRUDService):
             'certificate.get_instance', data['csr_id']
         )
         verrors = ValidationErrors()
-        email = (self.middleware.call_sync('user.query', [['uid', '=', 0]]))[0]['email']
+        email = self.middleware.call_sync('mail.local_administrator_email')
         if not email:
             verrors.add(
-                'name', 'Please configure an email address for "root" user which will be used with the ACME Server.'
+                'name', ('Please configure an email address for any local administrator user which will be used with '
+                         'the ACME server'),
             )
         verrors.check()
 
