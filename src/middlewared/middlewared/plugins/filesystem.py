@@ -71,6 +71,10 @@ class FilesystemService(Service):
         return dosmode.get_dosflags(path)
 
     @private
+    def is_dataset_path(self, path):
+        return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
+
+    @private
     def is_cluster_path(self, path):
         return path.startswith(FuseConfig.FUSE_PATH_SUBST.value)
 

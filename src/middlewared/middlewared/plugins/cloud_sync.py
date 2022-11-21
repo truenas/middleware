@@ -142,7 +142,7 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-def check_local_path(path, *, check_mountpoint=True, error_text_path=None):
+async def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
     error_text_path = error_text_path or path
 
     if not os.path.exists(path):
@@ -152,7 +152,7 @@ def check_local_path(path, *, check_mountpoint=True, error_text_path=None):
         raise CallError(f"{error_text_path!r} is not a directory")
 
     if check_mountpoint:
-        if not os.path.normpath(path).startswith("/mnt/") or os.stat(path).st_dev == os.stat("/mnt").st_dev:
+        if not await middleware.call("filesystem.is_dataset_path", path):
             raise CallError(f"Directory {error_text_path!r} must reside within volume mount point")
 
 
@@ -161,15 +161,15 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
     if await middleware.call("filesystem.is_cluster_path", cloud_sync["path"]):
         path = await middleware.call("filesystem.resolve_cluster_path", cloud_sync["path"])
-        await middleware.run_in_thread(
-            check_local_path,
+        await check_local_path(
+            middleware,
             path,
             check_mountpoint=False,
             error_text_path=cloud_sync["path"],
         )
     else:
         path = cloud_sync["path"]
-        await middleware.run_in_thread(check_local_path, path)
+        await check_local_path(middleware, path)
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
