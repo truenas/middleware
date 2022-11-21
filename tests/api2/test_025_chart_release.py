@@ -140,7 +140,7 @@ if not ha:
         results = POST('/chart/release/events/', 'ipfs')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
-        assert results.json()[0]['involved_object']['namespace'] == 'ix-ipfs', results.text
+        assert results.json()[0]['involvedObject']['namespace'] == 'ix-ipfs', results.text
 
     def test_16_set_ipfs_chart_release_scale(request):
         depends(request, ['release_ipfs'])
