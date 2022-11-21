@@ -59,13 +59,6 @@ if __name__ == "__main__":
             INSERT INTO account_bsdgroupmembership (bsdgrpmember_group_id, bsdgrpmember_user_id) VALUES (?, ?)
         """, (user_id, builtin_administrators_group_id))
 
-        shutil.copytree("/root", home)
-        for root, dirs, files in os.walk(home):
-            for d in dirs:
-                os.chown(os.path.join(root, d), 1000, 1000)
-            for f in files:
-                os.chown(os.path.join(root, f), 1000, 1000)
-
         c.execute("UPDATE account_bsdusers SET bsdusr_password_disabled = 1 WHERE bsdusr_username = 'root'")
 
     conn.commit()
