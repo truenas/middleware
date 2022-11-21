@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
         c.execute("""
             INSERT INTO account_bsdgroupmembership (bsdgrpmember_group_id, bsdgrpmember_user_id) VALUES (?, ?)
-        """, (user_id, builtin_administrators_group_id))
+        """, (builtin_administrators_group_id, user_id))
 
         c.execute("UPDATE account_bsdusers SET bsdusr_password_disabled = 1 WHERE bsdusr_username = 'root'")
 
