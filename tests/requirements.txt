@@ -2,6 +2,7 @@ pytest
 pytest-dependency
 pytest-rerunfailures
 pytest-timeout
+pytest-timestamper
 pyvmomi
 requests
 websocket-client
