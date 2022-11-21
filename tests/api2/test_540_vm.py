@@ -165,13 +165,24 @@ if support_virtualization:
         assert isinstance(results.json(), dict), results.text
         assert isinstance(results.json()[dkey], int), results.text
 
-    def test_22_suspend_vm(data):
+    def test_22_get_vm_instance(data):
+        results = POST('/vm/get_instance/', {'id': data["vmid"]})
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['name'] == 'vmtest', results.json()
+
+    def test_23_get_vm_display_devices(data):
+        results = POST('/vm/get_display_devices/', data["vmid"])
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), list), results.text
+
+    def test_24_suspend_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/suspend')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), type(None)), results.text
         sleep(1)
 
-    def test_23_verify_vm_status_is_suspended(data):
+    def test_25_verify_vm_status_is_suspended(data):
         results = POST(f'/vm/id/{data["vmid"]}/status/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -179,13 +190,13 @@ if support_virtualization:
         assert isinstance(results.json()['pid'], int), results.text
         assert results.json()['domain_state'] == 'PAUSED', results.text
 
-    def test_24_resume_vm(data):
+    def test_26_resume_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/resume')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), type(None)), results.text
         sleep(1)
 
-    def test_25_verify_vm_status_is_running_after_resuming(data):
+    def test_27_verify_vm_status_is_running_after_resuming(data):
         results = POST(f'/vm/id/{data["vmid"]}/status/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -193,14 +204,14 @@ if support_virtualization:
         assert isinstance(results.json()['pid'], int), results.text
         assert results.json()['domain_state'] == 'RUNNING', results.text
 
-    def test_26_restart_vm(data):
+    def test_28_restart_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/restart')
         assert results.status_code == 200, results.text
         job_status = wait_on_job(results.json(), 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
         sleep(1)
 
-    def test_27_verify_vm_status_is_running_after_restarting(data):
+    def test_29_verify_vm_status_is_running_after_restarting(data):
         results = POST(f'/vm/id/{data["vmid"]}/status/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -208,20 +219,20 @@ if support_virtualization:
         assert isinstance(results.json()['pid'], int), results.text
         assert results.json()['domain_state'] == 'RUNNING', results.text
 
-    def test_28_stop_vm(data):
+    def test_30_stop_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/stop/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), int), results.text
         job_status = wait_on_job(results.json(), 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    def test_29_poweroff_vm(data):
+    def test_31_poweroff_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/poweroff/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), type(None)), results.text
         sleep(1)
 
-    def test_30_verify_vm_status_is_stopped_and_shutoff(data):
+    def test_32_verify_vm_status_is_stopped_and_shutoff(data):
         results = POST(f'/vm/id/{data["vmid"]}/status/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -229,7 +240,7 @@ if support_virtualization:
         assert isinstance(results.json()['pid'], type(None)), results.text
         assert results.json()['domain_state'] == 'SHUTOFF', results.text
 
-    def test_31_update_vm(data):
+    def test_33_update_vm(data):
         global payload
         payload = {
             'memory': 768,
@@ -239,19 +250,19 @@ if support_virtualization:
         assert GET(f'/vm?id={data["vmid"]}').json()[0]['memory'] == 768
 
     @pytest.mark.parametrize('dkey', ['memory'])
-    def test_32_get_vm_query(data, dkey):
+    def test_34_get_vm_query(data, dkey):
         results = GET(f'/vm/id/{data["vmid"]}')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()[dkey] == payload[dkey], results.text
 
-    def test_33_clone_a_vm(data):
+    def test_35_clone_a_vm(data):
         results = POST(f'/vm/id/{data["vmid"]}/clone/', 'vmtest2')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
         data['vmid2'] = GET('/vm/?name=vmtest2').json()[0]['id']
 
-    def test_34_verify_cloned_vm_status_is_stopped(data):
+    def test_36_verify_cloned_vm_status_is_stopped(data):
         results = POST(f'/vm/id/{data["vmid2"]}/status/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
@@ -259,18 +270,19 @@ if support_virtualization:
         assert isinstance(results.json()['pid'], type(None)), results.text
         assert results.json()['domain_state'] == 'SHUTOFF', results.text
 
-    def test_35_get_the_clone_vm_console_name(data):
+    def test_37_get_the_clone_vm_console_name(data):
         results = POST('/vm/get_console/', data['vmid2'])
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), str), results.text
         assert results.json() == f'{data["vmid2"]}_vmtest2'
 
-    def test_36_get_vm_memory_info_on_stopped_vm(data):
+    def test_38_get_vm_memory_info_on_stopped_vm(data):
         results = POST('/vm/get_memory_usage/', data["vmid2"])
         assert results.status_code == 422, results.text
         assert isinstance(results.json(), dict), results.text
 
     @pytest.mark.parametrize('vmid', ['vmid', 'vmid2'])
-    def test_37_delete_vms(data, vmid):
+    def test_39_delete_vms(data, vmid):
         results = DELETE(f'/vm/id/{data[vmid]}/')
         assert results.status_code == 200, results.text
+        assert isinstance(results.json(), bool), results.text
