@@ -13,7 +13,6 @@ from middlewared.service import Service, job, accepts
 from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
-from middlewared.plugins.device_ import vrrp_events
 from libzfs import Error as libzfs_errnos
 
 
@@ -604,18 +603,13 @@ class FailoverEventsService(Service):
         if fw_drop_job.error:
             logger.error(f'Error blocking network traffic: {fw_drop_job.error}')
 
-        start_new_vrrp_thread = False
         try:
-            for thread in filter(lambda x: x.name == vrrp_events.VRRP_THREAD_NAME, threading.enumerate()):
-                if thread.is_alive():
-                    # we have to stop the thread responsible for processing "failover" events
-                    # because restarting the keepalived triggers a backup event...but we're
-                    # already processing one at this point so this would cause an endless
-                    # backup failover loop...which isn't good
-                    logger.info('Temporarily stopping vrrp event thread')
-                    thread.shutdown()
-                start_new_vrrp_thread = True
-                break
+            # we have to stop the thread responsible for processing "failover" events
+            # because restarting the keepalived triggers a backup event...but we're
+            # already processing one at this point so this would cause an endless
+            # backup failover loop...which isn't good
+            logger.info('Temporarily stopping vrrp event thread')
+            self.run_call('vrrp.thread.stop')
 
             # restarting keepalived sends a priority 0 advertisement
             # which means any VIP that is on this controller will be
@@ -623,9 +617,8 @@ class FailoverEventsService(Service):
             logger.info('Transitioning all VIPs off this node')
             self.run_call('service.restart', 'keepalived')
         finally:
-            if start_new_vrrp_thread:
-                logger.info('Restarting vrrp event thread')
-                vrrp_events.VrrpFifoThread(middleware=self.middleware).start()
+            logger.info('Restarting vrrp event thread')
+            self.run_call('vrrp.thread.start')
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
