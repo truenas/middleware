@@ -366,6 +366,7 @@ class FailoverService(ConfigService):
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
         self.send_small_file('/data/license')
         self.send_small_file('/data/pwenc_secret')
+        self.send_small_file('/home/admin/.ssh/authorized_keys')
         self.send_small_file('/root/.ssh/authorized_keys')
         self.send_small_file(ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE)
         self.middleware.call_sync('failover.call_remote', 'failover.zpool.cachefile.setup', ['SYNC'])
@@ -399,6 +400,8 @@ class FailoverService(ConfigService):
         if not os.path.exists(path):
             return
         mode = os.stat(path).st_mode
+        uid = os.stat(path).st_uid
+        gid = os.stat(path).st_gid
         with open(path, 'rb') as f:
             first = True
             while True:
@@ -406,7 +409,7 @@ class FailoverService(ConfigService):
                 if not read:
                     break
                 self.middleware.call_sync('failover.call_remote', 'filesystem.file_receive', [
-                    dest, base64.b64encode(read).decode(), {'mode': mode, 'append': not first}
+                    dest, base64.b64encode(read).decode(), {'mode': mode, 'uid': uid, 'gid': gid, 'append': not first}
                 ])
                 first = False
 
