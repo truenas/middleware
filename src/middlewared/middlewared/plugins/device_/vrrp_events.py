@@ -1,14 +1,16 @@
+import threading
+
 from os import mkfifo
 from prctl import set_name
-from threading import Thread
 from time import sleep
 from asyncio import ensure_future
 
 
 VRRP_THREAD = None
+VRRP_THREAD_NAME = 'vrrp_fifo'
 
 
-class VrrpFifoThread(Thread):
+class VrrpFifoThread(threading.Thread):
 
     def __init__(self, *args, **kwargs):
         super(VrrpFifoThread, self).__init__()
@@ -17,6 +19,7 @@ class VrrpFifoThread(Thread):
         self.middleware = kwargs.get('middleware')
         self.logger = self.middleware.logger
         self.shutdown_line = '--SHUTDOWN--\n'
+        self.name = VRRP_THREAD_NAME
 
     def shutdown(self):
         with open(self._vrrp_file, 'w') as f:
@@ -31,7 +34,7 @@ class VrrpFifoThread(Thread):
             raise
 
     def run(self):
-        set_name('vrrp_fifo_thread')
+        set_name(VRRP_THREAD_NAME)
         try:
             self.create_fifo()
         except Exception:
