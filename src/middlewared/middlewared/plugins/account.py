@@ -190,6 +190,8 @@ class UserService(CRUDService):
         # Get authorized keys
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
+        user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
+
         return user
 
     @private
@@ -199,6 +201,7 @@ class UserService(CRUDService):
             'id_type_both',
             'nt_name',
             'sid',
+            'immutable',
         ]
 
         for i in to_remove:
