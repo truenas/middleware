@@ -277,6 +277,9 @@ class SystemGeneralService(ConfigService):
         if config['crash_reporting'] != new_config['crash_reporting']:
             await self.middleware.call('system.general.set_crash_reporting')
 
+        if config['ds_auth'] != new_config['ds_auth']:
+            await self.middleware.call('etc.generate', 'pam')
+
         await self.middleware.call('service.start', 'ssl')
 
         if rollback_timeout is not None:

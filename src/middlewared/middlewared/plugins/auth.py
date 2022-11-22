@@ -660,7 +660,7 @@ def check_permission(middleware, app):
             except MatchNotFound:
                 return
 
-            user = middleware.call_sync('auth.authenticate_local_user', local_user['id'], local_user['username'])
+            user = middleware.call_sync('auth.authenticate_user', local_user['username'], True)
             if user is None:
                 return
 
