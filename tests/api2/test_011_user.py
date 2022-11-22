@@ -271,7 +271,7 @@ def test_24_look_user_is_delete(request):
     assert len(GET('/user?username=testuser').json()) == 0
 
 
-def test_25_has_root_password(request):
+def test_25_has_local_administrator_set_up(request):
     depends(request, ["user_02", "user_01"])
     assert GET('/user/has_local_administrator_set_up/', anonymous=True).json() is True
 

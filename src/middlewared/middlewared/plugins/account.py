@@ -13,6 +13,7 @@ import crypt
 import errno
 import glob
 import hashlib
+import json
 import os
 import random
 import shlex
@@ -849,8 +850,12 @@ class UserService(CRUDService):
         return last_uid + 1
 
     @no_auth_required
-    @private
+    @accepts()
+    @returns(Bool())
     async def has_root_password(self):
+        """
+        Deprecated method. Use `user.has_local_administrator_set_up`
+        """
         warnings.warn("`user.has_root_password` has been deprecated. Use `user.has_local_administrator_set_up`",
                       DeprecationWarning)
         return await self.has_local_administrator_set_up()
@@ -870,6 +875,22 @@ class UserService(CRUDService):
     @no_auth_required
     @accepts(
         Str('password'),
+        Dict('options')
+    )
+    @returns()
+    @pass_app()
+    async def set_root_password(self, app, password, options):
+        """
+        Deprecated method. Use `user.setup_local_administrator`
+        """
+        warnings.warn("`user.set_root_password` has been deprecated. Use `user.setup_local_administrator`",
+                      DeprecationWarning)
+        return await self.setup_local_administrator(app, 'root', password, options)
+
+    @no_auth_required
+    @accepts(
+        Str('username', enum=['root', 'admin']),
+        Str('password'),
         Dict(
             'options',
             Dict(
@@ -881,26 +902,35 @@ class UserService(CRUDService):
     )
     @returns()
     @pass_app()
-    async def set_root_password(self, app, password, options):
+    async def setup_local_administrator(self, app, username, password, options):
         """
-        Set password for root user if it is not already set.
+        Set up local administrator (this method does not require authentication if local administrator is not already
+        set up).
         """
         if not app.authenticated:
-            if await self.middleware.call('user.has_root_password'):
-                raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
-
             if await self.middleware.call('system.environment') == 'EC2':
                 if 'ec2' not in options:
                     raise CallError(
-                        'You need to specify instance ID when setting initial root password on EC2 instance',
+                        'You need to specify instance ID when setting up local administrator on EC2 instance',
                         errno.EACCES,
                     )
 
                 if options['ec2']['instance_id'] != await self.middleware.call('ec2.instance_id'):
                     raise CallError('Incorrect EC2 instance ID', errno.EACCES)
 
-        root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
-        await self.middleware.call('user.update', root['id'], {'password': password})
+        if await self.middleware.call('user.has_local_administrator_set_up'):
+            raise CallError('Local administrator is already set up', errno.EALREADY)
+
+        if username == 'admin':
+            if await self.middleware.call('user.query', [['uid', '=', 1000]]):
+                raise CallError('A user with uid=1000 already exists, setting up local administrator is not possible',
+                                errno.EALREADY)
+            if await self.middleware.call('user.query', [['username', '=', 'admin']]):
+                raise CallError('"admin" user already exists, setting up local administrator is not possible',
+                                errno.EALREADY)
+
+        await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
+                  input=json.dumps({'username': username, 'password': password}).encode('utf-8'))
 
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
