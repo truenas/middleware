@@ -15,9 +15,7 @@ class AuthService(Service):
     async def authenticate(self, username, password):
         local = '@' not in username
 
-        if await self.middleware.call('auth.libpam_authenticate', username, password):
-            pass
-        elif username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
+        if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             root = await self.middleware.call(
                 'datastore.query',
                 'account.bsdusers',
@@ -30,7 +28,7 @@ class AuthService(Service):
 
             if not hmac.compare_digest(crypt.crypt(password, root['unixhash']), root['unixhash']):
                 return None
-        else:
+        elif not await self.middleware.call('auth.libpam_authenticate', username, password):
             return None
 
         return await self.authenticate_user(username, local)
