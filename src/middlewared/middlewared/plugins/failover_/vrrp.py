@@ -15,25 +15,35 @@ class VrrpThreadService(Service):
 
     VTHR = None
 
-    def start(self):
+    def is_running(self):
+        running = False
         with RLOCK:
-            if VrrpThreadService.VTHR is None or not VrrpThreadService.VTHR.is_alive():
+            running = VrrpThreadService.VTHR is not None and VrrpThreadService.VTHR.is_alive()
+
+        return running
+
+    def start(self, bypass=False):
+        with RLOCK:
+            if bypass or not self.is_running():
                 VrrpThreadService.VTHR = VrrpFifoThread(middleware=self.middleware)
                 VrrpThreadService.VTHR.start()
 
-    def stop(self):
+    def stop(self, bypass=False):
         with RLOCK:
-            if VrrpThreadService.VTHR is not None and VrrpThreadService.VTHR.is_alive():
+            if bypass or self.is_running():
                 VrrpThreadService.VTHR.shutdown()
 
     def start_or_stop(self, middleware_is_shutting_down=False):
         is_ha = self.middleware.call_sync('failover.licensed')
         with RLOCK:
-            cur_thr = VrrpThreadService.VTHR
-            if is_ha and (cur_thr is None or not cur_thr.is_alive()):
-                self.start()
-            elif (cur_thr is not None and cur_thr.is_alive()) and not is_ha or middleware_is_shutting_down:
-                self.stop()
+            already_running = self.is_running()
+            if is_ha and not already_running:
+                # 1. HA system so it should always be running
+                self.start(bypass=True)
+            elif already_running and not is_ha or middleware_is_shutting_down:
+                # 1. middlewarwe process is shutting down
+                # 2. or system is being downgraded from an HA to non-HA system (very rare)
+                self.stop(bypass=True)
 
 
 async def _event_system(middleware, *args, **kwargs):
