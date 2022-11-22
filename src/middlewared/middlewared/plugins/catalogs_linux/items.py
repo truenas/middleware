@@ -3,8 +3,7 @@ import functools
 import json
 import os
 
-from catalog_validation.items.catalog import item_details
-from catalog_validation.utils import VALID_TRAIN_REGEX
+from catalog_validation.items.catalog import item_details, retrieve_train_names
 
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
@@ -137,20 +136,6 @@ class CatalogService(Service):
         return trains
 
     @private
-    def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
-        train_names = []
-        trains_filter = trains_filter or []
-        for train in os.listdir(location):
-            if (
-                not (all_trains or train in trains_filter) or not os.path.isdir(
-                    os.path.join(location, train)
-                ) or train.startswith('.') or train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
-            ):
-                continue
-            train_names.append(train)
-        return train_names
-
-    @private
     def get_trains(self, job, catalog, options):
         # We make sure we do not dive into library and docs folders and not consider those a train
         # This allows us to use these folders for placing helm library charts and docs respectively
@@ -160,7 +145,7 @@ class CatalogService(Service):
         unhealthy_apps = set()
         preferred_trains = catalog['preferred_trains']
 
-        trains_to_traverse = self.retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
+        trains_to_traverse = retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
         # In order to calculate job progress, we need to know number of items we would be traversing
         items = {}
         for train in trains_to_traverse:
