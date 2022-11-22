@@ -17,7 +17,7 @@ class VrrpThreadService(Service):
 
     def start(self):
         with RLOCK:
-            if VrrpThreadService.VTHR is not None and not VrrpThreadService.VTHR.is_alive():
+            if VrrpThreadService.VTHR is None or not VrrpThreadService.VTHR.is_alive():
                 VrrpThreadService.VTHR = VrrpFifoThread(middleware=self.middleware)
                 VrrpThreadService.VTHR.start()
 
