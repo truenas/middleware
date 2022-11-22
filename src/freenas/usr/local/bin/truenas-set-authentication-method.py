@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import json
-import os
-import shutil
 import sys
 
 import sqlite3
@@ -39,9 +37,13 @@ if __name__ == "__main__":
         user["bsdusr_uid"] = 1000
         user["bsdusr_username"] = username
         user["bsdusr_unixhash"] = password
+        user["bsdusr_smbhash"] = "*"
         user["bsdusr_home"] = home
         user["bsdusr_full_name"] = "Local Administrator"
         user["bsdusr_builtin"] = 0
+        user["bsdusr_smb"] = 0
+        user["bsdusr_password_disabled"] = 0
+        user["bsdusr_locked"] = 0
         user["bsdusr_sudo"] = 1
         user["bsdusr_group_id"] = group_id
         c.execute(f"""

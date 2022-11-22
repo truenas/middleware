@@ -47,10 +47,13 @@ async def run(*args, **kwargs):
     check = kwargs.pop('check', True)
     encoding = kwargs.pop('encoding', None)
     errors = kwargs.pop('errors', None) or 'strict'
+    input = kwargs.pop('input', None)
+    if input is not None:
+        kwargs['stdin'] = subprocess.PIPE
     abort_signal = kwargs.pop('abort_signal', signal.SIGKILL)
     proc = await asyncio.create_subprocess_exec(*args, **kwargs)
     try:
-        stdout, stderr = await proc.communicate()
+        stdout, stderr = await proc.communicate(input)
     except asyncio.CancelledError:
         if abort_signal is not None:
             proc.send_signal(abort_signal)
