@@ -19,6 +19,7 @@ support_virtualization = GET('/vm/supports_virtualization/', controller_a=ha).js
 DATASET = f'{pool_name}/disks'
 DATASET_URL = DATASET.replace('/', '%2F')
 DATASET_PATH = f'/mnt/{DATASET}'
+DEVICE = {'disk_id': 'DISK', 'display_id': 'DISPLAY', 'cdrom_id': 'CDROM'}
 
 
 @pytest.fixture(scope='module')
@@ -80,26 +81,45 @@ if support_virtualization:
         payload = {
             'dtype': 'DISPLAY',
             'vm': data['vmid'],
-            'attributes': {}
+            'attributes': {'resolution': '1920x1080'}
         }
         results = POST('/vm/device', payload)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         data['display_id'] = results.json()['id']
 
-    def test_06_verify_vm_device_list():
+    def test_06_create_a_cdrom_device(data):
+        payload = {
+            'dtype': 'CDROM',
+            'vm': 1,
+            'attributes': {'path': DATASET_PATH}
+        }
+        results = POST('/vm/device', payload)
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        data['cdrom_id'] = results.json()['id']
+
+    def test_07_verify_vm_device_list():
         results = GET('/vm/device/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
         assert len(results.json()) > 0, results.text
 
-    def test_07_get_vm_display_devices(data):
+    @pytest.mark.parametrize('device_id', list(DEVICE.keys()))
+    def test_08_get_vm_device_instance(data, device_id):
+        results = POST('/vm/device/get_instance/', {'id': data[device_id]})
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['dtype'] == DEVICE[device_id], results.text
+        assert results.json()['vm'] == data["vmid"], results.text
+
+    def test_09_get_vm_display_devices(data):
         results = POST('/vm/get_display_devices/', data["vmid"])
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
         assert results.json()[0]['vm'] == data["vmid"], results.json()
 
-    def test_08_delete_vm(data):
+    def test_10_delete_vm(data):
         results = DELETE(f'/vm/id/{data["vmid"]}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
