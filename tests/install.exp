@@ -21,7 +21,7 @@ expect {
 }
 
 
-# ┌───────────FreeNAS 11.3-MASTER-201810170704 Console Setup──────────────┐
+# ┌────────────────────TrueNAS 22.12.0 Console Setup──────────────────────┐
 # │ ┌───────────────────────────────────────────────────────────────────┐ │
 # │ │                        1  Install/Upgrade                         │ │
 # │ │                        2  Shell                                   │ │
@@ -48,7 +48,7 @@ expect {
 }
 
 # ┌────────────────Choose destination media──────────────────┐
-# │ Select one or more drives where FreeNAS should be        │
+# │ Select one or more drives where TrueNAS should be        │
 # │ installed (use arrow keys to navigate to the drive(s)    │
 # │ for installation; select a drive with the spacebar).     │
 # │ ┌──────────────────────────────────────────────────────┐ │
@@ -60,6 +60,7 @@ expect {
 # │               <  OK  >        <Cancel>                   │
 # └──────────────────────────────────────────────────────────┘
 
+
 expect {
   "Choose destination media" {
     sleep .5
@@ -68,7 +69,7 @@ expect {
   }
 }
 
-# ┌─────────────────────────FreeNAS installation───────────────────────────┐
+# ┌─────────────────────────TrueNAS installation───────────────────────────┐
 # │ WARNING:                                                               │
 # │ - This will erase ALL paritions and data on ada0.                      │
 # │ - You can't use ada0 for sharing data.                                 │
@@ -83,12 +84,27 @@ expect {
 # └────────────────────────────────────────────────────────────────────────┘
 
 expect {
-  "NAS installation" {
+  "TrueNAS installation" {
     sleep .5
     send "Y"
     send "\r"
   }
 }
+
+# ┌────────────────────Web UI Authentication Method───────────────────────┐
+# │ ┌───────────────────────────────────────────────────────────────────┐ │
+# │ │                  1  Administrative user (admin)                   │ │
+# │ │                  2  Root user (not recommended)                   │ │
+# │ │                  3  Configure using Web UI                        │ │
+# │ │                                                                   │ │
+# │ │                                                                   │ │
+# │ │                                                                   │ │
+# │ └───────────────────────────────────────────────────────────────────┘ │
+# ├───────────────────────────────────────────────────────────────────────┤
+# │                     <  OK  >           <Cancel>                       │
+# └───────────────────────────────────────────────────────────────────────┘
+
+## Old SCALE installer support
 
 # ┌────────────────────────────────────────────────┐
 # │ Enter your root password; cancel for no root   │
@@ -102,35 +118,57 @@ expect {
 # └────────────────────────────────────────────────┘
 
 expect {
+  "Web UI Authentication Method" {
+    sleep .5
+    send "2"
+    send "\r"
+  }
+
+  # Old SCALE installer support
   "Enter your root password;" {
     sleep .5
     send "testing"
     # Tab to next field
     send \011
+    sleep .2
     send "testing"
     # Tab to submit/OK button
     send \011
+    sleep .2
     # Submit/confirm password dialog
     send "O"
     send "\r"
   }
 }
 
-# ┌──────────────────────────FreeNAS Boot Mode─────────────────────────────┐
-# │ FreeNAS can be booted in either BIOS or UEFI mode.                     │
-# │                                                                        │
-# | BIOS mode is recommended for legacy and enterprise hardware,           │
-# | whereas UEFI may be required for newer consumer motherboards.          │
-# ├────────────────────────────────────────────────────────────────────────┤
-# │               <Boot via UEFI>        <Boot via BIOS>                   │
-# └────────────────────────────────────────────────────────────────────────┘
+# ┌────────────────────────────────────────────────────────────────────┐
+# │ Enter your root password. Cancel for cancelling installation       │
+# │ ┌────────────────────────────────────────────────────────────────┐ │
+# │ │         Password:                                              │ │
+# │ │         Confirm Password:                                      │ │
+# │ └────────────────────────────────────────────────────────────────┘ │
+# │                                                                    │
+# ├────────────────────────────────────────────────────────────────────┤
+# │                   <  OK  >          <Cancel>                       │
+# └────────────────────────────────────────────────────────────────────┘
 
 expect {
-  "NAS Boot Mode" {
+  "Enter your root password." {
     sleep .5
-    send "B"
+    send "testing"
+    # Tab to next field
+    send \011
+    sleep .2
+    send "testing"
+    # Tab to submit/OK button
+    send \011
+    sleep .2
+    # Submit/confirm password dialog
+    send "O"
+    send "\r"
   }
 
+  # old SCALE installer support
   "installation on sda succeeded!" {
     send_user "Bhyve installation finished\n"
     sleep 5
@@ -156,7 +194,7 @@ expect {
 }
 
 # ┌────────────────────────────────────────────────────────────────────────┐
-# │ The FreeNAS installation on ada0 succeeded!                           |
+# │ The TrueNAS installation on sda succeeded!                             |
 # │                                                                        │
 # ├────────────────────────────────────────────────────────────────────────┤
 # │                               <  OK  >                                 │
@@ -165,7 +203,7 @@ expect {
 # Or
 
 # ┌────────────────────────────────────────────────────────────────────────┐
-# │ The FreeNAS installation on ada0 failed.                              |
+# │ The TrueNAS installation on sda failed.                                |
 # │                                                                        │
 # ├────────────────────────────────────────────────────────────────────────┤
 # │                               <  OK  >                                 │
@@ -173,13 +211,13 @@ expect {
 
 # Installation complete!
 expect {
-  "installation on ada0 succeeded!" {
+  "installation on sda succeeded!" {
     send_user "Bhyve installation finished\n"
     sleep 5
     exit 0
   }
 
-  "installation on ada0 failed." {
+  "installation on sda failed." {
     send_user "Bhyve installation failed\n"
     sleep 5
     exit 1
