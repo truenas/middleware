@@ -3,23 +3,14 @@ import functools
 import json
 import os
 
+from catalog_validation.items.catalog import item_details
 from catalog_validation.utils import VALID_TRAIN_REGEX
 
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
 
-from .items_util import get_item_details, get_item_version_details
+from .items_util import get_item_version_details
 from .utils import get_cache_key
-
-
-def item_details(items, location, questions_context, item_key):
-    train = items[item_key]
-    item = item_key.removesuffix(f'_{train}')
-    item_location = os.path.join(location, train, item)
-    return {
-        k: v for k, v in get_item_details(item_location, questions_context, {'retrieve_versions': True}).items()
-        if k != 'versions'
-    }
 
 
 class CatalogService(Service):
