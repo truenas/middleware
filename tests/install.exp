@@ -124,7 +124,7 @@ expect {
     send "\r"
   }
 
-  # Old SCAlE installer support
+  # Old SCALE installer support
   "Enter your root password;" {
     sleep .5
     send "testing"
@@ -168,7 +168,7 @@ expect {
     send "\r"
   }
 
-  # old SCAlE installer support
+  # old SCALE installer support
   "installation on sda succeeded!" {
     send_user "Bhyve installation finished\n"
     sleep 5
