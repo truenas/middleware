@@ -9,7 +9,7 @@ import pytest
 import requests
 
 from middlewared.test.integration.assets.keychain import ssh_keypair
-from middlewared.test.integration.utils import call, client, host, ssh, url
+from middlewared.test.integration.utils import call, client, host, url
 
 
 @pytest.fixture(scope="module")
@@ -22,17 +22,22 @@ def admin():
     root_id = root_backup.pop("id")
     # Connect before removing root password
     with client() as c:
-        stdin = json.dumps({"username": "admin", "password": "admin"})
-        ssh(f"echo '{stdin}' | truenas-set-authentication-method.py")
-        # Quickly restore root password before anyone notices
-        c.call("datastore.update", "account.bsdusers", root_id, root_backup)
-        c.call("etc.generate", "user")
+        try:
+            c.call("user.update", root_id, {"password_disabled": True})
+            c.call("user.setup_local_administrator", "admin", "admin")
+            # Quickly restore root password before anyone notices
+            c.call("datastore.update", "account.bsdusers", root_id, root_backup)
+            c.call("etc.generate", "user")
 
-    admin = call("user.query", [["username", "=", "admin"]], {"get": True})
-    try:
-        yield admin
-    finally:
-        call("user.delete", admin["id"])
+            admin = call("user.query", [["username", "=", "admin"]], {"get": True})
+            try:
+                yield admin
+            finally:
+                call("user.delete", admin["id"])
+        finally:
+            # Restore root access on test failure
+            c.call("datastore.update", "account.bsdusers", root_id, root_backup)
+            c.call("etc.generate", "user")
 
 
 def test_installer_admin_has_local_administrator_privilege(admin):
