@@ -24,7 +24,6 @@ install_client:
 
 install_test:
 	bash install-dev-tools
-	apt install -y python3-pampy
 	python3 setup_test.py install --single-version-externally-managed --record=/dev/null
 
 migrate:
