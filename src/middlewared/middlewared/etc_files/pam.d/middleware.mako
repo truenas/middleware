@@ -5,14 +5,10 @@
 
 %if ds_auth:
 @include common-auth
-@include common-account
-@include common-session
-@include common-session
-@include common-password
 %else:
 @include common-auth-unix
-@include common-account-unix
-@include common-session-unix-header
-@include common-session-unix-footer
-@include common-password-unix
 %endif
+
+account	required	pam_deny.so
+password	required	pam_deny.so
+session	required	pam_deny.so
