@@ -1,3 +1,4 @@
+import contextlib
 import functools
 import json
 import os
@@ -8,7 +9,7 @@ from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
 
 from .items_util import get_item_version_details
-from .utils import get_cache_key
+from .utils import CATALOG_JSON_FILE, get_cache_key
 
 
 class CatalogService(Service):
@@ -136,6 +137,31 @@ class CatalogService(Service):
 
     @private
     def get_trains(self, job, catalog, options):
+        if catalog['id'] == self.middleware.call_sync('catalog.official_catalog_label') and os.path.exists(
+            os.path.join(catalog['location'], CATALOG_JSON_FILE)
+        ):
+            # If the data is malformed or something similar, let's read the data then from filesystem
+            with contextlib.suppress(json.JSONDecodeError, AttributeError):
+                return self.retrieve_trains_data_from_json(catalog, options)
+
+        return self.get_trains_impl(job, catalog, options)
+
+    @private
+    def retrieve_trains_data_from_json(self, catalog, options):
+        trains_to_traverse = retrieve_train_names(
+            catalog['location'], options['retrieve_all_trains'], options['trains']
+        )
+        with open(os.path.join(catalog['location'], CATALOG_JSON_FILE), 'r') as f:
+            data = {k: v for k, v in json.loads(f.read()).items() if k in trains_to_traverse}
+
+        for train in data:
+            for item in data[train]:
+                data[train][item]['location'] = os.path.join(catalog['location'], train, item)
+
+        return data
+
+    @private
+    def get_trains_impl(self, job, catalog, options):
         # We make sure we do not dive into library and docs folders and not consider those a train
         # This allows us to use these folders for placing helm library charts and docs respectively
         location = catalog['location']

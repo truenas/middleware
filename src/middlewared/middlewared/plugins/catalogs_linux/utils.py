@@ -11,6 +11,7 @@ from git.exc import GitCommandError
 from middlewared.service import CallError
 
 
+CATALOG_JSON_FILE = 'catalog.json'
 GIT_LOCK = defaultdict(threading.Lock)
 logger = logging.getLogger('catalog_utils')
 
