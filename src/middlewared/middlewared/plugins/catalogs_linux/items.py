@@ -1,9 +1,8 @@
-import concurrent.futures
 import functools
 import json
 import os
 
-from catalog_validation.items.catalog import item_details, retrieve_train_names
+from catalog_validation.items.catalog import get_items_in_trains, retrieve_train_names, retrieve_trains_data
 
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
@@ -139,41 +138,18 @@ class CatalogService(Service):
     def get_trains(self, job, catalog, options):
         # We make sure we do not dive into library and docs folders and not consider those a train
         # This allows us to use these folders for placing helm library charts and docs respectively
-        trains = {'charts': {}, 'test': {}}
         location = catalog['location']
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-        unhealthy_apps = set()
-        preferred_trains = catalog['preferred_trains']
 
         trains_to_traverse = retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
         # In order to calculate job progress, we need to know number of items we would be traversing
-        items = {}
-        for train in trains_to_traverse:
-            trains[train] = {}
-            items.update({
-                f'{i}_{train}': train for i in os.listdir(os.path.join(location, train))
-                if os.path.isdir(os.path.join(location, train, i))
-            })
+        items = get_items_in_trains(trains_to_traverse, location)
 
         job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
 
-        total_items = len(items)
-        with concurrent.futures.ProcessPoolExecutor(max_workers=(5 if total_items > 10 else 2)) as exc:
-            for index, result in enumerate(zip(items, exc.map(
-                functools.partial(item_details, items, location, questions_context),
-                items, chunksize=(10 if total_items > 10 else 5)
-            ))):
-                item_key = result[0]
-                item_info = result[1]
-                train = items[item_key]
-                item = item_key.removesuffix(f'_{train}')
-                job.set_progress(
-                    int((index / total_items) * 80) + 10,
-                    f'Retrieved information of {item!r} item from {train!r} train'
-                )
-                trains[train][item] = item_info
-                if train in preferred_trains and not trains[train][item]['healthy']:
-                    unhealthy_apps.add(f'{item} ({train} train)')
+        trains, unhealthy_apps = retrieve_trains_data(
+            items, location, catalog['preferred_trains'], trains_to_traverse, job, questions_context
+        )
 
         if unhealthy_apps:
             self.middleware.call_sync(
