@@ -109,6 +109,7 @@ if support_virtualization:
         }
         results = POST('/vm/', payload)
         assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
         data['vmid'] = results.json()['id']
 
     def test_13_get_vm_query(data):
