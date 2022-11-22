@@ -34,7 +34,7 @@ if __name__ == "__main__":
         user = dict(c.fetchone())
 
         del user["id"]
-        user["bsdusr_uid"] = 1000
+        user["bsdusr_uid"] = 950  # When googled, does not conflict with anything
         user["bsdusr_username"] = username
         user["bsdusr_unixhash"] = password
         user["bsdusr_smbhash"] = "*"
