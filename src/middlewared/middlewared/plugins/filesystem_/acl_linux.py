@@ -64,7 +64,7 @@ class FilesystemService(Service, ACLBase):
         if is_cluster:
             return
 
-        if st['realpath'].startswith("/root/.ssh"):
+        if any(st['realpath'].startswith(prefix) for prefix in ('/home/admin/.ssh', '/root/.ssh')):
             return
 
         if not st['realpath'].startswith('/mnt/'):

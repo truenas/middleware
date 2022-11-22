@@ -48,7 +48,7 @@ class ConfigService(Service):
                 files = {'freenas-v1.db': FREENAS_DATABASE}
                 if options['secretseed']:
                     files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
-                if options['root_authorized_keys'] and os.path.exists(files['admin_authorized_keys']):
+                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['admin_authorized_keys']):
                     files['admin_authorized_keys'] = CONFIG_FILES['admin_authorized_keys']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                     files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
