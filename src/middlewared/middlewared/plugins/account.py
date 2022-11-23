@@ -919,8 +919,8 @@ class UserService(CRUDService):
             raise CallError('Local administrator is already set up', errno.EALREADY)
 
         if username == 'admin':
-            if await self.middleware.call('user.query', [['uid', '=', 1000]]):
-                raise CallError('A user with uid=1000 already exists, setting up local administrator is not possible',
+            if await self.middleware.call('user.query', [['uid', '=', 950]]):
+                raise CallError('A user with uid=950 already exists, setting up local administrator is not possible',
                                 errno.EALREADY)
             if await self.middleware.call('user.query', [['username', '=', 'admin']]):
                 raise CallError('"admin" user already exists, setting up local administrator is not possible',
