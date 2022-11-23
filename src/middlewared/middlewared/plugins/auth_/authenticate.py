@@ -31,7 +31,7 @@ class AuthService(Service):
         elif not await self.middleware.call('auth.libpam_authenticate', username, password):
             return None
 
-        return await self.authenticate_user(username, local)
+        return await self.authenticate_user({'username': username}, local)
 
     @private
     def libpam_authenticate(self, username, password):
@@ -39,8 +39,8 @@ class AuthService(Service):
         return p.authenticate(username, password, service='middleware')
 
     @private
-    async def authenticate_user(self, username, local):
-        user = await self.middleware.call('user.get_user_obj', {'username': username, 'get_groups': True})
+    async def authenticate_user(self, query, local):
+        user = await self.middleware.call('user.get_user_obj', {**query, 'get_groups': True})
         groups = set(user['grouplist'])
         groups_key = 'local_groups' if local else 'ds_groups'
 
