@@ -110,9 +110,17 @@ if ha:
             assert remote['nameserver3'] == old_ns
             assert remote['state']['nameserver3'] == old_ns
 
-    def test_08_vrrp_thread_is_running():
+def test_08_vrrp_thread_is_running():
+    rv = make_ws_request(ip, {'msg': 'method', 'method': 'vrrp.thread.is_running'})
+    assert isinstance(rv, dict)
+    if not ha:
+        assert not rv['result'], 'VRRP FIFO Thread should not be running on non-HA systems'
+
+        # try to start it
+        make_ws_request(ip, {'msg': 'method', 'method': 'vrrp.thread.start'})
         rv = make_ws_request(ip, {'msg': 'method', 'method': 'vrrp.thread.is_running'})
-        assert isinstance(rv, dict)
+        assert not rv['result'], 'VRRP FIFO Thread should not start on non-HA systems'
+    else:
         assert rv['result'], 'VRRP FIFO Thread should always be running on HA systems'
 
         # we stop and start this thread on failover backup events
