@@ -25,6 +25,8 @@ import warnings
 from pathlib import Path
 from contextlib import suppress
 
+ADMIN_UID = 950  # When googled, does not conflict with anything
+ADMIN_GID = 950
 SKEL_PATH = '/etc/skel/'
 
 
@@ -919,11 +921,22 @@ class UserService(CRUDService):
             raise CallError('Local administrator is already set up', errno.EALREADY)
 
         if username == 'admin':
-            if await self.middleware.call('user.query', [['uid', '=', 950]]):
-                raise CallError('A user with uid=950 already exists, setting up local administrator is not possible',
-                                errno.EALREADY)
+            if await self.middleware.call('user.query', [['uid', '=', ADMIN_UID]]):
+                raise CallError(
+                    f'A user with uid={ADMIN_UID} already exists, setting up local administrator is not possible',
+                    errno.EALREADY,
+                )
             if await self.middleware.call('user.query', [['username', '=', 'admin']]):
                 raise CallError('"admin" user already exists, setting up local administrator is not possible',
+                                errno.EALREADY)
+
+            if await self.middleware.call('group.query', [['gid', '=', ADMIN_GID]]):
+                raise CallError(
+                    f'A group with gid={ADMIN_GID} already exists, setting up local administrator is not possible',
+                    errno.EALREADY,
+                )
+            if await self.middleware.call('group.query', [['group', '=', 'admin']]):
+                raise CallError('"admin" group already exists, setting up local administrator is not possible',
                                 errno.EALREADY)
 
         await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
