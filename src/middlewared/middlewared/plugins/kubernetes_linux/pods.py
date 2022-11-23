@@ -81,7 +81,7 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
                 ) if self.arg[v]
             }
         }
-        self.watch = Watch(Pod, kwargs)
+        self.watch = Watch(Pod, kwargs, False)
 
         async for event in self.watch.watch():
             # Event should contain a timestamp in RFC3339 format, we should parse it and supply it

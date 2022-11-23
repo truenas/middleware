@@ -14,8 +14,9 @@ class Watch(ClientMixin):
 
     def __init__(
         self, resource: typing.Union[typing.Type[Event], typing.Type[Pod]],
-        resource_uri_args: typing.Optional[dict] = None,
+        resource_uri_args: typing.Optional[dict] = None, recreate: bool = True
     ):
+        self.recreate: bool = recreate
         self.resource: typing.Union[typing.Type[Event], typing.Type[Pod]] = resource
         self.resource_ui_args: typing.Optional[dict] = resource_uri_args or {}
         self._stop: bool = False
@@ -43,3 +44,6 @@ class Watch(ClientMixin):
                             return
 
                         yield self.resource.normalize_data(self.sanitize_data(line, self.resource.STREAM_RESPONSE_TYPE))
+
+            if not self.recreate:
+                break
