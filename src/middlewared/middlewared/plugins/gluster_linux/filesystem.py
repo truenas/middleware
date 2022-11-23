@@ -266,10 +266,9 @@ class GlusterFilesystemService(Service):
         key in the returned dictionary can be used for further filesystem operations.
 
         """
-        additional_kwargs = {"flags": os.O_DIRECTORY}
         with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             parent = self.get_object_handle(vol, data['parent_uuid'])
-            obj = parent.mkdir(data['path'], **(data['options'] | additional_kwargs))
+            obj = parent.mkdir(data['path'], **data['options'])
             return self.glfs_object_handle_to_dict(obj)
 
     @accepts(Dict(
@@ -425,7 +424,7 @@ class GlusterFilesystemService(Service):
         """
         with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             fd = self.get_object_handle(vol, data['uuid']).open(os.O_RDONLY)
-            bytes = fd.pread(**data['options'])
+            bytes = fd.pread(data['options']['offset'], data['options']['cnt'])
             return b64encode(bytes).decode()
 
     @accepts(Dict(
@@ -463,4 +462,4 @@ class GlusterFilesystemService(Service):
                 payload = b64decode(data['payload'])
 
             fd = self.get_object_handle(vol, data['uuid']).open(os.O_RDWR)
-            fd.pwrite(buf=payload, **data['options'])
+            fd.pwrite(payload, data['options']['offset'])
