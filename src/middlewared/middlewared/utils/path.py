@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import errno
+import enum
 import fcntl
 import logging
 import os
@@ -9,7 +10,30 @@ from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["belongs_to_tree", "pathref_open", "pathref_reopen", "is_child"]
+__all__ = ["belongs_to_tree", "pathref_open", "pathref_reopen", "is_child", "path_location", "strip_location_prefix"]
+
+EXTERNAL_PATH_PREFIX = 'EXTERNAL:'
+CLUSTER_PATH_PREFIX = 'CLUSTER:'
+
+
+class FSLocation(enum.Enum):
+    CLUSTER = enum.auto()
+    EXTERNAL = enum.auto()
+    LOCAL = enum.auto()
+
+
+def path_location(path):
+    if path.startswith(CLUSTER_PATH_PREFIX):
+        return FSLocation.CLUSTER.name
+
+    if path.startswith(EXTERNAL_PATH_PREFIX):
+        return FSLocation.EXTERNAL.name
+
+    return FSLocation.LOCAL.name
+
+
+def strip_location_prefix(path):
+    return path.lstrip(f'{path_location(path)}:')
 
 
 def belongs_to_tree(dataset: str, root: str, recursive: bool, exclude: [str]):

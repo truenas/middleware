@@ -9,6 +9,7 @@ from ipaddress import ip_address
 from dns.exception import DNSException
 from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.schema import Bool, returns
+from middlewared.utils.path import CLUSTER_PATH_PREFIX
 from middlewared.service import Service, job, ValidationErrors, private, accepts
 from middlewared.service_exception import CallError
 
@@ -196,7 +197,7 @@ class FuseConfig(enum.Enum):
     the gluster volumes locally.
     """
     FUSE_PATH_BASE = '/cluster'
-    FUSE_PATH_SUBST = 'CLUSTER:'
+    FUSE_PATH_SUBST = CLUSTER_PATH_PREFIX
 
 
 class CTDBConfig(enum.Enum):
