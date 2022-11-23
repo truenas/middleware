@@ -40,7 +40,11 @@ class AuthService(Service):
 
     @private
     async def authenticate_user(self, query, local):
-        user = await self.middleware.call('user.get_user_obj', {**query, 'get_groups': True})
+        try:
+            user = await self.middleware.call('user.get_user_obj', {**query, 'get_groups': True})
+        except KeyError:
+            return None
+
         groups = set(user['grouplist'])
         groups_key = 'local_groups' if local else 'ds_groups'
 
@@ -52,7 +56,7 @@ class AuthService(Service):
             return None
 
         return {
-            'username': username,
+            'username': user['pw_name'],
             'privilege': await self.middleware.call('privilege.compose_privilege', privileges),
         }
 
