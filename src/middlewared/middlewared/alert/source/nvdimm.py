@@ -17,16 +17,16 @@ class NVDIMMAlertClass(AlertClass):
 class NVDIMMLifetimeWarningAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
-    title = 'NVDIMM Lifetime Is Less Than 20%'
-    text = 'NVDIMM: "%(dev)s" Remaining Lifetime is %(value)d%%.'
+    title = 'NVDIMM Memory Module Lifetime Is Less Than 20%'
+    text = 'NVDIMM: "%(dev)s" Memory Module Remaining Lifetime is %(value)d%%.'
     products = ('SCALE_ENTERPRISE',)
 
 
 class NVDIMMLifetimeCriticalAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
-    title = 'NVDIMM Lifetime Is Less Than 10%'
-    text = 'NVDIMM: "%(dev)s" Remaining Lifetime is %(value)d%%.'
+    title = 'NVDIMM Memory Module Lifetime Is Less Than 10%'
+    text = 'NVDIMM: "%(dev)s" Memory Module Remaining Lifetime is %(value)d%%.'
     products = ('SCALE_ENTERPRISE',)
 
 
