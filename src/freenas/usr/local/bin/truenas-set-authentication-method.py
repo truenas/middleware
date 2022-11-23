@@ -4,7 +4,7 @@ import sys
 
 import sqlite3
 
-from middlewared.plugins.account import crypted_password
+from middlewared.plugins.account import ADMIN_UID, ADMIN_GID, crypted_password
 from middlewared.utils.db import FREENAS_DATABASE
 
 if __name__ == "__main__":
@@ -24,8 +24,8 @@ if __name__ == "__main__":
         c.execute("""
             INSERT INTO account_bsdgroups (bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_sudo, bsdgrp_smb,
                                            bsdgrp_sudo_commands, bsdgrp_sudo_nopasswd)
-            VALUES (1000, ?, 0, 0, 0, '[]', 0)
-        """, (username,))
+            VALUES (?, ?, 0, 0, 0, '[]', 0)
+        """, (ADMIN_GID, username,))
 
         c.execute("SELECT last_insert_rowid()")
         group_id = dict(c.fetchone())["last_insert_rowid()"]
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         user = dict(c.fetchone())
 
         del user["id"]
-        user["bsdusr_uid"] = 950  # When googled, does not conflict with anything
+        user["bsdusr_uid"] = ADMIN_UID
         user["bsdusr_username"] = username
         user["bsdusr_unixhash"] = password
         user["bsdusr_smbhash"] = "*"
