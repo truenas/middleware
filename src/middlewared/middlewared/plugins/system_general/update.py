@@ -278,7 +278,7 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('system.general.set_crash_reporting')
 
         if config['ds_auth'] != new_config['ds_auth']:
-            await self.middleware.call('etc.generate', 'pam')
+            await self.middleware.call('etc.generate', 'pam_middleware')
 
         await self.middleware.call('service.start', 'ssl')
 
