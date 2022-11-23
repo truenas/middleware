@@ -516,7 +516,7 @@ class UserService(CRUDService):
                 verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
 
         # Do not allow attributes to be changed for builtin user
-        if user['builtin']:
+        if user['immutable']:
             for i in ('group', 'home', 'home_mode', 'uid', 'username', 'smb'):
                 if i in data and data[i] != user[i]:
                     verrors.add(f'user_update.{i}', 'This attribute cannot be changed')
@@ -592,7 +592,7 @@ class UserService(CRUDService):
                 raise CallError(f'{user["home"]} is not a directory')
 
         home_mode = user.pop('home_mode', None)
-        if user['builtin']:
+        if user['immutable']:
             home_mode = None
 
         try:
