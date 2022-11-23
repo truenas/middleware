@@ -1,5 +1,4 @@
 import io
-import json
 import os
 import subprocess
 import tarfile
@@ -9,12 +8,12 @@ import pytest
 import requests
 
 from middlewared.test.integration.assets.keychain import ssh_keypair
-from middlewared.test.integration.utils import call, client, host, url
+from middlewared.test.integration.utils import call, client, host, mock, url
 
 
 @pytest.fixture(scope="module")
 def admin():
-    assert call("user.query", [["uid", "=", 1000]]) == []
+    assert call("user.query", [["uid", "=", 950]]) == []
     assert call("user.query", [["username", "=", "admin"]]) == []
 
     root_backup = call("datastore.query", "account.bsdusers", [["bsdusr_username", "=", "root"]], {"get": True})
@@ -72,8 +71,8 @@ def test_can_set_admin_authorized_key(admin):
                 tar_io = io.BytesIO(r.content)
                 with tarfile.TarFile(fileobj=tar_io) as tar:
                     member = tar.getmember("admin_authorized_keys")
-                    assert member.uid == 1000
-                    assert member.gid == 1000
+                    assert member.uid == 950
+                    assert member.gid == 950
                     assert member.uname == "admin"
                     assert member.gname == "admin"
                     assert tar.extractfile(member).read().decode() == keypair["attributes"]["public_key"]
@@ -81,3 +80,16 @@ def test_can_set_admin_authorized_key(admin):
             call("user.update", admin["id"], {
                 "sshpubkey": "",
             })
+
+
+def test_admin_user_alert(admin):
+    with mock("user.get_user_obj", return_value={
+        "pw_name": "root", "pw_uid": 0, "pw_gid": 0, "pw_gecos": "root", "pw_dir": "/root", "pw_shell": "/usr/bin/zsh"
+    }):
+        alerts = call("alert.run_source", "AdminUser")
+        assert len(alerts) == 1
+        assert alerts[0]["klass"] == "AdminUserIsOverridden"
+
+
+def test_admin_user_no_alert(admin):
+    assert not call("alert.run_source", "AdminUser")
