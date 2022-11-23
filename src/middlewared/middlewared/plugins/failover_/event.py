@@ -126,32 +126,17 @@ class FailoverEventsService(Service):
             raise
 
     def event(self, ifname, event):
+
         refresh = True
         try:
-            event_job = self._event(ifname, event)
+            return self._event(ifname, event)
         except IgnoreFailoverEvent:
-            # refreshing the failover status can cause delays in failover
-            # there is no reason to refresh it if the event has been ignored
             refresh = False
         finally:
+            # refreshing the failover status can cause delays in failover
+            # there is no reason to refresh it if the event has been ignored
             if refresh:
                 self.run_call('failover.status_refresh')
-
-                event_job.wait_sync()
-                if event_job.result == 'SUCCESS' and event == 'BACKUP':
-                    logger.info('Triggering failover status refresh on active node')
-                    try:
-                        # the webUI no longer polls the middleware for the HA status
-                        # and instead depends on us to send a proper event. If we get here,
-                        # it means this is the backup node and we have successfully became
-                        # the backup node so we need to tell the active controller to update
-                        # the HA status which triggers an event that the webUI will parse.
-                        # This allows the dashboard in the webUI to update and not show
-                        # "stale" information.
-                        self.run_call('failover.call_remote', 'failover.status_refresh')
-                    except Exception:
-                        logger.warning('Failed triggering failover status refresh on active node', exc_info=True)
-                        pass
 
     def _export_zpools(self, volumes):
 
@@ -603,22 +588,11 @@ class FailoverEventsService(Service):
         if fw_drop_job.error:
             logger.error(f'Error blocking network traffic: {fw_drop_job.error}')
 
-        try:
-            # we have to stop the thread responsible for processing "failover" events
-            # because restarting the keepalived triggers a backup event...but we're
-            # already processing one at this point so this would cause an endless
-            # backup failover loop...which isn't good
-            logger.info('Temporarily stopping vrrp event thread')
-            self.run_call('vrrp.thread.stop')
-
-            # restarting keepalived sends a priority 0 advertisement
-            # which means any VIP that is on this controller will be
-            # migrated to the other controller
-            logger.info('Transitioning all VIPs off this node')
-            self.run_call('service.restart', 'keepalived')
-        finally:
-            logger.info('Restarting vrrp event thread')
-            self.run_call('vrrp.thread.start')
+        # restarting keepalived sends a priority 0 advertisement
+        # which means any VIP that is on this controller will be
+        # migrated to the other controller
+        logger.info('Transitioning all VIPs off this node')
+        self.run_call('service.restart', 'keepalived')
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
