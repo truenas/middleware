@@ -1,4 +1,3 @@
-import contextlib
 import functools
 import json
 import os
@@ -139,9 +138,7 @@ class CatalogService(Service):
 
     @private
     def get_trains(self, job, catalog, options):
-        if catalog['id'] == self.middleware.call_sync('catalog.official_catalog_label') and os.path.exists(
-            os.path.join(catalog['location'], CATALOG_JSON_FILE)
-        ):
+        if os.path.exists(os.path.join(catalog['location'], CATALOG_JSON_FILE)):
             # If the data is malformed or something similar, let's read the data then from filesystem
             try:
                 return self.retrieve_trains_data_from_json(catalog, options)
