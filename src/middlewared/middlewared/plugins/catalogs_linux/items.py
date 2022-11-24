@@ -4,6 +4,8 @@ import json
 import os
 
 from catalog_validation.items.catalog import get_items_in_trains, retrieve_train_names, retrieve_trains_data
+from catalog_validation.items.utils import get_catalog_json_schema
+from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
@@ -141,8 +143,10 @@ class CatalogService(Service):
             os.path.join(catalog['location'], CATALOG_JSON_FILE)
         ):
             # If the data is malformed or something similar, let's read the data then from filesystem
-            with contextlib.suppress(json.JSONDecodeError, AttributeError):
+            try:
                 return self.retrieve_trains_data_from_json(catalog, options)
+            except (json.JSONDecodeError, JsonValidationError):
+                self.logger.error('Invalid catalog json file specified for %r catalog', catalog['id'])
 
         return self.get_trains_impl(job, catalog, options)
 
@@ -152,7 +156,10 @@ class CatalogService(Service):
             catalog['location'], options['retrieve_all_trains'], options['trains']
         )
         with open(os.path.join(catalog['location'], CATALOG_JSON_FILE), 'r') as f:
-            data = {k: v for k, v in json.loads(f.read()).items() if k in trains_to_traverse}
+            catalog_data = json.loads(f.read())
+            json_schema_validate(catalog_data, get_catalog_json_schema())
+
+            data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
         for train in data:
             for item in data[train]:
