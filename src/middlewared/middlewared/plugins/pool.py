@@ -4585,19 +4585,13 @@ class PoolScrubService(CRUDService):
             return False
 
         history = (await run('zpool', 'history', name, encoding='utf-8')).stdout
+
+        last_scrub = None
         for match in reversed(list(RE_HISTORY_ZPOOL_SCRUB.finditer(history))):
             last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
             break
-        else:
-            # creation time of the pool if no scrub was done
-            for match in RE_HISTORY_ZPOOL_CREATE.finditer(history):
-                last_scrub = datetime.strptime(match.group(1), '%Y-%m-%d.%H:%M:%S')
-                break
-            else:
-                logger.warning("Could not find last scrub of pool %r", name)
-                last_scrub = datetime.min
 
-        if (datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400:
+        if last_scrub and ((datetime.now() - last_scrub).total_seconds() < (threshold - 1) * 86400):
             logger.debug("Pool %r last scrub %r", name, last_scrub)
             return False
 
