@@ -52,7 +52,7 @@ class ChartReleaseService(Service):
             release_namespace_name = get_namespace(name)
 
             # We don't want manifest files data
-            release.pop('manifest')
+            release.pop('manifest', None)
 
             release.update({
                 'chart_metadata': release.pop('chart')['metadata'],
