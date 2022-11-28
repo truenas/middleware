@@ -921,26 +921,26 @@ class UserService(CRUDService):
                     raise CallError('Incorrect EC2 instance ID', errno.EACCES)
 
         if await self.middleware.call('user.has_local_administrator_set_up'):
-            raise CallError('Local administrator is already set up', errno.EALREADY)
+            raise CallError('Local administrator is already set up', errno.EEXIST)
 
         if username == 'admin':
             if await self.middleware.call('user.query', [['uid', '=', ADMIN_UID]]):
                 raise CallError(
                     f'A user with uid={ADMIN_UID} already exists, setting up local administrator is not possible',
-                    errno.EALREADY,
+                    errno.EEXIST,
                 )
             if await self.middleware.call('user.query', [['username', '=', 'admin']]):
                 raise CallError('"admin" user already exists, setting up local administrator is not possible',
-                                errno.EALREADY)
+                                errno.EEXIST)
 
             if await self.middleware.call('group.query', [['gid', '=', ADMIN_GID]]):
                 raise CallError(
                     f'A group with gid={ADMIN_GID} already exists, setting up local administrator is not possible',
-                    errno.EALREADY,
+                    errno.EEXIST,
                 )
             if await self.middleware.call('group.query', [['group', '=', 'admin']]):
                 raise CallError('"admin" group already exists, setting up local administrator is not possible',
-                                errno.EALREADY)
+                                errno.EEXIST)
 
         await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
                   input=json.dumps({'username': username, 'password': password}).encode('utf-8'))
