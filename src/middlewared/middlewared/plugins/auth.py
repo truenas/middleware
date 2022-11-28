@@ -146,7 +146,7 @@ def dump_credentials(credentials):
     return {
         "credentials": re.sub(
             "([A-Z])",
-            "_\\1",
+            r"_\1",
             credentials.__class__.__name__.replace("SessionManagerCredentials", "")
         ).lstrip("_").upper(),
         "credentials_data": credentials.dump(),
@@ -282,7 +282,7 @@ class AuthService(Service):
         )
 
     @accepts(Str('id'))
-    @returns(Bool(description='Is `true` if `session was terminated successfully'))
+    @returns(Bool(description='Is `true` if session was terminated successfully'))
     async def terminate_session(self, id):
         """
         Terminates session `id`.
@@ -294,6 +294,7 @@ class AuthService(Service):
         await session.app.response.close()
 
     @accepts()
+    @returns()
     @pass_app()
     async def terminate_other_sessions(self, app):
         """
