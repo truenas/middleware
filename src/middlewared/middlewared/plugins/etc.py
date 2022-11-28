@@ -325,7 +325,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/tftpd-hpa'},
         ],
         'truecommand': [
-            {'type': 'mako', 'path': 'wireguard/ix-truecommand-wg.conf'},
+            {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},
         ],
         'k3s': [
             {'type': 'py', 'path': 'rancher/k3s/flags', 'checkpoint': None},
