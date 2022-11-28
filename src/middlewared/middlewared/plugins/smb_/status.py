@@ -57,7 +57,11 @@ class SMBService(Service):
             try:
                 with open("/var/log/samba4/auth_audit.log", "r") as f:
                     for e in f:
-                        entry = json.loads(e.strip())
+                        try:
+                            entry = json.loads(e.strip())
+                        except json.JSONDecodeError:
+                            continue
+
                         ts, extra = entry['timestamp'].split('.', 1)
                         # add timezone info
                         ts += extra[6:]
