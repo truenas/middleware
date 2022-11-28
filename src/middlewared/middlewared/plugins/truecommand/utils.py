@@ -1,1 +1,1 @@
-WIREGUARD_INTERFACE_NAME = 'ix-truecommand-wg'
+WIREGUARD_INTERFACE_NAME = 'ix-truecommand'
