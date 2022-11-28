@@ -493,6 +493,9 @@ class UserService(CRUDService):
             group = user['group']
             user['group'] = group['id']
 
+        if data.get('uid') == user['uid']:
+            data.pop('uid')  # Only check for duplicate UID if we are updating it
+
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
 
         try:
@@ -938,6 +941,21 @@ class UserService(CRUDService):
             exclude_filter,
             {'prefix': 'bsdusr_'}
         )
+
+        if data.get('uid') is not None:
+            try:
+                existing_user = await self.middleware.call(
+                    'user.get_user_obj',
+                    {'uid': data['uid']},
+                )
+            except KeyError:
+                pass
+            else:
+                verrors.add(
+                    f'{schema}.uid',
+                    f'Uid {data["uid"]} is already used (user {existing_user["pw_name"]} has it)',
+                    errno.EEXIST,
+                )
 
         if 'username' in data:
             pw_checkname(verrors, f'{schema}.username', data['username'])
@@ -1399,6 +1417,9 @@ class GroupService(CRUDService):
         group = await self.get_instance(pk)
         groupmap_changed = False
 
+        if data.get('gid') == group['gid']:
+            data.pop('gid')  # Only check for duplicate GID if we are updating it
+
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
         verrors.check()
@@ -1580,14 +1601,16 @@ class GroupService(CRUDService):
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
         if data.get('gid') and not allow_duplicate_gid:
-            existing = await self.middleware.call(
-                'datastore.query', 'account.bsdgroups',
-                [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'}
-            )
-            if existing:
+            try:
+                existing = await self.middleware.call(
+                    'group.get_group_obj', {'gid': data['gid']},
+                )
+            except KeyError:
+                pass
+            else:
                 verrors.add(
                     f'{schema}.gid',
-                    f'The Group ID "{data["gid"]}" already exists.',
+                    f'Gid {data["gid"]} is already used (group {existing["gr_name"]} has it)',
                     errno.EEXIST,
                 )
 
