@@ -209,3 +209,7 @@ class CatalogService(Service):
             'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
         }
+
+    @private
+    def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
+        return retrieve_train_names(location, all_trains, trains_filter)
