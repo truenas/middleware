@@ -273,7 +273,7 @@ def test_24_look_user_is_delete(request):
 
 def test_25_has_root_password(request):
     depends(request, ["user_02", "user_01"])
-    results = GET('/user/has_local_administrator_set_up/', anonymous=True).json() is True
+    assert GET('/user/has_local_administrator_set_up/', anonymous=True).json() is True
 
 
 def test_26_get_next_uid_for_shareuser(request):
