@@ -7,7 +7,7 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.utils.osc import getmntinfo
-from middlewared.utils.path import path_location
+from middlewared.utils.path import FSLocation, path_location
 from pathlib import Path
 
 import asyncio
@@ -903,6 +903,8 @@ class SharingSMBModel(sa.Model):
 class SharingSMBService(SharingService):
 
     share_task_type = 'SMB'
+    path_field = 'path_local'
+    allowed_path_types = [FSLocation.CLUSTER, FSLocation.EXTERNAL, FSLocation.LOCAL]
 
     class Config:
         namespace = 'sharing.smb'
@@ -1307,6 +1309,7 @@ class SharingSMBService(SharingService):
     @private
     async def clean(self, data, schema_name, verrors, id=None):
         data['name'] = await self.name_exists(data, schema_name, verrors, id)
+        await self.add_path_local(data)
 
     @private
     async def validate_aux_params(self, data, schema_name):
@@ -1473,6 +1476,14 @@ class SharingSMBService(SharingService):
                 )
 
     @private
+    async def get_path_field(self, data):
+        if self.path_field in data:
+            return data[self.path_field]
+
+        resolved = await self.add_path_local({'path': data['path'], 'cluster_volname': data['cluster_volname']})
+        return resolved[self.path_field]
+
+    @private
     async def validate_external_path(self, verrors, name, path):
         proxy_list = path.split(',')
         for proxy in proxy_list:
@@ -1484,6 +1495,28 @@ class SharingSMBService(SharingService):
 
         if len(proxy_list) == 0:
             verrors.add(name, 'At least one DFS proxy must be specified')
+
+    @private
+    async def validate_local_path(self, verrors, name, path):
+        await super().validate_local_path(verrors, name, path)
+        """
+        This is a very rough check is to prevent users from sharing unsupported
+        filesystems over SMB as behavior with our default VFS options in such
+        a situation is undefined.
+        """
+        try:
+            await self.middleware.run_in_thread(
+                self.validate_mount_info, verrors, name, path
+            )
+        except FileNotFoundError:
+            verrors.add(name, 'Path does not exist.')
+
+    @private
+    async def validate_cluster_path(self, verrors, name, volname, path):
+        await super().validate_cluster_path(verrors, name, volname, path)
+
+        if path == '/':
+            verrors.add(name, 'Sharing root of gluster volume is not permitted.')
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
@@ -1504,25 +1537,7 @@ class SharingSMBService(SharingService):
 
         await self.cluster_share_validate(data, schema_name, verrors)
 
-        loc = path_location(data['path'])
-
-        await self.validate_path_field(data, schema_name, verrors, permitted_locations=['LOCAL', 'EXTERNAL'])
-        if loc == 'LOCAL':
-            """
-            When path is not a clustervolname, legacy behavior is to make all path components
-            so skip this step here. This is a very rough check is to prevent users from sharing
-            unsupported filesystems over SMB as behavior with our default VFS options in such
-            a situation is undefined.
-            """
-            try:
-                await self.middleware.run_in_thread(
-                    self.validate_mount_info, verrors, f'{schema_name}.path', data['path']
-                )
-            except FileNotFoundError:
-                verrors.add(f'{schema_name}.path', 'Path does not exist.')
-        else:
-            if data.get('path') == '/':
-                verrors.add(f'{schema_name}.path', 'Sharing root of gluster volume is not permitted.')
+        await self.validate_path_field(data, schema_name, verrors)
 
         if data['auxsmbconf']:
             try:
@@ -1636,6 +1651,15 @@ class SharingSMBService(SharingService):
         return name
 
     @private
+    async def add_path_local(self, data):
+        if data['cluster_volname']:
+            data['path_local'] = f'CLUSTER:{data["cluster_volname"]}/{data["path"]}'
+        else:
+            data['path_local'] = data['path']
+
+        return data
+
+    @private
     async def extend(self, data):
         data['hostsallow'] = data['hostsallow'].split()
         data['hostsdeny'] = data['hostsdeny'].split()
@@ -1645,11 +1669,7 @@ class SharingSMBService(SharingService):
         if 'share_acl' in data:
             data.pop('share_acl')
 
-        if data['cluster_volname']:
-            data['path_local'] = f'CLUSTER:{data["cluster_volname"]}:{data["path"]}'
-        else:
-            data['path_local'] = data['path']
-        return data
+        return await self.add_path_local(data)
 
     @private
     async def compress(self, data):
@@ -1725,7 +1745,6 @@ class SharingSMBService(SharingService):
             if share['home']:
                 share['name'] = 'homes'
 
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         registry_shares = await self.middleware.call('sharing.smb.reg_listshares')
         cf_active = set([x['name'].casefold() for x in active_shares])
         cf_reg = set([x.casefold() for x in registry_shares])
@@ -1734,7 +1753,7 @@ class SharingSMBService(SharingService):
 
         for share in to_add:
             share_conf = list(filter(lambda x: x['name'].casefold() == share.casefold(), active_shares))
-            if ha_mode != 'CLUSTERED':
+            if path_location(share_conf[0][self.path_field]) is FSLocation.LOCAL:
                 if not await self.middleware.run_in_thread(os.path.exists, share_conf[0]['path']):
                     self.logger.warning("Path [%s] for share [%s] does not exist. "
                                         "Refusing to add share to SMB configuration.",

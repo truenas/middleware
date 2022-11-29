@@ -24,16 +24,16 @@ class FSLocation(enum.Enum):
 
 def path_location(path):
     if path.startswith(CLUSTER_PATH_PREFIX):
-        return FSLocation.CLUSTER.name
+        return FSLocation.CLUSTER
 
     if path.startswith(EXTERNAL_PATH_PREFIX):
-        return FSLocation.EXTERNAL.name
+        return FSLocation.EXTERNAL
 
-    return FSLocation.LOCAL.name
+    return FSLocation.LOCAL
 
 
 def strip_location_prefix(path):
-    return path.lstrip(f'{path_location(path)}:')
+    return path.lstrip(f'{path_location(path).name}:')
 
 
 def belongs_to_tree(dataset: str, root: str, recursive: bool, exclude: [str]):
