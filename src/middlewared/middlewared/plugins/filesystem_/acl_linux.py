@@ -5,7 +5,7 @@ import subprocess
 import stat as pystat
 from pathlib import Path
 
-from middlewared.utils.path import path_location
+from middlewared.utils.path import FSLocation, path_location
 from middlewared.service import private, CallError, ValidationErrors, Service
 from .acl_base import ACLBase, ACLType
 
@@ -33,7 +33,7 @@ class FilesystemService(Service, ACLBase):
 
     def _common_perm_path_validate(self, schema, data, verrors):
         loc = path_location(data['path'])
-        if loc == 'EXTERNAL':
+        if loc is FSLocation.EXTERNAL:
             verrors.add(f'{schema}.path', 'ACL operations on remote server paths are not possible')
 
         try:
@@ -65,7 +65,7 @@ class FilesystemService(Service, ACLBase):
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
             return
 
-        if loc == 'CLUSTER':
+        if loc is FSLocation.CLUSTER:
             return
 
         if any(st['realpath'].startswith(prefix) for prefix in ('/home/admin/.ssh', '/root/.ssh')):
@@ -106,7 +106,7 @@ class FilesystemService(Service, ACLBase):
         raises NotImplementedError for EXTERNAL paths
         """
 
-        if path_location(path) == 'EXTERNAL':
+        if path_location(path) is FSLocation.EXTERNAL:
             raise NotImplementedError
 
         try:
@@ -377,7 +377,7 @@ class FilesystemService(Service, ACLBase):
 
     def getacl(self, path, simplified, resolve_ids):
         path = self.middleware.call_sync('filesystem.resolve_cluster_path', path)
-        if path_location(path) == 'EXTERNAL':
+        if path_location(path) is FSLocation.EXTERNAL:
             raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
 
         if not os.path.exists(path):
