@@ -3,6 +3,6 @@ pytest-dependency
 pytest-rerunfailures
 pytest-timeout
 pytest-timestamper
-pyvmomi
+pyvmomi==7.0.3
 requests
 websocket-client
