@@ -8,6 +8,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
+from middlewared.utils.path import FSLocation
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.service.task_state import TaskStateMixin
@@ -743,6 +744,7 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
     share_task_type = 'CloudSync'
+    allowed_path_types = [FSLocation.CLUSTER, FSLocation.LOCAL]
     task_state_methods = ['cloudsync.sync', 'cloudsync.restore']
 
     class Config:
@@ -832,7 +834,7 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
-        await self.validate_path_field(data, name, verrors, permitted_locations=['LOCAL', 'CLUSTER'])
+        await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
