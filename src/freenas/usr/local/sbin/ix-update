@@ -55,7 +55,8 @@ if [ -f ${TRUENAS_DB_UPLOADED} ]; then
     fi
 fi
 
-migrate > $UPDATE_FAILED_LOG 2>&1
+echo "== Migration at $(date) ==" >> $UPDATE_FAILED_LOG
+migrate >> $UPDATE_FAILED_LOG 2>&1
 
 echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 /data/freenas-v1.db
 
