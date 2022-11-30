@@ -605,7 +605,7 @@ class KeychainCredentialService(CRUDService):
 
         with client as c:
             if data.get("token"):
-                if not c.call("auth.token", data["token"]):
+                if not c.call("auth.login_with_token", data["token"]):
                     raise CallError("Invalid token")
             elif data.get("password"):
                 args = [data["admin_username"], data["password"]]

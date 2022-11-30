@@ -29,7 +29,7 @@ def unprivileged_user():
 @pytest.fixture()
 def unprivileged_user_token(unprivileged_user):
     with client(auth=(unprivileged_user.username, unprivileged_user.password)) as c:
-        return c.call("auth.generate_token")
+        return c.call("auth.generate_token", 300, {}, True)
 
 
 @pytest.fixture(scope="module")
@@ -47,7 +47,7 @@ def unprivileged_user_with_web_shell():
 @pytest.fixture()
 def unprivileged_user_with_web_shell_token(unprivileged_user_with_web_shell):
     with client(auth=(unprivileged_user_with_web_shell.username, unprivileged_user_with_web_shell.password)) as c:
-        return c.call("auth.generate_token")
+        return c.call("auth.generate_token", 300, {}, True)
 
 
 def test_websocket_auth_session_list_terminate(unprivileged_user):
