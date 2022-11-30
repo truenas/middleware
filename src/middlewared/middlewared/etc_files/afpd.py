@@ -1,9 +1,13 @@
 import os
+import shutil
 import textwrap
 
 from middlewared.client.utils import Struct
 from middlewared.utils import osc
 from middlewared.plugins.afp import AFPLogLevel
+
+DEFAULT_CNID_DB_PATH = '/var/db/system/netatalk/CNID'
+APPLEDB_FILE = '.AppleDB'
 
 
 def get_interface(middleware, ipaddress):
@@ -15,6 +19,32 @@ def get_interface(middleware, ipaddress):
             ifaces.append(iface['name'])
 
     return ifaces
+
+
+def regular_share_migrate(middleware, from_path, to_path):
+    orig_db = f'{from_path}/{APPLEDB_FILE}'
+    new_db = f'{to_path}/{APPLEDB_FILE}'
+
+    if not os.path.exists(orig_db):
+        return
+
+    os.makedirs(to_path, mode=0o755, exist_ok=True)
+    middleware.logger.debug('Migrating CNID DB from %s to %s', orig_db, new_db)
+    shutil.copytree(orig_db, new_db)
+    shutil.rmtree(orig_db)
+
+
+def home_share_migrate(middleware, from_base, to_base):
+    with os.scandir(from_base) as it:
+        for entry in it:
+            if not entry.is_dir():
+                continue
+
+            if not os.path.exists(f'{entry.path}/{APPLEDB_FILE}'):
+                continue
+
+            target = f'{to_base}/{entry.name}'
+            regular_share_migrate(middleware, entry.path, target)
 
 
 def render(service, middleware):
@@ -30,6 +60,7 @@ def render(service, middleware):
     the bindpw and possibly LDAP schema changes) will be required for this feature to work correctly.
     """
 
+    has_default_db_path = False
     map_acls_mode = False
     ds_type = None
     afp_config = "/etc/afp.conf"
@@ -58,11 +89,11 @@ def render(service, middleware):
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
     cf_contents.append("\tafpstats = yes\n")
-    if afp.afp_srv_dbpath:
-        cf_contents.append("\tvol dbnest = no\n")
-        cf_contents.append("\tvol dbpath = %s\n" % afp.afp_srv_dbpath)
-    else:
-        cf_contents.append("\tvol dbnest = yes\n")
+    cf_contents.append("\tvol dbnest = no\n")
+
+    db_path = afp.afp_srv_dbpath or DEFAULT_CNID_DB_PATH
+    cf_contents.append("\tvol dbpath = %s\n" % db_path)
+
     if afp.afp_srv_global_aux:
         cf_contents.append("\t%s\n" % afp.afp_srv_global_aux)
 
@@ -134,6 +165,11 @@ def render(service, middleware):
 
     locked_shares = {d['id']: d for d in middleware.call_sync('sharing.afp.query', [['locked', '=', True]])}
 
+    # Create our db path
+    if db_path == DEFAULT_CNID_DB_PATH:
+        os.makedirs(db_path, mode=0o755, exist_ok=True)
+        has_default_db_path = True
+
     for share in middleware.call_sync('datastore.query', 'sharing.afp_share', [['afp_enabled', '=', True]]):
         share = Struct(share)
         if share.id in locked_shares:
@@ -142,13 +178,22 @@ def render(service, middleware):
             continue
 
         if share.afp_home:
+            share_name = 'Homes'
             cf_contents.append("[Homes]\n")
             cf_contents.append("\tbasedir regex = %s\n" % share.afp_path)
+            share_migrate_fn = home_share_migrate
             if share.afp_name and share.afp_name != "Homes":
                 cf_contents.append("\thome name = %s\n" % share.afp_name)
         else:
+            share_name = share.afp_name
+            share_migrate_fn = regular_share_migrate
             cf_contents.append("[%s]\n" % share.afp_name)
             cf_contents.append("\tpath = %s\n" % share.afp_path)
+
+        if not os.path.exists(f'{db_path}/{share_name}') and has_default_db_path:
+            to_create = f'{db_path}/{share_name}'
+            share_migrate_fn(middleware, share.afp_path, to_create)
+
         if share.afp_allow:
             cf_contents.append("\tvalid users = %s\n" % share.afp_allow)
         if share.afp_deny:
@@ -182,8 +227,8 @@ def render(service, middleware):
         # Do not fail if aux params are not properly entered by the user
         try:
             aux_params = ["\t{0}\n".format(p) for p in share.afp_auxparams.split("\n")]
-        except:
-            pass
+        except Exception:
+            middleware.logger.debug('Failed to parse AFP auxiliary parameters', exc_info=True)
         else:
             cf_contents += aux_params
         # Update TimeMachine special files
