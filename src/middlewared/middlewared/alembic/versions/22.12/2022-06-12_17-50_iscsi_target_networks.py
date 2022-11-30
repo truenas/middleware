@@ -24,13 +24,23 @@ def upgrade():
 
     conn = op.get_bind()
 
-    target_groups = [dict(row) for row in conn.execute("SELECT * FROM services_iscsitargetgroups").fetchall()]
+    target_groups = [
+        dict(row)
+        for row in conn.execute("""
+            SELECT *
+            FROM services_iscsitargetgroups
+            WHERE iscsi_target_initiatorgroup_id IS NOT NULL
+        """).fetchall()
+    ]
     for target_group in target_groups:
-        initiator = dict(conn.execute(
+        initiator = conn.execute(
             "SELECT * FROM services_iscsitargetauthorizedinitiator WHERE id = ?",
             [target_group['iscsi_target_initiatorgroup_id']]
-        ).first())
+        ).fetchone()
+        if initiator is None:
+            continue
 
+        initiator = dict(initiator)
 
         auth_network = initiator['iscsi_target_initiator_auth_network']
 
