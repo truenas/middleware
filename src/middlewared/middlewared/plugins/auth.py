@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 import errno
 import re
-import socket
-import struct
 import time
 import warnings
 
@@ -19,7 +17,8 @@ from middlewared.service import (
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils.nginx import get_peer_process, get_remote_addr_port
+from middlewared.utils.nginx import get_peer_process
+from middlewared.utils.origin import UnixSocketOrigin, TCPIPOrigin
 from middlewared.utils.crypto import generate_token
 from middlewared.validators import Range
 
@@ -28,14 +27,14 @@ class TokenManager:
     def __init__(self):
         self.tokens = {}
 
-    def create(self, ttl, attributes, parent_credentials):
+    def create(self, ttl, attributes, match_origin, parent_credentials):
         attributes = attributes or {}
 
         token = generate_token(48, url_safe=True)
-        self.tokens[token] = Token(self, token, ttl, attributes, parent_credentials)
+        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, parent_credentials)
         return self.tokens[token]
 
-    def get(self, token):
+    def get(self, token, origin):
         token = self.tokens.get(token)
         if token is None:
             return None
@@ -44,6 +43,12 @@ class TokenManager:
             self.tokens.pop(token.token)
             return None
 
+        if token.match_origin:
+            if not isinstance(origin, type(token.match_origin)):
+                return None
+            if not token.match_origin.match(origin):
+                return None
+
         return token
 
     def destroy(self, token):
@@ -51,11 +56,12 @@ class TokenManager:
 
 
 class Token:
-    def __init__(self, manager, token, ttl, attributes, parent_credentials):
+    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials):
         self.manager = manager
         self.token = token
         self.ttl = ttl
         self.attributes = attributes
+        self.match_origin = match_origin
         self.parent_credentials = parent_credentials
 
         self.last_used_at = time.monotonic()
@@ -89,9 +95,7 @@ class SessionManager:
             app.authenticated_credentials = credentials
             return
 
-        origin = self._get_origin(app)
-
-        session = Session(self, origin, credentials, app)
+        session = Session(self, credentials, app)
         self.sessions[app.session_id] = session
 
         app.authenticated = True
@@ -113,18 +117,6 @@ class SessionManager:
                 self.middleware.send_event("auth.sessions", "REMOVED", fields=dict(id=app.session_id))
 
         app.authenticated = False
-
-    def _get_origin(self, app):
-        sock = app.request.transport.get_extra_info("socket")
-        if sock.family == socket.AF_UNIX:
-            return "UNIX_SOCKET"
-
-        remote_addr, remote_port = get_remote_addr_port(app.request)
-
-        if ":" in remote_addr:
-            return f"[{remote_addr}]:{remote_port}"
-        else:
-            return f"{remote_addr}:{remote_port}"
 
     def _app_on_message(self, app, message):
         session = self.sessions.get(app.session_id)
@@ -154,9 +146,8 @@ def dump_credentials(credentials):
 
 
 class Session:
-    def __init__(self, manager, origin, credentials, app):
+    def __init__(self, manager, credentials, app):
         self.manager = manager
-        self.origin = origin
         self.credentials = credentials
         self.app = app
 
@@ -164,7 +155,7 @@ class Session:
 
     def dump(self):
         return {
-            "origin": self.origin,
+            "origin": str(self.app.origin),
             **dump_credentials(self.credentials),
             "created_at": datetime.utcnow() - timedelta(seconds=time.monotonic() - self.created_at),
         }
@@ -194,18 +185,15 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
 
 def is_internal_session(session):
-    if session.origin == "UNIX_SOCKET":
+    if isinstance(session.app.origin, UnixSocketOrigin):
         return True
 
-    host, port = session.origin.rsplit(":", 1)
-    host = host.strip("[]")
-    port = int(port)
+    if isinstance(session.app.origin, TCPIPOrigin):
+        if session.app.origin.addr in ["127.0.0.1", "::1"]:
+            return True
 
-    if host in ["127.0.0.1", "::1"]:
-        return True
-
-    if host in ["169.254.10.1", "169.254.10.2", "169.254.10.20", "169.254.10.80"] and port <= 1024:
-        return True
+        if session.app.origin.addr in ["169.254.10.1", "169.254.10.2"] and session.app.origin.port <= 1024:
+            return True
 
     return False
 
@@ -333,10 +321,14 @@ class AuthService(Service):
         return await self.middleware.call('auth.authenticate', username, password) is not None
 
     @no_auth_required
-    @accepts(Int('ttl', default=600, null=True), Dict('attrs', additional_attrs=True))
+    @accepts(
+        Int('ttl', default=600, null=True),
+        Dict('attrs', additional_attrs=True),
+        Bool('match_origin', default=False),
+    )
     @returns(Str('token'))
     @pass_app(rest=True)
-    def generate_token(self, app, ttl, attrs):
+    def generate_token(self, app, ttl, attrs, match_origin):
         """
         Generate a token to be used for authentication.
 
@@ -344,6 +336,8 @@ class AuthService(Service):
         has been inactive for a time greater than this.
 
         `attrs` is a general purpose object/dictionary to hold information about the token.
+
+        `match_origin` will only allow using this token from the same IP address or with the same user UID.
         """
         if not app.authenticated:
             raise CallError('Not authenticated', errno.EACCES)
@@ -351,7 +345,12 @@ class AuthService(Service):
         if ttl is None:
             ttl = 600
 
-        token = self.token_manager.create(ttl, attrs, app.authenticated_credentials)
+        token = self.token_manager.create(
+            ttl,
+            attrs,
+            app.origin if match_origin else None,
+            app.authenticated_credentials,
+        )
 
         return token.token
 
@@ -365,8 +364,8 @@ class AuthService(Service):
             return None
 
     @private
-    def get_token_for_action(self, token_id, method, resource):
-        if (token := self.token_manager.tokens.get(token_id)) is None:
+    def get_token_for_action(self, token_id, origin, method, resource):
+        if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
         if token.attributes:
@@ -378,8 +377,8 @@ class AuthService(Service):
         return TokenSessionManagerCredentials(self.token_manager, token)
 
     @private
-    def get_token_for_shell_application(self, token_id):
-        if (token := self.token_manager.tokens.get(token_id)) is None:
+    def get_token_for_shell_application(self, token_id, origin):
+        if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
         if token.attributes:
@@ -457,7 +456,7 @@ class AuthService(Service):
         """
         Authenticate session using token generated with `auth.generate_token`.
         """
-        token = self.token_manager.get(token)
+        token = self.token_manager.get(token, app.origin)
         if token is None:
             return False
 
@@ -630,18 +629,17 @@ class TwoFactorAuthService(ConfigService):
 
 def check_permission(middleware, app):
     """Authenticates connections coming from loopback and from root user."""
-    sock = app.request.transport.get_extra_info('socket')
-    if sock.family == socket.AF_UNIX:
-        peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
-        pid, uid, gid = struct.unpack('3i', peercred)
-        if uid == 0:
+    origin = app.origin
+
+    if isinstance(origin, UnixSocketOrigin):
+        if origin.uid == 0:
             user = middleware.call_sync('auth.authenticate_root')
         else:
             try:
                 local_user = middleware.call_sync(
                     'datastore.query',
                     'account.bsdusers',
-                    [['bsdusr_uid', '=', uid]],
+                    [['bsdusr_uid', '=', origin.uid]],
                     {'get': True, 'prefix': 'bsdusr_'},
                 )
             except MatchNotFound:
@@ -654,20 +652,20 @@ def check_permission(middleware, app):
         AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
         return
 
-    remote_addr, remote_port = get_remote_addr_port(app.request)
-    if not (remote_addr.startswith('127.') or remote_addr == '::1'):
-        return
+    if isinstance(origin, TCPIPOrigin):
+        if not (origin.addr.startswith('127.') or origin.addr == '::1'):
+            return
 
-    # This is an expensive operation, but it is only performed for localhost TCP connections which are rare
-    if process := get_peer_process(remote_addr, remote_port):
-        try:
-            euid = process.uids().effective
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            if euid == 0:
-                AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
-                return
+        # This is an expensive operation, but it is only performed for localhost TCP connections which are rare
+        if process := get_peer_process(origin.addr, origin.port):
+            try:
+                euid = process.uids().effective
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                if euid == 0:
+                    AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
+                    return
 
 
 def setup(middleware):

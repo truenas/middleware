@@ -16,6 +16,8 @@ from .job import Job
 from .pipe import Pipes
 from .schema import Error as SchemaError
 from .service_exception import adapt_exception, CallError, MatchNotFound, ValidationError, ValidationErrors
+from .utils.nginx import get_remote_addr_port
+from .utils.origin import TCPIPOrigin
 
 
 async def authenticate(middleware, request, method, resource):
@@ -32,7 +34,8 @@ async def authenticate(middleware, request, method, resource):
         token = None
 
     if token is not None:
-        token = await middleware.call('auth.get_token_for_action', token, method, resource)
+        origin = TCPIPOrigin(*await middleware.run_in_thread(get_remote_addr_port, request))
+        token = await middleware.call('auth.get_token_for_action', token, origin, method, resource)
         if token is None:
             raise web.HTTPForbidden()
 
