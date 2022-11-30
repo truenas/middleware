@@ -13,6 +13,7 @@ from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from .utils.nginx import get_remote_addr_port
+from .utils.origin import UnixSocketOrigin, TCPIPOrigin
 from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
@@ -77,7 +78,7 @@ class LoopMonitorIgnoreFrame:
     cut_below: bool = False
 
 
-class Application(object):
+class Application:
 
     def __init__(self, middleware, loop, request, response):
         self.middleware = middleware
@@ -105,6 +106,17 @@ class Application(object):
         """
         self.__callbacks = defaultdict(list)
         self.__subscribed = {}
+
+    @functools.cached_property
+    def origin(self):
+        sock = self.request.transport.get_extra_info("socket")
+        if sock.family == socket.AF_UNIX:
+            peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
+            pid, uid, gid = struct.unpack('3i', peercred)
+            return UnixSocketOrigin(pid, uid, gid)
+
+        remote_addr, remote_port = get_remote_addr_port(self.request)
+        return TCPIPOrigin(remote_addr, remote_port)
 
     def register_callback(self, name, method):
         assert name in ('on_message', 'on_close')
@@ -720,7 +732,8 @@ class ShellApplication(object):
                 if not token:
                     continue
 
-                token = await self.middleware.call('auth.get_token_for_shell_application', token)
+                origin = TCPIPOrigin(*await self.middleware.run_in_thread(get_remote_addr_port, request))
+                token = await self.middleware.call('auth.get_token_for_shell_application', token, origin)
                 if not token:
                     await ws.send_json({
                         'msg': 'failed',
