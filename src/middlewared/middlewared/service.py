@@ -2198,16 +2198,17 @@ class CoreService(Service):
 
             try:
                 msg = await self.middleware.call(method, *p)
-                error = None
+                status = {"result": msg, "error": None}
 
                 if isinstance(msg, Job):
                     b_job = msg
-                    msg = await msg.wait()
+                    status["job_id"] = b_job.id
+                    status["result"] = await msg.wait()
 
                     if b_job.error:
-                        error = b_job.error
+                        status["error"] = b_job.error
 
-                statuses.append({"result": msg, "error": error})
+                statuses.append(status)
             except Exception as e:
                 statuses.append({"result": None, "error": str(e)})
 
