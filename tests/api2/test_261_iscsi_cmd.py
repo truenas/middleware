@@ -451,7 +451,7 @@ def test_05_chap():
                                 assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
                                 assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
 
-def test_06_chap():
+def test_06_mutual_chap():
     """
     This tests that Mutual CHAP auth operates as expected.
     """
