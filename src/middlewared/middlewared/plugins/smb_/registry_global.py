@@ -13,6 +13,7 @@ DEFAULT_GLOBAL_PARAMETERS = {
     "printing": {"smbconf": "printing", "default": "bsd"},
     "printcap": {"smbconf": "printcap", "default": "/dev/null"},
     "fruit:nfs_aces": {"smbconf": "fruit:nfs_aces", "default": False},
+    "fruit:zero_file_id": {"smbconf": "fruit:zero_file_id", "default": False},
     "disable spoolss": {"smbconf": "disable spoolss", "default": True},
     "dos filemode": {"smbconf": "dos filemode", "default": True},
     "kernel change notify": {"smbconf": "kernel change notify", "default": True},
