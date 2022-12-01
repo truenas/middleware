@@ -217,7 +217,15 @@ if support_virtualization:
         assert isinstance(results.json(), dict), results.text
         data['nic_id'] = results.json()['id']
 
-    def test_24_add_a_nic_attach_nic_device(data):
+    def test_24_verify_nic_device_by_id(data):
+        results = GET(f'/vm/device/id/{data["nic_id"]}/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['dtype'] == 'NIC', results.text
+        assert results.json()['vm'] == data["vmid"], results.text
+
+    def test_25_add_a_nic_attach_nic_device(data):
+        global nic_list
         nic_list = list(GET('/vm/device/nic_attach_choices/').json().keys())
         payload = {
             'attributes': {'nic_attach': nic_list[0]}
@@ -226,18 +234,36 @@ if support_virtualization:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
 
+    def test_26_verify_nic_device_nic_attach_attributes(data):
+        results = GET(f'/vm/device/id/{data["nic_id"]}/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['attributes']['nic_attach'] == nic_list[0], results.text
+
     @pytest.mark.parametrize('device_id', list(DEVICE.keys()))
-    def test_12_delete_all_device(device_id, data):
+    def test_27_delete_devices(device_id, data):
         results = DELETE(f'/vm/device/id/{data[device_id]}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
 
-    def test_10_delete_vm(data):
+    def test_28_verify_vm_device_list_is_not_empty_before_deleting_the_vm(data):
+        results = GET(f'/vm/device/?vm={data["vmid"]}')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), list), results.text
+        assert len(results.json()) > 0, results.text
+
+    def test_29_delete_the_vm(data):
         results = DELETE(f'/vm/id/{data["vmid"]}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
 
-    def test_20_delete_disk_and_cdrom_dataset(request):
+    def test_30_verify_vm_device_list_is_empty_after_deleting_the_vm(data):
+        results = GET(f'/vm/device/?vm={data["vmid"]}')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), list), results.text
+        assert len(results.json()) == 0, results.text
+
+    def test_31_delete_disk_and_cdrom_dataset(request):
         results = DELETE(f"/pool/dataset/id/{DISK_DATASET_URL}/")
         assert results.status_code == 200, results.text
 
