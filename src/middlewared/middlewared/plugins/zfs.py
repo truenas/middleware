@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import libzfs
 
-from middlewared.plugins.zfs_.utils import zvol_path_to_name, unlocked_zvols_fast
+from middlewared.plugins.zfs_.utils import zvol_path_to_name, unlocked_zvols_fast, get_snapshot_count_cached
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.schema import accepts, returns, Any, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import (
@@ -521,6 +521,9 @@ class ZFSDatasetService(CRUDService):
         `query-options.extra.snapshots` is a boolean which when set will retrieve snapshots for the dataset in question
         by adding a snapshots key to the dataset data.
 
+        `query-options.extra.snapshots_count` is a boolean key which when set will retrieve snapshot counts for the
+        datasets returned by adding a snapshot_count key to the dataset data.
+
         `query-options.extra.retrieve_children` is a boolean set to true by default. When set to true, will retrieve
         all children datasets which can cause a performance penalty. When set to false, will not retrieve children
         datasets which does not incur the performance penalty.
@@ -551,6 +554,7 @@ class ZFSDatasetService(CRUDService):
         retrieve_properties = extra.get('retrieve_properties', True)
         retrieve_children = extra.get('retrieve_children', True)
         snapshots = extra.get('snapshots')
+        snapshots_count = extra.get('snapshots_count')
         snapshots_recursive = extra.get('snapshots_recursive')
         snapshots_properties = extra.get('snapshots_properties', [])
         if not retrieve_properties:
@@ -561,6 +565,11 @@ class ZFSDatasetService(CRUDService):
 
         with libzfs.ZFS() as zfs:
             # Handle `id` or `name` filter specially to avoiding getting all datasets
+            pop_snapshots_changed = False
+            if snapshots_count and props is not None and 'snapshots_changed' not in props:
+                props.append('snapshots_changed')
+                pop_snapshots_changed = True
+
             kwargs = dict(
                 props=props, user_props=user_properties, snapshots=snapshots, retrieve_children=retrieve_children,
                 snapshots_recursive=snapshots_recursive, snapshot_props=snapshots_properties
@@ -576,6 +585,17 @@ class ZFSDatasetService(CRUDService):
                 datasets = self.flatten_datasets(datasets)
             else:
                 datasets = list(datasets)
+
+            if snapshots_count:
+                prefetch = not (len(kwargs.get('datasets', [])) == 1)
+                get_snapshot_count_cached(
+                    self.middleware,
+                    zfs,
+                    datasets,
+                    prefetch,
+                    True,
+                    pop_snapshots_changed
+                )
 
         return filter_list(datasets, filters, options)
 
@@ -1152,6 +1172,31 @@ class ZFSSnapshot(CRUDService):
         process_pool = True
         cli_namespace = 'storage.snapshot'
 
+    @private
+    def count(self, dataset_names='*', recursive=False):
+        kwargs = {
+            'user_props': False,
+            'props': ['snapshots_changed'],
+            'retrieve_children': (dataset_names == '*' or recursive)
+        }
+        if dataset_names != '*':
+            if not isinstance(dataset_names, list):
+                raise ValueError("dataset_names must be '*' or a list")
+
+            kwargs['datasets'] = dataset_names
+
+        prefetch = True
+        if dataset_names != '*' and len(dataset_names) == 1 and not recursive:
+            prefetch = False
+
+        try:
+            with libzfs.ZFS() as zfs:
+                datasets = zfs.datasets_serialized(**kwargs)
+                return get_snapshot_count_cached(self.middleware, zfs, datasets, prefetch)
+
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+
     @filterable
     def query(self, filters, options):
         """
@@ -1176,6 +1221,15 @@ class ZFSSnapshot(CRUDService):
         ):
             kwargs = {}
             other_filters = []
+
+            if not filters and options.get('count'):
+                snaps = self.count()
+                cnt = 0
+                for entry in snaps.values():
+                    cnt += entry
+
+                return cnt
+
             for f in filters:
                 if len(f) == 3 and f[0] in ['pool', 'dataset'] and f[1] in ['=', 'in']:
                     if f[1] == '=':

@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 
@@ -33,10 +31,10 @@ class SnapshotCountAlertSource(AlertSource):
         max_total = await self.middleware.call("pool.snapshottask.max_total_count")
 
         total = 0
-        datasets = defaultdict(lambda: 0)
-        for snapshot in await self.middleware.call("zfs.snapshot.query", [], {"select": ["name"]}):
-            total += 1
-            datasets[snapshot["name"].split("@")[0]] += 1
+        datasets = await self.middleware.call("zfs.snapshot.count")
+
+        for cnt in datasets.values():
+            total += cnt
 
         if total > max_total:
             return Alert(
