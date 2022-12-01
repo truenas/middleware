@@ -1,5 +1,5 @@
 from middlewared.plugins.smb_.registry_base import RegObj, RegistrySchema
-from middlewared.utils.path import path_location, strip_location_prefix
+from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 
 
 FRUIT_CATIA_MAPS = [
@@ -201,13 +201,13 @@ class ShareSchema(RegistrySchema):
         loc = path_location(val)
         path = strip_location_prefix(val)
 
-        if loc == 'EXTERNAL':
+        if loc is FSLocation.EXTERNAL:
             data_out['msdfs root'] = {'parsed': True}
             data_out['msdfs proxy'] = {'parsed': path}
             path = '/var/empty'
 
         path_suffix = data_in["path_suffix"]
-        if path_suffix and loc != 'EXTERNAL':
+        if path_suffix and loc is not FSLocation.EXTERNAL:
             path = '/'.join([path, path_suffix])
 
         data_out['path'] = {"parsed": path}
@@ -302,7 +302,11 @@ class ShareSchema(RegistrySchema):
         if not val:
             data_out['nt acl support'] = {"parsed": False}
 
-        if data_in['cluster_volname']:
+        loc = path_location(data_in['path'])
+        if loc == FSLocation.EXTERNAL:
+            return
+
+        elif data_in['cluster_volname']:
             data_out['vfs objects']['parsed'].append("acl_xattr")
             return
 
