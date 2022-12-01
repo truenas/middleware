@@ -4089,7 +4089,7 @@ class PoolDatasetService(CRUDService):
                     continue
 
             elif q['quota_type'] not in ['PROJECT', 'PROJECTOBJ']:
-                if q['quota_value'] is None:
+                if not q['quota_value']:
                     q['quota_value'] = 'none'
 
                 xid = None
