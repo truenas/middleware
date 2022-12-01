@@ -9,16 +9,19 @@ import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, POST, DELETE
+from functions import GET, POST, PUT, DELETE
 from auto_config import dev_test, ha, pool_name, ip
 from middlewared.test.integration.assets.pool import dataset
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
 support_virtualization = GET('/vm/supports_virtualization/', controller_a=ha).json()
-DATASET = f'{pool_name}/disks'
-DATASET_URL = DATASET.replace('/', '%2F')
-DATASET_PATH = f'/mnt/{DATASET}'
+DISK_DATASET = f'{pool_name}/disks'
+DISK_DATASET_URL = DISK_DATASET.replace('/', '%2F')
+DISK_DATASET_PATH = f'/mnt/{DISK_DATASET}'
+CDROM_DATASET = f'{pool_name}/cdrom'
+CDROM_DATASET_URL = CDROM_DATASET.replace('/', '%2F')
+CDROM_DATASET_PATH = f'/mnt/{CDROM_DATASET}'
 DEVICE = {'disk_id': 'DISK', 'display_id': 'DISPLAY', 'cdrom_id': 'CDROM'}
 
 
@@ -39,19 +42,63 @@ def test_01_vm_disk_choices(request):
 if support_virtualization:
     @pytest.mark.parametrize('bind', ['0.0.0.0', '::', ip])
     def test_02_verify_vm_device_bind_choices(bind):
-        results = GET('/vm/device/bind_choices')
+        results = GET('/vm/device/bind_choices/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()[bind] == bind, results.text
 
-    def test_02_create_dataset_for_disk():
-        payload = {
-            "name": DATASET,
-        }
-        results = POST("/pool/dataset/", payload)
+    def test_03_verify_vm_device_iommu_enabled_return_a_boolean():
+        results = GET('/vm/device/iommu_enabled/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), bool), results.text
+
+    def test_04_get_vm_device_iotype_choices():
+        results = GET('/vm/device/iotype_choices/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['NATIVE'] == 'NATIVE', results.text
+
+    def test_05_verify_vm_device_nic_attach_choices():
+        interface_results = GET('/interface/')
+        assert interface_results.status_code == 200, interface_results.text
+        assert isinstance(interface_results.json(), list), interface_results.text
+
+        nic_results = GET('/vm/device/nic_attach_choices/')
+        assert nic_results.status_code == 200, nic_results.text
+        assert isinstance(nic_results.json(), dict), nic_results.text
+
+        for interface in interface_results.json():
+            assert nic_results.json()[interface['name']] == interface['name'], nic_results.text
+
+    def test_06_get_vm_passthrough_device_choices():
+        results = GET('/vm/device/passthrough_device_choices/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+
+    def test_07_get_vm_device_pptdev_choices():
+        results = GET('/vm/device/pptdev_choices/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+
+    def test_08_get_vm_device_usb_controller_choices():
+        results = GET('/vm/device/usb_controller_choices/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['qemu-xhci'] == 'qemu-xhci', results.text
+
+    def test_09_get_vm_device_usb_controller_choices():
+        results = GET('/vm/device/usb_passthrough_choices/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+
+    def test_10_create_dataset_for_disk_and_cdrom():
+        results = POST("/pool/dataset/", payload={"name": DISK_DATASET})
         assert results.status_code == 200, results.text
 
-    def test_03_creating_a_vm_for_device_testing(data):
+        results = POST("/pool/dataset/", payload={"name": CDROM_DATASET})
+        assert results.status_code == 200, results.text
+
+    def test_11_creating_a_vm_for_device_testing(data):
         global payload
         payload = {
             'name': 'devicetest',
@@ -66,64 +113,133 @@ if support_virtualization:
         assert isinstance(results.json(), dict), results.text
         data['vmid'] = results.json()['id']
 
-    def test_04_create_a_disk_device(data):
+    def test_12_create_a_disk_device(data):
         payload = {
             'dtype': 'DISK',
             'vm': data['vmid'],
-            'attributes': {'path': DATASET_PATH}
+            'attributes': {'path': DISK_DATASET_PATH}
         }
-        results = POST('/vm/device', payload)
+        results = POST('/vm/device/', payload)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         data['disk_id'] = results.json()['id']
 
-    def test_05_create_a_display_device(data):
+    def test_13_verify_disk_device_by_id(data):
+        results = GET(f'/vm/device/id/{data["disk_id"]}/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['dtype'] == 'DISK', results.text
+        assert results.json()['vm'] == data["vmid"], results.text
+        assert results.json()['attributes']['path'] == DISK_DATASET_PATH, results.text
+
+    def test_14_create_a_display_device(data):
         payload = {
             'dtype': 'DISPLAY',
             'vm': data['vmid'],
             'attributes': {'resolution': '1920x1080'}
         }
-        results = POST('/vm/device', payload)
+        results = POST('/vm/device/', payload)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         data['display_id'] = results.json()['id']
 
-    def test_06_create_a_cdrom_device(data):
+    def test_15_verify_diplay_device_by_id(data):
+        results = GET(f'/vm/device/id/{data["display_id"]}/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['dtype'] == 'DISPLAY', results.text
+        assert results.json()['vm'] == data["vmid"], results.text
+        assert results.json()['attributes']['resolution'] == '1920x1080', results.text
+
+    def test_16_create_a_cdrom_device(data):
         payload = {
             'dtype': 'CDROM',
-            'vm': 1,
-            'attributes': {'path': DATASET_PATH}
+            'vm': data["vmid"],
+            'attributes': {'path': CDROM_DATASET_PATH}
         }
-        results = POST('/vm/device', payload)
+        results = POST('/vm/device/', payload)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         data['cdrom_id'] = results.json()['id']
 
-    def test_07_verify_vm_device_list():
+    def test_17_verify_cdrom_device_by_id(data):
+        results = GET(f'/vm/device/id/{data["cdrom_id"]}/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['dtype'] == 'CDROM', results.text
+        assert results.json()['vm'] == data["vmid"], results.text
+        assert results.json()['attributes']['path'] == CDROM_DATASET_PATH, results.text
+
+    def test_18_verify_vm_device_list():
         results = GET('/vm/device/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
         assert len(results.json()) > 0, results.text
 
     @pytest.mark.parametrize('device_id', list(DEVICE.keys()))
-    def test_08_get_vm_device_instance(data, device_id):
+    def test_19_get_vm_device_instance(data, device_id):
         results = POST('/vm/device/get_instance/', {'id': data[device_id]})
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()['dtype'] == DEVICE[device_id], results.text
         assert results.json()['vm'] == data["vmid"], results.text
 
-    def test_09_get_vm_display_devices(data):
+    def test_20_get_vm_display_devices(data):
         results = POST('/vm/get_display_devices/', data["vmid"])
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
         assert results.json()[0]['vm'] == data["vmid"], results.json()
+
+    def test_21_get_usb_passthrough_device_info(data):
+        usb_devices = list(GET('/vm/device/usb_passthrough_choices/').json().keys())
+        results = POST('/vm/device/usb_passthrough_device/', usb_devices[0])
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+
+    def test_22_change_display_resolution(data):
+        payload = {
+            'attributes': {'resolution': '1280x720'}
+        }
+        results = PUT(f'/vm/device/id/{data["display_id"]}/', payload)
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['attributes']['resolution'] == '1280x720', results.text
+        assert results.json()['vm'] == data["vmid"], results.json()
+
+    def test_23_create_a_nic_device(data):
+        payload = {
+            'dtype': 'NIC',
+            'vm': data["vmid"],
+            'attributes': {}
+        }
+        results = POST('/vm/device/', payload)
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        data['nic_id'] = results.json()['id']
+
+    def test_24_add_a_nic_attach_nic_device(data):
+        nic_list = list(GET('/vm/device/nic_attach_choices/').json().keys())
+        payload = {
+            'attributes': {'nic_attach': nic_list[0]}
+        }
+        results = PUT(f'/vm/device/id/{data["nic_id"]}/', payload)
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+
+    @pytest.mark.parametrize('device_id', list(DEVICE.keys()))
+    def test_12_delete_all_device(device_id, data):
+        results = DELETE(f'/vm/device/id/{data[device_id]}/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), bool), results.text
 
     def test_10_delete_vm(data):
         results = DELETE(f'/vm/id/{data["vmid"]}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
 
-    def test_20_delete_disk_dataset(request):
-        results = DELETE(f"/pool/dataset/id/{DATASET_URL}/")
+    def test_20_delete_disk_and_cdrom_dataset(request):
+        results = DELETE(f"/pool/dataset/id/{DISK_DATASET_URL}/")
+        assert results.status_code == 200, results.text
+
+        results = DELETE(f"/pool/dataset/id/{CDROM_DATASET_URL}/")
         assert results.status_code == 200, results.text
