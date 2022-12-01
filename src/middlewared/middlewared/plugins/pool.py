@@ -3027,6 +3027,7 @@ class PoolDatasetService(CRUDService):
         retrieve_children = extra.get('retrieve_children', True)
         props = extra.get('properties')
         snapshots = extra.get('snapshots')
+        snapshots_count = extra.get('snapshots_count')
         snapshots_recursive = extra.get('snapshots_recursive')
         return filter_list(
             self.__transform(self.middleware.call_sync(
@@ -3037,6 +3038,7 @@ class PoolDatasetService(CRUDService):
                         'properties': props,
                         'snapshots': snapshots,
                         'snapshots_recursive': snapshots_recursive,
+                        'snapshots_count': snapshots_count,
                         'snapshots_properties': extra.get('snapshots_properties', [])
                     }
                 }
