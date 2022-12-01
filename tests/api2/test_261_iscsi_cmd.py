@@ -250,11 +250,12 @@ def test_00_setup(request):
     assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "RUNNING", results.text
 
-def test_01_inquiry():
+def test_01_inquiry(request):
     """
     This tests the Vendor and Product information in an INQUIRY response
     are 'TrueNAS' and 'iSCSI Disk' respectively.
     """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -271,12 +272,13 @@ def test_01_inquiry():
                             assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
                             assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
 
-def test_02_read_capacity16():
+def test_02_read_capacity16(request):
     """
     This tests that the target created returns the correct size to READ CAPACITY (16).
 
     It performs this test with a couple of sizes for both file & zvol based targets.
     """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -394,28 +396,31 @@ def target_test_readwrite16(ip, iqn):
         r = s.read16(10,2)
         assert r.datain == deadbeef*2, r.datain
 
-def test_03_readwrite16_file_extent():
+def test_03_readwrite16_file_extent(request):
     """
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a file extent based iSCSI target.
     """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with configured_target_to_file_extent(target_name, pool_name):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
 
-def test_04_readwrite16_zvol_extent():
+def test_04_readwrite16_zvol_extent(request):
     """
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a zvol extent based iSCSI target.
     """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with configured_target_to_zvol_extent(target_name, zvol):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
 
-def test_05_chap():
+def test_05_chap(request):
     """
     This tests that CHAP auth operates as expected.
     """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     with initiator() as initiator_config:
@@ -451,10 +456,11 @@ def test_05_chap():
                                 assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
                                 assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
 
-def test_06_mutual_chap():
+def test_06_mutual_chap(request):
     """
     This tests that Mutual CHAP auth operates as expected.
     """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     peer_user = "user2"
