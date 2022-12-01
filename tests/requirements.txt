@@ -6,3 +6,5 @@ pytest-timestamper
 pyvmomi
 requests
 websocket-client
+PYSCSI
+cython-iscsi
