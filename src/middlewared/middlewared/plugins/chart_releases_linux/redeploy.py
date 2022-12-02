@@ -39,7 +39,7 @@ class ChartReleaseService(Service):
                 'operation': 'UPDATE',
                 'isUpdate': True,
             }
-        }, self.middleware)
+        }, self.middleware, release_name)
         if update_pool:
             for index, host_path in enumerate(config.get('ixVolumes', [])):
                 new_pool = release['path'].split('/')[2]

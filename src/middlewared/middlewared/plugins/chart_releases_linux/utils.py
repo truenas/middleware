@@ -37,7 +37,7 @@ def get_action_context(release_name):
     })
 
 
-async def add_context_to_configuration(config, context_dict, middleware):
+async def add_context_to_configuration(config, context_dict, middleware, release_name):
     context_dict[CONTEXT_KEY_NAME]['kubernetes_config'] = {
         k: v for k, v in (await middleware.call('kubernetes.config')).items()
         if k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
@@ -50,6 +50,7 @@ async def add_context_to_configuration(config, context_dict, middleware):
             'global': context_dict,
             **context_dict
         })
+    config['release_name'] = release_name
     return config
 
 
