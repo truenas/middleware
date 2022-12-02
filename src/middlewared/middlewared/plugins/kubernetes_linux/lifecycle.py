@@ -83,8 +83,9 @@ class KubernetesService(Service):
 
     @private
     async def iptable_rules(self):
+        config = await self.middleware.call('kubernetes.config')
         node_ip = await self.middleware.call('kubernetes.node_ip')
-        if node_ip in ('0.0.0.0', '::'):
+        if node_ip in ('0.0.0.0', '::') or config['passthrough_mode']:
             # This shouldn't happen but if it does, we don't add iptables in this case
             # Even if user selects 0.0.0.0, k8s is going to auto select a node ip in this case
             return []
@@ -282,12 +283,16 @@ class KubernetesService(Service):
         if os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 try:
-                    on_disk_config = json.loads(f.read())
+                    on_disk_config: dict = json.loads(f.read())
                 except json.JSONDecodeError:
                     pass
                 else:
+                    on_disk_config.setdefault('passthrough_mode', False)
+
                     clean_start = not all(
-                        config[k] == on_disk_config.get(k) for k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
+                        config[k] == on_disk_config.get(k) for k in (
+                            'cluster_cidr', 'service_cidr', 'cluster_dns_ip', 'passthrough_mode',
+                        )
                     )
 
         if clean_start and self.middleware.call_sync(
