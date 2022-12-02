@@ -233,6 +233,7 @@ class EtcService(Service):
         ],
         'docker': [
             {'type': 'mako', 'path': 'systemd/system/docker.service.d/http-proxy.conf', 'checkpoint': None},
+            {'type': 'mako', 'path': 'docker.env', 'checkpoint': None},
             {'type': 'py', 'path': 'docker', 'checkpoint': None},
         ],
         'motd': [
