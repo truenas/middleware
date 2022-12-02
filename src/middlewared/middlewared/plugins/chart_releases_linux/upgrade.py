@@ -292,7 +292,7 @@ class ChartReleaseService(Service):
                     'preUpgradeRevision': release['version'],
                 }
             }
-        }, self.middleware)
+        }, self.middleware, release_name)
 
         job.set_progress(60, 'Upgrading chart release version')
 
