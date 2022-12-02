@@ -1,4 +1,11 @@
-from psutil import disk_io_counters
+from collections import namedtuple
+
+dstats = namedtuple('dstats', [
+    'read_count', 'write_count',
+    'read_bytes', 'write_bytes',
+    'read_time', 'write_time',
+    'busy_time',
+])
 
 
 class DiskStats:
@@ -6,6 +13,25 @@ class DiskStats:
         self.interval = interval
         self.prev_data = prev_data
         self.ignore = ('sr', 'md', 'dm')
+        self.sector_size = 512
+
+    def read_procfs_diskstats(self):
+        rv = {}
+        with open('/proc/diskstats') as f:
+            for line in f:
+                fields = line.split()
+                if len(fields) != 20:
+                    continue
+
+                rds, _, rbytes, rtime, wrs, _, wbytes, wtime, _, btime, _ = map(int, fields[3:14])
+                rbytes *= self.sector_size
+                wbytes *= self.sector_size
+
+                # fields[2] is name of disk
+                name = fields[2]
+                rv[name] = dstats(*(rds, wrs, rbytes, wbytes, rtime, wtime, btime))
+
+        return rv
 
     def get_disk(self, disk):
         if disk.startswith(self.ignore):
@@ -25,7 +51,7 @@ class DiskStats:
 
     def read(self):
         read_ops = read_bytes = write_ops = write_bytes = busy = total_disks = 0
-        for disk, current in filter(lambda x: self.get_disk(x[0]) is not None, disk_io_counters(perdisk=True).items()):
+        for disk, current in filter(lambda x: self.get_disk(x[0]) is not None, self.read_procfs_diskstats().items()):
             read_ops += current.read_count
             read_bytes += current.read_bytes
             write_ops += current.write_count
