@@ -474,7 +474,7 @@ class ChartReleaseService(CRUDService):
                     'operation': 'INSTALL',
                     'isInstall': True,
                 }
-            }, self.middleware)
+            }, self.middleware, data['release_name'])
 
             await self.middleware.call(
                 'chart.release.create_update_storage_class_for_chart_release',
@@ -548,7 +548,7 @@ class ChartReleaseService(CRUDService):
                 'operation': 'UPDATE',
                 'isUpdate': True,
             }
-        }, self.middleware)
+        }, self.middleware, chart_release)
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 
