@@ -30,6 +30,7 @@ class KubernetesModel(sa.Model):
     configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
     validate_host_path = sa.Column(sa.Boolean(), default=True)
+    passthrough_mode = sa.Column(sa.Boolean(), default=False)
 
 
 class KubernetesService(ConfigService):
@@ -44,6 +45,7 @@ class KubernetesService(ConfigService):
         Bool('servicelb', required=True),
         Bool('configure_gpus', required=True),
         Bool('validate_host_path', required=True),
+        Bool('passthrough_mode', required=True),
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),
         IPAddr('service_cidr', required=True, cidr=True, empty=True),
@@ -481,6 +483,9 @@ class KubernetesService(ConfigService):
     @private
     async def validate_k8s_setup(self, raise_exception=True):
         error = None
+        if (await self.middleware.call('kubernetes.config'))['passthrough_mode']:
+            error = 'Kubernetes operations are not allowed with passthrough mode enabled'
+
         if not await self.pool_configured():
             error = 'Please configure kubernetes pool.'
         if not error and not await self.middleware.call('service.started', 'kubernetes'):
