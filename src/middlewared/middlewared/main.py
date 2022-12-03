@@ -825,6 +825,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
+        self.tasks = set()
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -938,7 +939,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
 
     def __call_periodic_task(self, method, service_name, service_obj, method_name, interval):
-        self.loop.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
+        self.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
 
     async def __periodic_task_wrapper(self, method, service_name, service_obj, method_name, interval):
         self.logger.trace("Calling periodic task %s", method_name)
@@ -1549,7 +1550,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.loop.set_debug(True)
             self.loop.slow_callback_duration = 0.2
 
-        self.loop.create_task(self.__initialize())
+        self.create_task(self.__initialize())
 
         try:
             self.loop.run_forever()
@@ -1664,6 +1665,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 task.cancel()
 
         self.loop.stop()
+
+    def create_task(self, coro, *, name=None):
+        task = self.loop.create_task(coro, name=name)
+        self.tasks.add(task)
+        task.add_done_callback(self.tasks.discard)
+
+        return task
 
 
 def main():
