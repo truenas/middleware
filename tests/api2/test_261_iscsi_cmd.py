@@ -231,6 +231,90 @@ def configured_target_to_zvol_extent(target_name, zvol):
                                 'extent': extent_config,
                             }
 
+
+def TUR(s):
+    """
+    Perform a TEST UNIT READY.
+
+    :param s: a pyscsi.SCSI instance
+
+    Will retry once, if necessary.
+    """
+    try:
+        s.testunitready()
+    except TypeError:
+        s.testunitready()
+
+def _verify_inquiry(s):
+    """
+    Verify that the supplied SCSI has the expected INQUIRY response.
+
+    :param s: a pyscsi.SCSI instance
+    """
+    TUR(s)
+    r = s.inquiry()
+    data = r.result
+    assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
+    assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+
+def _extract_luns(rl):
+    """
+    Return a list of LUNs.
+
+    :param rl: a ReportLuns instance (response)
+    :return result a list of int LUNIDs
+
+    Currently the results from pyscsi.ReportLuns.unmarshall_datain are (a) subject
+    to change & (b) somewhat lacking for our purposes.  Therefore we will parse
+    the datain here in a manner more useful for us.
+    """
+    result = []
+    # First 4 bytes are LUN LIST LENGTH
+    lun_list_length = int.from_bytes(rl.datain[:4], "big")
+    # Next 4 Bytes are RESERVED
+    # Remaining bytes are LUNS (8 bytes each)
+    luns = rl.datain[8:]
+    assert len(luns) >= lun_list_length
+    for i in range(0,lun_list_length, 8):
+        lun = luns[i:i+8]
+        addr_method = (lun[0] >> 6) & 0x3;
+        assert addr_method == 0, f"Unsupported Address Method: {addr_method}"
+        if addr_method == 0:
+            # peripheral device addressing method, don't care about bus.
+            result.append(lun[1])
+    return result
+
+def _verify_luns(s, expected_luns):
+    """
+    Verify that the supplied SCSI has the expected LUNs.
+
+    :param s: a pyscsi.SCSI instance
+    :param expected_luns: a list of int LUNIDs
+    """
+    TUR(s)
+    # REPORT LUNS
+    rl = s.reportluns()
+    data = rl.result
+    assert isinstance(data, dict), data
+    assert 'luns' in data, data
+    # Check that we only have LUN 0
+    luns = _extract_luns(rl)
+    assert len(luns) == len(expected_luns), luns
+    assert set(luns) == set(expected_luns), luns
+
+def _verify_capacity(s, expected_capacity):
+    """
+    Verify that the supplied SCSI has the expected capacity.
+
+    :param s: a pyscsi.SCSI instance
+    :param expected_capacity: an int
+    """
+    TUR(s)
+    # READ CAPACITY (16)
+    data = s.readcapacity16().result
+    returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
+    assert returned_size == expected_capacity, {data['returned_lba'], data['block_length']}
+
 @pytest.mark.dependency(name="iscsi_cmd_00")
 def test_00_setup(request):
     # Enable iSCSI service
@@ -266,11 +350,7 @@ def test_01_inquiry(request):
                     with target_extent_associate(target_id, extent_id):
                         iqn = f'{basename}:{target_name}'
                         with iscsi_scsi_connection(ip, iqn) as s:
-                            s.testunitready()
-                            r = s.inquiry()
-                            data = r.result
-                            assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
-                            assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+                            _verify_inquiry(s)
 
 def test_02_read_capacity16(request):
     """
@@ -290,20 +370,14 @@ def test_02_read_capacity16(request):
                     with target_extent_associate(target_id, extent_id):
                         iqn = f'{basename}:{target_name}'
                         with iscsi_scsi_connection(ip, iqn) as s:
-                            s.testunitready()
-                            data = s.readcapacity16().result
-                            returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
-                            assert returned_size == MB_100, {data['returned_lba'], data['block_length']}
+                            _verify_capacity(s, MB_100)
                 # 512 MB file extent
                 with file_extent(pool_name, MB_512) as extent_config:
                     extent_id = extent_config['id']
                     with target_extent_associate(target_id, extent_id):
                         iqn = f'{basename}:{target_name}'
                         with iscsi_scsi_connection(ip, iqn) as s:
-                            s.testunitready()
-                            data = s.readcapacity16().result
-                            returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
-                            assert returned_size == MB_512, {data['returned_lba'], data['block_length']}
+                            _verify_capacity(s, MB_512)
                 # 100 MB zvol extent
                 with zvol_dataset(zvol, MB_100):
                     with zvol_extent(zvol) as extent_config:
@@ -311,10 +385,7 @@ def test_02_read_capacity16(request):
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                s.testunitready()
-                                data = s.readcapacity16().result
-                                returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
-                                assert returned_size == MB_100, {data['returned_lba'], data['block_length']}
+                                _verify_capacity(s, MB_100)
                 # 512 MB zvol extent
                 with zvol_dataset(zvol):
                     with zvol_extent(zvol) as extent_config:
@@ -322,10 +393,7 @@ def test_02_read_capacity16(request):
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
-                                s.testunitready()
-                                data = s.readcapacity16().result
-                                returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
-                                assert returned_size == MB_512, {data['returned_lba'], data['block_length']}
+                                _verify_capacity(s, MB_512)
 
 def target_test_readwrite16(ip, iqn):
     """
@@ -337,7 +405,7 @@ def target_test_readwrite16(ip, iqn):
     deadbeef_lbas = [1,5,7]
 
     with iscsi_scsi_connection(ip, iqn) as s:
-        s.testunitready()
+        TUR(s)
         s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
@@ -362,7 +430,7 @@ def target_test_readwrite16(ip, iqn):
 
     # Drop the iSCSI connection and login again
     with iscsi_scsi_connection(ip, iqn) as s:
-        s.testunitready()
+        TUR(s)
         s.blocksize = 512
 
         # Check results using READ (16)
@@ -438,23 +506,20 @@ def test_05_chap(request):
                             # Try and fail to connect without supplying CHAP creds
                             with pytest.raises(RuntimeError) as ve:
                                 with iscsi_scsi_connection(ip, iqn) as s:
-                                    s.testunitready()
+                                    TUR(s)
                                     assert False, "Should not have been able to connect without CHAP credentials."
                             assert 'Unable to connect to' in str(ve), ve
 
                             # Try and fail to connect supplying incorrect CHAP creds
                             with pytest.raises(RuntimeError) as ve:
                                 with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
-                                    s.testunitready()
+                                    TUR(s)
                                     assert False, "Should not have been able to connect without CHAP credentials."
                             assert 'Unable to connect to' in str(ve), ve
 
                             # Finally ensure we can connect with the right CHAP creds
                             with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
-                                s.testunitready()
-                                data = s.inquiry().result
-                                assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
-                                assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+                                _verify_inquiry(s)
 
 def test_06_mutual_chap(request):
     """
@@ -480,38 +545,68 @@ def test_06_mutual_chap(request):
                             # Try and fail to connect without supplying Mutual CHAP creds
                             with pytest.raises(RuntimeError) as ve:
                                 with iscsi_scsi_connection(ip, iqn) as s:
-                                    s.testunitready()
+                                    TUR(s)
                                     assert False, "Should not have been able to connect without CHAP credentials."
                             assert 'Unable to connect to' in str(ve), ve
 
                             # Try and fail to connect supplying incorrect CHAP creds (not mutual)
                             with pytest.raises(RuntimeError) as ve:
                                 with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
-                                    s.testunitready()
+                                    TUR(s)
                                     assert False, "Should not have been able to connect with incorrect CHAP credentials."
                             assert 'Unable to connect to' in str(ve), ve
 
                             # Ensure we can connect with the right CHAP creds, if we *choose* not
                             # to validate things.
                             with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
-                                s.testunitready()
-                                data = s.inquiry().result
-                                assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
-                                assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+                                _verify_inquiry(s)
 
                             # Try and fail to connect supplying incorrect Mutual CHAP creds
                             with pytest.raises(RuntimeError) as ve:
                                 with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, "WrongSecret") as s:
-                                    s.testunitready()
+                                    TUR(s)
                                     assert False, "Should not have been able to connect with incorrect Mutual CHAP credentials."
                             assert 'Unable to connect to' in str(ve), ve
 
                             # Finally ensure we can connect with the right Mutual CHAP creds
                             with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
-                                s.testunitready()
-                                data = s.inquiry().result
-                                assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
-                                assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+                                _verify_inquiry(s)
+
+def test_07_report_luns(request):
+    """
+    This tests REPORT LUNS and accessing multiple LUNs on a target.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    iqn = f'{basename}:{target_name}'
+    with initiator() as initiator_config:
+        with portal() as portal_config:
+            portal_id = portal_config['id']
+            with target(target_name, [{'portal': portal_id}]) as target_config:
+                target_id = target_config['id']
+                # LUN 0 (100 MB file extent)
+                with file_extent(pool_name, MB_100) as extent_config:
+                    extent_id = extent_config['id']
+                    with target_extent_associate(target_id, extent_id):
+                        with iscsi_scsi_connection(ip, iqn) as s:
+                            _verify_luns(s, [0])
+                            _verify_capacity(s, MB_100)
+                        # Now create a 512 MB zvol and associate with LUN 1
+                        with zvol_dataset(zvol):
+                            with zvol_extent(zvol) as extent_config:
+                                extent_id = extent_config['id']
+                                with target_extent_associate(target_id, extent_id, 1):
+                                    # Connect to LUN 0
+                                    with iscsi_scsi_connection(ip, iqn, 0) as s0:
+                                        _verify_luns(s0, [0, 1])
+                                        _verify_capacity(s0, MB_100)
+                                    # Connect to LUN 1
+                                    with iscsi_scsi_connection(ip, iqn, 1) as s1:
+                                        _verify_luns(s1, [0, 1])
+                                        _verify_capacity(s1, MB_512)
+                        # Check again now that LUN 1 has been removed again.
+                        with iscsi_scsi_connection(ip, iqn) as s:
+                            _verify_luns(s, [0])
+                            _verify_capacity(s, MB_100)
 
 def test_99_teardown(request):
     # Disable iSCSI service
