@@ -162,7 +162,7 @@ class JobsQueue(object):
     async def run(self):
         while True:
             job = await self.next()
-            asyncio.ensure_future(job.run(self))
+            self.middleware.create_task(job.run(self))
 
 
 class JobsDeque(object):

@@ -35,7 +35,7 @@ async def remove_disk(middleware, disk_name):
     await middleware.call('alert.oneshot_delete', 'SMART', disk_name)
     # If a disk dies we need to reconfigure swaps so we are not left
     # with a single disk mirror swap, which may be a point of failure.
-    asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+    middleware.create_task(middleware.call('disk.swaps_configure'))
     PREV_TASK.clear()
 
 
@@ -60,7 +60,7 @@ async def devd_devfs_hook(middleware, data):
             method = reset_cache
 
         PREV_TASK.append({
-            'task': task(SETTLE_TIME, lambda: asyncio.ensure_future(method(middleware, data['cdev']))),
+            'task': task(SETTLE_TIME, lambda: middleware.create_task(method(middleware, data['cdev']))),
             'method': method.__qualname__,
         })
     elif PREV_TASK[-1]['method'] != 'reset_cache':
@@ -73,7 +73,7 @@ async def devd_devfs_hook(middleware, data):
         # disk cache to play it safe.
         PREV_TASK[-1]['task'].cancel()
         PREV_TASK.append({
-            'task': task(SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware, data['cdev']))),
+            'task': task(SETTLE_TIME, lambda: middleware.create_task(reset_cache(middleware, data['cdev']))),
             'method': 'reset_cache',
         })
     elif 'backoff' not in PREV_TASK[-1]:
@@ -84,7 +84,7 @@ async def devd_devfs_hook(middleware, data):
         # occur but the logic needs to be here to cover edge-case scenarios.
         PREV_TASK[-1]['task'].cancel()
         PREV_TASK.append({
-            'task': task(MAX_WAIT_TIME, lambda: asyncio.ensure_future(reset_cache(middleware, data['cdev']))),
+            'task': task(MAX_WAIT_TIME, lambda: middleware.create_task(reset_cache(middleware, data['cdev']))),
             'method': 'reset_cache',
             'backoff': True,
         })
@@ -94,7 +94,7 @@ async def devd_devfs_hook(middleware, data):
         # 5-7 seconds apart. This is very common on QE team, for example))
         PREV_TASK[-1]['task'].cancel()
         PREV_TASK.append({
-            'task': task(SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware, data['cdev']))),
+            'task': task(SETTLE_TIME, lambda: middleware.create_task(reset_cache(middleware, data['cdev']))),
             'method': 'reset_cache',
         })
         middleware.logger.warning(
@@ -105,7 +105,7 @@ async def devd_devfs_hook(middleware, data):
         # where we don't need to worry about this running
         PREV_TASK[-1]['task'].cancel()
         PREV_TASK.append({
-            'task': task(SETTLE_TIME, lambda: asyncio.ensure_future(reset_cache(middleware, data['cdev']))),
+            'task': task(SETTLE_TIME, lambda: middleware.create_task(reset_cache(middleware, data['cdev']))),
             'method': 'reset_cache',
         })
 

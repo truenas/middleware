@@ -175,7 +175,7 @@ class Application(object):
                         message['method'],
                         self.middleware.dump_args(message.get('params', []), method_name=message['method'])
                     ), exc_info=True)
-                    asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
+                    self.middleware.create_task(self.__crash_reporting(sys.exc_info()))
 
     async def __crash_reporting(self, exc_info):
         if self.middleware.crash_reporting.is_disabled():
@@ -270,7 +270,7 @@ class Application(object):
 
         for ident, val in self.__event_sources.items():
             event_source = val['event_source']
-            asyncio.ensure_future(self.middleware.run_in_thread(event_source.cancel))
+            self.middleware.create_task(self.middleware.run_in_thread(event_source.cancel))
 
         self.middleware.unregister_wsclient(self)
 
@@ -326,7 +326,7 @@ class Application(object):
                 self.send_error(message, errno.EACCES, 'Not authenticated')
                 return
 
-            asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
+            self.middleware.create_task(self.call_method(message, serviceobj, methodobj))
             return
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
@@ -362,7 +362,7 @@ class FileApplication(object):
         self.jobs[job_id] = self.middleware.loop.call_later(
             3600 if buffered else 60,  # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
                                        # download instead of waiting 3600 seconds for the whole operation
-            lambda: asyncio.ensure_future(self._cleanup_job(job_id)),
+            lambda: self.middleware.create_task(self._cleanup_job(job_id)),
         )
 
     async def _cleanup_cancel(self, job_id):
@@ -739,7 +739,7 @@ class ShellApplication(object):
             return ws
 
         if conndata.t_worker:
-            asyncio.ensure_future(self.worker_kill(conndata.t_worker))
+            self.middleware.create_task(self.worker_kill(conndata.t_worker))
 
         return ws
 
@@ -1119,7 +1119,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 elif hook['sync']:
                     await fut
                 else:
-                    asyncio.ensure_future(fut)
+                    self.create_task(fut)
             except Exception:
                 self.logger.error(
                     'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
@@ -1603,7 +1603,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         restful_api = RESTfulAPI(self, app)
         await restful_api.register_resources()
-        asyncio.ensure_future(self.jobs.run())
+        self.create_task(self.jobs.run())
 
         # Start up middleware worker process pool
         self.__procpool._start_executor_manager_thread()

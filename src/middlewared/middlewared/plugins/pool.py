@@ -430,7 +430,6 @@ class PoolService(CRUDService):
 
     @private
     def pool_extend(self, pool):
-
         """
         If pool is encrypted we need to check if the pool is imported
         or if all geli providers exist.
@@ -772,7 +771,7 @@ class PoolService(CRUDService):
             await self.middleware.call('systemdataset.setup', mount, exclude_pool, boot_pool, on_active)
         else:
             job.set_progress(95, 'Restarting reporting services')
-            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
+            self.middleware.create_task(self.middleware.call('service.restart', 'rrdcached'))
 
         job.set_progress(96, 'Syncing ZFS GUID to disk')
         await self.middleware.call('disk.sync_zfs_guid', pool)
@@ -1211,7 +1210,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         return True
 
@@ -1678,7 +1677,7 @@ class PoolService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
 
         # Let's reconfigure swap in case dumpdev needs to be configured again
-        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
 
@@ -2227,7 +2226,7 @@ class PoolDatasetService(CRUDService):
         datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
         for ds in datasets:
             if ds['kmip_uid']:
-                asyncio.ensure_future(self.middleware.call('kmip.reset_zfs_key', ds['name'], ds['kmip_uid']))
+                self.middleware.create_task(self.middleware.call('kmip.reset_zfs_key', ds['name'], ds['kmip_uid']))
             await self.middleware.call('datastore.delete', self.dataset_store, ds['id'])
 
     @accepts(Str('id'))
@@ -4371,4 +4370,4 @@ def parse_fstat(fstat, dirs):
 
 
 def setup(middleware):
-    asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))
+    middleware.create_task(middleware.call('pool.configure_resilver_priority'))

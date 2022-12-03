@@ -301,6 +301,7 @@ class Service(object, metaclass=ServiceBase):
 
     This is meant for services that do not follow any standard.
     """
+
     def __init__(self, middleware):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
@@ -430,7 +431,7 @@ class SystemServiceService(ConfigService):
         if self._config.service_verb_sync:
             await fut
         else:
-            asyncio.ensure_future(fut)
+            self.middleware.create_task(fut)
 
 
 class CRUDService(ServiceChangeMixin, Service):
@@ -1222,7 +1223,7 @@ class CoreService(Service):
           - threaded: run debugger in a new thread instead of event loop
         """
         if options['threaded']:
-            asyncio.ensure_future(self.middleware.run_in_thread(self.__debug, engine, options))
+            self.middleware.create_task(self.middleware.run_in_thread(self.__debug, engine, options))
         else:
             self.__debug(engine, options)
 

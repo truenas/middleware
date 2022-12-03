@@ -461,7 +461,7 @@ class EtcService(Service):
 async def __event_system_ready(middleware, event_type, args):
 
     if args['id'] == 'ready':
-        asyncio.ensure_future(middleware.call('etc.generate_checkpoint', 'post_init'))
+        middleware.create_task(middleware.call('etc.generate_checkpoint', 'post_init'))
 
 
 async def setup(middleware):

@@ -2421,7 +2421,7 @@ async def __event_system_ready(middleware, event_type, args):
         if not await middleware.call('system.is_freenas') and await middleware.call('failover.licensed'):
             return
 
-        asyncio.ensure_future(middleware.call('vm.start_on_boot'))
+        middleware.create_task(middleware.call('vm.start_on_boot'))
     elif args['id'] == 'shutdown':
         async with SHUTDOWN_LOCK:
             await asyncio_map(
@@ -2494,10 +2494,10 @@ async def setup(middleware):
     if sysctl:
         ZFS_ARC_MAX_INITIAL = sysctl.filter('vfs.zfs.arc.max')[0].value
     if osc.IS_FREEBSD:
-        asyncio.ensure_future(kmod_load())
-    asyncio.ensure_future(middleware.call('pool.dataset.register_attachment_delegate',
-                                          VMFSAttachmentDelegate(middleware)))
+        middleware.create_task(kmod_load())
+    middleware.create_task(middleware.call('pool.dataset.register_attachment_delegate',
+                                           VMFSAttachmentDelegate(middleware)))
 
     if await middleware.call('system.ready'):
-        asyncio.ensure_future(middleware.call('vm.initialize_vms', 2))  # We use a short timeout here deliberately
+        middleware.create_task(middleware.call('vm.initialize_vms', 2))  # We use a short timeout here deliberately
     middleware.event_subscribe('system', __event_system_ready)
