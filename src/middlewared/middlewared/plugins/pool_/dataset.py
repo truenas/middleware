@@ -1,10 +1,12 @@
 import copy
+import errno
 import os
 
 import middlewared.sqlalchemy as sa
 
+from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
-from middlewared.schema import accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Ref, Str
+from middlewared.schema import accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, Str
 from middlewared.service import CRUDService, filterable, pass_app, private, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
@@ -634,3 +636,156 @@ class PoolDatasetService(CRUDService):
             await acl_job.wait()
 
         return created_ds
+
+    @accepts(Str('id', required=True), Patch(
+        'pool_dataset_create', 'pool_dataset_update',
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'type'}),
+        ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('rm', {'name': 'share_type'}),  # This is something we should only do at create time
+        ('rm', {'name': 'sparse'}),  # Create time only attribute
+        ('rm', {'name': 'volblocksize'}),  # Create time only attribute
+        ('rm', {'name': 'encryption'}),  # Create time only attribute
+        ('rm', {'name': 'encryption_options'}),  # Create time only attribute
+        ('rm', {'name': 'inherit_encryption'}),  # Create time only attribute
+        ('add', List(
+            'user_properties_update',
+            items=[Dict(
+                'user_property',
+                Str('key', required=True, validators=[Match(r'.*:.*')]),
+                Str('value'),
+                Bool('remove'),
+            )],
+        )),
+        ('attr', {'update': True}),
+    ))
+    async def do_update(self, id, data):
+        """
+        Updates a dataset/zvol `id`.
+
+        .. examples(websocket)::
+
+          Update the `comments` for "tank/myuser".
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.update,
+                "params": ["tank/myuser", {
+                    "comments": "Dataset for myuser, UPDATE #1"
+                }]
+            }
+        """
+        verrors = ValidationErrors()
+
+        dataset = await self.middleware.call(
+            'pool.dataset.query', [('id', '=', id)], {'extra': {'retrieve_children': False}}
+        )
+        if not dataset:
+            verrors.add('id', f'{id} does not exist', errno.ENOENT)
+        else:
+            data['type'] = dataset[0]['type']
+            data['name'] = dataset[0]['name']
+            if data['type'] == 'VOLUME':
+                data['volblocksize'] = dataset[0]['volblocksize']['value']
+            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE', cur_dataset=dataset[0])
+            if 'volsize' in data:
+                if data['volsize'] < dataset[0]['volsize']['parsed']:
+                    verrors.add('pool_dataset_update.volsize',
+                                'You cannot shrink a zvol from GUI, this may lead to data loss.')
+            if dataset[0]['type'] == 'VOLUME':
+                existing_snapdev_prop = dataset[0]['snapdev']['parsed'].upper()
+                snapdev_prop = data.get('snapdev') or existing_snapdev_prop
+                if existing_snapdev_prop != snapdev_prop and snapdev_prop in ('INHERIT', 'HIDDEN'):
+                    if await self.middleware.call(
+                        'zfs.dataset.unlocked_zvols_fast',
+                        [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id}@']],
+                        {}, ['RO', 'ATTACHMENT']
+                    ):
+                        verrors.add(
+                            'pool_dataset_update.snapdev',
+                            f'{id!r} has snapshots which have attachments being used. Before marking it '
+                            'as HIDDEN, remove attachment usages.'
+                        )
+
+        verrors.check()
+
+        properties_definitions = (
+            ('aclinherit', None, str.lower, True),
+            ('aclmode', None, str.lower, True),
+            ('acltype', None, str.lower, True),
+            ('atime', None, str.lower, True),
+            ('checksum', None, str.lower, True),
+            ('comments', 'org.freenas:description', None, False),
+            ('sync', None, str.lower, True),
+            ('compression', None, str.lower, True),
+            ('deduplication', 'dedup', str.lower, True),
+            ('exec', None, str.lower, True),
+            ('managedby', 'org.truenas:managedby', None, True),
+            ('quota', None, none_normalize, False),
+            ('quota_warning', 'org.freenas:quota_warning', str, True),
+            ('quota_critical', 'org.freenas:quota_critical', str, True),
+            ('refquota', None, none_normalize, False),
+            ('refquota_warning', 'org.freenas:refquota_warning', str, True),
+            ('refquota_critical', 'org.freenas:refquota_critical', str, True),
+            ('reservation', None, none_normalize, False),
+            ('refreservation', None, none_normalize, False),
+            ('copies', None, str, True),
+            ('snapdir', None, str.lower, True),
+            ('snapdev', None, str.lower, True),
+            ('readonly', None, str.lower, True),
+            ('recordsize', None, None, True),
+            ('volsize', None, lambda x: str(x), False),
+            ('special_small_block_size', 'special_small_blocks', None, True),
+        )
+
+        props = {}
+        for i, real_name, transform, inheritable in properties_definitions:
+            if i not in data:
+                continue
+            name = real_name or i
+            if inheritable and data[i] == 'INHERIT':
+                props[name] = {'source': 'INHERIT'}
+            else:
+                props[name] = {'value': data[i] if not transform else transform(data[i])}
+
+        if data.get('user_properties_update'):
+            props.update(await self.get_create_update_user_props(data['user_properties_update'], True))
+
+        if 'acltype' in props and (acltype_value := props['acltype'].get('value')):
+            if acltype_value == 'nfsv4':
+                props.update({
+                    'aclinherit': {'value': 'passthrough'}
+                })
+            elif acltype_value in ['posix', 'off']:
+                props.update({
+                    'aclmode': {'value': 'discard'},
+                    'aclinherit': {'value': 'discard'}
+                })
+            elif props['acltype'].get('source') == 'INHERIT':
+                props.update({
+                    'aclmode': {'source': 'INHERIT'},
+                    'aclinherit': {'source': 'INHERIT'}
+                })
+
+        try:
+            await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+        except ZFSSetPropertyError as e:
+            verrors = ValidationErrors()
+            verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
+            raise verrors
+
+        if data['type'] == 'VOLUME' and 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
+            # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscs)
+            # and if it is, resync it so the connected initiators can see the new size of the zvol
+            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id)
+
+        return await self.get_instance(id)
+
+    def __handle_zfs_set_property_error(self, e, properties_definitions):
+        zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
+        api_name = zfs_name_to_api_name.get(e.property) or e.property
+        verrors = ValidationErrors()
+        verrors.add(api_name, e.error)
+        return verrors
