@@ -4,6 +4,7 @@ import json
 import os
 
 from middlewared.service_exception import CallError
+from middlewared.utils.size import MB
 
 
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
