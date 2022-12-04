@@ -241,6 +241,12 @@ class PoolService(CRUDService):
 
         return disks, vdevs
 
+    @private
+    async def restart_services(self):
+        await self.middleware.call('service.reload', 'disk')
+        # regenerate crontab because of scrub
+        await self.middleware.call('service.restart', 'cron')
+
     async def __common_validation(self, verrors, data, schema_name, old=None):
 
         if 'topology' not in data:
