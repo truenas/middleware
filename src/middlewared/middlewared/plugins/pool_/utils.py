@@ -1,5 +1,6 @@
 import enum
 import itertools
+import os
 
 
 ZFS_CHECKSUM_CHOICES = ['ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR']
@@ -26,6 +27,10 @@ def _null(x):
     if x == 'none':
         return None
     return x
+
+
+def attachments_path(dataset):
+    return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
 
 
 def get_props_of_interest_mapping():

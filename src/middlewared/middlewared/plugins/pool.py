@@ -1123,25 +1123,6 @@ class PoolDatasetService(CRUDService):
             raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
         return await self.middleware.call('zfs.dataset.promote', id)
 
-    @private
-    async def from_path(self, path, check_parents):
-        p = Path(path)
-        if not p.is_absolute():
-            raise CallError(f"[{path}] is not an absolute path.", errno.EINVAL)
-
-        if not p.exists() and check_parents:
-            for parent in p.parents:
-                if parent.exists():
-                    p = parent
-                    break
-
-        ds_name = await self.middleware.call("zfs.dataset.path_to_dataset", p.as_posix(), True)
-        return await self.middleware.call(
-            "pool.dataset.query",
-            [("id", "=", ds_name)],
-            {"get": True}
-        )
-
     @accepts(
         Str('id', required=True),
         Dict(
@@ -1531,43 +1512,6 @@ class PoolDatasetService(CRUDService):
 
     @item_method
     @accepts(Str('id', required=True))
-    @returns(Ref('attachments'))
-    async def attachments(self, oid):
-        """
-        Return a list of services dependent of this dataset.
-
-        Responsible for telling the user whether there is a related
-        share, asking for confirmation.
-
-        Example return value:
-        [
-          {
-            "type": "NFS Share",
-            "service": "nfs",
-            "attachments": ["/mnt/tank/work"]
-          }
-        ]
-        """
-        dataset = await self.get_instance(oid)
-        return await self.attachments_with_path(self.__attachments_path(dataset))
-
-    @private
-    async def attachments_with_path(self, path):
-        result = []
-        if path:
-            for delegate in self.attachment_delegates:
-                attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
-                for attachment in await delegate.query(path, True):
-                    attachments["attachments"].append(await delegate.get_attachment_name(attachment))
-                if attachments["attachments"]:
-                    result.append(attachments)
-        return result
-
-    def __attachments_path(self, dataset):
-        return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
-
-    @item_method
-    @accepts(Str('id', required=True))
     @returns(Ref('processes'))
     async def processes(self, oid):
         """
@@ -1651,15 +1595,3 @@ class PoolDatasetService(CRUDService):
             'code': 'unstoppable_processes',
             'processes': processes,
         })
-
-    @private
-    def register_attachment_delegate(self, delegate):
-        self.attachment_delegates.append(delegate)
-
-    @private
-    async def query_attachment_delegate(self, name, path, enabled):
-        for delegate in self.attachment_delegates:
-            if delegate.name == name:
-                return await delegate.query(path, enabled)
-
-        raise RuntimeError(f'Unknown attachment delegate {name!r}')
