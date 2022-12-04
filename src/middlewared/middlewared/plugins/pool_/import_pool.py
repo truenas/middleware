@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import errno
 import os
@@ -303,7 +302,9 @@ class PoolService(Service):
 
             # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
             # we don't want that
-            if self.middleware.call_sync('pool.dataset.get_instance', pool['name'])['locked']:
+            if self.middleware.call_sync(
+                'pool.dataset.get_instance_quick', pool['name'], {'encryption': True}
+            )['locked']:
                 with contextlib.suppress(CallError):
                     self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
 

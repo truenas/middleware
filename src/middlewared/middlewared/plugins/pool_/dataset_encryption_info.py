@@ -300,7 +300,7 @@ class PoolDatasetService(Service):
 
         Please refer to websocket documentation for downloading the file.
         """
-        self.middleware.call_sync('pool.dataset.get_instance', id)
+        self.middleware.call_sync('pool.dataset.get_instance_quick', id)
         sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id)
         sync_job.wait_sync()
 
@@ -324,7 +324,7 @@ class PoolDatasetService(Service):
         if download:
             job.check_pipe('output')
 
-        self.middleware.call_sync('pool.dataset.get_instance', id)
+        self.middleware.call_sync('pool.dataset.get_instance_quick', id)
 
         keys = self.query_encrypted_roots_keys([['name', '=', id]])
         if id not in keys:

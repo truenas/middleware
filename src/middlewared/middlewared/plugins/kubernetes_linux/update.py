@@ -185,7 +185,9 @@ class KubernetesService(ConfigService):
 
                 if not verrors:
                     source_root_ds = await self.middleware.call(
-                        'pool.dataset.get_instance', old_data['pool'], {'extra': {'retrieve_children': False}}
+                        'pool.dataset.get_instance_quick', old_data['pool'], {
+                            'encryption': True,
+                        }
                     )
                     ix_apps_ds = ix_apps_ds[0]
                     if source_root_ds['encrypted'] and ix_apps_ds['encrypted']:
@@ -233,8 +235,8 @@ class KubernetesService(ConfigService):
 
                         # Now let's add some validation for destination
                         destination_root_ds = await self.middleware.call(
-                            'pool.dataset.get_instance', data['pool'], {
-                                'extra': {'retrieve_children': False}
+                            'pool.dataset.get_instance_quick', data['pool'], {
+                                'encryption': True,
                             }
                         )
                         if not destination_root_ds['encrypted']:

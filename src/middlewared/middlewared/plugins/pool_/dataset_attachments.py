@@ -30,7 +30,7 @@ class PoolDatasetService(Service):
           }
         ]
         """
-        dataset = await self.middleware.call('pool.dataset.get_instance', oid)
+        dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid)
         return await self.attachments_with_path(attachments_path(dataset))
 
     @private

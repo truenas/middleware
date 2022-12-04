@@ -37,7 +37,9 @@ class PoolDatasetService(Service):
         the dataset was mounted before it was locked making sure that the path cannot be modified. Once the dataset
         is unlocked, it will not be affected by this change and consumers can continue consuming it.
         """
-        ds = await self.middleware.call('pool.dataset.get_instance', id)
+        ds = await self.middleware.call('pool.dataset.get_instance_quick', id, {
+            'encryption': True,
+        })
 
         if not ds['encrypted']:
             raise CallError(f'{id} is not encrypted')
