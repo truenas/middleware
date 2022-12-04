@@ -33,6 +33,19 @@ def attachments_path(dataset):
     return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
 
 
+def dataset_can_be_mounted(ds_name, ds_mountpoint):
+    mount_error_check = ''
+    if os.path.isfile(ds_mountpoint):
+        mount_error_check = f'A file exists at {ds_mountpoint!r} and {ds_name} cannot be mounted'
+    elif os.path.isdir(ds_mountpoint) and os.listdir(ds_mountpoint):
+        mount_error_check = f'{ds_mountpoint!r} directory is not empty'
+    mount_error_check += (
+        ' (please provide "force" flag to override this error and file/directory '
+        'will be renamed once the dataset is unlocked)' if mount_error_check else ''
+    )
+    return mount_error_check
+
+
 def get_props_of_interest_mapping():
     return [
         ('org.freenas:description', 'comments', None),
