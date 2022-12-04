@@ -65,17 +65,3 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
         event_send = False
         cli_namespace = 'storage.dataset'
-
-    @item_method
-    @accepts(Str('id'))
-    @returns()
-    async def promote(self, id):
-        """
-        Promote the cloned dataset `id`.
-        """
-        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id)])
-        if not dataset:
-            raise CallError(f'Dataset "{id}" does not exist.', errno.ENOENT)
-        if not dataset[0]['properties']['origin']['value']:
-            raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
-        return await self.middleware.call('zfs.dataset.promote', id)

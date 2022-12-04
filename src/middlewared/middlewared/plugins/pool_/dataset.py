@@ -9,7 +9,9 @@ from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import (
     accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, returns, Str
 )
-from middlewared.service import CallError, CRUDService, filterable, job, pass_app, private, ValidationErrors
+from middlewared.service import (
+    CallError, CRUDService, filterable, item_method, job, pass_app, private, ValidationErrors
+)
 from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
 
@@ -882,3 +884,17 @@ class PoolDatasetService(CRUDService):
         verrors = ValidationErrors()
         verrors.add(api_name, e.error)
         return verrors
+
+    @item_method
+    @accepts(Str('id'))
+    @returns()
+    async def promote(self, id):
+        """
+        Promote the cloned dataset `id`.
+        """
+        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id)])
+        if not dataset:
+            raise CallError(f'Dataset "{id}" does not exist.', errno.ENOENT)
+        if not dataset[0]['properties']['origin']['value']:
+            raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
+        return await self.middleware.call('zfs.dataset.promote', id)
