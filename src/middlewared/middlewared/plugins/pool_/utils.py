@@ -6,6 +6,7 @@ import os
 from middlewared.service_exception import CallError
 
 
+DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 ZFS_CHECKSUM_CHOICES = ['ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR']
 ZFS_COMPRESSION_ALGORITHM_CHOICES = [
     'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZSTD', 'ZSTD-FAST', 'ZLE', 'LZJB',
