@@ -1018,54 +1018,6 @@ class PoolDatasetService(CRUDService):
             locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
         return any(is_child(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
-    @accepts(Str('id'), Dict(
-        'dataset_delete',
-        Bool('recursive', default=False),
-        Bool('force', default=False),
-    ))
-    async def do_delete(self, id, options):
-        """
-        Delete dataset/zvol `id`.
-
-        `recursive` will also delete/destroy all children datasets.
-        `force` will force delete busy datasets.
-
-        .. examples(websocket)::
-
-          Delete "tank/myuser" dataset.
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.dataset.delete",
-                "params": ["tank/myuser"]
-            }
-        """
-
-        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id}/']]):
-            raise CallError(f'Failed to delete dataset: cannot destroy {id!r}: filesystem has children',
-                            errno.ENOTEMPTY)
-
-        dataset = await self.get_instance(id)
-        path = self.__attachments_path(dataset)
-        if path:
-            for delegate in self.attachment_delegates:
-                attachments = await delegate.query(path, True)
-                if attachments:
-                    await delegate.delete(attachments)
-
-        if dataset['locked'] and dataset['mountpoint'] and os.path.exists(dataset['mountpoint']):
-            # We would like to remove the immutable flag in this case so that it's mountpoint can be
-            # cleaned automatically when we delete the dataset
-            await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
-
-        result = await self.middleware.call('zfs.dataset.delete', id, {
-            'force': options['force'],
-            'recursive': options['recursive'],
-        })
-        return result
-
     @accepts(
         Str('name'),
         Dict(
