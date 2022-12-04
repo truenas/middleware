@@ -2,7 +2,6 @@ import asyncio
 import errno
 import os
 
-from middlewared.plugins.pool import PoolDatasetService  # FIXME: change this after pool dataset has been moved
 from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, Service, ValidationError
 from middlewared.utils.asyncio_ import asyncio_map
@@ -71,7 +70,7 @@ class PoolService(Service):
             if await self.middleware.call('keyvalue.has_key', enable_on_import_key):
                 enable_on_import = await self.middleware.call('keyvalue.get', enable_on_import_key)
 
-        for i, delegate in enumerate(PoolDatasetService.attachment_delegates):
+        for i, delegate in enumerate(await self.middleware.call('pool.dataset.get_attachment_delegates')):
             job.set_progress(
                 i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 
