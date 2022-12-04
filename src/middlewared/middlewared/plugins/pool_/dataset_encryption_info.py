@@ -12,12 +12,10 @@ from middlewared.utils import filter_list
 from middlewared.utils.path import is_child
 from middlewared.validators import Range
 
-from .utils import dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
+from .utils import DATASET_DATABASE_MODEL_NAME, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
 
 class PoolDatasetService(Service):
-
-    dataset_store = 'storage.encrypteddataset'
 
     class Config:
         namespace = 'pool.dataset'
@@ -255,7 +253,7 @@ class PoolDatasetService(Service):
         # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,
         # there are 2 ways this can go, we don't retrieve the key or the user can sync KMIP keys and we will have it
         # with the KMIP service again through which we can retrieve them
-        datasets = filter_list(self.middleware.call_sync('datastore.query', self.dataset_store), filters)
+        datasets = filter_list(self.middleware.call_sync('datastore.query', DATASET_DATABASE_MODEL_NAME), filters)
         zfs_keys = self.middleware.call_sync('kmip.retrieve_zfs_keys')
         keys = {}
         for ds in datasets:

@@ -63,7 +63,6 @@ class PoolDatasetEncryptionModel(sa.Model):
 
 class PoolDatasetService(CRUDService):
 
-    dataset_store = 'storage.encrypteddataset'
     ENTRY = Dict(
         'pool_dataset_entry',
         Str('id', required=True),
