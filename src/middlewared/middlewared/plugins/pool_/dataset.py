@@ -94,6 +94,23 @@ class PoolDatasetService(CRUDService):
         event_send = False
         namespace = 'pool.dataset'
 
+    @private
+    async def get_instance_quick(self, name, options=None):
+        options = options or {}
+        properties = set(options.get('properties') or [])
+        properties.add('mountpoint')
+        if options.get('encryption'):
+            properties.update(['encryption', 'keystatus', 'mountpoint', 'keyformat', 'encryptionroot'])
+
+        return await self.middleware.call(
+            'pool.dataset.get_instance', name, {
+                'extra': {
+                    'retrieve_children': options.get('retrieve_children', False),
+                    'properties': list(properties),
+                }
+            }
+        )
+
     def _internal_user_props(self):
         return [
             'org.freenas:description',

@@ -38,7 +38,7 @@ class PoolDatasetService(Service):
           }
         ]
         """
-        dataset = await self.middleware.call('pool.dataset.get_instance', oid)
+        dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid, {'encryption': True})
         if dataset['locked']:
             return []
         path = attachments_path(dataset)

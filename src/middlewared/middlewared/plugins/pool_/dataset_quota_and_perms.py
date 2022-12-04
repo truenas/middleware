@@ -219,7 +219,7 @@ class PoolDatasetService(Service):
         Note: SMB client requests to set a quota granting no space will result
         in an on-disk quota of 1 KiB.
         """
-        dataset = (await self.middleware.call('pool.dataset.get_instance', ds))['name']
+        dataset = (await self.middleware.call('pool.dataset.get_instance_quick', ds))['name']
         quota_list = await self.middleware.call(
             'zfs.dataset.get_quota', dataset, quota_type.lower()
         )

@@ -136,7 +136,9 @@ class PoolDatasetService(Service):
         1) It has encrypted roots as children which are encrypted with a key
         2) If it is a root dataset where the system dataset is located
         """
-        ds = await self.middleware.call('pool.dataset.get_instance', id)
+        ds = await self.middleware.call('pool.dataset.get_instance_quick', id, {
+            'encryption': True,
+        })
         verrors = ValidationErrors()
         if not ds['encrypted']:
             verrors.add('id', 'Dataset is not encrypted')
@@ -228,7 +230,9 @@ class PoolDatasetService(Service):
         Allows inheriting parent's encryption root discarding its current encryption settings. This
         can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
         """
-        ds = await self.middleware.call('pool.dataset.get_instance', id)
+        ds = await self.middleware.call('pool.dataset.get_instance_quick', id, {
+            'encryption': True,
+        })
         if not ds['encrypted']:
             raise CallError(f'Dataset {id} is not encrypted')
         elif ds['encryption_root'] != id:
@@ -238,12 +242,18 @@ class PoolDatasetService(Service):
         elif '/' not in id:
             raise CallError('Root datasets do not have a parent and cannot inherit encryption settings')
         else:
-            parent = await self.middleware.call('pool.dataset.get_instance', id.rsplit('/', 1)[0])
+            parent = await self.middleware.call(
+                'pool.dataset.get_instance_quick', id.rsplit('/', 1)[0], {
+                    'encryption': True,
+                }
+            )
             if not parent['encrypted']:
                 raise CallError('This operation requires the parent dataset to be encrypted')
             else:
                 parent_encrypted_root = await self.middleware.call(
-                    'pool.dataset.get_instance', parent['encryption_root']
+                    'pool.dataset.get_instance_quick', parent['encryption_root'], {
+                        'encryption': True,
+                    }
                 )
                 if ZFSKeyFormat(parent_encrypted_root['key_format']['value']) == ZFSKeyFormat.PASSPHRASE.value:
                     if any(

@@ -13,7 +13,7 @@ class PoolDatasetService(Service):
         """
         Get a mapping of services identifiers and labels that can be restart on dataset unlock.
         """
-        await self.middleware.call('pool.dataset.get_instance', dataset)
+        await self.middleware.call('pool.dataset.get_instance_quick', dataset)
         services = {
             'cifs': 'SMB',
             'ftp': 'FTP',
