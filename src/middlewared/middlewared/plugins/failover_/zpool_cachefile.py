@@ -2,7 +2,7 @@ from pathlib import Path
 
 from middlewared.service import Service
 from middlewared.schema import Str, accepts
-from middlewared.plugins.pool import ZPOOL_CACHE_FILE
+from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
 
 ZPOOL_CACHE_FILE_SAVED = f'{ZPOOL_CACHE_FILE}.saved'
 ZPOOL_CACHE_FILE_OVERWRITE = f'{ZPOOL_CACHE_FILE}.overwrite'
