@@ -2,7 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.pool import PoolDatasetService
+from middlewared.plugins.pool_.dataset_encryption_lock import PoolDatasetService
 
 
 @pytest.mark.parametrize("request_datasets,keys_supplied,queried_datasets,result", [
