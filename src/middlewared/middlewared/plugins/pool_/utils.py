@@ -1,9 +1,25 @@
+import enum
+import itertools
+
+
 ZFS_CHECKSUM_CHOICES = ['ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR']
+ZFS_COMPRESSION_ALGORITHM_CHOICES = [
+    'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZSTD', 'ZSTD-FAST', 'ZLE', 'LZJB',
+] + [f'ZSTD-{i}' for i in range(1, 20)] + [
+    f'ZSTD-FAST-{i}' for i in itertools.chain(range(1, 11), range(20, 110, 10), range(500, 1500, 500))
+]
 ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
 ]
+ZFS_MAX_DATASET_NAME_LEN = 200  # It's really 256, but we should leave some space for snapshot names
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
+
+
+def none_normalize(x):
+    if x in (0, None):
+        return 'none'
+    return x
 
 
 def _null(x):
@@ -57,3 +73,9 @@ def get_props_of_interest_mapping():
         ('creation', None, None),
         ('snapdev', None, str.upper),
     ]
+
+
+class ZFSKeyFormat(enum.Enum):
+    HEX = 'HEX'
+    PASSPHRASE = 'PASSPHRASE'
+    RAW = 'RAW'
