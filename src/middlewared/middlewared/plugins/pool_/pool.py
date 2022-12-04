@@ -6,8 +6,8 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
-from middlewared.schema import Bool, Dict, Int, List, Ref, Str
-from middlewared.service import accepts, CRUDService, job, private, returns, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, List, Patch, Ref, Str
+from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 from middlewared.validators import Range
 
@@ -564,4 +564,74 @@ class PoolService(CRUDService):
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
+        return pool
+
+    @accepts(Int('id'), Patch(
+        'pool_create', 'pool_update',
+        ('add', {'name': 'autotrim', 'type': 'str', 'enum': ['ON', 'OFF']}),
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'encryption'}),
+        ('rm', {'name': 'encryption_options'}),
+        ('rm', {'name': 'deduplication'}),
+        ('rm', {'name': 'checksum'}),
+        ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
+    ))
+    @job(lock='pool_createupdate')
+    async def do_update(self, job, id, data):
+        """
+        Update pool of `id`, adding the new topology.
+
+        The `type` of `data` must be the same of existing vdevs.
+
+        .. examples(websocket)::
+
+          Add a new set of raidz1 to pool of id 1.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.update",
+                "params": [1, {
+                    "topology": {
+                        "data": [
+                            {"type": "RAIDZ1", "disks": ["da7", "da8", "da9"]}
+                        ]
+                    }
+                }]
+            }
+        """
+        pool = await self.get_instance(id)
+
+        verrors = ValidationErrors()
+
+        await self.__common_validation(verrors, data, 'pool_update', old=pool)
+        disks = vdevs = None
+        if 'topology' in data:
+            disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+            verrors.add_child(
+                'pool_update',
+                await self.middleware.call(
+                    'disk.check_disks_availability', list(disks), data['allow_duplicate_serials']
+                )
+            )
+        verrors.check()
+
+        if disks and vdevs:
+            await self.middleware.call('pool.format_disks', job, disks)
+
+            job.set_progress(90, 'Extending ZFS Pool')
+            extend_job = await self.middleware.call('zfs.pool.extend', pool['name'], vdevs)
+            await extend_job.wait()
+
+            if extend_job.error:
+                raise CallError(extend_job.error)
+
+        if 'autotrim' in data:
+            await self.middleware.call('zfs.pool.update', pool['name'], {'properties': {
+                'autotrim': {'value': data['autotrim'].lower()},
+            }})
+
+        pool = await self.get_instance(id)
+        await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
