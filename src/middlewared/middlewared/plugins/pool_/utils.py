@@ -1,6 +1,9 @@
 import enum
 import itertools
+import json
 import os
+
+from middlewared.service_exception import CallError
 
 
 ZFS_CHECKSUM_CHOICES = ['ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR']
@@ -91,6 +94,19 @@ def get_props_of_interest_mapping():
         ('creation', None, None),
         ('snapdev', None, str.upper),
     ]
+
+
+def retrieve_keys_from_file(job):
+    job.check_pipe('input')
+    try:
+        data = json.loads(job.pipes.input.r.read(10 * MB))
+    except json.JSONDecodeError:
+        raise CallError('Input file must be a valid JSON file')
+
+    if not isinstance(data, dict) or any(not isinstance(v, str) for v in data.values()):
+        raise CallError('Please specify correct format for input file')
+
+    return data
 
 
 class ZFSKeyFormat(enum.Enum):
