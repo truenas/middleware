@@ -7,12 +7,12 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, Str
-from middlewared.service import CRUDService, filterable, pass_app, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, filterable, pass_app, private, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
-    get_props_of_interest_mapping, none_normalize, ZFS_COMPRESSION_ALGORITHM_CHOICES,
+    attachments_path, get_props_of_interest_mapping, none_normalize, ZFS_COMPRESSION_ALGORITHM_CHOICES,
     ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
 )
 
@@ -782,6 +782,55 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id)
 
         return await self.get_instance(id)
+
+    @accepts(Str('id'), Dict(
+        'dataset_delete',
+        Bool('recursive', default=False),
+        Bool('force', default=False),
+    ))
+    async def do_delete(self, id, options):
+        """
+        Delete dataset/zvol `id`.
+
+        `recursive` will also delete/destroy all children datasets.
+        `force` will force delete busy datasets.
+
+        .. examples(websocket)::
+
+          Delete "tank/myuser" dataset.
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "pool.dataset.delete",
+                "params": ["tank/myuser"]
+            }
+        """
+
+        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id}/']]):
+            raise CallError(
+                f'Failed to delete dataset: cannot destroy {id!r}: filesystem has children', errno.ENOTEMPTY
+            )
+
+        dataset = await self.get_instance(id)
+        path = attachments_path(dataset)
+        if path:
+            for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+                attachments = await delegate.query(path, True)
+                if attachments:
+                    await delegate.delete(attachments)
+
+        if dataset['locked'] and dataset['mountpoint'] and os.path.exists(dataset['mountpoint']):
+            # We would like to remove the immutable flag in this case so that it's mountpoint can be
+            # cleaned automatically when we delete the dataset
+            await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
+
+        result = await self.middleware.call('zfs.dataset.delete', id, {
+            'force': options['force'],
+            'recursive': options['recursive'],
+        })
+        return result
 
     def __handle_zfs_set_property_error(self, e, properties_definitions):
         zfs_name_to_api_name = {i[1]: i[0] for i in properties_definitions}
