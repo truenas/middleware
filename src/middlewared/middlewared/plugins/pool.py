@@ -20,6 +20,7 @@ from middlewared.schema import (
     accepts, Attribute, Bool, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any,
     Ref, returns, OROperator, NOT_PROVIDED,
 )
+from middlewared.plugins.pool_.utils import dataset_can_be_mounted
 from middlewared.service import (
     item_method, job, private, CallError, CRUDService, ValidationErrors, periodic
 )
@@ -434,7 +435,7 @@ class PoolDatasetService(CRUDService):
                 )
 
             if not options['force'] and not ds['force']:
-                if err := self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name'])):
+                if err := dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name'])):
                     verrors.add(f'unlock_options.datasets.{i}.force', err)
 
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
@@ -755,7 +756,7 @@ class PoolDatasetService(CRUDService):
                     ds['unlock_error'] = f'Child cannot be unlocked when parent "{check}" is locked'
 
             if ds['locked'] and not options['force'] and not keys_supplied.get(ds['name'], {}).get('force'):
-                err = self.dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name']))
+                err = dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name']))
                 if ds['unlock_error'] and err:
                     ds['unlock_error'] += f' and {err}'
                 elif err:
@@ -780,19 +781,6 @@ class PoolDatasetService(CRUDService):
                 failed.add(ds['name'])
 
         return results
-
-    @private
-    def dataset_can_be_mounted(self, ds_name, ds_mountpoint):
-        mount_error_check = ''
-        if os.path.isfile(ds_mountpoint):
-            mount_error_check = f'A file exists at {ds_mountpoint!r} and {ds_name} cannot be mounted'
-        elif os.path.isdir(ds_mountpoint) and os.listdir(ds_mountpoint):
-            mount_error_check = f'{ds_mountpoint!r} directory is not empty'
-        mount_error_check += (
-            ' (please provide "force" flag to override this error and file/directory '
-            'will be renamed once the dataset is unlocked)' if mount_error_check else ''
-        )
-        return mount_error_check
 
     @accepts(
         Str('id'),
