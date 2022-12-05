@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import gzip
 import os
@@ -24,7 +23,7 @@ class JobsCopyService(Service):
         if await self.middleware.call("failover.status") != "MASTER":
             return
 
-        asyncio.ensure_future(self.send_job(job))
+        self.middleware.create_task(self.send_job(job))
 
     async def send_job(self, job):
         try:
