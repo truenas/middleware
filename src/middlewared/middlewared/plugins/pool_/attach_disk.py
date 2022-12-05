@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
 from middlewared.service import job, Service, ValidationErrors
 
@@ -69,4 +67,4 @@ class PoolService(Service):
         ])
         await job.wrap(extend_job)
 
-        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
