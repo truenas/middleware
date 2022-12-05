@@ -1342,4 +1342,4 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     if await middleware.call('system.ready'):
-        asyncio.ensure_future(ready_system_sync_keys(middleware))
+        middleware.create_task(ready_system_sync_keys(middleware))
