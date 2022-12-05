@@ -167,7 +167,7 @@ async def _event_vms(middleware, event_type, args):
     if not vm or vm[0]['status']['state'] != 'STOPPED' or args.get('state') != 'SHUTOFF':
         return
 
-    middlewarwe.create_task(middleware.call('vm.teardown_guest_vmemory', args['id']))
+    middleware.create_task(middleware.call('vm.teardown_guest_vmemory', args['id']))
 
 
 async def setup(middleware):
