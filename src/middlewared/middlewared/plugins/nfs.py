@@ -549,13 +549,13 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload NFS if a pool is imported and there are shares configured for it.
     """
     if pool is None:
-        asyncio.ensure_future(middleware.call('etc.generate', 'nfsd'))
+        middleware.create_task(middleware.call('etc.generate', 'nfsd'))
         return
 
     path = f'/mnt/{pool["name"]}'
     for share in await middleware.call('sharing.nfs.query'):
         if share['path'].startswith(path):
-            asyncio.ensure_future(middleware.call('service.reload', 'nfs'))
+            middleware.create_task(middleware.call('service.reload', 'nfs'))
             break
 
 
