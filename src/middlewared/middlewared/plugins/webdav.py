@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import middlewared.sqlalchemy as sa
@@ -278,11 +277,11 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload WebDAV if a pool is imported.
     """
     if pool is None:
-        asyncio.ensure_future(middleware.call('etc.generate', 'webdav'))
+        middleware.create_task(middleware.call('etc.generate', 'webdav'))
         return
 
     if await middleware.call('service.started_or_enabled', 'webdav'):
-        asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
+        middleware.create_task(middleware.call('service.reload', 'webdav'))
 
 
 class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):
