@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import os
 
@@ -85,7 +84,7 @@ class PoolService(Service):
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
-            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         if options['preserve_settings']:
             filters = [['zfs_guid', '=', options['label']]]

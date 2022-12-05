@@ -396,7 +396,7 @@ class ServiceService(CRUDService):
 
 async def __event_service_ready(middleware, event_type, args):
     if args['id'] == 'ready':
-        asyncio.ensure_future(middleware.call('service.check_deprecated_services'))
+        middleware.create_task(middleware.call('service.check_deprecated_services'))
 
 
 async def setup(middleware):

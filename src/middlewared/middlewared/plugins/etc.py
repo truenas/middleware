@@ -1,15 +1,14 @@
-from mako import exceptions
-from middlewared.service import CallError, Service
-from middlewared.utils import osc
-from middlewared.utils.io import write_if_changed
-from middlewared.utils.mako import get_template
-
-
 import asyncio
 from collections import defaultdict
 import imp
 import os
 import stat
+
+from mako import exceptions
+from middlewared.service import CallError, Service
+from middlewared.utils import osc
+from middlewared.utils.io import write_if_changed
+from middlewared.utils.mako import get_template
 
 DEFAULT_ETC_PERMS = 0o644
 
@@ -491,7 +490,7 @@ class EtcService(Service):
 
 async def __event_system_ready(middleware, event_type, args):
     if args['id'] == 'ready':
-        asyncio.ensure_future(middleware.call('etc.generate_checkpoint', 'post_init'))
+        middleware.create_task(middleware.call('etc.generate_checkpoint', 'post_init'))
 
 
 async def pool_post_import(middleware, pool):

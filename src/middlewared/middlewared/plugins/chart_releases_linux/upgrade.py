@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import errno
 import json
@@ -372,7 +371,7 @@ class ChartReleaseService(Service):
 
         container_config = await self.middleware.call('container.config')
         if container_config['enable_image_updates']:
-            asyncio.ensure_future(self.middleware.call('container.image.check_update'))
+            self.middleware.create_task(self.middleware.call('container.image.check_update'))
 
     @private
     async def chart_release_update_check(self, catalog_item, application):

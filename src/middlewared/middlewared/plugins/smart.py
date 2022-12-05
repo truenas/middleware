@@ -344,7 +344,7 @@ class SMARTTestService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        asyncio.ensure_future(self._service_change('smartd', 'restart'))
+        self.middleware.create_task(self._service_change('smartd', 'restart'))
 
         return await self.get_instance(data['id'])
 
@@ -372,7 +372,7 @@ class SMARTTestService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        asyncio.ensure_future(self._service_change('smartd', 'restart'))
+        self.middleware.create_task(self._service_change('smartd', 'restart'))
 
         return await self.get_instance(id)
 
@@ -386,7 +386,7 @@ class SMARTTestService(CRUDService):
             id
         )
 
-        asyncio.ensure_future(self._service_change('smartd', 'restart'))
+        self.middleware.create_task(self._service_change('smartd', 'restart'))
 
         return response
 

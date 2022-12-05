@@ -114,7 +114,7 @@ class FailoverEventsService(Service):
         entire failover event.
         """
         logger.info('Syncing enclosure')
-        asyncio.ensure_future(self.middleware.call('enclosure.sync_zpool'))
+        self.middleware.create_task(self.middleware.call('enclosure.sync_zpool'))
 
     def run_call(self, method, *args):
         try:
@@ -538,12 +538,12 @@ class FailoverEventsService(Service):
             # start any VMs (this will log errors if the vm(s) fail to start)
             # Initialize VMs first to make sure system has relevant
             # objects for each VM initialized
-            asyncio.ensure_future(start_vms())
+            self.middleware.create_task(start_vms())
 
         if await self.middleware.call('kubernetes.license_active') and (
             await self.middleware.call('kubernetes.config')
         )['dataset']:
-            asyncio.ensure_future(self.middleware.call('kubernetes.start_service'))
+            self.middleware.create_task(self.middleware.call('kubernetes.start_service'))
 
     @job(lock='vrrp_backup')
     def vrrp_backup(self, job, fobj, ifname, event):

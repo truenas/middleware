@@ -137,7 +137,7 @@ class ReportingService(Service):
                 self.middleware.logger.debug("Scheduling internal Graphite server shutdown")
                 self.server_shutdown_timer = asyncio.get_event_loop().call_later(
                     300,
-                    lambda: asyncio.ensure_future(self.middleware.call("reporting.shutdown_graphite_server")),
+                    lambda: self.middleware.create_task(self.middleware.call("reporting.shutdown_graphite_server")),
                 )
 
     @private

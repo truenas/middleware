@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
@@ -31,8 +29,7 @@ class DiskService(PseudoServiceBase):
         await self.reload()
 
     async def reload(self):
-        # FIXME: Linux
-        asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
+        self.middleware.create_task(self.middleware.call("service.restart", "collectd"))
 
 
 class KmipService(PseudoServiceBase):
@@ -186,10 +183,10 @@ class SystemService(PseudoServiceBase):
     restartable = True
 
     async def stop(self):
-        asyncio.ensure_future(self.middleware.call("system.shutdown", {"delay": 3}))
+        self.middleware.create_task(self.middleware.call("system.shutdown", {"delay": 3}))
 
     async def restart(self):
-        asyncio.ensure_future(self.middleware.call("system.reboot", {"delay": 3}))
+        self.middleware.create_task(self.middleware.call("system.reboot", {"delay": 3}))
 
 
 class TimeservicesService(PseudoServiceBase):

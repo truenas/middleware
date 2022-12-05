@@ -1,25 +1,26 @@
+import asyncio
+import codecs
+import enum
+import os
+import re
+from pathlib import Path
+import stat
+import subprocess
+import uuid
+
+from samba import param
+
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
-from middlewared.service import accepts, job, private, SharingService, TDBWrapConfigService, ValidationErrors, filterable
+from middlewared.service import accepts, job, private, SharingService
+from middlewared.service import TDBWrapConfigService, ValidationErrors, filterable
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.utils.osc import getmntinfo
 from middlewared.utils.path import FSLocation, path_location
-from pathlib import Path
-
-import asyncio
-import codecs
-import enum
-import os
-import re
-import stat
-import subprocess
-import uuid
-
-from samba import param
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
@@ -626,7 +627,9 @@ class SMBService(TDBWrapConfigService):
         except KeyError:
             pass
 
-        gl_enabled = (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
+        gl_enabled = (await self.middleware.call(
+            'service.query', [('service', '=', 'glusterd')], {'get': True}
+        ))['enable']
 
         if gl_enabled:
             hamode = SMBHAMODE['CLUSTERED'].name
@@ -732,7 +735,10 @@ class SMBService(TDBWrapConfigService):
             bindip_choices = list((await self.bindip_choices()).keys())
             for idx, item in enumerate(new['bindip']):
                 if item not in bindip_choices:
-                    verrors.add(f'smb_update.bindip.{idx}', f'IP address [{item}] is not a configured address for this server')
+                    verrors.add(
+                        f'smb_update.bindip.{idx}',
+                        f'IP address [{item}] is not a configured address for this server'
+                    )
 
         if not new.get('workgroup'):
             verrors.add('smb_update.workgroup', 'workgroup field is required.')
@@ -750,8 +756,12 @@ class SMBService(TDBWrapConfigService):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
 
         if not new['aapl_extensions']:
-            if await self.middleware.call('sharing.smb.query', [['OR', [['afp', '=', True], ['timemachine', '=', True]]]], {'count': True}):
-                verrors.add('smb_update.aapl_extensions', 'This option must be enabled when AFP  or time machine shares are present')
+            filters = [['OR', [['afp', '=', True], ['timemachine', '=', True]]]]
+            if await self.middleware.call('sharing.smb.query', filters, {'count': True}):
+                verrors.add(
+                    'smb_update.aapl_extensions',
+                    'This option must be enabled when AFP or time machine shares are present'
+                )
 
     @accepts(Dict(
         'smb_update',
@@ -785,27 +795,29 @@ class SMBService(TDBWrapConfigService):
         `netbiosalias` a list of netbios aliases. If Server is joined to an AD domain, additional Kerberos
         Service Principal Names will be generated for these aliases.
 
-        `workgroup` specifies the NetBIOS workgroup to which the TrueNAS server belongs. This will be automatically
-        set to the correct value during the process of joining an AD domain. `workgroup` and `netbiosname` should have different values.
+        `workgroup` specifies the NetBIOS workgroup to which the TrueNAS server belongs. This will be
+        automatically set to the correct value during the process of joining an AD domain.
+        NOTE: `workgroup` and `netbiosname` should have different values.
 
         `enable_smb1` allows legacy SMB clients to connect to the server when enabled.
 
-        `aapl_extensions` enables support for SMB2 protocol extensions for MacOS clients. This is not a requirement for MacOS support,
-        but is currently a requirement for time machine support.
+        `aapl_extensions` enables support for SMB2 protocol extensions for MacOS clients. This is not a
+        requirement for MacOS support, but is currently a requirement for time machine support.
 
         `localmaster` when set, determines if the system participates in a browser election.
 
         `guest` attribute is specified to select the account to be used for guest access. It defaults to "nobody".
 
-        The group specified as the SMB `admin_group` will be automatically added as a foreign group member of S-1-5-32-544 (builtin\admins).
-        This will afford the group all privileges granted to a local admin. Any SMB group may be selected (including AD groups).
+        The group specified as the SMB `admin_group` will be automatically added as a foreign group member
+        of S-1-5-32-544 (builtin\admins). This will afford the group all privileges granted to a local admin.
+        Any SMB group may be selected (including AD groups).
 
-        `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or poorly-implemented
-        SMB clients.
+        `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or
+        poorly-implemented SMB clients.
 
-        `smb_options` smb.conf parameters that are not covered by the above supported configuration options may be added as
-        an smb_option. Not all options are tested or supported, and behavior of smb_options may change between releases. Stability of
-        smb.conf options is not guaranteed.
+        `smb_options` smb.conf parameters that are not covered by the above supported configuration options may be
+        added as an smb_option. Not all options are tested or supported, and behavior of smb_options may change
+        between releases. Stability of smb.conf options is not guaranteed.
         """
         old = await self.config()
 
@@ -1787,7 +1799,7 @@ async def pool_post_import(middleware, pool):
         already completed and initialized the SMB service.
         """
         await middleware.call('smb.disable_acl_if_trivial')
-        asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
+        middleware.create_task(middleware.call('sharing.smb.sync_registry'))
         return
 
     smb_is_configured = await middleware.call("smb.is_configured")
@@ -1806,7 +1818,7 @@ async def pool_post_import(middleware, pool):
         ])
     ]):
         await middleware.call('smb.disable_acl_if_trivial')
-        asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
+        middleware.create_task(middleware.call('sharing.smb.sync_registry'))
 
 
 class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):

@@ -73,7 +73,7 @@ class SystemGeneralService(Service):
         HTTP server will be restarted after `delay` seconds.
         """
         event_loop = asyncio.get_event_loop()
-        event_loop.call_later(delay, lambda: asyncio.ensure_future(self.middleware.call('service.restart', 'http')))
+        event_loop.call_later(delay, lambda: self.middleware.create_task(self.middleware.call('service.restart', 'http')))
 
     @accepts()
     @returns(Str('local_url'))
