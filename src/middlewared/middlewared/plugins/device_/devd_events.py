@@ -59,6 +59,7 @@ async def devd_listen(middleware):
         line = line.decode(errors='ignore')
         if line == "":
             writer.close()
+            await writer.wait_closed()
             break
 
         if not line.startswith('!'):
