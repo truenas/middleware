@@ -8,7 +8,7 @@ import websocket
 from middlewared.client import ClientException
 from middlewared.test.integration.assets.account import user, unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import client, ssh, websocket_url
+from middlewared.test.integration.utils import call, client, ssh, websocket_url
 from middlewared.test.integration.utils.shell import assert_shell_works
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def unprivileged_user():
 @pytest.fixture()
 def unprivileged_user_token(unprivileged_user):
     with client(auth=(unprivileged_user.username, unprivileged_user.password)) as c:
-        return c.call("auth.generate_token")
+        return c.call("auth.generate_token", 300, {}, True)
 
 
 @pytest.fixture(scope="module")
@@ -47,7 +47,36 @@ def unprivileged_user_with_web_shell():
 @pytest.fixture()
 def unprivileged_user_with_web_shell_token(unprivileged_user_with_web_shell):
     with client(auth=(unprivileged_user_with_web_shell.username, unprivileged_user_with_web_shell.password)) as c:
-        return c.call("auth.generate_token")
+        return c.call("auth.generate_token", 300, {}, True)
+
+
+def test_websocket_auth_session_list_terminate(unprivileged_user):
+    with client(auth=(unprivileged_user.username, unprivileged_user.password)) as c:
+        sessions = call("auth.sessions")
+        my_sessions = [
+            s for s in sessions
+            if s["credentials"] == "LOGIN_PASSWORD" and s["credentials_data"]["username"] == unprivileged_user.username
+        ]
+        assert len(my_sessions) == 1, sessions
+
+        call("auth.terminate_session", my_sessions[0]["id"])
+
+        with pytest.raises(Exception):
+            c.call("system.info")
+
+    sessions = call("auth.sessions")
+    assert not [
+        s for s in sessions
+        if s["credentials"] == "LOGIN_PASSWORD" and s["credentials_data"]["username"] == unprivileged_user.username
+    ], sessions
+
+
+def test_websocket_auth_terminate_all_other_sessions(unprivileged_user):
+    with client(auth=(unprivileged_user.username, unprivileged_user.password)) as c:
+        call("auth.terminate_other_sessions")
+
+        with pytest.raises(Exception):
+            c.call("system.info")
 
 
 def test_websocket_auth_get_methods(unprivileged_user):
@@ -99,6 +128,27 @@ def test_unix_socket_auth_fails_when_user_has_no_privilege():
         }):
             result = ssh(f"sudo -u noconnect midclt call pool.create", check=False, complete_response=True)
             assert "Not authenticated" in result["stderr"]
+
+
+def test_token_auth_session_list_terminate(unprivileged_user, unprivileged_user_token):
+    with client(auth=None) as c:
+        assert c.call("auth.login_with_token", unprivileged_user_token)
+
+        sessions = call("auth.sessions")
+        my_sessions = [
+            s for s in sessions
+            if (
+                s["credentials"] == "TOKEN" and
+                s["credentials_data"]["parent"]["credentials"] == "LOGIN_PASSWORD" and
+                s["credentials_data"]["parent"]["credentials_data"]["username"] == unprivileged_user.username
+            )
+        ]
+        assert len(my_sessions) == 1, sessions
+
+        call("auth.terminate_session", my_sessions[0]["id"])
+
+        with pytest.raises(Exception):
+            c.call("system.info")
 
 
 def test_token_auth_calls_allowed_method(unprivileged_user_token):

@@ -19,6 +19,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.osc import getmntinfo
+from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 from middlewared.plugins.filesystem_.acl_base import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
 
@@ -71,8 +72,12 @@ class FilesystemService(Service):
         return dosmode.get_dosflags(path)
 
     @private
+    def is_dataset_path(self, path):
+        return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
+
+    @private
     def is_cluster_path(self, path):
-        return path.startswith(FuseConfig.FUSE_PATH_SUBST.value)
+        return path_location(path) is FSLocation.CLUSTER
 
     @private
     def resolve_cluster_path(self, path, ignore_ctdb=False):
@@ -80,21 +85,26 @@ class FilesystemService(Service):
         Convert a "CLUSTER:"-prefixed path to an absolute path
         on the server.
         """
-        if not path.startswith(FuseConfig.FUSE_PATH_SUBST.value):
+        if path_location(path) is not FSLocation.CLUSTER:
             return path
 
-        gluster_volume = path[8:].split("/")[0]
+        try:
+            gluster_volume, volpath = strip_location_prefix(path).split('/', 1)
+        except ValueError:
+            raise CallError(
+                'Cluster paths must be provided with the following format: '
+                f'"{FuseConfig.FUSE_PATH_SUBST.value}<cluster volume name>/<path>". '
+                f'For example: "{FuseConfig.FUSE_PATH_SUBST.value}GLSMB/SHARE"'
+            )
+
         if gluster_volume == CTDBConfig.CTDB_VOL_NAME.value and not ignore_ctdb:
             raise CallError('access to ctdb volume is not permitted.', errno.EPERM)
-        elif not gluster_volume:
-            raise CallError(f'More than the prefix "{FuseConfig.FUSE_PATH_SUBST.value}" must be provided')
 
         is_mounted = self.middleware.call_sync('gluster.fuse.is_mounted', {'name': gluster_volume})
         if not is_mounted:
             raise CallError(f'{gluster_volume}: cluster volume is not mounted.', errno.ENXIO)
 
-        cluster_path = path.replace(FuseConfig.FUSE_PATH_SUBST.value, f'{FuseConfig.FUSE_PATH_BASE.value}/')
-        return cluster_path
+        return os.path.join(FuseConfig.FUSE_PATH_BASE.value, gluster_volume, volpath)
 
     @private
     @filterable
@@ -329,6 +339,9 @@ class FilesystemService(Service):
         in the directory 'data' in the clustered volume `smb01`, the
         path should be specified as `CLUSTER:smb01/data`.
         """
+        if path_location(_path) is FSLocation.EXTERNAL:
+            raise CallError(f'{_path} is external to TrueNAS', errno.EXDEV)
+
         path = pathlib.Path(self.resolve_cluster_path(_path))
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
@@ -379,6 +392,8 @@ class FilesystemService(Service):
             'options',
             Bool('append', default=False),
             Int('mode'),
+            Int('uid'),
+            Int('gid'),
         ),
     )
     def file_receive(self, path, content, options):
@@ -396,9 +411,10 @@ class FilesystemService(Service):
             openmode = 'wb+'
         with open(path, openmode) as f:
             f.write(binascii.a2b_base64(content))
-        mode = options.get('mode')
-        if mode:
+        if mode := options.get('mode'):
             os.chmod(path, mode)
+        if (uid := options.get('uid')) is not None and (gid := options.get('gid')) is not None:
+            os.chown(path, uid, gid)
         if path == PWENC_FILE_SECRET:
             self.middleware.call_sync('pwenc.reset_secret_cache')
         return True

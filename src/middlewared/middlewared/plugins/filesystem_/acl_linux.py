@@ -5,6 +5,7 @@ import subprocess
 import stat as pystat
 from pathlib import Path
 
+from middlewared.utils.path import FSLocation, path_location
 from middlewared.service import private, CallError, ValidationErrors, Service
 from .acl_base import ACLBase, ACLType
 
@@ -31,7 +32,10 @@ class FilesystemService(Service, ACLBase):
             raise CallError(f"acltool [{action}] on path {path} failed with error: [{acltool.stderr.decode().strip()}]")
 
     def _common_perm_path_validate(self, schema, data, verrors):
-        is_cluster = self.middleware.call_sync('filesystem.is_cluster_path', data['path'])
+        loc = path_location(data['path'])
+        if loc is FSLocation.EXTERNAL:
+            verrors.add(f'{schema}.path', 'ACL operations on remote server paths are not possible')
+
         try:
             data['path'] = self.middleware.call_sync('filesystem.resolve_cluster_path', data['path'])
         except CallError as e:
@@ -61,10 +65,10 @@ class FilesystemService(Service, ACLBase):
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
             return
 
-        if is_cluster:
+        if loc is FSLocation.CLUSTER:
             return
 
-        if st['realpath'].startswith("/root/.ssh"):
+        if any(st['realpath'].startswith(prefix) for prefix in ('/home/admin/.ssh', '/root/.ssh')):
             return
 
         if not st['realpath'].startswith('/mnt/'):
@@ -98,7 +102,13 @@ class FilesystemService(Service, ACLBase):
         """
         Failure with ENODATA in case acltype is supported, but
         acl absent. EOPNOTSUPP means that acltype is not supported.
+
+        raises NotImplementedError for EXTERNAL paths
         """
+
+        if path_location(path) is FSLocation.EXTERNAL:
+            raise NotImplementedError
+
         try:
             os.getxattr(path, "system.posix_acl_access")
             return ACLType.POSIX1E.name
@@ -367,6 +377,9 @@ class FilesystemService(Service, ACLBase):
 
     def getacl(self, path, simplified, resolve_ids):
         path = self.middleware.call_sync('filesystem.resolve_cluster_path', path)
+        if path_location(path) is FSLocation.EXTERNAL:
+            raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
+
         if not os.path.exists(path):
             raise CallError('Path not found.', errno.ENOENT)
 

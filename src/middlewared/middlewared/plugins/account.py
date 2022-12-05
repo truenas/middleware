@@ -13,6 +13,7 @@ import crypt
 import errno
 import glob
 import hashlib
+import json
 import os
 import random
 import shlex
@@ -20,9 +21,12 @@ import shutil
 import string
 import stat
 import time
+import warnings
 from pathlib import Path
 from contextlib import suppress
 
+ADMIN_UID = 950  # When googled, does not conflict with anything
+ADMIN_GID = 950
 SKEL_PATH = '/etc/skel/'
 
 
@@ -189,6 +193,8 @@ class UserService(CRUDService):
         # Get authorized keys
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
+        user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
+
         return user
 
     @private
@@ -198,6 +204,7 @@ class UserService(CRUDService):
             'id_type_both',
             'nt_name',
             'sid',
+            'immutable',
         ]
 
         for i in to_remove:
@@ -489,22 +496,29 @@ class UserService(CRUDService):
             group = user['group']
             user['group'] = group['id']
 
+        if data.get('uid') == user['uid']:
+            data.pop('uid')  # Only check for duplicate UID if we are updating it
+
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
 
         try:
-            st = os.stat(user.get("home", "/nonexistent")).st_mode
+            st = (await self.middleware.run_in_thread(os.stat, user.get("home", "/nonexistent"))).st_mode
             old_mode = f'{stat.S_IMODE(st):03o}'
         except FileNotFoundError:
             old_mode = None
 
         home = data.get('home') or user['home']
         has_home = home != '/nonexistent'
-        # root user (uid 0) is an exception to the rule
-        if data.get('sshpubkey') and not home.startswith('/mnt') and user['uid'] != 0:
-            verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
+        # root user and admin users are an exception to the rule
+        if data.get('sshpubkey'):
+            if not (
+                home in ['/home/admin', '/root'] or
+                await self.middleware.call('filesystem.is_dataset_path', home)
+            ):
+                verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
 
         # Do not allow attributes to be changed for builtin user
-        if user['builtin']:
+        if user['immutable']:
             for i in ('group', 'home', 'home_mode', 'uid', 'username', 'smb'):
                 if i in data and data[i] != user[i]:
                     verrors.add(f'user_update.{i}', 'This attribute cannot be changed')
@@ -580,7 +594,7 @@ class UserService(CRUDService):
                 raise CallError(f'{user["home"]} is not a directory')
 
         home_mode = user.pop('home_mode', None)
-        if user['builtin']:
+        if user['immutable']:
             home_mode = None
 
         try:
@@ -842,17 +856,42 @@ class UserService(CRUDService):
     @returns(Bool())
     async def has_root_password(self):
         """
-        Return whether the root user has a valid password set.
+        Deprecated method. Use `user.has_local_administrator_set_up`
+        """
+        warnings.warn("`user.has_root_password` has been deprecated. Use `user.has_local_administrator_set_up`",
+                      DeprecationWarning)
+        return await self.has_local_administrator_set_up()
+
+    @no_auth_required
+    @accepts()
+    @returns(Bool())
+    async def has_local_administrator_set_up(self):
+        """
+        Return whether a local administrator with a valid password exists.
 
         This is used when the system is installed without a password and must be set on
         first use/login.
         """
-        return (await self.middleware.call(
-            'datastore.query', 'account.bsdusers', [('bsdusr_username', '=', 'root')], {'get': True}
-        ))['bsdusr_unixhash'] != '*'
+        return len(await self.middleware.call('privilege.local_administrators')) > 0
 
     @no_auth_required
     @accepts(
+        Str('password'),
+        Dict('options')
+    )
+    @returns()
+    @pass_app()
+    async def set_root_password(self, app, password, options):
+        """
+        Deprecated method. Use `user.setup_local_administrator`
+        """
+        warnings.warn("`user.set_root_password` has been deprecated. Use `user.setup_local_administrator`",
+                      DeprecationWarning)
+        return await self.setup_local_administrator(app, 'root', password, options)
+
+    @no_auth_required
+    @accepts(
+        Str('username', enum=['root', 'admin']),
         Str('password'),
         Dict(
             'options',
@@ -865,26 +904,46 @@ class UserService(CRUDService):
     )
     @returns()
     @pass_app()
-    async def set_root_password(self, app, password, options):
+    async def setup_local_administrator(self, app, username, password, options):
         """
-        Set password for root user if it is not already set.
+        Set up local administrator (this method does not require authentication if local administrator is not already
+        set up).
         """
         if not app.authenticated:
-            if await self.middleware.call('user.has_root_password'):
-                raise CallError('You cannot call this method anonymously if root already has a password', errno.EACCES)
-
             if await self.middleware.call('system.environment') == 'EC2':
                 if 'ec2' not in options:
                     raise CallError(
-                        'You need to specify instance ID when setting initial root password on EC2 instance',
+                        'You need to specify instance ID when setting up local administrator on EC2 instance',
                         errno.EACCES,
                     )
 
                 if options['ec2']['instance_id'] != await self.middleware.call('ec2.instance_id'):
                     raise CallError('Incorrect EC2 instance ID', errno.EACCES)
 
-        root = await self.middleware.call('user.query', [('username', '=', 'root')], {'get': True})
-        await self.middleware.call('user.update', root['id'], {'password': password})
+        if await self.middleware.call('user.has_local_administrator_set_up'):
+            raise CallError('Local administrator is already set up', errno.EEXIST)
+
+        if username == 'admin':
+            if await self.middleware.call('user.query', [['uid', '=', ADMIN_UID]]):
+                raise CallError(
+                    f'A user with uid={ADMIN_UID} already exists, setting up local administrator is not possible',
+                    errno.EEXIST,
+                )
+            if await self.middleware.call('user.query', [['username', '=', 'admin']]):
+                raise CallError('"admin" user already exists, setting up local administrator is not possible',
+                                errno.EEXIST)
+
+            if await self.middleware.call('group.query', [['gid', '=', ADMIN_GID]]):
+                raise CallError(
+                    f'A group with gid={ADMIN_GID} already exists, setting up local administrator is not possible',
+                    errno.EEXIST,
+                )
+            if await self.middleware.call('group.query', [['group', '=', 'admin']]):
+                raise CallError('"admin" group already exists, setting up local administrator is not possible',
+                                errno.EEXIST)
+
+        await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
+                  input=json.dumps({'username': username, 'password': password}).encode('utf-8'))
 
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
@@ -925,6 +984,21 @@ class UserService(CRUDService):
             exclude_filter,
             {'prefix': 'bsdusr_'}
         )
+
+        if data.get('uid') is not None:
+            try:
+                existing_user = await self.middleware.call(
+                    'user.get_user_obj',
+                    {'uid': data['uid']},
+                )
+            except KeyError:
+                pass
+            else:
+                verrors.add(
+                    f'{schema}.uid',
+                    f'Uid {data["uid"]} is already used (user {existing_user["pw_name"]} has it)',
+                    errno.EEXIST,
+                )
 
         if 'username' in data:
             pw_checkname(verrors, f'{schema}.username', data['username'])
@@ -1386,6 +1460,9 @@ class GroupService(CRUDService):
         group = await self.get_instance(pk)
         groupmap_changed = False
 
+        if data.get('gid') == group['gid']:
+            data.pop('gid')  # Only check for duplicate GID if we are updating it
+
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
         verrors.check()
@@ -1567,14 +1644,16 @@ class GroupService(CRUDService):
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
         if data.get('gid') and not allow_duplicate_gid:
-            existing = await self.middleware.call(
-                'datastore.query', 'account.bsdgroups',
-                [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'}
-            )
-            if existing:
+            try:
+                existing = await self.middleware.call(
+                    'group.get_group_obj', {'gid': data['gid']},
+                )
+            except KeyError:
+                pass
+            else:
                 verrors.add(
                     f'{schema}.gid',
-                    f'The Group ID "{data["gid"]}" already exists.',
+                    f'Gid {data["gid"]} is already used (group {existing["gr_name"]} has it)',
                     errno.EEXIST,
                 )
 

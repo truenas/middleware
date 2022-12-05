@@ -60,7 +60,7 @@ def storj_credential():
 
 
 def test_storj_list_buckets(storj_credential):
-    assert any(item["Name"] == "demo-bucket" for item in call("cloudsync.list_buckets", storj_credential["id"]))
+    assert any(item["Name"] == STORJ_IX_BUCKET for item in call("cloudsync.list_buckets", storj_credential["id"]))
 
 
 def test_storj_list_directory(storj_credential):

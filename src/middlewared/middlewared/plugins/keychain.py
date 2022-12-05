@@ -560,6 +560,7 @@ class KeychainCredentialService(CRUDService):
         Str("name", required=True),
         Str("url", required=True, validators=[URL()]),
         Str("token", private=True),
+        Str("admin_username", default="root"),
         Str("password", private=True),
         Str("otp_token", private=True),
         Str("username", default="root"),
@@ -604,14 +605,14 @@ class KeychainCredentialService(CRUDService):
 
         with client as c:
             if data.get("token"):
-                if not c.call("auth.token", data["token"]):
+                if not c.call("auth.login_with_token", data["token"]):
                     raise CallError("Invalid token")
             elif data.get("password"):
-                args = ["root", data["password"]]
+                args = [data["admin_username"], data["password"]]
                 if data.get("otp_token"):
                     args.append(data["otp_token"])
                 if not c.call("auth.login", *args):
-                    raise CallError("Invalid password")
+                    raise CallError("Invalid username or password")
             else:
                 raise CallError("You should specify either remote system password or temporary authentication token")
 

@@ -1852,6 +1852,10 @@ async def configure_http_proxy(middleware, *args, **kwargs):
 
 
 async def attach_interface(middleware, iface):
+    ignore = await middleware.call('interface.internal_interfaces')
+    if any((i.startswith(iface) for i in ignore)):
+        return
+
     if await middleware.call('interface.sync_interface', iface):
         await middleware.call('interface.run_dhcp', iface, False)
 

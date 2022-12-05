@@ -137,10 +137,11 @@ class ACMERegistrationService(CRUDService):
             )
 
         # For now we assume that only root is responsible for certs issued under ACME protocol
-        email = (self.middleware.call_sync('user.query', [['uid', '=', 0]]))[0]['email']
+        email = self.middleware.call_sync('mail.local_administrator_email')
         if not email:
             raise CallError(
-                'Please configure an email address for "root" user which will be used with the ACME server'
+                'Please configure an email address for any local administrator user which will be used with the ACME '
+                'server'
             )
 
         if self.middleware.call_sync(

@@ -73,6 +73,7 @@ def privilege_with_orphan_local_group():
             "web_shell": False,
         })
         call("datastore.delete", "account.bsdgroups", g["id"])
+        call("etc.generate", "user")
 
     yield types.SimpleNamespace(gid=gid, privilege=privilege)
 

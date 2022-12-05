@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, List
-from middlewared.service import Service
+from middlewared.service import filter_list, Service, private
 
 
 class GroupService(Service):
@@ -12,14 +12,16 @@ class GroupService(Service):
         """
         Checks whether at least one local user with a password is a member of any of the `group_ids`.
         """
-        groups = await self.middleware.call(
-            "datastore.query",
-            "account.bsdgroups",
-            [
-                ["gid", "in", gids],
-            ],
-            {"prefix": "bsdgrp_"},
-        )
+        return len(await self.get_password_enabled_users(gids, exclude_user_ids)) > 0
+
+    @private
+    async def get_password_enabled_users(self, gids, exclude_user_ids, groups=None):
+        if groups is None:
+            groups = await self.middleware.call('group.query')
+
+        result = []
+
+        groups = filter_list(groups, [["gid", "in", gids]])
         for membership in await self.middleware.call(
             "datastore.query",
             "account.bsdgroupmembership",
@@ -29,12 +31,15 @@ class GroupService(Service):
             ],
             {"prefix": "bsdgrpmember_"}
         ):
+            if membership["user"]["bsdusr_locked"]:
+                continue
+
             if membership["user"]["bsdusr_password_disabled"]:
                 continue
 
-            if membership["user"]["bsdusr_unixhash"] == "*":
+            if membership["user"]["bsdusr_unixhash"] in ("x", "*"):
                 continue
 
-            return True
+            result.append({k.removeprefix("bsdusr_"): v for k, v in membership["user"].items()})
 
-        return False
+        return result

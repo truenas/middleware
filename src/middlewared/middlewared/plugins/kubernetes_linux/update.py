@@ -1,4 +1,3 @@
-import asyncio
 import ipaddress
 import itertools
 import json
@@ -10,7 +9,7 @@ from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
-from .k8s import api_client
+from .k8s import ApiException, Node
 from .utils import applications_ds_name
 
 
@@ -482,22 +481,24 @@ class KubernetesService(ConfigService):
     @private
     async def validate_k8s_setup(self, raise_exception=True):
         error = None
-        k8s_config = await self.middleware.call('kubernetes.config')
-        if not k8s_config['dataset']:
+        if not await self.pool_configured():
             error = 'Please configure kubernetes pool.'
         if not error and not await self.middleware.call('service.started', 'kubernetes'):
             error = 'Kubernetes service is not running.'
 
         if not error:
             try:
-                async with api_client({'node': True}, {'request_timeout': 2}) as (api, context):
-                    pass
-            except asyncio.exceptions.TimeoutError:
+                await Node.get_instance(request_kwargs={'timeout': 2})
+            except ApiException:
                 error = 'Unable to connect to kubernetes cluster'
 
         if error and raise_exception:
             raise CallError(error)
         return not error
+
+    @private
+    async def pool_configured(self):
+        return bool((await self.middleware.call('kubernetes.config'))['dataset'])
 
     @accepts()
     @returns(Str('kubernetes_node_ip', null=True))

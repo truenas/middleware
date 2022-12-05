@@ -1,20 +1,13 @@
-from middlewared.service import CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.service import CRUDService
 
-from .k8s import api_client
+from .k8s_base_resources import KubernetesBaseResource
+from .k8s import ReplicaSet
 
 
-class KubernetesReplicaSetService(CRUDService):
+class KubernetesReplicaSetService(KubernetesBaseResource, CRUDService):
+
+    KUBERNETES_RESOURCE = ReplicaSet
 
     class Config:
         namespace = 'k8s.replicaset'
         private = True
-
-    @filterable
-    async def query(self, filters, options):
-        async with api_client() as (api, context):
-            replica_sets = [
-                d.to_dict() for d in (await context['apps_api'].list_replica_set_for_all_namespaces()).items
-            ]
-
-        return filter_list(replica_sets, filters, options)

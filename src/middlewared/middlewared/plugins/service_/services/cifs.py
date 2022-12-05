@@ -1,4 +1,7 @@
+import errno
+
 from .base import SimpleService
+from middlewared.service_exception import CallError
 
 
 class CIFSService(SimpleService):
@@ -9,14 +12,12 @@ class CIFSService(SimpleService):
 
     systemd_unit = "smbd"
 
-    async def start(self):
+    async def check_configuration(self):
         is_clustered = await self.middleware.call("smb.getparm", "clustering", "global")
-        if is_clustered:
-            cluster_healthy = await self.middleware.call("ctdb.general.healthy")
-            if not cluster_healthy:
-                self.middleware.logger.warning("Cluster is unhealthy. Refusing to start SMB service.")
-                return
+        if is_clustered and not (await self.middleware.call("ctdb.general.healthy")):
+            raise CallError("Cluster is unhealthy. Refusing to start SMB service.", errno.EINVAL)
 
+    async def start(self):
         if not await self.middleware.call("smb.configure_wait"):
             return
 

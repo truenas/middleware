@@ -29,6 +29,7 @@ from middlewared.service_exception import (  # noqa
 from middlewared.settings import conf
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
+from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 from middlewared.logger import Logger, reconfigure_logging, stop_logging
 from middlewared.job import Job
 from middlewared.pipe import Pipes
@@ -1075,10 +1076,15 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 class SharingTaskService(CRUDService):
 
     path_field = 'path'
+    allowed_path_types = [FSLocation.LOCAL]
     enabled_field = 'enabled'
     locked_field = 'locked'
     locked_alert_class = NotImplemented
     share_task_type = NotImplemented
+
+    @private
+    async def get_path_field(self, data):
+        return data[self.path_field]
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
@@ -1096,26 +1102,79 @@ class SharingTaskService(CRUDService):
         }
 
     @private
-    async def validate_path_field(self, data, schema, verrors, *, allow_cluster=False):
-        name = f'{schema}.{self.path_field}'
-        path = data[self.path_field]
+    async def validate_cluster_path(self, verrors, name, volname, path):
+        if volname not in await self.middleware.call('gluster.volume.list'):
+            verrors.add(name, f'{volname}: cluster volume does not exist.')
+            return
 
-        if await self.middleware.call('filesystem.is_cluster_path', path):
-            if not allow_cluster:
-                verrors.add(name, 'Cluster path is not allowed')
+        try:
+            await self.middleware.call('filesystem.stat', f'CLUSTER:{volname}{path}')
+        except CallError as e:
+            if e.errno is errno.ENXIO:
+                verrors.add(name, f'{volname}: cluster volume is not mounted.')
+            elif e.errno is errno.ENOENT:
+                # this is not treated as fatal error in `check_path_resides_within_volume`
+                # but the design decision may need further review
+                pass
+            else:
+                raise
+
+    @private
+    async def validate_external_path(self, verrors, name, path):
+        # Services with external paths must implement their own
+        # validation here because we can't predict what is required.
+        raise NotImplementedError
+
+    @private
+    async def validate_local_path(self, verrors, name, path):
+        await check_path_resides_within_volume(verrors, self.middleware, name, path)
+
+    @private
+    async def validate_path_field(self, data, schema, verrors):
+        name = f'{schema}.{self.path_field}'
+        path = await self.get_path_field(data)
+        loc = path_location(path)
+
+        if loc not in self.allowed_path_types:
+            verrors.add(name, f'{loc.name}: path type is not allowed.')
+
+        elif loc is FSLocation.CLUSTER:
+            try:
+                volname, volpath = strip_location_prefix(path).split('/', 1)
+            except ValueError:
+                verrors.add(name, f'{path}: path within cluster volume must be specified.')
+            else:
+                volpath = os.path.join('/', volpath)
+                await self.validate_cluster_path(verrors, name, volname, volpath)
+
+        elif loc is FSLocation.EXTERNAL:
+            await self.validate_external_path(verrors, name, strip_location_prefix(path))
+
+        elif loc is FSLocation.LOCAL:
+            await self.validate_local_path(verrors, name, path)
+
         else:
-            await check_path_resides_within_volume(verrors, self.middleware, name, path)
+            self.logger.error('%s: unknown location type', loc.name)
+            raise NotImplementedError
 
         return verrors
 
     @private
     async def sharing_task_datasets(self, data):
-        return [os.path.relpath(data[self.path_field], '/mnt')]
+        path = await self.get_path_field(data)
+        if path_location(path) is not FSLocation.LOCAL:
+            return []
+
+        return [os.path.relpath(path, '/mnt')]
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
+        path = await self.get_path_field(data)
+        if path_location(path) is not FSLocation.LOCAL:
+            return False
+
         return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', data[self.path_field], locked_datasets
+            'pool.dataset.path_in_locked_datasets', path, locked_datasets
         )
 
     @private
@@ -1184,7 +1243,7 @@ class TaskPathService(SharingTaskService):
 
     @private
     async def human_identifier(self, share_task):
-        return share_task[self.path_field]
+        return await self.get_path_field(share_task)
 
 
 class TDBWrapCRUDService(CRUDService):
@@ -2190,16 +2249,17 @@ class CoreService(Service):
 
             try:
                 msg = await self.middleware.call(method, *p)
-                error = None
+                status = {"result": msg, "error": None}
 
                 if isinstance(msg, Job):
                     b_job = msg
-                    msg = await msg.wait()
+                    status["job_id"] = b_job.id
+                    status["result"] = await msg.wait()
 
                     if b_job.error:
-                        error = b_job.error
+                        status["error"] = b_job.error
 
-                statuses.append({"result": msg, "error": error})
+                statuses.append(status)
             except Exception as e:
                 statuses.append({"result": None, "error": str(e)})
 

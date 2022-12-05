@@ -34,7 +34,7 @@ class ChartReleaseService(Service):
 
         release_secrets = defaultdict(lambda: dict({'releases': [], 'history': {}}))
         secrets = self.middleware.call_sync(
-            'k8s.secret.query', [namespace_filter], {'extra': {'field_selector': 'type=helm.sh/release.v1'}}
+            'k8s.secret.query', [namespace_filter], {'extra': {'fieldSelector': 'type=helm.sh/release.v1'}}
         )
         official_catalog_label = self.middleware.call_sync('catalog.official_catalog_label')
         for release_secret in secrets:
@@ -52,7 +52,7 @@ class ChartReleaseService(Service):
             release_namespace_name = get_namespace(name)
 
             # We don't want manifest files data
-            release.pop('manifest')
+            release.pop('manifest', None)
 
             release.update({
                 'chart_metadata': release.pop('chart')['metadata'],

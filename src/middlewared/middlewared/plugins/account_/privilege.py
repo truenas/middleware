@@ -2,7 +2,7 @@ import enum
 import errno
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str, Patch
-from middlewared.service import CallError, CRUDService, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 
@@ -279,3 +279,58 @@ class PrivilegeService(CRUDService):
             'allowlist': [{'method': '*', 'resource': '*'}],
             'web_shell': True,
         }
+
+    previous_always_has_root_password_enabled_value = None
+
+    @private
+    async def always_has_root_password_enabled(self, users=None, groups=None):
+        if users is None:
+            users = await self.middleware.call('user.query')
+        if groups is None:
+            groups = await self.middleware.call('group.query')
+
+        root_user = filter_list(
+            users,
+            [['username', '=', 'root']],
+            {'get': True},
+        )
+        users = await self.local_administrators([root_user['id']], groups)
+        if not users:
+            value = True
+        else:
+            value = False
+
+            if self.previous_always_has_root_password_enabled_value:
+                usernames = [user['username'] for user in users]
+                self.middleware.send_event(
+                    'user.web_ui_login_disabled', 'ADDED', id=None, fields={'usernames': usernames},
+                )
+
+        self.previous_always_has_root_password_enabled_value = value
+        return value
+
+    @private
+    async def local_administrators(self, exclude_user_ids=None, groups=None):
+        exclude_user_ids = exclude_user_ids or []
+        if groups is None:
+            groups = await self.middleware.call('group.query')
+
+        local_administrator_privilege = await self.middleware.call(
+            'datastore.query',
+            'account.privilege',
+            [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
+            {'get': True},
+        )
+        return await self.middleware.call(
+            'group.get_password_enabled_users',
+            local_administrator_privilege['local_groups'],
+            exclude_user_ids,
+            groups,
+        )
+
+
+async def setup(middleware):
+    middleware.event_register(
+        'user.web_ui_login_disabled',
+        'Sent when root user login to the Web UI is disabled.'
+    )

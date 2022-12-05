@@ -1,60 +1,37 @@
-from aiohttp.client_exceptions import ClientConnectionError
 from dateutil.parser import parse, ParserError
-from kubernetes_asyncio.watch import Watch
 
 from middlewared.event import EventSource
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import CRUDService, filterable
-from middlewared.utils import filter_list
+from middlewared.schema import Dict, Int, Str
+from middlewared.service import CRUDService
 from middlewared.validators import Range
 
-from .k8s import api_client
+from .k8s_base_resources import KubernetesBaseResource
+from .k8s import Pod, Watch
 
 
-class KubernetesPodService(CRUDService):
+class KubernetesPodService(KubernetesBaseResource, CRUDService):
+
+    QUERY_EVENTS = True
+    QUERY_EVENTS_RESOURCE_NAME = 'Pod'
+    KUBERNETES_RESOURCE = Pod
 
     class Config:
         namespace = 'k8s.pod'
         private = True
 
-    @filterable
-    async def query(self, filters, options):
-        options = options or {}
-        extra = options.get('extra', {})
-        label_selector = extra.get('label_selector')
-        kwargs = {k: v for k, v in [('label_selector', label_selector)] if v}
-        force_all_pods = extra.get('retrieve_all_pods')
-        async with api_client() as (api, context):
-            pods = [
-                d.to_dict() for d in (await context['core_api'].list_pod_for_all_namespaces(**kwargs)).items
-                if force_all_pods or not any(o.kind == 'DaemonSet' for o in (d.metadata.owner_references or []))
-            ]
-            if options['extra'].get('events'):
-                events = await self.middleware.call(
-                    'kubernetes.get_events_of_resource_type', 'Pod', [p['metadata']['uid'] for p in pods]
-                )
-                for pod in pods:
-                    pod['events'] = events[pod['metadata']['uid']]
-
-        return filter_list(pods, filters, options)
-
-    @accepts(
-        Str('pod_name', empty=False),
-        Dict(
-            'k8s.pod.delete',
-            Str('namespace', required=True, empty=False),
+    async def conditional_filtering_in_query(self, entry, options):
+        return options['extra'].get('retrieve_all_pods') or not any(
+            o['kind'] == 'DaemonSet' for o in (entry['metadata']['ownerReferences'] or [])
         )
-    )
-    async def do_delete(self, pod_name, options):
-        async with api_client() as (api, context):
-            await context['core_api'].delete_namespaced_pod(pod_name, namespace=options['namespace'])
 
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
-        async with api_client() as (api, context):
-            return await context['core_api'].read_namespaced_pod_log(
-                name=pod, container=container, namespace=namespace, tail_lines=tail_lines, limit_bytes=limit_bytes,
-                timestamps=True,
-            )
+        kwargs = {
+            'timestamps': True,
+            'tailLines': tail_lines,
+            'container': container,
+            **({'limitBytes': limit_bytes} if limit_bytes else {}),
+        }
+        return await Pod.logs(pod, namespace, **kwargs)
 
 
 class KubernetesPodLogsFollowTailEventSource(EventSource):
@@ -91,40 +68,38 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
     async def run(self):
         release = self.arg['release_name']
         pod = self.arg['pod_name']
-        container = self.arg['container_name']
-        tail_lines = self.arg['tail_lines']
-        limit_bytes = self.arg['limit_bytes']
 
-        await self.middleware.call('chart.release.validate_pod_log_args', release, pod, container)
+        await self.middleware.call('chart.release.validate_pod_log_args', release, pod, self.arg['container_name'])
         release_data = await self.middleware.call('chart.release.get_instance', release)
+        kwargs = {
+            'namespace': release_data['namespace'], **{
+                k: self.arg[v] for k, v in (
+                    ('container', 'container_name'),
+                    ('tailLines', 'tail_lines'),
+                    ('limitBytes', 'limit_bytes'),
+                    ('pod_name', 'pod_name'),
+                ) if self.arg[v]
+            }
+        }
+        self.watch = Watch(Pod, kwargs, False)
 
-        async with api_client() as (api, context):
-            self.watch = Watch()
+        async for event in self.watch.watch():
+            # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
+            # separately so UI can highlight the timestamp giving us a cleaner view of the logs
+            timestamp = event.split(maxsplit=1)[0].strip()
             try:
-                async with self.watch.stream(
-                    context['core_api'].read_namespaced_pod_log, name=pod, container=container,
-                    namespace=release_data['namespace'], tail_lines=tail_lines, limit_bytes=limit_bytes,
-                    timestamps=True, _request_timeout=1800
-                ) as stream:
-                    async for event in stream:
-                        # Event should contain a timestamp in RFC3339 format, we should parse it and supply it
-                        # separately so UI can highlight the timestamp giving us a cleaner view of the logs
-                        timestamp = event.split(maxsplit=1)[0].strip()
-                        try:
-                            timestamp = str(parse(timestamp))
-                        except (TypeError, ParserError):
-                            timestamp = None
-                        else:
-                            event = event.split(maxsplit=1)[-1].lstrip()
+                timestamp = str(parse(timestamp))
+            except (TypeError, ParserError):
+                timestamp = None
+            else:
+                event = event.split(maxsplit=1)[-1].lstrip()
 
-                        self.send_event('ADDED', fields={'data': event, 'timestamp': timestamp})
-            except ClientConnectionError:
-                pass
+            self.send_event('ADDED', fields={'data': event, 'timestamp': timestamp})
 
     async def cancel(self):
         await super().cancel()
         if self.watch:
-            await self.watch.close()
+            await self.watch.stop()
 
     async def on_finish(self):
         self.watch = None

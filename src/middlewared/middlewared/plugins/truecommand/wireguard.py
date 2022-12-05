@@ -8,6 +8,7 @@ from middlewared.service import accepts, CallError, no_auth_required, periodic, 
 from middlewared.utils import osc, Popen, run
 
 from .enums import Status
+from .utils import WIREGUARD_INTERFACE_NAME
 
 HEALTH_CHECK_SECONDS = 1800
 WIREGUARD_HEALTH_RE = re.compile(r'=\s*(.*)')
@@ -72,7 +73,7 @@ class TruecommandService(Service):
         """
         health_error = not (await self.middleware.call('service.started', 'truecommand'))
         if not health_error:
-            cp = await run(['wg', 'show', 'wg0', 'latest-handshakes'], encoding='utf8', check=False)
+            cp = await run(['wg', 'show', WIREGUARD_INTERFACE_NAME, 'latest-handshakes'], encoding='utf8', check=False)
             if cp.returncode:
                 health_error = True
             else:

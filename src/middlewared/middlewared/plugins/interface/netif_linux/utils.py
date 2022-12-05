@@ -8,7 +8,8 @@ __all__ = ["bitmask_to_set", "INTERNAL_INTERFACES", "run"]
 
 
 INTERNAL_INTERFACES = [
-    "wg", "lo", "tun", "tap", "docker", "veth", "kube-bridge", "kube-dummy-if", "vnet", "openvpn", "macvtap",
+    "wg", "lo", "tun", "tap", "docker", "veth", "kube-bridge", "kube-dummy-if", "vnet",
+    "openvpn", "macvtap", "ix",
 ]
 
 

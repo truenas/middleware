@@ -157,10 +157,10 @@ class ChartReleaseService(CRUDService):
             release_name = k8s_svc['metadata']['namespace'][len(CHART_NAMESPACE_PREFIX):]
             ports_used[release_name].extend([
                 {
-                    'port': p['port' if k8s_svc['spec']['type'] == 'LoadBalancer' else 'node_port'],
+                    'port': p['port' if k8s_svc['spec']['type'] == 'LoadBalancer' else 'nodePort'],
                     'protocol': p['protocol']
                 }
-                for p in k8s_svc['spec']['ports']
+                for p in k8s_svc['spec'].get('ports') or []
             ])
 
         if get_resources:
@@ -202,8 +202,8 @@ class ChartReleaseService(CRUDService):
             for pod in filter(lambda p: p['status']['phase'] == 'Running', resources[Resources.POD.value][name]):
                 for container in pod['spec']['containers']:
                     ports_used[name].extend([
-                        {'port': p['host_port'], 'protocol': p['protocol']}
-                        for p in (container['ports'] or []) if p['host_port']
+                        {'port': p['hostPort'], 'protocol': p['protocol']}
+                        for p in (container.get('ports') or []) if p.get('hostPort')
                     ])
 
             release_data.update({
@@ -326,9 +326,11 @@ class ChartReleaseService(CRUDService):
         host_path_volumes = []
         for resource in resources:
             for volume in filter(
-                lambda v: (v.get('host_path') or {}).get('path'), resource['spec']['template']['spec']['volumes'] or []
+                lambda v: (
+                    v.get('hostPath') or {}
+                ).get('path'), resource['spec']['template']['spec'].get('volumes') or []
             ):
-                host_path_volumes.append(volume['host_path']['path'])
+                host_path_volumes.append(volume['hostPath']['path'])
         return host_path_volumes
 
     @private
@@ -472,7 +474,7 @@ class ChartReleaseService(CRUDService):
                     'operation': 'INSTALL',
                     'isInstall': True,
                 }
-            }, self.middleware)
+            }, self.middleware, data['release_name'])
 
             await self.middleware.call(
                 'chart.release.create_update_storage_class_for_chart_release',
@@ -546,7 +548,7 @@ class ChartReleaseService(CRUDService):
                 'operation': 'UPDATE',
                 'isUpdate': True,
             }
-        }, self.middleware)
+        }, self.middleware, chart_release)
 
         await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 

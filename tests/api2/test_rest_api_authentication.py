@@ -45,7 +45,7 @@ def token_auth(allowlist):
         web_shell=False,
     ) as t:
         with client(auth=(t.username, t.password)) as c:
-            token = c.call("auth.generate_token")
+            token = c.call("auth.generate_token", 300, {}, True)
             yield dict(anonymous=True, headers={"Authorization": f"Token {token}"})
 
 

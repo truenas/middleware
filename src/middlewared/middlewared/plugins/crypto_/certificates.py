@@ -80,7 +80,6 @@ class CertificateService(CRUDService):
         # General method to check certificate health wrt usage in services
         cert = await self.middleware.call('certificate.query', [['id', '=', id]])
         verrors = ValidationErrors()
-        valid_key_size = {'EC': 28, 'RSA': 2048}
         if cert:
             cert = cert[0]
             if cert['cert_type'] != 'CERTIFICATE' or cert['cert_type_CSR']:
@@ -88,47 +87,8 @@ class CertificateService(CRUDService):
                     schema_name,
                     'Selected certificate id is not a valid certificate'
                 )
-            elif not cert.get('fingerprint'):
-                verrors.add(
-                    schema_name,
-                    f'{cert["name"]} certificate is malformed'
-                )
-
-            if not cert['privatekey']:
-                verrors.add(
-                    schema_name,
-                    'Selected certificate does not have a private key'
-                )
-            elif not cert['key_length']:
-                verrors.add(
-                    schema_name,
-                    'Failed to parse certificate\'s private key'
-                )
-            elif cert['key_length'] < valid_key_size[cert['key_type']]:
-                verrors.add(
-                    schema_name,
-                    f'{cert["name"]}\'s private key size is less then {valid_key_size[cert["key_type"]]} bits'
-                )
-
-            if cert['until'] and datetime.datetime.strptime(
-                cert['until'], '%a %b  %d %H:%M:%S %Y'
-            ) < datetime.datetime.now():
-                verrors.add(
-                    schema_name,
-                    f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
-                )
-
-            if cert['digest_algorithm'] in ['MD5', 'SHA1']:
-                verrors.add(
-                    schema_name,
-                    'Please use a certificate whose digest algorithm has at least 112 security bits'
-                )
-
-            if cert['revoked']:
-                verrors.add(
-                    schema_name,
-                    'This certificate is revoked'
-                )
+            else:
+                await self.cert_checks(cert, verrors, schema_name)
         else:
             verrors.add(
                 schema_name,
@@ -139,6 +99,51 @@ class CertificateService(CRUDService):
             verrors.check()
         else:
             return verrors
+
+    @private
+    async def cert_checks(self, cert, verrors, schema_name):
+        valid_key_size = {'EC': 28, 'RSA': 2048}
+        if not cert.get('fingerprint'):
+            verrors.add(
+                schema_name,
+                f'{cert["name"]} certificate is malformed'
+            )
+
+        if not cert['privatekey']:
+            verrors.add(
+                schema_name,
+                'Selected certificate does not have a private key'
+            )
+        elif not cert['key_length']:
+            verrors.add(
+                schema_name,
+                'Failed to parse certificate\'s private key'
+            )
+        elif cert['key_length'] < valid_key_size[cert['key_type']]:
+            verrors.add(
+                schema_name,
+                f'{cert["name"]}\'s private key size is less then {valid_key_size[cert["key_type"]]} bits'
+            )
+
+        if cert['until'] and datetime.datetime.strptime(
+            cert['until'], '%a %b  %d %H:%M:%S %Y'
+        ) < datetime.datetime.now():
+            verrors.add(
+                schema_name,
+                f'{cert["name"]!r} has expired (it was valid until {cert["until"]!r})'
+            )
+
+        if cert['digest_algorithm'] in ['MD5', 'SHA1']:
+            verrors.add(
+                schema_name,
+                'Please use a certificate whose digest algorithm has at least 112 security bits'
+            )
+
+        if cert['revoked']:
+            verrors.add(
+                schema_name,
+                'This certificate is revoked'
+            )
 
     @private
     async def validate_common_attributes(self, data, schema_name):
@@ -355,10 +360,11 @@ class CertificateService(CRUDService):
             'certificate.get_instance', data['csr_id']
         )
         verrors = ValidationErrors()
-        email = (self.middleware.call_sync('user.query', [['uid', '=', 0]]))[0]['email']
+        email = self.middleware.call_sync('mail.local_administrator_email')
         if not email:
             verrors.add(
-                'name', 'Please configure an email address for "root" user which will be used with the ACME Server.'
+                'name', ('Please configure an email address for any local administrator user which will be used with '
+                         'the ACME server'),
             )
         verrors.check()
 

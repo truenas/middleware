@@ -85,7 +85,8 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'passwd', 'local_path': 'master.passwd'},
                 {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
                 {'type': 'mako', 'path': 'local/sudoers'},
-                {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'}
+                {'type': 'mako', 'path': 'aliases', 'local_path': 'mail/aliases'},
+                {'type': 'py', 'path': 'web_ui_root_login_alert'},
             ]
         },
         'fstab': [
@@ -231,7 +232,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/rrdcached', 'checkpoint': 'pool_import'},
         ],
         'docker': [
-            {'type': 'mako', 'path': 'systemd/system/docker.service.d/http-proxy.conf', 'checkpoint': None},
+            {'type': 'mako', 'path': 'docker.env', 'checkpoint': None},
             {'type': 'py', 'path': 'docker', 'checkpoint': None},
         ],
         'motd': [
@@ -324,7 +325,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'default/tftpd-hpa'},
         ],
         'truecommand': [
-            {'type': 'mako', 'path': 'wireguard/wg0.conf'}
+            {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},
         ],
         'k3s': [
             {'type': 'py', 'path': 'rancher/k3s/flags', 'checkpoint': None},

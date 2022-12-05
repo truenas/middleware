@@ -17,7 +17,7 @@ from auto_config import (
     password,
 )
 from pytest_dependency import depends
-from protocols import SMB
+from protocols import SMB, smb_connection, smb_share
 
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
@@ -692,6 +692,29 @@ def test_155_ssh_read_afp_xattr(request, xat):
     assert results['result'] is True, results['output']
     xat_data = b64decode(results['output'])
     assert AFPXattr[xat]['bytes'] == xat_data, results['output']
+
+
+def test_175_check_external_path(request):
+    with smb_share(f'EXTERNAL:{ip}\{SMB_NAME}', {'name': 'EXTERNAL'}):
+        with smb_connection(
+            host=ip,
+            share=SMB_NAME,
+            username=SMB_USER,
+            password=SMB_PWD,
+            smb1=False
+        ) as c:
+            fd = c.create_file('external_test_file', "w")
+            c.write(fd, b'EXTERNAL_TEST')
+            c.close(fd)
+
+        cmd = f'smbclient //127.0.0.1/EXTERNAL -U {SMB_USER}%{SMB_PWD} '
+        cmd += '-c "get external_test_file"'
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, results['output']
+
+        results = SSH_TEST('cat external_test_file', user, password, ip)
+        assert results['result'] is True, results['output']
+        assert results['output'] == 'EXTERNAL_TEST'
 
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")

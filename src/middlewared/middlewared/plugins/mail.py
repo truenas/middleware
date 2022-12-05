@@ -493,6 +493,22 @@ class MailService(ConfigService):
 
         return from_addr
 
+    @private
+    async def local_administrators_emails(self):
+        return [
+            user["email"]
+            for user in await self.middleware.call("privilege.local_administrators")
+            if user["email"]
+        ]
+
+    @private
+    async def local_administrator_email(self):
+        emails = await self.local_administrators_emails()
+        if emails:
+            return sorted(emails)[0]
+        else:
+            return None
+
 
 async def setup(middleware):
     await middleware.call('network.general.register_activity', 'mail', 'Mail')

@@ -1,1 +1,6 @@
-from kubernetes_asyncio.utils.create_from_yaml import FailToCreateError # noqa
+class ApiException(Exception):
+    def __init__(self, errmsg):
+        self.errmsg = errmsg
+
+    def __str__(self) -> str:
+        return self.errmsg

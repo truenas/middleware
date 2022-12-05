@@ -2,46 +2,24 @@ import asyncio
 
 from aiohttp import client_exceptions
 from datetime import datetime
+from dateutil.parser import parse as datetime_parse
 from dateutil.tz import tzutc
-from kubernetes_asyncio import watch
 
-from middlewared.service import CRUDService, filterable, private
-from middlewared.utils import filter_list
+from middlewared.service import CRUDService
 
-from .k8s import api_client
+from .k8s_base_resources import KubernetesBaseResource
+from .k8s import Event, Watch
 from .utils import NODE_NAME
 
 
-class KubernetesEventService(CRUDService):
+class KubernetesEventService(KubernetesBaseResource, CRUDService):
+
+    KUBERNETES_RESOURCE = Event
 
     class Config:
         namespace = 'k8s.event'
         private = True
 
-    @filterable
-    async def query(self, filters, options):
-        options = options or {}
-        label_selector = options.get('extra', {}).get('label_selector')
-        field_selector = options.get('extra', {}).get('field_selector')
-        namespace = options.get('extra', {}).get('namespace')
-        kwargs = {
-            k: v for k, v in [
-                ('label_selector', label_selector),
-                ('field_selector', field_selector),
-                ('namespace', namespace),
-            ] if v
-        }
-        async with api_client() as (api, context):
-            if namespace:
-                method = context['core_api'].list_namespaced_event
-            else:
-                method = context['core_api'].list_event_for_all_namespaces
-            return filter_list(
-                [d.to_dict() for d in (await method(**kwargs)).items],
-                filters, options
-            )
-
-    @private
     async def setup_k8s_events(self):
         if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
@@ -54,27 +32,26 @@ class KubernetesEventService(CRUDService):
                 return
             raise
 
-    @private
     async def k8s_events_internal(self):
         chart_namespace_prefix = await self.middleware.call('chart.release.get_chart_namespace_prefix')
-        async with api_client() as (api, context):
-            watch_obj = watch.Watch()
-            start_time = datetime.now(tz=tzutc())
-            async with watch_obj.stream(context['core_api'].list_event_for_all_namespaces) as stream:
-                async for event in stream:
-                    event_obj = event['object']
-                    check_time = event_obj.event_time or event_obj.last_timestamp or event_obj.first_timestamp
+        start_time = datetime.now(tz=tzutc())
+        async for event in Watch(Event).watch():
+            event_obj = event['object']
+            check_time = datetime_parse(
+                event_obj['eventTime'] or event_obj['lastTimestamp'] or event_obj['firstTimestamp']
+            )
 
-                    if not check_time or start_time > check_time or event['type'] != 'ADDED' or (
-                        event_obj.involved_object.uid != NODE_NAME and not event_obj.metadata.namespace.startswith(
-                            chart_namespace_prefix
-                        )
-                    ):
-                        continue
+            involved_obj = event_obj['involvedObject']
+            if not involved_obj.get('uid') or not check_time or start_time > check_time or event['type'] != 'ADDED' or (
+                involved_obj['uid'] != NODE_NAME and not event_obj['metadata']['namespace'].startswith(
+                    chart_namespace_prefix
+                )
+            ):
+                continue
 
-                    self.middleware.send_event(
-                        'kubernetes.events', 'ADDED', uid=event_obj.involved_object.uid, fields=event_obj.to_dict()
-                    )
+            self.middleware.send_event(
+                'kubernetes.events', 'ADDED', uid=event_obj['involvedObject']['uid'], fields=event_obj
+            )
 
 
 async def setup(middleware):

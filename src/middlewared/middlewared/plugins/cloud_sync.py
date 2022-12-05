@@ -8,6 +8,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
+from middlewared.utils.path import FSLocation
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.service.task_state import TaskStateMixin
@@ -142,7 +143,7 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-def check_local_path(path, *, check_mountpoint=True, error_text_path=None):
+async def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
     error_text_path = error_text_path or path
 
     if not os.path.exists(path):
@@ -152,7 +153,7 @@ def check_local_path(path, *, check_mountpoint=True, error_text_path=None):
         raise CallError(f"{error_text_path!r} is not a directory")
 
     if check_mountpoint:
-        if not os.path.normpath(path).startswith("/mnt/") or os.stat(path).st_dev == os.stat("/mnt").st_dev:
+        if not await middleware.call("filesystem.is_dataset_path", path):
             raise CallError(f"Directory {error_text_path!r} must reside within volume mount point")
 
 
@@ -161,15 +162,15 @@ async def rclone(middleware, job, cloud_sync, dry_run):
 
     if await middleware.call("filesystem.is_cluster_path", cloud_sync["path"]):
         path = await middleware.call("filesystem.resolve_cluster_path", cloud_sync["path"])
-        await middleware.run_in_thread(
-            check_local_path,
+        await check_local_path(
+            middleware,
             path,
             check_mountpoint=False,
             error_text_path=cloud_sync["path"],
         )
     else:
         path = cloud_sync["path"]
-        await middleware.run_in_thread(check_local_path, path)
+        await check_local_path(middleware, path)
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:
@@ -743,6 +744,7 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
     share_task_type = 'CloudSync'
+    allowed_path_types = [FSLocation.CLUSTER, FSLocation.LOCAL]
     task_state_methods = ['cloudsync.sync', 'cloudsync.restore']
 
     class Config:
@@ -832,7 +834,7 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
             if limit1["time"] >= limit2["time"]:
                 verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
 
-        await self.validate_path_field(data, name, verrors, allow_cluster=True)
+        await self.validate_path_field(data, name, verrors)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":

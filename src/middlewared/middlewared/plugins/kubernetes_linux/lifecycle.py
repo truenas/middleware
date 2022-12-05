@@ -11,6 +11,9 @@ from typing import Dict
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
+from .k8s.config import reinitialize_config
+
+
 START_LOCK = asyncio.Lock()
 
 
@@ -18,6 +21,7 @@ class KubernetesService(Service):
 
     @private
     async def post_start(self):
+        reinitialize_config()
         async with START_LOCK:
             return await self.post_start_impl()
 
@@ -123,7 +127,6 @@ class KubernetesService(Service):
     @private
     async def post_start_internal(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
-        node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.gpu.setup')
         try:
@@ -153,12 +156,30 @@ class KubernetesService(Service):
                 )
             except CallError:
                 self.logger.error('Failed to remove %r daemonset', daemonset['metadata']['name'], exc_info=True)
-
+        node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call(
             'k8s.node.remove_taints', [
-                k['key'] for k in (node_config['spec']['taints'] or []) if k['key'] in ('ix-svc-start', 'ix-svc-stop')
+                k['key'] for k in (node_config['spec'].get('taints') or [])
+                if k['key'] in ('ix-svc-start', 'ix-svc-stop')
             ]
         )
+
+        # Wait for taints to be removed - this includes the built-in taints which might be present
+        # at this point i.e node.kubernetes.io/not-ready
+        taint_timeout = 600
+        sleep_time = 5
+        taints = None
+        while taint_timeout > 0:
+            taints = (await self.middleware.call('k8s.node.config'))['spec'].get('taints')
+            if not taints:
+                break
+
+            await asyncio.sleep(sleep_time)
+            taint_timeout -= sleep_time
+        else:
+            raise CallError(
+                f'Timed out waiting for {", ".join([taint["key"] for taint in taints])!r} taints to be removed'
+            )
 
         # Let helm re-create load balancer services for scaled up apps
         chart_releases = await self.middleware.call('chart.release.query', [['status', 'in', ('ACTIVE', 'DEPLOYING')]])
@@ -175,8 +196,15 @@ class KubernetesService(Service):
         # be consuming a locked host path volume
         await self.middleware.call('chart.release.scale_down_resources_consuming_locked_paths')
 
-        while not await self.middleware.call('k8s.pod.query', [['status.phase', '=', 'Running']]):
-            await asyncio.sleep(5)
+        pod_running_timeout = 600
+        while pod_running_timeout > 0:
+            if await self.middleware.call('k8s.pod.query', [['status.phase', '=', 'Running']]):
+                break
+
+            await asyncio.sleep(sleep_time)
+            pod_running_timeout -= sleep_time
+        else:
+            raise CallError('Kube-router routes not applied as timed out waiting for pods to execute')
 
         # Kube-router configures routes in the main table which we would like to add to kube-router table
         # because it's internal traffic will also be otherwise advertised to the default route specified

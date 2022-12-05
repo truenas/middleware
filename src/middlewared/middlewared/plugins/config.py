@@ -18,6 +18,7 @@ from middlewared.plugins.gluster_linux.utils import GlusterConfig
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
+    'admin_authorized_keys': '/home/admin/.ssh/authorized_keys',
     'root_authorized_keys': '/root/.ssh/authorized_keys',
     GlusterConfig.ARCNAME.value: GlusterConfig.WORKDIR.value
 }
@@ -25,7 +26,8 @@ NEED_UPDATE_SENTINEL = '/data/need-update'
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
 UPLOADED_DB_PATH = '/data/uploaded.db'
 PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
-ROOT_KEYS_UPLOADED = '/data/authorized_keys_uploaded'
+ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
+ROOT_KEYS_UPLOADED = '/data/root_authorized_keys_uploaded'
 DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
 
 
@@ -46,6 +48,8 @@ class ConfigService(Service):
                 files = {'freenas-v1.db': FREENAS_DATABASE}
                 if options['secretseed']:
                     files['pwenc_secret'] = CONFIG_FILES['pwenc_secret']
+                if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['admin_authorized_keys']):
+                    files['admin_authorized_keys'] = CONFIG_FILES['admin_authorized_keys']
                 if options['root_authorized_keys'] and os.path.exists(CONFIG_FILES['root_authorized_keys']):
                     files['root_authorized_keys'] = CONFIG_FILES['root_authorized_keys']
                 if options[GlusterConfig.ARCNAME.value]:
@@ -157,6 +161,10 @@ class ConfigService(Service):
                 if i.name == 'pwenc_secret':
                     shutil.move(abspath, PWENC_UPLOADED)
                     send_to_remote.append(PWENC_UPLOADED)
+
+                if i.name == 'admin_authorized_keys':
+                    shutil.move(abspath, ADMIN_KEYS_UPLOADED)
+                    send_to_remote.append(ADMIN_KEYS_UPLOADED)
 
                 if i.name == 'root_authorized_keys':
                     shutil.move(abspath, ROOT_KEYS_UPLOADED)

@@ -12,6 +12,8 @@ TRUENAS_DB="/data/freenas-v1.db"
 TRUENAS_DB_UPLOADED="/data/uploaded.db"
 PWENC="/data/pwenc_secret"
 PWENC_UPLOADED="/data/pwenc_secret_uploaded"
+ADMIN_KEYS_UPLOADED="/data/admin_authorized_keys_uploaded"
+ADMIN_KEYS="/home/admin/.ssh/authorized_keys"
 ROOT_KEYS="/root/.ssh/authorized_keys"
 ROOT_KEYS_UPLOADED="/data/authorized_keys_uploaded"
 
@@ -34,6 +36,15 @@ if [ -f ${TRUENAS_DB_UPLOADED} ]; then
         mv ${PWENC_UPLOADED} ${PWENC}
     fi
 
+    if [ -f ${ADMIN_KEYS_UPLOADED} ]; then
+	if [ -f ${ADMIN_KEYS} ]; then
+	    echo "Saving current ${ADMIN_KEYS} to ${ADMIN_KEYS}.bak"
+	    mv ${ADMIN_KEYS} ${ADMIN_KEYS}.bak
+	fi
+	echo "Moving ${ADMIN_KEYS_UPLOADED} to ${ADMIN_KEYS}"
+	mv ${ADMIN_KEYS_UPLOADED} ${ADMIN_KEYS}
+    fi
+
     if [ -f ${ROOT_KEYS_UPLOADED} ]; then
 	if [ -f ${ROOT_KEYS} ]; then
 	    echo "Saving current ${ROOT_KEYS} to ${ROOT_KEYS}.bak"
@@ -44,7 +55,8 @@ if [ -f ${TRUENAS_DB_UPLOADED} ]; then
     fi
 fi
 
-migrate > $UPDATE_FAILED_LOG 2>&1
+echo "== Migration at $(date) ==" >> $UPDATE_FAILED_LOG
+migrate >> $UPDATE_FAILED_LOG 2>&1
 
 echo "REPLACE INTO system_keyvalue (key, value) VALUES ('run_migration', 'true')" | sqlite3 /data/freenas-v1.db
 

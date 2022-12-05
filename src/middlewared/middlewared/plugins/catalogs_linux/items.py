@@ -1,25 +1,16 @@
-import concurrent.futures
 import functools
 import json
 import os
 
-from catalog_validation.utils import VALID_TRAIN_REGEX
+from catalog_validation.items.catalog import get_items_in_trains, retrieve_train_names, retrieve_trains_data
+from catalog_validation.items.utils import get_catalog_json_schema
+from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
 
-from .items_util import get_item_details, get_item_version_details
-from .utils import get_cache_key
-
-
-def item_details(items, location, questions_context, item_key):
-    train = items[item_key]
-    item = item_key.removesuffix(f'_{train}')
-    item_location = os.path.join(location, train, item)
-    return {
-        k: v for k, v in get_item_details(item_location, questions_context, {'retrieve_versions': True}).items()
-        if k != 'versions'
-    }
+from .items_util import get_item_version_details
+from .utils import CATALOG_JSON_FILE, get_cache_key
 
 
 class CatalogService(Service):
@@ -146,58 +137,49 @@ class CatalogService(Service):
         return trains
 
     @private
-    def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
-        train_names = []
-        trains_filter = trains_filter or []
-        for train in os.listdir(location):
-            if (
-                not (all_trains or train in trains_filter) or not os.path.isdir(
-                    os.path.join(location, train)
-                ) or train.startswith('.') or train in ('library', 'docs') or not VALID_TRAIN_REGEX.match(train)
-            ):
-                continue
-            train_names.append(train)
-        return train_names
+    def get_trains(self, job, catalog, options):
+        if os.path.exists(os.path.join(catalog['location'], CATALOG_JSON_FILE)):
+            # If the data is malformed or something similar, let's read the data then from filesystem
+            try:
+                return self.retrieve_trains_data_from_json(catalog, options)
+            except (json.JSONDecodeError, JsonValidationError):
+                self.logger.error('Invalid catalog json file specified for %r catalog', catalog['id'])
+
+        return self.get_trains_impl(job, catalog, options)
 
     @private
-    def get_trains(self, job, catalog, options):
+    def retrieve_trains_data_from_json(self, catalog, options):
+        trains_to_traverse = retrieve_train_names(
+            catalog['location'], options['retrieve_all_trains'], options['trains']
+        )
+        with open(os.path.join(catalog['location'], CATALOG_JSON_FILE), 'r') as f:
+            catalog_data = json.loads(f.read())
+            json_schema_validate(catalog_data, get_catalog_json_schema())
+
+            data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
+
+        for train in data:
+            for item in data[train]:
+                data[train][item]['location'] = os.path.join(catalog['location'], train, item)
+
+        return data
+
+    @private
+    def get_trains_impl(self, job, catalog, options):
         # We make sure we do not dive into library and docs folders and not consider those a train
         # This allows us to use these folders for placing helm library charts and docs respectively
-        trains = {'charts': {}, 'test': {}}
         location = catalog['location']
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-        unhealthy_apps = set()
-        preferred_trains = catalog['preferred_trains']
 
-        trains_to_traverse = self.retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
+        trains_to_traverse = retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
         # In order to calculate job progress, we need to know number of items we would be traversing
-        items = {}
-        for train in trains_to_traverse:
-            trains[train] = {}
-            items.update({
-                f'{i}_{train}': train for i in os.listdir(os.path.join(location, train))
-                if os.path.isdir(os.path.join(location, train, i))
-            })
+        items = get_items_in_trains(trains_to_traverse, location)
 
         job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
 
-        total_items = len(items)
-        with concurrent.futures.ProcessPoolExecutor(max_workers=(5 if total_items > 10 else 2)) as exc:
-            for index, result in enumerate(zip(items, exc.map(
-                functools.partial(item_details, items, location, questions_context),
-                items, chunksize=(10 if total_items > 10 else 5)
-            ))):
-                item_key = result[0]
-                item_info = result[1]
-                train = items[item_key]
-                item = item_key.removesuffix(f'_{train}')
-                job.set_progress(
-                    int((index / total_items) * 80) + 10,
-                    f'Retrieved information of {item!r} item from {train!r} train'
-                )
-                trains[train][item] = item_info
-                if train in preferred_trains and not trains[train][item]['healthy']:
-                    unhealthy_apps.add(f'{item} ({train} train)')
+        trains, unhealthy_apps = retrieve_trains_data(
+            items, location, catalog['preferred_trains'], trains_to_traverse, job, questions_context
+        )
 
         if unhealthy_apps:
             self.middleware.call_sync(
@@ -227,3 +209,7 @@ class CatalogService(Service):
             'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
         }
+
+    @private
+    def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
+        return retrieve_train_names(location, all_trains, trains_filter)

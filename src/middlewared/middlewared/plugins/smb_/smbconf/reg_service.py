@@ -1,4 +1,5 @@
 from middlewared.plugins.smb_.registry_base import RegObj, RegistrySchema
+from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 
 
 FRUIT_CATIA_MAPS = [
@@ -182,6 +183,14 @@ class ShareSchema(RegistrySchema):
             suffix_len = len(path_suffix['raw'].split('/'))
             path = path.rsplit('/', suffix_len)[0]
 
+        """
+        If this is a DFS proxy, covert back to our special designator
+        """
+        if 'msdfs proxy' in conf:
+            conf.pop('msdfs root', None)
+            proxy_addr = conf.pop('msdfs proxy')
+            path = f'EXTERNAL:{proxy_addr["raw"]}'
+
         return path
 
     def path_set(entry, val, data_in, data_out):
@@ -189,11 +198,17 @@ class ShareSchema(RegistrySchema):
             data_out["path"] = {"parsed": ""}
             return
 
+        loc = path_location(val)
+        path = strip_location_prefix(val)
+
+        if loc is FSLocation.EXTERNAL:
+            data_out['msdfs root'] = {'parsed': True}
+            data_out['msdfs proxy'] = {'parsed': path}
+            path = '/var/empty'
+
         path_suffix = data_in["path_suffix"]
-        if path_suffix:
-            path = '/'.join([val, path_suffix])
-        else:
-            path = val
+        if path_suffix and loc is not FSLocation.EXTERNAL:
+            path = '/'.join([path, path_suffix])
 
         data_out['path'] = {"parsed": path}
 
@@ -287,7 +302,11 @@ class ShareSchema(RegistrySchema):
         if not val:
             data_out['nt acl support'] = {"parsed": False}
 
-        if data_in['cluster_volname']:
+        loc = path_location(data_in['path'])
+        if loc == FSLocation.EXTERNAL:
+            return
+
+        elif data_in['cluster_volname']:
             data_out['vfs objects']['parsed'].append("acl_xattr")
             return
 
@@ -299,6 +318,8 @@ class ShareSchema(RegistrySchema):
                 "may indicate a failure of pool import.", data_in["path"]
             )
             raise ValueError(f"{data_in['path']}: path does not exist")
+        except NotImplementedError:
+            acltype = "DISABLED"
         except OSError:
             entry.middleware.logger.warning(
                 "%s: failed to determine acltype for path.",
