@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import functools
 
@@ -60,7 +59,7 @@ class EventSourceManager:
             except ValidationErrors as e:
                 await self.unsubscribe(ident, e)
             else:
-                asyncio.ensure_future(self.instances[name][arg].process())
+                self.middleware.create_task(self.instances[name][arg].process())
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
