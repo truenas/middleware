@@ -229,7 +229,7 @@ class Application:
                         message['method'],
                         self.middleware.dump_args(message.get('params', []), method_name=message['method'])
                     ), exc_info=True)
-                    asyncio.ensure_future(self.__crash_reporting(sys.exc_info()))
+                    self.middleware.create_task(self.__crash_reporting(sys.exc_info()))
 
     async def __crash_reporting(self, exc_info):
         if self.middleware.crash_reporting.is_disabled():
@@ -358,7 +358,7 @@ class Application:
                     self.send_error(message, errno.EACCES, 'Not authorized')
                     error = True
             if not error:
-                asyncio.ensure_future(self.call_method(message, serviceobj, methodobj))
+                self.middleware.create_task(self.call_method(message, serviceobj, methodobj))
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
@@ -403,7 +403,7 @@ class FileApplication(object):
         self.jobs[job_id] = self.middleware.loop.call_later(
             3600 if buffered else 60,  # FIXME: Allow the job to run for infinite time + give 300 seconds to begin
                                        # download instead of waiting 3600 seconds for the whole operation
-            lambda: asyncio.ensure_future(self._cleanup_job(job_id)),
+            lambda: self.middleware.create_task(self._cleanup_job(job_id)),
         )
 
     async def _cleanup_cancel(self, job_id):
@@ -775,7 +775,7 @@ class ShellApplication(object):
             return ws
 
         if conndata.t_worker:
-            asyncio.ensure_future(self.worker_kill(conndata.t_worker))
+            self.middleware.create_task(self.worker_kill(conndata.t_worker))
 
         return ws
 
@@ -850,6 +850,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.jobs = JobsQueue(self)
         self.mocks = {}
         self.socket_messages_queue = deque(maxlen=200)
+        self.tasks = set()
+
+    def create_task(self, coro, *, name=None):
+        task = self.loop.create_task(coro, name=name)
+        self.tasks.add(task)
+        task.add_done_callback(self.tasks.discard)
+        return task
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -962,7 +969,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
 
     def __call_periodic_task(self, method, service_name, service_obj, method_name, interval):
-        self.loop.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
+        self.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
 
     async def __periodic_task_wrapper(self, method, service_name, service_obj, method_name, interval):
         self.logger.trace("Calling periodic task %s", method_name)
@@ -1151,7 +1158,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 elif hook['sync']:
                     await fut
                 else:
-                    asyncio.ensure_future(fut)
+                    self.create_task(fut)
             except Exception:
                 if hook['raise_error']:
                     raise
@@ -1323,7 +1330,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def call_sync(self, name, *params, job_on_progress_cb=None, background=False):
         if background:
-            return self.loop.call_soon_threadsafe(lambda: asyncio.ensure_future(self.call(name, *params)))
+            return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params)))
 
         serviceobj, methodobj = self._method_lookup(name)
 
@@ -1723,7 +1730,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         restful_api = RESTfulAPI(self, app)
         await restful_api.register_resources()
-        asyncio.ensure_future(self.jobs.run())
+        self.create_task(self.jobs.run())
 
         # Start up middleware worker process pool
         self.__procpool._start_executor_manager_thread()
@@ -1756,7 +1763,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def terminate(self):
         self.logger.info('Terminating')
-        self.__terminate_task = self.loop.create_task(self.__terminate())
+        self.__terminate_task = self.create_task(self.__terminate())
 
     async def __terminate(self):
         for service_name, service in self.get_services().items():

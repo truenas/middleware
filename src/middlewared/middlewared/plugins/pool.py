@@ -853,8 +853,8 @@ class PoolService(CRUDService):
 
         # There is really no point in waiting all these services to reload so do them
         # in background.
-        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
-        asyncio.ensure_future(self.restart_services())
+        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
+        self.middleware.create_task(self.restart_services())
 
         pool = await self.get_instance(pool_id)
         await self.middleware.call_hook('pool.post_create', pool=pool)
@@ -1193,7 +1193,7 @@ class PoolService(CRUDService):
             'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
         )
         if disk:
-            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         return True
 
@@ -1511,7 +1511,7 @@ class PoolService(CRUDService):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        asyncio.ensure_future(self.middleware.call('service.restart', 'collectd'))
+        self.middleware.create_task(self.middleware.call('service.restart', 'collectd'))
         await self.middleware.call_hook('pool.post_import', {'passphrase': data.get('passphrase'), **pool})
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
@@ -1671,7 +1671,7 @@ class PoolService(CRUDService):
         await self.middleware.call('service.restart', 'cron')
 
         # Let's reconfigure swap in case dumpdev needs to be configured again
-        asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'CHANGED', id=oid, cleared=True)
@@ -2258,7 +2258,7 @@ class PoolDatasetService(CRUDService):
         datasets = await self.middleware.call('datastore.query', self.dataset_store, filters)
         for ds in datasets:
             if ds['kmip_uid']:
-                asyncio.ensure_future(self.middleware.call('kmip.reset_zfs_key', ds['name'], ds['kmip_uid']))
+                self.middleware.create_task(self.middleware.call('kmip.reset_zfs_key', ds['name'], ds['kmip_uid']))
             await self.middleware.call('datastore.delete', self.dataset_store, ds['id'])
 
     @accepts(Str('id'))
@@ -4587,4 +4587,4 @@ class PoolScrubService(CRUDService):
 
 
 def setup(middleware):
-    asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))
+    middleware.create_task(middleware.call('pool.configure_resilver_priority'))

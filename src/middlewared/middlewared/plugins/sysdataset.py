@@ -1,18 +1,3 @@
-from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
-from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
-from middlewared.service_exception import InstanceNotFound
-import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
-from middlewared.utils.size import format_size
-from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
-from middlewared.plugins.gluster_linux.utils import get_gluster_workdir_dataset, set_gluster_workdir_dataset
-
-try:
-    from middlewared.plugins.cluster_linux.utils import CTDBConfig
-except ImportError:
-    CTDBConfig = None
-
-import asyncio
 from contextlib import contextmanager, suppress
 import errno
 import json
@@ -22,6 +7,16 @@ import shutil
 import subprocess
 import threading
 import uuid
+
+from middlewared.schema import accepts, Bool, Dict, Int, returns, Str
+from middlewared.service import CallError, ConfigService, ValidationErrors, job, private
+from middlewared.service_exception import InstanceNotFound
+import middlewared.sqlalchemy as sa
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
+from middlewared.utils.size import format_size
+from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
+from middlewared.plugins.gluster_linux.utils import get_gluster_workdir_dataset, set_gluster_workdir_dataset
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -193,8 +188,8 @@ class SystemDatasetService(ConfigService):
         await self.middleware.call('smb.setup_directories')
         # There is no need to wait this to finish
         # Restarting rrdcached will ensure that we start/restart collectd as well
-        asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
-        asyncio.ensure_future(self.middleware.call('service.restart', 'syslogd'))
+        self.middleware.create_task(self.middleware.call('service.restart', 'rrdcached'))
+        self.middleware.create_task(self.middleware.call('service.restart', 'syslogd'))
 
         # The following should be backgrounded since they may be quite
         # long-running.
@@ -644,7 +639,11 @@ class SystemDatasetService(ConfigService):
         # context manager handles service stop / restart
         with self.release_system_dataset():
             if _from:
-                cp = subprocess.run(['rsync', '-az', f'{SYSDATASET_PATH}/', f'{MIDDLEWARE_RUN_DIR}/system.new'], check=False, capture_output=True)
+                cp = subprocess.run(
+                    ['rsync', '-az', f'{SYSDATASET_PATH}/', f'{MIDDLEWARE_RUN_DIR}/system.new'],
+                    check=False,
+                    capture_output=True
+                )
                 if cp.returncode == 0:
                     # Let's make sure that we don't have coredump directory mounted
                     subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)

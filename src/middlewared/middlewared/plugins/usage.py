@@ -59,7 +59,7 @@ class UsageService(Service):
 
         event_loop.call_later(
             scheduled,
-            lambda: asyncio.ensure_future(self.middleware.call('usage.start'))
+            lambda: self.middleware.create_task(self.middleware.call('usage.start'))
         )
         self.logger.debug(f'Scheduled next run in {round(scheduled)} seconds')
 
@@ -589,7 +589,5 @@ async def setup(middleware):
         random.uniform(1, (
             now.replace(hour=23, minute=59, second=59) - now
         ).total_seconds()),
-        lambda: asyncio.ensure_future(
-            middleware.call('usage.start')
-        )
+        lambda: middleware.create_task(middleware.call('usage.start'))
     )

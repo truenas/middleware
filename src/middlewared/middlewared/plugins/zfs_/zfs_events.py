@@ -1,4 +1,3 @@
-import asyncio
 from collections import defaultdict
 import libzfs
 import threading
@@ -138,7 +137,7 @@ async def zfs_events(middleware, data):
         max_items = 5
         deadman_throttle[pool] = list(filter(lambda t: t > now - interval, deadman_throttle[pool]))
         if len(deadman_throttle[pool]) < max_items:
-            asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+            middleware.create_task(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
                 'vdev': vdev,
                 'pool': pool,
             }))
@@ -165,7 +164,7 @@ async def zfs_events(middleware, data):
             # it in sync every time there is a change. Also, we only want to configure swap
             # if system is ready as otherwise when the pools have not been imported,
             # middleware will remove swap disks as all pools might not have imported
-            asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+            middleware.create_task(middleware.call('disk.swaps_configure'))
 
         alerts = ('PoolUSBDisks', 'PoolUpgraded')
         if pool_name:

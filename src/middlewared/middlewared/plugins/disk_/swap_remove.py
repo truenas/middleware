@@ -1,4 +1,3 @@
-import asyncio
 import glob
 
 from middlewared.schema import Bool, Dict, List, Str
@@ -74,4 +73,4 @@ class DiskService(Service):
 
         # Let consumer explicitly deny swap configuration if desired
         if configure_swap and options.get('configure_swap', True):
-            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))

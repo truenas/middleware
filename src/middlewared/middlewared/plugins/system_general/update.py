@@ -285,7 +285,7 @@ class SystemGeneralService(ConfigService):
             self._original_datastore = original_datastore
             self._rollback_timer = asyncio.get_event_loop().call_later(
                 rollback_timeout,
-                lambda: asyncio.ensure_future(self.rollback()),
+                lambda: self.middleware.create_task(self.rollback()),
             )
 
         if ui_restart_delay is not None:

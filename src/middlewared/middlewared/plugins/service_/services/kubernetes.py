@@ -94,7 +94,7 @@ class KubernetesService(SimpleService):
                 break
 
     async def after_start(self):
-        asyncio.ensure_future(self.middleware.call('kubernetes.post_start'))
+        self.middleware.create_task(self.middleware.call('kubernetes.post_start'))
 
     async def before_stop(self):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-stop', 'effect': 'NoExecute'}])

@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 import warnings
@@ -225,7 +224,7 @@ class SystemAdvancedService(ConfigService):
             if not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
                 # We want to make sure kmip uid is None in this case
                 adv_config = await self.middleware.call('datastore.config', self._config.datastore)
-                asyncio.ensure_future(
+                self.middleware.create_task(
                     self.middleware.call('kmip.reset_sed_global_password', adv_config['adv_kmip_uid'])
                 )
                 config_data['kmip_uid'] = None

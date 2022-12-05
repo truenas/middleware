@@ -770,7 +770,7 @@ class SystemServiceService(ConfigService):
         if self._config.service_verb_sync:
             await fut
         else:
-            asyncio.ensure_future(fut)
+            self.middleware.create_task(fut)
 
 
 class CRUDServiceMetabase(ServiceBase):
@@ -2174,7 +2174,7 @@ class CoreService(Service):
           - threaded: run debugger in a new thread instead of event loop
         """
         if options['threaded']:
-            asyncio.ensure_future(self.middleware.run_in_thread(self.__debug, engine, options))
+            self.middleware.create_task(self.middleware.run_in_thread(self.__debug, engine, options))
         else:
             self.__debug(engine, options)
 
