@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade():
     with op.batch_alter_table('services_kubernetes', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('passthrough_mode', sa.Boolean(), nullable=False, server_default='1'))
+        batch_op.add_column(sa.Column('passthrough_mode', sa.Boolean(), nullable=False, server_default='0'))
 
 
 def downgrade():
