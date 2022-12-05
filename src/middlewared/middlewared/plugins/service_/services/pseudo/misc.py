@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.plugins.service_.services.base import SimpleService, systemd_unit
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
