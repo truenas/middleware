@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import re
 import subprocess
@@ -253,7 +252,7 @@ class DiskService(CRUDService):
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             if new['kmip_uid']:
-                asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
+                self.middleware.create_task(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
             new['kmip_uid'] = None
 
         for key in ['advpowermgmt', 'hddstandby']:
@@ -315,7 +314,7 @@ class DiskService(CRUDService):
                 changed = True
 
         if changed:
-            asyncio.ensure_future(self._service_change('smartd', 'restart'))
+            self.middleware.create_task(self._service_change('smartd', 'restart'))
 
     @private
     async def check_clean(self, disk):
@@ -484,7 +483,7 @@ async def _event_system_ready(middleware, event_type, args):
         return
 
     # Configure disks power management
-    asyncio.ensure_future(middleware.call('disk.configure_power_management'))
+    middleware.create_task(middleware.call('disk.configure_power_management'))
 
 
 def setup(middleware):
