@@ -850,6 +850,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.jobs = JobsQueue(self)
         self.mocks = {}
         self.socket_messages_queue = deque(maxlen=200)
+        self.tasks = set()
+
+    def create_task(self, coro, *, name=None):
+        task = self.loop.create_task(coro, name=name)
+        self.tasks.add(task)
+        task.add_done_callback(self.tasks.discard)
+        return task
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -962,7 +969,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     )
 
     def __call_periodic_task(self, method, service_name, service_obj, method_name, interval):
-        self.loop.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
+        self.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, method_name, interval))
 
     async def __periodic_task_wrapper(self, method, service_name, service_obj, method_name, interval):
         self.logger.trace("Calling periodic task %s", method_name)
@@ -1756,7 +1763,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
     def terminate(self):
         self.logger.info('Terminating')
-        self.__terminate_task = self.loop.create_task(self.__terminate())
+        self.__terminate_task = self.create_task(self.__terminate())
 
     async def __terminate(self):
         for service_name, service in self.get_services().items():
