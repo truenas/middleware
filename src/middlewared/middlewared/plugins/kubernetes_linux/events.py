@@ -1,5 +1,3 @@
-import asyncio
-
 from aiohttp import client_exceptions
 from datetime import datetime
 from dateutil.parser import parse as datetime_parse
@@ -57,4 +55,4 @@ class KubernetesEventService(KubernetesBaseResource, CRUDService):
 async def setup(middleware):
     middleware.event_register('kubernetes.events', 'Kubernetes cluster events')
     # We are going to check in setup k8s events if setting up events is relevant or not
-    asyncio.ensure_future(middleware.call('k8s.event.setup_k8s_events'))
+    middleware.create_task(middleware.call('k8s.event.setup_k8s_events'))
