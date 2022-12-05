@@ -1,6 +1,5 @@
 import asyncio
 import os
-import socket
 
 from middlewared.service import private, Service
 
@@ -51,18 +50,15 @@ def parse_devd_message(msg):
 async def devd_listen(middleware):
     global DEVD_CONNECTED
 
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.connect(DEVD_SOCKETFILE)
-    # reader, writer = await asyncio.open_unix_connection(sock=s)
-    reader = s.makefile('rb')
+    reader, writer = await asyncio.open_unix_connection(path=DEVD_SOCKETFILE)
     middleware.logger.info('devd connection established')
     DEVD_CONNECTED = True
 
     while True:
-        # line = await reader.readline()
-        line = await middleware.run_in_thread(reader.readline)
+        line = await reader.readline()
         line = line.decode(errors='ignore')
         if line == "":
+            writer.close()
             break
 
         if not line.startswith('!'):
@@ -70,7 +66,7 @@ async def devd_listen(middleware):
             continue
 
         try:
-            parsed = await middleware.run_in_thread(parse_devd_message, line[1:])
+            parsed = parse_devd_message(line[1:])
         except Exception:
             middleware.logger.warn(f'Failed to parse devd message: {line}')
             continue
