@@ -77,7 +77,9 @@ class EventSource(metaclass=EventSourceMetabase):
             verrors = ValidationErrors()
             clean_and_validate_arg(verrors, self.RETURNS[0], kwargs.get('fields'))
             if verrors:
-                self.middleware.loop.call_soon_threadsafe(lambda: asyncio.ensure_future(self.unsubscribe_all(verrors)))
+                self.middleware.loop.call_soon_threadsafe(
+                    lambda: self.middleware.create_task(self.unsubscribe_all(verrors))
+                )
                 return
 
         self.send_event_internal(event_type, **kwargs)
