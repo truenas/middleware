@@ -1,3 +1,15 @@
+import asyncio
+import codecs
+import enum
+import os
+import re
+from pathlib import Path
+import stat
+import subprocess
+import uuid
+
+from samba import param
+
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
@@ -8,18 +20,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.utils.osc import getmntinfo
 from middlewared.utils.path import FSLocation, path_location
-from pathlib import Path
-
-import asyncio
-import codecs
-import enum
-import os
-import re
-import stat
-import subprocess
-import uuid
-
-from samba import param
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
@@ -1787,7 +1787,7 @@ async def pool_post_import(middleware, pool):
         already completed and initialized the SMB service.
         """
         await middleware.call('smb.disable_acl_if_trivial')
-        asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
+        middleware.create_task(middleware.call('sharing.smb.sync_registry'))
         return
 
     smb_is_configured = await middleware.call("smb.is_configured")
@@ -1806,7 +1806,7 @@ async def pool_post_import(middleware, pool):
         ])
     ]):
         await middleware.call('smb.disable_acl_if_trivial')
-        asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
+        middleware.create_task(middleware.call('sharing.smb.sync_registry'))
 
 
 class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
