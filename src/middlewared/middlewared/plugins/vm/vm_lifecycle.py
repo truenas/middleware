@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, private, Service
 
@@ -169,7 +167,7 @@ async def _event_vms(middleware, event_type, args):
     if not vm or vm[0]['status']['state'] != 'STOPPED' or args.get('state') != 'SHUTOFF':
         return
 
-    asyncio.ensure_future(middleware.call('vm.teardown_guest_vmemory', args['id']))
+    middlewarwe.create_task(middleware.call('vm.teardown_guest_vmemory', args['id']))
 
 
 async def setup(middleware):
