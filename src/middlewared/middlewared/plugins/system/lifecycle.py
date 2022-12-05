@@ -109,7 +109,7 @@ async def _event_system(middleware, event_type, args):
         birthday = await middleware.call('system.birthday')
         if birthday is None:
             # try to set birthday in background
-            asyncio.ensure_future(_update_birthday(middleware))
+            middleware.create_task(_update_birthday(middleware))
 
         if (await middleware.call('system.advanced.config'))['kdump_enabled']:
             cp = await run(['kdump-config', 'status'], check=False)
@@ -124,7 +124,7 @@ async def _event_system(middleware, event_type, args):
             await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
 
         if await middleware.call('system.first_boot'):
-            asyncio.ensure_future(middleware.call('usage.firstboot'))
+            middleware.create_task(middleware.call('usage.firstboot'))
 
     if args['id'] == 'shutdown':
         lifecycle_conf.SYSTEM_SHUTTING_DOWN = True
