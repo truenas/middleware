@@ -1,5 +1,3 @@
-import asyncio
-
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.utils.path import is_child
 
@@ -54,6 +52,6 @@ class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def setup(middleware):
-    asyncio.ensure_future(
+    middleware.create_task(
         middleware.call('pool.dataset.register_attachment_delegate', ChartReleaseFSAttachmentDelegate(middleware))
     )
