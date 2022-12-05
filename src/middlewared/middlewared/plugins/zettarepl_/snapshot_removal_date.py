@@ -1,4 +1,3 @@
-import asyncio
 from collections import defaultdict
 from datetime import datetime
 import subprocess
@@ -169,10 +168,9 @@ class ZettareplService(Service):
 
 
 async def pool_configuration_change(middleware, *args, **kwargs):
-    asyncio.ensure_future(middleware.call("zettarepl.load_removal_dates"))
+    middleware.create_task(middleware.call("zettarepl.load_removal_dates"))
 
 
 async def setup(middleware):
-    asyncio.ensure_future(middleware.call("zettarepl.load_removal_dates"))
-
+    middleware.create_task(middleware.call("zettarepl.load_removal_dates"))
     middleware.register_hook("pool.post_import", pool_configuration_change)
