@@ -2,9 +2,6 @@ from os import mkfifo
 from prctl import set_name
 from threading import Thread
 from time import sleep
-from asyncio import ensure_future
-
-
 VRRP_THREAD = None
 
 
@@ -82,6 +79,6 @@ async def _event_system(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
-    ensure_future(_event_system(middleware))  # start thread on middlewared service start/restart
+    middleware.create_task(_event_system(middleware))  # start thread on middlewared service start/restart
     middleware.register_hook('system', _event_system)  # catch shutdown event and clean up thread
     middleware.register_hook('system.post_license_update', _event_system)  # catch license change
