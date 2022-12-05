@@ -1,4 +1,3 @@
-import asyncio
 from collections import namedtuple
 from itertools import zip_longest
 
@@ -87,7 +86,7 @@ async def interface_post_sync(middleware):
     if POST_ROLLBACK_LISTEN_DELEGATES:
         for pd in POST_ROLLBACK_LISTEN_DELEGATES:
             middleware.logger.info("Restoring listen IPs on delegate %r: %r", pd.delegate, pd.state)
-            asyncio.ensure_future(pd.delegate.set_listen_state(pd.state))
+            middleware.create_task(pd.delegate.set_listen_state(pd.state))
 
         POST_ROLLBACK_LISTEN_DELEGATES[:] = []
         return
@@ -95,7 +94,7 @@ async def interface_post_sync(middleware):
     for pd in PRE_SYNC_LISTEN_DELEGATES:
         middleware.logger.info("Resetting listen IPs on delegate %r because %r addresses were removed", pd.delegate,
                                pd.addresses)
-        asyncio.ensure_future(pd.delegate.reset_listens(pd.state))
+        middleware.create_task(pd.delegate.reset_listens(pd.state))
 
 
 async def interface_post_rollback(middleware):
