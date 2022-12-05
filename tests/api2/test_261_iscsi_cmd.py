@@ -3,16 +3,18 @@
 # License: BSD
 
 import os
-import pytest
 import random
 import string
 import sys
 from time import sleep
+
+import pytest
 from pytest_dependency import depends
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ip, pool_name, hostname, dev_test
-from functions import PUT, POST, GET, SSH_TEST, DELETE
+from auto_config import dev_test, hostname, ip, pool_name
+from functions import DELETE, GET, POST, PUT, SSH_TEST
 from protocols import iscsi_scsi_connection
 
 MB=1024*1024
@@ -32,7 +34,9 @@ zvol_name = f"ds{digit}"
 zvol = f'{pool_name}/{zvol_name}'
 
 import contextlib
+
 from auto_config import ip
+
 
 @contextlib.contextmanager
 def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
