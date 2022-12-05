@@ -637,7 +637,7 @@ class InterfaceService(CRUDService):
         if options['rollback'] and options['checkin_timeout']:
             loop = asyncio.get_event_loop()
             self._rollback_timer = loop.call_later(
-                options['checkin_timeout'], lambda: asyncio.ensure_future(self.rollback())
+                options['checkin_timeout'], lambda: self.middleware.create_task(self.rollback())
             )
         else:
             self._original_datastores = {}
@@ -1895,7 +1895,7 @@ async def setup(middleware):
     middleware.event_register('network.config', 'Sent on network configuration changes.')
 
     # Configure http proxy on startup and on network.config events
-    asyncio.ensure_future(configure_http_proxy(middleware))
+    middleware.create_task(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
     middleware.event_subscribe('system', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook)
