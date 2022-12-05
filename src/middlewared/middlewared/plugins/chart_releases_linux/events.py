@@ -91,7 +91,7 @@ class ChartReleaseService(Service):
                     await self.changed_status_event(name, status, cached_chart_release)
                 elif not cached_chart_release['poll']:
                     cached_chart_release['poll'] = True
-                    asyncio.ensure_future(self.poll_chart_release_status(name))
+                    self.middleware.create_task(self.poll_chart_release_status(name))
 
     @private
     async def changed_status_event(self, name, new_status, cached_chart_release):
@@ -134,4 +134,4 @@ async def chart_release_event(middleware, event_type, args):
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
     if await middleware.call('kubernetes.validate_k8s_setup', False):
-        asyncio.ensure_future(middleware.call('chart.release.refresh_events_state'))
+        middleware.create_task(middleware.call('chart.release.refresh_events_state'))
