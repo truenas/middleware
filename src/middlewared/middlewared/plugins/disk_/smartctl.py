@@ -38,7 +38,7 @@ class DiskService(Service):
             finally:
                 self.smartctl_args_for_device_lock.release()
 
-        asyncio.ensure_future(update())
+        self.middleware.create_task(update())
 
     @private
     async def smartctl_args(self, disk):

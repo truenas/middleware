@@ -1,4 +1,3 @@
-import asyncio
 import contextlib
 import os
 import signal
@@ -33,7 +32,7 @@ class UPSService(SimpleService):
 
     async def after_start(self):
         if await self.middleware.call("service.started", "collectd"):
-            asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
+            self.middleware.create_task(self.middleware.call("service.restart", "collectd"))
 
     async def before_stop(self):
         await self.middleware.call("ups.dismiss_alerts")
@@ -63,4 +62,4 @@ class UPSService(SimpleService):
 
     async def after_stop(self):
         if await self.middleware.call("service.started", "collectd"):
-            asyncio.ensure_future(self.middleware.call("service.restart", "collectd"))
+            self.middleware.create_task(self.middleware.call("service.restart", "collectd"))

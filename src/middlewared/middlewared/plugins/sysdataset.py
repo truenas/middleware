@@ -3,7 +3,6 @@ from middlewared.service import CallError, ConfigService, ValidationErrors, job,
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
 
-import asyncio
 import errno
 import os
 import shutil
@@ -270,7 +269,7 @@ class SystemDatasetService(ConfigService):
         if await self.__setup_datasets(config['pool'], config['uuid']):
             # There is no need to wait this to finish
             # Restarting rrdcached will ensure that we start/restart collectd as well
-            asyncio.ensure_future(self.middleware.call('service.restart', 'rrdcached'))
+            self.middleware.create_task(self.middleware.call('service.restart', 'rrdcached'))
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):

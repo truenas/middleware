@@ -270,7 +270,7 @@ class SystemAdvancedService(ConfigService):
             if not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
                 # We want to make sure kmip uid is None in this case
                 adv_config = await self.middleware.call('datastore.config', self._config.datastore)
-                asyncio.ensure_future(
+                self.middleware.create_task(
                     self.middleware.call('kmip.reset_sed_global_password', adv_config['adv_kmip_uid'])
                 )
                 config_data['kmip_uid'] = None
@@ -1354,7 +1354,7 @@ class SystemGeneralService(ConfigService):
         HTTP server will be restarted after `delay` seconds.
         """
         event_loop = asyncio.get_event_loop()
-        event_loop.call_later(delay, lambda: asyncio.ensure_future(self.middleware.call('service.restart', 'http')))
+        event_loop.call_later(delay, lambda: self.middleware.create_task(self.middleware.call('service.restart', 'http')))
 
     @accepts()
     async def local_url(self):
@@ -1527,7 +1527,7 @@ async def _event_system(middleware, event_type, args):
         birthday = (await middleware.call('system.info'))['birthday']
         if birthday is None:
             # try to set birthday in background
-            asyncio.ensure_future(_update_birthday(middleware))
+            middleware.create_task(_update_birthday(middleware))
 
     if args['id'] == 'shutdown':
         SYSTEM_SHUTTING_DOWN = True
@@ -1720,7 +1720,7 @@ async def setup(middleware):
     await middleware.call('system.general.set_crash_reporting')
 
     if osc.IS_FREEBSD:
-        asyncio.ensure_future(middleware.call('system.advanced.autotune', 'sysctl'))
+        middleware.create_task(middleware.call('system.advanced.autotune', 'sysctl'))
         await update_timeout_value(middleware)
 
         for srv in ['initshutdownscript', 'tunable', 'vm']:

@@ -550,7 +550,7 @@ async def interface_post_sync(middleware):
         nfs = await middleware.call('datastore.query', 'services_services', filters, options)
         if nfs['srv_enable'] and any([i['enabled'] for i in await middleware.call('sharing.nfs.query')]):
             if (await middleware.call('nfs.config'))['bindip']:
-                asyncio.ensure_future(middleware.call('service.restart', 'nfs'))
+                middleware.create_task(middleware.call('service.restart', 'nfs'))
 
 
 async def pool_post_import(middleware, pool):
@@ -558,13 +558,13 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload NFS if a pool is imported and there are shares configured for it.
     """
     if pool is None:
-        asyncio.ensure_future(middleware.call('etc.generate', 'nfsd'))
+        middleware.create_task(middleware.call('etc.generate', 'nfsd'))
         return
 
     path = f'/mnt/{pool["name"]}'
     for share in await middleware.call('sharing.nfs.query'):
         if any(filter(lambda x: x == path or x.startswith(f'{path}/'), share['paths'])):
-            asyncio.ensure_future(middleware.call('service.reload', 'nfs'))
+            middleware.create_task(middleware.call('service.reload', 'nfs'))
             break
 
 

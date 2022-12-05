@@ -1,4 +1,3 @@
-import asyncio
 from collections import defaultdict
 import libzfs
 import threading
@@ -115,7 +114,7 @@ async def devd_zfs_hook(middleware, data):
         'resource.fs.zfs.removed',
         'sysevent.fs.zfs.config_sync',
     ):
-        asyncio.ensure_future(middleware.call('pool.sync_encrypted'))
+        middleware.create_task(middleware.call('pool.sync_encrypted'))
 
 deadman_throttle = defaultdict(list)
 
@@ -139,7 +138,7 @@ async def zfs_events(middleware, data):
         max_items = 5
         deadman_throttle[pool] = list(filter(lambda t: t > now - interval, deadman_throttle[pool]))
         if len(deadman_throttle[pool]) < max_items:
-            asyncio.ensure_future(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
+            middleware.create_task(middleware.call('alert.oneshot_create', 'ZfsDeadman', {
                 'vdev': vdev,
                 'pool': pool,
             }))
@@ -155,7 +154,7 @@ async def zfs_events(middleware, data):
         # Swap must be configured only on disks being used by some pool,
         # for this reason we must react to certain types of ZFS events to keep
         # it in sync every time there is a change.
-        asyncio.ensure_future(middleware.call('disk.swaps_configure'))
+        middleware.create_task(middleware.call('disk.swaps_configure'))
     elif (
         event_id == 'sysevent.fs.zfs.history_event' and data.get(
             'history_internal_name'

@@ -1,4 +1,3 @@
-import asyncio
 import re
 import subprocess
 import time
@@ -130,7 +129,7 @@ class TruecommandService(Service):
             ):
                 await self.middleware.call('service.start', 'truecommand')
                 await self.middleware.call('service.reload', 'http')
-                asyncio.ensure_future(self.middleware.call('truecommand.health_check'))
+                self.middleware.create_task(self.middleware.call('truecommand.health_check'))
             else:
                 # start polling iX Portal to see what's up and why we don't have these values set
                 # This can happen in instances where system was polling and then was rebooted,

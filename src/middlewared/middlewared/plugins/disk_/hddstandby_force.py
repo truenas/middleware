@@ -118,7 +118,7 @@ class DiskService(Service):
 
         if spindown_disks:
             logger.trace("Spinning down disks %r", spindown_disks)
-            asyncio.ensure_future(self._spindown_disks(spindown_disks))
+            self.middleware.create_task(self._spindown_disks(spindown_disks))
 
     async def _spindown_disks(self, disks):
         for disk in disks:
@@ -171,4 +171,4 @@ class DiskService(Service):
 
 
 async def setup(middleware):
-    asyncio.ensure_future(middleware.call("disk.update_hddstandby_force"))
+    middleware.create_task(middleware.call("disk.update_hddstandby_force"))

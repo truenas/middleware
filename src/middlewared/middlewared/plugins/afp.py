@@ -1,4 +1,3 @@
-import asyncio
 import enum
 import uuid
 
@@ -362,7 +361,7 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload AFP if a pool is imported and there are shares configured for it.
     """
     if pool is None:
-        asyncio.ensure_future(middleware.call('etc.generate', 'afpd'))
+        middleware.create_task(middleware.call('etc.generate', 'afpd'))
         return
 
     path = f'/mnt/{pool["name"]}'
@@ -372,7 +371,7 @@ async def pool_post_import(middleware, pool):
             ('path', '^', f'{path}/'),
         ])
     ]):
-        asyncio.ensure_future(middleware.call('service.reload', 'afp'))
+        middleware.create_task(middleware.call('service.reload', 'afp'))
 
 
 class AFPFSAttachmentDelegate(LockableFSAttachmentDelegate):

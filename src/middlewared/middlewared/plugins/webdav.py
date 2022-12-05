@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
@@ -261,7 +260,7 @@ async def pool_post_import(middleware, pool):
     Makes sure to reload WebDAV if a pool is imported and there are shares configured for it.
     """
     if pool is None:
-        asyncio.ensure_future(middleware.call('etc.generate', 'webdav'))
+        middleware.create_task(middleware.call('etc.generate', 'webdav'))
         return
 
     path = f'/mnt/{pool["name"]}'
@@ -271,7 +270,7 @@ async def pool_post_import(middleware, pool):
             ('path', '^', f'{path}/'),
         ])
     ]):
-        asyncio.ensure_future(middleware.call('service.reload', 'webdav'))
+        middleware.create_task(middleware.call('service.reload', 'webdav'))
 
 
 class WebDAVFSAttachmentDelegate(LockableFSAttachmentDelegate):

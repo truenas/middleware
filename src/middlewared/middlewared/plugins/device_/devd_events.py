@@ -94,4 +94,4 @@ async def devd_listen(middleware):
 
 
 def setup(middleware):
-    asyncio.ensure_future(devd_loop(middleware))
+    middleware.create_task(devd_loop(middleware))

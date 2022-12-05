@@ -1,4 +1,3 @@
-import asyncio
 import os
 import time
 import re
@@ -282,7 +281,7 @@ class DiskService(Service, ServiceChangeMixin):
                     ):
                         self.middleware.call_sync('iscsi.extent.delete', extent['id'])
                     if disk['disk_kmip_uid']:
-                        asyncio.ensure_future(self.middleware.call(
+                        self.middleware.create_task(self.middleware.call(
                             'kmip.reset_sed_disk_password', disk['disk_identifier'], disk['disk_kmip_uid']
                         ))
                     self.middleware.call_sync('datastore.delete', 'storage.disk', disk['disk_identifier'], options)

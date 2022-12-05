@@ -214,7 +214,7 @@ async def rclone(middleware, job, cloud_sync, dry_run=False):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        check_cloud_sync = asyncio.ensure_future(rclone_check_progress(job, proc))
+        check_cloud_sync = middleware.create_task(rclone_check_progress(job, proc))
         cancelled_error = None
         try:
             try:

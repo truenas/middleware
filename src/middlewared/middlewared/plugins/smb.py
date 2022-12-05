@@ -5,7 +5,6 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, Popen, run
 
-import asyncio
 import codecs
 import enum
 import errno
@@ -1322,7 +1321,7 @@ async def pool_post_import(middleware, pool):
         By the time the post-import hook is called, the smb.configure should have
         already completed and initialized the SMB service.
         """
-        asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
+        middleware.create_task(middleware.call('sharing.smb.sync_registry'))
         return
 
     path = f'/mnt/{pool["name"]}'
@@ -1332,7 +1331,7 @@ async def pool_post_import(middleware, pool):
             ('path', '^', f'{path}/'),
         ])
     ]):
-        asyncio.ensure_future(middleware.call('sharing.smb.sync_registry'))
+        middleware.create_task(middleware.call('sharing.smb.sync_registry'))
 
 
 class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):

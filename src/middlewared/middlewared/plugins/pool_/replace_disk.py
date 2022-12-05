@@ -1,4 +1,3 @@
-import asyncio
 import errno
 import os
 
@@ -112,7 +111,7 @@ class PoolService(Service):
         finally:
             # Needs to happen even if replace failed to put back disk that had been
             # removed from swap prior to replacement
-            asyncio.ensure_future(self.middleware.call('disk.swaps_configure'))
+            self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         enc_disks = [{'disk': disk['devname'], 'devname': f'{new_devname.removeprefix("/dev/")}'}]
         await self.middleware.call('pool.save_encrypteddisks', oid, enc_disks, {disk['devname']: disk})

@@ -231,7 +231,7 @@ class DiskService(CRUDService):
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             if new['kmip_uid']:
-                asyncio.ensure_future(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
+                self.middleware.create_task(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
             new['kmip_uid'] = None
 
         for key in ['acousticlevel', 'advpowermgmt', 'hddstandby']:
@@ -670,7 +670,7 @@ class DiskService(CRUDService):
             args = ['camcontrol', 'apm', dev]
             if disk['advpowermgmt'] != 'DISABLED':
                 args += ['-l', disk['advpowermgmt']]
-            asyncio.ensure_future(run(*args, check=False))
+            self.middleware.create_task(run(*args, check=False))
 
         # Try to set AAM
         if RE_CAMCONTROL_AAM.search(identify):
@@ -679,7 +679,7 @@ class DiskService(CRUDService):
                 'MEDIUM': '64',
                 'MAXIMUM': '127',
             }
-            asyncio.ensure_future(run(
+            self.middleware.create_task(run(
                 'camcontrol', 'aam', dev, '-l', acousticlevel_map.get(disk['acousticlevel'], '0'),
                 check=False,
             ))
@@ -696,9 +696,9 @@ class DiskService(CRUDService):
             # or some activity is happening very soon.
             async def camcontrol_idle():
                 await asyncio.sleep(60)
-                asyncio.ensure_future(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
+                self.middleware.create_task(run('camcontrol', 'idle', dev, '-t', str(idle), check=False))
 
-            asyncio.ensure_future(camcontrol_idle())
+            self.middleware.create_task(camcontrol_idle())
 
 
 async def _event_system_ready(middleware, event_type, args):
@@ -706,7 +706,7 @@ async def _event_system_ready(middleware, event_type, args):
         return
 
     # Configure disks power management
-    asyncio.ensure_future(middleware.call('disk.configure_power_management'))
+    middleware.create_task(middleware.call('disk.configure_power_management'))
 
 
 def setup(middleware):
