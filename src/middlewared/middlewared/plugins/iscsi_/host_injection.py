@@ -26,7 +26,7 @@ class iSCSIHostsInjectionService(Service):
             self.logger.debug("Starting iscsi.host.injection")
             self.run_event = asyncio.Event()
             self.stop_event = asyncio.Event()
-            asyncio.ensure_future(self._run(self.run_event, self.stop_event))
+            self.middleware.create_task(self._run(self.run_event, self.stop_event))
 
     async def stop(self):
         async with self.control_lock:
