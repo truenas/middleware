@@ -8,7 +8,7 @@ class DiskService(Service):
 
     @private
     async def power_management_impl(self, dev, disk):
-        asyncio.ensure_future(run(
+        self.middleware.create_task(run(
             'hdparm', '-B', disk['advpowermgmt'] if disk['advpowermgmt'] != 'DISABLED' else '255', f'/dev/{dev}',
             check=False,
         ))
@@ -23,10 +23,10 @@ class DiskService(Service):
         else:
             idle = 0
 
-        # We wait a minute before applying idle because its likely happening during system boot
-        # or some activity is happening very soon.
-        async def camcontrol_idle():
+        async def hdparm_idle():
+            # We wait a minute before applying idle because its likely happening during system boot
+            # or some activity is happening very soon.
             await asyncio.sleep(60)
-            asyncio.ensure_future(run('hdparm', '-S', str(idle), f'/dev/{dev}', check=False))
+            self.middleware.create_task(run('hdparm', '-S', str(idle), f'/dev/{dev}', check=False))
 
-        asyncio.ensure_future(camcontrol_idle())
+        self.middleware.create_task(hdparm_idle())
