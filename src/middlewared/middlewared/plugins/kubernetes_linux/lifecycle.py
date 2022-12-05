@@ -45,10 +45,10 @@ class KubernetesService(Service):
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
         else:
-            asyncio.ensure_future(self.middleware.call('k8s.event.setup_k8s_events'))
+            self.middleware.create_task(self.middleware.call('k8s.event.setup_k8s_events'))
             await self.middleware.call('chart.release.refresh_events_state')
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
-            asyncio.ensure_future(self.redeploy_chart_releases_consuming_outdated_certs())
+            self.middleware.create_task(self.redeploy_chart_releases_consuming_outdated_certs())
 
     @private
     async def add_iptables_rules(self):
@@ -413,9 +413,9 @@ async def _event_system(middleware, event_type, args):
             await middleware.call('kubernetes.config')
         )['pool']
     ):
-        asyncio.ensure_future(middleware.call('kubernetes.start_service'))
+        middleware.create_task(middleware.call('kubernetes.start_service'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'kubernetes'):
-        asyncio.ensure_future(middleware.call('service.stop', 'kubernetes'))
+        middleware.create_task(middleware.call('service.stop', 'kubernetes'))
 
 
 async def setup(middleware):
