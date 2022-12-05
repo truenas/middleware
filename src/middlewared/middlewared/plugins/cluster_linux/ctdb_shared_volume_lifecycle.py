@@ -1,6 +1,3 @@
-import asyncio
-
-
 async def _event(middleware, event_type, args):
 
     if args['id'] == 'ready':
@@ -13,9 +10,9 @@ async def _event(middleware, event_type, args):
             {'get': True}
         )
         if glusterd['srv_enable']:
-            asyncio.ensure_future(middleware.call('service.start', 'glusterd'))
+            middleware.create_task(middleware.call('service.start', 'glusterd'))
     elif args['id'] == 'shutdown' and await middleware.call('service.started', 'glusterd'):
-        asyncio.ensure_future(middleware.call('service.stop', 'glusterd'))
+        middleware.create_task(middleware.call('service.stop', 'glusterd'))
 
 
 async def setup(middleware):
