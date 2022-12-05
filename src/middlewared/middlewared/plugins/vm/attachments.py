@@ -1,4 +1,3 @@
-import asyncio
 import collections
 import os.path
 
@@ -148,7 +147,7 @@ class VMPortDelegate(PortDelegate):
 
 
 async def setup(middleware):
-    asyncio.ensure_future(
+    middleware.create_task(
         middleware.call('pool.dataset.register_attachment_delegate', VMFSAttachmentDelegate(middleware))
     )
     await middleware.call('port.register_attachment_delegate', VMPortDelegate(middleware))
