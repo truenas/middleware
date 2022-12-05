@@ -29,6 +29,8 @@ digit = ''.join(random.choices(string.digits, k=2))
 file_mountpoint = f'/tmp/iscsi-file-{hostname}'
 zvol_mountpoint = f'/tmp/iscsi-zvol-{hostname}'
 target_name = f"target{digit}"
+dataset_name = f"dataset{digit}"
+file_name = f"iscsi{digit}"
 basename = "iqn.2005-10.org.freenas.ctl"
 zvol_name = f"ds{digit}"
 zvol = f'{pool_name}/{zvol_name}'
@@ -118,12 +120,32 @@ def target(target_name, groups, alias=None):
         assert results.json(), results.text
 
 @contextlib.contextmanager
-def file_extent(pool_name, filesize=MB_512):
+def dataset(pool_name, dataset_name):
+
+    dataset = f"{pool_name}/{dataset_name}"
+
+    payload = {
+        'name': dataset,
+    }
+    results = POST("/pool/dataset/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    dataset_config = results.json()
+
+    try:
+        yield dataset_config
+    finally:
+        dataset_id = dataset_config['id'].replace('/', '%2F')
+        results = DELETE(f"/pool/dataset/id/{dataset_id}/", {'recursive' : True} )
+        assert results.status_code == 200, results.text
+
+@contextlib.contextmanager
+def file_extent(pool_name, dataset_name, file_name, filesize=MB_512):
     payload = {
         'type': 'FILE',
         'name': 'extent',
         'filesize': filesize, 
-        'path': f'/mnt/{pool_name}/dataset03/iscsi'
+        'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
     }
     results = POST("/iscsi/extent/", payload)
     assert results.status_code == 200, results.text
@@ -201,21 +223,23 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         assert results.json(), results.text
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(target_name, pool_name):
+def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with file_extent(pool_name) as extent_config:
-                    extent_id = extent_config['id']
-                    with target_extent_associate(target_id, extent_id):
-                        yield {
-                            'initiator': initiator_config,
-                            'portal': portal_config,
-                            'target': target_config,
-                            'extent': extent_config,
-                        }
+                with dataset(pool_name, dataset_name) as dataset_config:
+                    with file_extent(pool_name, pool_name, dataset_name) as extent_config:
+                        extent_id = extent_config['id']
+                        with target_extent_associate(target_id, extent_id):
+                            yield {
+                                'initiator': initiator_config,
+                                'portal': portal_config,
+                                'target': target_config,
+                                'dataset': dataset_config,
+                                'extent': extent_config,
+                            }
 
 @contextlib.contextmanager
 def configured_target_to_zvol_extent(target_name, zvol):
@@ -224,7 +248,7 @@ def configured_target_to_zvol_extent(target_name, zvol):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with zvol_dataset(zvol):
+                with zvol_dataset(zvol) as dataset_config:
                     with zvol_extent(zvol) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
@@ -232,6 +256,7 @@ def configured_target_to_zvol_extent(target_name, zvol):
                                 'initiator': initiator_config,
                                 'portal': portal_config,
                                 'target': target_config,
+                                'dataset': dataset_config,
                                 'extent': extent_config,
                             }
 
@@ -349,12 +374,13 @@ def test_01_inquiry(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with file_extent(pool_name) as extent_config:
-                    extent_id = extent_config['id']
-                    with target_extent_associate(target_id, extent_id):
-                        iqn = f'{basename}:{target_name}'
-                        with iscsi_scsi_connection(ip, iqn) as s:
-                            _verify_inquiry(s)
+                with dataset(pool_name, dataset_name) as dataset_config:
+                    with file_extent(pool_name, dataset_name, file_name) as extent_config:
+                        extent_id = extent_config['id']
+                        with target_extent_associate(target_id, extent_id):
+                            iqn = f'{basename}:{target_name}'
+                            with iscsi_scsi_connection(ip, iqn) as s:
+                                _verify_inquiry(s)
 
 def test_02_read_capacity16(request):
     """
@@ -368,20 +394,21 @@ def test_02_read_capacity16(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                # 100 MB file extent
-                with file_extent(pool_name, MB_100) as extent_config:
-                    extent_id = extent_config['id']
-                    with target_extent_associate(target_id, extent_id):
-                        iqn = f'{basename}:{target_name}'
-                        with iscsi_scsi_connection(ip, iqn) as s:
-                            _verify_capacity(s, MB_100)
-                # 512 MB file extent
-                with file_extent(pool_name, MB_512) as extent_config:
-                    extent_id = extent_config['id']
-                    with target_extent_associate(target_id, extent_id):
-                        iqn = f'{basename}:{target_name}'
-                        with iscsi_scsi_connection(ip, iqn) as s:
-                            _verify_capacity(s, MB_512)
+                with dataset(pool_name, dataset_name) as dataset_config:
+                    # 100 MB file extent
+                    with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
+                        extent_id = extent_config['id']
+                        with target_extent_associate(target_id, extent_id):
+                            iqn = f'{basename}:{target_name}'
+                            with iscsi_scsi_connection(ip, iqn) as s:
+                                _verify_capacity(s, MB_100)
+                    # 512 MB file extent
+                    with file_extent(pool_name, dataset_name, file_name, MB_512) as extent_config:
+                        extent_id = extent_config['id']
+                        with target_extent_associate(target_id, extent_id):
+                            iqn = f'{basename}:{target_name}'
+                            with iscsi_scsi_connection(ip, iqn) as s:
+                                _verify_capacity(s, MB_512)
                 # 100 MB zvol extent
                 with zvol_dataset(zvol, MB_100):
                     with zvol_extent(zvol) as extent_config:
@@ -474,7 +501,7 @@ def test_03_readwrite16_file_extent(request):
     a file extent based iSCSI target.
     """
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
-    with configured_target_to_file_extent(target_name, pool_name):
+    with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
 
@@ -502,28 +529,29 @@ def test_05_chap(request):
             with iscsi_auth(auth_tag, user, secret) as auth_config:
                 with target(target_name, [{'portal': portal_id, 'authmethod': 'CHAP', 'auth': auth_tag}]) as target_config:
                     target_id = target_config['id']
-                    with file_extent(pool_name) as extent_config:
-                        extent_id = extent_config['id']
-                        with target_extent_associate(target_id, extent_id):
-                            iqn = f'{basename}:{target_name}'
+                    with dataset(pool_name, dataset_name) as dataset_config:
+                        with file_extent(pool_name, dataset_name, file_name) as extent_config:
+                            extent_id = extent_config['id']
+                            with target_extent_associate(target_id, extent_id):
+                                iqn = f'{basename}:{target_name}'
 
-                            # Try and fail to connect without supplying CHAP creds
-                            with pytest.raises(RuntimeError) as ve:
-                                with iscsi_scsi_connection(ip, iqn) as s:
-                                    TUR(s)
-                                    assert False, "Should not have been able to connect without CHAP credentials."
-                            assert 'Unable to connect to' in str(ve), ve
+                                # Try and fail to connect without supplying CHAP creds
+                                with pytest.raises(RuntimeError) as ve:
+                                    with iscsi_scsi_connection(ip, iqn) as s:
+                                        TUR(s)
+                                        assert False, "Should not have been able to connect without CHAP credentials."
+                                assert 'Unable to connect to' in str(ve), ve
 
-                            # Try and fail to connect supplying incorrect CHAP creds
-                            with pytest.raises(RuntimeError) as ve:
-                                with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
-                                    TUR(s)
-                                    assert False, "Should not have been able to connect without CHAP credentials."
-                            assert 'Unable to connect to' in str(ve), ve
+                                # Try and fail to connect supplying incorrect CHAP creds
+                                with pytest.raises(RuntimeError) as ve:
+                                    with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
+                                        TUR(s)
+                                        assert False, "Should not have been able to connect without CHAP credentials."
+                                assert 'Unable to connect to' in str(ve), ve
 
-                            # Finally ensure we can connect with the right CHAP creds
-                            with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
-                                _verify_inquiry(s)
+                                # Finally ensure we can connect with the right CHAP creds
+                                with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
+                                    _verify_inquiry(s)
 
 def test_06_mutual_chap(request):
     """
@@ -541,40 +569,41 @@ def test_06_mutual_chap(request):
             with iscsi_auth(auth_tag, user, secret, peer_user, peer_secret) as auth_config:
                 with target(target_name, [{'portal': portal_id, 'authmethod': 'CHAP_MUTUAL', 'auth': auth_tag}]) as target_config:
                     target_id = target_config['id']
-                    with file_extent(pool_name) as extent_config:
-                        extent_id = extent_config['id']
-                        with target_extent_associate(target_id, extent_id):
-                            iqn = f'{basename}:{target_name}'
+                    with dataset(pool_name, dataset_name) as dataset_config:
+                        with file_extent(pool_name, dataset_name, file_name) as extent_config:
+                            extent_id = extent_config['id']
+                            with target_extent_associate(target_id, extent_id):
+                                iqn = f'{basename}:{target_name}'
 
-                            # Try and fail to connect without supplying Mutual CHAP creds
-                            with pytest.raises(RuntimeError) as ve:
-                                with iscsi_scsi_connection(ip, iqn) as s:
-                                    TUR(s)
-                                    assert False, "Should not have been able to connect without CHAP credentials."
-                            assert 'Unable to connect to' in str(ve), ve
+                                # Try and fail to connect without supplying Mutual CHAP creds
+                                with pytest.raises(RuntimeError) as ve:
+                                    with iscsi_scsi_connection(ip, iqn) as s:
+                                        TUR(s)
+                                        assert False, "Should not have been able to connect without CHAP credentials."
+                                assert 'Unable to connect to' in str(ve), ve
 
-                            # Try and fail to connect supplying incorrect CHAP creds (not mutual)
-                            with pytest.raises(RuntimeError) as ve:
-                                with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
-                                    TUR(s)
-                                    assert False, "Should not have been able to connect with incorrect CHAP credentials."
-                            assert 'Unable to connect to' in str(ve), ve
+                                # Try and fail to connect supplying incorrect CHAP creds (not mutual)
+                                with pytest.raises(RuntimeError) as ve:
+                                    with iscsi_scsi_connection(ip, iqn, 0, user, "WrongSecret") as s:
+                                        TUR(s)
+                                        assert False, "Should not have been able to connect with incorrect CHAP credentials."
+                                assert 'Unable to connect to' in str(ve), ve
 
-                            # Ensure we can connect with the right CHAP creds, if we *choose* not
-                            # to validate things.
-                            with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
-                                _verify_inquiry(s)
+                                # Ensure we can connect with the right CHAP creds, if we *choose* not
+                                # to validate things.
+                                with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
+                                    _verify_inquiry(s)
 
-                            # Try and fail to connect supplying incorrect Mutual CHAP creds
-                            with pytest.raises(RuntimeError) as ve:
-                                with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, "WrongSecret") as s:
-                                    TUR(s)
-                                    assert False, "Should not have been able to connect with incorrect Mutual CHAP credentials."
-                            assert 'Unable to connect to' in str(ve), ve
+                                # Try and fail to connect supplying incorrect Mutual CHAP creds
+                                with pytest.raises(RuntimeError) as ve:
+                                    with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, "WrongSecret") as s:
+                                        TUR(s)
+                                        assert False, "Should not have been able to connect with incorrect Mutual CHAP credentials."
+                                assert 'Unable to connect to' in str(ve), ve
 
-                            # Finally ensure we can connect with the right Mutual CHAP creds
-                            with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
-                                _verify_inquiry(s)
+                                # Finally ensure we can connect with the right Mutual CHAP creds
+                                with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
+                                    _verify_inquiry(s)
 
 def test_07_report_luns(request):
     """
@@ -587,30 +616,31 @@ def test_07_report_luns(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                # LUN 0 (100 MB file extent)
-                with file_extent(pool_name, MB_100) as extent_config:
-                    extent_id = extent_config['id']
-                    with target_extent_associate(target_id, extent_id):
-                        with iscsi_scsi_connection(ip, iqn) as s:
-                            _verify_luns(s, [0])
-                            _verify_capacity(s, MB_100)
-                        # Now create a 512 MB zvol and associate with LUN 1
-                        with zvol_dataset(zvol):
-                            with zvol_extent(zvol) as extent_config:
-                                extent_id = extent_config['id']
-                                with target_extent_associate(target_id, extent_id, 1):
-                                    # Connect to LUN 0
-                                    with iscsi_scsi_connection(ip, iqn, 0) as s0:
-                                        _verify_luns(s0, [0, 1])
-                                        _verify_capacity(s0, MB_100)
-                                    # Connect to LUN 1
-                                    with iscsi_scsi_connection(ip, iqn, 1) as s1:
-                                        _verify_luns(s1, [0, 1])
-                                        _verify_capacity(s1, MB_512)
-                        # Check again now that LUN 1 has been removed again.
-                        with iscsi_scsi_connection(ip, iqn) as s:
-                            _verify_luns(s, [0])
-                            _verify_capacity(s, MB_100)
+                with dataset(pool_name, dataset_name) as dataset_config:
+                    # LUN 0 (100 MB file extent)
+                    with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
+                        extent_id = extent_config['id']
+                        with target_extent_associate(target_id, extent_id):
+                            with iscsi_scsi_connection(ip, iqn) as s:
+                                _verify_luns(s, [0])
+                                _verify_capacity(s, MB_100)
+                            # Now create a 512 MB zvol and associate with LUN 1
+                            with zvol_dataset(zvol):
+                                with zvol_extent(zvol) as extent_config:
+                                    extent_id = extent_config['id']
+                                    with target_extent_associate(target_id, extent_id, 1):
+                                        # Connect to LUN 0
+                                        with iscsi_scsi_connection(ip, iqn, 0) as s0:
+                                            _verify_luns(s0, [0, 1])
+                                            _verify_capacity(s0, MB_100)
+                                        # Connect to LUN 1
+                                        with iscsi_scsi_connection(ip, iqn, 1) as s1:
+                                            _verify_luns(s1, [0, 1])
+                                            _verify_capacity(s1, MB_512)
+                            # Check again now that LUN 1 has been removed again.
+                            with iscsi_scsi_connection(ip, iqn) as s:
+                                _verify_luns(s, [0])
+                                _verify_capacity(s, MB_100)
 
 def test_99_teardown(request):
     # Disable iSCSI service
