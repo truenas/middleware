@@ -85,7 +85,8 @@ class DeviceService(Service):
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
         ident = serial = (
             self.safe_retrieval(dev.properties, 'ID_SCSI_SERIAL', '') or
-            self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT', '')
+            self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT', '') or
+            self.safe_retrieval(dev.properties, 'ID_SERIAL', '')
         )
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
         driver = self.safe_retrieval(dev.parent.properties, 'DRIVER', '') if not is_nvme else 'nvme'
