@@ -63,10 +63,12 @@ def test_00_firstboot_checks():
     for srv in services:
         if srv['service'] == 'smartd':
             assert srv['enable'] is True, str(srv)
+            if not ha:
+                # On our HA VM (bhyve) drives are S.M.A.R.T.-capable so it can start successfully.
+                assert srv['state'] == 'STOPPED', str(srv)
         else:
             assert srv['enable'] is False, str(srv)
-
-        assert srv['state'] == 'STOPPED', str(srv)
+            assert srv['state'] == 'STOPPED', str(srv)
 
 
 def test_01_Configuring_ssh_settings_for_root_login():
