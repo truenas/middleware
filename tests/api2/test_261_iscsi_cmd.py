@@ -29,7 +29,7 @@ digit = ''.join(random.choices(string.digits, k=2))
 file_mountpoint = f'/tmp/iscsi-file-{hostname}'
 zvol_mountpoint = f'/tmp/iscsi-zvol-{hostname}'
 target_name = f"target{digit}"
-dataset_name = f"dataset{digit}"
+dataset_name = f"iscsids{digit}"
 file_name = f"iscsi{digit}"
 basename = "iqn.2005-10.org.freenas.ctl"
 zvol_name = f"ds{digit}"
@@ -223,6 +223,33 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         assert results.json(), results.text
 
 @contextlib.contextmanager
+def snapshot(dataset_id, snapshot_name):
+    payload = {
+        'dataset': dataset_id,
+        'name': snapshot_name
+    }
+    results = POST("/zfs/snapshot/", payload)
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    snapshot_config = results.json()
+
+    try:
+        yield snapshot_config
+    finally:
+        snapshot_id = snapshot_config['id'].replace('/', '%2F')
+        results = DELETE(f"/zfs/snapshot/id/{snapshot_id}/")
+        assert results.status_code == 200, results.text
+        assert results.json(), results.text
+
+def snapshot_rollback(snapshot_id):
+    payload = {
+        'id': snapshot_id,
+        'options': {}
+    }
+    results = POST("/zfs/snapshot/rollback", payload)
+    assert results.status_code == 200, results.text
+
+@contextlib.contextmanager
 def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
     with initiator() as initiator_config:
         with portal() as portal_config:
@@ -230,7 +257,7 @@ def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
                 with dataset(pool_name, dataset_name) as dataset_config:
-                    with file_extent(pool_name, pool_name, dataset_name) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             yield {
@@ -641,6 +668,184 @@ def test_07_report_luns(request):
                             with iscsi_scsi_connection(ip, iqn) as s:
                                 _verify_luns(s, [0])
                                 _verify_capacity(s, MB_100)
+
+def target_test_snapshot_single_login(ip, iqn, dataset_id):
+    """
+    This tests snapshots with an iSCSI target using a single
+    iSCSI session.
+    """
+    zeros = bytearray(512)
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+    deadbeef_lbas = [1,5,7]
+    all_deadbeef_lbas = [1,5,7,10,11]
+
+    with iscsi_scsi_connection(ip, iqn) as s:
+        TUR(s)
+        s.blocksize = 512
+
+        # First let's write zeros to the first 12 blocks using WRITE SAME (16)
+        w = s.writesame16(0, 12, zeros)
+
+        # Check results using READ (16)
+        for lba in range(0,12):
+            r = s.read16(lba,1)
+            assert r.datain == zeros, r.datain
+
+        # Take snap0
+        with snapshot(dataset_id, "snap0") as snap0_config:
+
+            # Now let's write DEADBEEF to a few LBAs using WRITE (16)
+            for lba in deadbeef_lbas:
+                s.write16(lba, 1, deadbeef)
+
+            # Check results using READ (16)
+            for lba in range(0,12):
+                r = s.read16(lba,1)
+                if lba in deadbeef_lbas:
+                    assert r.datain == deadbeef, r.datain
+                else:
+                    assert r.datain == zeros, r.datain
+
+            # Take snap1
+            with snapshot(dataset_id, "snap1") as snap1_config:
+
+                # Do a WRITE for > 1 LBA
+                s.write16(10, 2, deadbeef*2)
+
+                # Check results using READ (16)
+                for lba in range(0,12):
+                    r = s.read16(lba,1)
+                    if lba in all_deadbeef_lbas:
+                        assert r.datain == deadbeef, r.datain
+                    else:
+                        assert r.datain == zeros, r.datain
+
+                # Now revert to snap1
+                snapshot_rollback(snap1_config['id'])
+
+
+                # Check results using READ (16)
+                for lba in range(0,12):
+                    r = s.read16(lba,1)
+                    if lba in deadbeef_lbas:
+                        assert r.datain == deadbeef, r.datain
+                    else:
+                        assert r.datain == zeros, r.datain
+
+            # Now revert to snap0
+            snapshot_rollback(snap0_config['id'])
+
+            # Check results using READ (16)
+            for lba in range(0,12):
+                r = s.read16(lba,1)
+                assert r.datain == zeros, r.datain
+
+def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
+    """
+    This tests snapshots with an iSCSI target using multiple
+    iSCSI sessions.
+    """
+    zeros = bytearray(512)
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+    deadbeef_lbas = [1,5,7]
+    all_deadbeef_lbas = [1,5,7,10,11]
+
+    with iscsi_scsi_connection(ip, iqn) as s:
+        TUR(s)
+        s.blocksize = 512
+
+        # First let's write zeros to the first 12 blocks using WRITE SAME (16)
+        w = s.writesame16(0, 12, zeros)
+
+        # Check results using READ (16)
+        for lba in range(0,12):
+            r = s.read16(lba,1)
+            assert r.datain == zeros, r.datain
+
+    # Take snap0
+    with snapshot(dataset_id, "snap0") as snap0_config:
+
+        with iscsi_scsi_connection(ip, iqn) as s:
+            TUR(s)
+            s.blocksize = 512
+
+            # Now let's write DEADBEEF to a few LBAs using WRITE (16)
+            for lba in deadbeef_lbas:
+                s.write16(lba, 1, deadbeef)
+
+            # Check results using READ (16)
+            for lba in range(0,12):
+                r = s.read16(lba,1)
+                if lba in deadbeef_lbas:
+                    assert r.datain == deadbeef, r.datain
+                else:
+                    assert r.datain == zeros, r.datain
+
+        # Take snap1
+        with snapshot(dataset_id, "snap1") as snap1_config:
+
+            with iscsi_scsi_connection(ip, iqn) as s:
+                TUR(s)
+                s.blocksize = 512
+
+                # Do a WRITE for > 1 LBA
+                s.write16(10, 2, deadbeef*2)
+
+                # Check results using READ (16)
+                for lba in range(0,12):
+                    r = s.read16(lba,1)
+                    if lba in all_deadbeef_lbas:
+                        assert r.datain == deadbeef, r.datain
+                    else:
+                        assert r.datain == zeros, r.datain
+
+                # Now revert to snap1
+                snapshot_rollback(snap1_config['id'])
+
+        with iscsi_scsi_connection(ip, iqn) as s:
+            TUR(s)
+            s.blocksize = 512
+
+            # Check results using READ (16)
+            for lba in range(0,12):
+                r = s.read16(lba,1)
+                if lba in deadbeef_lbas:
+                    assert r.datain == deadbeef, r.datain
+                else:
+                    assert r.datain == zeros, r.datain
+
+        # Now revert to snap0
+        snapshot_rollback(snap0_config['id'])
+
+        with iscsi_scsi_connection(ip, iqn) as s:
+            TUR(s)
+            s.blocksize = 512
+            # Check results using READ (16)
+            for lba in range(0,12):
+                r = s.read16(lba,1)
+                assert r.datain == zeros, r.datain
+
+def test_08_snapshot_zvol_extent(request):
+    """
+    This tests snapshots with a zvol extent based iSCSI target.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    iqn = f'{basename}:{target_name}'
+    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
+        target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
+    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
+        target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+
+def test_09_snapshot_file_extent(request):
+    """
+    This tests snapshots with a file extent based iSCSI target.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    iqn = f'{basename}:{target_name}'
+    with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name) as iscsi_config:
+        target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
+    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
+        target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
 
 def test_99_teardown(request):
     # Disable iSCSI service
