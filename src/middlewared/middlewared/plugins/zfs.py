@@ -1079,7 +1079,6 @@ class ZFSDatasetService(CRUDService):
             if recv_run.returncode == 0 and e.stderr.strip().endswith('dataset does not exist'):
                 # This operation might have deleted this dataset if it was created by `zfs recv` operation
                 return
-            self.logger.error('Failed to delete dataset', exc_info=True)
             error = e.stderr.strip()
             errno_ = errno.EFAULT
             if "Device busy" in error or "dataset is busy" in error:
