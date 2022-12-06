@@ -12,6 +12,7 @@ Welcome to TrueNAS developer documentation!
    testing/integration-tests/index.rst
    build/index.rst
    simulating/index.rst
+   dev-workspace/index.rst
 
 
 
