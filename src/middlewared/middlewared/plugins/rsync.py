@@ -93,9 +93,9 @@ class RsyncdModel(sa.Model):
 class RsyncdService(SystemServiceService):
 
     class Config:
-        service = "rsync"
-        service_model = 'rsyncd'
-        datastore_prefix = "rsyncd_"
+        datastore = 'services.rsyncd'
+        service = 'rsync'
+        datastore_prefix = 'rsyncd_'
         cli_namespace = 'service.rsync'
 
     ENTRY = Dict(

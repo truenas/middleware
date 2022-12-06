@@ -24,6 +24,7 @@ class DynDNSService(SystemServiceService):
 
     class Config:
         service = "dynamicdns"
+        datastore = "services.dynamicdns"
         datastore_extend = "dyndns.dyndns_extend"
         datastore_prefix = "ddns_"
         cli_namespace = "service.dyndns"

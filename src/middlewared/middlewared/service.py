@@ -356,8 +356,6 @@ class ServiceBase(type):
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - service: system service `name` option used by `SystemServiceService`
-      - service_model: system service datastore model option used by `SystemServiceService`
-                       (`service` if used if not provided)
       - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
       - namespace_alias: another namespace identifier of the service, mostly used to rename and
@@ -403,7 +401,6 @@ def service_config(klass, config):
         'event_register': True,
         'event_send': True,
         'service': None,
-        'service_model': None,
         'service_verb': 'reload',
         'service_verb_sync': True,
         'namespace': namespace,
@@ -753,7 +750,7 @@ class SystemServiceService(ConfigService):
     @accepts()
     async def config(self):
         return await self._get_or_insert(
-            f'services.{self._config.service_model or self._config.service}', {
+            self._config.datastore, {
                 'extend': self._config.datastore_extend,
                 'extend_context': self._config.datastore_extend_context,
                 'prefix': self._config.datastore_prefix
@@ -762,9 +759,9 @@ class SystemServiceService(ConfigService):
 
     @private
     async def _update_service(self, old, new, verb=None):
-        await self.middleware.call('datastore.update',
-                                   f'services.{self._config.service_model or self._config.service}', old['id'], new,
-                                   {'prefix': self._config.datastore_prefix})
+        await self.middleware.call(
+            'datastore.update', self._config.datastore, old['id'], new, {'prefix': self._config.datastore_prefix}
+        )
 
         fut = self._service_change(self._config.service, verb or self._config.service_verb)
         if self._config.service_verb_sync:

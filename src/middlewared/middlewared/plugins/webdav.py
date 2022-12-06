@@ -169,6 +169,7 @@ class WebDAVModel(sa.Model):
 class WebDAVService(SystemServiceService):
     class Config:
         service = 'webdav'
+        datastore = 'services.webdav'
         datastore_prefix = 'webdav_'
         datastore_extend = 'webdav.upper'
         cli_namespace = 'service.webdav'

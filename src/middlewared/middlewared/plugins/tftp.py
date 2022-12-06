@@ -24,6 +24,7 @@ class TFTPService(SystemServiceService):
 
     class Config:
         service = "tftp"
+        datastore = "services.tftp"
         datastore_prefix = "tftp_"
         cli_namespace = "service.tftp"
 

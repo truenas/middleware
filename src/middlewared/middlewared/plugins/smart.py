@@ -688,8 +688,8 @@ class SmartModel(sa.Model):
 class SmartService(SystemServiceService):
 
     class Config:
+        datastore = "services.smart"
         service = "smartd"
-        service_model = "smart"
         service_verb_sync = False
         datastore_extend = "smart.smart_extend"
         datastore_prefix = "smart_"

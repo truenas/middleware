@@ -29,6 +29,7 @@ class SNMPService(SystemServiceService):
 
     class Config:
         service = 'snmp'
+        datastore = 'services.snmp'
         datastore_prefix = 'snmp_'
         cli_namespace = 'service.snmp'
 
