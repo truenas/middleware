@@ -30,6 +30,7 @@ class KubernetesModel(sa.Model):
     configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
     validate_host_path = sa.Column(sa.Boolean(), default=True)
+    passthrough_mode = sa.Column(sa.Boolean(), default=False)
 
 
 class KubernetesService(ConfigService):
@@ -44,6 +45,7 @@ class KubernetesService(ConfigService):
         Bool('servicelb', required=True),
         Bool('configure_gpus', required=True),
         Bool('validate_host_path', required=True),
+        Bool('passthrough_mode', required=True),
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),
         IPAddr('service_cidr', required=True, cidr=True, empty=True),
@@ -130,6 +132,13 @@ class KubernetesService(ConfigService):
             verrors.add(
                 f'{schema}.pool',
                 'System is not licensed to use Applications'
+            )
+
+        license = await self.middleware.call('system.license')
+        if data['passthrough_mode'] and (not license or '-MINI-' in license['system_product']):
+            verrors.add(
+                f'{schema}.passthrough_mode',
+                'Can only be enabled on licensed iX enterprise hardware'
             )
 
         if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
@@ -481,6 +490,9 @@ class KubernetesService(ConfigService):
     @private
     async def validate_k8s_setup(self, raise_exception=True):
         error = None
+        if (await self.middleware.call('kubernetes.config'))['passthrough_mode']:
+            error = 'Kubernetes operations are not allowed with passthrough mode enabled'
+
         if not await self.pool_configured():
             error = 'Please configure kubernetes pool.'
         if not error and not await self.middleware.call('service.started', 'kubernetes'):

@@ -28,6 +28,7 @@ async def test_kubernetes_configuration_for_licensed_and_unlicensed_systems(ha_c
         'route_v6_gateway': None,
         'node_ip': '0.0.0.0',
         'configure_gpus': True,
+        'passthrough_mode': False,
         'servicelb': True,
         'validate_host_path': True,
     }
