@@ -3,6 +3,7 @@ from functions import DELETE, POST
 
 from .smb_proto import SMB
 from .nfs_proto import SSH_NFS
+from .iscsi_proto import iscsi_scsi_connection, iscsi_scsi_connect
 
 
 @contextlib.contextmanager
