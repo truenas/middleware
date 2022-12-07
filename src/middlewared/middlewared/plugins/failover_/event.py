@@ -652,9 +652,6 @@ class FailoverEventsService(Service):
         logger.info('Regenerating cron')
         self.run_call('etc.generate', 'cron')
 
-        logger.info('Stopping smartd')
-        self.run_call('service.stop', 'smartd', self.HA_PROPAGATE)
-
         logger.info('Stopping rrdcached')
         self.run_call('service.stop', 'rrdcached', self.HA_PROPAGATE)
 
