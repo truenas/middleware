@@ -45,15 +45,13 @@ def test_03_get_vm_flags():
     assert isinstance(results.json(), dict), results.text
 
 
-def test_04_get_vm_cpu_model_choices():
-    results = GET('/vm/cpu_model_choices/')
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    assert results.json()['EPYC'] == 'EPYC', results.json()
-
-
 # Only run if the system support virtualization
 if support_virtualization:
+    def test_04_get_vm_cpu_model_choices():
+        results = GET('/vm/cpu_model_choices/')
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['EPYC'] == 'EPYC', results.json()
 
     @pytest.mark.parametrize('dkey', list(bootloader.keys()))
     def test_05_verify_vm_bootloader_options(dkey):
@@ -67,7 +65,6 @@ if support_virtualization:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), int), results.text
 
-    # /vm/guest_architecture_and_machine_choices
     @pytest.mark.parametrize('dkey', ['i686', 'x86_64'])
     def test_07_verify_vm_guest_architecture_and_machine_choices(dkey):
         results = GET('/vm/guest_architecture_and_machine_choices/')
