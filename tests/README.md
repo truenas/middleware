@@ -16,7 +16,7 @@ snmpwalk
 ### Installing of dependency on FreeBSD base OS
 
 #### Require packages
-`pkg install py39-pip samba* sshpass net-snmp`
+`pkg install py39-pip samba* sshpass net-snmp pkgconf libiscsi`
 
 In middleware/tests run the command bellow
 
@@ -26,7 +26,7 @@ In middleware/tests run the command bellow
 
 #### Require packages
 
-`apt install python3-pip samba smbclient sshpass snmp`
+`apt install python3-pip samba smbclient sshpass snmp libiscsi-dev`
 
 In middleware/tests run the command bellow
 
