@@ -6,7 +6,6 @@ import subprocess
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
 from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece
 from middlewared.schema import Cron
-from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 
 logger = logging.getLogger(__name__)
@@ -74,6 +73,11 @@ async def render(service, middleware):
         LEFT JOIN tasks_smarttest s ON s.id = sd.smarttest_id OR s.smarttest_all_disks = true
         WHERE disk_togglesmart = 1 AND disk_expiretime IS NULL
     """)
+    if await middleware.call("failover.licensed") and (await middleware.call("failover.status") != "MASTER"):
+        # If failover is licensed and we are not a `MASTER` node, only monitor boot pool disks to avoid
+        # reservation conflicts
+        boot_pool_disks = set(await middleware.call("boot.get_disks"))
+        disks = [disk for disk in disks if disk["disk_name"] in boot_pool_disks]
 
     disks = [dict(disk, **smart_config) for disk in disks]
 
@@ -94,10 +98,7 @@ async def render(service, middleware):
     for disk in disks:
         config += get_smartd_config(disk) + "\n"
 
-    if osc.IS_FREEBSD:
-        path = "/usr/local/etc/smartd.conf"
-    else:
-        path = "/etc/smartd.conf"
+    path = "/etc/smartd.conf"
 
     with open(path, "w") as f:
         f.write(config)
