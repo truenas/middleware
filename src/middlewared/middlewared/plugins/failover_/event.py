@@ -9,11 +9,10 @@ import errno
 from collections import defaultdict
 
 from middlewared.utils import filter_list
-from middlewared.service import Service, CallError, job, accepts
+from middlewared.service import Service, job, accepts
 from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
-from libzfs import ZFSInvalidCachefileException
 
 logger = logging.getLogger('failover')
 
@@ -384,12 +383,8 @@ class FailoverEventsService(Service):
                     'zfs.pool.import_pool', vol['guid'], options, any_host, cachefile, new_name, import_options
                 )
             except Exception as e:
-                if isinstance(e, ZFSInvalidCachefileException):
+                if e.errno == errno.ENOENT:
                     try_again = True
-                elif isinstance(e, CallError) and e.errno == errno.ENOENT:
-                    try_again = True
-
-                if try_again:
                     logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
                 else:
                     vol['error'] = str(e)
