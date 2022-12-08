@@ -24,6 +24,7 @@ class GlobalSchema(RegistrySchema):
         guest_enabled = any(filter(lambda x: x['guestok'], shares))
         fsrvp_enabled = any(filter(lambda x: x['fsrvp'], shares))
         has_home = any(filter(lambda x: x['home'], shares))
+        ad_enabled = data_in['ds_state']['activedirectory'] != 'DISABLED'
 
         if has_home:
             data_out['obey pam restrictions'] = {'parsed': True}
@@ -37,6 +38,7 @@ class GlobalSchema(RegistrySchema):
             'fruit:nfs_aces': {'parsed': False},
             'fruit:zero_file_id': {'parsed': False},
             'restrict anonymous': {'parsed': 0 if guest_enabled else 2},
+            'winbind request timeout': {'parsed': 60 if ad_enabled else 2},
         })
 
         if guest_enabled:
