@@ -128,6 +128,9 @@ class PoolDatasetService(Service):
             'encryption_algorithm': {
                 'parsed': 'off', 'rawvalue': 'off', 'value': None, 'source': 'DEFAULT', 'source_info': None
             },
+            'origin': {
+                'parsed': '', 'rawvalue': '', 'value': '', 'source': 'NONE', 'source_info': None
+            },
             'used': {
                 'parsed': 3874467840, 'rawvalue': '3874467840', 'value': '3.61G', 'source': 'NONE', 'source_info': None
             },
@@ -176,6 +179,7 @@ class PoolDatasetService(Service):
                     'usedbydataset',
                     'usedbychildren',
                     'refquota',
+                    'origin',
                     'org.freenas:refquota_critical',
                     'org.freenas:refquota_warning',
                     'quota',
