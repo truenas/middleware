@@ -28,7 +28,6 @@ def test_attachment_with_child_path(request):
 
             with dataset(CHILD_DATASET) as child_dataset:
                 child_path = f'/mnt/{child_dataset}'
-                call('sharing.nfs.create', {'path': child_path})
                 attachments = call('pool.dataset.attachments_with_path', child_path)
                 assert len(attachments) > 0, attachments
                 assert attachments[0]['type'] == 'NFS Share', attachments
