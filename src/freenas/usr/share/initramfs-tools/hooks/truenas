@@ -14,6 +14,12 @@ case "$1" in
         ;;
 esac
 
+. /usr/share/initramfs-tools/hook-functions
+
+# CorSSL needs an hmac that doesn't get copied automatically by copy_exec
+copy_file hmac "/usr/lib/x86_64-linux-gnu/libcrypto.hmac"
+copy_file hmac "/usr/lib/x86_64-linux-gnu/libssl.hmac"
+
 # FreeBSD loader imports boot pool with hostid=0
 # We want to keep this to be able to boot back into FreeBSD in case of an erroneous upgrade
 rm -f ${DESTDIR}/etc/hostid
