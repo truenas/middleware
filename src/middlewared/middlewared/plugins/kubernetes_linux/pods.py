@@ -21,7 +21,7 @@ class KubernetesPodService(KubernetesBaseResource, CRUDService):
 
     async def conditional_filtering_in_query(self, entry, options):
         return options['extra'].get('retrieve_all_pods') or not any(
-            o['kind'] == 'DaemonSet' for o in (entry['metadata']['ownerReferences'] or [])
+            o['kind'] == 'DaemonSet' for o in (entry['metadata'].get('ownerReferences') or [])
         )
 
     async def get_logs(self, pod, container, namespace, tail_lines=500, limit_bytes=None):
