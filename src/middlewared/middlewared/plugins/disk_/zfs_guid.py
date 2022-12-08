@@ -15,6 +15,20 @@ class DiskService(Service):
             return None
 
     @private
+    async def sync_all_zfs_guid(self):
+        for pool in await self.middleware.call(
+            "zfs.pool.query",
+            [["name", "!=", await self.middleware.call("boot.pool_name")]],
+        ):
+            try:
+                await self.sync_zfs_guid({
+                    **pool,
+                    "topology": await self.middleware.call("pool.transform_topology", pool["groups"])
+                })
+            except Exception:
+                self.logger.error("Error running sync_zfs_guid for pool %r", pool["name"])
+
+    @private
     async def sync_zfs_guid(self, pool_id_or_pool):
         if isinstance(pool_id_or_pool, dict):
             pool = pool_id_or_pool
