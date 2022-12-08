@@ -492,7 +492,7 @@ class FailoverEventsService(Service):
         # sync disks is disabled on passive node
         logger.info('Syncing disks')
         self.run_call('disk.sync_all')
-        self.run_call('disk.sync_zfs_guid')
+        self.run_call('disk.sync_all_zfs_guid')
 
         # background any methods that can take awhile to
         # run but shouldn't hold up the entire failover
