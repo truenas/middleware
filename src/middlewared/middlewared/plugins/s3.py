@@ -29,6 +29,7 @@ class S3Service(SystemServiceService):
 
     class Config:
         service = "s3"
+        datastore = "services.s3"
         datastore_prefix = "s3_"
         datastore_extend = "s3.config_extend"
         cli_namespace = "service.s3"

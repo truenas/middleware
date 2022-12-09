@@ -9,10 +9,6 @@ from middlewared.utils import filter_list, run
 class ISCSIGlobalService(Service):
 
     class Config:
-        datastore_extend = 'iscsi.global.config_extend'
-        datastore_prefix = 'iscsi_'
-        service = 'iscsitarget'
-        service_model = 'iscsitargetglobalconfiguration'
         namespace = 'iscsi.global'
 
     @filterable

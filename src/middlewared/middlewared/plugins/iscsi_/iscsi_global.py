@@ -24,10 +24,10 @@ class ISCSIGlobalModel(sa.Model):
 class ISCSIGlobalService(SystemServiceService):
 
     class Config:
+        datastore = 'services.iscsitargetglobalconfiguration'
         datastore_extend = 'iscsi.global.config_extend'
         datastore_prefix = 'iscsi_'
         service = 'iscsitarget'
-        service_model = 'iscsitargetglobalconfiguration'
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
 

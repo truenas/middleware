@@ -56,6 +56,7 @@ class FTPService(SystemServiceService):
 
     class Config:
         service = "ftp"
+        datastore = "services.ftp"
         datastore_prefix = "ftp_"
         datastore_extend = "ftp.ftp_extend"
         cli_namespace = "service.ftp"

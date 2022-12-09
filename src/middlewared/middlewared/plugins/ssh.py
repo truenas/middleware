@@ -48,8 +48,8 @@ class SSHModel(sa.Model):
 class SSHService(SystemServiceService):
 
     class Config:
+        datastore = "services.ssh"
         service = "ssh"
-        service_model = "ssh"
         datastore_prefix = "ssh_"
         cli_namespace = 'service.ssh'
 

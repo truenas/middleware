@@ -249,8 +249,8 @@ class OpenVPNServerService(SystemServiceService):
     class Config:
         namespace = 'openvpn.server'
         service = 'openvpn_server'
-        service_model = 'openvpnserver'
         service_verb = 'restart'
+        datastore = 'services.openvpnserver'
         datastore_extend = 'openvpn.server.server_extend'
         cli_namespace = 'service.openvpn.server'
 
@@ -545,8 +545,8 @@ class OpenVPNClientService(SystemServiceService):
     class Config:
         namespace = 'openvpn.client'
         service = 'openvpn_client'
-        service_model = 'openvpnclient'
         service_verb = 'restart'
+        datastore = 'services.openvpnclient'
         datastore_extend = 'openvpn.client.client_extend'
         cli_namespace = 'service.openvpn.client'
 
