@@ -11,17 +11,6 @@
         dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx)
 %>\
 
-% if dsp.enabled() and dsp.name() != 'NIS':
 ${dsp.pam_account()}
-% endif
-# here's the fallback if no module succeeds
-# here are the per-package modules (the "Primary" block)
-account	[success=1 new_authtok_reqd=done default=ignore]	pam_unix.so
-# here's the fallback if no module succeeds
 account	requisite			pam_deny.so
-# prime the stack with a positive return value if there isn't one already;
-# this avoids us returning an error just because nothing sets a success code
-# since the modules above will each just jump around
 account	required			pam_permit.so
-# and here are more per-package modules (the "Additional" block)
-# end of pam-auth-update config
