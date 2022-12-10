@@ -17,6 +17,9 @@ from auto_config import dev_test, hostname, ip, pool_name
 from functions import DELETE, GET, POST, PUT, SSH_TEST
 from protocols import iscsi_scsi_connection
 
+from assets.REST.pool import dataset
+from assets.REST.snapshot import snapshot, snapshot_rollback
+
 MB=1024*1024
 MB_100=100*MB
 MB_512=512*MB
@@ -120,26 +123,6 @@ def target(target_name, groups, alias=None):
         assert results.json(), results.text
 
 @contextlib.contextmanager
-def dataset(pool_name, dataset_name):
-
-    dataset = f"{pool_name}/{dataset_name}"
-
-    payload = {
-        'name': dataset,
-    }
-    results = POST("/pool/dataset/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    dataset_config = results.json()
-
-    try:
-        yield dataset_config
-    finally:
-        dataset_id = dataset_config['id'].replace('/', '%2F')
-        results = DELETE(f"/pool/dataset/id/{dataset_id}/", {'recursive' : True} )
-        assert results.status_code == 200, results.text
-
-@contextlib.contextmanager
 def file_extent(pool_name, dataset_name, file_name, filesize=MB_512):
     payload = {
         'type': 'FILE',
@@ -221,33 +204,6 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         results = DELETE(f"/iscsi/targetextent/id/{associate_config['id']}/", True)
         assert results.status_code == 200, results.text
         assert results.json(), results.text
-
-@contextlib.contextmanager
-def snapshot(dataset_id, snapshot_name):
-    payload = {
-        'dataset': dataset_id,
-        'name': snapshot_name
-    }
-    results = POST("/zfs/snapshot/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    snapshot_config = results.json()
-
-    try:
-        yield snapshot_config
-    finally:
-        snapshot_id = snapshot_config['id'].replace('/', '%2F')
-        results = DELETE(f"/zfs/snapshot/id/{snapshot_id}/")
-        assert results.status_code == 200, results.text
-        assert results.json(), results.text
-
-def snapshot_rollback(snapshot_id):
-    payload = {
-        'id': snapshot_id,
-        'options': {}
-    }
-    results = POST("/zfs/snapshot/rollback", payload)
-    assert results.status_code == 200, results.text
 
 @contextlib.contextmanager
 def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
