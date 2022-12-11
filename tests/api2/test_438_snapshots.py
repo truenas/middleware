@@ -163,6 +163,8 @@ def _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list,
                         snap = snaps[0]
                         assert snap['createtxg'] not in existing_snaps, f"Got unexpected snap: {snap}"
                         new_snaps = set([snap['createtxg']])
+                        _verify_snapshot_keys_present(snap, expected_keys, unexpected_keys)
+                        _verify_snapshot_against_config(snap, dataset2_config, snap03_config)
 
                         # Next issue the query with a bogus filter
                         payload.update({
