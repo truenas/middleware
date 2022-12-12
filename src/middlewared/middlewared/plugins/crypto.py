@@ -41,7 +41,7 @@ CERT_TYPE_CSR = 0x20
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 EKU_OIDS = [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')]
-NOT_VALID_AFTER_DEFAULT = 825
+NOT_VALID_AFTER_DEFAULT = 397
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 
@@ -172,6 +172,8 @@ class CryptoKeyService(Service):
         'BrainpoolP384R1',
         'BrainpoolP256R1',
         'SECP256K1',
+        'SECP384R1',
+        'SECP521R1',
         'ed25519',
     ]
 
@@ -962,6 +964,85 @@ class CertificateService(CRUDService):
         datastore_prefix = 'cert_'
 
     PROFILES = {
+        # Options / EKUs reference rfc5246
+        'HTTPS RSA Certificate': {
+            'cert_extensions': {
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': False,
+                    'extension_critical': True
+                },
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                # These days, most TLS certs want "ClientAuth".
+                # LetsEncrypt appears to want this extension to issue.
+                # https://community.letsencrypt.org/t/extendedkeyusage-tls-client-
+                # authentication-in-tls-server-certificates/59140/7
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'usages': [
+                        'SERVER_AUTH',
+                        'CLIENT_AUTH',
+                    ]
+                },
+                # RSA certs need "digitalSignature" for DHE,
+                # and "keyEncipherment" for nonDHE
+                # Include "keyAgreement" for compatibility (DH_DSS / DH_RSA)
+                # See rfc5246
+                'KeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'digital_signature': True,
+                    'key_encipherment': True,
+                    'key_agreement': True,
+                }
+            },
+            'key_length': 2048,
+            'key_type': 'RSA',
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
+            'digest_algorithm': 'SHA256'
+        },
+        'HTTPS ECC Certificate': {
+            'cert_extensions': {
+                'BasicConstraints': {
+                    'enabled': True,
+                    'ca': False,
+                    'extension_critical': True
+                },
+                'AuthorityKeyIdentifier': {
+                    'enabled': True,
+                    'authority_cert_issuer': True,
+                    'extension_critical': False
+                },
+                # These days, most TLS certs want "ClientAuth".
+                # LetsEncrypt appears to want this extension to issue.
+                # https://community.letsencrypt.org/t/extendedkeyusage-tls-client-
+                # authentication-in-tls-server-certificates/59140/7
+                'ExtendedKeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'usages': [
+                        'SERVER_AUTH',
+                        'CLIENT_AUTH',
+                    ]
+                },
+                # keyAgreement is not generally required for EC certs.
+                # See Google, cloudflare certs
+                'KeyUsage': {
+                    'enabled': True,
+                    'extension_critical': True,
+                    'digital_signature': True,
+                }
+            },
+            'ec_curve': 'SECP384R1',
+            'key_type': 'EC',
+            'lifetime': NOT_VALID_AFTER_DEFAULT,
+            'digest_algorithm': 'SHA256'
+        },
         'Openvpn Server Certificate': {
             'cert_extensions': {
                 'BasicConstraints': {
