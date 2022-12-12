@@ -20,9 +20,6 @@ session	requisite			pam_deny.so
 # since the modules above will each just jump around
 session	required			pam_permit.so
 # and here are more per-package modules (the "Additional" block)
-% if dsp.enabled() and dsp.name() != 'NIS':
 ${dsp.pam_session()}
-% endif
-session	required	pam_unix.so
 session	optional	pam_systemd.so
 # end of pam-auth-update config

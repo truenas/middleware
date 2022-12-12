@@ -20,17 +20,6 @@
         dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx)
 %>\
 
-% if dsp.enabled():
 ${dsp.pam_password()}
-% endif
-
-# here are the per-package modules (the "Primary" block)
-password	[success=1 default=ignore]	pam_unix.so obscure sha512
-# here's the fallback if no module succeeds
 password	requisite			pam_deny.so
-# prime the stack with a positive return value if there isn't one already;
-# this avoids us returning an error just because nothing sets a success code
-# since the modules above will each just jump around
 password	required			pam_permit.so
-# and here are more per-package modules (the "Additional" block)
-# end of pam-auth-update config
