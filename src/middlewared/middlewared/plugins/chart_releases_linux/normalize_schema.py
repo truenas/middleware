@@ -2,7 +2,10 @@ import copy
 import json
 import os
 
-from collections import Callable
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 
 from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import private, Service
