@@ -2,6 +2,7 @@ import os
 import subprocess
 import tempfile
 import yaml
+import re
 
 from middlewared.plugins.kubernetes_linux.yaml import SafeDumper
 from middlewared.service import CallError, private, Service
@@ -41,6 +42,10 @@ class ChartReleaseService(Service):
             )
             stderr = cp.communicate()[1]
             if cp.returncode:
-                raise CallError(f'Failed to {tn_action} chart release: {stderr.decode()}')
+                errmsg = stderr.decode()
+                if tn_action == 'upgrade' or tn_action == 'install':
+                    cleanupregex = re.compile(r'^Error: .+?[)]: ')
+                    errmsg = re.sub(cleanupregex, '', errmsg, 1)
+                raise CallError(f'Failed to {tn_action} App: {errmsg}')
 
         self.middleware.call_sync('chart.release.clear_chart_release_portal_cache', chart_release)
