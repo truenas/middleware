@@ -14,10 +14,7 @@ class DeviceService(Service):
 
 
 async def devd_loop(middleware):
-    global DEVD_CONNECTED
-
     while True:
-        DEVD_CONNECTED = False
         try:
             if not os.path.exists(DEVD_SOCKETFILE):
                 middleware.logger.info('devd is not running yet, waiting...')
@@ -51,43 +48,46 @@ async def devd_listen(middleware):
     global DEVD_CONNECTED
 
     reader, writer = await asyncio.open_unix_connection(path=DEVD_SOCKETFILE)
-    middleware.logger.info('devd connection established')
-    DEVD_CONNECTED = True
+    try:
+        middleware.logger.info('devd connection established')
+        DEVD_CONNECTED = True
 
-    while True:
-        line = await reader.readline()
-        line = line.decode(errors='ignore')
-        if line == "":
-            writer.close()
-            await writer.wait_closed()
-            break
+        while True:
+            line = await reader.readline()
+            line = line.decode(errors='ignore')
+            if line == "":
+                break
 
-        if not line.startswith('!'):
-            # TODO: its not a complete message, ignore for now
-            continue
+            if not line.startswith('!'):
+                # TODO: its not a complete message, ignore for now
+                continue
 
-        try:
-            parsed = parse_devd_message(line[1:])
-        except Exception:
-            middleware.logger.warn(f'Failed to parse devd message: {line}')
-            continue
+            try:
+                parsed = parse_devd_message(line[1:])
+            except Exception:
+                middleware.logger.warn(f'Failed to parse devd message: {line}')
+                continue
 
-        if 'system' not in parsed:
-            continue
+            if 'system' not in parsed:
+                continue
 
-        # Lets ignore CAM messages for now
-        if parsed['system'] in ('CAM', 'ACPI'):
-            continue
+            # Lets ignore CAM messages for now
+            if parsed['system'] in ('CAM', 'ACPI'):
+                continue
 
-        if parsed['type'] == 'GEOM::physpath' and parsed.get('devname'):
-            # treat GEOM::physpath as DEVFS (even though it's geom)
-            # to fix a rare race condition between CAM and SES drivers
-            # when disks are moved around
-            # (This was seen when QE team was testing new "Phison" SSDS
-            #   and moving them around between head-unit and jbods)
-            parsed = {'type': 'CREATE', 'system': 'DEVFS', 'subsystem': 'CDEV', 'cdev': parsed['devname']}
+            if parsed['type'] == 'GEOM::physpath' and parsed.get('devname'):
+                # treat GEOM::physpath as DEVFS (even though it's geom)
+                # to fix a rare race condition between CAM and SES drivers
+                # when disks are moved around
+                # (This was seen when QE team was testing new "Phison" SSDS
+                #   and moving them around between head-unit and jbods)
+                parsed = {'type': 'CREATE', 'system': 'DEVFS', 'subsystem': 'CDEV', 'cdev': parsed['devname']}
 
-        await middleware.call_hook(f'devd.{parsed["system"]}'.lower(), data=parsed)
+            await middleware.call_hook(f'devd.{parsed["system"]}'.lower(), data=parsed)
+    finally:
+        DEVD_CONNECTED = False
+        writer.close()
+        await writer.wait_closed()
 
 
 def setup(middleware):
