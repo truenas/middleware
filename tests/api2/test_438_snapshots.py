@@ -71,15 +71,15 @@ def _verify_snapshot_properties(snap, properties_list):
     if 'createtxg' in properties_list:
         assert snap['properties']['createtxg']['value'] == snap['createtxg'], f"createtxg property does not match {snap['properties']['name']}"
 
-def _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list,
+#
+# Snapshot query: filter by dataset name
+#
+
+def _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
         expected_keys = ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg'],
         unexpected_keys = ['properties']):
     """
     Perform snapshot queries, filtered by dataset name.
-
-    As written the function is expected to yield a simple (AKA fast-path) query.  This can be
-    overridden by supplying suitable values for properties_list, expected_keys and
-    unexpected_keys
 
     :param dataset_name: a string, the name of the dataset to be created and used in queries.
     :param properties_list: a list of strings, the names to be queried in snapshot properties option
@@ -125,8 +125,6 @@ def _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list,
                 ssnaps = sorted(snaps, key=lambda d: int(d['createtxg']))
                 snap01 = ssnaps[0]
                 snap02 = ssnaps[1]
-                # assert False, snap01
-                # assert False, snap02
                 _verify_snapshot_keys_present(snap01, expected_keys, unexpected_keys)
                 _verify_snapshot_against_config(snap01, dataset_config, snap01_config)
                 _verify_snapshot_keys_present(snap02, expected_keys, unexpected_keys)
@@ -165,6 +163,8 @@ def _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list,
                         new_snaps = set([snap['createtxg']])
                         _verify_snapshot_keys_present(snap, expected_keys, unexpected_keys)
                         _verify_snapshot_against_config(snap, dataset2_config, snap03_config)
+                        if 'properties' not in unexpected_keys:
+                            _verify_snapshot_properties(snap, properties_list)
 
                         # Next issue the query with a bogus filter
                         payload.update({
@@ -203,14 +203,25 @@ def _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list,
                     assert existing_snaps.issubset(all_snaps), "Existing snaps not returned in filterless query"
                     assert not new_snaps.issubset(all_snaps), "New snaps returned in filterless query"
 
-def _test_snapshot_query_filter_dataset(dataset_name, properties_list):
+def _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list):
     """
-    Perform snapshot queries, filtered by dataset name.
+    Perform simple snapshot queries, filtered by dataset name.
 
     :param dataset_name: a string, the name of the dataset to be created and used in queries.
     :param properties_list: a list of strings, the names to be queried in snapshot properties option
     """
-    _test_simple_snapshot_query_filter_dataset(dataset_name, properties_list,
+    _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
+        expected_keys = ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg'],
+        unexpected_keys = ['properties'])
+
+def _test_full_snapshot_query_filter_dataset(dataset_name, properties_list):
+    """
+    Perform non-simple (non fast-path) snapshot queries, filtered by dataset name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    """
+    _test_xxx_snapshot_query_filter_dataset(dataset_name, properties_list,
         ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg', 'properties'],
         [])
 
@@ -249,7 +260,268 @@ def test_04_snapshot_query_filter_dataset_props_used(request):
     The results should be regular (NON fast-path) query that returns 'properties'.
     """
     depends(request, ["pool_04"], scope="session")
-    _test_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used'])
-    _test_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'name'])
-    _test_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])
-    _test_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'createtxg'])
+    _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used'])
+    _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'name'])
+    _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])
+    _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'createtxg'])
+
+
+#
+# Snapshot query: filter by snapshot name
+#
+
+def _test_xxx_snapshot_query_filter_snapshot(dataset_name, properties_list, expected_keys, unexpected_keys):
+    """
+    Perform snapshot queries, filtered by snapshot name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    :expected_keys: a list of strings, the key names expected to be present in the snapshot dict
+    :unexpected_keys: a list of strings, the key names expected NOT to be present in the snapshot dict
+    """
+    with dataset(pool_name, dataset_name) as dataset_config:
+        dataset_id = dataset_config['id']
+        with snapshot(dataset_id, "snap01") as snap01_config:
+            with snapshot(dataset_id, "snap02") as snap02_config:
+                # Query snap01
+                payload = {
+                    'query-filters': [['name', '=', snap01_config['name']]],
+                    'query-options': {
+                        'extra': {
+                            'properties': properties_list
+                        }
+                    }
+                }
+                results = GET(f"/zfs/snapshot", payload)
+                assert results.status_code == 200, result.text
+                assert isinstance(results.json(), list), results.text
+                snaps = results.json()
+                # Check that we have one snap returned and that it has the expected
+                # data
+                assert len(snaps) == 1, snaps
+                snap = snaps[0]
+                _verify_snapshot_keys_present(snap, expected_keys, unexpected_keys)
+                _verify_snapshot_against_config(snap, dataset_config, snap01_config)
+                if 'properties' not in unexpected_keys:
+                    _verify_snapshot_properties(snap, properties_list)
+
+                # Query snap02
+                payload = {
+                    'query-filters': [['name', '=', snap02_config['name']]],
+                    'query-options': {
+                        'extra': {
+                            'properties': properties_list
+                        }
+                    }
+                }
+                results = GET(f"/zfs/snapshot", payload)
+                assert results.status_code == 200, result.text
+                assert isinstance(results.json(), list), results.text
+                snaps = results.json()
+                # Check that we have one snap returned and that it has the expected
+                # data
+                assert len(snaps) == 1, snaps
+                snap = snaps[0]
+                _verify_snapshot_keys_present(snap, expected_keys, unexpected_keys)
+                _verify_snapshot_against_config(snap, dataset_config, snap02_config)
+                if 'properties' not in unexpected_keys:
+                    _verify_snapshot_properties(snap, properties_list)
+
+            # Allow snap02 to be destroyed, then query again to make sure we don't get it
+            results = GET(f"/zfs/snapshot", payload)
+            assert results.status_code == 200, result.text
+            assert isinstance(results.json(), list), results.text
+            snaps = results.json()
+            assert len(snaps) == 0, snaps
+
+
+def _test_simple_snapshot_query_filter_snapshot(dataset_name, properties_list):
+    """
+    Perform simple snapshot queries, filtered by snapshot name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    """
+    _test_xxx_snapshot_query_filter_snapshot(dataset_name, properties_list,
+        expected_keys = ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg'],
+        unexpected_keys = ['properties'])
+
+def _test_full_snapshot_query_filter_snapshot(dataset_name, properties_list):
+    """
+    Perform non-simple (non fast-path) snapshot queries, filtered by snapshot name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    """
+    _test_xxx_snapshot_query_filter_snapshot(dataset_name, properties_list,
+        ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg', 'properties'],
+        [])
+
+def test_05_snapshot_query_filter_snapshot_props_name(request):
+    """
+    Test snapshot query, filtered by snapshot with properties option: 'name'
+
+    The results should be simple (fast-path) without 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-name", ['name'])
+
+def test_06_snapshot_query_filter_snapshot_props_createtxg(request):
+    """
+    Test snapshot query, filtered by snapshot with properties option: 'createtxg'
+
+    The results should be simple (fast-path) without 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['createtxg'])
+
+def test_07_snapshot_query_filter_snapshot_props_name_createtxg(request):
+    """
+    Test snapshot query, filtered by snapshot with properties option: 'name', 'createtxg'
+
+    The results should be simple (fast-path) without 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-name-createtxg", ['name', 'createtxg'])
+    _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg-name", ['createtxg', 'name'])
+
+def test_08_snapshot_query_filter_snapshot_props_used(request):
+    """
+    Test snapshot query, filtered by snapshot including properties option: 'used'
+
+    The results should be regular (NON fast-path) query that returns 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used'])
+    _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used', 'name'])
+    _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])
+    _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used', 'createtxg'])
+
+
+#
+# Snapshot query: filter by pool name
+#
+
+def _test_xxx_snapshot_query_filter_pool(dataset_name, properties_list, expected_keys, unexpected_keys):
+    """
+    Perform snapshot queries, filtered by pool name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    :expected_keys: a list of strings, the key names expected to be present in the snapshot dict
+    :unexpected_keys: a list of strings, the key names expected NOT to be present in the snapshot dict
+    """
+    with dataset(pool_name, dataset_name) as dataset_config:
+        dataset_id = dataset_config['id']
+        # Before we create any snapshots for this test, query snapshots
+        payload = {
+            'query-filters': [['pool', '=', pool_name]],
+            'query-options': {
+                'extra': {
+                    'properties': properties_list
+                }
+            }
+        }
+        results = GET(f"/zfs/snapshot", payload)
+        assert results.status_code == 200, result.text
+        assert isinstance(results.json(), list), results.text
+        snaps = results.json()
+        original_snap_count = len(snaps)
+
+        with snapshot(dataset_id, "snap01") as snap01_config:
+            with snapshot(dataset_id, "snap02") as snap02_config:
+                # Query again
+                results = GET(f"/zfs/snapshot", payload)
+                assert results.status_code == 200, result.text
+                assert isinstance(results.json(), list), results.text
+                snaps = results.json()
+
+                # Check that we have two additional snap returned and that 
+                # they have the expected data
+                assert len(snaps) == original_snap_count+2, snaps
+                ssnaps = sorted(snaps, key=lambda d: int(d['createtxg']))
+                snap01 = ssnaps[-2]
+                snap02 = ssnaps[-1]
+                _verify_snapshot_keys_present(snap01, expected_keys, unexpected_keys)
+                _verify_snapshot_against_config(snap01, dataset_config, snap01_config)
+                _verify_snapshot_keys_present(snap02, expected_keys, unexpected_keys)
+                _verify_snapshot_against_config(snap02, dataset_config, snap02_config)
+                if 'properties' not in unexpected_keys:
+                    _verify_snapshot_properties(snap01, properties_list)
+                    _verify_snapshot_properties(snap02, properties_list)
+
+            # Allow snap02 to be destroyed & query again.
+            results = GET(f"/zfs/snapshot", payload)
+            assert results.status_code == 200, result.text
+            assert isinstance(results.json(), list), results.text
+            snaps = results.json()
+
+            assert len(snaps) == original_snap_count+1, snaps
+            ssnaps = sorted(snaps, key=lambda d: int(d['createtxg']))
+            snap01 = ssnaps[-1]
+            _verify_snapshot_keys_present(snap01, expected_keys, unexpected_keys)
+            _verify_snapshot_against_config(snap01, dataset_config, snap01_config)
+            if 'properties' not in unexpected_keys:
+                _verify_snapshot_properties(snap01, properties_list)
+
+def _test_simple_snapshot_query_filter_pool(dataset_name, properties_list):
+    """
+    Perform simple snapshot queries, filtered by pool name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    """
+    _test_xxx_snapshot_query_filter_pool(dataset_name, properties_list,
+        expected_keys = ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg'],
+        unexpected_keys = ['properties'])
+
+def _test_full_snapshot_query_filter_pool(dataset_name, properties_list):
+    """
+    Perform non-simple (non fast-path) snapshot queries, filtered by pool name.
+
+    :param dataset_name: a string, the name of the dataset to be created and used in queries.
+    :param properties_list: a list of strings, the names to be queried in snapshot properties option
+    """
+    _test_xxx_snapshot_query_filter_pool(dataset_name, properties_list,
+        ['pool', 'name', 'type', 'snapshot_name', 'dataset', 'id', 'createtxg', 'properties'],
+        [])
+
+def test_09_snapshot_query_filter_pool_props_name(request):
+    """
+    Test snapshot query, filtered by pool with properties option: 'name'
+
+    The results should be simple (fast-path) without 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-name", ['name'])
+
+def test_10_snapshot_query_filter_pool_props_createtxg(request):
+    """
+    Test snapshot query, filtered by pool with properties option: 'createtxg'
+
+    The results should be simple (fast-path) without 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['createtxg'])
+
+def test_11_snapshot_query_filter_pool_props_name_createtxg(request):
+    """
+    Test snapshot query, filtered by pool with properties option: 'name', 'createtxg'
+
+    The results should be simple (fast-path) without 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-name-createtxg", ['name', 'createtxg'])
+    _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg-name", ['createtxg', 'name'])
+
+def test_12_snapshot_query_filter_pool_props_used(request):
+    """
+    Test snapshot query, filtered by pool including properties option: 'used'
+
+    The results should be regular (NON fast-path) query that returns 'properties'.
+    """
+    depends(request, ["pool_04"], scope="session")
+    _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used'])
+    _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used', 'name'])
+    _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])
+    _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used', 'createtxg'])
