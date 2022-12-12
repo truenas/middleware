@@ -2789,6 +2789,21 @@ class CertificateAuthorityService(CRUDService):
                     f'This certificate authority is in use by {text} service and cannot be deleted.'
                 )
 
+        ca_certs = await self.middleware.call('certificateauthority.query', [['issuer.id', '=', id]])
+        certs = await self.middleware.call('certificate.query', [['issuer.id', '=', id]])
+
+        if ca_certs or certs:
+            err_str = ''
+            if ca_certs:
+                err_str = f'{", ".join(cert["name"] for cert in ca_certs)!r} intermediate ' \
+                          f'CA(s){" and " if certs else ""}'
+            if certs:
+                err_str += f'{", ".join(cert["name"] for cert in certs)!r} certificate(s)'
+            verrors.add(
+                'certificateauthority_delete.id',
+                f'This certificate authority is in use by {err_str}'
+            )
+
         verrors.check()
 
         response = await self.middleware.call(
