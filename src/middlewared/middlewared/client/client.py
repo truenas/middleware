@@ -1,24 +1,31 @@
+from collections import defaultdict, namedtuple
+
 from . import ejson as json
 from .protocol import DDPProtocol
-from .utils import MIDDLEWARE_RUN_DIR, undefined, ProgressBar
-from collections import defaultdict, namedtuple, Callable
-from threading import Event as TEvent, Lock, Thread
-from ws4py.client.threadedclient import WebSocketClient
+from .utils import MIDDLEWARE_RUN_DIR, ProgressBar, undefined
+
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 
 import argparse
-from base64 import b64decode
 import errno
 import logging
 import os
 import pickle
+import platform
 import pprint
+import random
 import socket
 import sys
 import time
 import uuid
-import random
-import platform
+from base64 import b64decode
+from threading import Event as TEvent
+from threading import Lock, Thread
 
+from ws4py.client.threadedclient import WebSocketClient
 
 try:
     from libzfs import Error as ZFSError
