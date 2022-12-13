@@ -288,7 +288,7 @@ class PoolDatasetService(Service):
 
         quotas = []
         ignore = ('PROJECT', 'PROJECTOBJ')  # TODO: not implemented
-        for i, q in filter(lambda x: x[1]['id'] not in ignore, enumerate(data)):
+        for i, q in filter(lambda x: x[1]['quota_type'] not in ignore, enumerate(data)):
             quota_type = q['quota_type'].lower()
             if q['quota_type'] == 'DATASET':
                 if q['id'] not in ('QUOTA', 'REFQUOTA'):
