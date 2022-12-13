@@ -130,7 +130,8 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
 
     async def is_child_of_path(self, resource, path):
-        return is_child(resource[self.path_field], path)
+        share_path = await self.service_class.get_path_field(self.service_class, resource)
+        return is_child(share_path, path)
 
     async def start(self, attachments):
         for attachment in attachments:
