@@ -337,7 +337,8 @@ class PoolDatasetService(Service):
                         f'quotas.{i}.id',
                         f'{quota_type} {q["id"]} must be a numeric project id.'
                     )
-                xid = int(q['id'])
+                else:
+                    xid = int(q['id'])
 
             quotas[xid] = q
 
