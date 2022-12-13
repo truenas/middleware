@@ -173,7 +173,7 @@ def test_14_setting_various_quotas(request):
     depends(request, ['pool_04', 'shareuser'], scope='session')
     user = group = 'shareuser'
     user_gid = GET('/group/?group=shareuser').json()[0]['gid']
-    user_uid = GET('/user/?user=shareuser').json()[0]['uid']
+    user_uid = GET('/user/?username=shareuser').json()[0]['uid']
     user_quota_value = 1000000
     group_quota_value = user_quota_value * 2
     dataset_quota_value = group_quota_value + 10000
