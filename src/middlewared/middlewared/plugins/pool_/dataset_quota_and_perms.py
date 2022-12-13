@@ -287,7 +287,8 @@ class PoolDatasetService(Service):
 
         quotas = {}
 
-        for i, q in enumerate(data):
+        ignore = ('PROJECT', 'PROJECTOBJ')  # TODO: not implemented
+        for i, q in filter(lambda x: x[1]['id'] not in ignore, enumerate(data)):
             quota_type = q['quota_type'].lower()
             if q['quota_type'] == 'DATASET':
                 if q['id'] not in ['QUOTA', 'REFQUOTA']:
@@ -305,7 +306,7 @@ class PoolDatasetService(Service):
                     )
                     continue
 
-            elif q['quota_type'] not in ['PROJECT', 'PROJECTOBJ']:
+            else:
                 if not q['quota_value']:
                     q['quota_value'] = 'none'
 
@@ -331,14 +332,6 @@ class PoolDatasetService(Service):
                         f'quotas.{i}.id',
                         f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted.'
                     )
-            else:
-                if not q['id'].isdigit():
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        f'{quota_type} {q["id"]} must be a numeric project id.'
-                    )
-                else:
-                    xid = int(q['id'])
 
             quotas[xid] = q
 
