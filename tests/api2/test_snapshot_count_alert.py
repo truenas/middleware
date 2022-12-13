@@ -17,6 +17,8 @@ def test_snapshot_total_count_alert(request):
                 call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
 
             assert call("alert.run_source", "SnapshotCount") == []
+            # snapshots_changed ZFS dataset property has 1 second resolution
+            sleep(1)
 
             call("zfs.snapshot.create", {"dataset": ds, "name": "snap-10"})
 
@@ -35,6 +37,7 @@ def test_snapshot_count_alert(request):
                 call("zfs.snapshot.create", {"dataset": ds, "name": f"snap-{i}"})
 
             assert call("alert.run_source", "SnapshotCount") == []
+            # snapshots_changed ZFS dataset property has 1 second resolution
             sleep(1)
 
             call("zfs.snapshot.create", {"dataset": ds, "name": "snap-10"})
