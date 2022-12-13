@@ -280,37 +280,31 @@ class PoolDatasetService(Service):
         MAX_QUOTAS = 100
         verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
-            verrors.add(
+            # no reason to continue
+            raise ValidationErrors(
                 'quotas',
                 f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
             )
 
-        quotas = {}
-
-        for i, q in enumerate(data):
+        quotas = []
+        ignore = ('PROJECT', 'PROJECTOBJ')  # TODO: not implemented
+        for i, q in filter(lambda x: x[1]['quota_type'] not in ignore, enumerate(data)):
             quota_type = q['quota_type'].lower()
             if q['quota_type'] == 'DATASET':
-                if q['id'] not in ['QUOTA', 'REFQUOTA']:
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
-                    )
-                    continue
-
-                xid = q['id'].lower()
-                if xid in quotas:
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        f'Setting multiple values for {xid} for quota_type "DATASET" is not permitted'
-                    )
-                    continue
-
-            elif q['quota_type'] not in ['PROJECT', 'PROJECTOBJ']:
+                if q['id'] not in ('QUOTA', 'REFQUOTA'):
+                    verrors.add(f'quotas.{i}.id', 'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"')
+                else:
+                    xid = q['id'].lower()
+                    if any((i.get(xid, False) for i in quotas)):
+                        verrors.add(
+                            f'quotas.{i}.id',
+                            f'Setting multiple values for {xid} for quota_type DATASET is not permitted'
+                        )
+            else:
                 if not q['quota_value']:
                     q['quota_value'] = 'none'
 
                 xid = None
-
                 id_type = 'user' if quota_type.startswith('user') else 'group'
                 if not q['id'].isdigit():
                     try:
@@ -318,28 +312,17 @@ class PoolDatasetService(Service):
                                                              {f'{id_type}name': q['id']})
                         xid = xid_obj['pw_uid'] if id_type == 'user' else xid_obj['gr_gid']
                     except Exception:
-                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q['id'], exc_info=True)
-                        verrors.add(
-                            f'quotas.{i}.id',
-                            f'{quota_type} {q["id"]} is not valid.'
-                        )
+                        self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
+                        verrors.add(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
                 else:
                     xid = int(q['id'])
 
                 if xid == 0:
                     verrors.add(
-                        f'quotas.{i}.id',
-                        f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted.'
+                        f'quotas.{i}.id', f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted'
                     )
-            else:
-                if not q['id'].isdigit():
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        f'{quota_type} {q["id"]} must be a numeric project id.'
-                    )
-                xid = int(q['id'])
 
-            quotas[xid] = q
+            quotas.append({xid: q})
 
         verrors.check()
         if quotas:

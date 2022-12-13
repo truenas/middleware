@@ -24,4 +24,4 @@ def test_errors(request, id, quota_type, error):
         with pytest.raises(ValidationErrors) as ve:
             call("pool.dataset.set_quota", ds, [{"quota_type": quota_type, "id": id, "quota_value": 5242880}])
 
-        assert ve.value.errors[0].errmsg == f"Setting {error} [0] is not permitted."
+        assert ve.value.errors[0].errmsg == f"Setting {error} [0] is not permitted"
