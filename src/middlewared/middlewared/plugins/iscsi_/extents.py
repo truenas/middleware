@@ -49,24 +49,20 @@ class iSCSITargetExtentService(SharingService):
         cli_namespace = 'sharing.iscsi.extent'
 
     @private
-    async def sharing_task_datasets(self, data):
-        if data['type'] == 'DISK':
-            if data['path'].startswith('zvol/'):
-                return [zvol_path_to_name(f'/dev/{data["path"]}')]
-            else:
-                return []
-
-        return await super().sharing_task_datasets(data)
-
-    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
-        if data['type'] == 'DISK':
-            if data['path'].startswith('zvol/'):
-                return any(zvol_path_to_name(f'/dev/{data["path"]}') == d['id'] for d in locked_datasets)
-            else:
-                return False
-        else:
-            return await super().sharing_task_determine_locked(data, locked_datasets)
+        """
+        `mountpoint` attribute of zvol will be unpopulated and so we
+        first try direct comparison between the two strings.
+
+        The parent dataset of a zvol may also be locked, which renders
+        the zvol inaccessible as well, and so we need to continue to the
+        common check for whether the path is in the locked datasets.
+        """
+        path = await self.get_path_field(data)
+        if data['type'] == 'DISK' and any(path == os.path.join('/mnt', d['id']) for d in locked_datasets):
+            return True
+
+        return await self.middleware.call('pool.dataset.path_in_locked_datasets', path, locked_datasets)
 
     @accepts(Dict(
         'iscsi_extent_create',
@@ -267,6 +263,13 @@ class iSCSITargetExtentService(SharingService):
     @private
     async def validate_path_resides_in_volume(self, verrors, schema, path):
         await check_path_resides_within_volume(verrors, self.middleware, schema, path)
+
+    @private
+    async def get_path_field(self, data):
+        if data['type'] == 'DISK' and data[self.path_field].startswith('zvol/'):
+            return os.path.join('/mnt', zvol_path_to_name(os.path.join('/dev', data[self.path_field])))
+
+        return data[self.path_field]
 
     @private
     def clean_type_and_path(self, data, schema_name, verrors):

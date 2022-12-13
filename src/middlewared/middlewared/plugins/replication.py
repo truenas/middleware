@@ -893,12 +893,13 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
         results = []
         for replication in await self.middleware.call('replication.query', [['enabled', '=', enabled]]):
             if replication['transport'] == 'LOCAL' or replication['direction'] == 'PUSH':
-                if any(is_child(os.path.join('/mnt', source_dataset), path)
-                       for source_dataset in replication['source_datasets']):
+                if await self.middleware.call('filesystem.is_child', [
+                    os.path.join('/mnt', source_dataset) for source_dataset in replication['source_datasets']
+                ], path):
                     results.append(replication)
 
             if replication['transport'] == 'LOCAL' or replication['direction'] == 'PULL':
-                if is_child(os.path.join('/mnt', replication['target_dataset']), path):
+                if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', replication['target_dataset']), path):
                     results.append(replication)
 
         return results
