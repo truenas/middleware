@@ -295,7 +295,7 @@ class PoolDatasetService(Service):
                     verrors.add(f'quotas.{i}.id', 'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"')
                 else:
                     xid = q['id'].lower()
-                    if xid in quotas:
+                    if any((i.get(xid, False) for i in quotas)):
                         verrors.add(
                             f'quotas.{i}.id',
                             f'Setting multiple values for {xid} for quota_type DATASET is not permitted'
