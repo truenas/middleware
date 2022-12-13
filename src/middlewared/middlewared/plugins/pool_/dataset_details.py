@@ -2,7 +2,6 @@ import os
 
 from middlewared.service import Service, private
 from middlewared.schema import accepts, List, returns
-from middlewared.plugins.zfs_.utils import ZFSCTL
 from middlewared.utils.osc.linux.mount import getmntinfo
 
 
@@ -196,7 +195,8 @@ class PoolDatasetService(Service):
                     'sync',
                     'compression',
                     'dedup',
-                ]
+                ],
+                'snapshots_count': True,
             }
         }
         collapsed = []
@@ -207,10 +207,8 @@ class PoolDatasetService(Service):
         mntinfo = getmntinfo()
         info = self.build_details(mntinfo)
         for i in collapsed:
-            snapshot_count, locked = self.get_snapcount_and_encryption_status(i, mntinfo)
             atime, case = self.get_atime_and_casesensitivity(i, mntinfo)
-            i['snapshot_count'] = snapshot_count
-            i['locked'] = locked
+            i['locked'] = i['encrypted']
             i['atime'] = atime
             i['casesensitive'] = case
             i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
@@ -336,37 +334,6 @@ class PoolDatasetService(Service):
                 })
 
         return results
-
-    @private
-    def get_snapcount_and_encryption_status(self, ds, mntinfo):
-        snap_count = 0
-        locked = False
-        if ds['type'] == 'FILESYSTEM':
-            # FIXME: determining zvol snapshot count requires iterating over
-            # all snapshots for a given zvol and then counting them which is
-            # painful. This will be moot when this is merged upstream
-            # https://github.com/openzfs/zfs/pull/13635
-
-            try:
-                st = os.stat(f'{ds["mountpoint"]}/.zfs/snapshot')
-            except FileNotFoundError:
-                # means that the zfs snapshot dir doesn't exist which
-                # can only happen if the dataset is encrypted and "locked"
-                # (unmounted) or the dataset is unmounted
-                locked = ds['encrypted']
-            else:
-                if st.st_ino == ZFSCTL.INO_SNAPDIR:
-                    # dataset isn't locked and the inode of the snapshot dir
-                    # is what we expect so we're able to determine the snapshot
-                    # count by reading st_nlink
-                    snap_count = st.st_nlink - 2  # (remove 2 for `.` and `..`)
-                else:
-                    # zfs snapshot dir exists but inode doesn't match reality
-                    # which can only happen if dataset is unmounted and the
-                    # same directory structure is created manually
-                    locked = ds['encrypted']
-
-        return snap_count, locked
 
     @private
     def get_nfs_shares(self, ds, nfsshares):
