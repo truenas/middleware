@@ -292,27 +292,20 @@ class PoolDatasetService(Service):
         for i, q in filter(lambda x: x[1]['id'] not in ignore, enumerate(data)):
             quota_type = q['quota_type'].lower()
             if q['quota_type'] == 'DATASET':
-                if q['id'] not in ['QUOTA', 'REFQUOTA']:
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
-                    )
-                    continue
-
-                xid = q['id'].lower()
-                if xid in quotas:
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        f'Setting multiple values for {xid} for quota_type "DATASET" is not permitted'
-                    )
-                    continue
-
+                if q['id'] not in ('QUOTA', 'REFQUOTA'):
+                    verrors.add(f'quotas.{i}.id', 'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"')
+                else:
+                    xid = q['id'].lower()
+                    if xid in quotas:
+                        verrors.add(
+                            f'quotas.{i}.id',
+                            f'Setting multiple values for {xid} for quota_type DATASET is not permitted'
+                        )
             else:
                 if not q['quota_value']:
                     q['quota_value'] = 'none'
 
                 xid = None
-
                 id_type = 'user' if quota_type.startswith('user') else 'group'
                 if not q['id'].isdigit():
                     try:
@@ -320,18 +313,14 @@ class PoolDatasetService(Service):
                                                              {f'{id_type}name': q['id']})
                         xid = xid_obj['pw_uid'] if id_type == 'user' else xid_obj['gr_gid']
                     except Exception:
-                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q['id'], exc_info=True)
-                        verrors.add(
-                            f'quotas.{i}.id',
-                            f'{quota_type} {q["id"]} is not valid.'
-                        )
+                        self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
+                        verrors.add(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
                 else:
                     xid = int(q['id'])
 
                 if xid == 0:
                     verrors.add(
-                        f'quotas.{i}.id',
-                        f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted.'
+                        f'quotas.{i}.id', f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted'
                     )
 
             quotas[xid] = q
