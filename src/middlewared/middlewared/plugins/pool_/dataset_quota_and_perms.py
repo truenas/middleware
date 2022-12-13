@@ -280,7 +280,8 @@ class PoolDatasetService(Service):
         MAX_QUOTAS = 100
         verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
-            verrors.add(
+            # no reason to continue
+            raise ValidationErrors(
                 'quotas',
                 f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
             )
