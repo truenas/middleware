@@ -18,6 +18,8 @@ class ChartReleaseService(Service):
     @private
     def helm_action(self, chart_release, chart_path, config, tn_action):
         args = ['-f']
+        CLEANUPREGEX = re.compile(r'^Error: .[)]: ')
+        
         if os.path.exists(os.path.join(chart_path, 'ix_values.yaml')):
             args.extend([os.path.join(chart_path, 'ix_values.yaml'), '-f'])
 
@@ -44,8 +46,7 @@ class ChartReleaseService(Service):
             if cp.returncode:
                 errmsg = stderr.decode()
                 if tn_action == 'upgrade' or tn_action == 'install':
-                    cleanupregex = re.compile(r'^Error: .[)]: ')
-                    errmsg = re.sub(cleanupregex, '', errmsg, 1)
+                    errmsg = re.sub(CLEANUPREGEX, '', errmsg, 1)
                 raise CallError(f'Failed to {tn_action} App: {errmsg}')
 
         self.middleware.call_sync('chart.release.clear_chart_release_portal_cache', chart_release)
