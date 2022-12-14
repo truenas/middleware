@@ -1,7 +1,6 @@
 import copy
 import json
 import os
-
 try:
     from collections.abc import Callable
 except ImportError:
@@ -9,7 +8,6 @@ except ImportError:
 
 from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import private, Service
-
 from .schema import get_list_item_from_value
 from .utils import get_network_attachment_definition_name, RESERVED_NAMES
 

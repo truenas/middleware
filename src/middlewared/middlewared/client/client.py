@@ -1,14 +1,3 @@
-from collections import defaultdict, namedtuple
-
-from . import ejson as json
-from .protocol import DDPProtocol
-from .utils import MIDDLEWARE_RUN_DIR, ProgressBar, undefined
-
-try:
-    from collections.abc import Callable
-except ImportError:
-    from collections import Callable
-
 import argparse
 import errno
 import logging
@@ -22,11 +11,19 @@ import sys
 import time
 import uuid
 from base64 import b64decode
+from collections import defaultdict, namedtuple
 from threading import Event as TEvent
 from threading import Lock, Thread
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 
 from ws4py.client.threadedclient import WebSocketClient
 
+from . import ejson as json
+from .protocol import DDPProtocol
+from .utils import MIDDLEWARE_RUN_DIR, ProgressBar, undefined
 try:
     from libzfs import Error as ZFSError
 except ImportError:
