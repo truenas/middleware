@@ -101,3 +101,11 @@ class PCI(Device):
 
         if not self.middleware.call_sync('vm.device.iommu_enabled'):
             verrors.add('attribute.pptdev', 'IOMMU support is required.')
+
+        if old and vm_instance and vm_instance['status']['state'] in ACTIVE_STATES and old[
+            'attributes'
+        ].get('pptdev') != pptdev:
+            verrors.add(
+                'attribute.pptdev',
+                'Changing PCI device is not allowed while the VM is active.'
+            )
