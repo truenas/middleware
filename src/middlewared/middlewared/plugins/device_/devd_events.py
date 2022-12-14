@@ -19,7 +19,7 @@ async def devd_loop(middleware):
     while True:
         DEVD_CONNECTED = False
         try:
-            if not os.path.exists(DEVD_SOCKETFILE):
+            if not await middleware.run_in_thread(os.path.exists, DEVD_SOCKETFILE):
                 middleware.logger.info('devd is not running yet, waiting...')
                 await asyncio.sleep(1)
                 continue
