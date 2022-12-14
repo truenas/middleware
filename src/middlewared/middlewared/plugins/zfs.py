@@ -802,16 +802,19 @@ class ZFSDatasetService(CRUDService):
 
     def set_quota(self, ds, quotas):
         properties = {}
-        for xid, quota in quotas.items():
-            quota_type = quota['quota_type'].lower()
-            quota_value = {'value': quota['quota_value']}
-            if quota_type == 'dataset':
-                properties[xid] = quota_value
-            else:
-                properties[f'{quota_type}quota@{xid}'] = quota_value
-        with libzfs.ZFS() as zfs:
-            dataset = zfs.get_dataset(ds)
-            dataset.update_properties(properties)
+        for quota in quotas:
+            for xid, quota_info in quota.items():
+                quota_type = quota_info['quota_type'].lower()
+                quota_value = {'value': quota_info['quota_value']}
+                if quota_type == 'dataset':
+                    properties[xid] = quota_value
+                else:
+                    properties[f'{quota_type}quota@{xid}'] = quota_value
+
+        if properties:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(ds)
+                dataset.update_properties(properties)
 
     @accepts(
         Str('id'),

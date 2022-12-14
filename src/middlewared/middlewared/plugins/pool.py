@@ -4034,68 +4034,53 @@ class PoolDatasetService(CRUDService):
         There are three over-arching types of quotas for ZFS datasets.
         1) dataset quotas and refquotas. If a DATASET quota type is specified in
         this API call, then the API acts as a wrapper for `pool.dataset.update`.
-
         2) User and group quotas. These limit the amount of disk space consumed
         by files that are owned by the specified users or groups. If the respective
         "object quota" type is specfied, then the quota limits the number of objects
         that may be owned by the specified user or group.
-
         3) Project quotas. These limit the amount of disk space consumed by files
         that are owned by the specified project. Project quotas are not yet implemended.
-
         This API allows users to set multiple quotas simultaneously by submitting a
         list of quotas. The list may contain all supported quota types.
-
         `ds` the name of the target ZFS dataset.
-
         `quotas` specifies a list of `quota_entry` entries to apply to dataset.
-
         `quota_entry` entries have these required parameters:
-
         `quota_type`: specifies the type of quota to apply to the dataset. Possible
         values are USER, USEROBJ, GROUP, GROUPOBJ, and DATASET. USEROBJ and GROUPOBJ
         quotas limit the number of objects consumed by the specified user or group.
-
         `id`: the uid, gid, or name to which the quota applies. If quota_type is
         'DATASET', then `id` must be either `QUOTA` or `REFQUOTA`.
-
         `quota_value`: the quota size in bytes. Setting a value of `0` removes
         the user or group quota.
         """
         MAX_QUOTAS = 100
         verrors = ValidationErrors()
         if len(data) > MAX_QUOTAS:
-            verrors.add(
+            # no reason to continue
+            raise ValidationErrors(
                 'quotas',
                 f'The number of user or group quotas that can be set in single API call is limited to {MAX_QUOTAS}.'
             )
 
-        quotas = {}
-
-        for i, q in enumerate(data):
+        quotas = []
+        ignore = ('PROJECT', 'PROJECTOBJ')  # TODO: not implemented
+        for i, q in filter(lambda x: x[1]['quota_type'] not in ignore, enumerate(data)):
             quota_type = q['quota_type'].lower()
             if q['quota_type'] == 'DATASET':
-                if q['id'] not in ['QUOTA', 'REFQUOTA']:
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"'
-                    )
-                    continue
-
-                xid = q['id'].lower()
-                if xid in quotas:
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        f'Setting multiple values for {xid} for quota_type "DATASET" is not permitted'
-                    )
-                    continue
-
-            elif q['quota_type'] not in ['PROJECT', 'PROJECTOBJ']:
+                if q['id'] not in ('QUOTA', 'REFQUOTA'):
+                    verrors.add(f'quotas.{i}.id', 'id for quota_type DATASET must be either "QUOTA" or "REFQUOTA"')
+                else:
+                    xid = q['id'].lower()
+                    if any((i.get(xid, False) for i in quotas)):
+                        verrors.add(
+                            f'quotas.{i}.id',
+                            f'Setting multiple values for {xid} for quota_type DATASET is not permitted'
+                        )
+            else:
                 if not q['quota_value']:
                     q['quota_value'] = 'none'
 
                 xid = None
-
                 id_type = 'user' if quota_type.startswith('user') else 'group'
                 if not q['id'].isdigit():
                     try:
@@ -4103,28 +4088,17 @@ class PoolDatasetService(CRUDService):
                                                              {f'{id_type}name': q['id']})
                         xid = xid_obj['pw_uid'] if id_type == 'user' else xid_obj['gr_gid']
                     except Exception:
-                        self.logger.debug("Failed to convert %s [%s] to id.", id_type, q['id'], exc_info=True)
-                        verrors.add(
-                            f'quotas.{i}.id',
-                            f'{quota_type} {q["id"]} is not valid.'
-                        )
+                        self.logger.debug('Failed to convert %s [%s] to id.', id_type, q['id'], exc_info=True)
+                        verrors.add(f'quotas.{i}.id', f'{quota_type} {q["id"]} is not valid.')
                 else:
                     xid = int(q['id'])
 
                 if xid == 0:
                     verrors.add(
-                        f'quotas.{i}.id',
-                        f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted.'
+                        f'quotas.{i}.id', f'Setting {quota_type} quota on {id_type[0]}id [{xid}] is not permitted'
                     )
-            else:
-                if not q['id'].isdigit():
-                    verrors.add(
-                        f'quotas.{i}.id',
-                        f'{quota_type} {q["id"]} must be a numeric project id.'
-                    )
-                xid = int(q['id'])
 
-            quotas[xid] = q
+            quotas.append({xid: q})
 
         verrors.check()
         if quotas:

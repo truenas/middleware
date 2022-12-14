@@ -169,28 +169,63 @@ def test_13_strip_acl_from_dataset(request):
     JOB_ID = result.json()
 
 
-def test_14_setting_dataset_quota(request):
-    depends(request, ["pool_04", "shareuser"], scope="session")
-    gid = str(GET('/group/?group=shareuser').json()[0]['gid'])
-    global results
-    payload = [
-        {'quota_type': 'USER', 'id': 'shareuser', 'quota_value': 0},
-        {'quota_type': 'GROUP', 'id': gid, 'quota_value': 2000000000},
-        {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': 1073741824}
+def test_14_setting_various_quotas(request):
+    depends(request, ['pool_04', 'shareuser'], scope='session')
+    user = group = 'shareuser'
+    user_gid = GET('/group/?group=shareuser').json()[0]['gid']
+    user_uid = GET('/user/?username=shareuser').json()[0]['uid']
+    user_quota_value = 1000000
+    group_quota_value = user_quota_value * 2
+    dataset_quota_value = group_quota_value + 10000
+    dataset_refquota_value = dataset_quota_value + 10000
+
+    set_quota_payload = [
+        {'quota_type': 'USER', 'id': user, 'quota_value': user_quota_value},
+        {'quota_type': 'USEROBJ', 'id': user, 'quota_value': user_quota_value},
+        {'quota_type': 'GROUP', 'id': group, 'quota_value': group_quota_value},
+        {'quota_type': 'GROUPOBJ', 'id': group, 'quota_value': group_quota_value},
+        {'quota_type': 'DATASET', 'id': 'QUOTA', 'quota_value': dataset_quota_value},
+        {'quota_type': 'DATASET', 'id': 'REFQUOTA', 'quota_value': dataset_refquota_value},
     ]
-    results = POST(f'/pool/dataset/id/{dataset_url}/set_quota', payload)
+    results = POST(f'/pool/dataset/id/{dataset_url}/set_quota', set_quota_payload)
     assert results.status_code == 200, results.text
 
-
-def test_15_getting_dataset_quota(request):
-    depends(request, ["pool_04"], scope="session")
-    global results
-    payload = {
+    expected_user_quota_result = {
         'quota_type': 'USER',
+        'id': user_uid,
+        'quota': user_quota_value,
+        'obj_quota': user_quota_value,
+        'name': user
     }
-    results = POST(f'/pool/dataset/id/{dataset_url}/get_quota', payload)
+    results = POST(f'/pool/dataset/id/{dataset_url}/get_quota', {'quota_type': 'USER'})
     assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results
+    assert any((i == expected_user_quota_result for i in results.json())), results
+
+    expected_group_quota_result = {
+        'quota_type': 'GROUP',
+        'id': user_gid,
+        'quota': group_quota_value,
+        'obj_quota': group_quota_value,
+        'name': group
+    }
+    results = POST(f'/pool/dataset/id/{dataset_url}/get_quota', {'quota_type': 'GROUP'})
+    assert results.status_code == 200, results.text
+    assert any((i == expected_group_quota_result for i in results.json())), results
+
+    expected_dataset_quota_result = {
+        'quota_type': 'DATASET',
+        'id': dataset,
+        'name': dataset,
+        'quota': dataset_quota_value,
+        'refquota': dataset_refquota_value,
+    }
+    results = POST(f'/pool/dataset/id/{dataset_url}/get_quota', {'quota_type': 'DATASET'})
+    assert results.status_code == 200, results.text
+    for ds_quota in filter(lambda x: x['id'] == expected_dataset_quota_result['id'], results.json()):
+        # the dataset quota that is return includes a used_bytes key that has an actual
+        # filesystem value. We can't predict what that value will ever be at this point
+        # so we just verify all the other keys match what we expect
+        assert all((expected_dataset_quota_result[k] == ds_quota[k] for k in expected_dataset_quota_result))
 
 
 def test_16_verify_job_id_is_successfull(request):
