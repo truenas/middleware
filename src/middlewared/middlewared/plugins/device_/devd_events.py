@@ -31,7 +31,7 @@ async def devd_loop(middleware):
         await asyncio.sleep(1)
 
 
-def parse_devd_message(msg):
+async def parse_devd_message(msg):
     """
     Parse devd messages using "=" char as separator.
     We use the first word before "=" as key and every word minus 1 after "=" as value.
@@ -66,17 +66,13 @@ async def devd_listen(middleware):
                 continue
 
             try:
-                parsed = parse_devd_message(line[1:])
+                parsed = await parse_devd_message(line[1:])
             except Exception:
                 middleware.logger.warn(f'Failed to parse devd message: {line}')
                 continue
-
-            if 'system' not in parsed:
-                continue
-
-            # Lets ignore CAM messages for now
-            if parsed['system'] in ('CAM', 'ACPI'):
-                continue
+            else:
+                if not parsed or 'system' not in parsed or parsed['system'] in ('CAM', 'ACPI'):
+                    continue
 
             if parsed['type'] == 'GEOM::physpath' and parsed.get('devname'):
                 # treat GEOM::physpath as DEVFS (even though it's geom)
