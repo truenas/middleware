@@ -169,7 +169,7 @@ class PoolDatasetService(Service):
         """
         options = {
             'extra': {
-                'flat': False,
+                'flat': True,
                 'order_by': 'name',
                 'properties': [
                     'used',
