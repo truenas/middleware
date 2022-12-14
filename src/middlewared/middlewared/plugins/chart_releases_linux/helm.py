@@ -18,7 +18,7 @@ class ChartReleaseService(Service):
     @private
     def helm_action(self, chart_release, chart_path, config, tn_action):
         args = ['-f']
-        CLEANUPREGEX = re.compile(r'^Error: .[)]: ')
+        CLEANUPREGEX = re.compile(r'^Error: .+[)]: ')
         
         if os.path.exists(os.path.join(chart_path, 'ix_values.yaml')):
             args.extend([os.path.join(chart_path, 'ix_values.yaml'), '-f'])
