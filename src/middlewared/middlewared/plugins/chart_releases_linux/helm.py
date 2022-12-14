@@ -44,7 +44,7 @@ class ChartReleaseService(Service):
             if cp.returncode:
                 errmsg = stderr.decode()
                 if tn_action == 'upgrade' or tn_action == 'install':
-                    cleanupregex = re.compile(r'^Error: .+?[)]: ')
+                    cleanupregex = re.compile(r'^Error: .+[)]: ')
                     errmsg = re.sub(cleanupregex, '', errmsg, 1)
                 raise CallError(f'Failed to {tn_action} App: {errmsg}')
 
