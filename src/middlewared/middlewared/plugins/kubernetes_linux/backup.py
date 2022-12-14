@@ -89,7 +89,7 @@ class KubernetesService(Service):
 
     @private
     def to_ignore_datasets_on_backup(self, k8s_dataset):
-        return [os.path.join(k8s_dataset, ds_name) for ds_name in ('catalogs', 'docker')]
+        return [os.path.join(k8s_dataset, ds_name) for ds_name in ('catalogs', 'docker', 'k3s/kubelet')]
 
     @accepts()
     @returns(Dict('backups', additional_attrs=True))
