@@ -1,6 +1,5 @@
 import asyncio
 import os
-import socket
 
 from middlewared.service import private, Service
 
@@ -20,7 +19,7 @@ async def devd_loop(middleware):
     while True:
         DEVD_CONNECTED = False
         try:
-            if not os.path.exists(DEVD_SOCKETFILE):
+            if not await middleware.run_in_thread(os.path.exists, DEVD_SOCKETFILE):
                 middleware.logger.info('devd is not running yet, waiting...')
                 await asyncio.sleep(1)
                 continue
@@ -32,7 +31,7 @@ async def devd_loop(middleware):
         await asyncio.sleep(1)
 
 
-def parse_devd_message(msg):
+async def parse_devd_message(msg):
     """
     Parse devd messages using "=" char as separator.
     We use the first word before "=" as key and every word minus 1 after "=" as value.
@@ -51,46 +50,43 @@ def parse_devd_message(msg):
 async def devd_listen(middleware):
     global DEVD_CONNECTED
 
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.connect(DEVD_SOCKETFILE)
-    # reader, writer = await asyncio.open_unix_connection(sock=s)
-    reader = s.makefile('rb')
-    middleware.logger.info('devd connection established')
-    DEVD_CONNECTED = True
+    reader, writer = await asyncio.open_unix_connection(path=DEVD_SOCKETFILE)
+    try:
+        middleware.logger.info('devd connection established')
+        DEVD_CONNECTED = True
 
-    while True:
-        # line = await reader.readline()
-        line = await middleware.run_in_thread(reader.readline)
-        line = line.decode(errors='ignore')
-        if line == "":
-            break
+        while True:
+            line = await reader.readline()
+            line = line.decode(errors='ignore')
+            if line == "":
+                break
 
-        if not line.startswith('!'):
-            # TODO: its not a complete message, ignore for now
-            continue
+            if not line.startswith('!'):
+                # TODO: its not a complete message, ignore for now
+                continue
 
-        try:
-            parsed = await middleware.run_in_thread(parse_devd_message, line[1:])
-        except Exception:
-            middleware.logger.warn(f'Failed to parse devd message: {line}')
-            continue
+            try:
+                parsed = await parse_devd_message(line[1:])
+            except Exception:
+                middleware.logger.warn(f'Failed to parse devd message: {line}')
+                continue
+            else:
+                if not parsed or 'system' not in parsed or parsed['system'] in ('CAM', 'ACPI'):
+                    continue
 
-        if 'system' not in parsed:
-            continue
+            if parsed['type'] == 'GEOM::physpath' and parsed.get('devname'):
+                # treat GEOM::physpath as DEVFS (even though it's geom)
+                # to fix a rare race condition between CAM and SES drivers
+                # when disks are moved around
+                # (This was seen when QE team was testing new "Phison" SSDS
+                #   and moving them around between head-unit and jbods)
+                parsed = {'type': 'CREATE', 'system': 'DEVFS', 'subsystem': 'CDEV', 'cdev': parsed['devname']}
 
-        # Lets ignore CAM messages for now
-        if parsed['system'] in ('CAM', 'ACPI'):
-            continue
-
-        if parsed['type'] == 'GEOM::physpath' and parsed.get('devname'):
-            # treat GEOM::physpath as DEVFS (even though it's geom)
-            # to fix a rare race condition between CAM and SES drivers
-            # when disks are moved around
-            # (This was seen when QE team was testing new "Phison" SSDS
-            #   and moving them around between head-unit and jbods)
-            parsed = {'type': 'CREATE', 'system': 'DEVFS', 'subsystem': 'CDEV', 'cdev': parsed['devname']}
-
-        await middleware.call_hook(f'devd.{parsed["system"]}'.lower(), data=parsed)
+            await middleware.call_hook(f'devd.{parsed["system"]}'.lower(), data=parsed)
+    finally:
+        DEVD_CONNECTED = False
+        writer.close()
+        await writer.wait_closed()
 
 
 def setup(middleware):
