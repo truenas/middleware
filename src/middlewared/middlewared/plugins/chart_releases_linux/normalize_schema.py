@@ -1,12 +1,13 @@
 import copy
 import json
 import os
-
-from collections import Callable
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
 
 from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import private, Service
-
 from .schema import get_list_item_from_value
 from .utils import get_network_attachment_definition_name, RESERVED_NAMES
 
