@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import enum
 import ipaddress
 import os
 import socket
@@ -14,6 +15,14 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 
 
+class NFSProtocol(str, enum.Enum):
+    NFSv3 = 'NFSV3'
+    NFSv4 = 'NFSV4'
+
+    def choices():
+        return [x.value for x in NFSProtocol]
+
+
 class NFSModel(sa.Model):
     __tablename__ = 'services_nfs'
 
@@ -21,7 +30,7 @@ class NFSModel(sa.Model):
     nfs_srv_servers = sa.Column(sa.Integer(), default=4)
     nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_v4 = sa.Column(sa.Boolean(), default=False)
+    nfs_srv_protocols = sa.Column(sa.JSON(type=list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
     nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
     nfs_srv_bindip = sa.Column(sa.MultiSelectField())
@@ -51,7 +60,8 @@ class NFSService(SystemServiceService):
         Int('servers', validators=[Range(min=1, max=256)], required=True),
         Bool('udp', required=True),
         Bool('allow_nonroot', required=True),
-        Bool('v4', required=True),
+        Bool('v4', required=False),    # Will remove this later when clients switch over to using protocols
+        List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=False),    # Will turn on required when 'v4' is removed.
         Bool('v4_v3owner', required=True),
         Bool('v4_krb', required=True),
         Str('v4_domain', required=True),
@@ -71,12 +81,19 @@ class NFSService(SystemServiceService):
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
         nfs["userd_manage_gids"] = nfs.pop("16")
         nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
+        # Begin - interim compatability for migration from "v4" to "protocols"
+        if "v4" not in nfs:
+            nfs["v4"] = NFSProtocol.NFSv4 in nfs.get("protocols")
+        # End   - interim compatability for migration from "v4" to "protocols"
         return nfs
 
     @private
     async def nfs_compress(self, nfs):
         nfs.pop("v4_krb_enabled")
         nfs["16"] = nfs.pop("userd_manage_gids")
+        # Begin - interim compatability for migration from "v4" to "protocols"
+        del nfs["v4"]
+        # End   - interim compatability for migration from "v4" to "protocols"
         return nfs
 
     @accepts()
@@ -133,7 +150,9 @@ class NFSService(SystemServiceService):
         `bindip` is a list of IP's on which NFS will listen for requests. When it is unset/empty, NFS listens on
         all available addresses.
 
-        `v4` when set means that we switch from NFSv3 to NFSv4.
+        `v4` when set means that we switch from NFSv3 to NFSv4.  Deprecated in favor of `protocols`.
+
+        `protocols` specifies whether NFSv3, NFSv4, or both are enabled.
 
         `v4_v3owner` when set means that system will use NFSv3 ownership model for NFSv4.
 
@@ -160,12 +179,28 @@ class NFSService(SystemServiceService):
                     "bindip": [
                         "192.168.0.10"
                     ],
-                    "v4": true
+                    "protocols": ["NFSV3", "NFSV4"]
                 }]
             }
         """
-        if data.get("v4") is False:
-            data.setdefault("v4_v3owner", False)
+        # Begin - interim compatability for migration from "v4" to "protocols"
+        if "v4" in data:
+            # v4 supplied, override protocols for now
+            if data.get("v4") is False:
+                data['protocols'] = [NFSProtocol.NFSv3]
+            else:
+                data['protocols'] = [NFSProtocol.NFSv3, NFSProtocol.NFSv4]
+            del data["v4"]
+        # End  - interim compatability for migration from "v4" to "protocols"
+
+        if 'protocols' in data:
+            if not data['protocols']:
+                raise ValidationError(
+                    'nfs_update.protocols',
+                    'Must specify at least one value ("NFSV3", "NFSV4") in the "protocols" list.'
+                )
+            if NFSProtocol.NFSv4 not in data.get("protocols"):
+                data.setdefault("v4_v3owner", False)
 
         old = await self.config()
 
@@ -180,7 +215,7 @@ class NFSService(SystemServiceService):
         for k in ['mountd_port', 'rpcstatd_port', 'rpclockd_port']:
             verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs'))
 
-        if await self.middleware.call("failover.licensed") and new["v4"] and new_v4_krb_enabled:
+        if await self.middleware.call("failover.licensed") and NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
             gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
             if not gc["gc_hostname_virtual"] or not gc["gc_domain"]:
                 verrors.add(
@@ -194,7 +229,7 @@ class NFSService(SystemServiceService):
             if bindip not in bindip_choices:
                 verrors.add(f'nfs_update.bindip.{i}', 'Please provide a valid ip address')
 
-        if new["v4"] and new_v4_krb_enabled and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+        if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled and await self.middleware.call('activedirectory.get_state') != "DISABLED":
             """
             In environments with kerberized NFSv4 enabled, we need to tell winbindd to not prefix
             usernames with the short form of the AD domain. Directly update the db and regenerate
@@ -213,14 +248,14 @@ class NFSService(SystemServiceService):
             await self.middleware.call('activedirectory.synchronize')
             await self.middleware.call('service.reload', 'cifs')
 
-        if not new["v4"] and new["v4_v3owner"]:
+        if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_v3owner"]:
             verrors.add("nfs_update.v4_v3owner", "This option requires enabling NFSv4")
 
         if new["v4_v3owner"] and new["userd_manage_gids"]:
             verrors.add(
                 "nfs_update.userd_manage_gids", "This option is incompatible with NFSv3 ownership model for NFSv4")
 
-        if not new["v4"] and new["v4_domain"]:
+        if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if verrors:
@@ -428,7 +463,7 @@ class SharingNFSService(SharingService):
         v4_sec = list(filter(lambda sec: sec != "SYS", data.get("security", [])))
         if v4_sec:
             nfs_config = await self.middleware.call("nfs.config")
-            if not nfs_config["v4"]:
+            if NFSProtocol.NFSv4 not in nfs_config["protocols"]:
                 verrors.add(
                     f"{schema_name}.security",
                     f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."

@@ -3,7 +3,10 @@
     mountd_opts = [f'--num-threads {config["servers"]}', '-N 2']
     nfsd_opts = ['-s', '-N 2']
 
-    if not config["v4"]:
+    if "NFSV3" not in config["protocols"]:
+        nfsd_opts.append('-N 3')
+
+    if "NFSV4" not in config["protocols"]:
         nfsd_opts.append('-N 4')
 
     if config["userd_manage_gids"]:

@@ -127,7 +127,7 @@ def test_01_creating_the_nfs_server():
                "udp": False,
                "rpcstatd_port": 871,
                "rpclockd_port": 32803,
-               "v4": True}
+               "protocols": ["NFSV3", "NFSV4"]}
     results = PUT("/nfs/", paylaod)
     assert results.status_code == 200, results.text
 
@@ -515,13 +515,78 @@ def test_37_check_nfs_allow_nonroot_behavior(request):
     assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
 
-def test_38_check_nfs_service_v4_parameter(request):
+def test_38_check_nfs_service_protocols_parameter(request):
     """
-    This test verifies that toggling the `v4` option generates expected changes
-    in nfs kernel server config.
+    This test verifies that changing the `protocols` option generates expected
+    changes in nfs kernel server config.
+
+    For the time being this test will also exercise the deprecated `v4` option
+    to the same effect, but this will later be removed.
+
+    NFS must be enabled for this test to succeed as while the config (i.e.
+    database) will be updated regardless, the server config file will not
+    be updated.
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
 
+    # Check existing config (both NFSv3 & NFSv4 configured)
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    protocols = results.json()['protocols']
+    assert "NFSV3" in protocols, results.text
+    assert "NFSV4" in protocols, results.text
+
+    s = parse_server_config()
+    assert "-N 3" not in s["RPCNFSDOPTS"], str(s)
+    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+
+    # Turn off NFSv4 (v3 on)
+    results = PUT("/nfs/", {"protocols": ["NFSV3"]})
+    assert results.status_code == 200, results.text
+
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    protocols = results.json()['protocols']
+    assert "NFSV3" in protocols, results.text
+    assert "NFSV4" not in protocols, results.text
+
+    s = parse_server_config()
+    assert "-N 3" not in s["RPCNFSDOPTS"], str(s)
+    assert "-N 4" in s["RPCNFSDOPTS"], str(s)
+
+    # Try (and fail) to turn off both
+    results = PUT("/nfs/", {"protocols": []})
+    assert results.status_code != 200, results.text
+
+    # Turn off NFSv3 (v4 on)
+    results = PUT("/nfs/", {"protocols": ["NFSV4"]})
+    assert results.status_code == 200, results.text
+
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    protocols = results.json()['protocols']
+    assert "NFSV3" not in protocols, results.text
+    assert "NFSV4" in protocols, results.text
+
+    s = parse_server_config()
+    assert "-N 3" in s["RPCNFSDOPTS"], str(s)
+    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+
+    # Finally turn both back on again
+    results = PUT("/nfs/", {"protocols": ["NFSV3", "NFSV4"]})
+    assert results.status_code == 200, results.text
+
+    results = GET("/nfs")
+    assert results.status_code == 200, results.text
+    protocols = results.json()['protocols']
+    assert "NFSV3" in protocols, results.text
+    assert "NFSV4" in protocols, results.text
+
+    s = parse_server_config()
+    assert "-N 3" not in s["RPCNFSDOPTS"], str(s)
+    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+
+    # Begin - interim compatability for migration from "v4" to "protocols"
     results = GET("/nfs")
     assert results.status_code == 200, results.text
     assert results.json()['v4'] is True, results.text
@@ -540,6 +605,7 @@ def test_38_check_nfs_service_v4_parameter(request):
 
     s = parse_server_config()
     assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
+    # End   - interim compatability for migration from "v4" to "protocols"
 
 
 def test_39_check_nfs_service_udp_parameter(request):
@@ -770,7 +836,8 @@ def test_52_check_adjusting_threadpool_mode(request):
     Verify that NFS thread pool configuration can be adjusted
     through private API endpoints.
 
-    This request will fail if NFS server is still running.
+    This request will fail if NFS server (or NFS client) is
+    still running.
     """
     supported_modes = ["AUTO", "PERCPU", "PERNODE", "GLOBAL"]
     payload = {'msg': 'method', 'method': None, 'params': []}

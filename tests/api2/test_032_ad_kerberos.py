@@ -476,7 +476,7 @@ def test_30_check_nfs_exports_sec(request):
     results = POST("/sharing/nfs/", payload)
     assert results.status_code == 200, results.text
 
-    payload = {"v4": True}
+    payload = {"protocols": ["NFSV3", "NFSV4"]}
     results = PUT("/nfs/", payload)
     assert results.status_code == 200, results.text
 
