@@ -1,6 +1,5 @@
 import asyncio
 import os
-import socket
 
 from middlewared.service import private, Service
 
