@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.docker_linux.utils import get_chart_releases_consuming_image
+from middlewared.plugins.container_runtime_interface.utils import get_chart_releases_consuming_image
 
 
 payload = [

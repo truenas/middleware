@@ -59,7 +59,7 @@ def parse_auth_header(header: str):
     return results
 
 
-class DockerClientMixin:
+class CRIClientMixin:
 
     async def _api_call(self, url, options=None, headers=None, mode='get'):
         options = options or {}

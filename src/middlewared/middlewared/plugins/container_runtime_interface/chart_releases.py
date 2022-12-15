@@ -4,7 +4,7 @@ from middlewared.service import accepts, Service
 from .utils import get_chart_releases_consuming_image
 
 
-class DockerImagesService(Service):
+class ContainerImagesService(Service):
 
     class Config:
         namespace = 'container.image'

@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.docker_linux.utils import normalize_reference
+from middlewared.plugins.container_runtime_interface.utils import normalize_reference
 
 
 @pytest.mark.parametrize("reference,expected_results", [
