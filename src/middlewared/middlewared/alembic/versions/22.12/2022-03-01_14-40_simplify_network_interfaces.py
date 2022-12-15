@@ -30,7 +30,7 @@ def create_new_entries(old_entry):
 
         # we'll write the ipv6 address to the network_alias table
         alias_entry['alias_interface_id'] = old_entry['id']
-        alias_entry['alias_address'] = old_entry['int_ipv6address'],
+        alias_entry['alias_address'] = old_entry['int_ipv6address']
         alias_entry['alias_address_b'] = old_entry['int_ipv6address_b']
         alias_entry['alias_vip'] = old_entry['int_vipv6address']
         alias_entry['alias_version'] = 6
