@@ -156,7 +156,7 @@ class ContainerdClient:
 
     def __init__(self, client_type: str):
         self.channel: typing.Optional[typing.Type[Channel]] = None
-        self.client: typing.Union[typing.Type[Containers], typing.Type[Containers]] = self.CLIENT_MAPPING[client_type]
+        self.client: typing.Union[typing.Type[Containers], typing.Type[Images]] = self.CLIENT_MAPPING[client_type]
 
     def __enter__(self):
         self.channel = Channel(self.CONTAINERD_SOCKET)
