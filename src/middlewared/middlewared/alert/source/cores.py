@@ -24,7 +24,7 @@ class CoreFilesArePresentAlertSource(AlertSource):
         "/usr/sbin/smartctl",
     )
     ignore_units = (
-        # Unit: "containerd.service"/"docker.service" is related to k3s.
+        # Unit: "containerd.service" is related to k3s.
         # users are free to run whatever they would like to in containers
         # and we don't officially support all the apps themselves so we
         # ignore those core dumps

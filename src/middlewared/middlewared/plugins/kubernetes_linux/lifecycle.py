@@ -229,7 +229,7 @@ class KubernetesService(Service):
 
         k8s_datasets = set(await self.kubernetes_datasets(config['dataset']))
         required_datasets = set(config['dataset']) | set(
-            os.path.join(config['dataset'], ds) for ds in ('k3s', 'docker', 'releases')
+            os.path.join(config['dataset'], ds) for ds in ('k3s', 'releases')
         )
         existing_datasets = {
             d['id']: d for d in await self.middleware.call(
@@ -384,7 +384,7 @@ class KubernetesService(Service):
     async def kubernetes_datasets(self, k8s_ds):
         return [k8s_ds] + [
             os.path.join(k8s_ds, d) for d in (
-                'docker', 'k3s', 'k3s/kubelet', 'releases',
+                'k3s', 'k3s/kubelet', 'releases',
                 'default_volumes', 'catalogs'
             )
         ]
