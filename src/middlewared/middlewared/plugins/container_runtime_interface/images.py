@@ -1,8 +1,6 @@
 import aiodocker
 import contextlib
-import errno
 import itertools
-import os
 
 from copy import deepcopy
 from datetime import datetime
@@ -11,6 +9,7 @@ from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
+from .client import ContainerdClient
 from .utils import DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO
 
 
@@ -44,7 +43,7 @@ class ContainerImagesService(CRUDService):
     )
 
     @filterable
-    async def query(self, filters, options):
+    def query(self, filters, options):
         """
         Retrieve container images present in the system.
 
@@ -52,36 +51,36 @@ class ContainerImagesService(CRUDService):
         for container images.
         """
         results = []
-        if not await self.middleware.call('service.started', 'docker'):
+        if not self.middleware.call_sync('service.started', 'docker'):
             return results
 
         extra = deepcopy(options.get('extra', {}))
-        update_cache = await self.middleware.call('container.image.image_update_cache')
-        system_images = await self.middleware.call('container.image.get_system_images_tags')
+        update_cache = self.middleware.call_sync('container.image.image_update_cache')
+        system_images = self.middleware.call_sync('container.image.get_system_images_tags')
         parse_tags = extra.get('parse_tags', False) or extra.get('complete_tags', False)
 
-        async with aiodocker.Docker() as docker:
-            for image in await docker.images.list():
-                repo_tags = image['RepoTags'] or []
+        with ContainerdClient('image') as client:
+            for image in client.list_images():
+                repo_tags = image['repoTags'] or []
                 system_image = any(tag in system_images for tag in repo_tags)
                 created_at = None
-                with contextlib.suppress(ValueError):
+                with contextlib.suppress(ValueError, KeyError):
                     # We have seen cases where docker returns N/A for created so let's handle this safely
                     created_at = datetime.fromtimestamp(int(image['Created']))
 
                 result = {
                     'id': image['Id'],
-                    'labels': image['Labels'] or {},
+                    'labels': {},  # TODO: We are not getting these so far
                     'repo_tags': repo_tags,
-                    'repo_digests': image.get('RepoDigests') or [],
-                    'size': image['Size'],
+                    'repo_digests': image.get('repoDigests') or [],
+                    'size': image['size'],
                     'created': created_at,
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
                     'update_available': not system_image and any(update_cache[r] for r in repo_tags),
                     'system_image': system_image,
                 }
                 if parse_tags:
-                    result['parsed_repo_tags'] = await self.middleware.call('container.image.parse_tags', repo_tags)
+                    result['parsed_repo_tags'] = self.middleware.call_sync('container.image.parse_tags', repo_tags)
                 if extra.get('complete_tags', False):
                     result['complete_tags'] = [tag['complete_tag'] for tag in result['parsed_repo_tags']]
 
