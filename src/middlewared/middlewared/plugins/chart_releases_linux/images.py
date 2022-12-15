@@ -1,6 +1,8 @@
 import errno
 
-from middlewared.plugins.docker_linux.utils import normalize_reference, get_chart_releases_consuming_image
+from middlewared.plugins.container_runtime_interface.utils import (
+    normalize_reference, get_chart_releases_consuming_image
+)
 from middlewared.schema import Dict, Str, returns
 from middlewared.service import accepts, CallError, private, Service
 

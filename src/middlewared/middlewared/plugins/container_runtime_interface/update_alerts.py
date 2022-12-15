@@ -5,11 +5,11 @@ from typing import Dict, List
 
 from middlewared.service import CallError, private, Service
 
-from .client import DockerClientMixin
+from .client import CRIClientMixin
 from .utils import normalize_reference
 
 
-class DockerImagesService(Service, DockerClientMixin):
+class ContainerImagesService(Service, CRIClientMixin):
 
     class Config:
         namespace = 'container.image'

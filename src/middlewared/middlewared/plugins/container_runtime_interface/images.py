@@ -17,7 +17,7 @@ from .utils import DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEF
 DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
 
 
-class DockerImagesService(CRUDService):
+class ContainerImagesService(CRUDService):
 
     class Config:
         datastore_primary_key_type = 'string'
