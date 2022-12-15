@@ -319,7 +319,6 @@ class KubernetesService(Service):
     async def status_change_internal(self):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('k8s.migration.run')
-        await self.middleware.call('service.start', 'docker')
         await self.middleware.call('service.start', 'kubernetes')
 
     @private
