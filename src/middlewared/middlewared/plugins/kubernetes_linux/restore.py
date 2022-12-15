@@ -64,11 +64,6 @@ class KubernetesService(Service):
                 if sync_job_obj.state.name == 'RUNNING':
                     sync_job_obj.wait_sync()
 
-        # We will be nuking the docker dataset and re-creating it
-        # Motivation behind this action is that docker creates many datasets per image/container and
-        # when we re-initialize the k8s cluster, it's possible we are leftover with datasets which are not
-        # being used by any container. Images will be pulled again by k8s, so that shouldn't be a concern
-        # in this regard.
         fresh_datasets = self.middleware.call_sync('kubernetes.to_ignore_datasets_on_backup', k8s_config['dataset'])
         for dataset in fresh_datasets:
             self.middleware.call_sync('zfs.dataset.delete', dataset, {'force': True, 'recursive': True})

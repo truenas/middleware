@@ -94,7 +94,6 @@ class KubernetesService(Service):
             os.path.join(k8s_dataset, ds_name): ds_props
             for ds_name, ds_props in {
                 'catalogs': {'mount': True},
-                'docker': {'mount': True},
                 'k3s/kubelet': {'mount': False, 'creation_props': {'mountpoint': 'legacy'}},
             }.items()
         }

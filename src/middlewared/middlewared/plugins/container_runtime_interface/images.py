@@ -61,7 +61,7 @@ class ContainerImagesService(CRUDService):
 
         with ContainerdClient('image') as client:
             for image in client.list_images():
-                repo_tags = image['repoTags'] or []
+                repo_tags = image.get('repoTags') or []
                 system_image = any(tag in system_images for tag in repo_tags)
                 created_at = None
                 with contextlib.suppress(ValueError, KeyError):
@@ -69,7 +69,7 @@ class ContainerImagesService(CRUDService):
                     created_at = datetime.fromtimestamp(int(image['Created']))
 
                 result = {
-                    'id': image['Id'],
+                    'id': image['id'],
                     'labels': {},  # TODO: We are not getting these so far
                     'repo_tags': repo_tags,
                     'repo_digests': image.get('repoDigests') or [],
