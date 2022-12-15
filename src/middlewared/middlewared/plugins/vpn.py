@@ -196,7 +196,8 @@ class OpenVPN:
                 'Please specify a valid authentication_algorithm.'
             )
 
-        if data.pop('remove_certificates'):
+        if 'remove_certificates' in data:
+            data.pop('remove_certificates')
             data.update({
                 'root_ca': None,
                 f'{mode}_certificate': None,
