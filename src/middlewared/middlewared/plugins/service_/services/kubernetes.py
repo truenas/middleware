@@ -61,7 +61,6 @@ class KubernetesService(SimpleService):
             ('vm.overcommit_memory', 1),
         ):
             await self.middleware.call('sysctl.set_value', key, value)
-        await self.middleware.call('service.start', 'docker')
         await self._systemd_unit('cni-dhcp', 'start')
 
         # It is possible server/token got misconfigured somehow ( we have had reports that on unclean shutdown the file
@@ -105,7 +104,6 @@ class KubernetesService(SimpleService):
     async def after_stop(self):
         await self._systemd_unit('kube-router', 'stop')
         await self._systemd_unit('cni-dhcp', 'stop')
-        await self.middleware.call('service.stop', 'docker')
         # This is necessary to ensure that docker umounts datasets and shuts down cleanly
         await asyncio.sleep(5)
         await self.middleware.call('k8s.cni.cleanup_cni')

@@ -19,7 +19,3 @@ def migrate(middleware):
 
     middleware.call_sync('zfs.dataset.create', {'name': docker_ds, 'type': 'FILESYSTEM'})
     middleware.call_sync('zfs.dataset.mount', docker_ds)
-
-    # start/stop docker just so it can setup it's state gracefully for the first time
-    middleware.call_sync('service.start', 'docker')
-    middleware.call_sync('service.stop', 'docker')

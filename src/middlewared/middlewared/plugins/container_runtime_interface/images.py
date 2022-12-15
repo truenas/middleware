@@ -51,7 +51,7 @@ class ContainerImagesService(CRUDService):
         for container images.
         """
         results = []
-        if not self.middleware.call_sync('service.started', 'docker'):
+        if not self.middleware.call_sync('kubernetes.validate_k8s_setup', False):
             return results
 
         extra = deepcopy(options.get('extra', {}))
@@ -113,7 +113,7 @@ class ContainerImagesService(CRUDService):
 
         `docker_authentication` should be specified if image to be retrieved is under a private repository.
         """
-        self.middleware.call_sync('container.image.docker_checks')
+        self.middleware.call_sync('kubernetes.validate_k8s_setup')
         # TODO: Have job progress report downloading progress
         with ContainerdClient('image') as client:
             try:
@@ -139,7 +139,7 @@ class ContainerImagesService(CRUDService):
         """
         `options.force` should be used to force delete an image even if it's in use by a stopped container.
         """
-        self.middleware.call_sync('container.image.docker_checks')
+        self.middleware.call_sync('kubernetes.validate_k8s_setup')
         image = self.middleware.call_sync('container.image.get_instance', id)
         if image['system_image']:
             raise CallError(f'{id} is being used by system and cannot be deleted.')
@@ -149,11 +149,6 @@ class ContainerImagesService(CRUDService):
             client.remove_image(id)
 
         self.middleware.call_sync('container.image.remove_image_from_cache', image)
-
-    @private
-    async def docker_checks(self):
-        if not await self.middleware.call('service.started', 'docker'):
-            raise CallError('Docker service is not running')
 
     @private
     def normalise_tag(self, tag):
