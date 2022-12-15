@@ -208,7 +208,7 @@ class PoolDatasetService(Service):
         info = self.build_details(mntinfo)
         for i in collapsed:
             atime, case = self.get_atime_and_casesensitivity(i, mntinfo)
-            i['locked'] = i['encrypted']
+            i['locked'] = i['locked']
             i['atime'] = atime
             i['casesensitive'] = case
             i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
