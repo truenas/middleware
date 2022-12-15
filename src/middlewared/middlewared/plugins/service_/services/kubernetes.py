@@ -105,13 +105,14 @@ class KubernetesService(SimpleService):
             self.middleware.logger.error('Failed to remove iptable rules for kubernetes service: %r', e)
 
     async def after_stop(self):
-        cp = await run(['/usr/local/bin/k3s-kill.sh'], check=False, encoding='utf8')
-        if cp.returncode:
-            self.middleware.logger.error('Failed to kill pods after stopping kubernetes service: %r', cp.stderr)
         await self._systemd_unit('kube-router', 'stop')
         await self._systemd_unit('cni-dhcp', 'stop')
         # This is necessary to ensure that docker umounts datasets and shuts down cleanly
         await asyncio.sleep(5)
         await self.middleware.call('k8s.cni.cleanup_cni')
+        # TODO: Ensure this actually kills all the containerd-shims
+        cp = await run(['/usr/local/bin/k3s-kill.sh'], check=False, encoding='utf8')
+        if cp.returncode:
+            self.middleware.logger.error('Failed to kill pods after stopping kubernetes service: %r', cp.stderr)
         await self.unmount_kubelet_dataset()
         remove_initialized_config()
