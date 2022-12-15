@@ -99,7 +99,10 @@ class KubernetesService(SimpleService):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-stop', 'effect': 'NoExecute'}])
         await asyncio.sleep(10)
         await self.clear_chart_releases_cache()
-        await self.middleware.call('kubernetes.remove_iptables_rules')
+        try:
+            await self.middleware.call('kubernetes.remove_iptables_rules')
+        except Exception as e:
+            self.middleware.logger.error('Failed to remove iptable rules for kubernetes service: %r', e)
 
     async def after_stop(self):
         cp = await run(['/usr/local/bin/k3s-kill.sh'], check=False, encoding='utf8')
