@@ -384,6 +384,11 @@ class SharingSMBService(Service):
                 continue
             try:
                 auxparam, val = param.split('=', 1)
+                if auxparam == 'include':
+                    self.logger.warning('[%s] contains invalid include line: %s',
+                                        data['name'], param)
+                    continue
+
                 """
                 vfs_fruit must be added to all shares if fruit is enabled.
                 Support for SMB2 AAPL extensions is determined on first tcon
@@ -397,6 +402,7 @@ class SharingSMBService(Service):
                     conf['vfs objects'] = await self.order_vfs_objects(vfsobjects)
                 else:
                     conf[auxparam.strip()] = val.strip()
+
             except Exception:
                 self.logger.debug("[%s] contains invalid auxiliary parameter: [%s]",
                                   data['name'], param)
