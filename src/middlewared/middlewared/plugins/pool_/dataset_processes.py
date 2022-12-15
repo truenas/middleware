@@ -6,7 +6,7 @@ import re
 from middlewared.schema import accepts, Ref, returns, Str
 from middlewared.service import CallError, item_method, private, Service
 
-from .utils import attachments_path
+from .utils import dataset_mountpoint
 
 RE_ZD = re.compile(r'^/dev/zd[0-9]+$')
 
@@ -41,9 +41,12 @@ class PoolDatasetService(Service):
         dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid, {'encryption': True})
         if dataset['locked']:
             return []
-        path = attachments_path(dataset)
-        zvol_path = f'/dev/zvol/{dataset["name"]}'
-        return await self.middleware.call('pool.dataset.processes_using_paths', [path, zvol_path])
+
+        paths = [f'/dev/zvol/{dataset["name"]}']
+        if mountpoint := dataset_mountpoint(dataset):
+            paths.append(mountpoint)
+
+        return await self.middleware.call('pool.dataset.processes_using_paths', paths)
 
     @private
     async def kill_processes(self, oid, control_services, max_tries=5):
