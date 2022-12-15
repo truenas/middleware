@@ -11,10 +11,7 @@ from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
-from .utils import DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO
-
-
-DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
+from .utils import DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO
 
 
 class ContainerImagesService(CRUDService):
@@ -154,26 +151,6 @@ class ContainerImagesService(CRUDService):
         await self.middleware.call('container.image.remove_image_from_cache', image)
 
     @private
-    async def load_images_from_file(self, path):
-        await self.docker_checks()
-        if not os.path.exists(path):
-            raise CallError(f'"{path}" path does not exist.', errno=errno.ENOENT)
-
-        resp = []
-        async with aiodocker.Docker() as client:
-            with open(path, 'rb') as f:
-                async for i in client.images.import_image(data=f, stream=True):
-                    if 'error' in i:
-                        raise CallError(f'Unable to load images from file: {i["error"]}')
-                    else:
-                        resp.append(i)
-        return resp
-
-    @private
-    async def load_default_images(self):
-        await self.load_images_from_file(DEFAULT_DOCKER_IMAGES_PATH)
-
-    @private
     async def docker_checks(self):
         if not await self.middleware.call('service.started', 'docker'):
             raise CallError('Docker service is not running')
@@ -196,10 +173,9 @@ class ContainerImagesService(CRUDService):
 
     @private
     def get_system_images_tags(self):
-        with open(DEFAULT_DOCKER_IMAGES_LIST_PATH, 'r') as f:
-            images = [i for i in map(str.strip, f.readlines()) if i]
+        # TODO: Let's add coredns/pause image etc
 
-        images.extend([
+        images = [
             'nvidia/k8s-device-plugin:1.0.0-beta6',
             'k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0',
             'k8s.gcr.io/sig-storage/csi-provisioner:v2.1.0',
@@ -207,7 +183,7 @@ class ContainerImagesService(CRUDService):
             'k8s.gcr.io/sig-storage/snapshot-controller:v4.0.0',
             'k8s.gcr.io/sig-storage/csi-snapshotter:v4.0.0',
             'openebs/zfs-driver:ci',
-        ])
+        ]
         return list(itertools.chain(
             *[self.normalise_tag(tag) for tag in images]
         ))

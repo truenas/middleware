@@ -320,7 +320,6 @@ class KubernetesService(Service):
         await self.validate_k8s_fs_setup()
         await self.middleware.call('k8s.migration.run')
         await self.middleware.call('service.start', 'docker')
-        await self.middleware.call('container.image.load_default_images')
         await self.middleware.call('service.start', 'kubernetes')
 
     @private
