@@ -1,8 +1,8 @@
-import aiodocker
 import contextlib
 import itertools
 
 from copy import deepcopy
+from cri_api.images import ImageServiceException
 from datetime import datetime
 
 from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
@@ -103,7 +103,7 @@ class ContainerImagesService(CRUDService):
     )
     @returns(List(items=[Dict('pull_result_entry', Str('status'), additional_attrs=True)]))
     @job()
-    async def pull(self, job, data):
+    def pull(self, job, data):
         """
         `from_image` is the name of the image to pull. Format for the name is "registry/repo/image" where
         registry may be omitted and it will default to docker registry in this case.
@@ -113,17 +113,17 @@ class ContainerImagesService(CRUDService):
 
         `docker_authentication` should be specified if image to be retrieved is under a private repository.
         """
-        await self.docker_checks()
+        self.middleware.call_sync('container.image.docker_checks')
         # TODO: Have job progress report downloading progress
-        async with aiodocker.Docker() as docker:
+        with ContainerdClient('image') as client:
             try:
-                response = await docker.images.pull(
-                    from_image=data['from_image'], tag=data['tag'], auth=data['docker_authentication']
+                response = client.pull_image(
+                    f'{data["from_image"]}:{data["tag"]}', auth_config=data['docker_authentication'],
                 )
-            except aiodocker.DockerError as e:
-                raise CallError(f'Failed to pull image: {e.message}')
+            except ImageServiceException as e:
+                raise CallError(f'Failed to pull image: {e}')
 
-        await self.middleware.call('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
+        self.middleware.call_sync('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
 
         return response
 
@@ -135,19 +135,20 @@ class ContainerImagesService(CRUDService):
         )
     )
     @returns()
-    async def do_delete(self, id, options):
+    def do_delete(self, id, options):
         """
         `options.force` should be used to force delete an image even if it's in use by a stopped container.
         """
-        await self.docker_checks()
-        image = await self.get_instance(id)
+        self.middleware.call_sync('container.image.docker_checks')
+        image = self.middleware.call_sync('container.image.get_instance', id)
         if image['system_image']:
             raise CallError(f'{id} is being used by system and cannot be deleted.')
 
-        async with aiodocker.Docker() as docker:
-            await docker.images.delete(name=id, force=options['force'])
+        with ContainerdClient('image') as client:
+            # TODO: See force alternatives
+            client.remove_image(id)
 
-        await self.middleware.call('container.image.remove_image_from_cache', image)
+        self.middleware.call_sync('container.image.remove_image_from_cache', image)
 
     @private
     async def docker_checks(self):
