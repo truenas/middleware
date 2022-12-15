@@ -1,5 +1,4 @@
 from .cifs import CIFSService
-from .docker import DockerService
 from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .haproxy import HAProxyService
@@ -85,7 +84,6 @@ all_services = [
     GlusterdService,
     GlusterEventsdService,
     CtdbService,
-    DockerService,
     KubernetesService,
     KubeRouterService,
     OpenVmToolsService,
