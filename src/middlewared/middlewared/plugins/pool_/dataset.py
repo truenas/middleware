@@ -16,7 +16,7 @@ from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
-    attachments_path, get_props_of_interest_mapping, none_normalize, ZFS_COMPRESSION_ALGORITHM_CHOICES,
+    dataset_mountpoint, get_props_of_interest_mapping, none_normalize, ZFS_COMPRESSION_ALGORITHM_CHOICES,
     ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
 )
 
@@ -836,17 +836,16 @@ class PoolDatasetService(CRUDService):
             )
 
         dataset = await self.get_instance(id)
-        path = attachments_path(dataset)
-        if path:
+        if mountpoint := dataset_mountpoint(dataset):
             for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
-                attachments = await delegate.query(path, True)
+                attachments = await delegate.query(mountpoint, True)
                 if attachments:
                     await delegate.delete(attachments)
 
-        if dataset['locked'] and dataset['mountpoint'] and os.path.exists(dataset['mountpoint']):
+        if dataset['locked'] and mountpoint and os.path.exists(mountpoint):
             # We would like to remove the immutable flag in this case so that it's mountpoint can be
             # cleaned automatically when we delete the dataset
-            await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
+            await self.middleware.call('filesystem.set_immutable', False, mountpoint)
 
         result = await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],

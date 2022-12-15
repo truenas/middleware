@@ -12,7 +12,7 @@ from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.validators import Range
 
-from .utils import attachments_path, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
+from .utils import dataset_mountpoint, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
 
 
 class PoolDatasetService(Service):
@@ -50,8 +50,11 @@ class PoolDatasetService(Service):
         elif id != ds['encryption_root']:
             raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
 
+        mountpoint = dataset_mountpoint(ds)
+
         async def detach(delegate):
-            await delegate.stop(await delegate.query(attachments_path(ds), True))
+            if mountpoint:
+                await delegate.stop(await delegate.query(mountpoint, True))
 
         try:
             await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
@@ -285,7 +288,7 @@ class PoolDatasetService(Service):
         if unlocked:
             if options['toggle_attachments']:
                 job.set_progress(91, 'Handling attachments')
-                self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset, options)
+                self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset)
 
             job.set_progress(92, 'Updating database')
 
@@ -322,13 +325,14 @@ class PoolDatasetService(Service):
                             break
 
     @private
-    async def unlock_handle_attachments(self, dataset, options):
+    async def unlock_handle_attachments(self, dataset):
+        mountpoint = dataset_mountpoint(dataset)
         for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
             # FIXME: put this into `VMFSAttachmentDelegate`
             if attachment_delegate.name == 'vm':
                 await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
                 continue
 
-            attachments = await attachment_delegate.query(attachments_path(dataset), True, {'locked': False})
-            if attachments:
-                await attachment_delegate.start(attachments)
+            if mountpoint:
+                if attachments := await attachment_delegate.query(mountpoint, True, {'locked': False}):
+                    await attachment_delegate.start(attachments)

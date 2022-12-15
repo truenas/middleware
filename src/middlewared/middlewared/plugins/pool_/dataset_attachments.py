@@ -1,7 +1,7 @@
 from middlewared.schema import accepts, Ref, returns, Str
 from middlewared.service import item_method, private, Service
 
-from .utils import attachments_path
+from .utils import dataset_mountpoint
 
 
 class PoolDatasetService(Service):
@@ -31,7 +31,9 @@ class PoolDatasetService(Service):
         ]
         """
         dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid)
-        return await self.attachments_with_path(attachments_path(dataset))
+        if mountpoint := dataset_mountpoint(dataset):
+            return await self.attachments_with_path(mountpoint)
+        return []
 
     @private
     async def attachments_with_path(self, path):
