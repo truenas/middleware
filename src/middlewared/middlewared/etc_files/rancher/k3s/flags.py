@@ -1,5 +1,6 @@
 import contextlib
 import ipaddress
+import json
 import os
 import shutil
 import yaml
@@ -49,4 +50,11 @@ def render(service, middleware):
             'kubelet-arg': kubelet_args,
             'protect-kernel-defaults': True,
             'disable': [] if config['servicelb'] else ['servicelb'],
+        }))
+
+    # TODO: See what we have to do make proxy work for pulling images
+    with open('/etc/docker/middleware.json', 'w') as f:
+        f.write(json.dumps({
+            'verifyVolumes': config['validate_host_path'],
+            'appsDataset': config['dataset'],
         }))

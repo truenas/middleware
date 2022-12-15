@@ -230,10 +230,6 @@ class EtcService(Service):
             },
             {'type': 'mako', 'path': 'default/rrdcached', 'checkpoint': 'pool_import'},
         ],
-        'docker': [
-            {'type': 'mako', 'path': 'docker.env', 'checkpoint': None},
-            {'type': 'py', 'path': 'docker', 'checkpoint': None},
-        ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
         ],
