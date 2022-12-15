@@ -2,7 +2,12 @@ import aiohttp
 import aiohttp.client_exceptions
 import async_timeout
 import asyncio
+import typing
 import urllib
+
+from cri_api.channel import Channel
+from cri_api.containers import Containers
+from cri_api.images import Images
 
 from middlewared.service import CallError, private
 
@@ -139,3 +144,23 @@ class CRIClientMixin:
         digests = parse_digest_from_schema(response)
         digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
         return digests
+
+
+class ContainerdClient:
+
+    CLIENT_MAPPING: dict = {
+        'container': Containers,
+        'image': Images,
+    }
+    CONTAINERD_SOCKET: str = 'unix:///run/k3s/containerd/containerd.sock'
+
+    def __init__(self, client_type: str):
+        self.channel: typing.Optional[typing.Type[Channel]] = None
+        self.client: typing.Union[typing.Type[Containers], typing.Type[Containers]] = self.CLIENT_MAPPING[client_type]
+
+    def __enter__(self):
+        self.channel = Channel(self.CONTAINERD_SOCKET)
+        return self.client(self.channel)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.channel.channel.close()
