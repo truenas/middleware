@@ -46,8 +46,7 @@ class ChartReleaseService(Service):
             stderr = cp.communicate()[1]
             if cp.returncode:
                 errmsg = stderr.decode()
-                if tn_action == 'upgrade' or tn_action == 'install':
-                    errmsg = re.sub(RE_ERRCLEANUP, '', errmsg, 1)
+                errmsg = re.sub(RE_ERRCLEANUP, '', errmsg, 1)
                 raise CallError(f'Failed to {tn_action} App: {errmsg}')
 
         self.middleware.call_sync('chart.release.clear_chart_release_portal_cache', chart_release)
