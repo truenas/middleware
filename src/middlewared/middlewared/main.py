@@ -552,17 +552,17 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, middleware, ws, input_queue, loop, username, can_sudo, options):
+    def __init__(self, middleware, ws, input_queue, loop, username, as_root, options):
         self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
-        self.command, self.sudo_warning = self.get_command(username, can_sudo, options)
+        self.command, self.sudo_warning = self.get_command(username, as_root, options)
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
-    def get_command(self, username, can_sudo, options):
+    def get_command(self, username, as_root, options):
         allowed_options = ('chart_release', 'vm_id')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
@@ -573,10 +573,10 @@ class ShellWorkerThread(threading.Thread):
                 'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
             ]
 
-            if not can_sudo:
+            if not as_root:
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 
-            return command, not can_sudo
+            return command, not as_root
         elif options.get('chart_release'):
             command = [
                 '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],
@@ -584,10 +584,10 @@ class ShellWorkerThread(threading.Thread):
                 options.get('command', '/bin/bash'),
             ]
 
-            if not can_sudo:
+            if not as_root:
                 command = ['/usr/bin/sudo', '-H', '-u', username] + command
 
-            return command, not can_sudo
+            return command, not as_root
         else:
             return ['/usr/bin/login', '-p', '-f', username], False
 
@@ -780,7 +780,7 @@ class ShellApplication(object):
                 # By default we want to run kubectl/virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
                 # run them straight with root privileges.
-                can_sudo = False
+                as_root = False
                 try:
                     user = await self.middleware.call(
                         'user.query',
@@ -792,16 +792,16 @@ class ShellApplication(object):
                     pass
                 else:
                     if user['sudo'] and not user['sudo_commands']:
-                        can_sudo = True
+                        as_root = True
                     else:
                         for group in await self.middleware.call('group.query', [['id', 'in', user['groups']]]):
                             if group['sudo'] and not group['sudo_commands']:
-                                can_sudo = True
+                                as_root = True
                                 break
 
                 conndata.t_worker = ShellWorkerThread(
                     middleware=self.middleware, ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(),
-                    username=token['username'], can_sudo=can_sudo, options=options,
+                    username=token['username'], as_root=as_root, options=options,
                 )
                 conndata.t_worker.start()
 
