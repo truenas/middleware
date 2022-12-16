@@ -101,7 +101,7 @@ class ContainerImagesService(CRUDService):
             Str('tag', default=None, null=True),
         )
     )
-    @returns(List(items=[Dict('pull_result_entry', Str('status'), additional_attrs=True)]))
+    @returns()
     @job()
     def pull(self, job, data):
         """
@@ -114,28 +114,20 @@ class ContainerImagesService(CRUDService):
         `docker_authentication` should be specified if image to be retrieved is under a private repository.
         """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
-        # TODO: Have job progress report downloading progress
         with ContainerdClient('image') as client:
             try:
-                response = client.pull_image(
+                client.pull_image(
                     f'{data["from_image"]}:{data["tag"]}', auth_config=data['docker_authentication'],
                 )
             except ImageServiceException as e:
                 raise CallError(f'Failed to pull image: {e}')
 
         self.middleware.call_sync('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
+        job.set_progress(100, 'Image pull complete')
 
-        return response
-
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('force', default=False),
-        )
-    )
+    @accepts(Str('id'))
     @returns()
-    def do_delete(self, id, options):
+    def do_delete(self, id):
         """
         `options.force` should be used to force delete an image even if it's in use by a stopped container.
         """
