@@ -245,6 +245,7 @@ class ErrnoMixin:
     EREMOTENODEERROR = 204
     EDATASETISLOCKED = 205
     EINVALIDRRDTIMESTAMP = 206
+    ENOTAUTHENTICATED = 207
 
     @classmethod
     def _get_errname(cls, code):
