@@ -9,7 +9,9 @@ class DiskService(Service):
     async def disk_by_zfs_guid(self, guid):
         try:
             return await self.middleware.call(
-                "disk.query", [["zfs_guid", "=", guid]], {"extra": {"include_expired": True}, "get": True},
+                "disk.query",
+                [["zfs_guid", "=", guid]],
+                {"extra": {"include_expired": True}, "get": True, "order_by": ["disk_expiretime"]},
             )
         except MatchNotFound:
             return None
@@ -55,12 +57,13 @@ class DiskService(Service):
         for disk in await self.middleware.call("disk.query", [], {"extra": {"include_expired": True}}):
             guid = disk_to_guid.get(disk["devname"])
             if guid is not None and guid != disk["zfs_guid"]:
-                self.logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
-                events.add(disk["identifier"])
-                await self.middleware.call(
-                    "datastore.update", "storage.disk", disk["identifier"],
-                    {"zfs_guid": guid}, {"prefix": "disk_", "send_events": False},
-                )
+                if not disk["expiretime"]:
+                    self.logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
+                    events.add(disk["identifier"])
+                    await self.middleware.call(
+                        "datastore.update", "storage.disk", disk["identifier"],
+                        {"zfs_guid": guid}, {"prefix": "disk_", "send_events": False},
+                    )
             elif disk["zfs_guid"]:
                 devname = disk_to_guid.inv.get(disk["zfs_guid"])
                 if devname is not None and devname != disk["devname"]:
