@@ -155,7 +155,7 @@ system_func()
 	fi
 
 	section_header "Failed updates /data/update.failed"
-	sc /data/update.failed
+	midclt call system.gather_update_failed
 	section_footer
 
 	section_header "Truecommand connection (midclt call truecommand.connected)"
