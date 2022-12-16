@@ -57,7 +57,7 @@ class ContainerService(Service):
                         'id': image['id'],
                         'repo_tags': image['repo_tags'],
                     })
-                    pruned_objects['images']['SpaceReclaimed'] += image['size']
+                    pruned_objects['images']['SpaceReclaimed'] += int(image['size'])
 
         job.set_progress(100, 'Successfully pruned images/containers')
         return pruned_objects
