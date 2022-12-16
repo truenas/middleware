@@ -8,7 +8,9 @@ from .restful import authenticate, copy_multipart_to_pipe, RESTfulAPI
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
-from .service_exception import adapt_exception, CallError, CallException, ValidationError, ValidationErrors
+from .service_exception import (
+    adapt_exception, CallError, CallException, MatchNotFound, ValidationError, ValidationErrors,
+)
 from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
 from .utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
@@ -550,36 +552,44 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, middleware, ws, input_queue, loop, username, options):
+    def __init__(self, middleware, ws, input_queue, loop, username, can_sudo, options):
         self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
-        self.command = self.get_command(username, options)
+        self.command, self.sudo_warning = self.get_command(username, can_sudo, options)
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
-    def get_command(self, username, options):
+    def get_command(self, username, can_sudo, options):
         allowed_options = ('chart_release', 'vm_id')
         if all(options.get(k) for k in allowed_options):
             raise CallError(f'Only one option is supported from {", ".join(allowed_options)}')
 
         if options.get('vm_id'):
-            return [
-                '/usr/bin/sudo', '-H', '-u', username,
+            command = [
                 '/usr/bin/virsh', '-c', 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock',
                 'console', f'{options["vm_data"]["id"]}_{options["vm_data"]["name"]}'
             ]
+
+            if not can_sudo:
+                command = ['/usr/bin/sudo', '-H', '-u', username] + command
+
+            return command, not can_sudo
         elif options.get('chart_release'):
-            return [
-                '/usr/bin/sudo', '-H', '-u', username,
+            command = [
                 '/usr/local/bin/k3s', 'kubectl', 'exec', '-n', options['chart_release']['namespace'],
                 f'pod/{options["pod_name"]}', '--container', options['container_name'], '-it', '--',
                 options.get('command', '/bin/bash'),
             ]
+
+            if not can_sudo:
+                command = ['/usr/bin/sudo', '-H', '-u', username] + command
+
+            return command, not can_sudo
         else:
-            return ['/usr/bin/login', '-p', '-f', username]
+            return ['/usr/bin/login', '-p', '-f', username], False
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
@@ -604,6 +614,16 @@ class ShellWorkerThread(threading.Thread):
         attr = termios.tcgetattr(master_fd)
         attr[4] = attr[5] = termios.B921600
         termios.tcsetattr(master_fd, termios.TCSANOW, attr)
+
+        if self.sudo_warning:
+            asyncio.run_coroutine_threadsafe(
+                self.ws.send_bytes(
+                    (
+                        f"WARNING: Your user does not have sudo privileges so {self.command[4]} command will run\r\n"
+                        f"on your behalf. This might cause permission issues.\r\n\r\n"
+                    ).encode("utf-8")
+                ), loop=self.loop
+            ).result()
 
         def reader():
             """
@@ -757,9 +777,31 @@ class ShellApplication(object):
                         'chart.release.get_instance', options['chart_release_name']
                     )
 
+                # By default we want to run kubectl/virsh with user's privileges and assume all "permission denied"
+                # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
+                # run them straight with root privileges.
+                can_sudo = False
+                try:
+                    user = await self.middleware.call(
+                        'user.query',
+                        [['username', '=', token['username']]],
+                        {'get': True},
+                    )
+                except MatchNotFound:
+                    # Currently only local users can be sudoers
+                    pass
+                else:
+                    if user['sudo'] and not user['sudo_commands']:
+                        can_sudo = True
+                    else:
+                        for group in await self.middleware.call('group.query', [['id', 'in', user['groups']]]):
+                            if group['sudo'] and not group['sudo_commands']:
+                                can_sudo = True
+                                break
+
                 conndata.t_worker = ShellWorkerThread(
                     middleware=self.middleware, ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop(),
-                    username=token['username'], options=options,
+                    username=token['username'], can_sudo=can_sudo, options=options,
                 )
                 conndata.t_worker.start()
 
