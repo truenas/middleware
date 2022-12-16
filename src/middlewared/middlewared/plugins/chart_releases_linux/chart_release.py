@@ -8,6 +8,7 @@ import textwrap
 
 from pkg_resources import parse_version
 
+from middlewared.plugins.container_runtime_interface.utils import normalize_reference
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list
@@ -112,7 +113,7 @@ class ChartReleaseService(CRUDService):
         catalogs = await self.middleware.call('catalog.query', [], {'extra': {'item_details': True}})
         container_images = {}
         for image in await self.middleware.call('container.image.query'):
-            for tag in image['repo_tags']:
+            for tag in map(lambda t: normalize_reference(t)['complete_tag'], image['repo_tags']):
                 if not container_images.get(tag):
                     container_images[tag] = image
 
@@ -222,7 +223,7 @@ class ChartReleaseService(CRUDService):
                 } for i_name, image_details in map(
                     lambda i: (i, container_images.get(i, {})),
                     list(set(
-                        c['image']
+                        normalize_reference(c['image'])['complete_tag']
                         for workload_type in ('deployments', 'statefulsets')
                         for workload in resources[workload_type][name]
                         for c in workload['spec']['template']['spec']['containers']
