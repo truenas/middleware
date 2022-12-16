@@ -172,7 +172,7 @@ if not ha:
         global public_image_id
         results = GET('/container/image/')
         for result in results.json():
-            if result['repo_tags'] == ['minio/minio:latest']:
+            if result['repo_tags'] == ['docker.io/minio/minio:latest']:
                 public_image_id = result['id']
                 assert True, result
                 break
@@ -572,7 +572,7 @@ if not ha:
 
     def test_44_delete_public_image_with_id(request):
         depends(request, ['pull_public_image'])
-        results = DELETE(f'/container/image/id/{public_image_id}/', {'force': True})
+        results = DELETE(f'/container/image/id/{public_image_id}/')
         assert results.status_code == 200, results.text
         assert results.json() is None, results.text
 
