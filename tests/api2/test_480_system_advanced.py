@@ -55,7 +55,7 @@ def test_04_system_advanced_check_serial_port_using_api(sysadv_dict):
 
 def test_05_system_advanced_check_serial_port_using_ssh(sysadv_dict, request):
     depends(request, ["ssh_password"], scope="session")
-    cmd = f'dmesg | grep "{sysadv_dict["serial_choices"][0]}"'
+    cmd = f'systemctl | grep "{sysadv_dict["serial_choices"][0]}"'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results
 
@@ -97,7 +97,7 @@ def test_10_system_advanced_check_motd_using_ssh(request):
     results = SSH_TEST(f'cat /etc/motd | grep "{MOTD}"', user, password, ip)
     assert results['result'] is True, results
 
-    
+
 def test_11_Setting_sysloglevel():
     results = PUT("/system/advanced/", {"sysloglevel": SYSLOGLEVEL})
     assert results.status_code == 200, results.text
@@ -108,4 +108,3 @@ def test_12_Checking_sysloglevel_using_api():
     assert results.status_code == 200, results.text
     data = results.json()
     assert data['sysloglevel'] == SYSLOGLEVEL
-    
