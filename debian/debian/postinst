@@ -73,6 +73,13 @@ systemctl mask exim4-base.service exim4.service exim4-base.timer
 systemctl mask uuidd.service uuidd.socket
 systemctl mask ndctl-monitor.service
 
+# mdmonitor.service in particular causes mdadm to send emails to the MAILADDR line
+# in /etc/mdadm/mdadm.conf. By default, that's the root account, so end-users are
+# getting unnecessary emails about these devices. Since middlewared service is
+# solely responsible for managing md devices there is no reason to run this monitor
+# service. This prevents unnecessary emails from being sent out.
+systemctl mask mdadm.service mdmonitor.service
+
 # We don't use LVM and this service can add significant boot delays
 # on large disk systems
 systemctl mask lvm2-monitor.service
