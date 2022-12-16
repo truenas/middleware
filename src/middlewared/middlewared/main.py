@@ -9,7 +9,7 @@ from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
 from .service_exception import (
-    adapt_exception, CallError, CallException, MatchNotFound, ValidationError, ValidationErrors,
+    adapt_exception, CallError, CallException, ErrnoMixin, MatchNotFound, ValidationError, ValidationErrors,
 )
 from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
@@ -354,7 +354,7 @@ class Application:
                     error = True
             if not error and not hasattr(methodobj, '_no_auth_required'):
                 if not self.authenticated:
-                    self.send_error(message, errno.EACCES, 'Not authenticated')
+                    self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
                     error = True
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.send_error(message, errno.EACCES, 'Not authorized')
@@ -758,7 +758,7 @@ class ShellApplication(object):
                     await ws.send_json({
                         'msg': 'failed',
                         'error': {
-                            'error': errno.EACCES,
+                            'error': ErrnoMixin.ENOTAUTHENTICATED,
                             'reason': 'Invalid token',
                         }
                     })
