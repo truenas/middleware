@@ -21,6 +21,9 @@ def normalize_reference(reference: str) -> Dict:
     Most of the logic has been used from docker engine to make sure we follow the same rules/practices
     for normalising the image name / tag
     """
+    # This needs to be done as containerd automatically adds docker.io as a registery which can't be queried by us
+    # when checking for update alerts as registry-1.docker.io is the one used to actually query that information
+    reference = reference.removeprefix('docker.io/')
     registry_idx = reference.find('/')
     if registry_idx == -1 or (not any(c in reference[:registry_idx] for c in ('.', ':')) and reference[:registry_idx] != 'localhost'):
         registry, tagged_image = DEFAULT_DOCKER_REGISTRY, reference
