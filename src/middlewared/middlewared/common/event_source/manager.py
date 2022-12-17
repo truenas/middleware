@@ -110,4 +110,5 @@ class EventSourceManager:
         for ident in self.subscriptions[name][arg]:
             await self.send_no_sub_message(self.idents.pop(ident), error)
 
+        self.instances[name].pop(arg)
         self.subscriptions[name][arg].clear()
