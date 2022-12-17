@@ -260,7 +260,7 @@ class Application:
     async def subscribe(self, ident, name):
         shortname, arg = self.middleware.event_source_manager.short_name_arg(name)
         if shortname in self.middleware.event_source_manager.event_sources:
-            await self.middleware.event_source_manager.subscribe(self, self.__esm_ident(ident), shortname, arg)
+            await self.middleware.event_source_manager.subscribe_app(self, self.__esm_ident(ident), shortname, arg)
         else:
             self.__subscribed[ident] = name
 
