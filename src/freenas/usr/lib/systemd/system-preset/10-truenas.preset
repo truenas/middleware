@@ -33,7 +33,6 @@ disable wsdd.service
 disable libvirtd.service
 disable winbind.service
 disable glusterd*
-disable docker*
 disable kubelet*
 disable openvpn*
 disable nvidia-*
@@ -41,7 +40,6 @@ disable libvirt*
 disable k3s*
 disable cni*
 disable kube-router*
-disable containerd*
 disable walinuxagent*
 disable serial-getty@*
 disable haproxy*
