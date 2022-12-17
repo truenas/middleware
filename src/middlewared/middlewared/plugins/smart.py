@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timedelta, timezone
 import functools
 import re
@@ -12,7 +11,7 @@ from middlewared.schema import accepts, Bool, Cron, Datetime, Dict, Int, Float, 
 from middlewared.service import (
     CRUDService, filterable, filterable_returns, filter_list, job, private, SystemServiceService, ValidationErrors
 )
-from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 
@@ -424,7 +423,7 @@ class SMARTTestService(CRUDService):
                 'Please specify at least one disk.'
             )
         else:
-            supported_disks = await self.disk_choices(True)
+            supported_disks = await self.middleware.call('smart.test.disk_choices', True)
             devices = await self.middleware.call('device.get_disks')
             valid_disks = [
                 disk['identifier']
@@ -646,32 +645,16 @@ class SMARTTestService(CRUDService):
         start_monotime = time.monotonic()
         end_monotime = start_monotime + (expected_result_time - start).total_seconds()
 
-        while True:
-            try:
-                current_test = (await self.middleware.call(
-                    'smart.test.results',
-                    [['disk', '=', disk['disk']]],
-                    {'get': True}
-                ))['current_test']
-            except MatchNotFound:
-                raise CallError(f'No S.M.A.R.T. test results found for {disk["disk"]}')
+        await self.middleware.call('smart.test.set_test_data', disk['disk'], {
+            'start_monotime': start_monotime,
+            'end_monotime': end_monotime,
+        })
 
-            if current_test is None:
+        async for _, data in await self.middleware.event_source_manager.iterate('smart.test.progress', disk['disk']):
+            if data['fields']['progress'] is None:
                 return
 
-            job.set_progress(current_test['progress'])
-
-            # Check every percent
-            interval = int((end_monotime - start_monotime) / 100)
-
-            if time.monotonic() < end_monotime:
-                # but not more often than every ten seconds
-                interval = max(interval, 10)
-            else:
-                # the test is taking longer than expected, do not poll more often than every minute
-                interval = max(interval, 60)
-
-            await asyncio.sleep(interval)
+            job.set_progress(data['fields']['progress'])
 
 
 class SmartModel(sa.Model):
