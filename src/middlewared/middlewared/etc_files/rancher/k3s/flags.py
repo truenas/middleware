@@ -52,7 +52,8 @@ def render(service, middleware):
             'disable': [] if config['servicelb'] else ['servicelb'],
         }))
 
-    # TODO: See what we have to do make proxy work for pulling images
+    # TODO: test containerd env file works for proxy
+    #  Also check coredumps are limited
     with open('/etc/containerd.json', 'w') as f:
         f.write(json.dumps({
             'verifyVolumes': config['validate_host_path'],

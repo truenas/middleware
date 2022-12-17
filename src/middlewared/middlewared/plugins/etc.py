@@ -323,6 +323,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},
         ],
         'k3s': [
+            {'type': 'mako', 'path': 'containerd.env', 'checkpoint': None},
             {'type': 'py', 'path': 'rancher/k3s/flags', 'checkpoint': None},
             {'type': 'py', 'path': 'rancher/node/node_passwd', 'checkpoint': None},
         ],
