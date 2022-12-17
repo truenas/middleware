@@ -24,11 +24,7 @@ class CoreFilesArePresentAlertSource(AlertSource):
         "/usr/sbin/smartctl",
     )
     ignore_units = (
-        # Unit: "containerd.service" is related to k3s.
-        # users are free to run whatever they would like to in containers
-        # and we don't officially support all the apps themselves so we
-        # ignore those core dumps
-        "containerd.service",
+        # TODO: with docker/containerd removed, please see what we need to whitelist here
         # Unit: "syslog-ng.service" has been core dumping for, literally, years
         # on freeBSD and now also on linux. The fix is non-trivial and it seems
         # to be very specific to how we implemented our system dataset. Anyways,
