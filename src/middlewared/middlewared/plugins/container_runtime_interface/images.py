@@ -93,7 +93,7 @@ class ContainerImagesService(CRUDService):
         Dict(
             'image_pull',
             Dict(
-                'docker_authentication',
+                'authentication',
                 Str('username', required=True),
                 Str('password', required=True),
                 default=None,
@@ -113,14 +113,12 @@ class ContainerImagesService(CRUDService):
         `tag` specifies tag of the image and defaults to `null`. In case of `null` it will retrieve all the tags
         of the image.
 
-        `docker_authentication` should be specified if image to be retrieved is under a private repository.
+        `authentication` should be specified if image to be retrieved is under a private repository.
         """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         with ContainerdClient('image') as client:
             try:
-                client.pull_image(
-                    f'{data["from_image"]}:{data["tag"]}', auth_config=data['docker_authentication'],
-                )
+                client.pull_image(f'{data["from_image"]}:{data["tag"]}', auth_config=data['authentication'])
             except ImageServiceException as e:
                 raise CallError(f'Failed to pull image: {e}')
 

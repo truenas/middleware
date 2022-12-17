@@ -37,7 +37,7 @@ class ContainerService(Service):
         """
         Prune unused images/containers. This will by default remove any dangling images.
 
-        `prune_options.remove_unused_images` when set will remove any docker image which is not being used by any
+        `prune_options.remove_unused_images` when set will remove any container image which is not being used by any
         container.
         """
         pruned_objects = {'images': {'ImagesDeleted': [], 'SpaceReclaimed': 0}}
