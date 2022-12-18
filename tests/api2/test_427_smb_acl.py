@@ -6,10 +6,12 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import POST, GET, DELETE, wait_on_job
+from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import (
     pool_name,
     dev_test,
+    user,
+    password,
     ip
 )
 from protocols import SMB
@@ -49,6 +51,29 @@ flagset = {
     "INHERITED": False
 }
 
+WINMSA_FULL_PERMS_ALL = [
+    {
+        "tag": "owner@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "group@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+    {
+        "tag": "everyone@",
+        "id": None,
+        "type": "ALLOW",
+        "perms": {"BASIC": "FULL_CONTROL"},
+        "flags": {"BASIC": "INHERIT"}
+    },
+]
 
 @contextlib.contextmanager
 def smb_share(path, options=None):
@@ -70,10 +95,11 @@ def smb_share(path, options=None):
     next_uid = results.json()
 
 
-def get_windows_sd(share, format="LOCAL"):
+def get_windows_sd(share, format="LOCAL", path="\\"):
     results = POST("/smb/get_remote_acl", {
         "server": "127.0.0.1",
         "share": share,
+        "path": path,
         "username": SMB_USER,
         "password": SMB_PWD,
         "options": {"output_format": format}
@@ -251,6 +277,94 @@ def test_007_test_disable_autoinherit(request):
             sd = c.get_sd('foo')
             assert 'SEC_DESC_DACL_PROTECTED' in sd['control']['parsed'], str(sd)
             c.disconnect()
+
+
+def test_008_test_winmsa_behavior(request):
+    """
+    This test validates that vfs_winmsa behaves correctly per specifications of
+    customer who requested the module.
+
+    Ops are as follows:
+    * create two directories with different ACL on them (dir 1 and dir 2)
+    * move files from dir1 to dir2
+    * verify that ACL on dir2 is automatically inherited on newly-renamed files.
+    * move files from dir2 back to dir1
+    * verify that ACL on files is back to what it was originally
+    *
+    * verify that if file is renamed within the same directory, its ACL is not
+    * altered.
+    """
+    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    ds = 'winmsa_ds'
+    path = f'/mnt/{pool_name}/{ds}'
+    with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):
+        paths = [
+            f'{path}/dir1/path/to/',
+            f'{path}/dir2'
+        ]
+        cmd = f'mkdir -p {" ".join(paths)};'
+        cmd += f'touch {paths[0]}/testfile.txt;'
+        cmd += f'chown -R {SMB_USER} {path}'
+
+        results = SSH_TEST(cmd, user, password, ip)
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+
+        result = POST("/filesystem/setacl/", {'path': paths[1], "dacl": WINMSA_FULL_PERMS_ALL})
+        assert result.status_code == 200, result.text
+        job_status = wait_on_job(result.json(), 180)
+        assert job_status["state"] == "SUCCESS", str(job_status["results"])
+
+        with smb_share(path, {'name': 'WINMSA_TEST', 'auxsmbconf': 'vfs objects = streams_xattr winmsa zfsacl'}):
+            """
+            The first two tests verify that moving a directory to a different path in SMB share
+            will trigger ACL to re-inherit from the parent directory, and that moving back to
+            original path will restore ACL to what it was prior to first move.
+            """
+            c = SMB()
+            c.connect(host=ip, share='WINMSA_TEST', username=SMB_USER, password=SMB_PWD, smb1=False)
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir1/path')
+            initial_dacl_root = sd['dacl']
+
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir1/path/to/testfile.txt')
+            initial_dacl_file = sd['dacl']
+
+            c.rename('dir1/path', 'dir2/path')
+
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir2/path')
+            final_dacl_root = sd['dacl']
+
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir2/path/to/testfile.txt')
+            final_dacl_file = sd['dacl']
+
+            assert initial_dacl_root != final_dacl_root
+            assert initial_dacl_file != final_dacl_file
+
+            c.rename('dir2/path', 'dir1/path')
+
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir1/path')
+            final_dacl_root = sd['dacl']
+
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir1/path/to/testfile.txt')
+            final_dacl_file = sd['dacl']
+
+            assert initial_dacl_root == final_dacl_root
+            assert initial_dacl_file == final_dacl_file
+
+            """
+            This test verifies that moving file in same parent directory (e.g. simple rename)
+            does not trigger re-ACL.
+            """
+            result = POST("/filesystem/setacl/", {'path': f'{path}/dir1', 'dacl': WINMSA_FULL_PERMS_ALL})
+            assert result.status_code == 200, result.text
+            job_status = wait_on_job(result.json(), 180)
+            assert job_status["state"] == "SUCCESS", str(job_status["results"])
+
+            c.rename('dir1/path', 'dir1/path_new')
+
+            sd = get_windows_sd('WINMSA_TEST', 'SMB', 'dir1/path_new')
+            final_dacl_root = sd['dacl']
+
+            assert initial_dacl_root == final_dacl_root
 
 
 def test_099_delete_smb_user(request):
