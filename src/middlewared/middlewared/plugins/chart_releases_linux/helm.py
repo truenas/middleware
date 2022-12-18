@@ -2,11 +2,14 @@ import os
 import subprocess
 import tempfile
 import yaml
+import re
 
 from middlewared.plugins.kubernetes_linux.yaml import SafeDumper
 from middlewared.service import CallError, private, Service
 
 from .utils import get_namespace
+
+RE_ERRCLEANUP = re.compile(r'^Error: .+[)]: ')
 
 
 class ChartReleaseService(Service):
@@ -17,6 +20,7 @@ class ChartReleaseService(Service):
     @private
     def helm_action(self, chart_release, chart_path, config, tn_action):
         args = ['-f']
+
         if os.path.exists(os.path.join(chart_path, 'ix_values.yaml')):
             args.extend([os.path.join(chart_path, 'ix_values.yaml'), '-f'])
 
@@ -41,6 +45,7 @@ class ChartReleaseService(Service):
             )
             stderr = cp.communicate()[1]
             if cp.returncode:
-                raise CallError(f'Failed to {tn_action} chart release: {stderr.decode()}')
+                errmsg = re.sub(RE_ERRCLEANUP, '', stderr.decode(), 1)
+                raise CallError(f'Failed to {tn_action} App: {errmsg}')
 
         self.middleware.call_sync('chart.release.clear_chart_release_portal_cache', chart_release)
