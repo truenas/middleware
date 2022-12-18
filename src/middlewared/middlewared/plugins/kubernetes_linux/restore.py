@@ -223,7 +223,11 @@ class KubernetesService(Service):
                     failed_pv_restores.append(f'Unable to create ZFS Volume for {pvc!r} PVC: {e}')
                     continue
 
+                # We need to safely access claim_ref volume attribute keys as with k8s client api re-write
+                # camel casing which was done by kubernetes asyncio package is not happening anymore
                 pv_spec = pv['pv_details']['spec']
+                claim_ref = pv_spec.get('claim_ref') or pv_spec['claimRef']
+                pv_volume_attrs = pv_spec['csi'].get('volume_attributes') or pv_spec['csi']['volumeAttributes']
                 try:
                     self.middleware.call_sync('k8s.pv.create', {
                         'metadata': {
@@ -234,18 +238,18 @@ class KubernetesService(Service):
                                 'storage': pv_spec['capacity']['storage'],
                             },
                             'claimRef': {
-                                'name': pv_spec['claim_ref']['name'],
-                                'namespace': pv_spec['claim_ref']['namespace'],
+                                'name': claim_ref['name'],
+                                'namespace': claim_ref['namespace'],
                             },
                             'csi': {
                                 'volumeAttributes': {
                                     'openebs.io/poolname': RE_POOL.sub(
-                                        f'{k8s_pool}\\1', pv_spec['csi']['volume_attributes']['openebs.io/poolname']
+                                        f'{k8s_pool}\\1', pv_volume_attrs['openebs.io/poolname']
                                     )
                                 },
-                                'volumeHandle': pv_spec['csi']['volume_handle'],
+                                'volumeHandle': pv_spec['csi'].get('volume_handle') or pv_spec['csi']['volumeHandle'],
                             },
-                            'storageClassName': pv_spec['storage_class_name'],
+                            'storageClassName': pv_spec.get('storage_class_name') or pv_spec['storageClassName'],
                         },
                     })
                 except Exception as e:
