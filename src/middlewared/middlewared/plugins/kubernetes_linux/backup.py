@@ -80,7 +80,7 @@ class KubernetesService(Service):
 
         self.middleware.call_sync(
             'zettarepl.create_recursive_snapshot_with_exclude', k8s_config['dataset'],
-            snap_name, self.to_ignore_datasets_on_backup(k8s_config['dataset'])
+            snap_name, list(self.to_ignore_datasets_on_backup(k8s_config['dataset']))
         )
 
         job.set_progress(100, f'Backup {name!r} complete')
@@ -89,7 +89,14 @@ class KubernetesService(Service):
 
     @private
     def to_ignore_datasets_on_backup(self, k8s_dataset):
-        return [os.path.join(k8s_dataset, ds_name) for ds_name in ('catalogs', 'docker', 'k3s/kubelet')]
+        return {
+            os.path.join(k8s_dataset, ds_name): ds_props
+            for ds_name, ds_props in {
+                'catalogs': {'mount': True},
+                'docker': {'mount': True},
+                'k3s/kubelet': {'mount': False, 'creation_props': {'mountpoint': 'legacy'}},
+            }.items()
+        }
 
     @accepts()
     @returns(Dict('backups', additional_attrs=True))

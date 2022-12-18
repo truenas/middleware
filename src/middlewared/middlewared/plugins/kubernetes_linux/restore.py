@@ -82,9 +82,14 @@ class KubernetesService(Service):
                 'recursive_rollback': True,
             }
         )
-        for dataset in fresh_datasets:
-            self.middleware.call_sync('zfs.dataset.create', {'name': dataset, 'type': 'FILESYSTEM'})
-            self.middleware.call_sync('zfs.dataset.mount', dataset)
+        for dataset, ds_details in fresh_datasets.items():
+            self.middleware.call_sync('zfs.dataset.create', {
+                'name': dataset,
+                'type': 'FILESYSTEM',
+                **({'properties': ds_details['creation_props']} if ds_details.get('creation_props') else {}),
+            })
+            if ds_details['mount']:
+                self.middleware.call_sync('zfs.dataset.mount', dataset)
 
         # FIXME: Remove this sleep, sometimes the k3s dataset fails to umount
         #  After discussion with mav, it sounds like a bug to him in zfs, so until that is fixed, we have this sleep
