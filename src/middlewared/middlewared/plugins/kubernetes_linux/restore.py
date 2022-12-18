@@ -86,7 +86,7 @@ class KubernetesService(Service):
             self.middleware.call_sync('zfs.dataset.create', {
                 'name': dataset,
                 'type': 'FILESYSTEM',
-                **ds_details.get('creation_props', {}),
+                **({'properties': ds_details['creation_props']} if ds_details.get('creation_props') else {}),
             })
             if ds_details['mount']:
                 self.middleware.call_sync('zfs.dataset.mount', dataset)
