@@ -246,10 +246,10 @@ class ChartReleaseService(Service):
             for r in await self.middleware.call(
                 f'k8s.{key}.query', [
                     ['metadata.namespace', '=', namespace],
-                    ['metadata', 'rin', 'owner_references'],
+                    ['metadata', 'rin', 'ownerReferences'],
                 ], {'select': ['metadata']}
             ):
-                for owner_reference in filter(lambda o: o.get('uid'), r['metadata']['owner_references'] or []):
+                for owner_reference in filter(lambda o: o.get('uid'), r['metadata']['ownerReferences'] or []):
                     mapping[key][owner_reference['uid']][r['metadata']['uid']] = r
 
         pod_mapping = defaultdict(list)

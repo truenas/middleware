@@ -606,7 +606,7 @@ class ChartReleaseService(CRUDService):
             # If we had pre-install jobs, it's possible we have leftover pods which the job did not remove
             # based on dev specified settings of cleaning it up - let's remove those
             for pod in await self.middleware.call('k8s.pod.query', [['metadata.namespace', '=', namespace]]):
-                owner_references = pod['metadata'].get('owner_references')
+                owner_references = pod['metadata'].get('ownerReferences')
                 if not isinstance(owner_references, list) or all(
                     owner_reference.get('name') not in pre_install_jobs for owner_reference in owner_references
                 ):
@@ -658,7 +658,7 @@ class ChartReleaseService(CRUDService):
         pvc_volume_ds = os.path.join(release_ds, 'volumes')
         for pv in await self.middleware.call(
             'k8s.pv.query', [
-                ['spec.csi.volume_attributes.openebs\\.io/poolname', '=', pvc_volume_ds]
+                ['spec.csi.volumeAttributes.openebs\\.io/poolname', '=', pvc_volume_ds]
             ]
         ):
             await self.middleware.call('k8s.pv.delete', pv['metadata']['name'])
