@@ -23,7 +23,7 @@ class PoolService(Service):
             swap_size = 0
             if config['create_swap'] and not is_ha_capable:
                 swap_size = swapgb
-            await self.middleware.call('disk.format', disk, config.get('min_size'), swap_size, False)
+            await self.middleware.call('disk.format', disk, config.get('size'), swap_size)
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len_disks})')
 

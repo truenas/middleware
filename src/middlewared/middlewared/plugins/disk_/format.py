@@ -1,17 +1,14 @@
 import contextlib
-import subprocess
+
+import parted
 
 from middlewared.service import CallError, private, Service
-
-# from parttypes.cc
-SWAP_PARTHEX = '8200'
-ZFS_PARTHEX = 'BF01'
 
 
 class DiskService(Service):
 
     @private
-    def validate_disk(self, disk, min_size, swapgb):
+    def format(self, disk, data_size, swap_size_gb):
         dd = self.middleware.call_sync('device.get_disk', disk)
         if not dd:
             raise CallError(f'Unable to retrieve disk details for {disk!r}')
@@ -19,61 +16,85 @@ class DiskService(Service):
         if dd['dif']:
             raise CallError(f'Disk: {disk!r} is incorrectly formatted with Data Integrity Feature (DIF).')
 
-        size = dd['size']
-        if not size:
-            raise CallError(f'Unable to determine size of {disk!r}')
-
-        sectorsize = dd['sectorsize'] or 512
-        alignment = int(4096 / sectorsize)
-
-        gpt_header_size = 102400  # The GPT header takes about 34KB + alignment, round it to 100
-
-        swapsize = swapgb * 1024 * 1024 * 1024
-        if min_size:
-            leftover = size - gpt_header_size - min_size
-            if leftover < 0:
-                raise CallError(f'Disk: {disk!r} must be larger than {min_size} bytes')
-
-            if leftover < swapsize:
-                self.logger.warning(
-                    'Requested %d bytes for swap and a minimal data partition size of %d bytes, but only %d bytes for '
-                    'swap are available on disk %s',
-                    swapsize, min_size, leftover, disk,
-                )
-                swapsize = leftover
-        else:
-            if (size - gpt_header_size) <= swapsize:
-                raise CallError(f'Disk: {disk!r} must be larger than {swapgb}GB')
-
-        # round up to the nearest whole integral multiple of 128 so next
-        # partition starts at multiple of 128
-        swapsize = int(((swapsize / sectorsize) + 127) / 128) * 128
-
-        return swapsize, alignment
-
-    @private
-    def format(self, disk, min_size, swapgb, sync=True):
-        swapsize, alignment = self.validate_disk(disk, min_size, swapgb)
-
-        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
+        job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', False)
         job.wait_sync()
         if job.error:
             raise CallError(f'Failed to wipe disk {disk}: {job.error}')
 
-        if swapsize > 0:
-            commands = [
-                ('sgdisk', f'-a{alignment}', f'-n1:128:{swapsize}', f'-t1:{SWAP_PARTHEX}', f'/dev/{disk}'),
-                ('sgdisk', '-n2:0:0', f'-t2:{ZFS_PARTHEX}', f'/dev/{disk}'),
-            ]
-        else:
-            commands = [('sgdisk', f'-a{alignment}', '-n1:0:0', f'-t1:{ZFS_PARTHEX}', f'/dev/{disk}')]
+        device = parted.getDevice(f'/dev/{disk}')
+        device.clobber()
+        parted_disk = parted.freshDisk(device, 'gpt')
+
+        if data_size is not None:
+            data_geometry = self._get_largest_free_space_region(parted_disk)
+            data_constraint = parted.Constraint(
+                startAlign=device.optimumAlignment,
+                endAlign=device.optimumAlignment,
+                startRange=data_geometry,
+                endRange=data_geometry,
+                minSize=parted.sizeToSectors(data_size, 'B', device.sectorSize),
+                # Can be increased within the alignment threshold
+                maxSize=parted.sizeToSectors(data_size, 'B', device.sectorSize) + device.optimumAlignment.grainSize,
+            )
+            data_filesystem = parted.FileSystem(type='zfs', geometry=data_geometry)
+            data_partition = parted.Partition(
+                disk=parted_disk,
+                type=parted.PARTITION_NORMAL,
+                fs=data_filesystem,
+                geometry=data_geometry,
+            )
+            try:
+                parted_disk.addPartition(data_partition, constraint=data_constraint)
+            except parted.PartitionException:
+                raise CallError(f'Disk {disk!r} must be larger than {data_size} bytes')
+
+        if swap_size_gb > 0:
+            swap_geometry = self._get_largest_free_space_region(parted_disk)
+            swap_constraint = parted.Constraint(
+                startAlign=device.optimumAlignment,
+                endAlign=device.optimumAlignment,
+                startRange=swap_geometry,
+                endRange=swap_geometry,
+                minSize=parted.sizeToSectors(1, 'GiB', device.sectorSize),
+                maxSize=(
+                    parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize) + device.optimumAlignment.grainSize
+                ),
+            )
+            swap_filesystem = parted.FileSystem(type='linux-swap(v1)', geometry=swap_geometry)
+            swap_partition = parted.Partition(
+                disk=parted_disk,
+                type=parted.PARTITION_NORMAL,
+                fs=swap_filesystem,
+                geometry=swap_geometry,
+            )
+            try:
+                parted_disk.addPartition(swap_partition, constraint=swap_constraint)
+            except parted.PartitionException as e:
+                self.logger.warning('Unable to fit a swap partition on disk %r: %r', disk, e)
+
+        if data_size is None:
+            data_geometry = self._get_largest_free_space_region(parted_disk)
+            data_constraint = device.optimalAlignedConstraint
+            data_filesystem = parted.FileSystem(type='zfs', geometry=data_geometry)
+            data_partition = parted.Partition(
+                disk=parted_disk,
+                type=parted.PARTITION_NORMAL,
+                fs=data_filesystem,
+                geometry=data_geometry,
+            )
+            try:
+                parted_disk.addPartition(data_partition, constraint=data_constraint)
+            except parted.PartitionException:
+                if swap_size_gb > 0:
+                    # If we are unable to fit any data partition on a disk, that might mean that the swap that was
+                    # created was too large
+                    raise CallError(f'Disk {disk!r} must be larger than {swap_size_gb} GiB')
+
+                raise
+
+        parted_disk.commit()
 
         # TODO: Install a dummy boot block so system gives meaningful message if booting from a zpool data disk.
-
-        for cmd in commands:
-            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            if cp.returncode != 0:
-                raise CallError(f'Unable to GPT format the disk "{disk}": {cp.stderr}')
 
         self.middleware.call_sync('device.settle_udev_events')
 
@@ -82,6 +103,5 @@ class DiskService(Service):
                 # It's okay to suppress this as some partitions might not have it
                 self.middleware.call_sync('zfs.pool.clear_label', partition['path'])
 
-        if sync:
-            # We might need to sync with reality (e.g. devname -> uuid)
-            self.middleware.call_sync('disk.sync', disk)
+    def _get_largest_free_space_region(self, disk):
+        return sorted(disk.getFreeSpaceRegions(), key=lambda geometry: geometry.length)[-1]
