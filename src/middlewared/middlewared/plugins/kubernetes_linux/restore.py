@@ -310,7 +310,7 @@ class KubernetesService(Service):
         for chart_release in restored_chart_releases.values():
             self.middleware.call_sync(
                 'chart.release.scale_release_internal', chart_release['resources'], None,
-                chart_release['replica_counts'], True,
+                chart_release['replica_counts'],
             )
 
         job.set_progress(99, 'Syncing catalogs')
