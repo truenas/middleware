@@ -23,14 +23,15 @@ class PoolService(Service):
             if config['create_swap'] and not await self.middleware.call('system.is_ha_capable'):
                 swap_size = swapgb
             await self.middleware.call('disk.format', disk, config.get('min_size'), swap_size, False)
-            devname = await self.middleware.call(
-                'disk.gptid_from_part_type', disk, await self.middleware.call('disk.get_zfs_part_type')
-            )
             formatted += 1
             job.set_progress(15, f'Formatting disks ({formatted}/{len(disks)})')
-            config['vdev'].append(f'/dev/{devname}')
 
         await asyncio_map(format_disk, disks.items(), limit=16)
 
         disk_sync_job = await self.middleware.call('disk.sync_all')
         await job.wrap(disk_sync_job)
+
+        zfs_part_type = await self.middleware.call('disk.get_zfs_part_type')
+        for disk, config in disks.items():
+            devname = await self.middleware.call('disk.gptid_from_part_type', disk, zfs_part_type)
+            config['vdev'].append(f'/dev/{devname}')
