@@ -238,15 +238,6 @@ class VMDeviceService(CRUDService):
             if not options['force']:
                 raise
 
-        if device['dtype'] == 'PCI':
-            device_obj = PCI(device, middleware=self.middleware)
-            if await self.middleware.run_in_thread(device_obj.safe_to_reattach):
-                try:
-                    await self.middleware.run_in_thread(device_obj.reattach_device)
-                except CallError:
-                    if not options['force']:
-                        raise
-
         return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     async def __reorder_devices(self, id, vm_id, order):
