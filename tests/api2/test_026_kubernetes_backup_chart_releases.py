@@ -1,3 +1,4 @@
+import json
 import os
 import pytest
 import sys
@@ -6,13 +7,19 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE, SSH_TEST, wait_on_job
-from auto_config import ha, dev_test, artifacts, password, ip
-from middlewared.test.integration.utils import call
+from auto_config import ha, dev_test, artifacts, password, ip, pool_name
+from middlewared.test.integration.utils import call, ssh
+
+from middlewared.test.integration.assets.apps import chart_release
+from middlewared.test.integration.assets.catalog import catalog
+from middlewared.test.integration.assets.kubernetes import backup
+from middlewared.test.integration.utils import file_exists_and_perms_check
 
 
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
+backup_release_name = 'backupplex'
 
 # Read all the test below only on non-HA
 if not ha:
@@ -239,3 +246,56 @@ if not ha:
         ks3_logs = open(f'{artifacts}/k3s-scale.log', 'w')
         ks3_logs.writelines(results['output'])
         ks3_logs.close()
+
+    def test_25_backup_structure():
+
+        def read_file_content(file_path: str) -> str:
+            return ssh(f'cat {file_path}')
+
+        with catalog({
+            'force': True,
+            'preferred_trains': ['stable'],
+            'label': 'TRUECHARTS',
+            'repository': 'https://github.com/truecharts/catalog.git',
+            'branch': 'main'
+        }) as catalog_info:
+            with chart_release({
+                'catalog': catalog_info['label'],
+                'item': 'plex',
+                'release_name': backup_release_name,
+                'train': 'stable',
+            }) as chart_release_info:
+                with backup() as backup_name:
+                    app_info = call(
+                        'chart.release.get_instance', chart_release_info['id'], {'extra': {'retrieve_resources': True}}
+                    )
+                    backup_path = os.path.join(
+                        '/mnt', pool_name, 'ix-applications/backups', backup_name, app_info['id']
+                    )
+                    for f in ('namespace.yaml', 'pv_info.json', 'workloads_replica_counts.json'):
+                        test_path = os.path.join(backup_path, f)
+                        assert file_exists_and_perms_check(test_path) is True, test_path
+
+                    secrets_data = call(
+                        'k8s.secret.query', [
+                            ['type', 'in', ['helm.sh/release.v1', 'Opaque']],
+                            ['metadata.namespace', '=', app_info['namespace']]
+                        ]
+                    )
+                    for secret in secrets_data:
+                        secret_file_path = os.path.join(backup_path, 'secrets', secret['metadata']['name'])
+                        assert file_exists_and_perms_check(secret_file_path) is True, secret_file_path
+                        exported_secret = call('k8s.secret.export_to_yaml', secret['metadata']['name'])
+                        assert read_file_content(secret_file_path) == exported_secret
+
+                    assert read_file_content(os.path.join(backup_path, 'namespace.yaml')) == call(
+                        'k8s.namespace.export_to_yaml', app_info['namespace']
+                    )
+
+                    assert json.loads(read_file_content(os.path.join(backup_path, 'pv_info.json'))) == call(
+                        'chart.release.retrieve_pv_pvc_mapping', app_info['name']
+                    )
+
+                    assert json.loads(read_file_content(
+                        os.path.join(backup_path, 'workloads_replica_counts.json')
+                    )) == call('chart.release.get_replica_count_for_resources', app_info['resources'])
