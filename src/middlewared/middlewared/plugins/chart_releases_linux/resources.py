@@ -158,13 +158,13 @@ class ChartReleaseService(Service):
         }
 
         for pv in chart_release['resources']['persistent_volumes']:
-            claim_name = pv['spec'].get('claim_ref', {}).get('name')
+            claim_name = pv['spec'].get('claimRef', {}).get('name')
             if claim_name:
                 csi_spec = pv['spec']['csi']
-                volumes_ds = csi_spec['volume_attributes']['openebs.io/poolname']
+                volumes_ds = csi_spec['volumeAttributes']['openebs.io/poolname']
                 if (
                     os.path.join(chart_release['dataset'], 'volumes') != volumes_ds or
-                    csi_spec['volume_handle'] not in zfs_volumes
+                    csi_spec['volumeHandle'] not in zfs_volumes
                 ):
                     # We are only going to backup/restore pvc's which were consuming
                     # their respective storage class and we have related zfs volume present
@@ -174,8 +174,8 @@ class ChartReleaseService(Service):
                 mapping[claim_name] = {
                     'name': pv_name,
                     'pv_details': pv,
-                    'dataset': os.path.join(volumes_ds, csi_spec['volume_handle']),
-                    'zv_details': zfs_volumes[csi_spec['volume_handle']],
+                    'dataset': os.path.join(volumes_ds, csi_spec['volumeHandle']),
+                    'zv_details': zfs_volumes[csi_spec['volumeHandle']],
                 }
         return mapping
 
@@ -246,12 +246,12 @@ class ChartReleaseService(Service):
         # If the chart release was consuming any PV's, they would have to be manually removed from k8s database
         # because of chart release reclaim policy being retain
         for pv in await self.middleware.call(
-                'k8s.pv.query', [[
-                    'spec.csi.volume_attributes.openebs\\.io/poolname', '^',
-                    f'{os.path.join(k8s_config["dataset"], "releases")}/'
-                ]]
+            'k8s.pv.query', [[
+                'spec.csi.volumeAttributes.openebs\\.io/poolname', '^',
+                f'{os.path.join(k8s_config["dataset"], "releases")}/'
+            ]]
         ):
-            dataset = pv['spec']['csi']['volume_attributes']['openebs.io/poolname']
+            dataset = pv['spec']['csi']['volumeAttributes']['openebs.io/poolname']
             rl = dataset.split('/', 4)
             if len(rl) > 4:
                 mapping['persistent_volumes'][rl[3]].append(pv)
