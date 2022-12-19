@@ -128,4 +128,4 @@ class VMService(Service):
 
     @private
     async def get_haproxy_uri(self):
-        return 'localhost:700'
+        return '127.0.0.1:700'
