@@ -68,6 +68,10 @@ class DiskService(Service):
 
             # backwards compatibility
             i['devname'] = i['name']
+            try:
+                i['size'] = int(i['size'])
+            except ValueError:
+                i['size'] = None
 
         return unused
 
