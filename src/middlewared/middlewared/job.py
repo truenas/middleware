@@ -412,7 +412,7 @@ class Job:
 
         if self.options["logs"]:
             self.logs_path = self._logs_path()
-            self.start_logging()
+            await self.middleware.run_in_thread(self.start_logging)
 
         try:
             if self.aborted:
@@ -615,6 +615,9 @@ class Job:
             self.logs_fd = open(self.logs_path, 'ab', buffering=0)
             if fd is not None:
                 fd.close()
+
+    async def logs_fd_write(self, data):
+        await self.middleware.run_in_thread(self.logs_fd.write, data)
 
     def send_event(self, name, fields):
         if not self.options['transient']:
