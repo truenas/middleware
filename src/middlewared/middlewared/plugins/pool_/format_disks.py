@@ -7,7 +7,7 @@ class PoolService(Service):
     @private
     async def format_disks(self, job, disks):
         """
-        Format all disks, putting all ZFS partitions created  into their respective vdevs.
+        Format all disks, putting all ZFS partitions created into their respective vdevs.
         """
         # Make sure all SED disks are unlocked
         await self.middleware.call('disk.sed_unlock_all')
