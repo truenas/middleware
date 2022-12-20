@@ -264,9 +264,7 @@ class SystemGeneralService(ConfigService):
         )
 
         if config['kbdmap'] != new_config['kbdmap']:
-            await self.middleware.call('etc.generate', 'keyboard')
-            await run(['setupcon'], check=False)
-            await run(['localectl', 'set-keymap', new_config['kbdmap']], check=False)
+            await self.set_kbdlayout(new_config['kbdmap'])
 
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
@@ -292,6 +290,12 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('system.general.ui_restart', ui_restart_delay)
 
         return await self.config()
+
+    @private
+    async def set_kbdlayout(self, kbdmap='us'):
+        await self.middleware.call('etc.generate', 'keyboard')
+        await run(['setupcon'], check=False)
+        await run(['localectl', 'set-keymap', kbdmap], check=False)
 
     @private
     def set_crash_reporting(self):
