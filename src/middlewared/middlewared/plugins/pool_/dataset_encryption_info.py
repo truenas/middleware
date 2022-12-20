@@ -9,7 +9,7 @@ from io import BytesIO
 from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.utils.path import is_child
+from middlewared.utils.path import is_child_realpath
 from middlewared.validators import Range
 
 from .utils import DATASET_DATABASE_MODEL_NAME, dataset_can_be_mounted, retrieve_keys_from_file, ZFSKeyFormat
@@ -244,7 +244,7 @@ class PoolDatasetService(Service):
     def path_in_locked_datasets(self, path, locked_datasets=None):
         if locked_datasets is None:
             locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
-        return any(is_child(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
+        return any(is_child_realpath(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
     @private
     @accepts(Ref('query-filters'))

@@ -1,8 +1,4 @@
-import os
-
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.utils.path import is_child
 
 from .extents import iSCSITargetExtentService
 
@@ -15,11 +11,6 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
     async def get_query_filters(self, enabled, options=None):
         return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
-
-    async def is_child_of_path(self, resource, path):
-        dataset_name = os.path.relpath(path, '/mnt')
-        full_zvol_path = zvol_name_to_path(dataset_name)
-        return is_child(resource[self.path_field], os.path.relpath(full_zvol_path, '/dev'))
 
     async def delete(self, attachments):
         orphan_targets_ids = set()
