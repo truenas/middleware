@@ -15,50 +15,43 @@ from middlewared.client import Client
 
 
 def get_kstat():
-    kstat = {"vfs.zfs.version.spa": Decimal(5000)}
-    with open("/proc/spl/kstat/zfs/arcstats") as f:
-        for lineno, line in enumerate(f, start=1):
-            if lineno > 2 and (info := line.strip()):
-                name, _, data = info.split()
-                kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+    kstat = {}
+    try:
+        with open("/proc/spl/kstat/zfs/arcstats") as f:
+            for lineno, line in enumerate(f, start=1):
+                if lineno > 2 and (info := line.strip()):
+                    name, _, data = info.split()
+                    kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+    except Exception:
+        return kstat
+    else:
+        kstat["vfs.zfs.version.spa"] = Decimal(5000)
 
     return kstat
 
 
-def get_arc_efficiency(Kstat):
-    output = {}
-
-    if "vfs.zfs.version.spa" not in Kstat:
+def get_arc_efficiency(kstat):
+    if not kstat.get("vfs.zfs.version.spa"):
         return
 
-    arc_hits = Kstat["kstat.zfs.misc.arcstats.hits"]
-    arc_misses = Kstat["kstat.zfs.misc.arcstats.misses"]
-    demand_data_hits = Kstat["kstat.zfs.misc.arcstats.demand_data_hits"]
-    demand_data_misses = Kstat["kstat.zfs.misc.arcstats.demand_data_misses"]
-    demand_metadata_hits = Kstat[
-        "kstat.zfs.misc.arcstats.demand_metadata_hits"
-    ]
-    demand_metadata_misses = Kstat[
-        "kstat.zfs.misc.arcstats.demand_metadata_misses"
-    ]
-    mfu_ghost_hits = Kstat["kstat.zfs.misc.arcstats.mfu_ghost_hits"]
-    mfu_hits = Kstat["kstat.zfs.misc.arcstats.mfu_hits"]
-    mru_ghost_hits = Kstat["kstat.zfs.misc.arcstats.mru_ghost_hits"]
-    mru_hits = Kstat["kstat.zfs.misc.arcstats.mru_hits"]
-    prefetch_data_hits = Kstat["kstat.zfs.misc.arcstats.prefetch_data_hits"]
-    prefetch_data_misses = Kstat[
-        "kstat.zfs.misc.arcstats.prefetch_data_misses"
-    ]
-    prefetch_metadata_hits = Kstat[
-        "kstat.zfs.misc.arcstats.prefetch_metadata_hits"
-    ]
-    prefetch_metadata_misses = Kstat[
-        "kstat.zfs.misc.arcstats.prefetch_metadata_misses"
-    ]
+    output = {}
+    prefix = 'kstat.zfs.misc.arcstats'
+    arc_hits = kstat[f"{prefix}.hits"]
+    arc_misses = kstat[f"{prefix}.misses"]
+    demand_data_hits = kstat[f"{prefix}.demand_data_hits"]
+    demand_data_misses = kstat[f"{prefix}.demand_data_misses"]
+    demand_metadata_hits = kstat[f"{prefix}.demand_metadata_hits"]
+    demand_metadata_misses = kstat[f"{prefix}.demand_metadata_misses"]
+    mfu_ghost_hits = kstat[f"{prefix}.mfu_ghost_hits"]
+    mfu_hits = kstat[f"{prefix}.mfu_hits"]
+    mru_ghost_hits = kstat[f"{prefix}.mru_ghost_hits"]
+    mru_hits = kstat[f"{prefix}.mru_hits"]
+    prefetch_data_hits = kstat[f"{prefix}.prefetch_data_hits"]
+    prefetch_data_misses = kstat[f"{prefix}.prefetch_data_misses"]
+    prefetch_metadata_hits = kstat[f"{prefix}.prefetch_metadata_hits"]
+    prefetch_metadata_misses = kstat[f"{prefix}.prefetch_metadata_misses"]
 
-    anon_hits = arc_hits - (
-        mfu_hits + mru_hits + mfu_ghost_hits + mru_ghost_hits
-    )
+    anon_hits = arc_hits - (mfu_hits + mru_hits + mfu_ghost_hits + mru_ghost_hits)
     arc_accesses_total = (arc_hits + arc_misses)
     demand_data_total = (demand_data_hits + demand_data_misses)
     prefetch_data_total = (prefetch_data_hits + prefetch_data_misses)
