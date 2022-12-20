@@ -307,11 +307,10 @@ zvolEntry OBJECT-TYPE
 ZvolEntry ::= SEQUENCE {
         zvolIndex                    Integer32,
         zvolDescr                    DisplayString,
-        zvolAllocationUnits          Integer32,
-        zvolSize                     Integer32,
-        zvolUsed                     Integer32,
-        zvolAvailable                Integer32,
-        zvolReferenced               Integer32
+        zvolSize                     Counter64,
+        zvolUsed                     Counter64,
+        zvolAvailable                Counter64,
+        zvolReferenced               Counter64
     }
 
 zvolIndex OBJECT-TYPE

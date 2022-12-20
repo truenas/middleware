@@ -256,17 +256,14 @@ dataset_table = agent.Table(
 
 zvol_table = agent.Table(
     oidstr="FREENAS-MIB::zvolTable",
-    indexes=[
-        agent.Integer32()
-    ],
+    indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
         (2, agent.DisplayString()),
-        (3, agent.Integer32()),
-        (4, agent.Integer32()),
-        (5, agent.Integer32()),
-        (6, agent.Integer32()),
-        (7, agent.Integer32()),
+        (3, agent.Counter64()),
+        (4, agent.Counter64()),
+        (5, agent.Counter64()),
+        (6, agent.Counter64()),
     ],
 )
 
@@ -423,8 +420,19 @@ def fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpoolobj):
     row.setRowCell(14, agent.Counter64(io_1s[name]["write_bytes"]))
 
 
-def report_zpool_info(prev_zpool_info, zfsobj):
+def fill_in_zvol_snmp_table_info(idx, zvolobj):
+    row = zvol_table.addRow([agent.Integer32(idx)])
+    row.setRowCell(1, agent.Integer32(idx))
+    row.setRowCell(2, agent.DisplayString(zvolobj.properties["name"].value))
+    row.setRowCell(3, int(zvolobj.properties["volsize"].rawvalue))
+    row.setRowCell(4, int(zvolobj.properties["used"].rawvalue))
+    row.setRowCell(5, int(zvolobj.properties["available"].rawvalue))
+    row.setRowCell(6, int(zvolobj.properties["referenced"].rawvalue))
+
+
+def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
     zpool_table.clear()
+    zvol_table.clear()
     for idx, zpool in enumerate(zfsobj.pools, start=1):
         name = zpool.name
 
@@ -435,6 +443,13 @@ def report_zpool_info(prev_zpool_info, zfsobj):
         # be sure and update our zpool io data so next time it's called
         # we calculate the 1sec values properly
         prev_zpool_info[name].update(io_overall[name])
+
+        # zvol related information
+        zvol_type = libzfs.DatasetType.VOLUME
+        for zvol in filter(lambda x: x.type == zvol_type, zpool.root_dataset.children_recursive):
+            # TODO: going through libzfs to get properties is expensive but there isn't a better
+            # way (currently) to get the relevant zvol information that we're looking for
+            fill_in_zvol_snmp_table_info(idx, zvol)
 
 
 if __name__ == "__main__":
@@ -469,16 +484,13 @@ if __name__ == "__main__":
         agent.check_and_process()
 
         if datetime.utcnow() - last_update_at > timedelta(seconds=1):
-            report_zpool_info(prev_zpool_info, zfsobj)
+            report_zpool_and_zvol_info(prev_zpool_info, zfsobj)
 
             datasets = []
-            zvols = []
             for zpool in zfsobj.pools:
                 for dataset in zpool.root_dataset.children_recursive:
                     if dataset.type == libzfs.DatasetType.FILESYSTEM:
                         datasets.append(dataset)
-                    if dataset.type == libzfs.DatasetType.VOLUME:
-                        zvols.append(dataset)
 
             dataset_table.clear()
             for i, dataset in enumerate(datasets):
@@ -498,28 +510,6 @@ if __name__ == "__main__":
                 row.setRowCell(4, agent.Integer32(size))
                 row.setRowCell(5, agent.Integer32(used))
                 row.setRowCell(6, agent.Integer32(available))
-
-            zvol_table.clear()
-            for i, zvol in enumerate(zvols):
-                row = zvol_table.addRow([agent.Integer32(i + 1)])
-                row.setRowCell(1, agent.Integer32(i + 1))
-                row.setRowCell(2, agent.DisplayString(zvol.properties["name"].value))
-                allocation_units, (
-                    volsize,
-                    used,
-                    available,
-                    referenced
-                ) = calculate_allocation_units(
-                    int(zvol.properties["volsize"].rawvalue),
-                    int(zvol.properties["used"].rawvalue),
-                    int(zvol.properties["available"].rawvalue),
-                    int(zvol.properties["referenced"].rawvalue),
-                )
-                row.setRowCell(3, agent.Integer32(allocation_units))
-                row.setRowCell(4, agent.Integer32(volsize))
-                row.setRowCell(5, agent.Integer32(used))
-                row.setRowCell(6, agent.Integer32(available))
-                row.setRowCell(7, agent.Integer32(referenced))
 
             if lm_sensors_table:
                 lm_sensors_table.clear()
