@@ -9,6 +9,7 @@ KUBEROUTER_TABLE_ID = 77
 KUBEROUTER_TABLE_NAME = 'kube-router'
 MIGRATION_NAMING_SCHEMA = 'ix-app-migrate-%Y-%m-%d_%H-%M'
 NODE_NAME = 'ix-truenas'
+NVIDIA_RUNTIME_CLASS_NAME = 'nvidia'
 OPENEBS_ZFS_GROUP_NAME = 'zfs.openebs.io'
 UPDATE_BACKUP_PREFIX = 'system-update-'
 
