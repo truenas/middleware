@@ -95,28 +95,27 @@ zpoolDescr OBJECT-TYPE
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The name of the zpool"
     ::= { zpoolEntry 2 }
 
-zpoolAllocationUnits OBJECT-TYPE
-    SYNTAX     Integer32 (1..2147483647)
-    UNITS      "Bytes"
+zpoolHealth OBJECT-TYPE
+    SYNTAX     DisplayString
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The health of the zpool"
     ::= { zpoolEntry 3 }
 
 zpoolSize OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
-    MAX-ACCESS read-write
-    STATUS     current
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
     DESCRIPTION
         ""
     ::= { zpoolEntry 4 }
 
 zpoolUsed OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
@@ -124,21 +123,12 @@ zpoolUsed OBJECT-TYPE
     ::= { zpoolEntry 5 }
 
 zpoolAvailable OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { zpoolEntry 6 }
-
-zpoolHealth OBJECT-TYPE
-    SYNTAX  ZPoolHealthType
-    MAX-ACCESS  read-only
-    STATUS  current
-    DESCRIPTION
-        "The current health of the containing pool, as reported
-        by zpool status."
-    ::= { zpoolEntry 7 }
 
 zpoolReadOps OBJECT-TYPE
     SYNTAX Counter64
@@ -147,7 +137,7 @@ zpoolReadOps OBJECT-TYPE
     DESCRIPTION
         "The number of read I/O operations sent to the pool or device,
         including metadata requests (averaged since system booted)."
-    ::= { zpoolEntry 8 }
+    ::= { zpoolEntry 7 }
 
 zpoolWriteOps OBJECT-TYPE
     SYNTAX Counter64
@@ -156,7 +146,7 @@ zpoolWriteOps OBJECT-TYPE
     DESCRIPTION
         "The number of write I/O operations sent to the pool or device
         (averaged since system booted)."
-    ::= { zpoolEntry 9 }
+    ::= { zpoolEntry 8 }
 
 zpoolReadBytes OBJECT-TYPE
     SYNTAX Counter64
@@ -165,7 +155,7 @@ zpoolReadBytes OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all read operations (including metadata),
         expressed as units per second (averaged since system booted)"
-    ::= { zpoolEntry 10 }
+    ::= { zpoolEntry 9 }
 
 zpoolWriteBytes OBJECT-TYPE
     SYNTAX Counter64
@@ -174,7 +164,7 @@ zpoolWriteBytes OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all write operations, expressed as units per
         second (averaged since system booted)."
-    ::= { zpoolEntry 11 }
+    ::= { zpoolEntry 10 }
 
 zpoolReadOps1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -183,7 +173,7 @@ zpoolReadOps1sec OBJECT-TYPE
     DESCRIPTION
         "The number of read I/O operations sent to the pool or device,
         including metadata requests (over 1 second interval)."
-    ::= { zpoolEntry 12 }
+    ::= { zpoolEntry 11 }
 
 zpoolWriteOps1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -192,7 +182,7 @@ zpoolWriteOps1sec OBJECT-TYPE
     DESCRIPTION
         "The number of write I/O operations sent to the pool or device
         (over 1 second interval)."
-    ::= { zpoolEntry 13 }
+    ::= { zpoolEntry 12 }
 
 zpoolReadBytes1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -201,7 +191,7 @@ zpoolReadBytes1sec OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all read operations (including metadata),
         expressed as units per second (over 1 second interval)"
-    ::= { zpoolEntry 14 }
+    ::= { zpoolEntry 13 }
 
 zpoolWriteBytes1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -210,7 +200,7 @@ zpoolWriteBytes1sec OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all write operations, expressed as units per
         second (over 1 second interval)."
-    ::= { zpoolEntry 15 }
+    ::= { zpoolEntry 14 }
 
 datasetTable OBJECT-TYPE
     SYNTAX     SEQUENCE OF DatasetEntry
@@ -250,41 +240,32 @@ datasetDescr OBJECT-TYPE
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The name of the dataset"
     ::= { datasetEntry 2 }
 
-datasetAllocationUnits OBJECT-TYPE
-    SYNTAX     Integer32 (1..2147483647)
-    UNITS      "Bytes"
+datasetTotalBytes OBJECT-TYPE
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { datasetEntry 3 }
 
-datasetSize OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
-    MAX-ACCESS read-write
+datasetUsedBytes OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { datasetEntry 4 }
 
-datasetUsed OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
+datasetAvailableBytes OBJECT-TYPE
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { datasetEntry 5 }
-
-datasetAvailable OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { datasetEntry 6 }
 
 zvolTable OBJECT-TYPE
     SYNTAX     SEQUENCE OF ZvolEntry
@@ -325,49 +306,40 @@ zvolDescr OBJECT-TYPE
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The name of the zvol"
     ::= { zvolEntry 2 }
 
-zvolAllocationUnits OBJECT-TYPE
-    SYNTAX     Integer32 (1..2147483647)
-    UNITS      "Bytes"
+zvolSize OBJECT-TYPE
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { zvolEntry 3 }
 
-zvolSize OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
-    MAX-ACCESS read-write
+zvolUsed OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { zvolEntry 4 }
 
-zvolUsed OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
+zvolAvailable OBJECT-TYPE
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { zvolEntry 5 }
 
-zvolAvailable OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
+zvolReferenced OBJECT-TYPE
+    SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
     ::= { zvolEntry 6 }
-
-zvolReferenced OBJECT-TYPE
-    SYNTAX     Integer32 (0..2147483647)
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { zvolEntry 7 }
 
 zfsArcSize OBJECT-TYPE
     SYNTAX Gauge32
