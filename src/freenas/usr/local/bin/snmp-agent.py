@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import threading
 import time
-from copy import deepcopy
-from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -211,28 +209,26 @@ mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/u
 mib_builder.setMibSources(*mib_sources)
 mib_builder.loadModules("FREENAS-MIB")
 mib_builder.loadModules("LM-SENSORS-MIB")
-zpool_health_type = mib_builder.importSymbols("FREENAS-MIB", "ZPoolHealthType")[0]
 
 agent = netsnmpagent.netsnmpAgent(
     AgentName="FreeNASAgent",
     MIBFiles=[
-        "/usr/local/share/snmp/mibs/FREENAS-MIB.txt", "/usr/local/share/snmp/mibs/LM-SENSORS-MIB.txt"
+        "/usr/local/share/snmp/mibs/FREENAS-MIB.txt",
+        "/usr/local/share/snmp/mibs/LM-SENSORS-MIB.txt"
     ],
 )
 
 zpool_table = agent.Table(
     oidstr="FREENAS-MIB::zpoolTable",
-    indexes=[
-        agent.Integer32()
-    ],
+    indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
         (2, agent.DisplayString()),
-        (3, agent.Integer32()),
-        (4, agent.Integer32()),
-        (5, agent.Integer32()),
-        (6, agent.Integer32()),
-        (7, agent.Integer32()),
+        (3, agent.DisplayString()),
+        (4, agent.Counter64()),
+        (5, agent.Counter64()),
+        (6, agent.Counter64()),
+        (7, agent.Counter64()),
         (8, agent.Counter64()),
         (9, agent.Counter64()),
         (10, agent.Counter64()),
@@ -240,7 +236,6 @@ zpool_table = agent.Table(
         (12, agent.Counter64()),
         (13, agent.Counter64()),
         (14, agent.Counter64()),
-        (15, agent.Counter64()),
     ],
 )
 
@@ -308,44 +303,6 @@ zfs_l2arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsL2ArcSize")
 zfs_zilstat_ops1 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps1sec")
 zfs_zilstat_ops5 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps5sec")
 zfs_zilstat_ops10 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps10sec")
-
-
-class ZpoolIoThread(threading.Thread):
-    def __init__(self):
-        super().__init__()
-
-        self.daemon = True
-
-        self.stop_event = threading.Event()
-
-        self.lock = threading.Lock()
-        self.values_overall = defaultdict(lambda: defaultdict(lambda: 0))
-        self.values_1s = defaultdict(lambda: defaultdict(lambda: 0))
-
-    def run(self):
-        zfs = libzfs.ZFS()
-        while not self.stop_event.wait(1.0):
-            with self.lock:
-                previous_values = deepcopy(self.values_overall)
-
-                for pool in zfs.pools:
-                    self.values_overall[pool.name] = {
-                        "read_ops": pool.root_vdev.stats.ops[libzfs.ZIOType.READ],
-                        "write_ops": pool.root_vdev.stats.ops[libzfs.ZIOType.WRITE],
-                        "read_bytes": pool.root_vdev.stats.bytes[libzfs.ZIOType.READ],
-                        "write_bytes": pool.root_vdev.stats.bytes[libzfs.ZIOType.WRITE],
-                    }
-
-                    if pool.name in previous_values:
-                        for k in ["read_ops", "write_ops", "read_bytes", "write_bytes"]:
-                            self.values_1s[pool.name][k] = (
-                                self.values_overall[pool.name][k] -
-                                previous_values[pool.name][k]
-                            )
-
-    def get_values(self):
-        with self.lock:
-            return deepcopy(self.values_overall), deepcopy(self.values_1s)
 
 
 def readZilOpsCount() -> int:
@@ -427,19 +384,68 @@ class DiskTempThread(threading.Thread):
             time.sleep(self.interval)
 
 
+def gather_zpool_iostat_info(prev_data, name, zfsobj):
+    r_ops = zfsobj.root_vdev.stats.ops[libzfs.ZIOType.READ]
+    w_ops = zfsobj.root_vdev.stats.ops[libzfs.ZIOType.WRITE]
+    r_bytes = zfsobj.root_vdev.stats.bytes[libzfs.ZIOType.READ]
+    w_bytes = zfsobj.root_vdev.stats.bytes[libzfs.ZIOType.WRITE]
+
+    # the current values as reported by libzfs
+    values_overall = {name: {
+        "read_ops": r_ops,
+        "write_ops": w_ops,
+        "read_bytes": r_bytes,
+        "write_bytes": w_bytes,
+    }}
+
+    values_1s = {name: {"read_ops": 0, "write_ops": 0, "read_bytes": 0, "write_bytes": 0}}
+    for key in values_overall.get(name, ()):
+        values_1s[name][key] = (values_overall[name][key] - prev_data[name][key])
+
+    return values_overall, values_1s
+
+
+def fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpoolobj):
+    row = zpool_table.addRow([agent.Integer32(idx)])
+    row.setRowCell(1, agent.Integer32(idx))
+    row.setRowCell(2, agent.DisplayString(name))  # zpool name
+    row.setRowCell(3, agent.DisplayString(zpoolobj.properties["health"].value))  # pool health status
+    row.setRowCell(4, agent.Counter64(int(zpoolobj.properties["size"].rawvalue)))
+    row.setRowCell(5, agent.Counter64(int(zpoolobj.properties["allocated"].rawvalue)))
+    row.setRowCell(6, agent.Counter64(int(zpoolobj.properties["free"].rawvalue)))
+    row.setRowCell(7, agent.Counter64(io_overall[name]["read_ops"]))
+    row.setRowCell(8, agent.Counter64(io_overall[name]["write_ops"]))
+    row.setRowCell(9, agent.Counter64(io_overall[name]["read_bytes"]))
+    row.setRowCell(10, agent.Counter64(io_overall[name]["write_bytes"]))
+    row.setRowCell(11, agent.Counter64(io_1s[name]["read_ops"]))
+    row.setRowCell(12, agent.Counter64(io_1s[name]["write_ops"]))
+    row.setRowCell(13, agent.Counter64(io_1s[name]["read_bytes"]))
+    row.setRowCell(14, agent.Counter64(io_1s[name]["write_bytes"]))
+
+
+def report_zpool_info(prev_zpool_info, zfsobj):
+    zpool_table.clear()
+    for idx, zpool in enumerate(zfsobj.pools, start=1):
+        name = zpool.name
+
+        # zpool related information
+        io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, zfsobj)
+        fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpool)
+
+        # be sure and update our zpool io data so next time it's called
+        # we calculate the 1sec values properly
+        prev_zpool_info[name].update(io_overall[name])
+
+
 if __name__ == "__main__":
     with Client() as c:
         config = c.call("snmp.config")
 
-    zfs = libzfs.ZFS()
-
-    zpool_io_thread = ZpoolIoThread()
-    zpool_io_thread.start()
+    zfsobj = libzfs.ZFS()
 
     zilstat_1_thread = None
     zilstat_5_thread = None
     zilstat_10_thread = None
-
     if config["zilstat"]:
         zilstat_1_thread = ZilstatThread(1)
         zilstat_5_thread = ZilstatThread(5)
@@ -457,49 +463,17 @@ if __name__ == "__main__":
 
     agent.start()
 
+    prev_zpool_info = {}
     last_update_at = datetime.min
     while True:
         agent.check_and_process()
 
         if datetime.utcnow() - last_update_at > timedelta(seconds=1):
-            zpool_io_overall, zpool_io_1sec = zpool_io_thread.get_values()
+            report_zpool_info(prev_zpool_info, zfsobj)
 
             datasets = []
             zvols = []
-            zpool_table.clear()
-            for i, zpool in enumerate(zfs.pools):
-                row = zpool_table.addRow([agent.Integer32(i + 1)])
-                row.setRowCell(1, agent.Integer32(i + 1))
-                row.setRowCell(2, agent.DisplayString(zpool.properties["name"].value))
-                try:
-                    allocation_units, \
-                        (
-                            size,
-                            used,
-                            available
-                        ) = calculate_allocation_units(
-                            int(zpool.properties["size"].rawvalue),
-                            int(zpool.properties["allocated"].rawvalue),
-                            int(zpool.properties["free"].rawvalue),
-                        )
-                except ValueError:
-                    allocation_units = 4096
-                    size = used = available = 0
-                row.setRowCell(3, agent.Integer32(allocation_units))
-                row.setRowCell(4, agent.Integer32(size))
-                row.setRowCell(5, agent.Integer32(used))
-                row.setRowCell(6, agent.Integer32(available))
-                row.setRowCell(7, agent.Integer32(zpool_health_type.namedValues.getValue(
-                    zpool.properties["health"].value.lower())))
-                row.setRowCell(8, agent.Counter64(zpool_io_overall[zpool.name]["read_ops"]))
-                row.setRowCell(9, agent.Counter64(zpool_io_overall[zpool.name]["write_ops"]))
-                row.setRowCell(10, agent.Counter64(zpool_io_overall[zpool.name]["read_bytes"]))
-                row.setRowCell(11, agent.Counter64(zpool_io_overall[zpool.name]["write_bytes"]))
-                row.setRowCell(12, agent.Counter64(zpool_io_1sec[zpool.name]["read_ops"]))
-                row.setRowCell(13, agent.Counter64(zpool_io_1sec[zpool.name]["write_ops"]))
-                row.setRowCell(14, agent.Counter64(zpool_io_1sec[zpool.name]["read_bytes"]))
-                row.setRowCell(15, agent.Counter64(zpool_io_1sec[zpool.name]["write_bytes"]))
-
+            for zpool in zfsobj.pools:
                 for dataset in zpool.root_dataset.children_recursive:
                     if dataset.type == libzfs.DatasetType.FILESYSTEM:
                         datasets.append(dataset)

@@ -21,19 +21,6 @@ freeNas MODULE-IDENTITY
         ""
     ::= { enterprises 50536 }
 
-ZPoolHealthType ::= TEXTUAL-CONVENTION
-    STATUS     current
-    DESCRIPTION
-        ""
-    SYNTAX  INTEGER {
-                online(0),
-                degraded(1),
-                faulted(2),
-                offline(3),
-                unavail(4),
-                removed(5)
-                }
-
 AlertLevelType ::= TEXTUAL-CONVENTION
     STATUS     current
     DESCRIPTION
@@ -81,11 +68,10 @@ zpoolEntry OBJECT-TYPE
 ZpoolEntry ::= SEQUENCE {
         zpoolIndex                    Integer32,
         zpoolDescr                    DisplayString,
-        zpoolAllocationUnits          Integer32,
-        zpoolSize                     Integer32,
-        zpoolUsed                     Integer32,
-        zpoolAvailable                Integer32,
-        zpoolHealth                   ZPoolHealthType,
+        zpoolHealth                   DisplayString,
+        zpoolSize                     Counter64,
+        zpoolUsed                     Counter64,
+        zpoolAvailable                Counter64,
         zpoolReadOps                  Counter64,
         zpoolWriteOps                 Counter64,
         zpoolReadBytes                Counter64,
