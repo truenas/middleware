@@ -35,7 +35,7 @@ from middlewared.service_exception import InstanceNotFound, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.path import is_child
+from middlewared.utils.path import is_child_realpath
 from middlewared.utils.size import MB
 from middlewared.validators import Exact, Match, Or, Range, Time
 
@@ -2982,7 +2982,7 @@ class PoolDatasetService(CRUDService):
     def path_in_locked_datasets(self, path, locked_datasets=None):
         if locked_datasets is None:
             locked_datasets = self.middleware.call_sync('zfs.dataset.locked_datasets')
-        return any(is_child(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
+        return any(is_child_realpath(path, d['mountpoint']) for d in locked_datasets if d['mountpoint'])
 
     @filterable
     def query(self, filters, options):

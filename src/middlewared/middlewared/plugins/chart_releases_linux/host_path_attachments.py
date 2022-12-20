@@ -1,5 +1,4 @@
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.utils.path import is_child
 
 
 class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
@@ -13,7 +12,8 @@ class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
                 release['status'] == 'STOPPED' if enabled else release['status'] != 'STOPPED'
             ):
                 continue
-            if any(is_child(p, path) for p in release['resources']['host_path_volumes']):
+
+            if await self.middleware.call('filesystem.is_child', release['resources']['host_path_volumes'], path):
                 chart_releases_attached.append({
                     'id': release['name'],
                     'name': release['name'],
