@@ -39,7 +39,7 @@ class NFSService(Service):
                 if not svc.endswith("debug"):
                     continue
 
-                with open(f"proc/sys/sunrpc/{svc}", "r") as f:
+                with open(f"/proc/sys/sunrpc/{svc}", "r") as f:
                     val = int(f.readline().strip(), 16)
 
                 for f in NFSDBG:
