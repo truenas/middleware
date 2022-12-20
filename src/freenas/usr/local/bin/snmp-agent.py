@@ -420,7 +420,7 @@ def fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpoolobj):
     row.setRowCell(14, agent.Counter64(io_1s[name]["write_bytes"]))
 
 
-def fill_in_zvol_snmp_table_info(idx, zvolobj):
+def fill_in_zvol_snmp_row_info(idx, zvolobj):
     row = zvol_table.addRow([agent.Integer32(idx)])
     row.setRowCell(1, agent.Integer32(idx))
     row.setRowCell(2, agent.DisplayString(zvolobj.properties["name"].value))
@@ -449,7 +449,7 @@ def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
         for zvol in filter(lambda x: x.type == zvol_type, zpool.root_dataset.children_recursive):
             # TODO: going through libzfs to get properties is expensive but there isn't a better
             # way (currently) to get the relevant zvol information that we're looking for
-            fill_in_zvol_snmp_table_info(idx, zvol)
+            fill_in_zvol_snmp_row_info(idx, zvol)
 
 
 if __name__ == "__main__":
