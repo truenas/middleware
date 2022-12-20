@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from collections import defaultdict
-import copy
-from datetime import datetime, timedelta
-from decimal import Decimal
 import threading
 import time
+from copy import deepcopy
+from collections import defaultdict
+from datetime import datetime, timedelta
+from decimal import Decimal
 
 import libzfs
 import netsnmpagent
@@ -336,7 +336,7 @@ class ZpoolIoThread(threading.Thread):
         zfs = libzfs.ZFS()
         while not self.stop_event.wait(1.0):
             with self.lock:
-                previous_values = copy.deepcopy(self.values_overall)
+                previous_values = deepcopy(self.values_overall)
 
                 for pool in zfs.pools:
                     self.values_overall[pool.name] = {
@@ -355,7 +355,7 @@ class ZpoolIoThread(threading.Thread):
 
     def get_values(self):
         with self.lock:
-            return copy.deepcopy(self.values_overall), copy.deepcopy(self.values_1s)
+            return deepcopy(self.values_overall), deepcopy(self.values_1s)
 
 
 def readZilOpsCount() -> int:
