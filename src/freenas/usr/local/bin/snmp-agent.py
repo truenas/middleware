@@ -14,18 +14,15 @@ import pysnmp.smi
 from middlewared.client import Client
 
 
-def get_Kstat():
-    Kstat = {}
-
+def get_kstat():
+    kstat = {"vfs.zfs.version.spa": Decimal(5000)}
     with open("/proc/spl/kstat/zfs/arcstats") as f:
         for lineno, line in enumerate(f, start=1):
             if lineno > 2 and (info := line.strip()):
                 name, _, data = info.split()
-                Kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+                kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
 
-    Kstat["vfs.zfs.version.spa"] = Decimal(5000)
-
-    return Kstat
+    return kstat
 
 
 def get_arc_efficiency(Kstat):
@@ -579,7 +576,7 @@ if __name__ == "__main__":
                         row.setRowCell(2, agent.DisplayString(name))
                         row.setRowCell(3, agent.Unsigned32(temp))
 
-            kstat = get_Kstat()
+            kstat = get_kstat()
             arc_efficiency = get_arc_efficiency(kstat)
 
             zfs_arc_size.update(kstat["kstat.zfs.misc.arcstats.size"] / 1024)
