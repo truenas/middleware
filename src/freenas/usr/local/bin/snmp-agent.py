@@ -231,16 +231,14 @@ zpool_table = agent.Table(
 
 dataset_table = agent.Table(
     oidstr="FREENAS-MIB::datasetTable",
-    indexes=[
-        agent.Integer32()
-    ],
+    indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
         (2, agent.DisplayString()),
-        (3, agent.Integer32()),
-        (4, agent.Integer32()),
-        (5, agent.Integer32()),
-        (6, agent.Integer32()),
+        (3, agent.Counter64()),
+        (4, agent.Counter64()),
+        (5, agent.Counter64()),
+        (6, agent.Counter64()),
     ],
 )
 
@@ -371,11 +369,11 @@ class DiskTempThread(threading.Thread):
             time.sleep(self.interval)
 
 
-def gather_zpool_iostat_info(prev_data, name, zfsobj):
-    r_ops = zfsobj.root_vdev.stats.ops[libzfs.ZIOType.READ]
-    w_ops = zfsobj.root_vdev.stats.ops[libzfs.ZIOType.WRITE]
-    r_bytes = zfsobj.root_vdev.stats.bytes[libzfs.ZIOType.READ]
-    w_bytes = zfsobj.root_vdev.stats.bytes[libzfs.ZIOType.WRITE]
+def gather_zpool_iostat_info(prev_data, name, zpoolobj):
+    r_ops = zpoolobj.root_vdev.stats.ops[libzfs.ZIOType.READ]
+    w_ops = zpoolobj.root_vdev.stats.ops[libzfs.ZIOType.WRITE]
+    r_bytes = zpoolobj.root_vdev.stats.bytes[libzfs.ZIOType.READ]
+    w_bytes = zpoolobj.root_vdev.stats.bytes[libzfs.ZIOType.WRITE]
 
     # the current values as reported by libzfs
     values_overall = {name: {
@@ -386,7 +384,7 @@ def gather_zpool_iostat_info(prev_data, name, zfsobj):
     }}
 
     values_1s = {name: {"read_ops": 0, "write_ops": 0, "read_bytes": 0, "write_bytes": 0}}
-    for key in values_overall.get(name, ()):
+    for key in prev_data.get(name, ()):
         values_1s[name][key] = (values_overall[name][key] - prev_data[name][key])
 
     return values_overall, values_1s
@@ -414,10 +412,10 @@ def fill_in_zvol_snmp_row_info(idx, zvolobj):
     row = zvol_table.addRow([agent.Integer32(idx)])
     row.setRowCell(1, agent.Integer32(idx))
     row.setRowCell(2, agent.DisplayString(zvolobj.properties["name"].value))
-    row.setRowCell(3, int(zvolobj.properties["volsize"].rawvalue))
-    row.setRowCell(4, int(zvolobj.properties["used"].rawvalue))
-    row.setRowCell(5, int(zvolobj.properties["available"].rawvalue))
-    row.setRowCell(6, int(zvolobj.properties["referenced"].rawvalue))
+    row.setRowCell(3, agent.Counter64(int(zvolobj.properties["volsize"].rawvalue)))
+    row.setRowCell(4, agent.Counter64(int(zvolobj.properties["used"].rawvalue)))
+    row.setRowCell(5, agent.Counter64(int(zvolobj.properties["available"].rawvalue)))
+    row.setRowCell(6, agent.Counter64(int(zvolobj.properties["referenced"].rawvalue)))
 
 
 def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
@@ -427,12 +425,12 @@ def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
         name = zpool.name
 
         # zpool related information
-        io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, zfsobj)
+        io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, zpool)
         fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpool)
 
         # be sure and update our zpool io data so next time it's called
         # we calculate the 1sec values properly
-        prev_zpool_info[name].update(io_overall[name])
+        prev_zpool_info.update(io_overall)
 
         # zvol related information
         zvol_type = libzfs.DatasetType.VOLUME
@@ -453,7 +451,11 @@ def fill_in_dataset_snmp_row_info(idx, name, total, free, avail):
 
 def report_dataset_info():
     dataset_table.clear()
-    for idx, info in enumerate((filter(lambda x: x['fs_type'] == 'zfs', getmntinfo())), start=1):
+    idx = 1
+    for devid, info in getmntinfo().items():
+        if info['fs_type'] != 'zfs':
+            continue
+
         try:
             st = os.statvfs(info['mountpoint'])
         except Exception:
@@ -464,6 +466,7 @@ def report_dataset_info():
             free_bytes = st.f_bfree * st.f_frsize
             avail_bytes = st.f_bavail * st.f_frsize
 
+            idx += 1
             fill_in_dataset_snmp_row_info(idx, info['mount_source'], total_bytes, free_bytes, avail_bytes)
 
 
