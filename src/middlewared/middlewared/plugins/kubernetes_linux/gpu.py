@@ -3,6 +3,8 @@ import os
 from middlewared.service import Service
 from middlewared.utils import run
 
+from .utils import NVIDIA_RUNTIME_CLASS_NAME
+
 
 GPU_CONFIG = {
     'NVIDIA': {
@@ -23,6 +25,7 @@ GPU_CONFIG = {
                         {'key': 'nvidia.com/gpu', 'operator': 'Exists', 'effect': 'NoSchedule'}
                     ],
                     'priorityClassName': 'system-node-critical',
+                    'runtimeClassName': NVIDIA_RUNTIME_CLASS_NAME,
                     'containers': [{
                         'image': 'nvidia/k8s-device-plugin:v0.10.0',
                         'name': 'nvidia-device-plugin-ctr',
@@ -164,6 +167,9 @@ class KubernetesGPUService(Service):
             to_remove = to_remove - found_gpus
             for gpu in found_gpus:
                 config = GPU_CONFIG[gpu]
+                # We will want to be adding nvidia runtime class if we find a nvidia gpu
+                if gpu == 'NVIDIA':
+                    await self.configure_nvidia_runtime_class()
                 config_metadata = config['metadata']
                 if f'{config_metadata["namespace"]}_{config_metadata["name"]}' in daemonsets:
                     await self.middleware.call(
@@ -181,11 +187,29 @@ class KubernetesGPUService(Service):
 
         for vendor in to_remove:
             config_metadata = GPU_CONFIG[vendor]['metadata']
+            if vendor == 'NVIDIA' and await self.middleware.call(
+                'k8s.runtime_class.query', [['metadata.name', '=', NVIDIA_RUNTIME_CLASS_NAME]]
+            ):
+                await self.middleware.call('k8s.runtime_class.delete', NVIDIA_RUNTIME_CLASS_NAME)
+
             if f'{config_metadata["namespace"]}_{config_metadata["name"]}' not in daemonsets:
                 continue
             await self.middleware.call(
                 'k8s.daemonset.delete', config_metadata['name'], {'namespace': config_metadata['namespace']}
             )
+
+    async def configure_nvidia_runtime_class(self):
+        if not await self.middleware.call(
+            'k8s.runtime_class.query', [['metadata.name', '=', NVIDIA_RUNTIME_CLASS_NAME]]
+        ):
+            await self.middleware.call('k8s.runtime_class.create', {
+                'body': {
+                    'apiVersion': 'node.k8s.io/v1',
+                    'kind': 'RuntimeClass',
+                    'metadata': {'name': NVIDIA_RUNTIME_CLASS_NAME},
+                    'handler': NVIDIA_RUNTIME_CLASS_NAME,
+                }
+            })
 
     async def setup_nvidia_gpu(self):
         if os.path.exists('/dev/nvidia-uvm'):
