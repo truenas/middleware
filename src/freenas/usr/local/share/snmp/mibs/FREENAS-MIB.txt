@@ -232,10 +232,9 @@ datasetEntry OBJECT-TYPE
 DatasetEntry ::= SEQUENCE {
         datasetIndex                    Integer32,
         datasetDescr                    DisplayString,
-        datasetAllocationUnits          Integer32,
-        datasetSize                     Integer32,
-        datasetUsed                     Integer32,
-        datasetAvailable                Integer32
+        datasetTotalBytes               Counter64,
+        datasetUsedBytes                Counter64,
+        datasetAvailableBytes           Counter64
     }
 
 datasetIndex OBJECT-TYPE

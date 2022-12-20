@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import threading
 import time
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -10,6 +11,7 @@ import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
 from middlewared.client import Client
+from middlewared.utils.osc import getmntinfo
 
 
 def get_kstat():
@@ -179,18 +181,6 @@ def fPerc(lVal=0, rVal=0, Decimal=2):
         return str("%0." + str(Decimal) + "f") % (100 * (lVal / rVal)) + "%"
     else:
         return str("%0." + str(Decimal) + "f") % 100 + "%"
-
-
-def calculate_allocation_units(*args):
-    allocation_units = 4096
-    while True:
-        values = tuple(map(lambda arg: int(arg / allocation_units), args))
-        if all(v < 2 ** 31 for v in values):
-            break
-
-        allocation_units *= 2
-
-    return allocation_units, values
 
 
 def get_zfs_arc_miss_percent(kstat):
@@ -452,6 +442,31 @@ def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
             fill_in_zvol_snmp_row_info(idx, zvol)
 
 
+def fill_in_dataset_snmp_row_info(idx, name, total, free, avail):
+    row = dataset_table.addRow([agent.Integer32(idx)])
+    row.setRowCell(1, agent.Integer32(idx))
+    row.setRowCell(2, agent.DisplayString(name))
+    row.setRowCell(3, agent.Counter64(total))
+    row.setRowCell(4, agent.Counter64(free))
+    row.setRowCell(5, agent.Counter64(avail))
+
+
+def report_dataset_info():
+    dataset_table.clear()
+    for idx, info in enumerate((filter(lambda x: x['fs_type'] == 'zfs', getmntinfo())), start=1):
+        try:
+            st = os.statvfs(info['mountpoint'])
+        except Exception:
+            # don't crash, it's snmp so just continue
+            continue
+        else:
+            total_bytes = st.f_blocks * st.f_frsize
+            free_bytes = st.f_bfree * st.f_frsize
+            avail_bytes = st.f_bavail * st.f_frsize
+
+            fill_in_dataset_snmp_row_info(idx, info['mount_source'], total_bytes, free_bytes, avail_bytes)
+
+
 if __name__ == "__main__":
     with Client() as c:
         config = c.call("snmp.config")
@@ -485,31 +500,7 @@ if __name__ == "__main__":
 
         if datetime.utcnow() - last_update_at > timedelta(seconds=1):
             report_zpool_and_zvol_info(prev_zpool_info, zfsobj)
-
-            datasets = []
-            for zpool in zfsobj.pools:
-                for dataset in zpool.root_dataset.children_recursive:
-                    if dataset.type == libzfs.DatasetType.FILESYSTEM:
-                        datasets.append(dataset)
-
-            dataset_table.clear()
-            for i, dataset in enumerate(datasets):
-                row = dataset_table.addRow([agent.Integer32(i + 1)])
-                row.setRowCell(1, agent.Integer32(i + 1))
-                row.setRowCell(2, agent.DisplayString(dataset.properties["name"].value))
-                allocation_units, (
-                    size,
-                    used,
-                    available
-                ) = calculate_allocation_units(
-                    int(dataset.properties["used"].rawvalue) + int(dataset.properties["available"].rawvalue),
-                    int(dataset.properties["used"].rawvalue),
-                    int(dataset.properties["available"].rawvalue),
-                )
-                row.setRowCell(3, agent.Integer32(allocation_units))
-                row.setRowCell(4, agent.Integer32(size))
-                row.setRowCell(5, agent.Integer32(used))
-                row.setRowCell(6, agent.Integer32(available))
+            report_dataset_info()
 
             if lm_sensors_table:
                 lm_sensors_table.clear()
