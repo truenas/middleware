@@ -2,6 +2,7 @@ import copy
 import enum
 import os
 
+from middlewared.plugins.kubernetes_linux.utils import NVIDIA_RUNTIME_CLASS_NAME
 from middlewared.utils import run as _run
 
 
@@ -28,6 +29,8 @@ class Resources(enum.Enum):
 
 def get_action_context(release_name):
     return copy.deepcopy({
+        'addNvidiaRuntimeClass': True,
+        'nvidiaRuntimeClassName': NVIDIA_RUNTIME_CLASS_NAME,
         'operation': None,
         'isInstall': False,
         'isUpdate': False,
