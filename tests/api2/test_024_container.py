@@ -43,6 +43,8 @@ if not ha:
         )
         chart_release_data = call("chart.release.get_instance", app_name, {"extra": {"retrieve_resources": True}})
         for image_tag in chart_release_data["resources"]["container_images"]:
+            # remove registery-1 prefix as containerd adds it
+            image_tag = image_tag.removeprefix("registry-1.")
             while not call("container.image.query", [["repo_tags", "rin", image_tag]]):
                 time.sleep(10)
 
@@ -55,7 +57,9 @@ if not ha:
 
     def get_num_of_images(images_tags):
         return call(
-            "container.image.query", [["OR", [["repo_tags", "rin", tag] for tag in images_tags]]], {"count": True}
+            "container.image.query", [
+                ["OR", [["repo_tags", "rin", tag.removeprefix("registry-1.")] for tag in images_tags]]
+            ], {"count": True}
         )
 
     def assert_images_exist_for_chart_release(chart_release_data):
