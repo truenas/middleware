@@ -434,7 +434,8 @@ def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
 
         # zvol related information
         zvol_type = libzfs.DatasetType.VOLUME
-        for zvol in filter(lambda x: x.type == zvol_type, zpool.root_dataset.children_recursive):
+        ds_iterator = zpool.root_dataset.children_recursive
+        for zidx, zvol in enumerate(filter(lambda x: x.type == zvol_type, ds_iterator), start=1):
             # TODO: going through libzfs to get properties is expensive but there isn't a better
             # way (currently) to get the relevant zvol information that we're looking for
             fill_in_zvol_snmp_row_info(idx, zvol)
@@ -451,7 +452,7 @@ def fill_in_dataset_snmp_row_info(idx, name, total, free, avail):
 
 def report_dataset_info():
     dataset_table.clear()
-    idx = 1
+    idx = 0
     for devid, info in getmntinfo().items():
         if info['fs_type'] != 'zfs':
             continue
