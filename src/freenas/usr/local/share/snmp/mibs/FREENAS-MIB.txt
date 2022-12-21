@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 freeNas MODULE-IDENTITY
-    LAST-UPDATED "202005280000Z"
+    LAST-UPDATED "202212210900Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
         "postal:   2490 Kruse Dr
@@ -15,8 +15,8 @@ freeNas MODULE-IDENTITY
 
          email:    support@iXsystems.com"
     DESCRIPTION
-        ""
-    REVISION     "202005280000Z"
+        "FREENAS Specific MIBs"
+    REVISION     "202212210900Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
