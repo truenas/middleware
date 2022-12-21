@@ -49,7 +49,9 @@ class ContainerService(Service):
                 map(
                     lambda i: {**i, 'repo_tags': i.get('repoTags') or []},
                     client.list_images()
-                ) if options else self.middleware.call_sync('container.image.query', [['dangling', '=', True]])
+                ) if options.get('remove_unused_images') else self.middleware.call_sync(
+                    'container.image.query', [['dangling', '=', True]]
+                )
             ):
                 if image['id'] not in containers_image_refs:
                     client.remove_image(image['id'])
