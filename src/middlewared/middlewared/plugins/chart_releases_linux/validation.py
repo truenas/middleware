@@ -95,6 +95,9 @@ class ChartReleaseService(Service):
                         var_attr, attr, f'{schema_name}.{index}', release_data,
                     )
 
+        if schema['type'] == 'hostpath':
+            await self.validate_host_path_field(value, verrors, schema_name)
+
         for validator_def in filter(lambda k: k in validation_mapping, schema.get('$ref', [])):
             await self.middleware.call(
                 f'chart.release.validate_{validation_mapping[validator_def]}',
@@ -117,6 +120,14 @@ class ChartReleaseService(Service):
                     )
 
         return verrors
+
+    @private
+    async def validate_host_path_field(self, value, verrors, schema_name):
+        if not (await self.middleware.call('kubernetes.config'))['validate_host_path']:
+            return
+
+        if err_str := await self.middleware.call('chart.release.validate_host_source_path', value):
+            verrors.add(schema_name, err_str)
 
     @private
     async def validate_port_available_on_node(self, verrors, value, question, schema_name, release_data):
