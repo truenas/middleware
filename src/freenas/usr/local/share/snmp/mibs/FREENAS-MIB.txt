@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 freeNas MODULE-IDENTITY
-    LAST-UPDATED "202212210900Z"
+    LAST-UPDATED "202212211800Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
         "postal:   2490 Kruse Dr
@@ -16,7 +16,7 @@ freeNas MODULE-IDENTITY
          email:    support@iXsystems.com"
     DESCRIPTION
         "FREENAS Specific MIBs"
-    REVISION     "202212210900Z"
+    REVISION     "202212211800Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
@@ -67,11 +67,8 @@ zpoolEntry OBJECT-TYPE
 
 ZpoolEntry ::= SEQUENCE {
         zpoolIndex                    Integer32,
-        zpoolDescr                    DisplayString,
+        zpoolName                     DisplayString,
         zpoolHealth                   DisplayString,
-        zpoolSize                     Counter64,
-        zpoolUsed                     Counter64,
-        zpoolAvailable                Counter64,
         zpoolReadOps                  Counter64,
         zpoolWriteOps                 Counter64,
         zpoolReadBytes                Counter64,
@@ -90,7 +87,7 @@ zpoolIndex OBJECT-TYPE
         ""
     ::= { zpoolEntry 1 }
 
-zpoolDescr OBJECT-TYPE
+zpoolName OBJECT-TYPE
     SYNTAX     DisplayString
     MAX-ACCESS read-only
     STATUS     current
@@ -106,30 +103,6 @@ zpoolHealth OBJECT-TYPE
         "The health of the zpool"
     ::= { zpoolEntry 3 }
 
-zpoolSize OBJECT-TYPE
-    SYNTAX Counter64
-    MAX-ACCESS read-only
-    STATUS current
-    DESCRIPTION
-        ""
-    ::= { zpoolEntry 4 }
-
-zpoolUsed OBJECT-TYPE
-    SYNTAX     Counter64
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { zpoolEntry 5 }
-
-zpoolAvailable OBJECT-TYPE
-    SYNTAX     Counter64
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { zpoolEntry 6 }
-
 zpoolReadOps OBJECT-TYPE
     SYNTAX Counter64
     MAX-ACCESS read-only
@@ -137,7 +110,7 @@ zpoolReadOps OBJECT-TYPE
     DESCRIPTION
         "The number of read I/O operations sent to the pool or device,
         including metadata requests (averaged since system booted)."
-    ::= { zpoolEntry 7 }
+    ::= { zpoolEntry 4 }
 
 zpoolWriteOps OBJECT-TYPE
     SYNTAX Counter64
@@ -146,7 +119,7 @@ zpoolWriteOps OBJECT-TYPE
     DESCRIPTION
         "The number of write I/O operations sent to the pool or device
         (averaged since system booted)."
-    ::= { zpoolEntry 8 }
+    ::= { zpoolEntry 5 }
 
 zpoolReadBytes OBJECT-TYPE
     SYNTAX Counter64
@@ -155,7 +128,7 @@ zpoolReadBytes OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all read operations (including metadata),
         expressed as units per second (averaged since system booted)"
-    ::= { zpoolEntry 9 }
+    ::= { zpoolEntry 6 }
 
 zpoolWriteBytes OBJECT-TYPE
     SYNTAX Counter64
@@ -164,7 +137,7 @@ zpoolWriteBytes OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all write operations, expressed as units per
         second (averaged since system booted)."
-    ::= { zpoolEntry 10 }
+    ::= { zpoolEntry 7 }
 
 zpoolReadOps1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -173,7 +146,7 @@ zpoolReadOps1sec OBJECT-TYPE
     DESCRIPTION
         "The number of read I/O operations sent to the pool or device,
         including metadata requests (over 1 second interval)."
-    ::= { zpoolEntry 11 }
+    ::= { zpoolEntry 8 }
 
 zpoolWriteOps1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -182,7 +155,7 @@ zpoolWriteOps1sec OBJECT-TYPE
     DESCRIPTION
         "The number of write I/O operations sent to the pool or device
         (over 1 second interval)."
-    ::= { zpoolEntry 12 }
+    ::= { zpoolEntry 9 }
 
 zpoolReadBytes1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -191,7 +164,7 @@ zpoolReadBytes1sec OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all read operations (including metadata),
         expressed as units per second (over 1 second interval)"
-    ::= { zpoolEntry 13 }
+    ::= { zpoolEntry 10 }
 
 zpoolWriteBytes1sec OBJECT-TYPE
     SYNTAX Counter64
@@ -200,7 +173,7 @@ zpoolWriteBytes1sec OBJECT-TYPE
     DESCRIPTION
         "The bandwidth of all write operations, expressed as units per
         second (over 1 second interval)."
-    ::= { zpoolEntry 14 }
+    ::= { zpoolEntry 11 }
 
 datasetTable OBJECT-TYPE
     SYNTAX     SEQUENCE OF DatasetEntry
@@ -222,9 +195,9 @@ datasetEntry OBJECT-TYPE
 DatasetEntry ::= SEQUENCE {
         datasetIndex                    Integer32,
         datasetDescr                    DisplayString,
-        datasetTotalBytes               Counter64,
         datasetUsedBytes                Counter64,
-        datasetAvailableBytes           Counter64
+        datasetAvailableBytes           Counter64,
+        datasetReferencedBytes          Counter64
     }
 
 datasetIndex OBJECT-TYPE
@@ -243,28 +216,28 @@ datasetDescr OBJECT-TYPE
         "The name of the dataset"
     ::= { datasetEntry 2 }
 
-datasetTotalBytes OBJECT-TYPE
-    SYNTAX     Counter64
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { datasetEntry 3 }
-
 datasetUsedBytes OBJECT-TYPE
     SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
-    ::= { datasetEntry 4 }
+        "The zfs used property value"
+    ::= { datasetEntry 3 }
 
 datasetAvailableBytes OBJECT-TYPE
     SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The zfs available property value"
+    ::= { datasetEntry 4 }
+
+datasetReferencedBytes OBJECT-TYPE
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The zfs referenced property value"
     ::= { datasetEntry 5 }
 
 zvolTable OBJECT-TYPE
@@ -287,10 +260,9 @@ zvolEntry OBJECT-TYPE
 ZvolEntry ::= SEQUENCE {
         zvolIndex                    Integer32,
         zvolDescr                    DisplayString,
-        zvolSize                     Counter64,
-        zvolUsed                     Counter64,
-        zvolAvailable                Counter64,
-        zvolReferenced               Counter64
+        zvolUsedBytes                Counter64,
+        zvolAvailableBytes           Counter64,
+        zvolReferencedBytes          Counter64
     }
 
 zvolIndex OBJECT-TYPE
@@ -309,37 +281,29 @@ zvolDescr OBJECT-TYPE
         "The name of the zvol"
     ::= { zvolEntry 2 }
 
-zvolSize OBJECT-TYPE
+zvolUsedBytes OBJECT-TYPE
     SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The zfs used property value"
     ::= { zvolEntry 3 }
 
-zvolUsed OBJECT-TYPE
+zvolAvailableBytes OBJECT-TYPE
     SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The zfs available property value"
     ::= { zvolEntry 4 }
 
-zvolAvailable OBJECT-TYPE
+zvolReferencedBytes OBJECT-TYPE
     SYNTAX     Counter64
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        ""
+        "The zfs referenced property value"
     ::= { zvolEntry 5 }
-
-zvolReferenced OBJECT-TYPE
-    SYNTAX     Counter64
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { zvolEntry 6 }
 
 zfsArcSize OBJECT-TYPE
     SYNTAX Gauge32

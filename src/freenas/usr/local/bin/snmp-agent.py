@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import threading
 import time
-import os
+import contextlib
+import pathlib
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -223,9 +224,6 @@ zpool_table = agent.Table(
         (9, agent.Counter64()),
         (10, agent.Counter64()),
         (11, agent.Counter64()),
-        (12, agent.Counter64()),
-        (13, agent.Counter64()),
-        (14, agent.Counter64()),
     ],
 )
 
@@ -238,7 +236,6 @@ dataset_table = agent.Table(
         (3, agent.Counter64()),
         (4, agent.Counter64()),
         (5, agent.Counter64()),
-        (6, agent.Counter64()),
     ],
 )
 
@@ -251,7 +248,6 @@ zvol_table = agent.Table(
         (3, agent.Counter64()),
         (4, agent.Counter64()),
         (5, agent.Counter64()),
-        (6, agent.Counter64()),
     ],
 )
 
@@ -390,96 +386,88 @@ def gather_zpool_iostat_info(prev_data, name, zpoolobj):
     return values_overall, values_1s
 
 
-def fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpoolobj):
+def fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s):
     row = zpool_table.addRow([agent.Integer32(idx)])
     row.setRowCell(1, agent.Integer32(idx))
-    row.setRowCell(2, agent.DisplayString(name))  # zpool name
-    row.setRowCell(3, agent.DisplayString(zpoolobj.properties["health"].value))  # pool health status
-    row.setRowCell(4, agent.Counter64(int(zpoolobj.properties["size"].rawvalue)))
-    row.setRowCell(5, agent.Counter64(int(zpoolobj.properties["allocated"].rawvalue)))
-    row.setRowCell(6, agent.Counter64(int(zpoolobj.properties["free"].rawvalue)))
-    row.setRowCell(7, agent.Counter64(io_overall[name]["read_ops"]))
-    row.setRowCell(8, agent.Counter64(io_overall[name]["write_ops"]))
-    row.setRowCell(9, agent.Counter64(io_overall[name]["read_bytes"]))
-    row.setRowCell(10, agent.Counter64(io_overall[name]["write_bytes"]))
-    row.setRowCell(11, agent.Counter64(io_1s[name]["read_ops"]))
-    row.setRowCell(12, agent.Counter64(io_1s[name]["write_ops"]))
-    row.setRowCell(13, agent.Counter64(io_1s[name]["read_bytes"]))
-    row.setRowCell(14, agent.Counter64(io_1s[name]["write_bytes"]))
-
-
-def fill_in_zvol_snmp_row_info(idx, zvolobj):
-    row = zvol_table.addRow([agent.Integer32(idx)])
-    row.setRowCell(1, agent.Integer32(idx))
-    row.setRowCell(2, agent.DisplayString(zvolobj.properties["name"].value))
-    row.setRowCell(3, agent.Counter64(int(zvolobj.properties["volsize"].rawvalue)))
-    row.setRowCell(4, agent.Counter64(int(zvolobj.properties["used"].rawvalue)))
-    row.setRowCell(5, agent.Counter64(int(zvolobj.properties["available"].rawvalue)))
-    row.setRowCell(6, agent.Counter64(int(zvolobj.properties["referenced"].rawvalue)))
-
-
-def report_zpool_and_zvol_info(prev_zpool_info, zfsobj):
-    zpool_table.clear()
-    zvol_table.clear()
-    for idx, zpool in enumerate(zfsobj.pools, start=1):
-        name = zpool.name
-
-        # zpool related information
-        io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, zpool)
-        fill_in_zpool_snmp_row_info(idx, name, io_overall, io_1s, zpool)
-
-        # be sure and update our zpool io data so next time it's called
-        # we calculate the 1sec values properly
-        prev_zpool_info.update(io_overall)
-
-        # zvol related information
-        zvol_type = libzfs.DatasetType.VOLUME
-        ds_iterator = zpool.root_dataset.children_recursive
-        for zidx, zvol in enumerate(filter(lambda x: x.type == zvol_type, ds_iterator), start=1):
-            # TODO: going through libzfs to get properties is expensive but there isn't a better
-            # way (currently) to get the relevant zvol information that we're looking for
-            fill_in_zvol_snmp_row_info(idx, zvol)
-
-
-def fill_in_dataset_snmp_row_info(idx, name, total, free, avail):
-    row = dataset_table.addRow([agent.Integer32(idx)])
-    row.setRowCell(1, agent.Integer32(idx))
     row.setRowCell(2, agent.DisplayString(name))
-    row.setRowCell(3, agent.Counter64(total))
-    row.setRowCell(4, agent.Counter64(free))
-    row.setRowCell(5, agent.Counter64(avail))
+    row.setRowCell(3, agent.DisplayString(health))
+    row.setRowCell(4, agent.Counter64(io_overall[name]["read_ops"]))
+    row.setRowCell(5, agent.Counter64(io_overall[name]["write_ops"]))
+    row.setRowCell(6, agent.Counter64(io_overall[name]["read_bytes"]))
+    row.setRowCell(7, agent.Counter64(io_overall[name]["write_bytes"]))
+    row.setRowCell(8, agent.Counter64(io_1s[name]["read_ops"]))
+    row.setRowCell(9, agent.Counter64(io_1s[name]["write_ops"]))
+    row.setRowCell(10, agent.Counter64(io_1s[name]["read_bytes"]))
+    row.setRowCell(11, agent.Counter64(io_1s[name]["write_bytes"]))
 
 
-def report_dataset_info():
+def fill_in_zvol_or_dataset_snmp_row_info(indexes, info):
+    if info['type'] == 'VOLUME':
+        indexes['zvol'] += 1
+        idx = indexes['zvol']
+        row = zvol_table.addRow([agent.Integer32(idx)])
+    elif info['type'] == 'FILESYSTEM':
+        indexes['ds'] += 1
+        idx = indexes['ds']
+        row = dataset_table.addRow([agent.Integer32(idx)])
+
+    row.setRowCell(1, agent.Integer32(idx))
+    row.setRowCell(2, agent.DisplayString(info["name"]))
+    row.setRowCell(3, agent.Counter64(info["properties"]["used"]["parsed"]))
+    row.setRowCell(4, agent.Counter64(info["properties"]["available"]["parsed"]))
+    row.setRowCell(5, agent.Counter64(info["properties"]["referenced"]["parsed"]))
+
+
+def report_zfs_info(prev_zpool_info):
+    zpool_table.clear()
     dataset_table.clear()
-    idx = 0
+    zvol_table.clear()
+
+    # zpool related information
+    with libzfs.ZFS() as z:
+        for idx, zpool in enumerate(z.pools, start=1):
+            name = zpool.name
+            health = zpool.properties["health"].value
+            io_overall, io_1s = gather_zpool_iostat_info(prev_zpool_info, name, zpool)
+            fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s)
+            # be sure and update our zpool io data so next time it's called
+            # we calculate the 1sec values properly
+            prev_zpool_info.update(io_overall)
+
+        zvols, datasets = get_list_of_zvols_and_datasets()
+        kwargs = {
+            'user_props': False,
+            'props': ['used', 'available', 'referenced'],
+            'retrieve_children': False,
+            'datasets': list(zvols) + list(datasets),
+        }
+        indexes = {'zvol': 0, 'ds': 0}
+        for ds_info in z.datasets_serialized(**kwargs):
+            fill_in_zvol_or_dataset_snmp_row_info(indexes, ds_info)
+
+
+def get_list_of_zvols_and_datasets():
+    zvols = set()
+    ds = set()
     for devid, info in getmntinfo().items():
-        if info['fs_type'] != 'zfs':
-            continue
+        ds.add(info['mount_source'])
 
-        try:
-            st = os.statvfs(info['mountpoint'])
-        except Exception:
-            # don't crash, it's snmp so just continue
-            continue
-        else:
-            total_bytes = st.f_blocks * st.f_frsize
-            free_bytes = st.f_bfree * st.f_frsize
-            avail_bytes = st.f_bavail * st.f_frsize
+    root_dir = '/dev/zvol/'
+    with contextlib.suppress(FileNotFoundError):  # no zvols
+        for zpool in pathlib.Path(root_dir).iterdir():
+            for zvol in filter(lambda x: '@' not in x.name, zpool.iterdir()):
+                zvol_normalized = zvol.as_posix().removeprefix(root_dir)
+                zvol_normalized = zvol_normalized.replace('+', ' ')
+                zvols.add(zvol_normalized)
 
-            idx += 1
-            fill_in_dataset_snmp_row_info(idx, info['mount_source'], total_bytes, free_bytes, avail_bytes)
+    return zvols, ds
 
 
 if __name__ == "__main__":
     with Client() as c:
         config = c.call("snmp.config")
 
-    zfsobj = libzfs.ZFS()
-
-    zilstat_1_thread = None
-    zilstat_5_thread = None
-    zilstat_10_thread = None
+    zilstat_1_thread = zilstat_5_thread = zilstat_10_thread = None
     if config["zilstat"]:
         zilstat_1_thread = ZilstatThread(1)
         zilstat_5_thread = ZilstatThread(5)
@@ -503,8 +491,7 @@ if __name__ == "__main__":
         agent.check_and_process()
 
         if datetime.utcnow() - last_update_at > timedelta(seconds=1):
-            report_zpool_and_zvol_info(prev_zpool_info, zfsobj)
-            report_dataset_info()
+            report_zfs_info(prev_zpool_info)
 
             if lm_sensors_table:
                 lm_sensors_table.clear()
