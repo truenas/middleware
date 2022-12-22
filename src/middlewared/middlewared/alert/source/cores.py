@@ -24,7 +24,6 @@ class CoreFilesArePresentAlertSource(AlertSource):
         "/usr/sbin/smartctl",
     )
     ignore_units = (
-        # TODO: with docker/containerd removed, please see what we need to whitelist here
         # Unit: "syslog-ng.service" has been core dumping for, literally, years
         # on freeBSD and now also on linux. The fix is non-trivial and it seems
         # to be very specific to how we implemented our system dataset. Anyways,
