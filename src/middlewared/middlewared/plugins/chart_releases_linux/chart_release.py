@@ -16,7 +16,7 @@ from middlewared.validators import Match
 
 from .utils import (
     add_context_to_configuration, CHART_NAMESPACE_PREFIX, CONTEXT_KEY_NAME, get_action_context,
-    get_namespace, get_storage_class_name, Resources, run,
+    get_namespace, get_storage_class_name, normalize_image_tag, Resources, run,
 )
 
 
@@ -217,7 +217,7 @@ class ChartReleaseService(CRUDService):
             })
 
             container_images_normalized = {
-                i_name: {
+                normalize_image_tag(i_name): {
                     'id': image_details.get('id'),
                     'update_available': image_details.get('update_available', False)
                 } for i_name, image_details in map(
