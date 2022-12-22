@@ -199,6 +199,7 @@ class KubernetesGPUService(Service):
             )
 
     async def configure_nvidia_runtime_class(self):
+        # Reference: https://github.com/k3s-io/k3s/issues/4391#issuecomment-1233314825
         if not await self.middleware.call(
             'k8s.runtime_class.query', [['metadata.name', '=', NVIDIA_RUNTIME_CLASS_NAME]]
         ):

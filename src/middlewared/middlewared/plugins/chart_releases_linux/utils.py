@@ -1,8 +1,11 @@
 import copy
+import contextlib
 import enum
 import os
 
+from middlewared.plugins.container_runtime_interface.utils import normalize_reference
 from middlewared.plugins.kubernetes_linux.utils import NVIDIA_RUNTIME_CLASS_NAME
+from middlewared.service import CallError
 from middlewared.utils import run as _run
 
 
@@ -99,6 +102,20 @@ def is_ix_volume_path(path: str, dataset: str) -> bool:
 
     app_path = path.replace(release_path, '')
     return path.startswith(os.path.join(release_path, app_path, 'volumes/ix_volumes/'))
+
+
+def normalize_image_tag(tag: str) -> str:
+    # This needs to be done as CRI adds registry-1. prefix which it does not
+    # do when we query containerd directly
+    try:
+        complete_tag = normalize_reference(tag)['complete_tag']
+    except CallError:
+        return tag
+    else:
+        if complete_tag.startswith('registry-1.docker.io/'):
+            return complete_tag.removeprefix('registry-1.')
+        else:
+            return complete_tag
 
 
 def is_ix_namespace(namespace):
