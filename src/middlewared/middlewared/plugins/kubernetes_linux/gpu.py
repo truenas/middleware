@@ -27,7 +27,7 @@ GPU_CONFIG = {
                     'priorityClassName': 'system-node-critical',
                     'runtimeClassName': NVIDIA_RUNTIME_CLASS_NAME,
                     'containers': [{
-                        'image': 'nvidia/k8s-device-plugin:v0.10.0',
+                        'image': 'nvcr.io/nvidia/k8s-device-plugin:v0.13.0',
                         'name': 'nvidia-device-plugin-ctr',
                         'securityContext': {'allowPrivilegeEscalation': False, 'capabilities': {'drop': ['ALL']}},
                         'volumeMounts': [{'name': 'device-plugin', 'mountPath': '/var/lib/kubelet/device-plugins'}]
