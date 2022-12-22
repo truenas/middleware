@@ -31,7 +31,6 @@ class ContainerImagesService(CRUDService):
         Bool('dangling'),
         Bool('update_available'),
         Bool('system_image'),
-        Datetime('created', null=True),
         List('parsed_repo_tags', items=[Dict(
             'parsed_repo_tag',
             Str('image'),
@@ -64,19 +63,11 @@ class ContainerImagesService(CRUDService):
                 repo_tags = image.get('repoTags') or []
                 system_image = any(tag in system_images for tag in repo_tags)
 
-                # TODO: We are not getting creation information from containerd
-                created_at = None
-                with contextlib.suppress(ValueError, KeyError):
-                    # We have seen cases where docker returns N/A for created so let's handle this safely
-                    created_at = datetime.fromtimestamp(int(image['Created']))
-
                 result = {
                     'id': image['id'],
-                    'labels': {},  # TODO: We are not getting these so far
                     'repo_tags': repo_tags,
                     'repo_digests': image.get('repoDigests') or [],
                     'size': int(image['size']),
-                    'created': created_at,
                     'dangling': len(repo_tags) == 1 and repo_tags[0] == '<none>:<none>',
                     'update_available': not system_image and any(update_cache[r] for r in repo_tags),
                     'system_image': system_image,
