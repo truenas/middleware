@@ -12,7 +12,7 @@ class ShareLockedAlertClass(AlertClass, OneShotAlertClass):
         return Alert(ShareLockedAlertClass, args, key=f'{args["type"]}_{args["id"]}')
 
     async def delete(self, alerts, query):
-        return list(filter(lambda alert: alert.key != str(query), alerts))
+        return list(filter(lambda alert: alert.key != query, alerts))
 
 
 class TaskLockedAlertClass(AlertClass, OneShotAlertClass):
@@ -26,4 +26,4 @@ class TaskLockedAlertClass(AlertClass, OneShotAlertClass):
         return Alert(TaskLockedAlertClass, args, key=f'{args["type"]}_{args["id"]}')
 
     async def delete(self, alerts, query):
-        return list(filter(lambda alert: alert.key != str(query), alerts))
+        return list(filter(lambda alert: alert.key != query, alerts))
