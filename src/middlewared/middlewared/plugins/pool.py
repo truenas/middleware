@@ -21,6 +21,7 @@ from io import BytesIO
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs import ZFSSetPropertyError
+from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name, validate_pool_name
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron,
@@ -4233,7 +4234,7 @@ class PoolDatasetService(CRUDService):
         if dataset['locked']:
             return []
 
-        paths = [f"/dev/zvol/{dataset['name']}"]
+        paths = [zvol_name_to_path(dataset['name'])]
         if path := self.__attachments_path(dataset):
             paths.append(path)
 
