@@ -249,7 +249,7 @@ class DiskService(Service, ServiceChangeMixin):
             for change in changed:
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:
-                self.middleware.send_event('disk.query', 'CHANGED', id=delete, cleared=True)
+                self.middleware.send_event('disk.query', 'REMOVED', id=delete)
 
         if licensed and status == 'MASTER':
             job.set_progress(96, 'Synchronizing database to standby controller')
@@ -303,7 +303,7 @@ class DiskService(Service, ServiceChangeMixin):
             if kwargs["fields"]["expiretime"] is not None:
                 if kwargs["fields"]["identifier"] not in self.expired_disks:
                     self.expired_disks.add(kwargs["fields"]["identifier"])
-                    return "CHANGED", {"id": kwargs["id"], "cleared": True}
+                    return "REMOVED", {"id": kwargs["id"]}
 
                 return None
             else:

@@ -434,7 +434,6 @@ class AlertService(Service):
             self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 
     def _send_alert_deleted_event(self, alert):
-        self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, cleared=True)
         self.middleware.send_event("alert.list", "REMOVED", id=alert.uuid)
 
     @periodic(60)

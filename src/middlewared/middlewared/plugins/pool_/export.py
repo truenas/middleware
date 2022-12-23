@@ -169,5 +169,4 @@ class PoolService(Service):
         self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
-        self.middleware.send_event('pool.query', 'CHANGED', id=oid, cleared=True)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)

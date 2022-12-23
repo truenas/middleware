@@ -296,9 +296,6 @@ class Application:
         if event_type in ('ADDED', 'CHANGED'):
             if 'fields' in kwargs:
                 event['fields'] = kwargs.pop('fields')
-        if event_type == 'CHANGED':
-            if 'cleared' in kwargs:
-                event['cleared'] = kwargs.pop('cleared')
         if kwargs:
             event['extra'] = kwargs
         self._send(event)
@@ -1468,7 +1465,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         event_data = self.events.get_event(name)
         # TODO: Temporarily skip events which are CHANGED but have cleared set for validation as CHANGED
         # will be removed in next release and this case wouldn't be applicable
-        if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED') and 'cleared' not in kwargs:
+        if event_data and conf.debug_mode and event_type in ('ADDED', 'CHANGED'):
             verrors = ValidationErrors()
             clean_and_validate_arg(verrors, event_data['returns'][0], kwargs.get('fields'))
             verrors.check()
