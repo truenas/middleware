@@ -34,6 +34,5 @@ def test_freenas_mib(snmpd_running):
         )
         assert snmp.returncode == 0, snmp.stderr
 
-    assert "TRUENAS-MIB::zpoolDescr.1 = STRING: boot-pool\n" in snmp.stdout
-    assert re.search(r"^TRUENAS-MIB::datasetDescr\.1 = STRING: boot-pool/.+\n", snmp.stdout, re.MULTILINE), snmp.stdout
+    assert "TRUENAS-MIB::zpoolName.1 = STRING: boot-pool\n" in snmp.stdout
     assert re.search(r"^TRUENAS-MIB::zfsArcSize\.0 = Gauge32: ([1-9][0-9]+)\n", snmp.stdout, re.MULTILINE), snmp.stdout
