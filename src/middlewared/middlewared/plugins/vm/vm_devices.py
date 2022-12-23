@@ -4,7 +4,7 @@ import re
 import middlewared.sqlalchemy as sa
 
 from middlewared.plugins.vm.devices.storage_devices import IOTYPE_CHOICES
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
 from middlewared.service import CallError, CRUDService, private
 from middlewared.utils import run
@@ -275,7 +275,7 @@ class VMDeviceService(CRUDService):
         def translate_device(dev):
             # A disk should have a path configured at all times, when that is not the case, that means `dtype` is DISK
             # and end user wants to create a new zvol in this case.
-            return dev['attributes'].get('path') or f'/dev/zvol/{dev["attributes"]["zvol_name"]}'
+            return dev['attributes'].get('path') or zvol_name_to_path(dev['attributes']['zvol_name'])
 
         disks = [
             d for d in vm['devices']

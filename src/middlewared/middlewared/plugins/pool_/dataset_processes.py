@@ -3,6 +3,7 @@ import errno
 import os
 import re
 
+from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.schema import accepts, Ref, returns, Str
 from middlewared.service import CallError, item_method, private, Service
 
@@ -42,7 +43,7 @@ class PoolDatasetService(Service):
         if dataset['locked']:
             return []
 
-        paths = [f'/dev/zvol/{dataset["name"]}']
+        paths = [zvol_name_to_path(dataset['name'])]
         if mountpoint := dataset_mountpoint(dataset):
             paths.append(mountpoint)
 
