@@ -10,13 +10,14 @@ import textwrap
 import time
 from functools import partial
 
+from middlewared.auth import TrueNasNodeSessionManagerCredentials
 from middlewared.plugins.failover_.utils import throttle_condition
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
 import middlewared.sqlalchemy as sa
-from middlewared.plugins.auth import AuthService, SessionManagerCredentials
+from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
@@ -24,10 +25,6 @@ from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOO
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
 logger = logging.getLogger('failover')
-
-
-class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
-    pass
 
 
 class FailoverModel(sa.Model):
@@ -1038,7 +1035,7 @@ async def ha_permission(middleware, app):
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
     if remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2'):
-        AuthService.session_manager.login(app, TruenasNodeSessionManagerCredentials())
+        AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
 
 
 async def interface_pre_sync_hook(middleware):
