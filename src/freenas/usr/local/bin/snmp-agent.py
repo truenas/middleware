@@ -406,7 +406,6 @@ def report_zfs_info(prev_zpool_info):
             'user_props': False,
             'props': ['used', 'available', 'referenced'],
             'retrieve_children': False,
-            # 'datasets': list(zvols) + list(datasets),
             'datasets': zvols,
         }
         for idx, ds_info in enumerate(z.datasets_serialized(**kwargs), start=1):
