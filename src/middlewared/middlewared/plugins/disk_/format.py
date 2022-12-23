@@ -1,5 +1,3 @@
-import contextlib
-
 import parted
 
 from middlewared.service import CallError, private, Service
@@ -97,11 +95,6 @@ class DiskService(Service):
         # TODO: Install a dummy boot block so system gives meaningful message if booting from a zpool data disk.
 
         self.middleware.call_sync('device.settle_udev_events')
-
-        for partition in self.middleware.call_sync('disk.list_partitions', disk):
-            with contextlib.suppress(CallError):
-                # It's okay to suppress this as some partitions might not have it
-                self.middleware.call_sync('zfs.pool.clear_label', partition['path'])
 
     def _get_largest_free_space_region(self, disk):
         return sorted(disk.getFreeSpaceRegions(), key=lambda geometry: geometry.length)[-1]
