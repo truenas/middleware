@@ -199,14 +199,10 @@ mib_builder = pysnmp.smi.builder.MibBuilder()
 mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
 mib_builder.setMibSources(*mib_sources)
 mib_builder.loadModules("TRUENAS-MIB")
-mib_builder.loadModules("LM-SENSORS-MIB")
 
 agent = netsnmpagent.netsnmpAgent(
     AgentName="TrueNASAgent",
-    MIBFiles=[
-        "/usr/local/share/snmp/mibs/TRUENAS-MIB.txt",
-        "/usr/local/share/snmp/mibs/LM-SENSORS-MIB.txt"
-    ],
+    MIBFiles=["/usr/local/share/snmp/mibs/TRUENAS-MIB.txt"],
 )
 
 zpool_table = agent.Table(
@@ -250,8 +246,6 @@ zvol_table = agent.Table(
         (5, agent.Counter64()),
     ],
 )
-
-lm_sensors_table = None
 
 hdd_temp_table = agent.Table(
     oidstr="TRUENAS-MIB::hddTempTable",
@@ -477,9 +471,6 @@ if __name__ == "__main__":
         zilstat_5_thread.start()
         zilstat_10_thread.start()
 
-    # TODO: Linux implementation
-    cpu_temp_thread = None
-
     disk_temp_thread = DiskTempThread(300)
     disk_temp_thread.start()
 
@@ -492,20 +483,6 @@ if __name__ == "__main__":
 
         if datetime.utcnow() - last_update_at > timedelta(seconds=1):
             report_zfs_info(prev_zpool_info)
-
-            if lm_sensors_table:
-                lm_sensors_table.clear()
-                temperatures = []
-                if cpu_temp_thread:
-                    for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
-                        temperatures.append((f"CPU{i}", temp))
-                if disk_temp_thread:
-                    temperatures.extend(list(disk_temp_thread.temperatures.items()))
-                for i, (name, temp) in enumerate(temperatures):
-                    row = lm_sensors_table.addRow([agent.Integer32(i + 1)])
-                    row.setRowCell(1, agent.Integer32(i + 1))
-                    row.setRowCell(2, agent.DisplayString(name))
-                    row.setRowCell(3, agent.Unsigned32(temp))
 
             if hdd_temp_table:
                 hdd_temp_table.clear()
