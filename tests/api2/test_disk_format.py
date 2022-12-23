@@ -70,3 +70,10 @@ def test_disk_format_with_size_with_swap():
     assert data_size <= partitions[0]['size'] < data_size * 1.01
     # Swap of the requested size
     assert int(partitions[1]['size'] / (1024 ** 3) + 0.5) == 2
+
+
+def test_disk_format_removes_existing_partition_table():
+    disk = call('disk.get_unused')[0]['name']
+
+    call('disk.format', disk, None, 2)
+    call('disk.format', disk, None, 0)
