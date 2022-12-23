@@ -1,4 +1,4 @@
-FREENAS-MIB DEFINITIONS ::= BEGIN
+TRUENAS-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
     MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, enterprises,
@@ -6,7 +6,7 @@ IMPORTS
 
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
-freeNas MODULE-IDENTITY
+trueNas MODULE-IDENTITY
     LAST-UPDATED "202212211800Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
@@ -15,7 +15,7 @@ freeNas MODULE-IDENTITY
 
          email:    support@iXsystems.com"
     DESCRIPTION
-        "FREENAS Specific MIBs"
+        "TrueNAS Specific MIBs"
     REVISION     "202212211800Z"
     DESCRIPTION
         ""
@@ -35,9 +35,9 @@ AlertLevelType ::= TEXTUAL-CONVENTION
                 emergency(7)
                 }
 
-zfs     OBJECT IDENTIFIER ::= { freeNas 1 }
+zfs     OBJECT IDENTIFIER ::= { trueNas 1 }
 
-notifications       OBJECT IDENTIFIER ::= { freeNas 2 }
+notifications       OBJECT IDENTIFIER ::= { trueNas 2 }
 notificationPrefix  OBJECT IDENTIFIER ::= { notifications 1 }
 notificationObjects OBJECT IDENTIFIER ::= { notifications 2 }
 
@@ -496,7 +496,7 @@ hddTempTable OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "Table of HDDs and their temperatures."
-    ::= { freeNas 3 }
+    ::= { trueNas 3 }
 
 hddTempEntry OBJECT-TYPE
     SYNTAX      HDDTempEntry

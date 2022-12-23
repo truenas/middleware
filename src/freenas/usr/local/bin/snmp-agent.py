@@ -198,19 +198,19 @@ def get_zfs_arc_miss_percent(kstat):
 mib_builder = pysnmp.smi.builder.MibBuilder()
 mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
 mib_builder.setMibSources(*mib_sources)
-mib_builder.loadModules("FREENAS-MIB")
+mib_builder.loadModules("TRUENAS-MIB")
 mib_builder.loadModules("LM-SENSORS-MIB")
 
 agent = netsnmpagent.netsnmpAgent(
-    AgentName="FreeNASAgent",
+    AgentName="TrueNASAgent",
     MIBFiles=[
-        "/usr/local/share/snmp/mibs/FREENAS-MIB.txt",
+        "/usr/local/share/snmp/mibs/TRUENAS-MIB.txt",
         "/usr/local/share/snmp/mibs/LM-SENSORS-MIB.txt"
     ],
 )
 
 zpool_table = agent.Table(
-    oidstr="FREENAS-MIB::zpoolTable",
+    oidstr="TRUENAS-MIB::zpoolTable",
     indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
@@ -228,7 +228,7 @@ zpool_table = agent.Table(
 )
 
 dataset_table = agent.Table(
-    oidstr="FREENAS-MIB::datasetTable",
+    oidstr="TRUENAS-MIB::datasetTable",
     indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
@@ -240,7 +240,7 @@ dataset_table = agent.Table(
 )
 
 zvol_table = agent.Table(
-    oidstr="FREENAS-MIB::zvolTable",
+    oidstr="TRUENAS-MIB::zvolTable",
     indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
@@ -254,7 +254,7 @@ zvol_table = agent.Table(
 lm_sensors_table = None
 
 hdd_temp_table = agent.Table(
-    oidstr="FREENAS-MIB::hddTempTable",
+    oidstr="TRUENAS-MIB::hddTempTable",
     indexes=[
         agent.Integer32(),
     ],
@@ -264,26 +264,26 @@ hdd_temp_table = agent.Table(
     ]
 )
 
-zfs_arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcSize")
-zfs_arc_meta = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcMeta")
-zfs_arc_data = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcData")
-zfs_arc_hits = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcHits")
-zfs_arc_misses = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcMisses")
-zfs_arc_c = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcC")
-zfs_arc_p = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcP")
-zfs_arc_miss_percent = agent.DisplayString(oidstr="FREENAS-MIB::zfsArcMissPercent")
-zfs_arc_cache_hit_ratio = agent.DisplayString(oidstr="FREENAS-MIB::zfsArcCacheHitRatio")
-zfs_arc_cache_miss_ratio = agent.DisplayString(oidstr="FREENAS-MIB::zfsArcCacheMissRatio")
+zfs_arc_size = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcSize")
+zfs_arc_meta = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcMeta")
+zfs_arc_data = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcData")
+zfs_arc_hits = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcHits")
+zfs_arc_misses = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcMisses")
+zfs_arc_c = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcC")
+zfs_arc_p = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcP")
+zfs_arc_miss_percent = agent.DisplayString(oidstr="TRUENAS-MIB::zfsArcMissPercent")
+zfs_arc_cache_hit_ratio = agent.DisplayString(oidstr="TRUENAS-MIB::zfsArcCacheHitRatio")
+zfs_arc_cache_miss_ratio = agent.DisplayString(oidstr="TRUENAS-MIB::zfsArcCacheMissRatio")
 
-zfs_l2arc_hits = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcHits")
-zfs_l2arc_misses = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcMisses")
-zfs_l2arc_read = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcRead")
-zfs_l2arc_write = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcWrite")
-zfs_l2arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsL2ArcSize")
+zfs_l2arc_hits = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcHits")
+zfs_l2arc_misses = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcMisses")
+zfs_l2arc_read = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcRead")
+zfs_l2arc_write = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcWrite")
+zfs_l2arc_size = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsL2ArcSize")
 
-zfs_zilstat_ops1 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps1sec")
-zfs_zilstat_ops5 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps5sec")
-zfs_zilstat_ops10 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps10sec")
+zfs_zilstat_ops1 = agent.Counter64(oidstr="TRUENAS-MIB::zfsZilstatOps1sec")
+zfs_zilstat_ops5 = agent.Counter64(oidstr="TRUENAS-MIB::zfsZilstatOps5sec")
+zfs_zilstat_ops10 = agent.Counter64(oidstr="TRUENAS-MIB::zfsZilstatOps10sec")
 
 
 def readZilOpsCount() -> int:
