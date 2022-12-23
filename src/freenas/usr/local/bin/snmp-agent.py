@@ -401,9 +401,6 @@ def report_zfs_info(prev_zpool_info):
             # we calculate the 1sec values properly
             prev_zpool_info.update(io_overall)
 
-        # we'll continue to enumerate the datasets but we're not
-        # reporting any space via snmp because this is already
-        # handled by the built-in HOST-RESOURCES-MIB::hrStorage* OID(s)
         zvols = get_list_of_zvols()
         kwargs = {
             'user_props': False,
