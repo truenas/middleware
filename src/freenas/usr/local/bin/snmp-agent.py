@@ -12,7 +12,6 @@ import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
 from middlewared.client import Client
-from middlewared.utils.osc import getmntinfo
 
 
 def get_kstat():
@@ -223,18 +222,6 @@ zpool_table = agent.Table(
     ],
 )
 
-dataset_table = agent.Table(
-    oidstr="TRUENAS-MIB::datasetTable",
-    indexes=[agent.Integer32()],
-    columns=[
-        (1, agent.Integer32()),
-        (2, agent.DisplayString()),
-        (3, agent.Counter64()),
-        (4, agent.Counter64()),
-        (5, agent.Counter64()),
-    ],
-)
-
 zvol_table = agent.Table(
     oidstr="TRUENAS-MIB::zvolTable",
     indexes=[agent.Integer32()],
@@ -390,16 +377,8 @@ def fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s):
     row.setRowCell(11, agent.Counter64(io_1s[name]["write_bytes"]))
 
 
-def fill_in_zvol_or_dataset_snmp_row_info(indexes, info):
-    if info['type'] == 'VOLUME':
-        indexes['zvol'] += 1
-        idx = indexes['zvol']
-        row = zvol_table.addRow([agent.Integer32(idx)])
-    elif info['type'] == 'FILESYSTEM':
-        indexes['ds'] += 1
-        idx = indexes['ds']
-        row = dataset_table.addRow([agent.Integer32(idx)])
-
+def fill_in_zvol_snmp_row_info(idx, info):
+    row = zvol_table.addRow([agent.Integer32(idx)])
     row.setRowCell(1, agent.Integer32(idx))
     row.setRowCell(2, agent.DisplayString(info["name"]))
     row.setRowCell(3, agent.Counter64(info["properties"]["used"]["parsed"]))
@@ -409,7 +388,6 @@ def fill_in_zvol_or_dataset_snmp_row_info(indexes, info):
 
 def report_zfs_info(prev_zpool_info):
     zpool_table.clear()
-    dataset_table.clear()
     zvol_table.clear()
 
     # zpool related information
@@ -423,24 +401,23 @@ def report_zfs_info(prev_zpool_info):
             # we calculate the 1sec values properly
             prev_zpool_info.update(io_overall)
 
-        zvols, datasets = get_list_of_zvols_and_datasets()
+        # we'll continue to enumerate the datasets but we're not
+        # reporting any space via snmp because this is already
+        # handled by the built-in HOST-RESOURCES-MIB::hrStorage* OID(s)
+        zvols = get_list_of_zvols()
         kwargs = {
             'user_props': False,
             'props': ['used', 'available', 'referenced'],
             'retrieve_children': False,
-            'datasets': list(zvols) + list(datasets),
+            # 'datasets': list(zvols) + list(datasets),
+            'datasets': zvols,
         }
-        indexes = {'zvol': 0, 'ds': 0}
-        for ds_info in z.datasets_serialized(**kwargs):
-            fill_in_zvol_or_dataset_snmp_row_info(indexes, ds_info)
+        for idx, ds_info in enumerate(z.datasets_serialized(**kwargs), start=1):
+            fill_in_zvol_snmp_row_info(idx, ds_info)
 
 
-def get_list_of_zvols_and_datasets():
+def get_list_of_zvols():
     zvols = set()
-    ds = set()
-    for devid, info in getmntinfo().items():
-        ds.add(info['mount_source'])
-
     root_dir = '/dev/zvol/'
     with contextlib.suppress(FileNotFoundError):  # no zvols
         for zpool in pathlib.Path(root_dir).iterdir():
@@ -449,7 +426,7 @@ def get_list_of_zvols_and_datasets():
                 zvol_normalized = zvol_normalized.replace('+', ' ')
                 zvols.add(zvol_normalized)
 
-    return zvols, ds
+    return list(zvols)
 
 
 if __name__ == "__main__":
