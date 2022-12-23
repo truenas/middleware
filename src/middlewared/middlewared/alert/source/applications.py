@@ -42,6 +42,6 @@ class ChartReleaseUpdateAlertClass(AlertClass, OneShotAlertClass):
 
     async def delete(self, alerts, query):
         return list(filter(
-            lambda alert: alert.key != str(query),
+            lambda alert: alert.key != query,
             alerts
         ))

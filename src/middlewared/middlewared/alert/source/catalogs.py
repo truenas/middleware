@@ -9,11 +9,11 @@ class CatalogNotHealthyAlertClass(AlertClass, OneShotAlertClass):
     text = '%(apps)s Applications in %(catalog)s Catalog are not healthy.'
 
     async def create(self, args):
-        return Alert(CatalogNotHealthyAlertClass, args, _key=args['catalog'])
+        return Alert(CatalogNotHealthyAlertClass, args, key=args['catalog'])
 
     async def delete(self, alerts, query):
         return list(filter(
-            lambda alert: alert.key != str(query),
+            lambda alert: alert.args['catalog'] != query,
             alerts
         ))
 
@@ -26,10 +26,10 @@ class CatalogSyncFailedAlertClass(AlertClass, OneShotAlertClass):
     text = 'Failed to sync %(catalog)s catalog: %(error)s'
 
     async def create(self, args):
-        return Alert(CatalogSyncFailedAlertClass, args, _key=args['catalog'])
+        return Alert(CatalogSyncFailedAlertClass, args, key=args['catalog'])
 
     async def delete(self, alerts, query):
         return list(filter(
-            lambda alert: alert.key != str(query),
+            lambda alert: alert.args['catalog'] != query,
             alerts
         ))
