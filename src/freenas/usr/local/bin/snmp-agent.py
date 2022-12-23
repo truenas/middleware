@@ -458,18 +458,16 @@ def get_list_of_zvols_and_datasets():
 
 
 if __name__ == "__main__":
-    with Client() as c:
-        config = c.call("snmp.config")
-
     zilstat_1_thread = zilstat_5_thread = zilstat_10_thread = None
-    if config["zilstat"]:
-        zilstat_1_thread = ZilstatThread(1)
-        zilstat_5_thread = ZilstatThread(5)
-        zilstat_10_thread = ZilstatThread(10)
+    with Client() as c:
+        if c.call("snmp.config")["zilstat"]:
+            zilstat_1_thread = ZilstatThread(1)
+            zilstat_5_thread = ZilstatThread(5)
+            zilstat_10_thread = ZilstatThread(10)
 
-        zilstat_1_thread.start()
-        zilstat_5_thread.start()
-        zilstat_10_thread.start()
+            zilstat_1_thread.start()
+            zilstat_5_thread.start()
+            zilstat_10_thread.start()
 
     disk_temp_thread = DiskTempThread(300)
     disk_temp_thread.start()
