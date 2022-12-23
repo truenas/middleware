@@ -367,7 +367,7 @@ zfsZilstatOps1sec OBJECT-TYPE
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        "The ops column parsed from the command zilstat 1 1"
+        ""
     ::= { zil 1 }
 
 zfsZilstatOps5sec OBJECT-TYPE
@@ -375,7 +375,7 @@ zfsZilstatOps5sec OBJECT-TYPE
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        "The ops column parsed from the command zilstat 5 1"
+        ""
     ::= { zil 2 }
 
 zfsZilstatOps10sec OBJECT-TYPE
@@ -383,7 +383,7 @@ zfsZilstatOps10sec OBJECT-TYPE
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
-        "The ops column parsed from the command zilstat 10 1"
+        ""
     ::= { zil 3 }
 
 alert NOTIFICATION-TYPE
