@@ -662,7 +662,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('etc.generate', 'pam')
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'].name)
-            await self.middleware.call('admonitor.start')
             await self.middleware.call('service.start', 'dscache')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
@@ -688,7 +687,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         await self.set_state(DSStatus['LEAVING'].name)
         job.set_progress(5, 'Stopping Active Directory monitor')
-        await self.middleware.call('admonitor.stop')
         await self.middleware.call('etc.generate', 'hostname')
         job.set_progress(10, 'Stopping kerberos service')
         await self.middleware.call('kerberos.stop')

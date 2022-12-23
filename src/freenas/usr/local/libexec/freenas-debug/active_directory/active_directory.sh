@@ -182,17 +182,17 @@ active_directory_func()
 	if [ "${enabled}" = "ENABLED" ]
 	then
 	section_header "Active Directory machine account status"
-	midclt call activedirectory.machine_account_status
+	midclt call activedirectory.machine_account_status | jq
 	section_footer
 	fi
 
 	#
-	#	Dump results clockskew check
+	#	Dump results lookup DC
 	#
 	if [ "${enabled}" = "ENABLED" ]
 	then
-	section_header "Active Directory clockskew - midclt call activedirectory.check_clockskew"
-	midclt call activedirectory.check_clockskew | jq
+	section_header "Active Directory lookup DC - midclt call activedirectory.lookup_dc | jq"
+	midclt call activedirectory.lookup_dc | jq
 	section_footer
 	fi
 
