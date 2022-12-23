@@ -61,3 +61,7 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
                 "name": self.api_key.api_key["name"],
             }
         }
+
+
+class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
+    pass
