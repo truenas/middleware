@@ -467,11 +467,10 @@ class PoolService(CRUDService):
                 "params": [1]
             }
         """
+        pool = await self.middleware.call('pool.get_instance', oid)
         # Should we check first if upgrade is required ?
-        await self.middleware.call(
-            'zfs.pool.upgrade',
-            (await self.get_instance(oid))['name']
-        )
+        await self.middleware.call('zfs.pool.upgrade', pool['name'])
+        await self.middleware.call('alert.oneshot_delete', 'PoolUpgraded', pool['name'])
         return True
 
     @private
