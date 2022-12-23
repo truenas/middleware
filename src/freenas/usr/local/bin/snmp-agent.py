@@ -308,11 +308,6 @@ class ZilstatThread(threading.Thread):
             previous = current
 
 
-class CpuTempThread(threading.Thread):
-    # TODO: Linux implementation
-    pass
-
-
 class DiskTempThread(threading.Thread):
     def __init__(self, interval):
         super().__init__()
