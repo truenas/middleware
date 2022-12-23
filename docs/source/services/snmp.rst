@@ -20,11 +20,11 @@ To validate custom MIB syntax use:
 
 .. code-block:: bash
 
-    smilint src/freenas/usr/local/share/snmp/mibs/FREENAS-MIB.txt
+    smilint src/freenas/usr/local/share/snmp/mibs/TRUENAS-MIB.txt
 
 All changes made to this MIB must be reflected in `src/freenas/usr/local/share/pysnmp/mibs/FREENAS-MIB.py` file that is
 used by our custom `snmp-agent.py`. This file is auto-generated, just run
 
 .. code-block:: bash
 
-    smidump -f python /root/freenas/freenas/src/freenas/usr/local/share/snmp/mibs/FREENAS-MIB.txt | libsmi2pysnmp > /root/freenas/freenas/src/freenas/usr/local/share/pysnmp/mibs/FREENAS-MIB.py
+    smidump -f python /root/freenas/freenas/src/freenas/usr/local/share/snmp/mibs/TRUENAS-MIB.txt | libsmi2pysnmp > /root/freenas/freenas/src/freenas/usr/local/share/pysnmp/mibs/TRUENAS-MIB.py
