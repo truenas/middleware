@@ -215,7 +215,6 @@ async def zfs_events(middleware, data):
                 # Ignore deletion of hidden clones such as `%recv` dataset created by replication
                 return
 
-            middleware.send_event('pool.dataset.query', 'CHANGED', id=ds_id, cleared=True)
             middleware.send_event('pool.dataset.query', 'REMOVED', id=ds_id)
 
             await middleware.call(

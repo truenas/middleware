@@ -53,12 +53,6 @@ class DatastoreService(Service):
 
     async def send_delete_events(self, datastore, id):
         for options in self.events[datastore]:
-            await self._send_event(
-                options,
-                "CHANGED",
-                id=id,
-                cleared=True,
-            )
             await self._send_event(options, "REMOVED", id=id)
 
     async def _fields(self, options, row, get=True):
