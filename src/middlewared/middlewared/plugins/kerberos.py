@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import datetime
 import enum
 import errno
 import io
@@ -13,7 +12,10 @@ from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Ref, Datetime, Bool
 from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run, Popen
+from middlewared.utils import filter_list, run, Popen
+
+
+KRB_TKT_CHECK_INTERVAL = 1800
 
 
 class keytab(enum.Enum):
@@ -25,6 +27,23 @@ class keytab(enum.Enum):
 class krb5ccache(enum.Enum):
     SYSTEM = '/tmp/krb5cc_0'
     TEMP = '/tmp/krb5cc_middleware'
+
+
+class krb_tkt_flag(enum.Enum):
+    FORWARDABLE = 'F'
+    FORWARDED = 'f'
+    PROXIABLE = 'P'
+    PROXY = 'p'
+    POSTDATEABLE = 'D'
+    POSTDATED = 'd'
+    RENEWABLE = 'R'
+    INITIAL = 'I'
+    INVALID = 'i'
+    HARDWARE_AUTHENTICATED = 'H'
+    PREAUTHENTICATED = 'A'
+    TRANSIT_POLICY_CHECKED = 'T'
+    OKAY_AS_DELEGATE = 'O'
+    ANONYMOUS = 'a'
 
 
 class KRB_AppDefaults(enum.Enum):
@@ -442,35 +461,40 @@ class KerberosService(TDBWrapConfigService):
         await self.do_kinit({'krb5_cred': cred})
 
     @private
-    async def parse_klist(self, data):
-        ad = data.get("ad")
-        ldap = data.get("ldap")
-        klistin = data.get("klistin")
-        tickets = klistin.splitlines()
+    async def parse_klist(self, klistbuf):
+        tickets = klistbuf.splitlines()
+
+        ticket_cache = None
         default_principal = None
         tlen = len(tickets)
 
-        if ad['enable']:
-            dstype = DSType.DS_TYPE_ACTIVEDIRECTORY
-        elif ldap['enable']:
-            dstype = DSType.DS_TYPE_LDAP
-        else:
-            return {"ad_TGT": [], "ldap_TGT": []}
-
         parsed_klist = []
         for idx, e in enumerate(tickets):
+            if e.startswith('Ticket cache'):
+                cache_type, cache_name = e.strip('Ticket cache: ').split(':', 1)
+                if cache_type == 'FILE':
+                    cache_name = krb5ccache(cache_name.strip()).name
+
+                ticket_cache = {
+                    'type': cache_type,
+                    'name': cache_name
+                }
+
             if e.startswith('Default'):
                 default_principal = (e.split(':')[1]).strip()
+                continue
+
             if e and e[0].isdigit():
                 d = e.split("  ")
-                issued = time.strptime(d[0], "%m/%d/%y %H:%M:%S")
-                expires = time.strptime(d[1], "%m/%d/%y %H:%M:%S")
+                issued = time.mktime(time.strptime(d[0], "%m/%d/%y %H:%M:%S"))
+                expires = time.mktime(time.strptime(d[1], "%m/%d/%y %H:%M:%S"))
                 client = default_principal
                 server = d[2]
-                flags = None
+                renew_until = 0
+                flags = ''
                 etype = None
-                next_two = [idx + 1, idx + 2]
-                for i in next_two:
+
+                for i in range(idx + 1, idx + 3):
                     if i >= tlen:
                         break
                     if tickets[i][0].isdigit():
@@ -478,129 +502,98 @@ class KerberosService(TDBWrapConfigService):
                     if tickets[i].startswith("\tEtype"):
                         etype = tickets[i].strip()
                         break
+
                     if tickets[i].startswith("\trenew"):
-                        flags = tickets[i].split("Flags: ")[1]
+                        ts, flags = tickets[i].split(",")
+                        renew_until = time.mktime(time.strptime(ts.strip('\trenew until '), "%m/%d/%y %H:%M:%S"))
+                        flags = flags.split("Flags: ")[1]
                         continue
 
                     extra = tickets[i].split(", ", 1)
-                    flags = extra[0].strip()
+                    flags = extra[0][7:].strip()
                     etype = extra[1].strip()
 
                 parsed_klist.append({
                     'issued': issued,
                     'expires': expires,
+                    'renew_until': renew_until,
                     'client': client,
                     'server': server,
                     'etype': etype,
-                    'flags': flags,
+                    'flags': [krb_tkt_flag(f).name for f in flags],
                 })
 
         return {
-            "ad_TGT": parsed_klist if dstype == DSType.DS_TYPE_ACTIVEDIRECTORY else [],
-            "ldap_TGT": parsed_klist if dstype == DSType.DS_TYPE_LDAP else [],
+            'default_principal': default_principal,
+            'ticket_cache': ticket_cache,
+            'tickets': parsed_klist,
         }
 
     @private
-    async def _get_cached_klist(self):
-        """
-        Try to get retrieve cached kerberos tgt info. If it hasn't been cached,
-        perform klist, parse it, put it in cache, then return it.
-        """
-        if await self.middleware.call('cache.has_key', 'KRB_TGT_INFO'):
-            return (await self.middleware.call('cache.get', 'KRB_TGT_INFO'))
-        ad = await self.middleware.call('activedirectory.config')
-        ldap = await self.middleware.call('ldap.config')
-        ad_TGT = []
-        ldap_TGT = []
-        parsed_klist = {}
-        if not ad['enable'] and not ldap['enable']:
-            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
-        if not ad['enable'] and not ldap['kerberos_realm']:
-            return {'ad_TGT': ad_TGT, 'ldap_TGT': ldap_TGT}
+    @accepts(Patch(
+        'kerberos-options',
+        'klist-options',
+        ('add', {'name': 'timeout', 'type': 'int', 'default': 10}),
+    ))
+    async def klist(self, data):
+        ccache = krb5ccache[data['ccache']].value
 
-        if not await self.status():
-            await self.start()
         try:
             klist = await asyncio.wait_for(
-                run(['klist', '-ef'], check=False, stdout=subprocess.PIPE),
-                timeout=10.0
+                run(['klist', '-ef', ccache], check=False, stdout=subprocess.PIPE),
+                timeout=data['timeout']
             )
-        except Exception as e:
-            await self.stop()
-            raise CallError("Attempt to list kerberos tickets failed with error: %s", e)
+        except asyncio.TimeoutError:
+            raise CallError('Attempt to list kerberos tickets timeod out after {data["timeout"]} seconds')
 
         if klist.returncode != 0:
-            await self.stop()
             raise CallError(f'klist failed with error: {klist.stderr.decode()}')
 
-        klist_output = klist.stdout.decode()
-
-        parsed_klist = await self.parse_klist({
-            "klistin": klist_output,
-            "ad": ad,
-            "ldap": ldap,
-        })
-
-        if parsed_klist['ad_TGT'] or parsed_klist['ldap_TGT']:
-            await self.middleware.call('cache.put', 'KRB_TGT_INFO', parsed_klist)
-
-        return parsed_klist
+        return await self.parse_klist(klist.stdout.decode())
 
     @private
     async def renew(self):
-        """
-        Compare timestamp of cached TGT info with current timestamp. If we're within 5 minutes
-        of expire time, renew the TGT via 'kinit -R'.
-        """
-        tgt_info = await self._get_cached_klist()
-        ret = True
+        if not await self._klist_test():
+            self.logger.warning('Kerberos ticket is unavailable. Performing kinit.')
+            return await self.start()
 
-        must_renew = False
-        must_reinit = False
-        if not tgt_info['ad_TGT'] and not tgt_info['ldap_TGT']:
-            must_reinit = True
+        tgt_info = await self.klist()
+        if not tgt_info:
+            return await self.start()
 
-        if tgt_info['ad_TGT']:
-            permitted_buffer = datetime.timedelta(minutes=5)
-            current_time = datetime.datetime.now()
-            for entry in tgt_info['ad_TGT']:
-                tgt_expiry_time = datetime.datetime.fromtimestamp(time.mktime(entry['expires']))
-                delta = tgt_expiry_time - current_time
-                if datetime.timedelta(minutes=0) > delta:
-                    must_reinit = True
-                    break
-                if permitted_buffer > delta:
-                    must_renew = True
-                    break
+        current_time = time.time()
 
-        if tgt_info['ldap_TGT']:
-            permitted_buffer = datetime.timedelta(minutes=5)
-            current_time = datetime.datetime.now()
-            for entry in tgt_info['ldap_TGT']:
-                tgt_expiry_time = datetime.datetime.fromtimestamp(time.mktime(entry['expires']))
-                delta = tgt_expiry_time - current_time
-                if datetime.timedelta(minutes=0) > delta:
-                    must_reinit = True
-                    break
-                if permitted_buffer > delta:
-                    must_renew = True
-                    break
+        ticket = filter_list(
+            tgt_info['tickets'],
+            [['client', '=', tgt_info['default_principal']], ['server', '^', 'krbtgt']],
+            {'get': True}
+        )
 
-        if must_renew and not must_reinit:
-            try:
-                kinit = await asyncio.wait_for(run(['kinit', '-R'], check=False), timeout=15)
-                if kinit.returncode != 0:
-                    raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
-                self.logger.debug('Successfully renewed kerberos TGT')
-                await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
-            except asyncio.TimeoutError:
-                self.logger.debug('Attempt to renew kerberos TGT failed after 15 seconds.')
+        remaining = ticket['expires'] - current_time
+        if remaining < 0:
+            self.logger.warning('Kerberos ticket expired. Performing kinit.')
+            return await self.start()
 
-        if must_reinit:
-            ret = await self.start()
-            await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
+        if remaining > KRB_TKT_CHECK_INTERVAL:
+            return tgt_info
 
-        return ret
+        if krb_tkt_flag.RENEWABLE.name not in ticket['flags']:
+            self.logger.debug("Kerberos ticket is not renewable. Performing kinit.")
+            return await self.start()
+
+        if (2 * KRB_TKT_CHECK_INTERVAL) + current_time > ticket['renew_until']:
+            # getting close to time when we can no longer renew. Better to kinit again.
+            return await self.start()
+
+        try:
+            kinit = await asyncio.wait_for(run(['kinit', '-R'], check=False), timeout=15)
+            if kinit.returncode != 0:
+                raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
+        except asyncio.TimeoutError:
+            raise CallError('Attempt to renew kerberos TGT failed after 15 seconds.')
+
+        self.logger.debug('Successfully renewed kerberos TGT')
+        return await self.klist()
 
     @private
     async def status(self):
@@ -628,9 +621,15 @@ class KerberosService(TDBWrapConfigService):
 
     @private
     async def stop(self):
-        await self.middleware.call('cache.pop', 'KRB_TGT_INFO')
+        renewal_job = await self.middleware.call(
+            'core.get_jobs',
+            [['method', '=', 'kerberos.wait_for_renewal']]
+        )
+        if renewal_job:
+            await self.middleware.call('core.job_abort', renewal_job[0]['id'])
+
         await self.kdestroy()
-        return True
+        return
 
     @private
     async def start(self, realm=None, kinit_timeout=30):
@@ -643,6 +642,33 @@ class KerberosService(TDBWrapConfigService):
             await asyncio.wait_for(self._kinit(), timeout=kinit_timeout)
         except asyncio.TimeoutError:
             raise CallError(f'Timed out hung kinit after [{kinit_timeout}] seconds')
+
+        await self.middleware.call('kerberos.wait_for_renewal')
+        return await self.klist()
+
+    @private
+    @job(lock="kerberos_renew_watch", transient=True, lock_queue_size=1)
+    async def wait_for_renewal(self, job):
+        klist = await self.klist()
+
+        while True:
+            now = time.time()
+
+            ticket = filter_list(
+                klist['tickets'],
+                [['client', '=', klist['default_principal']], ['server', '^', 'krbtgt']],
+                {'get': True}
+            )
+
+            timestr = time.strftime("%m/%d/%y %H:%M:%S UTC", time.gmtime(ticket['expires']))
+            job.set_description(f'Waiting to renew kerberos ticket. Current ticket expires: {timestr}')
+
+            if (ticket['expires'] - (now + KRB_TKT_CHECK_INTERVAL)) > 0:
+                await asyncio.sleep(KRB_TKT_CHECK_INTERVAL)
+                klist = await self.klist()
+                continue
+
+            klist = await self.renew()
 
 
 class KerberosRealmModel(sa.Model):
