@@ -21,6 +21,7 @@ from io import BytesIO
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs import ZFSSetPropertyError
+from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name, validate_pool_name
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron,
@@ -2335,8 +2336,11 @@ class PoolDatasetService(CRUDService):
         elif id != ds['encryption_root']:
             raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
 
+        path = self.__attachments_path(ds)
+
         async def detach(delegate):
-            await delegate.stop(await delegate.query(self.__attachments_path(ds), True))
+            if path:
+                await delegate.stop(await delegate.query(path, True))
 
         try:
             await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
@@ -2604,15 +2608,17 @@ class PoolDatasetService(CRUDService):
 
     @private
     async def unlock_handle_attachments(self, dataset, options):
+        path = self.__attachments_path(dataset)
         for attachment_delegate in PoolDatasetService.attachment_delegates:
             # FIXME: put this into `VMFSAttachmentDelegate`
             if attachment_delegate.name == 'vm':
                 await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
                 continue
 
-            attachments = await attachment_delegate.query(self.__attachments_path(dataset), True, {'locked': False})
-            if attachments:
-                await attachment_delegate.start(attachments)
+            if path:
+                attachments = await attachment_delegate.query(path, True, {'locked': False})
+                if attachments:
+                    await attachment_delegate.start(attachments)
 
     @accepts(
         Str('id'),
@@ -3707,10 +3713,10 @@ class PoolDatasetService(CRUDService):
                 if attachments:
                     await delegate.delete(attachments)
 
-        if dataset['locked'] and dataset['mountpoint'] and os.path.exists(dataset['mountpoint']):
+        if dataset['locked'] and path and os.path.exists(path):
             # We would like to remove the immutable flag in this case so that it's mountpoint can be
             # cleaned automatically when we delete the dataset
-            await self.middleware.call('filesystem.set_immutable', False, dataset['mountpoint'])
+            await self.middleware.call('filesystem.set_immutable', False, path)
 
         result = await self.middleware.call('zfs.dataset.delete', id, {
             'force': options['force'],
@@ -4175,7 +4181,9 @@ class PoolDatasetService(CRUDService):
         ]
         """
         dataset = await self.get_instance(oid)
-        return await self.attachments_with_path(self.__attachments_path(dataset))
+        if path := self.__attachments_path(dataset):
+            return await self.attachments_with_path(path)
+        return []
 
     @private
     async def attachments_with_path(self, path):
@@ -4194,6 +4202,9 @@ class PoolDatasetService(CRUDService):
         return result
 
     def __attachments_path(self, dataset):
+        if dataset['mountpoint'] == 'legacy':
+            return None
+
         return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
 
     @item_method
@@ -4221,9 +4232,12 @@ class PoolDatasetService(CRUDService):
         dataset = await self.get_instance(oid)
         if dataset['locked']:
             return []
-        path = self.__attachments_path(dataset)
-        zvol_path = f"/dev/zvol/{dataset['name']}"
-        return await self.middleware.call('pool.dataset.processes_using_paths', [path, zvol_path])
+
+        paths = [zvol_name_to_path(dataset['name'])]
+        if path := self.__attachments_path(dataset):
+            paths.append(path)
+
+        return await self.middleware.call('pool.dataset.processes_using_paths', paths)
 
     @private
     async def kill_processes(self, oid, control_services, max_tries=5):
