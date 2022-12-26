@@ -61,7 +61,8 @@ class KubernetesService(Service):
                     ['metadata.namespace', '=', chart_release['namespace']]
                 ]
             )
-            for secret in sorted(secrets, key=lambda d: d['metadata']['name']):
+            # We ignore this keeping in line with helm behaviour where the secret malformed is ignored by helm
+            for secret in sorted(secrets, key=lambda d: d['metadata']['name'] and d.get('data')):
                 with open(os.path.join(secrets_dir, secret['metadata']['name']), 'w') as f:
                     f.write(self.middleware.call_sync('k8s.secret.export_to_yaml_internal', secret))
 
