@@ -108,7 +108,7 @@ if not ha:
     def test_05_pull_a_private_container_image(request):
         depends(request, ['setup_kubernetes'], scope='session')
         payload = {
-            'docker_authentication': {
+            'authentication': {
                 'username': docker_username,
                 'password': docker_password
             },
@@ -126,7 +126,7 @@ if not ha:
         global private_image_id
         results = GET('/container/image/')
         for result in results.json():
-            if result['repo_tags'] == [f'{docker_image}:{docker_tag}']:
+            if all([f'{docker_image}:{docker_tag}' in tag for tag in result['repo_tags']]):
                 private_image_id = result['id']
                 assert True, result
                 break
@@ -141,7 +141,7 @@ if not ha:
 
     def test_08_delete_private_image_with_id(request):
         depends(request, ['pull_private_image'])
-        results = DELETE(f'/container/image/id/{private_image_id}/', {'force': True})
+        results = DELETE(f'/container/image/id/{private_image_id}/')
         assert results.status_code == 200, results.text
         assert results.json() is None, results.text
 
