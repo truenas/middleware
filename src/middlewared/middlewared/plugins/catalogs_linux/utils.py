@@ -37,8 +37,8 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=1):
         repo = get_repo(destination)
         clone_repo = not bool(repo)
         if repo:
-            # We will try to checkout branch and do a git pull, if any of these operations fail, we will
-            # clone the repository again. 
+            # We will try to checkout branch and do a git pull, if any of these operations fail,
+            # we will clone the repository again.
             # Why they might fail is if user has been manually playing with the repo or repo was force-pushed
             try:
                 repo.git.checkout(branch)
