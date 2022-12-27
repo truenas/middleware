@@ -20,9 +20,9 @@ def convert_repository_to_path(git_repository_uri, branch):
     return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_') + f'_{branch}'
 
 
-def clone_repository(repository_uri, destination, depth):
+def clone_repository(repository_uri, destination, depth, branch):
     shutil.rmtree(destination, ignore_errors=True)
-    return git.Repo.clone_from(repository_uri, destination, env=os.environ.copy(), depth=depth)
+    return git.Repo.clone_from(repository_uri, destination, env=os.environ.copy(), depth=depth, branch=branch)
 
 
 def get_repo(destination):
@@ -48,7 +48,7 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=1):
 
         if clone_repo:
             try:
-                repo = clone_repository(repository_uri, destination, depth)
+                repo = clone_repository(repository_uri, destination, depth, branch)
             except GitCommandError as e:
                 raise CallError(f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {e}')
             else:
