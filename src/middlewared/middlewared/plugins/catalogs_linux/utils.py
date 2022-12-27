@@ -20,9 +20,9 @@ def convert_repository_to_path(git_repository_uri, branch):
     return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_') + f'_{branch}'
 
 
-def clone_repository(repository_uri, destination, depth):
+def clone_repository(repository_uri, destination, depth, branch):
     shutil.rmtree(destination, ignore_errors=True)
-    return git.Repo.clone_from(repository_uri, destination, env=os.environ.copy(), depth=depth)
+    return git.Repo.clone_from(repository_uri, destination, env=os.environ.copy(), depth=depth, branch=branch)
 
 
 def get_repo(destination):
@@ -30,15 +30,16 @@ def get_repo(destination):
         return git.Repo(destination)
 
 
-def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
+def pull_clone_repository(repository_uri, parent_dir, branch, depth=1):
     with GIT_LOCK[repository_uri]:
         os.makedirs(parent_dir, exist_ok=True)
         destination = os.path.join(parent_dir, convert_repository_to_path(repository_uri, branch))
         repo = get_repo(destination)
         clone_repo = not bool(repo)
         if repo:
-            # We will try to checkout branch and do a git pull, if any of these operations fail, we will
-            # clone the repository again. Why they might fail is if user has been manually playing with the repo
+            # We will try to checkout branch and do a git pull, if any of these operations fail,
+            # we will clone the repository again.
+            # Why they might fail is if user has been manually playing with the repo or repo was force-pushed
             try:
                 repo.git.checkout(branch)
                 repo.git.pull()
@@ -47,7 +48,7 @@ def pull_clone_repository(repository_uri, parent_dir, branch, depth=None):
 
         if clone_repo:
             try:
-                repo = clone_repository(repository_uri, destination, depth)
+                repo = clone_repository(repository_uri, destination, depth, branch)
             except GitCommandError as e:
                 raise CallError(f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {e}')
             else:
