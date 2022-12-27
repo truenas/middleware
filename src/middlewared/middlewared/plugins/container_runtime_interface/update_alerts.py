@@ -1,7 +1,7 @@
 import contextlib
 
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict
 
 from middlewared.service import CallError, private, Service
 
@@ -47,10 +47,6 @@ class ContainerImagesService(Service, CRIClientMixin):
             )
 
         return repo_digests
-
-    @private
-    async def parse_tags(self, references: List[str]) -> List[Dict[str, str]]:
-        return [self.normalize_reference(reference=reference) for reference in references]
 
     @private
     async def check_update_for_image(self, tag, image_details):

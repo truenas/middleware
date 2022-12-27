@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 from middlewared.service import CallError
 
@@ -80,3 +80,7 @@ def get_chart_releases_consuming_image(
                 else:
                     chart_releases_consuming_image.add(chart_release['name'])
     return chart_releases_consuming_image if get_mapping else list(chart_releases_consuming_image)
+
+
+def parse_tags(references: List[str]) -> List[Dict[str, str]]:
+    return [normalize_reference(reference=reference) for reference in references]

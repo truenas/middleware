@@ -1,16 +1,14 @@
-import contextlib
 import itertools
 
 from copy import deepcopy
 from cri_api.images import ImageServiceException
-from datetime import datetime
 
-from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
+from middlewared.schema import Bool, Dict, Int, List, returns, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
 from .client import ContainerdClient
-from .utils import DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO
+from .utils import DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO, parse_tags
 
 
 class ContainerImagesService(CRUDService):
@@ -24,7 +22,6 @@ class ContainerImagesService(CRUDService):
     ENTRY = Dict(
         'container_image_entry',
         Str('id'),
-        Dict('labels', additional_attrs=True),
         List('repo_tags', items=[Str('repo_tag')]),
         List('repo_digests', items=[Str('repo_digest')]),
         Int('size'),
@@ -56,7 +53,7 @@ class ContainerImagesService(CRUDService):
         extra = deepcopy(options.get('extra', {}))
         update_cache = self.middleware.call_sync('container.image.image_update_cache')
         system_images = self.middleware.call_sync('container.image.get_system_images_tags')
-        parse_tags = extra.get('parse_tags', False) or extra.get('complete_tags', False)
+        parse_all_tags = extra.get('parse_tags', False) or extra.get('complete_tags', False)
 
         with ContainerdClient('image') as client:
             for image in client.list_images():
@@ -72,8 +69,8 @@ class ContainerImagesService(CRUDService):
                     'update_available': not system_image and any(update_cache[r] for r in repo_tags),
                     'system_image': system_image,
                 }
-                if parse_tags:
-                    result['parsed_repo_tags'] = self.middleware.call_sync('container.image.parse_tags', repo_tags)
+                if parse_all_tags:
+                    result['parsed_repo_tags'] = parse_tags(repo_tags)
                 if extra.get('complete_tags', False):
                     result['complete_tags'] = [tag['complete_tag'] for tag in result['parsed_repo_tags']]
 
