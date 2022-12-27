@@ -84,6 +84,7 @@ class SMB(object):
         host = kwargs.get("host")
         share = kwargs.get("share")
         username = kwargs.get("username")
+        domain = kwargs.get("domain")
         password = kwargs.get("password")
         smb1 = kwargs.get("smb1", False)
 
@@ -96,12 +97,15 @@ class SMB(object):
             self._cred.set_username(username)
         if password is not None:
             self._cred.set_password(password)
+        if domain is not None:
+            self._cred.set_domain(domain)
 
         self._host = host
         self._share = share
         self._smb1 = smb1
         self._username = username
         self._password = password
+        self._domain = domain
         self._connection = libsmb.Conn(
             host,
             share,

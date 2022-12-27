@@ -7,6 +7,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, PUT, SSH_TEST, wait_on_job
+from assets.REST.directory_services import active_directory
 from auto_config import ha, dev_test, hostname, user, password
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -246,44 +247,24 @@ def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(request):
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
 
-    payload = {
-        "bindpw": ADPASSWORD,
-        "bindname": ADUSERNAME,
-        "domainname": AD_DOMAIN,
-        "netbiosname": hostname,
-        "dns_timeout": 15,
-        "verbose_logging": True,
-        "enable": True
-    }
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json()['job_id'], 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
+        netbiosname=hostname,
+    ) as ad:
+        results = GET('/activedirectory/get_state/')
+        assert results.status_code == 200, results.text
+        assert results.json() == 'HEALTHY', results.text
 
-    results = GET('/activedirectory/get_state/')
-    assert results.status_code == 200, results.text
-    assert results.json() == 'HEALTHY', results.text
+        results = PUT("/systemdataset/", {'pool': 'second_pool'})
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), int), results.text
+        job_status = wait_on_job(results.json(), 120)
+        assert job_status['state'] == 'FAILED', str(job_status['results'])
 
-    results = PUT("/systemdataset/", {'pool': 'second_pool'})
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), int), results.text
-    job_status = wait_on_job(results.json(), 120)
-    assert job_status['state'] == 'FAILED', str(job_status['results'])
-
-    results = GET("/systemdataset/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
-    assert results.json()['pool'] == 'first_pool', results.text
-    assert results.json()['basename'] == 'first_pool/.system', results.text
-
-    leave_payload = {
-        "username": ADUSERNAME,
-        "password": ADPASSWORD
-    }
-    results = POST("/activedirectory/leave/", leave_payload)
-    assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json(), 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        results = GET("/systemdataset/")
+        assert results.status_code == 200, results.text
+        assert isinstance(results.json(), dict), results.text
+        assert results.json()['pool'] == 'first_pool', results.text
+        assert results.json()['basename'] == 'first_pool/.system', results.text
 
     results = PUT("/network/configuration/", {"nameserver1": nameserver1})
     assert results.status_code == 200, results.text
