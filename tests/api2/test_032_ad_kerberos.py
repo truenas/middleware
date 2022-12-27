@@ -8,11 +8,18 @@ import pytest
 import sys
 import os
 import json
+import time
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from assets.REST.directory_services import active_directory
+from assets.REST.pool import dataset
+from functions import make_ws_request
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import pool_name, ip, hostname, password, user
+from calendar import timegm
+from contextlib import contextmanager
 from base64 import b64decode
+from protocols import nfs_share
 from pytest_dependency import depends
 
 try:
@@ -42,8 +49,6 @@ pam = {
     ticket_lifetime = 36000
 }
 """
-dataset = f"{pool_name}/ad-krb5"
-dataset_url = dataset.replace('/', '%2F')
 
 WORKGROUP = None
 nameserver1 = None
@@ -67,65 +72,137 @@ def get_export_sec(exports_config):
     return sec_entry
 
 
-@pytest.mark.dependency(name="GOT_DNS")
-def test_01_get_nameserver1_and_nameserver2():
-    global nameserver1
+def regenerate_exports():
+    # NFS service isn't running for these tests
+    # and so exports aren't updated. Force the update.
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'etc.generate',
+        'params': ['nfsd'],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+
+def check_export_sec(expected):
+    regenerate_exports()
+    results = SSH_TEST('cat /etc/exports', user, password, ip)
+    assert results['result'] is True, results['stderr']
+    exports_config = results['output'].strip()
+    sec = get_export_sec(exports_config)
+    assert sec == expected, exports_config
+
+
+def parse_krb5_conf(fn, split=None, state=None):
+    results = SSH_TEST('cat /etc/krb5.conf', user, password, ip)
+    assert results['result'] is True, results['output']
+
+    if split:
+        krb5conf_lines = results['output'].split(split)
+    else:
+        krb5conf_lines = results['output'].splitlines()
+
+    for idx, entry in enumerate(krb5conf_lines):
+        fn(krb5conf_lines, idx, entry, state)
+
+    return results['output']
+
+
+@contextmanager
+def add_kerberos_keytab(ktname):
+    payload = {
+        "name": ktname,
+        "file": SAMPLE_KEYTAB
+    }
+    results = POST("/kerberos/keytab/", payload)
+    assert results.status_code == 200, results.text
+    kt_id = results.json()['id']
+
+    try:
+        yield results.json()
+    finally:
+        results = DELETE(f'/kerberos/keytab/id/{kt_id}')
+        assert results.status_code == 200, results.text
+
+    results = GET(f'/kerberos/keytab/?name={ktname}')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) == 0, results.text
+
+
+@contextmanager
+def add_kerberos_realm(realm_name):
+    results = POST("/kerberos/realm/",{
+        'realm': realm_name,
+    })
+    assert results.status_code == 200, results.text
+    realm_id = results.json()['id']
+
+    try:
+        yield results.json()
+    finally:
+        results = DELETE(f'/kerberos/realm/id/{realm_id}')
+        assert results.status_code == 200, results.text
+
+
+@pytest.fixture(scope="function")
+def do_ad_connection(request):
+    with active_directory(
+        AD_DOMAIN,
+        ADUSERNAME,
+        ADPASSWORD,
+        netbiosname=hostname,
+    ) as ad:
+        yield (request, ad)
+
+
+@pytest.fixture(scope="module")
+def set_ad_nameserver(request):
     results = GET("/network/configuration/")
     assert results.status_code == 200, results.text
     nameserver1 = results.json()['nameserver1']
+    nameserver2 = results.json()['nameserver2']
+    nameserver3 = results.json()['nameserver3']
+
+    try:
+        results = PUT("/network/configuration/", {
+            'nameserver1': ADNameServer,
+            'nameserver2': '',
+            'nameserver3': ''
+        })
+        assert results.status_code == 200, results.text
+        yield results.json()
+    finally:
+        results = PUT("/network/configuration/", {
+            'nameserver1': nameserver1,
+            'nameserver2': nameserver2,
+            'nameserver3': nameserver3,
+        })
+        assert results.status_code == 200, results.text
 
 
 @pytest.mark.dependency(name="SET_DNS")
-def test_02_set_nameserver_for_ad(request):
-    depends(request, ["GOT_DNS"])
-    global payload
-    payload = {
-        "nameserver1": ADNameServer,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+def test_01_set_nameserver_for_ad(set_ad_nameserver):
+    assert set_ad_nameserver['nameserver1'] == ADNameServer
 
 
-@pytest.mark.dependency(name="AD_ENABLED")
-def test_03_enabling_activedirectory(request):
-    depends(request, ["pool_04", "SET_DNS"], scope="session")
-    global payload, results, job_id
-    payload = {
-        "bindpw": ADPASSWORD,
-        "bindname": ADUSERNAME,
-        "domainname": AD_DOMAIN,
-        "netbiosname": hostname,
-        "dns_timeout": 15,
-        "verbose_logging": True,
-        "enable": True
-    }
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
+def test_02_kerberos_keytab_and_realm(do_ad_connection):
+    depends(do_ad_connection[0], ["SET_DNS"])
+    def krb5conf_parser(krb5conf_lines, idx, entry, state):
+        if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
+            assert krb5conf_lines[idx + 1].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][1]}"
+            assert krb5conf_lines[idx + 2].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][2]}"
+            state['has_kdc'] = True
+
+        if entry.lstrip() == f"admin_server = {' '.join(SAMPLEDOM_REALM['admin_server'])}":
+            state['has_admin_server'] = True
+
+        if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
+            state['has_kpasswd_server'] = True
 
 
-@pytest.mark.dependency(name="JOINED_AD")
-def test_04_verify_the_job_id_is_successful(request):
-    depends(request, ["AD_ENABLED"])
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-@pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_05_get_activedirectory_state(request):
-    """
-    Issue no-effect operation on DC's netlogon share to
-    verify that domain join is alive.
-    """
-    depends(request, ["JOINED_AD"])
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
 
-
-@pytest.mark.dependency(name="AD_MACHINE_ACCOUNT_ADDED")
-def test_06_check_ad_machine_account_added(request):
     """
     The keytab in this case is a b64encoded keytab file.
     AD_MACHINE_ACCOUNT is automatically generated during domain
@@ -137,7 +214,6 @@ def test_06_check_ad_machine_account_added(request):
     can be determined by printing contents of system keytab and
     verifying that we were able to get a kerberos ticket.
     """
-    depends(request, ["AD_IS_HEALTHY"])
     results = GET('/kerberos/keytab/?name=AD_MACHINE_ACCOUNT')
     assert results.status_code == 200, results.text
     assert len(results.json()) == 1, results.text
@@ -148,517 +224,426 @@ def test_06_check_ad_machine_account_added(request):
     except Exception as e:
         errstr = e.args[0]
 
-    assert errstr == "", f"b64decode of keytab failed with: {errstr}"
+        assert errstr == "", f"b64decode of keytab failed with: {errstr}"
 
-
-@pytest.mark.dependency(name="KRB_DATASET")
-def test_07_creating_ad_dataset_for_smb(request):
-    depends(request, ["pool_04", "AD_IS_HEALTHY"], scope="session")
-    results = POST("/pool/dataset/", {"name": dataset})
-    assert results.status_code == 200, results.text
-
-
-def test_08_system_keytab_verify(request):
     """
     kerberos_principal_choices lists unique keytab principals in
     the system keytab. AD_MACHINE_ACCOUNT should add more than
     one principal.
     """
-    depends(request, ["AD_MACHINE_ACCOUNT_ADDED", "ssh_password"], scope="session")
-    global orig_kt_len
-    cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is True:
-        orig_kt_len = len(json.loads(results['output'].strip()))
-        assert orig_kt_len != 0, results['output']
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.keytab.kerberos_principal_choices',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
 
+    orig_kt_len = len(res['result'])
+    assert orig_kt_len != 0, res['result']
 
-@pytest.mark.dependency(name="KRB5_IS_HEALTHY")
-def test_09_ticket_verify(request):
     """
     kerberos._klist_test performs a platform-independent verification
     of kerberos ticket.
     """
-    depends(request, ["AD_MACHINE_ACCOUNT_ADDED", "ssh_password"], scope="session")
-    cmd = 'midclt call kerberos._klist_test'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['output'].strip() == 'True'
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos._klist_test',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is True
 
-
-@pytest.mark.dependency(name="SECOND_KEYTAB")
-def test_10_add_second_keytab_to_server(request):
     """
     Test uploading b64encoded sample kerberos keytab included
     at top of this file. In the next series of tests we will
     upload, validate that it was uploaded, and verify that the
     keytab is read back correctly.
     """
-    global kt_id
-    depends(request, ["AD_MACHINE_ACCOUNT_ADDED"])
-    payload = {
-        "name": "KT2",
-        "file": SAMPLE_KEYTAB
-    }
-    results = POST("/kerberos/keytab/", payload)
-    assert results.status_code == 200, results.text
-    kt_id = results.json()['id']
+    with add_kerberos_keytab("KT2") as new_keytab:
+        results = GET('/kerberos/keytab/?name=KT2')
+        assert results.status_code == 200, results.text
+        assert len(results.json()) == 1, results.text
+        assert results.json()[0]['file'] != "", "second keytab file empty"
+        errstr = ""
+        try:
+             b64decode(results.json()[0]['file'])
+        except Exception as e:
+             errstr = e.args[0]
 
+        assert errstr == "", f"b64decode of keytab failed with: {errstr}"
+        assert results.json()[0]['file'] == SAMPLE_KEYTAB, results.text
 
-def test_11_second_keytab_added(request):
-    depends(request, ["SECOND_KEYTAB"])
-    results = GET('/kerberos/keytab/?name=KT2')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
-    assert results.json()[0]['file'] != "", "second keytab file empty"
-    errstr = ""
-    try:
-        b64decode(results.json()[0]['file'])
-    except Exception as e:
-        errstr = e.args[0]
-
-    assert errstr == "", f"b64decode of keytab failed with: {errstr}"
-    assert results.json()[0]['file'] == SAMPLE_KEYTAB, results.text
-
-
-def test_12_second_keytab_system_keytab_verify(request):
-    """
-    kerberos_principal_choices lists unique keytab principals in
-    the system keytab. AD_MACHINE_ACCOUNT should add more than
-    one principal.
-    """
-    depends(request, ["SECOND_KEYTAB", "ssh_password"], scope="session")
-    cmd = 'midclt call kerberos.keytab.kerberos_principal_choices'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is True:
-        new_kt_len = len(json.loads(results['output'].strip()))
-        assert new_kt_len > orig_kt_len, results['output']
-
-
-def test_13_delete_second_keytab(request):
-    depends(request, ["SECOND_KEYTAB"])
-    results = DELETE(f'/kerberos/keytab/id/{kt_id}')
-    assert results.status_code == 200, results.text
-
-    # double-check that it was actually deleted
-    results = GET('/kerberos/keytab/?name=KT2')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 0, results.text
-
-
-def test_14_kerberos_realm_added(request):
     """
     AD Join should automatically add a kerberos realm
     for the AD domain.
     """
-    depends(request, ["KRB5_IS_HEALTHY"])
     results = GET(f'/kerberos/realm/?realm={AD_DOMAIN.upper()}')
     assert results.status_code == 200, results.text
     assert len(results.json()) == 1, results.text
 
+    with add_kerberos_realm(SAMPLEDOM_NAME) as new_realm:
+        payload = SAMPLEDOM_REALM.copy()
+        payload.pop("realm")
+        results = PUT(f"/kerberos/realm/id/{new_realm['id']}/", payload)
+        assert results.status_code == 200, results.text
 
-@pytest.mark.dependency(name="SECOND_REALM")
-def test_15_add_second_kerberos_realm(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
-    global realm_id
-    payload = {
-        "realm": SAMPLEDOM_NAME,
-    }
-    results = POST("/kerberos/realm/", payload)
-    assert results.status_code == 200, results.text
-    realm_id = results.json()['id']
+        results = GET(f'/kerberos/realm/?realm={SAMPLEDOM_NAME}')
+        assert results.status_code == 200, results.text
+        assert len(results.json()) == 1, results.text
 
-
-def test_16_second_realm_update(request):
-    depends(request, ["SECOND_REALM"])
-    payload = SAMPLEDOM_REALM.copy()
-    payload.pop("realm")
-    results = PUT(f"/kerberos/realm/id/{realm_id}/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_17_second_realm_update_verify(request):
-    depends(request, ["SECOND_REALM"])
-    results = GET(f'/kerberos/realm/?realm={SAMPLEDOM_NAME}')
-    assert results.status_code == 200, results.text
-    assert len(results.json()) == 1, results.text
-    if results.json():
         res = results.json()[0].copy()
         res.pop("id")
         assert res == SAMPLEDOM_REALM, results.json()
 
+        # Verify realms properly added to krb5.conf
+        iter_state = {
+            'has_kdc': False,
+            'has_admin_server': False,
+            'has_kpasswd_server': False
+        }
+        output = parse_krb5_conf(krb5conf_parser, state=iter_state)
 
-def test_18_second_realm_krb5_conf_verify(request):
-    """
-    kerberos_principal_choices lists unique keytab principals in
-    the system keytab. AD_MACHINE_ACCOUNT should add more than
-    one principal.
-    """
-    depends(request, ["SECOND_REALM", "ssh_password"], scope="session")
-    has_kdc = False
-    has_admin_server = False
-    has_kpasswd_server = False
-    cmd = 'cat /etc/krb5.conf'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+        assert iter_state['has_kdc'] is True, output
+        assert iter_state['has_admin_server'] is True, output
+        assert iter_state['has_kpasswd_server'] is True, output
 
-    krb5conf_lines = results['output'].splitlines()
-    for idx, entry in enumerate(krb5conf_lines):
-        if entry.lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][0]}":
-            assert krb5conf_lines[idx + 1].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][1]}"
-            assert krb5conf_lines[idx + 2].lstrip() == f"kdc = {SAMPLEDOM_REALM['kdc'][2]}"
-            has_kdc = True
-
-        if entry.lstrip() == f"admin_server = {' '.join(SAMPLEDOM_REALM['admin_server'])}":
-            has_admin_server = True
-
-        if entry.lstrip() == f"kpasswd_server = {' '.join(SAMPLEDOM_REALM['kpasswd_server'])}":
-            has_kpasswd_server = True
-
-    assert has_kdc is True, results['output']
-    assert has_admin_server is True, results['output']
-    assert has_kpasswd_server is True, results['output']
-
-
-def test_19_second_realm_delete(request):
-    depends(request, ["SECOND_REALM"])
-    results = DELETE(f'/kerberos/realm/id/{realm_id}')
-    assert results.status_code == 200, results.text
-
-    # double-check that it was actually deleted
     results = GET(f'/kerberos/realm/?realm={SAMPLEDOM_NAME}')
     assert results.status_code == 200, results.text
     assert len(results.json()) == 0, results.text
 
 
-def test_20_base_krb5_pam_override(request):
-    """
-    Test of more complex auxiliary parameter parsing that allows
-    users to override our defaults.
-    """
-    depends(request, ["KRB5_IS_HEALTHY"])
-    results = PUT("/kerberos/", {"appdefaults_aux": APPDEFAULTS_PAM_OVERRIDE})
-    assert results.status_code == 200, results.text
-
-
-def test_21_base_krb5_pam_verify(request):
-    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
-    has_forwardable = False
-    has_ticket_lifetime = False
-
-    cmd = 'cat /etc/krb5.conf'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if not results['result'] is True:
-        return
-
-    # First split krb5.conf into sections
-    for sec in results['output'].split('['):
+def test_03_kerberos_krbconf(do_ad_connection):
+    depends(do_ad_connection[0], ["SET_DNS"])
+    def parser_1(unused, idx, sec, state):
         if not sec.startswith("appdefaults"):
-            continue
+            return
 
         for entry in sec.splitlines():
             if entry.lstrip().startswith('}'):
                 break
 
             if entry.strip() == "forwardable = false":
-                has_forwardable = True
+                state['has_forwardable'] = True
 
             if entry.strip() == "ticket_lifetime = 36000":
-                has_ticket_lifetime = True
+                state['has_ticket_lifetime'] = True
 
-    assert has_forwardable is True, results['output']
-    assert has_ticket_lifetime is True, results['output']
-
-
-def test_22_base_krb5_appdefaults_add(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
-    results = PUT("/kerberos/", {"appdefaults_aux": "encrypt = true"})
-    assert results.status_code == 200, results.text
-
-
-def test_23_base_krb5_appdefaults_verify(request):
-    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
-    has_aux = False
-
-    cmd = 'cat /etc/krb5.conf'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if not results['result'] is True:
-        return
-
-    # First split krb5.conf into sections
-    for sec in results['output'].split('['):
-        if not sec.startswith("appdefaults"):
-            continue
+    def parse_section(unused, idx, sec, state):
+        if not sec.startswith(state['section']):
+            return
 
         pam_closed = False
         for entry in sec.splitlines():
-            if not pam_closed:
+            if state['section'] == 'appdefaults' and not pam_closed:
                 pam_closed = entry.lstrip().startswith('}')
                 continue
 
-            if entry.strip() == "encrypt = true":
-                has_aux = True
+            if entry.strip() == state['to_check']:
+                state['found'] = True
                 break
 
-    assert has_aux is True, results['output']
+    """
+    Test of more complex auxiliary parameter parsing that allows
+    users to override our defaults.
+    """
+    results = PUT("/kerberos/", {"appdefaults_aux": APPDEFAULTS_PAM_OVERRIDE})
+    assert results.status_code == 200, results.text
 
+    iter_state = {
+        'has_forwardable': False,
+        'has_ticket_lifetime': False
+    }
 
-def test_24_base_krb5_libdefaults_add(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    output = parse_krb5_conf(parser_1, split='[', state=iter_state)
+
+    assert iter_state['has_forwardable'] is True, output
+    assert iter_state['has_ticket_lifetime'] is True, output
+
+    results = PUT("/kerberos/", {"appdefaults_aux": "encrypt = true"})
+    assert results.status_code == 200, results.text
+
+    iter_state = {
+        'section': 'appdefaults',
+        'found': False,
+        'to_check': 'encrypt = true'
+    }
+
+    output = parse_krb5_conf(parse_section, split='[', state=iter_state)
+    assert iter_state['found'] is True, output
+
     results = PUT("/kerberos/", {"libdefaults_aux": "scan_interfaces = true"})
     assert results.status_code == 200, results.text
 
+    iter_state = {
+        'section': 'libdefaults',
+        'found': False,
+        'to_check': 'scan_interfaces = true'
+    }
+    output = parse_krb5_conf(parse_section, split='[', state=iter_state)
+    assert iter_state['found'] is True, output
 
-def test_25_base_krb5_libdefaults_verify(request):
-    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
-    has_aux = False
-
-    cmd = 'cat /etc/krb5.conf'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if not results['result'] is True:
-        return
-
-    # First split krb5.conf into sections
-    for sec in results['output'].split('['):
-        if not sec.startswith("libdefaults"):
-            continue
-
-        for entry in sec.splitlines():
-            if entry.strip() == "scan_interfaces = true":
-                has_aux = True
-                break
-
-    assert has_aux is True, results['output']
-
-
-def test_26_base_krb5_base_reset_aux(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    # reset to defaults
     results = PUT("/kerberos/", {"appdefaults_aux": "", "libdefaults_aux": ""})
     assert results.status_code == 200, results.text
 
-
-def test_27_modify_base_krb5_appdefaults_aux_knownfail(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
+    # check that parser raises validation errors
     results = PUT("/kerberos/", {"appdefaults_aux": "canary = true"})
     assert results.status_code == 422, results.text
 
-
-def test_28_modify_base_krb5_libdefaults_aux_knownfail(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
     results = PUT("/kerberos/", {"libdefaults_aux": "canary = true"})
     assert results.status_code == 422, results.text
 
 
-def test_29_verify_no_nfs_principals(request):
-    depends(request, ["KRB5_IS_HEALTHY", "ssh_password"], scope="session")
-    cmd = 'midclt call kerberos.keytab.has_nfs_principal'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'False'
+def test_04_kerberos_nfs4(do_ad_connection):
+    depends(do_ad_connection[0], ["SET_DNS"])
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.keytab.has_nfs_principal',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is False
+
+    with dataset(pool_name, 'AD_NFS') as ds:
+        with nfs_share(ds['mountpoint'], options={'comment': 'KRB Test Share'}) as share:
+            payload = {"protocols": ["NFSV3", "NFSV4"]}
+            results = PUT("/nfs/", payload)
+            assert results.status_code == 200, results.text
+
+            """
+            First NFS exports check. In this situation we are joined to
+            AD and therefore have a keytab. We do not at this point have
+            an NFS SPN entry. Expected security with v4 is:
+            "V4: / -sec=sys"
+            """
+            check_export_sec('sec=sys')
+
+            payload = {"v4_krb": True}
+            results = PUT("/nfs/", payload)
+            assert results.status_code == 200, results.text
+
+            """
+            Force AD plugin to add NFS spns for further testing.
+            This should still be possible because the initial domain
+            join involved obtaining a kerberos ticket with elevated
+            privileges.
+            """
+            results = GET("/smb/")
+            assert results.status_code == 200, results.text
+            netbios_name = results.json()['netbiosname_local']
+
+            res = make_ws_request(ip, {
+                'msg': 'method',
+                'method': 'activedirectory.add_nfs_spn',
+                'params': [netbios_name, AD_DOMAIN],
+            })
+            error = res.get('error')
+            assert error is None, str(error)
+
+            job_id = res['result']
+            job_status = wait_on_job(job_id, 180)
+            assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+            res = make_ws_request(ip, {
+                'msg': 'method',
+                'method': 'kerberos.keytab.has_nfs_principal',
+                'params': [],
+            })
+            error = res.get('error')
+            assert error is None, str(error)
+            assert res['result'] is True
+
+            res = make_ws_request(ip, {
+                'msg': 'method',
+                'method': 'smb.getparm',
+                'params': ['winbind use default domain', 'GLOBAL'],
+            })
+            error = res.get('error')
+            assert error is None, str(error)
+            assert res['result'] == 'true'
+
+            """
+            Second NFS exports check. We now have an NFS SPN entry
+            Expected security with is:
+            "V4: / -sec=krb5:krb5i:krb5p"
+            """
+            check_export_sec('sec=krb5:krb5i:krb5p')
+
+            """
+            v4_krb_enabled should still be True after this
+            disabling v4_krb because we still have an nfs
+            service principal in our keytab.
+            """
+            payload = {"v4_krb": False}
+            results = PUT("/nfs/", payload)
+            assert results.status_code == 200, results.text
+            v4_krb_enabled = results.json()['v4_krb_enabled']
+            assert v4_krb_enabled is True, results.text
+
+            """
+            Third NFS exports check. We now have an NFS SPN entry
+            but v4_krb is disabled.
+            Expected security with is:
+            "V4: / -sec=sys:krb5:krb5i:krb5p"
+            """
+            check_export_sec('sec=sys:krb5:krb5i:krb5p')
 
 
-def test_30_check_nfs_exports_sec(request):
+def test_05_verify_nfs_krb_disabled(request):
     """
-    First NFS exports check. In this situation we are joined to
-    AD and therefore have a keytab. We do not at this point have
-    an NFS SPN entry. Expected security with v4 is:
-    "V4: / -sec=sys"
+    This test checks that we no longer are flagged as having
+    v4_krb_enabled now that we are not joined to AD.
     """
-    depends(request, ["KRB5_IS_HEALTHY", "ssh_password", "KRB_DATASET"], scope="session")
-    payload = {
-        "comment": "KRB Test Share",
-        "path": f'/mnt/{dataset}',
-    }
-    results = POST("/sharing/nfs/", payload)
-    assert results.status_code == 200, results.text
-
-    payload = {"protocols": ["NFSV3", "NFSV4"]}
-    results = PUT("/nfs/", payload)
-    assert results.status_code == 200, results.text
-
-    cmd = 'midclt call etc.generate nfsd'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    expected_sec = "sec=sys"
-    cmd = 'cat /etc/exports'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    exports_config = results['output'].strip()
-    sec = get_export_sec(exports_config)
-    assert sec == expected_sec, exports_config
-
-
-@pytest.mark.dependency(name="V4_KRB_ENABLED")
-def test_31_enable_krb5_nfs4(request):
-    depends(request, ["KRB5_IS_HEALTHY"])
-    payload = {"v4_krb": True}
-    results = PUT("/nfs/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_32_add_krb_spn(request):
-    """
-    Force AD plugin to add NFS spns for further testing.
-    This should still be possible because the initial domain
-    join involved obtaining a kerberos ticket with elevated
-    privileges.
-    """
-    depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
-    results = GET("/smb/")
-    assert results.status_code == 200, results.text
-    netbios_name = results.json()['netbiosname_local']
-
-    cmd = f'midclt call activedirectory.add_nfs_spn {netbios_name} {AD_DOMAIN}'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    job_id = results['output'].strip()
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_33_verify_has_nfs_principals(request):
-    depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
-    cmd = 'midclt call kerberos.keytab.has_nfs_principal'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == 'True'
-
-
-def test_34_verify_ad_nfs_parameters(request):
-    depends(request, ["V4_KRB_ENABLED", "ssh_password"], scope="session")
-    cmd = 'midclt call smb.getparm "winbind use default domain" GLOBAL'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if not results['result']:
-        return
-    assert results['output'].strip() == "true"
-
-
-def test_35_check_nfs_exports_sec(request):
-    """
-    Second NFS exports check. We now have an NFS SPN entry
-    Expected security with is:
-    "V4: / -sec=krb5:krb5i:krb5p"
-    """
-    depends(request, ["ssh_password", "V4_KRB_ENABLED"], scope="session")
-    cmd = 'midclt call etc.generate nfsd'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    results = SSH_TEST("cat /etc/exports", user, password, ip)
-    assert results['result'] is True, results['output']
-    exports_config = results['output']
-
-    expected_sec = "sec=krb5:krb5i:krb5p"
-    sec = get_export_sec(exports_config)
-
-    assert sec == expected_sec, exports_config
-
-
-def test_36_disable_krb5_nfs4(request):
-    """
-    v4_krb_enabled should still be True after this
-    disabling v4_krb because we still have an nfs
-    service principal in our keytab.
-    """
-    depends(request, ["V4_KRB_ENABLED"])
-    payload = {"v4_krb": False}
-    results = PUT("/nfs/", payload)
-    assert results.status_code == 200, results.text
-    v4_krb_enabled = results.json()['v4_krb_enabled']
-    assert v4_krb_enabled is True, results.text
-
-
-def test_37_check_nfs_exports_sec(request):
-    """
-    Second NFS exports check. We now have an NFS SPN entry
-    but v4_krb is disabled.
-    Expected security with is:
-    "V4: / -sec=sys:krb5:krb5i:krb5p"
-    """
-    cmd = 'midclt call etc.generate nfsd'
-    depends(request, ["ssh_password", "V4_KRB_ENABLED"], scope="session")
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    results = SSH_TEST("cat /etc/exports", user, password, ip)
-    assert results['result'] is True, results['output']
-    exports_config = results['output']
-
-    expected_sec = "sec=sys:krb5:krb5i:krb5p"
-    sec = get_export_sec(exports_config)
-
-    assert sec == expected_sec, exports_config
-
-
-def test_38_cleanup_nfs_settings(request):
-    depends(request, ["V4_KRB_ENABLED"])
-    nfsid = GET('/sharing/nfs?comment=KRB Test Share').json()[0]['id']
-    results = DELETE(f"/sharing/nfs/id/{nfsid}")
-    assert results.status_code == 200, results.text
-
-    payload = {"v4": False}
-    results = PUT("/nfs/", payload)
-    assert results.status_code == 200, results.text
-
-    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
-    assert results.status_code == 200, results.text
-
-
-def test_39_leave_activedirectory(request):
-    depends(request, ["JOINED_AD"])
-    global payload, results
-    payload = {
-        "username": ADUSERNAME,
-        "password": ADPASSWORD
-    }
-    results = POST("/activedirectory/leave/", payload)
-    assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json(), 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_40_verify_activedirectory_live_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
-    cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
-
-
-def test_41_remove_site(request):
-    depends(request, ["JOINED_AD"])
-    payload = {"site": None, "use_default_domain": False}
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_42_reset_dns(request):
-    depends(request, ["SET_DNS"])
-    global payload
-    payload = {
-        "nameserver1": nameserver1,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_43_verify_v4_krb_enabled_is_false(request):
-    depends(request, ["V4_KRB_ENABLED"])
     results = GET("/nfs")
     assert results.status_code == 200, results.text
     v4_krb_enabled = results.json()['v4_krb_enabled']
     assert v4_krb_enabled is False, results.text
 
 
+def test_06_kerberos_ticket_management(do_ad_connection):
+    depends(do_ad_connection[0], ["SET_DNS"])
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.klist',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    klist_out = res['result']
+    assert klist_out['default_principal'].startswith(hostname.upper()), str(klist_out)
+    assert klist_out['ticket_cache']['type'] == 'FILE'
+    assert klist_out['ticket_cache']['name'] == 'SYSTEM'
+    assert len(klist_out['tickets']) != 0
+
+    to_check = None
+    for tkt in klist_out['tickets']:
+        if tkt['server'].startswith('krbtgt'):
+            to_check = tkt
+
+    assert to_check is not None, str(klist_out)
+    assert 'RENEWABLE' in to_check['flags']
+
+    results = GET('/core/get_jobs/?method=kerberos.wait_for_renewal')
+    assert results.status_code == 200, results.text
+    assert len(results.json()) != 0, results.text
+
+    renewal_job = results.json()[0]
+    time_string = renewal_job['description'].split(':', 1)[1]
+    timestamp = timegm(time.strptime(time_string, " %m/%d/%y %H:%M:%S %Z"))
+    assert tkt['expires'] == timestamp, str({"time": time_string, "ticket": tkt})
+
+    """
+    Now we forcibly set a short-lived kerberos ticket using
+    our kerberos principal and then call `kerberos.renew` to renew it
+
+    Since we're doing this in an enviroment where sysvol replication may be
+    slower than our tests, we need to insert a KDC override to have us only
+    talk to the KDC we used to initially join AD.
+    """
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.get_cred',
+        'params': [{
+            'dstype': 'DS_TYPE_ACTIVEDIRECTORY',
+            'conf': {
+                'domainname': AD_DOMAIN,
+                'kerberos_principal': f'{hostname.upper()}$@{AD_DOMAIN.upper()}'
+            }
+        }],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    cred = res['result']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'activedirectory.domain_info',
+        'params': [AD_DOMAIN]
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    kdc = res['result']['KDC server']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.do_kinit',
+        'params': [{
+            'krb5_cred': cred,
+            'kinit-options': {
+                'kdc_override': {'domain': AD_DOMAIN.upper(), 'kdc': kdc},
+                'lifetime': 10
+            }
+        }],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.klist',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    klist2_out = res['result']
+    assert klist2_out['default_principal'].startswith(hostname.upper())
+    assert klist2_out['ticket_cache']['type'] == 'FILE'
+    assert klist2_out['ticket_cache']['name'] == 'SYSTEM'
+    assert len(klist2_out['tickets']) != 0
+
+    to_check2 = None
+    for tkt in klist2_out['tickets']:
+        if tkt['server'].startswith('krbtgt'):
+            to_check2 = tkt
+
+    assert to_check2 is not None, str(klist2_out)
+    assert to_check2['expires'] != to_check['expires']
+    assert 'RENEWABLE' in to_check2['flags']
+
+    """
+    kerberos.renew should detect the remaining life on ticket is less
+    than our safe margin and automatically renew it.
+    """
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.renew',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.klist',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    klist3_out = res['result']
+    assert klist3_out['default_principal'].startswith(hostname.upper())
+    assert klist3_out['ticket_cache']['type'] == 'FILE'
+    assert klist3_out['ticket_cache']['name'] == 'SYSTEM'
+    assert len(klist3_out['tickets']) != 0
+
+    to_check3 = None
+    for tkt in klist3_out['tickets']:
+        if tkt['server'].startswith('krbtgt'):
+            to_check3 = tkt
+
+    assert to_check3 is not None, str(klist3_out)
+    assert to_check3['expires'] != to_check2['expires']
+    assert 'RENEWABLE' in to_check3['flags']
+
+
 def test_44_check_ad_machine_account_deleted_after_ad_leave(request):
-    depends(request, ["AD_IS_HEALTHY"])
     results = GET('/kerberos/keytab/?name=AD_MACHINE_ACCOUNT')
     assert results.status_code == 200, results.text
     assert len(results.json()) == 0

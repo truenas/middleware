@@ -594,7 +594,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.direct_update({"kerberos_realm": realm_id})
             ad = await self.config()
 
-        await self.middleware.call('kerberos.start')
+        if not await self.middleware.call('kerberos._klist_test'):
+            await self.middleware.call('kerberos.start')
 
         """
         'workgroup' is the 'pre-Windows 2000 domain name'. It must be set to the nETBIOSName value in Active Directory.
@@ -648,6 +649,33 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     'bindpw': '',
                     'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
                 })
+
+                job.set_progress(75, 'Performing kinit using new computer account.')
+                """
+                Remove our temporary administrative ticket and replace with machine account.
+
+                Sysvol replication may not have completed (new account only exists on the DC we're
+                talking to) and so during this operation we need to hard-code which KDC we use for
+                the new kinit.
+                """
+                domain_info = await self.domain_info(ad['domainname'])
+                payload = {
+                    'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                    'conf': {
+                        'domainname': ad['domainname'],
+                        'kerberos_principal': ad['kerberos_principal'],
+                    }
+                }
+                cred = await self.middleware.call('kerberos.get_cred', payload)
+                await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
+                await self.middleware.call('kerberos.do_kinit', {
+                    'krb5_cred': cred,
+                    'kinit-options': {
+                        'kdc_override': {'domain': ad['domainname'], 'kdc': domain_info['KDC server']}
+                    }
+                })
+                await self.middleware.call('kerberos.wait_for_renewal')
+                await self.middleware.call('etc.generate', 'kerberos')
 
             ret = neterr.JOINED
 
@@ -735,8 +763,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if ad is None:
             ad = await self.middleware.call('activedirectory.config')
 
-        await self.middleware.call('kerberos.generate_stub_config', ad['domainname'], kdc)
-
         payload = {
             'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
             'conf': {
@@ -747,7 +773,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
             }
         }
         cred = await self.middleware.call('kerberos.get_cred', payload)
-        await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
+        await self.middleware.call('kerberos.do_kinit', {
+            'krb5_cred': cred,
+            'kinit-options': {'kdc_override': {'domain': ad['domainname'], 'kdc': kdc}},
+        })
         return
 
     @private
