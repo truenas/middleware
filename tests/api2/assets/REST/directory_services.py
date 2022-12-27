@@ -49,8 +49,10 @@ def active_directory(domain, username, password, **kwargs):
 
     sleep(5)
     try:
+        config = results.json()
+        del(config['bindpw'])
         yield {
-            'config': results.json(),
+            'config': config,
             'result': job_status['results']
         }
     finally:
