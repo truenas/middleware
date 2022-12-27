@@ -12,7 +12,6 @@ import pysnmp.hlapi  # noqa
 import pysnmp.smi
 
 from middlewared.client import Client
-from middlewared.utils.osc import getmntinfo
 
 
 def get_kstat():
@@ -198,19 +197,15 @@ def get_zfs_arc_miss_percent(kstat):
 mib_builder = pysnmp.smi.builder.MibBuilder()
 mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
 mib_builder.setMibSources(*mib_sources)
-mib_builder.loadModules("FREENAS-MIB")
-mib_builder.loadModules("LM-SENSORS-MIB")
+mib_builder.loadModules("TRUENAS-MIB")
 
 agent = netsnmpagent.netsnmpAgent(
-    AgentName="FreeNASAgent",
-    MIBFiles=[
-        "/usr/local/share/snmp/mibs/FREENAS-MIB.txt",
-        "/usr/local/share/snmp/mibs/LM-SENSORS-MIB.txt"
-    ],
+    AgentName="TrueNASAgent",
+    MIBFiles=["/usr/local/share/snmp/mibs/TRUENAS-MIB.txt"],
 )
 
 zpool_table = agent.Table(
-    oidstr="FREENAS-MIB::zpoolTable",
+    oidstr="TRUENAS-MIB::zpoolTable",
     indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
@@ -227,20 +222,8 @@ zpool_table = agent.Table(
     ],
 )
 
-dataset_table = agent.Table(
-    oidstr="FREENAS-MIB::datasetTable",
-    indexes=[agent.Integer32()],
-    columns=[
-        (1, agent.Integer32()),
-        (2, agent.DisplayString()),
-        (3, agent.Counter64()),
-        (4, agent.Counter64()),
-        (5, agent.Counter64()),
-    ],
-)
-
 zvol_table = agent.Table(
-    oidstr="FREENAS-MIB::zvolTable",
+    oidstr="TRUENAS-MIB::zvolTable",
     indexes=[agent.Integer32()],
     columns=[
         (1, agent.Integer32()),
@@ -250,11 +233,9 @@ zvol_table = agent.Table(
         (5, agent.Counter64()),
     ],
 )
-
-lm_sensors_table = None
 
 hdd_temp_table = agent.Table(
-    oidstr="FREENAS-MIB::hddTempTable",
+    oidstr="TRUENAS-MIB::hddTempTable",
     indexes=[
         agent.Integer32(),
     ],
@@ -264,26 +245,26 @@ hdd_temp_table = agent.Table(
     ]
 )
 
-zfs_arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcSize")
-zfs_arc_meta = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcMeta")
-zfs_arc_data = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcData")
-zfs_arc_hits = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcHits")
-zfs_arc_misses = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcMisses")
-zfs_arc_c = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcC")
-zfs_arc_p = agent.Unsigned32(oidstr="FREENAS-MIB::zfsArcP")
-zfs_arc_miss_percent = agent.DisplayString(oidstr="FREENAS-MIB::zfsArcMissPercent")
-zfs_arc_cache_hit_ratio = agent.DisplayString(oidstr="FREENAS-MIB::zfsArcCacheHitRatio")
-zfs_arc_cache_miss_ratio = agent.DisplayString(oidstr="FREENAS-MIB::zfsArcCacheMissRatio")
+zfs_arc_size = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcSize")
+zfs_arc_meta = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcMeta")
+zfs_arc_data = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcData")
+zfs_arc_hits = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcHits")
+zfs_arc_misses = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcMisses")
+zfs_arc_c = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcC")
+zfs_arc_p = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsArcP")
+zfs_arc_miss_percent = agent.DisplayString(oidstr="TRUENAS-MIB::zfsArcMissPercent")
+zfs_arc_cache_hit_ratio = agent.DisplayString(oidstr="TRUENAS-MIB::zfsArcCacheHitRatio")
+zfs_arc_cache_miss_ratio = agent.DisplayString(oidstr="TRUENAS-MIB::zfsArcCacheMissRatio")
 
-zfs_l2arc_hits = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcHits")
-zfs_l2arc_misses = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcMisses")
-zfs_l2arc_read = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcRead")
-zfs_l2arc_write = agent.Counter32(oidstr="FREENAS-MIB::zfsL2ArcWrite")
-zfs_l2arc_size = agent.Unsigned32(oidstr="FREENAS-MIB::zfsL2ArcSize")
+zfs_l2arc_hits = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcHits")
+zfs_l2arc_misses = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcMisses")
+zfs_l2arc_read = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcRead")
+zfs_l2arc_write = agent.Counter32(oidstr="TRUENAS-MIB::zfsL2ArcWrite")
+zfs_l2arc_size = agent.Unsigned32(oidstr="TRUENAS-MIB::zfsL2ArcSize")
 
-zfs_zilstat_ops1 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps1sec")
-zfs_zilstat_ops5 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps5sec")
-zfs_zilstat_ops10 = agent.Counter64(oidstr="FREENAS-MIB::zfsZilstatOps10sec")
+zfs_zilstat_ops1 = agent.Counter64(oidstr="TRUENAS-MIB::zfsZilstatOps1sec")
+zfs_zilstat_ops5 = agent.Counter64(oidstr="TRUENAS-MIB::zfsZilstatOps5sec")
+zfs_zilstat_ops10 = agent.Counter64(oidstr="TRUENAS-MIB::zfsZilstatOps10sec")
 
 
 def readZilOpsCount() -> int:
@@ -312,11 +293,6 @@ class ZilstatThread(threading.Thread):
             current = readZilOpsCount()
             self.value = current - previous
             previous = current
-
-
-class CpuTempThread(threading.Thread):
-    # TODO: Linux implementation
-    pass
 
 
 class DiskTempThread(threading.Thread):
@@ -401,16 +377,8 @@ def fill_in_zpool_snmp_row_info(idx, name, health, io_overall, io_1s):
     row.setRowCell(11, agent.Counter64(io_1s[name]["write_bytes"]))
 
 
-def fill_in_zvol_or_dataset_snmp_row_info(indexes, info):
-    if info['type'] == 'VOLUME':
-        indexes['zvol'] += 1
-        idx = indexes['zvol']
-        row = zvol_table.addRow([agent.Integer32(idx)])
-    elif info['type'] == 'FILESYSTEM':
-        indexes['ds'] += 1
-        idx = indexes['ds']
-        row = dataset_table.addRow([agent.Integer32(idx)])
-
+def fill_in_zvol_snmp_row_info(idx, info):
+    row = zvol_table.addRow([agent.Integer32(idx)])
     row.setRowCell(1, agent.Integer32(idx))
     row.setRowCell(2, agent.DisplayString(info["name"]))
     row.setRowCell(3, agent.Counter64(info["properties"]["used"]["parsed"]))
@@ -420,7 +388,6 @@ def fill_in_zvol_or_dataset_snmp_row_info(indexes, info):
 
 def report_zfs_info(prev_zpool_info):
     zpool_table.clear()
-    dataset_table.clear()
     zvol_table.clear()
 
     # zpool related information
@@ -434,24 +401,19 @@ def report_zfs_info(prev_zpool_info):
             # we calculate the 1sec values properly
             prev_zpool_info.update(io_overall)
 
-        zvols, datasets = get_list_of_zvols_and_datasets()
+        zvols = get_list_of_zvols()
         kwargs = {
             'user_props': False,
             'props': ['used', 'available', 'referenced'],
             'retrieve_children': False,
-            'datasets': list(zvols) + list(datasets),
+            'datasets': zvols,
         }
-        indexes = {'zvol': 0, 'ds': 0}
-        for ds_info in z.datasets_serialized(**kwargs):
-            fill_in_zvol_or_dataset_snmp_row_info(indexes, ds_info)
+        for idx, ds_info in enumerate(z.datasets_serialized(**kwargs), start=1):
+            fill_in_zvol_snmp_row_info(idx, ds_info)
 
 
-def get_list_of_zvols_and_datasets():
+def get_list_of_zvols():
     zvols = set()
-    ds = set()
-    for devid, info in getmntinfo().items():
-        ds.add(info['mount_source'])
-
     root_dir = '/dev/zvol/'
     with contextlib.suppress(FileNotFoundError):  # no zvols
         for zpool in pathlib.Path(root_dir).iterdir():
@@ -460,25 +422,20 @@ def get_list_of_zvols_and_datasets():
                 zvol_normalized = zvol_normalized.replace('+', ' ')
                 zvols.add(zvol_normalized)
 
-    return zvols, ds
+    return list(zvols)
 
 
 if __name__ == "__main__":
-    with Client() as c:
-        config = c.call("snmp.config")
-
     zilstat_1_thread = zilstat_5_thread = zilstat_10_thread = None
-    if config["zilstat"]:
-        zilstat_1_thread = ZilstatThread(1)
-        zilstat_5_thread = ZilstatThread(5)
-        zilstat_10_thread = ZilstatThread(10)
+    with Client() as c:
+        if c.call("snmp.config")["zilstat"]:
+            zilstat_1_thread = ZilstatThread(1)
+            zilstat_5_thread = ZilstatThread(5)
+            zilstat_10_thread = ZilstatThread(10)
 
-        zilstat_1_thread.start()
-        zilstat_5_thread.start()
-        zilstat_10_thread.start()
-
-    # TODO: Linux implementation
-    cpu_temp_thread = None
+            zilstat_1_thread.start()
+            zilstat_5_thread.start()
+            zilstat_10_thread.start()
 
     disk_temp_thread = DiskTempThread(300)
     disk_temp_thread.start()
@@ -492,20 +449,6 @@ if __name__ == "__main__":
 
         if datetime.utcnow() - last_update_at > timedelta(seconds=1):
             report_zfs_info(prev_zpool_info)
-
-            if lm_sensors_table:
-                lm_sensors_table.clear()
-                temperatures = []
-                if cpu_temp_thread:
-                    for i, temp in enumerate(cpu_temp_thread.temperatures.copy()):
-                        temperatures.append((f"CPU{i}", temp))
-                if disk_temp_thread:
-                    temperatures.extend(list(disk_temp_thread.temperatures.items()))
-                for i, (name, temp) in enumerate(temperatures):
-                    row = lm_sensors_table.addRow([agent.Integer32(i + 1)])
-                    row.setRowCell(1, agent.Integer32(i + 1))
-                    row.setRowCell(2, agent.DisplayString(name))
-                    row.setRowCell(3, agent.Unsigned32(temp))
 
             if hdd_temp_table:
                 hdd_temp_table.clear()

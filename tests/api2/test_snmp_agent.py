@@ -21,7 +21,7 @@ def snmpd_running():
 def test_freenas_mib(snmpd_running):
     with tempfile.NamedTemporaryFile(suffix=".txt") as f:
         f.write(base64.b64decode(
-            call("filesystem.file_get_contents", "/usr/local/share/snmp/mibs/FREENAS-MIB.txt").encode("ascii")
+            call("filesystem.file_get_contents", "/usr/local/share/snmp/mibs/TRUENAS-MIB.txt").encode("ascii")
         ))
         f.flush()
 
@@ -34,6 +34,5 @@ def test_freenas_mib(snmpd_running):
         )
         assert snmp.returncode == 0, snmp.stderr
 
-    assert "FREENAS-MIB::zpoolDescr.1 = STRING: boot-pool\n" in snmp.stdout
-    assert re.search(r"^FREENAS-MIB::datasetDescr\.1 = STRING: boot-pool/.+\n", snmp.stdout, re.MULTILINE), snmp.stdout
-    assert re.search(r"^FREENAS-MIB::zfsArcSize\.0 = Gauge32: ([1-9][0-9]+)\n", snmp.stdout, re.MULTILINE), snmp.stdout
+    assert "TRUENAS-MIB::zpoolName.1 = STRING: boot-pool\n" in snmp.stdout
+    assert re.search(r"^TRUENAS-MIB::zfsArcSize\.0 = Gauge32: ([1-9][0-9]+)\n", snmp.stdout, re.MULTILINE), snmp.stdout
