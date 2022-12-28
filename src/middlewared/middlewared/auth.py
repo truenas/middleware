@@ -65,3 +65,7 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
 
 class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
     pass
+
+
+def is_ha_connection(remote_addr, remote_port):
+    return remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2')
