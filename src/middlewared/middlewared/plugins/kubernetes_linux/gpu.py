@@ -99,7 +99,7 @@ GPU_CONFIG = {
                         {'key': 'CriticalAddonsOnly', 'operator': 'Exists'},
                     ],
                     'containers': [{
-                        'image': 'rocm/k8s-device-plugin',
+                        'image': 'rocm/k8s-device-plugin:1.18.0',
                         'name': 'amdgpu-dp-cntr',
                         'securityContext': {'allowPrivilegeEscalation': False, 'capabilities': {'drop': ['ALL']}},
                         'volumeMounts': [
