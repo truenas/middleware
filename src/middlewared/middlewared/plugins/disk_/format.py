@@ -11,7 +11,7 @@ ZFS_PARTHEX = 'BF01'
 class DiskService(Service):
 
     @private
-    def validate_disk(self, disk, swapgb):
+    def validate_disk(self, disk, min_size, swapgb):
         dd = self.middleware.call_sync('device.get_disk', disk)
         if not dd:
             raise CallError(f'Unable to retrieve disk details for {disk!r}')
@@ -23,13 +23,27 @@ class DiskService(Service):
         if not size:
             raise CallError(f'Unable to determine size of {disk!r}')
 
-        swapsize = swapgb * 1024 * 1024 * 1024
-        if (size - 102400) <= swapsize:
-            # The GPT header takes about 34KB + alignment, round it to 100
-            raise CallError(f'Disk: {disk!r} must be larger than {swapgb}GB')
-
         sectorsize = dd['sectorsize'] or 512
         alignment = int(4096 / sectorsize)
+
+        gpt_header_size = 102400  # The GPT header takes about 34KB + alignment, round it to 100
+
+        swapsize = swapgb * 1024 * 1024 * 1024
+        if min_size:
+            leftover = size - gpt_header_size - min_size
+            if leftover < 0:
+                raise CallError(f'Disk: {disk!r} must be larger than {min_size} bytes')
+
+            if leftover < swapsize:
+                self.logger.warning(
+                    'Requested %d bytes for swap and a minimal data partition size of %d bytes, but only %d bytes for '
+                    'swap are available on disk %s',
+                    swapsize, min_size, leftover, disk,
+                )
+                swapsize = leftover
+        else:
+            if (size - gpt_header_size) <= swapsize:
+                raise CallError(f'Disk: {disk!r} must be larger than {swapgb}GB')
 
         # round up to the nearest whole integral multiple of 128 so next
         # partition starts at multiple of 128
@@ -38,8 +52,8 @@ class DiskService(Service):
         return swapsize, alignment
 
     @private
-    def format(self, disk, swapgb, sync=True):
-        swapsize, alignment = self.validate_disk(disk, swapgb)
+    def format(self, disk, min_size, swapgb, sync=True):
+        swapsize, alignment = self.validate_disk(disk, min_size, swapgb)
 
         job = self.middleware.call_sync('disk.wipe', disk, 'QUICK', sync)
         job.wait_sync()
