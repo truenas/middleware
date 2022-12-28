@@ -148,9 +148,10 @@ class ChartReleaseService(Service):
 
         for resource in SCALEABLE_RESOURCES:
             for workload in resources[resource.value]:
-                replica_count = replica_counts[resource.value].get(
+                configured_replica_count = replica_counts[resource.value].get(
                     workload['metadata']['name'], {}
-                ).get('replicas') or replicas
+                ).get('replicas')
+                replica_count = replicas if configured_replica_count is None else configured_replica_count
 
                 current_workload = resources_data[resource.name.lower()].get(workload['metadata']['uid'])
                 if not current_workload or replica_count == current_workload['spec'].get('replicas'):
