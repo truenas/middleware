@@ -207,7 +207,7 @@ def test_18_verify_if_cifs_service_is_running(request):
 
 def test_19_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_on(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
-    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%"{LDAPPASSWORD}" -c ls'
     results = cmd_test(cmd)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
@@ -215,7 +215,7 @@ def test_19_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_on(requ
 def test_20_create_a_testfile_and_send_it_to_the_smb_share_with_ldap(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     cmd_test('touch testfile.txt')
-    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD}' \
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%"{LDAPPASSWORD}"' \
         ' -c "put testfile.txt testfile.txt"'
     results = cmd_test(cmd)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
@@ -252,7 +252,7 @@ def test_24_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
 
 def test_25_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
-    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%"{LDAPPASSWORD}" -c ls'
     results = cmd_test(cmd)
     assert results['result'] is False, f'out: {results["output"]}, err: {results["stderr"]}'
 
@@ -289,14 +289,14 @@ def test_29_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
 
 def test_30_verify_smbclient_connect_to_the_smb_share_with_ldap_with_ssl_START_TLS(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
-    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%"{LDAPPASSWORD}" -c ls'
     results = cmd_test(cmd)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_31_remove_the_testfile_from_smb_share_with_ldap_with_ssl_START_TLS(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
-    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD}' \
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%"{LDAPPASSWORD}"' \
         ' -c "rm testfile.txt"'
     results = cmd_test(cmd)
     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
@@ -333,7 +333,7 @@ def test_35_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
 
 def test_36_verify_with_smbclient_that_ldap_user_cant_access_with_samba_schema_false(request):
     depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
-    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%{LDAPPASSWORD} -c ls'
+    cmd = f'smbclient //{ip}/{smb_name} -U {LDAPUSER}%"{LDAPPASSWORD}" -c ls'
     results = cmd_test(cmd)
     assert results['result'] is False, f'out: {results["output"]}, err: {results["stderr"]}'
 
