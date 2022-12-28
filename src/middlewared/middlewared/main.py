@@ -716,7 +716,7 @@ class ShellApplication(object):
         await ws.prepare(request)
 
         if not await self.middleware.ws_can_access(request, ws):
-            return
+            return ws
 
         conndata = ShellConnectionData()
         conndata.id = str(uuid.uuid4())
@@ -883,7 +883,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__hooks = defaultdict(list)
         self.__blocked_hooks = defaultdict(lambda: 0)
         self.__blocked_hooks_lock = threading.Lock()
-        self.__server_threads = []
         self.__init_services()
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
@@ -1589,7 +1588,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         await ws.prepare(request)
 
         if not await self.ws_can_access(request, ws):
-            return
+            return ws
 
         connection = Application(self, self.loop, request, ws)
         connection.on_open()
