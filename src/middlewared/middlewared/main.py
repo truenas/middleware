@@ -1,4 +1,5 @@
 from .apidocs import app as apidocs_app
+from .auth import is_ha_connection
 from .client import ejson as json
 from .common.event_source.manager import EventSourceManager
 from .event import Events
@@ -715,7 +716,7 @@ class ShellApplication(object):
         await ws.prepare(request)
 
         if not await self.middleware.ws_can_access(request, ws):
-            return
+            return ws
 
         conndata = ShellConnectionData()
         conndata.id = str(uuid.uuid4())
@@ -882,7 +883,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__hooks = defaultdict(list)
         self.__blocked_hooks = defaultdict(lambda: 0)
         self.__blocked_hooks_lock = threading.Lock()
-        self.__server_threads = []
         self.__init_services()
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
@@ -1588,7 +1588,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         await ws.prepare(request)
 
         if not await self.ws_can_access(request, ws):
-            return
+            return ws
 
         connection = Application(self, self.loop, request, ws)
         connection.on_open()
@@ -1637,18 +1637,25 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return ws
 
     async def ws_can_access(self, request, ws):
-        if ui_allowlist := await self.call('system.general.get_ui_allowlist'):
-            sock = request.transport.get_extra_info('socket')
-            if sock.family != socket.AF_UNIX:
-                remote_addr, remote_port = await self.run_in_thread(get_remote_addr_port, request)
-                if not addr_in_allowlist(remote_addr, ui_allowlist):
-                    await ws.close(
-                        code=WSCloseCode.POLICY_VIOLATION,
-                        message='You are not allowed to access this resource'.encode('utf-8'),
-                    )
-                    return False
+        if not (ui_allowlist := await self.call('system.general.get_ui_allowlist')):
+            return True
 
-        return True
+        sock = request.transport.get_extra_info('socket')
+        if sock.family == socket.AF_UNIX:
+            return True
+
+        remote_addr, remote_port = await self.run_in_thread(get_remote_addr_port, request)
+        if is_ha_connection(remote_addr, remote_port):
+            return True
+
+        if addr_in_allowlist(remote_addr, ui_allowlist):
+            return True
+
+        await ws.close(
+            code=WSCloseCode.POLICY_VIOLATION,
+            message='You are not allowed to access this resource'.encode('utf-8'),
+        )
+        return False
 
     _loop_monitor_ignore_frames = (
         LoopMonitorIgnoreFrame(

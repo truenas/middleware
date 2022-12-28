@@ -10,7 +10,7 @@ import textwrap
 import time
 from functools import partial
 
-from middlewared.auth import TrueNasNodeSessionManagerCredentials
+from middlewared.auth import is_ha_connection, TrueNasNodeSessionManagerCredentials
 from middlewared.plugins.failover_.utils import throttle_condition
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
@@ -1033,8 +1033,7 @@ async def ha_permission(middleware, app):
         return
 
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
-
-    if remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2'):
+    if is_ha_connection(remote_addr, remote_port):
         AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
 
 
