@@ -151,7 +151,7 @@ class ContainerImagesService(CRUDService):
         images = [
             'nvcr.io/nvidia/k8s-device-plugin:v0.13.0',
             'docker.io/intel/intel-gpu-initcontainer:0.19.0',
-            'docker.io/rocm/k8s-device-plugin:latest',
+            'docker.io/rocm/k8s-device-plugin:1.18.0',
             'docker.io/rancher/mirrored-coredns-coredns:1.9.1',
             'docker.io/rancher/mirrored-pause:3.6',
             'docker.io/rancher/klipper-lb:v0.3.5',
