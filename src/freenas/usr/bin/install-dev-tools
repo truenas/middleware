@@ -2,6 +2,11 @@
 PACKAGES=(
     # open-iscsi is used to test authorized networks for iscsi
     open-iscsi
+    # needed for running python3 setup.py install
+    # which is used by our integration testing infrastructure
+    # and is how we configure VMs/containers running latest
+    # middleware changes based off a remote branch
+    python3-babel
     # Integration and unit test utils, python package management
     python3-pip
     python3-pytest

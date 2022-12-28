@@ -15,6 +15,7 @@ clean:
 	rm -rf $(BUILD)
 
 install:
+	bash install-dev-tools
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
 	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
