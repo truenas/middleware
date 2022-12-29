@@ -9,6 +9,8 @@ import sys
 import json
 import os
 import time
+import stat
+
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -16,6 +18,7 @@ from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ha, password, user, ip
 SHELL = '/usr/bin/bash'
 GROUP = 'root'
+DEFAULT_HOMEDIR_OCTAL = 0o700
 group_id = GET(f'/group/?group={GROUP}', controller_a=ha).json()[0]['id']
 dataset = f"{pool_name}/test_homes"
 dataset_url = dataset.replace('/', '%2F')
@@ -97,7 +100,7 @@ def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
     assert results['result'] is False, str(results['output'])
 
 
-def test_04_look_user_is_created(request):
+def test_04_verify_user_was_created(request):
     depends(request, ["user_02", "user_01"])
     results = GET('/user?username=testuser')
     assert len(results.json()) == 1, results.text
@@ -122,15 +125,12 @@ def test_04_look_user_is_created(request):
         check_config_file(f['file'], f['value'])
 
 
-def test_05_check_user_exists(request):
+def test_05_verify_user_exists(request):
     """
     get_user_obj is a wrapper around the pwd module.
     This check verifies that the user is _actually_ created.
     """
-    payload = {
-        "username": "testuser"
-    }
-    results = POST("/user/get_user_obj/", payload)
+    results = POST("/user/get_user_obj/", {"username": "testuser"})
     assert results.status_code == 200, results.text
     if results.status_code == 200:
         pw = results.json()
@@ -355,8 +355,8 @@ def test_31_creating_user_with_homedir(request):
         "uid": next_uid,
         "shell": SHELL,
         "sshpubkey": "canary",
-        "home": f'/mnt/{dataset}/testuser2',
-        "home_mode": '750'
+        "home": f"/mnt/{dataset}/testuser2",
+        "home_mode": f'{stat.S_IMODE(DEFAULT_HOMEDIR_OCTAL):03o}'
     }
     results = POST("/user/", user_payload)
     assert results.status_code == 200, results.text
@@ -399,20 +399,17 @@ def test_33_smb_user_passb_entry_exists(request):
 
 
 @pytest.mark.dependency(name="HOMEDIR_EXISTS")
-def test_34_homedir_exists(request):
+def test_34_verify_homedir_information(request):
     depends(request, ["USER_CREATED"])
-    results = POST('/filesystem/stat/', f'/mnt/{dataset}/testuser2')
-    assert results.status_code == 200, results.text
-
-
-def test_35_homedir_acl_stripped(request):
-    depends(request, ["HOMEDIR_EXISTS"])
     # Homedir permissions changes are backgrounded.
     # one second sleep should be sufficient for them to complete.
     time.sleep(1)
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/testuser2')
     assert results.status_code == 200, results.text
-    assert results.json()['acl'] is False, results.text
+
+    rv = results.json()
+    assert rv['acl'] is False, results.text  # acl stripped
+    assert stat.S_IMODE(rv['mode']) == DEFAULT_HOMEDIR_OCTAL  # mode bits
 
 
 @pytest.mark.parametrize('to_test', home_files.keys())
