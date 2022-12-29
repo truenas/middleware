@@ -719,34 +719,32 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts(Int('user_id', default=None, null=True))
+    @accepts()
     @returns(Dict(
-        additional_attrs=True,
+        'shell_info',
+        Str('shell_path'),
         example={
+            '/usr/bin/bash': 'bash',
+            '/usr/bin/rbash': 'rbash',
+            '/usr/bin/dash': 'dash',
             '/usr/bin/sh': 'sh',
             '/usr/bin/zsh': 'zsh',
+            '/usr/bin/tmux': 'tmux',
+            '/usr/sbin/nologin': 'nologin'
         }
     ))
     def shell_choices(self, user_id):
-        """
-        Return the available shell choices to be used in `user.create` and `user.update`.
+        """Return the available shell choices to be used in `user.create` and `user.update`."""
+        shells = {'/usr/sbin/nologin': 'nologin'}
+        with open('/etc/shells') as f:
+            for shell in filter(lambda x: x.startswith('/usr/bin'), f):
+                # on scale /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
+                # The entries that point to the same basename are the same binary.
+                # The /usr/bin/ path is the "newer" place to put binaries so we'll use those entries.
+                shell = shell.strip()
+                shells[shell] = os.path.basename(shell)
 
-        If `user_id` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
-        """
-        user = self.middleware.call_sync('user.get_instance', user_id) if user_id else None
-
-        # on linux /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
-        # The entries that point to the same basename are the same binary.
-        # The /usr/bin/ path is the "newer" place to put binaries so we'll use those entries.
-        path = '/' if IS_FREEBSD else '/usr/bin/'
-
-        with open('/etc/shells', 'r') as f:
-            shells = [x.rstrip() for x in f.readlines() if x.startswith(path)]
-        return {
-            shell: os.path.basename(shell)
-            for shell in (shells + ['/usr/sbin/nologin'])
-            if 'netcli' not in shell or (user and user['username'] == 'root')
-        }
+        return shells
 
     @accepts(Dict(
         'get_user_obj',
