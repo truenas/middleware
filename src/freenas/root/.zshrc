@@ -1,9 +1,8 @@
-
 HISTFILE=~/.zsh-histfile
 SAVEHIST=1000
-PROMPT="%n@%m[%40<...<%~%<<]# "
-
 setopt APPEND_HISTORY
+
+PROMPT="%n@%m[%40<...<%~%<<]%(!.#.$) "
 
 bindkey "^[[A" up-line-or-search
 bindkey "^[[F" end-of-line
