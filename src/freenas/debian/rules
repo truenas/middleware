@@ -23,12 +23,14 @@ override_dh_auto_install:
 		cp -a etc/systemd debian/truenas-files/etc/; \
 		mkdir debian/truenas-files/home; \
 		cp -a root debian/truenas-files/home/admin; \
-		mkdir debian/truenas-files/home/admin/.ssh; \
-		chmod -R 700 debian/truenas-files/home/admin; \
+		chmod 700 debian/truenas-files/home/admin; \
 		chown -R 950:950 debian/truenas-files/home/admin; \
 		cp -a root debian/truenas-files/; \
+		chmod 700 debian/truenas-files/root; \
 		mkdir -p debian/truenas-files/conf/base/etc; \
 	"
+
+override_dh_fixperms:
 
 override_dh_shlibdeps:
 
