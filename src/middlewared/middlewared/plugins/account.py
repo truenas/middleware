@@ -1121,7 +1121,7 @@ class UserService(CRUDService):
                 'The "\\n" character is not allowed in a "Full Name".'
             )
 
-        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', pk):
+        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices'):
             verrors.add(
                 f'{schema}.shell', 'Please select a valid shell.'
             )
