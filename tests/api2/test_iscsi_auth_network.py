@@ -1,6 +1,7 @@
 import ipaddress
 import os
 import pytest
+import socket
 import sys
 
 apifolder = os.getcwd()
@@ -14,6 +15,18 @@ import contextlib
 from auto_config import ip
 
 
+def my_ip4(ipaddr=ip, port=80):
+    """See which of my IP addresses will be used to connect."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)
+    result = sock.connect_ex((ipaddr,port))
+    assert result == 0
+    myip = sock.getsockname()[0]
+    sock.close()
+    # Check that we have an IPv4 address
+    socket.inet_pton(socket.AF_INET, myip)
+    return myip
+    
 @contextlib.contextmanager
 def portal():
     portal_config = call('iscsi.portal.create', {'listen': [{'ip': ip}], 'discovery_authmethod': 'NONE'})
@@ -103,6 +116,63 @@ def test_iscsi_auth_networks(valid):
             'iscsi.target.update',
             config['target']['id'],
             {'auth_networks': [] if valid else ['8.8.8.8/32']}
+        )
+        portal_listen_details = config['portal']['listen'][0]
+        assert target_login_test(
+            f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}',
+            f'{config["global"]["basename"]}:{config["target"]["name"]}',
+        ) is valid
+
+@pytest.mark.parametrize('valid', [True, False])
+def test_iscsi_auth_networks_exact_ip(valid):
+    myip = my_ip4()
+    with configure_iscsi_service() as config:
+        call(
+            'iscsi.target.update',
+            config['target']['id'],
+            {'auth_networks': [f"{myip}/32"] if valid else ['8.8.8.8/32']}
+        )
+        portal_listen_details = config['portal']['listen'][0]
+        assert target_login_test(
+            f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}',
+            f'{config["global"]["basename"]}:{config["target"]["name"]}',
+        ) is valid
+
+@pytest.mark.parametrize('valid', [True, False])
+def test_iscsi_auth_networks_netmask_24(valid):
+    myip = my_ip4()
+    # good_ip will be our IP with the last byte cleared.
+    good_ip = '.'.join(myip.split('.')[:-1] + ['0'])
+    # bad_ip will be our IP with the second last byte changed and last byte cleared
+    n = (int(myip.split('.')[2]) + 1) % 256
+    bad_ip = '.'.join(good_ip.split('.')[:2] + [str(n), '0'])
+    with configure_iscsi_service() as config:
+        call(
+            'iscsi.target.update',
+            config['target']['id'],
+            {'auth_networks': ["8.8.8.8/24", f"{good_ip}/24"] if valid else ["8.8.8.8/24", f"{bad_ip}/24"]}
+        )
+        portal_listen_details = config['portal']['listen'][0]
+        assert target_login_test(
+            f'{portal_listen_details["ip"]}:{portal_listen_details["port"]}',
+            f'{config["global"]["basename"]}:{config["target"]["name"]}',
+        ) is valid
+
+@pytest.mark.parametrize('valid', [True, False])
+def test_iscsi_auth_networks_netmask_16(valid):
+    myip = my_ip4()
+    # good_ip will be our IP with the second last byte changed and last byte cleared
+    n = (int(myip.split('.')[2]) + 1) % 256
+    good_ip = '.'.join(myip.split('.')[:2] + [str(n), '0'])
+    # bad_ip will be the good_ip with the second byte changed
+    l = good_ip.split('.')
+    n = (int(l[1]) + 1) % 256
+    bad_ip = '.'.join([l[0], str(n)] + l[-2:])
+    with configure_iscsi_service() as config:
+        call(
+            'iscsi.target.update',
+            config['target']['id'],
+            {'auth_networks': ["8.8.8.8/16", f"{good_ip}/16"] if valid else ["8.8.8.8/16", f"{bad_ip}/16"]}
         )
         portal_listen_details = config['portal']['listen'][0]
         assert target_login_test(
