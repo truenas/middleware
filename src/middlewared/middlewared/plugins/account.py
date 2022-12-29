@@ -287,7 +287,7 @@ class UserService(CRUDService):
         Int('group'),
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),
-        Str('home_mode', default='755'),
+        Str('home_mode', default='700'),
         Str('shell', default='/usr/bin/zsh'),
         Str('full_name', required=True),
         Str('email', validators=[Email()], null=True, default=None),
