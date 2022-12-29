@@ -18,13 +18,13 @@ from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ha, password, user, ip
 SHELL = '/usr/bin/bash'
 GROUP = 'root'
-DEFAULT_HOMEDIR_OCTAL = 0o700
+DEFAULT_HOMEDIR_OCTAL = 0o40700
 group_id = GET(f'/group/?group={GROUP}', controller_a=ha).json()[0]['id']
 dataset = f"{pool_name}/test_homes"
 dataset_url = dataset.replace('/', '%2F')
 
 home_files = {
-    "~/": "0o40750",
+    "~/": oct(DEFAULT_HOMEDIR_OCTAL),
     "~/.profile": "0o100644",
     "~/.ssh": "0o40700",
     "~/.ssh/authorized_keys": "0o100600",
@@ -399,17 +399,14 @@ def test_33_smb_user_passb_entry_exists(request):
 
 
 @pytest.mark.dependency(name="HOMEDIR_EXISTS")
-def test_34_verify_homedir_information(request):
+def test_34_verify_homedir_acl_is_stripped(request):
     depends(request, ["USER_CREATED"])
     # Homedir permissions changes are backgrounded.
     # one second sleep should be sufficient for them to complete.
     time.sleep(1)
     results = POST('/filesystem/stat/', f'/mnt/{dataset}/testuser2')
     assert results.status_code == 200, results.text
-
-    rv = results.json()
-    assert rv['acl'] is False, results.text  # acl stripped
-    assert stat.S_IMODE(rv['mode']) == DEFAULT_HOMEDIR_OCTAL  # mode bits
+    assert results.json()['acl'] is False, results.text  # acl stripped
 
 
 @pytest.mark.parametrize('to_test', home_files.keys())
