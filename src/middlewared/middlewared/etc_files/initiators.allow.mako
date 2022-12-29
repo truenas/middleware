@@ -9,7 +9,7 @@
             try:
                 ipobj = ipaddress.ip_interface(s[0])
             except ValueError:
-                middleware.logger.warning(f"Invalid IP address: {s[0]}", exc_info=True)
+                middleware.logger.warning("Invalid IP address: %s", s[0], exc_info=True)
             else:
                 if (ipobj.version == 4 and s[1] == '32') or (ipobj.version == 6 and s[1] == '128'):
                     return str(ipobj.ip)
