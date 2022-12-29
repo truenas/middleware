@@ -771,7 +771,9 @@ class UserService(CRUDService):
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
-        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'])
+        return await self.middleware.call(
+            'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups']
+        )
 
     @item_method
     @accepts(
@@ -1274,7 +1276,9 @@ class GroupService(CRUDService):
     @private
     async def group_extend_context(self, rows, extra):
         mem = {}
-        membership = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'})
+        membership = await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'}
+        )
         users = await self.middleware.call('datastore.query', 'account.bsdusers')
 
         # uid and gid variables here reference database ids rather than OS uid / gid
