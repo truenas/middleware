@@ -732,7 +732,7 @@ class UserService(CRUDService):
             '/usr/sbin/nologin': 'nologin'
         }
     ))
-    def shell_choices(self, user_id):
+    def shell_choices(self):
         """Return the available shell choices to be used in `user.create` and `user.update`."""
         shells = {'/usr/sbin/nologin': 'nologin'}
         with open('/etc/shells') as f:
