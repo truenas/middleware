@@ -36,6 +36,7 @@ def active_directory(domain, username, password, **kwargs):
         'bindname': username,
         'bindpw': password,
         "kerberos_principal": "",
+        "use_default_domain": False,
         'enable': True,
         **kwargs
     }
