@@ -285,7 +285,7 @@ def test_08_test_backend_options(request, backend):
 
 
 def test_09_clear_idmap_cache(request):
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_IS_HEALTHY"])
     results = GET("/idmap/clear_idmap_cache")
     assert results.status_code == 200, results.text
     job_id = results.json()
@@ -298,7 +298,7 @@ def test_10_idmap_overlap_fail(request):
     It should not be possible to set an idmap range for a new
     domain that overlaps an existing one.
     """
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_IS_HEALTHY"])
     payload = {
         "name": "canary",
         "range_low": "20000",
@@ -315,7 +315,7 @@ def test_11_idmap_default_domain_name_change_fail(request):
     It should not be possible to change the name of a
     default idmap domain.
     """
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_IS_HEALTHY"])
     payload = {
         "name": "canary",
         "range_low": "1000000000",
@@ -332,7 +332,7 @@ def test_12_idmap_low_high_range_inversion_fail(request):
     It should not be possible to set an idmap low range
     that is greater than its high range.
     """
-    depends(request, ["JOINED_AD"])
+    depends(request, ["AD_IS_HEALTHY"])
     payload = {
         "name": "canary",
         "range_low": "2000000000",
@@ -345,7 +345,7 @@ def test_12_idmap_low_high_range_inversion_fail(request):
 
 @pytest.mark.dependency(name="CREATED_NEW_DOMAIN")
 def test_13_idmap_new_domain(request):
-    depends(request, ["JOINED_AD", "ssh_password"], scope="session")
+    depends(request, ["AD_IS_HEALTHY", "ssh_password"], scope="session")
     global dom_id
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
@@ -369,7 +369,7 @@ def test_14_idmap_new_domain_duplicate_fail(request):
     It should not be possible to create a new domain that
     has a name conflict with an existing one.
     """
-    depends(request, ["JOINED_AD", "ssh_password"], scope="session")
+    depends(request, ["AD_IS_HEALTHY", "ssh_password"], scope="session")
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
