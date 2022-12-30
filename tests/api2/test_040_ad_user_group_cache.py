@@ -8,6 +8,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, wait_on_job
+from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ip, hostname, password, user
 from pytest_dependency import depends
 
@@ -22,73 +23,33 @@ else:
     pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 WINBIND_SEPARATOR = "\\"
-nameserver1 = None
-nameserver2 = None
-
-job_id = None
-job_status = None
 
 
-# Create tests
-@pytest.mark.dependency(name="GOT_DNS")
-def test_01_get_nameserver1():
-    global nameserver1
-    results = GET("/network/configuration/")
-    assert results.status_code == 200, results.text
-    nameserver1 = results.json()['nameserver1']
+@pytest.fixture(scope="module")
+def do_ad_connection(request):
+    with active_directory(
+        AD_DOMAIN,
+        ADUSERNAME,
+        ADPASSWORD,
+        netbiosname=hostname,
+    ) as ad:
+        yield (request, ad)
 
 
-@pytest.mark.dependency(name="SET_DNS")
-def test_02_set_nameserver_for_ad(request):
-    depends(request, ["GOT_DNS"])
-    global payload
-    payload = {
-        "nameserver1": ADNameServer,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+@pytest.fixture(scope="module")
+def set_ad_nameserver(request):
+    with override_nameservers(ADNameServer) as ns:
+        yield (request, ns)
 
 
-@pytest.mark.dependency(name="AD_ENABLED")
-def test_03_enabling_activedirectory(request):
-    depends(request, ["pool_04", "SET_DNS"], scope="session")
-    global payload, results, job_id
-    payload = {
-        "bindpw": ADPASSWORD,
-        "bindname": ADUSERNAME,
-        "domainname": AD_DOMAIN,
-        "netbiosname": hostname,
-        "dns_timeout": 15,
-        "verbose_logging": True,
-        "enable": True
-    }
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
-
-
-@pytest.mark.dependency(name="JOINED_AD")
-def test_04_verify_the_job_id_is_successful(request):
-    depends(request, ["AD_ENABLED"])
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+def test_01_set_nameserver_for_ad(set_ad_nameserver):
+    assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
 @pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_05_get_activedirectory_state(request):
-    """
-    Issue no-effect operation on DC's netlogon share to
-    verify that domain join is alive.
-
-    Also get our current workgroup. During domain join, this
-    will change to one appropriate for the AD environment. Used
-    for AD names.
-    """
+def test_03_enabling_activedirectory(do_ad_connection):
     global WORKGROUP
 
-    depends(request, ["JOINED_AD"])
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
 
@@ -325,34 +286,3 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     })
     assert results.status_code == 200, results.text
     assert len(results.json()) == 1, results.text
-
-
-def test_39_leave_activedirectory(request):
-    depends(request, ["JOINED_AD"])
-    global payload, results
-    payload = {
-        "username": ADUSERNAME,
-        "password": ADPASSWORD
-    }
-    results = POST("/activedirectory/leave/", payload)
-    assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json(), 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_41_remove_site(request):
-    depends(request, ["JOINED_AD"])
-    payload = {"site": None, "use_default_domain": False}
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_42_reset_dns(request):
-    depends(request, ["SET_DNS"])
-    global payload
-    payload = {
-        "nameserver1": nameserver1,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
