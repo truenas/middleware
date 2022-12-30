@@ -1,5 +1,3 @@
-# -*- coding=utf-8 -*-
-import logging
 import os
 import sys
 
@@ -11,12 +9,11 @@ try:
 except ImportError:
     pass
 
-logger = logging.getLogger(__name__)
-
 __all__ = ["ssh"]
 
 
-def ssh(command, check=True, complete_response=False):
+def ssh(command, check=True, complete_response=False, _ip=None):
+    _ip = _ip if _ip is not None else ip
     result = SSH_TEST(command, user, password, ip)
     if check:
         assert result["result"] is True, f"stdout: {result['output']}\nstderr: {result['stderr']}"

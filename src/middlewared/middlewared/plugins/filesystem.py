@@ -431,29 +431,6 @@ class FilesystemService(Service):
             self.middleware.call_sync('pwenc.reset_secret_cache')
         return True
 
-    @private
-    @accepts(
-        Str('path'),
-        Dict(
-            'options',
-            Int('offset'),
-            Int('maxlen'),
-        ),
-    )
-    def file_get_contents(self, path, options):
-        """
-        Get contents of a file `path` in base64 encode.
-
-        DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
-        """
-        if not os.path.exists(path):
-            return None
-        with open(path, 'rb') as f:
-            if options.get('offset'):
-                f.seek(options['offset'])
-            data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
-        return data
-
     @accepts(Str('path'))
     @returns()
     @job(pipes=["output"])
