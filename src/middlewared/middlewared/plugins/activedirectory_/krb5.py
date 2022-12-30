@@ -1,7 +1,6 @@
 from middlewared.plugins.smb import SMBCmd
 from middlewared.plugins.kerberos import krb5ccache
 from middlewared.plugins.activedirectory_.dns import SRV
-from middlewared.schema import accepts
 from middlewared.service import private, job, Service
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DSStatus
@@ -33,7 +32,7 @@ class ActiveDirectoryService(Service):
 
         return True
 
-    @accepts()
+    @private
     async def get_spn_list(self):
         """
         Return list of kerberos SPN entries registered for the server's Active
@@ -61,7 +60,7 @@ class ActiveDirectoryService(Service):
 
         return spnlist
 
-    @accepts()
+    @private
     async def change_trust_account_pw(self):
         """
         Force an update of the AD machine account password. This can be used to
