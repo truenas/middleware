@@ -19,7 +19,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     conn.execute(
-        'UPDATE account_bsdusers SET bsdusr_shell = "/usr/sbin/nologin" WHERE instr("bsdusr_shell", "netcli") > 1'
+        'UPDATE account_bsdusers SET bsdusr_shell = "/usr/sbin/nologin" WHERE bsdusr_shell LIKE "%netcli%"'
     )
 
 def downgrade():
