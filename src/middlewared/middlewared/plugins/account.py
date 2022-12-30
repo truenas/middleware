@@ -734,7 +734,11 @@ class UserService(CRUDService):
     ))
     def shell_choices(self):
         """Return the available shell choices to be used in `user.create` and `user.update`."""
-        shells = {'/usr/sbin/nologin': 'nologin'}
+        shells = {
+            '/usr/sbin/nologin': 'nologin',
+            '/usr/bin/cli': 'TrueNAS CLI',  # installed via midcli
+            '/usr/bin/cli_console': 'TrueNAS Console',  # installed via midcli
+        }
         with open('/etc/shells') as f:
             for shell in filter(lambda x: x.startswith('/usr/bin'), f):
                 # on scale /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
