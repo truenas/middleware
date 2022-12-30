@@ -32,4 +32,18 @@ def smb_share(path, options=None):
         result = DELETE(f"/sharing/smb/id/{id}/")
         assert result.status_code == 200, result.text
 
+
+@contextlib.contextmanager
+def nfs_share(path, options=None):
+    results = POST("/sharing/nfs/", {
+        "path": path,
+        **(options or {}),
+    })
     assert results.status_code == 200, results.text
+    id = results.json()["id"]
+
+    try:
+        yield id
+    finally:
+        result = DELETE(f"/sharing/nfs/id/{id}/")
+        assert result.status_code == 200, result.text

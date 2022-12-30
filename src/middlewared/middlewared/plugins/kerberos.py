@@ -395,13 +395,34 @@ class KerberosService(TDBWrapConfigService):
             'kerberos-options',
             'kinit-options',
             ('add', {'name': 'renewal_period', 'type': 'int', 'default': 7}),
+            ('add', {'name': 'lifetime', 'type': 'int', 'default': 0}),
+            ('add', {
+                'name': 'kdc_override',
+                'type': 'dict',
+                'args': [Str('domain', default=None), Str('kdc', default=None)]
+            }),
         )
     ))
     async def do_kinit(self, data):
         ccache = krb5ccache[data['kinit-options']['ccache']]
-        cmd = ['kinit', '-r', str(data['kinit-options']['renewal_period']), '-c', ccache.value]
+        cmd = ['kinit', '-V', '-r', str(data['kinit-options']['renewal_period']), '-c', ccache.value]
         creds = data['krb5_cred']
         has_principal = 'kerberos_principal' in creds
+        lifetime = data['kinit-options']['lifetime']
+
+        if lifetime != 0:
+            minutes = f'{lifetime}m'
+            cmd.extend(['-l', minutes])
+
+        if data['kinit-options']['kdc_override']['kdc'] is not None:
+            override = data['kinit-options']['kdc_override']
+            if override['domain'] is None:
+                raise CallError('Domain missing from KDC override')
+
+            await self.middleware.call(
+                'kerberos.generate_stub_config',
+                override['domain'], override['kdc']
+            )
 
         if has_principal:
             cmd.extend(['-k', creds['kerberos_principal']])
