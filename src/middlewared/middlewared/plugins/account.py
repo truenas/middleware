@@ -4,7 +4,6 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.osc import IS_FREEBSD
 from middlewared.validators import Email
 from middlewared.plugins.smb import SMBBuiltin
 
@@ -289,7 +288,7 @@ class UserService(CRUDService):
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),
         Str('home_mode', default='700'),
-        Str('shell', default='/bin/csh' if IS_FREEBSD else '/usr/bin/zsh'),
+        Str('shell', default='/usr/bin/zsh'),
         Str('full_name', required=True),
         Str('email', validators=[Email()], null=True, default=None),
         Str('password', private=True),
@@ -721,32 +720,33 @@ class UserService(CRUDService):
 
     @accepts(Int('user_id', default=None, null=True))
     @returns(Dict(
-        additional_attrs=True,
+        'shell_info',
+        Str('shell_path'),
         example={
+            '/usr/bin/bash': 'bash',
+            '/usr/bin/rbash': 'rbash',
+            '/usr/bin/dash': 'dash',
             '/usr/bin/sh': 'sh',
             '/usr/bin/zsh': 'zsh',
+            '/usr/bin/tmux': 'tmux',
+            '/usr/sbin/nologin': 'nologin'
         }
     ))
     def shell_choices(self, user_id):
+        """Return the available shell choices to be used in `user.create` and `user.update`.
+
+        `user_id`: deprecated and ignored
         """
-        Return the available shell choices to be used in `user.create` and `user.update`.
+        shells = {'/usr/sbin/nologin': 'nologin'}
+        with open('/etc/shells') as f:
+            for shell in filter(lambda x: x.startswith('/usr/bin'), f):
+                # on scale /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
+                # The entries that point to the same basename are the same binary.
+                # The /usr/bin/ path is the "newer" place to put binaries so we'll use those entries.
+                shell = shell.strip()
+                shells[shell] = os.path.basename(shell)
 
-        If `user_id` is provided, shell choices are filtered to ensure the user can access the shell choices provided.
-        """
-        user = self.middleware.call_sync('user.get_instance', user_id) if user_id else None
-
-        # on linux /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
-        # The entries that point to the same basename are the same binary.
-        # The /usr/bin/ path is the "newer" place to put binaries so we'll use those entries.
-        path = '/' if IS_FREEBSD else '/usr/bin/'
-
-        with open('/etc/shells', 'r') as f:
-            shells = [x.rstrip() for x in f.readlines() if x.startswith(path)]
-        return {
-            shell: os.path.basename(shell)
-            for shell in (shells + ['/usr/sbin/nologin'])
-            if 'netcli' not in shell or (user and user['username'] == 'root')
-        }
+        return shells
 
     @accepts(Dict(
         'get_user_obj',
@@ -773,7 +773,9 @@ class UserService(CRUDService):
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
-        return await self.middleware.call('dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'])
+        return await self.middleware.call(
+            'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups']
+        )
 
     @item_method
     @accepts(
@@ -1121,7 +1123,7 @@ class UserService(CRUDService):
                 'The "\\n" character is not allowed in a "Full Name".'
             )
 
-        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', pk):
+        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices'):
             verrors.add(
                 f'{schema}.shell', 'Please select a valid shell.'
             )
@@ -1276,7 +1278,9 @@ class GroupService(CRUDService):
     @private
     async def group_extend_context(self, rows, extra):
         mem = {}
-        membership = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'})
+        membership = await self.middleware.call(
+            'datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'}
+        )
         users = await self.middleware.call('datastore.query', 'account.bsdusers')
 
         # uid and gid variables here reference database ids rather than OS uid / gid
