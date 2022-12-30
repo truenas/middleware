@@ -3,7 +3,8 @@ import time
 
 import pytest
 from pytest_dependency import depends
-from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential, local_s3_task, run_task
+from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential
+from middlewared.test.integration.assets.cloud_sync import local_s3_task, run_task
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool, ssh
@@ -218,21 +219,24 @@ def test_state_persist():
 
 
 if ha:
+    def get_controllers_ips():
+        return os.environ.get('controller1_ip'), os.environ.get('controller2_ip')
+
     def test_state_failover():
         with dataset("test") as ds:
-            with local_s3_task({
-                "path": f"/mnt/{ds}",
-            }) as task:
+            with local_s3_task({"path": f"/mnt/{ds}"}) as task:
                 call("cloudsync.sync", task["id"], job=True)
-
                 time.sleep(5)  # Job sending is not synchronous, allow it to propagate
 
-                local_job = call("cloudsync.get_instance", task["id"])["job"]
-                local_logs_path = local_job["logs_path"]
-                local_logs = call("filesystem.file_get_contents", local_logs_path)
+                ctrl1_ip, ctrl2_ip = get_controllers_ips()
+                assert all((ctrl1_ip, ctrl2_ip)), 'Unable to determine both HA controller IP addresses'
 
-                remote_job = call("failover.call_remote", "cloudsync.get_instance", [task["id"]])["job"]
-                remote_logs_path = remote_job["logs_path"]
-                remote_logs = call("failover.call_remote", "filesystem.file_get_contents", [remote_logs_path])
+                file1_path = call("cloudsync.get_instance", task["id"])["job"]["logs_path"]
+                file1_contents = ssh(f'cat {file1_path}', _ip=ctrl1_ip, check=False)
+                assert file1_contents
 
-                assert local_logs == remote_logs
+                file2_path = call("failover.call_remote", "cloudsync.get_instance", [task["id"]])["job"]["logs_path"]
+                file2_contents = ssh(f'cat {file2_path}', _ip=ctrl2_ip, check=False)
+                assert file2_contents
+
+                assert file1_contents == file2_contents
