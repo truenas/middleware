@@ -11,6 +11,7 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
+from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ip, hostname, password, user
 from base64 import b64decode
 from pytest_dependency import depends
@@ -51,66 +52,29 @@ job_id = None
 dom_id = None
 
 
-@pytest.mark.dependency(name="GOT_DNS")
-def test_01_get_nameserver1_and_nameserver2():
-    global nameserver1
-    results = GET("/network/configuration/")
-    assert results.status_code == 200, results.text
-    nameserver1 = results.json()['nameserver1']
+@pytest.fixture(scope="module")
+def do_ad_connection(request):
+    with active_directory(
+        AD_DOMAIN,
+        ADUSERNAME,
+        ADPASSWORD,
+        netbiosname=hostname,
+    ) as ad:
+        yield (request, ad)
 
 
-@pytest.mark.dependency(name="SET_DNS")
-def test_02_set_nameserver_for_ad(request):
-    depends(request, ["GOT_DNS"])
-    global payload
-    payload = {
-        "nameserver1": ADNameServer,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+@pytest.fixture(scope="module")
+def set_ad_nameserver(request):
+    with override_nameservers(ADNameServer) as ns:
+        yield (request, ns)
 
 
-@pytest.mark.dependency(name="AD_ENABLED")
-def test_03_enabling_activedirectory(request):
-    depends(request, ["pool_04", "SET_DNS"], scope="session")
-    global payload, results, job_id
-    payload = {
-        "bindpw": ADPASSWORD,
-        "bindname": ADUSERNAME,
-        "domainname": AD_DOMAIN,
-        "netbiosname": hostname,
-        "dns_timeout": 15,
-        "verbose_logging": True,
-        "enable": True
-    }
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
-
-
-@pytest.mark.dependency(name="JOINED_AD")
-def test_04_verify_the_job_id_is_successful(request):
-    depends(request, ["AD_ENABLED"])
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_05_verify_activedirectory_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
-    cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
+def test_01_set_nameserver_for_ad(set_ad_nameserver):
+    assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
 @pytest.mark.dependency(name="AD_IS_HEALTHY")
-def test_06_get_activedirectory_state(request):
-    """
-    Issue no-effect operation on DC's netlogon share to
-    verify that domain join is alive.
-    """
-    depends(request, ["JOINED_AD"])
+def test_03_enabling_activedirectory(do_ad_connection):
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
 
@@ -442,41 +406,3 @@ def test_16_idmap_delete_new_domain(request):
     depends(request, ["CREATED_NEW_DOMAIN"])
     results = DELETE(f"/idmap/id/{dom_id}")
     assert results.status_code == 200, f"[delete: {dom_id}]: {results.text}"
-
-
-def test_17_leave_activedirectory(request):
-    depends(request, ["JOINED_AD"])
-    global payload, results
-    payload = {
-        "username": ADUSERNAME,
-        "password": ADPASSWORD
-    }
-    results = POST("/activedirectory/leave/", payload)
-    assert results.status_code == 200, results.text
-    job_status = wait_on_job(results.json(), 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_18_verify_activedirectory_leave_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["AD_ENABLED", "ssh_password"], scope="session")
-    cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is False, str(results['output'])
-
-
-def test_19_remove_site(request):
-    depends(request, ["JOINED_AD"])
-    payload = {"site": None}
-    results = PUT("/activedirectory/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_20_reset_dns(request):
-    depends(request, ["SET_DNS"])
-    global payload
-    payload = {
-        "nameserver1": nameserver1,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
