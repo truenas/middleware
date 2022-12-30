@@ -60,3 +60,30 @@ def active_directory(domain, username, password, **kwargs):
         assert results.status_code == 200, results.text
         job_status = wait_on_job(results.json(), 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+
+@contextlib.contextmanager
+def override_nameservers(_nameserver1='', _nameserver2='', _nameserver3=''):
+    results = GET("/network/configuration/")
+    assert results.status_code == 200, results.text
+
+    net_config = results.json()
+    nameserver1 = net_config['nameserver1']
+    nameserver2 = net_config['nameserver2']
+    nameserver3 = net_config['nameserver3']
+
+    try:
+        results = PUT("/network/configuration/", {
+            'nameserver1': _nameserver1,
+            'nameserver2': _nameserver2,
+            'nameserver3': _nameserver3
+        })
+        assert results.status_code == 200, results.text
+        yield results.json()
+    finally:
+        results = PUT("/network/configuration/", {
+            'nameserver1': nameserver1,
+            'nameserver2': nameserver2,
+            'nameserver3': nameserver3,
+        })
+        assert results.status_code == 200, results.text
