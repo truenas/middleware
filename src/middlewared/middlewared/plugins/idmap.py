@@ -1,18 +1,58 @@
+import asyncio
 import enum
 import errno
 import os
 import datetime
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
 from middlewared.plugins.directoryservices import SSL
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
+from middlewared.utils import run, filter_list
 from middlewared.validators import Range
 from middlewared.plugins.smb import SMBCmd, WBCErr
 
 
 SID_LOCAL_USER_PREFIX = "S-1-22-1-"
 SID_LOCAL_GROUP_PREFIX = "S-1-22-2-"
+
+"""
+See MS-DTYP 2.4.2.4
+
+Most of these groups will never be used on production servers.
+We are statically assigning IDs (based on idmap low range)
+to cover edge cases where users may have decided to copy data
+from a local Windows server share (for example) and preserve
+the existing Security Descriptor. We want the mapping to be
+consistent so that ZFS replication of TrueNAS server A to
+TrueNAS server B will result in same effective permissions
+for users and groups with no unexpected elevation of permissions.
+
+Entries may be appended to this list. Ordering is used to determine
+the GID assigned to the builtin.
+Once a new entry has been appended, the corresponding padding
+in smb/_groupmap.py should be decreased
+"""
+WELL_KNOWN_SIDS = [
+    {"name": "NULL", "sid": "S-1-0-0", "set": False},
+    {"name": "EVERYONE", "sid": "S-1-1-0", "set": True},
+    {"name": "LOCAL", "sid": "S-1-2-0", "set": True},
+    {"name": "CONSOLE_LOGON", "sid": "S-1-2-1", "set": True},
+    {"name": "CREATOR_OWNER", "sid": "S-1-3-0", "set": True},
+    {"name": "CREATOR_GROUP", "sid": "S-1-3-1", "set": True},
+    {"name": "OWNER_RIGHTS", "sid": "S-1-3-4", "set": True},
+    {"name": "DIALUP", "sid": "S-1-5-1", "set": True},
+    {"name": "NETWORK", "sid": "S-1-5-2", "set": True},
+    {"name": "BATCH", "sid": "S-1-5-3", "set": True},
+    {"name": "INTERACTIVE", "sid": "S-1-5-4", "set": True},
+    {"name": "SERVICE", "sid": "S-1-5-6", "set": True},
+    {"name": "ANONYMOUS", "sid": "S-1-5-7", "set": True},
+    {"name": "AUTHENTICATED_USERS", "sid": "S-1-5-11", "set": True},
+    {"name": "TERMINAL_SERVER_USER", "sid": "S-1-5-13", "set": True},
+    {"name": "REMOTE_AUTHENTICATED_LOGON", "sid": "S-1-5-14", "set": True},
+    {"name": "LOCAL_SYSTEM", "sid": "S-1-5-18", "set": True},
+    {"name": "LOCAL_SERVICE", "sid": "S-1-5-19", "set": True},
+    {"name": "NETWORK_SERVICE", "sid": "S-1-5-20", "set": True},
+]
 
 
 class DSType(enum.Enum):
@@ -787,6 +827,64 @@ class IdmapDomainService(CRUDService):
             rv = {"id_type": "USER", "id": uid}
 
         return rv
+
+    @private
+    @filterable
+    async def builtins(self, filters, options):
+        out = []
+        idmap_backend = await self.middleware.call("smb.getparm", "idmap config * : backend", "GLOBAL")
+        if idmap_backend != "tdb":
+            """
+            idmap_autorid and potentially other allocating idmap backends may be used for
+            the default domain.
+            """
+            return []
+
+        idmap_range = await self.middleware.call("smb.getparm", "idmap config * : range", "GLOBAL")
+        low_range = int(idmap_range.split("-")[0].strip())
+        for idx, entry in enumerate(WELL_KNOWN_SIDS):
+            finalized_entry = entry.copy()
+            finalized_entry.update({
+                'id': idx,
+                'gid': low_range + 3 + idx
+            })
+            out.append(finalized_entry)
+
+        return filter_list(out, filters, options)
+
+    @private
+    async def id_to_name(self, id, id_type):
+        idtype = IDType[id_type]
+        idmap_timeout = 5.0
+
+        if idtype == IDType.GROUP or idtype == IDType.BOTH:
+            method = "group.get_group_obj"
+            to_check = {"gid": id}
+            key = 'gr_name'
+        elif idtype == IDType.USER:
+            method = "user.get_user_obj"
+            to_check = {"uid": id}
+            key = 'pw_name'
+        else:
+            raise CallError(f"Unsupported id_type: [{idtype.name}]")
+
+        try:
+            ret = await asyncio.wait_for(
+                self.middleware.call(method, to_check),
+                timeout=idmap_timeout
+            )
+            name = ret[key]
+        except asyncio.TimeoutError:
+            self.logger.debug(
+                "timeout encountered while trying to convert %s id %s "
+                "to name. This may indicate significant networking issue.",
+                id_type.lower(), id
+            )
+            name = None
+        except KeyError:
+            name = None
+
+        return name
 
     @private
     async def unixid_to_sid(self, data):
