@@ -1,7 +1,9 @@
+import dns
 import enum
+import errno
 import socket
 
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 from middlewared.plugins.kerberos import krb5ccache
 from middlewared.plugins.smb import SMBCmd
 from middlewared.utils import run
@@ -71,6 +73,54 @@ class ActiveDirectoryService(Service):
             s.close()
 
         return ret
+
+    @private
+    async def check_nameservers(self, domain, site=None):
+        def get_host(srv_prefix):
+            if site and site != 'Default-First-Site-Name':
+                if 'msdcs' in srv_prefix.value:
+                    parts = srv_prefix.value.split('.')
+                    srv = '.'.join([parts[0], parts[1]])
+                    msdcs = '.'.join([parts[2], parts[3]])
+                    return f"{srv}.{site}._sites.{msdcs}.{domain}"
+
+                else:
+                    return f"{srv_prefix.value}{site}._sites.{domain}."
+
+            return f"{srv_prefix.value}{domain}."
+
+        targets = [get_host(srv_record) for srv_record in [
+            SRV.DOMAINCONTROLLER,
+            SRV.GLOBALCATALOG,
+            SRV.KERBEROS,
+            SRV.KERBEROSDOMAINCONTROLLER,
+            SRV.KPASSWD,
+            SRV.LDAP,
+            SRV.PDC
+        ]]
+
+        for entry in await self.middleware.call('dns.query'):
+            try:
+                servers = await self.middleware.call('dnsclient.forward_lookup', {
+                    'names': targets,
+                    'record_type': 'SRV',
+                    'dns_client_options': {'nameservers': [entry['nameserver']]},
+                    'query-options': {'order_by': ['priority', 'weight']}
+                })
+            except dns.resolver.NXDOMAIN:
+                raise CallError(
+                    f'Nameserver {entry["nameserver"]} failed to resolve SRV records for domain {domain}. '
+                    'This may indicate a DNS misconfiguration on the TrueNAS server.',
+                    errno.EINVAL
+                )
+
+            for name in targets:
+                if not any([lambda resp: resp['name'].casefold() == name.casefold(), servers]):
+                    raise CallError(
+                        f'Forward lookup of "{name}" failed with nameserver {entry["nameserver"]}. '
+                        'This may indicate a DNS misconfiguration on the remote nameserver.',
+                        errno.ENOENT
+                    )
 
     @private
     def get_n_working_servers(self, domain, srv=SRV.DOMAINCONTROLLER.name, site=None, cnt=1, timeout=10, verbose=False):
