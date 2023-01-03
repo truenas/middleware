@@ -420,6 +420,18 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 )
 
             try:
+                await self.middleware.call(
+                    'activedirectory.check_nameservers',
+                    new['domainname'],
+                    new['site']
+                )
+            except CallError as e:
+                raise ValidationError(
+                    'activedirectory.domainname',
+                    e.errmsg
+                )
+
+            try:
                 await self.validate_credentials(new, domain_info['KDC server'])
             except CallError as e:
                 if new['kerberos_principal']:
