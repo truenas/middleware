@@ -7,7 +7,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, PUT, SSH_TEST, wait_on_job
-from assets.REST.directory_services import active_directory
+from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ha, dev_test, hostname, user, password
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -37,6 +37,12 @@ def logs_data():
 @pytest.fixture(scope='module')
 def reporing_data():
     return {}
+
+
+@pytest.fixture(scope="function")
+def set_ad_nameserver(request):
+    with override_nameservers(ADNameServer) as ns:
+        yield (request, ns)
 
 
 def test_01_verify_sysds_is_set_to_boot_pool():
@@ -233,19 +239,8 @@ def test_09_verify_sysds_does_not_move_after_second_pool_is_created(request, poo
     assert results.json()['basename'] == 'first_pool/.system', results.text
 
 
-def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(request):
-    depends(request, ["second_pool"])
-
-    results = GET("/network/configuration/")
-    assert results.status_code == 200, results.text
-    nameserver1 = results.json()['nameserver1']
-    payload = {
-        "nameserver1": ADNameServer,
-    }
-
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(set_ad_nameserver):
+    depends(set_ad_nameservers[0], ["second_pool"])
 
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
         netbiosname=hostname,
@@ -265,9 +260,6 @@ def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(request):
         assert isinstance(results.json(), dict), results.text
         assert results.json()['pool'] == 'first_pool', results.text
         assert results.json()['basename'] == 'first_pool/.system', results.text
-
-    results = PUT("/network/configuration/", {"nameserver1": nameserver1})
-    assert results.status_code == 200, results.text
 
 
 def test_11_get_logs_before_moving_the_sysds_to_the_second_pool(logs_data):
