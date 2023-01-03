@@ -217,7 +217,7 @@ class ChartReleaseService(Service):
 
         if attachments := {
             attachment['type']
-            for attachment in await self.middleware.call('pool.dataset.attachments_with_path', path)
+            for attachment in await self.middleware.call('pool.dataset.attachments_with_path', path, True)
             if attachment['type'].lower() not in ['kubernetes', 'chart releases']
         }:
             verrors.add(schema_name, f"The path '{path}' is already attached to service(s): {', '.join(attachments)}.")
