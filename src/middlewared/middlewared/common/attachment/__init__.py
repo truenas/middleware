@@ -91,6 +91,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
 
     async def query(self, path, enabled, options=None):
         results = []
+        options = options or {}
         check_path_child_of_resource = options.get('check_path_child_of_resource', False)
         for resource in await self.middleware.call(
             f'{self.namespace}.query', await self.get_query_filters(enabled, options)
