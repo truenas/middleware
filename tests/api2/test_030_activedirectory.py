@@ -8,7 +8,7 @@ from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.directory_services import active_directory
+from assets.REST.directory_services import active_directory, override_nameservers
 from assets.REST.pool import dataset
 from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, wait_on_job
@@ -63,29 +63,17 @@ ad_object_list = [
 SMB_NAME = "TestADShare"
 
 
-@pytest.mark.dependency(name="ad_01")
-def test_01_get_nameserver1(request):
-    global nameserver1
-    results = GET("/network/configuration/")
-    assert results.status_code == 200, results.text
-    nameserver1 = results.json()['nameserver1']
+@pytest.fixture(scope="module")
+def set_ad_nameserver(request):
+    with override_nameservers(ADNameServer) as ns:
+        yield (request, ns)
 
 
-@pytest.mark.dependency(name="ad_02")
-def test_02_set_nameserver_for_ad(request):
-    depends(request, ["ad_01"], scope="session")
-    global payload
-    payload = {
-        "nameserver1": ADNameServer,
-    }
-    global results
-    results = PUT("/network/configuration/", payload)
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), dict), results.text
+def test_01_set_nameserver_for_ad(set_ad_nameserver):
+    assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
 def test_03_get_activedirectory_data(request):
-    depends(request, ["ad_01", "ad_02"], scope="session")
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
@@ -93,19 +81,16 @@ def test_03_get_activedirectory_data(request):
 
 @pytest.mark.parametrize('data', list(ad_data_type.keys()))
 def test_04_verify_activedirectory_data_type_of_the_object_value_of_(request, data):
-    depends(request, ["ad_02"], scope="session")
     assert isinstance(results.json()[data], ad_data_type[data]), results.text
 
 
 def test_05_get_activedirectory_state(request):
-    depends(request, ["ad_01", "ad_02"], scope="session")
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
 
 
 def test_06_get_activedirectory_started_before_starting_activedirectory(request):
-    depends(request, ["ad_01", "ad_02"], scope="session")
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text

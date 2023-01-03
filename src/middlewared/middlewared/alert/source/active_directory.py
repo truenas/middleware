@@ -3,6 +3,7 @@ import logging
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule, IntervalSchedule
 from middlewared.plugins.directoryservices import DSStatus
+from middlewared.service_exception import CallError
 
 log = logging.getLogger("activedirectory_check_alertmod")
 
@@ -36,6 +37,15 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,
                 {'verrs': str(e)},
+                key=None
+            )
+
+        try:
+            await self.middleware.call("activedirectory.check_nameservers")
+        except CallError as e:
+            return Alert(
+                ActiveDirectoryDomainHealthAlertClass,
+                {'verrs': e.errmsg},
                 key=None
             )
 
