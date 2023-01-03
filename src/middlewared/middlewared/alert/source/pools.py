@@ -20,11 +20,11 @@ class PoolUSBDisksAlertClass(AlertClass, OneShotAlertClass):
         pool_name = args['pool_name']
         disks = args['disks']
 
-        if (usb_disks := await self.get_usb_disks(pool_name, disks)):
+        if usb_disks := await self.get_usb_disks(pool_name, disks):
             return Alert(PoolUSBDisksAlertClass, {'pool': pool_name, 'disks': ', '.join(usb_disks)}, key=pool_name)
 
     async def delete(self, alerts, query):
-        return list(filter(lambda x: x.key != query, alerts))
+        return list(filter(lambda x: x.args['pool'] != query, alerts))
 
 
 class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
@@ -51,4 +51,4 @@ class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
             return Alert(PoolUpgradedAlertClass, pool, key=pool)
 
     async def delete(self, alerts, query):
-        return list(filter(lambda x: x.key != query, alerts))
+        return list(filter(lambda x: x.args != query, alerts))

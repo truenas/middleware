@@ -9,7 +9,8 @@ import pyotp
 
 from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCredentials,
                               UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
-                              LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials)
+                              LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
+                              TrueNasNodeSessionManagerCredentials)
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, returns, Str
 from middlewared.service import (
     ConfigService, Service, filterable, filterable_returns, filter_list, no_auth_required,
@@ -185,15 +186,14 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
 
 def is_internal_session(session):
-    if isinstance(session.app.origin, UnixSocketOrigin):
+    if isinstance(session.app.origin, UnixSocketOrigin) and session.app.origin.uid == 0:
         return True
 
-    if isinstance(session.app.origin, TCPIPOrigin):
-        if session.app.origin.addr in ["127.0.0.1", "::1"]:
-            return True
-
-        if session.app.origin.addr in ["169.254.10.1", "169.254.10.2"] and session.app.origin.port <= 1024:
-            return True
+    if isinstance(session.app.authenticated_credentials, (
+        RootTcpSocketSessionManagerCredentials,
+        TrueNasNodeSessionManagerCredentials,
+    )):
+        return True
 
     return False
 

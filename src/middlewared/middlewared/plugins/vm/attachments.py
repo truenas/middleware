@@ -5,7 +5,6 @@ from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import private, Service
-from middlewared.utils.path import is_child
 
 from .utils import ACTIVE_STATES
 
@@ -58,7 +57,7 @@ class VMService(Service):
 
             dataset_path = os.path.join('/mnt', dataset)
             if await determine_recursive_search(recursive, device, datasets):
-                if is_child(path, dataset_path):
+                if await self.middleware.call('filesystem.is_child', path, dataset_path):
                     vms[device['vm']].append(device)
             elif dataset_path == path:
                 vms[device['vm']].append(device)
@@ -93,7 +92,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             if disk.startswith('/dev/zvol'):
                 disk = os.path.join('/mnt', zvol_path_to_name(disk))
 
-            if is_child(disk, path):
+            if await self.middleware.call('filesystem.is_child', disk, path):
                 vm = {
                     'id': device['vm'].get('id'),
                     'name': device['vm'].get('name'),

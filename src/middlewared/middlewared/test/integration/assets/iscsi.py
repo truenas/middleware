@@ -14,6 +14,7 @@ def target_login_test(portal_ip, target_name):
 
 def target_login_test_linux(portal_ip, target_name):
     try:
+        run_on_runner(['iscsiadm', '-m', 'discovery', '-t', 'sendtargets', '--portal', portal_ip])
         run_on_runner(['iscsiadm', '-m', 'node', '--targetname', target_name, '--portal', portal_ip, '--login'])
     except RunOnRunnerException:
         return False

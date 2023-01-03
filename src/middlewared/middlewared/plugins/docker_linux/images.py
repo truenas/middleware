@@ -201,6 +201,7 @@ class DockerImagesService(CRUDService):
 
         images.extend([
             'nvidia/k8s-device-plugin:1.0.0-beta6',
+            'rocm/k8s-device-plugin:1.18.0',
             'k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.1.0',
             'k8s.gcr.io/sig-storage/csi-provisioner:v2.1.0',
             'k8s.gcr.io/sig-storage/csi-resizer:v1.1.0',

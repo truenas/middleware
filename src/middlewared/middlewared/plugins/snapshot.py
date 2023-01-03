@@ -434,7 +434,7 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
     async def query(self, path, enabled, options=None):
         results = []
         for task in await self.middleware.call('pool.snapshottask.query', [['enabled', '=', enabled]]):
-            if is_child(os.path.join('/mnt', task['dataset']), path):
+            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', task['dataset']), path):
                 results.append(task)
 
         return results

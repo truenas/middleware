@@ -52,10 +52,25 @@ class PoolService(Service):
             if not options['force'] and not await self.middleware.call('disk.check_clean', disk['devname']):
                 verrors.add('options.force', 'Disk is not clean, partitions were found.')
 
-        if not (found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool)):
+        if not (found := await self.middleware.call('pool.find_disk_from_topology', options['label'], pool, {
+            'include_siblings': True,
+        })):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
         verrors.check()
+
+        create_swap = found[0] in ('data', 'spare')
+
+        min_size = None
+        if create_swap:
+            for vdev in found[2]:
+                if vdev.get('device'):
+                    size = await self.middleware.call('disk.get_dev_size', vdev['device'])
+                    if size is not None:
+                        if min_size is None:
+                            min_size = size
+                        else:
+                            min_size = min(min_size, size)
 
         swap_disks = [disk['devname']]
         if found[1] and await self.middleware.run_in_thread(os.path.exists, found[1]['path']):
@@ -66,8 +81,13 @@ class PoolService(Service):
         await self.middleware.call('disk.swaps_remove_disks', swap_disks)
 
         vdev = []
-        format_opts = {disk['devname']: {'vdev': vdev, 'create_swap': found[0] in ('data', 'spare')}}
-        await self.middleware.call('pool.format_disks', job, format_opts)
+        await self.middleware.call('pool.format_disks', job, {
+            disk['devname']: {
+                'vdev': vdev,
+                'create_swap': create_swap,
+                'min_size': min_size,
+            },
+        })
 
         try:
             job.set_progress(30, 'Replacing disk')

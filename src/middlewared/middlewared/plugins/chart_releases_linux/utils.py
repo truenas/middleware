@@ -62,6 +62,42 @@ def get_chart_release_from_namespace(namespace):
     return namespace.split(CHART_NAMESPACE_PREFIX, 1)[-1]
 
 
+def safe_to_ignore_path(path: str) -> bool:
+    # "/" and "/home/keys/" are added for openebs use only, regular containers can't mount "/" as we have validation
+    # already in place by docker elsewhere to prevent that from happening
+    if path == '/':
+        return True
+
+    for ignore_path in (
+        '/etc/',
+        '/sys/',
+        '/proc/',
+        '/var/lib/kubelet/',
+        '/dev/',
+        '/mnt/',
+        '/home/keys/',
+        '/run/',
+        '/var/run/',
+        '/var/lock/',
+        '/lock',
+        '/usr/share/zoneinfo',  # allow mounting localtime
+        '/usr/lib/os-release',  # allow mounting /etc/os-release
+    ):
+        if path.startswith(ignore_path) or path == ignore_path.removesuffix('/'):
+            return True
+
+    return False
+
+
+def is_ix_volume_path(path: str, dataset: str) -> bool:
+    release_path = os.path.join('/mnt', dataset, 'releases')
+    if not path.startswith(release_path):
+        return False
+
+    app_path = path.replace(release_path, '')
+    return path.startswith(os.path.join(release_path, app_path, 'volumes/ix_volumes/'))
+
+
 def is_ix_namespace(namespace):
     return namespace.startswith(CHART_NAMESPACE_PREFIX)
 

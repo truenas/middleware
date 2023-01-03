@@ -46,19 +46,20 @@ class NVDIMMAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         alerts = []
-        for nvdimm in self.get_ndctl_output():
-            lifetime = 100 - nvdimm['health']['life_used_percentage']
-            alert = None
-            if lifetime < 10:
-                alert = NVDIMMLifetimeCriticalAlertClass
-            elif lifetime < 20:
-                alert = NVDIMMLifetimeWarningAlertClass
+        if self.middleware.call_sync('failover.hardware') != 'BHYVE':
+            for nvdimm in self.get_ndctl_output():
+                lifetime = 100 - nvdimm['health']['life_used_percentage']
+                alert = None
+                if lifetime < 10:
+                    alert = NVDIMMLifetimeCriticalAlertClass
+                elif lifetime < 20:
+                    alert = NVDIMMLifetimeWarningAlertClass
 
-            if alert is not None:
-                alerts.append(Alert(alert, {'dev': nvdimm['dev'], 'value': lifetime}))
+                if alert is not None:
+                    alerts.append(Alert(alert, {'dev': nvdimm['dev'], 'value': lifetime}))
 
-            overall = nvdimm['health']['health_state']
-            if overall != 'ok':
-                alerts.append(Alert(NVDIMMAlertClass, {'dev': nvdimm['dev'], 'value': overall}))
+                overall = nvdimm['health']['health_state']
+                if overall != 'ok':
+                    alerts.append(Alert(NVDIMMAlertClass, {'dev': nvdimm['dev'], 'value': overall}))
 
         return alerts

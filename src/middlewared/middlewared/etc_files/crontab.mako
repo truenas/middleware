@@ -20,5 +20,3 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 1,31	0-5	*	*	*	root	adjkerntz -a > /dev/null 2>&1
 
 0	*	*	*	*	root	/usr/local/bin/python /usr/local/bin/mfistatus.py > /dev/null 2>&1
-
-30	*/5	*	*	*	root	/etc/ix.rc.d/ix-kinit renew > /dev/null 2>&1

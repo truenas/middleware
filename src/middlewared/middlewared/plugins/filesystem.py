@@ -11,6 +11,7 @@ import time
 
 import pyinotify
 
+from itertools import product
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
@@ -19,7 +20,7 @@ from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, retur
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.osc import getmntinfo
-from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
+from middlewared.utils.path import FSLocation, path_location, strip_location_prefix, is_child_realpath
 from middlewared.plugins.filesystem_.acl_base import ACLType
 from middlewared.plugins.zfs_.utils import ZFSCTL
 
@@ -70,6 +71,17 @@ class FilesystemService(Service):
     @returns(Ref('dosmode'))
     def get_dosmode(self, path):
         return dosmode.get_dosflags(path)
+
+    @private
+    def is_child(self, child, parent):
+        for to_check in product(
+            child if isinstance(child, list) else [child],
+            parent if isinstance(parent, list) else [parent]
+        ):
+            if is_child_realpath(to_check[0], to_check[1]):
+                return True
+
+        return False
 
     @private
     def is_dataset_path(self, path):

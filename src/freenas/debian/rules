@@ -17,18 +17,19 @@ override_dh_auto_install:
 		cp -a etc/initramfs-tools debian/truenas-files/etc/; \
 		cp etc/iso_3166_2_countries.csv debian/truenas-files/etc/; \
 		cp -a etc/logrotate.d debian/truenas-files/etc/; \
-		cp etc/netcli debian/truenas-files/etc/; \
 		cp etc/nsswitch.conf debian/truenas-files/etc/; \
 		cp -a etc/syslog-ng debian/truenas-files/etc/; \
 		cp -a etc/systemd debian/truenas-files/etc/; \
 		mkdir debian/truenas-files/home; \
 		cp -a root debian/truenas-files/home/admin; \
-		mkdir debian/truenas-files/home/admin/.ssh; \
-		chmod -R 700 debian/truenas-files/home/admin; \
+		chmod 700 debian/truenas-files/home/admin; \
 		chown -R 950:950 debian/truenas-files/home/admin; \
 		cp -a root debian/truenas-files/; \
+		chmod 700 debian/truenas-files/root; \
 		mkdir -p debian/truenas-files/conf/base/etc; \
 	"
+
+override_dh_fixperms:
 
 override_dh_shlibdeps:
 

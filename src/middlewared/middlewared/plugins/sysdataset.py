@@ -386,10 +386,10 @@ class SystemDatasetService(ConfigService):
         mntinfo = self.middleware.call_sync('filesystem.mount_info')
         sysds_mntinfo = filter_list(mntinfo, [['mountpoint', "=", SYSDATASET_PATH]])
 
-        if not os.path.isdir(SYSDATASET_PATH):
-            if os.path.exists(SYSDATASET_PATH):
-                os.unlink(SYSDATASET_PATH)
-            os.makedirs(SYSDATASET_PATH)
+        if not os.path.isdir(SYSDATASET_PATH) and os.path.exists(SYSDATASET_PATH):
+            os.unlink(SYSDATASET_PATH)
+
+        os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
 
         ds_mntinfo = filter_list(mntinfo, [['mount_source', '=', config['basename']]])
         if ds_mntinfo:
@@ -619,6 +619,7 @@ class SystemDatasetService(ConfigService):
         """
         config = self.middleware.call_sync('systemdataset.config')
 
+        os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
         self.middleware.call_sync('systemdataset.setup_datasets', _to, config['uuid'])
 
         if _from:
@@ -731,7 +732,8 @@ async def pool_pre_export(middleware, pool, options, job):
 
 
 async def setup(middleware):
-    def setup_nscd_paths():
+    def setup_paths():
+        os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
         if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):
             if os.path.exists('/var/cache/nscd'):
                 shutil.rmtree('/var/cache/nscd')
@@ -747,6 +749,6 @@ async def setup(middleware):
     middleware.register_hook('pool.pre_export', pool_pre_export, order=40, raise_error=True)
 
     try:
-        await middleware.run_in_thread(setup_nscd_paths)
+        await middleware.run_in_thread(setup_paths)
     except Exception:
         middleware.logger.error('Error moving cache away from boot pool', exc_info=True)

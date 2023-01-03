@@ -31,7 +31,7 @@ def convert_schema(spec):
     elif t in ('bool', 'boolean'):
         return Bool(name, **spec)
     elif t == 'dict':
-        return Dict(name, **spec)
+        return Dict(name, *spec.get('args', []), **spec.get('kwargs', {}))
     raise ValueError(f'Unknown type: {t}')
 
 

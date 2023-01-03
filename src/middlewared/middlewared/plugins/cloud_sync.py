@@ -336,7 +336,7 @@ async def run_script_check(job, proc, name):
         read = await proc.stdout.readline()
         if read == b"":
             break
-        job.logs_fd.write(f"[{name}] ".encode("utf-8") + read)
+        await job.logs_fd_write(f"[{name}] ".encode("utf-8") + read)
 
 
 # Prevents clogging job logs with progress reports every second
@@ -439,7 +439,7 @@ async def rclone_check_progress(job, proc):
 
             result = cutter.notify(read)
             if result:
-                job.logs_fd.write(result.encode("utf-8", "ignore"))
+                await job.logs_fd_write(result.encode("utf-8", "ignore"))
 
             if reg := RE_TRANSF1.search(read):
                 progress1 = int(reg.group("progress"))
@@ -457,7 +457,7 @@ async def rclone_check_progress(job, proc):
     finally:
         result = cutter.flush()
         if result:
-            job.logs_fd.write(result.encode("utf-8", "ignore"))
+            await job.logs_fd_write(result.encode("utf-8", "ignore"))
 
     if dropbox__restricted_content:
         message = (
@@ -469,7 +469,7 @@ async def rclone_check_progress(job, proc):
             "Dropbox Support: https://www.dropbox.com/support\n"
         )
         job.internal_data["messages"] = [message]
-        job.logs_fd.write(("\n" + message).encode("utf-8", "ignore"))
+        await job.logs_fd_write(("\n" + message).encode("utf-8", "ignore"))
 
 
 def rclone_encrypt_password(password):

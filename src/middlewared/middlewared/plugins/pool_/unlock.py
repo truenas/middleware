@@ -1,3 +1,4 @@
+from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.schema import Dict, returns, Str
 from middlewared.service import accepts, private, Service
 
@@ -57,7 +58,7 @@ class PoolDatasetService(Service):
                 if not path:
                     continue
 
-                if path.startswith(f'/dev/zvol/{dataset_name}/') or path.startswith(f'/mnt/{dataset_name}/'):
+                if path.startswith(zvol_name_to_path(dataset_name) + '/') or path.startswith(f'/mnt/{dataset_name}/'):
                     result.append(vm)
                     break
 

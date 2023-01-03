@@ -1053,7 +1053,7 @@ async def setup(middleware):
     try:
         await middleware.call("zettarepl.start")
     except Exception:
-        pass
+        middleware.logger.error("Unhandled exception during zettarepl startup", exc_info=True)
 
     middleware.register_hook("pool.post_import", pool_configuration_change, sync=True)
     middleware.register_hook("pool.post_export", pool_configuration_change, sync=True)

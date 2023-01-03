@@ -7,10 +7,11 @@ import os
 import stat
 
 from contextlib import contextmanager
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["belongs_to_tree", "pathref_open", "pathref_reopen", "is_child", "path_location", "strip_location_prefix"]
+__all__ = ["pathref_open", "pathref_reopen", "is_child", "is_child_realpath", "path_location", "strip_location_prefix"]
 
 EXTERNAL_PATH_PREFIX = 'EXTERNAL:'
 CLUSTER_PATH_PREFIX = 'CLUSTER:'
@@ -34,13 +35,6 @@ def path_location(path):
 
 def strip_location_prefix(path):
     return path.lstrip(f'{path_location(path).name}:')
-
-
-def belongs_to_tree(dataset: str, root: str, recursive: bool, exclude: [str]):
-    if recursive:
-        return is_child(dataset, root) and not should_exclude(dataset, exclude)
-    else:
-        return dataset == root
 
 
 def pathref_reopen(fd_in: int, flags: int, **kwargs) -> int:
@@ -131,7 +125,37 @@ def pathref_open(path: str, **kwargs) -> int:
         os.close(fd)
 
 
+def is_child_realpath(child: str, parent: str):
+    """
+    This method blocks, but uses realpath to determine
+    whether the specified path is a child of another.
+    Python realpath checks each path component for whether
+    it's a symlink, but may not do so in a race-free way.
+
+    For internal purposes though, this is sufficient for
+    how we use it (primarily to determine whether a share
+    path is locked, etc).
+    """
+    c = Path(child)
+    p = Path(parent)
+
+    if c == p:
+        return True
+
+    return c.resolve().is_relative_to(p.resolve())
+
+
 def is_child(child: str, parent: str):
+    """
+    This method is asyncio safe, but should not be used
+    to check whether one local path is a child of another.
+
+    An example where it may be useful is determining whether
+    a dataset name is a child of another.
+    """
+    if os.path.isabs(child) or os.path.isabs(parent):
+        raise ValueError(f'Symlink-unsafe method called with absolute path(s): {child}, {parent}')
+
     rel = os.path.relpath(child, parent)
     return rel == "." or not rel.startswith("..")
 

@@ -1,5 +1,6 @@
 import os
 
+from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import Service, private
 from middlewared.schema import accepts, List, returns
 from middlewared.utils.osc.linux.mount import getmntinfo
@@ -312,7 +313,7 @@ class PoolDatasetService(Service):
         for vm in self.middleware.call_sync('datastore.query', 'vm.device', [['dtype', 'in', ['RAW', 'DISK']]]):
             if vm['dtype'] == 'DISK':
                 # disk type is always a zvol
-                vm['zvol'] = vm['attributes']['path'].removeprefix('/dev/zvol/')
+                vm['zvol'] = zvol_path_to_name(vm['attributes']['path'])
             else:
                 # raw type is always a file
                 vm['mount_info'] = self.get_mount_info(vm['attributes']['path'], mntinfo)

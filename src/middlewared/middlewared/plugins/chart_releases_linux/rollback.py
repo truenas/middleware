@@ -162,7 +162,7 @@ class ChartReleaseService(Service):
                 break
 
         await self.middleware.call(
-            'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale'], True,
+            'chart.release.scale_release_internal', release['resources'], None, scale_stats['before_scale'],
         )
         await self.middleware.call('chart.release.clear_chart_release_portal_cache', release_name)
 

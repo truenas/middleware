@@ -1,8 +1,9 @@
 from datetime import timedelta
 import logging
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule, IntervalSchedule
 from middlewared.plugins.directoryservices import DSStatus
+from middlewared.service_exception import CallError
 
 log = logging.getLogger("activedirectory_check_alertmod")
 
@@ -21,13 +22,6 @@ class ActiveDirectoryDomainHealthAlertClass(AlertClass):
     text = "Domain validation failed with error: %(verrs)s"
 
 
-class ActiveDirectoryDomainOfflineAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.DIRECTORY_SERVICE
-    level = AlertLevel.WARNING
-    title = "Domain Offline"
-    text = "Active Directory Domain \"%(domain)s\" is Offline."
-
-
 class ActiveDirectoryDomainHealthAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)
     run_on_backup_node = False
@@ -43,6 +37,15 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,
                 {'verrs': str(e)},
+                key=None
+            )
+
+        try:
+            await self.middleware.call("activedirectory.check_nameservers")
+        except CallError as e:
+            return Alert(
+                ActiveDirectoryDomainHealthAlertClass,
+                {'verrs': e.errmsg},
                 key=None
             )
 

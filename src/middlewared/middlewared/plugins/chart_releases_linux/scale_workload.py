@@ -69,7 +69,7 @@ class ChartReleaseService(Service):
                 )
 
             # We redeploy the chart to re-create the services/cronjobs which we had deleted
-            await self.middleware.call('chart.release.redeploy', release['name'])
+            await (await self.middleware.call('chart.release.redeploy', release['name'])).wait()
 
         else:
             for resource_type in ('service', 'cronjob'):
@@ -130,7 +130,7 @@ class ChartReleaseService(Service):
         return replica_counts
 
     @private
-    async def scale_release_internal(self, resources, replicas=None, replica_counts=None, resource_check=False):
+    async def scale_release_internal(self, resources, replicas=None, replica_counts=None):
         if replicas is not None and replica_counts:
             raise CallError('Only one of "replicas" or "replica_counts" should be specified')
         elif replicas is None and not replica_counts:
@@ -139,23 +139,23 @@ class ChartReleaseService(Service):
         assert bool(resources or replica_counts) is True
 
         replica_counts = replica_counts or {r.value: {} for r in SCALEABLE_RESOURCES}
-        if resource_check:
-            resources_data = {
-                r.name.lower(): {
-                    w['metadata']['name'] for w in await self.middleware.call(f'k8s.{r.name.lower()}.query')
-                }
-                for r in SCALEABLE_RESOURCES
+        resources_data = {
+            r.name.lower(): {
+                w['metadata']['uid']: w for w in await self.middleware.call(f'k8s.{r.name.lower()}.query')
             }
+            for r in SCALEABLE_RESOURCES
+        }
 
         for resource in SCALEABLE_RESOURCES:
             for workload in resources[resource.value]:
-                replica_count = replica_counts[resource.value].get(
+                configured_replica_count = replica_counts[resource.value].get(
                     workload['metadata']['name'], {}
-                ).get('replicas') or replicas
+                ).get('replicas')
+                replica_count = replicas if configured_replica_count is None else configured_replica_count
 
-                if resource_check:
-                    if workload['metadata']['name'] not in resources_data[resource.name.lower()]:
-                        continue
+                current_workload = resources_data[resource.name.lower()].get(workload['metadata']['uid'])
+                if not current_workload or replica_count == current_workload['spec'].get('replicas'):
+                    continue
 
                 await self.middleware.call(
                     f'k8s.{resource.name.lower()}.update', workload['metadata']['name'], {
@@ -246,10 +246,10 @@ class ChartReleaseService(Service):
             for r in await self.middleware.call(
                 f'k8s.{key}.query', [
                     ['metadata.namespace', '=', namespace],
-                    ['metadata', 'rin', 'owner_references'],
+                    ['metadata', 'rin', 'ownerReferences'],
                 ], {'select': ['metadata']}
             ):
-                for owner_reference in filter(lambda o: o.get('uid'), r['metadata']['owner_references'] or []):
+                for owner_reference in filter(lambda o: o.get('uid'), r['metadata']['ownerReferences'] or []):
                     mapping[key][owner_reference['uid']][r['metadata']['uid']] = r
 
         pod_mapping = defaultdict(list)

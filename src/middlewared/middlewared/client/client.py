@@ -245,6 +245,7 @@ class ErrnoMixin:
     EREMOTENODEERROR = 204
     EDATASETISLOCKED = 205
     EINVALIDRRDTIMESTAMP = 206
+    ENOTAUTHENTICATED = 207
 
     @classmethod
     def _get_errname(cls, code):
@@ -314,6 +315,7 @@ class Client:
         self._event_callbacks = defaultdict(list)
         self._closed = Event()
         self._connected = Event()
+        self._connection_error = None
         self._ws = WSClient(
             uri,
             client=self,
@@ -325,6 +327,8 @@ class Client:
         self._connected.wait(10)
         if not self._connected.is_set():
             raise ClientException('Failed connection handshake')
+        if self._connection_error is not None:
+            raise ClientException(self._connection_error)
 
     def __enter__(self):
         return self
@@ -343,7 +347,8 @@ class Client:
         if msg == 'connected':
             self._connected.set()
         elif msg == 'failed':
-            raise ClientException('Unsupported protocol version')
+            self._connection_error = 'Unsupported protocol version'
+            self._connected.set()
         elif msg == 'pong' and _id is not None:
             ping_event = self._pings.get(_id)
             if ping_event:
@@ -419,6 +424,9 @@ class Client:
 
     def on_close(self, code, reason=None):
         error = f'WebSocket connection closed with code={code!r}, reason={reason!r}'
+
+        self._connection_error = error
+        self._connected.set()
 
         for call in self._calls.values():
             if not call.returned.is_set():
