@@ -35,7 +35,7 @@ class ChartReleaseService(Service):
             lambda attachment: attachment['type'] not in allowed_service_types,
             await self.middleware.call('pool.dataset.attachments_with_path', path)
         ):
-            if attachment_entry['service'] == 'Kubernetes' and is_ix_volume_path(
+            if attachment_entry['service'].lower() == 'kubernetes' and is_ix_volume_path(
                 path, (await self.middleware.call('kubernetes.config'))['dataset']
             ):
                 continue
