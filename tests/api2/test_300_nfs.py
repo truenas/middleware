@@ -586,27 +586,6 @@ def test_38_check_nfs_service_protocols_parameter(request):
     assert "-N 3" not in s["RPCNFSDOPTS"], str(s)
     assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
 
-    # Begin - interim compatability for migration from "v4" to "protocols"
-    results = GET("/nfs")
-    assert results.status_code == 200, results.text
-    assert results.json()['v4'] is True, results.text
-
-    s = parse_server_config()
-    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
-
-    results = PUT("/nfs/", {"v4": False})
-    assert results.status_code == 200, results.text
-
-    s = parse_server_config()
-    assert "-N 4" in s["RPCNFSDOPTS"], str(s)
-
-    results = PUT("/nfs/", {"v4": True})
-    assert results.status_code == 200, results.text
-
-    s = parse_server_config()
-    assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
-    # End   - interim compatability for migration from "v4" to "protocols"
-
 
 def test_39_check_nfs_service_udp_parameter(request):
     """
