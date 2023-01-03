@@ -4189,16 +4189,17 @@ class PoolDatasetService(CRUDService):
         return []
 
     @private
-    async def attachments_with_path(self, path):
+    async def attachments_with_path(self, path, check_path_child_of_attachment=False):
         result = []
 
         if isinstance(path, str) and not path.startswith('/mnt/'):
-            self.logger.warning('%s: uexpected path not located within pool mountpoint', path)
+            self.logger.warning('%s: unexpected path not located within pool mountpoint', path)
 
         if path:
+            options = {'check_path_child_of_resource': check_path_child_of_attachment}
             for delegate in self.attachment_delegates:
                 attachments = {"type": delegate.title, "service": delegate.service, "attachments": []}
-                for attachment in await delegate.query(path, True):
+                for attachment in await delegate.query(path, True, options):
                     attachments["attachments"].append(await delegate.get_attachment_name(attachment))
                 if attachments["attachments"]:
                     result.append(attachments)
