@@ -90,7 +90,14 @@ class LDAPClient(Service):
         Verify that credentials are working by closing any existing LDAP bind
         and performing a fresh bind.
         """
-        await self.middleware.run_in_executor(self.thread_pool, self._open, data, True)
+        try:
+            await self.middleware.run_in_executor(self.thread_pool, self._open, data, True)
+
+        except CallError:
+            raise
+
+        except Exception as e:
+            self._convert_exception(e)
 
     def _name_to_errno(self, ldaperr):
         err = errno.EFAULT
@@ -103,6 +110,15 @@ class LDAPClient(Service):
 
         return err
 
+    def _local_error_to_errno(self, info):
+        err = errno.EFAULT
+        err_summary = None
+        if 'Server not found in Kerberos database' in info:
+            err = errno.ENOENT
+            err_summary = "KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN"
+
+        return (err, err_summary)
+
     def _convert_exception(self, ex):
         if issubclass(type(ex), pyldap.LDAPError) and ex.args:
             desc = ex.args[0].get('desc')
@@ -110,6 +126,10 @@ class LDAPClient(Service):
             err_str = f"{desc}: {info}" if info else desc
             err = self._name_to_errno(type(ex).__name__)
             raise CallError(err_str, err, type(ex).__name__)
+        if issubclass(ex, pyldap.LOCAL_ERROR):
+            info = ex.args[0].get('info')
+            err, err_summary = self._local_error_to_errno(info)
+            raise CallError(info, err, err_summary)
         else:
             raise CallError(str(ex))
 
@@ -702,6 +722,14 @@ class LDAPService(TDBWrapConfigService):
                         'Remote LDAP server returned that the base DN is '
                         'syntactically invalid.')
 
+        elif e.extra == "KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN":
+            verrors.add('ldap_update.kerberos_principal',
+                        'SASL GSSAPI failed with error (Client not found in kerberos '
+                        'database). This may indicate a misconfiguration in DNS server '
+                        'triggering a failure to validate the kerberos principal via '
+                        'reverse lookup zone. Exact error returned by kerberos library is '
+                        f'as follows: {e.errmsg}')
+
         elif e.extra:
             verrors.add('ldap_update', f'[{e.extra}]: {e.errmsg}')
 
@@ -966,7 +994,7 @@ class LDAPService(TDBWrapConfigService):
     @private
     async def validate_credentials(self, ldap_config=None):
         client_conf = await self.ldap_conf_to_client_config(ldap_config)
-        if client_conf['bind_type'] == 'GSSAPI':
+        if client_conf['bind_type'] == 'GSSAPI' and not (await self.middleware.call('kerberos._klist_test')):
             payload = {
                 'dstype': DSType.DS_TYPE_LDAP.name,
                 'conf': {
@@ -1154,7 +1182,9 @@ class LDAPService(TDBWrapConfigService):
         await self._service_change('cifs', 'restart')
         await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Reloading directory service cache.')
-        await self.middleware.call('service.start', 'dscache')
+        cache_job = await self.middleware.call('dscache.refresh')
+        await cache_job.wait()
+
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if ha_mode == 'CLUSTERED':
             job.set_progress(90, 'Reloading LDAP service on other cluster nodes')
