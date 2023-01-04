@@ -16,6 +16,7 @@ from functions import (
     cmd_test,
     wait_on_job
 )
+from assets.REST.directory_services import ldap
 from auto_config import pool_name, ip, user, password, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -39,6 +40,12 @@ smb_name = "TestLDAPShare"
 smb_path = f"/mnt/{dataset}"
 VOL_GROUP = "root"
 
+@pytest.fixture(scope="module")
+def do_ldap_connection(request):
+    with ldap(LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME,
+        has_samba_schema=True,
+    ) as ldap_conn:
+        yield (request, ldap_conn)
 
 def test_01_get_ldap():
     results = GET("/ldap/")
@@ -75,28 +82,7 @@ def test_05_get_ldap_ssl_choices():
 
 
 @pytest.mark.dependency(name="setup_ldap")
-def test_06_setup_and_enabling_ldap(request):
-    depends(request, ["pool_04"], scope="session")
-    payload = {
-        "basedn": LDAPBASEDN,
-        "binddn": LDAPBINDDN,
-        "bindpw": LDAPBINDPASSWORD,
-        "hostname": [
-            LDAPHOSTNAME
-        ],
-        "has_samba_schema": True,
-        "ssl": "ON",
-        "enable": True
-    }
-    results = PUT("/ldap/", payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()['job_id']
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_07_verify_ldap_state_after_is_enabled_after_enabling_ldap(request):
-    depends(request, ["setup_ldap"], scope="session")
+def test_06_setup_and_enabling_ldap(do_ldap_connection):
     results = GET("/ldap/get_state/")
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), str), results.text
@@ -136,8 +122,7 @@ def test_11_verify_that_the_ldap_user_id_exist_on_the_nas(request):
     global ldap_id
     results = POST("/user/get_user_obj/", payload)
     assert results.status_code == 200, results.text
-    if results.status_code == 200:
-        ldap_id = results.json()['pw_uid']
+    ldap_id = results.json()['pw_uid']
 
 
 @pytest.mark.dependency(name="LDAP_DATASET_PERMISSION")
@@ -374,34 +359,7 @@ def test_39_delete_the_smb_share_for_ldap_testing(request):
     assert results.status_code == 200, results.text
 
 
-def test_40_disabling_ldap(request):
-    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
-    payload = {
-        "enable": False
-    }
-    results = PUT("/ldap/", payload)
-    assert results.status_code == 200, results.text
-
-    job_id = results.json()['job_id']
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-
-
-def test_41_verify_ldap_state_after_is_enabled_after_disabling_ldap(request):
-    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
-    results = GET("/ldap/get_state/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), str), results.text
-    assert results.json() == "DISABLED", results.text
-
-
-def test_42_verify_ldap_enable_is_false(request):
-    depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
-    results = GET("/ldap/")
-    assert results.json()["enable"] is False, results.text
-
-
-def test_43_destroying_ad_dataset_for_smb(request):
+def test_43_destroying_ldap_dataset_for_smb(request):
     depends(request, ["setup_ldap", "ldap_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
