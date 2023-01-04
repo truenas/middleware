@@ -29,6 +29,24 @@ def clear_ad_info():
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
+def clear_ldap_info():
+    results = PUT("/ldap/", {
+        "hostname": [],
+        "binddn": "",
+        "bindpw": "",
+        "ssl": "ON",
+        "enable": False,
+        "kerberos_principal": "",
+        "kerberos_realm": None,
+        "anonbind": False,
+        "has_samba_schema": False,
+        "validate_certificates": True,
+        "disable_freenas_cache": False,
+        "certificate": None,
+    })
+    job_status = wait_on_job(results.json()['job_id'], 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
 @contextlib.contextmanager
 def active_directory(domain, username, password, **kwargs):
     payload = {
@@ -88,3 +106,37 @@ def override_nameservers(_nameserver1='', _nameserver2='', _nameserver3=''):
             'nameserver3': nameserver3,
         })
         assert results.status_code == 200, results.text
+
+
+@contextlib.contextmanager
+def ldap(basedn, binddn, bindpw, hostname, **kwargs):
+    payload = {
+        "basedn": basedn,
+        "binddn": binddn,
+        "bindpw": bindpw,
+        "hostname": [hostname],
+        "ssl": "ON",
+        "auxiliary_parameters": "",
+        "validate_certificates": True,
+        "enable": True,
+        **kwargs
+    }
+
+    results = PUT("/ldap/", payload)
+    assert results.status_code == 200, f'res: {results.text}, payload: {payload}'
+    job_id = results.json()['job_id']
+    job_status = wait_on_job(job_id, 180)
+    if job_status['state'] != 'SUCCESS':
+        clear_ldap_info()
+        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    sleep(5)
+    try:
+        config = results.json()
+        del(config['bindpw'])
+        yield {
+            'config': config,
+            'result': job_status['results']
+        }
+    finally:
+        clear_ldap_info()

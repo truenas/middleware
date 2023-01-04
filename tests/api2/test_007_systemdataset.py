@@ -240,7 +240,7 @@ def test_09_verify_sysds_does_not_move_after_second_pool_is_created(request, poo
 
 
 def test_10_verify_changes_to_sysds_are_forbidden_while_AD_is_running(set_ad_nameserver):
-    depends(set_ad_nameservers[0], ["second_pool"])
+    depends(set_ad_nameserver[0], ["second_pool"])
 
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
         netbiosname=hostname,
