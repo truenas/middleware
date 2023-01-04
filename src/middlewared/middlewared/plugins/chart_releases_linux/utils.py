@@ -94,7 +94,8 @@ def is_ix_volume_path(path: str, dataset: str) -> bool:
     if not path.startswith(release_path):
         return False
 
-    app_path = path.replace(release_path, '')
+    # path -> /mnt/pool/ix-applications/releases/plex/volumes/ix-volumes/
+    app_path = path.replace(release_path, '').removeprefix('/').split('/', 1)[0]
     return path.startswith(os.path.join(release_path, app_path, 'volumes/ix_volumes/'))
 
 
