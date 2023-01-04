@@ -24,8 +24,16 @@ else:
     pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 @pytest.fixture(scope="module")
-def kerberos_config():
-    return {}
+def kerberos_config(request):
+    payload = {"v4_krb": True}
+    results = PUT("/nfs/", payload)
+    assert results.status_code == 200, results.text
+    try:
+        yield (request, results.json())
+    finally:
+        payload = {"v4_krb": False}
+        results = PUT("/nfs/", payload)
+        assert results.status_code == 200, results.text
 
 
 @pytest.fixture(scope="module")
@@ -142,13 +150,54 @@ def test_01_set_nameserver_for_ad(set_ad_nameserver):
     assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
+@pytest.mark.dependency(name="AD_CONFIGURED")
 def test_02_enabling_activedirectory(do_ad_connection):
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
+    assert results.json() is True, results.text
+
+    results = GET('/activedirectory/get_state/')
+    assert results.status_code == 200, results.text
+    assert results.json() == 'HEALTHY', results.text
+
+
+def test_03_kerberos_nfs4_spn_add(kerberos_config):
+    depends(kerberos_config[0], ["AD_CONFIGURED"], scope="session")
+    assert kerberos_config[1]['v4_krb_enabled']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.keytab.has_nfs_principal',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is False
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'nfs.add_principal',
+        'params': [{
+            'username': ADUSERNAME,
+            'password': ADPASSWORD
+        }],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is True
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.keytab.has_nfs_principal',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is True
 
 
 @pytest.mark.dependency(name="SET_UP_AD_VIA_LDAP")
-def test_03_setup_and_enabling_ldap(do_ldap_connection):
+def test_04_setup_and_enabling_ldap(do_ldap_connection):
     res = make_ws_request(ip, {
         'msg': 'method',
         'method': 'kerberos.stop',
@@ -174,8 +223,19 @@ def test_03_setup_and_enabling_ldap(do_ldap_connection):
     assert error is None, str(error)
     assert res['result'] is True
 
+    # Verify that our NFS kerberos principal is
+    # still present
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.keytab.has_nfs_principal',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is True
 
-def test_04_verify_ldap_users(request):
+
+def test_05_verify_ldap_users(request):
     depends(request, ["SET_UP_AD_VIA_LDAP"], scope="session")
 
     results = GET('/user', payload={
