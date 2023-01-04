@@ -574,7 +574,7 @@ class LDAPService(ConfigService):
                         'syntactically invalid.')
 
         elif e.extra:
-            verrors.add('ldap_update', f'[{e.extra.__name__}]: {e.errmsg}')
+            verrors.add('ldap_update', f'[{e.extra}]: {e.errmsg}')
 
         else:
             verrors.add('ldap_update', e.errmsg)
