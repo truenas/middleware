@@ -206,7 +206,7 @@
             entries = [unix_entry, ldap_entry]
 
             if self.is_kerberized():
-                krb5_entry = super().pam_password(pam_path=self.pam_krb5, pam_args=krb5_args, success=3, required=)
+                krb5_entry = super().pam_password(pam_path=self.pam_krb5, pam_args=krb5_args, success=3)
                 entries.insert(0, krb5_entry)
 
             return "\n".join(entries)
