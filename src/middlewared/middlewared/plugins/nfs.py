@@ -60,8 +60,7 @@ class NFSService(SystemServiceService):
         Int('servers', validators=[Range(min=1, max=256)], required=True),
         Bool('udp', required=True),
         Bool('allow_nonroot', required=True),
-        Bool('v4', required=False),    # Will remove this later when clients switch over to using protocols
-        List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=False),    # Will turn on required when 'v4' is removed.
+        List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
         Bool('v4_v3owner', required=True),
         Bool('v4_krb', required=True),
         Str('v4_domain', required=True),
@@ -81,19 +80,12 @@ class NFSService(SystemServiceService):
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
         nfs["userd_manage_gids"] = nfs.pop("16")
         nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
-        # Begin - interim compatability for migration from "v4" to "protocols"
-        if "v4" not in nfs:
-            nfs["v4"] = NFSProtocol.NFSv4 in nfs.get("protocols")
-        # End   - interim compatability for migration from "v4" to "protocols"
         return nfs
 
     @private
     async def nfs_compress(self, nfs):
         nfs.pop("v4_krb_enabled")
         nfs["16"] = nfs.pop("userd_manage_gids")
-        # Begin - interim compatability for migration from "v4" to "protocols"
-        del nfs["v4"]
-        # End   - interim compatability for migration from "v4" to "protocols"
         return nfs
 
     @accepts()
@@ -150,8 +142,6 @@ class NFSService(SystemServiceService):
         `bindip` is a list of IP's on which NFS will listen for requests. When it is unset/empty, NFS listens on
         all available addresses.
 
-        `v4` when set means that we switch from NFSv3 to NFSv4.  Deprecated in favor of `protocols`.
-
         `protocols` specifies whether NFSv3, NFSv4, or both are enabled.
 
         `v4_v3owner` when set means that system will use NFSv3 ownership model for NFSv4.
@@ -183,16 +173,6 @@ class NFSService(SystemServiceService):
                 }]
             }
         """
-        # Begin - interim compatability for migration from "v4" to "protocols"
-        if "v4" in data:
-            # v4 supplied, override protocols for now
-            if data.get("v4") is False:
-                data['protocols'] = [NFSProtocol.NFSv3]
-            else:
-                data['protocols'] = [NFSProtocol.NFSv3, NFSProtocol.NFSv4]
-            del data["v4"]
-        # End  - interim compatability for migration from "v4" to "protocols"
-
         if 'protocols' in data:
             if not data['protocols']:
                 raise ValidationError(
