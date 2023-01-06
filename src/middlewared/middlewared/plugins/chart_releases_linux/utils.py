@@ -75,19 +75,16 @@ def safe_to_ignore_path(path: str) -> bool:
         return True
 
     for ignore_path in (
-        '/etc/',
-        '/sys/',
-        '/proc/',
-        '/var/lib/kubelet/',
-        '/dev/',
+        '/dev/',  # required by openebs
+        '/etc/group',  # required by netdata
+        '/etc/os-release',  # required by netdata
+        '/etc/passwd',  # required by netdata
+        '/home/keys/',  # required by openebs
         '/mnt/',
-        '/home/keys/',
-        '/run/',
-        '/var/run/',
-        '/var/lock/',
-        '/lock',
-        '/usr/share/zoneinfo',  # allow mounting localtime
-        '/usr/lib/os-release',  # allow mounting /etc/os-release
+        '/proc/',  # required by netdata
+        '/sys/',  # required by netdata
+        '/usr/lib/os-release',  # required by netdata
+        '/var/lib/kubelet/',
     ):
         if path.startswith(ignore_path) or path == ignore_path.removesuffix('/'):
             return True
