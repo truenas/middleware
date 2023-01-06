@@ -30,6 +30,7 @@ class CoreFilesArePresentAlertSource(AlertSource):
         # ignore those core dumps
         "containerd.service",
         "docker.service",
+        "k3s.service",
         # Unit: "syslog-ng.service" has been core dumping for, literally, years
         # on freeBSD and now also on linux. The fix is non-trivial and it seems
         # to be very specific to how we implemented our system dataset. Anyways,
