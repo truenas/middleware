@@ -26,7 +26,7 @@ defaults
 frontend vms
     bind ${middleware.call_sync('vm.get_haproxy_uri')}
 % for device in devices:
-    acl PATH_${device['id']} path_beg -i /${device['id']}
+    acl PATH_${device['id']} path_beg -i /${device['id']}/
     use_backend be_${device['id']} if PATH_${device['id']}
 % endfor
 
