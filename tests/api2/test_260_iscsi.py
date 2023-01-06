@@ -252,6 +252,10 @@ def test_21_Disconnect_iSCSI_target(request):
     cmd = f'iscsictl -R -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, f"{results['output']}, {results['stderr']}"
+    # Currently FreeBSD (13.1-RELEASE-p5) does *not* issue a LOGOUT (verified by
+    # network capture), so give the target time to react. SCST will log an error, e.g.
+    # iscsi-scst: ***ERROR***: Connection 00000000e749085f with initiator iqn.1994-09.org.freebsd:freebsd13.local unexpectedly closed!
+    sleep(1)
 
 
 def test_25_Delete_associate_iSCSI_file_targetextent(request):
