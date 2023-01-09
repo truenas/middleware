@@ -109,7 +109,9 @@ def target(target_name, groups, alias=None):
     payload = {
         'name': target_name,
         'groups': groups,
-    }   
+    }
+    if alias:
+        payload.update({'alias':alias})
     results = POST("/iscsi/target/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -123,10 +125,10 @@ def target(target_name, groups, alias=None):
         assert results.json(), results.text
 
 @contextlib.contextmanager
-def file_extent(pool_name, dataset_name, file_name, filesize=MB_512):
+def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent'):
     payload = {
         'type': 'FILE',
-        'name': 'extent',
+        'name': extent_name,
         'filesize': filesize, 
         'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
     }
@@ -206,11 +208,11 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         assert results.json(), results.text
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
+def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name, alias=None):
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
-            with target(target_name, [{'portal': portal_id}]) as target_config:
+            with target(target_name, [{'portal': portal_id}], alias) as target_config:
                 target_id = target_config['id']
                 with dataset(pool_name, dataset_name) as dataset_config:
                     with file_extent(pool_name, dataset_name, file_name) as extent_config:
@@ -225,11 +227,11 @@ def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_
                             }
 
 @contextlib.contextmanager
-def configured_target_to_zvol_extent(target_name, zvol):
+def configured_target_to_zvol_extent(target_name, zvol, alias=None):
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
-            with target(target_name, [{'portal': portal_id}]) as target_config:
+            with target(target_name, [{'portal': portal_id}], alias) as target_config:
                 target_id = target_config['id']
                 with zvol_dataset(zvol) as dataset_config:
                     with zvol_extent(zvol) as extent_config:
@@ -326,6 +328,24 @@ def _verify_capacity(s, expected_capacity):
     data = s.readcapacity16().result
     returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
     assert returned_size == expected_capacity, {data['returned_lba'], data['block_length']}
+
+def get_targets():
+    """
+    Return a dictionary of target JSON data, keyed by target name.
+    """
+    result = {}
+    results = GET("/iscsi/target")
+    assert results.status_code == 200, results.text
+    for target in results.json():
+        result[target['name']] = target
+    return result
+
+def modify_target(targetid, payload):
+    results = PUT(f"/iscsi/target/id/{targetid}/", payload)
+    assert results.status_code == 200, results.text
+
+def set_target_alias(targetid, newalias):
+    modify_target(targetid, {'alias': newalias})
 
 @pytest.mark.dependency(name="iscsi_cmd_00")
 def test_00_setup(request):
@@ -802,6 +822,51 @@ def test_09_snapshot_file_extent(request):
         target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
     with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
         target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+
+def test_10_target_alias(request):
+    """
+    This tests iSCSI target alias.
+
+    At the moment SCST does not use the alias usefully (e.g. TargetAlias in
+    LOGIN response).  When this is rectified this test should be extended.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+
+    data = {}
+    for t in ["A", "B"]:
+       data[t] = {}
+       data[t]['name'] = f"{target_name}{t.lower()}"
+       data[t]['alias'] = f"{target_name}{t}_alias"
+       data[t]['file'] = f"{target_name}{t}_file"
+
+    A = data['A']
+    B = data['B']
+    with configured_target_to_file_extent(A['name'], pool_name, dataset_name, A['file'], A['alias']) as iscsi_config:
+        with target(B['name'], [{'portal': iscsi_config['portal']['id']}]) as targetB_config:
+            with file_extent(pool_name, dataset_name, B['file'], extent_name="extentB") as extentB_config:
+                with target_extent_associate(targetB_config['id'], extentB_config['id']):
+                    # Created two targets, one with an alias, one without.  Check them.
+                    targets = get_targets()
+                    assert targets[A['name']]['alias'] == A['alias'], targets[A['name']]['alias']
+                    assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
+
+                    # Update alias for B
+                    set_target_alias(targets[B['name']]['id'], B['alias'])
+                    targets = get_targets()
+                    assert targets[A['name']]['alias'] == A['alias'], targets[A['name']]['alias']
+                    assert targets[B['name']]['alias'] == B['alias'], targets[B['name']]['alias']
+
+                    # Clear alias for A
+                    set_target_alias(targets[A['name']]['id'], "")
+                    targets = get_targets()
+                    assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
+                    assert targets[B['name']]['alias'] == B['alias'], targets[B['name']]['alias']
+
+                    # Clear alias for B
+                    set_target_alias(targets[B['name']]['id'], "")
+                    targets = get_targets()
+                    assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
+                    assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
 def test_99_teardown(request):
     # Disable iSCSI service
