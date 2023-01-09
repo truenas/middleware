@@ -65,7 +65,7 @@ class CrashReporting(object):
 
     def __init__(self):
         if sw_version_is_stable():
-            self.sentinel_file_path = '/tmp/.crashreporting_disabled'
+            self.sentinel_file_path = f'{MIDDLEWARE_RUN_DIR}/.crashreporting_disabled'
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.logger = logging.getLogger('middlewared.logger.CrashReporting')
@@ -94,7 +94,7 @@ class CrashReporting(object):
             bool: True if crash reporting is disabled, False otherwise.
         """
         # Allow report to be disabled via sentinel file or environment var,
-        # if FreeNAS current train is STABLE, the sentinel file path will be /tmp/,
+        # if TrueNAS current train is STABLE, the sentinel file path will be /var/run/middleware/,
         # otherwise it's path will be /data/ and can be persistent.
 
         if not self.enabled_in_settings:

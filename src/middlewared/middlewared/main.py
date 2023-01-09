@@ -853,7 +853,7 @@ class PreparedCall:
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
-    CONSOLE_ONCE_PATH = '/tmp/.middlewared-console-once'
+    CONSOLE_ONCE_PATH = f'{MIDDLEWARE_RUN_DIR}/.middlewared-console-once'
 
     def __init__(
         self, loop_debug=False, loop_monitor=True, debug_level=None,
