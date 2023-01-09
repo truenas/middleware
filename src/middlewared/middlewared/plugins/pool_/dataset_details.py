@@ -150,6 +150,7 @@ class PoolDatasetService(Service):
             'locked': False,
             'atime': False,
             'casesensitive': True,
+            'readonly': False,
             'nfs_shares': [],
             'smb_shares': [],
             'iscsi_shares': [],
@@ -208,7 +209,7 @@ class PoolDatasetService(Service):
         mntinfo = getmntinfo()
         info = self.build_details(mntinfo)
         for i in collapsed:
-            atime, case = self.get_atime_and_casesensitivity(i, mntinfo)
+            atime, case, readonly = self.get_mntinfo(i, mntinfo)
             i['locked'] = i['locked']
             i['atime'] = atime
             i['casesensitive'] = case
@@ -246,17 +247,19 @@ class PoolDatasetService(Service):
         return mount_info
 
     @private
-    def get_atime_and_casesensitivity(self, ds, mntinfo):
+    def get_mntinfo(self, ds, mntinfo):
         atime = case = True
+        readonly = False
         for devid, info in filter(lambda x: x[1]['mountpoint'] == ds['mountpoint'], mntinfo.items()):
             atime = not ('NOATIME' in info['mount_opts'])
+            readonly = 'RO' in info['mount_opts']
             case = any((i for i in ('CASESENSITIVE', 'CASEMIXED') if i in info['super_opts']))
 
         # case sensitivity is either on or off (sensitive or insensitve)
         # the "mixed" property is silently ignored in our use case because it
         # only applies to illumos kernel when using the in-kernel SMB server.
         # if it's set to "mixed" on linux, it's treated as case sensitive.
-        return atime, case
+        return atime, case, readonly
 
     @private
     def build_details(self, mntinfo):
