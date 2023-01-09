@@ -27,7 +27,7 @@ from middlewared.service_exception import (  # noqa
     CallException, CallError, InstanceNotFound, ValidationError, ValidationErrors
 )
 from middlewared.settings import conf
-from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, osc
+from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
 from middlewared.logger import Logger, reconfigure_logging, stop_logging
@@ -1697,7 +1697,7 @@ class CoreService(Service):
 
         # Sentinel file to tell we have gone far enough in the boot process.
         # See #17508
-        open('/tmp/.bootready', 'w').close()
+        open(BOOTREADY, 'w').close()
 
         # Send event to middlewared saying we are late enough in the process to call it ready
         self.middleware.call_sync(
