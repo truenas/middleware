@@ -15,6 +15,7 @@ BUILDTIME = None
 VERSION = None
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
+BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 
 logger = logging.getLogger(__name__)
 
