@@ -104,5 +104,5 @@ class NFSService(Service):
             await self.middleware.call('kerberos.stop')
             await self.middleware.call('kerberos.start')
 
-        await self._service_change("nfs", "restart")
+        await self.middleware.call('service.restart', 'nfs')
         return ret
