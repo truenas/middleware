@@ -3,7 +3,7 @@ import os
 import textwrap
 import uuid
 
-from middlewared.utils import run
+from middlewared.utils import BOOTREADY, run
 
 from .utils import FIRST_INSTALL_SENTINEL, lifecycle_conf
 
@@ -46,7 +46,7 @@ async def setup(middleware):
         id=reboot -- Started reboot process\n
         id=shutdown -- Started shutdown process'''))
 
-    if os.path.exists('/tmp/.bootready'):
+    if os.path.exists(BOOTREADY):
         lifecycle_conf.SYSTEM_READY = True
     else:
         await firstboot(middleware)
