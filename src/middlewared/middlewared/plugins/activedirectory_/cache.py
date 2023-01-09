@@ -1,10 +1,6 @@
 import grp
-import os
 import pwd
-import shutil
-import tdb
 
-from middlewared.plugins.smb import SMBPath
 from middlewared.plugins.idmap_.utils import WBClient
 from middlewared.service import Service, private, job
 from middlewared.service_exception import CallError
@@ -16,51 +12,9 @@ class ActiveDirectoryService(Service):
         service = "activedirectory"
 
     @private
-    def get_gencache_sid(self, tdb_key):
-        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
-        try:
-            tdb_val = gencache.get(tdb_key)
-        finally:
-            gencache.close()
-
-        if tdb_val is None:
-            return None
-
-        decoded_sid = tdb_val[8:-5].decode()
-        if decoded_sid == '-':
-            return None
-
-        return decoded_sid
-
-    @private
-    def get_gencache_names(self, idmap_domain):
-        out = []
-        known_doms = [x['domain_info']['name'] for x in idmap_domain]
-
-        gencache = tdb.Tdb('/tmp/gencache.tdb', 0, tdb.DEFAULT, os.O_RDONLY)
-        try:
-            for k in gencache.keys():
-                if k[:8] != b'NAME2SID':
-                    continue
-                key = k[:-1].decode()
-                name = key.split('/', 1)[1]
-                dom = name.split('\\')[0]
-                if dom not in known_doms:
-                    continue
-
-                out.append(name)
-        finally:
-            gencache.close()
-
-        return out
-
-    @private
     def get_entries(self, data):
         ret = []
         entry_type = data.get('entry_type')
-        do_wbinfo = data.get('cache_enabled', True)
-
-        shutil.copyfile(f'{SMBPath.LOCKDIR.platform()}/gencache.tdb', '/tmp/gencache.tdb')
 
         domain_info = self.middleware.call_sync(
             'idmap.query', [], {'extra': {'additional_information': ['DOMAIN_INFO']}}
@@ -71,14 +25,10 @@ class ActiveDirectoryService(Service):
 
         dom_by_sid = {x['domain_info']['sid']: x for x in domain_info}
 
-        if do_wbinfo:
-            if entry_type == 'USER':
-                entries = WBClient().users()
-            else:
-                entries = WBClient().groups()
-
+        if entry_type == 'USER':
+            entries = WBClient().users()
         else:
-            entries = self.get_gencache_names(domain_info)
+            entries = WBClient().groups()
 
         for i in entries:
             entry = {"id": -1, "sid": None, "nss": None}
@@ -88,7 +38,6 @@ class ActiveDirectoryService(Service):
                 except KeyError:
                     continue
                 entry["id"] = entry["nss"].pw_uid
-                tdb_key = f'IDMAP/UID2SID/{entry["id"]}'
 
             else:
                 try:
@@ -96,17 +45,16 @@ class ActiveDirectoryService(Service):
                 except KeyError:
                     continue
                 entry["id"] = entry["nss"].gr_gid
-                tdb_key = f'IDMAP/GID2SID/{entry["id"]}'
 
-            """
-            Try to look up in gencache before subprocess to wbinfo.
-            """
-            entry['sid'] = self.get_gencache_sid((tdb_key.encode() + b"\x00"))
-            if not entry['sid']:
-                entry['sid'] = self.middleware.call_sync('idmap.unixid_to_sid', {
-                    'id_type': entry_type,
-                    'id': entry['id'],
-                })
+            entry['sid'] = self.middleware.call_sync('idmap.unixid_to_sid', {
+                'id_type': entry_type,
+                'id': entry['id'],
+            })
+
+            if entry['sid'].startswith('S-1-22'):
+                self.logger.warning('%s [%s] collides with local user or group. '
+                                    'Omitting from cache', entry_type, i)
+                continue
 
             entry['domain_info'] = dom_by_sid[entry['sid'].rsplit('-', 1)[0]]
             ret.append(entry)
@@ -139,6 +87,9 @@ class ActiveDirectoryService(Service):
             'AUTORID'
         ]
         online_check_wait()
+
+        if ad['disable_freenas_cache']:
+            return
 
         users = self.get_entries({'entry_type': 'USER', 'cache_enabled': not ad['disable_freenas_cache']})
         for u in users:
