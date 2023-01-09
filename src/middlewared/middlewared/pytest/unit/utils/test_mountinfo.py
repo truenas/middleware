@@ -65,6 +65,7 @@ fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - 
 474 467 0:77 / /mnt/tank\040space\040/Dataset\040With\040a\040space rw,noatime shared:265 - zfs tank\040space\040/Dataset\040With\040a\040space rw,xattr,posixacl
 7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive
 8069 306 0:1214 / /mnt/tank/mixy rw,noatime shared:4507 - zfs tank/mixy rw,xattr,posixacl,casemixed
+537 327 0:75 / /mnt/tank/perf/mp29-nfs0016K ro shared:301 - zfs tank/perf/mp29-nfs0016K ro,xattr,posixacl,casesensitive
 """
 
 
@@ -123,3 +124,11 @@ def test__atime_and_casesentivity_in_mntinfo():
     assert 4194494 in data
     mntent = data[4194494]
     assert 'CASEMIXED' in mntent['super_opts']
+
+
+def test__readonly_in_mntinfo():
+    line = r'537 327 0:75 / /mnt/tank/perf/mp29-nfs0016K ro shared:301 - zfs tank/perf/mp29-nfs0016K ro,xattr,posixacl,casesensitive'
+    data = {}
+    __parse_mntent(line, data)
+    assert 75 in data
+    assert 'RO' in data[75]['mount_opts']
