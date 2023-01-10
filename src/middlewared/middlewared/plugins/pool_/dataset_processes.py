@@ -141,20 +141,26 @@ class PoolDatasetService(Service):
                 if not pid.isdigit() or int(pid) == os.getpid():
                     continue
 
-                with contextlib.suppress(FileNotFoundError):
+                with contextlib.suppress(FileNotFoundError, ProcessLookupError):
                     # FileNotFoundError for when a process is killed/exits
                     # while we're iterating
                     found = False
                     paths = set()
                     for f in os.listdir(f'/proc/{pid}/fd'):
                         fd = f'/proc/{pid}/fd/{f}'
+                        is_link = False
+                        realpath = None
                         if (
                             (include_devs and os.stat(fd).st_dev in include_devs) or
-                            (exact_matches and os.path.islink(fd) and os.path.realpath(fd) in exact_matches)
+                            (
+                                exact_matches and
+                                (is_link := os.path.islink(fd)) and
+                                (realpath := os.path.realpath(fd)) in exact_matches
+                            )
                         ):
                             found = True
-                            if os.path.islink(fd):
-                                paths.add(os.path.realpath(fd))
+                            if is_link:
+                                paths.add(realpath)
 
                     if found:
                         with open(f'/proc/{pid}/status') as status:
