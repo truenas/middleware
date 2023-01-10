@@ -34,6 +34,19 @@ zvol = f'{pool_name}/{zvol_name}'
 zvol_url = zvol.replace('/', '%2F')
 
 
+def waiting_for_iscsi_to_disconnect(base_target, wait):
+    timeout = 0
+    while timeout < wait:
+        cmd = 'iscsictl -L'
+        results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
+        if base_target not in results['output']:
+            return True
+        timeout += 1
+        sleep(1)
+    else:
+        return False
+
+
 @pytest.mark.dependency(name="iscsi_01")
 def test_01_Add_iSCSI_initiator():
     global initiator_id
@@ -236,6 +249,7 @@ def test_19_Unmounting_iSCSI_volume(request):
     cmd = f'umount "{file_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, f"{results['output']}, {results['stderr']}"
+    sleep(1)
 
 
 @bsd_host_cfg
@@ -252,6 +266,7 @@ def test_21_Disconnect_iSCSI_target(request):
     cmd = f'iscsictl -R -t {basename}:{target_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'] is True, f"{results['output']}, {results['stderr']}"
+    assert waiting_for_iscsi_to_disconnect(f'{basename}:{target_name}', 30)
 
 
 def test_25_Delete_associate_iSCSI_file_targetextent(request):
@@ -467,6 +482,7 @@ def test_46_disconnect_iscsi_zvol_target(request):
     cmd = f'iscsictl -R -t {basename}:{zvol_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'], f"{results['output']}, {results['stderr']}"
+    assert waiting_for_iscsi_to_disconnect(f'{basename}:{zvol_name}', 30)
 
 
 @bsd_host_cfg
@@ -530,6 +546,7 @@ def test_52_unmounting_the_zvol_iscsi_volume(request):
     cmd = f'umount "{zvol_mountpoint}"'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'], f"{results['output']}, {results['stderr']}"
+    sleep(1)
 
 
 @bsd_host_cfg
@@ -546,6 +563,7 @@ def test_54_redisconnect_iscsi_zvol_target(request):
     cmd = f'iscsictl -R -t {basename}:{zvol_name}'
     results = SSH_TEST(cmd, BSD_USERNAME, BSD_PASSWORD, BSD_HOST)
     assert results['result'], f"{results['output']}, {results['stderr']}"
+    assert waiting_for_iscsi_to_disconnect(f'{basename}:{zvol_name}', 30)
 
 
 def test_55_disable_iscsi_service(request):
