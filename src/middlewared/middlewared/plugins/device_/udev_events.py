@@ -14,6 +14,12 @@ class DeviceService(Service):
         if cp.returncode != 0:
             self.middleware.logger.error('Failed to settle udev events: %s', cp.stderr.decode())
 
+    @private
+    async def trigger_udev_events(self, device):
+        cp = await run(['udevadm', 'trigger', device], stdout=subprocess.DEVNULL, check=False)
+        if cp.returncode != 0:
+            self.middleware.logger.error('Failed to trigger udev events: %s', cp.stderr.decode())
+
 
 def udev_events(middleware):
     while True:
