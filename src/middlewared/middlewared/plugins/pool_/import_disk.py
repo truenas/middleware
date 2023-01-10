@@ -70,6 +70,7 @@ class PoolService(Service):
                     )
                     try:
                         progress_buffer = JobProgressBuffer(job)
+                        percent_complete = 0
                         while True:
                             line = await rsync_proc.stdout.readline()
                             job.logs_fd.write(line)
@@ -78,13 +79,14 @@ class PoolService(Service):
                                     line = line.decode('utf-8', 'ignore').strip()
                                     bits = re.split(r'\s+', line)
                                     if len(bits) == 6 and bits[1].endswith('%') and bits[1][:-1].isdigit():
-                                        progress_buffer.set_progress(int(bits[1][:-1]))
+                                        percent_complete = int(bits[1][:-1])
+                                        progress_buffer.set_progress(percent_complete)
                                     elif not line.endswith('/'):
                                         if (
                                             line not in ['sending incremental file list'] and
                                             'xfr#' not in line
                                         ):
-                                            progress_buffer.set_progress(None, extra=line)
+                                            progress_buffer.set_progress(percent_complete, extra=line)
                                 except Exception:
                                     logger.warning('Parsing error in rsync task', exc_info=True)
                             else:
