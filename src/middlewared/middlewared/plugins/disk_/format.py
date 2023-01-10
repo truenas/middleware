@@ -96,5 +96,10 @@ class DiskService(Service):
 
         self.middleware.call_sync('device.settle_udev_events')
 
+        if len(self.middleware.call_sync('disk.list_partitions', disk)) != len(parted_disk.partitions):
+            # In some rare cases udev does not re-read the partition table correctly; force it
+            self.middleware.call_sync('device.trigger_udev_events', f'/dev/{disk}')
+            self.middleware.call_sync('device.settle_udev_events')
+
     def _get_largest_free_space_region(self, disk):
         return sorted(disk.getFreeSpaceRegions(), key=lambda geometry: geometry.length)[-1]
