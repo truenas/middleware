@@ -4,7 +4,7 @@
 # License: BSD
 
 from subprocess import call
-from sys import argv
+from sys import argv, exit
 import os
 import getopt
 import sys
@@ -59,6 +59,7 @@ option_list = [
     "dev-test",
     "debug-mode",
     "log-cli-level=",
+    "returncode",
 ]
 
 # look if all the argument are there.
@@ -78,6 +79,7 @@ dev_test = False
 debug_mode = False
 verbose = 0
 exitfirst = ''
+returncode = False
 callargs = []
 for output, arg in myopts:
     if output in ('-i', '--ip'):
@@ -107,6 +109,8 @@ for output, arg in myopts:
     elif output == '--log-cli-level':
         callargs.append('--log-cli-level')
         callargs.append(arg)
+    elif output == '--returncode':
+        returncode = True
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -174,7 +178,7 @@ if exitfirst:
 
 # Use the right python version to start pytest with sys.executable
 # So that we can support virtualenv python pytest.
-call([
+proc_returncode = call([
     sys.executable,
     '-m',
     'pytest'
@@ -208,3 +212,6 @@ results = SSH_TEST('midclt call core.get_jobs | jq .', 'root', 'testing', ip)
 core_get_jobs = open(f'{artifacts}/core.get_jobs', 'w')
 core_get_jobs.writelines(results['output'])
 core_get_jobs.close()
+
+if returncode:
+    exit(proc_returncode)
