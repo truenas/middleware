@@ -357,7 +357,8 @@ class iSCSITargetService(CRUDService):
         data['mode'] = data['mode'].lower()
         for group in data['groups']:
             group['authmethod'] = AUTHMETHOD_LEGACY_MAP.inv.get(group.pop('authmethod'), 'NONE')
-        if 'alias' in data and not data['alias']:
-            # We may have specified the empty string as alias, store it as NULL
+        # If we specified the alias as the empty string, store it as NULL instead to prevent clash 
+        # on UNIQUE in the database.
+        if data.get("alias", None) == "":
             data['alias'] = None
         return data
