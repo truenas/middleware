@@ -12,7 +12,7 @@ from middlewared.plugins.idmap import DSType
 from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Ref, Datetime, Bool
 from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, run, Popen
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, run, Popen
 
 
 KRB_TKT_CHECK_INTERVAL = 1800
@@ -26,7 +26,8 @@ class keytab(enum.Enum):
 
 class krb5ccache(enum.Enum):
     SYSTEM = '/tmp/krb5cc_0'
-    TEMP = '/tmp/krb5cc_middleware'
+    TEMP = f'{MIDDLEWARE_RUN_DIR}/krb5cc_middleware_temp'
+    USER = '/tmp/krb5cc_'
 
 
 class krb_tkt_flag(enum.Enum):
@@ -167,17 +168,30 @@ class KerberosService(TDBWrapConfigService):
         return await self.config()
 
     @private
+    @accepts(Ref('kerberos-options'))
+    async def ccache_path(self, data):
+        krb_ccache = krb5ccache[data['ccache']]
+
+        path_out = krb_ccache.value
+        if krb_ccache == krb5ccache.USER:
+            path_out += str(data['ccache_uid'])
+
+        return path_out
+
+    @private
     @accepts(Dict(
         'kerberos-options',
         Str('ccache', enum=[x.name for x in krb5ccache], default=krb5ccache.SYSTEM.name),
+        Int('ccache_uid', default=0),
         register=True
     ))
     async def _klist_test(self, data):
         """
         Returns false if there is not a TGT or if the TGT has expired.
         """
-        krb_ccache = krb5ccache[data['ccache']]
-        klist = await run(['klist', '-s', '-c', krb_ccache.value], check=False)
+        ccache_path = await self.ccache_path(data)
+
+        klist = await run(['klist', '-s', '-c', ccache_path], check=False)
         if klist.returncode != 0:
             return False
 
@@ -405,9 +419,22 @@ class KerberosService(TDBWrapConfigService):
     ))
     async def do_kinit(self, data):
         ccache = krb5ccache[data['kinit-options']['ccache']]
-        cmd = ['kinit', '-V', '-r', str(data['kinit-options']['renewal_period']), '-c', ccache.value]
         creds = data['krb5_cred']
         has_principal = 'kerberos_principal' in creds
+        ccache_uid = data['kinit-options']['ccache_uid']
+        ccache_path = await self.ccache_path({
+            'ccache': data['kinit-options']['ccache'],
+            'ccache_uid': data['kinit-options']['ccache_uid']
+        })
+
+        if ccache == krb5ccache.USER:
+            if has_principal:
+                raise CallError('User-specific ccache not permitted with keytab-based kinit')
+
+            if ccache_uid == 0:
+                raise CallError('User-specific ccache not permitted for uid 0')
+
+        cmd = ['kinit', '-V', '-r', str(data['kinit-options']['renewal_period']), '-c', ccache_path]
         lifetime = data['kinit-options']['lifetime']
 
         if lifetime != 0:
@@ -441,7 +468,10 @@ class KerberosService(TDBWrapConfigService):
         if kinit.returncode != 0:
             raise CallError(f"kinit with password failed: {output[1].decode()}")
 
-        return True
+        if ccache == krb5ccache.USER:
+            await self.middleware.run_in_thread(os.chown, ccache_path, ccache_uid, -1)
+
+        return
 
     @private
     async def _kinit(self):

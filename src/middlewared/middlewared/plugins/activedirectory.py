@@ -727,6 +727,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await cl_reload.wait()
 
         job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
+        await self.middleware.call('service.reload', 'idmap')
         return ret.name
 
     @private

@@ -8,9 +8,11 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from assets.REST.directory_services import active_directory, ldap, override_nameservers
-from auto_config import ip, hostname, password, user
+from assets.REST.pool import dataset
+from auto_config import ip, hostname, password, pool_name, user
 from contextlib import contextmanager
-from functions import GET, POST, PUT, make_ws_request, wait_on_job
+from functions import GET, POST, PUT, SSH_TEST, make_ws_request, wait_on_job
+from protocols import nfs_share, SSH_NFS
 from pytest_dependency import depends
 
 try:
@@ -22,6 +24,32 @@ else:
     from auto_config import dev_test
     # comment pytestmark for development testing with --dev-test
     pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+
+test_perms = {
+    "READ_DATA": True,
+    "WRITE_DATA": True,
+    "EXECUTE": True,
+    "APPEND_DATA": True,
+    "DELETE_CHILD": False,
+    "DELETE": True,
+    "READ_ATTRIBUTES": True,
+    "WRITE_ATTRIBUTES": True,
+    "READ_NAMED_ATTRS": True,
+    "WRITE_NAMED_ATTRS": True,
+    "READ_ACL": True,
+    "WRITE_ACL": True,
+    "WRITE_OWNER": True,
+    "SYNCHRONIZE": False,
+}
+
+test_flags = {
+    "FILE_INHERIT": True,
+    "DIRECTORY_INHERIT": True,
+    "INHERIT_ONLY": False,
+    "NO_PROPAGATE_INHERIT": False,
+    "INHERITED": False
+}
+
 
 @pytest.fixture(scope="module")
 def kerberos_config(request):
@@ -141,6 +169,31 @@ def do_ldap_connection(request):
 
 
 @pytest.fixture(scope="module")
+def setup_nfs_share(request):
+    results = POST("/user/get_user_obj/", {'username': f'{ADUSERNAME}@{AD_DOMAIN}'})
+    assert results.status_code == 200, results.text
+    target_uid = results.json()['pw_uid']
+
+    target_acl = [
+        {'tag': 'owner@', 'id': -1, 'perms': test_perms, 'flags': test_flags, 'type': 'ALLOW'},
+        {'tag': 'group@', 'id': -1, 'perms': test_perms, 'flags': test_flags, 'type': 'ALLOW'},
+        {'tag': 'everyone@', 'id': -1, 'perms': test_perms, 'flags': test_flags, 'type': 'ALLOW'},
+        {'tag': 'USER', 'id': target_uid, 'perms': test_perms, 'flags': test_flags, 'type': 'ALLOW'},
+    ]
+    with dataset(
+        pool_name,
+        'NFSKRB5',
+        options={'acltype': 'NFSV4'},
+        acl=target_acl
+    ) as ds:
+        with nfs_share(ds['mountpoint'], options={
+            'comment': 'KRB Functional Test Share',
+            'security': ['KRB5', 'KRB5I', 'KRB5P'],
+        }) as share:
+            yield (request, {'share': share, 'uid': target_uid})
+
+
+@pytest.fixture(scope="module")
 def set_ad_nameserver(request):
     with override_nameservers(ADNameServer) as ns:
         yield (request, ns)
@@ -195,9 +248,127 @@ def test_03_kerberos_nfs4_spn_add(kerberos_config):
     assert error is None, str(error)
     assert res['result'] is True
 
+    results = POST('/service/reload/', {'service': 'idmap'})
+    assert results.status_code == 200, results.text
+
+    results = POST('/service/restart/', {'service': 'ssh'})
+    assert results.status_code == 200, results.text
+
+
+@pytest.mark.dependency(name="AD_LDAP_USER_CCACHE")
+def test_05_kinit_as_ad_user(setup_nfs_share):
+    """
+    Set up an NFS share and ensure that permissions are
+    set correctly to allow writes via out test user.
+
+    This test does kinit as our test user so that we have
+    kerberos ticket that we will use to verify NFS4 + KRB5
+    work correctly.
+    """
+    depends(setup_nfs_share[0], ["AD_CONFIGURED"], scope="session")
+
+    kinit_opts = {'ccache': 'USER', 'ccache_uid': setup_nfs_share[1]['uid']}
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.get_cred',
+        'params': [{
+            'dstype': 'DS_TYPE_ACTIVEDIRECTORY',
+            'conf': {
+                'domainname': AD_DOMAIN,
+                'bindname': ADUSERNAME,
+                'bindpw': ADPASSWORD,
+            }
+        }],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    cred = res['result']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.do_kinit',
+        'params': [{
+            'krb5_cred': cred,
+            'kinit-options': kinit_opts
+        }],
+    })
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos._klist_test',
+        'params': [kinit_opts],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert res['result'] is True
+
+    res = SSH_TEST(f'test -f /tmp/krb5cc_{setup_nfs_share[1]["uid"]}', user, password, ip)
+    assert res['result'] is True, results['stderr']
+
+    results = POST('/service/restart/', {'service': 'nfs'})
+    assert results.status_code == 200, results.text
+
+
+def test_06_krb5nfs_ops_with_ad(request):
+    my_fqdn = f'{hostname.strip()}.{AD_DOMAIN}'
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'dnsclient.forward_lookup',
+        'params': [{'names': [my_fqdn]}],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    addresses = [rdata['address'] for rdata in res['result']]
+    assert ip in addresses
+
+    """
+    The following creates a loopback mount using our kerberos
+    keytab (AD computer account) and then performs ops via SSH
+    using a limited AD account for which we generated a kerberos
+    ticket above. Due to the odd nature of this setup, the loopback
+    mount gets mapped as the guest account on the NFS server.
+    This is fine for our purposes as we're validating that
+    sec=krb5 works.
+    """
+    with SSH_NFS(
+        my_fqdn,
+        f'/mnt/{pool_name}/NFSKRB5',
+        vers=4,
+        mount_user=user,
+        mount_password=password,
+        ip=ip,
+        kerberos=True,
+        user=ADUSERNAME,
+        password=ADPASSWORD,
+    ) as n:
+        n.create('testfile')
+        n.mkdir('testdir')
+        contents = n.ls('.')
+
+        assert 'testdir' in contents
+        assert 'testfile' in contents
+
+        file_acl = n.getacl('testfile')
+        for idx, ace in enumerate(file_acl):
+            assert ace['perms'] == test_perms, str(ace)
+
+        dir_acl = n.getacl('testdir')
+        for idx, ace in enumerate(dir_acl):
+            assert ace['perms'] == test_perms, str(ace)
+            assert ace['flags'] == test_flags, str(ace)
+
+        n.unlink('testfile')
+        n.rmdir('testdir')
+        contents = n.ls('.')
+        assert 'testdir' not in contents
+        assert 'testfile' not in contents
+
 
 @pytest.mark.dependency(name="SET_UP_AD_VIA_LDAP")
-def test_04_setup_and_enabling_ldap(do_ldap_connection):
+def test_07_setup_and_enabling_ldap(do_ldap_connection):
     res = make_ws_request(ip, {
         'msg': 'method',
         'method': 'kerberos.stop',
@@ -235,7 +406,7 @@ def test_04_setup_and_enabling_ldap(do_ldap_connection):
     assert res['result'] is True
 
 
-def test_05_verify_ldap_users(request):
+def test_08_verify_ldap_users(request):
     depends(request, ["SET_UP_AD_VIA_LDAP"], scope="session")
 
     results = GET('/user', payload={
