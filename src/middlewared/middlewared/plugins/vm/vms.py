@@ -1,5 +1,6 @@
 import asyncio
 import errno
+import functools
 import os
 import re
 import shlex
@@ -53,6 +54,12 @@ class VMModel(sa.Model):
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
     uuid = sa.Column(sa.String(255))
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
+    bootloader_ovmf = sa.Column(sa.String(1024), default='OVMF_CODE.fd')
+
+
+@functools.cache
+def ovmf_options():
+    return [path for path in os.listdir('/usr/share/OVMF') if re.findall(r'^OVMF_CODE[^\.]*.fd', path)]
 
 
 class VMService(CRUDService, VMSupervisorMixin):
@@ -76,6 +83,14 @@ class VMService(CRUDService, VMSupervisorMixin):
         )),
         ('add', Int('id')),
     )
+
+    @accepts()
+    @returns(Dict(additional_attrs=True))
+    def bootloader_ovmf_choices(self):
+        """
+        Retrieve bootloader ovmf choices
+        """
+        return {path: path for path in ovmf_options()}
 
     @private
     def extend_context(self, rows, extra):
@@ -123,6 +138,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('min_memory', null=True, validators=[Range(min=20)], default=None),
         Bool('hyperv_enlightenments', default=False),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
+        Str('bootloader_ovmf', default='OVMF_CODE.fd'),
         Bool('autostart', default=True),
         Bool('hide_from_msr', default=False),
         Bool('ensure_display_device', default=True),
@@ -184,6 +200,12 @@ class VMService(CRUDService, VMSupervisorMixin):
 
     @private
     async def common_validation(self, verrors, schema_name, data, old=None):
+        if data['bootloader_ovmf'] not in await self.middleware.call('vm.bootloader_ovmf_choices'):
+            verrors.add(
+                f'{schema_name}.bootloader_ovmf',
+                'Invalid bootloader ovmf choice specified'
+            )
+
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
 
