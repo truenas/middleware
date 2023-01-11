@@ -75,18 +75,18 @@ async def test_ipmi_sel_alert_source__works():
     source = IPMISELAlertSource(middleware)
 
     assert await source._produce_alerts_for_ipmitool_output(textwrap.dedent("""\
-        9,04/20/2017,06:03:07,Power Unit #0xca,Failure detected,Asserted
+        26,09/15/2022,15:34:46,Voltage PVPP,Lower Non-recoverable going low,Asserted,Reading 0.12 < Threshold 2.17 Volts
     """)) == [
         Alert(
             IPMISELAlertClass,
             args=dict(
-                sensor="Power Unit #0xca",
-                event="Failure detected",
+                sensor="Voltage PVPP",
+                event="Lower Non-recoverable going low",
                 direction="Asserted",
-                verbose=None
+                verbose="Reading 0.12 < Threshold 2.17 Volts"
             ),
             _key=ANY,
-            datetime=datetime(2017, 4, 20, 6, 3, 7),
+            datetime=datetime(2022, 9, 15, 15, 34, 46),
         )
     ]
 
