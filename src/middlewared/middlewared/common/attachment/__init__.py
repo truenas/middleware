@@ -92,11 +92,11 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def query(self, path, enabled, options=None):
         results = []
         options = options or {}
-        check_path_child_of_resource = options.get('check_path_child_of_resource', False)
+        check_parent = options.get('check_parent', False)
         for resource in await self.middleware.call(
             f'{self.namespace}.query', await self.get_query_filters(enabled, options)
         ):
-            if await self.is_child_of_path(resource, path, check_path_child_of_resource):
+            if await self.is_child_of_path(resource, path, check_parent):
                 results.append(resource)
         return results
 
@@ -130,7 +130,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
     async def remove_alert(self, attachment):
         await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment['id'])
 
-    async def is_child_of_path(self, resource, path, check_path_child_of_resource):
+    async def is_child_of_path(self, resource, path, check_parent):
         share_path = await self.service_class.get_path_field(self.service_class, resource)
         if share_path == path:
             return True
@@ -143,7 +143,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
         # 3) When path is child of configured path, we return true as the path
         #    is being consumed by service in question
         is_child = await self.middleware.call('filesystem.is_child', share_path, path)
-        if not is_child and check_path_child_of_resource:
+        if not is_child and check_parent:
             return await self.middleware.call('filesystem.is_child', path, share_path)
         else:
             return is_child
