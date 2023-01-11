@@ -169,9 +169,15 @@ class SystemAdvancedService(ConfigService):
         if data['isolated_gpu_pci_ids']:
             verrors = await self.validate_gpu_pci_ids(data['isolated_gpu_pci_ids'], verrors, schema)
 
-        for ch in ('\n', '"'):
-            if ch in data['kernel_extra_options']:
-                verrors.add('kernel_extra_options', f'{ch!r} not allowed')
+        for invalid_char in ('\n', '"'):
+            if invalid_char in data['kernel_extra_options']:
+                verrors.add('kernel_extra_options', f'{invalid_char!r} is an invalid character and not allowed')
+
+        invalid_param = 'systemd.unified_cgroup_hierarchy'
+        if invalid_param in data['kernel_extra_options']:
+            # TODO: we don't normalize values being passed into us which
+            # allows a comical amount of potential foot-shooting
+            verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
 
         return verrors, data
 
