@@ -1451,13 +1451,21 @@ class SharingSMBService(SharingService):
 
         st = os.lstat(path)
         if stat.S_ISLNK(st.st_mode):
-            verrors.add(schema, 'f{path}: is symbolic link.')
+            verrors.add(schema, f'{path}: is symbolic link.')
             return
 
         mntinfo = getmntinfo()
         this_mnt = mntinfo[st.st_dev]
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
+
+        if os.path.relpath(this_mnt['mountpoint'], path) not in (os.curdir, os.pardir):
+            verrors.add(
+                schema,
+                f'Mountpoint {this_mnt["mountpoint"]} not within path {path}. '
+                'This may indicate that the path of the SMB share contains a '
+                'symlink component.'
+            )
 
         if 'XATTR' not in this_mnt['super_opts']:
             verrors.add(schema, 'Extended attribute support is required for SMB shares')
