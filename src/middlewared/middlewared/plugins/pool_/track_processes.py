@@ -61,8 +61,8 @@ class PoolDatasetService(Service):
                                 paths.add(realpath)
 
                     if found:
-                        with open(f'/proc/{pid}/status') as status:
-                            name = status.readline().split('\t', 1)[1].strip()
+                        with open(f'/proc/{pid}/comm') as comm:
+                            name = comm.read().strip()
 
                         proc = {'pid': pid, 'name': name}
 
