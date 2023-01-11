@@ -299,6 +299,8 @@ OS_BASE="$OS"
 boot_pool=`echo "$roots_dataset" | cut -d '/' -f1`
 activated_be=`zpool get -H -o value bootfs "$boot_pool"`
 datasets="$activated_be\n`zfs list -H -o name -r $roots_dataset | grep -vx $activated_be | sort -r`\nCORE"
+truenas_db="/data/freenas-v1.db"
+dk_query="SELECT adv_debugkernel FROM system_advanced;"
 for dataset in `echo $datasets`; do
   if [ "x$dataset" = "x$roots_dataset" ] ; then
     continue
@@ -320,7 +322,40 @@ for dataset in `echo $datasets`; do
   fi
 
   boot_device_id=
-  list="/boot/vmlinuz-$kernel_version"
+  # See if debugkernel is set to boot
+  debugkernel=`echo $dk_query | sqlite3 $truenas_db 2>/dev/null`
+  debugkernel_support="0"
+  if echo ${kernel_version} | grep -q "production+truenas" ; then
+    # Dataset was created with production kernel
+    debugkernel_support="1"
+    kernel_version_prod="$kernel_version"
+    kernel_version_dbg=`echo $kernel_version | sed "s|production|debug|"`
+    if [ "x$debugkernel" = "x1" ] ; then
+      # Boot with debug kernel if debugkernel is set
+      list="/boot/vmlinuz-$kernel_version_dbg"
+    else
+      # Boot with production kernel if debugkernel is not set
+      list="/boot/vmlinuz-$kernel_version_prod"
+    fi
+  elif echo ${kernel_version} | grep -q "debug+truenas" ; then
+    # Dataset was created with debug kernel
+    debugkernel_support="1"
+    kernel_version_dbg="$kernel_version"
+    kernel_version_prod=`echo $kernel_version | sed "s|debug|production|"`
+    if [ "x$debugkernel" = "x1" ] ; then
+      # Boot with debug kernel if debugkernel is set
+      list="/boot/vmlinuz-$kernel_version_dbg"
+    else
+      # Boot with production kernel if debugkernel is not set
+      list="/boot/vmlinuz-$kernel_version_prod"
+    fi
+  else
+    # The dataset was not created with debug or production kernels
+    list="/boot/vmlinuz-$kernel_version"
+    # Set debugkernel to flase for this iteration
+    debugkernel="0"
+  fi
+
   LINUX_ROOT_DEVICE="ZFS=$dataset"
   OS="$OS_BASE $truenas_version"
 
@@ -427,8 +462,42 @@ while [ "x$list" != "x" ] ; do
     is_top_level=false
   fi
 
+  # If debug and production kernels are supported, $debugkernel is used
+  # to manipulate the kernel used in default boot entry.
+  # The boot entry to boot using the alternate kernel (production or debug)
+  # can be found under Advanced menu, i.e. if $debugkernel is set, the
+  # default boot entry would boot with debug kernel, and under Advanced
+  # sub-menu, boot entry to boot using production kernel should be present.
+  if [ "x$debugkernel_support" = "x1" ] ; then
+    # Save contents of variables used in linux_entry
+    p_basename="$basename"
+    p_initrd="$initrd"
+    p_version="$version"
+    if [ "x$debugkernel" = "x1" ] ; then
+      # If $debugkernel is set, provide option to boot using production
+      # kernel under Advanced sub-menu
+      basename=`echo $basename | sed "s|debug|production|"`
+      initrd=`echo $initrd | sed "s|debug|production|"`
+      version=`echo $version | sed "s|debug|production|"`
+    else
+      # If $debugkernel is not set, provide option to boot using debug
+      # kernel under Advanced sub-menu
+      basename=`echo $basename | sed "s|production|debug|"`
+      initrd=`echo $initrd | sed "s|production|debug|"`
+      version=`echo $version | sed "s|production|debug|"`
+    fi
+  fi
+
   linux_entry "${OS}" "${version}" advanced \
               "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}"
+
+  if [ "x$debugkernel_support" = "x1" ] ; then
+    # Restore the the contents for current iteration
+    basename="$p_basename"
+    initrd="$p_initrd"
+    version="$p_version"
+  fi
+
   for supported_init in ${SUPPORTED_INITS}; do
     init_path="${supported_init#*:}"
     if [ -x "${init_path}" ] && [ "$(readlink -f /sbin/init)" != "$(readlink -f "${init_path}")" ]; then
