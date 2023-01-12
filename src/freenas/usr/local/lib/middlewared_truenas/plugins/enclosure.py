@@ -20,6 +20,10 @@ class EnclosureService(CRUDService):
 
     @filterable
     def query(self, filters, options):
+        if self.middleware.call_sync('truenas.get_chassis_hardware') == 'TRUENAS-UNKNOWN':
+            # this feature is only available on hardwarwe that ix sells
+            return []
+
         dmi = self.middleware.call_sync('system.dmidecode_info')
         prod = dmi['system-product-name']
         prod_vers = dmi['system-version']
