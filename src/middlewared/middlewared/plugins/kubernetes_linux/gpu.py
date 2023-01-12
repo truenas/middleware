@@ -137,9 +137,16 @@ GPU_CONFIG = {
             'namespace': 'kube-system'
         },
         'data': {
-            'nvdefault.yaml': '''{version: v1, sharing: { timeSlicing: { renameByDefault:
-                false, failRequestsGreaterThanOne: true, resources: [{"name":
-                "nvidia.com/gpu", "replicas": 5}]}}}'''
+            'nvdefault.yaml': '''|
+                version: v1
+                sharing: 
+                  timeSlicing: 
+                  renameByDefault: false
+                  failRequestsGreaterThanOne: true
+                  resources: 
+                    - name: nvidia.com/gpu
+                      replicas: 5
+                '''
         }
     },
 }
