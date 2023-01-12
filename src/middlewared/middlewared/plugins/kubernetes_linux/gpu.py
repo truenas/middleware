@@ -138,15 +138,15 @@ GPU_CONFIG = {
         },
         'data': {
             'nvdefault.yaml': """|
-                version: v1
-                sharing:
-                  timeSlicing:
-                    renameByDefault: false
-                    failRequestsGreaterThanOne: true
-                    resources:
-                    - name: nvidia.com/gpu
-                      replicas: 5
-                """
+version: v1
+sharing:
+  timeSlicing:
+    renameByDefault: false
+    failRequestsGreaterThanOne: true
+    resources:
+    - name: nvidia.com/gpu
+      replicas: 5
+"""
         }
     },
 }
