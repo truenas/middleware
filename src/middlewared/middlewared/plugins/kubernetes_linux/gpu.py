@@ -5,8 +5,8 @@ from middlewared.utils import run
 
 from .utils import NVIDIA_RUNTIME_CLASS_NAME
 
-
-GPU_CONFIG = {
+# Contains device plugin daemonsets for supported GPU platforms
+GPU_PLUGIN = {
     'NVIDIA': {
         'apiVersion': 'apps/v1',
         'kind': 'DaemonSet',
@@ -29,10 +29,17 @@ GPU_CONFIG = {
                     'containers': [{
                         'image': 'nvcr.io/nvidia/k8s-device-plugin:v0.13.0',
                         'name': 'nvidia-device-plugin-ctr',
+                        'args': ["--config-file /etc/config/nvdefault.yaml"],
                         'securityContext': {'allowPrivilegeEscalation': False, 'capabilities': {'drop': ['ALL']}},
-                        'volumeMounts': [{'name': 'device-plugin', 'mountPath': '/var/lib/kubelet/device-plugins'}]
+                        'volumeMounts': [
+                            {'name': 'device-plugin', 'mountPath': '/var/lib/kubelet/device-plugins'},
+                            {'name': 'plugin-config', 'mountPath': '/etc/config'}
+                        ]
                     }],
-                    'volumes': [{'name': 'device-plugin', 'hostPath': {'path': '/var/lib/kubelet/device-plugins'}}]
+                    'volumes': [
+                        {'name': 'device-plugin', 'hostPath': {'path': '/var/lib/kubelet/device-plugins'}},
+                        {'name': 'plugin-config', 'configMap': {'name': 'nvidia-device-plugin-config'}}
+                    ]
                 }
             }
         }
@@ -120,6 +127,23 @@ GPU_CONFIG = {
     },
 }
 
+# Contains configmaps for config files to-be-used by their respective device plugins
+GPU_CONFIG = {
+    'NVIDIA': {
+        'apiVersion': 'v1',
+        'kind': 'ConfigMap',
+        'metadata': {
+            'name': 'nvidia-device-plugin-config',
+            'namespace': 'kube-system'
+        },
+        'data': {
+            'nvdefault.yaml': '''{version: v1, sharing: { timeSlicing: { renameByDefault:
+                false, failRequestsGreaterThanOne: true, resources: [{"name":
+                "nvidia.com/gpu", "replicas": 5}]}}}'''
+        }
+    },
+}
+
 
 class KubernetesGPUService(Service):
 
@@ -156,47 +180,76 @@ class KubernetesGPUService(Service):
         return supported_gpus.intersection(set([gpu['vendor'] for gpu in gpus if gpu['available_to_host']]))
 
     async def setup_internal(self):
-        to_remove = set(GPU_CONFIG.keys())
+        to_remove = set(GPU_PLUGIN.keys())
         daemonsets = {
             f'{d["metadata"]["namespace"]}_{d["metadata"]["name"]}': d
             for d in await self.middleware.call('k8s.daemonset.query')
+        }
+        configmaps = {
+            f'{c["metadata"]["namespace"]}_{c["metadata"]["name"]}': c
+            for c in await self.middleware.call('k8s.configmap.query')
         }
         k8s_config = await self.middleware.call('kubernetes.config')
         found_gpus = await self.get_system_gpus() if k8s_config['configure_gpus'] else set()
         if found_gpus:
             to_remove = to_remove - found_gpus
             for gpu in found_gpus:
-                config = GPU_CONFIG[gpu]
+                plugin = GPU_PLUGIN[gpu]
                 # We will want to be adding nvidia runtime class if we find a nvidia gpu
                 if gpu == 'NVIDIA':
                     await self.configure_nvidia_runtime_class()
-                config_metadata = config['metadata']
-                if f'{config_metadata["namespace"]}_{config_metadata["name"]}' in daemonsets:
+
+                # Configmaps for config-files is optional, only used by nvidia for now
+                if GPU_CONFIG[gpu]:
+                    config_metadata = GPU_CONFIG[gpu]['metadata']
+                    # Nvidia stores it's configuration in a configmap instead of arguments
+                    # We make sure to create/update it before creating/updating the plugin itself
+                    if f'{config_metadata["namespace"]}_{config_metadata["name"]}' in daemonsets:
+                        await self.middleware.call(
+                            'k8s.configmap.update', config_metadata['name'], {
+                                'namespace': config_metadata['namespace'], 'body': plugin
+                            }
+                        )
+                    else:
+                        await self.middleware.call(
+                            'k8s.configmap.create', {'namespace': config_metadata['namespace'], 'body': plugin}
+                        )
+                plugin_metadata = plugin['metadata']
+                if f'{plugin_metadata["namespace"]}_{plugin_metadata["name"]}' in daemonsets:
                     await self.middleware.call(
-                        'k8s.daemonset.update', config_metadata['name'], {
-                            'namespace': config_metadata['namespace'], 'body': config
+                        'k8s.daemonset.update', plugin_metadata['name'], {
+                            'namespace': plugin_metadata['namespace'], 'body': plugin
                         }
                     )
                 else:
                     await self.middleware.call(
-                        'k8s.daemonset.create', {'namespace': config_metadata['namespace'], 'body': config}
+                        'k8s.daemonset.create', {'namespace': plugin_metadata['namespace'], 'body': plugin}
                     )
 
                 if callable(getattr(self, f'setup_{gpu.lower()}_gpu', None)):
                     await self.middleware.call(f'k8s.gpu.setup_{gpu.lower()}_gpu')
 
         for vendor in to_remove:
-            config_metadata = GPU_CONFIG[vendor]['metadata']
+            plugin_metadata = GPU_PLUGIN[vendor]['metadata']
             if vendor == 'NVIDIA' and await self.middleware.call(
                 'k8s.runtime_class.query', [['metadata.name', '=', NVIDIA_RUNTIME_CLASS_NAME]]
             ):
                 await self.middleware.call('k8s.runtime_class.delete', NVIDIA_RUNTIME_CLASS_NAME)
 
-            if f'{config_metadata["namespace"]}_{config_metadata["name"]}' not in daemonsets:
+            if f'{plugin_metadata["namespace"]}_{plugin_metadata["name"]}' not in daemonsets:
                 continue
             await self.middleware.call(
-                'k8s.daemonset.delete', config_metadata['name'], {'namespace': config_metadata['namespace']}
+                'k8s.daemonset.delete', plugin_metadata['name'], {'namespace': plugin_metadata['namespace']}
             )
+
+            # Configmaps for config-files is optional, only used by nvidia for now
+            if GPU_CONFIG[vendor]:
+                config_metadata = GPU_CONFIG[vendor]['metadata']
+                if f'{config_metadata["namespace"]}_{config_metadata["name"]}' not in configmaps:
+                    continue
+                await self.middleware.call(
+                    'k8s.daemonset.delete', config_metadata['name'], {'namespace': config_metadata['namespace']}
+                )
 
     async def configure_nvidia_runtime_class(self):
         # Reference: https://github.com/k3s-io/k3s/issues/4391#issuecomment-1233314825
