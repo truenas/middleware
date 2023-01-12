@@ -213,6 +213,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
     @private
     async def common_validate(self, new, old, verrors):
+        try:
+            if not (await self.middleware.call('activedirectory.netbiosname_is_ours', new['netbiosname'], new['domainname'])):
+                verrors.add(
+                    'activedirectory_update.netbiosname',
+                    f'NetBIOS name [{new["netbiosname"]}] appears to be in use by another computer in Active Directory DNS. '
+                    'Further investigation and DNS corrections will be required prior to using the aforementioned name to '
+                    'join Active Directory.'
+                )
+        except CallError:
+            pass
+
         if new['kerberos_realm'] and new['kerberos_realm'] != old['kerberos_realm']:
             realm = await self.middleware.call('kerberos.realm.query', [("id", "=", new['kerberos_realm'])])
             if not realm:
@@ -1007,6 +1018,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
             self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
+
+        job.set_progress(15, 'Removing DNS entries')
+        await self.middleware.call('activedirectory.unregister_dns', ad)
 
         job.set_progress(20, 'Removing kerberos keytab and realm.')
         krb_princ = await self.middleware.call(
