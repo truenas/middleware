@@ -223,6 +223,8 @@ if ha:
         return os.environ.get('controller1_ip'), os.environ.get('controller2_ip')
 
     def test_state_failover():
+        assert call("failover.status") == "MASTER"
+
         with dataset("test") as ds:
             with local_s3_task({"path": f"/mnt/{ds}"}) as task:
                 call("cloudsync.sync", task["id"], job=True)
@@ -232,11 +234,11 @@ if ha:
                 assert all((ctrl1_ip, ctrl2_ip)), 'Unable to determine both HA controller IP addresses'
 
                 file1_path = call("cloudsync.get_instance", task["id"])["job"]["logs_path"]
-                file1_contents = ssh(f'cat {file1_path}', _ip=ctrl1_ip, check=False)
+                file1_contents = ssh(f'cat {file1_path}', _ip=ctrl1_ip)
                 assert file1_contents
 
                 file2_path = call("failover.call_remote", "cloudsync.get_instance", [task["id"]])["job"]["logs_path"]
-                file2_contents = ssh(f'cat {file2_path}', _ip=ctrl2_ip, check=False)
+                file2_contents = ssh(f'cat {file2_path}', _ip=ctrl2_ip)
                 assert file2_contents
 
                 assert file1_contents == file2_contents
