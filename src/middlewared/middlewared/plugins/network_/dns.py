@@ -1,10 +1,14 @@
 import contextlib
+import ipaddress
 import re
+import subprocess
+import tempfile
 
 from middlewared.service import Service, filterable, filterable_returns, private
-from middlewared.schema import Dict, IPAddr, ValidationErrors
-from middlewared.utils import filter_list
+from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str, ValidationErrors
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.plugins.interface.netif import netif
+from middlewared.service_exception import CallError
 
 
 class DNSService(Service):
@@ -99,3 +103,93 @@ class DNSService(Service):
                 result += dns
 
         return result
+
+    @accepts(Dict(
+        'nsupdate_info',
+        Bool('use_kerberos', default=True),
+        List(
+            'ops',
+            required=True,
+            unique=True,
+            items=[
+                Dict(
+                    Str('command', enum=['ADD', 'DELETE'], required=True),
+                    Str('name', required=True),
+                    Str('type', enum=['A', 'AAAA'], default='A'),
+                    Int('ttl', default=3600),
+                    IPAddr('address', required=True, excluded_address_types=['MULTICAST', 'GLOBAL', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED']),
+                    Bool('do_ptr', default=True)
+                )
+            ],
+        ),
+        Int('timeout', default=30),
+    ))
+    @private
+    def nsupdate(self, data):
+        if data['use_kerberos']:
+            self.middleware.call_sync('kerberos.check_ticket')
+
+        if len(data['ops']) == 0:
+            raise CallError('At least one nsupdate command must be specified')
+
+        with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
+            ptrs = []
+            for entry in data['ops']:
+                addr = ipaddress.ip_address(entry['address'])
+
+                if entry['type'] == 'A' and not addr.version == 4:
+                    raise CallError(f'{addr.compressed}: not an IPv4 address')
+
+                if entry['type'] == 'AAAA' and not addr.version == 6:
+                    raise CallError(f'{addr.compressed}: not an IPv6 address')
+
+                directive = ' '.join([
+                    'update',
+                    entry['command'].lower(),
+                    entry['name'],
+                    str(entry['ttl']),
+                    entry['type'],
+                    addr.compressed,
+                    '\n'
+                ])
+
+                tmpfile.write(directive.encode())
+                if entry['do_ptr']:
+                    ptrs.append(addr.reverse_pointer)
+
+            if ptrs:
+                # additional newline means "send"
+                # in this case we send our A and AAAA changes
+                # prior to sending our PTR changes
+                tmpfile.write(b'\n')
+
+                for ptr in ptrs:
+                    directive = ' '.join([
+                        'update',
+                        entry['command'].lower(),
+                        ptr,
+                        str(entry['ttl']),
+                        'PTR',
+                        entry['name'],
+                        '\n'
+                    ])
+                    tmpfile.write(directive.encode())
+
+            tmpfile.write(b'send\n')
+            tmpfile.file.flush()
+
+            cmd = ['nsupdate', '-t', str(data['timeout'])]
+            if data['use_kerberos']:
+                cmd.append('-g')
+
+            cmd.append(tmpfile.name)
+
+            nsupdate_proc = subprocess.run(cmd, capture_output=True)
+
+            # tsig verify failure is possible if reverse zone is misconfigured
+            # Unfortunately, this is quite common and so we have to skip it.
+            #
+            # Future enhancement can be to perform forward-lookups to validate
+            # changes were applied properly
+            if nsupdate_proc.returncode and 'tsig verify failure' not in nsupdate_proc.stderr.decode():
+                raise CallError(f'nsupdate failed: {nsupdate_proc.stderr.decode()}')

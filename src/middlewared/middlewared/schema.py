@@ -339,11 +339,21 @@ class URI(Str):
 
 
 class IPAddr(Str):
+    excluded_addr_types = [
+        'MULTICAST',
+        'PRIVATE',
+        'GLOBAL',
+        'UNSPECIFIED',
+        'RESERVED',
+        'LOOPBACK',
+        'LINK_LOCAL'
+    ]
 
     def __init__(self, *args, **kwargs):
         self.cidr = kwargs.pop('cidr', False)
         self.network = kwargs.pop('network', False)
         self.network_strict = kwargs.pop('network_strict', False)
+        self.address_types = kwargs.pop('excluded_address_types', [])
 
         self.v4 = kwargs.pop('v4', True)
         self.v6 = kwargs.pop('v6', True)
@@ -376,6 +386,27 @@ class IPAddr(Str):
 
         super(IPAddr, self).__init__(*args, **kwargs)
 
+    def __check_permitted_addr_types(self, value):
+        if not self.address_types:
+            return
+
+        to_check = self.factory(value)
+
+        if isinstance(to_check, (ipaddress.IPv4Interface, ipaddress.IPv6Interface)):
+            to_check = to_check.ip
+
+        for addr_type in self.address_types:
+            if addr_type not in self.excluded_addr_types:
+                raise CallError(
+                    f'INTERNAL ERROR: {addr_type} not in supported types. '
+                    'This indicates a programming error in API endpoint.'
+                )
+
+            if to_check.__getattribute__(f'is_{addr_type.lower()}'):
+                raise ValueError(
+                    f'{str(to_check)}: {addr_type.lower()} addresses are not permitted.'
+                )
+
     def clean(self, value):
         value = super().clean(value)
 
@@ -401,6 +432,9 @@ class IPAddr(Str):
                     value = str(addr)
                     if zone_index is not None:
                         value += f'%{zone_index}'
+
+                self.__check_permitted_addr_types(value)
+
             except ValueError as e:
                 raise Error(self.name, str(e))
 

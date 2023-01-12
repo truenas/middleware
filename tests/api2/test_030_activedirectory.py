@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import ipaddress
 import json
 import sys
 import pytest
@@ -11,7 +12,7 @@ sys.path.append(apifolder)
 from assets.REST.directory_services import active_directory, override_nameservers
 from assets.REST.pool import dataset
 from auto_config import pool_name, ip, user, password, ha
-from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, wait_on_job
+from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
 from protocols import smb_connection, smb_share
 
 if ha and "hostname_virtual" in os.environ:
@@ -73,6 +74,79 @@ def test_01_set_nameserver_for_ad(set_ad_nameserver):
     assert set_ad_nameserver[1]['nameserver1'] == ADNameServer
 
 
+def test_02_cleanup_nameserver(request):
+    results = POST("/activedirectory/domain_info/", AD_DOMAIN)
+    assert results.status_code == 200, results.text
+    domain_info = results.json()
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.get_cred',
+        'params': [{
+            'dstype': 'DS_TYPE_ACTIVEDIRECTORY',
+            'conf': {
+                'bindname': ADUSERNAME,
+                'bindpw': ADPASSWORD,
+                'domainname': AD_DOMAIN,
+            }
+        }],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    cred = res['result']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'kerberos.do_kinit',
+        'params': [{
+            'krb5_cred': cred,
+            'kinit-options': {
+                'kdc_override': {
+                    'domain': AD_DOMAIN.upper(),
+                    'kdc': domain_info['KDC server']
+                },
+            }
+        }],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    # Now that we have proper kinit as domain admin
+    # we can nuke stale DNS entries from orbit.
+    #
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'dnsclient.forward_lookup',
+        'params': [{'names': [f'{hostname}.{AD_DOMAIN}']}]
+    })
+    error = res.get('error')
+
+    if error and error['trace']['class'] == 'NXDOMAIN':
+        # No entry, nothing to do
+        return
+
+    assert error is None, str(error)
+    ips_to_remove = [rdata['address'] for rdata in res['result']]
+
+    payload = []
+    for i in ips_to_remove:
+        addr = ipaddress(i)
+        payload.append({
+            'command': 'DELETE',
+            'name': f'{hostname}.{AD_DOMAIN}.',
+            'address': str(addr),
+            'type': 'A' if addr.version == 4 else 'AAAA'
+        })
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'dns.nsupdate',
+        'params': [{'ops': payload}]
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+
 def test_03_get_activedirectory_data(request):
     global results
     results = GET('/activedirectory/')
@@ -125,6 +199,17 @@ def test_07_enable_leave_activedirectory(request):
         assert results.json()['pw_name'] == AD_USER, results.text
         domain_users_id = results.json()['pw_gid']
 
+        res = make_ws_request(ip, {
+            'msg': 'method',
+            'method': 'dnsclient.forward_lookup',
+            'params': [{'names': [f'{hostname}.{AD_DOMAIN}']}],
+        })
+        error = res.get('error')
+        assert error is None, str(error)
+        assert len(res['result']) != 0
+
+        addresses = [x['address'] for x in res['result']]
+        assert ip in addresses
 
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
