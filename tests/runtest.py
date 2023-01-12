@@ -8,7 +8,7 @@ from sys import argv, exit
 import os
 import getopt
 import sys
-import random
+import secrets
 import string
 
 workdir = os.getcwd()
@@ -118,7 +118,7 @@ if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in loca
     exit()
 
 # create random hostname and random fake domain
-digit = ''.join(random.choices(string.digits, k=2))
+digit = ''.join(secrets.choice((string.ascii_uppercase + string.digits)) for i in range(10))
 hostname = f'test{digit}'
 domain = f'test{digit}.nb.ixsystems.com'
 artifacts = f"{workdir}/artifacts/"

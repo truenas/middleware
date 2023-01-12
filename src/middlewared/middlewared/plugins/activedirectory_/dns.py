@@ -1,12 +1,10 @@
 import dns
 import enum
 import errno
+import ipaddress
 import socket
 
 from middlewared.service import CallError, private, Service
-from middlewared.plugins.kerberos import krb5ccache
-from middlewared.plugins.smb import SMBCmd
-from middlewared.utils import run
 
 
 class SRV(enum.Enum):
@@ -26,31 +24,85 @@ class ActiveDirectoryService(Service):
         service = "activedirectory"
 
     @private
-    async def register_dns(self, ad, smb, smb_ha_mode):
-        await self.middleware.call('kerberos.check_ticket')
-        if not ad['allow_dns_updates'] or smb_ha_mode == 'STANDALONE':
+    async def unregister_dns(self, ad):
+        if not ad['allow_dns_updates']:
             return
+
+        netbiosname = (await self.middleware.call('smb.config'))['netbiosname_local']
+        domain = ad['domainname']
+
+        hostname = f'{netbiosname}.{domain}'
+        try:
+            dns_addresses = set([x['address'] for x in await self.middleware.call('dnsclient.forward_lookup', {
+                'names': [hostname]
+            })])
+        except dns.resolver.NXDOMAIN:
+            self.logger.warning(
+                f'DNS lookup of {hostname}. failed with NXDOMAIN. '
+                'This may indicate that DNS entries for the computer account have already been deleted; '
+                'however, it may also indicate the presence of larger underlying DNS configuration issues.'
+            )
+            return
+
+        ips_in_use = set([x['address'] for x in await self.middleware.call('interface.ip_in_use')])
+        if not dns_addresses & ips_in_use:
+            # raise a CallError here because we don't want someone fat-fingering
+            # input and removing an unrelated computer in the domain.
+            raise CallError(
+                f'DNS records indicate that {hostname} may be associated '
+                'with a different computer in the domain. Forward lookup returned the '
+                f'following results: {", ".join(dns_addresses)}.'
+            )
+
+        payload = []
+
+        for ip in dns_addresses:
+            addr = ipaddress.ip_address(ip)
+            payload.append({
+                'command': 'DELETE',
+                'name': hostname,
+                'address': str(addr),
+                'type': 'A' if addr.version == 4 else 'AAAA'
+            })
+
+        try:
+            await self.middleware.call('dns.nsupdate', {'ops': payload})
+        except CallError as e:
+            self.logger.warning(f'Failed to update DNS with payload [{payload}]: {e.errmsg}')
+
+    @private
+    async def register_dns(self, ad, smb, smb_ha_mode):
+        if not ad['allow_dns_updates']:
+            return
+
+        await self.middleware.call('kerberos.check_ticket')
 
         hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
         if smb_ha_mode == 'CLUSTERED':
             vips = (await self.middleware.call('smb.bindip_choices')).values()
         else:
-            vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use', {'static': True}))]
+            vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use'))]
 
         smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
         to_register = set(vips) & set(smb_bind_ips)
+
         hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            'ads', 'dns', 'register', hostname
-        ]
-        cmd.extend(to_register)
-        netdns = await run(cmd, check=False)
-        if netdns.returncode != 0:
-            self.logger.debug("hostname: %s, ips: %s, text: %s",
-                              hostname, to_register, netdns.stderr.decode())
+
+        payload = []
+
+        for ip in to_register:
+            addr = ipaddress.ip_address(ip)
+            payload.append({
+                'command': 'ADD',
+                'name': hostname,
+                'address': str(addr),
+                'type': 'A' if addr.version == 4 else 'AAAA'
+            })
+
+        try:
+            await self.middleware.call('dns.nsupdate', {'ops': payload})
+        except CallError as e:
+            self.logger.warning(f'Failed to update DNS with payload [{payload}]: {e.errmsg}')
 
     @private
     def port_is_listening(self, host, port, timeout=1):
@@ -153,3 +205,16 @@ class ActiveDirectoryService(Service):
                               cnt, srv, output)
 
         return output
+
+    @private
+    async def netbiosname_is_ours(self, netbios_name, domain_name):
+        try:
+            dns_addresses = set([x['address'] for x in await self.middleware.call('dnsclient.forward_lookup', {
+                'names': [f'{netbios_name}.{domain_name}']
+            })])
+        except dns.resolver.NXDOMAIN:
+            raise CallError(f'DNS forward lookup of [{netbios_name}] failed.', errno.ENOENT)
+
+        ips_in_use = set([x['address'] for x in await self.middleware.call('interface.ip_in_use')])
+
+        return bool(dns_addresses & ips_in_use)
