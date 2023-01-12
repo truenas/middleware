@@ -560,7 +560,7 @@ class Job:
         job.progress = job_dict['progress']
         job.result = job_dict['result']
         job.error = job_dict['error']
-        job.error = job_dict['exception']
+        job.exception = job_dict['exception']
         job.state = State.__members__[job_dict['state']]
         job.time_started = job_dict['time_started']
         job.time_finished = job_dict['time_finished']
