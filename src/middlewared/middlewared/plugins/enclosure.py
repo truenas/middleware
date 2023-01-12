@@ -69,6 +69,10 @@ class EnclosureService(CRUDService):
     @filterable
     def query(self, filters, options):
         enclosures = []
+        if self.middleware.call_sync('truenas.get_chassis_hardware') == 'TRUENAS-UNKNOWN':
+            # this feature is only available on hardware that ix sells
+            return enclosures
+
         for enc in self.__get_enclosures():
             enclosure = {
                 "id": enc.encid,
