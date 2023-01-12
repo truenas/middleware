@@ -2,6 +2,8 @@ from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.schema import Dict, returns, Str
 from middlewared.service import accepts, private, Service
 
+from .utils import dataset_mountpoint
+
 
 class PoolDatasetService(Service):
 
@@ -14,7 +16,7 @@ class PoolDatasetService(Service):
         """
         Get a mapping of services identifiers and labels that can be restart on dataset unlock.
         """
-        await self.middleware.call('pool.dataset.get_instance', dataset)
+        dataset_instance = await self.middleware.call('pool.dataset.get_instance', dataset)
         services = {
             'cifs': 'SMB',
             'ftp': 'FTP',
@@ -41,13 +43,13 @@ class PoolDatasetService(Service):
             ) if k in check_services
         })
 
-        if await self.unlock_restarted_vms(dataset):
+        if await self.middleware.call('pool.dataset.unlock_restarted_vms', dataset_instance):
             result['vms'] = 'Virtual Machines'
 
         return result
 
     @private
-    async def unlock_restarted_vms(self, dataset_name):
+    async def unlock_restarted_vms(self, dataset):
         result = []
         for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
             for device in vm['devices']:
@@ -58,24 +60,31 @@ class PoolDatasetService(Service):
                 if not path:
                     continue
 
-                if path.startswith(zvol_name_to_path(dataset_name) + '/') or path.startswith(f'/mnt/{dataset_name}/'):
+                if (
+                    (
+                        dataset['type'] == 'FILESYSTEM' and
+                        (mountpoint := dataset_mountpoint(dataset)) and
+                        path.startswith(mountpoint + '/')
+                    ) or
+                    (dataset['type'] == 'VOLUME' and path.startswith(zvol_name_to_path(dataset['name']) + '/'))
+                ):
                     result.append(vm)
                     break
 
         return result
 
     @private
-    async def restart_vms_after_unlock(self, dataset_name):
-        for vm in await self.unlock_restarted_vms(dataset_name):
-            if await self.middleware.call('vm.status', vm['id'])['state'] == 'RUNNING':
+    async def restart_vms_after_unlock(self, dataset):
+        for vm in await self.middleware.call('pool.dataset.unlock_restarted_vms', dataset):
+            if (await self.middleware.call('vm.status', vm['id']))['state'] == 'RUNNING':
                 stop_job = await self.middleware.call('vm.stop', vm['id'])
                 await stop_job.wait()
                 if stop_job.error:
                     self.logger.error('Failed to stop %r VM: %s', vm['name'], stop_job.error)
             try:
-                self.middleware.call_sync('vm.start', vm['id'])
+                await self.middleware.call('vm.start', vm['id'])
             except Exception:
-                self.logger.error('Failed to start %r VM after %r unlock', vm['name'], dataset_name, exc_info=True)
+                self.logger.error('Failed to start %r VM after %r unlock', vm['name'], dataset['name'], exc_info=True)
 
     @private
     async def restart_services_after_unlock(self, dataset_name, services_to_restart):
