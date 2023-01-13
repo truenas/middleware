@@ -100,8 +100,13 @@ class PoolService(Service):
 
     async def _resize_disk(self, part_data, encrypted_pool, geli_resize):
         partition_number = part_data['partition_number']
-        if not part_data['disk'].startswith(('nvd', 'vtbd', 'pmem')):
-            await run('camcontrol', 'reprobe', part_data['disk'])
+        if part_data['disk'].startswith(('da', 'ada', 'nda', 'sdda', 'cd')):
+            try:
+                await run('camcontrol', 'reprobe', part_data['disk'])
+            except Exception:
+                # this isn't fatal
+                self.logger.warning('Failed to camcontrol reprobe {part_data["disk"]!r}', exc_info=True)
+
         await run('gpart', 'recover', part_data['disk'])
         await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
 
