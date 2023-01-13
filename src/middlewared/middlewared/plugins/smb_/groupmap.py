@@ -130,9 +130,12 @@ class SMBService(Service):
 
         ad_state = await self.middleware.call('activedirectory.get_state')
         if ad_state == 'HEALTHY':
-            domain_info = await self.middleware.call('idmap.domain_info',
-                                                     'DS_TYPE_ACTIVEDIRECTORY')
-            domain_sid = domain_info['sid']
+            try:
+                domain_info = await self.middleware.call('idmap.domain_info',
+                                                         'DS_TYPE_ACTIVEDIRECTORY')
+                domain_sid = domain_info['sid']
+            except Exception:
+                self.logger.warning('Failed to retrieve idmap domain info', exc_info=True)
 
         """
         Administrators should only have local and domain admins, and a user-
