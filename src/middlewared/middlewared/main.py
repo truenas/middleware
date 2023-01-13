@@ -1028,6 +1028,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             )
         )
 
+    console_error_counter = 0
+
     def _console_write(self, text, fill_blank=True, append=False):
         """
         Helper method to write the progress of middlewared loading to the
@@ -1036,6 +1038,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         There are some cases where loading will take a considerable amount of time,
         giving user at least some basic feedback is fundamental.
         """
+        console_error_log_max = 3
+        if self.console_error_counter == console_error_log_max:
+            # sigh, truenas is installed on "gamer" hardware which
+            # is miserable. The amount of quirks seen on this style
+            # of hardware is astounding really. If we continually
+            # fail to log to console, there is no reason to spam
+            # our log file with it.
+            return
+
         # False means we are running in a terminal, no console needed
         self.logger.trace('_console_write %r', text)
         if self.__console_io is False:
@@ -1047,6 +1058,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             try:
                 self.__console_io = open('/dev/console', 'w')
             except Exception:
+                self.console_error_counter += 1
                 return
             try:
                 # We need to make sure we only try to write to console one time
@@ -1078,9 +1090,15 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.__console_io.flush()
             return writes
         except OSError:
+            self.console_error_counter += 1
             self.logger.debug('Failed to write to console', exc_info=True)
         except Exception:
+            self.console_error_counter += 1
             pass
+
+        # be sure and reset error counter after we successfully log
+        # to the console
+        self.console_error_counter = 0
 
     def __notify_startup_progress(self):
         systemd_notify(f'EXTEND_TIMEOUT_USEC={SYSTEMD_EXTEND_USECS}')
