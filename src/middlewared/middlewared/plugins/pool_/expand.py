@@ -105,7 +105,7 @@ class PoolService(Service):
                 await run('camcontrol', 'reprobe', part_data['disk'])
             except Exception:
                 # this isn't fatal
-                self.logger.warning('Failed to camcontrol reprobe {part_data["disk"]!r}', exc_info=True)
+                self.logger.warning(f'Failed to camcontrol reprobe {part_data["disk"]!r}', exc_info=True)
 
         await run('gpart', 'recover', part_data['disk'])
         await run('gpart', 'resize', '-a', '4k', '-i', str(partition_number), part_data['disk'])
