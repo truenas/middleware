@@ -46,7 +46,7 @@ class NVDIMMAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         alerts = []
-        if self.middleware.call_sync('failover.hardware') != 'BHYVE':
+        if self.middleware.call_sync('truenas.get_chassis_hardware').endswith(('M40', 'M50', 'M60')):
             for nvdimm in self.get_ndctl_output():
                 lifetime = 100 - nvdimm['health']['life_used_percentage']
                 alert = None
