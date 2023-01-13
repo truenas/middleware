@@ -11,11 +11,20 @@
             if pnn != recmaster:
                 enabled = False
 
+    smb_config = middleware.call_sync('smb.config')
+    if smb_config['bindip']:
+        interfaces = config['bind_ip']
+    else:
+        # We use bindip_choices because this is cluster-aware and will
+        # give ctdb public IPs
+        interfaces = list(middleware.call_sync('smb.bindip_choices').values())
+
     conf = {
-        "realm": middleware.call_sync('smb.getparm', 'realm', 'GLOBAL'),
-        "netbios_name": middleware.call_sync('smb.getparm', 'netbios name', 'GLOBAL'),
-        "workgroup": middleware.call_sync('smb.getparm', 'workgroup', 'GLOBAL'),
-        "enabled": middleware.call_sync('network.configuration.config')['service_announcement']['wsd']
+        'realm': middleware.call_sync('smb.getparm', 'realm', 'GLOBAL'),
+        'netbios_name': smb_config['netbiosname_local'],
+        'workgroup': smb_config['workgroup'],
+        'interfaces': interfaces,
+        'enabled': middleware.call_sync('network.configuration.config')['service_announcement']['wsd']
     }
 
     try:
