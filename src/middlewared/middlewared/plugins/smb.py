@@ -1470,6 +1470,11 @@ class SharingSMBService(SharingService):
         if 'XATTR' not in this_mnt['super_opts']:
             verrors.add(schema, 'Extended attribute support is required for SMB shares')
 
+        k8s_dataset = self.middleware.call_sync('kubernetes.config')['dataset']
+        if k8s_dataset and Path(this_mnt['mount_source']) in Path(k8s_dataset).parents:
+            verrors.add(schema, 'SMB shares containing the apps dataset are not permitted')
+            return
+
         current_acltype = get_acl_type(this_mnt['super_opts'])
         child_mounts = filter_list(list(mntinfo.values()), [['mountpoint', '^', path]])
         for mnt in child_mounts:
