@@ -177,6 +177,9 @@ def devices_xml(vm_data, context):
             }
         ))
 
+    devices.append(create_element('channel', type='unix', attribute_dict={
+        'children': [create_element('target', type='virtio', name='org.qemu.guest_agent.0')]
+    }))
     devices.append(create_element('serial', type='pty'))
     return create_element('devices', attribute_dict={'children': devices})
 
