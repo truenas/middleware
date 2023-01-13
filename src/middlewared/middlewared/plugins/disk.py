@@ -249,6 +249,14 @@ class DiskService(CRUDService):
         self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
+
+        # prevent breaking the ability to start the smartd service if user
+        # provides very obvious params that conflict with our own
+        invalid_smart_flags = ['-a', '-d', '-n', '-W', '-m', '-M', 'exec']
+        for invalid in invalid_smart_flags:
+            if invalid in new['smartoptions']:
+                raise ValidationError('disk.smartoptions', f'"{invalid}" is an invalid extra smart option')
+
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             if new['kmip_uid']:
@@ -279,11 +287,6 @@ class DiskService(CRUDService):
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
             else:
                 await self.middleware.call('disk.toggle_smart_off', new['name'])
-
-            invalid_smart_flags = ['-a', '-d', '-n', '-W', '-m', '-M', 'exec']
-            for invalid in invalid_smart_flags:
-                if invalid in new['smartoptions']:
-                    raise ValidationError('disk.smartoptions', f'"{invalid}" is an invalid extra smart option')
 
             await self.middleware.call('disk.update_smartctl_args_for_disks')
             await self.middleware.call('service.restart', 'collectd')
