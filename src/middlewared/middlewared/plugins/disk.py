@@ -4,7 +4,7 @@ import subprocess
 from sqlalchemy.exc import IntegrityError
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
-from middlewared.service import filterable, private, CallError, CRUDService
+from middlewared.service import filterable, private, CallError, CRUDService, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -279,6 +279,11 @@ class DiskService(CRUDService):
                 await self.middleware.call('disk.toggle_smart_on', new['name'])
             else:
                 await self.middleware.call('disk.toggle_smart_off', new['name'])
+
+            invalid_smart_flags = ['-a', '-d', '-n', '-W', '-m', '-M', 'exec']
+            for invalid in invalid_smart_flags:
+                if invalid in new['smartoptions']:
+                    raise ValidationError('disk.smartoptions', f'"{invalid}" is an invalid extra smart option')
 
             await self.middleware.call('disk.update_smartctl_args_for_disks')
             await self.middleware.call('service.restart', 'collectd')
