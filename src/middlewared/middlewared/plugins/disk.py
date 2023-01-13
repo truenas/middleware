@@ -4,7 +4,7 @@ import subprocess
 from sqlalchemy.exc import IntegrityError
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Str
-from middlewared.service import filterable, private, CallError, CRUDService
+from middlewared.service import filterable, private, CallError, CRUDService, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -249,6 +249,14 @@ class DiskService(CRUDService):
         self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
+
+        # prevent breaking the ability to start the smartd service if user
+        # provides very obvious params that conflict with our own
+        invalid_smart_flags = ['-a', '-d', '-n', '-W', '-m', '-M', 'exec']
+        for invalid in invalid_smart_flags:
+            if invalid in new['smartoptions']:
+                raise ValidationError('disk.smartoptions', f'"{invalid}" is an invalid extra smart option')
+
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             if new['kmip_uid']:
