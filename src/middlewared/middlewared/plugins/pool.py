@@ -1032,34 +1032,23 @@ class PoolService(CRUDService):
         filters = []
         if oid:
             filters.append(('id', '=', oid))
+        cache = await self.middleware.call('disk.label_to_dev_disk_cache')
+        disks_in_db = await self.middleware.call('datastore.query', 'storage.disk', [], {'prefix': 'disk_'})
         for pool in await self.query(filters):
             if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
                 for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
-            elif osc.IS_FREEBSD:
-                for encrypted_disk in await self.middleware.call(
-                    'datastore.query',
-                    'storage.encrypteddisk',
-                    [('encrypted_volume', '=', pool['id'])]
-                ):
-                    # Use provider and not disk because a disk is not a guarantee
+            else:
+                args = ('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])])
+                for prov in await filter(lambda x: x['encrypted_provider'], await self.middleware.call(*args)):
+                    # Use encrypted_provider and not disk because a disk is not a guarantee
                     # to point to correct device if its locked and its not in the system
                     # (e.g. temporarily). See #50291
-                    prov = encrypted_disk["encrypted_provider"]
-                    if not prov:
-                        continue
-
-                    disk_name = await self.middleware.call('disk.label_to_disk', prov)
-                    if not disk_name:
-                        continue
-
-                    disk = await self.middleware.call('disk.query', [('name', '=', disk_name)])
-                    if not disk:
-                        continue
-                    disk = disk[0]
-
-                    if os.path.exists(os.path.join("/dev", disk['devname'])):
-                        yield disk['devname']
+                    if disk_name := await self.middleware.call('disk.label_to_disk', prov, False, cache):
+                        for d in filter(lambda x: x['name'] == disk_name, disks_in_db):
+                            disk_path = os.path.join('/dev', d['devname'])
+                            if await self.middleware.run_in_thread(os.path.exists, disk_path):
+                                yield d['devname']
 
     @item_method
     @accepts(Int('id'), Dict(
