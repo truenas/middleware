@@ -86,20 +86,26 @@ class KubernetesService(ConfigService):
         return can_run_apps
 
     @private
+    def missing_apps_dataset(self, apps_ds):
+        required_datasets = self.middleware.call_sync('kubernetes.kubernetes_datasets', apps_ds)
+        existing_datasets = set([
+            ds['id'] for ds in self.middleware.call_sync(
+                'zfs.dataset.query', [
+                    ['id', 'in', required_datasets]
+                ], {'extra': {'retrieve_children': False, 'properties': []}}
+            )
+        ])
+        return list(set(required_datasets) ^ existing_datasets)
+
+    @private
     def check_config_on_apps_dataset(self, pool, verrors, force, schema_name):
         apps_ds = applications_ds_name(pool)
         if force or not self.middleware.call_sync(
-            'zfs.dataset.query', [['id', '=', apps_ds]], {'extra': {'retrieve_children': False}}
+            'zfs.dataset.query', [['id', '=', apps_ds]], {'extra': {'retrieve_children': False, 'properties': []}}
         ):
             return
 
-        missing = []
-        for ds_name in self.middleware.call_sync('kubernetes.kubernetes_datasets', apps_ds):
-            if not self.middleware.call_sync(
-                'zfs.dataset.query', [['id', '=', ds_name]], {'extra': {'retrieve_children': False}}
-            ):
-                missing.append(ds_name)
-
+        missing = self.missing_apps_dataset(apps_ds)
         force_str = 'Specify force to override this and let system re-initialize applications.'
         if missing:
             verrors.add(
@@ -435,14 +441,24 @@ class KubernetesService(ConfigService):
         In case user is switching pools and the new desired pool has not been configured for kubernetes before, it
         is possible to replicate data from old pool to new pool with setting `migrate_applications` attribute. This
         will replicate contents of old pool's ix-applications dataset to the new pool.
+
+        `force` is a boolean which can be set to bypass validation which does not allow users to select a pool which
+        is potentially corrupt by having a partially initialized ix-applications dataset. In that case the cluster
+        would be re-initialized and user would still be able to select such a pool.
         """
         old_config = await self.config()
         old_config.pop('dataset')
         config = old_config.copy()
         config.update(data)
+        force_flag = config.get('force', False)
         migrate = config.get('migrate_applications')
 
         await self.validate_data(config, 'kubernetes_update', old_config)
+
+        apps_ds = applications_ds_name(config['pool']) if config['pool'] else ''
+        if apps_ds and force_flag and await self.middleware.call('kubernetes.missing_apps_dataset', apps_ds):
+            await self.middleware.call('zfs.dataset.delete', apps_ds, {'force': True, 'recursive': True})
+
         migration_options = config.pop('migration_options', {})
         if len(set(old_config.items()) ^ set(config.items())) > 0:
             await self.middleware.call('chart.release.clear_update_alerts_for_all_chart_releases')
