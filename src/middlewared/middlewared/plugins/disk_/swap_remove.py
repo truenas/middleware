@@ -54,6 +54,9 @@ class DiskService(Service):
 
         swap_devices = await self.middleware.call('disk.get_swap_devices')
         for mirror in await self.middleware.call('disk.get_swap_mirrors'):
+            if not set([p['disk'] for p in mirror['providers']]).intersection(set(disks)):
+                continue
+
             devname = mirror['encrypted_provider'] or mirror['real_path']
             if devname in swap_devices:
                 await run('swapoff', devname)
