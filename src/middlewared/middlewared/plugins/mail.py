@@ -309,13 +309,9 @@ class MailService(ConfigService):
             raise verrors
         to = message.get('to')
         if not to:
-            to = [
-                self.middleware.call_sync(
-                    'user.query', [('username', '=', 'root')], {'get': True}
-                )['email']
-            ]
-            if not to[0]:
-                raise CallError('Email address for root is not configured')
+            to = self.middleware.call_sync('mail.local_administrators_emails')
+            if not to:
+                raise CallError('None of the local administrators has an e-mail address configured')
 
         if message.get('attachments'):
             job.check_pipe("input")
