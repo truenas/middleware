@@ -495,11 +495,11 @@ class MailService(ConfigService):
 
     @private
     async def local_administrators_emails(self):
-        return [
+        return list(set(
             user["email"]
             for user in await self.middleware.call("privilege.local_administrators")
             if user["email"]
-        ]
+        ))
 
     @private
     async def local_administrator_email(self):
