@@ -304,7 +304,7 @@ class MailService(ConfigService):
             else:
                 raise CallError('This message was already sent in the given interval')
 
-        verrors = self.__password_verify(config['pass'], 'mail-config.pass')
+        verrors = self.__password_verify(config['pass'], 'mail_update.pass')
         if verrors:
             raise verrors
         to = message.get('to')
