@@ -17,9 +17,10 @@ class GroupService(Service):
     @private
     async def get_password_enabled_users(self, gids, exclude_user_ids, groups=None):
         if groups is None:
-            groups = await self.middleware.call('group.query')
+            groups = await self.middleware.call("group.query")
 
         result = []
+        result_user_ids = set()
 
         groups = filter_list(groups, [["gid", "in", gids]])
         for membership in await self.middleware.call(
@@ -31,6 +32,9 @@ class GroupService(Service):
             ],
             {"prefix": "bsdgrpmember_"}
         ):
+            if membership["user"]["id"] in result_user_ids:
+                continue
+
             if membership["user"]["bsdusr_locked"]:
                 continue
 
@@ -41,5 +45,6 @@ class GroupService(Service):
                 continue
 
             result.append({k.removeprefix("bsdusr_"): v for k, v in membership["user"].items()})
+            result_user_ids.add(membership["user"]["id"])
 
         return result
