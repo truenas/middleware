@@ -91,8 +91,28 @@ If you know that you'll need to backport a feature you're working into a stable 
 generate your migration in the stable branch first. Then just cherry-pick all your code into the master branch and
 generate a merging migration.
 
+.. note::
+    The reason for this is the following. Let stable branch have migrations `a → b` and `b → c`, and master
+    branch have migrations `a → b`, `b → c` and `c → d`. If you generate a new migration in master branch, it will
+    be a migration which parent is ``d``, and it will fail to apply in stable branch because stable branch has no
+    `c → d` migration.
+
 All migrations that were created in the stable branch must be backported to the master branch. Otherwise, TrueNAS
 upgrade will break.
+
+.. note::
+    Let stable branch most recent migration be `xxx → yyy` and master branch most recent migration be `xxx → zzz`.
+    An attempt to upgrade from stable branch (where `HEAD` is `yyy`) to master branch will fail as master branch
+    code does not know nothing about `yyy` migration; the situation will be similar to the "detached head state"
+    in git.
+
+.. warning::
+    This section is only talking about migration tree consistency and disregards the database upgrade logic itself.
+    Two migrations with same `upgrade` function definition but different `revision` and `down_revision` variable values
+    are considered to be different migrations and, if the migration tree is correct, they both will be executed (and if
+    the tree is not correct then TrueNAS upgrade will fail). For example, if you try to backport a migration from
+    master branch to stable branch by copying it and changing `revision` and `down_revision` variable values, you will
+    just introduce a new migration and you will have to backport it back to ensure the tree correctness.
 
 Cherry-picking migrations
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -104,7 +124,8 @@ you have to do the following:
   will be the same `upgrade` code, but different file name, `revision` and `down_revision` values).
 * Change the code to be idempotent so it won't fail if the corresponding DB changes were already made.
 * Merge newly created stable branch migration to the master branch.
-* Also make the original master migration code idempotent.
+* Also make the original master migration code idempotent (highly likely, it'll just be the same code as in stable
+  branch).
 
 Applicability of database migrations
 ------------------------------------
