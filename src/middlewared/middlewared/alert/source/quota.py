@@ -115,13 +115,10 @@ class QuotaAlertSource(ThreadedAlertSource):
                         self.middleware.call_sync(
                             'user.get_user_obj', {'uid': owner}
                         )
-                        user_exists = True
                     except KeyError:
-                        user_exists = False
                         to = None
                         logger.debug("Unable to query bsduser with uid %r", owner)
-
-                    if user_exists:
+                    else:
                         try:
                             bsduser = self.middleware.call_sync(
                                 "datastore.query",

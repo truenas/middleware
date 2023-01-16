@@ -304,18 +304,14 @@ class MailService(ConfigService):
             else:
                 raise CallError('This message was already sent in the given interval')
 
-        verrors = self.__password_verify(config['pass'], 'mail-config.pass')
+        verrors = self.__password_verify(config['pass'], 'mail_update.pass')
         if verrors:
             raise verrors
         to = message.get('to')
         if not to:
-            to = [
-                self.middleware.call_sync(
-                    'user.query', [('username', '=', 'root')], {'get': True}
-                )['email']
-            ]
-            if not to[0]:
-                raise CallError('Email address for root is not configured')
+            to = self.middleware.call_sync('mail.local_administrators_emails')
+            if not to:
+                raise CallError('None of the local administrators has an e-mail address configured')
 
         if message.get('attachments'):
             job.check_pipe("input")
@@ -495,11 +491,11 @@ class MailService(ConfigService):
 
     @private
     async def local_administrators_emails(self):
-        return [
+        return list(set(
             user["email"]
             for user in await self.middleware.call("privilege.local_administrators")
             if user["email"]
-        ]
+        ))
 
     @private
     async def local_administrator_email(self):
