@@ -1,7 +1,17 @@
+import re
+
 from middlewared.utils.allowlist import Allowlist
 
 
 class SessionManagerCredentials:
+    @classmethod
+    def class_name(cls):
+        return re.sub(
+            r"([A-Z])",
+            r"_\1",
+            cls.__name__.replace("SessionManagerCredentials", "")
+        ).lstrip("_").upper()
+
     def login(self):
         pass
 
