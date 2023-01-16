@@ -1517,6 +1517,7 @@ class PoolService(CRUDService):
         self.middleware.create_task(self.middleware.call('service.restart', 'collectd'))
         await self.middleware.call_hook('pool.post_import', {'passphrase': data.get('passphrase'), **pool})
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+        self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
 
         return True
