@@ -767,6 +767,7 @@ class UserService(CRUDService):
         Int('pw_uid'),
         Int('pw_gid'),
         List('grouplist'),
+        register=True,
     ))
     async def get_user_obj(self, data):
         """
