@@ -28,10 +28,13 @@ class TokenManager:
         self.tokens = {}
 
     def create(self, ttl, attributes, match_origin, parent_credentials):
-        attributes = attributes or {}
+        credentials = parent_credentials
+        if isinstance(credentials, TokenSessionManagerCredentials):
+            if root_credentials := credentials.token.root_credentials():
+                credentials = root_credentials
 
         token = generate_token(48, url_safe=True)
-        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, parent_credentials)
+        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials)
         return self.tokens[token]
 
     def get(self, token, origin):
@@ -52,7 +55,7 @@ class TokenManager:
         return token
 
     def destroy(self, token):
-        self.tokens.pop(token, None)
+        self.tokens.pop(token.token, None)
 
 
 class Token:
