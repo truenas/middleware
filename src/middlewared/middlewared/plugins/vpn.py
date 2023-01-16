@@ -179,10 +179,11 @@ class OpenVPN:
         return verrors
 
     @staticmethod
-    async def common_validation(middleware, data, schema, mode):
+    async def common_validation(middleware, data, schema, mode, skip_port_validation=False):
         verrors = ValidationErrors()
 
-        verrors.extend(await validate_port(middleware, f'{schema}.port', data['port'], f'openvpn.{mode}'))
+        if not skip_port_validation:
+            verrors.extend(await validate_port(middleware, f'{schema}.port', data['port'], f'openvpn.{mode}'))
 
         if data['cipher'] and data['cipher'] not in OpenVPN.ciphers():
             verrors.add(
@@ -441,7 +442,7 @@ class OpenVPNServerService(SystemServiceService):
                     self.middleware, {
                         **config,
                         'client_certificate': client_certificate_id
-                    }, '', 'client'
+                    }, '', 'client', True
                 )
             )[0]
             if verrors:
