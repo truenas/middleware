@@ -88,3 +88,13 @@ def test_login_with_token_no_match_origin(unprivileged_user):
 
     with client(auth=None) as c:
         assert c.call("auth.login_with_token", token)
+
+
+def test_token_is_for_one_time_use():
+    token = call("auth.generate_token", 300)
+
+    with client(auth=None) as c:
+        assert c.call("auth.login_with_token", token)
+
+    with client(auth=None) as c:
+        assert not c.call("auth.login_with_token", token)
