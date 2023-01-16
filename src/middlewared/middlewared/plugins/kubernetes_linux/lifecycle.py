@@ -188,6 +188,7 @@ class KubernetesService(Service):
             'exec': 'on',
             'setuid': 'on',
             'casesensitivity': 'sensitive',
+            'atime': 'off',
         }
 
     @private
