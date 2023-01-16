@@ -245,7 +245,8 @@ def os_xml(vm_data):
     if vm_data['bootloader'] == 'UEFI':
         children.append(
             create_element(
-                'loader', attribute_dict={'text': '/usr/share/OVMF/OVMF_CODE.fd'}, readonly='yes', type='pflash',
+                'loader', attribute_dict={'text': f'/usr/share/OVMF/{vm_data["bootloader_ovmf"]}'},
+                readonly='yes', type='pflash',
             )
         )
     return create_element('os', attribute_dict={'children': children})
