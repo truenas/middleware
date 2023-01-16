@@ -7,10 +7,13 @@ from middlewared.plugins.vm.devices import CDROM, DISK, NIC, RAW, DISPLAY
 from middlewared.plugins.vm.supervisor.domain_xml import devices_xml
 from middlewared.pytest.unit.middleware import Middleware
 
+GUEST_CHANEL = '<channel type="unix"><target type="virtio" name="org.qemu.guest_agent.0" /></channel>'
+
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': []}, '<devices><serial type="pty" /></devices>'),
-    ({'ensure_display_device': True, 'devices': []}, '<devices><video /><serial type="pty" /></devices>'),
+    ({'ensure_display_device': False, 'devices': []}, f'<devices>{GUEST_CHANEL}<serial type="pty" /></devices>'),
+    ({'ensure_display_device': True, 'devices': []},
+     f'<devices><video />{GUEST_CHANEL}<serial type="pty" /></devices>'),
 ])
 def test_basic_devices_xml(vm_data, expected_xml):
     assert etree.tostring(devices_xml(vm_data, {'devices': []})).decode().strip() == expected_xml
@@ -22,7 +25,7 @@ def test_basic_devices_xml(vm_data, expected_xml):
         'dtype': 'CDROM',
     }]}, '<devices><disk type="file" device="cdrom"><driver name="qemu" type="raw" />'
          '<source file="/mnt/tank/disk.iso" /><target dev="sda" bus="sata" /><boot order="1" />'
-         '</disk><serial type="pty" /></devices>'
+         f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
 ])
 def test_cdrom_xml(vm_data, expected_xml):
@@ -50,7 +53,7 @@ def test_cdrom_xml(vm_data, expected_xml):
     }]}, '<devices><graphics type="spice" port="5912"><listen type="address" address="0.0.0.0" /></graphics>'
          '<controller type="usb" model="nec-xhci" /><input type="tablet" bus="usb" /><video>'
          '<model type="qxl"><resolution x="1024" y="768" /></model></video><channel type="spicevmc">'
-         '<target type="virtio" name="com.redhat.spice.0" /></channel><serial type="pty" /></devices>'
+         f'<target type="virtio" name="com.redhat.spice.0" /></channel>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
 ])
 def test_display_xml(vm_data, expected_xml):
@@ -72,7 +75,8 @@ def test_display_xml(vm_data, expected_xml):
         },
         'dtype': 'NIC',
     }]}, '<devices><interface type="bridge"><source bridge="br0" /><model type="virtio" />'
-         '<mac address="00:a0:99:7e:bb:8a" /></interface><serial type="pty" /></devices>'
+         '<mac address="00:a0:99:7e:bb:8a" /></interface>'
+         f'{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
     ({'ensure_display_device': False, 'devices': [{
         'attributes': {
@@ -83,7 +87,8 @@ def test_display_xml(vm_data, expected_xml):
         },
         'dtype': 'NIC',
     }]}, '<devices><interface type="direct" trustGuestRxFilters="no"><source dev="ens3" mode="bridge" />'
-         '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface><serial type="pty" /></devices>'
+         '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface>'
+         f'{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
     ({'ensure_display_device': False, 'devices': [{
         'attributes': {
@@ -94,7 +99,8 @@ def test_display_xml(vm_data, expected_xml):
         },
         'dtype': 'NIC',
     }]}, '<devices><interface type="direct" trustGuestRxFilters="yes"><source dev="ens3" mode="bridge" />'
-         '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface><serial type="pty" /></devices>'
+         '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface>'
+         f'{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
 ])
 @patch('middlewared.plugins.vm.devices.nic.NIC.is_available', lambda *args: True)
@@ -122,7 +128,7 @@ def test_nic_xml(vm_data, expected_xml):
         'dtype': 'DISK',
     }]}, '<devices><disk type="block" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" />'
          '<source dev="/dev/zvol/pool/boot_1" /><target bus="sata" dev="sda" /><boot order="1" />'
-         '</disk><serial type="pty" /></devices>'
+         f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
 ])
 def test_disk_xml(vm_data, expected_xml):
@@ -146,7 +152,7 @@ def test_disk_xml(vm_data, expected_xml):
         'dtype': 'RAW',
     }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" />'
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><boot order="1" />'
-         '</disk><serial type="pty" /></devices>'
+         f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
     ({'ensure_display_device': False, 'devices': [{
         'attributes': {
@@ -159,7 +165,8 @@ def test_disk_xml(vm_data, expected_xml):
         'dtype': 'RAW',
     }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" />'
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><boot order="1" />'
-         '<blockio logical_block_size="512" physical_block_size="512" /></disk><serial type="pty" /></devices>'
+         '<blockio logical_block_size="512" physical_block_size="512" /></disk>'
+         f'{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
 ])
 def test_raw_xml(vm_data, expected_xml):
