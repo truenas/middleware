@@ -17,7 +17,7 @@ def snmpd_running():
 
 
 def test_truenas_mib_elements(snmpd_running):
-    mib_file = "/usr/local/share/snmp/mibs/TRUENAS-MIB.txt"
+    mib_file = "/usr/local/share/snmp/mibs/FREENAS-MIB.txt"
     with tempfile.NamedTemporaryFile(mode='w') as f:
         lines = ssh(f'cat {mib_file}')
         assert lines
@@ -33,7 +33,7 @@ def test_truenas_mib_elements(snmpd_running):
             text=True,
         )
         assert snmp.returncode == 0, snmp.stderr
-        assert "TRUENAS-MIB::zpoolName.1 = STRING: boot-pool\n" in snmp.stdout
+        assert "FREENAS-MIB::zpoolName.1 = STRING: boot-pool\n" in snmp.stdout
         assert re.search(
-            r"^TRUENAS-MIB::zfsArcSize\.0 = Gauge32: ([1-9][0-9]+)\n", snmp.stdout, re.MULTILINE
+            r"^FREENAS-MIB::zfsArcSize\.0 = Gauge32: ([1-9][0-9]+)\n", snmp.stdout, re.MULTILINE
         )
