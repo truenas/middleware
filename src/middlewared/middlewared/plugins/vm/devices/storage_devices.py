@@ -1,7 +1,7 @@
 import errno
 import os
 
-from middlewared.plugins.zfs_.utils import zvol_name_to_path
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import Bool, Dict, Int, Str
 from middlewared.validators import Match
 
@@ -160,7 +160,15 @@ class DISK(StorageDevice):
 
             if not path:
                 verrors.add('attributes.path', 'Disk path is required.')
-            elif path and not os.path.exists(path):
-                verrors.add('attributes.path', f'Disk path {path} does not exist.', errno.ENOENT)
+            elif not path.startswith('/dev/zvol/'):
+                verrors.add('attributes.path', 'Disk path must start with "/dev/zvol/"')
+            else:
+                zvol = self.middleware.call_sync(
+                    'zfs.dataset.query', [['id', '=', zvol_path_to_name(path)]], {'extra': {'properties': []}}
+                )
+                if not zvol:
+                    verrors.add('attributes.path', 'Zvol referenced by path does not exist', errno.ENOENT)
+                elif zvol[0]['type'] != 'VOLUME':
+                    verrors.add('attributes.path', 'Path specified does not reference to a VOLUME')
 
         super()._validate(device, verrors, old, vm_instance, update)
