@@ -57,6 +57,7 @@ class NFS(object):
         self._mounted = False
         self._user = kwargs.get('user')
         self._password = kwargs.get('password')
+        self._use_kerberos = kwargs.get('kerberos', False)
         self._ip = kwargs.get('ip')
         self._client_platform = kwargs.get('platform')
 
@@ -75,6 +76,13 @@ class NFS(object):
 
 
 class SSH_NFS(NFS):
+
+    def __init__(self, hostname, path, **kwargs):
+        super().__init__(hostname, path, **kwargs)
+        self._mount_user = kwargs.get('mount_user', self._user)
+        self._mount_password = kwargs.get('mount_password', self._password)
+
+
     def acl_from_text(self, text):
         out = []
         for e in text.splitlines():
@@ -91,7 +99,11 @@ class SSH_NFS(NFS):
                 entry["tag"] = principal.lower()
             else:
                 entry["tag"] = "GROUP" if "g" in flags else "USER"
-                entry["id"] = int(principal)
+                if principal.isdigit():
+                    entry["id"] = int(principal)
+                else:
+                    entry["id"] = None
+                    entry['who'] = principal
 
             for c in flags:
                 if c == 'f':
@@ -332,16 +344,15 @@ class SSH_NFS(NFS):
             raise RuntimeError(rv['stderr'])
 
     def mount(self):
-        mkdir = SSH_TEST(f"mkdir {self._localpath}", self._user, self._password, self._ip)
-        cmd = [
-            'mount.nfs',
-            '-o', f'vers={self._version}',
-            f'{self._hostname}:{self._path}',
-            self._localpath
-        ]
-        do_mount = SSH_TEST(" ".join(cmd), self._user, self._password, self._ip)
+        mkdir = SSH_TEST(f"mkdir {self._localpath}", self._mount_user, self._mount_password, self._ip)
+        mnt_opts = f'vers={self._version}'
+        if self._use_kerberos:
+            mnt_opts +=',sec=krb5'
+
+        cmd = ['mount.nfs', '-o', mnt_opts, f'{self._hostname}:{self._path}', self._localpath]
+        do_mount = SSH_TEST(" ".join(cmd), self._mount_user, self._mount_password, self._ip)
         if do_mount['result'] == False:
-            raise RuntimeError(do_mount['output'])
+            raise RuntimeError(do_mount['stderr'])
 
         self._mounted = True
 
@@ -349,7 +360,7 @@ class SSH_NFS(NFS):
         if not self._mounted:
             return
 
-        do_umount = SSH_TEST(f"umount -f {self._localpath}", self._user, self._password, self._ip)
+        do_umount = SSH_TEST(f"umount -f {self._localpath}", self._mount_user, self._mount_password, self._ip)
         if do_umount['result'] == False:
             raise RuntimeError(do_umount['stderr'])
 
