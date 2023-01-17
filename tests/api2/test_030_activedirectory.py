@@ -130,7 +130,7 @@ def test_02_cleanup_nameserver(request):
 
     payload = []
     for i in ips_to_remove:
-        addr = ipaddress(i)
+        addr = ipaddress.ip_address(i)
         payload.append({
             'command': 'DELETE',
             'name': f'{hostname}.{AD_DOMAIN}.',
