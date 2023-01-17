@@ -3,7 +3,7 @@ from setuptools import setup
 
 install_requires = [
     'pytest-rerunfailures',
-    'ws4py<0.4.3',
+    'websocket-client',
 ]
 
 setup(
