@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 install_requires = [
-    'ws4py',
+    'websocket-client',
 ]
 
 setup(

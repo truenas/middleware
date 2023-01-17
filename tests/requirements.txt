@@ -5,6 +5,6 @@ pytest-timeout
 pytest-timestamper
 pyvmomi==7.0.3
 requests
-websocket-client
+websocket-client>=1.4.2
 PYSCSI
 cython-iscsi
