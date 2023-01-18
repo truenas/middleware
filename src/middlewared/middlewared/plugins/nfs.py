@@ -209,24 +209,20 @@ class NFSService(SystemServiceService):
             if bindip not in bindip_choices:
                 verrors.add(f'nfs_update.bindip.{i}', 'Please provide a valid ip address')
 
-        if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled and await self.middleware.call('activedirectory.get_state') != "DISABLED":
+        if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
             """
             In environments with kerberized NFSv4 enabled, we need to tell winbindd to not prefix
             usernames with the short form of the AD domain. Directly update the db and regenerate
             the smb.conf to avoid having a service disruption due to restarting the samba server.
             """
-            if await self.middleware.call('smb.get_smb_ha_mode') == 'LEGACY':
-                raise ValidationError(
-                    'nfs_update.v4',
-                    'Enabling kerberos authentication on TrueNAS HA requires '
-                    'the system dataset to be located on a data pool.'
+            ad_config = await self.middleware.call('activedirectory.config')
+            if ad_config['enable'] and not ad_config['use_default_domain']:
+                await self.middleware.call(
+                    'activedirectory.direct_update',
+                    {'use_default_domain': True}
                 )
-            await self.middleware.call(
-                'activedirectory.direct_update',
-                {'use_default_domain': True}
-            )
-            await self.middleware.call('activedirectory.synchronize')
-            await self.middleware.call('service.reload', 'cifs')
+                await self.middleware.call('activedirectory.synchronize')
+                await self.middleware.call('service.reload', 'idmap')
 
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_v3owner"]:
             verrors.add("nfs_update.v4_v3owner", "This option requires enabling NFSv4")
