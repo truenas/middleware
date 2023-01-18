@@ -41,6 +41,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
         'autostart': False,
         'time': 'LOCAL',
         'bootloader': 'UEFI',
+        'bootloader_ovmf': 'OVMF_CODE.fd',
         'cores': 1,
         'threads': 1,
         'hyperv_enlightenments': False,
@@ -58,6 +59,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
         'command_line_args': '',
     }
 
+    m['vm.bootloader_ovmf_choices'] = lambda *args: {'OVMF_CODE.fd': 'OVMF_CODE.fd'}
     m['vm.license_active'] = lambda *args: license_active
     m['vm.query'] = lambda *args: []
 
