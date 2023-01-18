@@ -10,6 +10,7 @@ from collections import defaultdict
 
 from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
+from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
@@ -114,6 +115,34 @@ class FailoverEventsService(Service):
         logger.info('Syncing enclosure')
         self.middleware.create_task(self.middleware.call('enclosure.sync_zpool'))
 
+    async def refresh_failover_status(self, jobid, event):
+        # this is called in a background task so we need to make sure that
+        # we wait on the current failover job to complete before we try
+        # and update the failover status
+        try:
+            wait_id = await self.middleware.call('core.job_wait', jobid)
+            await wait_id.wait(raise_error=True)
+        except (CallError, KeyError):
+            # `CallError` means the failover job didn't complete successfully
+            # but we still want to refresh status in this scenario
+            # `KeyError` shouldn't be possible but there exists a hypothetical
+            # race condition...but we still want to refresh status
+            pass
+        except Exception:
+            self.logger.error('Unhandled failover status exception', exc_info=True)
+            return
+
+        # update HA status on this controller
+        await self.middleware.call('failover.status_refresh')
+        if event == 'BACKUP':
+            try:
+                # we need to refresh status on the active node since webui subscribes
+                # to failover.disabled.reasons which is responsible for showing the
+                # various components on the dashboard as well as the HA status icon
+                await self.middleware.call('failover.call_remote', 'failover.status_refresh')
+            except Exception:
+                self.logger.warning('Failed to refresh failover status on active node')
+
     def run_call(self, method, *args):
         try:
             return self.middleware.call_sync(method, *args)
@@ -127,14 +156,15 @@ class FailoverEventsService(Service):
 
         refresh = True
         try:
-            return self._event(ifname, event)
+            job = self._event(ifname, event)
+            return job
         except IgnoreFailoverEvent:
             refresh = False
         finally:
             # refreshing the failover status can cause delays in failover
             # there is no reason to refresh it if the event has been ignored
             if refresh:
-                self.run_call('failover.status_refresh')
+                self.middleware.create_task(self.refresh_failover_status(job.id, event))
 
     def _export_zpools(self, volumes):
 
