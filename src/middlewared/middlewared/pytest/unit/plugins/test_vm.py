@@ -41,6 +41,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
         'autostart': False,
         'time': 'LOCAL',
         'bootloader': 'UEFI',
+        'bootloader_ovmf': 'OVMF_CODE.fd',
         'cores': 1,
         'threads': 1,
         'hyperv_enlightenments': False,
