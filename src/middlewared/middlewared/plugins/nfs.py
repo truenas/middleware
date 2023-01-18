@@ -9,7 +9,7 @@ from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.validators import Match, Range
-from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
+from middlewared.service import private, SharingService, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 
