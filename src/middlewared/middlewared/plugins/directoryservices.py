@@ -466,22 +466,12 @@ class DirectoryServices(Service):
         has_secrets = await self.middleware.call("directoryservices.secrets_has_domain", workgroup)
 
         if ad_enabled and not has_secrets:
-            kerberos_method = await self.middleware.call("smb.getparm", "kerberos method", "GLOBAL")
             self.logger.warning("Domain secrets database does not exist. "
                                 "Attempting to restore.")
-            ok = await self.middleware.call("directoryservices.restore_secrets")
-            if not ok:
+
+            if not await self.middleware.call("directoryservices.restore_secrets"):
                 self.logger.warning("Failed to restore domain secrets database. "
                                     "Re-joining AD domain may be required.")
-
-                if kerberos_method != "secrets and keytab":
-                    self.logger.warning("Restoration of secrets database failed. "
-                                        "Attempting to automatically re-join AD domain.")
-                    try:
-                        await self.middleware.call("activedirectory.start")
-                    except Exception:
-                        self.logger.warning("Failed to re-join active directory domain.",
-                                            exc_info=True)
 
         elif ldap_enabled and not has_secrets and ldap_conf["has_samba_schema"]:
             self.logger.warning("LDAP SMB secrets database does not exist. "
