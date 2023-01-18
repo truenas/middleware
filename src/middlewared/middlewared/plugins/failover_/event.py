@@ -123,7 +123,7 @@ class FailoverEventsService(Service):
             wait_id = await self.middleware.call('core.job_wait', jobid)
             await wait_id.wait(raise_error=True)
         except (CallError, KeyError):
-            # `CallErro` means the failover job didn't complete successfully
+            # `CallError` means the failover job didn't complete successfully
             # but we still want to refresh status in this scenario
             # `KeyError` shouldn't be possible but there exists a hypothetical
             # race condition...but we still want to refresh status
