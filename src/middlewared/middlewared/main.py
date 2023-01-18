@@ -789,11 +789,11 @@ class ShellApplication(object):
                     # Currently only local users can be sudoers
                     pass
                 else:
-                    if user['sudo'] and not user['sudo_commands']:
+                    if 'ALL' in user['sudo_commands'] or 'ALL' in user['sudo_commands_nopasswd']:
                         as_root = True
                     else:
                         for group in await self.middleware.call('group.query', [['id', 'in', user['groups']]]):
-                            if group['sudo'] and not group['sudo_commands']:
+                            if 'ALL' in group['sudo_commands'] or 'ALL' in group['sudo_commands_nopasswd']:
                                 as_root = True
                                 break
 

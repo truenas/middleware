@@ -24,6 +24,7 @@ class ReplicationModel(sa.Model):
     repl_direction = sa.Column(sa.String(120), default="PUSH")
     repl_transport = sa.Column(sa.String(120), default="SSH")
     repl_ssh_credentials_id = sa.Column(sa.ForeignKey('system_keychaincredential.id'), index=True, nullable=True)
+    repl_sudo = sa.Column(sa.Boolean())
     repl_netcat_active_side = sa.Column(sa.String(120), nullable=True, default=None)
     repl_netcat_active_side_port_min = sa.Column(sa.Integer(), nullable=True)
     repl_netcat_active_side_port_max = sa.Column(sa.Integer(), nullable=True)
@@ -152,6 +153,7 @@ class ReplicationService(CRUDService):
             Int("netcat_active_side_port_min", null=True, default=None, validators=[Port()]),
             Int("netcat_active_side_port_max", null=True, default=None, validators=[Port()]),
             Str("netcat_passive_side_connect_address", null=True, default=None),
+            Bool("sudo", default=False),
             List("source_datasets", items=[Dataset("dataset")], empty=False),
             Dataset("target_dataset", required=True),
             Bool("recursive", required=True),
@@ -231,6 +233,8 @@ class ReplicationService(CRUDService):
             to be open on `netcat_active_side`
             `ssh_credentials` is also required for control connection
           * `LOCAL` replicates to or from localhost
+          `sudo` flag controls whether `SSH` and `SSH+NETCAT` transports should use sudo (which is expected to be
+          passwordless) to run `zfs` command on the remote machine.
         * `source_datasets` is a non-empty list of datasets to replicate snapshots from
         * `target_dataset` is a dataset to put snapshots into. It must exist on target side
         * `recursive` and `exclude` have the same meaning as for Periodic Snapshot Task
@@ -473,7 +477,6 @@ class ReplicationService(CRUDService):
 
         If `only_from_scratch` is `true` then replication will fail if target dataset already exists.
         """
-
         data["name"] = f"Temporary replication task for job {job.id}"
         data["schedule"] = None
         data["only_matching_schedule"] = False
@@ -485,6 +488,11 @@ class ReplicationService(CRUDService):
 
         if verrors:
             raise verrors
+
+        if "ssh_credentials" in data:
+            data["ssh_credentials"] = await self.middleware.call(
+                "keychaincredential.get_of_type", data["ssh_credentials"], "SSH_CREDENTIALS",
+            )
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
