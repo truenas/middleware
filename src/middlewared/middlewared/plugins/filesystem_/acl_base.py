@@ -15,10 +15,24 @@ class ACLType(enum.Enum):
 
         return False if special else True
 
+    def _validate_entry(self, idx, entry, errors):
+        is_special = entry['tag'] in self.value[1]
+
+        if is_special and entry.get('type') == 'DENY':
+            errors.append((
+                idx,
+                f'{entry["tag"]}: DENY entries for this principal are not permitted.',
+                'tag'
+            ))
+
+        if not self._validate_id(entry['id'], is_special):
+            errors.append(
+                (idx, 'ACL entry has invalid id for tag type.', 'id')
+            )
+
     def validate(self, theacl):
         errors = []
         ace_keys = self.value[0]
-        special = self.value[1]
 
         if self != ACLType.NFS4 and theacl.get('nfs41flags'):
             errors.append(f"NFS41 ACL flags are not valid for ACLType [{self.name}]")
@@ -38,11 +52,7 @@ class ACLType(enum.Enum):
             if extra or missing:
                 continue
 
-            is_special = entry['tag'] in special
-            if not self._validate_id(entry['id'], is_special):
-                errors.append(
-                    (idx, "ACL entry has invalid id for tag type.", "id")
-                )
+            self._validate_entry(idx, entry, errors)
 
         return {"is_valid": len(errors) == 0, "errors": errors}
 
