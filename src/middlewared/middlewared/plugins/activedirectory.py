@@ -367,6 +367,13 @@ class ActiveDirectoryService(ConfigService):
 
     @private
     async def common_validate(self, new, old, verrors):
+        if new['kerberos_realm'] and new['kerberos_realm'] != old['kerberos_realm']:
+            if not await self.middleware.call('kerberos.realm.query', [("id", "=", new['kerberos_realm'])]):
+                verrors.add(
+                    'activedirectory_update.kerberos_realm',
+                    'Invalid Kerberos realm id. Realm does not exist.'
+                )
+
         if not new["enable"]:
             return
 
