@@ -79,6 +79,9 @@ def validate_sudo_commands(commands):
         try:
             executable = shlex.split(command)[0]
 
+            if executable == 'ALL':
+                continue
+
             if not executable.startswith('/'):
                 raise ValueError('Executable must be an absolute path')
 
@@ -116,9 +119,8 @@ class UserModel(sa.Model):
     bsdusr_smb = sa.Column(sa.Boolean(), default=True)
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
-    bsdusr_sudo = sa.Column(sa.Boolean(), default=False)
-    bsdusr_sudo_nopasswd = sa.Column(sa.Boolean())
     bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
+    bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_attributes = sa.Column(sa.JSON())
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
@@ -295,9 +297,8 @@ class UserService(CRUDService):
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
         Bool('smb', default=True),
-        Bool('sudo', default=False),
-        Bool('sudo_nopasswd', default=False),
         List('sudo_commands', items=[Str('command', empty=False)]),
+        List('sudo_commands_nopasswd', items=[Str('command', empty=False)]),
         Str('sshpubkey', null=True, max_length=None),
         List('groups', items=[Int('group')]),
         Dict('attributes', additional_attrs=True),
@@ -356,9 +357,8 @@ class UserService(CRUDService):
                 group = await self.middleware.call('group.create_internal', {
                     'name': data['username'],
                     'smb': False,
-                    'sudo': False,
-                    'sudo_nopasswd': False,
                     'sudo_commands': [],
+                    'sudo_commands_nopasswd': [],
                     'allow_duplicate_gid': False
                 }, False)
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
@@ -1139,6 +1139,12 @@ class UserService(CRUDService):
                 await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands']),
             )
 
+        if 'sudo_commands_nopasswd' in data:
+            verrors.add_child(
+                f'{schema}.sudo_commands_nopasswd',
+                await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
+            )
+
     async def __set_password(self, data):
         if 'password' not in data:
             return
@@ -1245,9 +1251,8 @@ class GroupModel(sa.Model):
     bsdgrp_gid = sa.Column(sa.Integer())
     bsdgrp_group = sa.Column(sa.String(120), unique=True)
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
-    bsdgrp_sudo = sa.Column(sa.Boolean(), default=False)
-    bsdgrp_sudo_nopasswd = sa.Column(sa.Boolean())
     bsdgrp_sudo_commands = sa.Column(sa.JSON(type=list))
+    bsdgrp_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
     bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
 
 
@@ -1398,9 +1403,8 @@ class GroupService(CRUDService):
         Int('gid'),
         Str('name', required=True),
         Bool('smb', default=True),
-        Bool('sudo', default=False),
-        Bool('sudo_nopasswd', default=False),
         List('sudo_commands', items=[Str('command', empty=False)]),
+        List('sudo_commands_nopasswd', items=[Str('command', empty=False)]),
         Bool('allow_duplicate_gid', default=False),
         List('users', items=[Int('id')], required=False),
         register=True,
@@ -1710,6 +1714,12 @@ class GroupService(CRUDService):
             verrors.add_child(
                 f'{schema}.sudo_commands',
                 await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands']),
+            )
+
+        if 'sudo_commands_nopasswd' in data:
+            verrors.add_child(
+                f'{schema}.sudo_commands_nopasswd',
+                await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
             )
 
 

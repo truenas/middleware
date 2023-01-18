@@ -703,6 +703,7 @@ class ZettareplService(Service):
                 replication_task["netcat_active_side_port_min"],
                 replication_task["netcat_active_side_port_max"],
                 replication_task["netcat_passive_side_connect_address"],
+                replication_task["sudo"],
             )
         except CallError as e:
             raise HoldReplicationTaskException(e.errmsg)
@@ -829,7 +830,8 @@ class ZettareplService(Service):
 
     async def _define_transport(self, transport, ssh_credentials=None, netcat_active_side=None,
                                 netcat_active_side_listen_address=None, netcat_active_side_port_min=None,
-                                netcat_active_side_port_max=None, netcat_passive_side_connect_address=None):
+                                netcat_active_side_port_max=None, netcat_passive_side_connect_address=None,
+                                sudo=False):
 
         if transport in ["SSH", "SSH+NETCAT"]:
             if ssh_credentials is None:
@@ -838,7 +840,7 @@ class ZettareplService(Service):
             ssh_credentials = await self.middleware.call("keychaincredential.get_of_type", ssh_credentials,
                                                          "SSH_CREDENTIALS")
 
-            transport_definition = dict(type="ssh", **await self._define_ssh_transport(ssh_credentials))
+            transport_definition = dict(type="ssh", **await self._define_ssh_transport(ssh_credentials), sudo=sudo)
 
             if transport == "SSH+NETCAT":
                 transport_definition["type"] = "ssh+netcat"

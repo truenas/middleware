@@ -1,13 +1,9 @@
 <%
-    from middlewared.utils import filter_list
-
-    users = filter_list(render_ctx['user.query'], [["sudo", "=", True]])
-    groups = filter_list(render_ctx['group.query'], [["sudo", "=", True]])
+    users = render_ctx['user.query']
+    groups = render_ctx['group.query']
 
     def sudo_commands(commands):
         commands = list(filter(None, [command.strip() for command in commands]))
-        if not commands:
-            return "ALL"
         return ", ".join(map(sudo_command, commands))
 
     def sudo_command(command):
@@ -18,16 +14,18 @@
 %>\
 root ALL=(ALL:ALL) ALL
 % for user in users:
-% if user['sudo_nopasswd']:
-${user['username']} ALL=(ALL) NOPASSWD: ${sudo_commands(user['sudo_commands'])}
-% else:
+% if user['sudo_commands_nopasswd']:
+${user['username']} ALL=(ALL) NOPASSWD: ${sudo_commands(user['sudo_commands_nopasswd'])}
+% endif
+% if user['sudo_commands']:
 ${user['username']} ALL=(ALL) ${sudo_commands(user['sudo_commands'])}
 % endif
 % endfor
 % for group in groups:
-% if group['sudo_nopasswd']:
-${f'%{group["group"]}'} ALL=(ALL) NOPASSWD: ${sudo_commands(group['sudo_commands'])}
-% else:
+% if group['sudo_commands_nopasswd']:
+${f'%{group["group"]}'} ALL=(ALL) NOPASSWD: ${sudo_commands(group['sudo_commands_nopasswd'])}
+% endif
+% if group['sudo_commands']:
 ${f'%{group["group"]}'} ALL=(ALL) ${sudo_commands(group['sudo_commands'])}
 % endif
 % endfor
