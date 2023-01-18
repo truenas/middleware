@@ -452,6 +452,13 @@ class KerberosService(TDBWrapConfigService):
             )
 
         if has_principal:
+            principals = await self.middleware.call('kerberos.keytab.kerberos_principal_choices')
+            if creds['kerberos_principal'] not in principals:
+                self.logger.debug('Selected kerberos principal [%s] not available in keytab principals: %s. '
+                                  'Regenerating kerberos keytab from configuration file.',
+                                  creds['kerberos_principal'], ','.join(principals))
+                await self.middleware.call('etc.generate', 'kerberos')
+
             cmd.extend(['-k', creds['kerberos_principal']])
             kinit = await run(cmd, check=False)
             if kinit.returncode != 0:
