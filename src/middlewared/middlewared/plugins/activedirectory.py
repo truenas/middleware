@@ -726,6 +726,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             job.set_progress(95, 'Propagating activedirectory service reload to cluster members')
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'START')
             await cl_reload.wait()
+            await self.middleware.call('service.restart', 'cifs')
 
         job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
         await self.middleware.call('service.reload', 'idmap')

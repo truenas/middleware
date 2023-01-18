@@ -348,6 +348,20 @@ def test_030_test_share_failover(request):
         assert res == b'test_failover'
         tcon.close(fd)
 
+    payload = {
+        'msg': 'method',
+        'method': 'ctdb.general.status',
+    }
+
+    res = make_ws_request(ip, payload)
+    assert res.get('error') is None, res
+    assert res['result']['all_healthy'] is False
+
+    url = f'http://{ip}/api/v2.0/activedirectory/get_state'
+    res = make_request('get', url)
+    assert res.status_code == 200, f'ip: {ip}, res: {res.text}'
+    assert res.json() == 'HEALTHY'
+
 
 def test_031_test_share_failover(request):
     """
