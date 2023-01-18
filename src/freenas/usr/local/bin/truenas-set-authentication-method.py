@@ -22,9 +22,9 @@ if __name__ == "__main__":
         home = f"/home/{username}"
 
         c.execute("""
-            INSERT INTO account_bsdgroups (bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_sudo, bsdgrp_smb,
-                                           bsdgrp_sudo_commands, bsdgrp_sudo_nopasswd)
-            VALUES (?, ?, 0, 0, 0, '[]', 0)
+            INSERT INTO account_bsdgroups (bsdgrp_gid, bsdgrp_group, bsdgrp_builtin, bsdgrp_smb, bsdgrp_sudo_commands,
+                                           bsdgrp_sudo_commands_nopasswd)
+            VALUES (?, ?, 0, 0, '[]', '[]')
         """, (ADMIN_GID, username,))
 
         c.execute("SELECT last_insert_rowid()")
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         user["bsdusr_smb"] = 0
         user["bsdusr_password_disabled"] = 0
         user["bsdusr_locked"] = 0
-        user["bsdusr_sudo"] = 1
+        user["bsdusr_sudo_commands"] = '["ALL"]'
         user["bsdusr_group_id"] = group_id
         c.execute(f"""
             INSERT INTO account_bsdusers ({', '.join([k for k in user.keys()])})

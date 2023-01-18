@@ -223,21 +223,6 @@ TYPES = {
 }
 
 
-async def get_ssh_key_pair_with_private_key(middleware, id):
-    try:
-        credential = await middleware.call("keychaincredential.query", [["id", "=", id]], {"get": True})
-    except IndexError:
-        return None
-
-    if credential["type"] != "SSH_KEY_PAIR":
-        return None
-
-    if not credential["attributes"]["private_key"]:
-        return None
-
-    return credential
-
-
 def process_ssh_keyscan_output(output):
     return "\n".join([" ".join(line.split()[1:]) for line in output.split("\n") if line and not line.startswith("# ")])
 
@@ -567,6 +552,7 @@ class KeychainCredentialService(CRUDService):
         Int("private_key", required=True),
         Str("cipher", enum=["STANDARD", "FAST", "DISABLED"], default="STANDARD"),
         Int("connect_timeout", default=10),
+        Bool("sudo", default=False),
         register=True,
     ))
     @returns(Ref("keychain_credential_entry"))
@@ -585,7 +571,7 @@ class KeychainCredentialService(CRUDService):
             {
                 "id": "6841f242-840a-11e6-a437-00e04d680384",
                 "msg": "method",
-                "method": "keychaincredential.keychain_remote_ssh_semiautomatic_setup",
+                "method": "keychaincredential.remote_ssh_semiautomatic_setup",
                 "params": [{
                     "name": "Work SSH connection",
                     "url": "https://work.freenas.org",
@@ -595,8 +581,8 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        replication_key = self.middleware.run_coroutine(
-            get_ssh_key_pair_with_private_key(self.middleware, data["private_key"]))
+        replication_key = self.middleware.call_sync("keychaincredential.get_ssh_key_pair_with_private_key",
+                                                    data["private_key"])
 
         try:
             client = Client(os.path.join(re.sub("^http", "ws", data["url"]), "websocket"))
@@ -617,23 +603,34 @@ class KeychainCredentialService(CRUDService):
                 raise CallError("You should specify either remote system password or temporary authentication token")
 
             try:
-                response = c.call("replication.pair", {
-                    "hostname": "any-host",
-                    "public-key": replication_key["attributes"]["public_key"],
-                    "user": data["username"],
+                response = c.call("keychaincredential.ssh_pair", {
+                    "remote_hostname": "any-host",
+                    "username": data["username"],
+                    "public_key": replication_key["attributes"]["public_key"],
                 })
             except Exception as e:
                 raise CallError(f"Semi-automatic SSH connection setup failed: {e!r}")
+
+            if data["sudo"]:
+                try:
+                    user = c.call("user.query", [["username", "=", data["username"]]], {"get": True})
+                    zfs_binary = "/usr/sbin/zfs"
+                    if zfs_binary not in user["sudo_commands_nopasswd"]:
+                        c.call("user.update", user["id"], {
+                            "sudo_commands_nopasswd": user["sudo_commands_nopasswd"] + [zfs_binary],
+                        })
+                except Exception as e:
+                    raise CallError(f"Error enabling passwordless sudo: {e!r}")
 
         return self.middleware.call_sync("keychaincredential.create", {
             "name": data["name"],
             "type": "SSH_CREDENTIALS",
             "attributes": {
                 "host": urllib.parse.urlparse(data["url"]).hostname,
-                "port": response["ssh_port"],
+                "port": response["port"],
                 "username": data["username"],
                 "private_key": replication_key["id"],
-                "remote_host_key": process_ssh_keyscan_output(response["ssh_hostkey"]),
+                "remote_host_key": process_ssh_keyscan_output(response["host_key"]),
                 "cipher": data["cipher"],
                 "connect_timeout": data["connect_timeout"],
             }
@@ -696,3 +693,18 @@ class KeychainCredentialService(CRUDService):
             "port": ssh["tcpport"],
             "host_key": ssh_hostkey,
         }
+
+    @private
+    async def get_ssh_key_pair_with_private_key(self, id):
+        try:
+            credential = await self.middleware.call("keychaincredential.query", [["id", "=", id]], {"get": True})
+        except IndexError:
+            return None
+
+        if credential["type"] != "SSH_KEY_PAIR":
+            return None
+
+        if not credential["attributes"]["private_key"]:
+            return None
+
+        return credential
