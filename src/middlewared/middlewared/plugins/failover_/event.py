@@ -154,16 +154,18 @@ class FailoverEventsService(Service):
 
     def event(self, ifname, event):
 
-        refresh = True
+        refresh, job = True, None
         try:
             job = self._event(ifname, event)
             return job
         except IgnoreFailoverEvent:
             refresh = False
+        except Exception:
+            self.logger.error('Unhandled exception processing failover event', exc_info=True)
         finally:
             # refreshing the failover status can cause delays in failover
             # there is no reason to refresh it if the event has been ignored
-            if refresh:
+            if refresh and job is not None:
                 self.middleware.create_task(self.refresh_failover_status(job.id, event))
 
     def _export_zpools(self, volumes):
