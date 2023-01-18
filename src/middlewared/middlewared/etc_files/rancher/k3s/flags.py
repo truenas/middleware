@@ -37,9 +37,9 @@ def render(service, middleware):
 
     disabled_features = []
     if not config['servicelb']:
-        disabled_features.append("servicelb")
+        disabled_features.append('servicelb')
     if not config['metric_server']:
-        disabled_features.append("metrics-server")
+        disabled_features.append('metrics-server')
     os.makedirs('/etc/rancher/k3s', exist_ok=True)
 
     with open(FLAGS_PATH, 'w') as f:
