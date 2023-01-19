@@ -110,6 +110,10 @@ def get_schema(variable_details, update, existing=NOT_PROVIDED):
             obj.enum = [v['value'] for v in schema_details['enum']]
 
         if schema_class == Str:
+            if range_args.get('max'):
+                # This needs to be done as string schema has built in support for max length as
+                # well apart from the range validator we add
+                obj.max_length = range_args['max']
             if 'valid_chars' in schema_details:
                 obj.validators.append(Match(schema_details['valid_chars']))
 
