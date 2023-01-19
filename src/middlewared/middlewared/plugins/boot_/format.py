@@ -70,7 +70,6 @@ class BootService(Service):
         if options['use_legacy_schema']:
             commands.extend((
                 ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
-                ['sgdisk', f'-n2:0:{zfs_part_size}', '-t2:BF01', f'/dev/{dev}'],
             ))
 
             if swap_size:
@@ -79,11 +78,16 @@ class BootService(Service):
                     f'-n3:0:+{int(swap_size / 1024)}K',
                     '-t3:8200', f'/dev/{dev}'
                 ])
+
+            # Creating standard-size partitions first leads to better alignment and more compact disk usage
+            # and can help to fit larger data partition.
+            commands.extend([
+                ['sgdisk', f'-n2:0:{zfs_part_size}', '-t2:BF01', f'/dev/{dev}'],
+            ])
         else:
             commands.extend((
                 ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+1024K', '-t1:EF02', f'/dev/{dev}'],
                 ['sgdisk', '-n2:0:+524288K', '-t2:EF00', f'/dev/{dev}'],
-                ['sgdisk', f'-n3:0:{zfs_part_size}', '-t3:BF01', f'/dev/{dev}'],
             ))
 
             if swap_size:
@@ -92,6 +96,12 @@ class BootService(Service):
                     f'-n4:0:+{int(swap_size / 1024)}K',
                     '-t4:8200', f'/dev/{dev}'
                 ])
+
+            # Creating standard-size partitions first leads to better alignment and more compact disk usage
+            # and can help to fit larger data partition.
+            commands.extend([
+                ['sgdisk', f'-n3:0:{zfs_part_size}', '-t3:BF01', f'/dev/{dev}']
+            ])
 
         for command in commands:
             p = await run(*command, check=False)
