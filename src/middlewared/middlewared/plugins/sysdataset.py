@@ -581,7 +581,7 @@ class SystemDatasetService(ConfigService):
         flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
-                subprocess.run(['umount', flags, dataset])
+                subprocess.run(['umount', flags, dataset], check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
                 stderr = e.stderr.decode()
                 if 'no mount point specified' in stderr:
@@ -684,6 +684,8 @@ class SystemDatasetService(ConfigService):
                 restart.append('idmap')
             if self.middleware.call_sync('service.started', 'nmbd'):
                 restart.append('nmbd')
+            if self.middleware.call_sync('service.started', 'wsdd'):
+                restart.append('wsdd')
 
             try:
                 self.middleware.call_sync('cache.put', 'use_syslog_dataset', False)
