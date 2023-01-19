@@ -12,12 +12,9 @@
                 enabled = False
 
     smb_config = middleware.call_sync('smb.config')
-    if smb_config['bindip']:
-        interfaces = config['bind_ip']
-    else:
-        # We use bindip_choices because this is cluster-aware and will
-        # give ctdb public IPs
-        interfaces = list(middleware.call_sync('smb.bindip_choices').values())
+
+    # We use bindip_choices because this is cluster-aware and will give ctdb public IPs
+    interfaces = smb_config['bindip'] or list(middleware.call_sync('smb.bindip_choices').values())
 
     conf = {
         'realm': middleware.call_sync('smb.getparm', 'realm', 'GLOBAL'),
