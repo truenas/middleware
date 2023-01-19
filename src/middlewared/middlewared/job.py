@@ -404,15 +404,18 @@ class Job(object):
                 head = []
                 tail = []
                 lines = 0
-                with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        if len(head) < 10:
-                            head.append(line)
-                        else:
-                            tail.append(line)
-                            tail = tail[-10:]
+                try:
+                    with open(self.logs_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line in f:
+                            if len(head) < 10:
+                                head.append(line)
+                            else:
+                                tail.append(line)
+                                tail = tail[-10:]
 
-                        lines += 1
+                            lines += 1
+                except FileNotFoundError:
+                    return "Log file was removed"
 
                 if lines > 20:
                     excerpt = "%s... %d more lines ...\n%s" % ("".join(head), lines - 20, "".join(tail))
