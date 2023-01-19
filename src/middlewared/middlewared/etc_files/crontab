@@ -7,8 +7,6 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 #
 #minute	hour	mday	month	wday	who	command
 #
-*/5	*	*	*	*	root	/usr/libexec/atrun > /dev/null 2>&1
-#
 # Save some entropy so that /dev/random can re-seed on boot.
 */11	*	*	*	*	operator /usr/libexec/save-entropy > /dev/null 2>&1
 #
