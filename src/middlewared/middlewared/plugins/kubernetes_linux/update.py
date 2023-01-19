@@ -31,6 +31,7 @@ class KubernetesModel(sa.Model):
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
     validate_host_path = sa.Column(sa.Boolean(), default=True)
     passthrough_mode = sa.Column(sa.Boolean(), default=False)
+    metrics_server = sa.Column(sa.Boolean(), default=False, nullable=False)
 
 
 class KubernetesService(ConfigService):
@@ -44,6 +45,7 @@ class KubernetesService(ConfigService):
         'kubernetes_entry',
         Bool('servicelb', required=True),
         Bool('configure_gpus', required=True),
+        Bool('metrics_server', required=True),
         Bool('validate_host_path', required=True),
         Bool('passthrough_mode', required=True),
         Str('pool', required=True, null=True),
@@ -445,6 +447,9 @@ class KubernetesService(ConfigService):
         `force` is a boolean which can be set to bypass validation which does not allow users to select a pool which
         is potentially corrupt by having a partially initialized ix-applications dataset. In that case the cluster
         would be re-initialized and user would still be able to select such a pool.
+
+        `metrics_server` is a boolean to enable or disable the integrated k3s Metrics Server. This can be set
+        to enabled to enable the user to use of Kubernetes Horizontal/Vertical Pod Autoscalers.
         """
         old_config = await self.config()
         old_config.pop('dataset')
