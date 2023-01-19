@@ -134,7 +134,7 @@ class KubernetesGPUService(Service):
         )['configure_gpus'] else set()
         available_gpus = {}
         for k, v in filter(
-            lambda i: i[0].endswith('/gpu') or i[0].startswith('gpu.intel'),
+            lambda i: (i[0].endswith('/gpu') or i[0].startswith('gpu.intel')) and i[1] != '0',
             node_config['status']['allocatable'].items()
         ):
             available_gpus[k] = v if any(gpu.lower() in k.lower() for gpu in found_gpus) else '0'
