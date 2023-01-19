@@ -10,7 +10,7 @@ from .devices.usb import USB_CONTROLLER_CHOICES
 from .utils import get_virsh_command_args
 
 
-RE_VALID_USB_DEVICE = re.compile(r'^usb_\d+_\d+(_\d)*$')
+RE_VALID_USB_DEVICE = re.compile(r'^usb_\d+_\d+(?:_\d)*$')
 
 
 class VMDeviceService(Service):
