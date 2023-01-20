@@ -102,7 +102,7 @@ class LDAPClient(Service):
     def _name_to_errno(self, ldaperr):
         err = errno.EFAULT
         if ldaperr == "INVALID_CREDENTIALS":
-            err = errno.EAUTH
+            err = errno.EPERM
         elif ldaperr == "NO_SUCH_OBJECT":
             err = errno.ENOENT
         elif ldaperr == "INVALID_DN_SYNTAX":
