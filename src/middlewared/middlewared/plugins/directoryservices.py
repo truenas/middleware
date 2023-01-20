@@ -23,6 +23,8 @@ DEFAULT_AD_CONF = {
     "restrict_pam": False
 }
 
+DEPENDENT_SERVICES = ['smb', 'nfs', 'ssh']
+
 
 class DSStatus(enum.Enum):
     DISABLED = enum.auto()
@@ -497,16 +499,16 @@ class DirectoryServices(Service):
         await self.middleware.call(health_check)
 
     @private
+    def restart_dependent_services(self):
+        for svc in self.middleware.call_sync('service.query', [['OR', [
+            ['enable', '=', True],
+            ['state', '=', 'RUNNING']
+        ]], ['service', 'in', DEPENDENT_SERVICES]]):
+            self.middleware.call_sync('service.restart', svc['service'])
+
+    @private
     @job(lock='ds_init', lock_queue_size=1)
     def setup(self, job):
-        def restart_dependent_services():
-            to_check = ['cifs', 'nfs']
-            for svc in self.middleware.call_sync('service.query'):
-                if not svc['enable'] or svc['service'] not in to_check:
-                    continue
-
-                self.middleware.call_sync('service.restart', svc['service'])
-
         config_in_progress = self.middleware.call_sync("core.get_jobs", [
             ["method", "=", "smb.configure"],
             ["state", "=", "RUNNING"]
@@ -534,7 +536,7 @@ class DirectoryServices(Service):
         cache_refresh.wait_sync()
 
         job.set_progress(75, 'Restarting dependent services')
-        restart_dependent_services()
+        self.restart_dependent_services()
         job.set_progress(100, 'Setup complete')
 
 
