@@ -1179,11 +1179,11 @@ class LDAPService(TDBWrapConfigService):
             job.set_progress(70, 'Storing LDAP password for SMB configuration')
             await self.middleware.call('smb.store_ldap_admin_password')
 
-        await self._service_change('cifs', 'restart')
         await self.set_state(DSStatus['HEALTHY'])
-        job.set_progress(80, 'Reloading directory service cache.')
+        job.set_progress(80, 'Restarting dependent services')
         cache_job = await self.middleware.call('dscache.refresh')
         await cache_job.wait()
+        await self.middleware.call('directoryservices.restart_dependent_services')
 
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if ha_mode == 'CLUSTERED':

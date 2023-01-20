@@ -8,9 +8,10 @@
 #
 <%namespace name="pam" file="pam.inc.mako" />\
 <%
-        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx)
+        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx).pam_account()
 %>\
 
-${dsp.pam_account()}
+${'\n'.join(dsp['primary'])}
 account	requisite			pam_deny.so
 account	required			pam_permit.so
+${'\n'.join(dsp['additional'])}

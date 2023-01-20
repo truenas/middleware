@@ -11,13 +11,54 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST, make_ws_request
-from auto_config import sshKey, user, password, ha
+from auto_config import sshKey, user, password, ha, hostname
+from assets.REST.directory_services import active_directory, ldap, override_nameservers
 from middlewared.test.integration.utils import call
+
+try:
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
+except ImportError:
+    Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
+    pytestmark = pytest.mark.skip(reason=Reason)
+
+try:
+    from config import (
+        LDAPBASEDN,
+        LDAPBINDDN,
+        LDAPBINDPASSWORD,
+        LDAPHOSTNAME,
+        LDAPUSER,
+        LDAPPASSWORD
+    )
+except ImportError:
+    Reason = 'LDAP* variable are not setup in config.py'
+    pytestmark = pytest.mark.skipif(True, reason=Reason)
+
 
 if "controller1_ip" in os.environ:
     ip = os.environ["controller1_ip"]
 else:
     from auto_config import ip
+
+
+@pytest.fixture(scope="function")
+def do_ad_connection(request):
+    with override_nameservers(ADNameServer):
+        with active_directory(
+            AD_DOMAIN,
+            ADUSERNAME,
+            ADPASSWORD,
+            netbiosname=hostname,
+        ) as ad:
+            yield (request, ad)
+
+
+@pytest.fixture(scope="function")
+def do_ldap_connection(request):
+    with ldap(LDAPBASEDN, LDAPBINDDN, LDAPBINDPASSWORD, LDAPHOSTNAME,
+        has_samba_schema=True,
+    ) as ldap_conn:
+        yield (request, ldap_conn)
 
 
 def test_00_firstboot_checks():
@@ -121,13 +162,30 @@ def test_07_Ensure_ssh_agent_is_setup(request):
     assert is_agent_setup() is True
 
 
-def test_08_Ensure_ssh_key_is_up(request):
+def test_08_test_ssh_ad(do_ad_connection):
+    cmd = 'ls -la'
+    results = SSH_TEST(cmd, f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_09_test_ssh_ldap(do_ldap_connection):
+    cmd = 'ls -la'
+    results = SSH_TEST(cmd, LDAPUSER, LDAPPASSWORD, ip)
+    assert results['result'] is True, results['output']
+
+
+def test_10_Ensure_ssh_agent_is_setup(request):
+    depends(request, ["ssh_password"])
+    assert is_agent_setup() is True
+
+
+def test_11_Ensure_ssh_key_is_up(request):
     depends(request, ["ssh_password"])
     assert if_key_listed() is True
 
 
 @pytest.mark.dependency(name="set_ssh_key")
-def test_09_Add_ssh_ky_to_root(request):
+def test_12_Add_ssh_ky_to_root(request):
     depends(request, ["ssh_password"])
     payload = {"sshpubkey": sshKey}
     results = PUT("/user/id/1/", payload, controller_a=ha)
@@ -135,7 +193,7 @@ def test_09_Add_ssh_ky_to_root(request):
 
 
 @pytest.mark.dependency(name="ssh_key")
-def test_10_test_ssh_key(request):
+def test_13_test_ssh_key(request):
     depends(request, ["set_ssh_key"])
     cmd = 'ls -la'
     results = SSH_TEST(cmd, user, None, ip)

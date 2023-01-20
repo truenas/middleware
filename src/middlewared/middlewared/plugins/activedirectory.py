@@ -707,13 +707,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self.set_idmap(ad['allow_trusted_doms'], ad['domainname'])
             await self.middleware.call('activedirectory.set_ntp_servers')
 
-        job.set_progress(90, 'Restarting SMB server.')
         await self.middleware.call('idmap.synchronize')
-        await self.middleware.call('service.restart', 'cifs')
+        await self.middleware.call('service.reload', 'idmap')
         await self.middleware.call('etc.generate', 'pam')
         if ret == neterr.JOINED:
             await self.set_state(DSStatus['HEALTHY'].name)
+            job.set_progress(90, 'Restarting dependent services.')
             await self.middleware.call('service.start', 'dscache')
+            await self.middleware.call('directoryservices.restart_dependent_services')
             if ad['verbose_logging']:
                 self.logger.debug('Successfully started AD service for [%s].', ad['domainname'])
 

@@ -22,7 +22,7 @@
         def generate_pam_line(self, pam_type, pam_control, pam_path, pam_args=None):
             return '\t'.join([
                 pam_type,
-                f'[{" ".join(pam_control)}]',
+                f'[{" ".join(pam_control)}]' if isinstance(pam_control, list) else pam_control,
                 pam_path,
                 ' '.join(pam_args or [])
             ])
@@ -52,8 +52,16 @@
             )
 
         def pam_session(self, **kwargs):
-            module = self.pam_unix
-            return f"session\trequired\t{module}"
+            pam_control = kwargs.pop('pam_control', 'required')
+            pam_path = kwargs.pop('pam_path', self.pam_unix)
+            pam_args = kwargs.pop('pam_args', None)
+
+            return self.generate_pam_line(
+                'session',
+                pam_control,
+                pam_path,
+                pam_args
+            )
 
         def pam_password(self, **kwargs):
             pam_path = kwargs.pop('pam_path', self.pam_unix)
@@ -91,25 +99,26 @@
 
             unix_auth = super().pam_auth(success=2)
             this_auth = super().pam_auth(pam_path=self.pam_winbind, success=1, pam_args=args)
-            return "\n".join([unix_auth, this_auth])
+            return {'primary': [unix_auth, this_auth], 'additional': []}
 
         def pam_account(self):
             args = ["krb5_auth", "krb5_ccache_type=FILE"]
 
             unix_account = super().pam_account(success=2)
             wb_account = super().pam_account(pam_path=self.pam_winbind, success=1, pam_args=args)
-            return "\n".join([unix_account, wb_account])
+            return {'primary': [unix_account, wb_account], 'additional': []}
 
         def pam_session(self):
             unix_session = super().pam_session()
-            return f"{unix_session}\nsession\t\trequired\t{self.pam_mkhomedir}"
+            wb_session = super().pam_session(pam_path=self.pam_winbind, pam_control='optional')
+            return {'primary': [], 'additional': [unix_session, wb_session]}
 
         def pam_password(self):
             args = ["try_first_pass", "krb5_auth", "krb5_ccache_type=FILE"]
 
             unix_passwd = super().pam_password(success=2)
             wb_passwd = super().pam_password(success=1, pam_path=self.pam_winbind, pam_args=args)
-            return "\n".join([unix_passwd, wb_passwd])
+            return {'primary': [unix_passwd, wb_passwd], 'additional': []}
 
 
     class LDAPPam(DirectoryServicePamBase):
@@ -162,14 +171,14 @@
                 krb5_entry = super().pam_auth(pam_path=self.pam_krb5, success=3, pam_args=krb5_args)
                 entries.insert(0, krb5_entry)
 
-            return "\n".join(entries)
+            return {'primary': entries, 'additional': []}
 
         def pam_account(self):
             min_uid = self.min_uid()
             ldap_args = {
                 'new_authtok_reqd': 'done',
                 'ignore': 'ignore',
-                'unknown_user': 'ignore',
+                'user_unknown': 'ignore',
                 'authinfo_unavail': 'ignore',
                 'default': 'bad'
             }
@@ -178,17 +187,21 @@
             unix_entry = super().pam_account()
             ldap_entry = super().pam_account(success="ok", pam_path=self.pam_ldap, pam_args=[f"minimum_uid={min_uid}"], **ldap_args)
 
-            entries = [unix_entry, ldap_entry]
+            entries = [ldap_entry]
 
             if self.is_kerberized():
                 krb5_entry = f"account\t\trequired\t{self.pam_krb5}\t\t{' '.join(krb5_args)}"
                 entries.insert(1, krb5_entry)
 
-            return "\n".join(entries)
+            return {'primary': [unix_entry], 'additional': entries}
 
         def pam_session(self):
-            unix_session = super().pam_session()
-            return f"{unix_session}\nsession\t\trequired\t{self.pam_mkhomedir}"
+            entries = [super().pam_session()]
+            entries.append(super().pam_session(pam_path=self.pam_ldap, pam_control='optional'))
+            if self.is_kerberized():
+                entries.append(super().pam_session(pam_path=self.pam_krb5, pam_control='optional'))
+
+            return {'primary': [], 'additional': entries}
 
         def pam_password(self):
             min_uid = self.min_uid()
@@ -209,7 +222,7 @@
                 krb5_entry = super().pam_password(pam_path=self.pam_krb5, pam_args=krb5_args, success=3)
                 entries.insert(0, krb5_entry)
 
-            return "\n".join(entries)
+            return {'primary': entries, 'additional': []}
 
     class DirectoryServicePam(DirectoryServicePamBase):
         def __new__(cls, **kwargs):
