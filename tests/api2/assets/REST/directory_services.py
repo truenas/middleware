@@ -123,6 +123,8 @@ def ldap(basedn, binddn, bindpw, hostname, **kwargs):
     }
 
     results = PUT("/ldap/", payload)
+    del(payload['bindpw'])
+
     assert results.status_code == 200, f'res: {results.text}, payload: {payload}'
     job_id = results.json()['job_id']
     job_status = wait_on_job(job_id, 180)
