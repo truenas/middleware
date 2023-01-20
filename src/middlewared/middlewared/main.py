@@ -1395,7 +1395,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         serviceobj, methodobj = self._method_lookup(name)
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
-                                           in_event_loop=True)
+                                           in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job
