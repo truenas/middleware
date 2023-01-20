@@ -5,7 +5,7 @@ def test_optimal_disk_usage():
     disk = call('disk.get_unused')[0]
     swap_size = 1024 * 1024 * 1024
     data_size = (
-        disk['size'] -
+        int(disk['size']) -
         1 * 1024 * 1024 -  # BIOS boot
         512 * 1024 * 1024 -  # EFI
         swap_size -
