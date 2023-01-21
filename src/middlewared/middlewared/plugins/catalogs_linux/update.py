@@ -174,6 +174,13 @@ class CatalogService(CRUDService):
                 f'{schema}.preferred_trains',
                 'At least 1 preferred train must be specified for a catalog.'
             )
+        if await self.middleware.call(
+            'kubernetes.license_active'
+        ) and data['preferred_trains'] != [OFFICIAL_ENTERPRISE_TRAIN]:
+            verrors.add(
+                f'{schema}.preferred_trains',
+                f'Licensed systems can only consume {OFFICIAL_ENTERPRISE_TRAIN!r} train'
+            )
 
         verrors.check()
 
@@ -210,6 +217,12 @@ class CatalogService(CRUDService):
                 verrors.add(
                     f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
                 )
+
+        if not await self.middleware.call('kubernetes.license_active'):
+            verrors.add(
+                'catalog_create.label',
+                'Licensed systems cannot add catalog(s)'
+            )
 
         verrors.check()
 
