@@ -18,9 +18,14 @@ def minimum_scale_version_check_update(version_details):
             'minimum_scale_version'
         )
     ):
-        if manifest_version() != version_details['chart_metadata']['minimum_scale_version'] and not can_update(
-                version_details['chart_metadata']['minimum_scale_version'], manifest_version()
-        ):
+        try:
+            if manifest_version() != version_details['chart_metadata']['minimum_scale_version'] and not can_update(
+                    version_details['chart_metadata']['minimum_scale_version'], manifest_version()
+            ):
+                version_details['supported'] = False
+        except Exception:
+            # In case invalid version string is specified we don't want a traceback here
+            # let's just explicitly not support the app version in question
             version_details['supported'] = False
 
     return version_details
