@@ -5,7 +5,7 @@ import os
 from middlewared.service import CallError, private, Service
 from middlewared.utils import manifest_version
 
-from .utils import SCALE_MANIFEST_FILE, can_update
+from .utils import can_update
 from .utils_linux import mount_update
 
 logger = logging.getLogger(__name__)
