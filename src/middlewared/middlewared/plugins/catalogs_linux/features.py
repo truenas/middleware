@@ -47,7 +47,7 @@ class CatalogService(Service):
         if missing_features:
             error_str = await self.missing_feature_error_message(missing_features)
 
-        version_check, check_error = minimum_scale_version_check_update_impl(version_details)
+        version_check, check_error = minimum_scale_version_check_update_impl(version_details, False)
         if not version_check:
             prefix = '\n\n' if error_str else ''
             error_str = f'{error_str}{prefix}Catalog item version{" also" if error_str else ""} has ' \
