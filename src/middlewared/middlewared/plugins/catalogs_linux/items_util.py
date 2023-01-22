@@ -19,11 +19,15 @@ def minimum_scale_version_check_update(version_details: dict) -> dict:
     return version_details
 
 
-def minimum_scale_version_check_update_impl(version_details: dict) -> typing.Tuple[bool, bool]:
-    if (
-        version_details['healthy'] and version_details['supported'] and version_details['chart_metadata'].get(
-            'minimum_scale_version'
-        )
+def minimum_scale_version_check_update_impl(
+    version_details: dict, check_supported_key: bool = True
+) -> typing.Tuple[bool, bool]:
+    # `check_supported_key` is used because when catalog validation returns the data it only checks the
+    # missing features and based on that makes the decision. So if something is not already supported
+    # we do not want to validate minimum scale version in that case. However, when we want to report to
+    # the user as to why exactly the app version is not supported, we need to be able to make that distinction
+    if version_details['healthy'] and version_details['chart_metadata'].get('minimum_scale_version') and (
+        not check_supported_key or version_details['supported']
     ):
         try:
             if manifest_version() != version_details['chart_metadata']['minimum_scale_version'] and not can_update(
