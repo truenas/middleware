@@ -53,7 +53,7 @@ def get_item_details(item_location: str, questions_context: dict, options: dict)
     return item_details
 
 
-def get_item_version_details(version_path: str, questions_context: dict, scale_version: str) -> dict:
+def get_item_version_details(version_path: str, questions_context: dict) -> dict:
     return minimum_scale_version_check_update(get_catalog_item_version_details(version_path, questions_context, {
         'default_values_callable': get_item_default_values,
     }))
