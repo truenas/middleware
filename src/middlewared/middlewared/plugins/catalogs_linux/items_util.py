@@ -4,20 +4,40 @@ from catalog_validation.items.items_util import (
 )
 
 from middlewared.plugins.chart_releases_linux.schema import construct_schema
+from middlewared.plugins.update_.utils import can_update
+from middlewared.utils import manifest_version
 
 
 def get_item_default_values(version_details: dict) -> dict:
     return construct_schema(version_details, {}, False)['new_values']
 
 
+def minimum_scale_version_check_update(version_details):
+    if (
+        version_details['healthy'] and version_details['supported'] and version_details['chart_metadata'].get(
+            'minimum_scale_version'
+        )
+    ):
+        if manifest_version() != version_details['chart_metadata']['minimum_scale_version'] and not can_update(
+                version_details['chart_metadata']['minimum_scale_version'], manifest_version()
+        ):
+            version_details['supported'] = False
+
+    return version_details
+
+
 def get_item_details(item_location: str, questions_context: dict, options: dict) -> dict:
-    return get_catalog_item_details(item_location, questions_context, {
+    item_details = get_catalog_item_details(item_location, questions_context, {
         **options,
         'default_values_callable': get_item_default_values,
     })
+    for version in item_details['versions'].values():
+        minimum_scale_version_check_update(version)
+
+    return item_details
 
 
-def get_item_version_details(version_path: str, questions_context: dict) -> dict:
-    return get_catalog_item_version_details(version_path, questions_context, {
+def get_item_version_details(version_path: str, questions_context: dict, scale_version: str) -> dict:
+    return minimum_scale_version_check_update(get_catalog_item_version_details(version_path, questions_context, {
         'default_values_callable': get_item_default_values,
-    })
+    }))
