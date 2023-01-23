@@ -137,26 +137,10 @@ class KubernetesService(Service):
         except Exception as e:
             raise CallError(f'Failed to configure PV/PVCs support: {e}')
 
-        for loadbalancer_svc in await self.middleware.call('k8s.service.query', [['spec.type', '=', 'LoadBalancer']]):
-            try:
-                await self.middleware.call(
-                    'k8s.service.delete', loadbalancer_svc['metadata']['name'],
-                    {'namespace': loadbalancer_svc['metadata']['namespace']}
-                )
-            except CallError:
-                self.logger.error('Failed to remove %r service', loadbalancer_svc['metadata']['name'], exc_info=True)
+        # Now that k8s is configured, we would want to scale down any deployment/statefulset which might
+        # be consuming a locked host path volume
+        await self.middleware.call('chart.release.scale_down_resources_consuming_locked_paths')
 
-        # In some scenarios k3s was not deleting loadbalancer based daemonsets, let's clean up those
-        for daemonset in await self.middleware.call(
-            'k8s.daemonset.query', [['metadata.namespace', '=', 'kube-system'], ['metadata.name', 'rin', 'svclb']]
-        ):
-            try:
-                await self.middleware.call(
-                    'k8s.daemonset.delete', daemonset['metadata']['name'],
-                    {'namespace': daemonset['metadata']['namespace']}
-                )
-            except CallError:
-                self.logger.error('Failed to remove %r daemonset', daemonset['metadata']['name'], exc_info=True)
         node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call(
             'k8s.node.remove_taints', [
@@ -181,21 +165,6 @@ class KubernetesService(Service):
             raise CallError(
                 f'Timed out waiting for {", ".join([taint["key"] for taint in taints])!r} taints to be removed'
             )
-
-        # Let helm re-create load balancer services for scaled up apps
-        chart_releases = await self.middleware.call('chart.release.query', [['status', 'in', ('ACTIVE', 'DEPLOYING')]])
-        bulk_job = await self.middleware.call(
-            'core.bulk', 'chart.release.redeploy', [[r['name']] for r in chart_releases]
-        )
-        for index, status in enumerate(await bulk_job.wait()):
-            if status['error']:
-                self.middleware.logger.error(
-                    'Failed to redeploy %r chart release: %s', chart_releases[index], status['error']
-                )
-
-        # Now that k8s is configured, we would want to scale down any deployment/statefulset which might
-        # be consuming a locked host path volume
-        await self.middleware.call('chart.release.scale_down_resources_consuming_locked_paths')
 
         pod_running_timeout = 600
         while pod_running_timeout > 0:
