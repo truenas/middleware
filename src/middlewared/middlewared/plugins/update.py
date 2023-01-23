@@ -429,7 +429,7 @@ class UpdateService(Service):
             self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
 
-        current_version = "-".join(self.middleware.call_sync("system.version").split("-")[1:])
+        current_version = f'SCALE-{self.middleware.call_sync("system.version", False)}'
         snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
 
