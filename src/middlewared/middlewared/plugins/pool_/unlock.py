@@ -27,8 +27,7 @@ class PoolDatasetService(Service):
 
         result = {}
         for k, v in services.items():
-            service = await self.middleware.call('service.query', [['service', '=', k]], {'get': True})
-            if service['enable'] or service['state'] == 'RUNNING':
+            if await self.middleware.call('service.started_or_enabled', k):
                 result[k] = v
 
         check_services = {

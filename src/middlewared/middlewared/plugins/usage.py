@@ -188,7 +188,11 @@ class UsageService(Service):
         return {
             'rsyncmod': {
                 'enabled': (
-                    await self.middleware.call('service.query', [['service', '=', 'rsync']], {'get': True})
+                    await self.middleware.call(
+                        'service.query',
+                        [['service', '=', 'rsync']],
+                        {'get': True, 'extra': {'include_state': False}}
+                    )
                 )['enable'],
                 'rsync_modules': await self.middleware.call('rsyncmod.query', [], {'count': True}),
             }
@@ -446,7 +450,7 @@ class UsageService(Service):
         return {'pools': pool_list}
 
     async def gather_services(self, context):
-        services = await self.middleware.call('service.query')
+        services = await self.middleware.call('service.query', [], {'extra': {'include_state': False}})
         service_list = []
 
         for s in services:
