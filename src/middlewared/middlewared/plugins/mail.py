@@ -1,7 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc
+from middlewared.utils import osc, BRAND
 from middlewared.utils.mako import get_template
 from middlewared.validators import Email
 
@@ -283,11 +283,8 @@ class MailService(ConfigService):
         else:
             interval = timedelta(seconds=interval)
 
-        channel = message.get('channel')
-        if not channel:
-            channel = 'truenas'
         if interval > timedelta():
-            channelfile = '/tmp/.msg.%s' % (channel)
+            channelfile = f'/tmp/.msg.{message.get("channel") or BRAND.lower()}'
             last_update = datetime.now() - interval
             try:
                 last_update = datetime.fromtimestamp(os.stat(channelfile).st_mtime)
