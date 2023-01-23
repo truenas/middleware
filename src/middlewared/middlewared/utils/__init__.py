@@ -15,6 +15,9 @@ MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
 MANIFEST_FILE = '/data/manifest.json'
+BRAND = 'TrueNAS'
+PRODUCT = 'SCALE'
+BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 
 logger = logging.getLogger(__name__)
 
@@ -242,10 +245,11 @@ def sw_info():
     """Returns the various software information from the manifest file."""
     with open(MANIFEST_FILE) as f:
         manifest = json.load(f)
+        version = manifest['version']
         return {
             'stable': 'MASTER' not in manifest['version'],
-            'version': manifest['version'],
-            'fullname': f"TrueNAS-SCALE-{manifest['version']}",
+            'version': version,
+            'fullname': f'{BRAND_PRODUCT}-{version}',
             'buildtime': manifest['buildtime'],
         }
 
