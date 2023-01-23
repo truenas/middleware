@@ -283,11 +283,9 @@ class MailService(ConfigService):
         else:
             interval = timedelta(seconds=interval)
 
-        sw_name = self.middleware.call_sync('system.version').split('-', 1)[0]
-
         channel = message.get('channel')
         if not channel:
-            channel = sw_name.lower()
+            channel = 'truenas'
         if interval > timedelta():
             channelfile = '/tmp/.msg.%s' % (channel)
             last_update = datetime.now() - interval
