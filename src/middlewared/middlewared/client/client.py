@@ -1,6 +1,4 @@
 import argparse
-from base64 import b64decode
-from collections import defaultdict, namedtuple
 import errno
 import logging
 import os
@@ -9,19 +7,28 @@ import pprint
 import random
 import socket
 import sys
-from threading import Event, Lock, Thread
 import time
 import uuid
+from base64 import b64decode
+from collections import defaultdict, namedtuple
+from threading import Event, Lock, Thread
 
-from libzfs import Error as ZFSError
 from websocket import WebSocketApp
 from websocket._abnf import STATUS_NORMAL
 from websocket._http import connect, proxy_info
 from websocket._socket import sock_opt
 
-
 from . import ejson as json
 from .utils import MIDDLEWARE_RUN_DIR, ProgressBar, undefined
+try:
+    from libzfs import Error as ZFSError
+except ImportError:
+    # this happens on our CI/CD runners as
+    # they do not install the py-libzfs module
+    # to run our api integration tests
+    LIBZFS = False
+else:
+    LIBZFS = True
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +203,7 @@ class ErrnoMixin:
 
     @classmethod
     def _get_errname(cls, code):
-        if 2000 <= code <= 2100:
+        if LIBZFS and 2000 <= code <= 2100:
             return 'EZFS_' + ZFSError(code).name
         for k, v in cls.__dict__.items():
             if k.startswith("E") and v == code:
