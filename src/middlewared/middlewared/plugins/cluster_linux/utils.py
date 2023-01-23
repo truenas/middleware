@@ -28,7 +28,11 @@ class ClusterUtils(Service):
         `True` means this system is clustered
         `False` means this system is not clustered.
         """
-        return (await self.middleware.call('service.query', [('service', '=', 'glusterd')], {'get': True}))['enable']
+        return (await self.middleware.call(
+            'service.query',
+            [('service', '=', 'glusterd')],
+            {'get': True, 'extra': {'include_state': False}}
+        ))['enable']
 
     @private
     async def _resolve_hostname(self, host, avail_ips):

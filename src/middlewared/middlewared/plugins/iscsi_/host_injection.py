@@ -104,6 +104,5 @@ class iSCSIHostsInjectionService(Service):
 
 
 async def setup(middleware):
-    service = await middleware.call("service.query", [["service", "=", "iscsitarget"]], {"get": True})
-    if service["enable"] or service["state"] == "RUNNING":
+    if await middleware.call('service.started_or_enabled', 'iscsitarget'):
         await middleware.call("iscsi.host.injection.start")
