@@ -14,6 +14,7 @@ from middlewared.utils.threading import start_daemon_thread  # noqa
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
+MANIFEST_FILE = '/data/manifest.json'
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +240,7 @@ def filter_getattrs(filters):
 @cache
 def sw_info():
     """Returns the various software information from the manifest file."""
-    with open('/data/manifest.json') as f:
+    with open(MANIFEST_FILE) as f:
         manifest = json.load(f)
         return {
             'stable': 'MASTER' not in manifest['version'],
