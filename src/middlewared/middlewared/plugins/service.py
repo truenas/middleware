@@ -10,7 +10,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import filterable, CallError, CRUDService, periodic, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, filter_getattrs
 
 
 class ServiceModel(sa.Model):
@@ -25,6 +25,9 @@ class ServiceService(CRUDService):
 
     class Config:
         cli_namespace = "service"
+        datastore_prefix = 'srv_'
+        datastore_extend = 'service.service_extend'
+        datastore_extend_context = 'service.service_extend_context'
 
     ENTRY = Dict(
         'service_entry',
@@ -35,18 +38,11 @@ class ServiceService(CRUDService):
         List('pids', items=[Int('pid')]),
     )
 
-    @filterable
-    async def query(self, filters, options):
-        """
-        Query all system services with `query-filters` and `query-options`.
-        """
-        if options is None:
-            options = {}
-        options['prefix'] = 'srv_'
+    @private
+    async def service_extend_context(self, services, extra):
+        if not extra.get('include_state', True):
+            return {}
 
-        services = await self.middleware.call('datastore.query', 'services.services', filters, options)
-
-        # In case a single service has been requested
         if not isinstance(services, list):
             services = [services]
 
@@ -56,6 +52,7 @@ class ServiceService(CRUDService):
             ): service
             for service in services
         }
+
         if jobs:
             done, pending = await asyncio.wait(list(jobs.keys()), timeout=15)
 
@@ -74,16 +71,42 @@ class ServiceService(CRUDService):
                     self.logger.warning('Task %r failed', exc_info=True)
 
             if result is None:
-                entry['state'] = 'UNKNOWN'
-                entry['pids'] = []
-            else:
-                entry['state'] = 'RUNNING' if result.running else 'STOPPED'
-                entry['pids'] = result.pids
+                return None
 
-            return entry
+            return {
+                'service': entry['service'],
+                'info': {
+                    'state': 'RUNNING' if result.running else 'STOPPED',
+                    'pids': result.pids
+                }
+            }
 
-        services = list(map(result, jobs))
-        return filter_list(services, filters, options)
+        return {srv['service']: srv['info'] for srv in map(result, jobs) if srv is not None}
+
+    @private
+    async def service_extend(self, svc, ctx):
+        return svc | ctx.get(svc['service'], {'state': 'UNKNOWN', 'pids': []})
+
+    @filterable
+    async def query(self, filters, options):
+        """
+        Query all system services with `query-filters` and `query-options`.
+
+        Supports the following extra options:
+        `include_state` - performance optimization to avoid getting service state.
+        defaults to True.
+        """
+        default_options = {
+            'prefix': self._config.datastore_prefix,
+            'extend': self._config.datastore_extend,
+            'extend_context': self._config.datastore_extend_context
+        }
+
+        if set(filter_getattrs(filters)) & {'state', 'pids'}:
+            services = await self.middleware.call('datastore.query', 'services.services', [], default_options)
+            return filter_list(services, filters, options)
+
+        return await self.middleware.call('datastore.query', 'services.services', filters, options | default_options)
 
     @accepts(
         Str('id_or_name'),
