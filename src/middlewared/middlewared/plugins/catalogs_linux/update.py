@@ -174,7 +174,7 @@ class CatalogService(CRUDService):
                 f'{schema}.preferred_trains',
                 'At least 1 preferred train must be specified for a catalog.'
             )
-        if await self.license_active() and data['preferred_trains'] != [OFFICIAL_ENTERPRISE_TRAIN]:
+        if await self.valid_enterprise_catalog_license() and data['preferred_trains'] != [OFFICIAL_ENTERPRISE_TRAIN]:
             verrors.add(
                 f'{schema}.preferred_trains',
                 f'Licensed systems can only consume {OFFICIAL_ENTERPRISE_TRAIN!r} train'
@@ -216,10 +216,10 @@ class CatalogService(CRUDService):
                     f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
                 )
 
-        if not await self.license_active():
+        if await self.valid_enterprise_catalog_license():
             verrors.add(
                 'catalog_create.label',
-                'Licensed systems cannot add catalog(s)'
+                'System is not licensed to add catalog(s)'
             )
 
         verrors.check()
@@ -302,8 +302,11 @@ class CatalogService(CRUDService):
         return ret
 
     @private
-    async def license_active(self):
-        can_add_catalogs = True
+    async def valid_enterprise_catalog_license(self):
+        if await self.middleware.call('system.product_type') != 'SCALE_ENTERPRISE':
+            return False
+
+        can_add_catalogs = False
         license = await self.middleware.call('system.license')
         if license is not None:
             can_add_catalogs = 'JAILS' in license['features']
