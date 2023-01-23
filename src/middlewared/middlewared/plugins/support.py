@@ -17,6 +17,7 @@ from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.validators import Email
+from middlewared.utils import PRODUCT
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -223,7 +224,7 @@ class SupportService(ConfigService):
             if i not in data:
                 raise CallError(f'{i} is required', errno.EINVAL)
 
-        data['version'] = f'SCALE-{await self.middleware.call("system.version", False)}'
+        data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version", False)}'
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
