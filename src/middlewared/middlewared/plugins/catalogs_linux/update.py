@@ -174,6 +174,11 @@ class CatalogService(CRUDService):
                 f'{schema}.preferred_trains',
                 'At least 1 preferred train must be specified for a catalog.'
             )
+        if await self.license_active() and data['preferred_trains'] != [OFFICIAL_ENTERPRISE_TRAIN]:
+            verrors.add(
+                f'{schema}.preferred_trains',
+                f'Licensed systems can only consume {OFFICIAL_ENTERPRISE_TRAIN!r} train'
+            )
 
         verrors.check()
 
@@ -210,6 +215,12 @@ class CatalogService(CRUDService):
                 verrors.add(
                     f'catalog_create.{k}', 'A catalog with same repository/branch already exists', errno=errno.EEXIST
                 )
+
+        if not await self.license_active():
+            verrors.add(
+                'catalog_create.label',
+                'Licensed systems cannot add catalog(s)'
+            )
 
         verrors.check()
 
@@ -289,6 +300,15 @@ class CatalogService(CRUDService):
         self.middleware.call_sync('cache.pop', get_cache_key(id))
 
         return ret
+
+    @private
+    async def license_active(self):
+        can_add_catalogs = True
+        license = await self.middleware.call('system.license')
+        if license is not None:
+            can_add_catalogs = 'JAILS' in license['features']
+
+        return can_add_catalogs
 
     @private
     async def official_catalog_label(self):
