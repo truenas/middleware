@@ -223,7 +223,7 @@ class SupportService(ConfigService):
             if i not in data:
                 raise CallError(f'{i} is required', errno.EINVAL)
 
-        data['version'] = (await self.middleware.call('system.version')).split('-', 1)[-1]
+        data['version'] = f'SCALE-{await self.middleware.call('system.version', False)}'
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
