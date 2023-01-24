@@ -1040,7 +1040,7 @@ class PoolService(CRUDService):
                     yield i
             else:
                 args = ('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])])
-                for prov in await filter(lambda x: x['encrypted_provider'], await self.middleware.call(*args)):
+                for prov in filter(lambda x: x['encrypted_provider'], (await self.middleware.call(*args))):
                     # Use encrypted_provider and not disk because a disk is not a guarantee
                     # to point to correct device if its locked and its not in the system
                     # (e.g. temporarily). See #50291
