@@ -3,7 +3,7 @@ import logging
 import os
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import sw_version
+from middlewared.utils import sw_info
 
 from .utils import can_update
 from .utils_linux import mount_update
@@ -33,7 +33,7 @@ class UpdateService(Service):
             with open(os.path.join(mounted, "manifest.json")) as f:
                 manifest = json.load(f)
 
-            old_version = sw_version(False)
+            old_version = sw_info()['version']
             new_version = manifest["version"]
             if old_version == new_version:
                 raise CallError(f'You already are using {new_version}')
