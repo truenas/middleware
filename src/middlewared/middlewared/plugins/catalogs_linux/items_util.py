@@ -7,7 +7,7 @@ from catalog_validation.items.items_util import (
 
 from middlewared.plugins.chart_releases_linux.schema import construct_schema
 from middlewared.plugins.update_.utils import can_update
-from middlewared.utils import manifest_version
+from middlewared.utils import sw_version
 
 
 def get_item_default_values(version_details: dict) -> dict:
@@ -30,8 +30,8 @@ def minimum_scale_version_check_update_impl(
         not check_supported_key or version_details['supported']
     ):
         try:
-            if manifest_version() != version_details['chart_metadata']['minimum_scale_version'] and not can_update(
-                version_details['chart_metadata']['minimum_scale_version'], manifest_version()
+            if sw_version(False) != version_details['chart_metadata']['minimum_scale_version'] and not can_update(
+                version_details['chart_metadata']['minimum_scale_version'], sw_version(False)
             ):
                 return False, False
         except Exception:
