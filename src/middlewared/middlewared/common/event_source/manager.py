@@ -174,5 +174,5 @@ class EventSourceManager:
         for ident in self.subscriptions[name][arg]:
             self.terminate(self.idents.pop(ident), error)
 
-        self.instances[name].pop(arg)
+        self.instances[name].pop(arg, None)
         self.subscriptions[name][arg].clear()
