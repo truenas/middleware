@@ -18,7 +18,7 @@ logging.getLogger('aiohttp.internal').setLevel(logging.WARN)
 # We dont need internal botocore debug logging
 logging.getLogger('botocore').setLevel(logging.WARN)
 # we dont need websocket debug messages
-logging.getLogger('websocket').setLevel(logging.WARN)
+logging.getLogger('websocket').setLevel(logging.CRITICAL)
 # we dont need GitPython debug messages (used in catalogs)
 logging.getLogger('git.cmd').setLevel(logging.CRITICAL)
 logging.getLogger('git.repo').setLevel(logging.CRITICAL)
