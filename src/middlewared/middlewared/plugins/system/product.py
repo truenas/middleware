@@ -74,13 +74,16 @@ class SystemService(Service):
         """
         return "TrueNAS"
 
-    @accepts()
+    @accepts(Bool('fullname', default=True))
     @returns(Str('truenas_version'))
-    def version(self):
+    def version(self, fullname):
+        """Returns software version of the system.
+
+        `full_name`: boolean. If false, will only return the major version
+            without the software product prefix.
+            (i.e. 22.12.0 instead of TrueNAS-SCALE-22.12.0)
         """
-        Returns software version of the system.
-        """
-        return sw_version()
+        return sw_version(fullname=fullname)
 
     @accepts()
     @returns(Str('is_stable'))

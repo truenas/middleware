@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, CallError, Service
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.update_.utils import UPLOAD_LOCATION
+from middlewared.utils import PRODUCT
 
 from datetime import datetime
 import enum
@@ -429,8 +430,8 @@ class UpdateService(Service):
             self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
 
-        current_version = "-".join(self.middleware.call_sync("system.version").split("-")[1:])
-        snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{current_version}'
+        current_version = self.middleware.call_sync('system.version', False)
+        snapshot = f'update--{datetime.utcnow().strftime("%Y-%m-%d-%H-%M")}--{PRODUCT}-{current_version}'
         subprocess.run(['zfs', 'snapshot', f'{dataset}@{snapshot}'])
 
 
