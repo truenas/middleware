@@ -71,7 +71,7 @@ async def render(service, middleware):
         FROM storage_disk d
         LEFT JOIN tasks_smarttest_smarttest_disks sd ON sd.disk_id = d.disk_identifier
         LEFT JOIN tasks_smarttest s ON s.id = sd.smarttest_id OR s.smarttest_all_disks = true
-        WHERE disk_togglesmart = 1 AND disk_expiretime IS NULL
+        WHERE disk_togglesmart = 1 AND disk_expiretime IS NULL AND disk_name NOT LIKE 'pmem%'
     """)
     if await middleware.call("failover.licensed") and (await middleware.call("failover.status") != "MASTER"):
         # If failover is licensed and we are not a `MASTER` node, only monitor boot pool disks to avoid

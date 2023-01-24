@@ -275,9 +275,10 @@ class SMARTTestService(CRUDService):
 
         `full_disk` will return full disk objects instead of just names.
         """
+        filters = [['name', '!^', 'pmem'], ['name', '!^', 'nvme']]
         return {
             disk['identifier']: disk if full_disk else disk['name']
-            for disk in await self.middleware.call('disk.query', [['devname', '!^', 'nv']])
+            for disk in await self.middleware.call('disk.query', filters)
             if await self.middleware.call('disk.smartctl_args', disk['name']) is not None
         }
 
