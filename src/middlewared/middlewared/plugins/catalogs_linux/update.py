@@ -219,7 +219,7 @@ class CatalogService(CRUDService):
         if await self.valid_enterprise_catalog_license():
             verrors.add(
                 'catalog_create.label',
-                'System is not licensed to add catalog(s)'
+                'Enterprise systems are not allowed to add catalog(s)'
             )
 
         verrors.check()
