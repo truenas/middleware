@@ -3,19 +3,21 @@ import logging
 import re
 import signal
 import subprocess
+import json
 from datetime import datetime, timedelta
-from functools import wraps
+from functools import wraps, cache
 from threading import Lock
 
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils import osc
 from middlewared.utils.threading import start_daemon_thread  # noqa
 
-BUILDTIME = None
-VERSION = None
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
+MANIFEST_FILE = '/data/manifest.json'
+BRAND = 'TrueNAS'
+PRODUCT = 'SCALE'
+BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 
 logger = logging.getLogger(__name__)
 
@@ -238,25 +240,35 @@ def filter_getattrs(filters):
     return attrs
 
 
+@cache
+def sw_info():
+    """Returns the various software information from the manifest file."""
+    with open(MANIFEST_FILE) as f:
+        manifest = json.load(f)
+        version = manifest['version']
+        return {
+            'stable': 'MASTER' not in manifest['version'],
+            'version': version,
+            'fullname': f'{BRAND_PRODUCT}-{version}',
+            'buildtime': manifest['buildtime'],
+        }
+
+
 def sw_buildtime():
-    global BUILDTIME
-    if BUILDTIME is None:
-        version = osc.get_app_version()
-        BUILDTIME = version['buildtime']
-    return BUILDTIME
+    return sw_info()['buildtime']
 
 
-def sw_version():
-    global VERSION
-    if VERSION is None:
-        version = osc.get_app_version()
-        VERSION = version['fullname']
-    return VERSION
+def sw_version(fullname=True):
+    """
+    `fullname`: bool. If False will return the version of the product
+        without the software name prefix.
+        (i.e. 22.12.0 instead of TrueNAS-SCALE-22.12.0)
+    """
+    return sw_info()['fullname' if fullname else 'version']
 
 
 def sw_version_is_stable():
-    version = osc.get_app_version()
-    return version['stable']
+    return sw_info()['stable']
 
 
 def is_empty(val):
