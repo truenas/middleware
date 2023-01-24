@@ -19,6 +19,83 @@ DATA = [
     },
 ]
 
+COMPLEX_DATA = [
+    {
+        "timestamp": "2022-11-10T07:40:17.397502-0800",
+        "type": "Authentication",
+        "Authentication": {
+            "version": {
+                "major": 1,
+                "minor": 2
+            },
+            "eventId": 4625,
+            "logonId": "0",
+            "logonType": 3,
+            "status": "NT_STATUS_NO_SUCH_USER",
+            "localAddress": "ipv4:192.168.0.200:445",
+            "remoteAddress": "ipv4:192.168.0.151:50559",
+            "serviceDescription": "SMB2",
+            "authDescription": None,
+            "clientDomain": "MicrosoftAccount",
+            "clientAccount": "awalker325@outlook.com",
+            "workstation": "WALKSURF",
+            "becameAccount": None,
+            "becameDomain": None,
+            "becameSid": None,
+            "mappedAccount": "awalker325@outlook.com",
+            "mappedDomain": "MicrosoftAccount",
+            "netlogonComputer": None,
+            "netlogonTrustAccount": None,
+            "netlogonNegotiateFlags": "0x00000000",
+            "netlogonSecureChannelType": 0,
+            "netlogonTrustAccountSid": None,
+            "passwordType": "NTLMv2",
+            "duration": 6298
+        },
+        "timestamp_tval": {
+            "tv_sec": 1668094817,
+            "tv_usec": 397502
+        }
+    },
+    {
+        "timestamp": "2023-01-24T12:37:39.522594-0800",
+        "type": "Authentication",
+        "Authentication": {
+            "version": {
+                "major": 1,
+                "minor": 2
+            },
+            "eventId": 4624,
+            "logonId": "c1b1a262c42babb6",
+            "logonType": 8,
+            "status": "NT_STATUS_OK",
+            "localAddress": "unix:",
+            "remoteAddress": "unix:",
+            "serviceDescription": "winbind",
+            "authDescription": "PAM_AUTH, PAM_WINBIND[sshd], 133191",
+            "clientDomain": "BILLY",
+            "clientAccount": "joiner",
+            "workstation": None,
+            "becameAccount": "joiner",
+            "becameDomain": "BILLY",
+            "becameSid": "S-1-5-21-1002530428-2020721000-3540273080-1103",
+            "mappedAccount": None,
+            "mappedDomain": None,
+            "netlogonComputer": None,
+            "netlogonTrustAccount": None,
+            "netlogonNegotiateFlags": "0x00000000",
+            "netlogonSecureChannelType": 0,
+            "netlogonTrustAccountSid": None,
+            "passwordType": "Plaintext",
+            "duration": 23554
+        },
+        "timestamp_tval": {
+            "tv_sec": 1674592659,
+            "tv_usec": 522594
+        }
+    }
+]
+
 
 def test__filter_list_equal():
     assert len(filter_list(DATA, [['foo', '=', 'foo1']])) == 1
@@ -84,3 +161,30 @@ def test__filter_list_OR_eq2():
         ['number', '=', 1],
         ['number', '=', 2],
     ]]])) == 2
+
+
+def test__filter_list_nested_dict():
+    assert len(filter_list(COMPLEX_DATA, [['Authentication.status', '=', 'NT_STATUS_OK']])) == 1
+
+
+def test__filter_list_option_get():
+    assert isinstance(filter_list(DATA, [], {'get': True}), dict)
+
+
+def test__filter_list_option_get_and_order_by():
+    assert filter_list(DATA, [], {'get': True, 'order_by': ['-number']})['foo'] == '_foo_'
+
+
+def test__filter_list_option_order_by():
+    for idx, entry in enumerate(filter_list(DATA, [], {'order_by': ['number']})):
+        assert entry['number'] == idx + 1
+
+
+def test__filter_list_option_order_by_reverse():
+    for idx, entry in enumerate(filter_list(DATA, [], {'order_by': ['-number']})):
+        assert entry['number'] == 3 - idx
+
+
+def test__filter_list_option_select():
+    for entry in filter_list(DATA, [], {'select': ['foo']}):
+        assert list(entry.keys()) == ['foo']

@@ -108,8 +108,7 @@ def get(obj, path):
     return cur
 
 
-def filter_list(_list, filters=None, options=None):
-
+class filters(object):
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
@@ -128,61 +127,105 @@ def filter_list(_list, filters=None, options=None):
         '!$': lambda x, y: x is not None and not x.endswith(y),
     }
 
-    if filters is None:
-        filters = {}
-    if options is None:
-        options = {}
+    def validate_filters(self, filters):
+        for f in filters:
+            if len(f) == 2:
+                op, value = f
+                if op != 'OR':
+                    raise ValueError(f'Invalid operation: {op}')
 
-    select = options.get('select')
+                if not value:
+                    raise ValueError('OR filter requires at least one branch.')
 
-    rv = []
-    if filters:
+                self.validate_filters(value)
+                continue
 
-        def filterop(f):
-            if len(f) != 3:
+            elif len(f) != 3:
                 raise ValueError(f'Invalid filter {f}')
-            name, op, value = f
-            if op not in opmap:
-                raise ValueError('Invalid operation: {}'.format(op))
-            if isinstance(i, dict):
-                source = get(i, name)
-            else:
-                source = getattr(i, name)
-            if opmap[op](source, value):
-                return True
-            return False
 
+            if f[1] not in self.opmap:
+                raise ValueError('Invalid operation: {}'.format(f[1]))
+
+    def validate_options(self, options):
+        if options is None:
+            return ({}, [], [])
+
+        if options.get('get') and options.get('limit', 0) > 1:
+            raise ValueError(
+                'Invalid options combination. `get` implies a single result.'
+            )
+
+        if options.get('get') and options.get('offset'):
+            raise ValueError(
+                'Invalid options combination. `get` implies a single result.'
+            )
+
+        select = options.get('select', [])
+        order_by = options.get('order_by', [])
+
+        return (options, select, order_by)
+
+    def filterop_dict(self, i, f):
+        name, op, value = f
+        source = get(i, name)
+        if self.opmap[op](source, value):
+            return True
+
+        return False
+
+    def filterop(self, i, f):
+        name, op, value = f
+        source = getattr(i, name)
+        if self.opmap[op](source, value):
+            return True
+
+        return False
+
+    def get_filterop(self, _list):
+        if not _list:
+            return None
+
+        if isinstance(_list[0], dict):
+            return self.filterop_dict
+
+        return self.filterop
+
+    def do_filters(self, _list, filters, select, shortcircuit):
+        rv = []
+
+        filterop = self.get_filterop(_list)
         for i in _list:
             valid = True
             for f in filters:
                 if len(f) == 2:
+                    # OR parsing
                     op, value = f
-                    if op == 'OR':
-                        for f in value:
-                            if filterop(f):
-                                break
-                        else:
-                            valid = False
+                    for f in value:
+                        if filterop(i, f):
                             break
                     else:
-                        raise ValueError(f'Invalid operation: {op}')
-                elif not filterop(f):
+                        valid = False
+                        break
+
+                elif not filterop(i, f):
                     valid = False
                     break
 
             if not valid:
                 continue
+
             if select:
-                entry = {}
-                for s in select:
-                    if s in i:
-                        entry[s] = i[s]
+                entry = self.do_select([i], select)[0]
             else:
                 entry = i
+
             rv.append(entry)
-            if options.get('get') is True:
-                return entry
-    elif select:
+            if shortcircuit:
+                break
+
+        return rv
+
+    def do_select(self, _list, select):
         rv = []
         for i in _list:
             entry = {}
@@ -190,14 +233,14 @@ def filter_list(_list, filters=None, options=None):
                 if s in i:
                     entry[s] = i[s]
             rv.append(entry)
-    else:
-        rv = _list
 
-    if options.get('count') is True:
+        return rv
+
+    def do_count(self, rv):
         return len(rv)
 
-    if options.get('order_by'):
-        for o in options.get('order_by'):
+    def do_order(self, rv, order_by):
+        for o in order_by:
             if o.startswith('-'):
                 o = o[1:]
                 reverse = True
@@ -205,19 +248,47 @@ def filter_list(_list, filters=None, options=None):
                 reverse = False
             rv = sorted(rv, key=lambda x: get(x, o), reverse=reverse)
 
-    if options.get('get') is True:
+        return rv
+
+    def do_get(self, rv):
         try:
             return rv[0]
         except IndexError:
             raise MatchNotFound() from None
 
-    if options.get('offset'):
-        rv = rv[options['offset']:]
+    def filter_list(self, _list, filters=None, options=None):
+        options, select, order_by = self.validate_options(options)
 
-    if options.get('limit'):
-        return rv[:options['limit']]
+        do_shortcircuit = options.get('get') and not order_by
+        if filters:
+            self.validate_filters(filters)
+            rv = self.do_filters(_list, filters, select, do_shortcircuit)
+            if do_shortcircuit:
+                return self.do_get(rv)
 
-    return rv
+        elif select:
+            rv = self.do_select(_list, select)
+        else:
+            rv = _list
+
+        if options.get('count') is True:
+            return self.do_count(rv)
+
+        rv = self.do_order(rv, order_by)
+
+        if options.get('get') is True:
+            return self.do_get(rv)
+
+        if options.get('offset'):
+            rv = rv[options['offset']:]
+
+        if options.get('limit'):
+            return rv[:options['limit']]
+
+        return rv
+
+
+filter_list = filters().filter_list
 
 
 def filter_getattrs(filters):
