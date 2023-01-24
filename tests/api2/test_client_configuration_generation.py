@@ -1,6 +1,8 @@
 import contextlib
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.assets.crypto import root_certificate_authority, get_cert_params
+from middlewared.test.integration.assets.crypto import (
+    get_cert_params, OPENVPN_CLIENT_CERT_EXT, OPENVPN_SERVER_CERT_EXT, root_certificate_authority,
+)
 
 
 @contextlib.contextmanager
@@ -24,36 +26,11 @@ def openvpn_server_update(server_cert_name, root_ca_id):
                  {'root_ca': None, 'server_certificate': None})
 
 
-SERVER_CERT_EXT = {
-    'BasicConstraints': {
-        'enabled': True,
-        'extension_critical': True
-    },
-    'AuthorityKeyIdentifier': {
-        'enabled': True,
-        'authority_cert_issuer': True
-    },
-    'ExtendedKeyUsage': {
-        'enabled': True,
-        'usages': [
-            'SERVER_AUTH'
-        ],
-        'extension_critical': True
-    },
-    'KeyUsage': {
-        'enabled': True,
-        'extension_critical': True,
-        'digital_signature': True,
-        'key_encipherment': True,
-    }
-}
-
-
 @contextlib.contextmanager
 def generate_server_certificate(server_cert_name, root_ca_id):
     cert_params = get_cert_params()
     cert_params['key_length'] = 2048
-    cert_params['cert_extensions'] = SERVER_CERT_EXT
+    cert_params['cert_extensions'] = OPENVPN_SERVER_CERT_EXT
     cert_params.pop('serial')
 
     call('certificate.create', {
@@ -70,37 +47,10 @@ def generate_server_certificate(server_cert_name, root_ca_id):
         call('certificate.delete', server_cert['id'], job=True)
 
 
-CLIENT_CERT_EXT = {
-    'BasicConstraints': {
-        'enabled': True,
-        'ca': False,
-        'extension_critical': True
-    },
-    'AuthorityKeyIdentifier': {
-        'enabled': True,
-        'authority_cert_issuer': True,
-        'extension_critical': False
-    },
-    'ExtendedKeyUsage': {
-        'enabled': True,
-        'extension_critical': True,
-        'usages': [
-            'CLIENT_AUTH',
-        ]
-    },
-    'KeyUsage': {
-        'enabled': True,
-        'extension_critical': True,
-        'digital_signature': True,
-        'key_agreement': True,
-    }
-}
-
-
 @contextlib.contextmanager
 def generate_client_certificate(client_cert_name, root_ca_id):
     cert_params = get_cert_params()
-    cert_params['cert_extensions'] = CLIENT_CERT_EXT
+    cert_params['cert_extensions'] = OPENVPN_CLIENT_CERT_EXT
     cert_params['key_length'] = 2048
     cert_params.pop('serial')
 
