@@ -1,5 +1,4 @@
 import asyncio
-import functools
 import logging
 import re
 import signal
@@ -266,11 +265,6 @@ def sw_version(fullname=True):
         (i.e. 22.12.0 instead of TrueNAS-SCALE-22.12.0)
     """
     return sw_info()['fullname' if fullname else 'version']
-
-
-@functools.cache
-def manifest_version():
-    return osc.get_app_version()['version']
 
 
 def sw_version_is_stable():
