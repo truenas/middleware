@@ -8,6 +8,7 @@ import random
 import socket
 import sys
 import time
+import urllib.parse
 import uuid
 from base64 import b64decode
 from collections import defaultdict, namedtuple
@@ -54,12 +55,21 @@ class WSClient:
             self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.socket.connect(self.url.removeprefix(unix_socket_prefix))
             app_url = "ws://localhost/websocket"  # Adviced by official docs to use dummy hostname
+        elif self.reserved_ports:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(10)
+            self._bind_to_reserved_port()
+            try:
+                self.socket.connect((urllib.parse.urlparse(self.url).hostname,
+                                     urllib.parse.urlparse(self.url).port or 80))
+            except Exception:
+                self.socket.close()
+                raise
+            app_url = "ws://localhost/websocket"  # Adviced by official docs to use dummy hostname
         else:
             sockopt = sock_opt(None, None)
             sockopt.timeout = 10
             self.socket = connect(self.url, sockopt, proxy_info(), None)[0]
-            if self.reserved_ports:
-                self._bind_to_reserved_port()
             app_url = self.url
 
         self.app = WebSocketApp(
