@@ -90,15 +90,19 @@ class EnclosureService(Service):
 
                     slot = int(m.group(1))
                     if enc_name == 'R50BM':
-                        # when adding this code and testing on internal R50BM, the starting slot
+                        # When adding this code and testing on internal R50BM, the starting slot
                         # number for the rear nvme drive bays starts at 2 and goes to 5. This means
                         # we're always off by 1. The easiest solution is to just check for this
                         # specific platform and subtract 1 from the slot number to keep everything
                         # in check.
-                        # TODO: This is, technically, same PLX bridge used on m50/60 series hardware
-                        # but we don't have this logic...why? Do we actually need it on m50/60 or is
-                        # the R50BM internally cabled ever so slightly differently??
+                        # To make things event more complicated, we found (by testing on internal hardware)
+                        # that slot 2 on OS is actually slot 3 and vice versa. This means we need to swap
+                        # those 2 numbers with each other to keep the webUI lined up with reality.
                         slot -= 1
+                        if slot == 2:
+                            slot = 3
+                        elif slot == 3:
+                            slot = 2
 
                     slot_to_nvme[slot] = child.sys_name
 
