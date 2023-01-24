@@ -3,8 +3,9 @@ import logging
 import os
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils import sw_info
 
-from .utils import SCALE_MANIFEST_FILE, can_update
+from .utils import can_update
 from .utils_linux import mount_update
 
 logger = logging.getLogger(__name__)
@@ -27,15 +28,12 @@ class UpdateService(Service):
         )
 
     def _install(self, path, progress_callback, options=None):
-        with open(SCALE_MANIFEST_FILE) as f:
-            old_manifest = json.load(f)
-
         progress_callback(0, "Reading update file")
         with mount_update(path) as mounted:
             with open(os.path.join(mounted, "manifest.json")) as f:
                 manifest = json.load(f)
 
-            old_version = old_manifest["version"]
+            old_version = sw_info()['version']
             new_version = manifest["version"]
             if old_version == new_version:
                 raise CallError(f'You already are using {new_version}')

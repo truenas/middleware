@@ -5,6 +5,8 @@ import os
 from catalog_validation.items.features import SUPPORTED_FEATURES
 from middlewared.service import CallError, private, Service
 
+from .items_util import minimum_scale_version_check_update_impl
+
 
 class CatalogService(Service):
 
@@ -36,7 +38,29 @@ class CatalogService(Service):
         if not version_details['healthy']:
             raise CallError(version_details['healthy_error'])
 
+        # There will be 2 scenarios now because of which a version might not be supported
+        # 1) Missing features
+        # 2) Minimum scale version check specified
+
+        error_str = ''
         missing_features = set(version_details['required_features']) - SUPPORTED_FEATURES
+        if missing_features:
+            error_str = await self.missing_feature_error_message(missing_features)
+
+        version_check, check_error = minimum_scale_version_check_update_impl(version_details, False)
+        if not version_check:
+            prefix = '\n\n' if error_str else ''
+            error_str = f'{error_str}{prefix}Catalog item version{" also" if error_str else ""} has ' \
+                        'minimum SCALE version specified '
+            if check_error:
+                error_str += 'which is invalid and system is not able to determine if item version is supported or not.'
+            else:
+                error_str += 'which is newer then current SCALE version.'
+
+        raise CallError(error_str)
+
+    @private
+    async def missing_feature_error_message(self, missing_features):
         try:
             mapping = await self.middleware.call('catalog.get_feature_map')
         except Exception as e:
@@ -55,4 +79,4 @@ class CatalogService(Service):
 
             error_str += f'{index + 1}) {feature}{f"{train_message}" if train_message else ""}\n\n'
 
-        raise CallError(error_str)
+        return error_str
