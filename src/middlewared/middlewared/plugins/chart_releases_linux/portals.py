@@ -48,6 +48,12 @@ class ChartReleaseService(Service):
         if not os.path.exists(questions_yaml_path):
             return {}
 
+        # If portals are defined in values.yaml/questions.yaml parse them
+        if len(release_data['config'].get('iXPortals')):
+            portals = release_data['config'].get('iXPortals')
+            return self.get_ixportals(portals, node_ip)
+
+        # TODO: remove some time after a release with NAS-119932 (limit app ver to os var) included
         if release_data['chart_metadata']['name'] == 'ix-chart':
             return self.get_ix_chart_portal(release_data, node_ip)
 
@@ -73,6 +79,7 @@ class ChartReleaseService(Service):
 
         return cleaned_portals
 
+    # TODO: remove some time after a release with NAS-119932 (limit app ver to os var) included
     @private
     def get_ix_chart_portal(self, release_data, node_ip):
         portal_config = release_data['config'].get('portalDetails')
@@ -82,6 +89,28 @@ class ChartReleaseService(Service):
         return {
             portal_config['portalName']: [f'{portal_config["protocol"]}://{host}:{portal_config["port"]}']
         }
+
+    # Reads a "ixPortals" dict in values.yaml, after parsing questions.yaml
+    # Creates portal references for each portal in the list
+    # This also allows for moving some/future logic changes to the charts repo
+    @private
+    def get_ixportals(self, portals, node_ip):
+        stored_portals = {}
+        for name, portal_config in portals.items():
+            if not portal_config.get('enabled'):
+                return {}
+            host = portal_config['host'] if portal_config['host'] else node_ip
+            protocol = 'http' if not portal_config['protocol'] else portal_config['protocol']
+            path = '' if not portal_config.get['path'] else f'/{portal_config["path"]}'
+            port = portal_config.get['port']
+            if (port == 80 and protocol == 'http') or (port == 443 and protocol == 'https') or (not port):
+                port = ''
+            else:
+                port = f':{port}'
+
+            stored_portals[name] = [f'{protocol}://{host}{port}/{path}']
+
+        return stored_portals
 
     @private
     def parse_tag(self, release_data, tag, node_ip):
