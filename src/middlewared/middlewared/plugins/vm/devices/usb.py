@@ -1,4 +1,5 @@
 from middlewared.schema import Dict, Str
+from middlewared.validators import Match
 
 from .device import Device
 from .utils import create_element
@@ -16,8 +17,14 @@ class USB(Device):
         'attributes',
         Dict(
             'usb',
-            Str('vendor_id', empty=False, required=True),
-            Str('product_id', empty=False, required=True),
+            Str(
+                'vendor_id', empty=False, required=True, validators=[Match(r'^0x.*')],
+                description='Vendor id must start with "0x" prefix e.g 0x0451'
+            ),
+            Str(
+                'product_id', empty=False, required=True, validators=[Match(r'^0x.*')],
+                description='Product id must start with "0x" prefix e.g 0x16a8'
+            ),
             default=None,
             null=True,
         ),
