@@ -177,7 +177,7 @@ class CatalogService(CRUDService):
         if await self.valid_enterprise_catalog_license() and data['preferred_trains'] != [OFFICIAL_ENTERPRISE_TRAIN]:
             verrors.add(
                 f'{schema}.preferred_trains',
-                f'Licensed systems can only consume {OFFICIAL_ENTERPRISE_TRAIN!r} train'
+                f'Enterprise systems may only consume {OFFICIAL_ENTERPRISE_TRAIN!r} train'
             )
 
         verrors.check()
