@@ -8,18 +8,12 @@
 
 <%namespace name="pam" file="pam.inc.mako" />\
 <%
-        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx)
+        dsp = pam.getDirectoryServicePam(middleware=middleware, render_ctx=render_ctx).pam_session()
 %>\
 
-# here are the per-package modules (the "Primary" block)
+${'\n'.join(dsp['primary'])}
 session	[default=1]			pam_permit.so
-# here's the fallback if no module succeeds
 session	requisite			pam_deny.so
-# prime the stack with a positive return value if there isn't one already;
-# this avoids us returning an error just because nothing sets a success code
-# since the modules above will each just jump around
 session	required			pam_permit.so
-# and here are more per-package modules (the "Additional" block)
-${dsp.pam_session()}
-session	optional	pam_systemd.so
-# end of pam-auth-update config
+session	optional			pam_systemd.so
+${'\n'.join(dsp['additional'])}
