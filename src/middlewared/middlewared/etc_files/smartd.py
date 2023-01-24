@@ -6,7 +6,6 @@ import subprocess
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
 from middlewared.plugins.smart_.schedule import SMARTD_SCHEDULE_PIECES, smartd_schedule_piece
 from middlewared.schema import Cron
-from middlewared.utils import osc
 from middlewared.utils.asyncio_ import asyncio_map
 
 logger = logging.getLogger(__name__)
@@ -94,10 +93,5 @@ async def render(service, middleware):
     for disk in disks:
         config += get_smartd_config(disk) + "\n"
 
-    if osc.IS_FREEBSD:
-        path = "/usr/local/etc/smartd.conf"
-    else:
-        path = "/etc/smartd.conf"
-
-    with open(path, "w") as f:
+    with open("/etc/smartd.conf", "w") as f:
         f.write(config)
