@@ -113,6 +113,9 @@ def test_00_firstboot_checks():
             assert srv['enable'] is False, str(srv)
             assert srv['state'] == 'STOPPED', str(srv)
 
+    results = GET("/system/ready/")
+    assert results.json() is True, results.text
+
 
 @pytest.mark.parametrize("path,stat", [
     ("/home/admin", {"mode": 0o40700, "uid": 950, "gid": 950}),
