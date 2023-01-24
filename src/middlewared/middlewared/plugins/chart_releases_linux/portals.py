@@ -47,7 +47,6 @@ class ChartReleaseService(Service):
         )
         if not os.path.exists(questions_yaml_path):
             return {}
-        
         if  release_data['config'].get('enableUIPortal'):
             return self.get_ix_chart_portal(release_data, node_ip)
 
