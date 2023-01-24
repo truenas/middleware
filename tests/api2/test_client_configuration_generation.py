@@ -22,8 +22,7 @@ def openvpn_server_update(server_cert_name, root_ca_id):
         try:
             yield server_config
         finally:
-            call('datastore.update', 'services.openvpnserver', server_config['id'],
-                 {'root_ca': None, 'server_certificate': None})
+            call('openvpn.server.update', {'remove_certificates': True})
 
 
 @contextlib.contextmanager
