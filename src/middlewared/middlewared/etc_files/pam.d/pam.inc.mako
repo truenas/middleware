@@ -32,36 +32,48 @@
             pam_args = kwargs.pop('pam_args', None)
             pam_control = self.base_control(**kwargs)
 
-            return self.generate_pam_line(
+            pam_line = self.generate_pam_line(
                 'auth',
                 pam_control,
                 pam_path,
                 pam_args
             )
+            if self.name() != 'Base':
+                return pam_line
+
+            return {'primary': [pam_line], 'additional': []}
 
         def pam_account(self, **kwargs):
             pam_path = kwargs.pop('pam_path', self.pam_unix)
             pam_args = kwargs.pop('pam_args', None)
             pam_control = self.base_control(**(kwargs | {'new_authtok_reqd': 'done'}))
 
-            return self.generate_pam_line(
+            pam_line = self.generate_pam_line(
                 'account',
                 pam_control,
                 pam_path,
                 pam_args
             )
+            if self.name() != 'Base':
+                return pam_line
+
+            return {'primary': [pam_line], 'additional': []}
 
         def pam_session(self, **kwargs):
             pam_control = kwargs.pop('pam_control', 'required')
             pam_path = kwargs.pop('pam_path', self.pam_unix)
             pam_args = kwargs.pop('pam_args', None)
 
-            return self.generate_pam_line(
+            pam_line = self.generate_pam_line(
                 'session',
                 pam_control,
                 pam_path,
                 pam_args
             )
+            if self.name() != 'Base':
+                return pam_line
+
+            return {'primary': [], 'additional': [pam_line]}
 
         def pam_password(self, **kwargs):
             pam_path = kwargs.pop('pam_path', self.pam_unix)
@@ -73,12 +85,16 @@
             ])
             pam_control = self.base_control(**kwargs)
 
-            return self.generate_pam_line(
+            pam_line = self.generate_pam_line(
                 'password',
                 pam_control,
                 pam_path,
                 pam_args
             )
+            if self.name() != 'Base':
+                return pam_line
+
+            return {'primary': [pam_line], 'additional': []}
 
     class ActiveDirectoryPam(DirectoryServicePamBase):
         def __init__(self, **kwargs):
