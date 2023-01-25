@@ -82,7 +82,7 @@ class SystemService(Service):
 
     @accepts()
     @returns(Str('truenas_version'))
-    def version(self, fullname):
+    def version(self):
         """Returns the full name of the software version of the system."""
         return sw_info()['fullname']
 
