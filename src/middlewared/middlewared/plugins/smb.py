@@ -134,6 +134,11 @@ class SMBSharePreset(enum.Enum):
         'fsrvp': False,
         'auxsmbconf': '',
     }, "cluster": False}
+    TIMEMACHINE = {"verbose_name": "Basic time machine share", "params": {
+        'path_suffix': '',
+        'timemachine': True,
+        'auxsmbconf': '',
+    }, "cluster": False}
     ENHANCED_TIMEMACHINE = {"verbose_name": "Multi-user time machine", "params": {
         'path_suffix': '%U',
         'timemachine': True,
