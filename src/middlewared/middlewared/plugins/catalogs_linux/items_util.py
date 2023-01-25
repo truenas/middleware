@@ -26,7 +26,7 @@ def minimum_scale_version_check_update_impl(
     # missing features and based on that makes the decision. So if something is not already supported
     # we do not want to validate minimum scale version in that case. However, when we want to report to
     # the user as to why exactly the app version is not supported, we need to be able to make that distinction
-    if version_details['healthy'] and version_details['chart_metadata'].get('minimum_scale_version') and (
+    if version_details.get('healthy', True) and version_details['chart_metadata'].get('minimum_scale_version') and (
         not check_supported_key or version_details['supported']
     ):
         try:
