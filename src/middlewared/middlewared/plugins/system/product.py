@@ -6,7 +6,7 @@ from pathlib import Path
 
 from middlewared.schema import accepts, Bool, returns, Str
 from middlewared.service import CallError, no_auth_required, private, Service
-from middlewared.utils import sw_version, sw_version_is_stable
+from middlewared.utils import sw_info, sw_version_is_stable
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
@@ -74,16 +74,11 @@ class SystemService(Service):
         """
         return "TrueNAS"
 
-    @accepts(Bool('fullname', default=True))
+    @accepts()
     @returns(Str('truenas_version'))
     def version(self, fullname):
-        """Returns software version of the system.
-
-        `full_name`: boolean. If false, will only return the major version
-            without the software product prefix.
-            (i.e. 22.12.0 instead of TrueNAS-SCALE-22.12.0)
-        """
-        return sw_version(fullname=fullname)
+        """Returns the full name of the software version of the system."""
+        return sw_info()['fullname']
 
     @accepts()
     @returns(Str('is_stable'))
