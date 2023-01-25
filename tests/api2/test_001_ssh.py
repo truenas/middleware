@@ -105,9 +105,10 @@ def test_00_firstboot_checks():
     for srv in services:
         if srv['service'] == 'smartd':
             assert srv['enable'] is True, str(srv)
-            if not ha:
-                # On our HA VM (bhyve) drives are S.M.A.R.T.-capable so it can start successfully.
-                assert srv['state'] == 'STOPPED', str(srv)
+            # SMART is started with "-q never" which means it should
+            # always start in all circumstances
+            # (even if there is an invalid (or empty) config)
+            assert srv['state'] == 'RUNNING', str(srv)
         else:
             assert srv['enable'] is False, str(srv)
             assert srv['state'] == 'STOPPED', str(srv)
