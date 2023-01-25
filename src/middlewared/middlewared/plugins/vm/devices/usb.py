@@ -29,7 +29,7 @@ class USB(Device):
             null=True,
         ),
         Str('controller_type', empty=False, default='nec-xhci', enum=USB_CONTROLLER_CHOICES),
-        Str('device', empty=False, null=True),
+        Str('device', empty=False, null=True, default=None),
     )
 
     @property
