@@ -63,6 +63,11 @@ def get_smartd_schedule(disk):
     ])
 
 
+def write_config(config):
+    with open("/etc/smartd.conf", "w") as f:
+        f.write(config)
+
+
 async def render(service, middleware):
     smart_config = await middleware.call("datastore.query", "services.smart", [], {"get": True})
 
@@ -98,7 +103,4 @@ async def render(service, middleware):
     for disk in disks:
         config += get_smartd_config(disk) + "\n"
 
-    path = "/etc/smartd.conf"
-
-    with open(path, "w") as f:
-        f.write(config)
+    await middleware.run_in_thread(write_config, config)
