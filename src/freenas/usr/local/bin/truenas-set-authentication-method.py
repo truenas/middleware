@@ -63,5 +63,7 @@ if __name__ == "__main__":
 
         c.execute("UPDATE account_bsdusers SET bsdusr_password_disabled = 1 WHERE bsdusr_username = 'root'")
 
+        c.execute("UPDATE services_ssh SET ssh_adminlogin = 0")
+
     conn.commit()
     conn.close()
