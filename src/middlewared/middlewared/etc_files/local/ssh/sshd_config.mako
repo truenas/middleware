@@ -108,3 +108,7 @@ ChallengeResponseAuthentication yes
 PrintMotd no
 % endif
 SetEnv LC_ALL=C.UTF-8
+% if not ssh_config['adminlogin']:
+Match User admin
+	PasswordAuthentication no
+% endif
