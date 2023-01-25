@@ -258,13 +258,8 @@ def sw_buildtime():
     return sw_info()['buildtime']
 
 
-def sw_version(fullname=True):
-    """
-    `fullname`: bool. If False will return the version of the product
-        without the software name prefix.
-        (i.e. 22.12.0 instead of TrueNAS-SCALE-22.12.0)
-    """
-    return sw_info()['fullname' if fullname else 'version']
+def sw_version():
+    return sw_info()['fullname']
 
 
 def sw_version_is_stable():

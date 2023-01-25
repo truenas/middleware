@@ -224,7 +224,7 @@ class SupportService(ConfigService):
             if i not in data:
                 raise CallError(f'{i} is required', errno.EINVAL)
 
-        data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version", False)}'
+        data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version_short")}'
         debug = data.pop('attach_debug')
 
         type_ = data.get('type')
