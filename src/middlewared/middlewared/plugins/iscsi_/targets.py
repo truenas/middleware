@@ -164,19 +164,8 @@ class iSCSITargetService(CRUDService):
             )
 
     async def __validate(self, verrors, data, schema_name, old=None):
-
-        if not RE_TARGET_NAME.search(data['name']):
-            verrors.add(
-                f'{schema_name}.name',
-                'Lowercase alphanumeric characters plus dot (.), dash (-), and colon (:) are allowed.'
-            )
-        else:
-            filters = [('name', '=', data['name'])]
-            if old:
-                filters.append(('id', '!=', old['id']))
-            names = await self.middleware.call(f'{self._config.namespace}.query', filters, {'force_sql_filters': True})
-            if names:
-                verrors.add(f'{schema_name}.name', 'Target name already exists')
+        if name_error := await self.validate_name(data['name'], old['id'] if old is not None else None):
+            verrors.add(f'{schema_name}.name', name_error)
 
         if data.get('alias') is not None:
             if '"' in data['alias']:
@@ -257,6 +246,25 @@ class iSCSITargetService(CRUDService):
                             f'{schema_name}.groups.{i}.auth',
                             f'Authentication group {group["auth"]} does not support CHAP Mutual'
                         )
+
+    @accepts(Str('name'), Int('existing_id', null=True, default=None))
+    async def validate_name(self, name, existing_id):
+        """
+        Returns validation error for iSCSI target name
+        :param name: name to be validated
+        :param existing_id: id of an existing iSCSI target that will receive this name (or `None` if a new target
+                            is being created)
+        :return: error message (or `None` if there is no error)
+        """
+        if not RE_TARGET_NAME.search(name):
+            return 'Only lowercase alphanumeric characters plus dot (.), dash (-), and colon (:) are allowed.'
+        else:
+            filters = [('name', '=', name)]
+            if existing_id is not None:
+                filters.append(('id', '!=', existing_id))
+            names = await self.middleware.call('iscsi.target.query', filters, {'force_sql_filters': True})
+            if names:
+                return 'Target with this name already exists'
 
     @accepts(
         Int('id'),
