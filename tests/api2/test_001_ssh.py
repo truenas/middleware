@@ -61,6 +61,19 @@ def do_ldap_connection(request):
         yield (request, ldap_conn)
 
 
+def test_000_is_system_ready():
+    # other parts of the CI/CD pipeline should have waited
+    # for middlewared to report as system.ready so this is
+    # a smoke test to see if that's true. If it's not, then
+    # the end-user can know that the entire integration run
+    # will be non-deterministic because middleware plugins
+    # internally expect that the system is ready before
+    # propertly responding to REST/WS requests.
+    results = GET("/system/ready/")
+    if not results.json():
+        assert False, f'System is not ready. Currently: {GET("/system/state").text}'
+
+
 def test_00_firstboot_checks():
     expected_datasets = [
         'boot-pool/.system',
@@ -112,9 +125,6 @@ def test_00_firstboot_checks():
         else:
             assert srv['enable'] is False, str(srv)
             assert srv['state'] == 'STOPPED', str(srv)
-
-    results = GET("/system/ready/")
-    assert results.json() is True, results.text
 
 
 @pytest.mark.parametrize("path,stat", [
