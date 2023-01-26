@@ -1,7 +1,7 @@
 <%
 	ups_config = middleware.call_sync('ups.config')
 	shutdown = ups_config['shutdown']
-	sudo_path = "/usr/bin/sudo" if IS_LINUX else "/usr/local/bin/sudo"
+	sudo_path = "/usr/bin/sudo"
 %>\
 CMDSCRIPT   "${sudo_path} /usr/local/bin/custom-upssched-cmd"
 PIPEFN      ${"/var/run/nut/upssched.pipe" if IS_LINUX else "/var/db/nut/upssched.pipe"}
