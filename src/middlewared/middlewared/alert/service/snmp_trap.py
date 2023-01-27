@@ -108,7 +108,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
             )
 
             if error_indication:
-                self.logger.error(f"Failed to send SNMP trap: %s", error_indication)
+                self.logger.error("Failed to send SNMP trap: %s", error_indication)
 
         for alert in new_alerts:
             error_indication, error_status, error_index, var_binds = next(
@@ -132,4 +132,4 @@ class SNMPTrapAlertService(ThreadedAlertService):
             )
 
             if error_indication:
-                self.logger.warning(f"Failed to send SNMP trap: %s", error_indication)
+                self.logger.warning("Failed to send SNMP trap: %s", error_indication)
