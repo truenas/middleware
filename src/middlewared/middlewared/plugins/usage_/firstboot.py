@@ -28,4 +28,3 @@ class UsageService(Service):
                     self.logger.error('Failed to send firstboot statistics', exc_info=True)
             else:
                 break
-

@@ -5,6 +5,6 @@ def move_to_root_cgroups(pid):
             _, _, value = line.strip().split(":")
 
             if value == "/system.slice/middlewared.service":
-                with open(f"/sys/fs/cgroup/cgroup.procs", "w") as f2:
+                with open("/sys/fs/cgroup/cgroup.procs", "w") as f2:
                     f2.write(f"{pid}\n")
                     break

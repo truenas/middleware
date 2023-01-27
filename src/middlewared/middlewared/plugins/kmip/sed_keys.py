@@ -326,7 +326,7 @@ class KMIPService(Service, KMIPServerMixin):
                 with self._connection(self.middleware.call_sync('kmip.connection_config')) as conn:
                     key = self._retrieve_secret_data(adv_config['kmip_uid'], conn)
             except Exception:
-                self.middleware.logger.debug(f'Failed to retrieve global SED key')
+                self.middleware.logger.debug('Failed to retrieve global SED key')
             else:
                 self.global_sed_key = key
 
