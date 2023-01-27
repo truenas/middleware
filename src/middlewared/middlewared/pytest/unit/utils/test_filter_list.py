@@ -19,6 +19,29 @@ DATA = [
     },
 ]
 
+DATA_WITH_NULL = [
+    {
+        'foo': 'foo1',
+        'number': 1,
+        'list': [1],
+    },
+    {
+        'foo': 'foo2',
+        'number': 2,
+        'list': [2],
+    },
+    {
+        'foo': '_foo_',
+        'number': 3,
+        'list': [3],
+    },
+    {
+        'foo': None,
+        'number': 4,
+        'list': [4],
+    },
+]
+
 COMPLEX_DATA = [
     {
         "timestamp": "2022-11-10T07:40:17.397502-0800",
@@ -188,3 +211,11 @@ def test__filter_list_option_order_by_reverse():
 def test__filter_list_option_select():
     for entry in filter_list(DATA, [], {'select': ['foo']}):
         assert list(entry.keys()) == ['foo']
+
+
+def test__filter_list_option_nulls_first():
+    assert filter_list(DATA_WITH_NULL, [], {'order_by': ['nulls_first:foo']})[0]['foo'] is None
+
+
+def test__filter_list_option_nulls_last():
+    assert filter_list(DATA_WITH_NULL, [], {'order_by': ['nulls_last:foo']})[-1]['foo'] is None
