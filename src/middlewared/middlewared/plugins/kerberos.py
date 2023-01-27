@@ -96,6 +96,7 @@ class KRB_LibDefaults(enum.Enum):
     FCACHE_VERSION = ('fcache_version', 'int')
     KRB4_GET_TICKETS = ('krb4_get_tickets', 'boolean')
     FCC_MIT_TICKETFLAGS = ('fcc-mit-ticketflags', 'boolean')
+    RDNS = ('rdns', 'boolean')
 
     def __str__(self):
         return self.value[0]
