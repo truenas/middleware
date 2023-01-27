@@ -7,14 +7,39 @@ from middlewared.service_exception import MatchNotFound
 class DiskService(Service):
     @private
     async def disk_by_zfs_guid(self, guid):
-        try:
-            return await self.middleware.call(
-                "disk.query",
-                [["zfs_guid", "=", guid]],
-                {"extra": {"include_expired": True}, "get": True, "order_by": ["disk_expiretime"]},
-            )
-        except MatchNotFound:
-            return None
+        """
+        This method returns a single disk entry with the specified
+        ZFS guid. The database however may contain multiple disks
+        with the same GUID differentiated by the `expiretime` key.
+
+        The `expiretime` key has the following special meaning depending
+        on value type:
+        `None` - disk is currently detected and in the system
+        `datetime` - disk was removed and will expire at the specified
+        time.
+
+        Since type is inconsistent for this value, it cannot be used
+        for ordering disks using builtin sorted() method in filter_list.
+        """
+        disk = None
+
+        disks_with_zfs_guid = await self.middleware.call(
+            "disk.query",
+            [["zfs_guid", "=", guid]],
+            {"extra": {"include_expired": True}},
+        )
+
+        for entry in disks_with_zfs_guid:
+            if entry['expiretime'] is None:
+                disk = entry
+                break
+
+            if disk is None:
+                disk = entry
+            elif entry['expiretime'] > disk['expiretime']:
+                disk = entry
+
+        return disk
 
     @private
     async def sync_all_zfs_guid(self):
