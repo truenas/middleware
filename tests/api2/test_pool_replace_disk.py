@@ -53,7 +53,8 @@ def test_pool_replace_disk(topology, i):
         assert call("disk.get_instance", to_replace_disk["identifier"], {"extra": {"pools": True}})["pool"] is None
 
 
-def test_pool_replace_disk_with_larger_swap():
+@pytest.mark.parametrize("swaps", [[0, 0], [2, 2], [2, 4]])
+def test_pool_replace_disk_swap(swaps):
     unused = call("disk.get_unused")
     if len(unused) < 3:
         raise RuntimeError(f"At least 3 unused disks required to run this test")
@@ -63,15 +64,16 @@ def test_pool_replace_disk_with_larger_swap():
     sizes = {disk["name"]: disk["size"] for disk in test_disks}
     assert len(set(sizes.values())) == 1, sizes
 
-    with another_pool(topology=mirror_topology) as pool:
-        to_replace_vdev = disks(pool["topology"])[0]
+    call("system.advanced.update", {"swapondrive": swaps[0]})
+    try:
+        with another_pool(topology=mirror_topology) as pool:
+            to_replace_vdev = disks(pool["topology"])[0]
 
-        call("system.advanced.update", {"swapondrive": 4})
-        try:
+            call("system.advanced.update", {"swapondrive": swaps[1]})
             call("pool.replace", pool["id"], {
                 "label": to_replace_vdev["guid"],
                 "disk": test_disks[2]["identifier"],
                 "force": True,
             }, job=True)
-        finally:
-            call("system.advanced.update", {"swapondrive": 2})
+    finally:
+        call("system.advanced.update", {"swapondrive": 2})
