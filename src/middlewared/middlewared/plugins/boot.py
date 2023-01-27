@@ -261,7 +261,7 @@ class BootService(Service):
     @private
     async def uses_legacy_schema(self, disk):
         if await self.middleware.call('boot.get_boot_type') == 'EFI':
-           return False
+            return False
 
         partitions = await self.middleware.call('disk.list_partitions', disk)
         swap_types = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
