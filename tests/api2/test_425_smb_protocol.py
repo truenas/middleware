@@ -8,6 +8,7 @@ from time import sleep
 from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from assets.REST.pool import dataset as create_dataset
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import (
     ip,
@@ -715,6 +716,29 @@ def test_175_check_external_path(request):
         results = SSH_TEST('cat external_test_file', user, password, ip)
         assert results['result'] is True, results['output']
         assert results['output'] == 'EXTERNAL_TEST'
+
+
+def test_176_check_dataset_auto_create(request):
+    with create_dataset(pool_name, 'smb_proto_nested_datasets', options={'share_type': 'SMB'}) as ds:
+        with smb_share(ds['mountpoint'], {'name': 'DATASETS', 'purpose': 'PRIVATE_DATASETS'}):
+            with smb_connection(
+                host=ip,
+                share='DATASETS',
+                username=SMB_USER,
+                password=SMB_PWD,
+                smb1=False
+            ) as c:
+                fd = c.create_file('nested_test_file', "w")
+                c.write(fd, b'EXTERNAL_TEST')
+                c.close(fd)
+
+        results = POST('/filesystem/getacl/', {
+            'path': os.path.join(ds['mountpoint'], SMB_USER),
+            'simplified': True
+        })
+        assert results.status_code == 200, results.text
+        acl = results.json()
+        assert acl['trivial'] is False, str(acl)
 
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")

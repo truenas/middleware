@@ -266,3 +266,42 @@ def test_08_activedirectory_smb_ops(request):
                     assert val == b'foo2'
 
                     c.rmdir('testdir')
+
+
+        with dataset(
+            pool_name,
+            "ad_datasets",
+            options={'share_type': 'SMB'},
+            acl=[{
+                'tag': 'GROUP',
+                'id': domain_users_id,
+                'perms': {'BASIC': 'FULL_CONTROL'},
+                'flags': {'BASIC': 'INHERIT'},
+                'type': 'ALLOW'
+            }]
+        ) as ds:
+            with smb_share(ds['mountpoint'], {
+                'name': 'DATASETS',
+                'purpose': 'NO_PRESET',
+                'auxsmbconf': 'zfs_core:zfs_auto_create = true',
+                'path_suffix': '%D/%U'
+            }):
+                with smb_connection(
+                    host=ip,
+                    share='DATASETS',
+                    username=ADUSERNAME,
+                    domain='AD02',
+                    password=ADPASSWORD
+                ) as c:
+                    fd = c.create_file('nested_test_file', "w")
+                    c.write(fd, b'EXTERNAL_TEST')
+                    c.close(fd)
+
+            results = POST('/filesystem/getacl/', {
+                'path': os.path.join(ds['mountpoint'], 'AD02', ADUSERNAME),
+                'simplified': True
+            })
+
+            assert results.status_code == 200, results.text
+            acl = results.json()
+            assert acl['trivial'] is False, str(acl)
