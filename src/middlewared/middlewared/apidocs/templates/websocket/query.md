@@ -120,12 +120,21 @@ Javascript:
 
 #### Order By
 
-Use the `order_by` option to specify which field determines the sort order.
+Use the `order_by` option to specify which field determines the sort order. Fields must be provided in an
+array of strings.
+
+The following prefixes may be applied to the field name:
+
+`-` reverse sort direction.
+
+`nulls_first:` place any NULL values at head of results list.
+
+`nulls_last:` place any NULL values at tail of results list.
 
 Javascript:
     :::javascript
     {
-      "order_by": "size" // field name
+      "order_by": ["size", "-devname", "nulls_first:-expiretime"]
     }
 
 

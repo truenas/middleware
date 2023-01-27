@@ -18,6 +18,9 @@ MANIFEST_FILE = '/data/manifest.json'
 BRAND = 'TrueNAS'
 PRODUCT = 'SCALE'
 BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
+NULLS_FIRST = 'nulls_first:'
+NULLS_LAST = 'nulls_last:'
+REVERSE_CHAR = '-'
 
 logger = logging.getLogger(__name__)
 
@@ -239,14 +242,43 @@ class filters(object):
     def do_count(self, rv):
         return len(rv)
 
+    def order_nulls(self, _list, order):
+        if order.startswith(REVERSE_CHAR):
+            order = order[1:]
+            reverse = True
+        else:
+            reverse = False
+
+        nulls = []
+        non_nulls = []
+        for entry in _list:
+            if entry[order] is None:
+                nulls.append(entry)
+            else:
+                non_nulls.append(entry)
+
+        non_nulls = sorted(non_nulls, key=lambda x: get(x, order), reverse=reverse)
+        return (nulls, non_nulls)
+
+    def order_no_null(self, _list, order):
+        if order.startswith(REVERSE_CHAR):
+            order = order[1:]
+            reverse = True
+        else:
+            reverse = False
+
+        return sorted(_list, key=lambda x: get(x, order), reverse=reverse)
+
     def do_order(self, rv, order_by):
         for o in order_by:
-            if o.startswith('-'):
-                o = o[1:]
-                reverse = True
+            if o.startswith(NULLS_FIRST):
+                nulls, non_nulls = self.order_nulls(rv, o[len(NULLS_FIRST):])
+                rv = nulls + non_nulls
+            elif o.startswith(NULLS_LAST):
+                nulls, non_nulls = self.order_nulls(rv, o[len(NULLS_LAST):])
+                rv = non_nulls + nulls
             else:
-                reverse = False
-            rv = sorted(rv, key=lambda x: get(x, o), reverse=reverse)
+                rv = self.order_no_null(rv, o)
 
         return rv
 
