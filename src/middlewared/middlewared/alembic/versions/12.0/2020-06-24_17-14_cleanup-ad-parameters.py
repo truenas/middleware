@@ -26,4 +26,3 @@ def upgrade():
         batch_op.drop_column('ad_validate_certificates')
 
     # ### end Alembic commands ###
-

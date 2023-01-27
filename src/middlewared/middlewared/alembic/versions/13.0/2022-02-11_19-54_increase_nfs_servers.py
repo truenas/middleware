@@ -19,4 +19,3 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     conn.execute("UPDATE services_nfs SET nfs_srv_servers = 16 WHERE nfs_srv_servers = 4")
-

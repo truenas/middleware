@@ -20,4 +20,3 @@ class PeriodicSnapshotTaskService(Service):
     )
     async def fixate_removal_date(self, job, datasets, task):
         await self.middleware.call("zettarepl.fixate_removal_date", datasets, task)
-
