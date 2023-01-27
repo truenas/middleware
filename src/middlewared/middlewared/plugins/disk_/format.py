@@ -26,7 +26,7 @@ class DiskService(Service):
         sectorsize = dd['sectorsize'] or 512
         alignment = int(4096 / sectorsize)
 
-        gpt_header_size = 102400  # The GPT header takes about 34KB + alignment, round it to 100
+        gpt_header_size = 73 * sectorsize
 
         swapsize = swapgb * 1024 * 1024 * 1024
         if min_size:
