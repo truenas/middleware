@@ -24,10 +24,10 @@ def upgrade():
     with op.batch_alter_table('account_bsdusers', schema=None) as batch_op:
         batch_op.add_column(sa.Column('bsdusr_smb', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE account_bsdgroups SET bsdgrp_smb = 1 WHERE bsdgrp_builtin = 0")    
-    op.execute("UPDATE account_bsdusers SET bsdusr_smb = 1 WHERE bsdusr_builtin = 0")    
-    op.execute("UPDATE account_bsdgroups SET bsdgrp_smb = 0 WHERE bsdgrp_builtin = 1")    
-    op.execute("UPDATE account_bsdusers SET bsdusr_smb = 0 WHERE bsdusr_builtin = 1")    
+    op.execute("UPDATE account_bsdgroups SET bsdgrp_smb = 1 WHERE bsdgrp_builtin = 0")
+    op.execute("UPDATE account_bsdusers SET bsdusr_smb = 1 WHERE bsdusr_builtin = 0")
+    op.execute("UPDATE account_bsdgroups SET bsdgrp_smb = 0 WHERE bsdgrp_builtin = 1")
+    op.execute("UPDATE account_bsdusers SET bsdusr_smb = 0 WHERE bsdusr_builtin = 1")
 
     with op.batch_alter_table('account_bsdgroups', schema=None) as batch_op:
         batch_op.alter_column('bsdgrp_smb', nullable=False)
