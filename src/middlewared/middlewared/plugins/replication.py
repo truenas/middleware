@@ -489,7 +489,7 @@ class ReplicationService(CRUDService):
         if verrors:
             raise verrors
 
-        if "ssh_credentials" in data:
+        if data.get("ssh_credentials") is not None:
             data["ssh_credentials"] = await self.middleware.call(
                 "keychaincredential.get_of_type", data["ssh_credentials"], "SSH_CREDENTIALS",
             )
