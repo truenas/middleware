@@ -13,9 +13,6 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, is_agent_setup, if_key_listed, SSH_TEST, make_ws_request
 from auto_config import sshKey, user, password, ha
 
-from middlewared.test.integration.utils import call
-
-
 if "controller1_ip" in os.environ:
     ip = os.environ["controller1_ip"]
 else:
@@ -74,13 +71,14 @@ def test_00_firstboot_checks():
             assert srv['enable'] is False, str(srv)
             assert srv['state'] == 'STOPPED', str(srv)
 
-
-@pytest.mark.parametrize("path,stat", [
-    ("/home/admin", {"mode": 0o40700, "uid": 950, "gid": 950}),
-    ("/root", {"mode": 0o40700, "uid": 0, "gid": 0}),
-])
-def test_00_firstboot_checks__stat(path, stat):
-    assert stat.items() <= call("filesystem.stat", path).items()
+    stat_info = {
+        '/home/admin': {'mode': 0o40700, 'uid': 950, 'gid': 950},
+        '/root': {'mode': 0o40700, 'uid': 0, 'gid': 0},
+    }
+    for path, expected_stat in stat_info.items():
+        rv = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.stat', 'params': [path]})
+        assert not rv.get('error'), rv
+        assert all((rv['result'][key] == expected_stat[key] for key in expected_stat))
 
 
 def test_01_Configuring_ssh_settings_for_root_login():
