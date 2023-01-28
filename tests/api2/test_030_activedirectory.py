@@ -63,6 +63,78 @@ ad_object_list = [
 
 SMB_NAME = "TestADShare"
 
+def remove_dns_entries(payload):
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'dns.nsupdate',
+        'params': [{'ops': payload}]
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+
+def cleanup_forward_zone():
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'dnsclient.forward_lookup',
+        'params': [{'names': [f'{hostname}.{AD_DOMAIN}']}]
+    })
+    error = res.get('error')
+
+    if error and error['trace']['class'] == 'NXDOMAIN':
+        # No entry, nothing to do
+        return
+
+    assert error is None, str(error)
+    ips_to_remove = [rdata['address'] for rdata in res['result']]
+
+    payload = []
+    for i in ips_to_remove:
+        addr = ipaddress.ip_address(i)
+        payload.append({
+            'command': 'DELETE',
+            'name': f'{hostname}.{AD_DOMAIN}.',
+            'address': str(addr),
+            'type': 'A' if addr.version == 4 else 'AAAA'
+        })
+
+    remove_dns_entries(payload)
+
+
+def cleanup_reverse_zone():
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'interface.ip_in_use',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    ptr_table = {ipaddress.ip_address(i['address']).reverse_pointer: i['address'] for i in res['result']}
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'dnsclient.reverse_lookup',
+        'params': [{'addresses': list(ptr_table.values())}],
+    })
+    error = res.get('error')
+    if error and error['trace']['class'] == 'NXDOMAIN':
+        # No entry, nothing to do
+        return
+
+    assert error is None, str(error)
+
+    payload = []
+    for host in res['result']:
+        addr = ipaddress.ip_address(ptr_table[host['name']])
+        payload.append({
+            'command': 'DELETE',
+            'name': host['target'],
+            'address': str(addr),
+            'type': 'A' if addr.version == 4 else 'AAAA'
+        })
+
+    remove_dns_entries(payload)
+
 
 @pytest.fixture(scope="module")
 def set_ad_nameserver(request):
@@ -114,37 +186,8 @@ def test_02_cleanup_nameserver(request):
     # Now that we have proper kinit as domain admin
     # we can nuke stale DNS entries from orbit.
     #
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'dnsclient.forward_lookup',
-        'params': [{'names': [f'{hostname}.{AD_DOMAIN}']}]
-    })
-    error = res.get('error')
-
-    if error and error['trace']['class'] == 'NXDOMAIN':
-        # No entry, nothing to do
-        return
-
-    assert error is None, str(error)
-    ips_to_remove = [rdata['address'] for rdata in res['result']]
-
-    payload = []
-    for i in ips_to_remove:
-        addr = ipaddress.ip_address(i)
-        payload.append({
-            'command': 'DELETE',
-            'name': f'{hostname}.{AD_DOMAIN}.',
-            'address': str(addr),
-            'type': 'A' if addr.version == 4 else 'AAAA'
-        })
-
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'dns.nsupdate',
-        'params': [{'ops': payload}]
-    })
-    error = res.get('error')
-    assert error is None, str(error)
+    cleanup_forward_zone()
+    cleanup_reverse_zone()
 
 
 def test_03_get_activedirectory_data(request):
