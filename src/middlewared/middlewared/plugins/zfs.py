@@ -414,7 +414,8 @@ class ZFSPoolService(CRUDService):
             except libzfs.ZFSInvalidCachefileException:
                 raise CallError('Invalid or missing cachefile', errno.ENOENT)
             except libzfs.ZFSException as e:
-                raise CallError(str(e), e.code)
+                code = errno.ENOENT if e.code == libzfs.Error.NOENT.value else e.code
+                raise CallError(str(e), code)
             else:
                 if found is None:
                     raise CallError(f'Pool {name_or_guid} not found.', errno.ENOENT)
