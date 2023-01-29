@@ -109,7 +109,7 @@ def cleanup_reverse_zone():
     })
     error = res.get('error')
     assert error is None, str(error)
-    ptr_table = {ipaddress.ip_address(i['address']).reverse_pointer: i['address'] for i in res['result']}
+    ptr_table = {ipaddress.ip_address(i['address']).reverse_pointer: i['address'] for i in res['result'] if not i['address'].startswith('192')}
     #ptr_table = {ipaddress.ip_address(ip).reverse_pointer: ip}
 
     res = make_ws_request(ip, {
