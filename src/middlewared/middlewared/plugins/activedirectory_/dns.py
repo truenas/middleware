@@ -71,22 +71,67 @@ class ActiveDirectoryService(Service):
             self.logger.warning(f'Failed to update DNS with payload [{payload}]: {e.errmsg}')
 
     @private
+    async def ipaddresses_to_register(self, data):
+        if data['bindip']:
+            to_check = bindip
+        if data['smb_ha_mode'] == 'CLUSTERED':
+            ips = (await self.middleware.call('smb.bindip_choices')).values()
+        else:
+            ips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use'))]
+
+        if data['bindip']:
+            to_check = set(data['bindip']) & set(ips)
+        else:
+            to_check = set(ips)
+
+        networks_to_check = {}
+        for ip in to_check:
+            network = str(ipaddress.ip_network(ip))
+            if network in networks_to_check:
+                continue
+
+            networks_to_check[network] = ip
+
+        validated_ips = []
+        for ip in networks_to_check.values():
+            try:
+                result = await self.middleware.call('dnsclient.reverse_lookup', {
+                    'addresses': [ip]
+                })
+            except dns.resolver.NXDOMAIN:
+                # This may simply mean entry was not found
+                validated_ips.append(ip)
+            except Exception:
+                # DNS for this IP may be simply wildly misconfigured and time out
+                self.logger.warning(
+                   'Reverse lookup of %s failed, omitting from list '
+                   'of addresses to use for Active Directory purposes.',
+                   ip, exc_info=True
+                )
+                continue
+            else:
+                if result[0]['target'] != data['hostname']:
+                    raise CallError(
+                        f'Reverse lookup of {ip} points to {result[0]["target"]}'
+                        f'rather than our hostname of {data["hostname"]}.',
+                        errno.EINVAL
+                    )
+                validated_ips.append(ip)
+
+        return validated_ips
+
+    @private
     async def register_dns(self, ad, smb, smb_ha_mode):
-        if not ad['allow_dns_updates']:
-            return
+        if not data['allow_dns_updates']:
+            return []
 
         await self.middleware.call('kerberos.check_ticket')
 
         hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
-        if smb_ha_mode == 'CLUSTERED':
-            vips = (await self.middleware.call('smb.bindip_choices')).values()
-        else:
-            vips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use'))]
-
-        smb_bind_ips = smb['bindip'] if smb['bindip'] else vips
-        to_register = set(vips) & set(smb_bind_ips)
-
-        hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
+        to_register = await self.ipaddresses_to_register({
+            'bindip': smb['bindip'],
+            'hostname': hostname,
+        })
 
         payload = []
 
