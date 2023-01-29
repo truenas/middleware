@@ -122,7 +122,7 @@ class ActiveDirectoryService(Service):
 
     @private
     async def register_dns(self, ad, smb, smb_ha_mode):
-        if not data['allow_dns_updates']:
+        if not ad['allow_dns_updates']:
             return []
 
         await self.middleware.call('kerberos.check_ticket')
