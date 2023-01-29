@@ -102,7 +102,6 @@ def cleanup_forward_zone():
 
 
 def cleanup_reverse_zone():
-    """
     res = make_ws_request(ip, {
         'msg': 'method',
         'method': 'interface.ip_in_use',
@@ -111,8 +110,7 @@ def cleanup_reverse_zone():
     error = res.get('error')
     assert error is None, str(error)
     ptr_table = {ipaddress.ip_address(i['address']).reverse_pointer: i['address'] for i in res['result']}
-    """
-    ptr_table = {ipaddress.ip_address(ip).reverse_pointer: ip}
+    #ptr_table = {ipaddress.ip_address(ip).reverse_pointer: ip}
 
     res = make_ws_request(ip, {
         'msg': 'method',
