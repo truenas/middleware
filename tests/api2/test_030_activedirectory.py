@@ -104,13 +104,15 @@ def cleanup_forward_zone():
 def cleanup_reverse_zone():
     res = make_ws_request(ip, {
         'msg': 'method',
-        'method': 'interface.ip_in_use',
-        'params': [],
+        'method': 'activedirectory.ipaddresses_to_register',
+        'params': [
+            {'hostname': f'{hostname}.{AD_DOMAIN}.', 'clustered': False, 'bindip': []},
+            False
+        ],
     })
     error = res.get('error')
     assert error is None, str(error)
-    ptr_table = {ipaddress.ip_address(i['address']).reverse_pointer: i['address'] for i in res['result'] if not i['address'].startswith('192')}
-    #ptr_table = {ipaddress.ip_address(ip).reverse_pointer: ip}
+    ptr_table = {ipaddress.ip_address(i).reverse_pointer: i for i in res['result']}
 
     res = make_ws_request(ip, {
         'msg': 'method',

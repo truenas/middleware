@@ -71,10 +71,10 @@ class ActiveDirectoryService(Service):
             self.logger.warning(f'Failed to update DNS with payload [{payload}]: {e.errmsg}')
 
     @private
-    async def ipaddresses_to_register(self, data):
+    async def ipaddresses_to_register(self, data, raise_errors=True):
         if data['bindip']:
             to_check = bindip
-        if data['smb_ha_mode'] == 'CLUSTERED':
+        if data['clustered']:
             ips = (await self.middleware.call('smb.bindip_choices')).values()
         else:
             ips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use'))]
@@ -101,16 +101,26 @@ class ActiveDirectoryService(Service):
             except dns.resolver.NXDOMAIN:
                 # This may simply mean entry was not found
                 validated_ips.append(ip)
-            except Exception:
+
+            except dns.resolver.NoNameservers:
                 # DNS for this IP may be simply wildly misconfigured and time out
+                self.logger.warning(
+                   'No nameservers configured to handle reverse pointer for %s. '
+                   'Omitting from list of addresses to use for Active Directory purposes.',
+                   ip
+                )
+                continue
+
+            except Exception:
                 self.logger.warning(
                    'Reverse lookup of %s failed, omitting from list '
                    'of addresses to use for Active Directory purposes.',
                    ip, exc_info=True
                 )
                 continue
+
             else:
-                if result[0]['target'] != data['hostname']:
+                if result[0]['target'] != data['hostname'] and raise_errors:
                     raise CallError(
                         f'Reverse lookup of {ip} points to {result[0]["target"]}'
                         f'rather than our hostname of {data["hostname"]}.',
@@ -131,7 +141,16 @@ class ActiveDirectoryService(Service):
         to_register = await self.ipaddresses_to_register({
             'bindip': smb['bindip'],
             'hostname': hostname,
+            'clustered': smb_ha_mode == 'CLUSTERED'
         })
+
+        if not to_register:
+            raise CallError(
+                'No server IP addresses passed DNS validation. '
+                'This may indicate an improperly configured reverse zone. '
+                'Review middleware log files for details regarding errors encountered.',
+                errno.EINVAL
+            )
 
         payload = []
 
