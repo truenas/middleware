@@ -126,8 +126,9 @@ def cleanup_reverse_zone():
 
     payload = []
     for host in res['result']:
-        assert host['name'] in ptr_table, str(ptr_table)
-        addr = ipaddress.ip_address(ptr_table[host['name']])
+        reverse_pointer = f'{host["name"]}.'
+        assert reverse_pointer in ptr_table, str(ptr_table)
+        addr = ipaddress.ip_address(ptr_table[reverse_pointer])
         payload.append({
             'command': 'DELETE',
             'name': host['target'],
