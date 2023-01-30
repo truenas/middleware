@@ -936,6 +936,7 @@ class ZettareplService(Service):
                         self.middleware.call_sync("zettarepl.set_state", f"replication_{message.task_id}", {
                             "state": "WAITING",
                             "datetime": datetime.utcnow(),
+                            "reason": message.waiting_reason,
                         })
 
                 if isinstance(message, ReplicationTaskStart):
