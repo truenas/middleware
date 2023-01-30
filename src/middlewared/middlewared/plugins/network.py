@@ -2026,6 +2026,8 @@ class InterfaceService(CRUDService):
         if wait_dhcp and dhclient_aws:
             await asyncio.wait(dhclient_aws, timeout=30)
 
+        await self.middleware.call('dns.sync')
+
         try:
             # We may need to set up routes again as they may have been removed while changing IPs
             await self.middleware.call('route.sync')
