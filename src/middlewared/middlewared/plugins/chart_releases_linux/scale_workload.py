@@ -278,3 +278,11 @@ class ChartReleaseService(Service):
         ]
         if args:
             await self.middleware.call('core.bulk', 'chart.release.scale', args)
+
+    @private
+    async def wait_for_namespace_to_terminate(self, namespace, timeout=300):
+        while timeout > 0 and await self.middleware.call(
+            'k8s.namespace.query', [['metadata.namespace', '=', namespace]]
+        ):
+            await asyncio.sleep(5)
+            timeout -= 5
