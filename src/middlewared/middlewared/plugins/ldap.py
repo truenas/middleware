@@ -14,7 +14,6 @@ from middlewared.schema import accepts, returns, Bool, Dict, Int, List, Str, Ref
 from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
-from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from concurrent.futures import ThreadPoolExecutor
@@ -1086,14 +1085,11 @@ class LDAPService(TDBWrapConfigService):
         except Exception as e:
             raise CallError(e)
 
-        try:
-            cached_state = await self.middleware.call('cache.get', 'DS_STATE')
+        if not await self.middleware.call('service.started', 'nslcd'):
+            await self.middleware.call('etc.generate', 'ldap')
+            await self.middleware.call('service.start', 'nslcd')
 
-            if cached_state['ldap'] != 'HEALTHY':
-                await self.set_state(DSStatus['HEALTHY'])
-        except KeyError:
-            await self.set_state(DSStatus['HEALTHY'])
-
+        await self.set_state(DSStatus['HEALTHY'])
         return True
 
     @private
@@ -1130,17 +1126,6 @@ class LDAPService(TDBWrapConfigService):
         return (await self.middleware.call('directoryservices.get_state'))['ldap']
 
     @private
-    async def nslcd_cmd(self, cmd):
-        nslcd = await run(['service', 'nslcd', cmd], check=False)
-        if nslcd.returncode != 0:
-            raise CallError(f'nslcd failed to {cmd} with errror: {nslcd.stderr.decode()}', errno.EFAULT)
-
-    @private
-    async def nslcd_status(self):
-        nslcd = await run(['service', 'nslcd', 'onestatus'], check=False)
-        return True if nslcd.returncode == 0 else False
-
-    @private
     @job(lock="ldap_start_stop")
     async def start(self, job):
         """
@@ -1164,10 +1149,7 @@ class LDAPService(TDBWrapConfigService):
         await self.middleware.call('etc.generate', 'pam')
 
         job.set_progress(30, 'Starting nslcd service')
-        if not await self.nslcd_status():
-            await self.nslcd_cmd('start')
-        else:
-            await self.nslcd_cmd('restart')
+        await self.middleware.call('service.restart', 'nslcd')
 
         job.set_progress(50, 'Reconfiguring SMB service')
         await self.middleware.call('smb.initialize_globals')
@@ -1221,7 +1203,7 @@ class LDAPService(TDBWrapConfigService):
         await self.middleware.call('service.stop', 'dscache')
 
         job.set_progress(80, 'Stopping nslcd service.')
-        await self.nslcd_cmd('stop')
+        await self.middleware.call('service.stop', 'nslcd')
         await self.set_state(DSStatus['DISABLED'])
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if ha_mode == 'CLUSTERED':
@@ -1236,7 +1218,7 @@ class LDAPService(TDBWrapConfigService):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        await self.nslcd_cmd(action.lower())
+        await self.middleware.call(f'service.{action.lower}' 'nslcd')
         await self._service_change('cifs', 'restart')
         await self.middleware.call(f'service.{action.lower()}', 'dscache')
 
