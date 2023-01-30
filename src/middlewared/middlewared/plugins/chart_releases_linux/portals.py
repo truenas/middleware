@@ -107,7 +107,6 @@ class ChartReleaseService(Service):
                 port = ''
             else:
                 port = f':{port}'
-
             stored_portals[name] = [f'{protocol}://{host}{port}/{path}']
 
         return stored_portals
