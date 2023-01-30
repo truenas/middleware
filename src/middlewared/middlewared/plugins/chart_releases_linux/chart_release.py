@@ -617,6 +617,7 @@ class ChartReleaseService(CRUDService):
 
         job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
         await self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name))
+        await self.middleware.call('chart.release.wait_for_namespace_to_terminate', get_namespace(release_name))
 
         await self.post_remove_tasks(release_name, job)
 

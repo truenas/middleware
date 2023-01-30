@@ -41,11 +41,10 @@ if not ha:
                 "values": values,
             }, job=True
         )
-        chart_release_data = call("chart.release.get_instance", app_name, {"extra": {"retrieve_resources": True}})
-        for image_tag in chart_release_data["resources"]["container_images"]:
-            while not call("container.image.query", [["repo_tags", "rin", image_tag]]):
-                time.sleep(10)
+        while call("chart.release.get_instance", app_name)["status"] != "ACTIVE":
+            time.sleep(10)
 
+        chart_release_data = call("chart.release.get_instance", app_name, {"extra": {"retrieve_resources": True}})
         assert_images_exist_for_chart_release(chart_release_data)
 
         try:
