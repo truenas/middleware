@@ -470,6 +470,11 @@ class PoolService(CRUDService):
                 await (await self.middleware.call('disk.resize', log_disks, True)).wait()
 
         await self.middleware.call('pool.format_disks', job, disks)
+        if await self.middleware.call('failover.licensed'):
+            try:
+                await self.middleware.call('failover.call_remote', 'disk.retaste')
+            except Exception:
+                self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 
         options = {
             'feature@lz4_compress': 'enabled',
