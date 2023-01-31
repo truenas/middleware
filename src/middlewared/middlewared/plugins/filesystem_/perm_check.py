@@ -136,7 +136,7 @@ class FilesystemService(Service):
             if not ok:
                 raise CallError(
                     f'Filesystem permissions on path {path_to_check} prevent access for '
-                    f'{id_type.lower()} {user_details["id_name"]} to the path {path}. '
+                    f'{id_type.lower()} "{user_details["id_name"]}" to the path {path}. '
                     f'This may be fixed by granting the aforementioned {id_type.lower()} '
                     f'execute permissions on the path: {path_to_check}.', errno.EPERM
                 )
