@@ -1,2 +1,2 @@
-account	requisite			pam_deny.so
-account	required			pam_permit.so
+auth	requisite			pam_deny.so
+auth	required			pam_permit.so
