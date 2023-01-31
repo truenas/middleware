@@ -142,7 +142,7 @@ class WSClient:
         self.client._recv(json.loads(data))
 
     def _on_error(self, app, e):
-        logger.error("Websocket client error", exc_info=True)
+        logger.warning("Websocket client error: %r", e)
 
     def _on_close(self, app, code, reason):
         self.client.on_close(code, reason)
