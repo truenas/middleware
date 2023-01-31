@@ -119,7 +119,7 @@ class Enclosure(object):
                 if da:
                     parsed[slot].update({'dev': da[0]})
                 else:
-                    parsed[slot].update(element['dev'])
+                    parsed[slot].update({'dev': ''})
 
             final[element_type[0]].update(parsed)
 
