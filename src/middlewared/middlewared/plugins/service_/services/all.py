@@ -9,6 +9,7 @@ from .mdns import MDNSService
 from .netbios import NetBIOSService
 from .nfs import NFSService
 from .nscd import NSCDService
+from .nslcd import NSSPamLdapdService
 from .openvpn_client import OpenVPNClientService
 from .openvpn_server import OpenVPNServerService
 from .rsync import RsyncService
@@ -64,6 +65,7 @@ all_services = [
     NetBIOSService,
     NFSService,
     NSCDService,
+    NSSPamLdapdService,
     OpenVPNClientService,
     OpenVPNServerService,
     RsyncService,
