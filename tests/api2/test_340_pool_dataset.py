@@ -8,6 +8,7 @@ import pytest
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from assets.REST.pool import dataset
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job, make_ws_request
 from auto_config import ip, pool_name, user, password
 from auto_config import dev_test
@@ -389,3 +390,16 @@ def test_31_path_to_dataset(request):
     res = make_ws_request(ip, get_payload)
     assert 'error' in res
     assert 'path is on boot pool' in res['error']['reason']
+
+
+def test_32_test_apps_preset(request):
+    depends(request, ["pool_04", "ssh_password"], scope="session")
+    with dataset(pool_name, 'APPS_TEST', options={'share_type': 'APPS'}) as ds:
+        assert ds['acltype']['value'] == 'NFSV4'
+        assert ds['atime']['value'] == 'OFF'
+        assert ds['aclmode']['value'] == 'PASSTHROUGH'
+
+        results = POST('/filesystem/getacl/', {'path': ds['mountpoint']}
+        assert results.status_code == 200, results.text
+
+        assert any([x['id'] == '568' for x in results.json()['acl']])

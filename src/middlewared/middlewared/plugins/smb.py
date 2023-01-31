@@ -146,15 +146,10 @@ class SMBSharePreset(enum.Enum):
             'zfs_core:zfs_auto_create=true'
         ])
     }, "cluster": False}
-    MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv3/SMB) shares", "params": {
-        'acl': False,
-        'streams': False,
+    MULTI_PROTOCOL_NFS = {"verbose_name": "Multi-protocol (NFSv4/SMB) shares", "params": {
+        'streams': True,
         'durablehandle': False,
-        'auxsmbconf': '\n'.join([
-            'oplocks = no',
-            'level2 oplocks = no',
-            'strict locking = yes',
-        ])
+        'auxsmbconf': '',
     }, "cluster": False}
     PRIVATE_DATASETS = {"verbose_name": "Private SMB Datasets and Shares", "params": {
         'path_suffix': '%U',
