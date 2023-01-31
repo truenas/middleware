@@ -17,6 +17,8 @@ clean:
 install:
 	bash install-dev-tools
 	apt install python3-pampy
+	echo 'auth	requisite			pam_deny.so' > /etc/pam.d/common-auth-unix
+	echo 'auth	required			pam_permit.so' >> /etc/pam.d/common-auth-unix
 	python3 setup.py install --single-version-externally-managed --record=/dev/null
 	cp ./debian/middlewared.service /usr/lib/systemd/system/middlewared.service
 
