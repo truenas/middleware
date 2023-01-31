@@ -1,9 +1,8 @@
-from collections import OrderedDict
-import glob
 import logging
 import os
 import re
 import subprocess
+import pathlib
 from collections import OrderedDict
 
 from middlewared.schema import Dict, Int, Str, accepts
@@ -466,21 +465,36 @@ class Enclosure(object):
                 element_number = None
 
     def _array_device_slot_dev(self, element_number):
-        try:
-            return os.listdir(f"/sys/class/enclosure/{self.devname}/Disk #{element_number:02X}/device/block")[0]
-        except (FileNotFoundError, IndexError):
-            pass
+        """
+        The sysfs directory structure is dynamic based on the enclosure that
+        is attached.
+        Here are some examples of what we've seen on internal hardware:
+            /sys/class/enclosure/13:0:0:0/Drive Slot #0_0000000000000000/
+            /sys/class/enclosure/13:0:0:0/Disk #00/
+            /sys/class/enclosure/13:0:0:0/Slot 00/
+            /sys/class/enclosure/13:0:0:0/slot00/
 
-        try:
-            return os.listdir(f"/sys/class/enclosure/{self.devname[len('bsg/'):]}/Slot {element_number:02X}/device/block")[0]
-        except (FileNotFoundError, IndexError):
-            pass
+        The safe assumption that we can make on whether or not the directory
+        represents a drive slot is looking for the file named "slot" underneath
+        each directory. (i.e. /sys/class/enclosure/13:0:0:0/Disk #00/slot)
 
-        if slot := glob.glob(f"/sys/class/enclosure/{self.devname[len('bsg/'):]}/slot{element_number:02} *"):
-            try:
-                return os.listdir(f"{slot[0]}/device/block")[0]
-            except (FileNotFoundError, IndexError):
-                pass
+        If this file doesn't exist, it means 1 thing
+            1. this isn't a drive slot directory
+
+        Once we've determined that there is a file named "slot", we can read it
+        and compare it to our `element_number` passed into us. The "slot" file
+        is always an integer so we don't need to convert to hexadecimal.
+        """
+        devname = self.devname.removeprefix('bsg/')  # why do we set this as 'bsg/13:0:0:0'...?
+        for enc_dir in filter(lambda x: devname == x.name, pathlib.Path("/sys/class/enclosure").iterdir()):
+            # any enclosures are enumerated here in this top level dir
+            # (i.e. /sys/class/enclosure/12:0:0:0, /sys/class/enclosure/13:0:0:0)
+            for i in filter(lambda x: x.is_dir(), enc_dir.iterdir()):
+                try:
+                    if (i / 'slot').read_text().strip() == str(element_number):
+                        return os.listdir(i / 'device/block')[0]
+                except (FileNotFoundError, IndexError):
+                    continue
 
         return ""
 
