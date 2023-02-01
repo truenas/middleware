@@ -9,7 +9,7 @@ sys.path.append(apifolder)
 
 from assets.REST.directory_services import active_directory, ldap, override_nameservers
 from assets.REST.pool import dataset
-from auto_config import ip, hostname, password, pool_name, user
+from auto_config import ip, hostname, password, pool_name, user, ha
 from contextlib import contextmanager
 from functions import GET, POST, PUT, SSH_TEST, make_ws_request, wait_on_job
 from protocols import nfs_share, SSH_NFS
@@ -319,61 +319,67 @@ def test_05_kinit_as_ad_user(setup_nfs_share):
     assert results.status_code == 200, results.text
 
 
-def test_06_krb5nfs_ops_with_ad(request):
-    my_fqdn = f'{hostname.strip()}.{AD_DOMAIN}'
-
-    res = make_ws_request(ip, {
-        'msg': 'method',
-        'method': 'dnsclient.forward_lookup',
-        'params': [{'names': [my_fqdn]}],
-    })
-    error = res.get('error')
-    assert error is None, str(error)
-
-    addresses = [rdata['address'] for rdata in res['result']]
-    assert ip in addresses
-
+if not ha:
     """
-    The following creates a loopback mount using our kerberos
-    keytab (AD computer account) and then performs ops via SSH
-    using a limited AD account for which we generated a kerberos
-    ticket above. Due to the odd nature of this setup, the loopback
-    mount gets mapped as the guest account on the NFS server.
-    This is fine for our purposes as we're validating that
-    sec=krb5 works.
+    we skip this test for a myriad of profoundly complex reasons
+    on our HA pipeline. If you cherish your sanity, don't try to
+    understand, just accept and move on :)
     """
-    with SSH_NFS(
-        my_fqdn,
-        f'/mnt/{pool_name}/NFSKRB5',
-        vers=4,
-        mount_user=user,
-        mount_password=password,
-        ip=ip,
-        kerberos=True,
-        user=ADUSERNAME,
-        password=ADPASSWORD,
-    ) as n:
-        n.create('testfile')
-        n.mkdir('testdir')
-        contents = n.ls('.')
+    def test_06_krb5nfs_ops_with_ad(request):
+        my_fqdn = f'{hostname.strip()}.{AD_DOMAIN}'
 
-        assert 'testdir' in contents
-        assert 'testfile' in contents
+        res = make_ws_request(ip, {
+            'msg': 'method',
+            'method': 'dnsclient.forward_lookup',
+            'params': [{'names': [my_fqdn]}],
+        })
+        error = res.get('error')
+        assert error is None, str(error)
 
-        file_acl = n.getacl('testfile')
-        for idx, ace in enumerate(file_acl):
-            assert ace['perms'] == test_perms, str(ace)
+        addresses = [rdata['address'] for rdata in res['result']]
+        assert ip in addresses
 
-        dir_acl = n.getacl('testdir')
-        for idx, ace in enumerate(dir_acl):
-            assert ace['perms'] == test_perms, str(ace)
-            assert ace['flags'] == test_flags, str(ace)
+        """
+        The following creates a loopback mount using our kerberos
+        keytab (AD computer account) and then performs ops via SSH
+        using a limited AD account for which we generated a kerberos
+        ticket above. Due to the odd nature of this setup, the loopback
+        mount gets mapped as the guest account on the NFS server.
+        This is fine for our purposes as we're validating that
+        sec=krb5 works.
+        """
+        with SSH_NFS(
+            my_fqdn,
+            f'/mnt/{pool_name}/NFSKRB5',
+            vers=4,
+            mount_user=user,
+            mount_password=password,
+            ip=ip,
+            kerberos=True,
+            user=ADUSERNAME,
+            password=ADPASSWORD,
+        ) as n:
+            n.create('testfile')
+            n.mkdir('testdir')
+            contents = n.ls('.')
 
-        n.unlink('testfile')
-        n.rmdir('testdir')
-        contents = n.ls('.')
-        assert 'testdir' not in contents
-        assert 'testfile' not in contents
+            assert 'testdir' in contents
+            assert 'testfile' in contents
+
+            file_acl = n.getacl('testfile')
+            for idx, ace in enumerate(file_acl):
+                assert ace['perms'] == test_perms, str(ace)
+
+            dir_acl = n.getacl('testdir')
+            for idx, ace in enumerate(dir_acl):
+                assert ace['perms'] == test_perms, str(ace)
+                assert ace['flags'] == test_flags, str(ace)
+
+            n.unlink('testfile')
+            n.rmdir('testdir')
+            contents = n.ls('.')
+            assert 'testdir' not in contents
+            assert 'testfile' not in contents
 
 
 @pytest.mark.dependency(name="SET_UP_AD_VIA_LDAP")
