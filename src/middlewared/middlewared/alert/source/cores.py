@@ -29,14 +29,16 @@ class CoreFilesArePresentAlertSource(AlertSource):
         # to be very specific to how we implemented our system dataset. Anyways,
         # the crash isn't harmful so we ignore it.
         "syslog-ng.service",
+        # Users are free to run whatever 3rd party software in their "app" that they
+        # so choose. We can't fix all the problems of k3s so ignore them since they're
+        # harmless and only cause unnecessary tickets to be created.
+        "k3s.service",
     )
 
     async def check(self):
         corefiles = []
         for coredump in filter(lambda c: c["corefile"] == "present", await self.middleware.call("system.coredumps")):
-            if coredump["exe"] in self.ignore_executables:
-                continue
-            if coredump["unit"] in self.ignore_units:
+            if coredump["exe"] in self.ignore_executables or coredump["unit"] in self.ignore_units:
                 continue
 
             corefiles.append(f"{coredump['exe']} ({coredump['time']})")
