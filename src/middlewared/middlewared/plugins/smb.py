@@ -947,7 +947,7 @@ class SharingSMBService(SharingService):
         Str('path', required=True),
         Str('path_suffix', default=''),
         Bool('home', default=False),
-        Str('name', max_length=80),
+        Str('name', max_length=80, required=True),
         Str('comment', default=''),
         Bool('ro', default=False),
         Bool('browsable', default=True),
@@ -1009,11 +1009,11 @@ class SharingSMBService(SharingService):
 
         await self.clean(data, 'sharingsmb_create', verrors)
         await self.validate(data, 'sharingsmb_create', verrors)
+        await self.apply_presets(data)
         await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
 
         verrors.check()
 
-        await self.apply_presets(data)
         await self.compress(data)
         if ha_mode != SMBHAMODE.CLUSTERED:
             vuid = await self.generate_vuid(data['timemachine'])
@@ -1069,6 +1069,9 @@ class SharingSMBService(SharingService):
 
         new['vuid'] = await self.generate_vuid(new['timemachine'], new['vuid'])
         await self.clean(new, 'sharingsmb_update', verrors, id=id)
+        if old['purpose'] != new['purpose']:
+            await self.apply_presets(new)
+
         await self.validate(new, 'sharingsmb_update', verrors, old=old)
         await self.legacy_afp_check(new, 'sharingsmb_update', verrors)
         check_mdns = False
@@ -1076,9 +1079,6 @@ class SharingSMBService(SharingService):
         verrors.check()
 
         guest_changed = old['guestok'] != new['guestok']
-
-        if old['purpose'] != new['purpose']:
-            await self.apply_presets(new)
 
         if ha_mode == SMBHAMODE.CLUSTERED:
             diff = await self.middleware.call(
