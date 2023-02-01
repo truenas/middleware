@@ -17,7 +17,7 @@ def client(*, auth=undefined, py_exceptions=True, log_py_exceptions=True):
 
     with Client(f"ws://{host()}/websocket", py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
         if auth is not None:
-            c.call("auth.login", *auth)
+            assert c.call("auth.login", *auth)
         yield c
 
 

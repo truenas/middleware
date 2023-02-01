@@ -13,7 +13,11 @@ class AuthService(Service):
 
     @private
     async def authenticate(self, username, password):
-        local = '@' not in username
+        if '@' in username:
+            username = username.split('@')[0]
+            local = False
+        else:
+            local = True
 
         if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             root = await self.middleware.call(
