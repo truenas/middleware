@@ -49,7 +49,7 @@ def test_root_password_disabled():
 
                     # Root should not be able to log in with password anymore
                     with pytest.raises(ClientException):
-                        call("system.info")
+                        call("system.info", client_kwargs=dict(auth_required=False))
 
                     assert events[0][1]["fields"]["usernames"] == ["admin"]
 

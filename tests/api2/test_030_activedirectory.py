@@ -367,7 +367,7 @@ def test_10_account_privilege_authentication(request):
     ):
         call("system.general.update", {"ds_auth": True})
         try:
-            gid = call("user.get_user_obj", {"username": ADUSERNAME})["pw_gid"]
+            gid = call("user.get_user_obj", {"username": AD_USER})["pw_gid"]
             with privilege({
                 "name": "AD privilege",
                 "local_groups": [],
@@ -375,7 +375,7 @@ def test_10_account_privilege_authentication(request):
                 "allowlist": [{"method": "CALL", "resource": "system.info"}],
                 "web_shell": False,
             }):
-                with client(auth=(f"{ADUSERNAME}@", ADPASSWORD)) as c:
+                with client(auth=(f"{AD_USER}@", ADPASSWORD)) as c:
                     methods = c.call("core.get_methods")
 
                 assert "system.info" in methods
