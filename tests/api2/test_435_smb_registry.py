@@ -171,6 +171,10 @@ def test_008_test_presets(request, preset):
         assert results.status_code == 200, results.text
         DETECTED_PRESETS = results.json()
 
+    if 'TIMEMACHINE' in preset:
+        results = PUT("/smb/", {"aapl_extensions": True})
+        assert results.status_code == 200, results.text
+
     to_test = DETECTED_PRESETS[preset]['params']
     to_test_aux = to_test['auxsmbconf']
     results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
