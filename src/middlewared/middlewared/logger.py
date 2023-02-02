@@ -184,17 +184,6 @@ class LoggerFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-class LoggerStream(object):
-
-    def __init__(self, logger):
-        self.logger = logger
-        self.linebuf = ''
-
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.debug(line.rstrip())
-
-
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     def __init__(
