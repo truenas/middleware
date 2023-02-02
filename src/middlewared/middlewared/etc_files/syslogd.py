@@ -1,10 +1,6 @@
-from datetime import datetime
 import logging
 import os
 import re
-import shlex
-import shutil
-import subprocess
 import textwrap
 
 
@@ -244,97 +240,6 @@ def generate_ha_syslog(middleware):
             """))
 
 
-def use_syslog_dataset(middleware):
-    systemdataset = middleware.call_sync("systemdataset.config")
-
-    if systemdataset["syslog"]:
-        try:
-            return middleware.call_sync("cache.get", "use_syslog_dataset")
-        except KeyError:
-            pass
-
-        if not middleware.call_sync("system.is_enterprise"):
-            return True
-        else:
-            return middleware.call_sync("failover.status") != "BACKUP"
-    else:
-        return False
-
-
-def configure_syslog(middleware):
-    systemdataset = middleware.call_sync("systemdataset.config")
-
-    if not systemdataset["path"] or not use_syslog_dataset(middleware):
-        if os.path.islink("/var/log"):
-            if not os.path.realpath("/var/log"):
-                os.rename("/var/log", "/var/log." + datetime.now().strftime("%Y%m%d%H%M%S"))
-            else:
-                os.unlink("/var/log")
-
-            os.mkdir("/var/log", 0o755)
-
-        reconfigure_logging(middleware)
-
-        return
-
-    log_path = os.path.join(systemdataset["path"], f"syslog-{systemdataset['uuid']}", "log")
-    if os.path.exists(log_path):
-        # log directory exists, pick up any new files or
-        # directories and create them. Existing files will be
-        # appended. This is done this way so that ownership and
-        # permissions are always preserved.
-
-        if not os.path.islink("/var/log"):
-            for item in os.listdir("/var/log"):
-                dst = os.path.join(log_path, item)
-                item = os.path.join("/var/log", item)
-
-                if os.path.isdir(item):
-                    # Pick up any new directories and sync them
-                    if not os.path.isdir(dst):
-                        shutil.copytree(item, dst)
-                else:
-                    # If the file exists already, append to
-                    # it, otherwise, copy it over.
-                    if os.path.isfile(dst):
-                        with open(item, "rb") as f1:
-                            with open(dst, "ab") as f2:
-                                shutil.copyfileobj(f1, f2)
-                    else:
-                        shutil.copy(item, dst)
-    else:
-        # This is the first time syslog is going to log to this
-        # directory, so create the log directory and sync files.
-        os.mkdir(log_path)
-        os.chmod(log_path, 0o755)
-        os.chown(log_path, 0, 0)
-        subprocess.run(f"rsync -avz /var/log/* {shlex.quote(log_path + '/')}", shell=True,
-                       stdout=subprocess.DEVNULL)
-
-    symlink = False
-    if os.path.islink("/var/log"):
-        if os.readlink("/var/log") != log_path:
-            os.unlink("/var/log")
-            symlink = True
-    else:
-        shutil.rmtree("/var/log")
-        symlink = True
-    if symlink:
-        os.symlink(log_path, "/var/log")
-
-    reconfigure_logging(middleware)
-
-
-def reconfigure_logging(middleware):
-    p = subprocess.run(["systemctl", "restart", "systemd-journald"], stdout=subprocess.PIPE,
-                       stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore")
-    if p.returncode != 0:
-        logger.warning("Unable to restart systemd-journald: %s", p.stdout)
-
-    middleware.call_sync("core.reconfigure_logging")
-
-
 def render(service, middleware):
     generate_syslog_conf(middleware)
     generate_ha_syslog(middleware)
-    configure_syslog(middleware)
