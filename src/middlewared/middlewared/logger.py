@@ -39,7 +39,6 @@ logging.getLogger('acme.client').setLevel(logging.WARN)
 logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARN)
 
 
-FAILSAFE_LOGFILE = f'{MIDDLEWARE_RUN_DIR}/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/root/syslog/failover.log'
@@ -200,7 +199,7 @@ class Logger(object):
             'loggers': {
                 '': {
                     'level': 'NOTSET',
-                    'handlers': ['file', 'failsafe'],
+                    'handlers': ['file'],
                 },
                 'zettarepl': {
                     'level': 'NOTSET',
@@ -218,16 +217,6 @@ class Logger(object):
                     'level': 'DEBUG',
                     'class': 'middlewared.logger.RotatingFileHandler',
                     'filename': LOGFILE,
-                    'mode': 'a',
-                    'maxBytes': 10485760,
-                    'backupCount': 5,
-                    'encoding': 'utf-8',
-                    'formatter': 'file',
-                },
-                'failsafe': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': FAILSAFE_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
                     'backupCount': 5,
@@ -285,7 +274,7 @@ class Logger(object):
         # Make sure various log files are not readable by everybody.
         # umask could be another approach but chmod was chosen so
         # it affects existing installs.
-        for i in (FAILSAFE_LOGFILE, LOGFILE, ZETTAREPL_LOGFILE):
+        for i in (LOGFILE, ZETTAREPL_LOGFILE):
             try:
                 os.chmod(i, 0o640)
             except OSError:
