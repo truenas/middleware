@@ -10,7 +10,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, make_ws_request # , POST
-from auto_config import dev_test, ip
+from auto_config import dev_test, ha, ip
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -73,3 +73,15 @@ def test_06_check_system_set_time():
     # This is a fudge-factor because NTP will start working
     # pretty quickly to correct the slew.
     assert abs(target - datetime2) < 60
+
+    if ha:
+        res = make_ws_request(ip, {
+            'msg': 'method',
+            'method': 'failover.call_remote',
+            'params': ['system.info']
+        })
+        error = res.get('error')
+        assert error is None, str(error)
+
+        datetime3 = res['result']['datetime']['$date']/1000
+        assert abs(target - datetime3) < 60

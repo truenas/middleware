@@ -30,23 +30,24 @@ class SystemService(Service):
         verr.check()
 
         # stop NTP service before making clock changes
-        self.middleware.call_sync('service.stop', 'ntpd')
+        self.middleware.call_sync('service.stop', 'ntpd', {'ha_propagate': False})
 
         # Make sure RTC is set to UTC
         timedatectl = subprocess.run(['timedatectl', 'set-local-rtc', '0'], capture_output=True, check=False)
         if timedatectl.returncode:
-            self.middleware.call_sync('service.start', 'ntpd')
+            self.middleware.call_sync('service.start', 'ntpd', {'ha_propagate': False})
             raise CallError(f'Failed to set RTC to UTC: {timedatectl.stderr.decode()}')
 
         # Set to our new timestamp
         timedatectl = subprocess.run(['timedatectl', 'set-time', f'@{int(ts)}'], capture_output=True, check=False)
         if timedatectl.returncode:
-            self.middleware.call_sync('service.start', 'ntpd')
+            self.middleware.call_sync('service.start', 'ntpd', {'ha_propagate': False})
             raise CallError(f'Failed to set clock to ({ts}): {timedatectl.stderr.decode()}')
 
-        self.middleware.call_sync('service.start', 'ntpd')
+        self.middleware.call_sync('service.start', 'ntpd', {'ha_propagate': False})
 
-        try:
-            self.middleware.call_sync('failover.call_remote', 'system.set_time', [ts])
-        except Exception:
-            self.logger.warning('Failed setting time on standby controller', exc_info=True)
+        if self.middleware.call_sync('failover.licensed'):
+            try:
+                self.middleware.call_sync('failover.call_remote', 'system.set_time', [ts])
+            except Exception:
+                self.logger.warning('Failed setting time on standby controller', exc_info=True)
