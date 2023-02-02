@@ -42,25 +42,22 @@ class ChartReleaseService(Service):
 
     @private
     def retrieve_portals_for_chart_release_impl(self, release_data, node_ip):
+        cleaned_portals = {}
         questions_yaml_path = os.path.join(
             release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
         )
         if not os.path.exists(questions_yaml_path):
-            return {}
+            return cleaned_portals
 
         if release_data['chart_metadata']['name'] == 'ix-chart':
-            return self.get_ix_chart_portal(release_data, node_ip)
+            cleaned_portals.update(self.get_ix_chart_portal(release_data, node_ip))
 
         with open(questions_yaml_path, 'r') as f:
             portals = yaml.safe_load(f.read()).get('portals') or {}
 
-        if not portals:
-            return portals
-
         def tag_func(key):
             return self.parse_tag(release_data, key, node_ip)
 
-        cleaned_portals = {}
         for portal_type, schema in portals.items():
             t_portals = []
             path = tag_func(schema.get('path') or '/')
@@ -71,7 +68,21 @@ class ChartReleaseService(Service):
 
             cleaned_portals[portal_type] = t_portals
 
+        cleaned_portals.update(self.get_user_configured_portals(release_data, node_ip))
         return cleaned_portals
+
+    @private
+    def get_user_configured_portals(self, release_data, node_ip):
+        portals = {}
+        for name, portal_config in release_data['config'].get('iXPortals', {}).values():
+            t_portals = []
+            path = portal_config.get('path')
+            for protocol in portal_config['protocols']:
+                for host in (portal_config.get('host') or []) + ([node_ip] if portal_config.get('useNodeIP') else []):
+                    for port in portal_config['ports']:
+                        t_portals.append(f'{protocol}://{host}:{port}{path}')
+            portals[name] = t_portals
+        return portals
 
     @private
     def get_ix_chart_portal(self, release_data, node_ip):
