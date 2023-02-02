@@ -670,22 +670,25 @@ class SystemDatasetService(ConfigService):
         simultaneous releases of system dataset.
         """
         with self.sysdataset_release_lock:
-            restart = ['collectd', 'rrdcached', 'syslogd', 'kubernetes', 'openvpn_server', 'openvpn_client']
+            restart = ['collectd', 'rrdcached', 'syslogd']
 
-            if self.middleware.call_sync('service.started', 'cifs'):
-                restart.insert(0, 'cifs')
-            if self.middleware.call_sync('service.started', 'glusterd'):
-                restart.insert(0, 'glusterd')
-            if self.middleware.call_sync('service.started_or_enabled', 'webdav'):
-                restart.append('webdav')
-            if self.middleware.call_sync('service.started', 'open-vm-tools'):
-                restart.append('open-vm-tools')
-            if self.middleware.call_sync('service.started', 'idmap'):
-                restart.append('idmap')
-            if self.middleware.call_sync('service.started', 'nmbd'):
-                restart.append('nmbd')
-            if self.middleware.call_sync('service.started', 'wsdd'):
-                restart.append('wsdd')
+            for svc_to_check in [
+                {'name': 'cifs', 'index': 0},
+                {'name': 'glusterd', 'index': 0},
+                {'name': 'webdav', 'method': 'service.started_or_enabled'},
+                {'name': 'open-vm-tools'},
+                {'name': 'idmap'},
+                {'name': 'nmbd'},
+                {'name': 'wsdd'},
+                {'name': 'kubernetes'},
+                {'name': 'openvpn_client'},
+                {'name': 'openvpn_server'},
+            ]:
+                if self.middleware.call_sync(svc_to_check.get('method', 'service.started'), svc_to_check['name']):
+                    if 'index' in svc_to_check:
+                        restart.insert(svc_to_check['index'], svc_to_check['name'])
+                    else:
+                        restart.append(svc_to_check['name'])
 
             try:
                 self.middleware.call_sync('cache.put', 'use_syslog_dataset', False)
