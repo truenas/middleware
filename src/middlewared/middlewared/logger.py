@@ -259,48 +259,29 @@ class Logger(object):
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
-    def _set_output_file(self):
-        """Set the output format for file log."""
-        try:
+    def configure_logging(self, output_option='file'):
+        """
+        Configure the log output to file or console.
+            `output_option` str: Default is `file`, can be set to `console`.
+        """
+        if output_option.lower() == 'console':
+            console_handler = logging.StreamHandler()
+            logging.root.setLevel(getattr(logging, self.debug_level))
+            time_format = "%Y/%m/%d %H:%M:%S"
+            console_handler.setFormatter(LoggerFormatter(self.log_format, datefmt=time_format))
+            logging.root.addHandler(console_handler)
+        else:
             os.makedirs(os.path.dirname(FAILOVER_LOGFILE), mode=0o755, exist_ok=True)
             dictConfig(self.DEFAULT_LOGGING)
-        except Exception:
-            # If something happens during system dataset reconfiguration, we have the chance of not having
-            # /var/log present leaving us with "ValueError: Unable to configure handler 'file':
-            # [Errno 2] No such file or directory: '/var/log/middlewared.log'"
-            # crashing the middleware during startup
-            pass
 
-        # Make sure various log files are not readable by everybody.
-        # umask could be another approach but chmod was chosen so
-        # it affects existing installs.
-        for i in (LOGFILE, ZETTAREPL_LOGFILE):
-            try:
-                os.chmod(i, 0o640)
-            except OSError:
-                pass
-
-    def _set_output_console(self):
-        """Set the output format for console."""
-
-        console_handler = logging.StreamHandler()
-        logging.root.setLevel(getattr(logging, self.debug_level))
-        time_format = "%Y/%m/%d %H:%M:%S"
-        console_handler.setFormatter(LoggerFormatter(self.log_format, datefmt=time_format))
-
-        logging.root.addHandler(console_handler)
-
-    def configure_logging(self, output_option='file'):
-        """Configure the log output to file or console.
-
-            Args:
-                    output_option (str): Default is `file`, can be set to `console`.
-        """
-
-        if output_option.lower() == 'console':
-            self._set_output_console()
-        else:
-            self._set_output_file()
+            # Make sure various log files are not readable by everybody.
+            # umask could be another approach but chmod was chosen so
+            # it affects existing installs.
+            for i in (LOGFILE, ZETTAREPL_LOGFILE):
+                try:
+                    os.chmod(i, 0o640)
+                except OSError:
+                    pass
 
         logging.root.setLevel(getattr(logging, self.debug_level))
 
