@@ -16,8 +16,6 @@ import traceback
 from subprocess import run
 import ipaddress
 
-import psutil
-
 from middlewared.common.environ import environ_update
 import middlewared.main
 from middlewared.schema import (
@@ -30,7 +28,7 @@ from middlewared.settings import conf
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR, osc
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.utils.path import FSLocation, path_location, strip_location_prefix
-from middlewared.logger import Logger, reconfigure_logging, stop_logging
+from middlewared.logger import Logger
 from middlewared.job import Job
 from middlewared.pipe import Pipes
 from middlewared.utils.type import copy_function_metadata
@@ -2086,39 +2084,8 @@ class CoreService(Service):
         self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
-    def __kill_multiprocessing(self):
-        # We need to kill this because multiprocessing has passed it stderr fd which is /var/log/middlewared.log
-        if osc.IS_LINUX:
-            for process in psutil.process_iter(attrs=["cmdline"]):
-                if "from multiprocessing.resource_tracker import main" in " ".join(process.info["cmdline"]):
-                    process.kill()
-
     @private
-    def reconfigure_logging(self):
-        """
-        When /var/log gets moved because of system dataset
-        we need to make sure the log file is reopened because
-        of the new location
-        """
-        reconfigure_logging()
-        self.__kill_multiprocessing()
-        self.middleware.call_sync('core.jobs_resume_logging')
-
-        self.middleware.send_event('core.reconfigure_logging', 'CHANGED')
-
-    @private
-    def stop_logging(self):
-        stop_logging()
-        self.__kill_multiprocessing()
-        self.middleware.call_sync('core.jobs_stop_logging')
-
-        self.middleware.send_event('core.reconfigure_logging', 'CHANGED', fields={'stop': True})
-
-    @private
-    @accepts(Dict(
-        'core-job',
-        Int('sleep'),
-    ))
+    @accepts(Dict('core-job', Int('sleep')))
     @job()
     def job_test(self, job, data):
         """
