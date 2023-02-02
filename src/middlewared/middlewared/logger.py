@@ -2,7 +2,6 @@ import logging
 from logging.config import dictConfig
 import logging.handlers
 import os
-import sys
 
 import sentry_sdk
 
@@ -196,22 +195,6 @@ class LoggerStream(object):
             self.logger.debug(line.rstrip())
 
 
-class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
-    def handleError(self, record):
-        try:
-            super().handleError(record)
-        except ValueError:
-            # sys.stderr can be closed by core.reconfigure_logging which leads to
-            # ValueError: I/O operation on closed file. raised on every operation that
-            # involves logging
-            pass
-
-    def doRollover(self):
-        super().doRollover()
-        # We must reconfigure stderr/stdout streams after rollover
-        reconfigure_logging()
-
-
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     def __init__(
@@ -244,7 +227,7 @@ class Logger(object):
             'handlers': {
                 'file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'class': 'middlewared.logger.RotatingFileHandler',
                     'filename': LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -264,7 +247,7 @@ class Logger(object):
                 },
                 'zettarepl_file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'class': 'middlewared.logger.RotatingFileHandler',
                     'filename': ZETTAREPL_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -274,7 +257,7 @@ class Logger(object):
                 },
                 'failover_file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'class': 'middlewared.logger.RotatingFileHandler',
                     'filename': FAILOVER_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -297,11 +280,6 @@ class Logger(object):
 
     def getLogger(self):
         return logging.getLogger(self.application_name)
-
-    def stream(self):
-        for handler in logging.root.handlers:
-            if isinstance(handler, ErrorProneRotatingFileHandler):
-                return handler.stream
 
     def _set_output_file(self):
         """Set the output format for file log."""
@@ -353,46 +331,7 @@ def setup_logging(name, debug_level, log_handler):
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 
-    if log_handler == 'file':
-        _logger.configure_logging('file')
-        stream = _logger.stream()
-        if stream is not None:
-            sys.stdout = sys.stderr = stream
-    elif log_handler == 'console':
+    if log_handler == 'console':
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
-
-
-def reconfigure_logging():
-    for name, handler in logging._handlers.items():
-        if not isinstance(handler, ErrorProneRotatingFileHandler):
-            continue
-
-        stream = handler.stream
-        handler.stream = handler._open()
-        if name == 'file':
-            # We want to reassign stdout/stderr if its not the default one or closed
-            # which will happen on log file rotation.
-            try:
-                if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
-                    raise ValueError()
-            except ValueError:
-                # ValueError can be raised if file handler is closed
-                sys.stdout = handler.stream
-                sys.stderr = handler.stream
-        try:
-            stream.close()
-        except Exception:
-            pass
-
-
-def stop_logging():
-    for name, handler in logging._handlers.items():
-        if not isinstance(handler, ErrorProneRotatingFileHandler):
-            continue
-
-        try:
-            handler.stream.close()
-        except Exception:
-            pass
