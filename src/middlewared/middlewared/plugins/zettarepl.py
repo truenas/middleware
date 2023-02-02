@@ -167,7 +167,6 @@ class ZettareplProcess:
                 handler.addFilter(ReplicationTaskLoggingLevelFilter(default_level))
 
             c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
-            c.subscribe('core.reconfigure_logging', lambda *args, **kwargs: reconfigure_logging())
 
             definition = Definition.from_data(self.definition, raise_on_error=False)
             self.observer_queue.put(DefinitionErrors(definition.errors))
