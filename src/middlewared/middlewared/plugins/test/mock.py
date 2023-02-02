@@ -5,7 +5,7 @@ class TestService(Service):
     class Config:
         private = True
 
-    async def set_mock(self, name, description):
+    async def set_mock(self, name, args, description):
         if isinstance(description, str):
             exec(description)
             try:
@@ -25,10 +25,10 @@ class TestService(Service):
         else:
             raise CallError("Invalid mock declaration")
 
-        self.middleware.set_mock(name, method)
+        self.middleware.set_mock(name, args, method)
 
-    async def remove_mock(self, name):
-        self.middleware.remove_mock(name)
+    async def remove_mock(self, name, args):
+        self.middleware.remove_mock(name, args)
 
     # Dummy methods to mock for internal infrastructure testing (i.e. jobs manager)
 

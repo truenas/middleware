@@ -83,7 +83,7 @@ def test_can_set_admin_authorized_key(admin):
 
 
 def test_admin_user_alert(admin):
-    with mock("user.get_user_obj", return_value={
+    with mock("user.get_user_obj", args=[{"uid": 950}], return_value={
         "pw_name": "root", "pw_uid": 0, "pw_gid": 0, "pw_gecos": "root", "pw_dir": "/root", "pw_shell": "/usr/bin/zsh"
     }):
         alerts = call("alert.run_source", "AdminUser")

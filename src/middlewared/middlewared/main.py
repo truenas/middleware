@@ -191,6 +191,9 @@ class Application:
     async def call_method(self, message, serviceobj, methodobj):
         params = message.get('params') or []
 
+        if mock := self.middleware._mock_method(message['method'], params):
+            methodobj = mock
+
         try:
             async with self._softhardsemaphore:
                 result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self)
@@ -887,7 +890,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__console_io = False if os.path.exists(self.CONSOLE_ONCE_PATH) else None
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
-        self.mocks = {}
+        self.mocks = defaultdict(list)
         self.socket_messages_queue = deque(maxlen=200)
         self.tasks = set()
 
@@ -1330,7 +1333,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             self.logger.trace('Calling %r in current IO loop', name)
             return await methodobj(*prepared_call.args)
 
-        if name not in self.mocks and serviceobj._config.process_pool:
+        if not self.mocks.get(name) and serviceobj._config.process_pool:
             self.logger.trace('Calling %r in process pool', name)
             if isinstance(serviceobj, middlewared.service.CRUDService):
                 service_name, method_name = name.rsplit('.', 1)
@@ -1351,6 +1354,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                     method = self._method_lookup(method_name)[1]
                 except Exception:
                     return args
+
+                if mock := self._mock_method(method_name, args):
+                    method = mock
 
         if (not hasattr(method, 'accepts') and
                 method.__name__ in ['create', 'update', 'delete'] and
@@ -1376,6 +1382,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
     async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
         serviceobj, methodobj = self._method_lookup(name)
 
+        if mock := self._mock_method(name, params):
+            methodobj = mock
+
         if profile:
             methodobj = profile_wrap(methodobj)
 
@@ -1389,6 +1398,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params)))
 
         serviceobj, methodobj = self._method_lookup(name)
+
+        if mock := self._mock_method(name, params):
+            methodobj = mock
 
         prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
                                            in_event_loop=False)
@@ -1570,9 +1582,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
             time.sleep(interval)
 
-    def set_mock(self, name, mock):
-        if name in self.mocks:
-            raise ValueError(f'{name!r} is already mocked')
+    def set_mock(self, name, args, mock):
+        for _args, _mock in self.mocks[name]:
+            if args == _args:
+                raise ValueError(f'{name!r} is already mocked with {args!r}')
 
         serviceobj, methodobj = self._method_lookup(name)
 
@@ -1587,18 +1600,22 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             f._job = methodobj._job
         copy_function_metadata(mock, f)
 
-        self.mocks[name] = f
+        self.mocks[name].append((args, f))
 
-    def remove_mock(self, name):
-        self.mocks.pop(name)
+    def remove_mock(self, name, args):
+        for i, (_args, _mock) in enumerate(self.mocks[name]):
+            if args == _args:
+                del self.mocks[name][i]
+                break
 
-    def _method_lookup(self, name):
-        serviceobj, methodobj = super()._method_lookup(name)
-
-        if mock := self.mocks.get(name):
-            return serviceobj, mock
-
-        return serviceobj, methodobj
+    def _mock_method(self, name, params):
+        if mocks := self.mocks.get(name):
+            for args, mock in mocks:
+                if args == list(params):
+                    return mock
+            for args, mock in mocks:
+                if args is None:
+                    return mock
 
     async def ws_handler(self, request):
         ws = web.WebSocketResponse()
