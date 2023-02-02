@@ -186,9 +186,6 @@ tar -chf - -C /var \
 	--exclude=log/sysstat \
 	--exclude="log/wtmp*" \
 	log | tar -C $dir -xf -
-if [ -f "/tmp/failsafe_middlewared.log" ]; then
-	cp /tmp/failsafe_middlewared* "$dir"
-fi
 
 echo "** 97%: Compressing Debug Files"
 tar -chf - -C /var/tmp fndebug | tar -C $dir -xf -
