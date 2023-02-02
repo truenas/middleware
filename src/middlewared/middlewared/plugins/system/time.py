@@ -45,3 +45,8 @@ class SystemService(Service):
             raise CallError(f'Failed to set clock to ({ts}): {timedatectl.stderr.decode()}')
 
         self.middleware.call_sync('service.start', 'ntpd')
+
+        try:
+            self.middleware.call_sync('failover.call_remote', 'system.set_time', [ts])
+        except Exception:
+            self.logger.warning('Failed setting time on standby controller', exc_info=True)
