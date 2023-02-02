@@ -74,14 +74,12 @@ class ChartReleaseService(Service):
     @private
     def get_user_configured_portals(self, release_data, node_ip):
         portals = {}
-        for name, portal_config in release_data['config'].get('iXPortals', {}).values():
-            t_portals = []
-            path = portal_config.get('path')
-            for protocol in portal_config['protocols']:
-                for host in (portal_config.get('host') or []) + ([node_ip] if portal_config.get('useNodeIP') else []):
-                    for port in portal_config['ports']:
-                        t_portals.append(f'{protocol}://{host}:{port}{path}')
-            portals[name] = t_portals
+        for portal_config in release_data['config'].get('iXPortals') or []:
+            path = portal_config.get('path') or ''
+            host = node_ip if portal_config['useNodeIP'] else portal_config['host']
+            portals[portal_config['portalName']] = [
+                f'{portal_config["protocol"]}://{host}:{portal_config["protocol"]}{path}'
+            ]
         return portals
 
     @private
