@@ -155,7 +155,7 @@ class DNSService(Service):
 
                 tmpfile.write(directive.encode())
                 if entry['do_ptr']:
-                    ptrs.append(addr.reverse_pointer)
+                    ptrs.append((addr.reverse_pointer, entry['name']))
 
             if ptrs:
                 # additional newline means "send"
@@ -164,13 +164,14 @@ class DNSService(Service):
                 tmpfile.write(b'\n')
 
                 for ptr in ptrs:
+                    reverse_pointer, name = ptr
                     directive = ' '.join([
                         'update',
                         entry['command'].lower(),
-                        ptr,
+                        reverse_pointer,
                         str(entry['ttl']),
                         'PTR',
-                        entry['name'],
+                        name,
                         '\n'
                     ])
                     tmpfile.write(directive.encode())
