@@ -3,6 +3,8 @@ import os
 import threading
 import yaml
 
+from catalog_validation.items.questions_utils import CUSTOM_PORTALS_KEY
+
 from middlewared.service import private, Service
 from middlewared.utils import get
 
@@ -74,7 +76,7 @@ class ChartReleaseService(Service):
     @private
     def get_user_configured_portals(self, release_data, node_ip):
         portals = {}
-        for portal_config in release_data['config'].get('iXPortals') or []:
+        for portal_config in release_data['config'].get(CUSTOM_PORTALS_KEY) or []:
             path = portal_config.get('path') or ''
             host = node_ip if portal_config['useNodeIP'] else portal_config['host']
             portals[portal_config['portalName']] = [
