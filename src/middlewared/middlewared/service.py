@@ -1645,16 +1645,6 @@ class CoreService(Service):
         """
         return list(self.middleware.socket_messages_queue)
 
-    @private
-    def jobs_stop_logging(self):
-        for job in self.middleware.jobs.all().values():
-            job.stop_logging()
-
-    @private
-    def jobs_resume_logging(self):
-        for job in self.middleware.jobs.all().values():
-            job.start_logging()
-
     @accepts(Int('id'))
     @job()
     def job_wait(self, job, id):
