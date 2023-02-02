@@ -215,7 +215,7 @@ class Logger(object):
             'handlers': {
                 'file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.RotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'filename': LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -225,7 +225,7 @@ class Logger(object):
                 },
                 'zettarepl_file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.RotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'filename': ZETTAREPL_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -235,7 +235,7 @@ class Logger(object):
                 },
                 'failover_file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.RotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'filename': FAILOVER_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
