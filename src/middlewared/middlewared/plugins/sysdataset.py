@@ -685,10 +685,7 @@ class SystemDatasetService(ConfigService):
                 {'name': 'openvpn_server'},
             ]:
                 if self.middleware.call_sync(svc_to_check.get('method', 'service.started'), svc_to_check['name']):
-                    if 'index' in svc_to_check:
-                        restart.insert(svc_to_check['index'], svc_to_check['name'])
-                    else:
-                        restart.append(svc_to_check['name'])
+                    restart.insert(svc_to_check.get('index', len(restart)), svc_to_check['name'])
 
             try:
                 self.middleware.call_sync('cache.put', 'use_syslog_dataset', False)
