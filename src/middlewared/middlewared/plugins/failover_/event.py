@@ -495,14 +495,6 @@ class FailoverEventsService(Service):
         logger.info('Configuring system dataset')
         self.run_call('systemdataset.setup')
 
-        # Write the certs to disk based on what is written in db.
-        logger.info('Configuring SSL')
-        self.run_call('etc.generate', 'ssl')
-
-        # Now we restart the appropriate services to ensure it's using correct certs.
-        logger.info('Configuring HTTP')
-        self.run_call('service.restart', 'http')
-
         # now we restart the services, prioritizing the "critical" services
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})
