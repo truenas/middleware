@@ -269,6 +269,8 @@ class ActiveDirectoryService(Service):
             })])
         except dns.resolver.NXDOMAIN:
             raise CallError(f'DNS forward lookup of [{netbios_name}] failed.', errno.ENOENT)
+        except dns.resolver.NoNameservers as e:
+            raise CallError(f'DNS forward lookup of netbios name failed: {e}', errno.EFAULT)
 
         ips_in_use = set([x['address'] for x in await self.middleware.call('interface.ip_in_use')])
 

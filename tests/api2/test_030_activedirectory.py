@@ -112,7 +112,7 @@ def cleanup_reverse_zone():
     })
     error = res.get('error')
     assert error is None, str(error)
-    ptr_table = {ipaddress.ip_address(i).reverse_pointer: i for i in res['result']}
+    ptr_table = {f'{ipaddress.ip_address(i).reverse_pointer}.': i for i in res['result']}
 
     res = make_ws_request(ip, {
         'msg': 'method',
@@ -128,7 +128,7 @@ def cleanup_reverse_zone():
 
     payload = []
     for host in res['result']:
-        reverse_pointer = f'{host["name"]}.'
+        reverse_pointer = host["name"]
         assert reverse_pointer in ptr_table, str(ptr_table)
         addr = ipaddress.ip_address(ptr_table[reverse_pointer])
         payload.append({

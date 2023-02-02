@@ -25,6 +25,10 @@ def clear_ad_info():
         "createcomputer": "",
         "kerberos_realm": None,
     })
+    assert results.status_code == 200, results.text
+    if not results.json().get('job_id'):
+        return
+
     job_status = wait_on_job(results.json()['job_id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
@@ -44,6 +48,9 @@ def clear_ldap_info():
         "disable_freenas_cache": False,
         "certificate": None,
     })
+    if not results.json().get('job_id'):
+        return
+
     job_status = wait_on_job(results.json()['job_id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
