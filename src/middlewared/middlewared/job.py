@@ -601,23 +601,10 @@ class Job:
             except Exception:
                 pass
 
-    def stop_logging(self):
-        fd = self.logs_fd
-        if fd is not None:
-            # This is only for a short amount of time when moving system dataset
-            # We could use io.BytesIO() for a temporary buffer but if a bad job produces lots of logs
-            # and system dataset move crashes, we don't want these logs to clog up the RAM.
-            self.logs_fd = open('/dev/null', 'wb')
-            fd.close()
-
     def start_logging(self):
         if self.logs_path is not None:
-            fd = self.logs_fd
-            os.makedirs(LOGS_DIR, exist_ok=True)
-            os.chmod(LOGS_DIR, 0o700)
+            os.makedirs(LOGS_DIR, mode=0o700, exist_ok=True)
             self.logs_fd = open(self.logs_path, 'ab', buffering=0)
-            if fd is not None:
-                fd.close()
 
     async def logs_fd_write(self, data):
         await self.middleware.run_in_thread(self.logs_fd.write, data)
