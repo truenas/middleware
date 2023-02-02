@@ -670,7 +670,7 @@ class SystemDatasetService(ConfigService):
         simultaneous releases of system dataset.
         """
         with self.sysdataset_release_lock:
-            restart = ['collectd', 'rrdcached', 'syslogd']
+            restart = ['collectd', 'rrdcached', 'syslogd', 'kubernetes', 'openvpn_server', 'openvpn_client']
 
             if self.middleware.call_sync('service.started', 'cifs'):
                 restart.insert(0, 'cifs')
