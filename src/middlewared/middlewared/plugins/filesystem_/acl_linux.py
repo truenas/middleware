@@ -678,3 +678,165 @@ class FilesystemService(Service, ACLBase):
             return self.setacl_posix1e(job, data)
         else:
             raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
+
+    @private
+    def add_to_acl_posix(self, acl, entries):
+        def convert_perm(perm):
+            if perm == 'MODIFY':
+                return {'READ': True, 'WRITE': True, 'EXECUTE': True}
+
+            if perm == 'READ':
+                return {'READ': True, 'WRITE': False, 'EXECUTE': True}
+
+        def check_acl_for_entry(entry):
+            id_type = entry['id_type']
+            xid = entry['id']
+            perm = entry['access']
+
+            canonical_entries = {
+                'USER_OBJ': {'has_default': False, 'entry': None},
+                'GROUP_OBJ': {'has_default': False, 'entry': None},
+                'OTHER': {'has_default': False, 'entry': None},
+            }
+
+            has_default = False
+            has_access = False
+            has_access_mask = False
+            has_default_mask = False
+
+            for ace in acl:
+                if (centry := canonical_entries.get(ace['tag'])) is not None:
+                    if ace['default']:
+                        centry['has_default'] = True
+                    else:
+                        centry['entry'] = ace
+
+                    continue
+
+                if ace['tag'] == 'MASK':
+                    if ace['default']:
+                        has_default_mask = True
+                    else:
+                        has_access_mask = True
+
+                    continue
+
+                if ace['tag'] != id_type or ace['id'] != xid:
+                    continue
+
+                if ace['perms'] != convert_perm(perm):
+                    continue
+
+                if ace['default']:
+                    has_default = True
+                else:
+                    has_access = True
+
+            for key, val in canonical_entries.items():
+                if val['has_default']:
+                    continue
+
+                acl.append({
+                    'tag': key,
+                    'id': val['entry']['id'],
+                    'perms': val['entry']['perms'],
+                    'default': True
+                })
+
+            return (has_default, has_access, has_access_mask, has_default_mask)
+
+        def add_entry(entry, default):
+            acl.append({
+                'tag': entry['id_type'],
+                'id': entry['id'],
+                'perms': convert_perm(entry['access']),
+                'default': default
+            })
+
+        def add_mask(default):
+            acl.append({
+                'tag': 'MASK',
+                'id': -1,
+                'perms': {'READ': True, 'WRITE': True, 'EXECUTE': True},
+                'default': default
+            })
+
+        for entry in entries:
+            default, access, mask, default_mask = check_acl_for_entry(entry)
+
+            if not default:
+                add_entry(entry, True)
+
+            if not access:
+                add_entry(entry, False)
+
+            if not mask:
+                add_mask(False)
+
+            if not default_mask:
+                add_mask(True)
+
+        return acl
+
+    @private
+    def add_to_acl_nfs4(self, acl, entries):
+        def convert_perm(perm):
+            if perm == 'MODIFY':
+                return {'BASIC': 'MODIFY'}
+
+            if perm == 'READ':
+                return {'BASIC': 'READ'}
+
+        def check_acl_for_entry(entry):
+            id_type = entry['id_type']
+            xid = entry['id']
+            perm = entry['access']
+
+            for ace in acl:
+                if ace['tag'] != id_type or ace['id'] != xid or ace['type'] != 'ALLOW':
+                    continue
+
+                if ace['perms'].get('BASIC', {}) == perm:
+                    return True
+
+            return False
+
+        for entry in entries:
+            if check_acl_for_entry(entry):
+                continue
+
+            acl.append({
+                'tag': entry['id_type'],
+                'id': entry['id'],
+                'perms': convert_perm(entry['access']),
+                'flags': {'BASIC': 'INHERIT'},
+                'type': 'ALLOW'
+            })
+
+        return acl
+
+    def add_to_acl(self, job, data):
+        if os.listdir(data['path']) and not data['options']['force']:
+            raise CallError(
+                f'{data["path"]}: path contains existing data '
+                'and `force` was not specified', errno.EPERM
+            )
+
+        current_acl = self.getacl(data['path'])
+        acltype = ACLType[current_acl['acltype']]
+
+        if acltype == ACLType.NFS4:
+            new_acl = self.add_to_acl_nfs4(current_acl['acl'], data['entries'])
+        elif acltype == ACLType.POSIX1E:
+            new_acl = self.add_to_acl_posix(current_acl['acl'], data['entries'])
+        else:
+            raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
+
+        setacl_job = self.middleware.call_sync('filesystem.setacl', {
+            'path': data['path'],
+            'dacl': new_acl,
+            'acltype': current_acl['acltype'],
+            'options': {'recursive': True}
+        })
+
+        return job.wrap_sync(setacl_job)
