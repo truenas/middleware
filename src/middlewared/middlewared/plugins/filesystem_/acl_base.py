@@ -1,5 +1,5 @@
 import enum
-from middlewared.service import accepts, returns, job, ServicePartBase
+from middlewared.service import accepts, private, returns, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
 from middlewared.validators import Range
 
@@ -370,4 +370,35 @@ class ACLBase(ServicePartBase):
         If an admin group is defined, then an entry granting it full control will
         be placed at the top of the ACL. Optionally may pass `share_type` to argument
         to get share-specific template ACL.
+        """
+
+    @private
+    @accepts(Dict(
+        'add_to_acl',
+        Str('path', required=True),
+        List('entries', required=True, items=[Dict(
+            'simplified_acl_entry',
+            Str('id_type', enum=['USER', 'GROUP'], required=True),
+            Int('id', required=True),
+            Str('access', enum=['READ', 'MODIFY'], required=True)
+        )]),
+        Dict(
+            'options',
+            Bool('force', default=False),
+        )
+    ))
+    @job()
+    def add_to_acl(self, job, data):
+        """
+        Simplified ACL maintenance API for charts users to grant either read or
+        modify access to particulr IDs on a given path. This call overwrites
+        any existing ACL on the given path.
+
+        `id_type` specifies whether the extra entry will be a user or group
+        `id` specifies the numeric id of the user / group for which access is
+        being granted.
+        `access` specifies the simplified access mask to be granted to the user.
+        For NFSv4 ACLs `READ` means the READ set, and `MODIFY` means the MODIFY
+        set. For POSIX1E `READ` means read and execute, `MODIFY` means read, write,
+        execute.
         """
