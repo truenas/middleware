@@ -602,7 +602,7 @@ class SystemDatasetService(ConfigService):
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
-                'cores', 'samba4', f'syslog-{uuid}',
+                'cores', 'samba4',
                 f'rrd-{uuid}', f'configs-{uuid}',
                 'webui', 'services',
                 'glusterd', CTDBConfig.CTDB_VOL_NAME.value,
