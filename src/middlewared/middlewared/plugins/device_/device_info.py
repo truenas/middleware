@@ -42,7 +42,7 @@ class DeviceService(Service):
         return disks
 
     @private
-    def get_disk_partitions(self, dev, lss):
+    def get_disk_partitions(self, dev):
         parts = []
         keys = tuple('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
         parent = dev.sys_name
@@ -60,15 +60,11 @@ class DeviceService(Service):
                 'partition_uuid': i['ID_PART_ENTRY_UUID'],
                 'start_sector': int(i['ID_PART_ENTRY_OFFSET']),
                 'end_sector': int(i['ID_PART_ENTRY_OFFSET']) + int(i['ID_PART_ENTRY_SIZE']) - 1,
-                'start': None,
-                'end': None,
-                'size': None,
                 'encrypted_provider': None,
             }
-            if lss:
-                part['start'] = lss * part['start_sector']
-                part['end'] = lss * part['end_sector']
-                part['size'] = lss * int(i['ID_PART_ENTRY_SIZE'])
+            part['start'] = part['start_sector'] * 512
+            part['end'] = part['end_sector'] * 512
+            part['size'] = int(i['ID_PART_ENTRY_SIZE']) * 512
 
             for attr in filter(lambda x: x.startswith('holders/md'), i.attributes.available_attributes):
                 # looks like `holders/md123`
@@ -120,7 +116,7 @@ class DeviceService(Service):
         }
 
         if get_partitions:
-            disk['parts'] = self.get_disk_partitions(dev, disk['sectorsize'])
+            disk['parts'] = self.get_disk_partitions(dev)
 
         if self.safe_retrieval(dev.attributes, 'queue/rotational', None) == '1':
             disk['type'] = 'HDD'
