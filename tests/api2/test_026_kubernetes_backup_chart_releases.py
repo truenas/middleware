@@ -19,7 +19,7 @@ from middlewared.test.integration.utils import file_exists_and_perms_check
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
-backup_release_name = 'backupplex'
+backup_release_name = 'backuppostgres'
 
 # Read all the test below only on non-HA
 if not ha:
@@ -254,17 +254,17 @@ if not ha:
 
         with catalog({
             'force': True,
-            'preferred_trains': ['stable'],
-            'label': 'TRUECHARTS',
-            'repository': 'https://github.com/truecharts/catalog.git',
+            'preferred_trains': ['test-apps'],
+            'label': 'TESTAPPS',
+            'repository': 'https://github.com/Qubad786/test_catalog.git',
             'branch': 'main'
         }) as catalog_info:
             with chart_release({
                 'catalog': catalog_info['label'],
-                'item': 'plex',
+                'item': 'postgres',
                 'release_name': backup_release_name,
-                'train': 'stable',
-            }) as chart_release_info:
+                'train': 'test-apps',
+            }, wait_until_active=True) as chart_release_info:
                 with backup() as backup_name:
                     app_info = call(
                         'chart.release.get_instance', chart_release_info['id'], {'extra': {'retrieve_resources': True}}
