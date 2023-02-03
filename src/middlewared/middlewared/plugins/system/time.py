@@ -46,7 +46,7 @@ class SystemService(Service):
 
         self.middleware.call_sync('service.start', 'ntpd', {'ha_propagate': False})
 
-        if self.middleware.call_sync('failover.licensed'):
+        if self.middleware.call_sync('failover.status') == 'MASTER':
             try:
                 self.middleware.call_sync('failover.call_remote', 'system.set_time', [ts])
             except Exception:
