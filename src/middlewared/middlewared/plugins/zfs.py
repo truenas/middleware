@@ -18,13 +18,6 @@ from middlewared.utils.osc import getmntinfo
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 
-class ZFSSetPropertyError(CallError):
-    def __init__(self, property, error):
-        self.property = property
-        self.error = error
-        super().__init__(f'Failed to update dataset: failed to set property {self.property}: {self.error}')
-
-
 class ZFSDatasetService(CRUDService):
 
     class Config:
