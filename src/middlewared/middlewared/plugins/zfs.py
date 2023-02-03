@@ -6,7 +6,6 @@ from copy import deepcopy
 
 import libzfs
 
-from middlewared.plugins.zfs_.pool_utils import convert_topology, find_vdev
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, unlocked_zvols_fast, get_snapshot_count_cached
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.schema import accepts, returns, Any, Bool, Dict, Int, List, Ref, Str
@@ -24,58 +23,6 @@ class ZFSSetPropertyError(CallError):
         self.property = property
         self.error = error
         super().__init__(f'Failed to update dataset: failed to set property {self.property}: {self.error}')
-
-
-class ZFSPoolService(CRUDService):
-
-    class Config:
-        namespace = 'zfs.pool'
-        private = True
-        process_pool = True
-
-    @accepts(
-        Str('name'),
-        List('new', default=None, null=True),
-        List('existing', items=[
-            Dict(
-                'attachvdev',
-                Str('target'),
-                Str('type', enum=['DISK']),
-                Str('path'),
-            ),
-        ], null=True, default=None),
-    )
-    @job()
-    def extend(self, job, name, new, existing):
-        """
-        Extend a zfs pool `name` with `new` vdevs or attach to `existing` vdevs.
-        """
-
-        if new is None and existing is None:
-            raise CallError('New or existing vdevs must be provided', errno.EINVAL)
-
-        try:
-            with libzfs.ZFS() as zfs:
-                pool = zfs.get(name)
-
-                if new:
-                    topology = convert_topology(zfs, new)
-                    pool.attach_vdevs(topology)
-
-                # Make sure we can find all target vdev
-                for i in (existing or []):
-                    target = find_vdev(pool, i['target'])
-                    if target is None:
-                        raise CallError(f"Failed to find vdev for {i['target']}", errno.EINVAL)
-                    i['target'] = target
-
-                for i in (existing or []):
-                    newvdev = libzfs.ZFSVdev(zfs, i['type'].lower())
-                    newvdev.path = i['path']
-                    i['target'].attach(newvdev)
-
-        except libzfs.ZFSException as e:
-            raise CallError(str(e), e.code)
 
 
 class ZFSDatasetService(CRUDService):

@@ -3,10 +3,10 @@ import libzfs
 import os
 
 from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import CallError, CRUDService, filterable
+from middlewared.service import CallError, CRUDService, filterable, job
 from middlewared.utils import filter_list
 
-from .pool_utils import convert_topology
+from .pool_utils import convert_topology, find_vdev
 
 
 class ZFSPoolService(CRUDService):
@@ -88,6 +88,50 @@ class ZFSPoolService(CRUDService):
             raise CallError(str(e), errno_)
         else:
             return True
+
+    @accepts(
+        Str('name'),
+        List('new', default=None, null=True),
+        List('existing', items=[
+            Dict(
+                'attachvdev',
+                Str('target'),
+                Str('type', enum=['DISK']),
+                Str('path'),
+            ),
+        ], null=True, default=None),
+    )
+    @job()
+    def extend(self, job, name, new, existing):
+        """
+        Extend a zfs pool `name` with `new` vdevs or attach to `existing` vdevs.
+        """
+
+        if new is None and existing is None:
+            raise CallError('New or existing vdevs must be provided', errno.EINVAL)
+
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+
+                if new:
+                    topology = convert_topology(zfs, new)
+                    pool.attach_vdevs(topology)
+
+                # Make sure we can find all target vdev
+                for i in (existing or []):
+                    target = find_vdev(pool, i['target'])
+                    if target is None:
+                        raise CallError(f"Failed to find vdev for {i['target']}", errno.EINVAL)
+                    i['target'] = target
+
+                for i in (existing or []):
+                    newvdev = libzfs.ZFSVdev(zfs, i['type'].lower())
+                    newvdev.path = i['path']
+                    i['target'].attach(newvdev)
+
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
 
     def query_imported_fast(self, name_filters=None):
         # the equivalent of running `zpool list -H -o guid,name` from cli
