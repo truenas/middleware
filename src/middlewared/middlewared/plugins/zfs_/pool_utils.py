@@ -3,6 +3,9 @@ import libzfs
 from collections import defaultdict
 
 
+SEARCH_PATHS = ['/dev/disk/by-partuuid', '/dev']
+
+
 def convert_topology(zfs, vdevs):
     topology = defaultdict(list)
     for vdev in vdevs:
@@ -21,3 +24,28 @@ def convert_topology(zfs, vdevs):
             z_vdev.children = children
             topology[vdev['root'].lower()].append(z_vdev)
     return topology
+
+
+def find_vdev(pool, vname):
+    """
+    Find a vdev in the given `pool` using `vname` looking for
+    guid or path
+
+    Returns:
+        libzfs.ZFSVdev object
+    """
+    children = []
+    for vdevs in pool.groups.values():
+        children += vdevs
+    while children:
+        child = children.pop()
+
+        if str(vname) == str(child.guid):
+            return child
+
+        if child.type == 'disk':
+            path = child.path.replace('/dev/', '')
+            if path == vname:
+                return child
+
+        children += list(child.children)
