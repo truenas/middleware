@@ -1,18 +1,15 @@
+import libzfs
 import subprocess
 
-import libzfs
-
-from middlewared.schema import accepts, returns, Bool, Dict, Str
-from middlewared.service import CallError, CRUDService, private
+from middlewared.schema import accepts, Bool, Dict, returns, Str
+from middlewared.service import CallError, private, Service
 
 
-class ZFSSnapshot(CRUDService):
+class ZFSSnapshot(Service):
 
     class Config:
-        datastore_primary_key_type = 'string'
         namespace = 'zfs.snapshot'
         process_pool = True
-        cli_namespace = 'storage.snapshot'
 
     @accepts(Dict(
         'snapshot_clone',
