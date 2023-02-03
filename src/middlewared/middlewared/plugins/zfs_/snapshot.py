@@ -1,10 +1,14 @@
 import copy
+import errno
 import libzfs
 
-from middlewared.service import CallError, CRUDService, filterable, private
+from middlewared.schema import accepts, Bool, Dict, List, Str
+from middlewared.service import CallError, CRUDService, filterable, private, ValidationErrors
 from middlewared.utils import filter_list, filter_getattrs
+from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
 from .utils import get_snapshot_count_cached
+from .validation_utils import validate_snapshot_name
 
 
 class ZFSSnapshot(CRUDService):
@@ -127,3 +131,118 @@ class ZFSSnapshot(CRUDService):
                 result = {k: v for k, v in result.items() if k in select}
 
         return result
+
+    @accepts(Dict(
+        'snapshot_create',
+        Str('dataset', required=True, empty=False),
+        Str('name', empty=False),
+        Str('naming_schema', empty=False, validators=[ReplicationSnapshotNamingSchema()]),
+        Bool('recursive', default=False),
+        List('exclude', items=[Str('dataset')]),
+        Bool('suspend_vms', default=False),
+        Bool('vmware_sync', default=False),
+        Dict('properties', additional_attrs=True),
+    ))
+    def do_create(self, data):
+        """
+        Take a snapshot from a given dataset.
+        """
+
+        dataset = data['dataset']
+        recursive = data['recursive']
+        exclude = data['exclude']
+        properties = data['properties']
+
+        verrors = ValidationErrors()
+
+        name = None
+        if 'name' in data and 'naming_schema' in data:
+            verrors.add('snapshot_create.naming_schema', 'You can\'t specify name and naming schema at the same time')
+        elif 'name' in data:
+            name = data['name']
+        elif 'naming_schema' in data:
+            # We can't do `strftime` here because we are in the process pool and `TZ` environment variable update
+            # is not propagated here.
+            name = self.middleware.call_sync('replication.new_snapshot_name', data['naming_schema'])
+        else:
+            verrors.add('snapshot_create.naming_schema', 'You must specify either name or naming schema')
+
+        if exclude:
+            if not recursive:
+                verrors.add('snapshot_create.exclude', 'This option has no sense for non-recursive snapshots')
+            for k in ['vmware_sync', 'properties']:
+                if data[k]:
+                    verrors.add(f'snapshot_create.{k}', 'This option is not supported when excluding datasets')
+
+        if name and not validate_snapshot_name(f'{dataset}@{name}'):
+            verrors.add('snapshot_create.name', 'Invalid snapshot name')
+
+        if verrors:
+            raise verrors
+
+        vmware_context = None
+        if data['vmware_sync']:
+            vmware_context = self.middleware.call_sync('vmware.snapshot_begin', dataset, recursive)
+
+        affected_vms = {}
+        if data['suspend_vms']:
+            if affected_vms := self.middleware.call_sync('vm.query_snapshot_begin', dataset, recursive):
+                self.middleware.call_sync('vm.suspend_vms', list(affected_vms))
+
+        try:
+            if not exclude:
+                with libzfs.ZFS() as zfs:
+                    ds = zfs.get_dataset(dataset)
+                    ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
+
+                    if vmware_context and vmware_context['vmsynced']:
+                        ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+            else:
+                self.middleware.call_sync('zettarepl.create_recursive_snapshot_with_exclude', dataset, name, exclude)
+
+            self.logger.info(f"Snapshot taken: {dataset}@{name}")
+        except libzfs.ZFSException as err:
+            self.logger.error(f'Failed to snapshot {dataset}@{name}: {err}')
+            raise CallError(f'Failed to snapshot {dataset}@{name}: {err}')
+        else:
+            return self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
+        finally:
+            if affected_vms:
+                self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))
+            if vmware_context:
+                self.middleware.call_sync('vmware.snapshot_end', vmware_context)
+
+    @accepts(
+        Str('id'), Dict(
+            'snapshot_update',
+            List(
+                'user_properties_update',
+                items=[Dict(
+                    'user_property',
+                    Str('key', required=True, validators=[Match(r'.*:.*')]),
+                    Str('value'),
+                    Bool('remove'),
+                )],
+            ),
+        )
+    )
+    def do_update(self, snap_id, data):
+        verrors = ValidationErrors()
+        props = data['user_properties_update']
+        for index, prop in enumerate(props):
+            if prop.get('remove') and 'value' in prop:
+                verrors.add(
+                    f'snapshot_update.user_properties_update.{index}.remove',
+                    'Must not be set when value is specified'
+                )
+        verrors.check()
+
+        try:
+            with libzfs.ZFS() as zfs:
+                snap = zfs.get_snapshot(snap_id)
+                user_props = self.middleware.call_sync('pool.dataset.get_create_update_user_props', props, True)
+                self.middleware.call_sync('zfs.dataset.update_zfs_object_props', user_props, snap)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+        else:
+            return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
