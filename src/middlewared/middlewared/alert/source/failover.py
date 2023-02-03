@@ -32,7 +32,7 @@ class FailoverFailedAlertClass(AlertClass):
     category = AlertCategory.HA
     level = AlertLevel.CRITICAL
     title = 'Failover Failed'
-    text = 'Failover failed. Check /root/syslog/failover.log on both controllers.'
+    text = 'Failover failed. Check /var/log/failover.log on both controllers.'
     products = ('SCALE_ENTERPRISE',)
 
 

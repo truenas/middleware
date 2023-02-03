@@ -671,9 +671,6 @@ class FailoverEventsService(Service):
         logger.info('Setting up system dataset')
         self.run_call('systemdataset.setup')
 
-        logger.info('Restarting syslog-ng')
-        self.run_call('service.restart', 'syslogd', self.HA_PROPAGATE)
-
         logger.info('Regenerating cron')
         self.run_call('etc.generate', 'cron')
 

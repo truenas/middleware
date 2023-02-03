@@ -901,7 +901,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
         self.event_register('core.environ', 'Send on middleware process environment changes.', private=True)
-        self.event_register('core.reconfigure_logging', 'Send when /var/log is remounted.', private=True)
 
     async def __plugins_load(self):
 

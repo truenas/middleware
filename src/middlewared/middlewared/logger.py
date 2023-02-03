@@ -2,7 +2,6 @@ import logging
 from logging.config import dictConfig
 import logging.handlers
 import os
-import sys
 
 import sentry_sdk
 
@@ -40,10 +39,9 @@ logging.getLogger('acme.client').setLevel(logging.WARN)
 logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARN)
 
 
-FAILSAFE_LOGFILE = f'{MIDDLEWARE_RUN_DIR}/failsafe_middlewared.log'
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
-FAILOVER_LOGFILE = '/root/syslog/failover.log'
+FAILOVER_LOGFILE = '/var/log/failover.log'
 logging.TRACE = 6
 
 
@@ -185,33 +183,6 @@ class LoggerFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-class LoggerStream(object):
-
-    def __init__(self, logger):
-        self.logger = logger
-        self.linebuf = ''
-
-    def write(self, buf):
-        for line in buf.rstrip().splitlines():
-            self.logger.debug(line.rstrip())
-
-
-class ErrorProneRotatingFileHandler(logging.handlers.RotatingFileHandler):
-    def handleError(self, record):
-        try:
-            super().handleError(record)
-        except ValueError:
-            # sys.stderr can be closed by core.reconfigure_logging which leads to
-            # ValueError: I/O operation on closed file. raised on every operation that
-            # involves logging
-            pass
-
-    def doRollover(self):
-        super().doRollover()
-        # We must reconfigure stderr/stdout streams after rollover
-        reconfigure_logging()
-
-
 class Logger(object):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     def __init__(
@@ -228,7 +199,7 @@ class Logger(object):
             'loggers': {
                 '': {
                     'level': 'NOTSET',
-                    'handlers': ['file', 'failsafe'],
+                    'handlers': ['file'],
                 },
                 'zettarepl': {
                     'level': 'NOTSET',
@@ -244,18 +215,8 @@ class Logger(object):
             'handlers': {
                 'file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
-                    'filename': LOGFILE,
-                    'mode': 'a',
-                    'maxBytes': 10485760,
-                    'backupCount': 5,
-                    'encoding': 'utf-8',
-                    'formatter': 'file',
-                },
-                'failsafe': {
-                    'level': 'DEBUG',
                     'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': FAILSAFE_LOGFILE,
+                    'filename': LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
                     'backupCount': 5,
@@ -264,7 +225,7 @@ class Logger(object):
                 },
                 'zettarepl_file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'filename': ZETTAREPL_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -274,7 +235,7 @@ class Logger(object):
                 },
                 'failover_file': {
                     'level': 'DEBUG',
-                    'class': 'middlewared.logger.ErrorProneRotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'filename': FAILOVER_LOGFILE,
                     'mode': 'a',
                     'maxBytes': 10485760,
@@ -298,53 +259,28 @@ class Logger(object):
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
-    def stream(self):
-        for handler in logging.root.handlers:
-            if isinstance(handler, ErrorProneRotatingFileHandler):
-                return handler.stream
-
-    def _set_output_file(self):
-        """Set the output format for file log."""
-        try:
-            os.makedirs(os.path.dirname(FAILOVER_LOGFILE), mode=0o755, exist_ok=True)
-            dictConfig(self.DEFAULT_LOGGING)
-        except Exception:
-            # If something happens during system dataset reconfiguration, we have the chance of not having
-            # /var/log present leaving us with "ValueError: Unable to configure handler 'file':
-            # [Errno 2] No such file or directory: '/var/log/middlewared.log'"
-            # crashing the middleware during startup
-            pass
-
-        # Make sure various log files are not readable by everybody.
-        # umask could be another approach but chmod was chosen so
-        # it affects existing installs.
-        for i in (FAILSAFE_LOGFILE, LOGFILE, ZETTAREPL_LOGFILE):
-            try:
-                os.chmod(i, 0o640)
-            except OSError:
-                pass
-
-    def _set_output_console(self):
-        """Set the output format for console."""
-
-        console_handler = logging.StreamHandler()
-        logging.root.setLevel(getattr(logging, self.debug_level))
-        time_format = "%Y/%m/%d %H:%M:%S"
-        console_handler.setFormatter(LoggerFormatter(self.log_format, datefmt=time_format))
-
-        logging.root.addHandler(console_handler)
-
     def configure_logging(self, output_option='file'):
-        """Configure the log output to file or console.
-
-            Args:
-                    output_option (str): Default is `file`, can be set to `console`.
         """
-
+        Configure the log output to file or console.
+            `output_option` str: Default is `file`, can be set to `console`.
+        """
         if output_option.lower() == 'console':
-            self._set_output_console()
+            console_handler = logging.StreamHandler()
+            logging.root.setLevel(getattr(logging, self.debug_level))
+            time_format = "%Y/%m/%d %H:%M:%S"
+            console_handler.setFormatter(LoggerFormatter(self.log_format, datefmt=time_format))
+            logging.root.addHandler(console_handler)
         else:
-            self._set_output_file()
+            dictConfig(self.DEFAULT_LOGGING)
+
+            # Make sure various log files are not readable by everybody.
+            # umask could be another approach but chmod was chosen so
+            # it affects existing installs.
+            for i in (LOGFILE, ZETTAREPL_LOGFILE, FAILOVER_LOGFILE):
+                try:
+                    os.chmod(i, 0o640)
+                except OSError:
+                    pass
 
         logging.root.setLevel(getattr(logging, self.debug_level))
 
@@ -353,46 +289,7 @@ def setup_logging(name, debug_level, log_handler):
     _logger = Logger(name, debug_level)
     _logger.getLogger()
 
-    if log_handler == 'file':
-        _logger.configure_logging('file')
-        stream = _logger.stream()
-        if stream is not None:
-            sys.stdout = sys.stderr = stream
-    elif log_handler == 'console':
+    if log_handler == 'console':
         _logger.configure_logging('console')
     else:
         _logger.configure_logging('file')
-
-
-def reconfigure_logging():
-    for name, handler in logging._handlers.items():
-        if not isinstance(handler, ErrorProneRotatingFileHandler):
-            continue
-
-        stream = handler.stream
-        handler.stream = handler._open()
-        if name == 'file':
-            # We want to reassign stdout/stderr if its not the default one or closed
-            # which will happen on log file rotation.
-            try:
-                if sys.stdout.fileno() != 1 or sys.stderr.fileno() != 2:
-                    raise ValueError()
-            except ValueError:
-                # ValueError can be raised if file handler is closed
-                sys.stdout = handler.stream
-                sys.stderr = handler.stream
-        try:
-            stream.close()
-        except Exception:
-            pass
-
-
-def stop_logging():
-    for name, handler in logging._handlers.items():
-        if not isinstance(handler, ErrorProneRotatingFileHandler):
-            continue
-
-        try:
-            handler.stream.close()
-        except Exception:
-            pass

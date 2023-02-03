@@ -566,10 +566,7 @@ class SystemDatasetService(ConfigService):
 
         This is why mount info is checked before manipulating sysdataset_path.
         """
-        mntinfo = self.middleware.call_sync(
-            'filesystem.mount_info',
-            [['mountpoint', '=', SYSDATASET_PATH]]
-        )
+        mntinfo = self.middleware.call_sync('filesystem.mount_info', [['mountpoint', '=', SYSDATASET_PATH]])
         if mntinfo and mntinfo[0]['mount_source'].split('/')[0] == pool:
             try:
                 self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
@@ -577,7 +574,6 @@ class SystemDatasetService(ConfigService):
                 pass
 
         subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
-
         flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
         for dataset, name in reversed(self.__get_datasets(pool, uuid)):
             try:
@@ -602,7 +598,7 @@ class SystemDatasetService(ConfigService):
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
             (f'{pool}/.system/{i}', i) for i in [
-                'cores', 'samba4', f'syslog-{uuid}',
+                'cores', 'samba4',
                 f'rrd-{uuid}', f'configs-{uuid}',
                 'webui', 'services',
                 'glusterd', CTDBConfig.CTDB_VOL_NAME.value,
@@ -670,8 +666,11 @@ class SystemDatasetService(ConfigService):
         simultaneous releases of system dataset.
         """
         with self.sysdataset_release_lock:
-            restart = ['collectd', 'rrdcached', 'syslogd']
-
+            # TODO: Review these services because /var/log no longer sits on
+            # the system dataset so any service that could potentially open
+            # a file descriptor underneath /var/log will no longer need to be
+            # stopped/restarted to allow the system dataset to migrate
+            restart = ['collectd', 'rrdcached']
             if self.middleware.call_sync('service.started', 'cifs'):
                 restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'glusterd'):
@@ -688,22 +687,12 @@ class SystemDatasetService(ConfigService):
                 restart.append('wsdd')
 
             try:
-                self.middleware.call_sync('cache.put', 'use_syslog_dataset', False)
-                self.middleware.call_sync('service.restart', 'syslogd')
-
-                # Middleware itself will log to syslog dataset.
-                # This may be prone to a race condition since we dont wait the workers to stop
-                # logging, however all the work before umount seems to make it seamless.
-                self.middleware.call_sync('core.stop_logging')
-
                 for i in restart:
                     self.middleware.call_sync('service.stop', i)
 
                 self.middleware.call_sync('tdb.close_sysdataset_handles')
                 yield
             finally:
-                self.middleware.call_sync('cache.pop', 'use_syslog_dataset')
-
                 restart.reverse()
                 for i in restart:
                     self.middleware.call_sync('service.start', i)

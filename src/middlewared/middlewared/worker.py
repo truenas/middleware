@@ -51,10 +51,7 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
         """
         serviceobj, methodobj = self._method_lookup(method)
 
-        if (
-            serviceobj._config.process_pool and
-            not hasattr(method, '_job')
-        ):
+        if serviceobj._config.process_pool and not hasattr(method, '_job'):
             if asyncio.iscoroutinefunction(methodobj):
                 try:
                     # Search for a synchronous implementation of the asynchronous method (i.e. `get_instance`).
@@ -123,19 +120,9 @@ def main_worker(*call_args):
     return res
 
 
-def reconfigure_logging(mtype, **message):
-    fields = message.get('fields') or {}
-    if fields.get('stop'):
-        logger.stop_logging()
-    else:
-        logger.reconfigure_logging()
-
-
 def receive_events():
     c = Client(f'ws+unix://{MIDDLEWARE_RUN_DIR}/middlewared-internal.sock', py_exceptions=True)
     c.subscribe('core.environ', lambda *args, **kwargs: environ_update(kwargs['fields']))
-    c.subscribe('core.reconfigure_logging', reconfigure_logging)
-
     environ_update(c.call('core.environ'))
 
 
