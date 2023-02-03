@@ -233,10 +233,6 @@ set +e
 "$path_prefix"/bin/cpuid > "$dir/cpuid"
 set -e
 
-if [ -d /root/syslog ]; then
-        cp -R /root/syslog "$dir"
-fi
-
 if [ -d /data/crash ]; then
 	cp -R /data/crash "$dir"
 fi

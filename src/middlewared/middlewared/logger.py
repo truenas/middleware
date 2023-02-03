@@ -41,7 +41,7 @@ logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(lo
 
 LOGFILE = '/var/log/middlewared.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
-FAILOVER_LOGFILE = '/root/syslog/failover.log'
+FAILOVER_LOGFILE = '/var/log/failover.log'
 logging.TRACE = 6
 
 
@@ -271,13 +271,12 @@ class Logger(object):
             console_handler.setFormatter(LoggerFormatter(self.log_format, datefmt=time_format))
             logging.root.addHandler(console_handler)
         else:
-            os.makedirs(os.path.dirname(FAILOVER_LOGFILE), mode=0o755, exist_ok=True)
             dictConfig(self.DEFAULT_LOGGING)
 
             # Make sure various log files are not readable by everybody.
             # umask could be another approach but chmod was chosen so
             # it affects existing installs.
-            for i in (LOGFILE, ZETTAREPL_LOGFILE):
+            for i in (LOGFILE, ZETTAREPL_LOGFILE, FAILOVER_LOGFILE):
                 try:
                     os.chmod(i, 0o640)
                 except OSError:
