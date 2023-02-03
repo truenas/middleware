@@ -1,4 +1,6 @@
+import errno
 import libzfs
+import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
@@ -181,6 +183,44 @@ class ZFSDatasetService(CRUDService):
             raise CallError(f'Failed to update dataset: {e}')
         else:
             return data
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'options',
+            Bool('force', default=False),
+            Bool('recursive', default=False),
+        )
+    )
+    def do_delete(self, id, options):
+        force = options['force']
+        recursive = options['recursive']
+
+        args = []
+        if force:
+            args += ['-f']
+        if recursive:
+            args += ['-r']
+
+        # If dataset is mounted and has receive_resume_token, we should destroy it or ZFS will say
+        # "cannot destroy 'pool/dataset': dataset already exists"
+        recv_run = subprocess.run(['zfs', 'recv', '-A', id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Destroying may take a long time, lets not use py-libzfs as it will block
+        # other ZFS operations.
+        try:
+            subprocess.run(
+                ['zfs', 'destroy'] + args + [id], text=True, capture_output=True, check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            if recv_run.returncode == 0 and e.stderr.strip().endswith('dataset does not exist'):
+                # This operation might have deleted this dataset if it was created by `zfs recv` operation
+                return
+            error = e.stderr.strip()
+            errno_ = errno.EFAULT
+            if 'Device busy' in error or 'dataset is busy' in error:
+                errno_ = errno.EBUSY
+            raise CallError(f'Failed to delete dataset: {error}', errno_)
+        return True
 
     def update_zfs_object_props(self, properties, zfs_object):
         verrors = ValidationErrors()
