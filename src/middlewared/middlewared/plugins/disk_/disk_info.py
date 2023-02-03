@@ -17,18 +17,7 @@ class DiskService(Service):
             if dev.get('DEVTYPE') not in ('disk', 'partition'):
                 return
 
-        size = dev.attributes.asint('size')
-
-        try:
-            attr = 'queue/logical_block_size'
-            if parent := dev.find_parent('block'):
-                lbs = pyudev.Devices.from_name(pyudev.Context(), 'block', parent.sys_name).attributes.asint(attr)
-            else:
-                lbs = dev.attributes.asint(attr)
-        except KeyError:
-            return
-
-        return size * lbs
+        return dev.attributes.asint('size') * 512
 
     @private
     def list_partitions(self, disk):
