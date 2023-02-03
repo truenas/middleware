@@ -672,20 +672,20 @@ class SystemDatasetService(ConfigService):
         with self.sysdataset_release_lock:
             restart = ['collectd', 'rrdcached', 'syslogd']
 
-            if self.middleware.call_sync('service.started', 'cifs'):
-                restart.insert(0, 'cifs')
-            if self.middleware.call_sync('service.started', 'glusterd'):
-                restart.insert(0, 'glusterd')
-            if self.middleware.call_sync('service.started_or_enabled', 'webdav'):
-                restart.append('webdav')
-            if self.middleware.call_sync('service.started', 'open-vm-tools'):
-                restart.append('open-vm-tools')
-            if self.middleware.call_sync('service.started', 'idmap'):
-                restart.append('idmap')
-            if self.middleware.call_sync('service.started', 'nmbd'):
-                restart.append('nmbd')
-            if self.middleware.call_sync('service.started', 'wsdd'):
-                restart.append('wsdd')
+            for svc_to_check in [
+                {'name': 'cifs', 'index': 0},
+                {'name': 'glusterd', 'index': 0},
+                {'name': 'webdav', 'method': 'service.started_or_enabled'},
+                {'name': 'open-vm-tools'},
+                {'name': 'idmap'},
+                {'name': 'nmbd'},
+                {'name': 'wsdd'},
+                {'name': 'kubernetes'},
+                {'name': 'openvpn_client'},
+                {'name': 'openvpn_server'},
+            ]:
+                if self.middleware.call_sync(svc_to_check.get('method', 'service.started'), svc_to_check['name']):
+                    restart.insert(svc_to_check.get('index', len(restart)), svc_to_check['name'])
 
             try:
                 self.middleware.call_sync('cache.put', 'use_syslog_dataset', False)
