@@ -1,8 +1,12 @@
+import errno
 import libzfs
+import os
 
-from middlewared.schema import accepts, Str
-from middlewared.service import CRUDService, filterable
+from middlewared.schema import accepts, Bool, Dict, List, Str
+from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list
+
+from .pool_utils import convert_topology
 
 
 class ZFSPoolService(CRUDService):
@@ -26,6 +30,64 @@ class ZFSPoolService(CRUDService):
             else:
                 pools = [i.__getstate__(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
+
+    @accepts(
+        Dict(
+            'zfspool_create',
+            Str('name', required=True),
+            List('vdevs', items=[
+                Dict(
+                    'vdev',
+                    Str('root', enum=['DATA', 'CACHE', 'LOG', 'SPARE', 'SPECIAL', 'DEDUP'], required=True),
+                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    List('devices', items=[Str('disk')], required=True),
+                ),
+            ], required=True),
+            Dict('options', additional_attrs=True),
+            Dict('fsoptions', additional_attrs=True),
+        ),
+    )
+    def do_create(self, data):
+        with libzfs.ZFS() as zfs:
+            topology = convert_topology(zfs, data['vdevs'])
+            zfs.create(data['name'], topology, data['options'], data['fsoptions'])
+
+        return self.middleware.call_sync('zfs.pool.get_instance', data['name'])
+
+    @accepts(Str('pool'), Dict(
+        'options',
+        Dict('properties', additional_attrs=True),
+    ))
+    def do_update(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(name)
+                for k, v in options['properties'].items():
+                    prop = pool.properties[k]
+                    if 'value' in v:
+                        prop.value = v['value']
+                    elif 'parsed' in v:
+                        prop.parsed = v['parsed']
+        except libzfs.ZFSException as e:
+            raise CallError(str(e))
+        else:
+            return options
+
+    @accepts(Str('pool'), Dict(
+        'options',
+        Bool('force', default=False),
+    ))
+    def do_delete(self, name, options):
+        try:
+            with libzfs.ZFS() as zfs:
+                zfs.destroy(name, force=options['force'])
+        except libzfs.ZFSException as e:
+            errno_ = errno.EFAULT
+            if e.code == libzfs.Error.UMOUNTFAILED:
+                errno_ = errno.EBUSY
+            raise CallError(str(e), errno_)
+        else:
+            return True
 
     def query_imported_fast(self, name_filters=None):
         # the equivalent of running `zpool list -H -o guid,name` from cli

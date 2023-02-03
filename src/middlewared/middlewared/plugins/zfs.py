@@ -2,11 +2,11 @@ import copy
 import errno
 import os
 import subprocess
-from collections import defaultdict
 from copy import deepcopy
 
 import libzfs
 
+from middlewared.plugins.zfs_.pool_utils import convert_topology
 from middlewared.plugins.zfs_.utils import zvol_path_to_name, unlocked_zvols_fast, get_snapshot_count_cached
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.schema import accepts, returns, Any, Bool, Dict, Int, List, Ref, Str
@@ -27,26 +27,6 @@ class ZFSSetPropertyError(CallError):
         self.property = property
         self.error = error
         super().__init__(f'Failed to update dataset: failed to set property {self.property}: {self.error}')
-
-
-def convert_topology(zfs, vdevs):
-    topology = defaultdict(list)
-    for vdev in vdevs:
-        children = []
-        for device in vdev['devices']:
-            z_cvdev = libzfs.ZFSVdev(zfs, 'disk')
-            z_cvdev.type = 'disk'
-            z_cvdev.path = device
-            children.append(z_cvdev)
-
-        if vdev['type'] == 'STRIPE':
-            topology[vdev['root'].lower()].extend(children)
-        else:
-            z_vdev = libzfs.ZFSVdev(zfs, 'disk')
-            z_vdev.type = vdev['type'].lower()
-            z_vdev.children = children
-            topology[vdev['root'].lower()].append(z_vdev)
-    return topology
 
 
 def find_vdev(pool, vname):
@@ -90,64 +70,6 @@ class ZFSPoolService(CRUDService):
                 raise CallError(f'{pool_name!r} not found', errno.ENOENT)
 
             return all((i.state in enabled for i in pool.features))
-
-    @accepts(
-        Dict(
-            'zfspool_create',
-            Str('name', required=True),
-            List('vdevs', items=[
-                Dict(
-                    'vdev',
-                    Str('root', enum=['DATA', 'CACHE', 'LOG', 'SPARE', 'SPECIAL', 'DEDUP'], required=True),
-                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
-                    List('devices', items=[Str('disk')], required=True),
-                ),
-            ], required=True),
-            Dict('options', additional_attrs=True),
-            Dict('fsoptions', additional_attrs=True),
-        ),
-    )
-    def do_create(self, data):
-        with libzfs.ZFS() as zfs:
-            topology = convert_topology(zfs, data['vdevs'])
-            zfs.create(data['name'], topology, data['options'], data['fsoptions'])
-
-        return self.middleware.call_sync('zfs.pool.get_instance', data['name'])
-
-    @accepts(Str('pool'), Dict(
-        'options',
-        Dict('properties', additional_attrs=True),
-    ))
-    def do_update(self, name, options):
-        try:
-            with libzfs.ZFS() as zfs:
-                pool = zfs.get(name)
-                for k, v in options['properties'].items():
-                    prop = pool.properties[k]
-                    if 'value' in v:
-                        prop.value = v['value']
-                    elif 'parsed' in v:
-                        prop.parsed = v['parsed']
-        except libzfs.ZFSException as e:
-            raise CallError(str(e))
-        else:
-            return options
-
-    @accepts(Str('pool'), Dict(
-        'options',
-        Bool('force', default=False),
-    ))
-    def do_delete(self, name, options):
-        try:
-            with libzfs.ZFS() as zfs:
-                zfs.destroy(name, force=options['force'])
-        except libzfs.ZFSException as e:
-            errno_ = errno.EFAULT
-            if e.code == libzfs.Error.UMOUNTFAILED:
-                errno_ = errno.EBUSY
-            raise CallError(str(e), errno_)
-        else:
-            return True
 
     @accepts(Str('pool', required=True))
     def upgrade(self, pool):
