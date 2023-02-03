@@ -1,15 +1,9 @@
-import copy
-import errno
 import subprocess
 
 import libzfs
 
-from middlewared.plugins.zfs_.utils import get_snapshot_count_cached
-from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
-from middlewared.schema import accepts, returns, Bool, Dict, List, Str
-from middlewared.service import CallError, CRUDService, ValidationErrors, filterable, private
-from middlewared.utils import filter_list, filter_getattrs
-from middlewared.validators import Match, ReplicationSnapshotNamingSchema
+from middlewared.schema import accepts, returns, Bool, Dict, Str
+from middlewared.service import CallError, CRUDService, private
 
 
 class ZFSSnapshot(CRUDService):
@@ -19,50 +13,6 @@ class ZFSSnapshot(CRUDService):
         namespace = 'zfs.snapshot'
         process_pool = True
         cli_namespace = 'storage.snapshot'
-
-    @accepts(Dict(
-        'snapshot_remove',
-        Str('dataset', required=True),
-        Str('name', required=True),
-        Bool('defer_delete')
-    ))
-    def remove(self, data):
-        """
-        Remove a snapshot from a given dataset.
-
-        Returns:
-            bool: True if succeed otherwise False.
-        """
-        self.logger.debug('zfs.snapshot.remove is deprecated, use zfs.snapshot.delete')
-        snapshot_name = data['dataset'] + '@' + data['name']
-        try:
-            self.do_delete(snapshot_name, {'defer': data.get('defer_delete') or False})
-        except Exception:
-            return False
-        return True
-
-    @accepts(
-        Str('id'),
-        Dict(
-            'options',
-            Bool('defer', default=False),
-            Bool('recursive', default=False),
-        ),
-    )
-    def do_delete(self, id, options):
-        """
-        Delete snapshot of name `id`.
-
-        `options.defer` will defer the deletion of snapshot.
-        """
-        try:
-            with libzfs.ZFS() as zfs:
-                snap = zfs.get_snapshot(id)
-                snap.delete(defer=options['defer'], recursive=options['recursive'])
-        except libzfs.ZFSException as e:
-            raise CallError(str(e))
-        else:
-            return True
 
     @accepts(Dict(
         'snapshot_clone',
