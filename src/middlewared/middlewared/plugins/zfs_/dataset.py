@@ -1,6 +1,7 @@
 import libzfs
 
-from middlewared.service import CRUDService, filterable
+from middlewared.schema import accepts, Bool, Dict, Str
+from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list
 
 from .dataset_utils import flatten_datasets
@@ -100,3 +101,105 @@ class ZFSDatasetService(CRUDService):
                 )
 
         return filter_list(datasets, filters, options)
+
+    @accepts(Dict(
+        'dataset_create',
+        Bool('create_ancestors', default=False),
+        Str('name', required=True),
+        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
+        Dict(
+            'properties',
+            Bool('sparse'),
+            additional_attrs=True,
+        ),
+    ))
+    def do_create(self, data):
+        """
+        Creates a ZFS dataset.
+        """
+
+        verrors = ValidationErrors()
+
+        if '/' not in data['name']:
+            verrors.add('name', 'You need a full name, e.g. pool/newdataset')
+
+        if verrors:
+            raise verrors
+
+        properties = data.get('properties') or {}
+        sparse = properties.pop('sparse', False)
+        params = {}
+
+        for k, v in data['properties'].items():
+            params[k] = v
+
+        # it's important that we set xattr=sa for various
+        # performance reasons related to ea handling
+        # pool.dataset.create already sets this by default
+        # so mirror the behavior here
+        if data['type'] == 'FILESYSTEM' and 'xattr' not in params:
+            params['xattr'] = 'sa'
+
+        try:
+            with libzfs.ZFS() as zfs:
+                pool = zfs.get(data['name'].split('/')[0])
+                pool.create(
+                    data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']),
+                    sparse_vol=sparse, create_ancestors=data['create_ancestors'],
+                )
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to create dataset', exc_info=True)
+            raise CallError(f'Failed to create dataset: {e}')
+        else:
+            return data
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_update',
+            Dict(
+                'properties',
+                additional_attrs=True,
+            ),
+        ),
+    )
+    def do_update(self, id, data):
+        try:
+            with libzfs.ZFS() as zfs:
+                dataset = zfs.get_dataset(id)
+
+                if 'properties' in data:
+                    properties = data['properties'].copy()
+                    # Set these after reservations
+                    for k in ['quota', 'refquota']:
+                        if k in properties:
+                            properties[k] = properties.pop(k)  # Set them last
+                    self.update_zfs_object_props(properties, dataset)
+
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to update dataset', exc_info=True)
+            raise CallError(f'Failed to update dataset: {e}')
+        else:
+            return data
+
+    def update_zfs_object_props(self, properties, zfs_object):
+        verrors = ValidationErrors()
+        for k, v in properties.items():
+            # If prop already exists we just update it,
+            # otherwise create a user property
+            prop = zfs_object.properties.get(k)
+            if v.get('source') == 'INHERIT':
+                if not prop:
+                    verrors.add(f'properties.{k}', 'Property does not exist and cannot be inherited')
+            else:
+                if not any(i in v for i in ('parsed', 'value')):
+                    verrors.add(f'properties.{k}', '"value" or "parsed" must be specified when setting a property')
+                if not prop and ':' not in k:
+                    verrors.add(f'properties.{k}', 'User property needs a colon (:) in its name')
+
+        verrors.check()
+
+        try:
+            zfs_object.update_properties(properties)
+        except libzfs.ZFSException as e:
+            raise CallError(f'Failed to update properties: {e!r}')
