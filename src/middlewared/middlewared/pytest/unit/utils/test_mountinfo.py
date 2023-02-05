@@ -53,7 +53,6 @@ fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - 
 93 26 0:38 / /var/db/system rw,relatime shared:48 - zfs dozer/.system rw,xattr,noacl
 100 93 0:39 / /var/db/system/cores rw,relatime shared:52 - zfs dozer/.system/cores rw,xattr,noacl
 107 93 0:40 / /var/db/system/samba4 rw,relatime shared:56 - zfs dozer/.system/samba4 rw,xattr,noacl
-114 93 0:41 / /var/db/system/syslog-f803551cf3cd4df8a1ddb0569466b72a rw,relatime shared:60 - zfs dozer/.system/syslog-f803551cf3cd4df8a1ddb0569466b72a rw,xattr,noacl
 121 93 0:42 / /var/db/system/rrd-f803551cf3cd4df8a1ddb0569466b72a rw,relatime shared:64 - zfs dozer/.system/rrd-f803551cf3cd4df8a1ddb0569466b72a rw,xattr,noacl
 151 93 0:43 / /var/db/system/configs-f803551cf3cd4df8a1ddb0569466b72a rw,relatime shared:68 - zfs dozer/.system/configs-f803551cf3cd4df8a1ddb0569466b72a rw,xattr,noacl
 158 93 0:44 / /var/db/system/webui rw,relatime shared:100 - zfs dozer/.system/webui rw,xattr,noacl

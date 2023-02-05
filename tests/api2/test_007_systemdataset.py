@@ -64,11 +64,6 @@ def test_02_get_initial_logs(logs_data):
     assert journald_log['result'] is True, str(journald_log)
     logs_data['journald_log_1'] = journald_log['output'].splitlines()[-1]
 
-    cmd = "cat /var/log/syslog"
-    syslog = SSH_TEST(cmd, user, password, ip)
-    assert syslog['result'] is True, str(syslog)
-    logs_data['syslog_1'] = syslog['output'].splitlines()[-1]
-
 
 def test_03_verify_sysds_is_moved_after_first_pool_with_encryption_is_created(request, pool_data):
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
@@ -134,13 +129,6 @@ def test_05_verify_logs_after_sysds_is_moved_to_a_passphrase_encrypted_pool(logs
     assert logs_data['journald_log_1'] in journald_log['output'], str(journald_log['output'])
     assert logs_data['journald_log_1'] != logs_data['journald_log_2']
 
-    cmd = "cat /var/log/syslog"
-    syslog = SSH_TEST(cmd, user, password, ip)
-    assert syslog['result'] is True, str(syslog)
-    logs_data['syslog_2'] = syslog['output'].splitlines()[-1]
-    assert logs_data['syslog_1'] in syslog['output'], str(syslog['output'])
-    assert logs_data['syslog_1'] != logs_data['syslog_2']
-
 
 def test_06_verify_sysds_after_passphrase_encrypted_pool_is_deleted(request, pool_data):
     payload = {
@@ -175,13 +163,6 @@ def test_07_verify_logs_after_passphrase_encrypted_pool_is_deleted(logs_data):
     logs_data['journald_log_3'] = journald_log['output'].splitlines()[-1]
     assert logs_data['journald_log_2'] in journald_log['output'], str(journald_log['output'])
     assert logs_data['journald_log_2'] != logs_data['journald_log_3']
-
-    cmd = "cat /var/log/syslog"
-    syslog = SSH_TEST(cmd, user, password, ip)
-    assert syslog['result'] is True, str(syslog)
-    logs_data['syslog_3'] = syslog['output'].splitlines()[-1]
-    assert logs_data['syslog_2'] in syslog['output'], str(syslog['output'])
-    assert logs_data['syslog_2'] != logs_data['syslog_3']
 
 
 @pytest.mark.dependency(name="first_pool")
@@ -273,11 +254,6 @@ def test_11_get_logs_before_moving_the_sysds_to_the_second_pool(logs_data):
     assert journald_log['result'] is True, str(journald_log)
     logs_data['journald_log_4'] = journald_log['output'].splitlines()[-1]
 
-    cmd = "cat /var/log/syslog"
-    syslog = SSH_TEST(cmd, user, password, ip)
-    assert syslog['result'] is True, str(syslog)
-    logs_data['syslog_4'] = syslog['output'].splitlines()[-1]
-
 
 def test_12_move_sysds_to_second_pool(request):
     depends(request, ["second_pool"])
@@ -308,13 +284,6 @@ def test_13_verify_logs_after_sysds_is_moved_to_second_pool(logs_data):
     logs_data['journald_log_5'] = journald_log['output'].splitlines()[-1]
     assert logs_data['journald_log_4'] in journald_log['output'], str(journald_log['output'])
     assert logs_data['journald_log_4'] != logs_data['journald_log_5']
-
-    cmd = "cat /var/log/syslog"
-    syslog = SSH_TEST(cmd, user, password, ip)
-    assert syslog['result'] is True, str(syslog)
-    logs_data['syslog_5'] = syslog['output'].splitlines()[-1]
-    assert logs_data['syslog_4'] in syslog['output'], str(syslog['output'])
-    assert logs_data['syslog_4'] != logs_data['syslog_5']
 
 
 def test_14_verify_sysds_can_be_moved_while_services_are_running(request):
