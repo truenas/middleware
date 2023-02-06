@@ -583,9 +583,9 @@ class ChartReleaseService(CRUDService):
         chart_release = await self.get_instance(release_name, {'extra': {'retrieve_resources': True}})
         namespace = get_namespace(release_name)
 
-        cp = await run(['helm', 'uninstall', release_name, '-n', namespace], check=False)
+        cp = await run(['helm', 'uninstall', release_name, '-n', namespace, '--wait'], check=False)
         if cp.returncode:
-            raise CallError(f'Unable to uninstall "{release_name}" chart release: {cp.stderr}')
+            raise CallError(f'Unable to uninstall {release_name!r} chart release: {cp.stderr}')
 
         job.set_progress(50, f'Uninstalled {release_name}')
 
@@ -616,10 +616,12 @@ class ChartReleaseService(CRUDService):
                 await self.middleware.call('k8s.pod.delete', pod['metadata']['name'], {'namespace': namespace})
 
         job.set_progress(75, f'Waiting for {release_name!r} pods to terminate')
+        # We still have a fallback for waiting for pods to terminate
+        # because of https://github.com/helm/helm/issues/10586
         await self.middleware.call('chart.release.wait_for_pods_to_terminate', get_namespace(release_name))
-        await self.middleware.call('chart.release.wait_for_namespace_to_terminate', get_namespace(release_name))
 
         await self.post_remove_tasks(release_name, job)
+        await self.middleware.call('chart.release.wait_for_namespace_to_terminate', get_namespace(release_name))
 
         await self.middleware.call('chart.release.remove_chart_release_from_events_state', release_name)
         await self.middleware.call('chart.release.clear_chart_release_portal_cache', release_name)
