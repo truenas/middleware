@@ -414,6 +414,12 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         return (hash % max_slices) * range_size + range_size
 
+    @private
+    async def flush_gencache(self):
+        gencache_flush = await run(['net', 'cache', 'flush'], check=False)
+        if gencache_flush.returncode != 0:
+            raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
+
     @accepts()
     @job(lock='clear_idmap_cache', lock_queue_size=1)
     async def clear_idmap_cache(self, job):
@@ -441,9 +447,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         except Exception:
             self.logger.debug("Failed to remove winbindd_cache.tdb.", exc_info=True)
 
-        gencache_flush = await run(['net', 'cache', 'flush'], check=False)
-        if gencache_flush.returncode != 0:
-            raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
+        await self.flush_gencache()
 
         await self.middleware.call('service.start', 'idmap')
         if smb_started:
