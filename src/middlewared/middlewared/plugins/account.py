@@ -715,6 +715,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
+        await self.middleware.call('idmap.flush_gencache')
 
         return pk
 
@@ -1569,6 +1570,7 @@ class GroupService(CRUDService):
             await gm_job.wait()
 
         await self.middleware.call('service.reload', 'user')
+        await self.middleware.call('idmap.flush_gencache')
 
         return pk
 
