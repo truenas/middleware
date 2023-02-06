@@ -816,12 +816,18 @@ class FilesystemService(Service, ACLBase):
         return acl
 
     def add_to_acl(self, job, data):
+        init_path = data['path']
+        verrors = ValidationErrors()
+        self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
+        verrors.check()
+
         if os.listdir(data['path']) and not data['options']['force']:
             raise CallError(
                 f'{data["path"]}: path contains existing data '
                 'and `force` was not specified', errno.EPERM
             )
 
+        data['path'] = init_path
         current_acl = self.getacl(data['path'])
         acltype = ACLType[current_acl['acltype']]
 
