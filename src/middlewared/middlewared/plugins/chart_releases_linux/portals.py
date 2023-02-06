@@ -80,7 +80,7 @@ class ChartReleaseService(Service):
             path = portal_config.get('path') or ''
             host = node_ip if portal_config['useNodeIP'] else portal_config['host']
             portals[portal_config['portalName']] = [
-                f'{portal_config["protocol"]}://{host}:{portal_config["protocol"]}{path}'
+                f'{portal_config["protocol"]}://{host}:{portal_config["port"]}{path}'
             ]
         return portals
 
