@@ -74,6 +74,7 @@ def privilege_with_orphan_local_group():
         })
         call("datastore.delete", "account.bsdgroups", g["id"])
         call("etc.generate", "user")
+        call("idmap.flush_gencache")
 
     yield types.SimpleNamespace(gid=gid, privilege=privilege)
 
