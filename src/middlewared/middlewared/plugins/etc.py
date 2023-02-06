@@ -272,7 +272,6 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
         ],
         'syslogd': [
-            {'type': 'mako', 'path': 'default/syslog-ng', 'checkpoint': 'pool_import'},
             {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
         ],
         'hosts': [{'type': 'mako', 'path': 'hosts', 'mode': 0o644, 'checkpoint': 'pre_interface_sync'}],
