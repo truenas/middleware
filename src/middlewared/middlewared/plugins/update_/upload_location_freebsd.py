@@ -22,7 +22,7 @@ class UpdateService(Service):
         )
         if prov is None:
             cp = subprocess.run(
-                ['mdconfig', '-a', '-t', 'swap', '-s', '2800m'],
+                ['mdconfig', '-a', '-t', 'swap', '-s', '3500m'],
                 text=True, capture_output=True, check=False,
             )
             if cp.returncode != 0:
