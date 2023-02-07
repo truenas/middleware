@@ -136,7 +136,19 @@ class VMDeviceService(Service):
             'available': not error_str and all(d == 'vfio-pci' for d in drivers) and not data['critical'],
             'error': f'Following errors were found with the device:\n{error_str}' if error_str else None,
             'reset_mechanism_defined': os.path.exists(os.path.join(data['device_path'], 'reset')),
+            'description': await self.get_pci_device_description(pci_id, controller_type, node_info),
         }
+
+    @private
+    async def get_pci_device_description(self, pci_id, controller_type, node_info):
+        # e.g 86:00.0 3D Controller: Nvidia corporation gp100GL []
+        # We say string before ":" is prefix and the one after is suffix
+        prefix = str(pci_id) + (f' {controller_type!r}' if controller_type else '')
+        vendor = (node_info['capability'].get('vendor') or '').strip()
+        suffix = (node_info['capability'].get('product') or '').strip()
+        if vendor:
+            suffix = f'{suffix} by {vendor!r}'
+        return f'{prefix}: {suffix}' if suffix else prefix
 
     @accepts()
     @returns(List(items=[Ref('passthrough_device')], register=True))
