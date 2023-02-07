@@ -16,12 +16,14 @@ class DeviceService(Service):
 
 
 def udev_events(middleware):
+    _256MB = 268435456  # for large quantity disk systems (100's or more)
     while True:
         # We always want to keep polling udev, let's log what error we are
-        # seeing and fix them accordingly as we see them
+        # seeing and fix them as we come across them
         try:
             context = pyudev.Context()
             monitor = pyudev.Monitor.from_netlink(context)
+            monitor.set_receive_buffer_size(_256MB)
             monitor.filter_by(subsystem='block')
             monitor.filter_by(subsystem='net')
             for device in iter(monitor.poll, None):
