@@ -62,7 +62,8 @@ def test_delete_local_administrator_group():
 @pytest.fixture(scope="module")
 def privilege_with_orphan_local_group():
     with group({
-        "name": "test_orphan"
+        "name": "test_orphan",
+        "smb": False,
     }) as g:
         gid = g["gid"]
         privilege = call("privilege.create", {
