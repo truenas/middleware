@@ -1,3 +1,4 @@
+import contextlib
 from logging.config import fileConfig
 import os
 import sys
@@ -40,6 +41,16 @@ list(load_modules(os.path.join(get_middlewared_dir(), "plugins"), depth=1))
 # ... etc.
 DATABASE_URL = f"sqlite:///{os.environ.get('FREENAS_DATABASE', FREENAS_DATABASE)}"
 
+original_batch_alter_table = Operations.batch_alter_table
+
+
+@contextlib.contextmanager
+def batch_alter_table_impl(self, *args, **kwargs):
+    # https://github.com/sqlalchemy/alembic/issues/380
+    kwargs["table_kwargs"] = {"sqlite_autoincrement": True, **kwargs.get("table_kwargs", {})}
+    with original_batch_alter_table(self, *args, **kwargs) as result:
+        yield result
+
 
 @Operations.register_operation("drop_references")
 @BatchOperations.register_operation("drop_references", "batch_drop_references")
@@ -80,6 +91,7 @@ def drop_references_impl(self, column_name):
                 break
 
 
+Operations.batch_alter_table = batch_alter_table_impl
 BatchOperationsImpl.drop_references = lambda self, column: self.batch.append(("drop_references", (column,), {}))
 ApplyBatchImpl.drop_references = drop_references_impl
 
