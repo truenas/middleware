@@ -36,7 +36,7 @@ def upgrade():
             new_sql = f'CREATE TABLE {table_name} ({m.group(3)}id integer{m.group(4)} PRIMARY KEY AUTOINCREMENT,' + \
                       m.group(5) + sql[len(m.group(0)):]
             new_sql = new_sql.rstrip().rstrip(')').rstrip().rstrip(',') + '\n)'
-        else
+        else:
             continue
 
         index_sqls = []
