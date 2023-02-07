@@ -10,6 +10,8 @@ from jsonschema import validate as json_schema_validate, ValidationError as Json
 from middlewared.service import private, Service
 from middlewared.utils import get
 
+from .utils import normalized_port_value
+
 
 PORTAL_LOCK = threading.Lock()
 
@@ -68,7 +70,7 @@ class ChartReleaseService(Service):
             for protocol in filter(bool, map(tag_func, schema['protocols'])):
                 for host in filter(bool, map(tag_func, schema['host'])):
                     for port in filter(bool, map(tag_func, schema['ports'])):
-                        t_portals.append(f'{protocol}://{host}:{port}{path}')
+                        t_portals.append(f'{protocol}://{host}{normalized_port_value(protocol, port)}{path}')
 
             cleaned_portals[portal_type] = t_portals
 
@@ -91,10 +93,10 @@ class ChartReleaseService(Service):
             host = node_ip if portal_config['useNodeIP'] else portal_config['host']
             protocol = portal_config['protocol']
             port = portal_config['port']
-            if (protocol == 'http' and port == 80) or (protocol == 'https' or port == 443):
-                port = ''
 
-            portals[portal_config['portalName']] = [f'{protocol}://{host}:{port}{path}']
+            portals[portal_config['portalName']] = [
+                f'{protocol}://{host}{normalized_port_value(protocol, port)}{path}'
+            ]
         return portals
 
     @private
@@ -103,8 +105,11 @@ class ChartReleaseService(Service):
         if not portal_config or not release_data['config'].get('enableUIPortal'):
             return {}
         host = node_ip if portal_config['useNodeIP'] else portal_config['host']
+        protocol = portal_config['protocol']
         return {
-            portal_config['portalName']: [f'{portal_config["protocol"]}://{host}:{portal_config["port"]}']
+            portal_config['portalName']: [
+                f'{protocol}://{host}{normalized_port_value(protocol, portal_config["port"])}'
+            ]
         }
 
     @private
