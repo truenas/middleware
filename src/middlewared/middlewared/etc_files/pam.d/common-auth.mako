@@ -13,6 +13,5 @@
 %>\
 
 ${'\n'.join(dsp['primary'])}
-auth	requisite			pam_deny.so
-auth	required			pam_permit.so
+@include common-auth-unix
 ${'\n'.join(dsp['additional'])}

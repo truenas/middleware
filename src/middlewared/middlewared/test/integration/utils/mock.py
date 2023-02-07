@@ -17,6 +17,8 @@ def mock(method, declaration="", **kwargs):
 
     :param method: Method name to replace
 
+    :params args: Only use this mock when the method is called with the specified arguments.
+
     :param return_value: The value returned when the mock is called.
 
     :param declaration: A string, containing python function declaration for mock. Function should be named `mock`,
@@ -24,18 +26,20 @@ def mock(method, declaration="", **kwargs):
         replaced accepts. No `@accepts`, `@job` or other decorators are required, but if a method being replaced is a
         job, then mock signature must also accept `job` argument.
     """
+    args = kwargs.pop("args", None)
+
     if declaration and kwargs:
         raise ValueError("Mock `declaration` is not allowed with kwargs")
     elif declaration:
-        arg = textwrap.dedent(declaration)
+        description = textwrap.dedent(declaration)
     else:
-        arg = kwargs
+        description = kwargs
 
     with client() as c:
-        c.call("test.set_mock", method, arg)
+        c.call("test.set_mock", method, args, description)
 
     try:
         yield
     finally:
         with client() as c:
-            c.call("test.remove_mock", method)
+            c.call("test.remove_mock", method, args)

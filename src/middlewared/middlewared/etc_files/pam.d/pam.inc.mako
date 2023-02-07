@@ -260,3 +260,6 @@
 <%def name="getDirectoryServicePam(**kwargs)">
   <% return DirectoryServicePam(**kwargs) %>
 </%def>
+<%def name="getNoDirectoryServicePam()">
+  <% return DirectoryServicePamBase() %>
+</%def>

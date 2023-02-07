@@ -139,6 +139,9 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'pam.d/common-session'},
             ]
         },
+        'pam_middleware': [
+            {'type': 'mako', 'path': 'pam.d/middleware'},
+        ],
         'ftp': [
             {'type': 'mako', 'path': 'proftpd/proftpd.conf',
              'local_path': 'local/proftpd.conf'},

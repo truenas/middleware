@@ -651,16 +651,20 @@ def check_permission(middleware, app):
             user = middleware.call_sync('auth.authenticate_root')
         else:
             try:
-                local_user = middleware.call_sync(
-                    'datastore.query',
-                    'account.bsdusers',
-                    [['bsdusr_uid', '=', origin.uid]],
-                    {'get': True, 'prefix': 'bsdusr_'},
-                )
+                query = {
+                    'username': middleware.call_sync(
+                        'datastore.query',
+                        'account.bsdusers',
+                        [['uid', '=', origin.uid]],
+                        {'get': True, 'prefix': 'bsdusr_'},
+                    )['username'],
+                }
+                local = True
             except MatchNotFound:
-                return
+                query = {'uid': origin.uid}
+                local = False
 
-            user = middleware.call_sync('auth.authenticate_local_user', local_user['id'], local_user['username'])
+            user = middleware.call_sync('auth.authenticate_user', query, local)
             if user is None:
                 return
 
