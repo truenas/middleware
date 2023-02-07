@@ -89,9 +89,12 @@ class ChartReleaseService(Service):
         for portal_config in release_data['config'].get(CUSTOM_PORTALS_KEY) or []:
             path = portal_config.get('path') or ''
             host = node_ip if portal_config['useNodeIP'] else portal_config['host']
-            portals[portal_config['portalName']] = [
-                f'{portal_config["protocol"]}://{host}:{portal_config["port"]}{path}'
-            ]
+            protocol = portal_config['protocol']
+            port = portal_config['port']
+            if (protocol == 'http' and port == 80) or (protocol == 'https' or port == 443):
+                port = ''
+
+            portals[portal_config['portalName']] = [f'{protocol}://{host}:{port}{path}']
         return portals
 
     @private
