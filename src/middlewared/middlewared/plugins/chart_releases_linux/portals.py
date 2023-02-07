@@ -4,6 +4,8 @@ import threading
 import yaml
 
 from catalog_validation.items.questions_utils import CUSTOM_PORTALS_KEY
+from catalog_validation.items.ix_values_utils import IX_VALUES_JSON_SCHEMA
+from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.service import private, Service
 from middlewared.utils import get
@@ -76,6 +78,14 @@ class ChartReleaseService(Service):
     @private
     def get_user_configured_portals(self, release_data, node_ip):
         portals = {}
+        custom_portals = release_data['config'].get(CUSTOM_PORTALS_KEY)
+        if custom_portals is None:
+            return portals
+        try:
+            json_schema_validate({CUSTOM_PORTALS_KEY: custom_portals}, IX_VALUES_JSON_SCHEMA)
+        except JsonValidationError:
+            return portals
+
         for portal_config in release_data['config'].get(CUSTOM_PORTALS_KEY) or []:
             path = portal_config.get('path') or ''
             host = node_ip if portal_config['useNodeIP'] else portal_config['host']
