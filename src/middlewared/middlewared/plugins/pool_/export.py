@@ -13,7 +13,7 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
-    def cleanup_after_export(self, poolinfo):
+    def cleanup_after_export(self, poolinfo, opts):
         if poolinfo['encrypt'] > 0:
             try:
                 # this is CORE GELI encryption which doesn't exist on SCALE
@@ -26,25 +26,27 @@ class PoolService(Service):
                 # use this zpool anyways
                 pass
 
-        rm_rf = False
         try:
-            contents = os.listdir(poolinfo['path'])
+            if all((opts['destroy'], opts['cascade'])) and (contents := os.listdir(poolinfo['path'])):
+                if len(contents) == 1 and contents[0] == 'ix-applications':
+                    # This means:
+                    #   1. zpool was destroyed (disks were wiped)
+                    #   2. end-user chose to delete all share configuration associated
+                    #       to said zpool
+                    #   3. somehow ix-applications was the only top-level directory that
+                    #       got left behind
+                    #
+                    # Since all 3 above are true, then we just need to remove this directory
+                    # so we don't leave dangling directory(ies) in /mnt.
+                    # (i.e. it'll leave something like /mnt/tank/ix-application/blah)
+                    shutil.rmtree(poolinfo['path'])
+            else:
+                # remove top-level directory for zpool (i.e. /mnt/tank (ONLY if it's empty))
+                os.rmdir(poolinfo['path'])
         except FileNotFoundError:
             # means the pool was exported and the path where the
             # root dataset (zpool) was mounted was removed
             return
-        else:
-            if len(contents) == 1 and contents[0] == 'ix-applications':
-                # This means that we exported the zpool and the only
-                # directory that remains is the dataset that we use
-                # to store k3s information. The contents get recreated
-                # no matter what so just remove recursively as to not
-                # leave dangling information in /mnt/.
-                # (i.e. it'll leave something like /mnt/tank/ix-application/blah)
-                rm_rf = True
-
-        try:
-            shutil.rmtree(poolinfo['path']) if rm_rf else os.rmdir(poolinfo['path'])
         except Exception:
             self.logger.warning('Failed to remove remaining directories after export', exc_info=True)
 
@@ -174,7 +176,7 @@ class PoolService(Service):
             await self.middleware.call('zfs.pool.export', pool['name'])
 
         job.set_progress(90, 'Cleaning up after export')
-        await self.middleware.run_in_thread(self.cleanup_after_export, pool)
+        await self.middleware.run_in_thread(self.cleanup_after_export, pool, options)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
