@@ -125,10 +125,14 @@ class PoolService(Service):
                 )
                 await wipe_job.wait()
                 if wipe_job.error:
-                    self.logger.warning(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                    self.logger.warning('Failed to wipe disk %r: {%r}', disk, wipe_job.error)
 
             await asyncio_map(unlabel, disks, limit=16)
-            await self.middleware.call('disk.sync_all')
+            job.set_progress(85, 'Syncing disk changes')
+            djob = await self.middleware.call('disk.sync_all')
+            await djob.wait()
+            if djob.error:
+                self.logger.warning('Failed syncing all disks: %r', djob.error)
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
