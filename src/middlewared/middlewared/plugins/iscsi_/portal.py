@@ -175,8 +175,9 @@ class ISCSIPortalService(CRUDService):
         Update database with new listen IPs.
         It will delete no longer existing addresses and add new ones.
         """
-        new_listen_set = set([tuple(i.items()) for i in new])
-        old_listen_set = set([tuple(i.items()) for i in old]) if old else set()
+        # We only want to compare 'ip', weed out any 'port' present
+        new_listen_set = set([(('ip', i.get('ip')),) for i in new])
+        old_listen_set = set([(('ip', i.get('ip')),) for i in old]) if old else set()
         for i in new_listen_set - old_listen_set:
             i = dict(i)
             await self.middleware.call(
