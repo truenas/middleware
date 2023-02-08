@@ -4,7 +4,7 @@ import threading
 import yaml
 
 from catalog_validation.items.questions_utils import CUSTOM_PORTALS_KEY
-from catalog_validation.items.ix_values_utils import IX_VALUES_JSON_SCHEMA
+from catalog_validation.items.ix_values_utils import CUSTOM_PORTALS_JSON_SCHEMA
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.service import private, Service
@@ -84,7 +84,7 @@ class ChartReleaseService(Service):
         if custom_portals is None:
             return portals
         try:
-            json_schema_validate({CUSTOM_PORTALS_KEY: custom_portals}, IX_VALUES_JSON_SCHEMA)
+            json_schema_validate(custom_portals, CUSTOM_PORTALS_JSON_SCHEMA)
         except JsonValidationError:
             return portals
 
