@@ -119,7 +119,6 @@ class PoolService(Service):
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
             job.set_progress(80, 'Cleaning disks')
-
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
                     'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
@@ -129,19 +128,7 @@ class PoolService(Service):
                     self.logger.warning(f'Failed to wipe disk {disk}: {wipe_job.error}')
 
             await asyncio_map(unlabel, disks, limit=16)
-
             await self.middleware.call('disk.sync_all')
-
-            if pool['encrypt'] > 0:
-                try:
-                    os.remove(pool['encryptkey_path'])
-                except OSError as e:
-                    self.logger.warning(
-                        'Failed to remove encryption key %s: %s',
-                        pool['encryptkey_path'],
-                        e,
-                        exc_info=True,
-                    )
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
