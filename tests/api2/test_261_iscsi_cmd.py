@@ -868,6 +868,23 @@ def test_10_target_alias(request):
                     assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
                     assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
+def test_11_modify_portal(request):
+    """
+    Test that we can modify a target portal.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    with portal() as portal_config:
+        portal_id = portal_config['id']
+        assert portal_config['comment'] == 'Default portal', portal_config
+        # First just change the comment
+        payload = {'comment' : 'New comment'}
+        results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
+        # Then try to reapply everything
+        payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}]}
+        # payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}, {'ip': '::'}]}
+        results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
+        assert results.status_code == 200, results.text
+
 def test_99_teardown(request):
     # Disable iSCSI service
     depends(request, ["iscsi_cmd_00"])
