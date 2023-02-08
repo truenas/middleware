@@ -594,6 +594,15 @@ class Job:
 
         return await subjob.wait(raise_error=True)
 
+    def wrap_sync(self, subjob):
+        if subjob.wrapped is not None:
+            raise RuntimeError(f"Job {subjob!r} is already wrapped by {subjob.wrapped!r}")
+
+        self.set_progress(**subjob.progress)
+        subjob.wrapped = self
+
+        return subjob.wait_sync(raise_error=True)
+
     def cleanup(self):
         if self.logs_path:
             try:
