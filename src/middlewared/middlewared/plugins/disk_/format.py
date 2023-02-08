@@ -30,10 +30,10 @@ class DiskService(Service):
 
         swapsize = swapgb * 1024 * 1024 * 1024
         if min_size:
-            leftover = size - gpt_header_size - min_size
-            if leftover < 0:
+            if size < min_size:
                 raise CallError(f'Disk: {disk!r} must be larger than {min_size} bytes')
 
+            leftover = max(0, size - gpt_header_size - min_size)
             if leftover < swapsize:
                 self.logger.warning(
                     'Requested %d bytes for swap and a minimal data partition size of %d bytes, but only %d bytes for '
