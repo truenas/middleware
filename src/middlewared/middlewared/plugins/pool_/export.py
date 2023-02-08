@@ -1,5 +1,6 @@
 import errno
 import os
+import shutil
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns
 from middlewared.service import CallError, item_method, job, Service, ValidationError
@@ -11,6 +12,30 @@ class PoolService(Service):
     class Config:
         cli_namespace = 'storage.pool'
         event_send = False
+
+    def cleanup_after_export(self, path):
+        rm_rf = False
+        try:
+            contents = os.listdir(path)
+        except FileNotFoundError:
+            # means the pool was exported and the path where the
+            # root dataset (zpool) was mounted was removed
+            return
+        else:
+            if len(contents) == 1 and contents[0] == 'ix-applications':
+                # This means that we exported the zpool and the only
+                # directory that remains is the dataset that we use
+                # to store k3s information. The contents get recreated
+                # no matter what so just remove recursively as to not
+                # leave dangling information in /mnt/.
+                # (i.e. it'll leave something like /mnt/tank/ix-application/blah)
+                rm_rf = True
+
+        method = shutil.rmtree if rm_rf else os.rmdir
+        try:
+            method(path)
+        except Exception:
+            self.logger.warning('Failed to remove remaining directories after export', exc_info=True)
 
     @item_method
     @accepts(
@@ -60,8 +85,7 @@ class PoolService(Service):
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):
             if not (await self.middleware.call('failover.config'))['disabled']:
-                err = errno.EOPNOTSUPP
-                raise CallError('Disable failover before exporting last pool on system.', err)
+                raise CallError('Disable failover before exporting last pool on system.', errno.EOPNOTSUPP)
 
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
@@ -118,7 +142,6 @@ class PoolService(Service):
             job.set_progress(60, 'Destroying pool')
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
-            job.set_progress(80, 'Cleaning disks')
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
                     'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
@@ -127,7 +150,9 @@ class PoolService(Service):
                 if wipe_job.error:
                     self.logger.warning('Failed to wipe disk %r: {%r}', disk, wipe_job.error)
 
+            job.set_progress(80, 'Cleaning disks')
             await asyncio_map(unlabel, disks, limit=16)
+
             job.set_progress(85, 'Syncing disk changes')
             djob = await self.middleware.call('disk.sync_all')
             await djob.wait()
@@ -137,14 +162,8 @@ class PoolService(Service):
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
 
-        job.set_progress(90, 'Cleaning up')
-        if os.path.isdir(pool['path']):
-            try:
-                # We dont try to remove recursively to avoid removing files that were
-                # potentially hidden by the mount
-                os.rmdir(pool['path'])
-            except OSError as e:
-                self.logger.warning('Failed to remove mountpoint %s: %s', pool['path'], e)
+        job.set_progress(90, 'Cleaning up after export')
+        await self.middleware.run_in_thread(self.cleanup_after_export, pool['path'])
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
