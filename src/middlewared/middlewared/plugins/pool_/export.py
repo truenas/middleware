@@ -13,10 +13,22 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
-    def cleanup_after_export(self, path):
+    def cleanup_after_export(self, poolinfo):
+        if poolinfo['encrypt'] > 0:
+            try:
+                # this is CORE GELI encryption which doesn't exist on SCALE
+                # so it means someone upgraded from CORE to SCALE and their
+                # db has an entry with a GELI based encrypted pool in it so
+                # we'll remove the GELI key files associated with the zpool
+                os.remove(poolinfo['encryptkey'])
+            except Exception:
+                # not fatal, and doesn't really matter since SCALE can't
+                # use this zpool anyways
+                pass
+
         rm_rf = False
         try:
-            contents = os.listdir(path)
+            contents = os.listdir(poolinfo['path'])
         except FileNotFoundError:
             # means the pool was exported and the path where the
             # root dataset (zpool) was mounted was removed
@@ -31,9 +43,8 @@ class PoolService(Service):
                 # (i.e. it'll leave something like /mnt/tank/ix-application/blah)
                 rm_rf = True
 
-        method = shutil.rmtree if rm_rf else os.rmdir
         try:
-            method(path)
+            shutil.rmtree(poolinfo['path']) if rm_rf else os.rmdir(poolinfo['path'])
         except Exception:
             self.logger.warning('Failed to remove remaining directories after export', exc_info=True)
 
@@ -163,7 +174,7 @@ class PoolService(Service):
             await self.middleware.call('zfs.pool.export', pool['name'])
 
         job.set_progress(90, 'Cleaning up after export')
-        await self.middleware.run_in_thread(self.cleanup_after_export, pool['path'])
+        await self.middleware.run_in_thread(self.cleanup_after_export, pool)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
