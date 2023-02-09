@@ -97,13 +97,15 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert results.json()['enable_image_updates'] is False, results.text
 
-    def test_04_get_pull_container_image():
+    def test_04_container_image_query():
         results = GET('/container/image/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
 
     @skip_container_image
     @pytest.mark.dependency(name='pull_private_image')
+    @pytest.mark.skip(reason='IX network drops network connection routinely.Sometimes, image is not pulled '
+                             'successfully.Skipping test until it is fixed')
     def test_05_pull_a_private_container_image(request):
         depends(request, ['setup_kubernetes'], scope='session')
         payload = {
@@ -154,6 +156,8 @@ if not ha:
         assert results.json()['enable_image_updates'] is True, results
 
     @pytest.mark.dependency(name='pull_public_image')
+    @pytest.mark.skip(reason='IX network drops network connection routinely.Sometimes, image is not pulled '
+                             'successfully.Skipping test until it is fixed')
     def test_10_pull_a_public_container_image(request):
         depends(request, ['setup_kubernetes'], scope='session')
         payload = {
