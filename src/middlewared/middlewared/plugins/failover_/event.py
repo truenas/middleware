@@ -393,8 +393,8 @@ class FailoverEventsService(Service):
             # error and move on
             logger.error('Failed to unlock SED disk(s) with error: %r', e)
 
-        # setup the zpool cachefile
-        self.run_call('failover.zpool.cachefile.setup', 'MASTER')
+        # setup the zpool cachefile  TODO: see comment below about cachefile usage
+        # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
 
         # retaste the disks so that any new metadata on the disks
         # can be detected by kernel to allow importing of the zpool(s)
@@ -409,8 +409,12 @@ class FailoverEventsService(Service):
         options = {'altroot': '/mnt'}
         import_options = {'missing_log': True}
         any_host = True
-        cachefile = ZPOOL_CACHE_FILE
-        new_name = None
+        # TODO: maintaing zpool cachefile is very fragile and can
+        # ruin the ability to successfully import a zpool on failover
+        # event.... Until we can truly dig into this problem, we'll
+        # ignore the cache file for now
+        # cachefile = ZPOOL_CACHE_FILE
+        new_name = cachefile = None
         for vol in fobj['volumes']:
             logger.info('Importing %r', vol['name'])
 
