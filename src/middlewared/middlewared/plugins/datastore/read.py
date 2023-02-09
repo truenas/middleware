@@ -10,6 +10,7 @@ from sqlalchemy.sql.operators import desc_op, nullsfirst_op, nullslast_op
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
+from middlewared.validators import QueryFilters
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
@@ -27,7 +28,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
     @accepts(
         Str('name'),
-        List('query-filters', register=True),
+        List('query-filters', items=[List('query-filter')], validators=[QueryFilters()], register=True),
         Dict(
             'query-options',
             Bool('relationships', default=True),
