@@ -50,13 +50,14 @@ class ContainerImagesService(Service, CRIClientMixin):
 
     @private
     async def check_update_for_image(self, tag, image_details):
-        parsed_reference = self.normalize_reference(tag)
-        self.IMAGE_CACHE[tag] = await self.compare_id_digests(
-            image_details,
-            parsed_reference['registry'],
-            parsed_reference['image'],
-            parsed_reference['tag']
-        )
+        if not image_details['dangling']:
+            parsed_reference = self.normalize_reference(tag)
+            self.IMAGE_CACHE[tag] = await self.compare_id_digests(
+                image_details,
+                parsed_reference['registry'],
+                parsed_reference['image'],
+                parsed_reference['tag']
+            )
 
     @private
     async def clear_update_flag_for_tag(self, tag):
