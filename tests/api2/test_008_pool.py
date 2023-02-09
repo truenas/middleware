@@ -191,6 +191,9 @@ def test_08_test_pool_property_normalization(request):
     assert res['result']
     for i in filter(lambda x: x['vol_name'] == tp['name'], res['result']):
         tp['id'] = i['id']
+        break
+    else:
+        assert False, f'zpool with name: {tp["name"]!r} not found'
 
 
 def test_09_export_test_pool_with_destroy_true(request):
