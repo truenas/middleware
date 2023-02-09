@@ -1,6 +1,7 @@
 import errno
 import libzfs
 import subprocess
+import functools
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import CallError, Service
@@ -14,6 +15,15 @@ class ZFSPoolService(Service):
         namespace = 'zfs.pool'
         private = True
         process_pool = True
+
+    @functools.cache
+    def get_search_paths(self):
+        if self.middleware.call_sync('system.is_ha_capable'):
+            # HA capable hardware which means we _ALWAYS_ expect
+            # the zpool to have been created with disks that have
+            # been formatted with gpt type labels on them
+            return ['/dev/disk/by-partuuid']
+        return SEARCH_PATHS
 
     def is_upgraded(self, pool_name):
         enabled = (libzfs.FeatureState.ENABLED, libzfs.FeatureState.ACTIVE)
@@ -168,8 +178,9 @@ class ZFSPoolService(Service):
 
     @accepts()
     def find_import(self):
+        sp = self.get_search_paths()
         with libzfs.ZFS() as zfs:
-            return [i.__getstate__() for i in zfs.find_import(search_paths=SEARCH_PATHS)]
+            return [i.__getstate__() for i in zfs.find_import(search_paths=sp)]
 
     @accepts(
         Str('name_or_guid'),
@@ -185,8 +196,9 @@ class ZFSPoolService(Service):
     def import_pool(self, name_or_guid, properties, any_host, cachefile, new_name, import_options):
         with libzfs.ZFS() as zfs:
             found = None
+            sp = self.get_search_paths()
             try:
-                for pool in zfs.find_import(cachefile=cachefile, search_paths=SEARCH_PATHS):
+                for pool in zfs.find_import(cachefile=cachefile, search_paths=sp):
                     if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
                         found = pool
                         break
