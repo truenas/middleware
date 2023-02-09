@@ -585,7 +585,7 @@ class List(EnumMixin, Attribute):
         value = super(List, self).clean(value)
         if value is None:
             return copy.deepcopy(self.default)
-        if not isinstance(value, list):
+        if not isinstance(value, (list, tuple)):
             raise Error(self.name, 'Not a list')
         if not self.empty and not value:
             raise Error(self.name, 'Empty value not allowed')

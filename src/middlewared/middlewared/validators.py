@@ -4,11 +4,13 @@ import re
 from urllib.parse import urlparse
 import uuid
 from string import digits, ascii_uppercase, ascii_lowercase, punctuation
+from middlewared.utils import filters
 
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 RE_MAC_ADDRESS = re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
+validate_filters = filters().validate_filters
 
 
 class Email:
@@ -150,6 +152,11 @@ class Range:
 class Port(Range):
     def __init__(self):
         super().__init__(min=1, max=65535)
+
+
+class QueryFilters:
+    def __call__(self, value):
+        validate_filters(value)
 
 
 class Unique:
