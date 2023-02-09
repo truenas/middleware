@@ -183,6 +183,18 @@ def test_08_test_pool_property_normalization(request):
         assert ds['properties']['mountpoint']['value'] != 'legacy', str(ds['properties'])
         assert ds['properties']['sharenfs']['value'] == 'off', str(ds['properties'])
 
+    # the very next test that runs after this one exports the pool that
+    # we re-imported but the database id has changed so we need to update
+    # the global `tp['id']` variable
+    res = make_ws_request(ip, {'msg': 'method', 'method': 'datastore.query', 'params': ['storage.volume']})
+    assert res.get('error') is None
+    assert res['result']
+    for i in filter(lambda x: x['vol_name'] == tp['name'], res['result']):
+        tp['id'] = i['id']
+        break
+    else:
+        assert False, f'zpool with name: {tp["name"]!r} not found'
+
 
 def test_09_export_test_pool_with_destroy_true(request):
     depends(request, ["pool_04"])
