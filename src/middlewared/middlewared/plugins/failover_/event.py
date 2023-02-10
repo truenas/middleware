@@ -14,6 +14,7 @@ from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
+from middlewared.scripts.wait_on_disks import main as wait_for_disk_events_to_settle
 
 logger = logging.getLogger('failover')
 
@@ -401,6 +402,13 @@ class FailoverEventsService(Service):
         logger.info('Retasting disks')
         retaste_job = self.run_call('disk.retaste')
         retaste_job.wait_sync()
+
+        logger.info('Waiting for disk events to settle')
+        try:
+            wait_for_disk_events_to_settle(max_wait=3.0, interval=1.0)
+        except Exception:
+            # better safe than sorry
+            self.logger.error('Unexpected failure waiting on disk events to settle', exc_info=True)
 
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
