@@ -16,8 +16,8 @@ def smart_test(data):
         call("smart.test.delete", test["id"])
 
 
-def smart_test_disks(all_tests=False, disk_index=0):
-    if all_tests:
+def smart_test_disks(all_disks=False, disk_index=0):
+    if all_disks:
         return {"all_disks": True}
     else:
         return {"disks": [sorted(call("smart.test.disk_choices").keys())[disk_index]]}
@@ -84,3 +84,17 @@ def test_smart_test_intersect(existing_all_disks, new_all_disks):
                 pass
 
         assert ve.value.errors[0].errmsg == "A LONG test already runs at Day 1st of every month, Mon, 03:00"
+
+
+def test_smart_test_update():
+    with smart_test({
+        "schedule": {
+            "hour": "0",
+            "dom": "*",
+            "month": "*",
+            "dow": "*",
+        },
+        **smart_test_disks(True),
+        "type": "SHORT",
+    }) as test:
+        call("smart.test.update", test["id"], {})
