@@ -404,7 +404,11 @@ class FailoverEventsService(Service):
         retaste_job.wait_sync()
 
         logger.info('Waiting for disk events to settle')
-        wait_for_disk_events_to_settle(max_wait=3.0, interval=1.0)
+        try:
+            wait_for_disk_events_to_settle(max_wait=3.0, interval=1.0)
+        except Exception:
+            # better safe than sorry
+            self.logger.error('Unexpected failure waiting on disk events to settle', exc_info=True)
 
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
