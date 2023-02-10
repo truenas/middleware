@@ -357,7 +357,7 @@ class SMARTTestService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.add_child('smart_test_update', await self._validate(data))
+        verrors.add_child('smart_test_update', await self._validate(new, id))
         verrors.check()
 
         new['type'] = new.pop('type')[0]
