@@ -5,35 +5,39 @@ from sys import exit
 
 from pyudev import Context, Monitor, MonitorObserver
 
-dq = deque(maxlen=2)
+DQ = deque(maxlen=2)
 
 
 def callback(dev):
-    t = time()
     if uuid := dev.get('ID_PART_ENTRY_UUID'):
-        dq.append({'time': t, 'name': dev.sys_name, 'uuid': uuid, 'action': dev.action})
+        DQ.append({'time': time(), 'name': dev.sys_name, 'uuid': uuid, 'action': dev.action})
 
 
 def get_observer():
     ctx = Context()
     mon = Monitor.from_netlink(ctx)
-    mon.filter_by('block')
+    mon.filter_by(subsystem='block')
+
     return MonitorObserver(mon, callback=callback)
 
 
-def main():
+def main(max_wait=600.0, interval=5.0):
+    """
+    `max_wait`: float representing the total time (in seconds) we should block
+        and wait for disk events.
+    `interval`: float representing the time we sleep between each iteration to
+        allow new disk events to come in.
+    """
     obs = get_observer()
     obs.start()  # start background thread
 
-    max_time_to_wait = 600  # total time to wait in seconds
-    interval = 5  # seconds to sleep before checking for new event
-    last_event = {}
-    while max_time_to_wait > 0:
-        max_time_to_wait -= interval
+    last_event = dict()
+    while max_wait > 0:
+        max_wait -= round(interval, 2)
         sleep(interval)
 
         try:
-            event = dq[-1]
+            event = DQ[-1]
         except IndexError:
             # no events received
             break
