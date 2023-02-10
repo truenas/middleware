@@ -2,6 +2,7 @@ import copy
 import errno
 import os
 import subprocess
+import functools
 from collections import defaultdict
 from copy import deepcopy
 
