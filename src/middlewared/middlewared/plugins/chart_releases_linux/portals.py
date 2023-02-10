@@ -3,8 +3,14 @@ import os
 import threading
 import yaml
 
+from catalog_validation.items.questions_utils import CUSTOM_PORTALS_KEY
+from catalog_validation.items.ix_values_utils import CUSTOM_PORTALS_JSON_SCHEMA
+from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
+
 from middlewared.service import private, Service
 from middlewared.utils import get
+
+from .utils import normalized_port_value
 
 
 PORTAL_LOCK = threading.Lock()
@@ -42,36 +48,56 @@ class ChartReleaseService(Service):
 
     @private
     def retrieve_portals_for_chart_release_impl(self, release_data, node_ip):
+        cleaned_portals = {}
         questions_yaml_path = os.path.join(
             release_data['path'], 'charts', release_data['chart_metadata']['version'], 'questions.yaml'
         )
         if not os.path.exists(questions_yaml_path):
-            return {}
+            return cleaned_portals
 
         if release_data['chart_metadata']['name'] == 'ix-chart':
-            return self.get_ix_chart_portal(release_data, node_ip)
+            cleaned_portals.update(self.get_ix_chart_portal(release_data, node_ip))
 
         with open(questions_yaml_path, 'r') as f:
             portals = yaml.safe_load(f.read()).get('portals') or {}
 
-        if not portals:
-            return portals
-
         def tag_func(key):
             return self.parse_tag(release_data, key, node_ip)
 
-        cleaned_portals = {}
         for portal_type, schema in portals.items():
             t_portals = []
             path = tag_func(schema.get('path') or '/')
             for protocol in filter(bool, map(tag_func, schema['protocols'])):
                 for host in filter(bool, map(tag_func, schema['host'])):
                     for port in filter(bool, map(tag_func, schema['ports'])):
-                        t_portals.append(f'{protocol}://{host}:{port}{path}')
+                        t_portals.append(f'{protocol}://{host}{normalized_port_value(protocol, port)}{path}')
 
             cleaned_portals[portal_type] = t_portals
 
+        cleaned_portals.update(self.get_user_configured_portals(release_data, node_ip))
         return cleaned_portals
+
+    @private
+    def get_user_configured_portals(self, release_data, node_ip):
+        portals = {}
+        custom_portals = release_data['config'].get(CUSTOM_PORTALS_KEY)
+        if custom_portals is None:
+            return portals
+        try:
+            json_schema_validate(custom_portals, CUSTOM_PORTALS_JSON_SCHEMA)
+        except JsonValidationError:
+            return portals
+
+        for portal_config in release_data['config'].get(CUSTOM_PORTALS_KEY) or []:
+            path = portal_config.get('path') or ''
+            host = node_ip if portal_config['useNodeIP'] else portal_config['host']
+            protocol = portal_config['protocol']
+            port = portal_config['port']
+
+            portals[portal_config['portalName']] = [
+                f'{protocol}://{host}{normalized_port_value(protocol, port)}{path}'
+            ]
+        return portals
 
     @private
     def get_ix_chart_portal(self, release_data, node_ip):
@@ -79,8 +105,11 @@ class ChartReleaseService(Service):
         if not portal_config or not release_data['config'].get('enableUIPortal'):
             return {}
         host = node_ip if portal_config['useNodeIP'] else portal_config['host']
+        protocol = portal_config['protocol']
         return {
-            portal_config['portalName']: [f'{portal_config["protocol"]}://{host}:{portal_config["port"]}']
+            portal_config['portalName']: [
+                f'{protocol}://{host}{normalized_port_value(protocol, portal_config["port"])}'
+            ]
         }
 
     @private
