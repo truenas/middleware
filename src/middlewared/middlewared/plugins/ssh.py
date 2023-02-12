@@ -19,8 +19,7 @@ class SSHModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     ssh_bindiface = sa.Column(sa.MultiSelectField(), default=[])
     ssh_tcpport = sa.Column(sa.Integer(), default=22)
-    ssh_rootlogin = sa.Column(sa.Boolean(), default=False)
-    ssh_adminlogin = sa.Column(sa.Boolean(), default=False)
+    ssh_password_login_groups = sa.Column(sa.JSON(type=list))
     ssh_passwordauth = sa.Column(sa.Boolean(), default=False)
     ssh_kerberosauth = sa.Column(sa.Boolean(), default=False)
     ssh_tcpfwd = sa.Column(sa.Boolean(), default=False)
@@ -58,8 +57,7 @@ class SSHService(SystemServiceService):
         'ssh_entry',
         List('bindiface', items=[Str('iface')], required=True),
         Int('tcpport', validators=[Range(min=1, max=65535)], required=True),
-        Bool('rootlogin', required=True),
-        Bool('adminlogin', required=True),
+        List('password_login_groups', items=[Str('group')], required=True),
         Bool('passwordauth', required=True),
         Bool('kerberosauth', required=True),
         Bool('tcpfwd', required=True),

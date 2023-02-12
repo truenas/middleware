@@ -43,6 +43,7 @@ if __name__ == "__main__":
         user["bsdusr_builtin"] = 0
         user["bsdusr_smb"] = 0
         user["bsdusr_password_disabled"] = 0
+        user["bsdusr_ssh_password_enabled"] = 0
         user["bsdusr_locked"] = 0
         user["bsdusr_sudo_commands"] = '["ALL"]'
         user["bsdusr_group_id"] = group_id
@@ -62,8 +63,6 @@ if __name__ == "__main__":
         """, (builtin_administrators_group_id, user_id))
 
         c.execute("UPDATE account_bsdusers SET bsdusr_password_disabled = 1 WHERE bsdusr_username = 'root'")
-
-        c.execute("UPDATE services_ssh SET ssh_adminlogin = 0")
 
     conn.commit()
     conn.close()

@@ -95,8 +95,12 @@ def test_00_firstboot_checks():
 
 
 def test_01_Configuring_ssh_settings_for_root_login():
-    payload = {"rootlogin": True}
-    results = PUT("/ssh/", payload, controller_a=ha)
+    root = GET('/user?username=root')
+    results = root.json()
+    assert len(results) == 1, root.text
+
+    payload = {"ssh_password_enabled": True}
+    results = PUT(f"/user/id/{results[0]['id']}", payload, controller_a=ha)
     assert results.status_code == 200, results.text
 
 
