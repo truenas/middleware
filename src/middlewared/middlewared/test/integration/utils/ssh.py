@@ -4,7 +4,7 @@ import sys
 try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
-    from auto_config import user, password, ip
+    from auto_config import user as default_user, password as default_password, ip as default_ip
     from functions import SSH_TEST
 except ImportError:
     pass
@@ -12,8 +12,8 @@ except ImportError:
 __all__ = ["ssh"]
 
 
-def ssh(command, check=True, complete_response=False, _ip=None):
-    result = SSH_TEST(command, user, password, _ip or ip)
+def ssh(command, check=True, complete_response=False, *, user=default_user, password=default_password, ip=default_ip):
+    result = SSH_TEST(command, user, password, ip)
     if check:
         assert result["result"] is True, f"stdout: {result['output']}\nstderr: {result['stderr']}"
     return result if complete_response else result["output"]

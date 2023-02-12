@@ -2,7 +2,7 @@
 	import os
 	import ipaddress
 	import stat
-        from middlewared.utils import filter_list
+	from middlewared.utils import filter_list
 
 	ssh_config = render_ctx['ssh.config']
 
@@ -45,6 +45,9 @@
 	if not ad['enable']:
 		ldap_enabled = render_ctx["ldap.config"]["enable"]
 
+	users = middleware.call_sync('user.query')
+	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
+
 %>\
 Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
 % if 'Protocol' not in ssh_config['options']:
@@ -79,7 +82,7 @@ Port ${ssh_config['tcpport']}
 % for ip in bind_ifaces:
 ListenAddress ${ip}
 % endfor
-% if ssh_config['rootlogin']:
+% if root_user['ssh_password_enabled']:
 PermitRootLogin yes
 % else:
 PermitRootLogin without-password
@@ -94,7 +97,7 @@ Compression delayed
 % else:
 Compression no
 % endif
-PasswordAuthentication ${"yes" if ssh_config['passwordauth'] else "no"}
+PasswordAuthentication no
 % if ssh_config['kerberosauth']:
 GSSAPIAuthentication yes
 % endif
@@ -108,7 +111,13 @@ ChallengeResponseAuthentication yes
 PrintMotd no
 % endif
 SetEnv LC_ALL=C.UTF-8
-% if not ssh_config['adminlogin']:
-Match User admin
-	PasswordAuthentication no
+% if ssh_config['passwordauth']:
+% for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
+Match User ${user['username']}
+	PasswordAuthentication yes
+% endfor
+% for group in ssh_config['password_login_groups']:
+Match Group ${group}
+	PasswordAuthentication yes
+% endfor
 % endif

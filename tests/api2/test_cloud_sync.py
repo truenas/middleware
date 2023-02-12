@@ -234,11 +234,11 @@ if ha:
                 assert all((ctrl1_ip, ctrl2_ip)), 'Unable to determine both HA controller IP addresses'
 
                 file1_path = call("cloudsync.get_instance", task["id"])["job"]["logs_path"]
-                file1_contents = ssh(f'cat {file1_path}', _ip=ctrl1_ip)
+                file1_contents = ssh(f'cat {file1_path}', ip=ctrl1_ip)
                 assert file1_contents
 
                 file2_path = call("failover.call_remote", "cloudsync.get_instance", [task["id"]])["job"]["logs_path"]
-                file2_contents = ssh(f'cat {file2_path}', _ip=ctrl2_ip)
+                file2_contents = ssh(f'cat {file2_path}', ip=ctrl2_ip)
                 assert file2_contents
 
                 assert file1_contents == file2_contents

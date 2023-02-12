@@ -124,6 +124,7 @@ class UserModel(sa.Model):
     bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
     bsdusr_smb = sa.Column(sa.Boolean(), default=True)
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
+    bsdusr_ssh_password_enabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
     bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
     bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
@@ -422,6 +423,7 @@ class UserService(CRUDService):
         Str('email', validators=[Email()], null=True, default=None),
         Str('password', private=True),
         Bool('password_disabled', default=False),
+        Bool('ssh_password_enabled', default=False),
         Bool('locked', default=False),
         Bool('smb', default=True),
         List('sudo_commands', items=[Str('command', empty=False)]),
@@ -543,6 +545,7 @@ class UserService(CRUDService):
                 shutil.rmtree(data['home'])
             raise
 
+        await self.middleware.call('service.reload', 'ssh')
         await self.middleware.call('service.reload', 'user')
 
         if data['smb']:
@@ -753,6 +756,7 @@ class UserService(CRUDService):
         user = await self.user_compress(user)
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
+        await self.middleware.call('service.reload', 'ssh')
         await self.middleware.call('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
             gm_job = await self.middleware.call('smb.synchronize_passdb')
@@ -828,6 +832,7 @@ class UserService(CRUDService):
             await self.middleware.call('datastore.delete', 'account.bsdusers_webui_attribute', attributes[0]['id'])
 
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
+        await self.middleware.call('service.reload', 'ssh')
         await self.middleware.call('service.reload', 'user')
         await self.middleware.call('idmap.flush_gencache')
 
