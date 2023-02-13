@@ -26,6 +26,18 @@ user_attrs = [
     Str('country'),
 ]
 
+# We tag SMBIOS with relevant strings for each platform
+# before we ship to customer. These are the various prefixes
+# that represent each hardware platform.
+# ('TRUENAS-X10', 'TRUENAS-M50', 'TRUENAS-MINI-X+', 'FREENAS-MINI-X', etc)
+PLATFORM_PREFIXES = (
+    'TRUENAS-Z',  # z-series
+    'TRUENAS-X',  # x-series
+    'TRUENAS-M',  # m-series AND current mini platforms
+    'TRUENAS-R',  # freenas certified replacement
+    'FREENAS-MINI',  # minis tagged with legacy information
+)
+
 
 class TruenasCustomerInformationModel(sa.Model):
     __tablename__ = 'truenas_customerinformation'
@@ -51,7 +63,7 @@ class TrueNASService(Service):
         Returns what type of hardware this is, detected from dmidecode.
         """
         dmi = await self.middleware.call('system.dmidecode_info')
-        if dmi['system-product-name'].startswith(('TRUENAS-Z', 'TRUENAS-M', 'TRUENAS-X', 'TRUENAS-R')):
+        if dmi['system-product-name'].startswith(PLATFORM_PREFIXES):
             return dmi['system-product-name']
 
         if dmi['baseboard-product-name'] == 'iXsystems TrueNAS X10':
