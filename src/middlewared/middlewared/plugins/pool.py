@@ -1575,8 +1575,7 @@ class PoolService(CRUDService):
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):
             if not (await self.middleware.call('failover.config'))['disabled']:
-                err = errno.EOPNOTSUPP
-                raise CallError('Disable failover before exporting last pool on system.', err)
+                raise CallError('Disable failover before exporting last pool on system.', errno.EOPNOTSUPP)
 
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
@@ -1633,41 +1632,29 @@ class PoolService(CRUDService):
             job.set_progress(60, 'Destroying pool')
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
-            job.set_progress(80, 'Cleaning disks')
-
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
                     'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
                 )
                 await wipe_job.wait()
                 if wipe_job.error:
-                    self.logger.warning(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                    self.logger.warning('Failed to wipe disk %r: {%r}', disk, wipe_job.error)
+
+            job.set_progress(80, 'Cleaning disks')
             await asyncio_map(unlabel, disks, limit=16)
 
-            await self.middleware.call('disk.sync_all')
+            job.set_progress(85, 'Syncing disk changes')
+            djob = await self.middleware.call('disk.sync_all')
+            await djob.wait()
+            if djob.error:
+                self.logger.warning('Failed syncing all disks: %r', djob.error)
 
-            if pool['encrypt'] > 0:
-                try:
-                    os.remove(pool['encryptkey_path'])
-                except OSError as e:
-                    self.logger.warning(
-                        'Failed to remove encryption key %s: %s',
-                        pool['encryptkey_path'],
-                        e,
-                        exc_info=True,
-                    )
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
 
-        job.set_progress(90, 'Cleaning up')
-        if os.path.isdir(pool['path']):
-            try:
-                # We dont try to remove recursively to avoid removing files that were
-                # potentially hidden by the mount
-                os.rmdir(pool['path'])
-            except OSError as e:
-                self.logger.warning('Failed to remove mountpoint %s: %s', pool['path'], e)
+        job.set_progress(90, 'Cleaning up after export')
+        await self.middleware.call('pool.cleanup_after_export', pool, options)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
