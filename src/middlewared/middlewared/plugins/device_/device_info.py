@@ -27,7 +27,15 @@ class DeviceService(Service):
         return serial_port_choices()
 
     @private
-    def get_disks(self, get_partitions=False):
+    def get_disk_serial(self, dev):
+        return (
+            self.safe_retrieval(dev.properties, 'ID_SCSI_SERIAL', '') or
+            self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT', '') or
+            self.safe_retrieval(dev.properties, 'ID_SERIAL', '')
+        )
+
+    @private
+    def get_disks(self, get_partitions=False, serial_only=False):
         ctx = pyudev.Context()
         disks = {}
         for dev in ctx.list_devices(subsystem='block', DEVTYPE='disk'):
@@ -35,7 +43,10 @@ class DeviceService(Service):
                 continue
 
             try:
-                disks[dev.sys_name] = self.get_disk_details(ctx, dev, get_partitions)
+                if serial_only:
+                    disks[dev.sys_name] = self.get_disk_serial(dev)
+                else:
+                    disks[dev.sys_name] = self.get_disk_details(ctx, dev, get_partitions)
             except Exception:
                 self.logger.debug('Failed to retrieve disk details for %s', dev.sys_name, exc_info=True)
 
@@ -79,11 +90,7 @@ class DeviceService(Service):
     def get_disk_details(self, ctx, dev, get_partitions=False):
         is_nvme = dev.sys_name.startswith('nvme')
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
-        ident = serial = (
-            self.safe_retrieval(dev.properties, 'ID_SCSI_SERIAL', '') or
-            self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT', '') or
-            self.safe_retrieval(dev.properties, 'ID_SERIAL', '')
-        )
+        ident = serial = self.get_disk_serial(dev)
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
         driver = self.safe_retrieval(dev.parent.properties, 'DRIVER', '') if not is_nvme else 'nvme'
         sectorsize = self.safe_retrieval(dev.attributes, 'queue/logical_block_size', None, asint=True)
