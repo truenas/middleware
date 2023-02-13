@@ -3,7 +3,7 @@ import os
 import shutil
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns
-from middlewared.service import CallError, item_method, job, Service, ValidationError
+from middlewared.service import CallError, item_method, job, private, Service, ValidationError
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -13,6 +13,7 @@ class PoolService(Service):
         cli_namespace = 'storage.pool'
         event_send = False
 
+    @private
     def cleanup_after_export(self, poolinfo, opts):
         if poolinfo['encrypt'] > 0:
             try:
