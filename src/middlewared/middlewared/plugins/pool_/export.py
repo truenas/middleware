@@ -1,8 +1,9 @@
 import errno
 import os
+import shutil
 
 from middlewared.schema import accepts, Bool, Dict, Int, returns
-from middlewared.service import CallError, item_method, job, Service, ValidationError
+from middlewared.service import CallError, item_method, job, private, Service, ValidationError
 from middlewared.utils.asyncio_ import asyncio_map
 
 
@@ -11,6 +12,44 @@ class PoolService(Service):
     class Config:
         cli_namespace = 'storage.pool'
         event_send = False
+
+    @private
+    def cleanup_after_export(self, poolinfo, opts):
+        if poolinfo['encrypt'] > 0:
+            try:
+                # this is CORE GELI encryption which doesn't exist on SCALE
+                # so it means someone upgraded from CORE to SCALE and their
+                # db has an entry with a GELI based encrypted pool in it so
+                # we'll remove the GELI key files associated with the zpool
+                os.remove(poolinfo['encryptkey'])
+            except Exception:
+                # not fatal, and doesn't really matter since SCALE can't
+                # use this zpool anyways
+                pass
+
+        try:
+            if all((opts['destroy'], opts['cascade'])) and (contents := os.listdir(poolinfo['path'])):
+                if len(contents) == 1 and contents[0] == 'ix-applications':
+                    # This means:
+                    #   1. zpool was destroyed (disks were wiped)
+                    #   2. end-user chose to delete all share configuration associated
+                    #       to said zpool
+                    #   3. somehow ix-applications was the only top-level directory that
+                    #       got left behind
+                    #
+                    # Since all 3 above are true, then we just need to remove this directory
+                    # so we don't leave dangling directory(ies) in /mnt.
+                    # (i.e. it'll leave something like /mnt/tank/ix-application/blah)
+                    shutil.rmtree(poolinfo['path'])
+            else:
+                # remove top-level directory for zpool (i.e. /mnt/tank (ONLY if it's empty))
+                os.rmdir(poolinfo['path'])
+        except FileNotFoundError:
+            # means the pool was exported and the path where the
+            # root dataset (zpool) was mounted was removed
+            return
+        except Exception:
+            self.logger.warning('Failed to remove remaining directories after export', exc_info=True)
 
     @item_method
     @accepts(
@@ -60,8 +99,7 @@ class PoolService(Service):
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):
             if not (await self.middleware.call('failover.config'))['disabled']:
-                err = errno.EOPNOTSUPP
-                raise CallError('Disable failover before exporting last pool on system.', err)
+                raise CallError('Disable failover before exporting last pool on system.', errno.EOPNOTSUPP)
 
         enable_on_import_key = f'pool:{pool["name"]}:enable_on_import'
         enable_on_import = {}
@@ -118,42 +156,28 @@ class PoolService(Service):
             job.set_progress(60, 'Destroying pool')
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
-            job.set_progress(80, 'Cleaning disks')
-
             async def unlabel(disk):
                 wipe_job = await self.middleware.call(
                     'disk.wipe', disk, 'QUICK', False, {'configure_swap': False}
                 )
                 await wipe_job.wait()
                 if wipe_job.error:
-                    self.logger.warning(f'Failed to wipe disk {disk}: {wipe_job.error}')
+                    self.logger.warning('Failed to wipe disk %r: {%r}', disk, wipe_job.error)
 
+            job.set_progress(80, 'Cleaning disks')
             await asyncio_map(unlabel, disks, limit=16)
 
-            await self.middleware.call('disk.sync_all')
-
-            if pool['encrypt'] > 0:
-                try:
-                    os.remove(pool['encryptkey_path'])
-                except OSError as e:
-                    self.logger.warning(
-                        'Failed to remove encryption key %s: %s',
-                        pool['encryptkey_path'],
-                        e,
-                        exc_info=True,
-                    )
+            job.set_progress(85, 'Syncing disk changes')
+            djob = await self.middleware.call('disk.sync_all')
+            await djob.wait()
+            if djob.error:
+                self.logger.warning('Failed syncing all disks: %r', djob.error)
         else:
             job.set_progress(80, 'Exporting pool')
             await self.middleware.call('zfs.pool.export', pool['name'])
 
-        job.set_progress(90, 'Cleaning up')
-        if os.path.isdir(pool['path']):
-            try:
-                # We dont try to remove recursively to avoid removing files that were
-                # potentially hidden by the mount
-                os.rmdir(pool['path'])
-            except OSError as e:
-                self.logger.warning('Failed to remove mountpoint %s: %s', pool['path'], e)
+        job.set_progress(90, 'Cleaning up after export')
+        await self.middleware.run_in_thread(self.cleanup_after_export, pool, options)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
         await self.middleware.call(
