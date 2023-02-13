@@ -225,5 +225,5 @@ class GlusterPeerService(CRUDService):
             'create_ancestors': True,
             'properties': {'acltype': 'posix'}
         }
-        self.middleware.call_sync('zfs.dataset.create', info)
-        self.middleware.call_sync('zfs.dataset.mount', hiearchy)
+        await self.middleware.call('zfs.dataset.create', info)
+        await self.middleware.call('zfs.dataset.mount', hiearchy)
