@@ -176,6 +176,7 @@ def nfs_config(middleware, context):
 
     statd_flags = []
     lockd_flags = []
+    nfsuserd_flags = []
     if nfs['statd_lockd_log']:
         statd_flags.append('-d')
         lockd_flags += ['-d', '10']
@@ -214,6 +215,9 @@ def nfs_config(middleware, context):
     else:
         enabled = False
 
+    if nfs['userd_manage_gids']:
+        nfsuserd_flags.append('-manage-gids')
+
     if nfs['v4']:
         yield 'nfsv4_server_enable="YES"'
 
@@ -231,20 +235,17 @@ def nfs_config(middleware, context):
             sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
             sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 1
         else:
-            if enabled:
-                yield 'nfsuserd_enable="YES"'
             sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
             sysctl.filter('vfs.nfs.enable_uidtostring')[0].value = 0
-            nfsuserd_flags = []
             if nfs['v4_domain']:
                 nfsuserd_flags.append(f"-domain {nfs['v4_domain']}")
-            if nfsuserd_flags:
-                yield f"nfsuserd_flags=\"{' '.join(nfsuserd_flags)}\""
-    else:
-        if nfs['userd_manage_gids']:
-            if enabled:
-                yield 'nfsuserd_enable="YES"'
-            yield 'nfsuserd_flags="-manage-gids"'
+
+    if nfsuserd_flags and enabled:
+        yield 'nfsuserd_enable="YES"'
+        yield f"nfsuserd_flags=\"{' '.join(nfsuserd_flags)}\""
+
+    elif enabled and nfs['v4'] and not nfs['v4_v3owner']:
+        yield 'nfsuserd_enable="YES"'
 
 
 def nis_config(middleware, context):
