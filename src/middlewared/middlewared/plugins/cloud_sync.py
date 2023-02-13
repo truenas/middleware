@@ -190,6 +190,9 @@ async def rclone(middleware, job, cloud_sync, dry_run):
         if cloud_sync["transfers"]:
             args.extend(["--transfers", str(cloud_sync["transfers"])])
 
+        if cloud_sync["checkers"]:
+            args.extend(["--checkers", str(cloud_sync["checkers"])])
+
         if cloud_sync["bwlimit"]:
             args.extend(["--bwlimit", " ".join([
                 f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
@@ -734,6 +737,7 @@ class CloudSyncModel(sa.Model):
     include = sa.Column(sa.JSON(type=list))
     exclude = sa.Column(sa.JSON(type=list))
     transfers = sa.Column(sa.Integer(), nullable=True)
+    checkers = sa.Column(sa.Integer(), nullable=True)
     create_empty_src_dirs = sa.Column(sa.Boolean())
     follow_symlinks = sa.Column(sa.Boolean())
     job = sa.Column(sa.JSON(type=None))
@@ -902,6 +906,7 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
         Bool("create_empty_src_dirs", default=False),
         Bool("follow_symlinks", default=False),
         Int("transfers", null=True, default=None, validators=[Range(min=1)]),
+        Int("checkers", null=True, default=None, validators=[Range(min=1)]),
         List("bwlimit", items=[Dict("cloud_sync_bwlimit",
                                     Str("time", validators=[Time()]),
                                     Int("bandwidth", validators=[Range(min=1)], null=True))]),
