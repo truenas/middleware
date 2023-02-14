@@ -411,43 +411,37 @@ class FailoverService(ConfigService):
                 first = False
 
     @private
+    async def get_disks_local(self):
+        try:
+            lbd = await self.middleware.call('boot.get_disks')
+            return [
+                serial for disk, serial in (await self.middleware.call('device.get_disks', False, True)).items()
+                if disk not in lbd
+            ]
+        except Exception:
+            self.logger.error('Unhandled exception in get_disks_local', exc_info=True)
+
+    @private
     async def mismatch_disks(self):
+        """On HA systems, the block device names can be different between the controllers.
+        Because of this fact, we need to check the serials of each disk which should be the
+        same between the controllers.
         """
-        On HA systems, da#'s can be different
-        between controllers. This isn't common
-        but does occurr. An example being when
-        a customer powers off passive storage controller
-        for maintenance and also powers off an expansion shelf.
-        The active controller will reassign da#'s appropriately
-        depending on which shelf was powered off. When passive
-        storage controller comes back online, the da#'s will be
-        different than what's on the active controller because the
-        kernel reassigned those da#'s. This function now grabs
-        the serial numbers of each disk and calculates the difference
-        between the controllers. Instead of returning da#'s to alerts,
-        this returns serial numbers.
-        This accounts for 2 scenarios:
-         1. the quantity of disks are different between
-            controllers
-         2. the quantity of disks are the same between
-            controllers but serials do not match
-        """
-        local_boot_disks = await self.middleware.call('boot.get_disks')
-        remote_boot_disks = await self.middleware.call('failover.call_remote', 'boot.get_disks')
-        local_disks = set(
-            v['ident']
-            for k, v in (await self.middleware.call('device.get_info', 'DISK')).items()
-            if k not in local_boot_disks
-        )
-        remote_disks = set(
-            v['ident']
-            for k, v in (await self.middleware.call('failover.call_remote', 'device.get_info', ['DISK'])).items()
-            if k not in remote_boot_disks
-        )
-        return {
-            'missing_local': sorted(remote_disks - local_disks),
-            'missing_remote': sorted(local_disks - remote_disks),
-        }
+        result = {'missing_local': list(), 'missing_remote': list()}
+        if (ld := await self.get_disks_local()) is not None:
+            try:
+                rd = await self.middleware.call('failover.call_remote', 'failover.get_disks_local')
+            except Exception as e:
+                if isinstance(e, CallError) and e.errno == CallError.ENOMETHOD:
+                    # ignore it, just means the other side needs to be upgraded
+                    return result
+                else:
+                    self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
+            else:
+                result['missing_local'] = sorted(set(rd) - set(ld))
+                result['missing_remote'] = sorted(set(ld) - set(rd))
+
+        return result
 
     @accepts(Dict(
         'options',
