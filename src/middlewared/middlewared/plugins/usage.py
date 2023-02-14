@@ -220,10 +220,12 @@ class UsageService(Service):
 
     async def gather_hardware(self, context):
         network = context['network']
+        cpu = await self.middleware.call('system.cpu_info')
 
         return {
             'hardware': {
-                'cpus': (await self.middleware.call('system.cpu_info'))['core_count'],
+                'cpus': cpu['core_count'],
+                'cpu_model': cpu['cpu_model'],
                 'memory': (await self.middleware.call('system.mem_info'))['physmem_size'],
                 'nics': len(network),
                 'disks': [
