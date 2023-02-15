@@ -6,7 +6,7 @@ from helpers import ctdb_healthy
 from exceptions import JobTimeOut
 
 GPD = GLUSTER_PEERS_DNS
-URLS = [f'http://{hostname}/api/v2.0' for hostname in GPD]
+URLS = [f'http://{ip}/api/v2.0' for ip in CLUSTER_IPS]
 
 
 def enable_and_start_service_on_all_nodes():
