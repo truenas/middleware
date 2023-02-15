@@ -598,25 +598,28 @@ class OpenVPNClientService(SystemServiceService):
 
     @private
     async def validate(self, data, schema_name):
+        remove_certificates = data['remove_certificates']
+
         verrors, data = await OpenVPN.common_validation(
             self.middleware, data, schema_name, 'client'
         )
 
-        if not data.get('remote'):
-            verrors.add(
-                f'{schema_name}.remote',
-                'This field is required.'
-            )
+        if not remove_certificates:
+            if not data.get('remote'):
+                verrors.add(
+                    f'{schema_name}.remote',
+                    'This field is required.'
+                )
 
-        auth_flags = ('auth-user-pass', 'pkcs12')
-        if not data['client_certificate'] and not any(
-            flag in data['additional_parameters'] for flag in auth_flags
-        ):
-            verrors.add(
-                f'{schema_name}.client_certificate',
-                'Either client certificate or one of the "pkcs12" / "auth-user-pass" options '
-                'must be specified in additional parameters'
-            )
+            auth_flags = ('auth-user-pass', 'pkcs12')
+            if not data['client_certificate'] and not any(
+                flag in data['additional_parameters'] for flag in auth_flags
+            ):
+                verrors.add(
+                    f'{schema_name}.client_certificate',
+                    'Either client certificate or one of the "pkcs12" / "auth-user-pass" options '
+                    'must be specified in additional parameters'
+                )
 
         if not await self.validate_nobind(data):
             verrors.add(
