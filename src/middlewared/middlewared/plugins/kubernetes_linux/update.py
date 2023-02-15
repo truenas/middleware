@@ -142,9 +142,6 @@ class KubernetesService(ConfigService):
                 'System is not licensed to use Applications'
             )
 
-        if data['passthrough_mode'] and not await self.middleware.call('system.license'):
-            verrors.add(f'{schema}.passthrough_mode', 'Can only be enabled on licensed iX enterprise hardware')
-
         if data['pool'] and not await self.middleware.call('pool.query', [['name', '=', data['pool']]]):
             verrors.add(f'{schema}.pool', 'Please provide a valid pool configured in the system.')
 
