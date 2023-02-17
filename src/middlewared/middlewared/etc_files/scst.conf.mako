@@ -4,6 +4,44 @@
     from collections import defaultdict
 
     global_config = middleware.call_sync('iscsi.global.config')
+
+    # There are several changes that must occur if ALUA is enabled,
+    # and these are different depending on whether this is the
+    # MASTER node, or BACKUP node.
+    #
+    # MASTER:
+    # - publish additional internal targets, only accessible on the private IP
+    #
+    # BACKUP:
+    # - login to these internal targets
+    # - access them in dev_disk HANDLER
+    # - Add them to copy_manager
+    # - reexport them on the same IQNs as the master, but with different
+    #   rel_tgt_id.
+    #
+    # BOTH:
+    # - Write a DEVICE_GROUP section with two TARGET_GROUPs
+    # - TARGET GROUPs and rel_tgt_id are tied to the controller,
+    #   *not* to whether it is currently the MASTER or BACKUP
+    #
+    ha_capable = middleware.call_sync("system.is_ha_capable")
+    alua_enabled = middleware.call_sync("iscsi.global.alua_enabled")
+    failover_status = middleware.call_sync("failover.status")
+    node = middleware.call_sync("failover.node")
+    if failover_status == "MASTER":
+        middleware.call_sync("iscsi.target.logout_ha_targets")
+        local_ip = middleware.call_sync("failover.local_ip")
+        dlm_ready = middleware.call_sync("dlm.node_ready")
+    elif failover_status == "BACKUP":
+        if alua_enabled:
+            logged_in_targets = middleware.call_sync("iscsi.target.login_ha_targets")
+            cluster_mode_targets = middleware.call_sync('failover.call_remote', 'iscsi.target.cluster_mode_targets')
+        else:
+            middleware.call_sync("iscsi.target.logout_ha_targets")
+
+    nodes = {"A" : {"other" : "B", "group_id" : 101},
+             "B" : {"other" : "A", "group_id" : 102}}
+
     targets = middleware.call_sync('iscsi.target.query')
     extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
@@ -54,6 +92,53 @@
     target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
 %>\
+##
+## If we are on a HA system then write out a cluster name, we'll hard-code
+## it to "HA"
+##
+% if failover_status != "SINGLE":
+cluster_name HA
+% endif
+##
+## Write "HANDLER dev_disk" section on any HA-capable system (to force the
+## kernel module to get loaded on SCST startup), but only populate it on the
+## ALUA BACKUP node.
+##
+% if ha_capable:
+HANDLER dev_disk {
+%     if alua_enabled and failover_status == "BACKUP":
+%         for name, value in logged_in_targets.items():
+%             if value:
+        DEVICE ${value} {
+## Sanity check to ensure the MASTER target is in cluster_mode, if so then so are we
+## Note we use a similar check to determine whether the target will be enabled.
+%                 if name in cluster_mode_targets:
+            cluster_mode 1
+%                 endif
+        }
+%             endif
+%         endfor
+%     endif
+}
+% endif
+##
+## Write "TARGET_DRIVER copy_manager" sections only on the ALUA BACKUP node.
+##
+% if alua_enabled and failover_status == "BACKUP":
+TARGET_DRIVER copy_manager {
+        TARGET copy_manager_tgt {
+%     for idx, (name, value) in enumerate(logged_in_targets.items()):
+%         if value:
+                LUN ${idx} ${value}
+%         endif
+%     endfor
+        }
+}
+% endif
+##
+## Do NOT write "HANDLER vdisk_fileio" and "HANDLER vdisk_blockio" sections if
+## we are BACKUP node.
+% if failover_status != "BACKUP":
 % for handler in extents_io:
 HANDLER ${handler} {
 %   for extent in extents_io[handler]:
@@ -74,11 +159,15 @@ HANDLER ${handler} {
 %       endif
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
+%       if failover_status == "MASTER" and alua_enabled and dlm_ready:
+        cluster_mode 1
+%       endif
     }
 
 %   endfor
 }
 % endfor
+% endif
 
 TARGET_DRIVER iscsi {
     enabled 1
@@ -95,7 +184,7 @@ TARGET_DRIVER iscsi {
         ${spacing}LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
     % endfor
 </%def>\
-% for target in targets:
+% for idx, target in enumerate(targets):
     TARGET ${global_config['basename']}:${target['name']} {
 <%
     # SCST does not allow us to set authentication at a group level, so it is going to be set at
@@ -133,7 +222,34 @@ TARGET_DRIVER iscsi {
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
 %   if associated_targets:
+##
+## For ALUA rel_tgt_id is tied to controller, if not ALUA don't bother writing it
+##
+%       if alua_enabled:
+%           if node == "A":
+        rel_tgt_id ${idx + 1}
+%           endif
+%           if node == "B":
+        rel_tgt_id ${idx + 32001}
+%           endif
+%       endif
+##
+## For ALUA target is enabled if MASTER, disabled for BACKUP
+##
+%       if alua_enabled:
+%           if failover_status == "MASTER":
         enabled 1
+%           elif failover_status == "BACKUP" and target['name'] in cluster_mode_targets:
+        enabled 1
+%           else:
+        enabled 0
+%           endif
+%       else:
+        enabled 1
+%       endif
+##
+## per_portal_acl always 1
+##
         per_portal_acl 1
 %   endif
 %   for chap_auth in chap_users:
@@ -147,8 +263,127 @@ TARGET_DRIVER iscsi {
 %   for access_control in initiator_portal_access:
             INITIATOR ${access_control}
 %   endfor
+##
+%   if alua_enabled and failover_status == "BACKUP":
+<%
+    DEVICE = logged_in_targets.get(target['name'], None)
+%>\
+%       if DEVICE:
+            LUN 0 ${DEVICE}
+%       endif
+%   else:
 ${retrieve_luns(target['id'], ' ' * 4)}\
+%   endif
         }
     }
 % endfor
+##
+## For the master in HA ALUA write out additional targets that will only be accessible
+## from the peer node.  These will have the flipped rel_tgt_id
+##
+% if alua_enabled and failover_status == "MASTER":
+%     for idx, target in enumerate(targets):
+    TARGET ${global_config['basename']}:HA:${target['name']} {
+        allowed_portal ${local_ip}
+%       if node == "A":
+        rel_tgt_id ${idx + 32001}
+%       endif
+%       if node == "B":
+        rel_tgt_id ${idx + 1}
+%       endif
+        enabled 1
+        forward_dst 1
+        aen_disabled 1
+        forwarding 1
+${retrieve_luns(target['id'],'')}\
+    }
+%     endfor
+% endif
 }
+##
+## If ALUA is enabled then we will want a section to setup the target portal groups
+##
+## Since we do NOT split ZFS pools (and their subsequent targets) across controllers
+## we can just have one TPG per node.
+##   - Controller A will have TPG ID of 101
+##   - Controller B will have TPG ID of 102
+##
+## What is in each TPG depends upon which node is the MASTER and which is the BACKUP
+##
+## To make the code easier to read we have a different section for MASTER and BACKUP
+##
+% if alua_enabled:
+##
+## MASTER
+##   - this node is active and contains the targets
+##   - other node contains the "HA" targets (rel_tgt_ids 32001,..)
+##
+%     if failover_status == "MASTER":
+DEVICE_GROUP targets {
+% for handler in extents_io:
+%   for extent in extents_io[handler]:
+        DEVICE ${extent['name']}
+%   endfor
+% endfor
+
+        TARGET_GROUP controller_${node} {
+                group_id ${nodes[node]["group_id"]}
+                state active
+
+% for target in targets:
+                TARGET ${global_config['basename']}:${target['name']}
+% endfor
+        }
+
+        TARGET_GROUP controller_${nodes[node]["other"]} {
+                group_id ${nodes[nodes[node]["other"]]["group_id"]}
+                state nonoptimized
+
+% for target in targets:
+                TARGET ${global_config['basename']}:HA:${target['name']}
+% endfor
+        }
+}
+%     endif
+##
+## BACKUP
+##   - this node is nonoptimized
+##   - other node contains the "ALT" placeholder targets
+##
+%     if failover_status == "BACKUP":
+DEVICE_GROUP targets {
+%         for name, value in logged_in_targets.items():
+%             if value:
+        DEVICE ${value}
+%             endif
+%         endfor
+
+        TARGET_GROUP controller_${nodes[node]["other"]} {
+                group_id ${nodes[nodes[node]["other"]]["group_id"]}
+                state active
+
+% for idx, target in enumerate(targets):
+                TARGET ${global_config['basename']}:alt:${target['name']} {
+%     if node == "A":
+                   rel_tgt_id ${idx + 32001}
+%     endif
+%     if node == "B":
+                   rel_tgt_id ${idx + 1}
+%     endif
+                }
+% endfor
+
+        }
+
+        TARGET_GROUP controller_${node} {
+                group_id ${nodes[node]["group_id"]}
+                state nonoptimized
+
+% for target in targets:
+                TARGET ${global_config['basename']}:${target['name']}
+% endfor
+        }
+
+}
+%     endif
+% endif
