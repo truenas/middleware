@@ -216,6 +216,17 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
         return remote
 
+    @private
+    async def local_ip(self):
+        node = await self.middleware.call('failover.node')
+        if node == 'A':
+            local = '169.254.10.1'
+        elif node == 'B':
+            local = '169.254.10.2'
+        else:
+            raise CallError(f'Node {node} invalid', errno.EHOSTUNREACH)
+        return local
+
     @accepts(
         Str('method'),
         List('args'),
