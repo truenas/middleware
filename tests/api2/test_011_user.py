@@ -356,7 +356,8 @@ def test_31_creating_user_with_homedir(request):
         "shell": SHELL,
         "sshpubkey": "canary",
         "home": f"/mnt/{dataset}/testuser2",
-        "home_mode": f'{stat.S_IMODE(DEFAULT_HOMEDIR_OCTAL):03o}'
+        "home_mode": f'{stat.S_IMODE(DEFAULT_HOMEDIR_OCTAL):03o}',
+        "home_create": True,
     }
     results = POST("/user/", user_payload)
     assert results.status_code == 200, results.text
