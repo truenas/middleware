@@ -1,6 +1,6 @@
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable, job
+    CallError, CRUDService, ValidationErrors, no_auth_required, pass_app, private, filterable, job
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
@@ -122,7 +122,6 @@ class UserModel(sa.Model):
     bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
     bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
-    bsdusr_attributes = sa.Column(sa.JSON())
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
 
 
@@ -301,7 +300,6 @@ class UserService(CRUDService):
         List('sudo_commands_nopasswd', items=[Str('command', empty=False)]),
         Str('sshpubkey', null=True, max_length=None),
         List('groups', items=[Int('group')]),
-        Dict('attributes', additional_attrs=True),
         register=True,
     ))
     @returns(Int('primary_key'))
@@ -316,8 +314,6 @@ class UserService(CRUDService):
         `password` is required if `password_disabled` is false.
 
         Available choices for `shell` can be retrieved with `user.shell_choices`.
-
-        `attributes` is a general-purpose object for storing arbitrary user information.
 
         `smb` specifies whether the user should be allowed access to SMB shares. User
         will also automatically be added to the `builtin_users` group.
@@ -713,6 +709,10 @@ class UserService(CRUDService):
                     'datastore.update', 'services.cifs', cifs['id'], {'guest': 'nobody'}, {'prefix': 'cifs_srv_'}
                 )
 
+        if attributes := await self.middleware.call('datastore.query', 'account.bsdusers_webui_attribute',
+                                                    [['uid', '=', user['uid']]]):
+            await self.middleware.call('datastore.delete', 'account.bsdusers_webui_attribute', attributes[0]['id'])
+
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
         await self.middleware.call('idmap.flush_gencache')
@@ -779,59 +779,6 @@ class UserService(CRUDService):
         return await self.middleware.call(
             'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups']
         )
-
-    @item_method
-    @accepts(
-        Int('id'),
-        Str('key'),
-        Any('value'),
-    )
-    @returns(Bool())
-    async def set_attribute(self, pk, key, value):
-        """
-        Set user general purpose `attributes` dictionary `key` to `value`.
-
-        e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
-        """
-        user = await self.get_instance(pk)
-
-        user['attributes'][key] = value
-
-        await self.middleware.call(
-            'datastore.update',
-            'account.bsdusers',
-            pk,
-            {'attributes': user['attributes']},
-            {'prefix': 'bsdusr_'}
-        )
-
-        return True
-
-    @item_method
-    @accepts(
-        Int('id'),
-        Str('key'),
-    )
-    @returns(Bool())
-    async def pop_attribute(self, pk, key):
-        """
-        Remove user general purpose `attributes` dictionary `key`.
-        """
-        user = await self.get_instance(pk)
-
-        if key in user['attributes']:
-            user['attributes'].pop(key)
-
-            await self.middleware.call(
-                'datastore.update',
-                'account.bsdusers',
-                pk,
-                {'attributes': user['attributes']},
-                {'prefix': 'bsdusr_'}
-            )
-            return True
-        else:
-            return False
 
     @accepts()
     @returns(Int('next_available_uid'))

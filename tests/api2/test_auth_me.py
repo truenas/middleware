@@ -1,6 +1,7 @@
 import pytest
 
 from middlewared.service_exception import CallError
+from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client
 
@@ -33,3 +34,51 @@ def test_does_not_work_for_api_key():
                 c.call("auth.me")
 
             assert ve.value.errmsg == "You are logged in using API_KEY"
+
+
+def test_attributes():
+    user = call("auth.me")
+    assert "test" not in user["attributes"]
+
+    call("auth.set_attribute", "test", "value")
+
+    user = call("auth.me")
+    assert user["attributes"]["test"] == "value"
+
+    call("auth.set_attribute", "test", "new_value")
+
+    user = call("auth.me")
+    assert user["attributes"]["test"] == "new_value"
+
+
+def test_distinguishes_attributes():
+    builtin_administrators_group_id = call(
+        "datastore.query",
+        "account.bsdgroups",
+        [["group", "=", "builtin_administrators"]],
+        {"get": True, "prefix": "bsdgrp_"},
+    )["id"]
+
+    with user({
+        "username": "admin",
+        "full_name": "Admin",
+        "group_create": True,
+        "groups": [builtin_administrators_group_id],
+        "home": f"/nonexistent",
+        "password": "test1234",
+    }) as admin:
+        with client(auth=("admin", "test1234")) as c:
+            me = c.call("auth.me")
+            assert "test" not in me["attributes"]
+
+            c.call("auth.set_attribute", "test", "value")
+
+            me = c.call("auth.me")
+            assert me["attributes"]["test"] == "value"
+
+            c.call("auth.set_attribute", "test", "new_value")
+
+            me = c.call("auth.me")
+            assert me["attributes"]["test"] == "new_value"
+
+    assert not call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", admin["uid"]]])
