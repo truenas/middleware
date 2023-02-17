@@ -24,6 +24,10 @@ REVERSE_CHAR = '-'
 logger = logging.getLogger(__name__)
 
 
+class UnexpectedFailure(Exception):
+    pass
+
+
 def bisect(condition, iterable):
     a = []
     b = []

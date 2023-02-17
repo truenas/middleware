@@ -2,13 +2,9 @@ import os
 import asyncio
 import subprocess
 
-from middlewared.utils import run
+from middlewared.utils import run, UnexpectedFailure
 from middlewared.service import Service, CallError, private, accepts, returns, job, ValidationErrors
 from middlewared.schema import Dict, Str, Int, List, Bool
-
-
-class UnexpectedFailure(Exception):
-    pass
 
 
 class DiskService(Service):
