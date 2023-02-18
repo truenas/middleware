@@ -43,7 +43,8 @@ class SentryCrashReporting:
             # disabled via environment variable
             return True
         elif os.stat(__file__).st_dev != os.stat('/').st_dev:
-            # really??
+            # middlewared package directory is remotely mounted
+            # (i.e. done by some developers)
             return True
         else:
             return False
