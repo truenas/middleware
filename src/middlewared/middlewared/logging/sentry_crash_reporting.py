@@ -22,7 +22,7 @@ class SentryCrashReporting:
         dsn = 'https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2'
         query = '?timeout=3'
         dsn = f'{dsn}{query}'
-        release = sw_info['fullname']
+        release = sw_info()['fullname']
         sentry_sdk.init(dsn=dsn, release=release, default_integrations=False)
         sentry_sdk.utils.MAX_STRING_LENGTH = MAX_STRING_LEN
 
