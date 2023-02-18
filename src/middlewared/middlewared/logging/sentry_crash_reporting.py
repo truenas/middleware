@@ -52,8 +52,13 @@ class SentryCrashReporting:
         data = dict()
         for path, name in log_files:
             try:
-                with open(path) as f:
-                    data[name] = f.read()[-MAX_STRING_LEN:]
+                with open(path, 'rb') as f:
+                    # seek to offset relative to the end of file
+                    # since we don't want to load the entire contents
+                    # into memory as a single string just to read the
+                    # last `MAX_STRING_LEN` chars...
+                    f.seek(-MAX_STRING_LEN, os.SEEK_END)
+                    data[name] = f.read().decode()
             except FileNotFoundError:
                 continue
 
