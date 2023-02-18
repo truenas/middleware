@@ -534,6 +534,7 @@ class Job:
             'id': self.id,
             'method': self.method_name,
             'arguments': self.middleware.dump_args(self.args, method=self.method),
+            'transient': self.options['transient'],
             'description': self.description,
             'abortable': self.options['abortable'],
             'logs_path': self.logs_path,

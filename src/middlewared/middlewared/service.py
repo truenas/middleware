@@ -1599,6 +1599,7 @@ class CoreService(Service):
         Int('id'),
         Str('method'),
         List('arguments'),
+        Bool('transient'),
         Str('description', null=True),
         Bool('abortable'),
         Str('logs_path', null=True),
