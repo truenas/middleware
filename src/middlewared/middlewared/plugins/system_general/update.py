@@ -4,7 +4,7 @@ import syslog
 import middlewared.sqlalchemy as sa
 
 from middlewared.async_validators import validate_port
-from middlewared.logger import CrashReporting
+from middlewared.logging.sentry_crash_reporting import SentryCrashReporting
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import run
@@ -302,7 +302,7 @@ class SystemGeneralService(ConfigService):
 
     @private
     def set_crash_reporting(self):
-        CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
+        SentryCrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
     @accepts()
     @returns(Int('remaining_seconds', null=True))
