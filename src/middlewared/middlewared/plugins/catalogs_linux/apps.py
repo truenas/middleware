@@ -28,6 +28,9 @@ class AppService(Service):
     ))
     @job(lock='available_apps', lock_queue_size=1)
     def available(self, job, filters, options):
+        """
+        Retrieve all available applications from all configured catalogs.
+        """
         results = []
         catalogs = self.middleware.call_sync('catalog.query')
         installed_apps = [
@@ -66,4 +69,7 @@ class AppService(Service):
     @accepts()
     @returns(List(items=[Str('category')]))
     async def categories(self):
+        """
+        Retrieve list of valid categories which have associated applications.
+        """
         return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
