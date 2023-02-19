@@ -18,6 +18,8 @@ class CatalogService(Service):
     class Config:
         cli_namespace = 'app.catalog'
 
+    CATEGORIES_SET = set()
+
     @private
     def cached(self, label):
         return self.middleware.call_sync('cache.has_key', get_cache_key(label))
@@ -153,6 +155,8 @@ class CatalogService(Service):
                 if data[train][item]['healthy'] is False:
                     unhealthy_apps.add(f'{item} ({train} train)')
 
+                self.CATEGORIES_SET.update(data[train][item].get('categories') or [])
+
         if unhealthy_apps:
             self.middleware.call_sync(
                 'alert.oneshot_create', 'CatalogNotHealthy', {
@@ -184,3 +188,7 @@ class CatalogService(Service):
     @private
     def retrieve_train_names(self, location, all_trains=True, trains_filter=None):
         return retrieve_train_names(location, all_trains, trains_filter)
+
+    @private
+    def retrieve_mapped_categories(self):
+        return self.CATEGORIES_SET
