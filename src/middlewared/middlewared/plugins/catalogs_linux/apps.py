@@ -1,5 +1,5 @@
 from middlewared.schema import Bool, Dict, List, Str
-from middlewared.service import filterable, filterable_returns, Service
+from middlewared.service import filterable, filterable_returns, job, Service
 from middlewared.utils import filter_list
 
 
@@ -22,7 +22,32 @@ class AppService(Service):
         Str('train', required=True),
         Str('catalog', required=True),
     ))
-    def available(self, filters, options):
+    @job(lock='available_apps', lock_queue_size=1)
+    def available(self, job, filters, options):
         results = []
+        catalogs = self.middleware.call_sync('catalog.query')
+        total_catalogs = len(catalogs)
+        job.set_progress(5, 'Retrieving available apps from catalog(s)')
+
+        def progress(index):
+            return 10 + ((index + 1 / total_catalogs) * 80)
+
+        for index, catalog in enumerate(catalogs):
+            items_job = self.middleware.call_sync('catalog.items', catalog['label'])
+            items_job.wait_sync()
+            if items_job.error:
+                job.set_progress(progress(index), f'Failed to retrieve apps from {catalog["label"]!r}')
+                continue
+
+            catalog_items = items_job.result
+            for train, train_data in catalog_items.items():
+                for app_data in train_data.values():
+                    results.append({
+                        'catalog': catalog['label'],
+                        'train': train,
+                        **app_data,
+                    })
+
+            job.set_progress(progress(index), f'Completed retrieving apps from {catalog["label"]!r}')
 
         return filter_list(results, filters, options)
