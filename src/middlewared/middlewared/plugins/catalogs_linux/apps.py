@@ -5,6 +5,9 @@ from middlewared.utils import filter_list
 
 class AppService(Service):
 
+    class Config:
+        cli_namespace = 'app'
+
     @filterable
     @filterable_returns(Dict(
         'available_apps',
