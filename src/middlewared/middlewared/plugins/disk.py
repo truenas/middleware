@@ -487,13 +487,9 @@ class DiskService(CRUDService):
 
 
 async def _event_system_ready(middleware, event_type, args):
-    if args['id'] != 'ready':
-        return
-
-    # Configure disks power management
     middleware.create_task(middleware.call('disk.configure_power_management'))
 
 
 def setup(middleware):
     # Run disk tasks once system is ready (e.g. power management)
-    middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('system.ready', _event_system_ready)

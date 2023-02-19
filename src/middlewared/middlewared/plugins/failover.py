@@ -1280,16 +1280,17 @@ async def ready_system_sync_keys(middleware):
     await middleware.call('failover.sync_keys_from_remote_node')
 
 
-async def _event_system(middleware, event_type, args):
-    if args['id'] == 'ready':
-        # called when system is ready to issue an event in case HA upgrade is pending.
-        if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
-            return
+async def _event_system_ready(middleware, event_type, args):
+    # called when system is ready to issue an event in case HA upgrade is pending.
+    if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
+        return
 
-        if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
-            middleware.send_event('failover.upgrade_pending', 'ADDED', id='BACKUP', fields={'pending': True})
-    elif args['id'] == 'shutdown':
-        await middleware.call('failover.fenced.stop', True)
+    if await middleware.call('keyvalue.get', 'HA_UPGRADE', False):
+        middleware.send_event('failover.upgrade_pending', 'ADDED', id='BACKUP', fields={'pending': True})
+
+
+async def _event_system_shutdown(middleware, event_type, args):
+    await middleware.call('failover.fenced.stop', True)
 
 
 def remote_status_event(middleware, *args, **kwargs):
@@ -1304,7 +1305,8 @@ async def setup(middleware):
 
         It is expected the client will react by issuing `upgrade_finish` call
         at user will.'''))
-    middleware.event_subscribe('system', _event_system)
+    middleware.event_subscribe('system.ready', _event_system_ready)
+    middleware.event_subscribe('system.shutdown', _event_system_shutdown)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
     middleware.register_hook('interface.pre_sync', interface_pre_sync_hook, sync=True)
     middleware.register_hook('interface.post_sync', hook_setup_ha, sync=True)
@@ -1327,7 +1329,9 @@ async def setup(middleware):
     middleware.register_hook('service.pre_action', service_remote, sync=False)
 
     # Register callbacks to properly refresh HA status and send events on changes
-    await middleware.call('failover.remote_subscribe', 'system', remote_status_event)
+    await middleware.call('failover.remote_subscribe', 'system.ready', remote_status_event)
+    await middleware.call('failover.remote_subscribe', 'system.reboot', remote_status_event)
+    await middleware.call('failover.remote_subscribe', 'system.shutdown', remote_status_event)
     await middleware.call('failover.remote_on_connect', remote_status_event)
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 

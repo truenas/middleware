@@ -1,6 +1,5 @@
 # -*- coding=utf-8 -*-
 import os
-import textwrap
 import uuid
 
 from middlewared.utils import BOOTREADY, run
@@ -39,12 +38,9 @@ async def firstboot(middleware):
 async def setup(middleware):
     lifecycle_conf.SYSTEM_BOOT_ID = str(uuid.uuid4())
 
-    middleware.event_register('system', textwrap.dedent('''\
-        Sent on system state changes.
-
-        id=ready -- Finished boot process\n
-        id=reboot -- Started reboot process\n
-        id=shutdown -- Started shutdown process'''))
+    middleware.event_register('system.ready', 'Finished boot process')
+    middleware.event_register('system.reboot', 'Started reboot process')
+    middleware.event_register('system.shutdown', 'Started shutdown process')
 
     if os.path.exists(BOOTREADY):
         lifecycle_conf.SYSTEM_READY = True

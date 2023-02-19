@@ -58,7 +58,7 @@ class SystemService(Service):
         if options is None:
             options = {}
 
-        self.middleware.send_event('system', 'ADDED', id='reboot', fields={'description': 'System is going to reboot'})
+        self.middleware.send_event('system.reboot', 'ADDED')
 
         delay = options.get('delay')
         if delay:
@@ -100,35 +100,35 @@ async def _update_birthday(middleware):
             await asyncio.sleep(300)
 
 
-async def _event_system(middleware, event_type, args):
+async def _event_system_ready(middleware, event_type, args):
+    lifecycle_conf.SYSTEM_READY = True
 
-    if args['id'] == 'ready':
-        lifecycle_conf.SYSTEM_READY = True
+    # Check if birthday is already set
+    birthday = await middleware.call('system.birthday')
+    if birthday is None:
+        # try to set birthday in background
+        middleware.create_task(_update_birthday(middleware))
 
-        # Check if birthday is already set
-        birthday = await middleware.call('system.birthday')
-        if birthday is None:
-            # try to set birthday in background
-            middleware.create_task(_update_birthday(middleware))
-
-        if (await middleware.call('system.advanced.config'))['kdump_enabled']:
-            cp = await run(['kdump-config', 'status'], check=False)
-            if cp.returncode:
-                middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
-            else:
-                if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
-                    await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
-                else:
-                    await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+    if (await middleware.call('system.advanced.config'))['kdump_enabled']:
+        cp = await run(['kdump-config', 'status'], check=False)
+        if cp.returncode:
+            middleware.logger.error('Failed to retrieve kdump-config status: %s', cp.stderr.decode())
         else:
-            await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+            if not RE_KDUMP_CONFIGURED.findall(cp.stdout.decode()):
+                await middleware.call('alert.oneshot_create', 'KdumpNotReady', None)
+            else:
+                await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
+    else:
+        await middleware.call('alert.oneshot_delete', 'KdumpNotReady', None)
 
-        if await middleware.call('system.first_boot'):
-            middleware.create_task(middleware.call('usage.firstboot'))
+    if await middleware.call('system.first_boot'):
+        middleware.create_task(middleware.call('usage.firstboot'))
 
-    if args['id'] == 'shutdown':
-        lifecycle_conf.SYSTEM_SHUTTING_DOWN = True
+
+async def _event_system_shutdown(middleware, event_type, args):
+    lifecycle_conf.SYSTEM_SHUTTING_DOWN = True
 
 
 async def setup(middleware):
-    middleware.event_subscribe('system', _event_system)
+    middleware.event_subscribe('system.ready', _event_system_ready)
+    middleware.event_subscribe('system.shutdown', _event_system_shutdown)

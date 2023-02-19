@@ -1885,10 +1885,8 @@ async def udevd_ifnet_hook(middleware, data):
 
 
 async def __activate_service_announcements(middleware, event_type, args):
-
-    if args['id'] == 'ready':
-        srv = (await middleware.call("network.configuration.config"))["service_announcement"]
-        await middleware.call("network.configuration.toggle_announcement", srv)
+    srv = (await middleware.call("network.configuration.config"))["service_announcement"]
+    await middleware.call("network.configuration.toggle_announcement", srv)
 
 
 async def setup(middleware):
@@ -1897,7 +1895,7 @@ async def setup(middleware):
     # Configure http proxy on startup and on network.config events
     middleware.create_task(configure_http_proxy(middleware))
     middleware.event_subscribe('network.config', configure_http_proxy)
-    middleware.event_subscribe('system', __activate_service_announcements)
+    middleware.event_subscribe('system.ready', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook)
 
     # Only run DNS sync in the first run. This avoids calling the routine again

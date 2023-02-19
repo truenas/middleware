@@ -418,12 +418,11 @@ class ServiceService(CRUDService):
 
 
 async def __event_service_ready(middleware, event_type, args):
-    if args['id'] == 'ready':
-        middleware.create_task(middleware.call('service.check_deprecated_services'))
+    middleware.create_task(middleware.call('service.check_deprecated_services'))
 
 
 async def setup(middleware):
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))
 
-    middleware.event_subscribe('system', __event_service_ready)
+    middleware.event_subscribe('system.ready', __event_service_ready)

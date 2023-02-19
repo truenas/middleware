@@ -1169,9 +1169,8 @@ class AlertClassesService(ConfigService):
 
 
 async def _event_system(middleware, event_type, args):
-    if args["id"] == "ready":
-        if SEND_ALERTS_ON_READY:
-            await middleware.call("alert.send_alerts")
+    if SEND_ALERTS_ON_READY:
+        await middleware.call("alert.send_alerts")
 
 
 async def setup(middleware):
@@ -1180,4 +1179,4 @@ async def setup(middleware):
     await middleware.call("alert.load")
     await middleware.call("alert.initialize")
 
-    middleware.event_subscribe("system", _event_system)
+    middleware.event_subscribe("system.ready", _event_system)

@@ -541,12 +541,9 @@ class DirectoryServices(Service):
 
 
 async def __init_directory_services(middleware, event_type, args):
-    if args['id'] != 'ready':
-        return
-
     await middleware.call('directoryservices.setup')
 
 
 async def setup(middleware):
-    middleware.event_subscribe('system', __init_directory_services)
+    middleware.event_subscribe('system.ready', __init_directory_services)
     middleware.event_register('directoryservices.status', 'Sent on directory service state changes.')
