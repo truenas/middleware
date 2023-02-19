@@ -12,6 +12,7 @@ class AppService(Service):
     @filterable_returns(Dict(
         'available_apps',
         Bool('healthy', required=True),
+        Bool('installed', required=True),
         List('categories', required=True),
         Str('name', required=True),
         Str('title', required=True),
@@ -29,6 +30,10 @@ class AppService(Service):
     def available(self, job, filters, options):
         results = []
         catalogs = self.middleware.call_sync('catalog.query')
+        installed_apps = [
+            (app['chart_metadata']['name'], app['catalog'], app['catalog_train'])
+            for app in self.middleware.call_sync('chart.release.query')
+        ]
         total_catalogs = len(catalogs)
         job.set_progress(5, 'Retrieving available apps from catalog(s)')
 
@@ -47,6 +52,7 @@ class AppService(Service):
                 for app_data in train_data.values():
                     results.append({
                         'catalog': catalog['label'],
+                        'installed': (app_data['name'], catalog['label'], train) in installed_apps,
                         'train': train,
                         **app_data,
                     })
