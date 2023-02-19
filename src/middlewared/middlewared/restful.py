@@ -303,6 +303,9 @@ class OpenAPIResource(object):
                     'required': True,
                     'schema': {'type': service_config['datastore_primary_key_type']},
                 })
+            method_returns = method.get('returns') or []
+            if method_returns:
+                opobject['responses']['200'] = self._returns_to_request(methodname, method_returns)
 
         self._paths[f'/{path}'][operation] = opobject
 
@@ -334,6 +337,21 @@ class OpenAPIResource(object):
                 else:
                     schema['items'] = {}
         return schema
+
+    def _returns_to_request(self, methodname, method_returns):
+        method_name = f'return_schema_of_{methodname.replace(".", "_")}'
+
+        for schema in method_returns:
+            self._schemas[method_name] = self._convert_schema(schema)
+
+        json_request = {'schema': {'$ref': f'#components/schemas/{method_name}'}}
+
+        return {
+            'description': 'Response schema:',
+            'content': {
+                'application/json': json_request,
+            }
+        }
 
     def _accepts_to_request(self, methodname, method, schemas):
 
