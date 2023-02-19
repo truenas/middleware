@@ -1,7 +1,7 @@
 import logging
 
 
-class LoggerFormatter(logging.Formatter):
+class ConsoleLogFormatter(logging.Formatter):
     """Format the console log messages"""
 
     CONSOLE_COLOR_FORMATTER = {
