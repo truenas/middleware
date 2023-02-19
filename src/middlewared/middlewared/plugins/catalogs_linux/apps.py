@@ -53,4 +53,6 @@ class AppService(Service):
 
             job.set_progress(progress(index), f'Completed retrieving apps from {catalog["label"]!r}')
 
-        return filter_list(results, filters, options)
+        results = filter_list(results, filters, options)
+        job.set_progress(100, 'Retrieved all available apps from all catalog(s)')
+        return results
