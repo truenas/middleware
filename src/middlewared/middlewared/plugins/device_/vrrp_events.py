@@ -56,11 +56,11 @@ class VrrpFifoThread(Thread):
                     sleep(self._retry_timeout)
 
 
-async def _start_stop_vrrp_thread(middleware, *, shutting_down=False):
+async def _start_stop_vrrp_thread(middleware):
     global VRRP_THREAD
 
     licensed = await middleware.call('failover.licensed')
-    if (not licensed or shutting_down) and (VRRP_THREAD is not None and VRRP_THREAD.is_alive()):
+    if not licensed and (VRRP_THREAD is not None and VRRP_THREAD.is_alive()):
         # maybe the system is being downgraded to non-HA
         # (this is rare but still need to handle it) or
         # system is being restarted/shutdown etc
@@ -74,20 +74,10 @@ async def _start_stop_vrrp_thread(middleware, *, shutting_down=False):
         VRRP_THREAD.start()
 
 
-async def _event_system_ready(middleware, event_type, args):
-    await _start_stop_vrrp_thread(middleware)
-
-
-async def _event_system_shutdown(middleware, event_type, args):
-    await _start_stop_vrrp_thread(middleware, shutting_down=True)
-
-
 async def _post_license_update(middleware, *args, **kwargs):
     await _start_stop_vrrp_thread(middleware)
 
 
 async def setup(middleware):
     middleware.create_task(_start_stop_vrrp_thread(middleware))  # start thread on middlewared service start/restart
-    middleware.event_subscribe('system.ready', _event_system_ready)
-    middleware.event_subscribe('system.shutdown', _event_system_shutdown)  # catch shutdown event and clean up thread
     middleware.register_hook('system.post_license_update', _post_license_update)  # catch license change
