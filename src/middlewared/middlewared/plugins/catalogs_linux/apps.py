@@ -1,4 +1,4 @@
-from middlewared.schema import Bool, Dict, List, Str
+from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import filterable, filterable_returns, job, Service
 from middlewared.utils import filter_list
 
@@ -62,3 +62,8 @@ class AppService(Service):
         results = filter_list(results, filters, options)
         job.set_progress(100, 'Retrieved all available apps from all catalog(s)')
         return results
+
+    @accepts()
+    @returns(List(items=[Str('category')]))
+    async def categories(self):
+        return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
