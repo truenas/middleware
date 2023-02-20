@@ -23,6 +23,7 @@ class CatalogService(Service):
             await sync_job.wait()
 
         if await self.middleware.call('kubernetes.validate_k8s_setup', False):
+            await self.middleware.call('k8s.app.migration.run')
             self.middleware.create_task(
                 self.middleware.call('chart.release.chart_releases_update_checks_internal')
             )
