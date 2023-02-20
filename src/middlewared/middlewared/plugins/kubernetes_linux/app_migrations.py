@@ -90,16 +90,17 @@ class KubernetesAppMigrationsService(Service):
             apps[(chart_release['chart_metadata']['name'], chart_release['catalog_train'])].append(chart_release['id'])
 
         for migration in migrations:
-            for update_app in apps[(migration['app_name'], migration['old_train'])]:
-                try:
-                    await self.update_app(update_app, migration['new_train'])
-                except Exception:
-                    self.logger.error(
-                        'Failed to migrate %r application to %r train in %r catalog',
-                        update_app, migration['new_train'], catalog_label, exc_info=True,
-                    )
+            if migration['action'] == 'move':
+                for update_app in apps[(migration['app_name'], migration['old_train'])]:
+                    try:
+                        await self.move_app(update_app, migration['new_train'])
+                    except Exception:
+                        self.logger.error(
+                            'Failed to migrate %r application to %r train in %r catalog',
+                            update_app, migration['new_train'], catalog_label, exc_info=True,
+                        )
 
-    async def update_app(self, app_name, new_train):
+    async def move_app(self, app_name, new_train):
         await self.middleware.call('k8s.namespace.update', get_namespace(app_name), {
             'body': {
                 'metadata': {
