@@ -56,6 +56,9 @@ class KubernetesAppMigrationsService(Service):
         return migrations
 
     async def run(self):
+        if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
+            return
+
         executed_migrations = (await self.middleware.call('k8s.app.migration.applied'))
         applied_migrations = collections.defaultdict(list)
 
