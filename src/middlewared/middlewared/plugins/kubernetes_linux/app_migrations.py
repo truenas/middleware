@@ -3,63 +3,13 @@ import json
 import jsonschema
 import os
 
+from catalog_validation.schema.migration_schema import APP_MIGRATION_SCHEMA
+
 from middlewared.plugins.catalogs_linux.update import OFFICIAL_LABEL
 from middlewared.plugins.chart_releases_linux.utils import get_namespace
 from middlewared.service import Service
 
 
-APP_MIGRATION_SCHEMA = {
-    'type': 'array',
-    'items': [{
-        'type': 'object',
-        'properties': {
-            'app_name': {'type': 'string'},
-            'action': {'type': 'string', 'enum': ['rename', 'move']},
-        },
-        'required': [
-            'app_name',
-            'action'
-        ],
-        'allOf': [
-            {
-                'if': {
-                    'properties': {
-                        'action': {
-                            'const': 'move',
-                        },
-                    },
-                },
-                'then': {
-                    'properties': {
-                        'old_train': {'type': 'string'},
-                        'new_train': {'type': 'string'},
-                    },
-                    'required': [
-                        'new_train',
-                        'old_train',
-                    ],
-                },
-            },
-            {
-                'if': {
-                    'properties': {
-                        'action': {
-                            'const': 'rename',
-                        },
-                    },
-                },
-                'then': {
-                    'properties': {
-                        'new_app_name': {'type': 'string'},
-                    },
-                    'required': [
-                        'new_app_name',
-                    ],
-                },
-            },
-        ],
-    }],
-}
 MIGRATION_MANIFEST_SCHEMA = {
     'type': 'object',
     'patternProperties': {
