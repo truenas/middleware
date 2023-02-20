@@ -1,3 +1,4 @@
+import asyncio
 import collections
 import json
 import jsonschema
@@ -19,6 +20,7 @@ MIGRATION_MANIFEST_SCHEMA = {
         },
     },
 }
+RUN_LOCK = asyncio.Lock()
 
 
 class KubernetesAppMigrationsService(Service):
@@ -59,6 +61,10 @@ class KubernetesAppMigrationsService(Service):
         if not await self.middleware.call('kubernetes.validate_k8s_setup', False):
             return
 
+        async with RUN_LOCK:
+            await self.run_impl()
+
+    async def run_impl(self):
         executed_migrations = (await self.middleware.call('k8s.app.migration.applied'))
         applied_migrations = collections.defaultdict(list)
 
