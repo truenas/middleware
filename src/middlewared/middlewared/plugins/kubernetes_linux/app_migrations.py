@@ -25,15 +25,12 @@ APP_MIGRATION_SCHEMA = {
 }
 MIGRATION_MANIFEST_SCHEMA = {
     'type': 'object',
-    'properties': {
-        'migrations': {
+    'patternProperties': {
+        '.*': {
             'type': 'array',
             'items': [{'type': 'string'}],
         },
     },
-    'required': [
-        'migrations',
-    ],
 }
 
 
@@ -65,7 +62,7 @@ class KubernetesAppMigrationsService(Service):
         else:
             return data
 
-        migrations = {'migrations': []}
+        migrations = {OFFICIAL_LABEL: []}
         with open(self.migration_file_path(), 'w') as f:
             f.write(json.dumps(migrations))
 
