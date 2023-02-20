@@ -1,4 +1,5 @@
 import asyncio
+import collections
 import json
 import jsonschema
 import os
@@ -69,27 +70,33 @@ class KubernetesAppMigrationsService(Service):
         return migrations
 
     async def run(self):
-        executed_migrations = (await self.middleware.call('k8s.app.migration.applied'))['migrations']
-        applied_migrations = []
+        executed_migrations = (await self.middleware.call('k8s.app.migration.applied'))
+        applied_migrations = collections.defaultdict(list)
 
         for catalog in await self.middleware.call('catalog.query', [['label', '=', OFFICIAL_LABEL]]):
             for migration_name, migration_data in self.load_migrations(catalog).items():
-                if name in executed_migrations:
+                if migration_name in (executed_migrations.get(catalog['label']) or []):
                     continue
 
-                self.logger.info('Running kubernetes app migration %r', name)
+                self.logger.info('Running kubernetes app migration %r from %r', migration_name, OFFICIAL_LABEL)
                 try:
-                    if asyncio.iscoroutinefunction(module.migrate):
-                        await module.migrate(self.middleware)
-                    else:
-                        await self.middleware.run_in_thread(module.migrate, self.middleware)
+                    pass
                 except Exception:
-                    self.logger.error('Error running kubernetes app migration %r', name, exc_info=True)
+                    self.logger.error(
+                        'Error running kubernetes app migration %r from %r catalog',
+                        migration_name, catalog['label'], exc_info=True
+                    )
                     break
 
-                applied_migrations.append(name)
+                applied_migrations[catalog['label']].append(migration_name)
 
-        await self.middleware.call('k8s.app.migration.update_migrations', applied_migrations)
+        for catalog, migrations in applied_migrations.items():
+            if catalog in executed_migrations:
+                executed_migrations[catalog].extend(migrations)
+            else:
+                executed_migrations[catalog] = migrations
+
+        await self.middleware.call('k8s.app.migration.update_migrations', executed_migrations)
 
     def load_migrations(self, catalog):
         migrations_path = os.path.join(catalog['location'], '.migrations')
