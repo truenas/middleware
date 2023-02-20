@@ -1,11 +1,11 @@
-import asyncio
 import collections
 import json
 import jsonschema
 import os
 
 from middlewared.plugins.catalogs_linux.update import OFFICIAL_LABEL
-from middlewared.service import CallError, Service
+from middlewared.plugins.chart_releases_linux.utils import get_namespace
+from middlewared.service import Service
 
 
 APP_MIGRATION_SCHEMA = {
@@ -80,7 +80,7 @@ class KubernetesAppMigrationsService(Service):
 
                 self.logger.info('Running kubernetes app migration %r from %r', migration_name, OFFICIAL_LABEL)
                 try:
-                    pass
+                    await self.apply_migration(catalog['label'], migration_data)
                 except Exception:
                     self.logger.error(
                         'Error running kubernetes app migration %r from %r catalog',
@@ -97,6 +97,32 @@ class KubernetesAppMigrationsService(Service):
                 executed_migrations[catalog] = migrations
 
         await self.middleware.call('k8s.app.migration.update_migrations', executed_migrations)
+
+    async def apply_migration(self, catalog_label, migrations):
+        apps = collections.defaultdict(list)
+        for chart_release in await self.middleware.call('chart.release.query'):
+            apps[(chart_release['chart_metadata']['name'], chart_release['catalog_train'])].append(chart_release['id'])
+
+        for migration in migrations:
+            for update_app in apps[(migration['app_name'], migration['old_train'])]:
+                try:
+                    await self.update_app(update_app, migration['new_train'])
+                except Exception:
+                    self.logger.error(
+                        'Failed to migrate %r application to %r train in %r catalog',
+                        update_app, migration['new_train'], catalog_label, exc_info=True,
+                    )
+
+    async def update_app(self, app_name, new_train):
+        await self.middleware.call('k8s.namespace.update', get_namespace(app_name), {
+            'body': {
+                'metadata': {
+                    'labels': {
+                        'catalog_train': new_train,
+                    },
+                }
+            }
+        })
 
     def load_migrations(self, catalog):
         migrations_path = os.path.join(catalog['location'], '.migrations')
