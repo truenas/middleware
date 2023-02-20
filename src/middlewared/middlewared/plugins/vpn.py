@@ -299,6 +299,9 @@ class OpenVPNServerService(SystemServiceService):
             ):
                 raise CallError('Root CA has been revoked. Please select another Root CA.')
 
+        if not config['server']:
+            raise CallError('Server attribute must be configured to consume OpenVPN Server service.')
+
         if not config['server_certificate']:
             raise CallError('Please configure server certificate first.')
         else:
