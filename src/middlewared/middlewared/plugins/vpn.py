@@ -355,7 +355,7 @@ class OpenVPNServerService(SystemServiceService):
                 'on the same local port without any issues.'
             )
 
-        if ipaddress.ip_address(data['server']).version == 4 and data['netmask'] > 32:
+        if data['server'] and ipaddress.ip_address(data['server']).version == 4 and data['netmask'] > 32:
             verrors.add(
                 f'{schema_name}.netmask',
                 'For IPv4 server addresses please provide a netmask value from 0-32.'
