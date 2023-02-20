@@ -13,14 +13,50 @@ APP_MIGRATION_SCHEMA = {
     'items': [{
         'type': 'object',
         'properties': {
-            'old_train': {'type': 'string'},
             'app_name': {'type': 'string'},
-            'new_train': {'type': 'string'},
+            'action': {'type': 'string', 'enum': ['rename', 'move']},
         },
         'required': [
             'app_name',
-            'new_train',
-            'old_train',
+            'action'
+        ],
+        'allOf': [
+            {
+                'if': {
+                    'properties': {
+                        'action': {
+                            'const': 'move',
+                        },
+                    },
+                },
+                'then': {
+                    'properties': {
+                        'old_train': {'type': 'string'},
+                        'new_train': {'type': 'string'},
+                    },
+                    'required': [
+                        'new_train',
+                        'old_train',
+                    ],
+                },
+            },
+            {
+                'if': {
+                    'properties': {
+                        'action': {
+                            'const': 'rename',
+                        },
+                    },
+                },
+                'then': {
+                    'properties': {
+                        'new_app_name': {'type': 'string'},
+                    },
+                    'required': [
+                        'new_app_name',
+                    ],
+                },
+            },
         ],
     }],
 }
