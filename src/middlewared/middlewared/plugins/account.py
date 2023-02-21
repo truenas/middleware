@@ -75,6 +75,10 @@ def nt_password(cleartext):
 
 def validate_sudo_commands(commands):
     verrors = ValidationErrors()
+    if 'ALL' in commands and len(commands) != 1:
+        verrors.add(str(commands.index('ALL')), 'ALL cannot be used with other commands')
+        return verrors
+
     for i, command in enumerate(commands):
         try:
             executable = shlex.split(command)[0]

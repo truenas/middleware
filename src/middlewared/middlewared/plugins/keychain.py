@@ -614,11 +614,12 @@ class KeychainCredentialService(CRUDService):
             if data["sudo"]:
                 try:
                     user = c.call("user.query", [["username", "=", data["username"]]], {"get": True})
-                    zfs_binary = "/usr/sbin/zfs"
-                    if zfs_binary not in user["sudo_commands_nopasswd"]:
-                        c.call("user.update", user["id"], {
-                            "sudo_commands_nopasswd": user["sudo_commands_nopasswd"] + [zfs_binary],
-                        })
+                    if "ALL" not in user["sudo_commands_nopasswd"]:
+                        zfs_binary = "/usr/sbin/zfs"
+                        if zfs_binary not in user["sudo_commands_nopasswd"]:
+                            c.call("user.update", user["id"], {
+                                "sudo_commands_nopasswd": user["sudo_commands_nopasswd"] + [zfs_binary],
+                            })
                 except Exception as e:
                     raise CallError(f"Error enabling passwordless sudo: {e!r}")
 
