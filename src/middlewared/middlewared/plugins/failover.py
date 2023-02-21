@@ -12,9 +12,7 @@ from functools import partial
 
 from middlewared.auth import is_ha_connection, TrueNasNodeSessionManagerCredentials
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
-from middlewared.service import (
-    job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
-)
+from middlewared.service import job, no_auth_required, pass_app, private, CallError, ConfigService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
