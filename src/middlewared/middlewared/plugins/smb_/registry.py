@@ -327,6 +327,7 @@ class SharingSMBService(Service):
             })
 
         conf.update({
+            "ixnas:dosattrib_xattr": "false",
             "nfs4:chown": "true",
             "ea support": "false",
         })
