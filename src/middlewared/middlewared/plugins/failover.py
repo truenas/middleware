@@ -11,11 +11,8 @@ import time
 from functools import partial
 
 from middlewared.auth import is_ha_connection, TrueNasNodeSessionManagerCredentials
-from middlewared.plugins.failover_.utils import throttle_condition
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
-from middlewared.service import (
-    job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
-)
+from middlewared.service import job, no_auth_required, pass_app, private, CallError, ConfigService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
@@ -193,7 +190,6 @@ class FailoverService(ConfigService):
         return await self.middleware.call('failover.internal_interface.detect')
 
     @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
     @returns(Str())
     @pass_app(rest=True)
@@ -273,7 +269,6 @@ class FailoverService(ConfigService):
         return bool(event)
 
     @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
     @returns(List('ips', items=[Str('ip')]))
     @pass_app(rest=True)
