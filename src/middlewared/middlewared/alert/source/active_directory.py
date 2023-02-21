@@ -40,8 +40,10 @@ class ActiveDirectoryDomainHealthAlertSource(AlertSource):
                 key=None
             )
 
+        conf = await self.middleware.call("activedirectory.config")
+
         try:
-            await self.middleware.call("activedirectory.check_nameservers")
+            await self.middleware.call("activedirectory.check_nameservers", conf["domainname"], conf["site"])
         except CallError as e:
             return Alert(
                 ActiveDirectoryDomainHealthAlertClass,
