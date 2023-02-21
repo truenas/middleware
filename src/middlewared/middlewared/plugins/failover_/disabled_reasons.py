@@ -1,6 +1,5 @@
 from middlewared.schema import accepts, returns, List, Str
 from middlewared.service import Service, throttle, pass_app, no_auth_required, private
-from middlewared.plugins.failover_.utils import throttle_condition
 from middlewared.plugins.interface.netif import netif
 
 
@@ -13,7 +12,6 @@ class FailoverDisabledReasonsService(Service):
     LAST_DISABLED_REASONS = None
 
     @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts()
     @returns(List('reasons', items=[Str('reason')]))
     @pass_app()
