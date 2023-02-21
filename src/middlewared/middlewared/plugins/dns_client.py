@@ -47,7 +47,7 @@ class DNSClient(Service):
     @accepts(Dict(
         'lookup_data',
         List('names', items=[Str('name')], required=True),
-        Str('record_type', default='A', enum=['A', 'AAAA', 'SRV']),
+        Str('record_type', default='A', enum=['A', 'AAAA', 'SRV', 'CNAME']),
         Dict(
             'dns_client_options',
             List('nameservers', items=[IPAddr("ip")], default=[]),
@@ -67,6 +67,18 @@ class DNSClient(Service):
                     Int('priority'),
                     Int('weight'),
                     Int('port'),
+                    Str('class'),
+                    Str('type'),
+                    Int('ttl'),
+                    Str('target'),
+                )
+            ],
+        ),
+        List(
+            'rdata_list_cname',
+            items=[
+                Dict(
+                    Str('name'),
                     Str('class'),
                     Str('type'),
                     Int('ttl'),
@@ -111,7 +123,15 @@ class DNSClient(Service):
                     "type": i.rdtype.name,
                     "ttl": ttl,
                     "target": i.target.to_text()
-                } for i in ans.response.answer[0].items]
+                } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
+            elif rtype == 'CNAME':
+                entries = [{
+                    "name": name,
+                    "class": i.rdclass.name,
+                    "type": i.rdtype.name,
+                    "ttl": ttl,
+                    "target": i.target.to_text(),
+                } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
             else:
                 entries = [{
                     "name": name,
@@ -119,7 +139,7 @@ class DNSClient(Service):
                     "type": i.rdtype.name,
                     "ttl": ttl,
                     "address": i.address,
-                } for i in ans.response.answer[0].items]
+                } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
 
             output.extend(entries)
 
