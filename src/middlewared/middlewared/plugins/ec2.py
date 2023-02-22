@@ -43,11 +43,10 @@ class EC2Service(Service):
 
 
 async def _event_system(middleware, event_type, args):
-    if args["id"] == "ready":
-        await middleware.call("boot.expand")
-        await middleware.call("ec2.setup")
+    await middleware.call("boot.expand")
+    await middleware.call("ec2.setup")
 
 
 async def setup(middleware):
     if await middleware.call("system.environment") == "EC2":
-        middleware.event_subscribe("system", _event_system)
+        middleware.event_subscribe("system.ready", _event_system)

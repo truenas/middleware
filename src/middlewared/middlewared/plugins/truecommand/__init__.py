@@ -1,12 +1,11 @@
 from .enums import Status
 
 
-async def _event_system(middleware, event_type, args):
-    if args['id'] == 'ready':
-        if await middleware.call('failover.licensed'):
-            return
+async def _event_system_ready(middleware, event_type, args):
+    if await middleware.call('failover.licensed'):
+        return
 
-        await middleware.call('truecommand.start_truecommand_service')
+    await middleware.call('truecommand.start_truecommand_service')
 
 
 async def setup(middleware):
@@ -19,7 +18,7 @@ async def setup(middleware):
 
     await middleware.call('truecommand.set_status', status.value)
 
-    middleware.event_subscribe('system', _event_system)
+    middleware.event_subscribe('system.ready', _event_system_ready)
     if await middleware.call('system.ready'):
         if not await middleware.call('failover.licensed'):
             middleware.create_task(middleware.call('truecommand.start_truecommand_service'))

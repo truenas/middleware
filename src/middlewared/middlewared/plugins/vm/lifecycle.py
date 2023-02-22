@@ -113,6 +113,18 @@ async def __event_system_ready(middleware, event_type, args):
     Method called when system is ready, supposed to start VMs
     flagged that way.
     """
+    await middleware.call('vm.initialize_vms')
+
+    # we ignore the 'ready' event on an HA system since the failover event plugin
+    # is responsible for starting this service, however, the VMs still need to be
+    # initialized (which is what the above callers are doing)
+    if await middleware.call('failover.licensed'):
+        return
+
+    middleware.create_task(middleware.call('vm.start_on_boot'))
+
+
+async def __event_system_shutdown(middleware, event_type, args):
     async def poweroff_stop_vm(vm):
         if vm['status']['state'] == 'RUNNING':
             stop_job = await middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
@@ -125,30 +137,20 @@ async def __event_system_ready(middleware, event_type, args):
             except Exception:
                 middleware.logger.error('Powering off %r VM failed', vm['name'], exc_info=True)
 
-    if args['id'] == 'ready':
-        await middleware.call('vm.initialize_vms')
-
-        # we ignore the 'ready' event on an HA system since the failover event plugin
-        # is responsible for starting this service, however, the VMs still need to be
-        # initialized (which is what the above callers are doing)
-        if await middleware.call('failover.licensed'):
-            return
-
-        middleware.create_task(middleware.call('vm.start_on_boot'))
-    elif args['id'] == 'shutdown':
-        async with SHUTDOWN_LOCK:
-            await asyncio_map(
-                poweroff_stop_vm,
-                (await middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])), 16
-            )
-            middleware.logger.debug('VM(s) stopped successfully')
-            # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
-            # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
-            # and we have cleanly exited
-            await middleware.call('vm.deinitialize_vms')
+    async with SHUTDOWN_LOCK:
+        await asyncio_map(
+            poweroff_stop_vm,
+            (await middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])), 16
+        )
+        middleware.logger.debug('VM(s) stopped successfully')
+        # We do this in vm.terminate as well, reasoning for repeating this here is that we don't want to
+        # stop libvirt on middlewared restarts, we only want that to happen if a shutdown has been initiated
+        # and we have cleanly exited
+        await middleware.call('vm.deinitialize_vms')
 
 
 async def setup(middleware):
     if await middleware.call('system.ready'):
         middleware.create_task(middleware.call('vm.initialize_vms', 5))  # We use a short timeout here deliberately
-    middleware.event_subscribe('system', __event_system_ready)
+    middleware.event_subscribe('system.ready', __event_system_ready)
+    middleware.event_subscribe('system.shutdown', __event_system_shutdown)

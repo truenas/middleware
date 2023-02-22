@@ -488,8 +488,7 @@ class EtcService(Service):
 
 
 async def __event_system_ready(middleware, event_type, args):
-    if args['id'] == 'ready':
-        middleware.create_task(middleware.call('etc.generate_checkpoint', 'post_init'))
+    middleware.create_task(middleware.call('etc.generate_checkpoint', 'post_init'))
 
 
 async def pool_post_import(middleware, pool):
@@ -498,7 +497,7 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
-    middleware.event_subscribe('system', __event_system_ready)
+    middleware.event_subscribe('system.ready', __event_system_ready)
     # Generate `etc` files before executing other post-boot-time-pool-import actions.
     # There are no explicit requirements for that, we are just preserving execution order
     # when moving checkpoint generation to pool.post_import hook.

@@ -1684,12 +1684,7 @@ class CoreService(Service):
         open(BOOTREADY, 'w').close()
 
         # Send event to middlewared saying we are late enough in the process to call it ready
-        self.middleware.call_sync(
-            'core.event_send',
-            'system',
-            'ADDED',
-            {'id': 'ready'}
-        )
+        self.middleware.call_sync('core.event_send', 'system.ready', 'ADDED')
 
         # Let's setup periodic tasks now
         self.middleware._setup_periodic_tasks()
@@ -1966,7 +1961,8 @@ class CoreService(Service):
         await self.middleware.call_hook(name, *args, **kwargs)
 
     @private
-    async def event_send(self, name, event_type, kwargs):
+    async def event_send(self, name, event_type, kwargs=None):
+        kwargs = kwargs or {}
         self.middleware.send_event(name, event_type, **kwargs)
 
     @accepts()
