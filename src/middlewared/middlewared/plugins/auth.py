@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 import errno
 import time
@@ -10,7 +11,7 @@ from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCrede
                               UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
                               LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
                               TrueNasNodeSessionManagerCredentials)
-from middlewared.schema import accepts, Bool, Datetime, Dict, Int, Patch, Ref, returns, Str
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Patch, returns, Str
 from middlewared.service import (
     ConfigService, Service, filterable, filterable_returns, filter_list, no_auth_required,
     pass_app, private, cli_private, CallError,
@@ -194,6 +195,14 @@ def is_internal_session(session):
         return True
 
     return False
+
+
+class UserWebUIAttributeModel(sa.Model):
+    __tablename__ = 'account_bsdusers_webui_attribute'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
+    uid = sa.Column(sa.Integer(), unique=True)
+    attributes = sa.Column(sa.JSON())
 
 
 class AuthService(Service):
@@ -484,12 +493,54 @@ class AuthService(Service):
         return True
 
     @accepts()
-    @returns(Ref('user_information'))
+    @returns(
+        Patch(
+            'user_information',
+            'current_user_information',
+            ('add', Dict('attributes', additional_attrs=True)),
+        )
+    )
     @pass_app()
     async def me(self, app):
         """
         Returns currently logged-in user.
         """
+        user = await self._me(app)
+
+        if attr := await self._attributes(user):
+            attributes = attr['attributes']
+        else:
+            attributes = {}
+
+        return {**user, 'attributes': attributes}
+
+    @accepts(
+        Str('key'),
+        Any('value'),
+    )
+    @returns()
+    @pass_app()
+    async def set_attribute(self, app, key, value):
+        """
+        Set current user's `attributes` dictionary `key` to `value`.
+
+        e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
+        """
+        user = await self._me(app)
+
+        async with self._attributes_lock:
+            if attrs := await self._attributes(user):
+                await self.middleware.call('datastore.update', 'account.bsdusers_webui_attribute', attrs['id'],
+                                           {'attributes': {**attrs['attributes'], key: value}})
+            else:
+                await self.middleware.call('datastore.insert', 'account.bsdusers_webui_attribute', {
+                    'uid': user['pw_uid'],
+                    'attributes': {key: value},
+                })
+
+    _attributes_lock = asyncio.Lock()
+
+    async def _me(self, app):
         credentials = app.authenticated_credentials
         if isinstance(credentials, TokenSessionManagerCredentials):
             if root_credentials := credentials.token.root_credentials():
@@ -499,6 +550,13 @@ class AuthService(Service):
             raise CallError(f'You are logged in using {credentials.class_name()}')
 
         return await self.middleware.call('user.get_user_obj', {'username': credentials.user['username']})
+
+    async def _attributes(self, user):
+        try:
+            return await self.middleware.call('datastore.query', 'account.bsdusers_webui_attribute',
+                                              [['uid', '=', user['pw_uid']]], {'get': True})
+        except MatchNotFound:
+            return None
 
 
 class TwoFactorAuthModel(sa.Model):

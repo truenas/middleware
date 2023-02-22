@@ -166,18 +166,6 @@ def test_10_look_user_shell(request):
     assert userinfo["shell"] == SHELL
 
 
-def test_11_add_employee_id_and_team_special_attributes(request):
-    depends(request, ["user_02", "user_01"])
-    payload = {
-        'key': 'Employee ID',
-        'value': 'TU1234',
-        'key': 'Team',
-        'value': 'QA'
-    }
-    results = POST(f"/user/id/{user_id}/set_attribute/", payload)
-    assert results.status_code == 200, results.text
-
-
 def test_12_get_new_next_uid(request):
     depends(request, ["user_02", "user_01"])
     results = GET('/user/get_next_uid/')
@@ -243,20 +231,6 @@ def test_19_look_user_new_uid(request):
 def test_20_look_user_groups(request):
     depends(request, ["user_02", "user_01"])
     assert userinfo["groups"] == [group_id]
-
-
-def test_21_remove_old_team_special_atribute(request):
-    depends(request, ["user_02", "user_01"])
-    payload = 'Team'
-    results = POST(f"/user/id/{user_id}/pop_attribute/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_22_add_new_team_to_special_atribute(request):
-    depends(request, ["user_02", "user_01"])
-    payload = {'key': 'Team', 'value': 'QA'}
-    results = POST(f"/user/id/{user_id}/set_attribute/", payload)
-    assert results.status_code == 200, results.text
 
 
 # Delete the testuser
