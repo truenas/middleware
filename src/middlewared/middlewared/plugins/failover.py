@@ -12,7 +12,9 @@ from functools import partial
 
 from middlewared.auth import is_ha_connection, TrueNasNodeSessionManagerCredentials
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
-from middlewared.service import job, no_auth_required, pass_app, private, CallError, ConfigService, ValidationErrors
+from middlewared.service import (
+    job, no_auth_required, pass_app, private, CallError, ConfigService, ValidationError, ValidationErrors
+)
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
@@ -296,7 +298,7 @@ class FailoverService(ConfigService):
         of the zpool being imported at the same time on both nodes (which can ultimately end in data corruption).
         """
         if self.middleware.call_sync('failover.config')['disabled'] is True:
-            raise ValidationErrors('failover.become_passive', 'Failover must be enabled.')
+            raise ValidationError('failover.become_passive', 'Failover must be enabled.')
         else:
             try:
                 # have to enable the "magic" sysrq triggers
