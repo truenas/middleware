@@ -147,6 +147,7 @@ class UserService(CRUDService):
         ('rm', {'name': 'group'}),
         ('rm', {'name': 'group_create'}),
         ('rm', {'name': 'home_mode'}),
+        ('rm', {'name': 'home_create'}),
         ('rm', {'name': 'password'}),
         ('add', Dict('group', additional_attrs=True)),
         ('add', Int('id')),
@@ -209,6 +210,7 @@ class UserService(CRUDService):
             'nt_name',
             'sid',
             'immutable',
+            'home_create',
         ]
 
         for i in to_remove:
@@ -285,6 +287,47 @@ class UserService(CRUDService):
             filter_list, result, filters, options
         )
 
+    @private
+    def setup_homedir(self, path, username, mode, uid, gid, create=False):
+        homedir_created = False
+
+        if create:
+            target = os.path.join(path, username)
+            try:
+                os.mkdir(target, mode=int(mode, 8))
+            except FileExistsError:
+                if not os.path.isdir(target):
+                    raise CallError(
+                        'Path for home directory already '
+                        'exists and is not a directory',
+                        errno.EEXIST
+                    )
+            except OSError as oe:
+                raise CallError(
+                    'Failed to create the home directory '
+                    f'({target}) for user: {oe}'
+                )
+            else:
+                homedir_created = True
+        else:
+            target = path
+
+        try:
+            setperm_job = self.middleware.call_sync('filesystem.setperm', {
+                'path': target,
+                'mode': mode,
+                'uid': uid,
+                'gid': gid,
+                'options': {'stripacl': True}
+            })
+            setperm_job.wait_sync(raise_error=True)
+        except Exception:
+            if homedir_created:
+                shutil.rmtree(target)
+            raise
+
+        return target
+
     @accepts(Dict(
         'user_create',
         Int('uid'),
@@ -293,6 +336,7 @@ class UserService(CRUDService):
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),
         Str('home_mode', default='700'),
+        Bool('home_create', default=False),
         Str('shell', default='/usr/bin/zsh'),
         Str('full_name', required=True),
         Str('email', validators=[Email()], null=True, default=None),
@@ -348,6 +392,7 @@ class UserService(CRUDService):
 
         groups = data.pop('groups')
         create = data.pop('group_create')
+        group_created = False
 
         if create:
             group = await self.middleware.call('group.query', [('group', '=', data['username'])])
@@ -362,6 +407,8 @@ class UserService(CRUDService):
                     'allow_duplicate_gid': False
                 }, False)
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
+                group_created = True
+
             data['group'] = group['id']
         else:
             group = await self.middleware.call('group.query', [('id', '=', data['group'])])
@@ -377,44 +424,24 @@ class UserService(CRUDService):
         if data.get('uid') is None:
             data['uid'] = await self.get_next_uid()
 
-        # Is this a new directory or not? Let's not nuke existing directories,
-        # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
         new_homedir = False
         home_mode = data.pop('home_mode')
         if data['home'] and data['home'] != '/nonexistent':
             try:
-                try:
-                    os.makedirs(data['home'], mode=int(home_mode, 8))
-                    new_homedir = True
-                    await self.middleware.call('filesystem.setperm', {
-                        'path': data['home'],
-                        'mode': home_mode,
-                        'uid': data['uid'],
-                        'gid': group['gid'],
-                        'options': {'stripacl': True}
-                    })
-                except FileExistsError:
-                    if not os.path.isdir(data['home']):
-                        raise CallError(
-                            'Path for home directory already '
-                            'exists and is not a directory',
-                            errno.EEXIST
-                        )
-
-                    # If it exists, ensure the user is owner.
-                    await self.middleware.call('filesystem.chown', {
-                        'path': data['home'],
-                        'uid': data['uid'],
-                        'gid': group['gid'],
-                    })
-                except OSError as oe:
-                    raise CallError(
-                        'Failed to create the home directory '
-                        f'({data["home"]}) for user: {oe}'
-                    )
+                data['home'] = await self.middleware.run_in_thread(
+                    self.setup_homedir,
+                    data['username'],
+                    data['home'],
+                    home_mode,
+                    data['uid'],
+                    group['gid'],
+                    data['home_create']
+                )
             except Exception:
-                if new_homedir:
-                    shutil.rmtree(data['home'])
+                # Homedir setup failed, we should remove any auto-generated group
+                if group_created:
+                    await self.middleware.call('group.delete', data['group'])
+
                 raise
 
         pk = None  # Make sure pk exists to rollback in case of an error
@@ -563,6 +590,9 @@ class UserService(CRUDService):
         ):
             home_copy = True
             home_old = user['home']
+            if data.get('home_create', False):
+                data['home'] = os.path.join(data['home'], data.get('username') or user['username'])
+
         else:
             home_copy = False
 
