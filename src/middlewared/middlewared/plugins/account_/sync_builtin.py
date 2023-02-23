@@ -241,7 +241,6 @@ class UserService(Service):
                     "full_name": gecos,
                     "builtin": True,
                     "group": group["id"],
-                    "attributes": {},
                     "smb": False,
                     "sudo_commands": [],
                     "sudo_commands_nopasswd": [],
