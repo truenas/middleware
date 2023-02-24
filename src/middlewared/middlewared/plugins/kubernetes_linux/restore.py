@@ -9,6 +9,7 @@ import yaml
 
 from middlewared.schema import Dict, Bool, returns, Str
 from middlewared.service import accepts, CallError, job, Service
+from middlewared.plugins.kubernetes_linux.yaml import NoDatesFullLoader
 
 
 RE_POOL = re.compile(r'^.*?(/.*)')
@@ -150,14 +151,15 @@ class KubernetesService(Service):
 
             # First we will restore namespace and then the secrets
             with open(os.path.join(r_backup_dir, 'namespace.yaml'), 'r') as f:
-                namespace_body = yaml.load(f.read(), Loader=yaml.FullLoader)
+                namespace_body = yaml.load(f.read(), Loader=NoDatesFullLoader)
                 namespace_body['metadata'].pop('resourceVersion', None)
+
                 self.middleware.call_sync('k8s.namespace.create', {'body': namespace_body})
 
             secrets_dir = os.path.join(r_backup_dir, 'secrets')
             for secret in sorted(os.listdir(secrets_dir)):
                 with open(os.path.join(secrets_dir, secret)) as f:
-                    secret_body = yaml.load(f.read(), Loader=yaml.FullLoader)
+                    secret_body = yaml.load(f.read(), Loader=NoDatesFullLoader)
                     secret_body['metadata'].pop('resourceVersion', None)
                     self.middleware.call_sync(
                         'k8s.secret.create', {
