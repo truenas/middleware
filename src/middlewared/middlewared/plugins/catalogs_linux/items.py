@@ -88,23 +88,31 @@ class CatalogService(Service):
     def items_internal(self, job, label, options):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
-        cache_key = get_cache_key(label)
-        cache_available = self.middleware.call_sync('cache.has_key', cache_key)
+        cache_available = False
+
+        if options['cache']:
+            cache_key = get_cache_key(label)
+            try:
+                orig_cached_data = self.middleware.call_sync('cache.get', cache_key)
+            except KeyError:
+                orig_cached_data = None
+
+            cache_available = orig_cached_data is not None
+
         if options['cache'] and options['cache_only'] and not cache_available:
             return {}
 
         if options['cache'] and cache_available:
             job.set_progress(10, 'Retrieving cached content')
-            orig_data = self.middleware.call_sync('cache.get', cache_key)
             job.set_progress(60, 'Normalizing cached content')
             cached_data = {}
-            for train in orig_data:
+            for train in orig_cached_data:
                 if not all_trains and train not in options['trains']:
                     continue
 
                 train_data = {}
-                for catalog_item in orig_data[train]:
-                    train_data[catalog_item] = {k: v for k, v in orig_data[train][catalog_item].items()}
+                for catalog_item in orig_cached_data[train]:
+                    train_data[catalog_item] = {k: v for k, v in orig_cached_data[train][catalog_item].items()}
 
                 cached_data[train] = train_data
 
