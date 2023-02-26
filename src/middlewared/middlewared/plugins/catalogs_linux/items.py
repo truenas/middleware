@@ -46,6 +46,7 @@ class CatalogService(Service):
                     'healthy_error': False,
                     'latest_version': '1.2.0',
                     'latest_app_version': '1.1.6',
+                    'last_update': '2023-02-01 22:55:31',
                     'icon_url': 'https://www.chia.net/img/chia_logo.svg',
                     'title': 'Chia',
                     'description': 'App description here',
