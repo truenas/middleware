@@ -985,6 +985,8 @@ class Patch(object):
 
         schema = schema.copy()
         schema.name = self.name
+        if hasattr(schema, "title"):
+            schema.title = self.name
         for operation, patch in self.patches:
             if operation == 'replace':
                 # This is for convenience where it's hard sometimes to change attrs in a large dict
