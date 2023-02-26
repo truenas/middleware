@@ -4,13 +4,14 @@ import os
 
 from catalog_validation.items.catalog import retrieve_train_names
 from catalog_validation.items.utils import get_catalog_json_schema
+from catalog_validation.utils import CACHED_CATALOG_FILE_NAME
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, job, private, Service
 
 from .items_util import get_item_version_details
-from .utils import CATALOG_JSON_FILE, get_cache_key
+from .utils import get_cache_key
 
 
 class CatalogService(Service):
@@ -149,7 +150,7 @@ class CatalogService(Service):
 
     @private
     def get_trains(self, job, catalog, options):
-        if os.path.exists(os.path.join(catalog['location'], CATALOG_JSON_FILE)):
+        if os.path.exists(os.path.join(catalog['location'], CACHED_CATALOG_FILE_NAME)):
             # If the data is malformed or something similar, let's read the data then from filesystem
             try:
                 return self.retrieve_trains_data_from_json(catalog, options)
@@ -163,7 +164,7 @@ class CatalogService(Service):
         trains_to_traverse = retrieve_train_names(
             catalog['location'], options['retrieve_all_trains'], options['trains']
         )
-        with open(os.path.join(catalog['location'], CATALOG_JSON_FILE), 'r') as f:
+        with open(os.path.join(catalog['location'], CACHED_CATALOG_FILE_NAME), 'r') as f:
             catalog_data = json.loads(f.read())
             json_schema_validate(catalog_data, get_catalog_json_schema())
 
