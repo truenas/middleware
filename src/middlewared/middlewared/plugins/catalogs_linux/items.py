@@ -2,7 +2,7 @@ import functools
 import json
 import os
 
-from catalog_validation.items.catalog import get_items_in_trains, retrieve_train_names, retrieve_trains_data
+from catalog_validation.items.catalog import retrieve_train_names
 from catalog_validation.items.utils import get_catalog_json_schema
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
@@ -156,7 +156,7 @@ class CatalogService(Service):
             except (json.JSONDecodeError, JsonValidationError):
                 self.logger.error('Invalid catalog json file specified for %r catalog', catalog['id'])
 
-        return self.get_trains_impl(job, catalog, options)
+        return {}
 
     @private
     def retrieve_trains_data_from_json(self, catalog, options):
@@ -174,33 +174,6 @@ class CatalogService(Service):
                 data[train][item]['location'] = os.path.join(catalog['location'], train, item)
 
         return data
-
-    @private
-    def get_trains_impl(self, job, catalog, options):
-        # We make sure we do not dive into library and docs folders and not consider those a train
-        # This allows us to use these folders for placing helm library charts and docs respectively
-        location = catalog['location']
-        questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-
-        trains_to_traverse = retrieve_train_names(location, options['retrieve_all_trains'], options['trains'])
-        # In order to calculate job progress, we need to know number of items we would be traversing
-        items = get_items_in_trains(trains_to_traverse, location)
-
-        job.set_progress(8, f'Retrieving {", ".join(trains_to_traverse)!r} train(s) information')
-
-        trains, unhealthy_apps = retrieve_trains_data(
-            items, location, catalog['preferred_trains'], trains_to_traverse, job, questions_context
-        )
-
-        if unhealthy_apps:
-            self.middleware.call_sync(
-                'alert.oneshot_create', 'CatalogNotHealthy', {
-                    'catalog': catalog['id'], 'apps': ', '.join(unhealthy_apps)
-                }
-            )
-
-        job.set_progress(90, f'Retrieved {", ".join(trains_to_traverse)} train(s) information')
-        return trains
 
     @private
     def item_version_details(self, version_path, questions_context=None):
