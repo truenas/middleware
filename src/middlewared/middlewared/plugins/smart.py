@@ -57,6 +57,8 @@ def parse_smart_selftest_results(stdout):
                 test["status"] = "SUCCESS"
             elif test["status_verbose"] == "Self-test routine in progress":
                 test["status"] = "RUNNING"
+            elif test["status_verbose"] in ["Aborted by host", "Interrupted (host reset)"]:
+                test["status"] = "ABORTED"
             else:
                 test["status"] = "FAILED"
 
@@ -86,6 +88,8 @@ def parse_smart_selftest_results(stdout):
                 test["status"] = "SUCCESS"
             elif test["status_verbose"] == "Self test in progress ...":
                 test["status"] = "RUNNING"
+            elif test["status_verbose"] in ["Aborted (by user command)", "Aborted (device reset ?)"]:
+                test["status"] = "ABORTED"
             else:
                 test["status"] = "FAILED"
 
