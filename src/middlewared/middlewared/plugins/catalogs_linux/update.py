@@ -125,7 +125,7 @@ class CatalogService(CRUDService):
         with contextlib.suppress(Exception):
             # We don't care why it failed, we don't want catalog.query to fail
             # Failure will be caught by other automatic invocations automatically
-            trains = await self.middleware.call('catalog.items', {
+            trains = await self.middleware.call('catalog.items', label, {
                 'cache': True,
                 'cache_only': await self.official_catalog_label() != label,
                 'retrieve_all_trains': catalog_context['retrieve_all_trains'],
