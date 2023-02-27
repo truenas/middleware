@@ -354,35 +354,31 @@ class OpenAPIResource(object):
         }
 
     def _accepts_to_request(self, methodname, method, schemas):
-
         # Create an unique ID for every argument and register the schema
-        ids = []
-        for i, schema in enumerate(schemas):
-            if i == 0 and method['item_method']:
-                continue
-            unique_id = f'{methodname.replace(".", "_")}_{i}'
-            self._schemas[unique_id] = self._convert_schema(schema)
-            ids.append(unique_id)
-
-        if len(ids) == 1:
-            schema = f'#/components/schemas/{ids[0]}'
+        methodname = methodname.replace(".", "_")
+        if len(schemas) == 1 and not method["item_method"]:
+            self._schemas[methodname] = self._convert_schema(schemas[0])
+        elif len(schemas) == 2 and method["item_method"]:
+            # In this case, we ignore the first schema
+            self._schemas[methodname] = self._convert_schema(schemas[1])
         else:
             # If the method accepts multiple arguments lets emulate/create
             # a new schema, which is a object containing every argument as an
             # attribute.
             props = {}
-            for i in ids:
-                schema = self._schemas[i]
-                props[schema['title']] = {'$ref': f'#/components/schemas/{i}'}
+            for i, schema in enumerate(schemas):
+                if i == 0 and method['item_method']:
+                    continue
+                unique_id = f'{methodname}_{i}'
+                self._schemas[unique_id] = self._convert_schema(schema)
+                props[schema['title']] = {'$ref': f'#/components/schemas/{unique_id}'}
             new_schema = {
                 'type': 'object',
                 'properties': props
             }
-            new_id = f'{methodname.replace(".", "_")}'
-            self._schemas[new_id] = new_schema
-            schema = f'#/components/schemas/{new_id}'
+            self._schemas[methodname] = new_schema
 
-        json_request = {'schema': {'$ref': schema}}
+        json_request = {'schema': {'$ref': f'#/components/schemas/{methodname}'}}
         for i, example in enumerate(method['examples']['rest']):
             try:
                 title, example = example.split('{', 1)
