@@ -99,12 +99,9 @@ if not ha:
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        results = job_status['results']['result']
-        assert isinstance(results, dict), str(job_status['results'])
-        assert chart in results['charts'], str(job_status['results'])
+        items_result = results.json()
+        assert isinstance(items_result, dict), results.text
+        assert chart in items_result['charts'], results.text
 
     def test_09_set_truechart_catalog():
         global payload, results
@@ -161,12 +158,9 @@ if not ha:
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        results = job_status['results']['result']
-        assert isinstance(results, dict), str(job_status['results'])
-        assert chart in results['charts'], str(job_status['results'])
+        items_results = results.json()
+        assert isinstance(items_results, dict), results.text
+        assert chart in items_results['charts'], results.text
 
     def test_15_change_truechart_preferred_trains():
         payload = {
@@ -192,11 +186,8 @@ if not ha:
         }
         results = POST('/catalog/items/', payload)
         assert results.status_code == 200, results.text
-        job_id = results.json()
-        job_status = wait_on_job(job_id, 300)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-        results = job_status['results']['result']
-        assert isinstance(results['test'], dict), str(job_status['results'])
+        items_results = results.json()
+        assert isinstance(items_results['test'], dict), results.text
 
     def test_18_sync_all_catalog():
         results = GET('/catalog/sync_all/')
