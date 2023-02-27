@@ -435,9 +435,17 @@ class InterfaceService(CRUDService):
         gw = ip_address(gw)
         defgw = {'gc_ipv4gateway': gw.exploded}
         for iface in await self.middleware.call('datastore.query', 'network.interfaces'):
-            if gw in ip_interface(f'{iface["int_address"]}/{iface["int_netmask"]}').network:
-                await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, defgw)
-                return
+            gw_reachable = False
+            try:
+                gw_reachable = gw in ip_interface(f'{iface["int_address"]}/{iface["int_netmask"]}').network
+            except ValueError:
+                # these can be "empty" interface entries so there will be no ip or netmask
+                # (i.e. when someone creates a VLAN whose parent doesn't have a "config" associated to it)
+                continue
+            else:
+                if gw_reachable:
+                    await self.middleware.call('datastore.update', 'network.globalconfiguration', 1, defgw)
+                    return
 
         for iface in await self.middleware.call('datastore.query', 'network.alias'):
             if gw in ip_interface(f'{iface["alias_address"]}/{iface["alias_netmask"]}').network:
