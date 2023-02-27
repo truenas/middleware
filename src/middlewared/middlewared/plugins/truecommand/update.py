@@ -43,11 +43,16 @@ class TruecommandService(ConfigService):
         # Connecting basically represents 2 phases - where we wait for TC to connect to
         # NAS and where we are waiting to hear back from the portal after registration
         status_reason = None
-        if Status(config.pop('api_key_state')) == self.STATUS.CONNECTED and self.STATUS == Status.CONNECTING:
-            if await self.middleware.call('truecommand.wireguard_connection_health'):
-                await self.set_status(Status.CONNECTED.value)
-            else:
-                status_reason = 'Waiting for connection from Truecommand.'
+        if await self.middleware.call('failover.is_single_master_node'):
+            if Status(config.pop('api_key_state')) == self.STATUS.CONNECTED and self.STATUS == Status.CONNECTING:
+                if await self.middleware.call('truecommand.wireguard_connection_health'):
+                    await self.set_status(Status.CONNECTED.value)
+                else:
+                    status_reason = 'Waiting for connection from Truecommand.'
+        else:
+            if self.STATUS != Status.DISABLED:
+                await self.set_status(Status.DISABLED.value)
+            status_reason = 'Truecommand service is disabled on standby controller'
 
         config['remote_ip_address'] = config['remote_url'] = config.pop('remote_address')
         if config['remote_ip_address']:
