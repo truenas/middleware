@@ -50,7 +50,6 @@ class KubernetesService(Service):
         catalog_sync_jobs = self.middleware.call_sync('core.get_jobs', [
             ['OR', [
                 ['method', '=', 'catalog.sync'], ['method', '=', 'catalog.sync_all'],
-                ['method', '=', 'catalog.items_internal'], ['method', '=', 'catalog.items']
             ]],
             ['OR', [['state', '=', 'RUNNING'], ['state', '=', 'WAITING']]]
         ])
