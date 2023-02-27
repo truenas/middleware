@@ -8,7 +8,7 @@ from catalog_validation.utils import CACHED_CATALOG_FILE_NAME
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.schema import Bool, Dict, List, returns, Str
-from middlewared.service import accepts, job, private, Service
+from middlewared.service import accepts, private, Service
 
 from .items_util import get_item_version_details
 from .utils import get_cache_key
@@ -55,8 +55,7 @@ class CatalogService(Service):
             }
         }
     ))
-    @job(lock=lambda args: f'catalog_item_retrieval_{json.dumps(args)}', lock_queue_size=1)
-    async def items(self, job, label, options):
+    def items(self, label, options):
         """
         Retrieve item details for `label` catalog.
 
@@ -73,7 +72,7 @@ class CatalogService(Service):
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
-        return await job.wrap(await self.middleware.call('catalog.items_internal', label, options))
+        return self.items_internal(label, options)
 
     @private
     @accepts(
@@ -86,8 +85,7 @@ class CatalogService(Service):
             List('trains', items=[Str('train_name')]),
         )
     )
-    @job(lock=lambda args: f'catalog_item_retrieval_internal_{json.dumps(args)}', lock_queue_size=1, transient=True)
-    def items_internal(self, job, label, options):
+    def items_internal(self, label, options):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
         cache_available = False
@@ -105,8 +103,6 @@ class CatalogService(Service):
             return {}
 
         if options['cache'] and cache_available:
-            job.set_progress(10, 'Retrieving cached content')
-            job.set_progress(60, 'Normalizing cached content')
             cached_data = {}
             for train in orig_cached_data:
                 if not all_trains and train not in options['trains']:
@@ -118,18 +114,15 @@ class CatalogService(Service):
 
                 cached_data[train] = train_data
 
-            job.set_progress(100, 'Retrieved catalog item(s) details successfully')
-            self.middleware.loop.call_later(30, functools.partial(job.set_result, None))
             return cached_data
         elif not os.path.exists(catalog['location']):
-            job.set_progress(5, f'Cloning {label!r} catalog repository')
-            self.middleware.call_sync('catalog.update_git_repository', catalog)
+            return {}
 
         if all_trains:
             # We can only safely say that the catalog is healthy if we retrieve data for all trains
             self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', label)
 
-        trains = self.get_trains(job, catalog, options)
+        trains = self.get_trains(catalog, options)
 
         if all_trains:
             # We will only update cache if we are retrieving data of all trains for a catalog
@@ -144,12 +137,10 @@ class CatalogService(Service):
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
 
-        job.set_progress(100, f'Successfully retrieved {label!r} catalog information')
-        self.middleware.loop.call_later(30, functools.partial(job.set_result, None))
         return trains
 
     @private
-    def get_trains(self, job, catalog, options):
+    def get_trains(self, catalog, options):
         if os.path.exists(os.path.join(catalog['location'], CACHED_CATALOG_FILE_NAME)):
             # If the data is malformed or something similar, let's read the data then from filesystem
             try:
