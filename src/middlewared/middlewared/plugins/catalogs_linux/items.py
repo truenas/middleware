@@ -72,20 +72,6 @@ class CatalogService(Service):
         `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
         of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
         """
-        return self.items_internal(label, options)
-
-    @private
-    @accepts(
-        Str('label'),
-        Dict(
-            'options',
-            Bool('cache', default=True),
-            Bool('cache_only', default=False),
-            Bool('retrieve_all_trains', default=True),
-            List('trains', items=[Str('train_name')]),
-        )
-    )
-    def items_internal(self, label, options):
         catalog = self.middleware.call_sync('catalog.get_instance', label)
         all_trains = options['retrieve_all_trains']
         cache_available = False
