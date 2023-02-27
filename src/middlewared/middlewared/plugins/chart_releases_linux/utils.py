@@ -133,7 +133,7 @@ def get_network_attachment_definition_name(release, count):
 
 
 def normalized_port_value(protocol: str, port: int) -> str:
-    return '' if ((protocol == 'http' and port == 80) or (protocol == 'https' or port == 443)) else f':{port}'
+    return '' if ((protocol == 'http' and port == 80) or (protocol == 'https' and port == 443)) else f':{port}'
 
 
 SCALEABLE_RESOURCES = [
