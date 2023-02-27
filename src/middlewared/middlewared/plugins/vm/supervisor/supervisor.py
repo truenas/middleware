@@ -26,23 +26,34 @@ class VMSupervisor(LibvirtConnectionMixin):
         self._check_setup_connection()
 
         self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
-        self.domain = self.stop_devices_thread = None
+        self._domain = self.stop_devices_thread = None
         self.update_domain()
+
+    @property
+    def domain(self):
+        return self.domain_health_check()
+
+    def domain_health_check(self):
+        try:
+            self._domain.state()
+        except (AttributeError, libvirt.libvirtError):
+            self.update_domain(update_devices=False)
+        return self._domain
 
     def update_domain(self, vm_data=None, update_devices=True):
         # This can be called to update domain to reflect any changes introduced to the VM
         if update_devices:
             self.update_vm_data(vm_data)
         try:
-            self.domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
+            self._domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
         except libvirt.libvirtError:
-            self.domain = None
+            self._domain = None
         else:
-            if not self.domain.isActive():
+            if not self._domain.isActive():
                 # We have a domain defined and it is not running
                 self.undefine_domain()
 
-        if not self.domain:
+        if not self._domain:
             # This ensures that when a domain has been renamed, we undefine the previous domain name - if object
             # persists in this case of VMSupervisor - else it's the users responsibility to take care of this case
             self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
@@ -75,29 +86,30 @@ class VMSupervisor(LibvirtConnectionMixin):
         return self.domain.memoryStats()['actual'] * 1024
 
     def __define_domain(self):
-        if self.domain:
+        if self._domain:
             raise CallError(f'{self.libvirt_domain_name} domain has already been defined')
 
         vm_xml = etree.tostring(self.construct_xml()).decode()
         if not self.LIBVIRT_CONNECTION.defineXML(vm_xml):
             raise CallError(f'Unable to define persistent domain for {self.libvirt_domain_name}')
 
-        self.domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
+        self._domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
 
     def undefine_domain(self):
-        if self.domain.isActive():
+        if self._domain.isActive():
             raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
 
         with contextlib.suppress(OSError):
             os.unlink(f'/var/lib/libvirt/qemu/nvram/{self.libvirt_domain_name}_VARS.fd')
 
-        self.domain.undefine()
-        self.domain = None
+        self._domain.undefine()
+        self._domain = None
 
     def __getattribute__(self, item):
         retrieved_item = object.__getattribute__(self, item)
         if callable(retrieved_item) and item in ('start', 'stop', 'poweroff', 'undefine_domain', 'status'):
-            if not getattr(self, 'domain', None):
+            self.domain_health_check()
+            if not getattr(self, '_domain', None):
                 raise RuntimeError('Domain attribute not defined, please re-instantiate the VM class')
 
         return retrieved_item
