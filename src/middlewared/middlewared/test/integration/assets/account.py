@@ -9,6 +9,8 @@ from middlewared.test.integration.utils import call, ssh
 
 @contextlib.contextmanager
 def user(data, *, get_instance=True):
+    data.setdefault('home_create', True)  # create user homedir by default
+
     user = call("user.create", data)
 
     try:
