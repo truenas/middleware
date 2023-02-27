@@ -1,3 +1,4 @@
+import contextlib
 import errno
 import os
 import shutil
@@ -82,42 +83,37 @@ class CatalogService(CRUDService):
             'catalogs_context': {},
         }
         if extra.get('item_details'):
-            item_sync_params = await self.middleware.call('catalog.sync_items_params')
-            item_jobs = await self.middleware.call(
-                'core.get_jobs', [['method', '=', 'catalog.items_internal'], ['state', '=', 'RUNNING']]
+            sync_jobs = await self.middleware.call(
+                'core.get_jobs', [['method', '=', 'catalog.sync'], ['state', '=', 'RUNNING']]
             )
             for row in rows:
                 label = row['label']
                 catalog_info = {
-                    'item_job': await self.middleware.call('catalog.items_internal', label, {
-                        'cache': True,
-                        'cache_only': await self.official_catalog_label() != row['label'],
-                        'retrieve_all_trains': extra.get('retrieve_all_trains', True),
-                        'trains': extra.get('trains', []),
-                    }),
                     'cached': label == OFFICIAL_LABEL or await self.middleware.call('catalog.cached', label),
                     'normalized_progress': None,
+                    'trains': extra.get('trains', []),
+                    'retrieve_all_trains': extra.get('retrieve_all_trains', True),
                 }
                 if not catalog_info['cached']:
-                    caching_job = filter_list(item_jobs, [['arguments', '=', [row['label'], item_sync_params]]])
-                    if caching_job:
+                    sync_job = filter_list(sync_jobs, [['arguments', '=', [row['label']]]])
+                    if sync_job:
                         # We will almost certainly always have this except for the case when middleware starts
                         # it is guaranteed that we will eventually have this anyways as catalog.sync_all is called
                         # periodically. So let's not trigger a new redundant job for this
-                        caching_job = caching_job[0]
+                        sync_job = sync_job[0]
                     else:
-                        caching_job = None
+                        sync_job = None
 
                     catalog_info['normalized_progress'] = {
-                        'caching_job': caching_job,
-                        'caching_progress': caching_job['progress'] if caching_job else None,
+                        'sync_job': sync_job,
+                        'sync_progress': sync_job['progress'] if sync_job else None,
                     }
                 context['catalogs_context'][label] = catalog_info
 
         return context
 
     @private
-    async def normalize_data_from_item_job(self, label, catalog_context):
+    async def normalize_data_from_context(self, label, catalog_context):
         normalized = {
             'trains': {},
             'cached': catalog_context['cached'],
@@ -126,15 +122,21 @@ class CatalogService(CRUDService):
             'caching_progress': None,
             'caching_job': None,
         }
-        item_job = catalog_context['item_job']
-        await item_job.wait()
-        if not item_job.error:
+        with contextlib.suppress(Exception):
+            # We don't care why it failed, we don't want catalog.query to fail
+            # Failure will be caught by other automatic invocations automatically
+            trains = await self.middleware.call('catalog.items', {
+                'cache': True,
+                'cache_only': await self.official_catalog_label() != label,
+                'retrieve_all_trains': catalog_context['retrieve_all_trains'],
+                'trains': catalog_context['trains'],
+            })
             normalized.update({
-                'trains': item_job.result,
+                'trains': trains,
                 'healthy': all(
-                    app['healthy'] for train in item_job.result for app in item_job.result[train].values()
+                    app['healthy'] for train in trains for app in trains[train].values()
                 ),
-                'cached': label == OFFICIAL_LABEL or await self.middleware.call('catalog.cached', label),
+                'cached': catalog_context['cached'],
                 'error': False,
                 'caching_progress': None,
                 'caching_job': None,
@@ -152,7 +154,7 @@ class CatalogService(CRUDService):
         extra = context['extra']
         if extra.get('item_details'):
             catalog_context = context['catalogs_context'][catalog['label']]
-            catalog.update(await self.normalize_data_from_item_job(catalog['id'], catalog_context))
+            catalog.update(await self.normalize_data_from_context(catalog['id'], catalog_context))
             if catalog['cached']:
                 return catalog
             else:
