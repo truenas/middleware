@@ -161,7 +161,7 @@ class ClusterUtils(Service):
 
         interest = (f'.system/{CTDBConfig.CTDB_VOL_NAME.value}', '.system/glusterd')
         mount_info = self.middleware.call_sync('filesystem.mount_info')
-        for i in filter(lambda x: x['mountpoint'].endswith(interest), mount_info):
+        for i in filter(lambda x: x['mount_source'].endswith(interest), mount_info):
             dirs.append(i['mountpoint'])
 
         return files, dirs
