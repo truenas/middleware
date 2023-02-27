@@ -604,7 +604,7 @@ class OpenVPNClientService(SystemServiceService):
         remove_certificates = data['remove_certificates']
 
         verrors, data = await OpenVPN.common_validation(
-            self.middleware, data, schema_name, 'client'
+            self.middleware, data, schema_name, 'client', data['nobind'] is True,
         )
 
         if not remove_certificates:
