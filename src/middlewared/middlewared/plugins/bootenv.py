@@ -1,18 +1,15 @@
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, returns, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job
 )
 from middlewared.utils import filter_list, osc, Popen, run
-from middlewared.validators import Match
 
 from datetime import datetime
 
 import errno
 import os
 import subprocess
-
-
-RE_BE_NAME = r'^[^/ *\'"?@!#$%^&()+=~<>;\\]+$'
 
 
 class BootEnvService(CRUDService):
@@ -200,7 +197,7 @@ class BootEnvService(CRUDService):
 
     @accepts(Dict(
         'bootenv_create',
-        Str('name', required=True, validators=[Match(RE_BE_NAME)]),
+        Str('name', required=True),
         Str('source'),
     ))
     @returns(Str('bootenv_name'))
@@ -234,7 +231,7 @@ class BootEnvService(CRUDService):
 
     @accepts(Str('id'), Dict(
         'bootenv_update',
-        Str('name', required=True, validators=[Match(RE_BE_NAME)]),
+        Str('name', required=True),
     ))
     @returns(Str('bootenv_name'))
     async def do_update(self, oid, data):
@@ -262,6 +259,12 @@ class BootEnvService(CRUDService):
         )).communicate())[0].decode().split('\n')
         if name in filter(None, beadm_names):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
+
+        if not validate_dataset_name(name):
+            verrors.add(
+                f'{schema}.name',
+                f'Invalid BE name {name!r}. "test1, ix-test, ix_test" are valid examples.'
+            )
 
     @accepts(Str('id'))
     @job(lock=lambda args: f'bootenv_delete_{args[0]}')
