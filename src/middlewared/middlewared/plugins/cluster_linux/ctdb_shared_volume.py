@@ -167,6 +167,7 @@ class CtdbSharedVolumeService(Service):
 
         job.set_progress(99, 'Disabling cluster service')
         await self.middleware.call('service.update', 'glusterd', {'enable': False})
+        await self.middleware.call('smb.reset_smb_ha_mode')
 
         job.set_progress(100, 'CTDB shared volume teardown complete.')
 
