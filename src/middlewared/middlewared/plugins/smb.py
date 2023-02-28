@@ -1476,7 +1476,7 @@ class SharingSMBService(SharingService):
             return
 
         current_acltype = get_acl_type(this_mnt['super_opts'])
-        child_mounts = filter_list(list(mntinfo.values()), [['mountpoint', '^', path]])
+        child_mounts = filter_list(list(mntinfo.values()), [['mountpoint', '^', f'{path}/']])
         for mnt in child_mounts:
             if '@' in mnt['mount_source']:
                 continue
