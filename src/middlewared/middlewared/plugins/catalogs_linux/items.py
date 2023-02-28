@@ -146,9 +146,19 @@ class CatalogService(Service):
 
             data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
+        unhealthy_apps = set()
         for train in data:
             for item in data[train]:
                 data[train][item]['location'] = os.path.join(catalog['location'], train, item)
+                if data[train][item]['healthy'] is False:
+                    unhealthy_apps.add(f'{item} ({train} train)')
+
+        if unhealthy_apps:
+            self.middleware.call_sync(
+                'alert.oneshot_create', 'CatalogNotHealthy', {
+                    'catalog': catalog['id'], 'apps': ', '.join(unhealthy_apps)
+                }
+            )
 
         return data
 
