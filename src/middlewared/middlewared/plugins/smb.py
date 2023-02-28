@@ -20,7 +20,7 @@ from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.utils.osc import getmntinfo
-from middlewared.utils.path import FSLocation, path_location
+from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
@@ -1459,7 +1459,7 @@ class SharingSMBService(SharingService):
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
 
-        if os.path.relpath(this_mnt['mountpoint'], path) not in (os.curdir, os.pardir):
+        if not is_child_realpath(path, this_mnt['mountpoint']):
             verrors.add(
                 schema,
                 f'Mountpoint {this_mnt["mountpoint"]} not within path {path}. '

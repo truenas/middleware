@@ -741,6 +741,29 @@ def test_176_check_dataset_auto_create(request):
         assert acl['trivial'] is False, str(acl)
 
 
+def test_180_create_share_multiple_dirs_deep(request):
+    depends(request, ["SMB_USER_CREATED"])
+    with create_dataset(pool_name, 'nested_dirs', options={'share_type': 'SMB'}) as ds:
+        dirs_path = f'{ds["mountpoint"]}/d1/d2/d3'
+        results = SSH_TEST(f'mkdir -p {dirs_path}', user, password, ip)
+        assert results['result'] is True, {"cmd": cmd, "res": results['output']}
+
+        with smb_share(dirs_path, {'name': 'DIRS'}):
+            with smb_connection(
+                host=ip,
+                share='DIRS',
+                username=SMB_USER,
+                password=SMB_PWD,
+                smb1=False
+            ) as c:
+                fd = c.create_file('nested_dirs_file', "w")
+                c.write(fd, b'DIRS_TEST')
+                c.close(fd)
+
+        results = POST('/filesystem/stat/', os.path.join(dirs_path, 'nested_dirs_file'))
+        assert results.status_code == 200, results.text
+
+
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")
 def test_200_delete_smb_user(request):
     depends(request, ["SMB_USER_CREATED"])
