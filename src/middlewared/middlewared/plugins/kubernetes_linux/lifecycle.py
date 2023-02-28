@@ -141,6 +141,9 @@ class KubernetesService(Service):
         # be consuming a locked host path volume
         await self.middleware.call('chart.release.scale_down_resources_consuming_locked_paths')
 
+        # Let's run app migrations if any
+        await self.middleware.call('k8s.app.migration.run')
+
         node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call(
             'k8s.node.remove_taints', [
