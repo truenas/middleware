@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
-from middlewared.service import filterable, filterable_returns, job, Service
+from middlewared.service import filterable, filterable_returns, Service
 from middlewared.utils import filter_list
 
 
@@ -26,30 +26,18 @@ class AppService(Service):
         Str('train', required=True),
         Str('catalog', required=True),
     ))
-    @job(lock='available_apps', lock_queue_size=1)
-    def available(self, job, filters, options):
+    def available(self, filters, options):
         """
         Retrieve all available applications from all configured catalogs.
         """
         results = []
-        catalogs = self.middleware.call_sync('catalog.query')
         installed_apps = [
             (app['chart_metadata']['name'], app['catalog'], app['catalog_train'])
             for app in self.middleware.call_sync('chart.release.query')
         ]
-        total_catalogs = len(catalogs)
-        job.set_progress(5, 'Retrieving available apps from catalog(s)')
 
-        for index, catalog in enumerate(catalogs):
-            progress = 10 + ((index + 1 / total_catalogs) * 80)
-            items_job = self.middleware.call_sync('catalog.items', catalog['label'])
-            items_job.wait_sync()
-            if items_job.error:
-                job.set_progress(progress, f'Failed to retrieve apps from {catalog["label"]!r}')
-                continue
-
-            catalog_items = items_job.result
-            for train, train_data in catalog_items.items():
+        for catalog in self.middleware.call_sync('catalog.query'):
+            for train, train_data in self.middleware.call_sync('catalog.items', catalog['label']).items():
                 for app_data in train_data.values():
                     results.append({
                         'catalog': catalog['label'],
@@ -58,11 +46,7 @@ class AppService(Service):
                         **app_data,
                     })
 
-            job.set_progress(progress, f'Completed retrieving apps from {catalog["label"]!r}')
-
-        results = filter_list(results, filters, options)
-        job.set_progress(100, 'Retrieved all available apps from all catalog(s)')
-        return results
+        return filter_list(results, filters, options)
 
     @accepts()
     @returns(List(items=[Str('category')]))
