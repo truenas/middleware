@@ -11,7 +11,15 @@ reason = 'Skip for development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
+"""
 # TODO: why does this not run on HA?
+
+These don't make sense and point to forked repos that haven't been updated
+in 2 years. Some problems with these tests:
+    1. official catalog is more than enough for the tests so forks are redundant
+    2. because we have 2 different repos, execution time is EXPONENTIALLY increased...
+    3. the fork is 2 years old (at time of writing) hence why these are broken...
+
 if not ha:
     official_repository = 'https://github.com/truenas/charts.git'
     truechart_repository = 'https://github.com/ericbsd/charts.git'
@@ -203,3 +211,4 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
         assert results.json() is True, results.text
+"""

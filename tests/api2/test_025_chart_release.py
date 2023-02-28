@@ -12,6 +12,15 @@ reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
+"""
+Disabling these until the design and validity of these tests
+can be reviewed.
+
+3 massive problems:
+    1. this points to a fork that is 2years old
+    2. this points to a NON OFFICIAL (Truecharts) repo....why?
+    3. the truecharts repo is HUGE...like 900+ apps huge
+
 updatechart_catalog = {
     'label': 'UPDATECHARTS',
     'repository': 'https://github.com/ericbsd/charts-1.git',
@@ -458,3 +467,4 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
         assert results.json() is True, results.text
+"""
