@@ -5,6 +5,10 @@ get_physical_disks_list()
 		| sed 's/\([^0-9]*\)/\1 /' | sort +0 -1 +1n | tr -d ' '
 }
 
+mprutil_get_adapters()
+{
+	mprutil show adapters | grep "^/dev" | awk '{print $1}'
+}
 
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
@@ -118,4 +122,14 @@ hardware_func()
 	section_header "Enclosures (midclt call enclosure.query)"
 	midclt call enclosure.query |jq .
 	section_footer
+
+	for dev in $(mprutil_get_adapters); do
+		section_header "mprutil -u $dev show all"
+		mprutil -u $dev show all
+		section_footer
+
+		section_header "mprutil -u $dev show iocfacts"
+		mprutil -u $dev show iocfacts
+		section_footer
+	done
 }
