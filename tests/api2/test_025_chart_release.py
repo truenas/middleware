@@ -1,6 +1,7 @@
 import os
 import pytest
 import sys
+import textwrap
 import time
 from pytest_dependency import depends
 apifolder = os.getcwd()
@@ -8,18 +9,16 @@ sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE, wait_on_job
 from auto_config import ha, dev_test, interface, pool_name
 
-reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
-
-"""
+# pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+pytestmark = pytest.mark.skipif(True, textwrap.dedent("""
 Disabling these until the design and validity of these tests
 can be reviewed.
 
 3 massive problems:
-    1. this points to a fork that is 2years old
+    1. this points to a fork that is 2 years old
     2. this points to a NON OFFICIAL (Truecharts) repo....why?
-    3. the truecharts repo is HUGE...like 900+ apps huge
+    3. the truecharts repo is HUGE...like 900+ apps huge"""))
 
 updatechart_catalog = {
     'label': 'UPDATECHARTS',
@@ -467,4 +466,3 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
         assert results.json() is True, results.text
-"""

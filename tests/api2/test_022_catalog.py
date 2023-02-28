@@ -2,23 +2,22 @@
 import os
 import pytest
 import sys
+import textwrap
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE, PUT, wait_on_job
 from auto_config import ha, dev_test
 
-reason = 'Skip for development testing'
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
-
-"""
-# TODO: why does this not run on HA?
-
+# pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
+pytestmark = pytest.mark.skipif(True, reason=textwrap.dedent("""
 These don't make sense and point to forked repos that haven't been updated
 in 2 years. Some problems with these tests:
     1. official catalog is more than enough for the tests so forks are redundant
     2. because we have 2 different repos, execution time is EXPONENTIALLY increased...
-    3. the fork is 2 years old (at time of writing) hence why these are broken...
+    3. the forked repo is for truecharts which is HUGE...like 900+ apps huge
+    4. the fork is 2 years old (at time of writing) hence why these are broken...
+    5. why do these not get executed on HA systems?"""))
 
 if not ha:
     official_repository = 'https://github.com/truenas/charts.git'
@@ -211,4 +210,3 @@ if not ha:
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), bool), results.text
         assert results.json() is True, results.text
-"""
