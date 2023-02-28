@@ -196,30 +196,26 @@ class ActiveDirectoryService(Service):
 
             return f"{srv_prefix.value}{domain}."
 
-        targets = [get_host(srv_record) for srv_record in [
-            SRV.DOMAINCONTROLLER,
-            SRV.GLOBALCATALOG,
-            SRV.KERBEROS,
-            SRV.KERBEROSDOMAINCONTROLLER,
-            SRV.KPASSWD,
-            SRV.LDAP,
-            SRV.PDC
-        ]]
+        targets = [get_host(srv_record) for srv_record in [SRV.KERBEROS, SRV.LDAP]]
 
         for entry in await self.middleware.call('dns.query'):
-            try:
-                servers = await self.middleware.call('dnsclient.forward_lookup', {
-                    'names': targets,
-                    'record_type': 'SRV',
-                    'dns_client_options': {'nameservers': [entry['nameserver']]},
-                    'query-options': {'order_by': ['priority', 'weight']}
-                })
-            except dns.resolver.NXDOMAIN:
-                raise CallError(
-                    f'Nameserver {entry["nameserver"]} failed to resolve SRV records for domain {domain}. '
-                    'This may indicate a DNS misconfiguration on the TrueNAS server.',
-                    errno.EINVAL
-                )
+            servers = []
+            for name in targets:
+                try:
+                    resp = await self.middleware.call('dnsclient.forward_lookup', {
+                        'names': [name],
+                        'record_type': 'SRV',
+                        'dns_client_options': {'nameservers': [entry['nameserver']]}
+                    })
+                except dns.resolver.NXDOMAIN:
+                    raise CallError(
+                        f'{name}: Nameserver {entry["nameserver"]} failed to resolve SRV '
+                        'record for domain {domain}. This may indicate a DNS misconfiguration '
+                        'on the TrueNAS server.',
+                        errno.EINVAL
+                    )
+                else:
+                    servers.extend(resp)
 
             for name in targets:
                 if not any([lambda resp: resp['name'].casefold() == name.casefold(), servers]):
