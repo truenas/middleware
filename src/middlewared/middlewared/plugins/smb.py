@@ -13,6 +13,7 @@ from samba import param
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Str, Int, Patch
+from middlewared.schema import Path as SchemaPath
 from middlewared.service import accepts, job, private, SharingService
 from middlewared.service import TDBWrapConfigService, ValidationErrors, filterable
 from middlewared.service_exception import CallError, MatchNotFound
@@ -939,7 +940,7 @@ class SharingSMBService(SharingService):
     @accepts(Dict(
         'sharingsmb_create',
         Str('purpose', enum=[x.name for x in SMBSharePreset], default=SMBSharePreset.DEFAULT_SHARE.name),
-        Str('path', required=True),
+        SchemaPath('path', required=True),
         Str('path_suffix', default=''),
         Bool('home', default=False),
         Str('name', max_length=80, required=True),
