@@ -40,14 +40,12 @@ class AppService(Service):
         total_catalogs = len(catalogs)
         job.set_progress(5, 'Retrieving available apps from catalog(s)')
 
-        def progress(index):
-            return 10 + ((index + 1 / total_catalogs) * 80)
-
         for index, catalog in enumerate(catalogs):
+            progress = 10 + ((index + 1 / total_catalogs) * 80)
             items_job = self.middleware.call_sync('catalog.items', catalog['label'])
             items_job.wait_sync()
             if items_job.error:
-                job.set_progress(progress(index), f'Failed to retrieve apps from {catalog["label"]!r}')
+                job.set_progress(progress, f'Failed to retrieve apps from {catalog["label"]!r}')
                 continue
 
             catalog_items = items_job.result
@@ -60,7 +58,7 @@ class AppService(Service):
                         **app_data,
                     })
 
-            job.set_progress(progress(index), f'Completed retrieving apps from {catalog["label"]!r}')
+            job.set_progress(progress, f'Completed retrieving apps from {catalog["label"]!r}')
 
         results = filter_list(results, filters, options)
         job.set_progress(100, 'Retrieved all available apps from all catalog(s)')
