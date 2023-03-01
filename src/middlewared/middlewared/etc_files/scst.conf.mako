@@ -82,6 +82,10 @@ HANDLER ${handler} {
 
 TARGET_DRIVER iscsi {
     enabled 1
+## Currently SCST only supports one iSNS server
+% if global_config['isns_servers']:
+    iSNSServer ${global_config['isns_servers'][0]}
+% endif
 ## We are supposed to set iSNS server here but unfortunately that is not working
 ## An issue has been opened with scst regarding that and duplicating of target reporting on each new portal
 ## https://sourceforge.net/p/scst/tickets/38/ ( let's please fix this once we hear back from them )

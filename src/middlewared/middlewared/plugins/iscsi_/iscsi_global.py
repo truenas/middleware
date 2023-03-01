@@ -1,10 +1,10 @@
 import re
 
 import middlewared.sqlalchemy as sa
-
 from middlewared.async_validators import validate_port
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import private, SystemServiceService, ValidationErrors
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts
+from middlewared.service import SystemServiceService, ValidationErrors, private
+from middlewared.utils import run
 from middlewared.validators import IpAddress, Range
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
@@ -75,8 +75,8 @@ class ISCSIGlobalService(SystemServiceService):
             self.middleware, 'iscsiglobal_update.listen_port', new['listen_port'], 'iscsi.global'
         ))
 
-        if verrors:
-            raise verrors
+        verrors.check()
+        licensed = await self.middleware.call('failover.licensed')
 
         new['isns_servers'] = '\n'.join(servers)
 
@@ -85,7 +85,26 @@ class ISCSIGlobalService(SystemServiceService):
         if old['alua'] != new['alua']:
             await self.middleware.call('etc.generate', 'loader')
 
+        # If we have just turned off iSNS then work around a short-coming in scstadmin reload
+        if old['isns_servers'] != new['isns_servers'] and not servers:
+            await self.middleware.call('iscsi.global.stop_active_isns')
+            if licensed:
+                await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
+
         return await self.config()
+
+    @private
+    async def stop_active_isns(self):
+        """
+        Unfortunately a SCST reload does not stop a previously active iSNS config, so
+        need to be able to perform an explicit action.
+        """
+        cp = await run([
+            'scstadmin', '-force', '-noprompt', '-set_drv_attr', 'iscsi',
+            '-attributes', 'iSNSServer=""'
+        ], check=False)
+        if cp.returncode:
+            self.middleware.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
     @accepts()
     async def alua_enabled(self):
