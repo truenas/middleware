@@ -129,7 +129,14 @@ class CtdbSharedVolumeService(Service):
         priv_ctdb_ips = [i['address'] for i in await self.middleware.call('ctdb.private.ips.query')]
         for ip_to_add in [i for i in ips if i not in [j for j in priv_ctdb_ips]]:
             ip_add_job = await self.middleware.call('ctdb.private.ips.create', {'ip': ip_to_add})
-            await ip_add_job.wait()
+            try:
+                await ip_add_job.wait(raise_error=True)
+            except CallError as e:
+                if e.errno == errno.EEXIST:
+                    # This private IP has already been added. We can safely continue.
+                    continue
+
+                raise
 
         # this sends an event telling all peers in the TSP (including this system)
         # to start the ctdb service
