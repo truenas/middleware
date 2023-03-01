@@ -9,6 +9,7 @@ from functions import SSH_TEST
 from auto_config import hostname, ip
 
 from assets.REST.directory_services import active_directory, ldap, override_nameservers
+from middlewared.test.integration.utils import call
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
@@ -51,6 +52,9 @@ def do_ldap_connection(request):
 
 def test_08_test_ssh_ad(do_ad_connection, request):
     depends(request, ["ssh_password"], scope="session")
+    userobj = call('user.get_user_obj', {'username': f'{ADUSERNAME}@{AD_DOMAIN}'})
+    groupobj = call('group.get_group_obj', {'gid': userobj['pw_gid']})
+    call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
     cmd = 'ls -la'
     results = SSH_TEST(cmd, f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD, ip)
     assert results['result'] is True, results['output']
@@ -58,6 +62,9 @@ def test_08_test_ssh_ad(do_ad_connection, request):
 
 def test_09_test_ssh_ldap(do_ldap_connection, request):
     depends(request, ["ssh_password"], scope="session")
+    userobj = call('user.get_user_obj', {'username': LDAPUSER})
+    groupobj = call('group.get_group_obj', {'gid': userobj['pw_gid']})
+    call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
     cmd = 'ls -la'
     results = SSH_TEST(cmd, LDAPUSER, LDAPPASSWORD, ip)
     assert results['result'] is True, results['output']
