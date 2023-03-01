@@ -2,6 +2,7 @@ import pytest
 
 from middlewared.client import ValidationErrors
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.mock_binary import mock_binary
 
 SYSCTL = "kernel.watchdog"
 SYSCTL_DEFAULT_VALUE = "1"
@@ -114,36 +115,37 @@ def test_udev_lifecycle():
 
 
 def test_zfs_lifecycle():
-    def assert_default_value():
-        assert ssh("cat /etc/modprobe.d/zfs.conf", check=False) == f""
-        assert ssh(f"cat /sys/module/zfs/parameters/{ZFS}") == f"{ZFS_DEFAULT_VALUE}\n"
+    with mock_binary("/usr/sbin/update-initramfs", exitcode=0):
+        def assert_default_value():
+            assert ssh("cat /etc/modprobe.d/zfs.conf", check=False) == f""
+            assert ssh(f"cat /sys/module/zfs/parameters/{ZFS}") == f"{ZFS_DEFAULT_VALUE}\n"
 
-    def assert_new_value():
-        assert ssh("cat /etc/modprobe.d/zfs.conf", check=False) == f"options zfs {ZFS}={ZFS_NEW_VALUE}\n"
-        assert ssh(f"cat /sys/module/zfs/parameters/{ZFS}") == f"{ZFS_NEW_VALUE}\n"
+        def assert_new_value():
+            assert ssh("cat /etc/modprobe.d/zfs.conf", check=False) == f"options zfs {ZFS}={ZFS_NEW_VALUE}\n"
+            assert ssh(f"cat /sys/module/zfs/parameters/{ZFS}") == f"{ZFS_NEW_VALUE}\n"
 
-    assert_default_value()
+        assert_default_value()
 
-    tunable = call("tunable.create", {
-        "type": "ZFS",
-        "var": ZFS,
-        "value": ZFS_NEW_VALUE,
-    }, job=True)
+        tunable = call("tunable.create", {
+            "type": "ZFS",
+            "var": ZFS,
+            "value": ZFS_NEW_VALUE,
+        }, job=True)
 
-    assert_new_value()
+        assert_new_value()
 
-    call("tunable.update", tunable["id"], {
-        "enabled": False,
-    }, job=True)
+        call("tunable.update", tunable["id"], {
+            "enabled": False,
+        }, job=True)
 
-    assert_default_value()
+        assert_default_value()
 
-    call("tunable.update", tunable["id"], {
-        "enabled": True,
-    }, job=True)
+        call("tunable.update", tunable["id"], {
+            "enabled": True,
+        }, job=True)
 
-    assert_new_value()
+        assert_new_value()
 
-    call("tunable.delete", tunable["id"], job=True)
+        call("tunable.delete", tunable["id"], job=True)
 
-    assert_default_value()
+        assert_default_value()
