@@ -61,6 +61,7 @@ def update_zfs_default(root):
         with open(zfs_config_path, "w") as f:
             f.write(new_config)
         return True
+
     return False
 
 
@@ -70,7 +71,7 @@ def get_current_gpu_pci_ids(root):
     return [dev["pci_id"] for gpu in to_isolate for dev in gpu["devices"]]
 
 
-def update_module_files(root, config):
+def update_pci_module_files(root, config):
     def get_path(p):
         return os.path.join(root, p)
 
@@ -86,11 +87,12 @@ def update_module_files(root, config):
     ):
         with contextlib.suppress(Exception):
             os.unlink(path)
-    if not pci_ids:
-        return
 
     os.makedirs(get_path("etc/initramfs-tools"), exist_ok=True)
     os.makedirs(get_path("etc/modprobe.d"), exist_ok=True)
+
+    if not pci_ids:
+        return
 
     for path in map(get_path, ["etc/initramfs-tools/modules", "etc/modules"]):
         with open(path, "w") as f:
@@ -115,7 +117,7 @@ def update_module_files(root, config):
         f.write(f"options vfio-pci ids={','.join(pci_ids)}\n")
 
 
-def update_initramfs_config(root):
+def update_pci_initramfs_config(root):
     initramfs_config_path = os.path.join(root, "boot/initramfs_config.json")
     initramfs_config = {
         "pci_ids": get_current_gpu_pci_ids(root),
@@ -129,7 +131,41 @@ def update_initramfs_config(root):
         with open(initramfs_config_path, "w") as f:
             f.write(json.dumps(initramfs_config))
 
-        update_module_files(root, initramfs_config)
+        update_pci_module_files(root, initramfs_config)
+        return True
+
+    return False
+
+
+def update_zfs_module_config(root):
+    options = []
+    for tunable in query_table("system_tunable", os.path.join(root, FREENAS_DATABASE[1:]), "tun_"):
+        if tunable["type"] != "ZFS":
+            continue
+        if not tunable["enabled"]:
+            continue
+
+        options.append(f"{tunable['var']}={tunable['value']}")
+
+    if options:
+        config = f"options zfs {' '.join(options)}\n"
+    else:
+        config = None
+
+    config_path = os.path.join(root, "etc", "modprobe.d", "zfs.conf")
+    try:
+        with open(config_path) as f:
+            existing_config = f.read()
+    except FileNotFoundError:
+        existing_config = None
+
+    if existing_config != config:
+        if config is None:
+            os.unlink(config_path)
+        else:
+            with open(config_path, "w") as f:
+                f.write(config)
+
         return True
 
     return False
@@ -142,10 +178,10 @@ if __name__ == "__main__":
             sys.path.insert(0, os.path.join(root, "usr/lib/python3/dist-packages"))
 
         from middlewared.service_exception import CallError
-        from middlewared.utils.db import FREENAS_DATABASE, query_config_table
+        from middlewared.utils.db import FREENAS_DATABASE, query_config_table, query_table
         from middlewared.utils.gpu import get_gpus
 
-        update_required = update_zfs_default(root) | update_initramfs_config(root)
+        update_required = update_zfs_default(root) | update_pci_initramfs_config(root) | update_zfs_module_config(root)
         if update_required:
             subprocess.run(["chroot", root, "update-initramfs", "-k", "all", "-u"], check=True)
     except Exception:
