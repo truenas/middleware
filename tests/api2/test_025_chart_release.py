@@ -11,7 +11,7 @@ from auto_config import ha, dev_test, interface, pool_name
 
 # comment pytestmark for development testing with --dev-test
 # pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
-pytestmark = pytest.mark.skipif(True, textwrap.dedent("""
+pytestmark = pytest.mark.skipif(True, reason=textwrap.dedent("""
 Disabling these until the design and validity of these tests
 can be reviewed.
 
