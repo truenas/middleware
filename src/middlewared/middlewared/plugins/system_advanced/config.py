@@ -347,3 +347,4 @@ class SystemAdvancedService(ConfigService):
             {'isolated_gpu_pci_ids': isolated_gpu_pci_ids},
             {'prefix': self._config.datastore_prefix}
         )
+        await self.middleware.call('boot.update_initramfs')
