@@ -682,7 +682,7 @@ class KerberosService(TDBWrapConfigService):
     async def stop(self):
         renewal_job = await self.middleware.call(
             'core.get_jobs',
-            [['method', '=', 'kerberos.wait_for_renewal']]
+            [['method', '=', 'kerberos.wait_for_renewal'], ['state', '=', 'RUNNING']]
         )
         if renewal_job:
             await self.middleware.call('core.job_abort', renewal_job[0]['id'])
