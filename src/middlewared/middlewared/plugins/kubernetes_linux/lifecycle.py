@@ -376,9 +376,26 @@ class KubernetesService(Service):
 
     @private
     async def start_service(self):
+        await self.before_start_check()
         await self.middleware.call('k8s.migration.scale_version_check')
         await self.middleware.call('k8s.migration.run')
         await self.middleware.call('service.start', 'kubernetes')
+
+    @private
+    async def before_start_check(self):
+        try:
+            await self.middleware.call('kubernetes.validate_k8s_fs_setup')
+        except CallError as e:
+            if e.errno != CallError.EDATASETISLOCKED:
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'ApplicationsConfigurationFailed',
+                    {'error': e.errmsg},
+                )
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+
+            raise
 
 
 async def _event_system_ready(middleware, event_type, args):
