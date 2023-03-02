@@ -35,8 +35,11 @@ class K8sCRIService(Service):
         await self.middleware.call('service.stop', 'docker')
 
     async def re_initialization_needed(self):
-        await self.middleware.call('service.start', 'docker')
+        started = await self.middleware.call('service.started', 'docker')
+        if not started:
+            await self.middleware.call('service.start', 'docker')
         try:
             return await self.middleware.call('container.image.query') == []
         finally:
-            await self.middleware.call('service.stop', 'docker')
+            if started:
+                await self.middleware.call('service.stop', 'docker')
