@@ -166,9 +166,42 @@ class EnclosureService(Service):
         return self.fake_nvme_enclosure(*self.map_r50_or_r50b_impl(info, acpihandles))
 
     @private
+    def map_r30(self):
+        _id = 'r30_nvme_enclosure'
+        name = 'R30 NVMe Enclosure'
+        model = 'R30'
+        count = 16  # r30 has 16 nvme drive bays in head-unit (all nvme flash system)
+
+        nvmes = {}
+        for i in Context().list_devices(subsystem='nvme'):
+            try:
+                # looks like 0000:80:40.0
+                nvmes[i.parent.sys_name[:-2]] = i.sys_name
+            except (IndexError, AttributeError):
+                continue
+
+        # the keys in this dictionary are the 16 physical pcie slot ids
+        # and the values are the slots that the webUI uses to map them
+        # to their physical locations in a human manageable way
+        webui_map = {
+            '27': 1, '26': 7, '25': 2, '24': 8,
+            '37': 3, '36': 9, '35': 4, '34': 10,
+            '45': 5, '47': 11, '40': 6, '41': 12,
+            '38': 14, '39': 16, '43': 13, '44': 15,
+        }
+
+        mapped = {}
+        for i in Path('/sys/bus/pci/slots').iterdir():
+            addr = (i / 'address').read_text().strip()
+            if (nvme := nvmes.get(addr, None)) and (mapped_slot := webui_map.get(i.name, None)):
+                mapped[mapped_slot] = nvme
+
+        return self.fake_nvme_enclosure(_id, name, model, count, mapped)
+
+    @private
     def valid_hardware(self, prod):
         prefix = 'TRUENAS-'
-        models = ['R50', 'R50B', 'R50BM', 'M50', 'M60']
+        models = ['R30', 'R50', 'R50B', 'R50BM', 'M50', 'M60']
         if prod != 'TRUENAS-' and any((j in prod for j in [f'{prefix}{i}' for i in models])):
             return prod.split('-')[1]
 
@@ -180,6 +213,9 @@ class EnclosureService(Service):
 
         if prod == 'R50' or prod == 'R50B':
             return self.map_r50_or_r50b(prod)
+        elif prod == 'R30':
+            # all nvme system which we need to handle separately
+            return self.map_r30()
         else:
             # M50/60 and R50BM use same plx nvme bridge
             return self.map_plx_nvme(prod)
