@@ -214,12 +214,12 @@ def test_10_test_get_unused_before_pool_export_and_after_pool_export(request):
 
     with another_pool() as temp:
         # disk should not show up in `exported_zpool` keys
-        results = POST('/disk/get_unused/', False, False)
+        results = POST('/disk/get_unused/', False)
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
         assert not any((i['exported_zpool'] == temp['name'] for i in results.json())), results.json()
 
-    results = POST('/disk/get_unused/', False, False)
+    results = POST('/disk/get_unused/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
     # disk should show up in `exported_zpool` keys

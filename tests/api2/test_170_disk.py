@@ -92,13 +92,13 @@ def test_08_update_disk_password():
 
 
 def test_09_get_unused_disks():
-    results = POST('/disk/get_unused/', False, False)
+    results = POST('/disk/get_unused/', False)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), list), results.text
 
 
 def test_10_perform_wipe_on_unused_disk():
-    unused_disks = POST('/disk/get_unused/', False, False)
+    unused_disks = POST('/disk/get_unused/', False)
     if len(unused_disks.json()) > 0:
         print('in if')
         results = POST('/disk/wipe/', {

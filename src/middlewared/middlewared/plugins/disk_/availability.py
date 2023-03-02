@@ -26,10 +26,9 @@ class DiskService(Service):
         return disks
 
     @private
-    async def get_unused_impl(self, jp=False, ee=False):
+    async def get_unused_impl(self, jp=False):
         """
-        `jp` boolean: (join partitions) will get partitions on the disk
-        'ee' boolean: (expand enclosure) will decode enclosure_slot info for the disk
+        `jp` boolean: (join partitions) will retrieve all partitions on the disk(s)
         """
         in_use_disks_imported = []
         for guid, info in (await self.middleware.call('zfs.pool.query_imported_fast')).items():
@@ -70,14 +69,10 @@ class DiskService(Service):
                 j['name'] for j in serial_to_disk[(i['serial'], i['lunid'])] if j['name'] != i['name']
             ]
 
-            # add enclosure information if requested
+            # add enclosure information
             i['enclosure'] = {}
-            enc_info = i.pop('enclosure_slot', None)
-            if ee and enc_info is not None:
-                i['enclosure'] = {
-                    'number': enc_info // 1000,
-                    'slot': enc_info % 1000,
-                }
+            if (enc_info := i.pop('enclosure_slot', None) is not None):
+                i['enclosure'] = {'number': enc_info // 1000, 'slot': enc_info % 1000}
 
             # query partitions for the disk(s) if requested
             i['partitions'] = []
@@ -93,21 +88,16 @@ class DiskService(Service):
 
         return unused
 
-    @accepts(
-        Bool('join_partitions', default=False),
-        Bool('expand_enclosure', default=False)
-    )
-    async def get_unused(self, join_partitions, expand_enclosure):
+    @accepts(Bool('join_partitions', default=False))
+    async def get_unused(self, join_partitions):
         """
         Return disks that are not in use by any zpool that is currently imported. It will
         also return disks that are in use by any zpool that is exported.
 
         `join_partitions`: Bool, when True will return all partitions currently written to disk
             NOTE: this is an expensive operation
-        `expand_enclosure`: Bool, when True will return enclosure number and enclosure slot the
-            disk is currently sitting in.
         """
-        return await self.get_unused_impl(join_partitions, expand_enclosure)
+        return await self.get_unused_impl(join_partitions)
 
     @private
     async def get_reserved(self):
