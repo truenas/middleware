@@ -33,3 +33,10 @@ class K8sCRIService(Service):
         await self.middleware.call('container.image.load_default_images')
 
         await self.middleware.call('service.stop', 'docker')
+
+    async def re_initialization_needed(self):
+        await self.middleware.call('service.start', 'docker')
+        try:
+            return await self.middleware.call('container.image.query') == []
+        finally:
+            await self.middleware.call('service.stop', 'docker')
