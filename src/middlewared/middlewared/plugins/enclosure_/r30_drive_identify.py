@@ -1,6 +1,6 @@
 from subprocess import run, PIPE, STDOUT
 
-from middlewared.service_exceptions import CallError
+from middlewared.service_exception import CallError
 
 
 def slot_to_controller_and_bay_mapping(slot):
@@ -65,7 +65,7 @@ def set_slot_status(slot, status):
     ctrl, bay = slot_to_controller_and_bay_mapping(slot)
     status = led_status_mapping(status)
 
-    base = 'ipmitool raw 0x06 0x52 0x07 {ctrl} 0x00'
+    base = f'ipmitool raw 0x06 0x52 0x07 {ctrl} 0x00'
     manual_mode_cmd = f'{base} 0x3c 0xff'
     clear_ident_cmd = f'{base} {led_status_mapping("IDENTIFY")} {bay}'
     clear_fault_cmd = f'{base} {led_status_mapping("FAULT")} {bay}'
@@ -81,4 +81,4 @@ def set_slot_status(slot, status):
     cmds = '; '.join(cmds)
     ret = run(cmds, stdout=PIPE, stderr=STDOUT, shell=True)
     if ret.returncode != 0:
-        raise CallError('Failed to run {cmds!r}: {ret.stdout.decode()}')
+        raise CallError(f'Failed to run {cmds!r}: {ret.stdout.decode()}')
