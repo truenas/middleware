@@ -103,6 +103,9 @@ class TDBWrap(object):
 
         return output
 
+    def health(self):
+        return 'OK'
+
     def __init__(self, name, options, logger):
         self.name = str(name)
         tdb_type = options.get('backend', 'PERSISTENT')
@@ -149,6 +152,10 @@ class CTDBWrap(object):
             self.hdl
 
         super().__init__()
+
+    def health(self):
+        db_status = self.hdl.status()
+        return db_status['health']
 
     def validate_handle(self):
         return self.hdl is not None

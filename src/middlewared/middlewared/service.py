@@ -656,13 +656,31 @@ class TDBWrapConfigService(ConfigService):
 
         return status
 
+    @private
+    async def db_healthy(self):
+        try:
+            health = await self.middleware.call("tdb.health", {
+                "name": self._config.service,
+                "tdb-options": self.tdb_options.copy(),
+            })
+        except Exception:
+            self.logger.warning("%s: ctdb volume health status check failed.",
+                                self._config.service, exc_info=True)
+        else:
+            if health == "OK":
+                return True
+
+            self.logger.warning("%s: health status is [%s] returning default value",
+                                self._config.service, health)
+        return False
+
     @accepts()
     async def config(self):
         is_clustered = await self.is_clustered()
         if not is_clustered:
             return await super().config()
 
-        if not await self.cluster_healthy():
+        if not await self.cluster_healthy() and not await self.db_healthy():
             return copy.deepcopy(self.tdb_defaults)
 
         tdb_config = await self.middleware.call("tdb.config", {
@@ -1330,6 +1348,25 @@ class TDBWrapCRUDService(CRUDService):
             'tdb-options': self.tdb_options.copy()
         })
 
+    @private
+    async def db_healthy(self):
+        try:
+            health = await self.middleware.call("tdb.health", {
+                "name": self._config.namespace,
+                "tdb-options": self.tdb_options.copy(),
+            })
+        except Exception:
+            self.logger.warning("%s: ctdb volume health status check failed.",
+                                self._config.service, exc_info=True)
+        else:
+            if health == "OK":
+                return True
+
+            self.logger.warning("%s: health status is [%s] returning default value",
+                                self._config.service, health)
+
+        return False
+
     @filterable
     async def query(self, filters, options):
         is_clustered = await self.is_clustered()
@@ -1337,7 +1374,7 @@ class TDBWrapCRUDService(CRUDService):
             res = await super().query(filters, options)
             return res
 
-        if not await self.cluster_healthy():
+        if not await self.cluster_healthy() and not await self.db_healthy():
             return copy.deepcopy(self.tdb_defaults)
 
         res = await self.middleware.call('tdb.query', {
