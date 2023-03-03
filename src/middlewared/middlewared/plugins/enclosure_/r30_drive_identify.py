@@ -63,7 +63,7 @@ def set_slot_status(slot, status):
         6. switch back to auto mode
     """
     ctrl, bay = slot_to_controller_and_bay_mapping(slot)
-    status = led_status_mapping(status)
+    status_map = led_status_mapping(status)
 
     base = f'ipmitool raw 0x06 0x52 0x07 {ctrl} 0x00'
     manual_mode_cmd = f'{base} 0x3c 0xff'
@@ -71,8 +71,8 @@ def set_slot_status(slot, status):
     clear_fault_cmd = f'{base} {led_status_mapping("FAULT")} {bay}'
     clear_rebui_cmd = f'{base} {led_status_mapping("REBUILD")} {bay}'
     cmds = [manual_mode_cmd, clear_ident_cmd, clear_fault_cmd, clear_rebui_cmd]
-    if cmds != 'CLEAR':
-        cmds.append(f'{base} {status} {bay}')
+    if status != 'CLEAR':
+        cmds.append(f'{base} {status_map} {bay}')
 
     # always go back to auto mode (for now)
     cmds.append(f'{base} 0x3c 0x00')
