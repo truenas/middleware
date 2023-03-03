@@ -576,6 +576,7 @@ def test_21_creating_shareuser_to_test_acls(request):
         "group_create": True,
         "password": ACL_PWD,
         "uid": next_uid,
+        "ssh_password_enabled": True,
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
