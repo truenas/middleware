@@ -9,8 +9,10 @@ from middlewared.service import CallError, Service
 from middlewared.utils import osc
 from middlewared.utils.io import write_if_changed
 from middlewared.utils.mako import get_template
+from middlewared.utils.osc import openat2, ResolveFlags
 
 DEFAULT_ETC_PERMS = 0o644
+RFLAGS = ResolveFlags.RESOLVE_NO_SYMLINKS | ResolveFlags.RESOLVE_NO_XDEV
 
 
 class FileShouldNotExist(Exception):
@@ -401,9 +403,10 @@ class EtcService(Service):
 
     def make_changes(self, full_path, entry, rendered):
         mode = entry.get('mode', DEFAULT_ETC_PERMS)
+        rflags = entry.get('resolve', RFLAGS)
 
         def opener(path, flags):
-            return os.open(path, os.O_CREAT | os.O_RDWR, mode=mode)
+            return openat2(path, os.O_CREAT | os.O_RDWR, mode=mode, resolve=rflags)
 
         outfile_dirname = os.path.dirname(full_path)
         if outfile_dirname != '/etc':
