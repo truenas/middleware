@@ -229,7 +229,8 @@ def test_10_creating_shareuser_to_test_acls(request):
         "password": MODE_PWD,
         "uid": next_uid,
         "groups": [groupid],
-        "shell": '/usr/bin/bash'
+        "shell": '/usr/bin/bash',
+        "ssh_password_enabled": True,
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
