@@ -207,9 +207,15 @@ class EnclosureService(CRUDService):
     @accepts(Str("enclosure_id"), Int("slot"), Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"]))
     def set_slot_status(self, enclosure_id, slot, status):
         enclosure, element = self._get_slot(lambda element: element["slot"] == slot, [["id", "=", enclosure_id]])
-        ses_slot = self._get_ses_slot(enclosure, element)
-        if not ses_slot.device_slot_set(status.lower()):
-            raise CallError("Error setting slot status")
+        if enclosure_id == 'r30_nvme_enclosure':
+            # TODO this is an all NVMe system and drive identify is done
+            # exclusively via ipmi raw commands....this will need its own
+            # implementation
+            pass
+        else:
+            ses_slot = self._get_ses_slot(enclosure, element)
+            if not ses_slot.device_slot_set(status.lower()):
+                raise CallError("Error setting slot status")
 
     @private
     def sync_disk(self, id, enclosure_info=None):
