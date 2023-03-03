@@ -172,13 +172,21 @@ class EnclosureService(Service):
         model = 'R30'
         count = 16  # r30 has 16 nvme drive bays in head-unit (all nvme flash system)
 
+        ctx = Context()
         nvmes = {}
-        for i in Context().list_devices(subsystem='nvme'):
+        for i in ctx.list_devices(subsystem='nvme'):
             try:
-                # looks like 0000:80:40.0
-                nvmes[i.parent.sys_name[:-2]] = i.sys_name
-            except (IndexError, AttributeError):
+                namespace_dev = Devices.from_path(ctx, f'{i.sys_path}/{i.sys_name}n1')
+            except DeviceNotFoundAtPathError:
+                # no namespace for the device
                 continue
+            else:
+                try:
+                    # i.parent.sys_name looks like 0000:80:40.0
+                    # namespace_dev.sys_name looks like nvme1n1
+                    nvmes[i.parent.sys_name[:-2]] = namespace_dev.sys_name
+                except (IndexError, AttributeError):
+                    continue
 
         # the keys in this dictionary are the 16 physical pcie slot ids
         # and the values are the slots that the webUI uses to map them
