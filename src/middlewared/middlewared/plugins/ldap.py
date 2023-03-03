@@ -1218,7 +1218,7 @@ class LDAPService(TDBWrapConfigService):
         await self.middleware.call('etc.generate', 'rc')
         await self.middleware.call('etc.generate', 'ldap')
         await self.middleware.call('etc.generate', 'pam')
-        await self.middleware.call(f'service.{action.lower}' 'nslcd')
+        await self.middleware.call(f'service.{action.lower()}', 'nslcd')
         await self._service_change('cifs', 'restart')
         await self.middleware.call(f'service.{action.lower()}', 'dscache')
 
