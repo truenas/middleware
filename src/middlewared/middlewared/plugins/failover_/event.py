@@ -580,7 +580,7 @@ class FailoverEventsService(Service):
         if await self.middleware.call('kubernetes.license_active') and (
             await self.middleware.call('kubernetes.config')
         )['dataset']:
-            self.middleware.create_task(self.middleware.call('kubernetes.start_service'))
+            self.middleware.create_task(self.middleware.call('kubernetes.start_service_on_ha'))
 
     @job(lock='vrrp_backup')
     def vrrp_backup(self, job, fobj, ifname, event):

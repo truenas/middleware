@@ -4,7 +4,6 @@ import os
 import re
 
 from middlewared.plugins.kubernetes_linux.k8s.config import remove_initialized_config
-from middlewared.service import CallError
 from middlewared.utils import run
 
 from .base import SimpleService
@@ -39,20 +38,7 @@ class KubernetesService(SimpleService):
         )
 
     async def before_start(self):
-        try:
-            await self.middleware.call('kubernetes.validate_k8s_fs_setup')
-        except CallError as e:
-            if e.errno != CallError.EDATASETISLOCKED:
-                await self.middleware.call(
-                    'alert.oneshot_create',
-                    'ApplicationsConfigurationFailed',
-                    {'error': e.errmsg},
-                )
-            else:
-                await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
-
-            raise
-
+        await self.middleware.call('kubernetes.before_start_check')
         await self.mount_kubelet_dataset()
         await self.clear_chart_releases_cache()
 

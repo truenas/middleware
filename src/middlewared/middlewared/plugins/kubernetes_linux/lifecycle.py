@@ -378,9 +378,37 @@ class KubernetesService(Service):
 
     @private
     async def start_service(self):
+        await self.before_start_check()
+        return await self.start_service_impl()
+
+    @private
+    async def start_service_impl(self):
         await self.middleware.call('k8s.migration.scale_version_check')
         await self.middleware.call('k8s.migration.run')
         await self.middleware.call('service.start', 'kubernetes')
+
+    @private
+    async def start_service_on_ha(self):
+        await self.before_start_check()
+        if await self.middleware.call('k8s.cri.re_initialization_needed'):
+            await self.middleware.call('k8s.cri.re_initialize')
+        await self.start_service_impl()
+
+    @private
+    async def before_start_check(self):
+        try:
+            await self.middleware.call('kubernetes.validate_k8s_fs_setup')
+        except CallError as e:
+            if e.errno != CallError.EDATASETISLOCKED:
+                await self.middleware.call(
+                    'alert.oneshot_create',
+                    'ApplicationsConfigurationFailed',
+                    {'error': e.errmsg},
+                )
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+
+            raise
 
 
 async def _event_system(middleware, event_type, args):
