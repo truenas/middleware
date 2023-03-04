@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from functions import GET, POST, PUT, SSH_TEST, make_ws_request, wait_on_job
 from protocols import nfs_share, SSH_NFS
 from pytest_dependency import depends
+from middlewared.test.integration.utils import call
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
@@ -313,7 +314,7 @@ def test_05_kinit_as_ad_user(setup_nfs_share):
     assert res['result'] is True
 
     res = SSH_TEST(f'test -f /tmp/krb5cc_{setup_nfs_share[1]["uid"]}', user, password, ip)
-    assert res['result'] is True, results['stderr']
+    assert res['result'] is True, res['stderr']
 
     results = POST('/service/restart/', {'service': 'nfs'})
     assert results.status_code == 200, results.text
@@ -348,6 +349,9 @@ if not ha:
         This is fine for our purposes as we're validating that
         sec=krb5 works.
         """
+        userobj = call('user.get_user_obj', {'username': f'{ADUSERNAME}@{AD_DOMAIN}'})
+        groupobj = call('group.get_group_obj', {'gid': userobj['pw_gid']})
+        call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
         with SSH_NFS(
             my_fqdn,
             f'/mnt/{pool_name}/NFSKRB5',
