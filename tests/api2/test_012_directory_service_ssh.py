@@ -57,7 +57,7 @@ def test_08_test_ssh_ad(do_ad_connection, request):
     call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
     cmd = 'ls -la'
     results = SSH_TEST(cmd, f'{ADUSERNAME}@{AD_DOMAIN}', ADPASSWORD, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, results
 
 
 def test_09_test_ssh_ldap(do_ldap_connection, request):
@@ -67,4 +67,4 @@ def test_09_test_ssh_ldap(do_ldap_connection, request):
     call('ssh.update', {"password_login_groups": [groupobj['gr_name']]})
     cmd = 'ls -la'
     results = SSH_TEST(cmd, LDAPUSER, LDAPPASSWORD, ip)
-    assert results['result'] is True, results['output']
+    assert results['result'] is True, results
