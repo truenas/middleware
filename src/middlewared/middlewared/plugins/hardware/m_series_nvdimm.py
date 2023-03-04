@@ -21,7 +21,7 @@ class MseriesNvdimmService(Service):
             errors="ignore",
         ).stdout
 
-    def get_size_and_clock_speed(output):
+    def get_size_and_clock_speed(self, output):
         size = clock_speed = None
         if "vendor: 2c80 device: 4e32" in output:
             size = 16
@@ -35,7 +35,7 @@ class MseriesNvdimmService(Service):
 
         return size, clock_speed
 
-    def get_firmware_version_and_detect_old_bios(output):
+    def get_firmware_version_and_detect_old_bios(self, output):
         fw_vers = None
         old_bios = False
         if m := re.search(r"selected: [0-9]+ running: ([0-9]+)", output):
@@ -46,6 +46,10 @@ class MseriesNvdimmService(Service):
             old_bios = True
 
         return fw_vers, old_bios
+
+    def get_module_health(self, output):
+        if (m := re.search(r"Module Health:[^\n]+")):
+            return m.group().split("Module Health: ")[-1].strip()
 
     @cache
     def info(self):
@@ -65,7 +69,9 @@ class MseriesNvdimmService(Service):
 
                 results.append({
                     "index": int(nmem[len("/dev/nmem"):]),
+                    "dev": nmem.removeprefix("/dev/"),
                     "size": size,
+                    "module_health": self.get_module_health(output),
                     "clock_speed": clock_speed,
                     "firmware_version": fw_vers,
                     "old_bios": old_bios,
