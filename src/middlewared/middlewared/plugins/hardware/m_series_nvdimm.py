@@ -3,7 +3,6 @@ import re
 import subprocess
 
 from middlewared.service import Service
-from middlewared.utils.functools import cache
 
 
 class MseriesNvdimmService(Service):
@@ -51,7 +50,6 @@ class MseriesNvdimmService(Service):
         if (m := re.search(r"Module Health:[^\n]+")):
             return m.group().split("Module Health: ")[-1].strip()
 
-    @cache
     def info(self):
         results = []
         chassis = self.middleware.call_sync("truenas.get_chassis_hardware")
