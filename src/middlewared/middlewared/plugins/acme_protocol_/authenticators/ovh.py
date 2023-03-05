@@ -3,7 +3,7 @@ import logging
 from lexicon.providers.ovh import ENDPOINTS
 from certbot_dns_ovh._internal.dns_ovh import _OVHLexiconClient
 
-from middlewared.schema import accepts, Dict, Str, ValidationErrors
+from middlewared.schema import accepts, Dict, Str
 from middlewared.service import skip_arg
 
 from .base import Authenticator
