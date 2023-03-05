@@ -12,6 +12,7 @@ from .base import Authenticator
 logger = logging.getLogger(__name__)
 OVH_ENDPOINTS = tuple(ENDPOINTS.keys())
 
+
 class OVHAuthenticator(Authenticator):
 
     NAME = 'OVH'
