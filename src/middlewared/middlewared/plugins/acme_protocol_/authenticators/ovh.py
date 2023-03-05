@@ -18,10 +18,10 @@ class OVHAuthenticator(Authenticator):
     PROPAGATION_DELAY = 60
     SCHEMA = Dict(
         'OVH',
-        Str('application_key', empty=False, null=False, title='OVH Application Key'),
-        Str('application_secret', empty=False, null=False, title='OVH Application Secret'),
-        Str('consumer_key', empty=False, null=False, title='OVH Consumer Key'),
-        Str('endpoint', empty=False, default='ovh-eu', title='OVH Endpoint', enum=OVH_ENDPOINTS),
+        Str('application_key', empty=False, null=False, title='OVH Application Key', required=True),
+        Str('application_secret', empty=False, null=False, title='OVH Application Secret', required=True),
+        Str('consumer_key', empty=False, null=False, title='OVH Consumer Key', required=True),
+        Str('endpoint', empty=False, default='ovh-eu', title='OVH Endpoint', enum=OVH_ENDPOINTS, required=True),
     )
 
     def initialize_credentials(self):
@@ -34,8 +34,6 @@ class OVHAuthenticator(Authenticator):
     @accepts(SCHEMA)
     @skip_arg(count=1)
     async def validate_credentials(middleware, data):
-        verrors = ValidationErrors()
-        verrors.check()
         return data
 
     def _perform(self, domain, validation_name, validation_content):
