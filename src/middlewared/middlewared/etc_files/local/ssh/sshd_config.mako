@@ -113,11 +113,11 @@ PrintMotd no
 SetEnv LC_ALL=C.UTF-8
 % if ssh_config['passwordauth']:
 % for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
-Match User ${user['username']}
+Match User "${user['username']}"
 	PasswordAuthentication yes
 % endfor
 % for group in ssh_config['password_login_groups']:
-Match Group ${group}
+Match Group "${group}"
 	PasswordAuthentication yes
 % endfor
 % endif
