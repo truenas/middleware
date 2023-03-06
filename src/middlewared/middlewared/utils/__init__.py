@@ -112,7 +112,15 @@ def get(obj, path):
 
 
 class filters(object):
-    opmap = {
+    case_opmap = {
+        '=': lambda x, y: x is not None and x.casefold() == y.casefold(),
+        '^': lambda x, y: x is not None and x.casefold().startswith(y.casefold()),
+        '!^': lambda x, y: x is not None and not x.casefold().startswith(y.casefold()),
+        '$': lambda x, y: x is not None and x.casefold().endswith(y.casefold()),
+        '!$': lambda x, y: x is not None and not x.casefold().endswith(y.casefold()),
+    }
+
+    default_opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
         '>': lambda x, y: x > y,
@@ -129,6 +137,8 @@ class filters(object):
         '$': lambda x, y: x is not None and x.endswith(y),
         '!$': lambda x, y: x is not None and not x.endswith(y),
     }
+
+    opmap = default_opmap
 
     def validate_filters(self, filters):
         for f in filters:
@@ -290,8 +300,11 @@ class filters(object):
 
     def filter_list(self, _list, filters=None, options=None):
         options, select, order_by = self.validate_options(options)
-
         do_shortcircuit = options.get('get') and not order_by
+
+        if options.get('extra', {}).get('casefold', False):
+            self.opmap = self.case_opmap
+
         if filters:
             self.validate_filters(filters)
             rv = self.do_filters(_list, filters, select, do_shortcircuit)

@@ -219,3 +219,15 @@ def test__filter_list_option_nulls_first():
 
 def test__filter_list_option_nulls_last():
     assert filter_list(DATA_WITH_NULL, [], {'order_by': ['nulls_last:foo']})[-1]['foo'] is None
+
+
+def test__filter_list_option_casefold_equals():
+    assert len(filter_list(DATA, [['foo', '=', 'Foo1'], {'extra': {'casefold': True}})) == 1
+
+
+def test__filter_list_option_casefold_starts():
+    assert len(filter_list(DATA, [['foo', '^', 'F'], {'extra': {'casefold': True}})) == 2
+
+
+def test__filter_list_option_casefold_ends():
+    assert len(filter_list(DATA, [['foo', '$', '_'], {'extra': {'casefold': True}})) == 1
