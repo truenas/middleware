@@ -123,11 +123,6 @@ class CatalogService(Service):
             # reading again from disk hence the extra 1 hour.
             self.middleware.call_sync('cache.put', get_cache_key(label), trains, 90000)
 
-        if label == OFFICIAL_LABEL:
-            # Update feature map cache whenever official catalog is updated
-            self.middleware.call_sync('catalog.get_feature_map', False)
-            self.retrieve_recommended_apps({'cache': False})
-
         return trains
 
     @private
@@ -179,16 +174,10 @@ class CatalogService(Service):
             questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         return get_item_version_details(version_path, questions_context)
 
-    @accepts(
-        Dict(
-            'options',
-            Bool('cache', default=True),
-        )
-    )
     @private
-    def retrieve_recommended_apps(self, options):
+    def retrieve_recommended_apps(self, cache=True):
         cache_key = 'recommended_apps'
-        if options['cache']:
+        if cache:
             with contextlib.suppress(KeyError):
                 return self.middleware.call_sync('cache.get', cache_key)
 
