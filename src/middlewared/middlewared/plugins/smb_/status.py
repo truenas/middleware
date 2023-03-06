@@ -1,6 +1,7 @@
 from middlewared.schema import Bool, Dict, Ref, Str
 from middlewared.service import Service, accepts
 from middlewared.plugins.smb import SMBCmd
+from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
 import enum
@@ -111,24 +112,38 @@ class SMBService(Service):
         smbstatus = subprocess.run(statuscmd, capture_output=True)
 
         if smbstatus.returncode != 0:
-            self.logger.debug('smbstatus [{%s}] failed with error: ({%s})',
-                              flags, smbstatus.stderr.decode().strip())
+            raise CallError(f'Failed to retrieve SMB status: {smbstatus.stderr.decode().strip()}')
 
-        output = json.loads(smbstatus.stdout.decode())
+        json_status = json.loads(smbstatus.stdout.decode() or '{"sessions": {}}')
 
         if lvl == InfoLevel.SESSIONS:
-            output = output["sessions"]
+            to_filter = list(json_status.get("sessions", {}).values())
 
         elif lvl == InfoLevel.LOCKS:
-            output = output["locked_files"]
+            to_filter = list(json_status.get("open_files", {}).values())
 
         elif lvl == InfoLevel.BYTERANGE:
-            output = output["brl"]
+            to_filter = list(json_status.get("byte_range_locks", {}).values())
 
         elif lvl == InfoLevel.NOTIFICATIONS:
-            output = output["notify"]
+            to_filter = list(json_status.get("notifies", {}).values())
 
-        return filter_list(output, filters, options)
+        elif lvl == InfoLevel.SHARES:
+            to_filter = list(json_status.get("tcons", {}).values())
+
+        else:
+            for tcon in json_status.get("tcons", {}).values():
+                if not (session := json_status['sessions'].get(tcon['session_id'])):
+                    continue
+
+                if not session.get('share_connections'):
+                    session['share_connections'] = [tcon]
+                else:
+                    session['share_connections'].append(tcon)
+
+            to_filter = list(json_status['sessions'].values())
+
+        return filter_list(to_filter, filters, options)
 
     @accepts()
     def client_count(self):
