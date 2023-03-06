@@ -111,6 +111,19 @@ def get(obj, path):
     return cur
 
 
+def casefold(obj):
+    if obj is None:
+        return None
+
+    if isinstance(obj, str):
+        return obj.casefold()
+
+    if isinstance(obj, (list, tuple)):
+        return [x.casefold() for x in obj]
+
+    raise ValueError(f'{type(obj)}: support for casefolding object type not implemented.')
+
+
 class filters(object):
     opmap = {
         '=': lambda x, y: x == y,
@@ -146,7 +159,13 @@ class filters(object):
             elif len(f) != 3:
                 raise ValueError(f'Invalid filter {f}')
 
-            if f[1] not in self.opmap:
+            op = f[1]
+            if op[0] == 'C':
+                op = op[1:]
+                if op == '~':
+                    raise ValueError('Invalid case-insensitive operation: {}'.format(f[1]))
+
+            if op not in self.opmap:
                 raise ValueError('Invalid operation: {}'.format(f[1]))
 
     def validate_options(self, options):
@@ -168,35 +187,35 @@ class filters(object):
 
         return (options, select, order_by)
 
-    def filterop_dict(self, i, f):
+    def filterop(self, i, f, source_getter):
         name, op, value = f
-        source = get(i, name)
-        if self.opmap[op](source, value):
+        source = source_getter(i, name)
+
+        if op[0] == 'C':
+            fn = self.opmap[op[1:]]
+            source = casefold(source)
+            value = casefold(value)
+        else:
+            fn = self.opmap[op]
+
+        if fn(source, value):
             return True
 
         return False
 
-    def filterop(self, i, f):
-        name, op, value = f
-        source = getattr(i, name)
-        if self.opmap[op](source, value):
-            return True
-
-        return False
-
-    def get_filterop(self, _list):
+    def getter_fn(self, _list):
         if not _list:
             return None
 
         if isinstance(_list[0], dict):
-            return self.filterop_dict
+            return get
 
-        return self.filterop
+        return getattr
 
     def do_filters(self, _list, filters, select, shortcircuit):
         rv = []
 
-        filterop = self.get_filterop(_list)
+        getter = self.getter_fn(_list)
         for i in _list:
             valid = True
             for f in filters:
@@ -204,13 +223,13 @@ class filters(object):
                     # OR parsing
                     op, value = f
                     for f in value:
-                        if filterop(i, f):
+                        if self.filterop(i, f, getter):
                             break
                     else:
                         valid = False
                         break
 
-                elif not filterop(i, f):
+                elif not self.filterop(i, f, getter):
                     valid = False
                     break
 

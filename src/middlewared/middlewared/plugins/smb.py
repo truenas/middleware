@@ -1560,6 +1560,9 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
 
+        if await self.query([['name', 'C=', data['name']], ['id', '!=', data.get('id', 0)]]):
+            verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
+
         await self.cluster_share_validate(data, schema_name, verrors)
 
         await self.validate_path_field(data, schema_name, verrors)
@@ -1777,7 +1780,7 @@ class SharingSMBService(SharingService):
         to_del = cf_reg - cf_active
 
         for share in to_add:
-            share_conf = list(filter(lambda x: x['name'].casefold() == share.casefold(), active_shares))
+            share_conf = filter_list(active_shares, [['name', 'C=', share]])
             if path_location(share_conf[0][self.path_field]) is FSLocation.LOCAL:
                 if not await self.middleware.run_in_thread(os.path.exists, share_conf[0]['path']):
                     self.logger.warning("Path [%s] for share [%s] does not exist. "
