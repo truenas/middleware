@@ -291,7 +291,7 @@ class OpenAPIResource(object):
                                                  '`extra.retrieve_properties=false` will pass `retrieve_properties` ' \
                                                  'as an extra argument to pool/dataset endpoint.'
             elif accepts and not (operation == 'delete' and method['item_method'] and len(accepts) == 1) and (
-                '{id}' not in path and not method['filterable']
+                not method['filterable']
             ):
                 opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
