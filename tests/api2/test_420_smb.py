@@ -634,3 +634,44 @@ def test_064_destroying_smb_dataset(request):
     depends(request, ["create_dataset"], scope="session")
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
+
+
+@pytest.mark.parametrize('torture_test', [
+    'local.binding',
+    'local.ntlmssp',
+    'local.smbencrypt',
+    'local.messaging',
+    'local.irpc',
+    'local.strlist',
+    'local.file',
+    'local.str',
+    'local.time',
+    'local.datablob',
+    'local.binsearch',
+    'local.asn1',
+    'local.anonymous_shared',
+    'local.strv',
+    'local.strv_util',
+    'local.util',
+    'local.idtree',
+    'local.dlinklist',
+    'local.genrand',
+    'local.iconv',
+    'local.socket',
+    'local.pac',
+    'local.share',
+    'local.loadparm',
+    'local.charset',
+    'local.convert_string',
+    'local.string_case_handle',
+    'local.compression',
+    'local.event',
+    'local.tevent_req',
+    'local.util_str_escape',
+    'local.talloc',
+    'local.replace',
+    'local.crypto.md4'
+])
+def test_065_local_torture(request, torture_test):
+    results = SSH_TEST(f'smbtorture //127.0.0.1 {torture_test}', user, password, ip)
+    assert results['result'] is True, results['output']
