@@ -1075,12 +1075,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
         Generate list of Kerberos principals that are not the AD machine account.
         """
         ad = await self.middleware.call('activedirectory.config')
-        pruned_list = []
-        for i in keytab_list:
-            if ad['netbiosname'].casefold() not in i['principal'].casefold():
-                pruned_list.append(i)
-
-        return pruned_list
+        return filter_list(keytab_list, [['principal', 'Crnin', ad['netbiosname']]])
 
     @private
     async def _generate_tmp_keytab(self):

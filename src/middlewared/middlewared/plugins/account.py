@@ -1002,7 +1002,7 @@ class UserService(CRUDService):
                                                        [('smb', '=', True)] + exclude_filter,
                                                        {'prefix': 'bsdusr_'})
 
-                if any(filter(lambda x: data['username'].casefold() == x['username'].casefold(), smb_users)):
+                if filter_list(smb_users, [['username', 'C=', data['username']]]):
                     verrors.add(
                         f'{schema}.smb',
                         f'Username "{data["username"]}" conflicts with existing SMB user. Note that SMB '
@@ -1613,7 +1613,7 @@ class GroupService(CRUDService):
                                                         [('smb', '=', True)] + exclude_filter,
                                                         {'prefix': 'bsdgrp_'})
 
-                if any(filter(lambda x: data['name'].casefold() == x['group'].casefold(), smb_groups)):
+                if filter_list(smb_groups, [['group', 'C=', data['name']]]):
                     verrors.add(
                         f'{schema}.name',
                         f'Group name "{data["name"]}" conflicts with existing groupmap entry. '

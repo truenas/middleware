@@ -5,6 +5,7 @@ import ipaddress
 import socket
 
 from middlewared.service import CallError, private, Service
+from middlewared.utils import filter_list
 
 
 class SRV(enum.Enum):
@@ -218,7 +219,7 @@ class ActiveDirectoryService(Service):
                     servers.extend(resp)
 
             for name in targets:
-                if not any([lambda resp: resp['name'].casefold() == name.casefold(), servers]):
+                if not filter_list(servers, [['name', 'C=', name]]):
                     raise CallError(
                         f'Forward lookup of "{name}" failed with nameserver {entry["nameserver"]}. '
                         'This may indicate a DNS misconfiguration on the remote nameserver.',
