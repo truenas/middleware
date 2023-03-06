@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 
@@ -150,7 +151,7 @@ class CatalogService(Service):
 
             data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
-        recommended_apps = retrieve_recommended_apps(catalog['location']) if catalog['label'] == OFFICIAL_LABEL else {}
+        recommended_apps = self.retrieve_recommended_apps() if catalog['label'] == OFFICIAL_LABEL else {}
         unhealthy_apps = set()
         for train in data:
             for item in data[train]:
@@ -176,6 +177,23 @@ class CatalogService(Service):
         if not questions_context:
             questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
         return get_item_version_details(version_path, questions_context)
+
+    @accepts(
+        Dict(
+            'options',
+            Bool('cache', default=True),
+        )
+    )
+    @private
+    def retrieve_recommended_apps(self, options):
+        cache_key = 'recommended_apps'
+        if options['cache']:
+            with contextlib.suppress(KeyError):
+                return self.middleware.call_sync('cache.get', cache_key)
+
+        data = retrieve_recommended_apps(self.middleware.call_sync('catalog.get_instance', OFFICIAL_LABEL)['location'])
+        self.middleware.call_sync('cache.put', cache_key, data)
+        return data
 
     @private
     async def get_normalised_questions_context(self):
