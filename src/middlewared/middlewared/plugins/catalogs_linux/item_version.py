@@ -5,6 +5,7 @@ from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
 from .items_util import get_item_details
+from .update import OFFICIAL_LABEL
 
 
 class CatalogService(Service):
@@ -28,6 +29,7 @@ class CatalogService(Service):
         Str('app_readme', null=True, required=True),
         Str('location', required=True),
         Bool('healthy', required=True),
+        Bool('recommended', required=True),
         Str('healthy_error', required=True, null=True),
         Str('healthy_error', required=True, null=True),
         Dict('versions', required=True, additional_attrs=True),
@@ -49,4 +51,10 @@ class CatalogService(Service):
             raise CallError(f'{item_location!r} must be a directory')
 
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
-        return get_item_details(item_location, questions_context, {'retrieve_versions': True})
+        item_details = get_item_details(item_location, questions_context, {'retrieve_versions': True})
+        if options['catalog'] == OFFICIAL_LABEL:
+            recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
+            if options['train'] in recommended_apps and item_name in recommended_apps[options['train']]:
+                item_details['recommended'] = True
+
+        return item_details
