@@ -123,9 +123,10 @@ class CatalogService(Service):
             # reading again from disk hence the extra 1 hour.
             self.middleware.call_sync('cache.put', get_cache_key(label), trains, 90000)
 
-        if label == self.middleware.call_sync('catalog.official_catalog_label'):
+        if label == OFFICIAL_LABEL:
             # Update feature map cache whenever official catalog is updated
             self.middleware.call_sync('catalog.get_feature_map', False)
+            self.retrieve_recommended_apps({'cache': False})
 
         return trains
 
