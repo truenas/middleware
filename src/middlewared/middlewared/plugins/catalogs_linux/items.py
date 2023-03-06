@@ -1,7 +1,7 @@
 import json
 import os
 
-from catalog_validation.items.catalog import retrieve_train_names
+from catalog_validation.items.catalog import retrieve_recommended_apps, retrieve_train_names
 from catalog_validation.items.utils import get_catalog_json_schema
 from catalog_validation.utils import CACHED_CATALOG_FILE_NAME
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
@@ -10,6 +10,7 @@ from middlewared.schema import Bool, Dict, List, returns, Str
 from middlewared.service import accepts, private, Service
 
 from .items_util import get_item_version_details
+from .update import OFFICIAL_LABEL
 from .utils import get_cache_key
 
 
@@ -50,6 +51,7 @@ class CatalogService(Service):
                     'latest_app_version': '1.1.6',
                     'last_update': '2023-02-01 22:55:31',
                     'icon_url': 'https://www.chia.net/img/chia_logo.svg',
+                    'recommended': False,
                     'title': 'Chia',
                     'description': 'App description here',
                 }
@@ -148,12 +150,15 @@ class CatalogService(Service):
 
             data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
+        recommended_apps = retrieve_recommended_apps(catalog['location']) if catalog['label'] == OFFICIAL_LABEL else {}
         unhealthy_apps = set()
         for train in data:
             for item in data[train]:
                 data[train][item]['location'] = os.path.join(catalog['location'], train, item)
                 if data[train][item]['healthy'] is False:
                     unhealthy_apps.add(f'{item} ({train} train)')
+                if train in recommended_apps and item in recommended_apps[train]:
+                    data[train][item]['recommended'] = True
 
                 self.CATEGORIES_SET.update(data[train][item].get('categories') or [])
 
