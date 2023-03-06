@@ -83,7 +83,8 @@ class ContainerImagesService(CRUDService):
             Dict(
                 'authentication',
                 Str('username', required=True),
-                Str('password', required=True),
+                Str('password', required=True, max_length=4096),
+                # AWS ECR passwords can be huge - https://github.com/aws/containers-roadmap/issues/1589
                 default=None,
                 null=True,
             ),
