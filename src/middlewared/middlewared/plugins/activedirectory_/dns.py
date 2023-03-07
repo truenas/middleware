@@ -111,7 +111,7 @@ class ActiveDirectoryService(Service):
                 continue
 
             else:
-                if result[0]['target'] != data['hostname'] and raise_errors:
+                if result[0]['target'].casefold() != data['hostname'].casefold() and raise_errors:
                     raise CallError(
                         f'Reverse lookup of {ip} points to {result[0]["target"]}'
                         f'rather than our hostname of {data["hostname"]}.',
