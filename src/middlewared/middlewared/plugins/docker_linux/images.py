@@ -97,7 +97,7 @@ class DockerImagesService(CRUDService):
             Dict(
                 'docker_authentication',
                 Str('username', required=True),
-                Str('password', required=True),
+                Str('password', required=True, max_length=4096),
                 default=None,
                 null=True,
             ),
