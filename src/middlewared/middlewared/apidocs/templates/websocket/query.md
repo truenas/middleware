@@ -42,6 +42,8 @@ Javascript:
 | '$' |  x is not None and x.endswith(y) |
 | '!$' |  x is not None and not x.endswith(y) |
 
+Specifing the prefix 'C' will perform a case-insensitive version of the filter, e.g. `C=`.
+
 #### Multiple Filters
 
 We can use `disk.query` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:

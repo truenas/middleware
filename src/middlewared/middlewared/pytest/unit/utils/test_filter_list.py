@@ -42,6 +42,29 @@ DATA_WITH_NULL = [
     },
 ]
 
+DATA_WITH_CASE = [
+    {
+        'foo': 'foo',
+        'number': 1,
+        'list': [1],
+    },
+    {
+        'foo': 'Foo',
+        'number': 2,
+        'list': [2],
+    },
+    {
+        'foo': 'foO_',
+        'number': 3,
+        'list': [3],
+    },
+    {
+        'foo': 'bar',
+        'number': 3,
+        'list': [3],
+    },
+]
+
 COMPLEX_DATA = [
     {
         "timestamp": "2022-11-10T07:40:17.397502-0800",
@@ -219,3 +242,43 @@ def test__filter_list_option_nulls_first():
 
 def test__filter_list_option_nulls_last():
     assert filter_list(DATA_WITH_NULL, [], {'order_by': ['nulls_last:foo']})[-1]['foo'] is None
+
+
+def test__filter_list_option_casefold_equals():
+    assert len(filter_list(DATA, [['foo', 'C=', 'Foo1']])) == 1
+
+
+def test__filter_list_option_casefold_starts():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'C^', 'F']])) == 3
+
+
+def test__filter_list_option_casefold_does_not_start():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'C!^', 'F']])) == 1
+
+
+def test__filter_list_option_casefold_ends():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'C$', 'foo']])) == 2
+
+
+def test__filter_list_option_casefold_does_not_end():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'C!$', 'O']])) == 2
+
+
+def test__filter_list_option_casefold_in():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'Cin', 'foo']])) == 2
+
+
+def test__filter_list_option_casefold_rin():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'Crin', 'foo']])) == 3
+
+
+def test__filter_list_option_casefold_nin():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'Cnin', 'foo']])) == 2
+
+
+def test__filter_list_option_casefold_rnin():
+    assert len(filter_list(DATA_WITH_CASE, [['foo', 'Crnin', 'foo']])) == 1
+
+
+def test__filter_list_option_casefold_complex_data():
+    assert len(filter_list(COMPLEX_DATA, [['Authentication.clientAccount', 'C=', 'JOINER']])) == 1
