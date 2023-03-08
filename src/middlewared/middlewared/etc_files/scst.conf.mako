@@ -60,6 +60,9 @@ HANDLER ${handler} {
     DEVICE ${extent['name']} {
         filename ${extent['extent_path']}
         blocksize ${extent['blocksize']}
+%       if extent['pblocksize']:
+        lb_per_pb_exp 0
+%       endif
         read_only ${'1' if extent['ro'] else '0'}
         usn ${extent['serial']}
         naa_id ${extent['naa']}
