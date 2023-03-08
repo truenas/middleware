@@ -9,6 +9,7 @@ from middlewared.service import private, Service, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap_.utils import WBClient, WBCErr
+from middlewared.utils import filter_list
 
 
 class ActiveDirectoryService(Service):
@@ -127,10 +128,9 @@ class ActiveDirectoryService(Service):
             """
             try:
                 our_dc = self.winbind_status()
-                for dc_to_check in res:
-                    thehost = dc_to_check['host']
-                    if thehost.casefold() != our_dc.casefold():
-                        found_dc = thehost
+                other_dcs = filter_list(res, [['host', 'C!=', our_dc]])
+                if other_dcs:
+                    found_dc = other_dcs[0]['host']
             except Exception:
                 self.logger.warning("Failed to retrieve current DC.", exc_info=True)
                 found_dc = res[0]['host']
