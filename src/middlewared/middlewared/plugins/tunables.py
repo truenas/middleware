@@ -156,8 +156,8 @@ class TunableService(CRUDService):
                 await self.middleware.call('tunable.set_sysctl', data['var'], data['value'])
         elif data['type'] == 'ZFS':
             if data['enabled']:
-                await self.middleware.call('boot.update_initramfs')
                 await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
+                await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(data)
 
@@ -198,12 +198,12 @@ class TunableService(CRUDService):
             else:
                 await self.middleware.call('tunable.reset_sysctl', new)
         elif new['type'] == 'ZFS':
-            await self.middleware.call('boot.update_initramfs')
-
             if new['enabled']:
                 await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'])
             else:
                 await self.middleware.call('tunable.reset_zfs_parameter', new)
+
+            await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(new)
 
@@ -223,8 +223,8 @@ class TunableService(CRUDService):
 
             await self.middleware.call('tunable.reset_sysctl', entry)
         elif entry['type'] == 'ZFS':
-            await self.middleware.call('boot.update_initramfs')
-
             await self.middleware.call('tunable.reset_zfs_parameter', entry)
+
+            await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(entry)
