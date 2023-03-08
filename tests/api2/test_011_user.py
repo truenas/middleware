@@ -641,15 +641,20 @@ def test_52_converted_smb_user_passb_entry_exists(request):
 
 def test_53_add_user_to_sudoers(request):
     depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
-    results = PUT(f"/user/id/{testuser_id}", {"sudo_commands": ["ALL"]})
+    results = PUT(f"/user/id/{testuser_id}", {"sudo_commands": ["ALL"], "sudo_commands_nopasswd": []})
     assert results.status_code == 200, results.text
 
     check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL")
 
-    results = PUT(f"/user/id/{user_id}", {"sudo_commands_nopasswd": ["ALL"]})
+    results = PUT(f"/user/id/{user_id}", {"sudo_commands": [], "sudo_commands_nopasswd": ["ALL"]})
     assert results.status_code == 200, results.text
 
     check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) NOPASSWD: ALL")
+
+    results = PUT(f"/user/id/{user_id}", {"sudo_commands": ["ALL"], "sudo_commands_nopasswd": ["ALL"]})
+    assert results.status_code == 200, results.text
+
+    check_config_file("/etc/sudoers", "testuser3 ALL=(ALL) ALL, NOPASSWD: ALL")
 
 
 def test_54_disable_password_auth(request):
