@@ -885,6 +885,69 @@ def test_11_modify_portal(request):
         results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
         assert results.status_code == 200, results.text
 
+def test_12_pblocksize_setting(request):
+    """
+    This tests whether toggling pblocksize has the desired result on READ CAPACITY 16, i.e.
+    whether setting it results in LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT being zero.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    iqn = f'{basename}:{target_name}'
+    with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name) as iscsi_config:
+        extent_config = iscsi_config['extent']
+        with iscsi_scsi_connection(ip, iqn) as s:
+            TUR(s)
+            data = s.readcapacity16().result
+            # By default 512 << 3 == 4096
+            assert data['lbppbe'] == 3, data
+
+            # First let's just change the blocksize to 2K
+            payload = {'blocksize' : 2048}
+            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+            assert results.status_code == 200, results.text
+
+            TUR(s)
+            data = s.readcapacity16().result
+            assert data['block_length'] == 2048, data
+            assert data['lbppbe'] == 1, data
+
+            # Now let's change it back to 512, but also set pblocksize
+            payload = {'blocksize' : 512, 'pblocksize' : True}
+            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+            assert results.status_code == 200, results.text
+
+            TUR(s)
+            data = s.readcapacity16().result
+            assert data['block_length'] == 512, data
+            assert data['lbppbe'] == 0, data
+
+    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
+        extent_config = iscsi_config['extent']
+        with iscsi_scsi_connection(ip, iqn) as s:
+            TUR(s)
+            data = s.readcapacity16().result
+            # We created a vol with volblocksize == 16K (512 << 5)
+            assert data['lbppbe'] == 5, data
+
+            # First let's just change the blocksize to 4K
+            payload = {'blocksize' : 4096}
+            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+            assert results.status_code == 200, results.text
+
+            TUR(s)
+            data = s.readcapacity16().result
+            assert data['block_length'] == 4096, data
+            assert data['lbppbe'] == 2, data
+
+            # Now let's also set pblocksize
+            payload = {'pblocksize' : True}
+            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+            assert results.status_code == 200, results.text
+
+            TUR(s)
+            data = s.readcapacity16().result
+            assert data['block_length'] == 4096, data
+            assert data['lbppbe'] == 0, data
+
 def test_99_teardown(request):
     # Disable iSCSI service
     depends(request, ["iscsi_cmd_00"])
