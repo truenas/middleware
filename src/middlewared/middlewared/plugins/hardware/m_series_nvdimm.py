@@ -47,17 +47,17 @@ class MseriesNvdimmService(Service):
         return fw_vers, old_bios
 
     def get_module_health(self, output):
-        if (m := re.search(r"Module Health:[^\n]+")):
+        if (m := re.search(r"Module Health:[^\n]+", output)):
             return m.group().split("Module Health: ")[-1].strip()
 
     def info(self):
         results = []
-        chassis = self.middleware.call_sync("truenas.get_chassis_hardware")
-        if not chassis.startswith(("M40", "M50", "M60")):
+        sys = ("TRUENAS-M40", "TRUENAS-M50", "TRUENAS-M60")
+        if not self.middleware.call_sync("truenas.get_chassis_hardware").startswith(sys):
             return results
 
         try:
-            for nmem in glob.glob("/dev/nmem"):
+            for nmem in glob.glob("/dev/nmem*"):
                 output = self.run_ixnvdimm(nmem)
                 size, clock_speed = self.get_size_and_clock_speed(output)
                 if not all((size, clock_speed)):

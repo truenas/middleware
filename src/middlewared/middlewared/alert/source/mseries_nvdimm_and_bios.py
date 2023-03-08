@@ -134,8 +134,9 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
         health_states = {}
-        if self.middleware.call_sync('truenas.get_chassis_hardware').endswith(('M40', 'M50', 'M60')):
-            old_bios = self.middleware.call_sync('mseries.bios.is_old')
+        sys = ('TRUENAS-M40', 'TRUENAS-M50', 'TRUENAS-M60')
+        if self.middleware.call_sync('truenas.get_chassis_hardware').startswith(sys):
+            old_bios = self.middleware.call_sync('mseries.bios.is_old_version')
             if old_bios:
                 alerts.append(Alert(OldBiosVersionAlertClass))
 
