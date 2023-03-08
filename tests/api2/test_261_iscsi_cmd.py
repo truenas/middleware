@@ -2,6 +2,7 @@
 
 # License: BSD
 
+import contextlib
 import os
 import random
 import socket
@@ -9,22 +10,44 @@ import string
 import sys
 from time import sleep
 
+import pyscsi
 import pytest
 from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test, hostname, ip, isns_ip, pool_name
-from functions import DELETE, GET, POST, PUT, SSH_TEST
-from protocols import (initiator_name_supported, iscsi_scsi_connection,
-                       isns_connection)
 
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
 
-MB=1024*1024
-MB_100=100*MB
-MB_512=512*MB
+from auto_config import dev_test, ha, hostname, isns_ip, pool_name
+from functions import DELETE, GET, POST, PUT
+from protocols import (initiator_name_supported, iscsi_scsi_connection,
+                       isns_connection)
+
+if ha and "virtual_ip" in os.environ:
+    ip = os.environ["virtual_ip"]
+    controller1_ip = os.environ['controller1_ip']
+    controller2_ip = os.environ['controller2_ip']
+else:
+    from auto_config import ip
+
+# Setup some flags that will enable/disable tests based upon the capabilities of the
+# python-scsi package in use
+try:
+    from pyscsi.pyscsi.scsi_cdb_persistentreservein import PR_SCOPE, PR_TYPE
+    pyscsi_has_persistent_reservations = 'PersistentReserveOut' in dir(pyscsi.pyscsi.scsi)
+    LU_SCOPE = PR_SCOPE.LU_SCOPE
+except ImportError:
+    pyscsi_has_persistent_reservations = False
+    LU_SCOPE = 0
+skip_persistent_reservations = pytest.mark.skipif(not pyscsi_has_persistent_reservations,
+                                                  reason="PYSCSI does not support persistent reservations")
+
+skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
+                                          reason="PYSCSI does not support persistent reservations")
+
+skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -32,8 +55,17 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
                                                 reason="Invalid initiatorname will be presented")
 
-digit = ''.join(random.choices(string.digits, k=2))
+pyscsi_has_report_target_port_groups = 'ReportTargetPortGroups' in dir(pyscsi.pyscsi.scsi)
 
+# Some constants
+MB = 1024 * 1024
+MB_100 = 100 * MB
+MB_512 = 512 * MB
+PR_KEY1 = 0xABCDEFAABBCCDDEE
+PR_KEY2 = 0x00000000DEADBEEF
+
+# Some variables
+digit = ''.join(random.choices(string.digits, k=2))
 file_mountpoint = f'/tmp/iscsi-file-{hostname}'
 zvol_mountpoint = f'/tmp/iscsi-zvol-{hostname}'
 target_name = f"target{digit}"
@@ -42,10 +74,6 @@ file_name = f"iscsi{digit}"
 basename = "iqn.2005-10.org.freenas.ctl"
 zvol_name = f"ds{digit}"
 zvol = f'{pool_name}/{zvol_name}'
-
-import contextlib
-
-from auto_config import ip
 
 
 @contextlib.contextmanager
@@ -72,6 +100,7 @@ def iscsi_auth(tag, user, secret, peeruser=None, peersecret=None):
         assert results.status_code == 200, results.text
         assert results.json(), results.text
 
+
 @contextlib.contextmanager
 def initiator(comment='Default initiator', initiators=[]):
     payload = {
@@ -90,8 +119,9 @@ def initiator(comment='Default initiator', initiators=[]):
         assert results.status_code == 200, results.text
         assert results.json(), results.text
 
+
 @contextlib.contextmanager
-def portal(listen=[{'ip':'0.0.0.0',}], comment='Default portal',discovery_authmethod='NONE'):
+def portal(listen=[{'ip': '0.0.0.0'}], comment='Default portal', discovery_authmethod='NONE'):
     payload = {
         'listen': listen,
         'comment': comment,
@@ -109,6 +139,7 @@ def portal(listen=[{'ip':'0.0.0.0',}], comment='Default portal',discovery_authme
         assert results.status_code == 200, results.text
         assert results.json(), results.text
 
+
 @contextlib.contextmanager
 def target(target_name, groups, alias=None):
     payload = {
@@ -116,7 +147,7 @@ def target(target_name, groups, alias=None):
         'groups': groups,
     }
     if alias:
-        payload.update({'alias':alias})
+        payload.update({'alias': alias})
     results = POST("/iscsi/target/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -129,12 +160,13 @@ def target(target_name, groups, alias=None):
         assert results.status_code == 200, results.text
         assert results.json(), results.text
 
+
 @contextlib.contextmanager
 def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent'):
     payload = {
         'type': 'FILE',
         'name': extent_name,
-        'filesize': filesize, 
+        'filesize': filesize,
         'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
     }
     results = POST("/iscsi/extent/", payload)
@@ -151,6 +183,7 @@ def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name
         results = DELETE(f"/iscsi/extent/id/{extent_config['id']}/", payload)
         assert results.status_code == 200, results.text
         assert results.json(), results.text
+
 
 @contextlib.contextmanager
 def zvol_dataset(zvol, volsize=MB_512):
@@ -170,6 +203,7 @@ def zvol_dataset(zvol, volsize=MB_512):
         zvol_url = zvol.replace('/', '%2F')
         results = DELETE(f'/pool/dataset/id/{zvol_url}')
         assert results.status_code == 200, results.text
+
 
 @contextlib.contextmanager
 def zvol_extent(zvol, extent_name='zvol_extent'):
@@ -193,6 +227,7 @@ def zvol_extent(zvol, extent_name='zvol_extent'):
         assert results.status_code == 200, results.text
         assert results.json(), results.text
 
+
 @contextlib.contextmanager
 def target_extent_associate(target_id, extent_id, lun_id=0):
     payload = {
@@ -211,6 +246,7 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         results = DELETE(f"/iscsi/targetextent/id/{associate_config['id']}/", True)
         assert results.status_code == 200, results.text
         assert results.json(), results.text
+
 
 @contextlib.contextmanager
 def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
@@ -231,6 +267,7 @@ def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_
                                 'extent': extent_config,
                             }
 
+
 @contextlib.contextmanager
 def configured_target_to_zvol_extent(target_name, zvol, alias=None, extent_name='zvol_extent'):
     with initiator() as initiator_config:
@@ -250,30 +287,50 @@ def configured_target_to_zvol_extent(target_name, zvol, alias=None, extent_name=
                                 'extent': extent_config,
                             }
 
+
 @contextlib.contextmanager
 def configured_target(name, extent_type):
     assert extent_type in ["FILE", "VOLUME"]
     if extent_type == "FILE":
-       with configured_target_to_file_extent(name, pool_name, dataset_name, file_name, extent_name=name) as config:
-           yield config
+        with configured_target_to_file_extent(name, pool_name, dataset_name, file_name, extent_name=name) as config:
+            yield config
     elif extent_type == "VOLUME":
-       with configured_target_to_zvol_extent(name, zvol, extent_name=name) as config:
-           yield config
+        with configured_target_to_zvol_extent(name, zvol, extent_name=name) as config:
+            yield config
+
 
 @contextlib.contextmanager
 def isns_enabled(delay=5):
     payload = {'isns_servers': [isns_ip]}
-    results = PUT(f"/iscsi/global", payload)
+    results = PUT("/iscsi/global", payload)
     assert results.status_code == 200, results.text
     try:
         yield
     finally:
         payload = {'isns_servers': []}
-        results = PUT(f"/iscsi/global", payload)
+        results = PUT("/iscsi/global", payload)
         assert results.status_code == 200, results.text
         if delay:
             print(f'Sleeping for {delay} seconds after turning off iSNS')
             sleep(delay)
+
+
+@contextlib.contextmanager
+def alua_enabled(delay=3):
+    payload = {'alua': True}
+    results = PUT("/iscsi/global", payload)
+    assert results.status_code == 200, results.text
+    if delay:
+        sleep(delay)
+    try:
+        yield
+    finally:
+        payload = {'alua': False}
+        results = PUT("/iscsi/global", payload)
+        assert results.status_code == 200, results.text
+        if delay:
+            sleep(delay)
+
 
 def TUR(s):
     """
@@ -288,6 +345,7 @@ def TUR(s):
     except TypeError:
         s.testunitready()
 
+
 def _verify_inquiry(s):
     """
     Verify that the supplied SCSI has the expected INQUIRY response.
@@ -299,6 +357,7 @@ def _verify_inquiry(s):
     data = r.result
     assert data['t10_vendor_identification'].decode('utf-8').startswith("TrueNAS"), str(data)
     assert data['product_identification'].decode('utf-8').startswith("iSCSI Disk"), str(data)
+
 
 def _extract_luns(rl):
     """
@@ -318,14 +377,15 @@ def _extract_luns(rl):
     # Remaining bytes are LUNS (8 bytes each)
     luns = rl.datain[8:]
     assert len(luns) >= lun_list_length
-    for i in range(0,lun_list_length, 8):
-        lun = luns[i:i+8]
-        addr_method = (lun[0] >> 6) & 0x3;
+    for i in range(0, lun_list_length, 8):
+        lun = luns[i: i + 8]
+        addr_method = (lun[0] >> 6) & 0x3
         assert addr_method == 0, f"Unsupported Address Method: {addr_method}"
         if addr_method == 0:
             # peripheral device addressing method, don't care about bus.
             result.append(lun[1])
     return result
+
 
 def _verify_luns(s, expected_luns):
     """
@@ -345,6 +405,7 @@ def _verify_luns(s, expected_luns):
     assert len(luns) == len(expected_luns), luns
     assert set(luns) == set(expected_luns), luns
 
+
 def _verify_capacity(s, expected_capacity):
     """
     Verify that the supplied SCSI has the expected capacity.
@@ -355,8 +416,9 @@ def _verify_capacity(s, expected_capacity):
     TUR(s)
     # READ CAPACITY (16)
     data = s.readcapacity16().result
-    returned_size = (data['returned_lba'] + 1 -data['lowest_aligned_lba']) * data['block_length']
+    returned_size = (data['returned_lba'] + 1 - data['lowest_aligned_lba']) * data['block_length']
     assert returned_size == expected_capacity, {data['returned_lba'], data['block_length']}
+
 
 def get_targets():
     """
@@ -369,12 +431,15 @@ def get_targets():
         result[target['name']] = target
     return result
 
+
 def modify_target(targetid, payload):
     results = PUT(f"/iscsi/target/id/{targetid}/", payload)
     assert results.status_code == 200, results.text
 
+
 def set_target_alias(targetid, newalias):
     modify_target(targetid, {'alias': newalias})
+
 
 @pytest.mark.dependency(name="iscsi_cmd_00")
 def test_00_setup(request):
@@ -395,24 +460,26 @@ def test_00_setup(request):
     assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "RUNNING", results.text
 
+
 def test_01_inquiry(request):
     """
     This tests the Vendor and Product information in an INQUIRY response
     are 'TrueNAS' and 'iSCSI Disk' respectively.
     """
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
-    with initiator() as initiator_config:
+    with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset(pool_name, dataset_name) as dataset_config:
+                with dataset(pool_name, dataset_name):
                     with file_extent(pool_name, dataset_name, file_name) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             iqn = f'{basename}:{target_name}'
                             with iscsi_scsi_connection(ip, iqn) as s:
                                 _verify_inquiry(s)
+
 
 def test_02_read_capacity16(request):
     """
@@ -421,12 +488,12 @@ def test_02_read_capacity16(request):
     It performs this test with a couple of sizes for both file & zvol based targets.
     """
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
-    with initiator() as initiator_config:
+    with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset(pool_name, dataset_name) as dataset_config:
+                with dataset(pool_name, dataset_name):
                     # 100 MB file extent
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
@@ -458,34 +525,35 @@ def test_02_read_capacity16(request):
                             with iscsi_scsi_connection(ip, iqn) as s:
                                 _verify_capacity(s, MB_512)
 
+
 def target_test_readwrite16(ip, iqn):
     """
-    This tests WRITE SAME (16), READ (16) and WRITE (16) 
+    This tests WRITE SAME (16), READ (16) and WRITE (16)
     operations on the specified target.
     """
     zeros = bytearray(512)
     deadbeef = bytearray.fromhex('deadbeef') * 128
-    deadbeef_lbas = [1,5,7]
+    deadbeef_lbas = [1, 5, 7]
 
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
         s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
-        w = s.writesame16(0, 12, zeros)
+        s.writesame16(0, 12, zeros)
 
         # Check results using READ (16)
-        for lba in range(0,12):
-            r = s.read16(lba,1)
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
             assert r.datain == zeros, r.datain
 
         # Now let's write DEADBEEF to a few LBAs using WRITE (16)
         for lba in deadbeef_lbas:
             s.write16(lba, 1, deadbeef)
-                            
+
         # Check results using READ (16)
-        for lba in range(0,12):
-            r = s.read16(lba,1)
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
             if lba in deadbeef_lbas:
                 assert r.datain == deadbeef, r.datain
             else:
@@ -497,20 +565,20 @@ def target_test_readwrite16(ip, iqn):
         s.blocksize = 512
 
         # Check results using READ (16)
-        for lba in range(0,12):
-            r = s.read16(lba,1)
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
             if lba in deadbeef_lbas:
                 assert r.datain == deadbeef, r.datain
             else:
                 assert r.datain == zeros, r.datain
 
         # Do a WRITE for > 1 LBA
-        s.write16(10, 2, deadbeef*2)
+        s.write16(10, 2, deadbeef * 2)
 
         # Check results using READ (16)
         deadbeef_lbas.extend([10, 11])
-        for lba in range(0,12):
-            r = s.read16(lba,1)
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
             if lba in deadbeef_lbas:
                 assert r.datain == deadbeef, r.datain
             else:
@@ -518,14 +586,15 @@ def target_test_readwrite16(ip, iqn):
 
         # Do a couple of READ (16) for > 1 LBA
         # At this stage we have written deadbeef to LBAs 1,5,7,10,11
-        r = s.read16(0,2)
+        r = s.read16(0, 2)
         assert r.datain == zeros + deadbeef, r.datain
-        r = s.read16(1,2)
+        r = s.read16(1, 2)
         assert r.datain == deadbeef + zeros, r.datain
-        r = s.read16(2,2)
-        assert r.datain == zeros*2, r.datain
-        r = s.read16(10,2)
-        assert r.datain == deadbeef*2, r.datain
+        r = s.read16(2, 2)
+        assert r.datain == zeros * 2, r.datain
+        r = s.read16(10, 2)
+        assert r.datain == deadbeef * 2, r.datain
+
 
 def test_03_readwrite16_file_extent(request):
     """
@@ -536,6 +605,7 @@ def test_03_readwrite16_file_extent(request):
     with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
+
 
 def test_04_readwrite16_zvol_extent(request):
     """
@@ -556,14 +626,14 @@ def test_05_chap(request):
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
-    with initiator() as initiator_config:
+    with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
             auth_tag = 1
-            with iscsi_auth(auth_tag, user, secret) as auth_config:
+            with iscsi_auth(auth_tag, user, secret):
                 with target(target_name, [{'portal': portal_id, 'authmethod': 'CHAP', 'auth': auth_tag}]) as target_config:
                     target_id = target_config['id']
-                    with dataset(pool_name, dataset_name) as dataset_config:
+                    with dataset(pool_name, dataset_name):
                         with file_extent(pool_name, dataset_name, file_name) as extent_config:
                             extent_id = extent_config['id']
                             with target_extent_associate(target_id, extent_id):
@@ -598,14 +668,14 @@ def test_06_mutual_chap(request):
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     peer_user = "user2"
     peer_secret = 'sec2' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
-    with initiator() as initiator_config:
+    with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
             auth_tag = 1
-            with iscsi_auth(auth_tag, user, secret, peer_user, peer_secret) as auth_config:
+            with iscsi_auth(auth_tag, user, secret, peer_user, peer_secret):
                 with target(target_name, [{'portal': portal_id, 'authmethod': 'CHAP_MUTUAL', 'auth': auth_tag}]) as target_config:
                     target_id = target_config['id']
-                    with dataset(pool_name, dataset_name) as dataset_config:
+                    with dataset(pool_name, dataset_name):
                         with file_extent(pool_name, dataset_name, file_name) as extent_config:
                             extent_id = extent_config['id']
                             with target_extent_associate(target_id, extent_id):
@@ -641,18 +711,19 @@ def test_06_mutual_chap(request):
                                 with iscsi_scsi_connection(ip, iqn, 0, user, secret, peer_user, peer_secret) as s:
                                     _verify_inquiry(s)
 
+
 def test_07_report_luns(request):
     """
     This tests REPORT LUNS and accessing multiple LUNs on a target.
     """
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
-    with initiator() as initiator_config:
+    with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset(pool_name, dataset_name) as dataset_config:
+                with dataset(pool_name, dataset_name):
                     # LUN 0 (100 MB file extent)
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
@@ -678,6 +749,7 @@ def test_07_report_luns(request):
                                 _verify_luns(s, [0])
                                 _verify_capacity(s, MB_100)
 
+
 def target_test_snapshot_single_login(ip, iqn, dataset_id):
     """
     This tests snapshots with an iSCSI target using a single
@@ -685,19 +757,19 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
     """
     zeros = bytearray(512)
     deadbeef = bytearray.fromhex('deadbeef') * 128
-    deadbeef_lbas = [1,5,7]
-    all_deadbeef_lbas = [1,5,7,10,11]
+    deadbeef_lbas = [1, 5, 7]
+    all_deadbeef_lbas = [1, 5, 7, 10, 11]
 
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
         s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
-        w = s.writesame16(0, 12, zeros)
+        s.writesame16(0, 12, zeros)
 
         # Check results using READ (16)
-        for lba in range(0,12):
-            r = s.read16(lba,1)
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
             assert r.datain == zeros, r.datain
 
         # Take snap0
@@ -708,8 +780,8 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
                 s.write16(lba, 1, deadbeef)
 
             # Check results using READ (16)
-            for lba in range(0,12):
-                r = s.read16(lba,1)
+            for lba in range(0, 12):
+                r = s.read16(lba, 1)
                 if lba in deadbeef_lbas:
                     assert r.datain == deadbeef, r.datain
                 else:
@@ -719,11 +791,11 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
             with snapshot(dataset_id, "snap1") as snap1_config:
 
                 # Do a WRITE for > 1 LBA
-                s.write16(10, 2, deadbeef*2)
+                s.write16(10, 2, deadbeef * 2)
 
                 # Check results using READ (16)
-                for lba in range(0,12):
-                    r = s.read16(lba,1)
+                for lba in range(0, 12):
+                    r = s.read16(lba, 1)
                     if lba in all_deadbeef_lbas:
                         assert r.datain == deadbeef, r.datain
                     else:
@@ -732,10 +804,9 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
                 # Now revert to snap1
                 snapshot_rollback(snap1_config['id'])
 
-
                 # Check results using READ (16)
-                for lba in range(0,12):
-                    r = s.read16(lba,1)
+                for lba in range(0, 12):
+                    r = s.read16(lba, 1)
                     if lba in deadbeef_lbas:
                         assert r.datain == deadbeef, r.datain
                     else:
@@ -745,9 +816,10 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
             snapshot_rollback(snap0_config['id'])
 
             # Check results using READ (16)
-            for lba in range(0,12):
-                r = s.read16(lba,1)
+            for lba in range(0, 12):
+                r = s.read16(lba, 1)
                 assert r.datain == zeros, r.datain
+
 
 def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
     """
@@ -756,19 +828,19 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
     """
     zeros = bytearray(512)
     deadbeef = bytearray.fromhex('deadbeef') * 128
-    deadbeef_lbas = [1,5,7]
-    all_deadbeef_lbas = [1,5,7,10,11]
+    deadbeef_lbas = [1, 5, 7]
+    all_deadbeef_lbas = [1, 5, 7, 10, 11]
 
     with iscsi_scsi_connection(ip, iqn) as s:
         TUR(s)
         s.blocksize = 512
 
         # First let's write zeros to the first 12 blocks using WRITE SAME (16)
-        w = s.writesame16(0, 12, zeros)
+        s.writesame16(0, 12, zeros)
 
         # Check results using READ (16)
-        for lba in range(0,12):
-            r = s.read16(lba,1)
+        for lba in range(0, 12):
+            r = s.read16(lba, 1)
             assert r.datain == zeros, r.datain
 
     # Take snap0
@@ -783,8 +855,8 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                 s.write16(lba, 1, deadbeef)
 
             # Check results using READ (16)
-            for lba in range(0,12):
-                r = s.read16(lba,1)
+            for lba in range(0, 12):
+                r = s.read16(lba, 1)
                 if lba in deadbeef_lbas:
                     assert r.datain == deadbeef, r.datain
                 else:
@@ -798,11 +870,11 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                 s.blocksize = 512
 
                 # Do a WRITE for > 1 LBA
-                s.write16(10, 2, deadbeef*2)
+                s.write16(10, 2, deadbeef * 2)
 
                 # Check results using READ (16)
-                for lba in range(0,12):
-                    r = s.read16(lba,1)
+                for lba in range(0, 12):
+                    r = s.read16(lba, 1)
                     if lba in all_deadbeef_lbas:
                         assert r.datain == deadbeef, r.datain
                     else:
@@ -816,8 +888,8 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
             s.blocksize = 512
 
             # Check results using READ (16)
-            for lba in range(0,12):
-                r = s.read16(lba,1)
+            for lba in range(0, 12):
+                r = s.read16(lba, 1)
                 if lba in deadbeef_lbas:
                     assert r.datain == deadbeef, r.datain
                 else:
@@ -830,9 +902,10 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
             TUR(s)
             s.blocksize = 512
             # Check results using READ (16)
-            for lba in range(0,12):
-                r = s.read16(lba,1)
+            for lba in range(0, 12):
+                r = s.read16(lba, 1)
                 assert r.datain == zeros, r.datain
+
 
 def test_08_snapshot_zvol_extent(request):
     """
@@ -845,6 +918,7 @@ def test_08_snapshot_zvol_extent(request):
     with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
         target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
 
+
 def test_09_snapshot_file_extent(request):
     """
     This tests snapshots with a file extent based iSCSI target.
@@ -855,6 +929,7 @@ def test_09_snapshot_file_extent(request):
         target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
     with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
         target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+
 
 def test_10_target_alias(request):
     """
@@ -867,10 +942,10 @@ def test_10_target_alias(request):
 
     data = {}
     for t in ["A", "B"]:
-       data[t] = {}
-       data[t]['name'] = f"{target_name}{t.lower()}"
-       data[t]['alias'] = f"{target_name}{t}_alias"
-       data[t]['file'] = f"{target_name}{t}_file"
+        data[t] = {}
+        data[t]['name'] = f"{target_name}{t.lower()}"
+        data[t]['alias'] = f"{target_name}{t}_alias"
+        data[t]['file'] = f"{target_name}{t}_file"
 
     A = data['A']
     B = data['B']
@@ -901,16 +976,16 @@ def test_10_target_alias(request):
                     assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
                     assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
+
 def test_11_modify_portal(request):
     """
     Test that we can modify a target portal.
     """
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with portal() as portal_config:
-        portal_id = portal_config['id']
         assert portal_config['comment'] == 'Default portal', portal_config
         # First just change the comment
-        payload = {'comment' : 'New comment'}
+        payload = {'comment': 'New comment'}
         results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
         # Then try to reapply everything
         payload = {'comment': 'test1', 'discovery_authmethod': 'NONE', 'discovery_authgroup': None, 'listen': [{'ip': '0.0.0.0'}]}
@@ -1027,9 +1102,7 @@ def test_14_test_isns(request):
     # Will use a more unique target name than usual, just in case several test
     # runs are hitting the same iSNS server at the same time.
     _host = socket.gethostname()
-    _rand = ''.join(random.choices(string.digits +
-                                   string.ascii_lowercase,
-                                   k=12))
+    _rand = ''.join(random.choices(string.digits + string.ascii_lowercase, k=12))
     _name_base = f'isnstest:{_host}:{_rand}'
     _target1 = f'{_name_base}:1'
     _target2 = f'{_name_base}:2'
@@ -1119,6 +1192,480 @@ class TestFixtureInitiatorName:
                 with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
                     assert False, "Should not have been able to connect with invalid initiator name."
                 assert 'Unable to connect to' in str(ve), ve
+
+
+def _pr_check_registered_keys(s, expected=[]):
+    opcodes = s.device.opcodes
+    data = s.persistentreservein(opcodes.PERSISTENT_RESERVE_IN.serviceaction.READ_KEYS)
+    assert len(data.result['reservation_keys']) == len(expected), data.result
+    if len(expected):
+        expected_set = set(expected)
+        received_set = set(data.result['reservation_keys'])
+        assert expected_set == received_set, received_set
+    return data.result
+
+
+def _pr_check_reservation(s, expected={'reservation_key': None, 'scope': None, 'type': None}):
+    opcodes = s.device.opcodes
+    data = s.persistentreservein(opcodes.PERSISTENT_RESERVE_IN.serviceaction.READ_RESERVATION)
+    for key, value in expected.items():
+        actual_value = data.result.get(key)
+        assert value == actual_value, data.result
+    return data.result
+
+
+def _pr_register_key(s, value):
+    opcodes = s.device.opcodes
+    s.persistentreserveout(opcodes.PERSISTENT_RESERVE_OUT.serviceaction.REGISTER,
+                           service_action_reservation_key=value)
+
+
+def _pr_unregister_key(s, value):
+    opcodes = s.device.opcodes
+    s.persistentreserveout(opcodes.PERSISTENT_RESERVE_OUT.serviceaction.REGISTER,
+                           reservation_key=value,
+                           service_action_reservation_key=0)
+
+
+def _pr_reserve(s, pr_type, scope=LU_SCOPE, **kwargs):
+    opcodes = s.device.opcodes
+    s.persistentreserveout(opcodes.PERSISTENT_RESERVE_OUT.serviceaction.RESERVE,
+                           scope=scope,
+                           pr_type=pr_type,
+                           **kwargs)
+
+
+def _pr_release(s, pr_type, scope=LU_SCOPE, **kwargs):
+    opcodes = s.device.opcodes
+    s.persistentreserveout(opcodes.PERSISTENT_RESERVE_OUT.serviceaction.RELEASE,
+                           scope=scope,
+                           pr_type=pr_type,
+                           **kwargs)
+
+
+def _swallow_check_condition(s):
+    # Issue a TEST UNIT READY to swallow any CHECK CONDITION
+    # (may handle otherwise when python-scsi / cython-iscsi
+    # support CHECK CONDITION better - currently broken)
+    # print("Swallowing CHECK CONDITION")
+    TUR(s)
+
+
+@contextlib.contextmanager
+def _pr_registration(s, key):
+    _pr_register_key(s, key)
+    try:
+        yield
+    finally:
+        _swallow_check_condition(s)
+        _pr_unregister_key(s, key)
+
+
+@contextlib.contextmanager
+def _pr_reservation(s, pr_type, scope=LU_SCOPE, **kwargs):
+    _pr_reserve(s, pr_type, scope, **kwargs)
+    try:
+        yield
+    finally:
+        _swallow_check_condition(s)
+        _pr_release(s, pr_type, scope, **kwargs)
+
+
+@skip_persistent_reservations
+@pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
+def test_14_basic_persistent_reservation(request):
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    with configured_target_to_zvol_extent(target_name, zvol):
+        iqn = f'{basename}:{target_name}'
+        with iscsi_scsi_connection(ip, iqn) as s:
+            TUR(s)
+
+            _pr_check_registered_keys(s, [])
+            _pr_check_reservation(s)
+
+            with _pr_registration(s, PR_KEY1):
+                _pr_check_registered_keys(s, [PR_KEY1])
+                _pr_check_reservation(s)
+
+                with _pr_reservation(s, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                    _pr_check_registered_keys(s, [PR_KEY1])
+                    _pr_check_reservation(s, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+
+                _pr_check_registered_keys(s, [PR_KEY1])
+                _pr_check_reservation(s)
+
+            _pr_check_registered_keys(s, [])
+            _pr_check_reservation(s)
+
+
+@contextlib.contextmanager
+def _pr_expect_reservation_conflict(s):
+    try:
+        yield
+        assert False, "Failed to get expected PERSISTENT CONFLICT"
+    except Exception as e:
+        if e.__class__.__name__ != 'ReservationConflict':
+            raise e
+    finally:
+        _swallow_check_condition(s)
+
+
+def _check_persistent_reservations(s1, s2):
+    #
+    # First just do a some basic tests (register key, reserve, release, unregister key)
+    #
+    _pr_check_registered_keys(s1, [])
+    _pr_check_reservation(s1)
+    _pr_check_registered_keys(s2, [])
+    _pr_check_reservation(s2)
+
+    with _pr_registration(s1, PR_KEY1):
+        _pr_check_registered_keys(s1, [PR_KEY1])
+        _pr_check_reservation(s1)
+        _pr_check_registered_keys(s2, [PR_KEY1])
+        _pr_check_reservation(s2)
+
+        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+            _pr_check_registered_keys(s1, [PR_KEY1])
+            _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+            _pr_check_registered_keys(s2, [PR_KEY1])
+            _pr_check_reservation(s2, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+
+        _pr_check_registered_keys(s1, [PR_KEY1])
+        _pr_check_reservation(s1)
+        _pr_check_registered_keys(s2, [PR_KEY1])
+        _pr_check_reservation(s2)
+
+        with _pr_registration(s2, PR_KEY2):
+            _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+            _pr_check_reservation(s1)
+            _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+            _pr_check_reservation(s2)
+
+            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+                _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+                _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+                _pr_check_reservation(s2, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+
+            _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+            _pr_check_reservation(s1)
+            _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+            _pr_check_reservation(s2)
+
+            with _pr_reservation(s2, PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY, reservation_key=PR_KEY2):
+                _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+                _pr_check_reservation(s1, {'reservation_key': PR_KEY2, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY})
+                _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+                _pr_check_reservation(s2, {'reservation_key': PR_KEY2, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY})
+
+            TUR(s1)
+            _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
+            _pr_check_reservation(s1)
+            _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
+            _pr_check_reservation(s2)
+
+        _pr_check_registered_keys(s1, [PR_KEY1])
+        _pr_check_reservation(s1)
+        _pr_check_registered_keys(s2, [PR_KEY1])
+        _pr_check_reservation(s2)
+
+    _pr_check_registered_keys(s1, [])
+    _pr_check_reservation(s1)
+    _pr_check_registered_keys(s2, [])
+    _pr_check_reservation(s2)
+
+    #
+    # Now let's fail some stuff
+    # See:
+    # - SPC-5 5.14 Table 66
+    # - SBC-4 4.17 Table 13
+    #
+    zeros = bytearray(512)
+    dancing_queen = bytearray.fromhex('00abba00') * 128
+    deadbeef = bytearray.fromhex('deadbeef') * 128
+    with _pr_registration(s1, PR_KEY1):
+        with _pr_registration(s2, PR_KEY2):
+
+            # With registrations only both initiators can write
+            s1.write16(0, 1, deadbeef)
+            s2.write16(1, 1, dancing_queen)
+            r = s1.read16(1, 1)
+            assert r.datain == dancing_queen, r.datain
+            r = s2.read16(0, 1)
+            assert r.datain == deadbeef, r.datain
+
+            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                s1.writesame16(0, 2, zeros)
+                r = s2.read16(0, 2)
+                assert r.datain == zeros + zeros, r.datain
+
+                with _pr_expect_reservation_conflict(s2):
+                    s2.write16(1, 1, dancing_queen)
+
+                r = s2.read16(0, 2)
+                assert r.datain == zeros + zeros, r.datain
+
+                with _pr_expect_reservation_conflict(s2):
+                    with _pr_reservation(s2, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY2):
+                        pass
+
+            with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS, reservation_key=PR_KEY1):
+                with _pr_expect_reservation_conflict(s2):
+                    r = s2.read16(0, 2)
+                    assert r.datain == zeros + zeros, r.datain
+
+            with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, reservation_key=PR_KEY1):
+                r = s2.read16(0, 2)
+                assert r.datain == zeros + zeros, r.datain
+
+        # s2 no longer is registered
+        with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, reservation_key=PR_KEY1):
+            with _pr_expect_reservation_conflict(s2):
+                r = s2.read16(0, 2)
+                assert r.datain == zeros + zeros, r.datain
+
+        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY, reservation_key=PR_KEY1):
+            r = s2.read16(0, 2)
+            assert r.datain == zeros + zeros, r.datain
+
+
+@skip_persistent_reservations
+@skip_multi_initiator
+def test_15_persistent_reservation_two_initiators(request):
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    with configured_target_to_zvol_extent(target_name, zvol):
+        iqn = f'{basename}:{target_name}'
+        with iscsi_scsi_connection(ip, iqn) as s1:
+            s1.blocksize = 512
+            TUR(s1)
+            initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
+            with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_name2) as s2:
+                s2.blocksize = 512
+                TUR(s2)
+                _check_persistent_reservations(s1, s2)
+
+
+def _serial_number(s):
+    x = s.inquiry(evpd=1, page_code=0x80)
+    return x.result['unit_serial_number'].decode('utf-8')
+
+
+def _device_identification(s):
+    result = {}
+    x = s.inquiry(evpd=1, page_code=0x83)
+    for desc in x.result['designator_descriptors']:
+        if desc['designator_type'] == 4:
+            result['relative_port'] = desc['designator']['relative_port']
+        if desc['designator_type'] == 3 and desc['designator']['naa'] == 6:
+            items = (desc['designator']['naa'],
+                     desc['designator']['ieee_company_id'],
+                     desc['designator']['vendor_specific_identifier'],
+                     desc['designator']['vendor_specific_identifier_extension']
+                     )
+            result['naa'] = "0x{:01x}{:06x}{:09x}{:016x}".format(*items)
+    return result
+
+
+def _verify_ha_inquiry(s, serial_number, naa, tpgs=0,
+                       vendor='TrueNAS', product_id='iSCSI Disk'):
+    """
+    Verify that the supplied SCSI has the expected INQUIRY response.
+
+    :param s: a pyscsi.SCSI instance
+    """
+    TUR(s)
+    inq = s.inquiry().result
+    assert inq['t10_vendor_identification'].decode('utf-8').startswith(vendor)
+    assert inq['product_identification'].decode('utf-8').startswith(product_id)
+    assert inq['tpgs'] == tpgs
+    assert serial_number == _serial_number(s)
+    assert naa == _device_identification(s)['naa']
+
+
+def _check_ha_node_configuration():
+    both_nodes = ['A', 'B']
+    # Let's perform some sanity checking wrt controller and IP address
+    # First get node and calculate othernode
+    results = GET('/failover/node')
+    assert results.status_code == 200, results.text
+    node = results.text.replace('"', '').replace("'", "")
+    assert node in both_nodes
+
+    # Now let's get IPs and ensure that
+    # - Node A has controller1_ip
+    # - Node B has controller2_ip
+    # We will need this later when we start checking TPG, etc
+    ips = {}
+    for anode in both_nodes:
+        ips[anode] = set()
+        if anode == node:
+            results = GET('/interface')
+            assert results.status_code == 200, results.text
+            interfaces = results.json()
+        else:
+            payload = {'method': 'interface.query',
+                       'args': [],
+                       'options': {}
+                       }
+            results = POST('/failover/call_remote', payload)
+            assert results.status_code == 200, results.text
+            interfaces = results.json()
+
+        for i in interfaces:
+            for alias in i['state']['aliases']:
+                if alias.get('type') == 'INET':
+                    ips[anode].add(alias['address'])
+    # Ensure that controller1_ip and controller2_ip are what we expect
+    assert controller1_ip in ips['A']
+    assert controller1_ip not in ips['B']
+    assert controller2_ip in ips['B']
+    assert controller2_ip not in ips['A']
+
+
+@pytest.mark.dependency(name="iscsi_alua_config")
+def test_16_alua_config(request):
+    """
+    Test various aspects of ALUA configuration.
+    """
+    # First ensure ALUA is off
+    results = GET('/iscsi/global')
+    assert results.status_code == 200, results.text
+    assert not results.json()['alua'], results.text
+
+    if ha:
+        _check_ha_node_configuration()
+
+    # Next create a target
+    with configured_target_to_file_extent(target_name,
+                                          pool_name,
+                                          dataset_name,
+                                          file_name
+                                          ) as iscsi_config:
+        # Login to the target and ensure that things look reasonable.
+        iqn = f'{basename}:{target_name}'
+        api_serial_number = iscsi_config['extent']['serial']
+        api_naa = iscsi_config['extent']['naa']
+        with iscsi_scsi_connection(ip, iqn) as s:
+            _verify_ha_inquiry(s, api_serial_number, api_naa)
+
+        if ha:
+            # Only perform this section on a HA system
+
+            with alua_enabled():
+                results = GET('/iscsi/global')
+                assert results.status_code == 200, results.text
+                assert results.json()['alua'], results.text
+
+                # We will login to the target on BOTH controllers and make sure
+                # we see the same target.
+                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                    _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+                    with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                        _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+
+            # Ensure ALUA is off again
+            results = GET('/iscsi/global')
+            assert results.status_code == 200, results.text
+            assert not results.json()['alua'], results.text
+
+    # At this point we have no targets and ALUA is off
+    if ha:
+        # Now turn on ALUA again
+        with alua_enabled():
+            results = GET('/iscsi/global')
+            assert results.status_code == 200, results.text
+            assert results.json()['alua'], results.text
+
+            # Then create a target (with ALUA already enabled)
+            with configured_target_to_file_extent(target_name,
+                                                  pool_name,
+                                                  dataset_name,
+                                                  file_name
+                                                  ) as iscsi_config:
+                iqn = f'{basename}:{target_name}'
+                api_serial_number = iscsi_config['extent']['serial']
+                api_naa = iscsi_config['extent']['naa']
+                # Login to the target and ensure that things look reasonable.
+                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                    _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+
+                    with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                        _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+
+        # Ensure ALUA is off again
+        results = GET('/iscsi/global')
+        assert results.status_code == 200, results.text
+        assert not results.json()['alua'], results.text
+
+
+@skip_persistent_reservations
+@skip_multi_initiator
+@skip_ha_tests
+def test_17_alua_basic_persistent_reservation(request):
+    # Don't need to specify "pool_04", "iscsi_cmd_00" here
+    depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
+    # Turn on ALUA
+    with alua_enabled():
+        with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
+            iqn = f'{basename}:{target_name}'
+            # Login to the target on each controller
+            with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                    # Now we can do some basic tests
+                    _pr_check_registered_keys(s1, [])
+                    _pr_check_registered_keys(s2, [])
+                    _pr_check_reservation(s1)
+                    _pr_check_reservation(s2)
+
+                    with _pr_registration(s1, PR_KEY1):
+                        _pr_check_registered_keys(s1, [PR_KEY1])
+                        _pr_check_registered_keys(s2, [PR_KEY1])
+                        _pr_check_reservation(s1)
+                        _pr_check_reservation(s2)
+
+                        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                            _pr_check_registered_keys(s1, [PR_KEY1])
+                            _pr_check_registered_keys(s2, [PR_KEY1])
+                            _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+                            _pr_check_reservation(s2, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+
+                        _pr_check_registered_keys(s1, [PR_KEY1])
+                        _pr_check_registered_keys(s2, [PR_KEY1])
+                        _pr_check_reservation(s1)
+                        _pr_check_reservation(s2)
+
+                    _pr_check_registered_keys(s1, [])
+                    _pr_check_registered_keys(s2, [])
+                    _pr_check_reservation(s1)
+                    _pr_check_reservation(s2)
+
+    # Ensure ALUA is off again
+    results = GET('/iscsi/global')
+    assert results.status_code == 200, results.text
+    assert not results.json()['alua'], results.text
+
+
+@skip_persistent_reservations
+@skip_multi_initiator
+@skip_ha_tests
+def test_18_alua_persistent_reservation_two_initiators(request):
+    depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
+    with alua_enabled():
+        with configured_target_to_zvol_extent(target_name, zvol):
+            iqn = f'{basename}:{target_name}'
+            # Login to the target on each controller
+            with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                s1.blocksize = 512
+                TUR(s1)
+                initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
+                with iscsi_scsi_connection(controller2_ip, iqn, initiator_name=initiator_name2) as s2:
+                    s2.blocksize = 512
+                    TUR(s2)
+                    _check_persistent_reservations(s1, s2)
+                    # Do it all again, the other way around
+                    _check_persistent_reservations(s2, s1)
+
 
 def test_99_teardown(request):
     # Disable iSCSI service
