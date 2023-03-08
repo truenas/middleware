@@ -11,9 +11,11 @@ import os
 import time
 import stat
 
+from contextlib import contextmanager
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from assets.REST.pool import dataset as tmp_dataset
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ha, password, user, ip
 SHELL = '/usr/bin/bash'
@@ -67,6 +69,24 @@ def test_01_get_next_uid(request):
     assert results.status_code == 200, results.text
     global next_uid
     next_uid = results.json()
+
+
+@contextmanager
+def create_user_with_dataset(ds_info, user_info):
+    with tmp_dataset(ds_info['pool'], ds_info['name'], ds_info.get('options', []), **ds_info.get('kwargs', {})) as ds:
+        payload = user_info['payload']
+        if 'path' in user_info:
+            payload['home'] = os.path.join(ds['mountpoint'], user_info['path'])
+
+        results = POST("/user/", payload)
+        assert results.status_code == 200, results.text
+        user_req = GET(f'/user?id={results.json()}')
+        assert user_req.status_code == 200, results.text
+
+        try:
+            yield user_req.json()[0]
+        finally:
+            results = DELETE(f"/user/id/{results.json()}/", {"delete_group": True})
 
 
 @pytest.mark.dependency(name="user_02")
@@ -355,7 +375,7 @@ def test_31_creating_user_with_homedir(request):
         "uid": next_uid,
         "shell": SHELL,
         "sshpubkey": "canary",
-        "home": f"/mnt/{dataset}/testuser2",
+        "home": f"/mnt/{dataset}",
         "home_mode": f'{stat.S_IMODE(DEFAULT_HOMEDIR_OCTAL):03o}',
         "home_create": True,
     }
@@ -369,7 +389,7 @@ def test_31_creating_user_with_homedir(request):
     assert results.status_code == 200, results.text
 
     pw = results.json()
-    assert pw['pw_dir'] == user_payload['home'], results.text
+    assert pw['pw_dir'] == os.path.join(user_payload['home'], user_payload['username']), results.text
     assert pw['pw_name'] == user_payload['username'], results.text
     assert pw['pw_uid'] == user_payload['uid'], results.text
     assert pw['pw_shell'] == user_payload['shell'], results.text
@@ -692,3 +712,46 @@ def test_57_check_no_builtin_smb_users(request):
         }
     )
     assert result.json() == 0, result.text
+
+
+def test_58_create_new_user_existing_home_path(request):
+    """
+    Specifying an existing path without home_create should
+    succeed and set mode to desired value.
+    """
+    ds = {'pool': pool_name, 'name': 'user_test_exising_home_path'}
+    user_info = {
+        'username': 't1',
+        "full_name": 'T1',
+        'group_create': True,
+        'password': 'test1234',
+        'home_mode': '770'
+    }
+    with create_user_with_dataset(ds, {'payload': user_info, 'path': ''}) as user:
+        results = POST('/filesystem/stat/', user['home'])
+        assert results.status_code == 200, results.text
+        assert results.json()['acl'] is False, results.text
+        assert f'{stat.S_IMODE(results.json()["mode"]):03o}' == '770', results.text
+
+        # Attempting to repeat the same with new user should
+        # fail (no users may share same home path)
+        results = POST('/user/', {
+            'username': 't2',
+            'full_name': 't2',
+            'group_create': True,
+            'password': 'test1234',
+            'home': user['home']
+        })
+        assert results.status_code == 422, results.text
+
+        # Attempting to put homedir in subdirectory of existing homedir
+        # should also rase validation error
+        results = POST('/user/', {
+            'username': 't2',
+            'full_name': 't2',
+            'group_create': True,
+            'password': 'test1234',
+            'home': user['home'],
+            'home_create': True,
+        })
+        assert results.status_code == 422, results.text

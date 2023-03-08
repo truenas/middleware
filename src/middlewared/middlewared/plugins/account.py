@@ -434,8 +434,8 @@ class UserService(CRUDService):
             try:
                 data['home'] = await self.middleware.run_in_thread(
                     self.setup_homedir,
-                    data['username'],
                     data['home'],
+                    data['username'],
                     home_mode,
                     data['uid'],
                     group['gid'],
