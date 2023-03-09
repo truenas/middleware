@@ -7,7 +7,7 @@ FENCED_ALERT_FILE = "/data/sentinels/.fenced-alert"
 
 def get_fqdn(middleware):
     gc = middleware.call_sync("datastore.config", "network.globalconfiguration")
-    key = "gc_hostname_a"
+    key = "gc_hostname"
     if middleware.call_sync("failover.node") == "B":
         key = "gc_hostname_b"
 
