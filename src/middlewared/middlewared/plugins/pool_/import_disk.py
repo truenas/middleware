@@ -1,26 +1,24 @@
-import asyncio
 import os
 import logging
 import re
 import subprocess
+import time
 
-import async_timeout
 import psutil
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Dict, List, returns, Str
 from middlewared.service import CallError, job, Service
-from middlewared.utils import Popen, run
 
 logger = logging.getLogger(__name__)
 
 
-async def is_mounted(middleware, path):
-    mounted = await middleware.run_in_thread(psutil.disk_partitions)
+def is_mounted(path):
+    mounted = psutil.disk_partitions()
     return any(fs.mountpoint == path for fs in mounted)
 
 
-async def mount(device, path, fs_type, fs_options, options):
+def mount(device, path, fs_type, fs_options, options):
     options = options or []
 
     if isinstance(device, str):
@@ -44,12 +42,12 @@ async def mount(device, path, fs_type, fs_options, options):
     if options:
         arguments.extend(["-o", ",".join(options)])
 
-    proc = await Popen(
+    proc = subprocess.Popen(
         [executable] + arguments + [device, path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    output = await proc.communicate()
+    output = proc.communicate()
 
     if proc.returncode != 0:
         logger.debug("Mount failed (%s): %s", proc.returncode, output)
@@ -70,12 +68,12 @@ class MountFsContextManager:
         self.args = args
         self.kwargs = kwargs
 
-    async def __aenter__(self):
-        await mount(self.device, self.path, *self.args, **self.kwargs)
+    def __enter__(self):
+        mount(self.device, self.path, *self.args, **self.kwargs)
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if await is_mounted(self.middleware, os.path.realpath(self.path)):
-            await run("umount", self.path)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if is_mounted(os.path.realpath(self.path)):
+            subprocess.check_call(["umount", self.path])
 
 
 class PoolService(Service):
@@ -90,7 +88,7 @@ class PoolService(Service):
     )
     @returns()
     @job(lock=lambda args: 'volume_import', logs=True, abortable=True)
-    async def import_disk(self, job, device, fs_type, fs_options, dst_path):
+    def import_disk(self, job, device, fs_type, fs_options, dst_path):
         """
         Import a disk, by copying its content to a pool.
 
@@ -118,7 +116,7 @@ class PoolService(Service):
         try:
             os.makedirs(src)
 
-            async with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ['ro']):
+            with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ['ro']):
                 job.set_progress(None, description='Importing')
 
                 line = [
@@ -130,14 +128,14 @@ class PoolService(Service):
                     src + '/',
                     dst_path
                 ]
-                rsync_proc = await Popen(
+                rsync_proc = subprocess.Popen(
                     line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, preexec_fn=os.setsid,
                 )
                 try:
                     progress_buffer = JobProgressBuffer(job)
                     percent_complete = 0
                     while True:
-                        line = await rsync_proc.stdout.readline()
+                        line = rsync_proc.stdout.readline()
                         job.logs_fd.write(line)
                         if line:
                             try:
@@ -158,7 +156,7 @@ class PoolService(Service):
                             break
 
                     progress_buffer.flush()
-                    await rsync_proc.wait()
+                    rsync_proc.wait()
                     if rsync_proc.returncode != 0:
                         raise Exception('rsync failed with exit code %r' % rsync_proc.returncode)
                 finally:
@@ -167,12 +165,11 @@ class PoolService(Service):
                             logger.warning("Terminating rsync")
                             rsync_proc.terminate()
                             try:
-                                async with async_timeout.timeout(10):
-                                    await rsync_proc.wait()
-                            except asyncio.TimeoutError:
+                                rsync_proc.wait(10)
+                            except subprocess.TimeoutExpired:
                                 logger.warning("Timeout waiting for rsync to terminate, killing it")
                                 rsync_proc.kill()
-                                await asyncio.sleep(5)  # For children to die before unmount
+                                time.sleep(5)  # For children to die before unmount
                         except ProcessLookupError:
                             logger.warning("rsync process lookup error")
 
