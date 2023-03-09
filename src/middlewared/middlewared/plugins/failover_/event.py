@@ -14,6 +14,7 @@ from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
+from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 
 logger = logging.getLogger('failover')
 
@@ -56,10 +57,6 @@ class FailoverEventsService(Service):
     # the state of a service to the other controller since
     # that's being handled by us explicitly
     HA_PROPAGATE = {'ha_propagate': False}
-
-    # This file is managed in unscheduled_reboot_alert.py
-    # Ticket 39114
-    WATCHDOG_ALERT_FILE = '/data/sentinels/.watchdog-alert'
 
     # this is the time limit we place on exporting the
     # zpool(s) when becoming the BACKUP node
@@ -636,8 +633,8 @@ class FailoverEventsService(Service):
         # So if we panic here, middleware will check for this file and send an appropriate email.
         # ticket 39114
         with contextlib.suppress(Exception):
-            with open(self.WATCHDOG_ALERT_FILE, 'wb') as f:
-                f.write(int(time.time()).to_bytes(4, sys.byteorder))
+            with open(WATCHDOG_ALERT_FILE, 'w') as f:
+                f.write(f'{time.time()}')
                 f.flush()  # be sure it goes straight to disk
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
@@ -670,7 +667,7 @@ class FailoverEventsService(Service):
         # controller is MASTER. So this means we have no volumes to export which means
         # the `self.ZPOOL_EXPORT_TIMEOUT` is honored.
         with contextlib.suppress(Exception):
-            os.unlink(self.WATCHDOG_ALERT_FILE)
+            os.unlink(WATCHDOG_ALERT_FILE)
 
         logger.info('Refreshing failover status')
         self.run_call('failover.status_refresh')
