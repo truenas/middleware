@@ -243,7 +243,7 @@ nvme)
 	fi
 
 	echo "Creating new namespace."
-	nsid=`nvmecontrol ns create -s ${size} -f ${lbaf} -n 1 -d 0 ${ctrlr} | awk '/namespace [0-9]+ created/ { print $2 }'`
+	nsid=`nvmecontrol ns create -s ${size} -f ${lbaf} -d 0 ${ctrlr} | awk '/namespace [0-9]+ created/ { print $2 }'`
 	if [ -z "${nsid}" ]; then
 		echo "Namespace creation failed"
 		exit 1
