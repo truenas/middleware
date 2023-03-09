@@ -216,7 +216,11 @@ nvme)
 		ucap=`echo "${idctrl}" | awk -F ' +: ' '$1 == "unvmcap" { print $2 }'`
 		size=$((ucap / sector))
 	fi
-	created=`nvme create-ns -s ${size} -c ${size} -f ${lbaf} -m 1 -d 0 ${ctrlr}`
+	mic=`echo "${idctrl}" | awk -F ' +: ' '$1 == "cmic" { print $2 }'`
+	if [ "${mic}" != "0" ]; then
+		mic=1
+	fi
+	created=`nvme create-ns -s ${size} -c ${size} -f ${lbaf} -m ${mic} -d 0 ${ctrlr}`
 	echo "${created}"
 	nsid=`echo "${created}" | awk -F nsid: '{ print $2 }'`
 	if [ -z "${nsid}" ]; then
