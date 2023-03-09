@@ -11,18 +11,24 @@ def dict_factory(cursor, row):
 
 
 def query_config_table(table, database_path=None, prefix=None):
+    return query_table(table, database_path, prefix)[0]
+
+
+def query_table(table, database_path=None, prefix=None):
     database_path = database_path or FREENAS_DATABASE
     conn = sqlite3.connect(database_path)
+    result = []
     try:
         conn.row_factory = dict_factory
         c = conn.cursor()
         try:
-            c.execute(f"SELECT * FROM {table}")
-            result = c.fetchone()
+            for row in c.execute(f"SELECT * FROM {table}").fetchall():
+                row = dict(row)
+                if prefix:
+                    row = {k.removeprefix(prefix): v for k, v in row.items()}
+                result.append(row)
         finally:
             c.close()
     finally:
         conn.close()
-    if prefix:
-        result = {k.replace(prefix, ''): v for k, v in result.items()}
     return result

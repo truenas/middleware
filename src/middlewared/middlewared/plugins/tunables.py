@@ -1,8 +1,9 @@
 import errno
+import os
 import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str, ValidationErrors
-from middlewared.service import CRUDService, private
+from middlewared.service import CRUDService, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 
@@ -19,7 +20,11 @@ class TunableModel(sa.Model):
     tun_enabled = sa.Column(sa.Boolean(), default=True)
 
 
-TUNABLE_TYPES = ['SYSCTL', 'UDEV']
+TUNABLE_TYPES = ['SYSCTL', 'UDEV', 'ZFS']
+
+
+def zfs_parameter_path(name):
+    return f'/sys/module/zfs/parameters/{name}'
 
 
 class TunableService(CRUDService):
@@ -58,6 +63,17 @@ class TunableService(CRUDService):
         self.set_sysctl(tunable['var'], tunable['orig_value'])
 
     @private
+    def set_zfs_parameter(self, name, value):
+        path = zfs_parameter_path(name)
+        if os.access(path, os.W_OK):
+            with open(path, 'w') as f:
+                f.write(value)
+
+    @private
+    def reset_zfs_parameter(self, tunable):
+        self.set_zfs_parameter(tunable['var'], tunable['orig_value'])
+
+    @private
     async def handle_tunable_change(self, tunable):
         if tunable['type'] == 'UDEV':
             await self.middleware.call('etc.generate', 'udev')
@@ -80,7 +96,8 @@ class TunableService(CRUDService):
         Bool('enabled', default=True),
         register=True
     ))
-    async def do_create(self, data):
+    @job(lock='tunable_crud')
+    async def do_create(self, job, data):
         """
         Create a tunable.
 
@@ -89,6 +106,9 @@ class TunableService(CRUDService):
 
         If `type` is `UDEV` then `var` is an udev rules file name (e.g. `10-disable-usb`, `.rules` suffix will be
         appended automatically) and `value` is its contents (e.g. `BUS=="usb", OPTIONS+="ignore_device"`).
+
+        If `type` is `ZFS` then `var` is a ZFS kernel module parameter name (e.g. `zfs_dirty_data_max_max`) and `value`
+        is its value (e.g. `783091712`).
         """
         verrors = ValidationErrors()
 
@@ -106,21 +126,38 @@ class TunableService(CRUDService):
                 errno.EPERM,
             )
 
+        if data['type'] == 'ZFS':
+            if not await self.middleware.run_in_thread(os.path.exists, zfs_parameter_path(data['var'])):
+                verrors.add(
+                    'tunable_create.var',
+                    f'ZFS module does not accept {data["var"]!r} parameter.',
+                    errno.ENOENT
+                )
+
         verrors.check()
 
         data['orig_value'] = ''
         if data['type'] == 'SYSCTL':
             data['orig_value'] = await self.middleware.call('tunable.get_sysctl', data['var'])
+        if data['type'] == 'ZFS':
+            def read_zfs_parameter_value():
+                with open(zfs_parameter_path(data['var'])) as f:
+                    return f.read().strip()
+
+            data['orig_value'] = await self.middleware.run_in_thread(read_zfs_parameter_value)
 
         id = await self.middleware.call(
             'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
 
         if data['type'] == 'SYSCTL':
-            await self.middleware.call('etc.generate', 'sysctl')
-
             if data['enabled']:
+                await self.middleware.call('etc.generate', 'sysctl')
                 await self.middleware.call('tunable.set_sysctl', data['var'], data['value'])
+        elif data['type'] == 'ZFS':
+            if data['enabled']:
+                await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
+                await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(data)
 
@@ -136,7 +173,8 @@ class TunableService(CRUDService):
             ('attr', {'update': True}),
         )
     )
-    async def do_update(self, id, data):
+    @job(lock='tunable_crud')
+    async def do_update(self, job, id, data):
         """
         Update Tunable of `id`.
         """
@@ -159,12 +197,20 @@ class TunableService(CRUDService):
                 await self.middleware.call('tunable.set_sysctl', new['var'], new['value'])
             else:
                 await self.middleware.call('tunable.reset_sysctl', new)
+        elif new['type'] == 'ZFS':
+            if new['enabled']:
+                await self.middleware.call('tunable.set_zfs_parameter', new['var'], new['value'])
+            else:
+                await self.middleware.call('tunable.reset_zfs_parameter', new)
+
+            await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(new)
 
         return await self.get_instance(id)
 
-    async def do_delete(self, id):
+    @job(lock='tunable_crud')
+    async def do_delete(self, job, id):
         """
         Delete Tunable of `id`.
         """
@@ -176,5 +222,9 @@ class TunableService(CRUDService):
             await self.middleware.call('etc.generate', 'sysctl')
 
             await self.middleware.call('tunable.reset_sysctl', entry)
+        elif entry['type'] == 'ZFS':
+            await self.middleware.call('tunable.reset_zfs_parameter', entry)
+
+            await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(entry)
