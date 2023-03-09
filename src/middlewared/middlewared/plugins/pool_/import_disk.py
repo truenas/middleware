@@ -125,7 +125,7 @@ class PoolService(Service):
                     'rsync',
                     '--info=progress2',
                     '--modify-window=1',
-                    '-rltvh',
+                    '-rltvhX',
                     '--no-perms',
                     src + '/',
                     dst_path
