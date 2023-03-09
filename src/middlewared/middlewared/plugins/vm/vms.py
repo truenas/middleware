@@ -55,6 +55,7 @@ class VMModel(sa.Model):
     uuid = sa.Column(sa.String(255))
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
     bootloader_ovmf = sa.Column(sa.String(1024), default='OVMF_CODE.fd')
+    trusted_platform_module = sa.Column(sa.Boolean(), default=False)
 
 
 @functools.cache
@@ -134,6 +135,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Str('nodeset', default=None, null=True, validators=[NumericSet()]),
         Bool('pin_vcpus', default=False),
         Bool('suspend_on_snapshot', default=False),
+        Bool('trusted_platform_module', default=False),
         Int('memory', required=True, validators=[Range(min=20)]),
         Int('min_memory', null=True, validators=[Range(min=20)], default=None),
         Bool('hyperv_enlightenments', default=False),
