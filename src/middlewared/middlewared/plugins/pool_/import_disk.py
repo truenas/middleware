@@ -1,19 +1,86 @@
 import asyncio
-import async_timeout
 import os
 import logging
 import re
 import subprocess
 
+import async_timeout
+import psutil
+
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import Dict, returns, Str
-from middlewared.service import accepts, CallError, job, Service
-from middlewared.utils import Popen
+from middlewared.schema import accepts, Dict, List, returns, Str
+from middlewared.service import CallError, job, Service
+from middlewared.utils import Popen, run
 
 logger = logging.getLogger(__name__)
 
 
+async def is_mounted(middleware, path):
+    mounted = await middleware.run_in_thread(psutil.disk_partitions)
+    return any(fs.mountpoint == path for fs in mounted)
+
+
+async def mount(device, path, fs_type, fs_options, options):
+    options = options or []
+
+    if isinstance(device, str):
+        device = device.encode("utf-8")
+
+    if isinstance(path, str):
+        path = path.encode("utf-8")
+
+    executable = "mount"
+    arguments = []
+
+    if fs_type == "msdosfs" and fs_options:
+        if fs_options.get("locale"):
+            if fs_options.get("locale") == "utf8":
+                options.append("utf8")
+            else:
+                options.append(f"iocharset={fs_options['locale']}")
+
+    arguments.extend(["-t", {"msdosfs": "vfat", "ext2fs": "ext2"}.get(fs_type, fs_type)])
+
+    if options:
+        arguments.extend(["-o", ",".join(options)])
+
+    proc = await Popen(
+        [executable] + arguments + [device, path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    output = await proc.communicate()
+
+    if proc.returncode != 0:
+        logger.debug("Mount failed (%s): %s", proc.returncode, output)
+        raise ValueError("Mount failed (exit code {0}):\n{1}{2}" .format(
+            proc.returncode,
+            output[0].decode("utf-8"),
+            output[1].decode("utf-8"),
+        ))
+    else:
+        return True
+
+
+class MountFsContextManager:
+    def __init__(self, middleware, device, path, *args, **kwargs):
+        self.middleware = middleware
+        self.device = device
+        self.path = path
+        self.args = args
+        self.kwargs = kwargs
+
+    async def __aenter__(self):
+        await mount(self.device, self.path, *self.args, **self.kwargs)
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if await is_mounted(self.middleware, os.path.realpath(self.path)):
+            await run("umount", self.path)
+
+
 class PoolService(Service):
+
+    RE_NLS = re.compile(r"nls_(.+)\.ko")
 
     @accepts(
         Str('device'),
@@ -37,7 +104,7 @@ class PoolService(Service):
                 "msg": "method",
                 "method": "pool.import_disk,
                 "params": [
-                    "/dev/da0", "msdosfs", {}, "/mnt/tank/mydisk"
+                    "/dev/sda", "msdosfs", {}, "/mnt/tank/mydisk"
                 ]
             }
         """
@@ -51,67 +118,65 @@ class PoolService(Service):
         try:
             os.makedirs(src)
 
-            async with await self.middleware.call('pool.import_disk_kernel_module_context_manager', fs_type):
-                async with await self.middleware.call('pool.import_disk_mount_fs_context_manager', device, src,
-                                                      fs_type, fs_options):
-                    job.set_progress(None, description='Importing')
+            async with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ['ro']):
+                job.set_progress(None, description='Importing')
 
-                    line = [
-                        'rsync',
-                        '--info=progress2',
-                        '--modify-window=1',
-                        '-rltvh',
-                        '--no-perms',
-                        src + '/',
-                        dst_path
-                    ]
-                    rsync_proc = await Popen(
-                        line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, preexec_fn=os.setsid,
-                    )
-                    try:
-                        progress_buffer = JobProgressBuffer(job)
-                        percent_complete = 0
-                        while True:
-                            line = await rsync_proc.stdout.readline()
-                            job.logs_fd.write(line)
-                            if line:
-                                try:
-                                    line = line.decode('utf-8', 'ignore').strip()
-                                    bits = re.split(r'\s+', line)
-                                    if len(bits) == 6 and bits[1].endswith('%') and bits[1][:-1].isdigit():
-                                        percent_complete = int(bits[1][:-1])
-                                        progress_buffer.set_progress(percent_complete)
-                                    elif not line.endswith('/'):
-                                        if (
-                                            line not in ['sending incremental file list'] and
-                                            'xfr#' not in line
-                                        ):
-                                            progress_buffer.set_progress(percent_complete, extra=line)
-                                except Exception:
-                                    logger.warning('Parsing error in rsync task', exc_info=True)
-                            else:
-                                break
-
-                        progress_buffer.flush()
-                        await rsync_proc.wait()
-                        if rsync_proc.returncode != 0:
-                            raise Exception('rsync failed with exit code %r' % rsync_proc.returncode)
-                    finally:
-                        if rsync_proc.returncode is None:
+                line = [
+                    'rsync',
+                    '--info=progress2',
+                    '--modify-window=1',
+                    '-rltvh',
+                    '--no-perms',
+                    src + '/',
+                    dst_path
+                ]
+                rsync_proc = await Popen(
+                    line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, preexec_fn=os.setsid,
+                )
+                try:
+                    progress_buffer = JobProgressBuffer(job)
+                    percent_complete = 0
+                    while True:
+                        line = await rsync_proc.stdout.readline()
+                        job.logs_fd.write(line)
+                        if line:
                             try:
-                                logger.warning("Terminating rsync")
-                                rsync_proc.terminate()
-                                try:
-                                    async with async_timeout.timeout(10):
-                                        await rsync_proc.wait()
-                                except asyncio.TimeoutError:
-                                    logger.warning("Timeout waiting for rsync to terminate, killing it")
-                                    rsync_proc.kill()
-                                    await asyncio.sleep(5)  # For children to die before unmount
-                            except ProcessLookupError:
-                                logger.warning("rsync process lookup error")
+                                line = line.decode('utf-8', 'ignore').strip()
+                                bits = re.split(r'\s+', line)
+                                if len(bits) == 6 and bits[1].endswith('%') and bits[1][:-1].isdigit():
+                                    percent_complete = int(bits[1][:-1])
+                                    progress_buffer.set_progress(percent_complete)
+                                elif not line.endswith('/'):
+                                    if (
+                                        line not in ['sending incremental file list'] and
+                                        'xfr#' not in line
+                                    ):
+                                        progress_buffer.set_progress(percent_complete, extra=line)
+                            except Exception:
+                                logger.warning('Parsing error in rsync task', exc_info=True)
+                        else:
+                            break
 
-                    job.set_progress(100, description='Done', extra='')
+                    progress_buffer.flush()
+                    await rsync_proc.wait()
+                    if rsync_proc.returncode != 0:
+                        raise Exception('rsync failed with exit code %r' % rsync_proc.returncode)
+                finally:
+                    if rsync_proc.returncode is None:
+                        try:
+                            logger.warning("Terminating rsync")
+                            rsync_proc.terminate()
+                            try:
+                                async with async_timeout.timeout(10):
+                                    await rsync_proc.wait()
+                            except asyncio.TimeoutError:
+                                logger.warning("Timeout waiting for rsync to terminate, killing it")
+                                rsync_proc.kill()
+                                await asyncio.sleep(5)  # For children to die before unmount
+                        except ProcessLookupError:
+                            logger.warning("rsync process lookup error")
+
+                job.set_progress(100, description='Done', extra='')
         finally:
             os.rmdir(src)
 
@@ -128,7 +193,7 @@ class PoolService(Service):
                 "id": "6841f242-840a-11e6-a437-00e04d680384",
                 "msg": "method",
                 "method": "pool.import_disk_autodetect_fs_type",
-                "params": ["/dev/da0"]
+                "params": ["/dev/sda"]
             }
         """
         proc = subprocess.Popen(["blkid", device], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8")
@@ -164,3 +229,18 @@ class PoolService(Service):
             return None
 
         return fs
+
+    @accepts()
+    @returns(List('locales', items=[Str('locale')]))
+    def import_disk_msdosfs_locales(self):
+        """
+        Get a list of locales for msdosfs type to be used in `pool.import_disk`.
+        """
+        result = {"utf8"}
+        kernel = subprocess.check_output(["uname", "-r"], encoding="utf8").strip()
+        for name in os.listdir(os.path.join("/lib/modules", kernel, "kernel/fs/nls")):
+            m = self.RE_NLS.match(name)
+            if m:
+                result.add(m.group(1))
+
+        return sorted(result)
