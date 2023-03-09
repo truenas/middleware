@@ -1,19 +1,8 @@
 import datetime
 import os
-import textwrap
-
-from middlewared.alert.base import AlertCategory, AlertClass, SimpleOneShotAlertClass, AlertLevel
 
 WATCHDOG_ALERT_FILE = "/data/sentinels/.watchdog-alert"
 FENCED_ALERT_FILE = "/data/sentinels/.fenced-alert"
-
-
-class ScheduledRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Scheduled System Reboot"
-    text = "%s"
-    deleted_automatically = False
 
 
 def get_fqdn(middleware):
@@ -57,17 +46,12 @@ def setup_impl(middleware):
     fqdn = get_fqdn(middleware)
     watchdog_time, fenced_time = get_sentinel_files_time_and_clean_them_up(middleware)
     if watchdog_time and (not fenced_time or watchdog_time > fenced_time):
-        middleware.call_sync("alert.oneshot_create", "ScheduledReboot", textwrap.dedent(f"""\
-            {fqdn} had a failover event.
-            The system was rebooted to ensure a proper failover occurred.
-            The operating system successfully came back online at {now}.
-        """))
+        middleware.call_sync("alert.oneshot_create", "FailoverReboot", {'fqdn': fqdn, 'now': now})
     elif fenced_time:
-        middleware.call_sync("alert.oneshot_create", "ScheduledReboot", textwrap.dedent(f"""\
-            {fqdn} had a failover event.
-            The system was rebooted because persistent SCSI reservations were lost and/or cleared.
-            The operating system successfully came back online at {now}.
-        """))
+        middleware.call_sync("alert.oneshot_create", "FencedReboot", {'fqdn': fqdn, 'now': now})
+    else:
+        middleware.call_sync("alert.oneshot_delete", "FencedReboot")
+        middleware.call_sync("alert.oneshot_delete", "FailoverReboot")
 
 
 async def setup(middleware):
