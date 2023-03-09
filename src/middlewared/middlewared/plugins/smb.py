@@ -1024,6 +1024,11 @@ class SharingSMBService(SharingService):
 
         if do_global_reload:
             await self.middleware.call('smb.initialize_globals')
+            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+                await self.middleware.call('activedirectory.synchronize')
+                if data['home']:
+                    await self.middleware.call('idmap.clear_idmap_cache')
+
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
@@ -1187,6 +1192,11 @@ class SharingSMBService(SharingService):
 
         if do_global_reload:
             await self.middleware.call('smb.initialize_globals')
+            if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
+                await self.middleware.call('activedirectory.synchronize')
+                if new['home'] or old['home']:
+                    await self.middleware.call('idmap.clear_idmap_cache')
+
             await self._service_change('cifs', 'restart')
         else:
             await self._service_change('cifs', 'reload')
@@ -1304,6 +1314,9 @@ class SharingSMBService(SharingService):
             guest_mapping = await self.middleware.call('smb.getparm', 'map to guest', 'GLOBAL')
             if guest_mapping != 'Bad User':
                 return True
+
+        if data['home']:
+            return True
 
         return False
 

@@ -73,7 +73,14 @@
             if self.name() != 'Base':
                 return pam_line
 
-            return {'primary': [], 'additional': [pam_line]}
+            mkhomedir = self.generate_pam_line(
+                'session',
+                pam_control,
+                self.pam_mkhomedir,
+                pam_args
+            )
+
+            return {'primary': [], 'additional': [pam_line, mkhomedir]}
 
         def pam_password(self, **kwargs):
             pam_path = kwargs.pop('pam_path', self.pam_unix)
@@ -126,8 +133,9 @@
 
         def pam_session(self):
             unix_session = super().pam_session()
+            mkhomedir = super().pam_session(pam_path=self.pam_mkhomedir, pam_control='required')
             wb_session = super().pam_session(pam_path=self.pam_winbind, pam_control='optional')
-            return {'primary': [], 'additional': [unix_session, wb_session]}
+            return {'primary': [], 'additional': [unix_session, mkhomedir, wb_session]}
 
         def pam_password(self):
             args = ["try_first_pass", "krb5_auth", "krb5_ccache_type=FILE"]
@@ -214,6 +222,7 @@
         def pam_session(self):
             entries = [super().pam_session()]
             entries.append(super().pam_session(pam_path=self.pam_ldap, pam_control='optional'))
+            entries.append(super().pam_session(pam_path=self.pam_mkhomedir, pam_control='required'))
             if self.is_kerberized():
                 entries.append(super().pam_session(pam_path=self.pam_krb5, pam_control='optional'))
 
