@@ -6,6 +6,7 @@ from middlewared.plugins.smb_.smbconf.reg_service import ShareSchema
 
 import errno
 import json
+import os
 
 CONF_JSON_VERSION = {"major": 0, "minor": 1}
 
@@ -296,6 +297,20 @@ class SharingSMBService(Service):
         return ret
 
     @private
+    def create_domain_paths(self, path):
+        if not path:
+            return
+
+        for dom in self.middleware.call_sync('smb.domain_choices'):
+            if dom == 'BUILTIN':
+                continue
+
+            try:
+                os.mkdir(os.path.join(path, dom))
+            except FileExistsError:
+                pass
+
+    @private
     def share_to_smbconf(self, conf_in, globalconf=None):
         data = conf_in.copy()
         gl = self.middleware.call_sync('sharing.smb.get_global_params', globalconf)
@@ -312,6 +327,7 @@ class SharingSMBService(Service):
             """
             if gl['ad_enabled']:
                 data['path_suffix'] = '%D/%U'
+                self.create_domain_paths(conf_in['path'])
             elif data['path']:
                 data['path_suffix'] = '%U'
 
