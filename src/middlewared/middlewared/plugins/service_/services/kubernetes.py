@@ -4,7 +4,6 @@ import os
 import re
 
 from middlewared.plugins.kubernetes_linux.k8s.config import remove_initialized_config
-from middlewared.service import CallError
 from middlewared.utils import run
 
 from .base import SimpleService
