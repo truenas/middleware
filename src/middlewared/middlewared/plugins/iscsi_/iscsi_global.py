@@ -1,11 +1,14 @@
+import asyncio
 import re
+import socket
 
 import middlewared.sqlalchemy as sa
-
 from middlewared.async_validators import validate_port
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import private, SystemServiceService, ValidationErrors
-from middlewared.validators import IpAddress, Range
+from middlewared.schema import Bool, Dict, Int, List, Str, accepts
+from middlewared.service import (CallError, SystemServiceService,
+                                 ValidationErrors, private)
+from middlewared.utils import run
+from middlewared.validators import IpAddress, Port, Range
 
 RE_IP_PORT = re.compile(r'^(.+?)(:[0-9]+)?$')
 
@@ -30,6 +33,65 @@ class ISCSIGlobalService(SystemServiceService):
         service = 'iscsitarget'
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
+
+    @private
+    def port_is_listening(self, host, port, timeout=5):
+        ret = False
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout:
+            s.settimeout(timeout)
+
+        try:
+            s.connect((host, port))
+            ret = True
+        except Exception:
+            self.logger.debug("connection to %s failed", host, exc_info=True)
+            ret = False
+        finally:
+            s.close()
+
+        return ret
+
+    @private
+    def validate_isns_server(self, server, verrors):
+        """
+        Check whether a valid IP[:port] was supplied.  Returns None or failure,
+        or (server, ip, port) tuple on success.
+        """
+        invalid_ip_port_tuple = f'Server "{server}" is not a valid IP(:PORT)? tuple.'
+
+        reg = RE_IP_PORT.search(server)
+        if not reg:
+            verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
+            return None
+
+        ip = reg.group(1)
+        if ip and ip[0] == '[' and ip[-1] == ']':
+            ip = ip[1:-1]
+
+        # First check that a valid IP was supplied
+        try:
+            ip_validator = IpAddress()
+            ip_validator(ip)
+        except ValueError:
+            verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
+            return None
+
+        # Next check the port number (if supplied)
+        parts = server.split(':')
+        if len(parts) == 2:
+            try:
+                port = int(parts[1])
+                port_validator = Port()
+                port_validator(port)
+            except ValueError:
+                verrors.add('iscsiglobal_update.isns_servers', invalid_ip_port_tuple)
+                return None
+        else:
+            port = 3205
+
+        return (server, ip, port)
 
     @private
     def config_extend(self, data):
@@ -57,26 +119,24 @@ class ISCSIGlobalService(SystemServiceService):
         verrors = ValidationErrors()
 
         servers = data.get('isns_servers') or []
+        server_addresses = []
         for server in servers:
-            reg = RE_IP_PORT.search(server)
-            if reg:
-                ip = reg.group(1)
-                if ip and ip[0] == '[' and ip[-1] == ']':
-                    ip = ip[1:-1]
-                try:
-                    ip_validator = IpAddress()
-                    ip_validator(ip)
-                    continue
-                except ValueError:
-                    pass
-            verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" is not a valid IP(:PORT)? tuple.')
+            if result := self.validate_isns_server(server, verrors):
+                server_addresses.append(result)
+        if server_addresses:
+            # For the valid addresses, we will check connectivity in parallel
+            coroutines = [self.middleware.call('iscsi.global.port_is_listening', ip, port) for (server, ip, port) in server_addresses]
+            results = await asyncio.gather(*coroutines)
+            for (server, ip, port), result in zip(server_addresses, results):
+                if not result:
+                    verrors.add('iscsiglobal_update.isns_servers', f'Server "{server}" could not be contacted.')
 
         verrors.extend(await validate_port(
             self.middleware, 'iscsiglobal_update.listen_port', new['listen_port'], 'iscsi.global'
         ))
 
-        if verrors:
-            raise verrors
+        verrors.check()
+        licensed = await self.middleware.call('failover.licensed')
 
         new['isns_servers'] = '\n'.join(servers)
 
@@ -85,7 +145,32 @@ class ISCSIGlobalService(SystemServiceService):
         if old['alua'] != new['alua']:
             await self.middleware.call('etc.generate', 'loader')
 
+        # If we have just turned off iSNS then work around a short-coming in scstadmin reload
+        if old['isns_servers'] != new['isns_servers'] and not servers:
+            await self.middleware.call('iscsi.global.stop_active_isns')
+            if licensed:
+                try:
+                    await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
+                except Exception as e:
+                    if isinstance(e, CallError) and e.errno == CallError.ENOMETHOD:
+                        pass
+                    else:
+                        self.logger.error('Unhandled exception in stop_active_isns on remote controller', exc_info=True)
+
         return await self.config()
+
+    @private
+    async def stop_active_isns(self):
+        """
+        Unfortunately a SCST reload does not stop a previously active iSNS config, so
+        need to be able to perform an explicit action.
+        """
+        cp = await run([
+            'scstadmin', '-force', '-noprompt', '-set_drv_attr', 'iscsi',
+            '-attributes', 'iSNSServer=""'
+        ], check=False)
+        if cp.returncode:
+            self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
     @accepts()
     async def alua_enabled(self):

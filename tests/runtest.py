@@ -18,6 +18,8 @@ results_xml = f'{workdir}/results/'
 localHome = os.path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
+isns_ip='10.234.24.50' # isns01.qe.ixsystems.net
+pool_name = "tank"
 
 ixautomation_dot_conf_url = "https://raw.githubusercontent.com/iXsystems/" \
     "ixautomation/master/src/etc/ixautomation.conf.dist"
@@ -28,19 +30,21 @@ if not os.path.exists('config.py'):
     print(config_file_msg)
     exit(1)
 
-error_msg = """Usage for %s:
+error_msg = f"""Usage for %s:
 Mandatory option
-    --ip <###.###.###.###>     - IP of the FreeNAS
-    --password <root password> - Password of the FreeNAS root user
-    --interface <interface>    - The interface that FreeNAS is run one
+    --ip <###.###.###.###>      - IP of the TrueNAS
+    --password <root password>  - Password of the TrueNAS root user
+    --interface <interface>     - The interface that TrueNAS is run one
 
 Optional option
-    --test <test name>         - Test name (Network, ALL)
-    --vm-name <VM_NAME>        - Name the the Bhyve VM
-    --ha                       - Run test for HA
-    --dev-test                 - Run only the test that are not mark with
-                                 pytestmark skipif dev_test is true.
-    --debug-mode               - Start API tests with middleware debug mode
+    --test <test name>          - Test name (Network, ALL)
+    --vm-name <VM_NAME>         - Name the the Bhyve VM
+    --ha                        - Run test for HA
+    --dev-test                  - Run only the test that are not mark with
+                                  pytestmark skipif dev_test is true.
+    --debug-mode                - Start API tests with middleware debug mode
+    --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
+    --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
     """ % argv[0]
 
 # if have no argument stop
@@ -60,11 +64,12 @@ option_list = [
     "debug-mode",
     "log-cli-level=",
     "returncode",
+    "isns_ip=",
 ]
 
 # look if all the argument are there.
 try:
-    myopts, args = getopt.getopt(argv[1:], 'aipItk:vx', option_list)
+    myopts, args = getopt.getopt(argv[1:], 'aipItk:vxs', option_list)
 except getopt.GetoptError as e:
     print(str(e))
     print(error_msg)
@@ -111,6 +116,12 @@ for output, arg in myopts:
         callargs.append(arg)
     elif output == '--returncode':
         returncode = True
+    elif output == '--isns_ip':
+        isns_ip = arg
+    elif output == '--pool':
+        pool_name = arg
+    elif output == '-s':
+        callargs.append('-s')
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -138,13 +149,14 @@ interface = "{interface}"
 ntpServer = "10.20.20.122"
 localHome = "{localHome}"
 keyPath = "{keyPath}"
-pool_name = "tank"
+pool_name = "{pool_name}"
 ha_pool_name = "ha"
 ha = {ha}
 update = {update}
 dev_test = {dev_test}
 debug_mode = {debug_mode}
 artifacts = "{artifacts}"
+isns_ip = "{isns_ip}"
 """
 
 cfg_file = open("auto_config.py", 'w')

@@ -4,6 +4,7 @@
 
 import os
 import random
+import socket
 import string
 import sys
 from time import sleep
@@ -13,9 +14,9 @@ from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test, hostname, ip, pool_name
+from auto_config import dev_test, hostname, ip, isns_ip, pool_name
 from functions import DELETE, GET, POST, PUT, SSH_TEST
-from protocols import iscsi_scsi_connection
+from protocols import iscsi_scsi_connection, isns_connection
 
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
@@ -245,6 +246,20 @@ def configured_target_to_zvol_extent(target_name, zvol, alias=None):
                                 'extent': extent_config,
                             }
 
+@contextlib.contextmanager
+def isns_enabled(delay=5):
+    payload = {'isns_servers': [isns_ip]}
+    results = PUT(f"/iscsi/global", payload)
+    assert results.status_code == 200, results.text
+    try:
+        yield
+    finally:
+        payload = {'isns_servers': []}
+        results = PUT(f"/iscsi/global", payload)
+        assert results.status_code == 200, results.text
+        if delay:
+            print(f'Sleeping for {delay} seconds after turning off iSNS')
+            sleep(delay)
 
 def TUR(s):
     """
@@ -885,6 +900,7 @@ def test_11_modify_portal(request):
         results = PUT(f"/iscsi/portal/id/{portal_config['id']}", payload)
         assert results.status_code == 200, results.text
 
+
 def test_12_pblocksize_setting(request):
     """
     This tests whether toggling pblocksize has the desired result on READ CAPACITY 16, i.e.
@@ -901,7 +917,7 @@ def test_12_pblocksize_setting(request):
             assert data['lbppbe'] == 3, data
 
             # First let's just change the blocksize to 2K
-            payload = {'blocksize' : 2048}
+            payload = {'blocksize': 2048}
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
@@ -911,7 +927,7 @@ def test_12_pblocksize_setting(request):
             assert data['lbppbe'] == 1, data
 
             # Now let's change it back to 512, but also set pblocksize
-            payload = {'blocksize' : 512, 'pblocksize' : True}
+            payload = {'blocksize': 512, 'pblocksize': True}
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
@@ -929,7 +945,7 @@ def test_12_pblocksize_setting(request):
             assert data['lbppbe'] == 5, data
 
             # First let's just change the blocksize to 4K
-            payload = {'blocksize' : 4096}
+            payload = {'blocksize': 4096}
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
@@ -939,7 +955,7 @@ def test_12_pblocksize_setting(request):
             assert data['lbppbe'] == 2, data
 
             # Now let's also set pblocksize
-            payload = {'pblocksize' : True}
+            payload = {'pblocksize': True}
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
@@ -947,6 +963,75 @@ def test_12_pblocksize_setting(request):
             data = s.readcapacity16().result
             assert data['block_length'] == 4096, data
             assert data['lbppbe'] == 0, data
+
+
+def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
+    iqns = set(isns_client.list_targets())
+    while timeout > 0 and iqn not in iqns:
+        sleep(1)
+        iqns = set(isns_client.list_targets())
+    return iqns
+
+def test_13_test_isns(request):
+    """
+    Test ability to register targets with iSNS.
+    """
+    # Will use a more unique target name than usual, just in case several test
+    # runs are hitting the same iSNS server at the same time.
+    _host = socket.gethostname()
+    _rand = ''.join(random.choices(string.digits +
+                                   string.ascii_lowercase,
+                                   k=12))
+    _name_base = f'isnstest:{_host}:{_rand}'
+    _target1 = f'{_name_base}:1'
+    _target2 = f'{_name_base}:2'
+    _initiator = f'iqn.2005-10.org.freenas.ctl:isnstest:{_name_base}:initiator'
+    _iqn1 = f'{basename}:{_target1}'
+    _iqn2 = f'{basename}:{_target1}'
+
+    with isns_connection(isns_ip, _initiator) as isns_client:
+        # First let's ensure that the targets are not already present.
+        base_iqns = set(isns_client.list_targets())
+        for iqn in [_iqn1, _iqn2]:
+            assert iqn not in base_iqns, iqn
+
+        # Create target1 and ensure it is still not present (because we
+        # haven't switched on iSNS yet).
+        with configured_target_to_file_extent(_target1,
+                                              pool_name,
+                                              dataset_name,
+                                              file_name) as iscsi_config:
+            iqns = set(isns_client.list_targets())
+            assert _iqn1 not in iqns, _iqn1
+
+            # Now turn on the iSNS server
+            with isns_enabled():
+                iqns = _isns_wait_for_iqn(isns_client, _iqn1)
+                assert _iqn1 in iqns, _iqn1
+
+                # Create another target and ensure it shows up too
+                with target(_target2,
+                            [{'portal': iscsi_config['portal']['id']}]
+                            ) as target2_config:
+                    target_id = target2_config['id']
+                    with zvol_dataset(zvol):
+                        with zvol_extent(zvol) as extent_config:
+                            extent_id = extent_config['id']
+                            with target_extent_associate(target_id, extent_id):
+                                iqns = _isns_wait_for_iqn(isns_client, _iqn2)
+                                for inq in [_iqn1, _iqn2]:
+                                    assert iqn in iqns, iqn
+
+            # Now that iSNS is disabled again, ensure that our target is
+            # no longer advertised
+            iqns = set(isns_client.list_targets())
+            assert _iqn1 not in iqns, _iqn1
+
+        # Finally let's ensure that neither target is present.
+        base_iqns = set(isns_client.list_targets())
+        for iqn in [_iqn1, _iqn2]:
+            assert iqn not in base_iqns, iqn
+
 
 def test_99_teardown(request):
     # Disable iSCSI service
@@ -962,4 +1047,3 @@ def test_99_teardown(request):
     results = GET("/service/?service=iscsitarget")
     assert results.status_code == 200, results.text
     assert results.json()[0]["state"] == "STOPPED", results.text
-

@@ -1,9 +1,11 @@
 import contextlib
+
 from functions import DELETE, POST
 
-from .smb_proto import SMB
+from .iscsi_proto import iscsi_scsi_connect, iscsi_scsi_connection
+from .iSNSP.client import iSNSPClient
 from .nfs_proto import SSH_NFS
-from .iscsi_proto import iscsi_scsi_connection, iscsi_scsi_connect
+from .smb_proto import SMB
 
 
 @contextlib.contextmanager
@@ -47,3 +49,14 @@ def nfs_share(path, options=None):
     finally:
         result = DELETE(f"/sharing/nfs/id/{id}/")
         assert result.status_code == 200, result.text
+
+@contextlib.contextmanager
+def isns_connection(host, initiator_iqn, **kwargs):
+    c = iSNSPClient(host, initiator_iqn, **kwargs)
+    try:
+        c.connect()
+        c.register_initiator()
+        yield c
+    finally:
+        c.deregister_initiator()
+        c.close()
