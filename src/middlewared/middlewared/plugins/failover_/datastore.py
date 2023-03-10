@@ -7,6 +7,7 @@ from middlewared.plugins.datastore.connection import thread_pool
 from middlewared.utils.threading import start_daemon_thread, set_thread_name
 
 FREENAS_DATABASE_REPLICATED = f'{FREENAS_DATABASE}.replicated'
+RAISE_ALERT_SYNC_RETRY_TIME = 1200  # 20mins (some platforms take 15-20mins to reboot)
 
 
 class FailoverDatastoreService(Service):
@@ -36,27 +37,25 @@ class FailoverDatastoreService(Service):
         self.failure = True
         try:
             self.send()
-        except Exception:
-            self.logger.warning(
-                'Error sending database to the remote node on first replication failure', exc_info=True,
-            )
-
-            self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
+        except Exception as e:
+            self.logger.warning('Error sending database to remote node on first replication failure: %r', e)
 
             def send_retry():
                 set_thread_name('failover_datastore')
 
+                raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
+                total_mins = raise_alert_time / 60
+                sleep_time = 30
                 while True:
-                    time.sleep(60)
+                    raise_alert_time -= sleep_time
+                    time.sleep(sleep_time)
 
                     if not self.failure:
                         # Someone sent the database for us
                         return
 
-                    if (failover_status := self.middleware.call_sync('failover.status')) != 'MASTER':
-                        self.logger.warning(
-                            'Failover status changed to %s while retrying database send', failover_status,
-                        )
+                    if (fs := self.middleware.call_sync('failover.status')) != 'MASTER':
+                        self.logger.warning('Failover status changed to %s while retrying database send', fs)
                         self.failure = False
                         break
 
@@ -64,6 +63,10 @@ class FailoverDatastoreService(Service):
                         self.middleware.call_sync('failover.datastore.send')
                     except Exception:
                         pass
+
+                    if raise_alert_time <= 0 and self.failure:
+                        self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', {'mins': total_mins})
+                        raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
 
             start_daemon_thread(target=send_retry)
 
