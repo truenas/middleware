@@ -2,6 +2,7 @@ import asyncio
 import errno
 import json
 import os
+import re
 import shutil
 import uuid
 
@@ -14,6 +15,7 @@ from middlewared.utils import run
 from .k8s.config import reinitialize_config
 
 
+RE_CGROUP_CONTROLLERS = re.compile(r'(\w+)\s+')
 START_LOCK = asyncio.Lock()
 
 
@@ -195,6 +197,38 @@ class KubernetesService(Service):
         }
 
     @private
+    def ensure_cgroups_are_setup(self):
+        supported_controllers = {'cpu', 'cpuset', 'memory', 'hugetlb', 'pids'}
+        cgroup_root_path = '/sys/fs/cgroup'
+        system_supported_controllers_path = os.path.join(cgroup_root_path, 'cgroup.controllers')
+        try:
+            with open(system_supported_controllers_path, 'r') as f:
+                available_controllers = set(RE_CGROUP_CONTROLLERS.findall(f.read()))
+        except FileNotFoundError:
+            raise CallError(
+                'Unable to determine available cgroup controllers as '
+                f'{system_supported_controllers_path!r} does not exist'
+            )
+
+        needed_controllers = supported_controllers & available_controllers
+        system_available_controllers_path = os.path.join(cgroup_root_path, 'cgroup.subtree_control')
+        try:
+            with open(system_available_controllers_path, 'r') as f:
+                available_controllers_for_consumption = set(RE_CGROUP_CONTROLLERS.findall(f.read()))
+        except FileNotFoundError:
+            raise CallError(
+                'Unable to determine cgroup controllers which are available for consumption as '
+                f'{system_available_controllers_path!r} does not exist'
+            )
+
+        missing_controllers = needed_controllers - available_controllers_for_consumption
+        if missing_controllers:
+            raise CallError(
+                f'Missing {", ".join(missing_controllers)!r} cgroup controller(s) '
+                'which are required for apps to function'
+            )
+
+    @private
     async def validate_k8s_fs_setup(self):
         config = await self.middleware.call('kubernetes.config')
         if not await self.middleware.call('pool.query', [['name', '=', config['pool']]]):
@@ -240,6 +274,7 @@ class KubernetesService(Service):
         if errors:
             raise CallError(str(errors))
 
+        await self.middleware.call('kubernetes.ensure_cgroups_are_setup')
         await self.middleware.call('k8s.migration.scale_version_check')
 
     @private
