@@ -5,7 +5,8 @@ import socket
 import middlewared.sqlalchemy as sa
 from middlewared.async_validators import validate_port
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import SystemServiceService, ValidationErrors, private
+from middlewared.service import (CallError, SystemServiceService,
+                                 ValidationErrors, private)
 from middlewared.utils import run
 from middlewared.validators import IpAddress, Port, Range
 
@@ -148,7 +149,13 @@ class ISCSIGlobalService(SystemServiceService):
         if old['isns_servers'] != new['isns_servers'] and not servers:
             await self.middleware.call('iscsi.global.stop_active_isns')
             if licensed:
-                await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
+                try:
+                    await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
+                except Exception as e:
+                    if isinstance(e, CallError) and e.errno == CallError.ENOMETHOD:
+                        pass
+                    else:
+                        self.logger.error('Unhandled exception in stop_active_isns on remote controller', exc_info=True)
 
         return await self.config()
 
