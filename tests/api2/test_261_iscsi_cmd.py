@@ -965,6 +965,13 @@ def test_12_pblocksize_setting(request):
             assert data['lbppbe'] == 0, data
 
 
+def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
+    iqns = set(isns_client.list_targets())
+    while timeout > 0 and iqn not in iqns:
+        sleep(1)
+        iqns = set(isns_client.list_targets())
+    return iqns
+
 def test_13_test_isns(request):
     """
     Test ability to register targets with iSNS.
@@ -979,12 +986,13 @@ def test_13_test_isns(request):
     _target1 = f'{_name_base}:1'
     _target2 = f'{_name_base}:2'
     _initiator = f'iqn.2005-10.org.freenas.ctl:isnstest:{_name_base}:initiator'
+    _iqn1 = f'{basename}:{_target1}'
+    _iqn2 = f'{basename}:{_target1}'
 
     with isns_connection(isns_ip, _initiator) as isns_client:
         # First let's ensure that the targets are not already present.
         base_iqns = set(isns_client.list_targets())
-        for _target in [_target1, _target2]:
-            iqn = f'{basename}:{_target}'
+        for iqn in [_iqn1, _iqn2]:
             assert iqn not in base_iqns, iqn
 
         # Create target1 and ensure it is still not present (because we
@@ -994,14 +1002,12 @@ def test_13_test_isns(request):
                                               dataset_name,
                                               file_name) as iscsi_config:
             iqns = set(isns_client.list_targets())
-            iqn = f'{basename}:{_target1}'
-            assert iqn not in iqns, iqn
+            assert _iqn1 not in iqns, _iqn1
 
             # Now turn on the iSNS server
             with isns_enabled():
-                iqns = set(isns_client.list_targets())
-                iqn = f'{basename}:{_target1}'
-                assert iqn in iqns, iqn
+                iqns = _isns_wait_for_iqn(isns_client, _iqn1)
+                assert _iqn1 in iqns, _iqn1
 
                 # Create another target and ensure it shows up too
                 with target(_target2,
@@ -1012,21 +1018,18 @@ def test_13_test_isns(request):
                         with zvol_extent(zvol) as extent_config:
                             extent_id = extent_config['id']
                             with target_extent_associate(target_id, extent_id):
-                                iqns = set(isns_client.list_targets())
-                                for _target in [_target1, _target2]:
-                                    iqn = f'{basename}:{_target}'
+                                iqns = _isns_wait_for_iqn(isns_client, _iqn2)
+                                for inq in [_iqn1, _iqn2]:
                                     assert iqn in iqns, iqn
 
             # Now that iSNS is disabled again, ensure that our target is
             # no longer advertised
             iqns = set(isns_client.list_targets())
-            iqn = f'{basename}:{_target1}'
-            assert iqn not in iqns, iqn
+            assert _iqn1 not in iqns, _iqn1
 
         # Finally let's ensure that neither target is present.
         base_iqns = set(isns_client.list_targets())
-        for _target in [_target1, _target2]:
-            iqn = f'{basename}:{_target}'
+        for iqn in [_iqn1, _iqn2]:
             assert iqn not in base_iqns, iqn
 
 
