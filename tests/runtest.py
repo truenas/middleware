@@ -32,9 +32,9 @@ if not os.path.exists('config.py'):
 
 error_msg = f"""Usage for %s:
 Mandatory option
-    --ip <###.###.###.###>      - IP of the FreeNAS
-    --password <root password>  - Password of the FreeNAS root user
-    --interface <interface>     - The interface that FreeNAS is run one
+    --ip <###.###.###.###>      - IP of the TrueNAS
+    --password <root password>  - Password of the TrueNAS root user
+    --interface <interface>     - The interface that TrueNAS is run one
 
 Optional option
     --test <test name>          - Test name (Network, ALL)
