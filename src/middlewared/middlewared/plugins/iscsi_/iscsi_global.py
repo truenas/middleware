@@ -44,9 +44,8 @@ class ISCSIGlobalService(SystemServiceService):
         try:
             s.connect((host, port))
             ret = True
-        except Exception as e:
-            self.logger.debug("connection to %s failed with error: %s",
-                              host, e)
+        except Exception:
+            self.logger.debug("connection to %s failed", host, exc_info=True)
             ret = False
         finally:
             s.close()
@@ -164,7 +163,7 @@ class ISCSIGlobalService(SystemServiceService):
             '-attributes', 'iSNSServer=""'
         ], check=False)
         if cp.returncode:
-            self.middleware.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
+            self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
     @accepts()
     async def alua_enabled(self):
