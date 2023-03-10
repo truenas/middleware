@@ -1777,20 +1777,26 @@ class SharingSMBService(SharingService):
                                 "This may indicate that SMB service has not completed initialization.")
             return
 
-        active_shares = await self.query([
+        db_shares = await self.query()
+
+        for share in db_shares:
+            if share['home']:
+                share['name'] = 'HOMES'
+
+        active_shares = filter_list(db_shares, [
             ('locked', '=', False),
             ('enabled', '=', True),
             ('path', '!=', '')
         ])
-        for share in active_shares:
-            if share['home']:
-                share['name'] = 'homes'
 
         registry_shares = await self.middleware.call('sharing.smb.reg_listshares')
+
+        cf_db = set([x['name'].casefold() for x in db_shares])
         cf_active = set([x['name'].casefold() for x in active_shares])
         cf_reg = set([x.casefold() for x in registry_shares])
         to_add = cf_active - cf_reg
         to_del = cf_reg - cf_active
+        to_preserve_acl = cf_db & to_del
 
         for share in to_add:
             share_conf = filter_list(active_shares, [['name', 'C=', share]])
@@ -1803,6 +1809,7 @@ class SharingSMBService(SharingService):
 
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
+                await self.middleware.call('smb.sharesec.toggle_share', share, True)
             except ValueError:
                 self.logger.warning("Share [%s] has invalid configuration.", share, exc_info=True)
             except Exception:
@@ -1812,6 +1819,9 @@ class SharingSMBService(SharingService):
         for share in to_del:
             await self.middleware.call('sharing.smb.close_share', share)
             try:
+                if share in to_preserve_acl:
+                    await self.middleware.call('smb.sharesec.toggle_share', share, False)
+
                 await self.middleware.call('sharing.smb.reg_delshare', share)
             except Exception:
                 self.middleware.logger.warning('Failed to remove stale share [%s]',
