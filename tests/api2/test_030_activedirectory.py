@@ -353,3 +353,49 @@ def test_08_activedirectory_smb_ops(request):
             assert results.status_code == 200, results.text
             acl = results.json()
             assert acl['trivial'] is False, str(acl)
+
+        with dataset(
+            pool_name,
+            "ad_home",
+            options={'share_type': 'SMB'},
+            acl=[{
+                'tag': 'GROUP',
+                'id': domain_users_id,
+                'perms': {'BASIC': 'FULL_CONTROL'},
+                'flags': {'BASIC': 'INHERIT'},
+                'type': 'ALLOW'
+            }]
+        ) as ds:
+            results = POST("/service/restart/", {"service": "cifs"})
+            assert results.status_code == 200, results.text
+
+            with smb_share(ds['mountpoint'], {
+                'name': 'TEST_HOME',
+                'purpose': 'NO_PRESET',
+                'home': True,
+            }):
+                # must refresh idmap cache to get new homedir from NSS
+                # this means we may need a few seconds for winbindd
+                # service to settle down on slow systems (like our CI VMs)
+                sleep(5)
+
+                with smb_connection(
+                    host=ip,
+                    share='HOMES',
+                    username=ADUSERNAME,
+                    domain='AD02',
+                    password=ADPASSWORD
+                ) as c:
+                    fd = c.create_file('homes_test_file', "w")
+                    c.write(fd, b'EXTERNAL_TEST')
+                    c.close(fd)
+
+            file_local_path = os.path.join(ds['mountpoint'], 'AD02', ADUSERNAME, 'homes_test_file')
+            results = POST('/filesystem/getacl/', {
+                'path': file_local_path,
+                'simplified': True
+            })
+
+            assert results.status_code == 200, results.text
+            acl = results.json()
+            assert acl['trivial'] is False, str(acl)
