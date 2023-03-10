@@ -37,17 +37,14 @@ class FailoverDatastoreService(Service):
         try:
             self.send()
         except Exception:
-            self.logger.warning(
-                'Error sending database to the remote node on first replication failure', exc_info=True,
-            )
-
-            self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
-
             def send_retry():
                 set_thread_name('failover_datastore')
 
-                while True:
-                    time.sleep(60)
+                max_time_to_retry = 1200  # 20mins (some platforms take 15-20mins to reboot....)
+                sleep_time = 30
+                while max_time_to_retry > 0:
+                    max_time_to_retry -= sleep_time
+                    time.sleep(sleep_time)
 
                     if not self.failure:
                         # Someone sent the database for us
@@ -64,6 +61,10 @@ class FailoverDatastoreService(Service):
                         self.middleware.call_sync('failover.datastore.send')
                     except Exception:
                         pass
+
+                if self.failure:
+                    # we tried to sync db for `max_time_to_retry` but failed so something is definitely wrong
+                    self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', None)
 
             start_daemon_thread(target=send_retry)
 
