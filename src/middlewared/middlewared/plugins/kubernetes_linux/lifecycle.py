@@ -430,10 +430,10 @@ class KubernetesService(Service):
                     'ApplicationsConfigurationFailed',
                     {'error': e.errmsg},
                 )
-            else:
-                await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
             raise
+
+        await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
 
 async def _event_system_ready(middleware, event_type, args):
