@@ -6,6 +6,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
+from functions import make_ws_request, wait_on_job
 from auto_config import pool_name, user, password, ip, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -308,6 +309,54 @@ def test_31_toggle_share_and_verify_acl_preserved(request):
     results = PUT(f"/sharing/smb/id/{smb_id}/",
                   {"enabled": True})
     assert results.status_code == 200, results.text
+
+    results = GET(f"/smb/sharesec/id/{sharesec_id}")
+    assert results.status_code == 200, results.text
+    assert isinstance(results.json(), dict), results.text
+    ae_result = results.json()['share_acl'][0]['ae_who_sid']
+    assert ae_result == 'S-1-5-32-546', results.text
+
+    # Abusive test, bypass normal APIs for share and
+    # verify that sync_registry call still preserves info.
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'datastore.update',
+        'params': ['sharing.cifs.share', smb_id, {'cifs_enabled': False}],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'sharing.smb.sync_registry',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    job_id = res['result']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'datastore.update',
+        'params': ['sharing.cifs.share', smb_id, {'cifs_enabled': True}],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'sharing.smb.sync_registry',
+        'params': [],
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+
+    job_id = res['result']
+    job_status = wait_on_job(job_id, 180)
+    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     results = GET(f"/smb/sharesec/id/{sharesec_id}")
     assert results.status_code == 200, results.text
