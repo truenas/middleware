@@ -11,8 +11,9 @@ GUEST_CHANEL = '<channel type="unix"><target type="virtio" name="org.qemu.guest_
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': []}, f'<devices>{GUEST_CHANEL}<serial type="pty" /></devices>'),
-    ({'ensure_display_device': True, 'devices': []},
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': []},
+     f'<devices>{GUEST_CHANEL}<serial type="pty" /></devices>'),
+    ({'ensure_display_device': True, 'trusted_platform_module': False, 'devices': []},
      f'<devices><video />{GUEST_CHANEL}<serial type="pty" /></devices>'),
 ])
 def test_basic_devices_xml(vm_data, expected_xml):
@@ -20,7 +21,7 @@ def test_basic_devices_xml(vm_data, expected_xml):
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {'path': '/mnt/tank/disk.iso'},
         'dtype': 'CDROM',
     }]}, '<devices><disk type="file" device="cdrom"><driver name="qemu" type="raw" />'
@@ -38,7 +39,7 @@ def test_cdrom_xml(vm_data, expected_xml):
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'dtype': 'DISPLAY',
         'attributes': {
             'bind': '0.0.0.0',
@@ -66,7 +67,7 @@ def test_display_xml(vm_data, expected_xml):
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {
             'type': 'VIRTIO',
             'mac': '00:a0:99:7e:bb:8a',
@@ -78,7 +79,7 @@ def test_display_xml(vm_data, expected_xml):
          '<mac address="00:a0:99:7e:bb:8a" /></interface>'
          f'{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {
             'type': 'VIRTIO',
             'mac': '00:a0:99:7e:bb:8a',
@@ -90,7 +91,7 @@ def test_display_xml(vm_data, expected_xml):
          '<model type="virtio" /><mac address="00:a0:99:7e:bb:8a" /></interface>'
          f'{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {
             'type': 'VIRTIO',
             'mac': '00:a0:99:7e:bb:8a',
@@ -117,7 +118,7 @@ def test_nic_xml(vm_data, expected_xml):
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {
             'path': '/dev/zvol/pool/boot_1',
             'type': 'AHCI',
@@ -141,7 +142,7 @@ def test_disk_xml(vm_data, expected_xml):
 
 
 @pytest.mark.parametrize('vm_data,expected_xml', [
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {
             'path': '/mnt/tank/somefile',
             'type': 'AHCI',
@@ -154,7 +155,7 @@ def test_disk_xml(vm_data, expected_xml):
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><boot order="1" />'
          f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
-    ({'ensure_display_device': False, 'devices': [{
+    ({'ensure_display_device': False, 'trusted_platform_module': False, 'devices': [{
         'attributes': {
             'path': '/mnt/tank/somefile',
             'type': 'AHCI',

@@ -177,6 +177,13 @@ def devices_xml(vm_data, context):
             }
         ))
 
+    if vm_data['trusted_platform_module']:
+        devices.append(create_element(
+            'tpm', model='tpm-crb', attribute_dict={
+                'children': [create_element('backend', type='emulator', version='2.0')]
+            },
+        ))
+
     devices.append(create_element('channel', type='unix', attribute_dict={
         'children': [create_element('target', type='virtio', name='org.qemu.guest_agent.0')]
     }))
