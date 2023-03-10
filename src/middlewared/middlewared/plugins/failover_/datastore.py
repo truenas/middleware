@@ -37,6 +37,8 @@ class FailoverDatastoreService(Service):
         try:
             self.send()
         except Exception:
+            self.logger.warning('Error sending database to remote node on first replication failure')
+
             def send_retry():
                 set_thread_name('failover_datastore')
 
