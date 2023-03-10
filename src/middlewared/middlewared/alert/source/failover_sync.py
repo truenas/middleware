@@ -8,11 +8,17 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
     level = AlertLevel.CRITICAL
     title = "Automatic Sync to Peer Failed"
     text = (
-        "Failed to sync configuration information to standby storage "
-        "controller. Use Sync to Peer on the System/Failover page to "
-        "perform a manual sync."
+        "Tried for %(mins)d minutes to sync configuration information to "
+        "the standby storage controller but failed. Use Sync to Peer on the "
+        "System/Failover page to try and perform a manual sync."
     )
     products = ("SCALE_ENTERPRISE",)
+
+    async def create(self, args):
+        return Alert(FailoverSyncFailedAlertClass, {'mins': args['mins']})
+
+    async def delete(self, alerts, query):
+        return []
 
 
 class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
