@@ -2,6 +2,12 @@
 hardware_opt() { echo h; }
 hardware_help() { echo "Dump Hardware Configuration"; }
 hardware_directory() { echo "Hardware"; }
+
+get_hba_ctrl_numbers()
+{
+	storcli show J |jq '.Controllers[0]["Response Data"]["IT System Overview"]' |jq -r '.[]["Ctl"]' 2>/dev/null
+}
+
 hardware_func()
 {
 	section_header "CPU and Memory information"
@@ -40,4 +46,14 @@ hardware_func()
 	section_header "Enclosures (midclt call enclosure.query)"
 	midclt call enclosure.query |jq .
 	section_footer
+
+	section_header = "HBA Information (storcli show)"
+	storcli show
+	section_footer
+
+	for i in $(get_hba_ctrl_numbers); do
+		section_header "storcli /c$i show all"
+		storcli /c$i show all
+		section_footer
+	done
 }
