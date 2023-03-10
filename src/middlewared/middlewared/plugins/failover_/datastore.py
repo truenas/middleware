@@ -37,8 +37,8 @@ class FailoverDatastoreService(Service):
         self.failure = True
         try:
             self.send()
-        except Exception:
-            self.logger.warning('Error sending database to remote node on first replication failure')
+        except Exception as e:
+            self.logger.warning('Error sending database to remote node on first replication failure: %r', e)
 
             def send_retry():
                 set_thread_name('failover_datastore')
@@ -65,7 +65,6 @@ class FailoverDatastoreService(Service):
                         pass
 
                     if raise_alert_time <= 0 and self.failure:
-                        self.middleware.call_sync('alert.oneshot_delete', 'FailoverSyncFailed', None)
                         self.middleware.call_sync('alert.oneshot_create', 'FailoverSyncFailed', {'mins': total_mins})
                         raise_alert_time = RAISE_ALERT_SYNC_RETRY_TIME
 
