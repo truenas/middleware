@@ -198,6 +198,9 @@ class KubernetesService(Service):
 
     @private
     def ensure_cgroups_are_setup(self):
+        # Logic copied over from kubernetes
+        # https://github.com/kubernetes/kubernetes/blob/08fbe92fa76d35048b4b4891b41fc6912e689cc7/
+        # pkg/kubelet/cm/cgroup_manager_linux.go#L238
         supported_controllers = {'cpu', 'cpuset', 'memory', 'hugetlb', 'pids'}
         cgroup_root_path = '/sys/fs/cgroup'
         system_supported_controllers_path = os.path.join(cgroup_root_path, 'cgroup.controllers')
