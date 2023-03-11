@@ -27,6 +27,11 @@ def zfs_parameter_path(name):
     return f'/sys/module/zfs/parameters/{name}'
 
 
+def zfs_parameter_value(name):
+    with open(zfs_parameter_path(name)) as f:
+        return f.read().strip()
+
+
 class TunableService(CRUDService):
     class Config:
         datastore = 'system.tunable'
@@ -94,6 +99,7 @@ class TunableService(CRUDService):
         Str('value', required=True),
         Str('comment', default=''),
         Bool('enabled', default=True),
+        Bool('update_initramfs', default=True),
         register=True
     ))
     @job(lock='tunable_crud')
@@ -109,7 +115,12 @@ class TunableService(CRUDService):
 
         If `type` is `ZFS` then `var` is a ZFS kernel module parameter name (e.g. `zfs_dirty_data_max_max`) and `value`
         is its value (e.g. `783091712`).
+
+        If `update_initramfs` is `false` then initramfs will not be updated after creating a ZFS tunable and you will
+        need to run `system boot update_initramfs` manually.
         """
+        update_initramfs = data.pop('update_initramfs')
+
         verrors = ValidationErrors()
 
         if await self.middleware.call('tunable.query', [('var', '=', data['var'])]):
@@ -140,11 +151,7 @@ class TunableService(CRUDService):
         if data['type'] == 'SYSCTL':
             data['orig_value'] = await self.middleware.call('tunable.get_sysctl', data['var'])
         if data['type'] == 'ZFS':
-            def read_zfs_parameter_value():
-                with open(zfs_parameter_path(data['var'])) as f:
-                    return f.read().strip()
-
-            data['orig_value'] = await self.middleware.run_in_thread(read_zfs_parameter_value)
+            data['orig_value'] = await self.middleware.run_in_thread(zfs_parameter_value, data['var'])
 
         id = await self.middleware.call(
             'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
@@ -157,7 +164,8 @@ class TunableService(CRUDService):
         elif data['type'] == 'ZFS':
             if data['enabled']:
                 await self.middleware.call('tunable.set_zfs_parameter', data['var'], data['value'])
-                await self.middleware.call('boot.update_initramfs')
+                if update_initramfs:
+                    await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(data)
 
@@ -179,6 +187,8 @@ class TunableService(CRUDService):
         Update Tunable of `id`.
         """
         old = await self.get_instance(id)
+
+        update_initramfs = data.pop('update_initramfs', True)
 
         new = old.copy()
         new.update(data)
@@ -203,7 +213,8 @@ class TunableService(CRUDService):
             else:
                 await self.middleware.call('tunable.reset_zfs_parameter', new)
 
-            await self.middleware.call('boot.update_initramfs')
+            if update_initramfs:
+                await self.middleware.call('boot.update_initramfs')
         else:
             await self.handle_tunable_change(new)
 

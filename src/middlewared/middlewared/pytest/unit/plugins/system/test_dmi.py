@@ -1,7 +1,6 @@
 from datetime import date
 
-from middlewared.plugins.system.dmi import SystemService
-from middlewared.service import Service
+from middlewared.plugins.system.dmi import DMIDecode
 
 
 full_dmi = ("""
@@ -309,7 +308,7 @@ Physical Memory Array
 """).splitlines()
 
 
-def test__full_dmi():
+def test__full_DMIDecode():
     expected_result = {
         'bios-release-date': date(2020, 12, 3),
         'ecc-memory': True,
@@ -321,12 +320,12 @@ def test__full_dmi():
         'system-version': '0123456789',
         'has-ipmi': True,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(full_dmi)
     assert obj.CACHE == expected_result
 
 
-def test__double_colon_dmi():
+def test__double_colon_DMIDecode():
     expected_result = {
         'bios-release-date': '',
         'ecc-memory': True,
@@ -338,12 +337,12 @@ def test__double_colon_dmi():
         'system-version': '0123456789',
         'has-ipmi': False,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(double_colon_dmi)
     assert obj.CACHE == expected_result
 
 
-def test__missing_dmi():
+def test__missing_DMIDecode():
     expected_result = {
         'bios-release-date': '',
         'ecc-memory': False,
@@ -355,7 +354,7 @@ def test__missing_dmi():
         'system-version': '',
         'has-ipmi': False,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(missing_dmi)
     assert obj.CACHE == expected_result
 
@@ -372,7 +371,7 @@ def test__missing_dmi_type1():
         'system-version': '',
         'has-ipmi': False,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(missing_dmi_type1)
     assert obj.CACHE == expected_result
 
@@ -389,7 +388,7 @@ def test__missing_dmi_type2():
         'system-version': 'pc-q35-5.2',
         'has-ipmi': False,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(missing_dmi_type2)
     assert obj.CACHE == expected_result
 
@@ -406,7 +405,7 @@ def test__missing_dmi_type16():
         'system-version': 'pc-q35-5.2',
         'has-ipmi': False,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(missing_dmi_type16)
     assert obj.CACHE == expected_result
 
@@ -423,6 +422,6 @@ def test__missing_dmi_type38():
         'system-version': '0123456789',
         'has-ipmi': False,
     }
-    obj = SystemService(Service)
+    obj = DMIDecode()
     obj._parse_dmi(missing_dmi_type38)
     assert obj.CACHE == expected_result
