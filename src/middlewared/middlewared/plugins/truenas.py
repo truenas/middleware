@@ -39,6 +39,19 @@ PLATFORM_PREFIXES = (
 )
 
 
+def get_chassis_hardware(dmi):
+    if dmi['system-product-name'].startswith(PLATFORM_PREFIXES):
+        return dmi['system-product-name']
+
+    if dmi['baseboard-product-name'] == 'iXsystems TrueNAS X10':
+        # could be that production didn't burn in the correct x-series
+        # model information so let's check the motherboard model as a
+        # last resort
+        return 'TRUENAS-X'
+
+    return 'TRUENAS-UNKNOWN'
+
+
 class TruenasCustomerInformationModel(sa.Model):
     __tablename__ = 'truenas_customerinformation'
 
@@ -63,16 +76,7 @@ class TrueNASService(Service):
         Returns what type of hardware this is, detected from dmidecode.
         """
         dmi = await self.middleware.call('system.dmidecode_info')
-        if dmi['system-product-name'].startswith(PLATFORM_PREFIXES):
-            return dmi['system-product-name']
-
-        if dmi['baseboard-product-name'] == 'iXsystems TrueNAS X10':
-            # could be that production didn't burn in the correct x-series
-            # model information so let's check the motherboard model as a
-            # last resort
-            return 'TRUENAS-X'
-
-        return 'TRUENAS-UNKNOWN'
+        return get_chassis_hardware(dmi)
 
     @accepts()
     @returns(Str('eula', max_length=None, null=True))

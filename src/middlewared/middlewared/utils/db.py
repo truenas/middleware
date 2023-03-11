@@ -32,3 +32,17 @@ def query_table(table, database_path=None, prefix=None):
     finally:
         conn.close()
     return result
+
+
+def update_table(query, params, database_path=None):
+    database_path = database_path or FREENAS_DATABASE
+    conn = sqlite3.connect(database_path)
+    try:
+        c = conn.cursor()
+        try:
+            c.execute(query, params)
+        finally:
+            c.close()
+        conn.commit()
+    finally:
+        conn.close()

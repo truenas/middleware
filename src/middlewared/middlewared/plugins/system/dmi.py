@@ -1,10 +1,13 @@
-import subprocess
 from datetime import datetime
+import logging
+import subprocess
 
 from middlewared.service import private, Service
 
+logger = logging.getLogger(__name__)
 
-class SystemService(Service):
+
+class DMIDecode:
     # DMI information is mostly static so cache it
     CACHE = {
         'bios-release-date': None,
@@ -18,18 +21,17 @@ class SystemService(Service):
         'has-ipmi': None,
     }
 
-    @private
-    def dmidecode_info(self):
-        if all(v is None for k, v in SystemService.CACHE.items()):
+    def info(self):
+        if all(v is None for k, v in self.CACHE.items()):
             cp = subprocess.run(['dmidecode', '-t', '0,1,2,16,38'], encoding='utf8', capture_output=True)
             self._parse_dmi(cp.stdout.splitlines())
 
-        return SystemService.CACHE
+        return self.CACHE
 
-    @private
     def _parse_dmi(self, lines):
-        SystemService.CACHE = {i: '' for i in SystemService.CACHE}
-        SystemService.CACHE['has-ipmi'] = SystemService.CACHE['ecc-memory'] = False
+        self.CACHE = {i: '' for i in self.CACHE}
+        self.CACHE['has-ipmi'] = self.CACHE['ecc-memory'] = False
+        _type = None
         for line in lines:
             if 'DMI type 0,' in line:
                 _type = 'RELEASE_DATE'
@@ -49,22 +51,21 @@ class SystemService(Service):
             if sect == 'Release Date':
                 self._parse_bios_release_date(val)
             elif sect == 'Manufacturer':
-                SystemService.CACHE['system-manufacturer' if _type == 'SYSINFO' else 'baseboard-manufacturer'] = val
+                self.CACHE['system-manufacturer' if _type == 'SYSINFO' else 'baseboard-manufacturer'] = val
             elif sect == 'Product Name':
-                SystemService.CACHE['system-product-name' if _type == 'SYSINFO' else 'baseboard-product-name'] = val
+                self.CACHE['system-product-name' if _type == 'SYSINFO' else 'baseboard-product-name'] = val
             elif sect == 'Serial Number' and _type == 'SYSINFO':
-                SystemService.CACHE['system-serial-number'] = val
+                self.CACHE['system-serial-number'] = val
             elif sect == 'Version' and _type == 'SYSINFO':
-                SystemService.CACHE['system-version'] = val
+                self.CACHE['system-version'] = val
             elif sect == 'I2C Slave Address':
-                SystemService.CACHE['has-ipmi'] = True
+                self.CACHE['has-ipmi'] = True
             elif sect == 'Error Correction Type':
-                SystemService.CACHE['ecc-memory'] = 'ECC' in val
+                self.CACHE['ecc-memory'] = 'ECC' in val
                 # we break the for loop here since "16" is the last section
                 # that gets processed
                 break
 
-    @private
     def _parse_bios_release_date(self, string):
         parts = string.strip().split('/')
         if len(parts) < 3:
@@ -79,6 +80,14 @@ class SystemService(Service):
         # 2 digit year instead of a 4 digit year...gross
         formatter = '%m/%d/%Y' if len(parts[-1]) == 4 else '%m/%d/%y'
         try:
-            SystemService.CACHE['bios-release-date'] = datetime.strptime(string, formatter).date()
+            self.CACHE['bios-release-date'] = datetime.strptime(string, formatter).date()
         except Exception:
-            self.logger.warning('Failed to format BIOS release date to datetime object', exc_info=True)
+            logger.warning('Failed to format BIOS release date to datetime object', exc_info=True)
+
+
+class SystemService(Service):
+    dmidecode = DMIDecode()
+
+    @private
+    def dmidecode_info(self):
+        return self.dmidecode.info()
