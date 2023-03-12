@@ -215,7 +215,7 @@ class KubernetesService(Service):
 
         needed_controllers = supported_controllers & available_controllers
         available_controllers_for_consumption = get_available_controllers_for_consumption()
-        if missing_controllers := needed_controllers - available_controllers:
+        if missing_controllers := needed_controllers - available_controllers_for_consumption:
             # If we have missing controllers, lets try adding them to subtree control
             available_controllers_for_consumption = update_available_controllers_for_consumption(missing_controllers)
 
