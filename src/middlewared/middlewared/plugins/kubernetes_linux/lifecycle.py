@@ -12,8 +12,10 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
 from .k8s.config import reinitialize_config
-from .utils import CGROUP_ROOT_PATH, get_available_controllers_for_consumption, RE_CGROUP_CONTROLLERS
-
+from .utils import (
+    CGROUP_ROOT_PATH, get_available_controllers_for_consumption, RE_CGROUP_CONTROLLERS,
+    update_available_controllers_for_consumption,
+)
 
 START_LOCK = asyncio.Lock()
 
@@ -215,7 +217,7 @@ class KubernetesService(Service):
         available_controllers_for_consumption = get_available_controllers_for_consumption()
         if missing_controllers := needed_controllers - available_controllers:
             # If we have missing controllers, lets try adding them to subtree control
-            pass
+            available_controllers_for_consumption = update_available_controllers_for_consumption(missing_controllers)
 
         missing_controllers = needed_controllers - available_controllers_for_consumption
         if missing_controllers:
