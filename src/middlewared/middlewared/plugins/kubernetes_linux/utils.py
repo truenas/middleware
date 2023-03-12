@@ -41,6 +41,6 @@ def update_available_controllers_for_consumption(to_add_controllers: set) -> set
     # regardless of the update failing
     with contextlib.suppress(FileNotFoundError, OSError):
         with open(CGROUP_AVAILABLE_CONTROLLERS_PATH, 'w') as f:
-            f.write(f'+{" ".join(to_add_controllers)}')
+            f.write(f'{" ".join(map(lambda s: f"+{s}", to_add_controllers))}')
 
     return get_available_controllers_for_consumption()
