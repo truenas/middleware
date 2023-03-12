@@ -2,7 +2,6 @@ import asyncio
 import errno
 import json
 import os
-import re
 import shutil
 import uuid
 
@@ -13,9 +12,9 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
 from .k8s.config import reinitialize_config
+from .utils import CGROUP_ROOT_PATH, get_available_controllers_for_consumption, RE_CGROUP_CONTROLLERS
 
 
-RE_CGROUP_CONTROLLERS = re.compile(r'(\w+)\s+')
 START_LOCK = asyncio.Lock()
 
 
@@ -202,8 +201,7 @@ class KubernetesService(Service):
         # https://github.com/kubernetes/kubernetes/blob/08fbe92fa76d35048b4b4891b41fc6912e689cc7/
         # pkg/kubelet/cm/cgroup_manager_linux.go#L238
         supported_controllers = {'cpu', 'cpuset', 'memory', 'hugetlb', 'pids'}
-        cgroup_root_path = '/sys/fs/cgroup'
-        system_supported_controllers_path = os.path.join(cgroup_root_path, 'cgroup.controllers')
+        system_supported_controllers_path = os.path.join(CGROUP_ROOT_PATH, 'cgroup.controllers')
         try:
             with open(system_supported_controllers_path, 'r') as f:
                 available_controllers = set(RE_CGROUP_CONTROLLERS.findall(f.read()))
@@ -214,15 +212,10 @@ class KubernetesService(Service):
             )
 
         needed_controllers = supported_controllers & available_controllers
-        system_available_controllers_path = os.path.join(cgroup_root_path, 'cgroup.subtree_control')
-        try:
-            with open(system_available_controllers_path, 'r') as f:
-                available_controllers_for_consumption = set(RE_CGROUP_CONTROLLERS.findall(f.read()))
-        except FileNotFoundError:
-            raise CallError(
-                'Unable to determine cgroup controllers which are available for consumption as '
-                f'{system_available_controllers_path!r} does not exist'
-            )
+        available_controllers_for_consumption = get_available_controllers_for_consumption()
+        if missing_controllers := needed_controllers - available_controllers:
+            # If we have missing controllers, lets try adding them to subtree control
+            pass
 
         missing_controllers = needed_controllers - available_controllers_for_consumption
         if missing_controllers:
