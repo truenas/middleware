@@ -147,7 +147,7 @@ class CatalogService(Service):
 
             data = {k: v for k, v in catalog_data.items() if k in trains_to_traverse}
 
-        recommended_apps = self.retrieve_recommended_apps() if catalog['label'] == OFFICIAL_LABEL else {}
+        recommended_apps = self.retrieve_recommended_apps(False) if catalog['label'] == OFFICIAL_LABEL else {}
         unhealthy_apps = set()
         for train in data:
             for item in data[train]:
