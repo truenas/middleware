@@ -28,6 +28,8 @@ def assert_shell_works(token, username="root"):
             resp_opcode, msg = ws.recv_data()
             msg = ansi_escape_8bit.sub(b"", msg).decode("ascii")
             logger.debug("Received 1 %r", msg)
+            if "You are seeing this message because you have no zsh startup files" in msg:
+                ws.send_binary(b"q\n")
             if msg.endswith(prompt):
                 break
 
