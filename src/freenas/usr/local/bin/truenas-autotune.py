@@ -37,14 +37,12 @@ def guess_vfs_zfs_dirty_data_max_max(context):
 
 @zfs_parameter("zfs_arc_max")
 def guess_vfs_zfs_arc_max(context):
+    physmem = int(context.physmem * .9)
     if context.physmem / GiB > 200:
-        return int(max(min(int(context.physmem * .92),
-                           context.physmem - (context.kernel_reserved + context.userland_reserved)),
-                       MIN_ZFS_RESERVED_MEM))
-    else:
-        return int(max(min(int(context.physmem * .9),
-                           context.physmem - (context.kernel_reserved + context.userland_reserved)),
-                       MIN_ZFS_RESERVED_MEM))
+        physmem = int(context.physmem * .92)
+
+    physmem = min(physmem, (context.physmem - (context.kernel_reserved + context.userland_reserved)))
+    return max(physmem, MIN_ZFS_RESERVED_MEM)
 
 
 @zfs_parameter("l2arc_noprefetch")
@@ -101,7 +99,7 @@ def guess_vfs_zfs_zfetch_max_distance(context):
 
 if __name__ == "__main__":
     dmi = DMIDecode().info()
-    chassis_hardware = get_chassis_hardware(dmi)
+    chassis_hardware = get_chassis_hardware(dmi).removeprefix("TRUENAS-").split("-")[0]
     is_enterprise = is_enterprise_ix_hardware(chassis_hardware)
 
     if is_enterprise:
