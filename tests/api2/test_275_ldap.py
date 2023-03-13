@@ -91,6 +91,10 @@ def test_06_setup_and_enabling_ldap(do_ldap_connection):
     assert isinstance(results.json(), str), results.text
     assert results.json() == "HEALTHY", results.text
 
+    results = GET("/alert/list/")
+    assert results.status_code == 200, results.text
+    assert any([x for x in results.json() if x['klass'] == 'DeprecatedService']), results.text
+
 
 def test_08_verify_ldap_enable_is_true(request):
     depends(request, ["setup_ldap"], scope="session")
@@ -253,6 +257,10 @@ def test_22_set_has_samba_schema_to_false(request):
     job_id = results.json()['job_id']
     job_status = wait_on_job(job_id, 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+    results = GET("/alert/list/")
+    assert results.status_code == 200, results.text
+    assert not any([x for x in results.json() if x['klass'] == 'DeprecatedService']), results.text
 
 
 def test_23_restarting_cifs_service_after_changing_has_samba_schema(request):
