@@ -65,6 +65,7 @@ option_list = [
     "log-cli-level=",
     "returncode",
     "isns_ip=",
+    "pool=",
 ]
 
 # look if all the argument are there.
