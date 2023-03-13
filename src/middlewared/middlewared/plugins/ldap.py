@@ -644,8 +644,8 @@ class LDAPService(TDBWrapConfigService):
     @private
     async def common_validate(self, new, old, verrors):
         ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == "clustered":
-            verrors.add("ldap_upate", "Clustered LDAP service not yet implemented")
+        if ha_mode == "CLUSTERED" and new["has_samba_schema"]:
+            verrors.add("ldap_upate", "Legacy LDAP SMB support has been deprecated for Clustered TrueNAS.")
 
         if not new["enable"]:
             return
