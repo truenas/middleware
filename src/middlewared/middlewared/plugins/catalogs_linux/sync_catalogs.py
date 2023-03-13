@@ -44,7 +44,7 @@ class CatalogService(Service):
             if catalog_label == OFFICIAL_LABEL:
                 # Update feature map cache whenever official catalog is updated
                 await self.middleware.call('catalog.get_feature_map', False)
-                await self.middleware.call('catalog.retrieve_recommended_apps', {'cache': False})
+                await self.middleware.call('catalog.retrieve_recommended_apps', False)
             await self.middleware.call('catalog.items', catalog_label, await self.sync_items_params())
         except Exception as e:
             await self.middleware.call(
