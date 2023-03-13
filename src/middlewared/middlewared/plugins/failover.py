@@ -429,8 +429,8 @@ class FailoverService(ConfigService):
             try:
                 rd = await self.middleware.call('failover.call_remote', 'failover.get_disks_local')
             except Exception as e:
-                if isinstance(e, CallError) and e.errno == CallError.ENOMETHOD:
-                    # ignore it, just means the other side needs to be upgraded
+                ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+                if isinstance(e, CallError) and e.errno in ignore:
                     return result
                 else:
                     self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
