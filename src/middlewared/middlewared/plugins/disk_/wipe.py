@@ -51,6 +51,13 @@ class DiskService(Service):
                     os.write(f.fileno(), to_write)
                     data['job'].set_progress(float(f'{i / iterations:.{length}f}') * 100)
 
+        with open(f'/dev/{data["name"]}' 'wb'):
+            # we overwrote partiton label information by the time
+            # we get here so we need to close device and re-open
+            # it in write mode to trigger a udev to rescan the
+            # device for new information
+            pass
+
     @accepts(
         Str('dev'),
         Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM'], required=True),
