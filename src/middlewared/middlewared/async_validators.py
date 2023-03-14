@@ -29,7 +29,7 @@ async def check_path_resides_within_volume(verrors, middleware, name, path):
         rv['is_mountpoint'] = os.path.ismount(path)
         return rv
 
-    loc = path_location(name)
+    loc = path_location(path)
 
     if loc == 'EXTERNAL':
         verrors.add(name, "Path is external to TrueNAS.")

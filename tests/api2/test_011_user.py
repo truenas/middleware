@@ -454,10 +454,41 @@ def test_37_homedir_testfile_create(request):
 @pytest.mark.dependency(name="HOMEDIR2_EXISTS")
 def test_38_homedir_move_new_directory(request):
     depends(request, ["HOMEDIR_EXISTS"])
-    payload = {
-        "home": f'/mnt/{dataset}/new_home',
-    }
-    results = PUT(f"/user/id/{user_id}", payload)
+
+    # Validation of autocreation of homedir during path update
+    with tmp_dataset(pool_name, os.path.join('test_homes', 'ds2')) as ds:
+        results = PUT(f'/user/id/{user_id}', {'home': ds['mountpoint'], 'home_create': True})
+        assert results.status_code == 200, results.text
+
+        results = GET('/core/get_jobs/?method=user.do_home_copy')
+        assert results.status_code == 200, results.text
+        job_status = wait_on_job(results.json()[-1]['id'], 180)
+        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+        results = POST('/filesystem/stat/', os.path.join(ds['mountpoint'], 'testuser2'))
+        assert results.status_code == 200, results.text
+        assert results.json()['uid'] == next_uid, results.txt
+
+        # now kick the can down the road to the root of our pool
+        results = PUT(f'/user/id/{user_id}', {'home': os.path.join('/mnt', pool_name), 'home_create': True})
+        assert results.status_code == 200, results.text
+
+        results = GET('/core/get_jobs/?method=user.do_home_copy')
+        assert results.status_code == 200, results.text
+        job_status = wait_on_job(results.json()[-1]['id'], 180)
+        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+
+        results = POST('/filesystem/stat/', os.path.join('/mnt', pool_name, 'testuser2'))
+        assert results.status_code == 200, results.text
+        assert results.json()['uid'] == next_uid, results.txt
+
+    new_home = f'/mnt/{dataset}/new_home'
+    results = SSH_TEST(f'mkdir {new_home}', user, password, ip)
+    assert results['result'] is True, results['output']
+
+    # Validation of changing homedir to existing path without
+    # autocreation of subdir for user.
+    results = PUT(f"/user/id/{user_id}", {"home": new_home})
     assert results.status_code == 200, results.text
 
     results = GET('/core/get_jobs/?method=user.do_home_copy')
@@ -465,8 +496,9 @@ def test_38_homedir_move_new_directory(request):
     job_status = wait_on_job(results.json()[-1]['id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    results = POST('/filesystem/stat/', f'/mnt/{dataset}/new_home')
+    results = POST('/filesystem/stat/', new_home)
     assert results.status_code == 200, results.text
+    assert results.json()['uid'] == next_uid, results.txt
 
 
 @pytest.mark.parametrize('to_test', home_files.keys())
@@ -752,6 +784,17 @@ def test_58_create_new_user_existing_home_path(request):
             'group_create': True,
             'password': 'test1234',
             'home': user['home'],
+            'home_create': True,
+        })
+        assert results.status_code == 422, results.text
+
+        # Attempting to create a user with non-existing path
+        results = POST('/user/', {
+            'username': 't2',
+            'full_name': 't2',
+            'group_create': True,
+            'password': 'test1234',
+            'home': os.path.join(user['home'], 'canary'),
             'home_create': True,
         })
         assert results.status_code == 422, results.text
