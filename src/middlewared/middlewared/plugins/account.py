@@ -5,6 +5,7 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Email
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
 
 import binascii
@@ -27,6 +28,7 @@ from contextlib import suppress
 ADMIN_UID = 950  # When googled, does not conflict with anything
 ADMIN_GID = 950
 SKEL_PATH = '/etc/skel/'
+DEFAULT_HOME_PATH = '/nonexistent'
 
 
 def pw_checkname(verrors, attribute, name):
@@ -116,7 +118,7 @@ class UserModel(sa.Model):
     bsdusr_username = sa.Column(sa.String(16), default='User &', unique=True)
     bsdusr_unixhash = sa.Column(sa.String(128), default='*')
     bsdusr_smbhash = sa.Column(sa.EncryptedText(), default='*')
-    bsdusr_home = sa.Column(sa.String(255), default="/nonexistent")
+    bsdusr_home = sa.Column(sa.String(255), default=DEFAULT_HOME_PATH)
     bsdusr_shell = sa.Column(sa.String(120), default='/bin/csh')
     bsdusr_full_name = sa.Column(sa.String(120))
     bsdusr_builtin = sa.Column(sa.Boolean(), default=False)
@@ -288,6 +290,84 @@ class UserService(CRUDService):
         )
 
     @private
+    def validate_homedir_path(self, verrors, schema, data, users):
+        needs_additional_validation = True
+        p = Path(data['home'])
+
+        if not p.is_absolute():
+            verrors.add(f'{schema}.home', '"Home Directory" must be an absolute path.')
+            return False
+
+        if p.is_file():
+            verrors.add(f'{schema}.home', '"Home Directory" cannot be a file.')
+            return False
+
+        if ':' in data['home']:
+            verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
+            return False
+
+        if data['home'] == DEFAULT_HOME_PATH:
+            return False
+
+        if not p.exists():
+            if data.get('home_create', False):
+                verrors.add(
+                    f'{schema}.home',
+                    f'{data["home"]}: path specified to use for home directory creation does not '
+                    'exist. TrueNAS uses the provided path as the parent directory of the '
+                    'newly-created home directory.'
+                )
+
+            else:
+                verrors.add(
+                    f'{schema}.home',
+                    f'{data["home"]}: path specified to use as home directory does not exist.'
+                )
+
+            return False
+
+        in_use = filter_list(users, [('home', '=', data['home'])])
+        if in_use:
+            verrors.add(
+                f'{schema}.home',
+                f'{data["home"]}: homedir already used by {in_use[0]["username"]}.',
+                errno.EEXIST
+            )
+            needs_additional_validation = False
+
+        if not data['home'].startswith('/mnt/'):
+            verrors.add(
+                f'{schema}.home',
+                '"Home Directory" must begin with /mnt/ or set to '
+                f'{DEFAULT_HOME_PATH}.'
+            )
+            needs_additional_validation = False
+        elif not any(
+            data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
+            for i in self.middleware.call_sync('pool.query')
+        ):
+            verrors.add(
+                f'{schema}.home',
+                f'The path for the home directory "({data["home"]})" '
+                'must include a volume or dataset.'
+            )
+            needs_additional_validation = False
+        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', data['home']):
+            verrors.add(
+                f'{schema}.home',
+                'Path component for "Home Directory" is currently encrypted and locked'
+            )
+            needs_additional_validation = False
+        elif len(p.resolve().parents) == 2 and not data.get('home_create'):
+            verrors.add(
+                f'{schema}.home',
+                f'The specified path is a ZFS pool mountpoint "({data["home"]})".'
+            )
+            needs_additional_validation = False
+
+        return needs_additional_validation
+
+    @private
     def setup_homedir(self, path, username, mode, uid, gid, create=False):
         homedir_created = False
 
@@ -334,7 +414,7 @@ class UserService(CRUDService):
         Str('username', required=True, max_length=16),
         Int('group'),
         Bool('group_create', default=False),
-        Str('home', default='/nonexistent'),
+        Str('home', default=DEFAULT_HOME_PATH),
         Str('home_mode', default='700'),
         Bool('home_create', default=False),
         Str('shell', default='/usr/bin/zsh'),
@@ -426,7 +506,7 @@ class UserService(CRUDService):
 
         new_homedir = False
         home_mode = data.pop('home_mode')
-        if data['home'] and data['home'] != '/nonexistent':
+        if data['home'] and data['home'] != DEFAULT_HOME_PATH:
             try:
                 data['home'] = await self.middleware.run_in_thread(
                     self.setup_homedir,
@@ -528,13 +608,13 @@ class UserService(CRUDService):
         await self.__common_validation(verrors, data, 'user_update', pk=pk)
 
         try:
-            st = (await self.middleware.run_in_thread(os.stat, user.get("home", "/nonexistent"))).st_mode
+            st = (await self.middleware.run_in_thread(os.stat, user.get("home", DEFAULT_HOME_PATH))).st_mode
             old_mode = f'{stat.S_IMODE(st):03o}'
         except FileNotFoundError:
             old_mode = None
 
         home = data.get('home') or user['home']
-        has_home = home != '/nonexistent'
+        has_home = home != DEFAULT_HOME_PATH
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
             if not (
@@ -934,7 +1014,7 @@ class UserService(CRUDService):
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
     async def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
-        if home_old == '/nonexistent':
+        if home_old == DEFAULT_HOME_PATH:
             return
 
         if new_mode is not None:
@@ -1020,52 +1100,8 @@ class UserService(CRUDService):
             )
 
         if 'home' in data:
-            p = Path(data['home'])
-            if not p.is_absolute():
-                verrors.add(f'{schema}.home', '"Home Directory" must be an absolute path.')
-                return
-
-            if p.is_file():
-                verrors.add(f'{schema}.home', '"Home Directory" cannot be a file.')
-                return
-
-            if ':' in data['home']:
-                verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
-
-            if data['home'] != '/nonexistent':
-                in_use = filter_list(users, [('home', '=', data['home'])])
-                if in_use:
-                    verrors.add(
-                        f'{schema}.home',
-                        f'{data["home"]}: homedir already used by {in_use[0]["username"]}.',
-                        errno.EEXIST
-                    )
-
-                if not data['home'].startswith('/mnt/'):
-                    verrors.add(
-                        f'{schema}.home',
-                        '"Home Directory" must begin with /mnt/ or set to '
-                        '/nonexistent.'
-                    )
-                elif not any(
-                    data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
-                    for i in await self.middleware.call('pool.query')
-                ):
-                    verrors.add(
-                        f'{schema}.home',
-                        f'The path for the home directory "({data["home"]})" '
-                        'must include a volume or dataset.'
-                    )
-                elif await self.middleware.call('pool.dataset.path_in_locked_datasets', data['home']):
-                    verrors.add(
-                        f'{schema}.home',
-                        'Path component for "Home Directory" is currently encrypted and locked'
-                    )
-                elif len(p.resolve().parents) == 2:
-                    verrors.add(
-                        f'{schema}.home',
-                        f'The specified path is a ZFS pool mountpoint "({data["home"]})" '
-                    )
+            if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
+                check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
 
         if 'home_mode' in data:
             try:
