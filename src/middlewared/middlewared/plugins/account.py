@@ -130,6 +130,9 @@ class UserModel(sa.Model):
     bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
+    bsdusr_twofactor_auth_id = sa.Column(
+        sa.ForeignKey('account_twofactor_user_auth.id', ondelete='CASCADE'), index=True, nullable=False,
+    )
 
 
 class UserService(CRUDService):
