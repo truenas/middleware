@@ -181,7 +181,10 @@ class UserService(CRUDService):
             else:
                 memberships[uid] = [i['group']['id']]
 
-        return {"memberships": memberships}
+        return {
+            'memberships': memberships,
+            'global_2fa_configured': (await self.middleware.call('auth.twofactor.config'))['enabled'],
+        }
 
     @private
     def _read_authorized_keys(self, homedir):
@@ -205,6 +208,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
+        user['twofactor_auth_configured'] = ctx['global_2fa_configured'] and bool(user['twofactor_auth']['secret'])
 
         return user
 
