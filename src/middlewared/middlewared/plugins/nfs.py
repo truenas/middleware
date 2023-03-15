@@ -13,6 +13,7 @@ from middlewared.validators import Match, Range
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 
 
 class NFSProtocol(str, enum.Enum):
@@ -450,6 +451,9 @@ class SharingNFSService(SharingService):
         hostnames = list(set(hostnames))
 
         async def resolve(hostname):
+            if domain := get_wildcard_domain(hostname):
+                hostname = domain
+
             try:
                 return (
                     await asyncio.wait_for(self.middleware.run_in_thread(socket.getaddrinfo, hostname, None), 5)
@@ -502,15 +506,25 @@ class SharingNFSService(SharingService):
                     used_networks.add(ipaddress.ip_network("::/0"))
 
         for host in set(data["hosts"]):
+            # netgroups are valid
             if host.startswith('@'):
                 continue
 
+            # wildcarded names without a 'domain' are valid
+            if leftmost_has_wildcards(host) and get_domain(host) is None:
+                continue
+
+            # Everything else should be resolvable
             cached_host = dns_cache[host]
             if cached_host is None:
                 verrors.add(
                     f"{schema_name}.hosts",
                     f"Unable to resolve host {host}"
                 )
+                continue
+
+            # If wildcarded hostname, then continue
+            if leftmost_has_wildcards(host):
                 continue
 
             network = ipaddress.ip_network(cached_host)

@@ -33,7 +33,7 @@ NFS_PATH = "/mnt/" + dataset
 
 def parse_exports():
     results = SSH_TEST("cat /etc/exports", user, password, ip)
-    assert results['result'] is True, results['error']
+    assert results['result'] is True, f"rc={results['return_code']}, {results['output']}, {results['stderr']}"
     exp = results['output'].splitlines()
     rv = []
     for idx, line in enumerate(exp):
@@ -62,7 +62,7 @@ def parse_exports():
 
 def parse_server_config(fname="nfs-kernel-server"):
     results = SSH_TEST(f"cat /etc/default/{fname}", user, password, ip)
-    assert results['result'] is True, results['error']
+    assert results['result'] is True, f"rc={results['return_code']}, {results['output']}, {results['stderr']}"
     conf = results['output'].splitlines()
     rv = {}
 
@@ -280,7 +280,25 @@ def test_31_check_nfs_share_network(request):
     assert exports_networks[0] == '*', str(parsed)
 
 
-def test_32_check_nfs_share_hosts(request):
+# Parameters for test_32
+hostnames_to_test = [
+    # Valid hostnames (IP addresses) and netgroup
+    (["192.168.0.69", "192.168.0.70", "@fakenetgroup"], True),
+    # Valid wildcarded hostnames
+    (["asdfnm-*", "?-asdfnm-*", "asdfnm[0-9]", "nmix?-*dev[0-9]"], True),
+    # Valid wildcarded hostname with valid 'domains'
+    (["asdfdm-*.example.com", "?-asdfdm-*.ixsystems.com",
+      "asdfdm[0-9].example.com", "dmix?-*dev[0-9].ixsystems.com"], True),
+    # Invalid hostnames
+    (["-asdffail", "*.asdffail.com", "*.*.com", "bozofail.?.*"], False),
+    # Mix of valid and invalid hostnames
+    (["asdfdm[0-9].example.com", "-asdffail",
+      "devteam-*.ixsystems.com", "*.asdffail.com"], False)
+]
+
+
+@pytest.mark.parametrize("hostlist,ExpectedToPass", hostnames_to_test)
+def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
     """
     Verify that adding a network generates an appropriate line in exports
     file for same path. Sample:
@@ -289,24 +307,38 @@ def test_32_check_nfs_share_hosts(request):
         192.168.0.69(sec=sys,rw,subtree_check)\
         192.168.0.70(sec=sys,rw,subtree_check)\
         @fakenetgroup(sec=sys,rw,subtree_check)
+
+    host name handling in middleware:
+        If the host name contains no wildcard or special chars,
+            then we test it with a look up
+        else we apply the host name rules and skip the look up
+
+    The rules for the host field are:
+    - Dashes are allowed, but a level cannot start or end with a dash, '-'
+    - Only the left most level may contain special characters: '*','?' and '[]'
     """
-    depends(request, ["pool_04", "ssh_password"], scope="session")
-    hosts_to_test = ["192.168.0.69", "192.168.0.70", "@fakenetgroup"]
+    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hostlist})
+    if ExpectedToPass:
+        assert results.status_code == 200, results.text
+    else:
+        assert results.status_code != 200, results.text
 
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hosts_to_test})
-    assert results.status_code == 200, results.text
-
+    # Check the exports file
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
-
     exports_hosts = [x['host'] for x in parsed[0]['opts']]
-    diff = set(hosts_to_test) ^ set(exports_hosts)
-    assert len(diff) == 0, f'diff: {diff}, exports: {parsed}'
+    if ExpectedToPass:
+        # The entry should be present
+        diff = set(hostlist) ^ set(exports_hosts)
+        assert len(diff) == 0, f'diff: {diff}, exports: {parsed}'
+    else:
+        # The entry should not be present
+        assert len(exports_hosts) == 1, str(parsed)
 
-    # Reset to default
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': []})
-    assert results.status_code == 200, results.text
-
+    # Reset to default should always pass
+    cleanup_results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': []})
+    assert cleanup_results.status_code == 200, results.text
+    # Check the exports file to confirm it's clear
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
     exports_hosts = [x['host'] for x in parsed[0]['opts']]
@@ -766,12 +798,12 @@ def test_44_check_nfs_xattr_support(request):
                 n.create("testfile")
                 n.setxattr("testfile", "user.testxattr", "the_contents")
                 xattr_val = n.getxattr("testfile", "user.testxattr")
-                assert xattr_val == "the_contents" 
+                assert xattr_val == "the_contents"
 
                 n.create("testdir", True)
                 n.setxattr("testdir", "user.testxattr2", "the_contents2")
                 xattr_val = n.getxattr("testdir", "user.testxattr2")
-                assert xattr_val == "the_contents2" 
+                assert xattr_val == "the_contents2"
 
 
 def test_45_check_setting_runtime_debug(request):
@@ -785,7 +817,7 @@ def test_45_check_setting_runtime_debug(request):
     set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [["NFSD"], ["ALL"]]}
     res = make_ws_request(ip, get_payload)
     assert res['result'] == disabled, res
-    
+
     make_ws_request(ip, set_payload)
     res = make_ws_request(ip, get_payload)
     assert res['result']['NFSD'] == ["ALL"], res
@@ -836,6 +868,10 @@ def test_53_set_bind_ip():
     assert ip in res.json(), res.text
 
     res = PUT("/nfs/", {"bindip": [ip]})
+    assert res.status_code == 200, res.text
+
+    # reset to default
+    res = PUT("/nfs/", {"bindip": []})
     assert res.status_code == 200, res.text
 
 
