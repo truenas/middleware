@@ -211,7 +211,7 @@ class Alert:
     :ivar key: the information that will be used to distinguish this alert from the others of the same class. If empty,
         will default to `args`, which is the most common use case. Can be anything that can be JSON serialized.
 
-        However, for some alerts it has sense to pass only a subset of args as the key. For example, for a
+        However, for some alerts it makes sense to pass only a subset of args as the key. For example, for a
         `CertificateIsExpiringAlertClass` you may only want to include the certificate name as the key and omit how
         many days are left before the certificate expires. That way, at day change, the alerts "certificate xxx expires
         in 3 days" and "certificate xxx expires in 2 days" will be considered the same alert (as only certificate name
