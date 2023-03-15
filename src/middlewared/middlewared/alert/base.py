@@ -1,8 +1,9 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import enum
 import json
 import logging
 import os
+import typing
 
 import html2text
 
@@ -38,6 +39,27 @@ class AlertClassMeta(type):
 
 
 class AlertClass(metaclass=AlertClassMeta):
+    """
+    Alert class: a description of a specific type of issue that can exist in the system.
+
+    :cvar category: `AlertCategory` value
+
+    :cvar level: Default `AlertLevel` value (alert level can be later changed by user)
+
+    :cvar title: Short description of the alert class (e.g. "An SSL certificate is expiring")
+
+    :cvar text: Format string for the alert class instance (e.g. "%(name)s SSL certificate is expiring")
+
+    :cvar exclude_from_list: Set this to `true` to exclude the alert from the UI configuration. For example, you might
+        want to hide some rare legacy hardware-specific alert. It will still be sent if it occurs, but users won't be
+        able to disable it or change its level.
+
+    :cvar products: A list of `system.product_type` return values on which alerts of this class can be emitted.
+
+    :cvar proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for the
+        systems that have a corresponding support license.
+    """
+
     classes = []
     class_by_name = {}
 
@@ -65,20 +87,50 @@ class AlertClass(metaclass=AlertClassMeta):
 
 
 class OneShotAlertClass:
+    """
+    One-shot alert mixin: add this to `AlertClass` superclass list to the alerts that are created not by an
+    `AlertSource` but using `alert.oneshot_create` API method.
+
+    :cvar deleted_automatically: Set this to `false` if there is no one to call `alert.oneshot_delete` when the alert
+        situation is resolved. In that case, the alert will be deleted when the user dismisses it.
+
+    :cvar expires_after: Lifetime for the alert.
+    """
+
     deleted_automatically = True
     expires_after = None
 
     async def create(self, args):
+        """
+        Returns an `Alert` instance created using `args` that were passed to `alert.oneshot_create`.
+
+        :param args: free-form data that was passed  to `alert.oneshot_create`.
+        :return: an `Alert` instance.
+        """
         raise NotImplementedError
 
     async def delete(self, alerts, query):
+        """
+        Returns only those `alerts` that do not match `query` that was passed to `alert.oneshot_delete`.
+
+        :param alerts: all the alerts of this class.
+        :param query: free-form data that was passed to `alert.oneshot_delete`.
+        :return: `alerts` that do not match query (e.g. `query` specifies `{"certificate_id": "xxx"}` and the method
+            implementation returns all `alerts` except the ones related to the certificate `xxx`).
+        """
         raise NotImplementedError
 
 
 class SimpleOneShotAlertClass(OneShotAlertClass):
-    # keys = ["id", "name"] When deleting an alert, only this keys will be compared
-    # keys = []             When deleting an alert, all alerts of this class will be deleted
-    # keys = None           All present alert keys must be equal to the delete query (default)
+    """
+    A simple implementation of `OneShotAlertClass` that pass `args` as `args` when creating an `Alert` and will match
+    `args` dict keys (or their subset) when deleting an alert.
+
+    :cvar keys: controls how alerts are deleted:
+        `keys = ["id", "name"]` When deleting an alert, only this keys will be compared
+        `keys = []`             When deleting an alert, all alerts of this class will be deleted
+        `keys = None`           All present alert keys must be equal to the delete query (default)
+    """
     keys = None
 
     async def create(self, args):
@@ -147,6 +199,46 @@ class AlertLevel(enum.Enum):
 
 
 class Alert:
+    """
+    Alert: a message about a single issues in the system (or a group of similar issues that can be potentially resolved
+    with a single action).
+
+    :ivar klass: Alert class: generic description of the alert (e.g. `CertificateIsExpiringAlertClass`)
+
+    :ivar args: specific description of the alert (e.g. `{"name": "my certificate", "days": 3}`).
+        The resulting alert text will be obtained by doing `klass.text % args`
+
+    :ivar key: the information that will be used to distinguish this alert from the others of the same class. If empty,
+        will default to `args`, which is the most common use case. Can be anything that can be JSON serialized.
+
+        However, for some alerts it has sense to pass only a subset of args as the key. For example, for a
+        `CertificateIsExpiringAlertClass` you may only want to include the certificate name as the key and omit how
+        many days are left before the certificate expires. That way, at day change, the alerts "certificate xxx expires
+        in 3 days" and "certificate xxx expires in 2 days" will be considered the same alert (as only certificate name
+        will be compared) and the newer one will silently replace the old one (in opposite case, an E-Mail would be
+        sent claiming that one alert was cleared and another one was added).
+
+    :ivar datetime: timestamp when the alert was first seen.
+
+    :ivar last_occurrence: timestamp when the alert was last seen.
+
+    :ivar node: HA node when the alert was seen.
+
+    :ivar dismissed: whether the alert was dismissed by user.
+
+    :ivar mail: if this parameter is not null, it will be an argument to an extra call to `mail.send` that will be made
+        when the alert is first seen.
+    """
+
+    klass: type[AlertClass]
+    args: typing.Union[dict[str, typing.Any], list]
+    key: typing.Any
+    datetime: datetime
+    last_occurrence: datetime
+    node: typing.Optional[str]
+    dismissed: bool
+    mail: typing.Optional[dict]
+
     def __init__(self, klass, args=None, key=undefined, datetime=None, last_occurrence=None, node=None, dismissed=None,
                  mail=None, _uuid=None, _source=None, _key=None, _text=None):
         self.uuid = _uuid
@@ -192,6 +284,21 @@ class Alert:
 
 
 class AlertSource:
+    """
+    Alert source: a class that periodically checks for a specific erroneous condition and returns one or multiple
+    `Alert` instances.
+
+    :cvar schedule: `BaseSchedule` instance that will be used to determine whether this alert source should be ran at
+        any given moment. By default, alert checkers are ran every minute.
+
+    :cvar products: A list of `system.product_type` return values for which this source will be ran.
+
+    :cvar failover_related: should be `true` if this alert is HA failover related. Failover-related alerts are not ran
+        within a specific time interval after failover to prevent false positives.
+
+    :cvar run_on_backup_node: set this to `false` to prevent running this alert on HA `BACKUP` node.
+    """
+
     schedule = IntervalSchedule(timedelta())
 
     products = ("CORE", "ENTERPRISE", "SCALE", "SCALE_ENTERPRISE")
@@ -206,6 +313,11 @@ class AlertSource:
         return self.__class__.__name__.replace("AlertSource", "")
 
     async def check(self):
+        """
+        This method will be called on the specific `schedule` to check for the alert conditions.
+
+        :return: an `Alert` instance, or a list of `Alert` instances, or `None` for no alerts.
+        """
         raise NotImplementedError
 
 

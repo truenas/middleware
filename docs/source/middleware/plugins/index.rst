@@ -5,4 +5,5 @@ Middleware Plugins
     :maxdepth: 1
     :caption: Contents:
 
+    alert.rst
     migration.rst
