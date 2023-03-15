@@ -1,7 +1,7 @@
 """SSH password enabled
 
 Revision ID: 1c060aa856ca
-Revises: 54beb9f4bdf5
+Revises: 91a4e09f5b7a
 Create Date: 2023-02-12 10:45:59.865895+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '1c060aa856ca'
-down_revision = '54beb9f4bdf5'
+down_revision = '91a4e09f5b7a'
 branch_labels = None
 depends_on = None
 
