@@ -26,6 +26,7 @@ if __name__ == "__main__":
     config = [
         'GRUB_DISTRIBUTOR="TrueNAS Scale"',
         'GRUB_TIMEOUT=10',
+        'GRUB_DISABLE_RECOVERY="true"',
         'GRUB_CMDLINE_LINUX_DEFAULT="libata.allow_tpm=1 amd_iommu=on iommu=pt '
         'kvm_amd.npt=1 kvm_amd.avic=1 intel_iommu=on zfsforce=1 nvme_core.multipath=N'
         f'{f" {kernel_extra_options}" if kernel_extra_options else ""}"',
