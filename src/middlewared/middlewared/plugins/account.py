@@ -545,7 +545,19 @@ class UserService(CRUDService):
             await self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
 
-            pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
+            # FIXME: Cascade deletion is not working
+            twofactor_pk = await self.middleware.call(
+                'datastore.insert', 'account.twofactor_user_auth', {'secret': None}
+            )
+            pk = await self.middleware.call(
+                'datastore.insert',
+                'account.bsdusers',
+                {
+                    **data,
+                    'twofactor_auth': twofactor_pk,
+                },
+                {'prefix': 'bsdusr_'}
+            )
 
             await self.__set_groups(pk, groups)
 
