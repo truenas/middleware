@@ -132,10 +132,6 @@ class FailoverDisabledReasonsService(Service):
             if lsw != rsw:
                 reasons.add('MISMATCH_VERSIONS')
 
-            args = [
-                [["method", "in", ["failover.events.vrrp_master", "failover.events.vrrp_backup"]]],
-                {"order_by": ["-id"]}
-            ]
             if self.middleware.call_sync('failover.call_remote', 'failover.in_progress'):
                 reasons.add('REM_FAILOVER_ONGOING')
 
