@@ -821,6 +821,16 @@ class AlertService(Service):
     @accepts(Str("klass"), Any("args", null=True))
     @job(lock="process_alerts", transient=True)
     async def oneshot_create(self, job, klass, args):
+        """
+        Creates a one-shot alert of specified `klass`, passing `args` to `klass.create` method.
+
+        Normal alert creation logic will be applied, so if you create an alert with the same `key` as an already
+        existing alert, no duplicate alert will be created.
+
+        :param klass: one-shot alert class name (without the `AlertClass` suffix).
+        :param args: `args` that will be passed to `klass.create` method.
+        """
+
         try:
             klass = AlertClass.class_by_name[klass]
         except KeyError:
@@ -848,6 +858,15 @@ class AlertService(Service):
     @accepts(Str("klass"), Any("query", null=True, default=None))
     @job(lock="process_alerts", transient=True)
     async def oneshot_delete(self, job, klass, query):
+        """
+        Deletes one-shot alerts of specified `klass`, passing `query` to `klass.delete` method.
+
+        It's not an error if no alerts matching delete `query` exist.
+
+        :param klass: one-shot alert class name (without the `AlertClass` suffix).
+        :param query: `query` that will be passed to `klass.delete` method.
+        """
+
         try:
             klass = AlertClass.class_by_name[klass]
         except KeyError:
