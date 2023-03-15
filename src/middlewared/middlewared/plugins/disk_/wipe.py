@@ -11,7 +11,8 @@ class DiskService(Service):
 
     @private
     def _wipe(self, data):
-        with open(os.open(f'/dev/{data["dev"]}', os.O_WRONLY | os.O_EXCL), 'wb') as f:
+        disk_path = f'/dev/{data["dev"]}'
+        with open(os.open(disk_path, os.O_WRONLY | os.O_EXCL), 'wb') as f:
             size = os.lseek(f.fileno(), 0, os.SEEK_END)
             if size == 0:
                 # no size means nothing else will work
@@ -51,7 +52,7 @@ class DiskService(Service):
                     os.write(f.fileno(), to_write)
                     data['job'].set_progress(float(f'{i / iterations:.{length}f}') * 100)
 
-        with open(f'/dev/{data["name"]}' 'wb'):
+        with open(disk_path, 'wb'):
             # we overwrote partiton label information by the time
             # we get here so we need to close device and re-open
             # it in write mode to trigger a udev to rescan the
