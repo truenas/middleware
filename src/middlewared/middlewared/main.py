@@ -716,8 +716,9 @@ class ShellApplication(object):
         self.middleware = middleware
 
     async def ws_handler(self, request):
-        ws = web.WebSocketResponse()
-        await ws.prepare(request)
+        ws, prepared = await self.middleware.create_and_prepare_ws(request)
+        if not prepared:
+            return ws
 
         if not await self.middleware.ws_can_access(request, ws):
             return ws
@@ -1618,9 +1619,25 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 if args is None:
                     return mock
 
-    async def ws_handler(self, request):
+    async def create_and_prepare_ws(self, request):
         ws = web.WebSocketResponse()
-        await ws.prepare(request)
+        prepared = False
+        try:
+            await ws.prepare(request)
+            prepared = True
+        except ConnectionResetError:
+            # happens when we're preparing a new session
+            # and during the time we prepare, the server
+            # is stopped/killed/restarted etc. Ignore these
+            # to prevent log spam
+            pass
+
+        return ws, prepared
+
+    async def ws_handler(self, request):
+        ws, prepared = await self.create_and_prepare_ws(request)
+        if not prepared:
+            return ws
 
         if not await self.ws_can_access(request, ws):
             return ws
