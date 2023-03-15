@@ -33,7 +33,7 @@ One-shot alerts
 ^^^^^^^^^^^^^^^
 
 One-shot alerts are the alerts created by external events. The main issue with such alerts is deleting them, so there
-are a few one-shot alert types, each offering different deletion strategy.
+are a few one-shot alert types, each offering a different deletion strategy.
 
 Add `OneShotAlertClass` to your `AlertClass` superclass list to make it a one-shot alert.
 
