@@ -126,33 +126,9 @@ system_func()
 		section_footer
 	fi
 
-	ret1=$(midclt call system.is_enterprise)
-	if [ "x${ret1}" = "xTrue" ]; then
-		ret2=$(midclt call failover.status)
-		section_header "HA db journal status"
-		if [ "x${ret2}" != "xSINGLE" ]; then
-			if [ -s /data/ha-journal ]; then
-				echo "Warning: database sync journal has entries"
-			else
-				echo "Database sync journal normal"
-			fi
-		else
-			echo "Non-HA TrueNAS system detected"
-		fi
-		section_footer
-	fi
-
-	if [ "x${ret1}" = "xFalse" ];
-	then
-		if [ "x${ret2}" != "xSINGLE" ];
-		then
-			section_header "hactl output"
-			hactl
-			section_footer
-		else
-			echo "Non-HA TrueNAS system detected"
-		fi
-	fi
+	section_header "hactl output"
+	hactl
+	section_footer
 
 	section_header "Failed updates /data/update.failed"
 	midclt call system.gather_update_failed
