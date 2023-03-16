@@ -30,6 +30,7 @@ class FailoverDisabledReasonsService(Service):
         MISMATCH_VERSIONS - TrueNAS software versions do not match between storage controllers.
         NO_CRITICAL_INTERFACES - No network interfaces are marked critical for failover.
         NO_FENCED - Zpools are imported but fenced isn't running.
+        LOC_FAILOVER_ONGOING - This node is currently processing a failover event.
         REM_FAILOVER_ONGOING - Other node is currently processing a failover event.
         NO_HEARTBEAT_IFACE - Local heartbeat interface does not exist.
         NO_CARRIER_ON_HEARTBEAT - Local heartbeat interface is down.
@@ -67,6 +68,12 @@ class FailoverDisabledReasonsService(Service):
         """This method checks the local node to try and determine its failover status."""
         if self.middleware.call_sync('failover.config')['disabled']:
             reasons.add('NO_FAILOVER')
+
+        if self.middleware.call_sync('failover.in_progress'):
+            reasons.add('LOC_FAILOVER_ONGOING')
+            # no reason to check anything else since failover
+            # is happening on this system
+            return
 
         self.heartbeat_health(app, reasons)
 
@@ -125,13 +132,8 @@ class FailoverDisabledReasonsService(Service):
             if lsw != rsw:
                 reasons.add('MISMATCH_VERSIONS')
 
-            args = [
-                [["method", "in", ["failover.events.vrrp_master", "failover.events.vrrp_backup"]]],
-                {"order_by": ["-id"]}
-            ]
-            if rv := self.middleware.call_sync('failover.call_remote', 'core.get_jobs', args):
-                if rv[0]['state'] == 'RUNNING':
-                    reasons.add('REM_FAILOVER_ONGOING')
+            if self.middleware.call_sync('failover.call_remote', 'failover.in_progress'):
+                reasons.add('REM_FAILOVER_ONGOING')
 
             local = self.middleware.call_sync('failover.vip.get_states', ifaces)
             remote = self.middleware.call_sync('failover.call_remote', 'failover.vip.get_states')
