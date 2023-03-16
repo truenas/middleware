@@ -71,26 +71,24 @@ class EnclosureDetectionService(Service):
                 elif re.search(HA_HARDWARE.XSERIES_ENCLOSURE.value, info):
                     self.HARDWARE = 'PUMA'
 
-                    # We need to get the SAS address of the SAS expander first
-                    sas_addr_file = ENCLOSURES_DIR + enc.split('/dev/bsg/')[-1] + '/id'
-                    with open(sas_addr_file, 'r') as f:
+                    sas_addr = ''
+                    with open(f'{ENCLOSURES_DIR}{enc.split("/")[-1]}/device/sas_address') as f:
+                        # We need to get the SAS address of the SAS expander first
                         sas_addr = f.read().strip()
 
                     # We then cast the SES address (deduced from SES VPD pages)
                     # to an integer and subtract 1. Then cast it back to hexadecimal.
                     # We then compare if the SAS expander's SAS address
                     # is in the SAS expanders SES address
-                    reg = re.search(HA_HARDWARE.XSERIES_NODEA.value, info)
-                    if reg:
+                    if (reg := re.search(HA_HARDWARE.XSERIES_NODEA.value, info)) is not None:
                         ses_addr = hex(int(reg.group(1), 16) - 1)
-                        if ses_addr in sas_addr:
+                        if ses_addr == sas_addr:
                             self.NODE = 'A'
                             break
 
-                    reg = re.search(HA_HARDWARE.XSERIES_NODEB.value, info)
-                    if reg:
+                    if (reg := re.search(HA_HARDWARE.XSERIES_NODEB.value, info)) is not None:
                         ses_addr = hex(int(reg.group(1), 16) - 1)
-                        if ses_addr in sas_addr:
+                        if ses_addr == sas_addr:
                             self.NODE = 'B'
                             break
 
