@@ -80,6 +80,10 @@ system_func()
 	top -SHbi -d1 -n2
 	section_footer
 
+	section_header "zectl list"
+	zectl list
+	section_footer
+
 	section_header "Current Alerts (midclt call alert.list)"
 	midclt call alert.list | jq .
 	section_footer
