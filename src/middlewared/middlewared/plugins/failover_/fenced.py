@@ -65,7 +65,10 @@ class FencedService(Service):
         else:
             res = self.middleware.call_sync('failover.fenced.run_info')
             if res['running'] and res['pid']:
-                os.kill(res['pid'], signal.SIGKILL)
+                try:
+                    os.kill(res['pid'], signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
 
     def run_info(self):
         res = {'running': False, 'pid': ''}
@@ -86,10 +89,9 @@ class FencedService(Service):
 
         if check_running_procs:
             # either 1. no pid in file or 2. pid in file is wrong/stale
-            _iter = psutil.process_iter
-            proc = 'fenced'
-            res['pid'] = next((p.pid for p in _iter() if p.name() == proc), '')
-            res['running'] = bool(res['pid'])
+            for proc in filter(lambda x: x.info['name'] == 'fenced', psutil.process_iter(['pid', 'name'])):
+                res['pid'] = proc.info['pid']
+                res['running'] = True
 
         return res
 
