@@ -75,13 +75,6 @@ class TwoFactorAuthService(ConfigService):
 
         config.update(data)
 
-        if config['enabled'] and not config['secret']:
-            # Only generate a new secret on `enabled` when `secret` is not already set.
-            # This will aid users not setting secret up again on their mobiles.
-            config['secret'] = await self.middleware.run_in_thread(
-                self.generate_base32_secret
-            )
-
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
