@@ -152,11 +152,13 @@ class UserService(CRUDService):
         ('rm', {'name': 'home_mode'}),
         ('rm', {'name': 'home_create'}),
         ('rm', {'name': 'password'}),
+        ('rm', {'name': 'configure_twofactor_auth'}),
         ('add', Dict('group', additional_attrs=True)),
         ('add', Int('id')),
         ('add', Bool('builtin')),
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
+        ('add', Bool('twofactor_auth_configured')),
         ('add', Str('unixhash')),
         ('add', Str('smbhash')),
         ('add', Str('nt_name', null=True)),
@@ -764,7 +766,7 @@ class UserService(CRUDService):
 
         if home_copy:
             """
-            Background copy of user home directoy to new path as the user in question.
+            Background copy of user home directory to new path as the user in question.
             """
             await self.middleware.call(
                 'user.do_home_copy', home_old, user['home'], user['username'], home_mode, user['uid']
