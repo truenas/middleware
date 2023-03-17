@@ -33,7 +33,6 @@ class DetectVirtualIpStates(Service):
         # then it's considered "BACKUP" if the interface has the VIP(s)
         # then it's considered "MASTER"
         if len(ids):
-
             # we can have more than one interface in the failover
             # group so check the state of the interface
             for i in ids:
@@ -53,16 +52,13 @@ class DetectVirtualIpStates(Service):
             interfaces = await self.middleware.call('interface.query')
 
         int_ifaces = await self.middleware.call('interface.internal_interfaces')
-
-        for i in filter(lambda x: x['name'] not in int_ifaces, interfaces):
-            if not i.get('failover_critical', False) or not i['state']['vrrp_config']:
-                continue
-
-            vrrp_state = i['state']['vrrp_config'][0]['state']
-            if vrrp_state == 'MASTER':
-                masters.append(i['name'])
-            elif vrrp_state == 'BACKUP':
-                backups.append(i['name'])
+        for i in filter(lambda x: x['name'] not in int_ifaces and x['state']['vrrp_config'], interfaces):
+            if i['state']['link_state'] == 'LINK_STATE_UP':
+                vrrp_state = i['state']['vrrp_config'][0]['state']
+                if vrrp_state == 'MASTER':
+                    masters.append(i['name'])
+                elif vrrp_state == 'BACKUP':
+                    backups.append(i['name'])
 
         return masters, backups, inits
 
