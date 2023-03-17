@@ -181,6 +181,11 @@ class UserService(CRUDService):
         return {
             'memberships': memberships,
             'global_2fa_configured': (await self.middleware.call('auth.twofactor.config'))['enabled'],
+            'user_2fa_mapping': ({
+                entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
+                    'datastore.query', 'account.twofactor_user_auth'
+                )
+            }),
         }
 
     @private
@@ -205,7 +210,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
-        user['twofactor_auth_configured'] = ctx['global_2fa_configured'] and bool(user['twofactor_auth']['secret'])
+        user['twofactor_auth_configured'] = ctx['global_2fa_configured'] and bool(ctx['user_2fa_mapping'][user['id']])
 
         return user
 
