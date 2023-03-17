@@ -458,6 +458,21 @@ class iSCSITargetService(CRUDService):
         return results
 
     @private
+    def set_genhd_hidden_ips(self, ips):
+        """
+        Set the kernel parameter /sys/module/iscsi_tcp/parameters/genhd_hidden_ips to the
+        specified string, if not already set to it.
+        """
+        p = pathlib.Path('/sys/module/iscsi_tcp/parameters/genhd_hidden_ips')
+        if not p.exists():
+            try:
+                subprocess.run(["modprobe", "iscsi_tcp"])
+            except subprocess.CalledProcessError as e:
+                self.logger.error('Failed to load iscsi_tcp kernel module. Error %r', e)
+        if p.read_text().rstrip() != ips:
+            p.write_text(ips)
+
+    @private
     async def login_ha_targets(self, no_wait=False, raise_error=False):
         """
         When called on a HA BACKUP node will attempt to login to all internal HA targets,
@@ -483,8 +498,13 @@ class iSCSITargetService(CRUDService):
                 todo.add(iqn)
 
         if todo:
-            # First we need to do an iscsiadm discovery
             remote_ip = await self.middleware.call('failover.remote_ip')
+
+            # Ensure we have configured our kernel so that when we login to the
+            # peer controller's iSCSI targets no disk surfaces.
+            await self.middleware.call('iscsi.target.set_genhd_hidden_ips', remote_ip)
+
+            # Now we need to do an iscsiadm discovery
             await self.discover(remote_ip)
 
             # Then login the targets (in parallel)
