@@ -46,7 +46,6 @@ class TwoFactorAuthService(ConfigService):
             required=True
         ),
         Int('id', required=True),
-        Str('secret', required=True, null=True),
     )
 
     @private
@@ -60,7 +59,6 @@ class TwoFactorAuthService(ConfigService):
         Patch(
             'auth_twofactor_entry', 'auth_twofactor_update',
             ('rm', {'name': 'id'}),
-            ('rm', {'name': 'secret'}),
             ('attr', {'update': True}),
         )
     )
@@ -134,21 +132,6 @@ class TwoFactorAuthService(ConfigService):
             self.middleware.call_sync('service.reload', 'ssh')
 
         return True
-
-    @accepts()
-    @returns(Str(title='Provisioning URI'))
-    async def provisioning_uri(self):
-        """
-        Returns the provisioning URI for the OTP. This can then be encoded in a QR Code and used to
-        provision an OTP app like Google Authenticator.
-        """
-        config = await self.middleware.call(f'{self._config.namespace}.config')
-        return pyotp.totp.TOTP(
-            config['secret'], interval=config['interval'], digits=config['otp_digits']
-        ).provisioning_uri(
-            f'{await self.middleware.call("system.hostname")}@{await self.middleware.call("system.product_name")}',
-            'iXsystems'
-        )
 
     @private
     async def get_user_twofactor_config(self, user_id):
