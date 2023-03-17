@@ -1,3 +1,4 @@
+import base64
 import pyotp
 
 import middlewared.sqlalchemy as sa
@@ -95,3 +96,15 @@ class TwoFactorAuthService(ConfigService):
     @private
     def generate_base32_secret(self):
         return pyotp.random_base32()
+
+    @private
+    def get_users_twofactor_configuration(self):
+        return [
+            {
+                'username': config['user']['bsdusr_username'],
+                'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode()
+            }
+            for config in self.middleware.call_sync(
+                'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
+            )
+        ]
