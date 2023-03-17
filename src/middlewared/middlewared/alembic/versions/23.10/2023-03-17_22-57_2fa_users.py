@@ -26,33 +26,24 @@ def upgrade():
         'account_twofactor_user_auth',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('secret', sa.String(length=16), nullable=True),
+        sa.Column('user_id', sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ['user_id'], ['account_bsdusers.id'], name=op.f('fk_account_twofactor_user_auth_user_id_account_bsdusers'),
+            ondelete='CASCADE'
+        ),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_account_twofactor_user_auth')),
         sqlite_autoincrement=True,
     )
-
-    with op.batch_alter_table('account_bsdusers', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('bsdusr_twofactor_auth_id', sa.Integer(), nullable=True))
-        batch_op.create_index(
-            batch_op.f('ix_account_bsdusers_bsdusr_twofactor_auth_id'), ['bsdusr_twofactor_auth_id'], unique=False,
-        )
-        batch_op.create_foreign_key(
-            batch_op.f('fk_account_bsdusers_bsdusr_twofactor_auth_id_account_twofactor_user_auth'),
-            'account_twofactor_user_auth', ['bsdusr_twofactor_auth_id'], ['id'], ondelete='CASCADE'
-        )
+    with op.batch_alter_table('account_twofactor_user_auth', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_account_twofactor_user_auth_user_id'), ['user_id'], unique=False)
 
     conn = op.get_bind()
     existing_secret = conn.execute('SELECT secret FROM system_twofactorauthentication').fetchone()['secret']
 
-    for row in map(
-        dict, conn.execute(
-            'SELECT id,bsdusr_uid FROM account_bsdusers WHERE bsdusr_twofactor_auth_id is NULL'
-        ).fetchall()
-    ):
+    for row in map(dict, conn.execute('SELECT id,bsdusr_uid FROM account_bsdusers').fetchall()):
         row = dict(row)
         secret = existing_secret if row['bsdusr_uid'] == 0 else None
-        conn.execute('INSERT INTO account_twofactor_user_auth (secret) VALUES (?)', (secret,))
-        foreign_id = conn.execute('SELECT MAX(id) as id FROM account_twofactor_user_auth').fetchone()['id']
-        conn.execute(f'UPDATE account_bsdusers SET bsdusr_twofactor_auth_id={foreign_id} WHERE id={row["id"]}')
+        conn.execute('INSERT INTO account_twofactor_user_auth (secret,user_id) VALUES (?,?)', (secret, row['id']))
 
     with op.batch_alter_table('system_twofactorauthentication', schema=None) as batch_op:
         batch_op.drop_column('secret')
