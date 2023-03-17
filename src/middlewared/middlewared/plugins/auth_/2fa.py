@@ -110,29 +110,6 @@ class TwoFactorAuthService(ConfigService):
         )
         return totp.verify(token, valid_window=config['window'])
 
-    @accepts()
-    @returns(Bool('successfully_renewed_secret'))
-    def renew_secret(self):
-        """
-        Generates a new secret for Two Factor Authentication. Returns boolean true on success.
-        """
-        config = self.middleware.call_sync(f'{self._config.namespace}.config')
-        if not config['enabled']:
-            raise CallError('Please enable Two Factor Authentication first.')
-
-        self.middleware.call_sync(
-            'datastore.update',
-            self._config.datastore,
-            config['id'], {
-                'secret': self.generate_base32_secret()
-            }
-        )
-
-        if config['services']['ssh']:
-            self.middleware.call_sync('service.reload', 'ssh')
-
-        return True
-
     @private
     async def get_user_twofactor_config(self, user_id):
         return await self.middleware.call(
