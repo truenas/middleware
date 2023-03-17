@@ -2,8 +2,8 @@ import pyotp
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, returns, Str
-from middlewared.service import CallError, ConfigService, private
+from middlewared.schema import accepts, Bool, Dict, Int, Patch
+from middlewared.service import ConfigService, private
 from middlewared.validators import Range
 
 
@@ -92,23 +92,6 @@ class TwoFactorAuthService(ConfigService):
         await self.middleware.call('service.reload', 'ssh')
 
         return await self.config()
-
-    @accepts(
-        Str('token', null=True)
-    )
-    @returns(Bool('token_verified'))
-    def verify(self, token):
-        """
-        Returns boolean true if provided `token` is successfully authenticated.
-        """
-        config = self.middleware.call_sync(f'{self._config.namespace}.config')
-        if not config['enabled']:
-            raise CallError('Please enable Two Factor Authentication first.')
-
-        totp = pyotp.totp.TOTP(
-            config['secret'], interval=config['interval'], digits=config['otp_digits']
-        )
-        return totp.verify(token, valid_window=config['window'])
 
     @private
     async def get_user_twofactor_config(self, user_id):
