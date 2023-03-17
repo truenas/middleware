@@ -9,5 +9,5 @@
 		raise FileShouldNotExist()
 %>\
 % for user in users:
-${f'HOTP/T{twofactor_auth["interval"]}/{twofactor_auth["otp_digits"]}'}	user['username']	-	${user['secret_hex']}
-% endif
+${f'HOTP/T{twofactor_auth["interval"]}/{twofactor_auth["otp_digits"]}'}	${user['username']}	-	${user['secret_hex']}
+% endfor
