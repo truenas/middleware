@@ -317,6 +317,7 @@ def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
     - Dashes are allowed, but a level cannot start or end with a dash, '-'
     - Only the left most level may contain special characters: '*','?' and '[]'
     """
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hostlist})
     if ExpectedToPass:
         assert results.status_code == 200, results.text
