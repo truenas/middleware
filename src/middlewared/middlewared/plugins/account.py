@@ -223,6 +223,7 @@ class UserService(CRUDService):
             'sid',
             'immutable',
             'home_create',
+            'twofactor_auth_configured',
         ]
 
         for i in to_remove:
@@ -424,6 +425,7 @@ class UserService(CRUDService):
         Str('username', required=True, max_length=16),
         Int('group'),
         Bool('group_create', default=False),
+        Bool('configure_twofactor_auth', default=False),
         Str('home', default=DEFAULT_HOME_PATH),
         Str('home_mode', default='700'),
         Bool('home_create', default=False),
@@ -547,10 +549,13 @@ class UserService(CRUDService):
             await self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
 
+            secret = await self.middleware.call('auth.twofactor.generate_base32_secret') if data.pop(
+                'configure_twofactor_auth', False
+            ) else None
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
             await self.middleware.call(
                 'datastore.insert', 'account.twofactor_user_auth', {
-                    'secret': None,
+                    'secret': secret,
                     'user': pk,
                 }
             )
@@ -601,8 +606,10 @@ class UserService(CRUDService):
         Patch(
             'user_create',
             'user_update',
+            ('add', Bool('renew_twofactor_secret', default=False)),
             ('attr', {'update': True}),
             ('rm', {'name': 'group_create'}),
+            ('rm', {'name': 'configure_twofactor_auth'}),
         ),
     )
     @returns(Int('primary_key'))
@@ -707,6 +714,7 @@ class UserService(CRUDService):
             home_copy = False
 
         # After this point user dict has values from data
+        renew_2fa_secret = data.pop('renew_twofactor_secret', False)
         user.update(data)
 
         mode_to_set = user.get('home_mode')
@@ -779,6 +787,17 @@ class UserService(CRUDService):
         if 'groups' in user:
             groups = user.pop('groups')
             await self.__set_groups(pk, groups)
+
+        if renew_2fa_secret:
+            twofactor_auth_id = (await self.middleware.call(
+                'datastore.query', 'account.twofactor_user_auth', [['user', '=', pk]], {'get': True}
+            ))['id']
+            await self.middleware.call(
+                'datastore.update',
+                'account.twofactor_user_auth',
+                twofactor_auth_id,
+                {'secret': await self.middleware.call('auth.twofactor.generate_base32_secret')}
+            )
 
         user = await self.user_compress(user)
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
