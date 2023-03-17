@@ -151,5 +151,11 @@ class TwoFactorAuthService(ConfigService):
         )
 
     @private
+    async def get_user_twofactor_config(self, user_id):
+        return await self.middleware.call(
+            'datastore.query', 'account.twofactor_user_auth', [['user', '=', user_id]], {'get': True}
+        )
+
+    @private
     def generate_base32_secret(self):
         return pyotp.random_base32()
