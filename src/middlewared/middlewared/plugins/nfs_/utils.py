@@ -6,7 +6,7 @@ RE_DOMAIN_WILDCARD = re.compile(r'\*|\?|\[|\]')
 def get_domain(hostname):
     """
     return the 'domain' part of the hostname
-    e.g. gruff.billy.goat will return 'gruff'
+    e.g. gruff.billy.goat will return 'billy.goat'
     and  gruffbillygoat will return None
     """
     lst = hostname.split('.', 1)
