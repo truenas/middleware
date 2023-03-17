@@ -789,9 +789,7 @@ class UserService(CRUDService):
             await self.__set_groups(pk, groups)
 
         if renew_2fa_secret:
-            twofactor_auth_id = (await self.middleware.call(
-                'datastore.query', 'account.twofactor_user_auth', [['user', '=', pk]], {'get': True}
-            ))['id']
+            twofactor_auth_id = (await self.middleware.call('auth.twofactor.get_user_twofactor_config', pk))['id']
             await self.middleware.call(
                 'datastore.update',
                 'account.twofactor_user_auth',
