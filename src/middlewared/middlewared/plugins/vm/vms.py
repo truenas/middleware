@@ -96,6 +96,8 @@ class VMService(CRUDService, VMSupervisorMixin):
     @private
     def extend_context(self, rows, extra):
         status = {}
+        if rows:
+            self._check_setup_connection()
         for row in rows:
             status[row['id']] = self.status_impl(row)
         return {'status': status}
@@ -451,6 +453,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             - pid, process id if RUNNING
         """
         vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+        self._check_setup_connection()
         return self.status_impl(vm)
 
     @private
