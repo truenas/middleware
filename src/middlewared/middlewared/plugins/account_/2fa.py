@@ -29,7 +29,7 @@ class UserService(Service):
 
     @accepts(Int('user_id'), Str('token'))
     @returns(Bool('token_verified'))
-    def verify_twofactor_token(self, user_id, token):
+    async def verify_twofactor_token(self, user_id, token):
         """
         Returns boolean true if provided `token` is successfully authenticated for `user_id`.
         """
