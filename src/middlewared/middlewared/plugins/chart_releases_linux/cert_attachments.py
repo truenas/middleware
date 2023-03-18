@@ -52,3 +52,9 @@ class ChartReleaseService(Service):
                     chart_releases.append(chart_release['id'])
                     break
         return chart_releases
+
+
+async def setup(middleware):
+    await middleware.call(
+        'certificate.register_attachment_delegate', ChartReleaseCertificateAttachmentDelegate(middleware)
+    )
