@@ -4,6 +4,7 @@ from middlewared.common.attachment.certificate import CertificateCRUDServiceAtta
 class IdmapCertificateAttachmentDelegate(CertificateCRUDServiceAttachmentDelegate):
 
     CERT_FILTER_KEY = 'certificate.id'
+    HUMAN_NAME = 'IDMAP Service'
     NAMESPACE = 'idmap'
 
     async def redeploy(self, cert_id):

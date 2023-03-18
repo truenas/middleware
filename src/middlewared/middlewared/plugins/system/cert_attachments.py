@@ -4,6 +4,7 @@ from middlewared.common.attachment.certificate import CertificateServiceAttachme
 class SystemGeneralCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
     CERT_FIELD = 'ui_certificate'
+    HUMAN_NAME = 'UI Service'
     NAMESPACE = 'system.general'
     SERVICE = 'http'
 
@@ -11,6 +12,7 @@ class SystemGeneralCertificateAttachmentDelegate(CertificateServiceAttachmentDel
 class SystemAdvancedCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
     CERT_FIELD = 'syslog_tls_certificate'
+    HUMAN_NAME = 'Syslog Service'
     NAMESPACE = 'system.advanced'
     SERVICE = 'syslogd'
 

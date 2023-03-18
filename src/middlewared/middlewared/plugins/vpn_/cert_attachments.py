@@ -4,6 +4,7 @@ from middlewared.common.attachment.certificate import CertificateServiceAttachme
 class OpenvpnServerCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
     CERT_FIELD = 'server_certificate'
+    HUMAN_NAME = 'OpenVPN Server Service'
     NAMESPACE = 'openvpn.server'
     SERVICE = 'openvpn_server'
 
@@ -11,6 +12,7 @@ class OpenvpnServerCertificateAttachmentDelegate(CertificateServiceAttachmentDel
 class OpenvpnClientCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
     CERT_FIELD = 'client_certificate'
+    HUMAN_NAME = 'OpenVPN Client Service'
     NAMESPACE = 'openvpn.client'
     SERVICE = 'openvpn_client'
 

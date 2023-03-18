@@ -55,6 +55,7 @@ class MinioFSAttachmentDelegate(FSAttachmentDelegate):
 
 class S3CertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
+    HUMAN_NAME = 'S3 Service'
     SERVICE = 's3'
 
 

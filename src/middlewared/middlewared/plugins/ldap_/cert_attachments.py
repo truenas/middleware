@@ -3,6 +3,7 @@ from middlewared.common.attachment.certificate import CertificateServiceAttachme
 
 class LdapCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
+    HUMAN_NAME = 'LDAP Service'
     SERVICE = 'ldap'
     SERVICE_VERB = 'start'
 
