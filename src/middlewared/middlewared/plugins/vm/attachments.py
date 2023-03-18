@@ -137,8 +137,8 @@ class VMPortDelegate(PortDelegate):
             ports.append({
                 'description': f'{vms[device["vm"]]!r} VM',
                 'ports': [
-                    device['attributes']['port'],
-                    device['attributes']['web_port'],
+                    (device['attributes']['bind'], device['attributes']['port']),
+                    (device['attributes']['bind'], device['attributes']['web_port']),
                 ]
             })
 
