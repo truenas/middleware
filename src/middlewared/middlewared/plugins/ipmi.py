@@ -164,30 +164,6 @@ class IPMIService(CRUDService):
 
         return rc
 
-    @accepts(Dict(
-        'options',
-        Int('seconds', default=15, validators=[Range(min=0, max=3600)]),
-        Bool('force', default=False),
-    ))
-    @returns()
-    def identify(self, options):
-        """
-        Turn on chassis identify light.
-
-        `seconds` is an integer representing the number of seconds to leave the chassis identify light turned on.
-            - default is 15 seconds
-            - to turn it off, specify `seconds` as 0
-        `force` is a boolean. When True, turn on chassis identify light indefinitely.
-        """
-        verrors = ValidationErrors()
-        force = options['force']
-        seconds = options["seconds"]
-        if force and seconds:
-            verrors.add('ipmi.identify', f'Seconds: ({seconds}) and Force: ({force}) are exclusive.')
-        verrors.check()
-
-        run(['ipmitool', 'chassis', 'identify', 'force' if force else seconds], stdout=DEVNULL, stderr=DEVNULL)
-
     @filterable
     @filterable_returns(List('events_log', items=[Dict('event', additional_attrs=True)]))
     @job(lock='query_sel', lock_queue_size=3)
