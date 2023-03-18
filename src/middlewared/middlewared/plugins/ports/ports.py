@@ -3,7 +3,7 @@ import itertools
 from middlewared.service import Service, ValidationErrors
 
 
-SYSTEM_PORTS = [67, 123, 3702, 5353, 6000]
+SYSTEM_PORTS = [('0.0.0.0', port) for port in [67, 123, 3702, 5353, 6000]]
 
 
 class PortService(Service):
