@@ -4,6 +4,7 @@ from middlewared.common.ports import ServicePortDelegate
 
 class KmipCertificateAttachment(CertificateServiceAttachmentDelegate):
 
+    HUMAN_NAME = 'KMIP Service'
     SERVICE = 'kmip'
     SERVICE_VERB = 'start'
 

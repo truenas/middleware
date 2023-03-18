@@ -4,6 +4,7 @@ from middlewared.common.attachment.certificate import CertificateServiceAttachme
 class WebdavCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 
     CERT_FIELD = 'certssl'
+    HUMAN_NAME = 'Webdav Service'
     SERVICE = 'webdav'
 
 

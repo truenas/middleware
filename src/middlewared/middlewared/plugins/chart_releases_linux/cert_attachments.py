@@ -4,6 +4,7 @@ from middlewared.service import private, Service
 
 class ChartReleaseCertificateAttachmentDelegate(CertificateCRUDServiceAttachmentDelegate):
 
+    HUMAN_NAME = 'Applications'
     NAMESPACE = 'chart.release'
 
     async def get_filters(self, cert_id):

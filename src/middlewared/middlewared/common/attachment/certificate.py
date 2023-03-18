@@ -3,6 +3,7 @@ from middlewared.service import ServiceChangeMixin
 
 class CertificateAttachmentDelegate:
 
+    HUMAN_NAME = NotImplementedError
     NAMESPACE = NotImplementedError
 
     def __init__(self, middleware):
