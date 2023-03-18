@@ -3,7 +3,7 @@ from middlewared.common.ports import ServicePortDelegate
 
 class NFSServicePortDelegate(ServicePortDelegate):
 
-    bind_address_field = 'nfs_srv_bindip'
+    bind_address_field = 'bindip'
     name = 'nfs'
     namespace = 'nfs'
     port_fields = ['mountd_port', 'rpcstatd_port', 'rpclockd_port']
