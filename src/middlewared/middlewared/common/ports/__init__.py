@@ -40,7 +40,13 @@ class ServicePortDelegate(PortDelegate):
     async def config(self):
         return await self.middleware.call(f'{self.namespace}.config')
 
+    async def get_ports_internal_override(self):
+        return []
+
     async def get_ports_internal(self):
+        if override_ports := await self.get_ports_internal_override():
+            return [('0.0.0.0', port) for port in override_ports]
+
         await self.basic_checks()
         config = await self.config()
         return [self.get_bind_ip_port_tuple(config, k) for k in filter(lambda k: config.get(k), self.port_fields)]
