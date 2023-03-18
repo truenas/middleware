@@ -1,5 +1,7 @@
 import itertools
 
+from collections import defaultdict
+
 from middlewared.service import Service, ValidationErrors
 
 
@@ -40,20 +42,31 @@ class PortService(Service):
 
         return ports + self.SYSTEM_USED_PORTS
 
-    async def validate_port(self, schema, value, whitelist_namespace=None):
+    async def validate_port(self, schema, port, bindip='0.0.0.0', whitelist_namespace=None, raise_error=False):
         verrors = ValidationErrors()
-        for port_attachment in await self.middleware.call('port.get_in_use'):
-            if value in port_attachment['ports'] and port_attachment['namespace'] != whitelist_namespace:
-                for port_entry in filter(
-                    lambda p: value in p['ports'],
-                    port_attachment['port_details']
-                ):
-                    err = 'The port is being used by '
-                    if port_entry['description']:
-                        err += f'{port_entry["description"]!r} in {port_attachment["title"]!r}'
-                    else:
-                        err += f'{port_attachment["title"]!r}'
+        port_mapping = await self.ports_mapping(whitelist_namespace)
+        if port not in port_mapping.get(bindip, {}) and port not in port_mapping['0.0.0.0']:
+            return verrors
 
-                    verrors.add(schema, err)
+        problematic_bindip = bindip if port_mapping[bindip].get(port) else '0.0.0.0'
+        port_attachment = port_mapping[problematic_bindip][port]
+        port_entry = next(
+            entry for entry in port_attachment['port_details'] if (problematic_bindip, port) in entry['ports']
+        )
+        err = 'The port is being used by '
+        if port_entry['description']:
+            err += f'{port_entry["description"]!r} in {port_attachment["title"]!r}'
+        else:
+            err += f'{port_attachment["title"]!r}'
 
-        return verrors
+        verrors.add(schema, err)
+        if raise_error:
+            verrors.check()
+
+    async def ports_mapping(self, whitelist_namespace=None):
+        ports = defaultdict(dict)
+        for attachment in filter(lambda entry: entry['namespace'] != whitelist_namespace, await self.get_in_use()):
+            for bindip, port in attachment['ports']:
+                ports[bindip][port] = attachment
+
+        return ports
