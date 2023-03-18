@@ -11,7 +11,6 @@ from middlewared.service import CallError, CRUDService, job, private, skip_arg, 
 from middlewared.validators import Email, Range
 
 from .common_validation import _validate_common_attributes, validate_cert_name
-from .dependencies import check_dependencies
 from .cert_entry import CERT_ENTRY
 from .csr import generate_certificate_signing_request
 from .key_utils import export_private_key
@@ -685,9 +684,8 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        check_dependencies(self.middleware, 'CERT', id)
-
         certificate = self.middleware.call_sync('certificate.get_instance', id)
+        self.middleware.call_sync('certificate.check_cert_deps', id)
 
         if certificate.get('acme') and not certificate['expired']:
             # We won't try revoking a certificate which has expired already
