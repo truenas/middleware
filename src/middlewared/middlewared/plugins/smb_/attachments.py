@@ -7,7 +7,7 @@ class SMBServicePortDelegate(ServicePortDelegate):
     namespace = 'smb'
     title = 'SMB Service'
 
-    async def get_ports_internal(self):
+    async def get_ports_internal_override(self):
         return [137, 138, 139, 445]
 
 
