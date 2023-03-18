@@ -22,11 +22,11 @@ class CertificateAuthorityService(Service):
         await self.middleware.call('certificateauthority.check_dependencies', ca_id)
         chart_releases = await self.middleware.call(
             'chart.release.query', [
-                [f'resources.truenas_certificate_authorities', 'rin', ca_id]
+                ['resources.truenas_certificate_authorities', 'rin', ca_id]
             ], {'extra': {'retrieve_resources': True}}
         )
         if chart_releases:
             raise CallError(
-                f'Certificate Authority cannot be deleted as it is being used by '
+                'Certificate Authority cannot be deleted as it is being used by '
                 f'{", ".join([c["id"] for c in chart_releases])} chart release(s).'
             )
