@@ -7,7 +7,7 @@ class ReportingServicePortDelegate(ServicePortDelegate):
     namespace = 'reporting'
     title = 'Reporting Service'
 
-    async def get_ports_internal(self):
+    async def get_ports_internal_override(self):
         return [2003]
 
 
