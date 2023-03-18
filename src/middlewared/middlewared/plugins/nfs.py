@@ -178,7 +178,8 @@ class NFSService(SystemServiceService):
         new_v4_krb_enabled = new["v4_krb"] or keytab_has_nfs
 
         for k in ['mountd_port', 'rpcstatd_port', 'rpclockd_port']:
-            verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs'))
+            for bindip in (new['bindip'] or ['0.0.0.0']):
+                verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs', bindip))
 
         if await self.middleware.call("failover.licensed") and new["v4"] and new_v4_krb_enabled:
             gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
