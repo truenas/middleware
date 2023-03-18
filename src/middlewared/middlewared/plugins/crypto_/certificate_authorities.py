@@ -6,7 +6,6 @@ import middlewared.sqlalchemy as sa
 
 from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
-from .dependencies import check_dependencies
 from .key_utils import export_private_key
 from .load_utils import get_serial_from_certificate_safe
 from .query_utils import get_ca_chain, normalize_cert_attrs
@@ -498,7 +497,7 @@ class CertificateAuthorityService(CRUDService):
             }
         """
         await self.get_instance(id)
-        await self.middleware.run_in_thread(check_dependencies, self.middleware, 'CA', id)
+        await self.middleware.call('certificateauthority.check_ca_dependencies', id)
 
         response = await self.middleware.call(
             'datastore.delete',
