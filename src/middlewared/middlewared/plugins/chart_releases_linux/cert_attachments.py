@@ -10,6 +10,10 @@ class ChartReleaseCertificateAttachmentDelegate(CertificateCRUDServiceAttachment
     async def get_filters(self, cert_id):
         return [['resources.truenas_certificates', 'rin', cert_id]]
 
+    async def consuming_cert_human_output(self, cert_id):
+        attachments = await self.attachments(cert_id)
+        return f'{", ".join(app["id"] for app in attachments)!r} {self.HUMAN_NAME}' if attachments else None
+
     async def attachments(self, cert_id):
         return await self.middleware.call(
             f'{self.NAMESPACE}.query', await self.get_filters(cert_id), {'extra': {'retrieve_resources': True}}
