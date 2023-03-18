@@ -15,9 +15,6 @@ class NFSServicePortDelegate(ServicePortDelegate):
         else:
             return ['0.0.0.0']
 
-    def get_bind_ip_port_tuple(self, config, port_field):
-        pass
-
     async def get_ports_internal(self):
         await self.basic_checks()
         config = await self.config()
