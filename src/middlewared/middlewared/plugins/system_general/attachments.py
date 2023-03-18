@@ -3,6 +3,7 @@ from middlewared.common.ports import ServicePortDelegate
 
 class SystemGeneralServicePortDelegate(ServicePortDelegate):
 
+    bind_address_field = 'stg_guiaddress'
     name = 'webui'
     namespace = 'system.general'
     port_fields = ['ui_port', 'ui_httpsport']
