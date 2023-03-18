@@ -15,6 +15,9 @@ class CertificateAttachmentDelegate:
     async def redeploy(self, cert_id):
         raise NotImplementedError
 
+    async def consuming_cert_human_output(self, cert_id):
+        return self.HUMAN_NAME if self.state(cert_id) else None
+
 
 class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, ServiceChangeMixin):
 
