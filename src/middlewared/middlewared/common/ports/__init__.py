@@ -19,6 +19,7 @@ class PortDelegate:
 
 
 class ServicePortDelegate(PortDelegate):
+    bind_address_field = NotImplementedError
     port_fields = NotImplementedError
 
     async def basic_checks(self):
@@ -27,10 +28,19 @@ class ServicePortDelegate(PortDelegate):
         elif not isinstance(self.port_fields, Iterable):
             raise ValueError('Port fields must be an iterable')
 
+    def bind_address(self, config):
+        default = '0.0.0.0'
+        return default if self.bind_address_field is NotImplementedError else (
+            config.get(self.bind_address_field) or default
+        )
+
+    def get_bind_ip_port_tuple(self, config, port_field):
+        return self.bind_address(config), config[port_field]
+
     async def get_ports_internal(self):
         await self.basic_checks()
         config = await self.middleware.call(f'{self.namespace}.config')
-        return [config[k] for k in filter(lambda k: config.get(k), self.port_fields)]
+        return [self.get_bind_ip_port_tuple(config, k) for k in filter(lambda k: config.get(k), self.port_fields)]
 
     async def get_ports(self):
         ports = await self.get_ports_internal()
