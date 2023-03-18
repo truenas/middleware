@@ -12,7 +12,7 @@ class ChartReleasePortDelegate(PortDelegate):
         for chart_release in await self.middleware.call('chart.release.query'):
             chart_release_ports = []
             for port in chart_release['used_ports']:
-                chart_release_ports.append(port['port'])
+                chart_release_ports.append(('0.0.0.0', port['port']))
 
             ports.append({
                 'description': f'{chart_release["id"]!r} application',
