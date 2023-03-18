@@ -19,6 +19,10 @@ class CertificateService(Service):
         return [delegate for delegate in self.delegates if await delegate.state(cert_id)]
 
     @private
+    async def get_attachments(self, cert_id):
+        return list(filter(bool, [await delegate.consuming_cert_human_output(cert_id) for delegate in self.delegates]))
+
+    @private
     async def redeploy_cert_attachments(self, cert_id):
         for delegate in await self.in_use_attachments(cert_id):
             await delegate.redeploy(cert_id)
