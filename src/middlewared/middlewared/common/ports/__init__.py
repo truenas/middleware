@@ -37,9 +37,12 @@ class ServicePortDelegate(PortDelegate):
     def get_bind_ip_port_tuple(self, config, port_field):
         return self.bind_address(config), config[port_field]
 
+    async def config(self):
+        return await self.middleware.call(f'{self.namespace}.config')
+
     async def get_ports_internal(self):
         await self.basic_checks()
-        config = await self.middleware.call(f'{self.namespace}.config')
+        config = await self.config()
         return [self.get_bind_ip_port_tuple(config, k) for k in filter(lambda k: config.get(k), self.port_fields)]
 
     async def get_ports(self):
