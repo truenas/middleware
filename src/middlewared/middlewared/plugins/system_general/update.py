@@ -116,6 +116,9 @@ class SystemGeneralService(ConfigService):
                     self.middleware, f'{schema}.{k}', data[k], 'system.general', ui_address
                 ))
 
+        if data['ui_port'] == data['ui_httpsport']:
+            verrors.add(f'{schema}.ui_port', 'Must be different from "ui_httpsport"')
+
         language = data.get('language')
         system_languages = await self.middleware.call('system.general.language_choices')
         if language not in system_languages.keys():
