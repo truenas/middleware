@@ -435,6 +435,10 @@ class FailoverEventsService(Service):
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+
+                # TODO: come back and fix this once we figure out how to properly manage zpool cachefile
+                # (i.e. we need a cachefile per zpool, and not a global one)
+                """
                 try:
                     # make sure the zpool cachefile property is set appropriately
                     self.run_call(
@@ -442,6 +446,7 @@ class FailoverEventsService(Service):
                     )
                 except Exception:
                     logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
+                """
 
             logger.info('Successfully imported %r', vol['name'])
 
