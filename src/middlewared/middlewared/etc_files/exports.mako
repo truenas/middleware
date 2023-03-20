@@ -4,6 +4,7 @@
     import os
     from pathlib import Path
     from contextlib import suppress
+    from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 
     def do_map(share, map_type, map_ids):
         output = []
@@ -83,6 +84,10 @@
     def parse_host(hostname, gaierrors):
         if hostname.startswith('@'):
             # This is a netgroup, skip validation
+            return hostname
+
+        if leftmost_has_wildcards(hostname):
+            # This is a wildcarded name, skip validation
             return hostname
 
         try:
