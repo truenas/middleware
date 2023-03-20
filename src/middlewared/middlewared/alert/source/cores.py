@@ -10,7 +10,7 @@ class CoreFilesArePresentAlertClass(AlertClass):
         "Please open the shell, copy any core files present in /var/db/system/cores/ "
         "and then generate a system debug. Next, create a ticket at https://ixsystems.atlassian.net/ "
         "and attach the core files and debug. After creating the ticket, the core files can be removed "
-        "from the system by opening shell and entering rm /var/db/system/cores/*."
+        "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
     )
     products = ("SCALE",)
 
