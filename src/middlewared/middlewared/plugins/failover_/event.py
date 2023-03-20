@@ -11,7 +11,7 @@ from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
-from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
+# from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 
