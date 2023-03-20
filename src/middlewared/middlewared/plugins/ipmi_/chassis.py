@@ -14,11 +14,27 @@ class IpmiChassisService(Service):
     @filterable
     @filterable_returns(Dict('chassis_info', additional_attrs=True))
     def query(self, filters, options):
+        """Return looks like:
+        {
+            "system_power": "on",
+            "power_overload": "false",
+            "interlock": "inactive",
+            "power_fault": "false",
+            "power_control_fault": "false",
+            "power_restore_policy": "Always off",
+            "last_power_event": "unknown",
+            "chassis_intrusion": "inactive",
+            "front_panel_lockout": "inactive",
+            "drive_fault": "false",
+            "cooling/fan_fault": "false",
+            "chassis_identify_state": "off"
+        }
+        """
         rv = {}
         out = run(['ipmi-chassis', '--get-chassis-status'], stdout=PIPE, stderr=PIPE).stdout.decode().split('\n')
         for line in filter(lambda x: x, out):
             ele, status = line.split(':', 1)
-            rv[ele.strip()] = status.strip()
+            rv[ele.strip().replace(' ', '_').lower()] = status.strip()
 
         return filter_list(rv, filters, options)
 
