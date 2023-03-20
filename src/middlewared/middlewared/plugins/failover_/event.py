@@ -417,7 +417,8 @@ class FailoverEventsService(Service):
             except Exception as e:
                 if e.errno == errno.ENOENT:
                     try_again = True
-                    logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
+                    # logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
+                    logger.warning('Failed importing %r with ENOENT, trying again.', vol['name'])
                 else:
                     vol['error'] = str(e)
                     failed.append(vol)
@@ -629,7 +630,7 @@ class FailoverEventsService(Service):
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
         # setup the zpool cachefile
-        self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
+        # self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
 
         # export zpools in a thread and set a timeout to
         # to `self.ZPOOL_EXPORT_TIMEOUT`.
