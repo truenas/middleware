@@ -4,12 +4,14 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertS
 class CoreFilesArePresentAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "Core Files Found in System Dataset"
-    text = ("Core files for the following executables were found: %(corefiles)s. Please create a ticket at "
-            "https://ixsystems.atlassian.net/ and attach the relevant core files along with a system debug. "
-            "Once the core files have been archived and attached to the ticket, they may be removed "
-            "by running the following command in shell: 'rm /var/db/system/cores/*'.")
-
+    title = "Core Files Detected"
+    text = (
+        "Core files for executables have been found in /var/db/system/cores/."
+        "Please open the shell, copy any core files present in /var/db/system/cores/ "
+        "and then generate a system debug. Next, create a ticket at https://ixsystems.atlassian.net/ "
+        "and attach the core files and debug. After creating the ticket, the core files can be removed "
+        "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
+    )
     products = ("SCALE",)
 
 
