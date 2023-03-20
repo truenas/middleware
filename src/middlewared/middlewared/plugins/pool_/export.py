@@ -167,6 +167,16 @@ class PoolService(Service):
             job.set_progress(80, 'Cleaning disks')
             await asyncio_map(unlabel, disks, limit=16)
 
+            if await self.middleware.call('failover.licensed'):
+                try:
+                    await self.middleware.call('failover.call_remote', 'disk.retaste')
+                except Exception as e:
+                    ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+                    if isinstance(e, CallError) and e.errno in ignore:
+                        pass
+                    else:
+                        self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+
             job.set_progress(85, 'Syncing disk changes')
             djob = await self.middleware.call('disk.sync_all')
             await djob.wait()

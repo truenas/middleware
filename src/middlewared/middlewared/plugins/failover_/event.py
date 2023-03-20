@@ -392,15 +392,6 @@ class FailoverEventsService(Service):
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
 
-        # retaste the disks so that any new metadata on the disks
-        # can be detected by kernel to allow importing of the zpool(s)
-        logger.info('Retasting disks')
-        retaste_job = self.run_call('disk.retaste')
-        retaste_job.wait_sync()
-
-        logger.info('Waiting for disk events to settle')
-        self.run_call('device.settle_udev_events')
-
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
 
