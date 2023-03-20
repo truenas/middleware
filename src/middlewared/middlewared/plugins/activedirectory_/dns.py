@@ -128,10 +128,14 @@ class ActiveDirectoryService(Service):
             return []
 
         await self.middleware.call('kerberos.check_ticket')
+        if smb_ha_mode == 'UNIFIED' and not smb['bindip']:
+            bindip = await self.middleware.call('smb.bindip_choices')
+        else:
+            bindip = smb['bindip']
 
         hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
         to_register = await self.ipaddresses_to_register({
-            'bindip': smb['bindip'],
+            'bindip': bindip,
             'hostname': hostname,
             'clustered': smb_ha_mode == 'CLUSTERED'
         })
