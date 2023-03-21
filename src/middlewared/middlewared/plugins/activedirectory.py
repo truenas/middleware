@@ -841,7 +841,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if ad['createcomputer']:
             cmd.append(f'createcomputer={ad["createcomputer"]}')
 
-        cmd.append(ad['domainname'])
+        cmd.extend(['--no-dns-updates', ad['domainname']])
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
             self.logger.warning("AD JOIN FAILED: %s", netads.stderr.decode())
