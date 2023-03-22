@@ -15,73 +15,41 @@ class CPUPlugin(RRDBase):
     stacked = True
 
     def get_rrd_files(self, identifier):
-        if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
-            type = 'gauge'
-            cpu_idle = os.path.join(self.base_path, f'{type}-idle.rrd')
-            cpu_nice = os.path.join(self.base_path, f'{type}-nice.rrd')
-            cpu_user = os.path.join(self.base_path, f'{type}-user.rrd')
-            cpu_system = os.path.join(self.base_path, f'{type}-system.rrd')
-            cpu_interrupt = os.path.join(self.base_path, f'{type}-interrupt.rrd')
-        else:
-            cpu_idle = os.path.join(self.base_path, 'cpu-idle.rrd')
-            cpu_nice = os.path.join(self.base_path, 'cpu-nice.rrd')
-            cpu_user = os.path.join(self.base_path, 'cpu-user.rrd')
-            cpu_system = os.path.join(self.base_path, 'cpu-system.rrd')
-            cpu_interrupt = os.path.join(self.base_path, 'cpu-interrupt.rrd')
+        cpu_idle = os.path.join(self.base_path, 'cpu-idle.rrd')
+        cpu_nice = os.path.join(self.base_path, 'cpu-nice.rrd')
+        cpu_user = os.path.join(self.base_path, 'cpu-user.rrd')
+        cpu_system = os.path.join(self.base_path, 'cpu-system.rrd')
+        cpu_interrupt = os.path.join(self.base_path, 'cpu-interrupt.rrd')
 
         return [cpu_idle, cpu_nice, cpu_user, cpu_system, cpu_interrupt]
 
     def get_defs(self, identifier):
-        if self.middleware.call_sync('reporting.config')['cpu_in_percentage']:
-            type = 'gauge'
-            cpu_idle = os.path.join(self.base_path, f'{type}-idle.rrd')
-            cpu_nice = os.path.join(self.base_path, f'{type}-nice.rrd')
-            cpu_user = os.path.join(self.base_path, f'{type}-user.rrd')
-            cpu_system = os.path.join(self.base_path, f'{type}-system.rrd')
-            cpu_interrupt = os.path.join(self.base_path, f'{type}-interrupt.rrd')
+        cpu_idle = os.path.join(self.base_path, 'cpu-idle.rrd')
+        cpu_nice = os.path.join(self.base_path, 'cpu-nice.rrd')
+        cpu_user = os.path.join(self.base_path, 'cpu-user.rrd')
+        cpu_system = os.path.join(self.base_path, 'cpu-system.rrd')
+        cpu_interrupt = os.path.join(self.base_path, 'cpu-interrupt.rrd')
 
-            args = [
-                f'DEF:idle={cpu_idle}:value:AVERAGE',
-                f'DEF:nice={cpu_nice}:value:AVERAGE',
-                f'DEF:user={cpu_user}:value:AVERAGE',
-                f'DEF:system={cpu_system}:value:AVERAGE',
-                f'DEF:interrupt={cpu_interrupt}:value:AVERAGE',
-                'XPORT:interrupt:interrupt',
-                'XPORT:system:system',
-                'XPORT:user:user',
-                'XPORT:nice:nice',
-                'XPORT:idle:idle',
-            ]
+        args = [
+            f'DEF:idle={cpu_idle}:value:AVERAGE',
+            f'DEF:nice={cpu_nice}:value:AVERAGE',
+            f'DEF:user={cpu_user}:value:AVERAGE',
+            f'DEF:system={cpu_system}:value:AVERAGE',
+            f'DEF:interrupt={cpu_interrupt}:value:AVERAGE',
+            'CDEF:total=idle,nice,user,system,interrupt,+,+,+,+',
+            'CDEF:idle_p=idle,total,/,100,*',
+            'CDEF:nice_p=nice,total,/,100,*',
+            'CDEF:user_p=user,total,/,100,*',
+            'CDEF:system_p=system,total,/,100,*',
+            'CDEF:interrupt_p=interrupt,total,/,100,*',
+            'XPORT:interrupt_p:interrupt',
+            'XPORT:system_p:system',
+            'XPORT:user_p:user',
+            'XPORT:nice_p:nice',
+            'XPORT:idle_p:idle',
+        ]
 
-            return args
-
-        else:
-            cpu_idle = os.path.join(self.base_path, 'cpu-idle.rrd')
-            cpu_nice = os.path.join(self.base_path, 'cpu-nice.rrd')
-            cpu_user = os.path.join(self.base_path, 'cpu-user.rrd')
-            cpu_system = os.path.join(self.base_path, 'cpu-system.rrd')
-            cpu_interrupt = os.path.join(self.base_path, 'cpu-interrupt.rrd')
-
-            args = [
-                f'DEF:idle={cpu_idle}:value:AVERAGE',
-                f'DEF:nice={cpu_nice}:value:AVERAGE',
-                f'DEF:user={cpu_user}:value:AVERAGE',
-                f'DEF:system={cpu_system}:value:AVERAGE',
-                f'DEF:interrupt={cpu_interrupt}:value:AVERAGE',
-                'CDEF:total=idle,nice,user,system,interrupt,+,+,+,+',
-                'CDEF:idle_p=idle,total,/,100,*',
-                'CDEF:nice_p=nice,total,/,100,*',
-                'CDEF:user_p=user,total,/,100,*',
-                'CDEF:system_p=system,total,/,100,*',
-                'CDEF:interrupt_p=interrupt,total,/,100,*',
-                'XPORT:interrupt_p:interrupt',
-                'XPORT:system_p:system',
-                'XPORT:user_p:user',
-                'XPORT:nice_p:nice',
-                'XPORT:idle_p:idle',
-            ]
-
-            return args
+        return args
 
 
 class CPUTempPlugin(RRDBase):
