@@ -90,14 +90,14 @@ class LaggMixin:
                 except KeyError:
                     # interface was added to bond but maybe it no longer exists,
                     # for example, after a reboot
-                    self.logger.warning('Failed adding %r to %r. Interface not found', member, self.name)
+                    logger.warning('Failed adding %r to %r. Interface not found', member, self.name)
                     continue
                 else:
                     with ndb.interfaces[self.name] as bond:
                         try:
                             bond.add_port(member)
                         except Exception:
-                            self.logger.warning('Failed adding %r to %r', member, self.name, exc_inf=True)
+                            logger.warning('Failed adding %r to %r', member, self.name, exc_inf=True)
 
     def delete_port(self, member_port):
         return self.delete_ports([member_port])
@@ -106,11 +106,11 @@ class LaggMixin:
         with NDB(log='off') as ndb:
             for to_delete in member_ports:
                 if not ndb.interfaces.get(to_delete):
-                    self.logger.warning('Failed removing %r from %r. Interface not found', to_delete, self.name)
+                    logger.warning('Failed removing %r from %r. Interface not found', to_delete, self.name)
                 else:
                     try:
                         with ndb.interfaces[self.name] as bond:
                             bond.del_port(to_delete)
                     except Exception:
-                        self.logger.warning('Failed removing %r from %r.', to_delete, self.name, exc_info=True)
+                        logger.warning('Failed removing %r from %r.', to_delete, self.name, exc_info=True)
                         continue
