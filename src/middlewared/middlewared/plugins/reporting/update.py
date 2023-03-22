@@ -15,7 +15,6 @@ class ReportingModel(sa.Model):
     __tablename__ = 'system_reporting'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    cpu_in_percentage = sa.Column(sa.Boolean(), default=False)
     graphite = sa.Column(sa.String(120), default="")
     graph_age = sa.Column(sa.Integer(), default=12)
     graph_points = sa.Column(sa.Integer(), default=1200)
@@ -30,7 +29,6 @@ class ReportingService(ConfigService):
 
     ENTRY = Dict(
         'reporting_entry',
-        Bool('cpu_in_percentage', required=True),
         Str('graphite', required=True),
         Bool('graphite_separateinstances', required=True),
         Int('graph_age', validators=[Range(min=1, max=60)], required=True),
@@ -56,8 +54,6 @@ class ReportingService(ConfigService):
         """
         Configure Reporting Database settings.
 
-        If `cpu_in_percentage` is `true`, collectd reports CPU usage in percentage instead of "jiffies".
-
         `graphite` specifies a destination hostname or IP for collectd data sent by the Graphite plugin..
 
         `graphite_separateinstances` corresponds to collectd SeparateInstances option.
@@ -76,7 +72,6 @@ class ReportingService(ConfigService):
                 "msg": "method",
                 "method": "reporting.update",
                 "params": [{
-                    "cpu_in_percentage": false,
                     "graphite": "",
                 }]
             }
