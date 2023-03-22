@@ -380,7 +380,7 @@ class ACLBase(ServicePartBase):
             'simplified_acl_entry',
             Str('id_type', enum=['USER', 'GROUP'], required=True),
             Int('id', required=True),
-            Str('access', enum=['READ', 'MODIFY'], required=True)
+            Str('access', enum=['READ', 'MODIFY', 'FULL_CONTROL'], required=True)
         )]),
         Dict(
             'options',

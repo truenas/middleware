@@ -429,7 +429,13 @@ def test_33_simplified_charts_api(request):
         return has_entry or (has_access and has_default)
 
     USER_TO_ADD = 8765309
+    USER2_TO_ADD = 8765310
     GROUP_TO_ADD = 1138
+    NFS4_ACL_PAYLOAD = [
+       {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
+       {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'},
+       {'id_type': 'USER', 'id': USER2_TO_ADD, 'access': 'FULL_CONTROL'},
+    ]
     ACL_PAYLOAD = [
        {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
        {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'}
@@ -439,7 +445,7 @@ def test_33_simplified_charts_api(request):
     with create_dataset(pool_name, 'APPS_NFS4', options={'share_type': 'APPS'}) as ds:
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
             'path': ds['mountpoint'],
-            'entries': ACL_PAYLOAD
+            'entries': NFS4_ACL_PAYLOAD
         }]})
         assert res.get('error') is None, res['error']
         job_status = wait_on_job(res['result'], 180)
@@ -451,6 +457,7 @@ def test_33_simplified_charts_api(request):
         acl = results.json()['acl']
         assert check_for_entry(acl, 'USER', USER_TO_ADD, {'BASIC': 'MODIFY'}), str(acl)
         assert check_for_entry(acl, 'GROUP', GROUP_TO_ADD, {'BASIC': 'READ'}), str(acl)
+        assert check_for_entry(acl, 'USER', USER2_TO_ADD, {'BASIC': 'FULL_CONTROL'}), str(acl)
 
         # check behavior of using force option.
         # presence of file in path should trigger failure
@@ -460,7 +467,7 @@ def test_33_simplified_charts_api(request):
 
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
             'path': ds['mountpoint'],
-            'entries': ACL_PAYLOAD
+            'entries': NFS4_ACL_PAYLOAD
         }]})
         job_status = wait_on_job(res['result'], 180)
         assert job_status['state'] != 'SUCCESS', str(job_status['results'])
@@ -469,7 +476,7 @@ def test_33_simplified_charts_api(request):
         # second call with `force` specified should succeed
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
             'path': ds['mountpoint'],
-            'entries': ACL_PAYLOAD,
+            'entries': NFS4_ACL_PAYLOAD,
             'options': {'force': True}
         }]})
         job_status = wait_on_job(res['result'], 180)
@@ -483,6 +490,7 @@ def test_33_simplified_charts_api(request):
         acl = results.json()['acl']
         assert check_for_entry(acl, 'USER', USER_TO_ADD, {'BASIC': 'MODIFY'}), str(acl)
         assert check_for_entry(acl, 'GROUP', GROUP_TO_ADD, {'BASIC': 'READ'}), str(acl)
+        assert check_for_entry(acl, 'USER', USER2_TO_ADD, {'BASIC': 'FULL_CONTROL'}), str(acl)
 
 
     with create_dataset(pool_name, 'APPS_POSIX') as ds:
