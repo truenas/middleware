@@ -11,7 +11,7 @@ from middlewared.utils import filter_list
 from middlewared.service import Service, job, accepts
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Bool, Int
-from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
+# from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 
@@ -414,15 +414,6 @@ class FailoverEventsService(Service):
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
 
-        # retaste the disks so that any new metadata on the disks
-        # can be detected by kernel to allow importing of the zpool(s)
-        logger.info('Retasting disks')
-        retaste_job = self.run_call('disk.retaste')
-        retaste_job.wait_sync()
-
-        logger.info('Waiting for disk events to settle')
-        self.run_call('device.settle_udev_events')
-
         # set the progress to IMPORTING
         job.set_progress(None, description='IMPORTING')
 
@@ -448,7 +439,8 @@ class FailoverEventsService(Service):
             except Exception as e:
                 if e.errno == errno.ENOENT:
                     try_again = True
-                    logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
+                    # logger.warning('Failed importing %r using cachefile so trying without it.', vol['name'])
+                    logger.warning('Failed importing %r with ENOENT, trying again.', vol['name'])
                 else:
                     vol['error'] = str(e)
                     failed.append(vol)
@@ -465,6 +457,10 @@ class FailoverEventsService(Service):
                     vol['error'] = str(e)
                     failed.append(vol)
                     continue
+
+                # TODO: come back and fix this once we figure out how to properly manage zpool cachefile
+                # (i.e. we need a cachefile per zpool, and not a global one)
+                """
                 try:
                     # make sure the zpool cachefile property is set appropriately
                     self.run_call(
@@ -472,6 +468,7 @@ class FailoverEventsService(Service):
                     )
                 except Exception:
                     logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
+                """
 
             logger.info('Successfully imported %r', vol['name'])
 
@@ -660,7 +657,7 @@ class FailoverEventsService(Service):
                 os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
 
         # setup the zpool cachefile
-        self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
+        # self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
 
         # export zpools in a thread and set a timeout to
         # to `self.ZPOOL_EXPORT_TIMEOUT`.
