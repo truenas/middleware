@@ -295,8 +295,8 @@ class SMBService(TDBWrapConfigService):
             return choices
 
         elif ha_mode == 'UNIFIED':
-            masters, backup, init = await self.middleware.call('failover.vip.get_states')
-            for master_iface in await self.middleware.call('interface.query', [["id", "in", masters]]):
+            master, backup, init = await self.middleware.call('failover.vip.get_states')
+            for master_iface in await self.middleware.call('interface.query', [["id", "in", master + backup]]):
                 for i in master_iface['failover_virtual_aliases']:
                     choices[i['address']] = i['address']
 
