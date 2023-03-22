@@ -221,19 +221,26 @@ class FailoverEventsService(Service):
 
             1. if we are currently processing a failover event and then
                 receive another event and the new event is a _different_
-                event than the current one, we consider this an unsolvable
-                scenario. Any action we take would be assuming we know
-                which controller should become MASTER/BACKUP. When this
-                occurs, we play it safe and log a warning and raise an
-                `IgnoreFailoverEvent` exception.
+                event than the current one, we will wait for the current
+                job to finish. Once that job is finished, we'll begin to
+                process the next job that came in behind it. This is
+                particularly important when an HA system is booted up for
+                the first time (both controllers) OR if one controller is
+                powered off and only one is powered on. In either of these
+                scenarios, keepalived will send a BACKUP event and then 2
+                seconds middlewared updates the config and reloads keepalived
+                which sends another BACKUP event and then finally another 2
+                seconds later, a MASTER event will be sent. In testing,
+                the BACKUP event had not finished when we received the MASTER
+                event so we ignored it therefore leaving the controller(s) in
+                a busted state (both are BACKUP or the single controller would
+                never promote itself)
 
             2. if we are currently processing a failover event and then
                 receive another event and the new event is the _same_
                 event as the current one, we log an informational message
                 and raise an `IgnoreFailoverEvent` exception.
         """
-
-        # first check if there is an ongoing failover event
         current_events = self.run_call(
             'core.get_jobs', [
                 ('OR', [
@@ -246,10 +253,25 @@ class FailoverEventsService(Service):
         for i in current_events:
             cur_iface = i['arguments'][1]
             cur_event = i['arguments'][2]
-            msg = f'Received "{event}" event for "{ifname}" but a current event of "{cur_event}" is running'
-            msg += f' for "{cur_iface}". Ignoring failover event.'
-            logger.info(msg) if event == cur_event else logger.warning(msg)
-            raise IgnoreFailoverEvent()
+            msg = f'Received {event!r} event for {ifname!r} but '
+            if cur_event == event:
+                msg += f'a duplicate event is currently running for {cur_iface!r}. Ignoring.'
+                logger.info(msg)
+                raise IgnoreFailoverEvent()
+            else:
+                msg += f'an event {cur_event!r} is currently running for {cur_iface!r}. '
+                msg += f'Waiting on the current job (with id {i["id"]}) to complete before continuing.'
+                logger.warning(msg)
+                try:
+                    wait_id = self.middleware.call_sync('core.job_wait', i['id'])
+                    wait_id.wait_sync(raise_error=True)
+                    logger.info('Failover job event with id "%d" finished', i['id'])
+                except Exception as e:
+                    ignore = (errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+                    if isinstance(e, CallError) and e.errno in ignore:
+                        pass
+                    else:
+                        logger.warning('Failover job event with id "%d" failed', i['id'], exc_info=True)
 
     def _event(self, ifname, event):
 
