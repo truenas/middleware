@@ -38,6 +38,7 @@ Mandatory option
 
 Optional option
     --test <test name>          - Test name (Network, ALL)
+    --tests <test1>[,test2,...] - List of tests to be supplied to pytest
     --vm-name <VM_NAME>         - Name the the Bhyve VM
     --ha                        - Run test for HA
     --dev-test                  - Run only the test that are not mark with
@@ -66,6 +67,7 @@ option_list = [
     "returncode",
     "isns_ip=",
     "pool=",
+    "tests=",
 ]
 
 # look if all the argument are there.
@@ -87,6 +89,7 @@ verbose = 0
 exitfirst = ''
 returncode = False
 callargs = []
+tests = []
 for output, arg in myopts:
     if output in ('-i', '--ip'):
         ip = arg
@@ -123,6 +126,8 @@ for output, arg in myopts:
         pool_name = arg
     elif output == '-s':
         callargs.append('-s')
+    elif output == '--tests':
+        tests.extend(arg.split(','))
 
 if 'ip' not in locals() and 'passwd' not in locals() and 'interface' not in locals():
     print("Mandatory option missing!\n")
@@ -191,7 +196,7 @@ if exitfirst:
 
 # Use the right python version to start pytest with sys.executable
 # So that we can support virtualenv python pytest.
-proc_returncode = call([
+pytest_command = [
     sys.executable,
     '-m',
     'pytest'
@@ -200,8 +205,16 @@ proc_returncode = call([
     '--timeout=300',
     "--junitxml",
     'results/api_v2_tests_result.xml',
-    f"api2/{testName}"
-])
+]
+if testexpr:
+    pytest_command.extend(['-k', testexpr])
+
+if tests:
+    pytest_command.extend(tests)
+else:
+    pytest_command.append(f"api2/{testName}")
+
+proc_returncode = call(pytest_command)
 
 # get useful logs
 logs_list = [
