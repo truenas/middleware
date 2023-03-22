@@ -135,13 +135,18 @@ async def setup(middleware):
         for db_interface in db_interfaces:
             real_interface = real_interfaces.by_name.get(db_interface["interface"])
             if real_interface is None:
+                if db_interface["interface"].startswith(("vlan", "bond", "br")):
+                    # These interfaces are set up after middleware startup, do not reset their database link addresses
+                    # on each reboot just because they are temporarily absent
+                    continue
+
                 link_address = None
             else:
                 link_address = real_interface["state"]["link_address"]
 
             if db_interface["link_address"] != link_address:
-                middleware.logger.debug("Setting link address %r for interface %r",
-                                        link_address, db_interface["interface"])
+                middleware.logger.debug("Setting link address %r for interface %r (was %r)",
+                                        link_address, db_interface["interface"], db_interface["link_address"])
                 await middleware.call("datastore.update", "network.interfaces", db_interface["id"],
                                       {"link_address": link_address}, {"prefix": "int_"})
     except Exception:
