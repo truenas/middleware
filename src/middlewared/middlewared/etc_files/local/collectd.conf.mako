@@ -7,7 +7,6 @@
 	reporting_config = middleware.call_sync('reporting.config')
 	graphite = reporting_config['graphite']
 	graphite_separateinstances = reporting_config['graphite_separateinstances']
-	cpu_in_percentage = reporting_config['cpu_in_percentage']
 
 	timespans = [3600, 86400, 604800, 2678400]
 	if reporting_config['graph_age'] > 1:
@@ -23,13 +22,6 @@
 	base_dir = '/var/db/collectd'
 	data_dir = '/var/db/collectd/rrd'
 	hostname = middleware.call_sync('reporting.hostname')
-
-	if cpu_in_percentage:
-		cpu_plugin_options = 'ValuesPercentage True'
-		aggregation_plugin_cpu_type = 'percent'
-	else:
-		cpu_plugin_options = ''
-		aggregation_plugin_cpu_type = 'cpu'
 
 	has_internal_graphite_server = middleware.call_sync('reporting.has_internal_graphite_server')
 %>
@@ -64,7 +56,7 @@ LoadPlugin python
 <Plugin "aggregation">
 	<Aggregation>
 		Plugin "cpu"
-		Type "${aggregation_plugin_cpu_type}"
+		Type "cpu"
 		GroupBy "Host"
 		GroupBy "TypeInstance"
 		CalculateNum false
@@ -75,14 +67,6 @@ LoadPlugin python
 		CalculateStddev false
 	</Aggregation>
 </Plugin>
-<Plugin cpu>
-	${cpu_plugin_options}
-</Plugin>
-% if IS_FREEBSD:
-
-<Plugin cputemp>
-</Plugin>
-% endif
 
 <Plugin "disk">
 	Disk "/^disk/by-partuuid/"
@@ -115,29 +99,6 @@ LoadPlugin python
 	RRATimespan ${timespan}
 % endfor
 </Plugin>
-% if IS_FREEBSD:
-
-<Plugin "threshold">
-	<Plugin "ctl">
-		Instance "ha"
-		<Type "disk_octets">
-			WarningMax 10000000
-			Persist true
-			Interesting false
-		</Type>
-	</Plugin>
-</Plugin>
-% endif
-# collectd 5.10 does not expect empty zfs_arc plugin block and marks it as wrong config
-% if IS_FREEBSD:
-
-<Plugin "zfs_arc">
-</Plugin>
-
-<Plugin "geom_stat">
-	Filter "^([a]?da|ciss|md|mfi|md|nvd|pmem|xbd|vtbd)[0123456789]+$"
-</Plugin>
-% endif
 
 <Plugin "df">
 	Mountpoint "/^\/boot/"
