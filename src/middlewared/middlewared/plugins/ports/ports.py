@@ -45,28 +45,40 @@ class PortService(Service):
     async def validate_port(self, schema, port, bindip='0.0.0.0', whitelist_namespace=None, raise_error=False):
         verrors = ValidationErrors()
         port_mapping = await self.ports_mapping(whitelist_namespace)
-        if port not in port_mapping.get(bindip, {}) and port not in port_mapping['0.0.0.0']:
+        port_attachment = port_mapping[port]
+        if not port_attachment or (
+            bindip not in port_attachment and '0.0.0.0' not in port_attachment and bindip != '0.0.0.0'
+        ):
             return verrors
 
-        problematic_bindip = bindip if port_mapping[bindip].get(port) else '0.0.0.0'
-        port_attachment = port_mapping[problematic_bindip][port]
-        port_entry = next(
-            entry for entry in port_attachment['port_details'] if (problematic_bindip, port) in entry['ports']
-        )
-        err = 'The port is being used by '
-        if port_entry['description']:
-            err += f'{port_entry["description"]!r} in {port_attachment["title"]!r}'
-        else:
-            err += f'{port_attachment["title"]!r}'
+        ip_errors = []
+        for index, port_detail in enumerate(port_attachment.items()):
+            ip, port_entry = port_detail
+            if bindip == '0.0.0.0' or ip == '0.0.0.0' or (bindip != '0.0.0.0' and ip == bindip):
+                entry = next(
+                    detail for detail in port_entry['port_details'] if (ip, port) in detail['ports']
+                )
+                description = entry['description']
+                ip_errors.append(
+                    f'{index + 1}) "{ip}:{port}" used by {port_entry["title"]}'
+                    f'{f" ({description})" if description else ""}'
+                )
 
-        verrors.add(schema, err)
+        err = '\n'.join(ip_errors)
+        verrors.add(
+            schema,
+            f'The port is being used by following services:\n{err}'
+        )
+
         if raise_error:
             verrors.check()
+
+        return verrors
 
     async def ports_mapping(self, whitelist_namespace=None):
         ports = defaultdict(dict)
         for attachment in filter(lambda entry: entry['namespace'] != whitelist_namespace, await self.get_in_use()):
             for bindip, port in attachment['ports']:
-                ports[bindip][port] = attachment
+                ports[port][bindip] = attachment
 
         return ports
