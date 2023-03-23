@@ -24,12 +24,12 @@ def test_port_delegate_validation_with_invalid_ports(config_method, method, keys
     in_use_ports = []
     namespace = config_method.rsplit('.', 1)[0]
     for entry in call('port.get_in_use'):
-        in_use_ports.extend(filter(lambda i: i > 1024 and entry['namespace'] != namespace, entry['ports']))
+        in_use_ports.extend(filter(lambda i: i[1] > 1024 and entry['namespace'] != namespace, entry['ports']))
 
     assert in_use_ports != [], 'No in use ports retrieved'
 
     for index, key in enumerate(keys):
-        payload[key] = in_use_ports[index] if len(in_use_ports) > index else in_use_ports[0]
+        payload[key] = in_use_ports[index][1] if len(in_use_ports) > index else in_use_ports[0]
 
     with pytest.raises(ValidationErrors) as ve:
         call(method, payload)
