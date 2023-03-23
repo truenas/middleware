@@ -664,7 +664,7 @@ class FailoverEventsService(Service):
         # which means any VIP that is on this controller will be
         # migrated to the other controller
         logger.info('Transitioning all VIPs off this node')
-        self.run_call('service.restart', 'keepalived')
+        self.run_call('service.restart', 'keepalived', self.HA_PROPAGATE)
 
         # ticket 23361 enabled a feature to send email alerts when an unclean reboot occurrs.
         # TrueNAS HA, by design, has a triggered unclean shutdown.
