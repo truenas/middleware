@@ -1,5 +1,3 @@
-
-
 import logging
 
 from certbot_dns_google._internal.dns_google import _GoogleClient

@@ -1,5 +1,3 @@
-
-
 import logging
 
 from certbot_dns_digitalocean._internal.dns_digitalocean import _DigitalOceanClient
