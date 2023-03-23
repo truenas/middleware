@@ -645,10 +645,6 @@ class FailoverEventsService(Service):
 
         logger.warning('Entering BACKUP on "%s".', ifname)
 
-        # we need to stop fenced first
-        logger.warning('Stopping fenced')
-        self.run_call('failover.fenced.stop')
-
         logger.info('Blocking network traffic.')
         fw_drop_job = self.run_call('failover.firewall.drop_all')
         fw_drop_job.wait_sync()
@@ -700,6 +696,10 @@ class FailoverEventsService(Service):
             # now violently reboot
             with open('/proc/sysrq-trigger', 'w') as f:
                 f.write('b')
+
+        # Pools are now exported and so we can make disks available to other controller
+        logger.warning('Stopping fenced')
+        self.run_call('failover.fenced.stop')
 
         # We also remove this file here, because on boot we become BACKUP if the other
         # controller is MASTER. So this means we have no volumes to export which means
