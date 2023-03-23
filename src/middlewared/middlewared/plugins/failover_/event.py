@@ -14,6 +14,7 @@ from middlewared.schema import Dict, Bool, Int
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
+from time import sleep
 
 logger = logging.getLogger('failover')
 
@@ -318,6 +319,25 @@ class FailoverEventsService(Service):
         elif event == 'BACKUP':
             return self.run_call('failover.events.vrrp_backup', fobj, ifname, event)
 
+    def fenced_start_loop(self, force=False, timeout=10):
+
+        # When active node is rebooted administratively from shell, the
+        # fenced process will continue running on the node until systemd
+        # finishes terminating services and actually reboots. Hence, we may
+        # need towait a little while for fenced on other node to go away.
+        # fenced_err == 2 means that remote fenced is still running
+        while timeout:
+            fenced_error = self.run_call('failover.fenced.start', force)
+            if fenced_error != 2:
+                break
+
+            logger.warning('Fenced is running on remote node waiting %d more seconds.',
+                           timeout)
+            timeout -= 1
+            sleep(1)
+
+        return fenced_error
+
     @job(lock='vrrp_master')
     def vrrp_master(self, job, fobj, ifname, event):
 
@@ -338,7 +358,7 @@ class FailoverEventsService(Service):
             self.run_call('failover.fenced.stop')
 
             logger.warning('Forcefully starting fenced')
-            fenced_error = self.run_call('failover.fenced.start', True)
+            fenced_error = self.fenced_start_loop(force=True)
         else:
             # if we're here then we need to check a couple things before we start fenced
             # and start the process of becoming master
@@ -375,7 +395,7 @@ class FailoverEventsService(Service):
             self.run_call('failover.fenced.stop')
 
             logger.warning('Starting fenced')
-            fenced_error = self.run_call('failover.fenced.start')
+            fenced_error = self.fenced_start_loop()
 
         # starting fenced daemon failed....which is bad
         # emit an error and exit
