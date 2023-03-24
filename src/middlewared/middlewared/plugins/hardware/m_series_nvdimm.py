@@ -106,6 +106,40 @@ class MseriesNvdimmService(Service):
 
         return result
 
+    def health_info(self, output):
+        result = {
+            'critical_health_info': {},
+            'nvm_health_info': {},
+            'nvm_error_threshold_status': {},
+            'nvm_warning_threshold_status': {},
+            'nvm_lifetime': None,
+            'nvm_temperature': None,
+            'es_lifetime': None,
+            'es_temperature': None,
+        }
+        if m := re.search(r'Critical Health Info: (.*)', output):
+            bit, vals = m.group(1).split(' ', 1)
+            result['critical_health_info'][bit] = [i for i in vals.lstrip('<').rstrip('>').split(',') if i]
+        if m := re.search(r'Module Health: (.*)', output):
+            bit, vals = m.group(1).split(' ', 1)
+            result['nvm_health_info'][bit] = [i for i in vals.lstrip('<').rstrip('>').split(',') if i]
+        if m := re.search(r'Error Threshold Status: (.*)', output):
+            bit, vals = m.group(1).split(' ', 1)
+            result['nvm_error_threshold_status'][bit] = [i for i in vals.lstrip('<').rstrip('>').split(',') if i]
+        if m := re.search(r'Warning Threshold Status: (.*)', output):
+            bit, vals = m.group(1).split(' ', 1)
+            result['nvm_warning_threshold_status'][bit] = [i for i in vals.lstrip('<').rstrip('>').split(',') if i]
+        if m := re.search(r'NVM Lifetime: (.*)', output):
+            result['nvm_lifetime'] = m.group(1).split(' ', 1)[0]
+        if m := re.search(r'Module Current Temperature: (.*)', output):
+            result['nvm_temp'] = m.group(1).split(' ', 1)[0]
+        if m := re.search(r'ES Lifetime Percentage: (.*)', output):
+            result['es_lifetime'] = m.group(1).split(' ', 1)[0]
+        if m := re.search(r'ES Current Temperature: (.*)', output):
+            result['es_temperature'] = m.group(1).split(' ', 1)[0]
+
+        return result
+
     def info(self):
         results = []
         sys = ("TRUENAS-M40", "TRUENAS-M50", "TRUENAS-M60")
@@ -121,6 +155,7 @@ class MseriesNvdimmService(Service):
                     'dev': nmem.removeprefix('/dev/'),
                     'dev_path': nmem
                 }
+                info.update(self.health_info(output))
                 info.update(self.vendor_info(output))
                 info.update(self.get_running_firmware_vers_and_detect_old_bios(output))
                 results.append(info)
