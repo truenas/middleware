@@ -401,13 +401,17 @@ class AuthService(Service):
         }
 
     @no_auth_required
-    @accepts()
+    @accepts(Str('username'))
     @returns(Bool('two_factor_auth_enabled', description='Is `true` if 2FA is enabled'))
-    async def two_factor_auth(self):
+    async def two_factor_auth(self, username):
         """
         Returns true if two factor authorization is required for authorizing user's login.
         """
-        return (await self.middleware.call('auth.twofactor.config'))['enabled']
+        return (await self.middleware.call('auth.twofactor.config'))['enabled'] and (
+            await self.middleware.call(
+                'user.query', [['username', '=', username], ['twofactor_auth_configured', '=', True]]
+            )
+        )
 
     @cli_private
     @no_auth_required
