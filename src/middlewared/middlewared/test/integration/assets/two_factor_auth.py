@@ -7,7 +7,6 @@ from middlewared.test.integration.utils import call
 
 @contextlib.contextmanager
 def enabled_twofactor_auth():
-    config = call('auth.twofactor.config')
     try:
         yield call('auth.twofactor.update', {'enabled': True})
     finally:
