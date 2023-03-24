@@ -85,7 +85,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
 
         for i in ('nvm_lifetime', 'es_lifetime'):
             val = int(nvdimm[i].rstrip('%'))
-            if val < 20:
+            if val < 20 and val != -1:  # on M60 with 2 NVDIMMs, 1 of them will report -1 as percentage left
                 alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
                 name = dev if i == 'nvm_lifetime' else 'nvm energy source'
                 alerts.append(Alert(alert, {'dev': name, 'value': val}))
