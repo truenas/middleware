@@ -20,20 +20,6 @@ class MseriesNvdimmService(Service):
             errors="ignore",
         ).stdout
 
-    def get_size_and_clock_speed(self, output):
-        size = clock_speed = None
-        if "vendor: 2c80 device: 4e32" in output:
-            size = 16
-            clock_speed = 2666
-        elif "vendor: 2c80 device: 4e36" in output:
-            size = 16
-            clock_speed = 2933
-        elif "vendor: 2c80 device: 4e33" in output:
-            size = 32
-            clock_speed = 2933
-
-        return size, clock_speed
-
     def get_running_firmware_vers_and_detect_old_bios(self, output):
         result = {'running_firmware': None, 'old_bios': True}
         if m := re.search(r"selected: [0-9]+ running: ([0-9]+)", output):
