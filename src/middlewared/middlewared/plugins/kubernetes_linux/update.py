@@ -433,6 +433,11 @@ class KubernetesService(ConfigService):
         old_config = await self.config()
         old_config.pop('dataset')
         config = old_config.copy()
+
+        if await self.middleware.call('failover.licensed') and data.get('node_ip', old_config['node_ip']) == '0.0.0.0':
+            if choices := await self.bindip_choices():
+                data['node_ip'] = list(choices)[0]
+
         config.update(data)
         migrate = config.get('migrate_applications')
 
@@ -471,7 +476,7 @@ class KubernetesService(ConfigService):
             d['address']: d['address'] for d in await self.middleware.call(
                 'interface.ip_in_use', {
                     'static': True,
-                    'any': not (await self.middleware.call('system.is_ha_capable')),
+                    'any': not (await self.middleware.call('failover.licensed')),
                     'ipv6': False
                 }
             )
