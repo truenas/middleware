@@ -1702,13 +1702,8 @@ class CoreService(Service):
 
     @accepts(Int('id'))
     @job()
-    def job_wait(self, job, id):
-        target_job = self.middleware.jobs[id]
-        target_job.wait_sync()
-        if target_job.error:
-            raise CallError(target_job.error)
-        else:
-            return target_job.result
+    async def job_wait(self, job, id):
+        return await job.wrap(self.middleware.jobs[id])
 
     @accepts(Int('id'), Dict(
         'job-update',

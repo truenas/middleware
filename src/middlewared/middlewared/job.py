@@ -261,7 +261,7 @@ class Job:
         self.time_finished = None
         self.loop = self.middleware.loop
         self.future = None
-        self.wrapped = None
+        self.wrapped = []
 
         self.logs_path = None
         self.logs_fd = None
@@ -362,8 +362,8 @@ class Job:
         if changed:
             self.send_event('CHANGED', encoded)
 
-        if self.wrapped:
-            self.wrapped.set_progress(**self.progress)
+        for wrapped in self.wrapped:
+            wrapped.set_progress(**self.progress)
 
     async def wait(self, timeout=None, raise_error=False):
         if timeout is None:
@@ -587,20 +587,14 @@ class Job:
 
         :param subjob: The job to wrap.
         """
-        if subjob.wrapped is not None:
-            raise RuntimeError(f"Job {subjob!r} is already wrapped by {subjob.wrapped!r}")
-
         self.set_progress(**subjob.progress)
-        subjob.wrapped = self
+        subjob.wrapped.append(self)
 
         return await subjob.wait(raise_error=True)
 
     def wrap_sync(self, subjob):
-        if subjob.wrapped is not None:
-            raise RuntimeError(f"Job {subjob!r} is already wrapped by {subjob.wrapped!r}")
-
         self.set_progress(**subjob.progress)
-        subjob.wrapped = self
+        subjob.wrapped.append(self)
 
         return subjob.wait_sync(raise_error=True)
 
