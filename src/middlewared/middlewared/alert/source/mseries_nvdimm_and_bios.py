@@ -83,12 +83,16 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                         {'dev': dev, 'value': _hex, 'status': ','.join(vals)}
                     ))
 
-        for i in ('nvm_lifetime', 'es_lifetime'):
-            val = int(nvdimm[i].rstrip('%'))
-            if val < 20:
-                alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
-                name = dev if i == 'nvm_lifetime' else 'nvm energy source'
-                alerts.append(Alert(alert, {'dev': name, 'value': val}))
+        if (val := int(nvdimm['nvm_lifetime'].rstrip('%'))) < 20:
+            alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
+            alerts.append(Alert(alert, {'dev': 'NVM Lifetime', 'value': val}))
+
+        if nvdimm['index'] == 0 and (val := int(nvdimm['em_lifetime'].rstrip('%'))) < 20:
+            # we only check this value for the 0th slot nvdimm since M60 has 2 and the way
+            # they're physically cabled, prevents monitoring the 2nd nvdimm's energy source
+            # (it always reports -1%)
+            alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
+            alerts.append(Alert(alert, {'dev': 'NVM Energy Source', 'value': val}))
 
         if nvdimm['running_firmware'] not in nvdimm['qualified_firmware']:
             alerts.append(Alert(NVDIMMFirmwareVersionAlertClass, {'dev': dev}))
