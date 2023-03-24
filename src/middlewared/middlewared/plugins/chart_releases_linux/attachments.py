@@ -9,7 +9,7 @@ class ChartReleasePortDelegate(PortDelegate):
 
     async def get_ports(self):
         ports = []
-        for chart_release in await self.middleware.call('chart.release.query'):
+        for chart_release in filter(lambda c: c['used_ports'], await self.middleware.call('chart.release.query')):
             chart_release_ports = []
             for port in chart_release['used_ports']:
                 chart_release_ports.append(('0.0.0.0', port['port']))
