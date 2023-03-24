@@ -2,8 +2,8 @@
 2FA support for multiple usrers
 
 Revision ID: 55836e7dac39
-Revises: 7310292225d3
-Create Date: 2023-03-15 22:57:01.757983+00:00
+Revises: c55b034b7654
+Create Date: 2023-03-24 22:57:01.757983+00:00
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 revision = '55836e7dac39'
-down_revision = '7310292225d3'
+down_revision = 'c55b034b7654'
 branch_labels = None
 depends_on = None
 
