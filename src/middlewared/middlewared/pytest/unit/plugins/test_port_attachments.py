@@ -295,11 +295,11 @@ PORTS_IN_USE = [
         'title': 'S3 Service',
         'ports': [
             [
-                '0.0.0.0',
+                '192.168.0.70',
                 8703
             ],
             [
-                '0.0.0.0',
+                '192.168.0.70',
                 9010
             ]
         ],
@@ -308,11 +308,11 @@ PORTS_IN_USE = [
                 'description': None,
                 'ports': [
                     [
-                        '0.0.0.0',
+                        '192.168.0.70',
                         8703
                     ],
                     [
-                        '0.0.0.0',
+                        '192.168.0.70',
                         9010
                     ]
                 ]
@@ -581,3 +581,24 @@ async def test_port_validate_whitelist_namespace_logic(port, bindip, whitelist_n
             await port_service.validate_port('test', port, bindip, raise_error=True)
 
         assert (await port_service.validate_port('test', port, bindip, whitelist_namespace)).errors == []
+
+
+@pytest.mark.parametrize('port,bindip,should_work', [
+    (80, '0.0.0.0', False),
+    (81, '0.0.0.0', True),
+    (8703, '0.0.0.0', False),
+    (8703, '192.168.0.70', False),
+    (8703, '192.168.0.71', True),
+    (9010, '0.0.0.0', False),
+    (9010, '192.168.0.70', False),
+    (9010, '192.168.0.71', True),
+    (6443, '192.168.0.71', False),
+])
+@pytest.mark.asyncio
+async def test_port_validation_logic(port, bindip, should_work):
+    with get_port_service() as port_service:
+        if should_work:
+            assert (await port_service.validate_port('test', port, bindip, raise_error=False)).errors == []
+        else:
+            with pytest.raises(ValidationErrors):
+                await port_service.validate_port('test', port, bindip, raise_error=True)
