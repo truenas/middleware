@@ -56,7 +56,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
     products = ('SCALE_ENTERPRISE',)
 
-    def produce_alerts(nvdimm, alerts, old_bios):
+    def produce_alerts(self, nvdimm, alerts, old_bios):
         persistency_restored = 0x4
         arm_info = 0x40
         dev = nvdimm['dev']
