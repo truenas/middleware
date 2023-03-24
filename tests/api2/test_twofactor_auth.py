@@ -6,6 +6,7 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
+from middlewared.client import Client
 from middlewared.test.integration.assets.account import user as user_create
 from middlewared.test.integration.assets.two_factor_auth import enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 from middlewared.test.integration.utils import call
@@ -15,7 +16,7 @@ TEST_USERNAME = 'testuser'
 TEST_USERNAME_2 = 'testuser2'
 TEST_PASSWORD = 'testpassword'
 TEST_PASSWORD_2 = 'testpassword2'
-TEST_GID = 130
+TEST_GID = 544
 
 
 @contextlib.contextmanager
@@ -41,9 +42,9 @@ def test_secret_generation_for_user():
         'password': TEST_PASSWORD_2,
         'full_name': TEST_USERNAME_2,
         'configure_twofactor_auth': True,
-    }):
-        assert get_user_secret(TEST_USERNAME_2, False) != []
-        assert get_user_secret(TEST_USERNAME_2)['secret'] is not None
+    }) as user_obj:
+        assert get_user_secret(user_obj['id'], False) != []
+        assert get_user_secret(user_obj['id'])['secret'] is not None
 
 
 def test_login_without_otp_for_user_without_2fa():
@@ -63,11 +64,11 @@ def test_login_with_otp_for_user_with_2fa():
         'password': TEST_PASSWORD_2,
         'full_name': TEST_USERNAME_2,
         'configure_twofactor_auth': True,
-    }):
+    }) as user_obj:
         with enabled_twofactor_auth():
             assert call(
                 'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
-                get_2fa_totp_token(get_user_secret(TEST_USERNAME_2)['secret'])
+                get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
             ) is True
 
 
@@ -81,17 +82,17 @@ def test_user_2fa_secret_renewal():
         with enabled_twofactor_auth():
             assert call(
                 'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
-                get_2fa_totp_token(get_user_secret(TEST_USERNAME_2)['secret'])
+                get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
             ) is True
-            secret = get_user_secret(TEST_USERNAME_2)['secret']
+            secret = get_user_secret(user_obj['id'])['secret']
 
             call('user.update', user_obj['id'], {'renew_twofactor_secret': True})
             call('user.get_instance', user_obj['id'])
-            assert get_user_secret(TEST_USERNAME_2)['secret'] != secret
+            assert get_user_secret(user_obj['id'])['secret'] != secret
 
             assert call(
                 'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
-                get_2fa_totp_token(get_user_secret(TEST_USERNAME_2)['secret'])
+                get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
             ) is True
 
 
@@ -110,10 +111,10 @@ def test_multiple_users_login_with_otp():
                 'password': TEST_PASSWORD_2,
                 'full_name': TEST_USERNAME_2,
                 'configure_twofactor_auth': True,
-            }):
+            }) as second_user:
                 assert call(
                     'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
-                    get_2fa_totp_token(get_user_secret(TEST_USERNAME_2)['secret'])
+                    get_2fa_totp_token(get_user_secret(second_user['id'])['secret'])
                 ) is True
 
                 assert call('auth.login', TEST_USERNAME_2, TEST_PASSWORD_2) is False
@@ -122,5 +123,5 @@ def test_multiple_users_login_with_otp():
 
                 assert call(
                     'auth.login', TEST_USERNAME, TEST_PASSWORD,
-                    get_2fa_totp_token(get_user_secret(TEST_USERNAME)['secret'])
+                    get_2fa_totp_token(get_user_secret(first_user['id'])['secret'])
                 ) is True
