@@ -481,6 +481,12 @@ class UserService(CRUDService):
         if data.get('groups'):
             group_ids.extend(data['groups'])
 
+        if (await self.middleware.call('auth.twofactor.config'))['enabled'] and not data['configure_twofactor_auth']:
+            verrors.add(
+                'user_create.configure_twofactor_auth',
+                'Two-factor authentication is enabled. Please enable it for this user.'
+            )
+
         await self.__common_validation(verrors, data, 'user_create', group_ids)
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
@@ -634,6 +640,14 @@ class UserService(CRUDService):
         else:
             group = user['group']
             user['group'] = group['id']
+
+        if (
+            await self.middleware.call('auth.twofactor.config')
+        )['enabled'] and not user['twofactor_auth_configured'] and not data.get('renew_twofactor_secret'):
+            verrors.add(
+                'user_update.renew_twofactor_secret',
+                'Two-factor authentication is enabled but not configured for this user.'
+            )
 
         if data.get('uid') == user['uid']:
             data.pop('uid')  # Only check for duplicate UID if we are updating it
