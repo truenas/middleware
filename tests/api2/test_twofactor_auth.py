@@ -6,7 +6,6 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from middlewared.client import Client
 from middlewared.test.integration.assets.account import user as user_create
 from middlewared.test.integration.assets.two_factor_auth import enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 from middlewared.test.integration.utils import call
