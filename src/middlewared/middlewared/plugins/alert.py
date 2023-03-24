@@ -797,6 +797,16 @@ class AlertService(Service):
             if not isinstance(alerts, list):
                 alerts = [alerts]
 
+        keys = set()
+        unique_alerts = []
+        for alert in alerts:
+            if alert.key in keys:
+                continue
+
+            keys.add(alert.key)
+            unique_alerts.append(alert)
+        alerts = unique_alerts
+
         for alert in alerts:
             alert.source = source_name
 
