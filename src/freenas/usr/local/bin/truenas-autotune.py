@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import sys
 from types import SimpleNamespace
 
@@ -98,9 +99,16 @@ def guess_vfs_zfs_zfetch_max_distance(context):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--skip-unknown", action="store_true")
+    args = parser.parse_args()
+
     dmi = DMIDecode().info()
     chassis_hardware = get_chassis_hardware(dmi).removeprefix("TRUENAS-").split("-")[0]
     is_enterprise = is_enterprise_ix_hardware(chassis_hardware)
+
+    if args.skip_unknown and chassis_hardware == "UNKNOWN":
+        sys.exit(0)
 
     if is_enterprise:
         kernel_reserved = 6442450944
