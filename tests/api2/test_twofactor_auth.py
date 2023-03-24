@@ -42,3 +42,30 @@ def test_secret_generation_for_user():
     }):
         assert get_user_secret(TEST_USERNAME_2, False) != []
         assert get_user_secret(TEST_USERNAME_2)['secret'] is not None
+
+
+def test_login_without_otp_for_user_without_2fa():
+    with user({
+        'username': TEST_USERNAME_2,
+        'password': TEST_PASSWORD_2,
+        'groups': [TEST_GID],
+        'full_name': TEST_USERNAME_2,
+        'configure_twofactor_auth': False,
+    }):
+        with enabled_twofactor_auth():
+            assert call('auth.login', TEST_USERNAME_2, TEST_PASSWORD_2) is True
+
+
+def test_login_with_otp_for_user_with_2fa():
+    with user({
+        'username': TEST_USERNAME_2,
+        'password': TEST_PASSWORD_2,
+        'groups': [TEST_GID],
+        'full_name': TEST_USERNAME_2,
+        'configure_twofactor_auth': True,
+    }):
+        with enabled_twofactor_auth():
+            assert call(
+                'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
+                get_2fa_totp_token(get_user_secret(TEST_USERNAME_2)['secret'])
+            ) is True
