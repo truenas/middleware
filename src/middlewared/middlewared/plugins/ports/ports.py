@@ -33,10 +33,13 @@ class PortService(Service):
         for delegate in self.DELEGATES.values():
             used_ports = await delegate.get_ports()
             if used_ports:
+                for entry in used_ports:
+                    entry['ports'] = [list(i) for i in entry['ports']]
+
                 ports.append({
                     'namespace': delegate.namespace,
                     'title': delegate.title,
-                    'ports': list(itertools.chain(*[[list(i) for i in entry['ports']] for entry in used_ports])),
+                    'ports': list(itertools.chain(*[entry['ports'] for entry in used_ports])),
                     'port_details': used_ports,
                 })
 
@@ -56,7 +59,8 @@ class PortService(Service):
             ip, port_entry = port_detail
             if bindip == '0.0.0.0' or ip == '0.0.0.0' or (bindip != '0.0.0.0' and ip == bindip):
                 entry = next(
-                    detail for detail in port_entry['port_details'] if [ip, port] in detail['ports']
+                    detail for detail in port_entry['port_details']
+                    if [ip, port] in detail['ports'] or [bindip, port] in detail['ports']
                 )
                 description = entry['description']
                 ip_errors.append(
