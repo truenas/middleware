@@ -12,13 +12,22 @@ class MseriesNvdimmService(Service):
         namespace = 'mseries.nvdimm'
 
     def run_ixnvdimm(self, nvmem_dev):
-        return subprocess.run(
+        out = subprocess.run(
             ["ixnvdimm", nvmem_dev],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             encoding="utf-8",
             errors="ignore",
         ).stdout
+        specrev = subprocess.run(
+            ['ixnvdimm', '-r', nvmem_dev, 'SPECREV'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="utf-8",
+            errors="ignore",
+        ).stdout
+
+        return out, specrev
 
     def get_running_firmware_vers_and_detect_old_bios(self, output):
         result = {'running_firmware': None, 'old_bios': True}
@@ -118,7 +127,7 @@ class MseriesNvdimmService(Service):
         if m := re.search(r'NVM Lifetime: (.*)', output):
             result['nvm_lifetime'] = m.group(1).split(' ', 1)[0]
         if m := re.search(r'Module Current Temperature: (.*)', output):
-            result['nvm_temp'] = m.group(1).split(' ', 1)[0]
+            result['nvm_temperature'] = m.group(1).split(' ', 1)[0]
         if m := re.search(r'ES Lifetime Percentage: (.*)', output):
             result['es_lifetime'] = m.group(1).split(' ', 1)[0]
         if m := re.search(r'ES Current Temperature: (.*)', output):
@@ -134,12 +143,13 @@ class MseriesNvdimmService(Service):
 
         try:
             for nmem in glob.glob("/dev/nmem*"):
-                output = self.run_ixnvdimm(nmem)
+                output, specrev = self.run_ixnvdimm(nmem)
 
                 info = {
                     'index': int(nmem[len('/dev/nmem')]),
                     'dev': nmem.removeprefix('/dev/'),
-                    'dev_path': nmem
+                    'dev_path': nmem,
+                    'specrev': int(specrev.strip())
                 }
                 info.update(self.health_info(output))
                 info.update(self.vendor_info(output))
