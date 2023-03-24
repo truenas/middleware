@@ -34,21 +34,77 @@ class MseriesNvdimmService(Service):
 
         return size, clock_speed
 
-    def get_firmware_version_and_detect_old_bios(self, output):
-        fw_vers = None
-        old_bios = False
+    def get_running_firmware_vers_and_detect_old_bios(self, output):
+        result = {'running_firmware': None, 'old_bios': True}
         if m := re.search(r"selected: [0-9]+ running: ([0-9]+)", output):
             running_slot = int(m.group(1))
             if m := re.search(rf"slot{running_slot}: ([0-9])([0-9])", output):
-                fw_vers = f"{m.group(1)}.{m.group(2)}"
-        else:
-            old_bios = True
+                result['running_firmware'] = f"{m.group(1)}.{m.group(2)}"
+                result['old_bios'] = False
 
-        return fw_vers, old_bios
+        return result
 
     def get_module_health(self, output):
         if (m := re.search(r"Module Health:[^\n]+", output)):
             return m.group().split("Module Health: ")[-1].strip()
+
+    def vendor_info(self, output):
+        mapping = {
+            '0x2c80_0x4e32_0x31_0x3480_0x4131_0x01': {
+                'vendor': '0x2c80', 'device': '0x4e32', 'rev_id': '0x31',
+                'subvendor': '0x3480', 'subdevice': '0x4131', 'subrev_id': '0x01',
+                'part_num': '18ASF2G72PF12G6V21AB',
+                'size': '16GB', 'clock_speed': '2666MHz',
+                'qualified_firmare': ['2.1', '2.2', '2.4'],
+            },
+            '0x2c80_0x4e36_0x31_0x3480_0x4231_0x02': {
+                'vendor': '0x2c80', 'device': '0x4e36', 'rev_id': '0x31',
+                'subvendor': '0x3480', 'subdevice': '0x4231', 'subrev_id': '0x02',
+                'part_num': '18ASF2G72PF12G9WP1AB',
+                'size': '16GB', 'clock_speed': '2933MHz',
+                'qualified_firmare': ['2.2'],
+            },
+            '0x2c80_0x4e33_0x31_0x3480_0x4231_0x01': {
+                'vendor': '0x2c80', 'device': '0x4e33', 'rev_id': '0x31',
+                'subvendor': '0x3480', 'subdevice': '0x4231', 'subrev_id': '0x01',
+                'part_num': '36ASS4G72PF12G9PR1AB',
+                'size': '32GB', 'clock_speed': '2933MHz',
+                'qualified_firmare': ['2.4'],
+            },
+            '0xc180_0x4e88_0x33_0xc180_0x4331_0x01': {
+                'vendor': '0xc180', 'device': '0x4e88', 'rev_id': '0x33',
+                'subvendor': '0xc180', 'subdevice': '0x4331', 'subrev_id': '0x01',
+                'part_num': 'AGIGA8811-016ACA',
+                'size': '16GB', 'clock_speed': '2933MHz',
+                'qualified_firmare': ['0.8'],
+            },
+            '0xce01_0x4e39_0x34_0xc180_0x4331_0x01': {
+                'vendor': '0xce01', 'device': '0x4e39', 'rev_id': '0x34',
+                'subvendor': '0xc180', 'subdevice': '0x4331', 'subrev_id': '0x01',
+                'part_num': 'AGIGA8811-032ACA',
+                'size': '32GB', 'clock_speed': '2933MHz',
+                'qualified_firmare': ['0.8'],
+            },
+            'unknown': {
+                'vendor': None, 'device': None, 'rev_id': None,
+                'subvendor': None, 'subdevice': None, 'subrev_id': None,
+                'part_num': None,
+                'size': None, 'clock_speed': None,
+                'qualified_firmware': [],
+            }
+        }
+        result = mapping['unknown']
+        vend_key = subvend_key = None
+        if (match := re.search(r'vendor: (?P<v>\w+) device: (?P<d>\w+) revision: (?P<r>\w+)', output)):
+            vend_key = '_'.join([f'0x{v}' for v in match.groupdict().values()])
+
+        if (match := re.search(r'subvendor: (?P<v>\w+) subdevice: (?P<d>\w+) subrevision: (?P<r>\w+)', output)):
+            subvend_key = '_'.join([f'0x{v}' for v in match.groupdict().values()])
+
+        if all((vend_key, subvend_key)):
+            result = mapping.get(f'{vend_key}_{subvend_key}', mapping['unknown'])
+
+        return result
 
     def info(self):
         results = []
@@ -59,21 +115,16 @@ class MseriesNvdimmService(Service):
         try:
             for nmem in glob.glob("/dev/nmem*"):
                 output = self.run_ixnvdimm(nmem)
-                size, clock_speed = self.get_size_and_clock_speed(output)
-                if not all((size, clock_speed)):
-                    continue
 
-                fw_vers, old_bios = self.get_firmware_version_and_detect_old_bios(output)
+                info = {
+                    'index': int(nmem[len('/dev/nmem')]),
+                    'dev': nmem.removeprefix('/dev/'),
+                    'dev_path': nmem
+                }
+                info.update(self.vendor_info(output))
+                info.update(self.get_running_firmware_vers_and_detect_old_bios(output))
+                results.append(info)
 
-                results.append({
-                    "index": int(nmem[len("/dev/nmem"):]),
-                    "dev": nmem.removeprefix("/dev/"),
-                    "size": size,
-                    "module_health": self.get_module_health(output),
-                    "clock_speed": clock_speed,
-                    "firmware_version": fw_vers,
-                    "old_bios": old_bios,
-                })
         except Exception:
             self.logger.error("Unhandled exception obtaining nvdimm info", exc_info=True)
         else:
