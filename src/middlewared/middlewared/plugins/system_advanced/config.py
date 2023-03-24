@@ -277,6 +277,9 @@ class SystemAdvancedService(ConfigService):
             if original_data['isolated_gpu_pci_ids'] != config_data['isolated_gpu_pci_ids']:
                 await self.middleware.call('boot.update_initramfs')
 
+            if original_data['debugkernel'] != config_data['debugkernel']:
+                generate_grub = True
+
             await self.middleware.call('system.advanced.configure_tty', original_data, config_data, generate_grub)
 
         if consolemsg is not None:
