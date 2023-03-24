@@ -105,7 +105,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             if old_bios:
                 alerts.append(Alert(OldBiosVersionAlertClass))
 
-            for nvdimm in self.middleware.call_sync('mserires.nvdimm.info'):
+            for nvdimm in self.middleware.call_sync('mseries.nvdimm.info'):
                 self.produce_lifetime_alerts(nvdimm, alerts, old_bios)
 
         return alerts
