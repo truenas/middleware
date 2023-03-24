@@ -27,7 +27,7 @@ class UserService(Service):
             'iXsystems'
         )
 
-    @accepts(Int('user_id'), Str('token'))
+    @accepts(Int('user_id'), Str('token', null=True))
     @returns(Bool('token_verified'))
     async def verify_twofactor_token(self, user_id, token):
         """
@@ -42,4 +42,4 @@ class UserService(Service):
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
             digits=twofactor_config['otp_digits'],
         )
-        return totp.verify(token, valid_window=twofactor_config['window'])
+        return totp.verify(token or '', valid_window=twofactor_config['window'])
