@@ -260,6 +260,14 @@ class PrivilegeService(CRUDService):
         return gids
 
     @private
+    async def privileges_for_groups(self, groups_key, group_ids):
+        group_ids = set(group_ids)
+        return [
+            privilege for privilege in await self.middleware.call('datastore.query', 'account.privilege')
+            if set(privilege[groups_key]) & group_ids
+        ]
+
+    @private
     async def compose_privilege(self, privileges):
         compose = {
             'allowlist': [],

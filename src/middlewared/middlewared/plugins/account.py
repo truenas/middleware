@@ -462,7 +462,13 @@ class UserService(CRUDService):
                 errno.EINVAL
             )
 
-        await self.__common_validation(verrors, data, 'user_create')
+        group_ids = []
+        if data.get('group'):
+            group_ids.append(data['group'])
+        if data.get('groups'):
+            group_ids.extend(data['groups'])
+
+        await self.__common_validation(verrors, data, 'user_create', group_ids)
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
             verrors.add(
@@ -608,7 +614,13 @@ class UserService(CRUDService):
         if data.get('uid') == user['uid']:
             data.pop('uid')  # Only check for duplicate UID if we are updating it
 
-        await self.__common_validation(verrors, data, 'user_update', pk=pk)
+        group_ids = [group['id']]
+        if data.get('groups'):
+            group_ids.extend(data['groups'])
+        else:
+            group_ids.extend(user['groups'])
+
+        await self.__common_validation(verrors, data, 'user_update', group_ids, pk=pk)
 
         try:
             st = (await self.middleware.run_in_thread(os.stat, user.get("home", DEFAULT_HOME_PATH))).st_mode
@@ -838,7 +850,7 @@ class UserService(CRUDService):
 
         return pk
 
-    @accepts()
+    @accepts(List('group_ids', items=[Int('group_id')]))
     @returns(Dict(
         'shell_info',
         Str('shell_path'),
@@ -852,13 +864,29 @@ class UserService(CRUDService):
             '/usr/sbin/nologin': 'nologin'
         }
     ))
-    def shell_choices(self):
-        """Return the available shell choices to be used in `user.create` and `user.update`."""
+    def shell_choices(self, group_ids):
+        """
+        Return the available shell choices to be used in `user.create` and `user.update`.
+
+        `group_ids` is a list of local group IDs for the user.
+        """
+        group_ids = {
+            g["gid"] for g in self.middleware.call_sync(
+                "datastore.query",
+                "account.bsdgroups",
+                [("id", "in", group_ids)],
+                {"prefix": "bsdgrp_"},
+            )
+        }
+
         shells = {
             '/usr/sbin/nologin': 'nologin',
-            '/usr/bin/cli': 'TrueNAS CLI',  # installed via midcli
-            '/usr/bin/cli_console': 'TrueNAS Console',  # installed via midcli
         }
+        if self.middleware.call_sync('privilege.privileges_for_groups', 'local_groups', group_ids):
+            shells.update(**{
+                '/usr/bin/cli': 'TrueNAS CLI',  # installed via midcli
+                '/usr/bin/cli_console': 'TrueNAS Console',  # installed via midcli
+            })
         with open('/etc/shells') as f:
             for shell in filter(lambda x: x.startswith('/usr/bin'), f):
                 # on scale /etc/shells has duplicate entries like (/bin/sh, /usr/bin/sh) (/bin/bash, /usr/bin/bash) etc.
@@ -1045,7 +1073,7 @@ class UserService(CRUDService):
         if do_copy.returncode != 0:
             raise CallError(f"Failed to copy homedir [{home_old}] to [{home_new}]: {do_copy.stderr.decode()}")
 
-    async def __common_validation(self, verrors, data, schema, pk=None):
+    async def __common_validation(self, verrors, data, schema, group_ids, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
 
@@ -1148,7 +1176,7 @@ class UserService(CRUDService):
                 'The "\\n" character is not allowed in a "Full Name".'
             )
 
-        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices'):
+        if 'shell' in data and data['shell'] not in await self.middleware.call('user.shell_choices', group_ids):
             verrors.add(
                 f'{schema}.shell', 'Please select a valid shell.'
             )
