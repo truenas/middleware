@@ -581,6 +581,7 @@ class FailoverEventsService(Service):
 
         self.run_call('failover.events.start_apps_vms')
         self.run_call('truecommand.start_truecommand_service')
+        self.run_call('zettarepl.update_tasks')
 
         logger.info('Initializing alert system')
         self.run_call('alert.block_failover_alerts')
