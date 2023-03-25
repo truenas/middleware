@@ -40,11 +40,11 @@ class ServicePortDelegate(PortDelegate):
     async def config(self):
         return await self.middleware.call(f'{self.namespace}.config')
 
-    async def get_ports_internal_override(self):
+    async def get_ports_binded_on_wildcards(self):
         return []
 
     async def get_ports_internal(self):
-        if override_ports := await self.get_ports_internal_override():
+        if override_ports := await self.get_ports_binded_on_wildcards():
             return [('0.0.0.0', port) for port in override_ports]
 
         await self.basic_checks()

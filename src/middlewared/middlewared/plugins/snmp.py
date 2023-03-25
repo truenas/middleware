@@ -99,7 +99,7 @@ class SNMPServicePortDelegate(ServicePortDelegate):
     namespace = 'snmp'
     title = 'SNMP Service'
 
-    async def get_ports_internal_override(self):
+    async def get_ports_binded_on_wildcards(self):
         return [160, 161]
 
 
