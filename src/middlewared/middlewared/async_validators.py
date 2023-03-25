@@ -3,7 +3,6 @@ import os
 import socket
 from pathlib import Path
 
-from middlewared.service import ValidationErrors
 from middlewared.plugins.zfs_.utils import ZFSCTL
 from middlewared.utils.path import path_location
 from middlewared.validators import IpAddress

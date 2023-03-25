@@ -4,8 +4,18 @@ from collections import defaultdict
 
 from middlewared.service import Service, ValidationErrors
 
+from .utils import WILDCARD_IPS
 
-SYSTEM_PORTS = [('0.0.0.0', port) for port in [67, 123, 3702, 5353, 6000]]
+
+SYSTEM_PORTS = [(wildcard, port) for wildcard in WILDCARD_IPS for port in [67, 123, 3702, 5353, 6000]]
+
+
+def check_ip_is_ipv6(ip: str) -> bool:
+    return ':' in ip
+
+
+def get_ip_protocol(ip: str) -> int:
+    return 6 if check_ip_is_ipv6(ip) else 4
 
 
 class PortService(Service):
@@ -47,17 +57,22 @@ class PortService(Service):
 
     async def validate_port(self, schema, port, bindip='0.0.0.0', whitelist_namespace=None, raise_error=False):
         verrors = ValidationErrors()
+        bindip_protocol = get_ip_protocol(bindip)
+        wildcard_ip = '0.0.0.0' if bindip_protocol == 4 else '::'
         port_mapping = await self.ports_mapping(whitelist_namespace)
         port_attachment = port_mapping[port]
         if not port_attachment or (
-            bindip not in port_attachment and '0.0.0.0' not in port_attachment and bindip != '0.0.0.0'
+            bindip not in port_attachment and wildcard_ip not in port_attachment and bindip != wildcard_ip
         ):
             return verrors
 
         ip_errors = []
         for index, port_detail in enumerate(port_attachment.items()):
             ip, port_entry = port_detail
-            if bindip == '0.0.0.0' or ip == '0.0.0.0' or (bindip != '0.0.0.0' and ip == bindip):
+            if get_ip_protocol(ip) != bindip_protocol:
+                continue
+
+            if bindip == wildcard_ip or ip == wildcard_ip or (bindip != wildcard_ip and ip == bindip):
                 entry = next(
                     detail for detail in port_entry['port_details']
                     if [ip, port] in detail['ports'] or [bindip, port] in detail['ports']
