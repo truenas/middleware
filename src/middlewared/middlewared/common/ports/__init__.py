@@ -3,34 +3,34 @@ from collections.abc import Iterable
 
 class PortDelegate:
 
-    name = NotImplementedError
-    namespace = NotImplementedError
-    title = NotImplementedError
+    name = NotImplemented
+    namespace = NotImplemented
+    title = NotImplemented
 
     def __init__(self, middleware):
         self.middleware = middleware
         self.logger = middleware.logger
         for k in ('name', 'namespace', 'title'):
-            if getattr(self, k) is NotImplementedError:
+            if getattr(self, k) is NotImplemented:
                 raise ValueError(f'{k!r} must be specified for port delegate')
 
     async def get_ports(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 class ServicePortDelegate(PortDelegate):
-    bind_address_field = NotImplementedError
-    port_fields = NotImplementedError
+    bind_address_field = NotImplemented
+    port_fields = NotImplemented
 
     async def basic_checks(self):
-        if self.port_fields is NotImplementedError:
+        if self.port_fields is NotImplemented:
             raise ValueError('Port fields must be set for Service port delegate')
         elif not isinstance(self.port_fields, Iterable):
             raise ValueError('Port fields must be an iterable')
 
     def bind_address(self, config):
         default = '0.0.0.0'
-        return default if self.bind_address_field is NotImplementedError else (
+        return default if self.bind_address_field is NotImplemented else (
             config.get(self.bind_address_field) or default
         )
 
