@@ -688,6 +688,8 @@ class FilesystemService(Service, ACLBase):
             if perm == 'READ':
                 return {'READ': True, 'WRITE': False, 'EXECUTE': True}
 
+            raise CallError(f'{perm}: unsupported permissions type for POSIX1E acltype')
+
         def check_acl_for_entry(entry):
             id_type = entry['id_type']
             xid = entry['id']
@@ -786,6 +788,11 @@ class FilesystemService(Service, ACLBase):
 
             if perm == 'READ':
                 return {'BASIC': 'READ'}
+
+            if perm == 'FULL_CONTROL':
+                return {'BASIC': 'FULL_CONTROL'}
+
+            raise CallError(f'{perm}: unsupported permissions type for NFSv4 acltype')
 
         def check_acl_for_entry(entry):
             id_type = entry['id_type']
