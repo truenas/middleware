@@ -87,7 +87,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
             alerts.append(Alert(alert, {'dev': 'NVM Lifetime', 'value': val}))
 
-        if nvdimm['index'] == 0 and (val := int(nvdimm['em_lifetime'].rstrip('%'))) < 20:
+        if nvdimm['index'] == 0 and (val := int(nvdimm['es_lifetime'].rstrip('%'))) < 20:
             # we only check this value for the 0th slot nvdimm since M60 has 2 and the way
             # they're physically cabled, prevents monitoring the 2nd nvdimm's energy source
             # (it always reports -1%)
