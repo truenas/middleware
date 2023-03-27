@@ -94,7 +94,7 @@ if not ha:
             'catalog': 'OFFICIAL',
             'item': 'ipfs',
             'release_name': 'ipfs',
-            'train': 'charts'
+            'train': 'community'
         }
         results = POST('/chart/release/', payload)
         assert results.status_code == 200, results.text
