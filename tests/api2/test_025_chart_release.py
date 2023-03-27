@@ -52,7 +52,7 @@ if not ha:
             "item_name": "ipfs",
             "item_version_details": {
                 "catalog": "OFFICIAL",
-                "train": 'charts'
+                "train": 'community'
             }
         }
         results = POST('/catalog/get_item_details/', payload)
@@ -69,7 +69,7 @@ if not ha:
             'catalog': 'OFFICIAL',
             'item': 'ipfs',
             'release_name': 'ipfs',
-            'train': 'charts',
+            'train': 'community',
             'version': ipfs_version
         }
         results = POST('/chart/release/', payload)
@@ -91,7 +91,7 @@ if not ha:
         results = GET(f'/chart/release/id/{release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['catalog_train'] == 'charts', results.text
+        assert results.json()['catalog_train'] == 'community', results.text
 
     def test_09_get_ipfs_chart_release_name(request):
         depends(request, ['release_ipfs'])
