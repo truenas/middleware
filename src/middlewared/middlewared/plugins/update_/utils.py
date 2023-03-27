@@ -37,6 +37,10 @@ def can_update(old_version, new_version):
         if (x == 'INTERNAL') != (y == 'INTERNAL'):
             return True
 
+        if x.isdigit() and y.isdigit():
+            x = int(x)
+            y = int(y)
+
         if x < y:
             return True
         if x > y:
