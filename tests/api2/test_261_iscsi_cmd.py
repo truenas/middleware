@@ -63,6 +63,8 @@ MB_100 = 100 * MB
 MB_512 = 512 * MB
 PR_KEY1 = 0xABCDEFAABBCCDDEE
 PR_KEY2 = 0x00000000DEADBEEF
+CONTROLLER_A_TARGET_PORT_GROUP_ID = 101
+CONTROLLER_B_TARGET_PORT_GROUP_ID = 102
 
 # Some variables
 digit = ''.join(random.choices(string.digits, k=2))
@@ -74,6 +76,14 @@ file_name = f"iscsi{digit}"
 basename = "iqn.2005-10.org.freenas.ctl"
 zvol_name = f"ds{digit}"
 zvol = f'{pool_name}/{zvol_name}'
+
+
+def other_node(node):
+    if node == 'A':
+        return 'B'
+    if node == 'B':
+        return 'A'
+    raise ValueError("Invalid node supplied")
 
 
 @contextlib.contextmanager
@@ -1456,7 +1466,9 @@ def _device_identification(s):
     x = s.inquiry(evpd=1, page_code=0x83)
     for desc in x.result['designator_descriptors']:
         if desc['designator_type'] == 4:
-            result['relative_port'] = desc['designator']['relative_port']
+            result['relative_target_port_identifier'] = desc['designator']['relative_port']
+        if desc['designator_type'] == 5:
+            result['target_port_group'] = desc['designator']['target_portal_group']
         if desc['designator_type'] == 3 and desc['designator']['naa'] == 6:
             items = (desc['designator']['naa'],
                      desc['designator']['ieee_company_id'],
@@ -1483,14 +1495,49 @@ def _verify_ha_inquiry(s, serial_number, naa, tpgs=0,
     assert naa == _device_identification(s)['naa']
 
 
+def _get_node():
+    results = GET('/failover/node')
+    assert results.status_code == 200, results.text
+    return results.text.replace('"', '').replace("'", "")
+
+
+def _get_ha_failover_status():
+    # Make sure we're talking to the master
+    results = GET('/failover/status')
+    assert results.status_code == 200, results.text
+    return results.text.replace('"', '').replace("'", "")
+
+
+def _get_ha_remote_failover_status():
+    payload = {
+        'method': 'failover.status',
+        'args': [],
+        'options': {}
+    }
+    results = POST('/failover/call_remote', payload)
+    assert results.status_code == 200, results.text
+    return results.text.replace('"', '').replace("'", "")
+
+
+def _get_ha_failover_in_progress():
+    # Make sure we're talking to the master
+    results = GET('/failover/in_progress')
+    assert results.status_code == 200, results.text
+    return results.text == "true"
+
+
+def _check_master():
+    status = _get_ha_failover_status()
+    assert status == 'MASTER'
+
+
 def _check_ha_node_configuration():
     both_nodes = ['A', 'B']
     # Let's perform some sanity checking wrt controller and IP address
     # First get node and calculate othernode
-    results = GET('/failover/node')
-    assert results.status_code == 200, results.text
-    node = results.text.replace('"', '').replace("'", "")
+    node = _get_node()
     assert node in both_nodes
+    _check_master()
 
     # Now let's get IPs and ensure that
     # - Node A has controller1_ip
@@ -1521,6 +1568,108 @@ def _check_ha_node_configuration():
     assert controller1_ip not in ips['B']
     assert controller2_ip in ips['B']
     assert controller2_ip not in ips['A']
+
+
+def _verify_ha_device_identification(s, naa, relative_target_port_identifier, target_port_group):
+    x = _device_identification(s)
+    assert x['naa'] == naa, x
+    assert x['relative_target_port_identifier'] == relative_target_port_identifier, x
+    assert x['target_port_group'] == target_port_group, x
+
+
+def _verify_ha_report_target_port_groups(s, tpgs, active_tpg):
+    """
+    Verify that the REPORT TARGET PORT GROUPS command returns the expected
+    results.
+    """
+    x = s.reporttargetportgroups()
+    for tpg_desc in x.result['target_port_group_descriptors']:
+        tpg_id = tpg_desc['target_port_group']
+        ids = set([x['relative_target_port_id'] for x in tpg_desc['target_ports']])
+        assert ids == set(tpgs[tpg_id]), ids
+        # See SPC-5 6.36 REPORT TARGET PORT GROUPS
+        # Active/Optimized is 0
+        # Active/Non-optimized is 1
+        if tpg_id == active_tpg:
+            assert tpg_desc['asymmetric_access_state'] == 0, tpg_desc
+        else:
+            assert tpg_desc['asymmetric_access_state'] == 1, tpg_desc
+
+
+def _get_active_target_portal_group():
+    _check_master()
+    node = _get_node()
+    if node == 'A':
+        return CONTROLLER_A_TARGET_PORT_GROUP_ID
+    elif node == 'B':
+        return CONTROLLER_B_TARGET_PORT_GROUP_ID
+    return None
+
+
+def _ha_reboot_master(delay=900):
+    """
+    Reboot the MASTER node and wait for both the new MASTER
+    and new BACKUP to become available.
+    """
+    orig_master_node = _get_node()
+    new_master_node = other_node(orig_master_node)
+
+    results = POST('/system/reboot', {})
+    assert results.status_code == 200, results.text
+
+    # First we'll loop until the node is no longer the orig_node
+    new_master = False
+    while not new_master:
+        try:
+            if _get_node() == new_master_node:
+                new_master = True
+                break
+        except Exception:
+            pass
+        delay = delay - 1
+        if delay <= 0:
+            break
+        print("Waiting for MASTER")
+        sleep(1)
+
+    if not new_master:
+        raise RuntimeError('Did not switch to new controller.')
+
+    # OK, we're on the new master, now wait for the other controller
+    # to become BACKUP.
+    new_backup = False
+    while not new_backup:
+        try:
+            if _get_ha_remote_failover_status() == 'BACKUP':
+                new_backup = True
+                break
+        except Exception:
+            pass
+        delay = delay - 5
+        if delay <= 0:
+            break
+        print("Waiting for BACKUP")
+        sleep(5)
+
+    if not new_backup:
+        raise RuntimeError('Backup controller did not surface.')
+
+    # Finally ensure that a failover is still not in progress
+    in_progress = True
+    while in_progress:
+        try:
+            if in_progress := _get_ha_failover_in_progress():
+                break
+        except Exception:
+            pass
+        delay = delay - 5
+        if delay <= 0:
+            break
+        print("Waiting while in progress")
+        sleep(5)
+
+    if in_progress:
+        raise RuntimeError('Failover never completed.')
 
 
 @pytest.mark.dependency(name="iscsi_alua_config")
@@ -1558,11 +1707,23 @@ def test_16_alua_config(request):
                 assert results.json()['alua'], results.text
 
                 # We will login to the target on BOTH controllers and make sure
-                # we see the same target.
+                # we see the same target.  Observe that we supply tpgs=1 as
+                # part of the check
                 with iscsi_scsi_connection(controller1_ip, iqn) as s1:
                     _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
                     with iscsi_scsi_connection(controller2_ip, iqn) as s2:
                         _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+
+                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+
+                        tpgs = {
+                            CONTROLLER_A_TARGET_PORT_GROUP_ID: [1],
+                            CONTROLLER_B_TARGET_PORT_GROUP_ID: [32001]
+                        }
+                        active_tpg = _get_active_target_portal_group()
+                        _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
+                        _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
 
             # Ensure ALUA is off again
             results = GET('/iscsi/global')
@@ -1592,6 +1753,28 @@ def test_16_alua_config(request):
 
                     with iscsi_scsi_connection(controller2_ip, iqn) as s2:
                         _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+
+                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+
+                        # Use the tpgs & active_tpg from above
+                        _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
+                        _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
+
+                        # Let's failover
+                        _ha_reboot_master()
+                        TUR(s1)
+                        TUR(s2)
+
+                        _check_ha_node_configuration()
+                        new_active_tpg = _get_active_target_portal_group()
+                        assert new_active_tpg != active_tpg
+
+                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+
+                        _verify_ha_report_target_port_groups(s1, tpgs, new_active_tpg)
+                        _verify_ha_report_target_port_groups(s2, tpgs, new_active_tpg)
 
         # Ensure ALUA is off again
         results = GET('/iscsi/global')
