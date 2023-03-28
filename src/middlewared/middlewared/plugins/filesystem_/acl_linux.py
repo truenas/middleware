@@ -7,6 +7,7 @@ from pathlib import Path
 
 from middlewared.utils.path import FSLocation, path_location
 from middlewared.service import private, CallError, ValidationErrors, Service
+from middlewared.plugins.chart_releases_linux.utils import is_ix_volume_path
 from .acl_base import ACLBase, ACLType
 
 
@@ -91,7 +92,8 @@ class FilesystemService(Service, ACLBase):
             )
 
         apps_dataset = self.middleware.call_sync('kubernetes.config')['dataset']
-        if apps_dataset and st['realpath'].startswith(f'/mnt/{apps_dataset}'):
+        if apps_dataset and st['realpath'].startswith(f'/mnt/{apps_dataset}')\
+                and not is_ix_volume_path(st['realpath'], apps_dataset):
             verrors.add(
                 f'{schema}.path',
                 f'Changes to permissions of ix-applications dataset are not permitted: {path}.'
