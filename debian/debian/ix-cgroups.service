@@ -1,0 +1,17 @@
+[Unit]
+Description=Execute TrueNAS custom pre-init tasks
+DefaultDependencies=no
+
+Before=network-pre.target
+
+After=ix-zfs.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=midclt call endpointhere
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
