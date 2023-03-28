@@ -1,5 +1,5 @@
 [Unit]
-Description=Execute TrueNAS custom pre-init tasks
+Description=Enable required cgroups for TrueNAS
 DefaultDependencies=no
 
 Before=network-pre.target
