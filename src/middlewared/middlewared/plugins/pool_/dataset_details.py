@@ -213,6 +213,7 @@ class PoolDatasetService(Service):
             i['locked'] = i['locked']
             i['atime'] = atime
             i['casesensitive'] = case
+            i['readonly'] = readonly
             i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
             i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
             i['smb_shares'] = self.get_smb_shares(i, info['smb'])
