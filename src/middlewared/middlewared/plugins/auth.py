@@ -431,7 +431,7 @@ class AuthService(Service):
                 'user.query', [['username', '=', username], ['twofactor_auth_configured', '=', True]]
             )
         ):
-            # We should run user.verify_twofactor_token nevertheless of check_user result to prevent guessing
+            # We should run user.verify_twofactor_token regardless of check_user result to prevent guessing
             # passwords with a timing attack
             if not await self.middleware.call(
                 'user.verify_twofactor_token',
