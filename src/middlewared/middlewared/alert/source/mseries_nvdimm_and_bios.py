@@ -35,7 +35,7 @@ class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Invalid NVDIMM Firmware Version'
     text = (
-        'NVDIMM: "%(dev)s" is using a firmware version which can cause data loss if a power outage '
+        'NVDIMM: "%(dev)s" is running firmware version which can cause data loss if a power outage '
         f'event occurs. {WEBUI_SUPPORT_FORM}'
     )
     products = ('SCALE_ENTERPRISE',)
@@ -47,8 +47,8 @@ class NVDIMMRecommendedFirmwareVersionAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'NVDIMM Firmware Version Should Be Upgraded'
     text = (
-        'NVDIMM: "%(dev)s" is using a firmware version "%(rv)s" which can be upgraded to '
-        f'version "%(uv)s". {WEBUI_SUPPORT_FORM}'
+        'NVDIMM: "%(dev)s" is running firmware version "%(rv)s" which can be upgraded to '
+        f'"%(uv)s". {WEBUI_SUPPORT_FORM}'
     )
     products = ('SCALE_ENTERPRISE',)
     proactive_support = True
