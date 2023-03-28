@@ -763,22 +763,28 @@ class FilesystemService(Service, ACLBase):
                 'default': default
             })
 
+        changed = False
+
         for entry in entries:
             default, access, mask, default_mask = check_acl_for_entry(entry)
 
             if not default:
+                changed = True
                 add_entry(entry, True)
 
             if not access:
+                changed = True
                 add_entry(entry, False)
 
             if not mask:
+                changed = True
                 add_mask(False)
 
             if not default_mask:
+                changed = True
                 add_mask(True)
 
-        return acl
+        return changed
 
     @private
     def add_to_acl_nfs4(self, acl, entries):
@@ -808,6 +814,8 @@ class FilesystemService(Service, ACLBase):
 
             return False
 
+        changed = False
+
         for entry in entries:
             if check_acl_for_entry(entry):
                 continue
@@ -819,8 +827,9 @@ class FilesystemService(Service, ACLBase):
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
             })
+            changed = True
 
-        return acl
+        return changed
 
     def add_to_acl(self, job, data):
         init_path = data['path']
@@ -839,15 +848,19 @@ class FilesystemService(Service, ACLBase):
         acltype = ACLType[current_acl['acltype']]
 
         if acltype == ACLType.NFS4:
-            new_acl = self.add_to_acl_nfs4(current_acl['acl'], data['entries'])
+            changed = self.add_to_acl_nfs4(current_acl['acl'], data['entries'])
         elif acltype == ACLType.POSIX1E:
-            new_acl = self.add_to_acl_posix(current_acl['acl'], data['entries'])
+            changed = self.add_to_acl_posix(current_acl['acl'], data['entries'])
         else:
             raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
 
+        if not changed:
+            job.set_progress(100, 'ACL already contains all requested entries.')
+            return
+
         setacl_job = self.middleware.call_sync('filesystem.setacl', {
             'path': data['path'],
-            'dacl': new_acl,
+            'dacl': current_acl['acl'],
             'acltype': current_acl['acltype'],
             'options': {'recursive': True}
         })
