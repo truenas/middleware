@@ -38,7 +38,8 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_account_twofactor_user_auth_user_id'), ['user_id'], unique=False)
 
     conn = op.get_bind()
-    existing_secret = conn.execute('SELECT secret FROM system_twofactorauthentication').fetchone()['secret']
+    existing_secret_record = conn.execute('SELECT secret FROM system_twofactorauthentication').fetchone()
+    existing_secret = existing_secret_record['secret'] if existing_secret_record else None
 
     for row in map(dict, conn.execute('SELECT id,bsdusr_uid FROM account_bsdusers').fetchall()):
         row = dict(row)
