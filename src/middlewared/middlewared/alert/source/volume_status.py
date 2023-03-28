@@ -20,7 +20,7 @@ class VolumeStatusAlertSource(AlertSource):
             if not pool["is_decrypted"]:
                 continue
 
-            if not pool["healthy"]:
+            if not pool["healthy"] or pool["warning"]:
                 if await self.middleware.call("system.is_enterprise"):
                     try:
                         await self.middleware.call("enclosure.sync_zpool", pool["name"])
