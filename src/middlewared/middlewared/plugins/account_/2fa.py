@@ -29,15 +29,15 @@ class UserService(Service):
 
     @accepts(Int('user_id'), Str('token', null=True))
     @returns(Bool('token_verified'))
-    async def verify_twofactor_token(self, user_id, token):
+    def verify_twofactor_token(self, user_id, token):
         """
         Returns boolean true if provided `token` is successfully authenticated for `user_id`.
         """
-        twofactor_config = await self.middleware.call('auth.twofactor.config')
+        twofactor_config = self.middleware.call_sync('auth.twofactor.config')
         if not twofactor_config['enabled']:
             raise CallError('Please enable Two Factor Authentication first')
 
-        user_twofactor_config = await self.middleware.call('auth.twofactor.get_user_config', user_id)
+        user_twofactor_config = self.middleware.call_sync('auth.twofactor.get_user_config', user_id)
         totp = pyotp.totp.TOTP(
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
             digits=twofactor_config['otp_digits'],
