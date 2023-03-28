@@ -68,10 +68,7 @@ class AuthService(Service):
 
     @private
     async def common_authenticate(self, username, groups_key, groups):
-        privileges = [
-            privilege for privilege in await self.middleware.call('datastore.query', 'account.privilege')
-            if set(privilege[groups_key]) & groups
-        ]
+        privileges = await self.middleware.call('privilege.privileges_for_groups', groups_key, groups)
         if not privileges:
             return None
 
