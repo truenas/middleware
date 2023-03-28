@@ -9,6 +9,8 @@ from .utils import pull_clone_repository
 
 class CatalogService(Service):
 
+    SYNCED = False
+
     @accepts()
     @returns()
     @job(lock='sync_catalogs')
@@ -28,6 +30,8 @@ class CatalogService(Service):
             self.middleware.create_task(
                 self.middleware.call('chart.release.chart_releases_update_checks_internal')
             )
+
+        self.SYNCED = True
 
     @accepts(Str('label', required=True))
     @returns()
@@ -70,3 +74,7 @@ class CatalogService(Service):
         return pull_clone_repository(
             catalog['repository'], os.path.dirname(catalog['location']), catalog['branch'],
         )
+
+    @private
+    async def synced(self):
+        return self.SYNCED
