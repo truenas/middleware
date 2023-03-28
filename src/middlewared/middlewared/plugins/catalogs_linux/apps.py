@@ -30,6 +30,9 @@ class AppService(Service):
         """
         Retrieve all available applications from all configured catalogs.
         """
+        if not self.middleware.call_sync('catalog.synced'):
+            self.middleware.call_sync('catalog.initiate_first_time_sync')
+
         results = []
         installed_apps = [
             (app['chart_metadata']['name'], app['catalog'], app['catalog_train'])
