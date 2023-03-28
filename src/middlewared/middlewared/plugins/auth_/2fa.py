@@ -88,7 +88,7 @@ class TwoFactorAuthService(ConfigService):
         return await self.config()
 
     @private
-    async def get_user_twofactor_config(self, user_id):
+    async def get_user_config(self, user_id):
         return await self.middleware.call(
             'datastore.query', 'account.twofactor_user_auth', [['user', '=', user_id]], {'get': True}
         )
@@ -98,7 +98,7 @@ class TwoFactorAuthService(ConfigService):
         return pyotp.random_base32()
 
     @private
-    def get_users_twofactor_configuration(self):
+    def get_users_config(self):
         return [
             {
                 'username': config['user']['bsdusr_username'],
