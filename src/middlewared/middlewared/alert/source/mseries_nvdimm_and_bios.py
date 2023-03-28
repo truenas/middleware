@@ -3,6 +3,8 @@ import datetime
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
+WEBUI_SUPPORT_FORM = 'Please contact iXsystems Support using the form in System Settings -> General -> Support'
+
 
 class NVDIMMAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
@@ -28,13 +30,25 @@ class NVDIMMLifetimeCriticalAlertClass(AlertClass):
     products = ('SCALE_ENTERPRISE',)
 
 
-class NVDIMMFirmwareVersionAlertClass(AlertClass):
+class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = 'Invalid NVDIMM Firmware Version'
     text = (
         'NVDIMM: "%(dev)s" is using a firmware version which can cause data loss if a power outage '
-        'event occurs. Please contact iXsystems Support using the form in System -> Support.'
+        f'event occurs. {WEBUI_SUPPORT_FORM}'
+    )
+    products = ('SCALE_ENTERPRISE',)
+    proactive_support = True
+
+
+class NVDIMMRecommendedFirmwareVersionAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = 'NVDIMM Firmware Version Should Be Upgraded'
+    text = (
+        'NVDIMM: "%(dev)s" is using a firmware version "%(rv)s" which can be upgraded to '
+        f'version "%(uv)s". {WEBUI_SUPPORT_FORM}'
     )
     products = ('SCALE_ENTERPRISE',)
     proactive_support = True
@@ -44,10 +58,7 @@ class OldBiosVersionAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = 'Old BIOS Version'
-    text = (
-        'This system is running an old BIOS version. Please contact iXsystems Support '
-        'using the form in System > Support'
-    )
+    text = f'This system is running an old BIOS version. {WEBUI_SUPPORT_FORM}'
     products = ('SCALE_ENTERPRISE',)
     proactive_support = True
 
@@ -94,8 +105,14 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
             alerts.append(Alert(alert, {'dev': 'NVM Energy Source', 'value': val}))
 
-        if nvdimm['running_firmware'] not in nvdimm['qualified_firmware']:
-            alerts.append(Alert(NVDIMMFirmwareVersionAlertClass, {'dev': dev}))
+        if (run_fw := nvdimm['running_firmware']):
+            if run_fw not in nvdimm['qualified_firmware']:
+                alerts.append(Alert(NVDIMMInvalidFirmwareVersionAlertClass, {'dev': dev}))
+            elif run_fw != nvdimm['recommended_firmware']:
+                alerts.append(Alert(
+                    NVDIMMRecommendedFirmwareVersionAlertClass,
+                    {'dev': dev, 'rv': run_fw, 'uv': nvdimm['recommended_version']}
+                ))
 
         if not old_bios_alert_already_generated and nvdimm['old_bios']:
             alerts.append(Alert(OldBiosVersionAlertClass))
