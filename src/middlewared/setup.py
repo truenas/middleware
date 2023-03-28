@@ -68,6 +68,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
+            'setup_cgroups = middlewared.scripts.setup_cgroups:main',
             'middlewared = middlewared.main:main',
             'midclt = middlewared.client.client:main',
             'midgdb = middlewared.scripts.gdb:main',

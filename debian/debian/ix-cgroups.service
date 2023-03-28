@@ -1,0 +1,19 @@
+[Unit]
+Description=Enable required cgroups for TrueNAS
+DefaultDependencies=no
+# We want to do this after ix-zfs and before network is setup
+# systemd disables cpuset during boot phase and after much
+# fiddling, this combination of deps addresses our usecase
+# and keeps systemd happy at the end of the day
+Before=network-pre.target
+After=ix-zfs.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/setup_cgroups
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
