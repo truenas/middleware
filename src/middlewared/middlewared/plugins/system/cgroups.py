@@ -14,7 +14,7 @@ class SystemService(Service):
         namespace = 'system'
 
     @private
-    def ensure_cgroups_are_setup(self):
+    def setup_cgroups(self):
         # Logic copied over from kubernetes
         # https://github.com/kubernetes/kubernetes/blob/08fbe92fa76d35048b4b4891b41fc6912e689cc7/
         # pkg/kubelet/cm/cgroup_manager_linux.go#L238
