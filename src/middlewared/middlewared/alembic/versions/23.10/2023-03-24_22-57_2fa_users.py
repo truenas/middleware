@@ -1,5 +1,5 @@
 """
-2FA support for multiple usrers
+2FA support for multiple users
 
 Revision ID: 55836e7dac39
 Revises: c55b034b7654
