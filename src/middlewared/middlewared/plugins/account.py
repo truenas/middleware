@@ -484,7 +484,7 @@ class UserService(CRUDService):
         if (await self.middleware.call('auth.twofactor.config'))['enabled'] and not data['configure_twofactor_auth']:
             verrors.add(
                 'user_create.configure_twofactor_auth',
-                'Two-factor authentication is enabled. Please enable it for this user.'
+                'Two-factor authentication is enabled globally. Please enable it for this user.'
             )
 
         await self.__common_validation(verrors, data, 'user_create', group_ids)
@@ -646,7 +646,7 @@ class UserService(CRUDService):
         )['enabled'] and not user['twofactor_auth_configured'] and not data.get('renew_twofactor_secret'):
             verrors.add(
                 'user_update.renew_twofactor_secret',
-                'Two-factor authentication is enabled but not configured for this user.'
+                'Two-factor authentication is enabled globally but not configured for this user.'
             )
 
         if data.get('uid') == user['uid']:
