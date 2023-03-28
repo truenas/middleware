@@ -302,8 +302,25 @@ class UserService(CRUDService):
         )
 
     @private
+    def validate_homedir_mountinfo(self, verrors, schema, dev):
+        mntinfo = self.middleware.call_sync(
+            'filesystem.mount_info',
+            [['device_id.dev_t', '=', dev]],
+            {'get': True}
+        )
+
+        if 'RO' in mntinfo['mount_opts']:
+            verrors.add(f'{schema}.home', 'Path has the ZFS readonly property set.')
+            return False
+
+        if mntinfo['fs_type'] != 'zfs':
+            verrors.add(f'{schema}.home', 'Path is not on a ZFS filesystem')
+            return False
+
+        return True
+
+    @private
     def validate_homedir_path(self, verrors, schema, data, users):
-        needs_additional_validation = True
         p = Path(data['home'])
 
         if not p.is_absolute():
@@ -336,7 +353,21 @@ class UserService(CRUDService):
                     f'{data["home"]}: path specified to use as home directory does not exist.'
                 )
 
-            return False
+            if not p.parent.exists():
+                verrors.add(
+                    f'{schema}.home',
+                    f'{p.parent}: parent path of specified home directory does not exist.'
+                )
+
+            if not verrors:
+                self.validate_homedir_mountinfo(verrors, schema, p.parent.stat().st_dev)
+
+        elif self.validate_homedir_mountinfo(verrors, schema, p.stat().st_dev):
+            if self.middleware.call_sync('filesystem.is_immutable', data['home']):
+                verrors.add(
+                    f'{schema}.home',
+                    f'{data["home"]}: home directory path is immutable.'
+                )
 
         in_use = filter_list(users, [('home', '=', data['home'])])
         if in_use:
@@ -345,7 +376,6 @@ class UserService(CRUDService):
                 f'{data["home"]}: homedir already used by {in_use[0]["username"]}.',
                 errno.EEXIST
             )
-            needs_additional_validation = False
 
         if not data['home'].startswith('/mnt/'):
             verrors.add(
@@ -353,8 +383,12 @@ class UserService(CRUDService):
                 '"Home Directory" must begin with /mnt/ or set to '
                 f'{DEFAULT_HOME_PATH}.'
             )
-            needs_additional_validation = False
-        elif not any(
+
+        if verrors:
+            # if we're already going to error out, skip more expensive tests
+            return False
+
+        if not any(
             data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
             for i in self.middleware.call_sync('pool.query')
         ):
@@ -363,21 +397,18 @@ class UserService(CRUDService):
                 f'The path for the home directory "({data["home"]})" '
                 'must include a volume or dataset.'
             )
-            needs_additional_validation = False
         elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', data['home']):
             verrors.add(
                 f'{schema}.home',
                 'Path component for "Home Directory" is currently encrypted and locked'
             )
-            needs_additional_validation = False
         elif len(p.resolve().parents) == 2 and not data.get('home_create'):
             verrors.add(
                 f'{schema}.home',
                 f'The specified path is a ZFS pool mountpoint "({data["home"]})".'
             )
-            needs_additional_validation = False
 
-        return needs_additional_validation
+        return p.exists() and not verrors
 
     @private
     def setup_homedir(self, path, username, mode, uid, gid, create=False):
