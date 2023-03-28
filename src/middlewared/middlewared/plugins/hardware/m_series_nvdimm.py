@@ -50,7 +50,8 @@ class MseriesNvdimmService(Service):
                 'subvendor': '0x3480', 'subdevice': '0x4131', 'subrev_id': '0x01',
                 'part_num': '18ASF2G72PF12G6V21AB',
                 'size': '16GB', 'clock_speed': '2666MHz',
-                'qualified_firmware': ['2.1', '2.2', '2.4'],
+                'qualified_firmware': ['2.1', '2.2', '2.4', '2.6'],
+                'recommended_firmware': '2.6',
             },
             '0x2c80_0x4e36_0x31_0x3480_0x4231_0x02': {
                 'vendor': '0x2c80', 'device': '0x4e36', 'rev_id': '0x31',
@@ -58,6 +59,7 @@ class MseriesNvdimmService(Service):
                 'part_num': '18ASF2G72PF12G9WP1AB',
                 'size': '16GB', 'clock_speed': '2933MHz',
                 'qualified_firmware': ['2.2'],
+                'recommended_firmware': '2.2',
             },
             '0x2c80_0x4e33_0x31_0x3480_0x4231_0x01': {
                 'vendor': '0x2c80', 'device': '0x4e33', 'rev_id': '0x31',
@@ -65,6 +67,7 @@ class MseriesNvdimmService(Service):
                 'part_num': '36ASS4G72PF12G9PR1AB',
                 'size': '32GB', 'clock_speed': '2933MHz',
                 'qualified_firmware': ['2.4'],
+                'recommended_firmware': '2.4',
             },
             '0xc180_0x4e88_0x33_0xc180_0x4331_0x01': {
                 'vendor': '0xc180', 'device': '0x4e88', 'rev_id': '0x33',
@@ -72,6 +75,7 @@ class MseriesNvdimmService(Service):
                 'part_num': 'AGIGA8811-016ACA',
                 'size': '16GB', 'clock_speed': '2933MHz',
                 'qualified_firmware': ['0.8'],
+                'recommended_firmware': '0.8',
             },
             '0xce01_0x4e39_0x34_0xc180_0x4331_0x01': {
                 'vendor': '0xce01', 'device': '0x4e39', 'rev_id': '0x34',
@@ -79,6 +83,7 @@ class MseriesNvdimmService(Service):
                 'part_num': 'AGIGA8811-032ACA',
                 'size': '32GB', 'clock_speed': '2933MHz',
                 'qualified_firmware': ['0.8'],
+                'recommended_firmware': '0.8',
             },
             'unknown': {
                 'vendor': None, 'device': None, 'rev_id': None,
@@ -86,6 +91,7 @@ class MseriesNvdimmService(Service):
                 'part_num': None,
                 'size': None, 'clock_speed': None,
                 'qualified_firmware': [],
+                'recommended_firmware': None,
             }
         }
         result = mapping['unknown']
