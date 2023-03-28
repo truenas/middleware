@@ -37,7 +37,7 @@ class UserService(Service):
         if not twofactor_config['enabled']:
             raise CallError('Please enable Two Factor Authentication first')
 
-        user = await self.middleware.call('user.query', [['id', '=', username]], {'get': True})
+        user = self.middleware.call_sync('user.query', [['username', '=', username]], {'get': True})
         user_twofactor_config = self.middleware.call_sync('auth.twofactor.get_user_config', user['id'])
         totp = pyotp.totp.TOTP(
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
