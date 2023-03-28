@@ -15,7 +15,7 @@ class UserService(Service):
         """
         user = await self.middleware.call('user.get_instance', user_id)
         twofactor_config = await self.middleware.call('auth.twofactor.config')
-        user_twofactor_config = await self.middleware.call('auth.twofactor.get_user_twofactor_config', user_id)
+        user_twofactor_config = await self.middleware.call('auth.twofactor.get_user_config', user_id)
         if not user_twofactor_config['secret']:
             raise CallError(f'{user["username"]!r} user does not has two factor authentication configured')
 
@@ -37,7 +37,7 @@ class UserService(Service):
         if not twofactor_config['enabled']:
             raise CallError('Please enable Two Factor Authentication first')
 
-        user_twofactor_config = await self.middleware.call('auth.twofactor.get_user_twofactor_config', user_id)
+        user_twofactor_config = await self.middleware.call('auth.twofactor.get_user_config', user_id)
         totp = pyotp.totp.TOTP(
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
             digits=twofactor_config['otp_digits'],
