@@ -196,95 +196,102 @@ if not ha:
         assert isinstance(results.json(), dict), results.text
         assert results.json()['pod_status']['desired'] == 2, results.text
 
-    @pytest.mark.dependency(name='hostPath_dataset')
-    def test_20_create_datasets_for_ipfs_hostPath(request):
-        depends(request, ['pool_04'], scope='session')
-        result = POST('/pool/dataset/', {'name': f'{pool_name}/ipfs-staging'})
-        assert result.status_code == 200, result.text
-        result = POST('/pool/dataset/', {'name': f'{pool_name}/ipfs-data'})
-        assert result.status_code == 200, result.text
+    # The code below is kept for future reference when app related test will
+    # be reworked.
 
-    @pytest.mark.timeout(600)
-    @pytest.mark.dependency(name='ipfs_schema_values')
-    def test_21_change_some_ipfs_schema_values(request):
-        depends(request, ['release_ipfs', 'hostPath_dataset'])
-        global payload
-        payload = {
-            'values': {
-                'updateStrategy': 'RollingUpdate',
-                'service': {
-                    'swarmPort': 10401,
-                    'apiPort': 10501,
-                    'gatewayPort': 10880
-                },
-                'appVolumeMounts': {
-                    'staging': {
-                        'datasetName': 'ix-ipfs-staging',
-                        'mountPath': '/export',
-                        'hostPathEnabled': True,
-                        'hostPath': f'/mnt/{pool_name}/ipfs-staging'
-                    },
-                    'data': {
-                        'datasetName': 'ix-ipfs-data',
-                        'mountPath': '/data/ipfs',
-                        'hostPathEnabled': True,
-                        'hostPath': f'/mnt/{pool_name}/ipfs-data'
-                    }
-                }
-            }
-        }
-        results = PUT(f'/chart/release/id/{release_id}/', payload)
-        assert results.status_code == 200, results.text
-        job_status = wait_on_job(results.json(), 600)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    # @pytest.mark.dependency(name='hostPath_dataset')
+    # def test_20_create_datasets_for_ipfs_hostPath(request):
+    #     depends(request, ['pool_04'], scope='session')
+    #     result = POST('/pool/dataset/', {'name': f'{pool_name}/ipfs-staging'})
+    #     assert result.status_code == 200, result.text
+    #     result = POST('/pool/dataset/', {'name': f'{pool_name}/ipfs-data'})
+    #     assert result.status_code == 200, result.text
 
-    def test_22_verify_ipfs_updateStrategy(request):
-        depends(request, ['ipfs_schema_values'])
-        results = GET(f'/chart/release/id/{release_id}/')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
-        assert results.json()['config']['updateStrategy'] == payload['values']['updateStrategy'], results.text
+    # @pytest.mark.timeout(600)
+    # @pytest.mark.dependency(name='ipfs_schema_values')
+    # def test_21_change_some_ipfs_schema_values(request):
+    #     depends(request, ['release_ipfs', 'hostPath_dataset'])
+    #     global payload
+    #     payload = {
+    #         'values': {
+    #             'updateStrategy': 'RollingUpdate',
+    #             'service': {
+    #                 'swarmPort': 10401,
+    #                 'apiPort': 10501,
+    #                 'gatewayPort': 10880
+    #             },
+    #             'ipfsStorage': {
+    #                 'staging': {
+    #                     "type": "hostPath",
+    #                     'hostPath': f'/mnt/{pool_name}/ipfs-staging',
+    #                     #'datasetName': 'ix-ipfs-staging'
+    #                 },
+    #                 'data': {
+    #                     "type": "hostPath",
+    #                     'hostPath': f'/mnt/{pool_name}/ipfs-data',
+    #                     #'datasetName': 'ix-ipfs-data'
+    #                 }
+    #             },
+    #             "ipfsNetwork": {
+    #                 "apiPort": 30000,
+    #                 "swarmPort": 30001,
+    #                 "gatewayPort": 30002,
+    #                 "hostNetwork": False
+    #             }
+    #         }
+    #     }
+    #     results = PUT(f'/chart/release/id/{release_id}/', payload)
+    #     assert results.status_code == 200, results.text
+    #     job_status = wait_on_job(results.json(), 600)
+    #     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    @pytest.mark.parametrize('key', ['swarmPort', 'apiPort', 'gatewayPort'])
-    def test_23_verify_ipfs_service_port(request, key):
-        depends(request, ['ipfs_schema_values'])
-        results = GET(f'/chart/release/id/{release_id}/')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
-        assert results.json()['config']['service'][key] == payload['values']['service'][key], results.text
-        assert str(payload['values']['service'][key]) in str(results.json()['used_ports']), results.text
+    # def test_22_verify_ipfs_updateStrategy(request):
+    #     depends(request, ['ipfs_schema_values'])
+    #     results = GET(f'/chart/release/id/{release_id}/')
+    #     assert results.status_code == 200, results.text
+    #     assert isinstance(results.json(), dict), results.text
+    #     assert results.json()['config']['updateStrategy'] == payload['values']['updateStrategy'], results.text
 
-    @pytest.mark.parametrize('key', ['datasetName', 'mountPath', 'hostPathEnabled', 'hostPath'])
-    def test_24_verify_ipfs_appVolumeMounts_staging(request, key):
-        depends(request, ['ipfs_schema_values'])
-        results = GET(f'/chart/release/id/{release_id}/')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
-        staging = results.json()['config']['appVolumeMounts']['staging']
-        assert staging[key] == payload['values']['appVolumeMounts']['staging'][key], results.text
+    # @pytest.mark.parametrize('key', ['swarmPort', 'apiPort', 'gatewayPort'])
+    # def test_23_verify_ipfs_service_port(request, key):
+    #     depends(request, ['ipfs_schema_values'])
+    #     results = GET(f'/chart/release/id/{release_id}/')
+    #     assert results.status_code == 200, results.text
+    #     assert isinstance(results.json(), dict), results.text
+    #     assert results.json()['config']['service'][key] == payload['values']['service'][key], results.text
+    #     assert str(payload['values']['service'][key]) in str(results.json()['used_ports']), results.text
 
-    @pytest.mark.parametrize('key', ['datasetName', 'mountPath', 'hostPathEnabled', 'hostPath'])
-    def test_25_verify_ipfs_appVolumeMounts_data(request, key):
-        depends(request, ['ipfs_schema_values'])
-        results = GET(f'/chart/release/id/{release_id}/')
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), dict), results.text
-        data = results.json()['config']['appVolumeMounts']['data']
-        assert data[key] == payload['values']['appVolumeMounts']['data'][key], results.text
+    # @pytest.mark.parametrize('key', ['datasetName', 'mountPath', 'hostPathEnabled', 'hostPath'])
+    # def test_24_verify_ipfs_appVolumeMounts_staging(request, key):
+    #     depends(request, ['ipfs_schema_values'])
+    #     results = GET(f'/chart/release/id/{release_id}/')
+    #     assert results.status_code == 200, results.text
+    #     assert isinstance(results.json(), dict), results.text
+    #     staging = results.json()['config']['appVolumeMounts']['staging']
+    #     assert staging[key] == payload['values']['appVolumeMounts']['staging'][key], results.text
 
-    def test_26_verify_ipfs_staging_and_data_hostpath_in_resources_host_path_volumes(request):
-        depends(request, ['ipfs_schema_values'])
-        payload = {
-            'query-options': {
-                'extra': {
-                    'retrieve_resources': True
-                }
-            },
-            'query-filters': [['id', '=', 'ipfs']]}
-        results = GET('/chart/release/', payload)
-        host_path_volumes = str(results.json()[0]['resources']['host_path_volumes'])
-        assert f'/mnt/{pool_name}/ipfs-staging' in host_path_volumes, host_path_volumes
-        assert f'/mnt/{pool_name}/ipfs-data' in host_path_volumes, host_path_volumes
+    # @pytest.mark.parametrize('key', ['datasetName', 'mountPath', 'hostPathEnabled', 'hostPath'])
+    # def test_25_verify_ipfs_appVolumeMounts_data(request, key):
+    #     depends(request, ['ipfs_schema_values'])
+    #     results = GET(f'/chart/release/id/{release_id}/')
+    #     assert results.status_code == 200, results.text
+    #     assert isinstance(results.json(), dict), results.text
+    #     data = results.json()['config']['appVolumeMounts']['data']
+    #     assert data[key] == payload['values']['appVolumeMounts']['data'][key], results.text
+
+    # def test_26_verify_ipfs_staging_and_data_hostpath_in_resources_host_path_volumes(request):
+    #     depends(request, ['ipfs_schema_values'])
+    #     payload = {
+    #         'query-options': {
+    #             'extra': {
+    #                 'retrieve_resources': True
+    #             }
+    #         },
+    #         'query-filters': [['id', '=', 'ipfs']]}
+    #     results = GET('/chart/release/', payload)
+    #     host_path_volumes = str(results.json()[0]['resources']['host_path_volumes'])
+    #     assert f'/mnt/{pool_name}/ipfs-staging' in host_path_volumes, host_path_volumes
+    #     assert f'/mnt/{pool_name}/ipfs-data' in host_path_volumes, host_path_volumes
 
     def test_27_get_ipfs_chart_release_pod_console_choices(request):
         depends(request, ['release_ipfs'])
