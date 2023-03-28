@@ -9,9 +9,7 @@ def on_config_upload(middleware, path):
     conn = sqlite3.connect(path)
     try:
         cursor = conn.cursor()
-        for service, enabled in cursor.execute(
-            "SELECT srv_service, srv_enable FROM services_services"
-        ).fetchall():
+        for service, enabled in cursor.execute('SELECT srv_service, srv_enable FROM services_services').fetchall():
             try:
                 units = middleware.call_sync('service.systemd_units', service)
             except KeyError:
@@ -25,16 +23,37 @@ def on_config_upload(middleware, path):
     finally:
         conn.close()
 
-    for action in filter(lambda k: enable_disable_units[k], enable_disable_units):
-        cp = subprocess.Popen(
-            ['systemctl', action] + enable_disable_units[action],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    need_enabled = []
+    need_disabled = []
+    for action, services in enable_disable_units.items():
+        cp = subprocess.run(['systemctl', 'is-enabled'] + services, stdout=subprocess.PIPE, encoding='utf8')
+        for service, line in zip(services, cp.stdout.split('\n')):
+            if (line := line.strip()):
+                if line == 'disabled' and action == 'enable':
+                    need_enabled.append(service)
+                elif line == 'enabled' and action == 'disable':
+                    need_disabled.append(service)
+
+    if need_enabled:
+        cp = subprocess.run(
+            ['systemctl', 'enable'] + need_enabled,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        err = cp.communicate()[1]
         if cp.returncode:
             middleware.logger.error(
-                'Failed to %s %r systemctl units: %s', action,
-                ', '.join(enable_disable_units[action]), err.decode()
+                'Failed to enable systemd units %r with error %r',
+                ', '.join(need_enabled), cp.stdout.decode()
+            )
+
+    if need_disabled:
+        cp = subprocess.run(
+            ['systemctl', 'disable'] + need_disabled,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+        if cp.returncode:
+            middleware.logger.error(
+                'Failed to disable systemd units %r with error %r',
+                ', '.join(need_enabled), cp.stdout.decode()
             )
 
 
