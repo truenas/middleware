@@ -9,7 +9,7 @@ After=ix-zfs.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=midclt call endpointhere
+ExecStart=midclt call system.setup_cgroups
 StandardOutput=null
 StandardError=null
 
