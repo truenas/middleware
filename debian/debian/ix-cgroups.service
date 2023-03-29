@@ -1,10 +1,7 @@
 [Unit]
 Description=Enable required cgroups for TrueNAS
 DefaultDependencies=no
-
-Before=network-pre.target
-
-After=ix-zfs.service
+Before=middlewared.service
 
 [Service]
 Type=oneshot
