@@ -50,8 +50,7 @@ def mount(device, path, fs_type, fs_options, options):
     output = proc.communicate()
 
     if proc.returncode != 0:
-        logger.debug("Mount failed (%s): %s", proc.returncode, output)
-        raise ValueError("Mount failed (exit code {0}):\n{1}{2}" .format(
+        raise CallError("Mount failed (exit code {0}):\n{1}{2}" .format(
             proc.returncode,
             output[0].decode("utf-8"),
             output[1].decode("utf-8"),
@@ -69,11 +68,13 @@ class MountFsContextManager:
         self.kwargs = kwargs
 
     def __enter__(self):
+        os.makedirs(self.path, exist_ok=True)
         mount(self.device, self.path, *self.args, **self.kwargs)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if is_mounted(os.path.realpath(self.path)):
             subprocess.check_call(["umount", self.path])
+        os.rmdir(self.path)
 
 
 class PoolService(Service):
@@ -82,7 +83,7 @@ class PoolService(Service):
 
     @accepts(
         Str('device'),
-        Str('fs_type'),
+        Str('fs_type', enum=['ext2fs', 'msdosfs', 'ntfs', 'ufs']),
         Dict('fs_options', additional_attrs=True),
         Str('dst_path')
     )
@@ -110,72 +111,64 @@ class PoolService(Service):
 
         src = os.path.join('/var/run/importcopy/tmpdir', os.path.relpath(device, '/'))
 
-        if os.path.exists(src):
-            os.rmdir(src)
+        with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ['ro']):
+            job.set_progress(None, description='Importing')
 
-        try:
-            os.makedirs(src)
-
-            with MountFsContextManager(self.middleware, device, src, fs_type, fs_options, ['ro']):
-                job.set_progress(None, description='Importing')
-
-                line = [
-                    'rsync',
-                    '--info=progress2',
-                    '--modify-window=1',
-                    '-rltvhX',
-                    '--no-perms',
-                    src + '/',
-                    dst_path
-                ]
-                rsync_proc = subprocess.Popen(
-                    line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, preexec_fn=os.setsid,
-                )
-                try:
-                    progress_buffer = JobProgressBuffer(job)
-                    percent_complete = 0
-                    while True:
-                        line = rsync_proc.stdout.readline()
-                        job.logs_fd.write(line)
-                        if line:
-                            try:
-                                line = line.decode('utf-8', 'ignore').strip()
-                                bits = re.split(r'\s+', line)
-                                if len(bits) == 6 and bits[1].endswith('%') and bits[1][:-1].isdigit():
-                                    percent_complete = int(bits[1][:-1])
-                                    progress_buffer.set_progress(percent_complete)
-                                elif not line.endswith('/'):
-                                    if (
-                                        line not in ['sending incremental file list'] and
-                                        'xfr#' not in line
-                                    ):
-                                        progress_buffer.set_progress(percent_complete, extra=line)
-                            except Exception:
-                                logger.warning('Parsing error in rsync task', exc_info=True)
-                        else:
-                            break
-
-                    progress_buffer.flush()
-                    rsync_proc.wait()
-                    if rsync_proc.returncode != 0:
-                        raise Exception('rsync failed with exit code %r' % rsync_proc.returncode)
-                finally:
-                    if rsync_proc.returncode is None:
+            line = [
+                'rsync',
+                '--info=progress2',
+                '--modify-window=1',
+                '-rltvhX',
+                '--no-perms',
+                src + '/',
+                dst_path
+            ]
+            rsync_proc = subprocess.Popen(
+                line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0, preexec_fn=os.setsid,
+            )
+            try:
+                progress_buffer = JobProgressBuffer(job)
+                percent_complete = 0
+                while True:
+                    line = rsync_proc.stdout.readline()
+                    job.logs_fd.write(line)
+                    if line:
                         try:
-                            logger.warning("Terminating rsync")
-                            rsync_proc.terminate()
-                            try:
-                                rsync_proc.wait(10)
-                            except subprocess.TimeoutExpired:
-                                logger.warning("Timeout waiting for rsync to terminate, killing it")
-                                rsync_proc.kill()
-                                time.sleep(5)  # For children to die before unmount
-                        except ProcessLookupError:
-                            logger.warning("rsync process lookup error")
+                            line = line.decode('utf-8', 'ignore').strip()
+                            bits = re.split(r'\s+', line)
+                            if len(bits) == 6 and bits[1].endswith('%') and bits[1][:-1].isdigit():
+                                percent_complete = int(bits[1][:-1])
+                                progress_buffer.set_progress(percent_complete)
+                            elif not line.endswith('/'):
+                                if (
+                                    line not in ['sending incremental file list'] and
+                                    'xfr#' not in line
+                                ):
+                                    progress_buffer.set_progress(percent_complete, extra=line)
+                        except Exception:
+                            logger.warning('Parsing error in rsync task', exc_info=True)
+                    else:
+                        break
 
-                job.set_progress(100, description='Done', extra='')
-        finally:
-            os.rmdir(src)
+                progress_buffer.flush()
+                rsync_proc.wait()
+                if rsync_proc.returncode != 0:
+                    raise CallError('rsync failed with exit code %r' % rsync_proc.returncode)
+            finally:
+                if rsync_proc.returncode is None:
+                    try:
+                        logger.warning("Terminating rsync")
+                        rsync_proc.terminate()
+                        try:
+                            rsync_proc.wait(10)
+                        except subprocess.TimeoutExpired:
+                            logger.warning("Timeout waiting for rsync to terminate, killing it")
+                            rsync_proc.kill()
+                            time.sleep(5)  # For children to die before unmount
+                    except ProcessLookupError:
+                        logger.warning("rsync process lookup error")
+
+            job.set_progress(100, description='Done', extra='')
 
     @accepts(Str("device"))
     @returns(Str('filesystem', null=True))
