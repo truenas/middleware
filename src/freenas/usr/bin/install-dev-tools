@@ -25,6 +25,7 @@ PIP_PACKAGES=(
     asyncmock
     asynctest
     pyfakefs
+    pyotp
 )
 
 chmod +x /usr/bin/apt*
