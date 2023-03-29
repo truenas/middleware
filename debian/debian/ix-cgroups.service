@@ -1,6 +1,7 @@
 [Unit]
 Description=Enable required cgroups for TrueNAS
 DefaultDependencies=no
+# We want to set it up before starting middleware because of NAS-120085
 Before=middlewared.service
 
 [Service]
