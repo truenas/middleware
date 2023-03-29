@@ -306,7 +306,8 @@ class DiskService(CRUDService):
         ):
             return
 
-        result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig), disks, 16)
+        result = await asyncio_map(lambda disk: self.sed_unlock(disk['name'], disk, advconfig, False), disks, 16)
+        await self.middleware.call('geom.cache.invalidate')
         locked = list(filter(lambda x: x['locked'] is True, result))
         if locked:
             disk_names = ', '.join([i['name'] for i in locked])
@@ -336,7 +337,7 @@ class DiskService(CRUDService):
                 self.logger.error('Failed to set MBREnable for %r to "off": %s', devname, error)
 
     @private
-    async def sed_unlock(self, disk_name, disk=None, _advconfig=None):
+    async def sed_unlock(self, disk_name, disk=None, _advconfig=None, invalidate_geom_cache=True):
         # on an HA system, if both controllers manage to send
         # SED commands at the same time, then it can cause issues
         # where, ultimately, the disks don't get unlocked
@@ -409,6 +410,9 @@ class DiskService(CRUDService):
                     pass
             except OSError:
                 pass
+
+            if invalidate_geom_cache:
+                await self.middleware.call('geom.cache.invalidate')
         elif locked:
             self.logger.error(f'Failed to unlock {disk_name}')
         rv['locked'] = locked
