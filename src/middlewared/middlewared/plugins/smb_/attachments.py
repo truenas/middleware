@@ -7,7 +7,7 @@ class SMBServicePortDelegate(ServicePortDelegate):
     namespace = 'smb'
     title = 'SMB Service'
 
-    async def get_ports_binded_on_wildcards(self):
+    async def get_ports_bound_on_wildcards(self):
         return [137, 138, 139, 445]
 
 
