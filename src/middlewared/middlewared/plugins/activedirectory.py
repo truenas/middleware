@@ -476,6 +476,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'security policies, one may be required to pre-generate a kerberos keytab '
                         'and upload to TrueNAS server for use during join process.'
                     )
+                elif msg.endswith('not found in Kerberos database while getting initial credentials'):
+                    # KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN
+                    if method == "activedirectory.bindpw":
+                        method = "activedirectory.bindname"
+
+                    msg = (
+                        "Client's credentials were not found on remote domain controller. The most "
+                        "common reasons for the domain controller to return this response is due to a "
+                        "typo in the service account name or the service or the computer account being "
+                        "deleted from Active Directory."
+                    )
 
                 if not msg:
                     # failed to parse, re-raise original error message
