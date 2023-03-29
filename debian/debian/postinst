@@ -46,6 +46,7 @@ systemctl disable nvidia-persistenced
 
 # Update alternatives
 update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
+update-alternatives --install "/usr/bin/vim" vim.tiny "/usr/bin/vim.tiny" "10"
 
 # Add nut to dialout group - NAS-110578
 usermod -a -G dialout nut
