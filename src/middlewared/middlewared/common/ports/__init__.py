@@ -1,5 +1,7 @@
 from collections.abc import Iterable
 
+from middlewared.plugins.ports.utils import WILDCARD_IPS
+
 
 class PortDelegate:
 
@@ -40,12 +42,12 @@ class ServicePortDelegate(PortDelegate):
     async def config(self):
         return await self.middleware.call(f'{self.namespace}.config')
 
-    async def get_ports_binded_on_wildcards(self):
+    async def get_ports_bound_on_wildcards(self):
         return []
 
     async def get_ports_internal(self):
-        if override_ports := await self.get_ports_binded_on_wildcards():
-            return [('0.0.0.0', port) for port in override_ports]
+        if override_ports := await self.get_ports_bound_on_wildcards():
+            return [(wildcard, port) for wildcard in WILDCARD_IPS for port in override_ports]
 
         await self.basic_checks()
         config = await self.config()
