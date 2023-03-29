@@ -82,4 +82,5 @@ class CatalogService(Service):
     @private
     async def initiate_first_time_sync(self):
         await (await self.middleware.call('catalog.sync', OFFICIAL_LABEL)).wait()
+        self.SYNCED = True
         await self.middleware.call('catalog.sync_all')
