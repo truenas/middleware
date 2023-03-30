@@ -613,6 +613,12 @@ def get_port_service():
     (24007, '192.168.0.12', 'gluster.fuse'),
     (21027, '0.0.0.0', 'chart.release'),
     (21027, '192.168.0.12', 'chart.release'),
+    (68, '::', 'system'),
+    (68, '2001:db8:3333:4444:5555:6666:7777:8888', 'system'),
+    (24008, '::', 'gluster.fuse'),
+    (24008, '2001:db8:3333:4444:5555:6666:7777:8888', 'gluster.fuse'),
+    (21028, '::', 'chart.release'),
+    (21028, '2001:db8:3333:4444:5555:6666:7777:8888', 'chart.release'),
 ])
 @pytest.mark.asyncio
 async def test_port_validate_whitelist_namespace_logic(port, bindip, whitelist_namespace):
@@ -633,6 +639,13 @@ async def test_port_validate_whitelist_namespace_logic(port, bindip, whitelist_n
     (9010, '192.168.0.70', False),
     (9010, '192.168.0.71', True),
     (6443, '192.168.0.71', False),
+    (80, '::', True),
+    (8080, '::', False),
+    (8081, '::', True),
+    (8703, '::', True),
+    (8704, '::', False),
+    (8704, '2001:db8:3333:4444:5555:6666:7777:8888', False),
+    (8704, '2001:db8:3333:4444:5555:6666:7777:8889', True),
 ])
 @pytest.mark.asyncio
 async def test_port_validation_logic(port, bindip, should_work):
