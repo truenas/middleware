@@ -1,7 +1,9 @@
+import asyncio
 import contextlib
 import enum
 import ipaddress
 import os
+import socket
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -467,7 +469,9 @@ class SharingNFSService(SharingService):
                         return None
                     else:
                         try:
-                            return (await self.middleware.call('dnsclient.forward_lookup', {"names": [hostname]}))[0]['address']
+                            return (
+                                await asyncio.wait_for(self.middleware.run_in_thread(socket.getaddrinfo, hostname, None), 5)
+                            )[0][4][0]
                         except Exception as e:
                             self.logger.warning("Unable to resolve host %r: %r", hostname, e)
                             return None
