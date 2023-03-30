@@ -10,10 +10,17 @@ class SystemGeneralServicePortDelegate(ServicePortDelegate):
     title = 'WebUI Service'
 
     def bind_address(self, config):
-        if config[self.bind_address_field] and '0.0.0.0' not in config[self.bind_address_field]:
-            return config[self.bind_address_field]
-        else:
-            return ['0.0.0.0']
+        addresses = []
+        for wildcard_ip, address_field in (
+            ('0.0.0.0', 'ui_address'),
+            ('::', 'ui_v6address'),
+        ):
+            if config[address_field] and wildcard_ip not in config[address_field]:
+                addresses.extend(config[address_field])
+            else:
+                addresses.append(wildcard_ip)
+
+        return addresses
 
     async def get_ports_internal(self):
         await self.basic_checks()
