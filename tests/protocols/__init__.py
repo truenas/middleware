@@ -6,6 +6,7 @@ from .iscsi_proto import iscsi_scsi_connect, iscsi_scsi_connection
 from .iSNSP.client import iSNSPClient
 from .nfs_proto import SSH_NFS
 from .smb_proto import SMB
+from .ms_rpc import MS_RPC
 
 
 @contextlib.contextmanager
