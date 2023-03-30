@@ -111,7 +111,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             elif run_fw != nvdimm['recommended_firmware']:
                 alerts.append(Alert(
                     NVDIMMRecommendedFirmwareVersionAlertClass,
-                    {'dev': dev, 'rv': run_fw, 'uv': nvdimm['recommended_version']}
+                    {'dev': dev, 'rv': run_fw, 'uv': nvdimm['recommended_firmware']}
                 ))
 
         if not old_bios_alert_already_generated and nvdimm['old_bios']:
