@@ -72,11 +72,15 @@ class PortService(Service):
                 continue
 
             if bindip == wildcard_ip or ip == wildcard_ip or (bindip != wildcard_ip and ip == bindip):
-                entry = next(
-                    detail for detail in port_entry['port_details']
-                    if [ip, port] in detail['ports'] or [bindip, port] in detail['ports']
-                )
-                description = entry['description']
+                try:
+                    entry = next(
+                        detail for detail in port_entry['port_details']
+                        if [ip, port] in detail['ports'] or [bindip, port] in detail['ports']
+                    )
+                    description = entry['description']
+                except StopIteration:
+                    description = None
+
                 ip_errors.append(
                     f'{index + 1}) "{ip}:{port}" used by {port_entry["title"]}'
                     f'{f" ({description})" if description else ""}'
