@@ -3,7 +3,7 @@ import datetime
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
-WEBUI_SUPPORT_FORM = 'Please contact iXsystems Support using the form in System Settings -> General -> Support'
+WEBUI_SUPPORT_FORM = 'Please contact iXsystems Support using the form in System -> Support'
 
 
 class NVDIMMAlertClass(AlertClass):
