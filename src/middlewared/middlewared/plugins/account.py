@@ -152,7 +152,6 @@ class UserService(CRUDService):
         ('rm', {'name': 'home_mode'}),
         ('rm', {'name': 'home_create'}),
         ('rm', {'name': 'password'}),
-        ('rm', {'name': 'configure_twofactor_auth'}),
         ('add', Dict('group', additional_attrs=True)),
         ('add', Int('id')),
         ('add', Bool('builtin')),
@@ -616,6 +615,7 @@ class UserService(CRUDService):
         """
 
         user = await self.get_instance(pk)
+        same_user_logged_in = user['username'] == (await self.middleware.call('auth.me'))['pw_name']
 
         verrors = ValidationErrors()
 
@@ -630,7 +630,7 @@ class UserService(CRUDService):
             group = user['group']
             user['group'] = group['id']
 
-        if (
+        if same_user_logged_in and (
             await self.middleware.call('auth.twofactor.config')
         )['enabled'] and not user['twofactor_auth_configured'] and not data.get('renew_twofactor_secret'):
             verrors.add(
