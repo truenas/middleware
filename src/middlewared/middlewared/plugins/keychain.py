@@ -617,17 +617,19 @@ class KeychainCredentialService(CRUDService):
             except Exception as e:
                 raise CallError(f"Semi-automatic SSH connection setup failed: {e!r}")
 
+            user = c.call("user.query", [["username", "=", data["username"]]], {"get": True})
+            user_update = {}
+            if user["shell"] == "/usr/sbin/nologin":
+                user_update["shell"] = "/usr/bin/bash"
             if data["sudo"]:
-                try:
-                    user = c.call("user.query", [["username", "=", data["username"]]], {"get": True})
-                    if "ALL" not in user["sudo_commands_nopasswd"]:
-                        zfs_binary = "/usr/sbin/zfs"
-                        if zfs_binary not in user["sudo_commands_nopasswd"]:
-                            c.call("user.update", user["id"], {
-                                "sudo_commands_nopasswd": user["sudo_commands_nopasswd"] + [zfs_binary],
-                            })
-                except Exception as e:
-                    raise CallError(f"Error enabling passwordless sudo: {e!r}")
+                if "ALL" not in user["sudo_commands_nopasswd"]:
+                    zfs_binary = "/usr/sbin/zfs"
+                    if zfs_binary not in user["sudo_commands_nopasswd"]:
+                        user_update["sudo_commands_nopasswd"] = user["sudo_commands_nopasswd"] + [zfs_binary]
+            try:
+                c.call("user.update", user["id"], user_update)
+            except Exception as e:
+                raise CallError(f"Error updating remote user attributes: {e}")
 
         return self.middleware.call_sync("keychaincredential.create", {
             "name": data["name"],
