@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import urllib.parse
 
-from middlewared.client import Client
+from middlewared.client import Client, ClientException
 from middlewared.service_exception import CallError
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
@@ -608,6 +608,12 @@ class KeychainCredentialService(CRUDService):
                     "username": data["username"],
                     "public_key": replication_key["attributes"]["public_key"],
                 })
+            except ClientException as e:
+                raise CallError(
+                    f"Semi-automatic SSH connection setup failed: {e}\n\n"
+                    f"Please make sure that home directory for {data['username']} user on the remote system exists and "
+                    "is writeable."
+                )
             except Exception as e:
                 raise CallError(f"Semi-automatic SSH connection setup failed: {e!r}")
 
