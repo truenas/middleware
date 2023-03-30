@@ -427,7 +427,6 @@ class UserService(CRUDService):
         Str('username', required=True, max_length=16),
         Int('group'),
         Bool('group_create', default=False),
-        Bool('configure_twofactor_auth', default=False),
         Str('home', default=DEFAULT_HOME_PATH),
         Str('home_mode', default='700'),
         Bool('home_create', default=False),
@@ -480,12 +479,6 @@ class UserService(CRUDService):
             group_ids.append(data['group'])
         if data.get('groups'):
             group_ids.extend(data['groups'])
-
-        if (await self.middleware.call('auth.twofactor.config'))['enabled'] and not data['configure_twofactor_auth']:
-            verrors.add(
-                'user_create.configure_twofactor_auth',
-                'Two-factor authentication is enabled globally. Please enable it for this user.'
-            )
 
         await self.__common_validation(verrors, data, 'user_create', group_ids)
 
@@ -557,13 +550,10 @@ class UserService(CRUDService):
             await self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
 
-            secret = await self.middleware.call('auth.twofactor.generate_base32_secret') if data.pop(
-                'configure_twofactor_auth', False
-            ) else None
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
             await self.middleware.call(
                 'datastore.insert', 'account.twofactor_user_auth', {
-                    'secret': secret,
+                    'secret': None,
                     'user': pk,
                 }
             )
@@ -617,7 +607,6 @@ class UserService(CRUDService):
             ('add', Bool('renew_twofactor_secret', default=False)),
             ('attr', {'update': True}),
             ('rm', {'name': 'group_create'}),
-            ('rm', {'name': 'configure_twofactor_auth'}),
         ),
     )
     @returns(Int('primary_key'))
