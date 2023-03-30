@@ -11,7 +11,7 @@ from .utils import WILDCARD_IPS
 SYSTEM_PORTS = [(wildcard, port) for wildcard in WILDCARD_IPS for port in [67, 123, 3702, 5353, 6000]]
 
 
-def get_ip_protocol(ip: str) -> int:
+def get_ip_version(ip: str) -> int:
     return ipaddress.ip_interface(ip).version
 
 
@@ -54,12 +54,12 @@ class PortService(Service):
 
     async def validate_port(self, schema, port, bindip='0.0.0.0', whitelist_namespace=None, raise_error=False):
         verrors = ValidationErrors()
-        bindip_protocol = get_ip_protocol(bindip)
-        wildcard_ip = '0.0.0.0' if bindip_protocol == 4 else '::'
+        bindip_version = get_ip_version(bindip)
+        wildcard_ip = '0.0.0.0' if bindip_version == 4 else '::'
         port_mapping = await self.ports_mapping(whitelist_namespace)
         port_attachment = port_mapping[port]
         if not any(
-            get_ip_protocol(ip) == bindip_protocol for ip in port_attachment
+            get_ip_version(ip) == bindip_version for ip in port_attachment
         ) or (
             bindip not in port_attachment and wildcard_ip not in port_attachment and bindip != wildcard_ip
         ):
@@ -68,7 +68,7 @@ class PortService(Service):
         ip_errors = []
         for index, port_detail in enumerate(port_attachment.items()):
             ip, port_entry = port_detail
-            if get_ip_protocol(ip) != bindip_protocol:
+            if get_ip_version(ip) != bindip_version:
                 continue
 
             if bindip == wildcard_ip or ip == wildcard_ip or (bindip != wildcard_ip and ip == bindip):
