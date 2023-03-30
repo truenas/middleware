@@ -1,3 +1,4 @@
+import ipaddress
 import itertools
 
 from collections import defaultdict
@@ -10,12 +11,8 @@ from .utils import WILDCARD_IPS
 SYSTEM_PORTS = [(wildcard, port) for wildcard in WILDCARD_IPS for port in [67, 123, 3702, 5353, 6000]]
 
 
-def check_ip_is_ipv6(ip: str) -> bool:
-    return ':' in ip
-
-
 def get_ip_protocol(ip: str) -> int:
-    return 6 if check_ip_is_ipv6(ip) else 4
+    return ipaddress.ip_interface(ip).version
 
 
 class PortService(Service):
@@ -61,7 +58,9 @@ class PortService(Service):
         wildcard_ip = '0.0.0.0' if bindip_protocol == 4 else '::'
         port_mapping = await self.ports_mapping(whitelist_namespace)
         port_attachment = port_mapping[port]
-        if not port_attachment or (
+        if not any(
+            get_ip_protocol(ip) == bindip_protocol for ip in port_attachment
+        ) or (
             bindip not in port_attachment and wildcard_ip not in port_attachment and bindip != wildcard_ip
         ):
             return verrors
