@@ -616,7 +616,10 @@ class UserService(CRUDService):
         """
 
         user = await self.get_instance(pk)
-        same_user_logged_in = user['username'] == (await self.middleware.call('auth.me', app=app))['pw_name']
+        if app:
+            same_user_logged_in = user['username'] == (await self.middleware.call('auth.me', app=app))['pw_name']
+        else:
+            same_user_logged_in = False
 
         verrors = ValidationErrors()
 
