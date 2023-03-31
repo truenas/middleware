@@ -949,7 +949,8 @@ class UserService(CRUDService):
         'get_user_obj',
         Str('username', default=None),
         Int('uid', default=None),
-        Bool('get_groups', default=False)
+        Bool('get_groups', default=False),
+        Bool('sid_info', default=False),
     ))
     @returns(Dict(
         'user_information',
@@ -960,19 +961,33 @@ class UserService(CRUDService):
         Int('pw_uid'),
         Int('pw_gid'),
         List('grouplist'),
+        Dict('sid_info'),
         register=True,
     ))
     async def get_user_obj(self, data):
         """
         Returns dictionary containing information from struct passwd for the user specified by either
         the username or uid. Bypasses user cache.
+
+        Supports the following additional parameters:
+        `get_groups` - retrieve group list for the specified user.
+
+        NOTE: results will not include nested groups for Active Directory users
+
+        `sid_info` - retrieve SID and domain information for the user
+
+        NOTE: in some pathological scenarios this may make the operation hang until
+        the winbindd request timeout has been reached if the winbindd connection manager
+        has not yet marked the domain as offline. The TrueNAS middleware is more aggressive
+        about marking AD domains as FAULTED and so it may be advisable to first check the
+        Active Directory service state prior to batch operations using this option.
         """
         verrors = ValidationErrors()
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
         return await self.middleware.call(
-            'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups']
+            'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'], data['sid_info']
         )
 
     @accepts()
