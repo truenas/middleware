@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import ctdb
+import errno
 import fcntl
 import json
 import os
@@ -89,6 +90,18 @@ class CtdbEvent:
                 self.node_status = {}
 
         except FileNotFoundError:
+            self.cl_services = deepcopy(CTDB_SERVICE_DEFAULTS)
+
+        except OSError as e:
+            if e.errno == errno.ENOTCONN:
+                self.cl_services = deepcopy(CTDB_SERVICE_DEFAULTS)
+                raise RuntimeError(
+                    "IO operation on gluster volume fuse mount containing ctdbd metadata "
+                    "failed with ENOTCONN. This may indicate that the volume is not mounted "
+                    "or the mountpoint is otherwise not healthy."
+                )
+
+            self.logger.warning('Failed to load clustered services file', exc_info=True)
             self.cl_services = deepcopy(CTDB_SERVICE_DEFAULTS)
 
         except Exception:
@@ -190,7 +203,16 @@ class CtdbEvent:
             }
 
         if not payload['status'] == 'FAILURE':
-            self.load_service_file()
+            try:
+                self.load_service_file()
+            except RuntimeError as e:
+                payload = {
+                    'event': 'MONITOR',
+                    'status': 'FAILURE',
+                    'reason': str(e),
+                    'service': 'ctdb_shared_volume',
+                }
+
             self.init_node_status = deepcopy(self.node_status)
             for srv in self.cl_services.values():
                 if not srv['monitor_enable']:
