@@ -242,10 +242,19 @@ def test_07_enable_leave_activedirectory(request):
 
 
         # Verify that idmapping is working
-        results = POST("/user/get_user_obj/", {'username': AD_USER})
+        results = POST("/user/get_user_obj/", {'username': AD_USER, 'sid_info': True})
         assert results.status_code == 200, results.text
         assert results.json()['pw_name'] == AD_USER, results.text
-        domain_users_id = results.json()['pw_gid']
+        pw = results.json()
+        domain_users_id = pw['pw_gid']
+
+        # Verify winbindd information
+        assert pw['sid_info'] is not None, results.text
+        assert not pw['sid_info']['sid'].startswith('S-1-22-1-'), results.text
+        assert pw['sid_info']['domain_information']['domain'] != 'LOCAL', results.text
+        assert pw['sid_info']['domain_information']['domain_sid'] is not None, results.text
+        assert pw['sid_info']['domain_information']['online'], results.text
+        assert pw['sid_info']['domain_information']['activedirectory'], results.text
 
         res = make_ws_request(ip, {
             'msg': 'method',

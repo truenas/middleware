@@ -150,15 +150,18 @@ def test_05_verify_user_exists(request):
     get_user_obj is a wrapper around the pwd module.
     This check verifies that the user is _actually_ created.
     """
-    results = POST("/user/get_user_obj/", {"username": "testuser"})
+    results = POST("/user/get_user_obj/", {"username": "testuser", "sid_info": True})
     assert results.status_code == 200, results.text
-    if results.status_code == 200:
-        pw = results.json()
-        assert pw['pw_uid'] == next_uid, results.text
-        assert pw['pw_shell'] == SHELL, results.text
-        assert pw['pw_gecos'] == 'Test User', results.txt
-        assert pw['pw_dir'] == '/nonexistent', results.txt
+    pw = results.json()
+    assert pw['pw_uid'] == next_uid, results.text
+    assert pw['pw_shell'] == SHELL, results.text
+    assert pw['pw_gecos'] == 'Test User', results.text
+    assert pw['pw_dir'] == '/nonexistent', results.text
 
+    # At this point, we're not an SMB user
+    assert pw['sid_info'] is not None, results.text
+    assert pw['sid_info']['domain_information']['online'], results.text
+    assert pw['sid_info']['domain_information']['activedirectory'] is False, results.text
 
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
@@ -384,8 +387,7 @@ def test_31_creating_user_with_homedir(request):
     user_id = results.json()
     time.sleep(5)
 
-    payload = {"username": "testuser2"}
-    results = POST("/user/get_user_obj/", payload)
+    results = POST("/user/get_user_obj/", {"username": "testuser2", "sid_info": True})
     assert results.status_code == 200, results.text
 
     pw = results.json()
@@ -394,6 +396,11 @@ def test_31_creating_user_with_homedir(request):
     assert pw['pw_uid'] == user_payload['uid'], results.text
     assert pw['pw_shell'] == user_payload['shell'], results.text
     assert pw['pw_gecos'] == user_payload['full_name'], results.text
+
+    # this one is created as an SMB user
+    assert pw['sid_info'] is not None, results.text
+    assert pw['sid_info']['domain_information']['online'], results.text
+    assert pw['sid_info']['domain_information']['activedirectory'] is False, results.text
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):

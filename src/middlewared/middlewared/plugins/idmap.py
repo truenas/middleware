@@ -1095,6 +1095,8 @@ class IdmapDomainService(TDBWrapCRUDService):
                 return f'S-1-22-{1 if id == IDType.USER else 2}-{unixid}'
 
             return None
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
         return self._pyuidgid_to_dict(entry)['sid']
 
