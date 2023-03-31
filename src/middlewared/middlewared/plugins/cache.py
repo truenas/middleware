@@ -3,6 +3,7 @@ from middlewared.service import Service, private, job, filterable
 from middlewared.utils import filter_list
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.pwenc import encrypt, decrypt
+from middlewared.plugins.idmap import SID_LOCAL_USER_PREFIX
 
 from collections import namedtuple
 import os
@@ -355,7 +356,24 @@ class DSCache(Service):
         })
         return [x['val'] for x in entries]
 
-    def get_uncached_user(self, username=None, uid=None, getgroups=False):
+    def parse_domain_info(self, sid):
+        if sid.startswith(SID_LOCAL_USER_PREFIX):
+            return {'domain': 'LOCAL', 'domain_sid': None, 'online': True, 'activedirectory': False}
+
+        domain_info = self.middleware.call_sync(
+            'idmap.known_domains', [['sid', '=', sid.rsplit('-', 1)[0]]]
+        )
+        if not domain_info:
+            return {'domain': 'UNKNOWN', 'domain_sid': None, 'online': False, 'activedirectory': False}
+
+        return {
+            'domain': domain_info[0]['netbios_domain'],
+            'domain_sid': domain_info[0]['sid'],
+            'online': domain_info[0]['online'],
+            'activedirectory': 'ACTIVE_DIRECTORY' in domain_info[0]['domain_flags']['parsed']
+        }
+
+    def get_uncached_user(self, username=None, uid=None, getgroups=False, sid_info=False):
         """
         Returns dictionary containing pwd_struct data for
         the specified user or uid. Will raise an exception
@@ -379,6 +397,24 @@ class DSCache(Service):
         }
         if getgroups:
             user_obj['grouplist'] = os.getgrouplist(u.pw_name, u.pw_gid)
+
+        if sid_info:
+            try:
+                sid = self.middleware.call_sync('idmap.unixid_to_sid', {
+                    'id_type': 'USER',
+                    'id': user_obj['pw_uid'],
+                })
+            except Exception:
+                self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
+                sid = None
+
+            if sid:
+                user_obj['sid_info'] = {
+                    'sid': sid,
+                    'domain_information': self.parse_domain_info(sid)
+                }
+            else:
+                user_obj['sid_info'] = None
 
         return user_obj
 
