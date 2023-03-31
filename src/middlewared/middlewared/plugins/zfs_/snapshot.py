@@ -202,8 +202,11 @@ class ZFSSnapshot(CRUDService):
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
         except libzfs.ZFSException as err:
+            errno_ = errno.EFAULT
+            if 'already exists' in str(err):
+                errno_ = errno.EEXIST
             self.logger.error(f'Failed to snapshot {dataset}@{name}: {err}')
-            raise CallError(f'Failed to snapshot {dataset}@{name}: {err}')
+            raise CallError(f'Failed to snapshot {dataset}@{name}: {err}', errno_)
         else:
             return self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
         finally:
