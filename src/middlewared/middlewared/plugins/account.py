@@ -609,13 +609,14 @@ class UserService(CRUDService):
         ),
     )
     @returns(Int('primary_key'))
-    async def do_update(self, pk, data):
+    @pass_app()
+    async def do_update(self, app, pk, data):
         """
         Update attributes of an existing user.
         """
 
         user = await self.get_instance(pk)
-        same_user_logged_in = user['username'] == (await self.middleware.call('auth.me'))['pw_name']
+        same_user_logged_in = user['username'] == (await self.middleware.call('auth.me', app=app))['pw_name']
 
         verrors = ValidationErrors()
 
