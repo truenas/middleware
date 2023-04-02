@@ -2,6 +2,7 @@ import pyudev
 import re
 import subprocess
 
+from middlewared.plugins.vm.utils import SENSITIVE_PCI_DEVICE_TYPES
 from middlewared.service import CallError
 
 
@@ -50,7 +51,7 @@ def get_gpus():
                 'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
             })
             critical |= any(
-                k in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower() for k in ('host bridge', 'memory')
+                k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower() for k in SENSITIVE_PCI_DEVICE_TYPES
             )
 
         gpus.append({
