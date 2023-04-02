@@ -31,10 +31,13 @@ def test_001_volume_is_mounted(ip):
 def test_002_enable_and_start_ssh(ip, request):
     depends(request, ['FS_BASIC_GLUSTER_VOLUME_MOUNTED'])
 
-    payload = {
-        "rootlogin": True,
-    }
-    url = f'http://{CLUSTER_IPS[1]}/api/v2.0/ssh/'
+    url = f'http://{ip}/api/v2.0/user?username=root'
+    res = make_request('get', url)
+    assert res.status_code == 200, res.text
+    root = res.json()[0]
+
+    payload = {"ssh_password_enabled": True}
+    url = f'http://{ip}/api/v2.0/user/id/{root["id"]}'
     res = make_request('put', url, data=payload)
     assert res.status_code == 200, res.text
 

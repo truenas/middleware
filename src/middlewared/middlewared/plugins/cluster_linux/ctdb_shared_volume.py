@@ -1,4 +1,5 @@
 import errno
+import json
 from pathlib import Path
 from glustercli.cli import volume
 
@@ -10,6 +11,7 @@ MOUNT_UMOUNT_LOCK = CTDBConfig.MOUNT_UMOUNT_LOCK.value
 CRE_OR_DEL_LOCK = CTDBConfig.CRE_OR_DEL_LOCK.value
 CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
 CTDB_LOCAL_MOUNT = CTDBConfig.CTDB_LOCAL_MOUNT.value
+CTDB_VOL_INFO_FILE = CTDBConfig.CTDB_VOL_INFO_FILE.value
 
 
 class CtdbSharedVolumeService(Service):
@@ -17,6 +19,36 @@ class CtdbSharedVolumeService(Service):
     class Config:
         namespace = 'ctdb.shared.volume'
         private = True
+
+    def generate_info(self):
+        volume = CTDB_VOL_NAME
+        volume_mp = Path(CTDBConfig.LOCAL_MOUNT_BASE.value, volume)
+        metadata_dir = '/'
+        glfs_uuid = self.middleware.call_sync('gluster.filesystem.lookup', {
+            'volume_name': CTDB_VOL_NAME,
+            'path': metadata_dir
+        })['uuid']
+        data = {
+            'volume_name': volume,
+            'volume_mountpoint': str(volume_mp),
+            'path': metadata_dir,
+            'mountpoint': str(Path(f'{volume_mp}/{metadata_dir}')),
+            'uuid': glfs_uuid
+        }
+        with open(CTDB_VOL_INFO_FILE, "w") as f:
+            f.write(json.dumps(data))
+
+        return data
+
+    def config(self):
+        info_file = Path(CTDB_VOL_INFO_FILE)
+        try:
+            return json.loads(info_file.read_text())
+        except (FileNotFoundError, json.JSONDecodeError):
+            return self.generate_info()
+
+    def update(self, data):
+        raise CallError('Updates to ctdb shared volume configuration are not supported', errno.EOPNOTSUPP)
 
     async def validate(self):
         filters = [('id', '=', CTDB_VOL_NAME)]
@@ -104,6 +136,9 @@ class CtdbSharedVolumeService(Service):
         if fuse_mount_job:
             wait_id = await self.middleware.call('core.job_wait', fuse_mount_job[0]['id'])
             await wait_id.wait()
+
+        # Write our metadata configuration file
+        await self.middleware.call('ctdb.shared.volume.config')
 
         # Initialize clustered secrets
         if not await self.middleware.call('clpwenc.check'):
