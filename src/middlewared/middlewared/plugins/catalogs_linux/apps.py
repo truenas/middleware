@@ -1,12 +1,23 @@
-from middlewared.schema import accepts, Bool, Dict, List, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import filterable, filterable_returns, Service
 from middlewared.utils import filter_list
+from middlewared.validators import Range
 
 
 class AppService(Service):
 
     class Config:
         cli_namespace = 'app'
+
+    @accepts(Int('limit', default=10, validators=[Range(min=1)]))
+    @returns(Ref('available_apps'))
+    async def latest(self, limit):
+        """
+        Retrieve latest updated apps limiting the number by specifying `limit`.
+        """
+        return await self.middleware.call(
+            'app.available', [['last_update', '!=', None]], {'order_by': ['-last_update'], 'limit': limit}
+        )
 
     @filterable
     @filterable_returns(Dict(
@@ -20,11 +31,13 @@ class AppService(Service):
         Str('app_readme', required=True),
         Str('location', required=True),
         Str('healthy_error', required=True, null=True),
+        Str('last_update', required=True),
         Str('latest_version', required=True),
         Str('latest_app_version', required=True),
         Str('icon_url', required=True),
         Str('train', required=True),
         Str('catalog', required=True),
+        register=True
     ))
     def available(self, filters, options):
         """
