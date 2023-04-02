@@ -1,10 +1,11 @@
 import errno
-import fcntl
 import json
 import os
+import pyglfs
 
 from copy import deepcopy
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
+from middlewared.plugins.gluster_linux.pyglfs_utils import glfs, DEFAULT_GLFS_OPTIONS, lock_file_open
 from middlewared.schema import Dict, Str, Bool
 from middlewared.service import accepts, filterable, Service
 from middlewared.service_exception import CallError
@@ -25,16 +26,20 @@ class CtdbServicesService(Service):
         namespace = 'ctdb.services'
         private = True
 
-    def read_node_specific_status(self, pnn):
-        with open(f'{CTDBConfig.GM_CLUSTERED_SERVICES.value}.{pnn}', 'r') as f:
-            return json.load(f)
+    def read_node_specific_status(self, parent, pnn):
+        obj = parent.lookup(f'{CTDBConfig.CLUSTERED_SERVICES.value}.{pnn}')
+        with lock_file_open(obj, os.O_RDONLY):
+            return json.loads(obj.contents().decode())
 
-    def get_node_service_status(self):
+    def get_node_service_status(self, parent):
         out = []
         for node in self.middleware.call_sync('ctdb.general.listnodes'):
             try:
-                out.append({'pnn': node['pnn'], 'status': self.read_node_specific_status(node['pnn'])})
-            except FileNotFoundError:
+                out.append({'pnn': node['pnn'], 'status': self.read_node_specific_status(parent, node['pnn'])})
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+
                 out.append({'pnn': node['pnn'], 'status': {}})
             except json.decoder.JSONDecodeError:
                 self.logger.warning('Service status file for node %d could not be parsed', node['pnn'])
@@ -42,17 +47,16 @@ class CtdbServicesService(Service):
 
         return out
 
-    def get_global_state(self):
+    def get_global_state(self, parent, obj):
         if not self.middleware.call_sync('ctdb.general.healthy'):
             raise CallError('Unable to retrieve clustered service state while cluster unhealthy', errno.ENXIO)
 
+        if obj.cached_stat.st_size == 0:
+            return deepcopy(CTDB_SERVICE_DEFAULTS)
+
         try:
-            with open(CTDBConfig.GM_CLUSTERED_SERVICES.value, 'r') as f:
-                fcntl.lockf(f.fileno(), fcntl.LOCK_SH)
-                try:
-                    cl = json.load(f)
-                finally:
-                    fcntl.lockf(f.fileno(), fcntl.LOCK_UN)
+            with lock_file_open(obj, os.O_RDONLY):
+                cl = json.loads(obj.contents().decode())
 
             for srv in CTDB_MONITORED_SERVICES:
                 if srv not in cl:
@@ -60,12 +64,9 @@ class CtdbServicesService(Service):
 
             return cl
 
-        except FileNotFoundError:
-            pass
-
         except json.decoder.JSONDecodeError:
-            self.logger.warning('failed to parse clustered services state file', exc_info=True)
-            os.unlink(CTDBConfig.GM_CLUSTERED_SERVICES.value)
+            self.logger.warning('failed to parse clustered services state file: %s', obj.contents(), exc_info=True)
+            parent.unlink(CTDBConfig.CLUSTERED_SERVICES.value)
 
         return deepcopy(CTDB_SERVICE_DEFAULTS)
 
@@ -83,21 +84,34 @@ class CtdbServicesService(Service):
         `last_check` - timestamp (CLOCK_REALTIME) on `pnn` when state last updated
         `error` - error message from failure (if service isn't running when it should be)
         """
-        cl = self.get_global_state()
+        sv_config = self.middleware.call_sync('ctdb.shared.volume.config')
 
-        for node in self.get_node_service_status():
-            for srv in cl.keys():
-                if srv not in node['status']:
+        with glfs.get_volume_handle(sv_config['volume_name'], DEFAULT_GLFS_OPTIONS) as gl_vol:
+            parent = gl_vol.open_by_uuid(sv_config['uuid'])
+            try:
+                obj = parent.lookup(CTDBConfig.CLUSTERED_SERVICES.value)
+
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+
+                obj = parent.create(CTDBConfig.CLUSTERED_SERVICES.value, os.O_RDWR, mode=0o600)
+
+            cl = self.get_global_state(parent, obj)
+
+            for node in self.get_node_service_status(parent):
+                for srv in cl.keys():
+                    if srv not in node['status']:
+                        cl[srv]['cluster_state'].append({
+                            'pnn': node['pnn'],
+                            'state': 'UNAVAIL'
+                        })
+                        continue
+
                     cl[srv]['cluster_state'].append({
                         'pnn': node['pnn'],
-                        'state': 'UNAVAIL'
+                        'state': node['status'][srv]
                     })
-                    continue
-
-                cl[srv]['cluster_state'].append({
-                    'pnn': node['pnn'],
-                    'state': node['status'][srv]
-                })
 
         return filter_list(list(cl.values()), filters, options)
 
@@ -114,20 +128,28 @@ class CtdbServicesService(Service):
         Private method that enables CTDB monitoring for the specifie
         service. This enables cluster-wide.
         """
+        sv_config = self.middleware.call_sync('ctdb.shared.volume.config')
 
-        current_state = self.get_global_state()
-        current_service_config = {
-            'monitor_enable': current_state[srv]['monitor_enable'],
-            'service_enable': current_state[srv]['service_enable']
-        }
-        if data != current_service_config:
-            current_state[srv]['monitor_enable'] = data['monitor_enable']
-            current_state[srv]['service_enable'] = data['service_enable']
-            with open(CTDBConfig.GM_CLUSTERED_SERVICES.value, 'w') as f:
-                fcntl.lockf(f.fileno(), fcntl.LOCK_EX)
-                try:
-                    f.write(json.dumps(current_state))
-                    f.flush()
-                    os.fsync(f.fileno())
-                finally:
-                    fcntl.lockf(f.fileno(), fcntl.LOCK_UN)
+        with glfs.get_volume_handle(sv_config['volume_name'], DEFAULT_GLFS_OPTIONS) as gl_vol:
+            parent = gl_vol.open_by_uuid(sv_config['uuid'])
+            try:
+                obj = parent.lookup(CTDBConfig.CLUSTERED_SERVICES.value)
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+
+                obj = parent.create(CTDBConfig.CLUSTERED_SERVICES.value, os.O_RDWR, mode=0o600)
+
+            current_state = self.get_global_state(parent, obj)
+            current_service_config = {
+                'monitor_enable': current_state[srv]['monitor_enable'],
+                'service_enable': current_state[srv]['service_enable']
+            }
+            if data != current_service_config:
+                current_state[srv]['monitor_enable'] = data['monitor_enable']
+                current_state[srv]['service_enable'] = data['service_enable']
+
+            with lock_file_open(obj, os.O_RDWR) as fd:
+                fd.ftruncate(0)
+                fd.pwrite(json.dumps(current_state).encode(), 0)
+                fd.fsync()

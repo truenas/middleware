@@ -8,16 +8,12 @@ import time
 
 from copy import deepcopy
 from middlewared.client import Client
-from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from middlewared.plugins.cluster_linux.ctdb_services import CTDB_SERVICE_DEFAULTS
 from middlewared.service import MIDDLEWARE_STARTED_SENTINEL_PATH
+from pathlib import Path
 
-CTDB_VOL = os.path.join(
-    FuseConfig.FUSE_PATH_BASE.value,
-    CTDBConfig.CTDB_VOL_NAME.value,
-)
-
-CTDB_SERVICE_FILE = f'{CTDB_VOL}/.clustered_services'
+CTDB_VOL_INFO_FILE = CTDBConfig.CTDB_VOL_INFO_FILE.value
 CTDB_RUNDIR = '/var/run/ctdb'
 CTDB_MONITOR_FAILED_SENTINEL = os.path.join(CTDB_RUNDIR, '.monitored_failed')
 
@@ -32,6 +28,8 @@ class CtdbEvent:
         self.pnn = -1
         self.node_status = {}
         self.init_node_status = {}
+        self.ctdb_info = None
+        self.ctdb_service_file = None
 
     def __enter__(self):
         return self
@@ -52,8 +50,13 @@ class CtdbEvent:
             return False
 
     def check_ctdb_shared_volume(self):
-        st = os.stat(CTDB_VOL)
-        if st.st_ino != 1:
+        try:
+            self.ctdb_info = json.loads(Path(CTDB_VOL_INFO_FILE).read_text())
+        except FileNotFoundError:
+            self.ctdb_info = self.client.call('ctdb.shared.volume.config')
+
+        self.ctdb_service_file = os.path.join(self.ctdb_info['mountpoint'], '.clustered_services')
+        if os.stat(os.path.join('/cluster', self.ctdb_info['volume_name'])).st_ino != 1:
             raise RuntimeError('ctdb shared volume not mounted')
 
     def load_service_file(self):
@@ -75,7 +78,7 @@ class CtdbEvent:
         """
         self.pnn = ctdb.Client().pnn
         try:
-            with open(CTDB_SERVICE_FILE, 'r') as f:
+            with open(self.ctdb_service_file, 'r') as f:
                 fcntl.lockf(f.fileno(), fcntl.LOCK_SH)
                 try:
                     self.cl_services = json.load(f)
@@ -83,7 +86,7 @@ class CtdbEvent:
                     fcntl.lockf(f.fileno(), fcntl.LOCK_UN)
 
             try:
-                with open(f'{CTDB_SERVICE_FILE}.{self.pnn}') as f:
+                with open(f'{self.ctdb_service_file}.{self.pnn}') as f:
                     self.node_status = json.load(f)
             except (FileNotFoundError, json.decoder.JSONDecodeError):
                 self.node_status = {}
@@ -138,9 +141,6 @@ class CtdbEvent:
         if not self.init_client():
             return
 
-        if not os.path.exists(CTDB_SERVICE_FILE):
-            return
-
         try:
             self.check_ctdb_shared_volume()
         except Exception as e:
@@ -151,6 +151,9 @@ class CtdbEvent:
             })
 
             raise
+
+        if not os.path.exists(self.ctdb_service_file):
+            return
 
         self.load_service_file()
         for srv in self.cl_services.values():
@@ -258,7 +261,7 @@ class CtdbEvent:
             raise RuntimeError(payload['reason'])
 
         else:
-            with open(f'{CTDB_SERVICE_FILE}.{self.pnn}', 'w') as f:
+            with open(f'{self.ctdb_service_file}.{self.pnn}', 'w') as f:
                 fcntl.lockf(f.fileno(), fcntl.LOCK_EX)
                 try:
                     f.write(json.dumps(self.node_status))
