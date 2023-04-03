@@ -407,13 +407,16 @@ class AuthService(Service):
         }
 
     @no_auth_required
-    @accepts(Str('username'))
+    @throttle(seconds=2, condition=throttle_condition)
+    @accepts(Str('username'), Str('password'))
     @returns(Bool('two_factor_auth_enabled', description='Is `true` if 2FA is enabled'))
-    async def two_factor_auth(self, username):
+    async def two_factor_auth(self, username, password):
         """
         Returns true if two factor authorization is required for authorizing user's login.
         """
-        return (await self.middleware.call('auth.twofactor.config'))['enabled'] and (
+        return await self.check_user(username, password) and (
+            await self.middleware.call('auth.twofactor.config')
+        )['enabled'] and (
             await self.middleware.call(
                 'user.query', [['username', '=', username], ['twofactor_auth_configured', '=', True]]
             )
