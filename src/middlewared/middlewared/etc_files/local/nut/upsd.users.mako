@@ -7,4 +7,5 @@
 [${user}]
 	password = ${ups_config['monpwd']}
 	upsmon master
-	${ups_config['extrausers']}
+
+${ups_config['extrausers']}
