@@ -162,6 +162,8 @@ class GlusterEventsdService(Service):
             ['gluster-eventsapi', 'sync', '--json'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            encoding='utf-8',
+            errors='ignore',
             check=False
         )
         if cp.returncode == 0:
