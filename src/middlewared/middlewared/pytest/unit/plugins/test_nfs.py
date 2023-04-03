@@ -95,5 +95,5 @@ def test__sharing_nfs_service__validate_hosts_and_networks__fs_is_already_export
                 "192.168.0.1": "192.168.0.1",
             },
         )
-
-        verrors.add.assert_called_once_with("sharingnfs_update.networks", ANY)
+        # This is now a passing condition: NAS-120957
+        verrors.add.assert_not_called()
