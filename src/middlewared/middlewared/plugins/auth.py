@@ -313,12 +313,9 @@ class AuthService(Service):
         if errors:
             raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
-    @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
-    @pass_app()
-    async def check_user(self, app, username, password):
+    async def check_user(self, username, password):
         """
         Verify username and password
         """
@@ -416,7 +413,7 @@ class AuthService(Service):
         """
         Returns true if two-factor authorization is required for authorizing user's login.
         """
-        return await self.check_user(app, username, password) and (
+        return await self.check_user(username, password) and (
             await self.middleware.call('auth.twofactor.config')
         )['enabled'] and (
             await self.middleware.call(
