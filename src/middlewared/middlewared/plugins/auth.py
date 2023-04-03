@@ -13,13 +13,17 @@ from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCrede
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Patch, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required,
-    pass_app, private, cli_private, CallError,
+    pass_app, private, cli_private, CallError, throttle,
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.nginx import get_peer_process
 from middlewared.utils.origin import UnixSocketOrigin, TCPIPOrigin
 from middlewared.utils.crypto import generate_token
+
+
+def throttle_condition(middleware, app, *args, **kwargs):
+    return app is None or (app and app.authenticated), None
 
 
 class TokenManager:
@@ -309,6 +313,8 @@ class AuthService(Service):
         if errors:
             raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
+    @no_auth_required
+    @throttle(seconds=2, condition=throttle_condition)
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_user(self, username, password):
