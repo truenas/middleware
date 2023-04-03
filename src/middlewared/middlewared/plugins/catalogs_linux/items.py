@@ -4,7 +4,9 @@ import os
 
 from catalog_validation.items.catalog import retrieve_recommended_apps, retrieve_train_names
 from catalog_validation.items.utils import get_catalog_json_schema
+from catalog_validation.items.items_util import get_item_details_base
 from catalog_validation.utils import CACHED_CATALOG_FILE_NAME
+from datetime import datetime
 from jsonschema import validate as json_schema_validate, ValidationError as JsonValidationError
 
 from middlewared.schema import Bool, Dict, List, returns, Str
@@ -151,7 +153,15 @@ class CatalogService(Service):
         unhealthy_apps = set()
         for train in data:
             for item in data[train]:
-                data[train][item]['location'] = os.path.join(catalog['location'], train, item)
+                data[train][item].update({
+                    **{k: v for k, v in get_item_details_base().items() if k not in data[train][item]},
+                    'location': os.path.join(catalog['location'], train, item),
+                })
+                if data[train][item]['last_update']:
+                    data[train][item]['last_update'] = datetime.strptime(
+                        data[train][item]['last_update'], '%Y-%m-%d %H:%M:%S'
+                    )
+
                 if data[train][item]['healthy'] is False:
                     unhealthy_apps.add(f'{item} ({train} train)')
                 if train in recommended_apps and item in recommended_apps[train]:
