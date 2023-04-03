@@ -317,7 +317,8 @@ class AuthService(Service):
     @throttle(seconds=2, condition=throttle_condition)
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
-    async def check_user(self, username, password):
+    @pass_app()
+    async def check_user(self, app, username, password):
         """
         Verify username and password
         """
@@ -410,11 +411,12 @@ class AuthService(Service):
     @throttle(seconds=2, condition=throttle_condition)
     @accepts(Str('username'), Str('password'))
     @returns(Bool('two_factor_auth_enabled', description='Is `true` if 2FA is enabled'))
-    async def two_factor_auth(self, username, password):
+    @pass_app()
+    async def two_factor_auth(self, app, username, password):
         """
-        Returns true if two factor authorization is required for authorizing user's login.
+        Returns true if two-factor authorization is required for authorizing user's login.
         """
-        return await self.check_user(username, password) and (
+        return await self.check_user(app, username, password) and (
             await self.middleware.call('auth.twofactor.config')
         )['enabled'] and (
             await self.middleware.call(
