@@ -332,17 +332,17 @@ class CatalogService(CRUDService):
         catalog = await self.middleware.call('catalog.get_instance', OFFICIAL_LABEL)
         if await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
             can_system_add_catalog = await self.can_system_add_catalog()
+            preferred_trains = []
             if OFFICIAL_ENTERPRISE_TRAIN not in catalog['preferred_trains'] and can_system_add_catalog:
-                await self.middleware.call(
-                    'catalog.update', OFFICIAL_LABEL, {
-                        'preferred_trains': catalog['preferred_trains'] + [OFFICIAL_ENTERPRISE_TRAIN]
-                    }
-                )
+                preferred_trains = catalog['preferred_trains'] + [OFFICIAL_ENTERPRISE_TRAIN]
             elif not can_system_add_catalog:
+                preferred_trains = [OFFICIAL_ENTERPRISE_TRAIN]
+
+            if preferred_trains:
                 await self.middleware.call(
-                    'catalog.update', OFFICIAL_LABEL, {
-                        'preferred_trains': [OFFICIAL_ENTERPRISE_TRAIN]
-                    }
+                    'datastore.update', self._config.datastore, OFFICIAL_LABEL, {
+                        'preferred_trains': preferred_trains,
+                    },
                 )
 
 
