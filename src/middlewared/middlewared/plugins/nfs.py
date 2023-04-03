@@ -9,7 +9,7 @@ from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import Match, Range
+from middlewared.validators import Match, Range, IpAddress
 from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
@@ -414,6 +414,8 @@ class SharingNFSService(SharingService):
             self.validate_hosts_and_networks, other_shares,
             data, schema_name, verrors, dns_cache
         )
+        # Confirm the requested path is not relative to an existing share for the same hosts
+        await self.validate_share_path(other_shares, data, schema_name, verrors)
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
@@ -452,15 +454,30 @@ class SharingNFSService(SharingService):
         hostnames = list(set(hostnames))
 
         async def resolve(hostname):
-            if domain := get_wildcard_domain(hostname):
-                hostname = domain
-
             try:
-                return (
-                    await asyncio.wait_for(self.middleware.run_in_thread(socket.getaddrinfo, hostname, None), 5)
-                )[0][4][0]
+                try:
+                    # If this is an IP address, just return it
+                    ip = IpAddress()
+                    ip(hostname)
+                    return hostname
+                except ValueError:
+                    # Not an IP address, should be a name
+                    if domain := get_wildcard_domain(hostname):
+                        hostname = domain
+
+                    if leftmost_has_wildcards(hostname):
+                        # We know this will not resolve
+                        return None
+                    else:
+                        try:
+                            return (
+                                await asyncio.wait_for(self.middleware.run_in_thread(socket.getaddrinfo, hostname, None), 5)
+                            )[0][4][0]
+                        except Exception as e:
+                            self.logger.warning("Unable to resolve host %r: %r", hostname, e)
+                            return None
             except Exception as e:
-                self.logger.warning("Unable to resolve host %r: %r", hostname, e)
+                self.logger.warning("Unable to resolve or invalid host %r: %r", hostname, e)
                 return None
 
         resolved_hostnames = await asyncio_map(resolve, hostnames, 8)
@@ -548,12 +565,45 @@ class SharingNFSService(SharingService):
 
             used_networks.add(network)
 
-        if not data["hosts"] and not data["networks"]:
-            if used_networks:
-                verrors.add(
-                    f"{schema_name}.networks",
-                    "Another NFS share already exports this dataset for some network"
-                )
+    @private
+    async def validate_share_path(self, other_shares, data, schema_name, verrors):
+        """
+        Checks new share path against existing
+        """
+        for share in other_shares:
+            found_match = False
+            if await self.middleware.call('filesystem.is_child', data['path'], share['path']):
+                lowerpath = data['path']
+                upperpath = share['path']
+                found_match = True
+
+            if await self.middleware.call('filesystem.is_child', share['path'], data['path']):
+                lowerpath = share['path']
+                upperpath = data['path']
+                found_match = True
+
+            if found_match:
+                # Test hosts
+                # An empty 'hosts' list == '*' == 'everybody.  Workaround: remove '*' as a host entry
+                datahosts = [host for host in data["hosts"] if host != "*"]
+                sharehosts = [host for host in share["hosts"] if host != "*"]
+
+                commonHosts = set(datahosts) & set(sharehosts)
+                commonNetworks = set(data["networks"]) & set(share["networks"])
+                everybody = not bool(set(datahosts) | set(sharehosts) | set(data["networks"]) | set(share["networks"]))
+
+                if bool(commonHosts) | bool(commonNetworks) | everybody:
+                    reason = "'everybody', i.e. '*'"
+                    if commonHosts:
+                        reason = str(commonHosts)
+                    elif commonNetworks:
+                        reason = str(commonNetworks)
+                    verrors.add(
+                        f"{schema_name}.path",
+                        f"{lowerpath} is a subtree of {upperpath} and already exports this dataset for {reason}"
+                    )
+                    # Found an export of the same path to the same 'hosts'. Report it.
+                    break
 
     @private
     async def extend(self, data):
