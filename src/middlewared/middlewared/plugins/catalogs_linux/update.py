@@ -325,7 +325,9 @@ class CatalogService(CRUDService):
 
 
 async def enterprise_train_update(middleware, prev_product_type, *args, **kwargs):
-    if await middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
+    if await middleware.call('system.product_type') == 'SCALE_ENTERPRISE' and not await middleware.call(
+        'catalog.query', [['id', '=', OFFICIAL_LABEL], ['preferred_trains', 'rin', OFFICIAL_ENTERPRISE_TRAIN]],
+    ):
         await middleware.call('catalog.update', OFFICIAL_LABEL, {'preferred_trains': [OFFICIAL_ENTERPRISE_TRAIN]})
 
 
