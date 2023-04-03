@@ -115,7 +115,9 @@ def get_schema(variable_details, update, existing=NOT_PROVIDED):
                 # well apart from the range validator we add
                 obj.max_length = range_args['max']
             if 'valid_chars' in schema_details:
-                obj.validators.append(Match(schema_details['valid_chars']))
+                obj.validators.append(Match(
+                    schema_details['valid_chars'], explanation=schema_details.get('valid_chars_error')
+                ))
 
     if schema_class == List:
         obj.items = list(chain.from_iterable(get_schema(i, update) for i in schema_details['items']))
