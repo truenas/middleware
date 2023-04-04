@@ -22,7 +22,7 @@ class OpenVPNClientServicePortDelegate(ServicePortDelegate):
         if config['nobind']:
             return []
         else:
-            return [config[k] for k in filter(lambda k: config.get(k), self.port_fields)]
+            return [self.get_bind_ip_port_tuple(config, k) for k in filter(lambda k: config.get(k), self.port_fields)]
 
 
 async def setup(middleware):

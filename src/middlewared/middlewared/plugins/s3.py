@@ -106,7 +106,7 @@ class S3Service(SystemServiceService):
                 )
 
         for k in ('bindport', 'console_bindport'):
-            verrors.extend(await validate_port(self.middleware, f's3_update.{k}', new[k], 's3'))
+            verrors.extend(await validate_port(self.middleware, f's3_update.{k}', new[k], 's3', new['bindip']))
 
         if not new['storage_path'] and await self.middleware.call('service.started', 's3'):
             verrors.add('s3_update.storage_path', 'S3 must be stopped before unsetting storage path.')

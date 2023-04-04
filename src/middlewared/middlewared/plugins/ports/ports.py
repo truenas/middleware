@@ -1,9 +1,18 @@
+import ipaddress
 import itertools
+
+from collections import defaultdict
 
 from middlewared.service import Service, ValidationErrors
 
+from .utils import WILDCARD_IPS
 
-SYSTEM_PORTS = [67, 123, 3702, 5353, 6000]
+
+SYSTEM_PORTS = [(wildcard, port) for wildcard in WILDCARD_IPS for port in [67, 123, 3702, 5353, 6000]]
+
+
+def get_ip_version(ip: str) -> int:
+    return ipaddress.ip_interface(ip).version
 
 
 class PortService(Service):
@@ -31,6 +40,9 @@ class PortService(Service):
         for delegate in self.DELEGATES.values():
             used_ports = await delegate.get_ports()
             if used_ports:
+                for entry in used_ports:
+                    entry['ports'] = [list(i) for i in entry['ports']]
+
                 ports.append({
                     'namespace': delegate.namespace,
                     'title': delegate.title,
@@ -40,20 +52,55 @@ class PortService(Service):
 
         return ports + self.SYSTEM_USED_PORTS
 
-    async def validate_port(self, schema, value, whitelist_namespace=None):
+    async def validate_port(self, schema, port, bindip='0.0.0.0', whitelist_namespace=None, raise_error=False):
         verrors = ValidationErrors()
-        for port_attachment in await self.middleware.call('port.get_in_use'):
-            if value in port_attachment['ports'] and port_attachment['namespace'] != whitelist_namespace:
-                for port_entry in filter(
-                    lambda p: value in p['ports'],
-                    port_attachment['port_details']
-                ):
-                    err = 'The port is being used by '
-                    if port_entry['description']:
-                        err += f'{port_entry["description"]!r} in {port_attachment["title"]!r}'
-                    else:
-                        err += f'{port_attachment["title"]!r}'
+        bindip_version = get_ip_version(bindip)
+        wildcard_ip = '0.0.0.0' if bindip_version == 4 else '::'
+        port_mapping = await self.ports_mapping(whitelist_namespace)
+        port_attachment = port_mapping[port]
+        if not any(
+            get_ip_version(ip) == bindip_version for ip in port_attachment
+        ) or (
+            bindip not in port_attachment and wildcard_ip not in port_attachment and bindip != wildcard_ip
+        ):
+            return verrors
 
-                    verrors.add(schema, err)
+        ip_errors = []
+        for index, port_detail in enumerate(port_attachment.items()):
+            ip, port_entry = port_detail
+            if get_ip_version(ip) != bindip_version:
+                continue
+
+            if bindip == wildcard_ip or ip == wildcard_ip or (bindip != wildcard_ip and ip == bindip):
+                try:
+                    entry = next(
+                        detail for detail in port_entry['port_details']
+                        if [ip, port] in detail['ports'] or [bindip, port] in detail['ports']
+                    )
+                    description = entry['description']
+                except StopIteration:
+                    description = None
+
+                ip_errors.append(
+                    f'{index + 1}) "{ip}:{port}" used by {port_entry["title"]}'
+                    f'{f" ({description})" if description else ""}'
+                )
+
+        err = '\n'.join(ip_errors)
+        verrors.add(
+            schema,
+            f'The port is being used by following services:\n{err}'
+        )
+
+        if raise_error:
+            verrors.check()
 
         return verrors
+
+    async def ports_mapping(self, whitelist_namespace=None):
+        ports = defaultdict(dict)
+        for attachment in filter(lambda entry: entry['namespace'] != whitelist_namespace, await self.get_in_use()):
+            for bindip, port in attachment['ports']:
+                ports[port][bindip] = attachment
+
+        return ports

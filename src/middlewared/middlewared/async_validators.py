@@ -3,7 +3,6 @@ import os
 import socket
 from pathlib import Path
 
-from middlewared.service import ValidationErrors
 from middlewared.plugins.zfs_.utils import ZFSCTL
 from middlewared.utils.path import path_location
 from middlewared.validators import IpAddress
@@ -108,5 +107,5 @@ async def validate_country(middleware, country_name, verrors, v_field_name):
         )
 
 
-async def validate_port(middleware, schema, value, whitelist_namespace=None):
-    return await middleware.call('port.validate_port', schema, value, whitelist_namespace)
+async def validate_port(middleware, schema, port, whitelist_namespace=None, bind_ip='0.0.0.0'):
+    return await middleware.call('port.validate_port', schema, port, bind_ip, whitelist_namespace)

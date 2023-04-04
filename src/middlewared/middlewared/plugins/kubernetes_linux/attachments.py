@@ -57,7 +57,7 @@ class KubernetesServicePortDelegate(ServicePortDelegate):
     namespace = 'kubernetes'
     title = 'Kubernetes Service'
 
-    async def get_ports_internal(self):
+    async def get_ports_bound_on_wildcards(self):
         return [6443]
 
 

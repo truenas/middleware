@@ -111,7 +111,13 @@ class SystemGeneralService(ConfigService):
         verrors = ValidationErrors()
 
         for k in ('ui_port', 'ui_httpsport'):
-            verrors.extend(await validate_port(self.middleware, f'{schema}.{k}', data[k], 'system.general'))
+            for ui_address in data['ui_address']:
+                verrors.extend(await validate_port(
+                    self.middleware, f'{schema}.{k}', data[k], 'system.general', ui_address
+                ))
+
+        if data['ui_port'] == data['ui_httpsport']:
+            verrors.add(f'{schema}.ui_port', 'Must be different from "ui_httpsport"')
 
         language = data.get('language')
         system_languages = await self.middleware.call('system.general.language_choices')
