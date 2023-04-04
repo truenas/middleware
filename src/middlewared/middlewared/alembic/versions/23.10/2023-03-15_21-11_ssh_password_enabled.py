@@ -21,13 +21,16 @@ def upgrade():
     with op.batch_alter_table('account_bsdusers', schema=None) as batch_op:
         batch_op.add_column(sa.Column('bsdusr_ssh_password_enabled', sa.Boolean(), nullable=False, server_default='0'))
 
-    op.execute("UPDATE account_bsdusers SET bsdusr_ssh_password_enabled = IIF(bsdusr_password_disabled, 0, 1) "
-               "WHERE bsdusr_builtin = 0")
-
     conn = op.get_bind()
-    for rootlogin, adminlogin in conn.execute("SELECT ssh_rootlogin, ssh_adminlogin FROM services_ssh").fetchall():
-        op.execute(f"UPDATE account_bsdusers SET bsdusr_ssh_password_enabled = {int(rootlogin)} WHERE bsdusr_uid = 0")
-        op.execute(f"UPDATE account_bsdusers SET bsdusr_ssh_password_enabled = {int(adminlogin)} WHERE bsdusr_uid = 950")
+    for passwordauth, rootlogin, adminlogin in conn.execute("""
+        SELECT ssh_passwordauth, ssh_rootlogin, ssh_adminlogin FROM services_ssh
+    """).fetchall():
+        if int(passwordauth):
+            op.execute("UPDATE account_bsdusers SET bsdusr_ssh_password_enabled = IIF(bsdusr_password_disabled, 0, 1) "
+                       "WHERE bsdusr_builtin = 0")
+
+            op.execute(f"UPDATE account_bsdusers SET bsdusr_ssh_password_enabled = {int(rootlogin)} WHERE bsdusr_uid = 0")
+            op.execute(f"UPDATE account_bsdusers SET bsdusr_ssh_password_enabled = {int(adminlogin)} WHERE bsdusr_uid = 950")
 
     with op.batch_alter_table('services_ssh', schema=None) as batch_op:
         batch_op.drop_column('ssh_adminlogin')
