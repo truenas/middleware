@@ -423,6 +423,15 @@ class AuthService(Service):
         Authenticate session using username and password.
         `otp_token` must be specified if two factor authentication is enabled.
         """
+        user = await self.get_login_user(username, password, otp_token)
+        if user is not None:
+            self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
+            return True
+
+        return False
+
+    @private
+    async def get_login_user(self, username, password, otp_token=None):
         user = await self.middleware.call('auth.authenticate', username, password)
         twofactor_auth = await self.middleware.call('auth.twofactor.config')
 
@@ -436,11 +445,7 @@ class AuthService(Service):
             if not await self.middleware.call('user.verify_twofactor_token', username, otp_token):
                 user = None
 
-        if user is not None:
-            self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
-            return True
-
-        return False
+        return user
 
     @cli_private
     @no_auth_required
