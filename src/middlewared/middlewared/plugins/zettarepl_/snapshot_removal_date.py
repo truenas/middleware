@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 import subprocess
 
+from dateutil.tz import tzlocal
 import isodate
 
 from middlewared.service import Service
@@ -152,13 +153,13 @@ class ZettareplService(Service):
 
             if task_destroy_at is not None:
                 snapshot["retention"] = {
-                    "datetime": task_destroy_at,
+                    "datetime": task_destroy_at.replace(tzinfo=tzlocal()),
                     "source": "periodic_snapshot_task",
                     "periodic_snapshot_task_id": task_destroy_at_id,
                 }
             elif property_destroy_at is not None:
                 snapshot["retention"] = {
-                    "datetime": property_destroy_at,
+                    "datetime": property_destroy_at.replace(tzinfo=tzlocal()),
                     "source": "property",
                 }
             else:

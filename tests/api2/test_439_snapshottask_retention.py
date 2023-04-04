@@ -2,9 +2,10 @@
 from datetime import datetime
 import os
 import sys
-import time
+from unittest.mock import ANY
 
 import pytest
+import pytz
 
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import assert_creates_job, call
@@ -20,6 +21,8 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 def test_change_retention(request):
     depends(request, ["pool_04"], scope="session")
+
+    tz = pytz.timezone(call("system.info")["timezone"])
 
     with dataset("snapshottask-retention-test") as ds:
         call("zettarepl.load_removal_dates")
@@ -48,11 +51,15 @@ def test_change_retention(request):
         assert result.status_code == 200, result.text
         assert result.json()[0]["retention"] == {
             "datetime": {
-                "$date": (datetime(2071, 3, 31, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
+                "$date": ANY
             },
             "source": "periodic_snapshot_task",
             "periodic_snapshot_task_id": task_id,
         }
+        assert (
+            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000).astimezone(tz) ==
+            datetime(2071, 3, 31, 6, 30).astimezone(tz)
+        )
     
         result = POST(f"/pool/snapshottask/id/{task_id}/update_will_change_retention_for/", {
             "naming_schema": "auto-%Y-%m-%d-%H-%M-365d",
@@ -80,14 +87,20 @@ def test_change_retention(request):
         assert properties[0]["value"] == "2071-03-31T06:30:00"
         assert result.json()[0]["retention"] == {
             "datetime": {
-                "$date": (datetime(2071, 3, 31, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
+                "$date": ANY,
             },
             "source": "property",
         }
+        assert (
+            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000).astimezone(tz) ==
+            datetime(2071, 3, 31, 6, 30).astimezone(tz)
+        )
 
 
 def test_delete_retention(request):
     depends(request, ["pool_04"], scope="session")
+
+    tz = pytz.timezone(call("system.info")["timezone"])
 
     with dataset("snapshottask-retention-test-2") as ds:
         call("zettarepl.load_removal_dates")
@@ -135,7 +148,11 @@ def test_delete_retention(request):
         assert properties[0]["value"] == "2071-03-31T06:30:00"
         assert result.json()[0]["retention"] == {
             "datetime": {
-                "$date": (datetime(2071, 3, 31, 6, 30) - datetime(1970, 1, 1)).total_seconds() * 1000,
+                "$date": ANY,
             },
             "source": "property",
         }
+        assert (
+            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000).astimezone(tz) ==
+            datetime(2071, 3, 31, 6, 30).astimezone(tz)
+        )
