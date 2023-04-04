@@ -113,7 +113,13 @@ class Application:
 
     @functools.cached_property
     def origin(self):
-        sock = self.request.transport.get_extra_info("socket")
+        try:
+            sock = self.request.transport.get_extra_info("socket")
+        except AttributeError:
+            # self.request.transport can be None by the time this is called
+            # on HA systems because remote node could have been rebooted
+            return
+
         if sock.family == socket.AF_UNIX:
             peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
             pid, uid, gid = struct.unpack('3i', peercred)
