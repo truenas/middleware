@@ -8,7 +8,7 @@ class JSONEncoder(json.JSONEncoder):
             return {'$type': 'date', '$value': obj.isoformat()}
         elif type(obj) is datetime:
             if obj.tzinfo:
-                obj += obj.utcoffset()
+                obj -= obj.utcoffset()
                 obj = obj.replace(tzinfo=None)
             # Total milliseconds since EPOCH
             return {'$date': int((obj - datetime(1970, 1, 1)).total_seconds() * 1000)}
