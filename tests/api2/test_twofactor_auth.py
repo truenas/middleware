@@ -31,7 +31,7 @@ def test_login_without_2fa():
         'password': TEST_PASSWORD,
         'full_name': TEST_USERNAME,
     }):
-        assert call('auth.login', TEST_USERNAME, TEST_PASSWORD) is True
+        assert call('auth.get_login_user', TEST_USERNAME, TEST_PASSWORD) is not None
 
 
 def test_secret_generation_for_user():
@@ -55,7 +55,7 @@ def test_login_without_otp_for_user_without_2fa():
         'full_name': TEST_USERNAME_2,
     }):
         with enabled_twofactor_auth():
-            assert call('auth.login', TEST_USERNAME_2, TEST_PASSWORD_2) is True
+            assert call('auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2) is not None
 
 
 def test_login_with_otp_for_user_with_2fa():
@@ -67,9 +67,9 @@ def test_login_with_otp_for_user_with_2fa():
         with enabled_twofactor_auth():
             call('user.update', user_obj['id'], {'renew_twofactor_secret': True})
             assert call(
-                'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
+                'auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2,
                 get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
-            ) is True
+            ) is not None
 
 
 def test_user_2fa_secret_renewal():
@@ -81,9 +81,9 @@ def test_user_2fa_secret_renewal():
         call('user.update', user_obj['id'], {'renew_twofactor_secret': True})
         with enabled_twofactor_auth():
             assert call(
-                'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
+                'auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2,
                 get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
-            ) is True
+            ) is not None
             secret = get_user_secret(user_obj['id'])['secret']
 
             call('user.update', user_obj['id'], {'renew_twofactor_secret': True})
@@ -91,9 +91,9 @@ def test_user_2fa_secret_renewal():
             assert get_user_secret(user_obj['id'])['secret'] != secret
 
             assert call(
-                'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
+                'auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2,
                 get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
-            ) is True
+            ) is not None
 
 
 def test_multiple_users_login_with_otp():
@@ -103,7 +103,7 @@ def test_multiple_users_login_with_otp():
         'full_name': TEST_USERNAME,
     }) as first_user:
         with enabled_twofactor_auth():
-            assert call('auth.login', TEST_USERNAME, TEST_PASSWORD) is True
+            assert call('auth.get_login_user', TEST_USERNAME, TEST_PASSWORD) is not None
 
             with user({
                 'username': TEST_USERNAME_2,
@@ -113,15 +113,15 @@ def test_multiple_users_login_with_otp():
 
                 call('user.update', second_user['id'], {'renew_twofactor_secret': True})
                 assert call(
-                    'auth.login', TEST_USERNAME_2, TEST_PASSWORD_2,
+                    'auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2,
                     get_2fa_totp_token(get_user_secret(second_user['id'])['secret'])
-                ) is True
+                ) is not None
 
-                assert call('auth.login', TEST_USERNAME_2, TEST_PASSWORD_2) is False
+                assert call('auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2) is None
 
                 call('user.update', first_user['id'], {'renew_twofactor_secret': True})
 
                 assert call(
-                    'auth.login', TEST_USERNAME, TEST_PASSWORD,
+                    'auth.get_login_user', TEST_USERNAME, TEST_PASSWORD,
                     get_2fa_totp_token(get_user_secret(first_user['id'])['secret'])
-                ) is True
+                ) is not None
