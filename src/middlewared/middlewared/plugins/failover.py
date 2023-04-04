@@ -1270,7 +1270,7 @@ async def service_remote(middleware, service, verb, options):
         ])
     except Exception as e:
         ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-        if not (isinstance(e, CallError) and e.errno not in ignore:
+        if isinstance(e, CallError) and e.errno not in ignore:
             middleware.logger.warning(f'Failed to run {verb}({service})', exc_info=True)
 
 
