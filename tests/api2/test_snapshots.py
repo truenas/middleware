@@ -1,7 +1,10 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call
 
 import sys
 import os
@@ -51,3 +54,12 @@ def test_max_txg_snapshot_query():
 
 def test_min_max_txg_snapshot_query():
     common_min_max_txg_snapshot_test(True, True)
+
+
+def test_already_exists():
+    with dataset('test') as test_dataset:
+        call('zfs.snapshot.create', {'dataset': test_dataset, 'name': 'snap'})
+        with pytest.raises(CallError) as ve:
+            call('zfs.snapshot.create', {'dataset': test_dataset, 'name': 'snap'})
+
+        assert ve.value.errno == errno.EEXIST
