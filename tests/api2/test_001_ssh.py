@@ -95,7 +95,7 @@ def test_00_firstboot_checks():
 
 
 def test_01_Configuring_ssh_settings_for_root_login():
-    root = GET('/user?username=root')
+    root = GET('/user?username=root', controller_a=ha)
     results = root.json()
     assert len(results) == 1, root.text
 
