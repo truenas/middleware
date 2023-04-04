@@ -11,8 +11,8 @@ from middlewared.test.integration.assets.two_factor_auth import enabled_twofacto
 from middlewared.test.integration.utils import call
 
 
-TEST_USERNAME = 'testuser'
-TEST_USERNAME_2 = 'testuser2'
+TEST_USERNAME = 'test2fauser'
+TEST_USERNAME_2 = 'test2fauser2'
 TEST_PASSWORD = 'testpassword'
 TEST_PASSWORD_2 = 'testpassword2'
 TEST_GID = 544
