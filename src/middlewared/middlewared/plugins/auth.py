@@ -645,6 +645,8 @@ class TwoFactorAuthService(ConfigService):
 def check_permission(middleware, app):
     """Authenticates connections coming from loopback and from root user."""
     origin = app.origin
+    if origin is None:
+        return
 
     if isinstance(origin, UnixSocketOrigin):
         if origin.uid == 0:
