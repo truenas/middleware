@@ -511,7 +511,97 @@ def test_36_check_nfsdir_subtree_behavior(request):
         assert 'subtree_check' in parsed[1]['opts'][0]['parameters'], str(parsed)
 
 
-def test_37_check_nfs_allow_nonroot_behavior(request):
+class Test37WithFixture:
+    """
+    Wrap a class around test_37 to allow calling the fixture only once
+    in the parametrized test
+    """
+
+    @pytest.fixture(scope='class')
+    def dataset_and_dirs(self):
+        """
+        Create a dataset and an NFS share for it for host 127.0.0.1 only
+        In the dataset, create directories: dir1, dir2, dir3
+        In each directory, create subdirs: subdir1, subdir2, subdir3
+        """
+
+        vol0 = f'/mnt/{pool_name}/VOL0'
+        with nfs_dataset('VOL0'):
+            # Top level shared to narrow host
+            with nfs_share(vol0, {'hosts': ['127.0.0.1']}):
+                # Get the initial list of entries for the cleanup test
+                contents = GET('/sharing/nfs').json()
+                startIdList = [item.get('id') for item in contents]
+
+                # Create the dirs
+                dirs = ["dir1", "dir2", "dir3", "dir4", "dir5", "dir6"]
+                subdirs = ["subdir1", "subdir2", "subdir3"]
+                try:
+                    for dir in dirs:
+                        results = SSH_TEST(f"mkdir -p {vol0}/{dir}", user, password, ip)
+                        assert results['result'] is True
+                        for subdir in subdirs:
+                            results = SSH_TEST(f"mkdir -p {vol0}/{dir}/{subdir}", user, password, ip)
+                            assert results['result'] is True
+
+                    yield vol0
+                finally:
+                    # Remove the created dirs
+                    for dir in dirs:
+                        SSH_TEST(f"rm -rf {vol0}/{dir}", user, password, ip)
+                        assert results['result'] is True
+
+                    # Remove the created shares
+                    contents = GET('/sharing/nfs').json()
+                    endIdList = [item.get('id') for item in contents]
+                    for id in endIdList:
+                        if id not in startIdList:
+                            result = DELETE(f"/sharing/nfs/id/{id}/")
+                            assert result.status_code == 200, result.text
+
+    # Parameters for test_37
+    # Directory (dataset share VOL0), hostname, ExpectedToPass
+    dirs_to_export = [
+        ("dir1", ["*"], True),  # Test NAS-120957
+        ("dir2", ["*"], True),  # Test NAS-120957, allow non-related paths to same hosts
+        ("dir3", ["*.example.com"], True),
+        ("dir3", ["*.example.com"], False),  # Already exported
+        ("dir1/subdir1", ["192.168.0.0"], True),
+        ("dir1/subdir2", ["127.0.0.1"], False),  # Already exported at share root, VOL0
+        ("dir4/subdir1", ["192.168.1.0"], True),
+        ("dir4", ["192.168.1.0"], False),  # Already shared by dir4/subdir1
+        ("dir4", ["*.ixsystems.com"], True),
+        ("dir4/subdir2", ["192.168.1.0", "*.ixsystems.com"], False)  # ixsystems already shared
+    ]
+
+    @pytest.mark.parametrize("dirname,host,ExpectedToPass", dirs_to_export)
+    def test_37_check_nfsdir_subtree_share(self, request, dataset_and_dirs, dirname, host, ExpectedToPass):
+        """
+        Sharing subtrees to the same host can cause problems for
+        NFSv3.  This check makes sure a share creation follows
+        the rules.
+            * First match is applied
+            * A new path that is related to an existing path cannot be shared to same 'host'
+
+        For example, the following is not allowed:
+        "/mnt/dozer/NFS"\
+            fred(rw)
+        "/mnt/dozer/NFS/foo"\
+            fred(rw)
+        """
+        depends(request, ["pool_04", "ssh_password"], scope="session")
+
+        vol = dataset_and_dirs
+        dirpath = f'{vol}/{dirname}'
+        payload = {"path": dirpath, "hosts": host}
+        results = POST("/sharing/nfs/", payload)
+        if ExpectedToPass:
+            assert results.status_code == 200, results.text
+        else:
+            assert results.status_code != 200, results.text
+
+
+def test_38_check_nfs_allow_nonroot_behavior(request):
     """
     If global configuration option "allow_nonroot" is set, then
     we append "insecure" to each exports line.
@@ -548,7 +638,7 @@ def test_37_check_nfs_allow_nonroot_behavior(request):
     assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
 
-def test_38_check_nfs_service_v4_parameter(request):
+def test_39_check_nfs_service_v4_parameter(request):
     """
     This test verifies that toggling the `v4` option generates expected changes
     in nfs kernel server config.
@@ -575,7 +665,7 @@ def test_38_check_nfs_service_v4_parameter(request):
     assert "-N 4" not in s["RPCNFSDOPTS"], str(s)
 
 
-def test_39_check_nfs_service_udp_parameter(request):
+def test_40_check_nfs_service_udp_parameter(request):
     """
     This test verifies that toggling the `udp` option generates expected changes
     in nfs kernel server config.
@@ -602,7 +692,7 @@ def test_39_check_nfs_service_udp_parameter(request):
     assert "--no-udp" in s["RPCNFSDOPTS"], str(s)
 
 
-def test_40_check_nfs_service_ports(request):
+def test_41_check_nfs_service_ports(request):
     """
     Port options are spread between two files:
     /etc/default/nfs-kernel-server
@@ -625,7 +715,7 @@ def test_40_check_nfs_service_ports(request):
     assert f'--nlm-port {config["rpclockd_port"]}' in s['STATDOPTS'], str(s)
 
 
-def test_41_check_nfs_client_status(request):
+def test_42_check_nfs_client_status(request):
     """
     This test checks the function of API endpoints to list NFSv3 and
     NFSv4 clients by performing loopback mounts on the remote TrueNAS
@@ -652,7 +742,7 @@ def test_41_check_nfs_client_status(request):
         assert results.json() == 1, results.text
 
 
-def test_42_check_nfsv4_acl_support(request):
+def test_43_check_nfsv4_acl_support(request):
     """
     This test validates reading and setting NFSv4 ACLs through an NFSv4
     mount in the following manner:
