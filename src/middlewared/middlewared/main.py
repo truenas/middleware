@@ -113,14 +113,19 @@ class Application:
 
     @functools.cached_property
     def origin(self):
-        sock = self.request.transport.get_extra_info("socket")
-        if sock.family == socket.AF_UNIX:
-            peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
-            pid, uid, gid = struct.unpack('3i', peercred)
-            return UnixSocketOrigin(pid, uid, gid)
+        try:
+            sock = self.request.transport.get_extra_info("socket")
+            if sock.family == socket.AF_UNIX:
+                peercred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize('3i'))
+                pid, uid, gid = struct.unpack('3i', peercred)
+                return UnixSocketOrigin(pid, uid, gid)
 
-        remote_addr, remote_port = get_remote_addr_port(self.request)
-        return TCPIPOrigin(remote_addr, remote_port)
+            remote_addr, remote_port = get_remote_addr_port(self.request)
+            return TCPIPOrigin(remote_addr, remote_port)
+        except AttributeError:
+            # self.request.transport can be None by the time this is called
+            # on HA systems because remote node could have been rebooted
+            return
 
     def register_callback(self, name, method):
         assert name in ('on_message', 'on_close')
