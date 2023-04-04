@@ -251,6 +251,12 @@ class UserService(Service):
                     existing_user,
                     {"prefix": "bsdusr_"},
                 )
+                self.middleware.call_sync(
+                    "datastore.insert", "account.twofactor_user_auth", {
+                        'secret': None,
+                        'user': existing_user["id"],
+                    }
+                )
 
             for group_id in groups_members[name]:
                 if not self.middleware.call_sync(
