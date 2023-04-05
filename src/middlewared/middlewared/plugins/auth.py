@@ -1,4 +1,5 @@
 import asyncio
+import random
 from datetime import datetime, timedelta
 import errno
 import time
@@ -403,11 +404,14 @@ class AuthService(Service):
     @no_auth_required
     @accepts(Str('username'), Str('password'))
     @returns(Bool('two_factor_auth_enabled', description='Is `true` if 2FA is enabled'))
-    async def two_factor_auth(self, app, username, password):
+    async def two_factor_auth(self, username, password):
         """
         Returns true if two-factor authorization is required for authorizing user's login.
         """
-        return await self.check_user(username, password) and (
+        user_authenticated = await self.check_user(username, password)
+        if not user_authenticated:
+            await asyncio.sleep(random.randint(1, 5))
+        return user_authenticated and (
             await self.middleware.call('auth.twofactor.config')
         )['enabled'] and (
             await self.middleware.call(
@@ -426,7 +430,9 @@ class AuthService(Service):
         `otp_token` must be specified if two factor authentication is enabled.
         """
         user = await self.get_login_user(username, password, otp_token)
-        if user is not None:
+        if user is None:
+            await asyncio.sleep(random.randint(1, 5))
+        else:
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
             return True
 
