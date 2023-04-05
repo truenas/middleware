@@ -14,11 +14,11 @@ class ProactiveSupportAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        webui_page = 'System Settings->General->Support page.'
+        webui_page = 'System Settings->General->Support page'
         support = await self.middleware.call('support.config')
         available = await self.middleware.call('support.is_available')
         if available and support['enabled'] is None:
-            return Alert(ProactiveSupportAlertClass, f'Proactive support is not configured. Review the {webui_page}')
+            return Alert(ProactiveSupportAlertClass, f'Proactive support is not configured. Review the {webui_page}.')
 
         if support['enabled']:
             # This is for people who had ix alert enabled before Proactive Support
