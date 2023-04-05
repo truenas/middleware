@@ -11,6 +11,7 @@ from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
 from .service_exception import (
     adapt_exception, CallError, CallException, ErrnoMixin, MatchNotFound, ValidationError, ValidationErrors,
+    get_errname,
 )
 from .utils import MIDDLEWARE_RUN_DIR, osc, sw_version
 from .utils.debug import get_frame_details, get_threads_stacks
@@ -182,6 +183,7 @@ class Application:
             error_extra['py_exception'] = binascii.b2a_base64(pickle.dumps(exc_info[1])).decode()
         return dict({
             'error': errno,
+            'errname': get_errname(errno),
             'type': etype,
             'reason': reason,
             'trace': self._tb_error(exc_info) if exc_info else None,
