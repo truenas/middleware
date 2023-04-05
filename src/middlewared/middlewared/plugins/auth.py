@@ -13,17 +13,13 @@ from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCrede
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Patch, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required,
-    pass_app, private, cli_private, CallError, throttle,
+    pass_app, private, cli_private, CallError,
 )
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.nginx import get_peer_process
 from middlewared.utils.origin import UnixSocketOrigin, TCPIPOrigin
 from middlewared.utils.crypto import generate_token
-
-
-def throttle_condition(middleware, app, *args, **kwargs):
-    return app is None or (app and app.authenticated), None
 
 
 class TokenManager:
@@ -405,10 +401,8 @@ class AuthService(Service):
         }
 
     @no_auth_required
-    @throttle(seconds=2, condition=throttle_condition)
     @accepts(Str('username'), Str('password'))
     @returns(Bool('two_factor_auth_enabled', description='Is `true` if 2FA is enabled'))
-    @pass_app()
     async def two_factor_auth(self, app, username, password):
         """
         Returns true if two-factor authorization is required for authorizing user's login.
