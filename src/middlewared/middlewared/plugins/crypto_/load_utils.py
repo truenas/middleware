@@ -28,7 +28,14 @@ def load_certificate(certificate: str, get_issuer: bool = False) -> dict:
         # digest_algorithm, lifetime, country, state, city, organization, organizational_unit,
         # email, common, san, serial, chain, fingerprint
         cert = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
-    except crypto.Error:
+        from_date = parse_cert_date_string(cert.get_notBefore())
+        until_date = parse_cert_date_string(cert.get_notAfter())
+        expired = datetime.datetime.now() > datetime.datetime.strptime(
+            parse_cert_date_string(cert.get_notAfter()), '%a %b %d %H:%M:%S %Y'
+        )
+    except (crypto.Error, OverflowError):
+        # Overflow error is raised when the certificate has a lifetime which will never expire
+        # and we don't support such certificates
         return {}
     else:
         cert_info = get_x509_subject(cert)
@@ -56,14 +63,12 @@ def load_certificate(certificate: str, get_issuer: bool = False) -> dict:
             'lifetime': (
                 dateutil.parser.parse(cert.get_notAfter()) - dateutil.parser.parse(cert.get_notBefore())
             ).days,
-            'from': parse_cert_date_string(cert.get_notBefore()),
-            'until': parse_cert_date_string(cert.get_notAfter()),
+            'from': from_date,
+            'until': until_date,
             'serial': cert.get_serial_number(),
             'chain': len(RE_CERTIFICATE.findall(certificate)) > 1,
             'fingerprint': cert.digest('sha1').decode(),
-            'expired': datetime.datetime.now() > datetime.datetime.strptime(
-                parse_cert_date_string(cert.get_notAfter()), '%a %b %d %H:%M:%S %Y'
-            ),
+            'expired': expired,
         })
 
         return cert_info
