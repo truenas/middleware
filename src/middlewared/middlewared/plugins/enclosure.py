@@ -11,6 +11,8 @@ from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
+from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
+
 
 logger = logging.getLogger(__name__)
 
@@ -208,10 +210,7 @@ class EnclosureService(CRUDService):
     def set_slot_status(self, enclosure_id, slot, status):
         enclosure, element = self._get_slot(lambda element: element["slot"] == slot, [["id", "=", enclosure_id]])
         if enclosure_id == 'r30_nvme_enclosure':
-            # TODO this is an all NVMe system and drive identify is done
-            # exclusively via ipmi raw commands....this will need its own
-            # implementation
-            pass
+            r30_set_slot_status(slot, status)
         else:
             ses_slot = self._get_ses_slot(enclosure, element)
             if not ses_slot.device_slot_set(status.lower()):
