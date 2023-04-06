@@ -14,6 +14,7 @@ class TwoFactoryUserAuthModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     secret = sa.Column(sa.EncryptedText(), nullable=True, default=None)
     user_id = sa.Column(sa.ForeignKey('account_bsdusers.id', ondelete='CASCADE'), index=True, nullable=True)
+    user_sid = sa.Column(sa.String(length=255), nullable=True, index=True, unique=True)
 
 
 class TwoFactorAuthModel(sa.Model):
