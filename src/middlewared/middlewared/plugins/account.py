@@ -278,7 +278,19 @@ class UserService(CRUDService):
                 }})
 
         if dssearch:
-            return await self.middleware.call('dscache.query', 'USERS', filters, options)
+            dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options)
+            # For AD users, we will not have 2FA attribute normalized so let's do that
+            global_2fa_configured = (await self.middleware.call('auth.twofactor.config'))['enabled']
+            if global_2fa_configured:
+                ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
+            else:
+                ad_users_2fa_mapping = {}
+
+            for index, user in enumerate(filter(
+                lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
+            ):
+                dssearch_results[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+            return dssearch_results
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
