@@ -1,7 +1,6 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
 from middlewared.service import filterable, filterable_returns, Service
 from middlewared.utils import filter_list
-from middlewared.validators import Range
 
 
 class AppService(Service):
