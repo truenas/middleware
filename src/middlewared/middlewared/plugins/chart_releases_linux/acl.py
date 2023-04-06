@@ -16,7 +16,10 @@ class ChartReleaseService(Service):
         failures = []
         for status, acl_path in zip(bulk_job.result, acls_to_apply):
             if status['error']:
-                failures.append(acl_path)
+                failures.append((acl_path, status['error']))
 
         if failures:
-            raise CallError(f'Failed to apply ACLs to the following paths: {", ".join(failures)!r}')
+            err_str = 'Failed to apply ACLs to the following paths: \n'
+            for index, entry in enumerate(failures):
+                err_str += f'{index + 1}) {entry[0]}: {entry[1]}\n'
+            raise CallError(err_str)
