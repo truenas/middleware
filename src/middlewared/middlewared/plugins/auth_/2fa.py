@@ -109,3 +109,11 @@ class TwoFactorAuthService(ConfigService):
                 'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
             )
         ]
+
+    @private
+    async def get_ad_users(self):
+        return {
+            entry['user_sid']: entry for entry in await self.middleware.call(
+                'datastore.query', 'account.twofactor_user_auth', [['user_sid', '!=', None]]
+            )
+        }
