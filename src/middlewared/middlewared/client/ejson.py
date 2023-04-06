@@ -1,3 +1,4 @@
+import calendar
 from datetime import date, datetime, time, timedelta, timezone
 import json
 
@@ -7,11 +8,10 @@ class JSONEncoder(json.JSONEncoder):
         if type(obj) is date:
             return {'$type': 'date', '$value': obj.isoformat()}
         elif type(obj) is datetime:
-            if obj.tzinfo:
-                obj -= obj.utcoffset()
-                obj = obj.replace(tzinfo=None)
+            if obj.tzinfo is not None:
+                obj = obj.astimezone(timezone.utc)
             # Total milliseconds since EPOCH
-            return {'$date': int((obj - datetime(1970, 1, 1)).total_seconds() * 1000)}
+            return {'$date': int(calendar.timegm(obj.timetuple()) * 1000)}
         elif type(obj) is time:
             return {'$time': str(obj)}
         return super(JSONEncoder, self).default(obj)
