@@ -19,7 +19,7 @@ def official_chart_release(chart_name, release_name):
         'catalog': 'OFFICIAL',
         'item': chart_name,
         'release_name': release_name,
-        'train': 'charts',
+        'train': 'community',
     }
     chart_release = call('chart.release.create', payload, job=True)
     try:
@@ -48,7 +48,7 @@ def get_chart_release_pods(release_name, timeout=90):
 def test_get_chart_release_logs(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-logs'
-    with official_chart_release('qbittorent', release_name) as chart_release:
+    with official_chart_release('qbittorrent', release_name) as chart_release:
         with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
@@ -59,7 +59,7 @@ def test_get_chart_release_logs(request):
 def test_get_chart_exec_result(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-exec'
-    with official_chart_release('qbittorent', release_name) as chart_release:
+    with official_chart_release('qbittorrent', release_name) as chart_release:
         with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
