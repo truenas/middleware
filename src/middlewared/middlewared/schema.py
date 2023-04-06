@@ -966,6 +966,9 @@ class Ref(object):
         self.resolved = True
         return schema
 
+    def copy(self):
+        return copy.deepcopy(self)
+
 
 class Patch(object):
 

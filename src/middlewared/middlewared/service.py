@@ -317,15 +317,16 @@ def filterable(fn):
 
 def filterable_returns(schema):
     def filterable_internal(fn):
-        fn._filterable_schema = schema
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable_schema = schema
-        return returns(OROperator(
+        operator = OROperator(
             Int('count'),
             schema,
-            List('query_result', items=[schema]),
+            List('query_result', items=[schema.copy()]),
             name='filterable_result',
-        ))(fn)
+        )
+        fn._filterable_schema = operator
+        if hasattr(fn, 'wraps'):
+            fn.wraps._filterable_schema = operator
+        return returns(operator)(fn)
     return filterable_internal
 
 
@@ -1890,7 +1891,8 @@ class CoreService(Service):
                     )
 
                 if filterable_schema := getattr(method, '_filterable_schema', None):
-                    filterable_schema = self.get_json_schema([filterable_schema], None)[0]
+                    # filterable_schema is OROperator here and we just want it's specific schema
+                    filterable_schema = self.get_json_schema([filterable_schema.schemas[1]], None)[0]
                 elif attr == 'query':
                     if isinstance(svc, CompoundService):
                         for part in svc.parts:
