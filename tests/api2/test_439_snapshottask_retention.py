@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import sys
 from unittest.mock import ANY
@@ -31,7 +31,7 @@ def test_change_retention(request):
             "dataset": ds,
             "recursive": True,
             "exclude": [],
-            "lifetime_value": 50,
+            "lifetime_value": 10,
             "lifetime_unit": "YEAR",
             "naming_schema": "auto-%Y-%m-%d-%H-%M-1y",
             "schedule": {
@@ -57,8 +57,8 @@ def test_change_retention(request):
             "periodic_snapshot_task_id": task_id,
         }
         assert (
-            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000).astimezone(tz) ==
-            datetime(2071, 3, 31, 6, 30).astimezone(tz)
+            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000, timezone.utc).astimezone(tz) ==
+            tz.localize(datetime(2031, 4, 10, 6, 30))
         )
     
         result = POST(f"/pool/snapshottask/id/{task_id}/update_will_change_retention_for/", {
@@ -84,7 +84,7 @@ def test_change_retention(request):
         assert result.json()
         properties = [v for k, v in result.json()[0]["properties"].items() if k.startswith("org.truenas:destroy_at_")]
         assert properties, result.json()[0]["properties"]
-        assert properties[0]["value"] == "2071-03-31T06:30:00"
+        assert properties[0]["value"] == "2031-04-10T06:30:00"
         assert result.json()[0]["retention"] == {
             "datetime": {
                 "$date": ANY,
@@ -92,8 +92,8 @@ def test_change_retention(request):
             "source": "property",
         }
         assert (
-            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000).astimezone(tz) ==
-            datetime(2071, 3, 31, 6, 30).astimezone(tz)
+            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000, timezone.utc).astimezone(tz) ==
+            tz.localize(datetime(2031, 4, 10, 6, 30))
         )
 
 
@@ -109,7 +109,7 @@ def test_delete_retention(request):
             "dataset": ds,
             "recursive": True,
             "exclude": [],
-            "lifetime_value": 50,
+            "lifetime_value": 10,
             "lifetime_unit": "YEAR",
             "naming_schema": "auto-%Y-%m-%d-%H-%M-1y",
             "schedule": {
@@ -145,7 +145,7 @@ def test_delete_retention(request):
         assert result.json()
         properties = [v for k, v in result.json()[0]["properties"].items() if k.startswith("org.truenas:destroy_at_")]
         assert properties, result.json()[0]["properties"]
-        assert properties[0]["value"] == "2071-03-31T06:30:00"
+        assert properties[0]["value"] == "2031-04-10T06:30:00"
         assert result.json()[0]["retention"] == {
             "datetime": {
                 "$date": ANY,
@@ -153,6 +153,6 @@ def test_delete_retention(request):
             "source": "property",
         }
         assert (
-            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000).astimezone(tz) ==
-            datetime(2071, 3, 31, 6, 30).astimezone(tz)
+            datetime.fromtimestamp(result.json()[0]["retention"]["datetime"]["$date"] / 1000, timezone.utc).astimezone(tz) ==
+            tz.localize(datetime(2031, 4, 10, 6, 30))
         )
