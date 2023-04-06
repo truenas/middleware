@@ -9,14 +9,16 @@ class AppService(Service):
     class Config:
         cli_namespace = 'app'
 
-    @accepts(Int('limit', default=10, validators=[Range(min=1)]))
-    @returns(Ref('available_apps'))
-    async def latest(self, limit):
+    @filterable
+    @filterable_returns(Ref('available_apps'))
+    async def latest(self, filters, options):
         """
-        Retrieve latest updated apps limiting the number by specifying `limit`.
+        Retrieve latest updated apps.
         """
-        return await self.middleware.call(
-            'app.available', [['last_update', '!=', None]], {'order_by': ['-last_update'], 'limit': limit}
+        return filter_list(
+            await self.middleware.call(
+                'app.available', [['last_update', '!=', None]], {'order_by': ['-last_update']}
+            ), filters, options
         )
 
     @filterable
