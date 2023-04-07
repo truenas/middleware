@@ -278,7 +278,7 @@ class UserService(CRUDService):
                 }})
 
         if dssearch:
-            dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options)
+            dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
             # For AD users, we will not have 2FA attribute normalized so let's do that
             global_2fa_configured = (await self.middleware.call('auth.twofactor.config'))['enabled']
             if global_2fa_configured:
