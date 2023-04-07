@@ -1,7 +1,8 @@
+import errno
 import pyotp
 
 from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, private, Service
 
 
 class UserService(Service):
@@ -44,3 +45,20 @@ class UserService(Service):
             digits=twofactor_config['otp_digits'],
         )
         return totp.verify(token or '', valid_window=twofactor_config['window'])
+
+    @private
+    async def translate_username(self, username):
+        """
+        Translates `username` to a user object.
+        """
+        try:
+            user = await self.middleware.call('user.get_user_obj', {'username': username, 'sid_info': True})
+        except KeyError:
+            raise CallError(f'User {username!r} does not exist', errno.ENOENT)
+
+        return await self.middleware.call(
+            'user.query', [['username', '=', user['pw_name']]], {
+                'get': True,
+                'extra': {'additional_information': ['DS']},
+            }
+        )
