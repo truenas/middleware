@@ -111,15 +111,30 @@ class TwoFactorAuthService(ConfigService):
 
     @private
     def get_users_config(self):
-        return [
-            {
-                'username': config['user']['bsdusr_username'],
-                'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode()
-            }
-            for config in self.middleware.call_sync(
-                'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
+        users = []
+        mapping = {
+            user['sid']: user for user in self.middleware.call_sync(
+                'user.query', [['local', '=', False], ['sid', '!=', None]], {
+                    'extra': {'additional_information': ['DS']},
+                }
             )
-        ]
+        }
+        for config in self.middleware.call_sync(
+            'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
+        ):
+            username = None
+            if config['user']:
+                username = config['user']['bsdusr_username']
+            elif user := mapping.get(config['user_sid']):
+                username = user['username']
+
+            if username:
+                users.append({
+                    'username': username,
+                    'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode()
+                })
+
+        return users
 
     @private
     async def get_ad_users(self):
