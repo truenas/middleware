@@ -4,7 +4,7 @@ import pyotp
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import ConfigService, private
+from middlewared.service import ConfigService, periodic, private
 from middlewared.validators import Range
 
 
@@ -143,3 +143,20 @@ class TwoFactorAuthService(ConfigService):
                 'datastore.query', 'account.twofactor_user_auth', [['user_sid', '!=', None]]
             )
         }
+
+    @periodic(interval=86400, run_on_start=False)
+    @private
+    async def remove_expired_secrets(self):
+        if (await self.middleware.call('directoryservices.get_state'))['activedirectory'] != 'HEALTHY':
+            return
+
+        mapping = {
+            user['sid']: user for user in self.middleware.call_sync(
+                'user.query', [['local', '=', False], ['sid', '!=', None]], {
+                    'extra': {'additional_information': ['DS']},
+                }
+            )
+        }
+        for sid, entry in (await self.get_ad_users()).items():
+            if sid not in mapping:
+                await self.middleware.call('datastore.delete', 'account.twofactor_user_auth', entry['id'])
