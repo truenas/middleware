@@ -163,10 +163,19 @@ def test_abort(request):
 
             call("core.job_abort", job_id)
 
-            time.sleep(1)
+            for i in range(10):
+                time.sleep(1)
+                state = call("cloudsync.query", [["id", "=", task["id"]]], {"get": True})["job"]["state"]
+                if state == "RUNNING":
+                    continue
+                elif state == "ABORTED":
+                    break
+                else:
+                    assert False, f"Cloud sync task is {state}"
+            else:
+                assert False, "Cloud sync task was not aborted"
 
             assert "rclone" not in ssh("ps ax")
-            assert call("cloudsync.query", [["id", "=", task["id"]]], {"get": True})["job"]["state"] == "ABORTED"
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
