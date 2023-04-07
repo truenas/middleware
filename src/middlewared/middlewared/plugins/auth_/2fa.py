@@ -89,10 +89,15 @@ class TwoFactorAuthService(ConfigService):
         return await self.config()
 
     @private
-    async def get_user_config(self, user_id):
-        return await self.middleware.call(
-            'datastore.query', 'account.twofactor_user_auth', [['user', '=', user_id]], {'get': True}
-        )
+    async def get_user_config(self, user_id, local_user):
+        filters = [['user', '=', user_id]] if local_user else [['user_sid', '=', user_id]]
+        if config := await self.middleware.call('datastore.query', 'account.twofactor_user_auth', filters):
+            return config[0]
+        else:
+            return {
+                'secret': None,
+                filters[0][0]: user_id,
+            }
 
     @private
     def generate_base32_secret(self):
