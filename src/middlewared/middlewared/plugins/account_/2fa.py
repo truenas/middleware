@@ -14,9 +14,11 @@ class UserService(Service):
         Returns the provisioning URI for the OTP for `username`. This can then be encoded in a QR code and used
         to provision an OTP app like Google Authenticator.
         """
-        user = await self.middleware.call('user.query', [['username', '=', username]], {'get': True})
+        user = await self.translate_username(username)
         twofactor_config = await self.middleware.call('auth.twofactor.config')
-        user_twofactor_config = await self.middleware.call('auth.twofactor.get_user_config', user['id'])
+        user_twofactor_config = await self.middleware.call(
+            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
+        )
         if not user_twofactor_config['secret']:
             raise CallError(f'{user["username"]!r} user does not has two factor authentication configured')
 
@@ -38,8 +40,13 @@ class UserService(Service):
         if not twofactor_config['enabled']:
             raise CallError('Please enable Two Factor Authentication first')
 
-        user = self.middleware.call_sync('user.query', [['username', '=', username]], {'get': True})
-        user_twofactor_config = self.middleware.call_sync('auth.twofactor.get_user_config', user['id'])
+        user = self.middleware.call_sync('user.translate_username', username)
+        if not user['twofactor_auth_configured']:
+            raise CallError('Two Factor Authentication is not configured for this user')
+
+        user_twofactor_config = self.middleware.call_sync(
+            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
+        )
         totp = pyotp.totp.TOTP(
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
             digits=twofactor_config['otp_digits'],
