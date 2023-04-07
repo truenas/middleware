@@ -80,8 +80,9 @@ class UserService(Service):
         twofactor_auth = await self.middleware.call(
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']
         )
+
         secret = await self.middleware.call('auth.twofactor.generate_base32_secret')
-        if user['local']:
+        if twofactor_auth['exists']:
             await self.middleware.call(
                 'datastore.update',
                 'account.twofactor_user_auth',
@@ -89,3 +90,13 @@ class UserService(Service):
                     'secret': secret,
                 }
             )
+        else:
+            await self.middleware.call(
+                'datastore.insert', 'account.twofactor_user_auth', {
+                    'secret': None,
+                    'user': None,
+                    'user_sid': user['sid'],
+                }
+            )
+
+        return await self.translate_username(username)
