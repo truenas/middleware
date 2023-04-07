@@ -647,7 +647,6 @@ class UserService(CRUDService):
         Patch(
             'user_create',
             'user_update',
-            ('add', Bool('renew_twofactor_secret', default=False)),
             ('attr', {'update': True}),
             ('rm', {'name': 'group_create'}),
         ),
@@ -768,7 +767,6 @@ class UserService(CRUDService):
                 data['home'] = os.path.join(data['home'], data.get('username') or user['username'])
 
         # After this point user dict has values from data
-        renew_2fa_secret = data.pop('renew_twofactor_secret', False)
         user.update(data)
 
         mode_to_set = user.get('home_mode')
@@ -826,15 +824,6 @@ class UserService(CRUDService):
         if 'groups' in user:
             groups = user.pop('groups')
             await self.__set_groups(pk, groups)
-
-        if renew_2fa_secret:
-            twofactor_auth_id = (await self.middleware.call('auth.twofactor.get_user_config', pk))['id']
-            await self.middleware.call(
-                'datastore.update',
-                'account.twofactor_user_auth',
-                twofactor_auth_id,
-                {'secret': await self.middleware.call('auth.twofactor.generate_base32_secret')}
-            )
 
         user = await self.user_compress(user)
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
