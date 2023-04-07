@@ -1,7 +1,7 @@
 import errno
 import pyotp
 
-from middlewared.schema import accepts, Bool, returns, Str
+from middlewared.schema import accepts, Bool, Ref, returns, Str
 from middlewared.service import CallError, private, Service
 
 
@@ -69,3 +69,23 @@ class UserService(Service):
                 'extra': {'additional_information': ['DS']},
             }
         )
+
+    @accepts(Str('username'))
+    @returns(Ref('user_entry'))
+    async def renew_2fa_secret(self, username):
+        """
+        Renew `username` user's two-factor authentication secret.
+        """
+        user = await self.translate_username(username)
+        twofactor_auth = await self.middleware.call(
+            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']
+        )
+        secret = await self.middleware.call('auth.twofactor.generate_base32_secret')
+        if user['local']:
+            await self.middleware.call(
+                'datastore.update',
+                'account.twofactor_user_auth',
+                twofactor_auth['id'], {
+                    'secret': secret,
+                }
+            )
