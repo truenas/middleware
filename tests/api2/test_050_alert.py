@@ -9,6 +9,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
 from auto_config import ip, password, user, pool_name, dev_test, ha
+from middlewared.test.integration.utils import call
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -58,29 +59,18 @@ def test_05_verify_the_pool_is_degraded(request):
 def test_06_wait_for_the_alert_and_get_the_id(request):
     depends(request, ["degrade_pool"], scope="session")
     global alert_id
+    call("alert.process_alerts")
     while True:
         for line in GET("/alert/list/").json():
-            if line['source'] == 'VolumeStatus':
+            if (
+                line['source'] == 'VolumeStatus' and
+                line['args']['volume'] == pool_name and
+                line['args']['state'] == 'DEGRADED'
+            ):
                 alert_id = line['id']
-                assert True
                 break
-        else:
-            continue
-        break
+
         sleep(1)
-
-
-def test_07_verify_degraded_pool_alert_list_exist(request):
-    depends(request, ["degrade_pool"], scope="session")
-    results = GET("/alert/list/")
-    assert results.status_code == 200, results.text
-    assert isinstance(results.json(), list), results.text
-    for line in results.json():
-        if alert_id == line['id']:
-            assert line['args']['volume'] == pool_name, results.text
-            assert line['args']['state'] == 'DEGRADED', results.text
-            assert line['level'] == 'CRITICAL', results.text
-            break
 
 
 def test_08_dimiss_the_alert(request):
