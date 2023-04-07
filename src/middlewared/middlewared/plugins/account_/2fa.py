@@ -81,6 +81,10 @@ class UserService(Service):
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']
         )
 
+        # Add some sanity checks here
+        if user['local'] and not twofactor_auth['exists']:
+            raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
+
         secret = await self.middleware.call('auth.twofactor.generate_base32_secret')
         if twofactor_auth['exists']:
             await self.middleware.call(
