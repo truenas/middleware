@@ -400,6 +400,19 @@ class ActiveDirectoryService(TDBWrapConfigService):
         verrors.check()
 
         if new['enable']:
+            if new['allow_trusted_doms'] and not await self.middleware.call('idmap.may_enable_trusted_domains'):
+                raise ValidationError(
+                    'activedirectory.allow_trusted_doms',
+                    'Configuration for trusted domains requires that the idmap backend '
+                    'be configured to handle these domains. There are two possible strategies to '
+                    'achieve this. The first strategy is to use the AUTORID backend for the domain '
+                    'to which TrueNAS is joined. The second strategy is to separately configure idmap '
+                    'ranges for every domain that has a trust relationship with the domain to which '
+                    'TrueNAS is joined and which has accounts that will be used on the TrueNAS server. '
+                    'NOTE: the topic of how to properly map Windows SIDs to Unix IDs is complex and '
+                    'may require consultation with administrators of other Unix servers in the '
+                    'Active Directory domain to properly coordinate a comprehensive ID mapping strategy.'
+                )
             if await self.middleware.call('failover.licensed'):
                 if await self.middleware.call('systemdataset.is_boot_pool'):
                     raise ValidationError(
@@ -575,8 +588,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')
         idmap['dns_domain_name'] = our_domain.upper()
         await self.middleware.call('idmap.update', idmap_id, idmap)
-        if trusted_domains:
-            await self.middleware.call('idmap.autodiscover_trusted_domains')
 
     @private
     @job(lock="AD_start_stop")

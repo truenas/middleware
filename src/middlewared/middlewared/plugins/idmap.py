@@ -454,35 +454,14 @@ class IdmapDomainService(TDBWrapCRUDService):
             await self.middleware.call('service.start', 'cifs')
 
     @private
-    async def autodiscover_trusted_domains(self):
-        smb = await self.middleware.call('smb.config')
+    async def may_enable_trusted_domains(self):
+        domains = await self.query([['name', '!=', 'DS_TYPE_DEFAULT_DOMAIN'], ['name', '!=', 'DS_TYPE_LDAP']])
+        primary = filter_list(domains, [['name', '=', 'DS_TYPE_ACTIVEDIRECTORY']], {'get': True})
 
-        ad_idmap_backend = (await self.query([('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')], {'get': True}))['idmap_backend']
-        if ad_idmap_backend == IdmapBackend.AUTORID.name:
-            self.logger.trace('Skipping auto-generation of trusted domains due to AutoRID being enabled.')
-            return
+        if primary['idmap_backend'] == IdmapBackend.AUTORID.name or len(domains) > 1:
+            return True
 
-        try:
-            domains = await self.middleware.run_in_thread(self.known_domains)
-        except wbclient.WBCError:
-            self.logger.warning("Failed to retrieve domain list.", exc_info=True)
-            return
-
-        for entry in domains:
-            if 'ACTIVE_DIRECTORY' not in entry['domain_flags']['parsed']:
-                continue
-
-            if entry['netbios_domain'].casefold() == smb['workgroup'].casefold():
-                continue
-
-            range_low, range_high = await self.get_next_idmap_range()
-            await self.middleware.call('idmap.create', {
-                'name': entry['netbios_domain'],
-                'dns_domain_name': entry['dns_name'],
-                'range_low': range_low,
-                'range_high': range_high,
-                'idmap_backend': 'RID'
-            })
+        return False
 
     @accepts()
     async def backend_options(self):
