@@ -930,6 +930,14 @@ class KerberosKeytabService(TDBWrapCRUDService):
         Delete kerberos keytab by id, and force regeneration of
         system keytab.
         """
+        kt = await self.get_instance(id)
+        if kt['name'] == 'AD_MACHINE_ACCOUNT':
+            if (await self.middleware.call('activedirectory.get_state')) != 'DISABLED':
+                raise CallError(
+                    'Active Directory machine account keytab may not be deleted while '
+                    'the Active Directory service is enabled.'
+                )
+
         await super().do_delete(id)
         if os.path.exists(keytab['SYSTEM'].value):
             os.remove(keytab['SYSTEM'].value)
