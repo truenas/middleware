@@ -386,29 +386,14 @@ class IdmapDomainService(CRUDService):
             raise CallError(f'Attempt to flush gencache failed with error: {gencache_flush.stderr.decode().strip()}')
 
     @private
-    async def autodiscover_trusted_domains(self):
-        smb = await self.middleware.call('smb.config')
+    async def may_enable_trusted_domains(self):
+        domains = await self.query([['name', '!=', 'DS_TYPE_DEFAULT_DOMAIN'], ['name', '!=', 'DS_TYPE_LDAP']])
+        primary = filter_list(domains, [['name', '=', 'DS_TYPE_ACTIVEDIRECTORY']], {'get': True})
 
-        ad_idmap_backend = (await self.query([('name', '=', 'DS_TYPE_ACTIVEDIRECTORY')], {'get': True}))['idmap_backend']
-        if ad_idmap_backend == IdmapBackend.AUTORID.name:
-            self.logger.trace('Skipping auto-generation of trusted domains due to AutoRID being enabled.')
-            return
+        if primary['idmap_backend'] == IdmapBackend.AUTORID.name or len(domains) > 1:
+            return True
 
-        wbinfo = await run(['wbinfo', '-m', '--verbose'], check=False)
-        if wbinfo.returncode != 0:
-            raise CallError(f'wbinfo -m failed with error: {wbinfo.stderr.decode().strip()}')
-
-        for entry in wbinfo.stdout.decode().splitlines():
-            c = entry.split()
-            range_low, range_high = await self.get_next_idmap_range()
-            if len(c) == 6 and c[0] != smb['workgroup']:
-                await self.middleware.call('idmap.create', {
-                    'name': c[0],
-                    'dns_domain_name': c[1],
-                    'range_low': range_low,
-                    'range_high': range_high,
-                    'idmap_backend': 'RID'
-                })
+        return False
 
     @accepts()
     async def backend_options(self):
