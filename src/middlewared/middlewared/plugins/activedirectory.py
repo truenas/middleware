@@ -613,7 +613,7 @@ class ActiveDirectoryService(ConfigService):
         smb = await self.middleware.call('smb.config')
         smb_ha_mode = await self.middleware.call('smb.reset_smb_ha_mode')
         if smb_ha_mode == 'UNIFIED':
-            if (failover_status := await self.middleawre.call('failover.status')) != 'MASTER':
+            if (failover_status := await self.middleware.call('failover.status')) != 'MASTER':
                 self.logger.error('Skipping Active Directory start because node failover status is: %s', failover_status)
                 return
 
