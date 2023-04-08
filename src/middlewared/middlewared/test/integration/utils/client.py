@@ -11,11 +11,14 @@ __all__ = ["client", "host", "password", "session", "url", "websocket_url"]
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True):
+def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None):
     if auth is undefined:
         auth = ("root", password())
 
-    with Client(f"ws://{host()}/websocket", py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
+    if host_ip is None:
+        host_ip = host()
+
+    with Client(f"ws://{host_ip}/websocket", py_exceptions=py_exceptions, log_py_exceptions=log_py_exceptions) as c:
         if auth is not None:
             logged_in = c.call("auth.login", *auth)
             if auth_required:
