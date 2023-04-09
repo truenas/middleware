@@ -14,19 +14,35 @@ class NVDIMMAlertClass(AlertClass):
     products = ('SCALE_ENTERPRISE',)
 
 
-class NVDIMMLifetimeWarningAlertClass(AlertClass):
+class NVDIMMESLifetimeWarningAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = 'NVDIMM Memory Module Lifetime Is Less Than 20%'
-    text = 'NVDIMM: "%(dev)s" Memory Module Remaining Lifetime is %(value)d%%.'
+    level = AlertLevel.CRITICAL
+    title = 'NVDIMM Energy Source Lifetime Is Less Than 20%'
+    text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
     products = ('SCALE_ENTERPRISE',)
 
 
-class NVDIMMLifetimeCriticalAlertClass(AlertClass):
+class NVDIMMESLifetimeCriticalAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = 'NVDIMM Energy Source Lifetime Is Less Than 10%'
+    text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
+    products = ('SCALE_ENTERPRISE',)
+
+
+class NVDIMMMemoryModLifetimeWarningAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.CRITICAL
+    title = 'NVDIMM Memory Module Lifetime Is Less Than 20%'
+    text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
+    products = ('SCALE_ENTERPRISE',)
+
+
+class NVDIMMMemoryModLifetimeCriticalAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = 'NVDIMM Memory Module Lifetime Is Less Than 10%'
-    text = 'NVDIMM: "%(dev)s" Memory Module Remaining Lifetime is %(value)d%%.'
+    text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
     products = ('SCALE_ENTERPRISE',)
 
 
@@ -83,7 +99,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             if nvdimm['specrev'] >= 22 and not (hex_int & arm_info):
                 alerts.append(Alert(
                     NVDIMMAlertClass,
-                    {'dev': dev, 'value': 'ARM_INFO', 'status': 'not set'}
+                    {'dev': dev, 'value': 'ARM STATUS', 'status': 'NOT ARMED'}
                 ))
 
         for i in ('nvm_health_info', 'nvm_error_threshold_status', 'nvm_warning_threshold_status'):
@@ -95,15 +111,21 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                     ))
 
         if (val := int(nvdimm['nvm_lifetime'].rstrip('%'))) < 20:
-            alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
-            alerts.append(Alert(alert, {'dev': 'NVM Lifetime', 'value': val}))
+            alert = NVDIMMMemoryModLifetimeWarningAlertClass if val > 10 else NVDIMMMemoryModLifetimeCriticalAlertClass
+            alerts.append(Alert(alert, {'dev': dev, 'value': val}))
 
         if nvdimm['index'] == 0 and (val := int(nvdimm['es_lifetime'].rstrip('%'))) < 20:
             # we only check this value for the 0th slot nvdimm since M60 has 2 and the way
             # they're physically cabled, prevents monitoring the 2nd nvdimm's energy source
             # (it always reports -1%)
-            alert = NVDIMMLifetimeWarningAlertClass if val > 10 else NVDIMMLifetimeCriticalAlertClass
-            alerts.append(Alert(alert, {'dev': 'NVM Energy Source', 'value': val}))
+            alert = NVDIMMESLifetimeWarningAlertClass if val > 10 else NVDIMMESLifetimeCriticalAlertClass
+            alerts.append(Alert(alert, {'dev': dev, 'value': val}))
+
+        if 'not_armed' in nvdimm['state_flags']:
+            alerts.append(Alert(
+                NVDIMMAlertClass,
+                {'dev': dev, 'value': 'ARM STATUS', 'status': 'NOT ARMED'}
+            ))
 
         if (run_fw := nvdimm['running_firmware']):
             if run_fw not in nvdimm['qualified_firmware']:
