@@ -1,20 +1,32 @@
-#!/usr/bin/env python3
-
-import sys
 import os
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import POST
+import sys
+import time
+sys.path.append(os.getcwd())
 from auto_config import ha
 
-if 'license_file' in os.environ:
-    license_file = os.environ["license_file"]
-else:
-    license_file = '/root/license.txt'
+from middlewared.test.integration.utils import client
 
 # Only read the test on HA
 if ha:
-    def test_01_send_license():
-        with open(license_file, 'r') as f:
-            results = POST('/system/license_update', str(f.read()), controller_a=ha)
-            assert results.status_code == 200, results.text
+    def test_apply_and_verify_license():
+        with client(host_ip=os.environ.get('controller1_ip', None)) as c:
+            with open(os.environ.get('license_file', '/root/license.txt')) as f:
+                # apply license
+                c.call('system.license_update', f.read())
+
+                # verify license is applied
+                assert c.call('failover.licensed') is True
+
+                retries = 30
+                sleep_time = 1
+                for i in range(retries):
+                    if c.call('failover.call_remote', 'failover.licensed') is False:
+                        # we call a hook that runs in a background task
+                        # so give it a bit to propagate to other controller
+                        # furthermore, our VMs are...well...inconsistent to say the least
+                        # so sometimes this is almost instant while others I've 10+ secs
+                        time.sleep(sleep_time)
+                    else:
+                        break
+                else:
+                    assert False, f'Timed out after {sleep_time * retries}s waiting on license to sync to standby'
