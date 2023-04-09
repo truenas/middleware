@@ -141,6 +141,15 @@ class MseriesNvdimmService(Service):
 
         return result
 
+    def state_flags(self, nmem):
+        try:
+            with open(f'/sys/bus/nd/devices/{nmem.removeprefix("/dev/")}/nfit/flags') as f:
+                state_flags = f.read().strip().split()
+        except Exception:
+            state_flags = []
+
+        return state_flags
+
     def info(self):
         results = []
         sys = ("TRUENAS-M40", "TRUENAS-M50", "TRUENAS-M60")
@@ -155,7 +164,8 @@ class MseriesNvdimmService(Service):
                     'index': int(nmem[len('/dev/nmem')]),
                     'dev': nmem.removeprefix('/dev/'),
                     'dev_path': nmem,
-                    'specrev': int(specrev.strip())
+                    'specrev': int(specrev.strip()),
+                    'state_flags': self.state_flags(nmem),
                 }
                 info.update(self.health_info(output))
                 info.update(self.vendor_info(output))
