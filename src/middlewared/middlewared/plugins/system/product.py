@@ -179,11 +179,9 @@ class SystemService(Service):
     @accepts(Str('license'))
     @returns()
     def license_update(self, license):
-        """
-        Update license file.
-        """
+        """Update license file"""
         try:
-            License.load(license)
+            dser_license = License.load(license)
         except Exception:
             raise CallError('This is not a valid license.')
 
@@ -197,6 +195,8 @@ class SystemService(Service):
         SystemService.PRODUCT_TYPE = None
         if self.middleware.call_sync('system.is_enterprise'):
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
+
+        self.middleware.call_sync('failover.configure.license', dser_license)
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
         )

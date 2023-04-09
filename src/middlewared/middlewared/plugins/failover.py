@@ -20,6 +20,7 @@ from middlewared.plugins.auth import AuthService
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
+from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -38,7 +39,6 @@ class FailoverModel(sa.Model):
 class FailoverService(ConfigService):
 
     HA_MODE = None
-    HA_LICENSED = None
     LAST_STATUS = None
     LAST_DISABLEDREASONS = None
 
@@ -132,19 +132,16 @@ class FailoverService(ConfigService):
     @accepts()
     @returns(Bool())
     def licensed(self):
-        """
-        Checks whether this instance is licensed as a HA unit.
-        """
-        # update the class attribute so that all instances
-        # of this class see the correct value
-        if FailoverService.HA_LICENSED is None:
-            info = self.middleware.call_sync('system.license')
-            if info is not None and info['system_serial_ha']:
-                FailoverService.HA_LICENSED = True
-            else:
-                FailoverService.HA_LICENSED = False
+        """Checks whether this instance is licensed as a HA unit"""
+        try:
+            is_ha = self.middleware.call_sync('cache.get', HA_LICENSE_CACHE_KEY)
+        except KeyError:
+            is_ha = False
+            if (info := self.middleware.call_sync('system.license')) is not None and info['system_serial_ha']:
+                is_ha = True
+                self.middleware.call_sync('cache.put', HA_LICENSE_CACHE_KEY, is_ha)
 
-        return FailoverService.HA_LICENSED
+        return is_ha
 
     @private
     async def ha_mode(self):
@@ -1034,36 +1031,6 @@ async def interface_pre_sync_hook(middleware):
 
 async def hook_license_update(middleware, *args, **kwargs):
     FailoverService.HA_MODE = None
-    FailoverService.HA_LICENSED = None
-
-    if not await middleware.call('failover.licensed'):
-        return
-
-    # setup the local heartbeat interface
-    heartbeat = True
-    try:
-        await middleware.call('failover.ensure_remote_client')
-    except Exception:
-        middleware.logger.warning('Failed to ensure remote client on active')
-        heartbeat = False
-
-    if heartbeat:
-        # setup the remote controller
-        try:
-            await middleware.call('failover.send_small_file', '/data/license')
-        except Exception:
-            middleware.logger.warning('Failed to sync db to standby')
-
-        try:
-            await middleware.call('failover.call_remote', 'failover.ensure_remote_client')
-        except Exception:
-            middleware.logger.warning('Failed to ensure remote client on standby')
-
-        try:
-            await middleware.call('failover.call_remote', 'etc.generate', ['rc'])
-        except Exception:
-            middleware.logger.warning('etc.generate failed on standby')
-
     await middleware.call('failover.status_refresh')
 
 
