@@ -963,6 +963,22 @@ class IdmapDomainService(TDBWrapCRUDService):
         }
 
     @private
+    def convert_sids(self, sidlist):
+        try:
+            client = WBClient()
+            results = client.sids_to_users_and_groups(sidlist)
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
+
+        mapped = {sid: {
+            'type': entry.sid_type['parsed'][4:],
+            'id': entry.id,
+            'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
+        } for sid, entry in results['mapped'].items()}
+
+        return {'mapped': mapped, 'unmapped': results['unmapped']}
+
+    @private
     def sid_to_name(self, sid):
         try:
             client = WBClient()
