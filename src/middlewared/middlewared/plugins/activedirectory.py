@@ -421,6 +421,23 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'system dataset is on the boot pool'
                     )
 
+        elif new['enable'] and old['enable']:
+            permitted_keys = [
+                'verbose_logging',
+                'use_default_domain',
+                'allow_trusted_doms',
+                'disable_freenas_cache',
+                'restrict_pam',
+                'timeout',
+                'dns_timeout'
+            ]
+            for entry in new.keys():
+                if new[entry] != old[entry] and entry not in permitted_keys:
+                    raise ValidationError(
+                        f'activedirectory.{entry}',
+                        'Parameter may not be changed while the Active Directory service is enabled.'
+                    )
+
         if new['enable'] and not old['enable']:
             """
             Currently run two health checks prior to validating domain.
@@ -942,7 +959,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         else:
             cmd = [SMBCmd.NET.value, '--json', 'ads', 'info']
 
-        netads = await run(cmd, check=False)
+        netads = await self.cache_flush_retry(cmd)
         if netads.returncode != 0:
             err_msg = netads.stderr.decode().strip()
             if err_msg == "Didn't find the ldap server!":
@@ -988,11 +1005,22 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return
 
     @private
+    async def cache_flush_retry(self, cmd, retry=True):
+        rv = await run(cmd, check=False)
+        if rv.returncode != 0 and retry:
+            cache_flush = await run(['net', 'cache', 'flush'], check=False)
+            if cache_flush.returncode != 0:
+                raise CallError(f'Attempt to flush cache failed with error: {cache_flush.stderr.decode().strip()}')
+            return await self.cache_flush_retry(cmd, False)
+
+        return rv
+
+    @private
     async def lookup_dc(self, domain=None):
         if domain is None:
             domain = (await self.config())['domainname']
 
-        lookup = await run([SMBCmd.NET.value, '--json', '-S', domain, 'ads', 'lookup'], check=False)
+        lookup = await self.cache_flush_retry([SMBCmd.NET.value, '--json', '-S', domain, 'ads', 'lookup'])
         if lookup.returncode != 0:
             raise CallError("Failed to look up Domain Controller information: "
                             f"{lookup.stderr.decode().strip()}")
