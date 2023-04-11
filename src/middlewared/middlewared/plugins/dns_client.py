@@ -57,11 +57,11 @@ class DNSClient(Service):
             List('nameservers', items=[IPAddr("ip")], default=[]),
             Int('lifetime', default=12),
             Int('timeout', default=4),
+            Str('raise_error', default='HOST_FAILURE', enum=['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE']),
             register=True
         ),
         Ref('query-filters'),
         Ref('query-options'),
-        Str('raise_error', default='HOST_FAILURE', enum=['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE']),
     ))
     @returns(OROperator(
         List(
@@ -120,7 +120,6 @@ class DNSClient(Service):
 
         if (len(data['record_types']) > 1) and (set(single_rtypes) & set(data['record_types'])):
             raise ValidationError(
-                # 'dnclient.mcg_forward_lookup',
                 'dnclient.forward_lookup',
                 f'{single_rtypes} cannot be combined with other rtypes in the same request'
             )
@@ -176,14 +175,14 @@ class DNSClient(Service):
         # ANY   - raise on any failure
         # ALL   - raise if all tests for all 'names' fail
         if failures:
-            if data['raise_error'] == 'HOST_FAILURE':
+            if options['raise_error'] == 'HOST_FAILURE':
                 for h in data['names']:
                     fph = len(failuresPerHost[h]) if failuresPerHost.get(h) is not None else 0
                     if fph == len(data['record_types']):
                         raise failuresPerHost[h][0]
-            elif data['raise_error'] == 'ANY_FAILURE':
+            elif options['raise_error'] == 'ANY_FAILURE':
                 raise failures[0]
-            elif data['raise_error'] == 'ALL_FAILURE':
+            elif options['raise_error'] == 'ALL_FAILURE':
                 if len(data['names']) * len(data['record_types']) == len(failures):
                     raise failures[0]
 
