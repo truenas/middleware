@@ -7,7 +7,7 @@ from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
-from .utils import get_virsh_command_args
+from .utils import get_virsh_command_args, SENSITIVE_PCI_DEVICE_TYPES
 
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
@@ -19,12 +19,6 @@ RE_PCI_NAME = re.compile(r'^([\w:.]+)\s+')
 class VMDeviceService(Service):
 
     PCI_DEVICES = None
-    SENSITIVE_PCI_DEVICE_TYPES = (
-        'Host bridge',
-        'Bridge',
-        'RAM memory',
-        'SMBus',
-    )
 
     class Config:
         namespace = 'vm.device'
@@ -104,7 +98,7 @@ class VMDeviceService(Service):
                 'vendor': 'Not Available',
             },
             'controller_type': controller_type,
-            'critical': controller_type in self.SENSITIVE_PCI_DEVICE_TYPES,
+            'critical': (k.lower() in controller_type.lower() for k in SENSITIVE_PCI_DEVICE_TYPES),
             'iommu_group': {},
             'available': False,
             'drivers': [],
