@@ -2,7 +2,7 @@ import asyncio
 from dns.asyncresolver import Resolver
 from io import StringIO
 
-from middlewared.service import private, Service
+from middlewared.service import private, Service, ValidationError
 from middlewared.schema import accepts, returns, IPAddr, Dict, Int, List, Str, Ref, OROperator
 from middlewared.utils import filter_list
 
@@ -47,7 +47,11 @@ class DNSClient(Service):
     @accepts(Dict(
         'lookup_data',
         List('names', items=[Str('name')], required=True),
-        Str('record_type', default='A', enum=['A', 'AAAA', 'SRV', 'CNAME']),
+        List(
+            'record_types',
+            items=[Str('record_type', default='A', enum=['A', 'AAAA', 'SRV', 'CNAME'])],
+            default=['A', 'AAAA']
+        ),
         Dict(
             'dns_client_options',
             List('nameservers', items=[IPAddr("ip")], default=[]),
@@ -57,6 +61,7 @@ class DNSClient(Service):
         ),
         Ref('query-filters'),
         Ref('query-options'),
+        Str('throw_exception_on', default='host_failure', enum=['never', 'any_failure', 'host_failure', 'all_failure']),
     ))
     @returns(OROperator(
         List(
@@ -101,47 +106,85 @@ class DNSClient(Service):
         name='record_list',
     ))
     async def forward_lookup(self, data):
+        """
+        Rules: We can combine 'A' and 'AAAA', but 'SRV' and 'CNAME' must be singular.
+        NB1: By default raise_error=True and forward_lookup will return on the _first_ exception.
+             If that is not desired then use raise_error=False
+        NB2: With raise_error=False all results are returned and resolve attempts that
+             generate an exception are returned as an empty list
+        """
+        single_rtypes = ['CNAME', 'SRV']
         output = []
         options = data['dns_client_options']
-        rtype = data['record_type']
+
+        if (len(data['record_types']) > 1) and (set(single_rtypes) & set(data['record_types'])):
+            raise ValidationError(
+                # 'dnclient.mcg_forward_lookup',
+                'dnclient.forward_lookup',
+                f'{single_rtypes} cannot be combined with other rtypes in the same request'
+            )
 
         results = await asyncio.gather(*[
-            self.resolve_name(h, rtype, options) for h in data['names']
-        ])
+            self.resolve_name(h, rtype, options) for h in data['names'] for rtype in data['record_types']
+        ], return_exceptions=True)
 
-        for ans in results:
-            ttl = ans.response.answer[0].ttl
-            name = ans.response.answer[0].name.to_text()
-
-            if rtype == 'SRV':
-                entries = [{
-                    "name": name,
-                    "priority": i.priority,
-                    "weight": i.weight,
-                    "port": i.port,
-                    "class": i.rdclass.name,
-                    "type": i.rdtype.name,
-                    "ttl": ttl,
-                    "target": i.target.to_text()
-                } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
-            elif rtype == 'CNAME':
-                entries = [{
-                    "name": name,
-                    "class": i.rdclass.name,
-                    "type": i.rdtype.name,
-                    "ttl": ttl,
-                    "target": i.target.to_text(),
-                } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
+        failures = []
+        failuresPerHost = {}
+        for (h, rtype), ans in zip([(h, rtype) for h in data['names'] for rtype in data['record_types']], results):
+            if isinstance(ans, Exception):
+                failures.append(ans)
+                failuresPerHost[h] = failuresPerHost.setdefault(h, [])
+                failuresPerHost[h].append(ans)
             else:
-                entries = [{
-                    "name": name,
-                    "class": i.rdclass.name,
-                    "type": i.rdtype.name,
-                    "ttl": ttl,
-                    "address": i.address,
-                } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
+                ttl = ans.response.answer[0].ttl
+                name = ans.response.answer[0].name.to_text()
 
-            output.extend(entries)
+                # 'SRV' and 'CNAME' are special
+                if rtype == 'SRV':
+                    entries = [{
+                        "name": name,
+                        "priority": i.priority,
+                        "weight": i.weight,
+                        "port": i.port,
+                        "class": i.rdclass.name,
+                        "type": i.rdtype.name,
+                        "ttl": ttl,
+                        "target": i.target.to_text()
+                    } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
+                elif rtype == 'CNAME':
+                    entries = [{
+                        "name": name,
+                        "class": i.rdclass.name,
+                        "type": i.rdtype.name,
+                        "ttl": ttl,
+                        "target": i.target.to_text(),
+                    } for i in ans.response.answer[0].items if i.rdtype.name == rtype]
+                else:  # The remaining options are 'A' and/or 'AAAA'
+                    entries = [{
+                        "name": name,
+                        "class": i.rdclass.name,
+                        "type": i.rdtype.name,
+                        "ttl": ttl,
+                        "address": i.address,
+                    } for i in ans.rrset.items if i.rdtype.name == rtype]
+
+                output.extend(entries)
+
+        # never - squash all failures
+        # host  - raise if all tests for a name fail  (default case)
+        # any   - raise on any failure
+        # all   - raise if all tests for all 'names' fail
+        if failures:
+            if data['throw_exception_on'] == 'host_failure':
+                for h in data['names']:
+                    fph = len(failuresPerHost[h]) if failuresPerHost.get(h) is not None else 0
+                    if fph == len(data['record_types']):
+                        raise failuresPerHost[h][0]
+            elif data['throw_exception_on'] == 'any_failure':
+                raise failures[0]
+            elif data['throw_exception_on'] == 'all_failure':
+                if len(data['names']) * len(data['record_types']) == len(failures):
+                    raise failures[0]
 
         return filter_list(output, data['query-filters'], data['query-options'])
 

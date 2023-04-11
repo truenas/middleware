@@ -54,7 +54,7 @@ class ClusterUtils(Service):
                 pass
 
         try:
-            ans = [i['address'] for i in await self.middleware.call('dnsclient.forward_lookup', {"names": [host]})]
+            ans = [i['address'] for i in await self.middleware.call('dnsclient.forward_lookup', {"names": [host], 'record_types': ['A']})]
         except DNSException as e:
             # failed to resolve the hostname
             result['error'] = e.msg
