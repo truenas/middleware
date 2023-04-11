@@ -99,9 +99,35 @@ class iSNSPClient(object):
         if rpkt.function != 'DevDeregRsp':
             raise iSNSPException('Invalid response type', response)
 
+    def send(self, msg, msglen):
+        totalsent = 0
+        while totalsent < msglen:
+            sent = self.sock.send(msg[totalsent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
+            totalsent = totalsent + sent
+
+    def recv_packet(self):
+        length_calculated = False
+        chunks = []
+        bytes_required = iSNSPPacket.HEADER_LENGTH
+        bytes_received = 0
+        while bytes_received < bytes_required:
+            chunk = self.sock.recv(min(bytes_required - bytes_received, 4096))
+            if chunk == b'':
+                raise RuntimeError("socket connection broken")
+            chunks.append(chunk)
+            bytes_received = bytes_received + len(chunk)
+            if not length_calculated and bytes_received >= iSNSPPacket.HEADER_LENGTH:
+                pdu_len = iSNSPPacket.pdu_length(b''.join(chunks))
+                length_calculated = True
+                bytes_required = iSNSPPacket.HEADER_LENGTH + pdu_len
+        return b''.join(chunks)
+
     def send_packet(self, pkt):
-        self.sock.send(pkt.asbytes)
-        data = self.sock.recv(4096)
+        msg = pkt.asbytes
+        self.send(msg, len(msg))
+        data = self.recv_packet()
         _txnid = self.txnid
         self.txnid += 1
         response = iSNSPPacket.from_bytes(data)
