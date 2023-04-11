@@ -108,9 +108,10 @@ class DNSClient(Service):
     async def forward_lookup(self, data):
         """
         Rules: We can combine 'A' and 'AAAA', but 'SRV' and 'CNAME' must be singular.
-        NB1: By default raise_error=True and forward_lookup will return on the _first_ exception.
-             If that is not desired then use raise_error=False
-        NB2: With raise_error=False all results are returned and resolve attempts that
+        NB1: By default record_types is ['A', 'AAAA'] and if selected will return both 'A' and 'AAAA' records
+             for hosts that support both.
+        NB2: By default throw_exception_on is 'host_failure', i.e. raise exception if all tests for a name fail
+        NB3: With throw_exception_on as 'never' all results are returned and resolve attempts that
              generate an exception are returned as an empty list
         """
         single_rtypes = ['CNAME', 'SRV']
