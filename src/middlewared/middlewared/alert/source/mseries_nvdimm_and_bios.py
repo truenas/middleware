@@ -3,7 +3,9 @@ import datetime
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
-WEBUI_SUPPORT_FORM = 'Please contact iXsystems Support using the form in System Settings -> General -> Support'
+WEBUI_SUPPORT_FORM = (
+    'Please contact iXsystems Support using the "File Ticket" button in the System Settings->General->Support form'
+)
 
 
 class NVDIMMAlertClass(AlertClass):
@@ -50,10 +52,7 @@ class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = 'Invalid NVDIMM Firmware Version'
-    text = (
-        'NVDIMM: "%(dev)s" is running firmware version which can cause data loss if a power outage '
-        f'event occurs. {WEBUI_SUPPORT_FORM}'
-    )
+    text = f'NVDIMM: "%(dev)s" is running invalid firmware. {WEBUI_SUPPORT_FORM}'
     products = ('SCALE_ENTERPRISE',)
     proactive_support = True
 
@@ -127,7 +126,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                 {'dev': dev, 'value': 'ARM STATUS', 'status': 'NOT ARMED'}
             ))
 
-        if (run_fw := nvdimm['running_firmware']):
+        if (run_fw := nvdimm['running_firmware']) is not None:
             if run_fw not in nvdimm['qualified_firmware']:
                 alerts.append(Alert(NVDIMMInvalidFirmwareVersionAlertClass, {'dev': dev}))
             elif run_fw != nvdimm['recommended_firmware']:
