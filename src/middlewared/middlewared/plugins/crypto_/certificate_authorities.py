@@ -8,7 +8,7 @@ from .cert_entry import get_ca_result_entry
 from .common_validation import _validate_common_attributes, validate_cert_name
 from .dependencies import check_dependencies
 from .key_utils import export_private_key
-from .load_utils import get_serial_from_certificate_safe
+from .load_utils import get_serial_from_certificate_safe, load_certificate
 from .query_utils import get_ca_chain, normalize_cert_attrs
 from .utils import (
     get_cert_info_from_data, _set_required, CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -274,6 +274,9 @@ class CertificateAuthorityService(CRUDService):
                 data.pop(key, None)
 
         verrors = await self.validate_common_attributes(data, 'certificate_authority_create')
+
+        if create_type == 'CA_CREATE_IMPORTED' and not load_certificate(data['certificate']):
+            verrors.add('certificate_authority_create.certificate', 'Unable to parse certificate')
 
         await validate_cert_name(
             self.middleware, data['name'], self._config.datastore,
