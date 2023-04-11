@@ -127,7 +127,7 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                 {'dev': dev, 'value': 'ARM STATUS', 'status': 'NOT ARMED'}
             ))
 
-        if (run_fw := nvdimm['running_firmware']):
+        if (run_fw := nvdimm['running_firmware']) is not None:
             if run_fw not in nvdimm['qualified_firmware']:
                 alerts.append(Alert(NVDIMMInvalidFirmwareVersionAlertClass, {'dev': dev}))
             elif run_fw != nvdimm['recommended_firmware']:

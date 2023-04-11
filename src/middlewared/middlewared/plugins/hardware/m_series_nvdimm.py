@@ -50,7 +50,7 @@ class MseriesNvdimmService(Service):
                 'subvendor': '0x3480', 'subdevice': '0x4131', 'subrev_id': '0x01',
                 'part_num': '18ASF2G72PF12G6V21AB',
                 'size': '16GB', 'clock_speed': '2666MHz',
-                'qualified_firmware': ['2.1', '2.2', '2.4', '2.6'],
+                'qualified_firmware': ['2.6'],
                 'recommended_firmware': '2.6',
             },
             '0x2c80_0x4e36_0x31_0x3480_0x4231_0x02': {
