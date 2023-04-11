@@ -61,7 +61,7 @@ class DNSClient(Service):
         ),
         Ref('query-filters'),
         Ref('query-options'),
-        Str('throw_exception_on', default='host_failure', enum=['never', 'any_failure', 'host_failure', 'all_failure']),
+        Str('raise_error', default='HOST_FAILURE', enum=['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE']),
     ))
     @returns(OROperator(
         List(
@@ -110,8 +110,8 @@ class DNSClient(Service):
         Rules: We can combine 'A' and 'AAAA', but 'SRV' and 'CNAME' must be singular.
         NB1: By default record_types is ['A', 'AAAA'] and if selected will return both 'A' and 'AAAA' records
              for hosts that support both.
-        NB2: By default throw_exception_on is 'host_failure', i.e. raise exception if all tests for a name fail
-        NB3: With throw_exception_on as 'never' all results are returned and resolve attempts that
+        NB2: By default raise_error is 'HOST_FAILURE', i.e. raise exception if all tests for a name fail
+        NB3: With raise_error as 'NEVER' all results are returned and resolve attempts that
              generate an exception are returned as an empty list
         """
         single_rtypes = ['CNAME', 'SRV']
@@ -171,19 +171,19 @@ class DNSClient(Service):
 
                 output.extend(entries)
 
-        # never - squash all failures
-        # host  - raise if all tests for a name fail  (default case)
-        # any   - raise on any failure
-        # all   - raise if all tests for all 'names' fail
+        # NEVER - squash all failures
+        # HOST  - raise if all tests for a name fail  (default case)
+        # ANY   - raise on any failure
+        # ALL   - raise if all tests for all 'names' fail
         if failures:
-            if data['throw_exception_on'] == 'host_failure':
+            if data['raise_error'] == 'HOST_FAILURE':
                 for h in data['names']:
                     fph = len(failuresPerHost[h]) if failuresPerHost.get(h) is not None else 0
                     if fph == len(data['record_types']):
                         raise failuresPerHost[h][0]
-            elif data['throw_exception_on'] == 'any_failure':
+            elif data['raise_error'] == 'ANY_FAILURE':
                 raise failures[0]
-            elif data['throw_exception_on'] == 'all_failure':
+            elif data['raise_error'] == 'ALL_FAILURE':
                 if len(data['names']) * len(data['record_types']) == len(failures):
                     raise failures[0]
 
