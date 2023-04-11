@@ -1,10 +1,12 @@
 import base64
+import contextlib
+
 import pyotp
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import ConfigService, periodic, private
+from middlewared.service import CallError, ConfigService, periodic, private
 from middlewared.validators import Range
 
 
@@ -150,13 +152,11 @@ class TwoFactorAuthService(ConfigService):
         if (await self.middleware.call('directoryservices.get_state'))['activedirectory'] != 'HEALTHY':
             return
 
-        mapping = {
-            user['sid']: user for user in self.middleware.call_sync(
-                'user.query', [['local', '=', False], ['sid', '!=', None]], {
-                    'extra': {'additional_information': ['DS']},
-                }
-            )
-        }
-        for sid, entry in (await self.get_ad_users()).items():
-            if sid not in mapping:
-                await self.middleware.call('datastore.delete', 'account.twofactor_user_auth', entry['id'])
+        ad_users = await self.get_ad_users()
+        ad_users_sid_mapping = {user['sid']: user for user in ad_users}
+
+        with contextlib.suppress(CallError):
+            for unmapped_user_sid in (await self.middleware.call('idmap.convert_sids', list(ad_users)))['unmapped']:
+                await self.middleware.call(
+                    'datastore.delete', 'account.twofactor_user_auth', ad_users_sid_mapping[unmapped_user_sid]['id']
+                )
