@@ -107,12 +107,14 @@ def test_05_certificate_lifetime(life_time, should_work):
         if should_work:
             cert = None
             try:
-                cert = call('certificate.create', {
-                    'name': 'test-cert',
-                    'create_type': 'CERTIFICATE_CREATE_INTERNAL',
-                    'signedby': root_ca['id'],
-                    **cert_params,
-                }, job=True)
+                cert = call(
+                    'certificate.create', {
+                        'name': 'test-cert',
+                        'create_type': 'CERTIFICATE_CREATE_INTERNAL',
+                        'signedby': root_ca['id'],
+                        **cert_params,
+                    }, job=True
+                )
                 assert cert['parsed'] is True, cert
             finally:
                 if cert:
@@ -293,22 +295,28 @@ def test_05_certificate_lifetime(life_time, should_work):
 ])
 def test_06_imported_certificate(certificate, private_key, should_work):
     cert_params = {'certificate': certificate, 'privatekey': private_key}
-    csr = {}
-    try:
+    if should_work:
+        cert = None
         if should_work:
-            csr = call('certificate.create', {
-                'name': 'test-cert',
-                'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                **cert_params,
-            }, job=True)
-            assert isinstance(csr, dict)
+            try:
+                cert = call(
+                    'certificate.create', {
+                        'name': 'test-cert',
+                        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                        **cert_params,
+                    }, job=True
+                )
+                assert cert['parsed'] is True, cert
+            finally:
+                if cert:
+                    call('certificate.delete', cert['id'], job=True)
+
         else:
             with pytest.raises(ValidationErrors):
-                call('certificate.create', {
-                    'name': 'test-cert',
-                    'create_type': 'CERTIFICATE_CREATE_IMPORTED',
-                    **cert_params,
-                }, job=True)
-    finally:
-        if csr:
-            call('certificate.delete', csr['id'], job=True)
+                call(
+                    'certificate.create', {
+                        'name': 'test-cert',
+                        'create_type': 'CERTIFICATE_CREATE_IMPORTED',
+                        **cert_params,
+                    }, job=True
+                )
