@@ -359,6 +359,8 @@ class iSNSPPacket(object):
 
     ifunc_map: ClassVar[Dict[str, int]] = {v: k for k, v in func_map.items()}
 
+    HEADER_LENGTH = 12
+
     @property
     def asbytes(self):
         payload_bytes = bytes()
@@ -383,6 +385,19 @@ class iSNSPPacket(object):
             return list(msg_type_option.value.values())[0]
         else:
             return None
+
+    @classmethod
+    def pdu_length(cls, packet: bytes):
+        try:
+            decoded_packet = [
+                field.rstrip(b'\x00') if isinstance(field, bytes) else field
+                for field in struct.unpack(
+                    cls.packet_fmt, packet[: cls.payload_offset]
+                )
+            ]
+        except Exception as e:
+            raise MalformedPacketError(f'Unable to parse iSNSP packet: {e}')
+        return decoded_packet[2]
 
     @classmethod
     def from_bytes(cls, packet: bytes):
