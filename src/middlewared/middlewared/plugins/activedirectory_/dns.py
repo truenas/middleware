@@ -209,7 +209,7 @@ class ActiveDirectoryService(Service):
                 try:
                     resp = await self.middleware.call('dnsclient.forward_lookup', {
                         'names': [name],
-                        'record_type': 'SRV',
+                        'record_types': ['SRV'],
                         'dns_client_options': {'nameservers': [entry['nameserver']]}
                     })
                 except dns.resolver.NXDOMAIN:
@@ -245,7 +245,7 @@ class ActiveDirectoryService(Service):
             host = f"{srv_prefix.value}{domain}."
 
         servers = self.middleware.call_sync('dnsclient.forward_lookup', {
-            'names': [host], 'record_type': 'SRV', 'query-options': {'order_by': ['priority', 'weight']}
+            'names': [host], 'record_types': ['SRV'], 'query-options': {'order_by': ['priority', 'weight']}
         })
 
         output = []
