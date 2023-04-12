@@ -1593,7 +1593,7 @@ class InterfaceService(CRUDService):
             name = lagg['lagg_interface']['int_interface']
             members = await self.middleware.call('datastore.query', 'network.lagginterfacemembers',
                                                  [('lagg_interfacegroup_id', '=', lagg['id'])],
-                                                 {'order_by': ['lagg_physnic']})
+                                                 {'order_by': ['lagg_ordernum']})
             cloned_interfaces.append(name)
             try:
                 await self.middleware.call(
