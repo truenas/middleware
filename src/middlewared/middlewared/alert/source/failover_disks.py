@@ -32,8 +32,8 @@ class FailoverDisksAlertSource(AlertSource):
                 return [Alert(
                     DisksAreNotPresentOnStandbyNodeAlertClass, {'serials': ', '.join(md['missing_remote'])}
                 )]
-            if md['missing_remote']:
+            if md['missing_local']:
                 return [Alert(
-                    DisksAreNotPresentOnActiveNodeAlertClass, {'serials': ', '.join(md['missing_remote'])}
+                    DisksAreNotPresentOnActiveNodeAlertClass, {'serials': ', '.join(md['missing_local'])}
                 )]
         return []
