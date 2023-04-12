@@ -167,11 +167,11 @@ def zvol_dataset(zvol, volsize=MB_512):
         assert results.status_code == 200, results.text
 
 @contextlib.contextmanager
-def zvol_extent(zvol):
+def zvol_extent(zvol, extent_name='zvol_extent'):
     payload = {
         'type': 'DISK',
         'disk': f'zvol/{zvol}',
-        'name': 'zvol_extent',
+        'name': extent_name,
     }
     results = POST("/iscsi/extent/", payload)
     assert results.status_code == 200, results.text
@@ -208,14 +208,14 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
         assert results.json(), results.text
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name, alias=None):
+def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}], alias) as target_config:
                 target_id = target_config['id']
                 with dataset(pool_name, dataset_name) as dataset_config:
-                    with file_extent(pool_name, dataset_name, file_name) as extent_config:
+                    with file_extent(pool_name, dataset_name, file_name, filesize=filesize, extent_name=extent_name) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             yield {
@@ -227,14 +227,14 @@ def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_
                             }
 
 @contextlib.contextmanager
-def configured_target_to_zvol_extent(target_name, zvol, alias=None):
+def configured_target_to_zvol_extent(target_name, zvol, alias=None, extent_name='zvol_extent'):
     with initiator() as initiator_config:
         with portal() as portal_config:
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}], alias) as target_config:
                 target_id = target_config['id']
                 with zvol_dataset(zvol) as dataset_config:
-                    with zvol_extent(zvol) as extent_config:
+                    with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
                             yield {
@@ -244,6 +244,17 @@ def configured_target_to_zvol_extent(target_name, zvol, alias=None):
                                 'dataset': dataset_config,
                                 'extent': extent_config,
                             }
+
+
+@contextlib.contextmanager
+def configured_target(name, extent_type):
+    assert extent_type in ["FILE", "VOLUME"]
+    if extent_type == "FILE":
+       with configured_target_to_file_extent(name, pool_name, dataset_name, file_name, extent_name=name) as config:
+           yield config
+    elif extent_type == "VOLUME":
+       with configured_target_to_zvol_extent(name, zvol, extent_name=name) as config:
+           yield config
 
 
 def TUR(s):
@@ -947,6 +958,36 @@ def test_12_pblocksize_setting(request):
             data = s.readcapacity16().result
             assert data['block_length'] == 4096, data
             assert data['lbppbe'] == 0, data
+
+
+def generate_name(length, base="target"):
+    result = f"{base}-{length}-"
+    remaining = length - len(result)
+    assert remaining >= 0, f"Function not suitable for such a short length: {length}"
+    return result + ''.join(random.choices(string.ascii_lowercase + string.digits, k=remaining))
+
+
+@pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
+def test_13_test_target_name(request, extent_type):
+    """
+    Test the user-supplied target name.
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+
+    name64 = generate_name(64)
+    with configured_target(name64, extent_type):
+        iqn = f'{basename}:{name64}'
+        target_test_readwrite16(ip, iqn)
+
+    name65 = generate_name(65)
+    with pytest.raises(AssertionError) as ve:
+        with configured_target(name65, extent_type):
+            assert False, f"Should not have been able to create a target with name length {len(name65)}."
+            iqn = f'{basename}:{name65}'
+            target_test_readwrite16(ip, iqn)
+    assert "iscsi_extent_create.name" in str(ve), ve
+    assert "Value greater than 64 not allowed" in str(ve), ve
+
 
 def test_99_teardown(request):
     # Disable iSCSI service
