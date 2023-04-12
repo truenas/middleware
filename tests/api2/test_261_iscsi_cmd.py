@@ -1283,7 +1283,7 @@ def _pr_reservation(s, pr_type, scope=LU_SCOPE, **kwargs):
 
 @skip_persistent_reservations
 @pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
-def test_14_basic_persistent_reservation(request):
+def test_15_basic_persistent_reservation(request):
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with configured_target_to_zvol_extent(target_name, zvol):
         iqn = f'{basename}:{target_name}'
@@ -1442,7 +1442,7 @@ def _check_persistent_reservations(s1, s2):
 
 @skip_persistent_reservations
 @skip_multi_initiator
-def test_15_persistent_reservation_two_initiators(request):
+def test_16_persistent_reservation_two_initiators(request):
     depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     with configured_target_to_zvol_extent(target_name, zvol):
         iqn = f'{basename}:{target_name}'
@@ -1673,7 +1673,7 @@ def _ha_reboot_master(delay=900):
 
 
 @pytest.mark.dependency(name="iscsi_alua_config")
-def test_16_alua_config(request):
+def test_17_alua_config(request):
     """
     Test various aspects of ALUA configuration.
     """
@@ -1785,7 +1785,7 @@ def test_16_alua_config(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_17_alua_basic_persistent_reservation(request):
+def test_18_alua_basic_persistent_reservation(request):
     # Don't need to specify "pool_04", "iscsi_cmd_00" here
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     # Turn on ALUA
@@ -1832,7 +1832,7 @@ def test_17_alua_basic_persistent_reservation(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_18_alua_persistent_reservation_two_initiators(request):
+def test_19_alua_persistent_reservation_two_initiators(request):
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     with alua_enabled():
         with configured_target_to_zvol_extent(target_name, zvol):
