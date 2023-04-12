@@ -12,6 +12,7 @@ from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, 
 from middlewared.service import no_auth_required, pass_app, private, Service, throttle
 from middlewared.utils import sw_buildtime
 
+from .utils import cpu_info
 
 RE_CPU_MODEL = re.compile(r'^model name\s*:\s*(.*)', flags=re.M)
 
@@ -21,11 +22,6 @@ def throttle_condition(middleware, app, *args, **kwargs):
 
 
 class SystemService(Service):
-    CPU_INFO = {
-        'cpu_model': None,
-        'core_count': None,
-        'physical_core_count': None,
-    }
 
     MEM_INFO = {
         'physmem_size': None,
@@ -71,16 +67,16 @@ class SystemService(Service):
         CPU info doesn't change after boot so cache the results
         """
 
-        if self.CPU_INFO['cpu_model'] is None:
-            self.CPU_INFO['cpu_model'] = await self.middleware.call('system.get_cpu_model')
+        if cpu_info.cpu_model is None:
+            cpu_info.cpu_model = await self.middleware.call('system.get_cpu_model')
 
-        if self.CPU_INFO['core_count'] is None:
-            self.CPU_INFO['core_count'] = psutil.cpu_count(logical=True)
+        if cpu_info.core_count is None:
+            cpu_info.core_count = psutil.cpu_count(logical=True)
 
-        if self.CPU_INFO['physical_core_count'] is None:
-            self.CPU_INFO['physical_core_count'] = psutil.cpu_count(logical=False)
+        if cpu_info.physical_core_count is None:
+            cpu_info.physical_core_count = psutil.cpu_count(logical=False)
 
-        return self.CPU_INFO
+        return cpu_info.__dict__
 
     @private
     async def time_info(self):

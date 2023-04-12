@@ -2,6 +2,7 @@ import collections
 import errno
 import os
 
+from middlewared.plugins.system.utils import cpu_info
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
@@ -13,6 +14,14 @@ class ChartReleaseService(Service):
 
     class Config:
         namespace = 'chart.release'
+
+    SYSTEM_CORES = None
+
+    @private
+    async def get_system_cores(self):
+        if cpu_info.core_count is None:
+            await self.middleware.call('system.cpu_info')
+        return cpu_info.core_count
 
     @private
     async def retrieve_pod_with_containers(self, release_name):
@@ -303,3 +312,28 @@ class ChartReleaseService(Service):
             apps[app_name] = await self.middleware.call('chart.release.host_path_volumes', app_resources[app_name])
 
         return apps
+
+    @private
+    async def stats(self, release_name):
+        chart_release = await self.middleware.call('chart.release.get_instance', release_name, {
+            'extra': {'retrieve_resources': True}
+        })
+        return await self.stats_internal(chart_release['resources']['pods'])
+
+    @private
+    async def stats_internal(self, pods):
+        stats = {'memory': 0, 'cpu': 0, 'network': {'incoming': 0, 'outgoing': 0}}
+        for pod_stats in await self.middleware.call(
+            'k8s.stats.summary', [
+                ['podRef.name', 'in', [p['metadata']['name'] for p in pods]]
+            ]
+        ):
+            stats['cpu'] += int(pod_stats['cpu']['usageNanoCores'])
+            stats['memory'] += int(pod_stats['memory']['rssBytes'])
+            for interface in pod_stats['network']['interfaces']:
+                stats['network']['incoming'] += int(interface['rxBytes'])
+                stats['network']['outgoing'] += int(interface['txBytes'])
+
+        stats['cpu'] = ((stats['cpu'] / 1000000000) / await self.get_system_cores()) * 100
+
+        return stats

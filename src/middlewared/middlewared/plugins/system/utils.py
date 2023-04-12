@@ -1,6 +1,9 @@
 import enum
 import re
 
+from dataclasses import dataclass
+from typing import Optional
+
 
 DEBUG_MAX_SIZE = 30
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
@@ -10,6 +13,13 @@ RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=
 class VMProvider(enum.Enum):
     AZURE = 'AZURE'
     NONE = 'NONE'
+
+
+@dataclass
+class CPUInfo:
+    cpu_model: Optional[str] = None
+    core_count: Optional[int] = None
+    physical_core_count: Optional[int] = None
 
 
 class Lifecycle:
@@ -22,4 +32,5 @@ class Lifecycle:
         self.SYSTEM_SHUTTING_DOWN = False
 
 
+cpu_info = CPUInfo()
 lifecycle_conf = Lifecycle()

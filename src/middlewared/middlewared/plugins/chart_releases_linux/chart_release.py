@@ -135,6 +135,7 @@ class ChartReleaseService(CRUDService):
         options = options or {}
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_schema = extra.get('include_chart_schema')
+        retrieve_stats = extra.get('stats', True)
         get_resources = extra.get('retrieve_resources')
         get_locked_paths = extra.get('retrieve_locked_paths')
         locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets') if get_locked_paths else []
@@ -215,6 +216,10 @@ class ChartReleaseService(CRUDService):
                 'used_ports': ports_used[name],
                 'pod_status': pods_status,
             })
+            if retrieve_stats:
+                release_data['stats'] = await self.middleware.call(
+                    'chart.release.stats_internal', resources[Resources.POD.value][name]
+                )
 
             container_images_normalized = {
                 normalize_image_tag(i_name): {
