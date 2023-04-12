@@ -340,7 +340,7 @@ class ChartReleaseService(CRUDService):
             'chart.release.validate_values', item_details, values, update, release_data,
         )
         return await self.middleware.call(
-            'chart.release.get_normalised_values', dict_obj, values, update, {
+            'chart.release.get_normalized_values', dict_obj, values, update, {
                 'release': {
                     'name': release_ds.split('/')[-1],
                     'dataset': release_ds,
@@ -352,7 +352,7 @@ class ChartReleaseService(CRUDService):
 
     @private
     async def perform_actions(self, context):
-        for action in context['actions']:
+        for action in sorted(context['actions'], key=lambda d: 0 if d['method'] == 'update_volumes_for_release' else 1):
             await self.middleware.call(f'chart.release.{action["method"]}', *action['args'])
 
     @accepts(
