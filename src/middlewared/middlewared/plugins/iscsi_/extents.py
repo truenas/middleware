@@ -14,6 +14,8 @@ from middlewared.service import CallError, private, SharingService, ValidationEr
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
+from .utils import MAX_EXTENT_NAME_LEN
+
 
 class iSCSITargetExtentModel(sa.Model):
     __tablename__ = 'services_iscsitargetextent'
@@ -66,7 +68,7 @@ class iSCSITargetExtentService(SharingService):
 
     @accepts(Dict(
         'iscsi_extent_create',
-        Str('name', required=True),
+        Str('name', required=True, max_length=MAX_EXTENT_NAME_LEN),
         Str('type', enum=['DISK', 'FILE'], default='DISK'),
         Str('disk', default=None, null=True),
         Str('serial', default=None, null=True),
