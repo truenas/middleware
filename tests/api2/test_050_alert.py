@@ -68,7 +68,7 @@ def test_06_wait_for_the_alert_and_get_the_id(request):
                 line['args']['state'] == 'DEGRADED'
             ):
                 alert_id = line['id']
-                break
+                return 
 
         sleep(1)
 
