@@ -73,7 +73,7 @@ def datastore(si):
     else:
         raise RuntimeError(f"ESX host {VCENTER_ESX_HOST} not found")
 
-    with dataset("vm") as ds:
+    with dataset(f"vm_{random_string()}") as ds:
         with nfs_share(ds) as share:
             ssh(f"chmod 777 /mnt/{ds}")
 
