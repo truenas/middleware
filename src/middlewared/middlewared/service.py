@@ -6,7 +6,6 @@ import asyncio
 import errno
 import inspect
 import itertools
-import json
 import os
 import re
 import socket
@@ -15,6 +14,8 @@ import time
 import traceback
 from subprocess import run
 import ipaddress
+
+from remote_pdb import RemotePdb
 
 from middlewared.common.environ import environ_update
 import middlewared.main
@@ -2127,64 +2128,32 @@ class CoreService(Service):
             t.join()
         return True
 
-    @accepts(
-        Str('engine', enum=['PTVS', 'PYDEV', 'REMOTE_PDB']),
-        Dict(
-            'options',
-            Str('secret'),
-            Str('bind_address', default='0.0.0.0'),
-            Int('bind_port', default=3000),
-            Str('host'),
-            Bool('wait_attach', default=False),
-            Str('local_path'),
-            Bool('threaded', default=False),
-        ),
-    )
-    async def debug(self, engine, options):
+    @accepts(Dict(
+        'options',
+        Str('bind_address', default='0.0.0.0'),
+        Int('bind_port', default=3000),
+        Bool('threaded', default=False),
+    ))
+    async def debug(self, data):
         """
         Setup middlewared for remote debugging.
 
-        engines:
-          - PTVS: Python Visual Studio
-          - PYDEV: Python Dev (Eclipse/PyCharm)
+        engine currently used:
           - REMOTE_PDB: Remote vanilla PDB (over TCP sockets)
 
         options:
-          - secret: password for PTVS
-          - host: required for PYDEV, hostname of local computer (developer workstation)
-          - local_path: required for PYDEV, path for middlewared source in local computer
-                        (e.g. /home/user/freenas/src/middlewared/middlewared
-          - threaded: run debugger in a new thread instead of event loop
+            - bind_address: local ip address to bind the remote debug session to
+            - bind_port: local port to listen on
+            - threaded: run debugger in a new thread instead of the main event loop
         """
-        if options['threaded']:
-            self.middleware.create_task(self.middleware.run_in_thread(self.__debug, engine, options))
-        else:
-            self.__debug(engine, options)
-
-    def __debug(self, engine, options):
-        if engine == 'PTVS':
-            import ptvsd
-            if 'secret' not in options:
-                raise ValidationError('secret', 'secret is required for PTVS')
-            ptvsd.enable_attach(
-                options['secret'],
-                address=(options['bind_address'], options['bind_port']),
+        if data['threaded']:
+            self.middleware.create_task(
+                self.middleware.run_in_thread(
+                    RemotePdb, data['bind_address'], data['bind_port']
+                )
             )
-            if options['wait_attach']:
-                ptvsd.wait_for_attach()
-        elif engine == 'PYDEV':
-            for i in ('host', 'local_path'):
-                if i not in options:
-                    raise ValidationError(i, f'{i} is required for PYDEV')
-            os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps([
-                [options['local_path'], '/usr/local/lib/python3.7/site-packages/middlewared'],
-            ])
-            import pydevd
-            pydevd.stoptrace()
-            pydevd.settrace(host=options['host'])
-        elif engine == 'REMOTE_PDB':
-            from remote_pdb import RemotePdb
-            RemotePdb(options['bind_address'], options['bind_port']).set_trace()
+        else:
+            RemotePdb(data['bind_address'], data['bind_port']).set_trace()
 
     @private
     async def profile(self, method, params=None):
