@@ -13,7 +13,7 @@ class PoolService(Service):
         await self.middleware.call('disk.sed_unlock_all')
         swapgb = (await self.middleware.call('system.advanced.config'))['swapondrive']
         formatted = 0
-        await self.middleware.call('pool.remove_unsupported_md_devices_from_disks', disks)
+        await self.middleware.call('pool.remove_unsupported_devices_from_disks', disks)
         is_ha_capable = await self.middleware.call('system.is_ha_capable')
         len_disks = len(disks)
 

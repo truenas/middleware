@@ -18,3 +18,8 @@ class PoolService(Service):
             await self.middleware.call(
                 'disk.clean_superblocks_on_md_device', [p['name'] for p in md_devices[md_device]['providers']], False
             )
+
+    @private
+    async def remove_unsupported_devices_from_disks(self, disks):
+        await self.remove_unsupported_md_devices_from_disks(disks)
+        await self.middleware.call('disk.remove_lvm_from_disks', disks)

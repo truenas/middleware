@@ -122,6 +122,10 @@ class DiskService(Service):
             return self.get_disk_from_partition(part_disk) if part_disk else None
 
     @private
+    def is_partition(self, disk_name):
+        return os.path.exists(os.path.join('/sys/class/block', disk_name, 'partition'))
+
+    @private
     def get_disk_from_partition(self, part_name):
         if not os.path.exists(os.path.join('/dev', part_name)):
             return None
@@ -131,6 +135,10 @@ class DiskService(Service):
             # nvme/pmem partitions would be like nvmen1p1 where disk is nvmen1
             part_num = f'p{part_num}'
         return part_name.rsplit(part_num, 1)[0].strip()
+
+    @private
+    def normalize_device_to_disk_name(self, device_name):
+        return self.get_disk_from_partition(device_name) if self.is_partition(device_name) else device_name
 
     @private
     def get_partition_for_disk(self, disk, partition):
