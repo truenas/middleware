@@ -1,16 +1,13 @@
 import errno
 import os
-import pyglfs
-import threading
 
 from base64 import b64encode, b64decode
-from contextlib import contextmanager
-from copy import deepcopy
 from middlewared.service import (Service, CallError, job,
                                  accepts, Dict, Str, Int, Bool, List,
                                  Ref, private)
 from middlewared.schema import Path
 from middlewared.validators import UUID
+from middlewared.plugins.gluster_linux.pyglfs_utils import glfs
 
 
 class GlusterFilesystemService(Service):
@@ -26,74 +23,13 @@ class GlusterFilesystemService(Service):
         cli_namespace = 'service.gluster.filesystem'
         private = True
 
-    handles = {}
-
-    @private
-    def init_volume_mount(self, name, options):
-        """
-        Initialize a pyglfs gluster volume virtual mount.
-        Resources will be automatically deallocated / unmounted
-        when returned object is deallocated.
-        """
-        if not options['volfile_servers']:
-            volfile_servers = [{'host': '127.0.0.1', 'proto': 'tcp', 'port': 0}]
-        else:
-            volfile_servers = options['volfile_servers']
-
-        xlators = []
-
-        # Normalization of values
-        for s in volfile_servers:
-            s['proto'] = s['proto'].lower()
-
-        for entry in options.get('translators', []):
-            xlators.append((entry['xlator_name'], entry['key'], entry['value']))
-
-        kwargs = {
-            'volume_name': name,
-            'volfile_servers': volfile_servers
-        }
-
-        if options.get('translators'):
-            kwargs['translators'] = xlators
-
-        return pyglfs.Volume(**kwargs)
-
-    @private
-    @contextmanager
-    def get_volume_handle(self, name, options):
-        """
-        Get / store glusterfs volume handle virtual mount.
-        We want to keep these around because unmount can be rather
-        slow to complete (taking up to 10 seconds in some poorly-resourced VMs).
-
-        If a task is expected to be extremely long-running i.e. a `job` then,
-        it's a better idea to `init_volume_mount()` for a temporary virtual mount
-        and use that (since we're already commited in that case for a non-immediate response).
-        """
-        entry = self.handles.setdefault(name, {
-            'name': name,
-            'lock': threading.RLock(),
-            'handle_internal': None,
-            'options': deepcopy(options)
-        })
-
-        if options != entry['options']:
-            raise CallError(f'{name}: Internal Error - volume options mismatch', errno.EINVAL)
-
-        with entry['lock']:
-            if entry['handle_internal'] is None:
-                entry['handle_internal'] = self.init_volume_mount(name, options)
-
-            yield entry['handle_internal']
-
     @private
     def show_volume_handles(self):
-        return {h['name']: h['options'] for h in self.handles.values()}
+        return {h['name']: h['options'] for h in glfs.handles.values()}
 
     @private
     def close_volume_handles(self):
-        for entry in list(self.handles.values()):
+        for entry in list(glfs.handles.values()):
             with entry['lock']:
                 # Volume closes automatically in dealloc function
                 entry['handle_internal'] = None
@@ -196,7 +132,7 @@ class GlusterFilesystemService(Service):
         Dict containing information about the results of the lookup. The `UUID`
         key in the returned dictionary can be used for further filesystem operations.
         """
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             parent = self.get_object_handle(vol, data['parent_uuid'])
             obj = parent.lookup(data['path'], **data['options'])
             return self.glfs_object_handle_to_dict(obj)
@@ -231,7 +167,7 @@ class GlusterFilesystemService(Service):
         key in the returned dictionary can be used for further filesystem operations.
         """
         additional_kwargs = {"flags": os.O_CREAT | os.O_RDWR}
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             parent = self.get_object_handle(vol, data['parent_uuid'])
             obj = parent.create(data['path'], **(data['options'] | additional_kwargs))
             return self.glfs_object_handle_to_dict(obj)
@@ -266,7 +202,7 @@ class GlusterFilesystemService(Service):
         key in the returned dictionary can be used for further filesystem operations.
 
         """
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             parent = self.get_object_handle(vol, data['parent_uuid'])
             obj = parent.mkdir(data['path'], **data['options'])
             return self.glfs_object_handle_to_dict(obj)
@@ -293,7 +229,7 @@ class GlusterFilesystemService(Service):
         -------
         None
         """
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             parent = self.get_object_handle(vol, data['parent_uuid'])
             parent.unlink(data['path'])
 
@@ -327,7 +263,7 @@ class GlusterFilesystemService(Service):
         - File - contents of file as either string or base64 encoded string
         - Symlink - readlink return for symlink
         """
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             target = self.get_object_handle(vol, data['uuid'])
             contents = target.contents()
             if target.file_type['parsed'] == 'FILE':
@@ -380,7 +316,7 @@ class GlusterFilesystemService(Service):
             # Trade-off for recursive jobs. These may be _very_ long-running and so
             # execute under dedicated virtual mount. This will add a few seconds for
             # temporary mount teardown, but should be acceptable for a long-running job.
-            tmp_vol = self.init_volume_mount(data['volume_name'], data['gluster-volume-options'])
+            tmp_vol = glfs.init_volume_mount(data['volume_name'], data['gluster-volume-options'])
             target = self.get_object_handle(tmp_vol, data['uuid'])
             target.stat()
             if target.file_type['parsed'] != 'DIRECTORY':
@@ -390,7 +326,7 @@ class GlusterFilesystemService(Service):
             target.stat()
             return self.glfs_object_handle_to_dict(target)
 
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             target = self.get_object_handle(vol, data['uuid'])
             target.setattrs(**data['options'])
             target.stat()
@@ -422,7 +358,7 @@ class GlusterFilesystemService(Service):
         ------
         base64-encoded string containing specified bytes (length from offset) of file.
         """
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             fd = self.get_object_handle(vol, data['uuid']).open(os.O_RDONLY)
             bytes = fd.pread(data['options']['offset'], data['options']['cnt'])
             return b64encode(bytes).decode()
@@ -455,7 +391,7 @@ class GlusterFilesystemService(Service):
         ------
         None
         """
-        with self.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
+        with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             if data['payload_type'] == 'STRING':
                 payload = data['payload'].encode()
             elif data['payload_type'] == 'BINARY':
