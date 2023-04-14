@@ -1,7 +1,5 @@
 import errno
-import contextlib
 import subprocess
-from pathlib import Path
 
 from middlewared.schema import Dict, IPAddr, Int, Str, List, returns
 from middlewared.service import (accepts, job, filterable,
@@ -66,18 +64,9 @@ class CtdbPublicIpService(CRUDService):
 
         ctdb_ips = self.middleware.call_sync('ctdb.general.ips')
 
-        try:
-            shared_vol = Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
-            mounted = shared_vol.is_mount()
-        except Exception:
-            # can happen when mounted but glusterd service
-            # is stopped/crashed etc
-            mounted = False
-
-        if not mounted:
-            raise CallError("CTDB shared volume is in unhealthy state.", errno.ENXIO)
-
         nodes = {}
+
+        ctdb_info = self.middleware.call_sync('ctdb.shared.volume.config')
 
         for entry in self.middleware.call_sync('ctdb.general.listnodes'):
             """
@@ -99,23 +88,23 @@ class CtdbPublicIpService(CRUDService):
                 'active_ips': {}
             }
 
-            with contextlib.suppress(FileNotFoundError):
-                with open(f'{shared_vol}/public_addresses_{pnn}') as f:
-                    for i in f.read().splitlines():
-                        if not i.startswith('#'):
-                            enabled = True
-                            public_ip = i.split('/')[0]
-                        else:
-                            enabled = False
-                            public_ip = i.split('#')[1].split('/')[0]
+            data = {'ip_file': f'public_addresses_{pnn}'} | ctdb_info
 
-                        nodes[pnn]['configured_ips'].update({
-                            public_ip: {
-                                'enabled': enabled,
-                                'public_ip': public_ip,
-                                'interface_name': i.split()[-1]
-                            }
-                        })
+            for i in self.middleware.call_sync('ctdb.ips.contents', data):
+                if not i.startswith('#'):
+                    enabled = True
+                    public_ip = i.split('/')[0]
+                else:
+                    enabled = False
+                    public_ip = i.split('#')[1].split('/')[0]
+
+                nodes[pnn]['configured_ips'].update({
+                    public_ip: {
+                        'enabled': enabled,
+                        'public_ip': public_ip,
+                        'interface_name': i.split()[-1]
+                    }
+                })
 
         for entry in ctdb_ips:
             if not nodes.get(entry['pnn']):
@@ -186,6 +175,7 @@ class CtdbPublicIpService(CRUDService):
         if 'pnn' not in data:
             data['pnn'] = await self.middleware.call('ctdb.general.pnn')
 
+        data |= await self.middleware.call('ctdb.shared.volume.config')
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
         await self.middleware.call('ctdb.public.ips.reload')
@@ -225,6 +215,7 @@ class CtdbPublicIpService(CRUDService):
         data = (await self.get_instance(pnn))['configured_ips'][address]
         data['pnn'] = pnn
 
+        data |= await self.middleware.call('ctdb.shared.volume.config')
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         if data['enabled']:
             await self.middleware.call('ctdb.public.ips.delete_ip', {'public_ip': address})

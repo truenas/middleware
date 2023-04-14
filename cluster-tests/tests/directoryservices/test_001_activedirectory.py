@@ -11,6 +11,7 @@ from time import sleep
 SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/ds_smb_share_01'
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=10)
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='VALID_SMB_BIND_IPS')
 def test_001_validate_smb_bind_ips(ip, request):

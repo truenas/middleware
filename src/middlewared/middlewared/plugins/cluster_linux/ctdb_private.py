@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from middlewared.schema import Dict, IPAddr, Int, Bool
 from middlewared.service import (accepts, job, filterable,
                                  CRUDService, ValidationErrors)
@@ -36,27 +34,15 @@ class CtdbPrivateIpService(CRUDService):
             ips = self.middleware.call_sync('ctdb.general.listnodes')
             ips = list(map(lambda i: dict(i, id=i['pnn']), ips))
         else:
-            try:
-                shared_vol = Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
-                mounted = shared_vol.is_mount()
-            except Exception:
-                # can happen when mounted but glusterd service
-                # is stopped/crashed etc
-                mounted = False
-
-            if mounted:
-                pri_ip_file = Path(CTDBConfig.GM_PRI_IP_FILE.value)
-                etc_ip_file = Path(CTDBConfig.ETC_PRI_IP_FILE.value)
-                if pri_ip_file.exists():
-                    if etc_ip_file.is_symlink() and etc_ip_file.resolve() == pri_ip_file:
-                        with open(pri_ip_file) as f:
-                            for idx, i in enumerate(f.read().splitlines()):
-                                ips.append({
-                                    'id': idx,
-                                    'pnn': idx,
-                                    'address': i.split('#')[1] if i.startswith('#') else i,
-                                    'enabled': not i.startswith('#')
-                                })
+            data = self.middleware.call_sync('ctdb.shared.volume.config')
+            data['ip_file'] = CTDBConfig.PRIVATE_IP_FILE.value
+            for idx, i in enumerate(self.middleware.call_sync('ctdb.ips.contents', data)):
+                ips.append({
+                    'id': idx,
+                    'pnn': idx,
+                    'address': i.split('#')[1] if i.startswith('#') else i,
+                    'enabled': not i.startswith('#')
+                })
 
         return filter_list(ips, filters, options)
 
@@ -75,6 +61,7 @@ class CtdbPrivateIpService(CRUDService):
         schema_name = 'private_create'
         verrors = ValidationErrors()
 
+        data |= await self.middleware.call('ctdb.shared.volume.config')
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
 
@@ -102,6 +89,7 @@ class CtdbPrivateIpService(CRUDService):
         data = await self.get_instance(id)
         data['enable'] = option['enable']
 
+        data |= await self.middleware.call('ctdb.shared.volume.config')
         await self.middleware.call('ctdb.ips.common_validation', data, schema_name, verrors)
         await self.middleware.call('ctdb.ips.update_file', data, schema_name)
 

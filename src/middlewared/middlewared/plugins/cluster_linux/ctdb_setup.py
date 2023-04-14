@@ -19,7 +19,13 @@ class CtdbInitService(Service):
         if not await self.middleware.call('service.started', 'glusterd'):
             return result
 
-        shared_vol = Path(CTDBConfig.CTDB_LOCAL_MOUNT.value)
+        try:
+            shared_vol_config = await self.middleware.call('ctdb.shared.volume.config')
+        except Exception:
+            self.logger.error('Failed to retrieve ctdb shared volume configuration', exc_info=True)
+            return result
+
+        shared_vol = Path(shared_vol_config['volume_mountpoint'])
         try:
             mounted = shared_vol.is_mount()
         except Exception:
@@ -37,7 +43,7 @@ class CtdbInitService(Service):
         if not await self.middleware.call('ctdb.setup.conf'):
             return result
 
-        return await self.middleware.call('ctdb.setup.private_ip_file', result)
+        return await self.middleware.call('ctdb.setup.private_ip_file', result, shared_vol_config)
 
     def conf(self):
         """
@@ -46,10 +52,17 @@ class CtdbInitService(Service):
         self.middleware.call_sync('etc.generate', 'ctdb')
         return Path(CTDBConfig.ETC_GEN_FILE.value).exists()
 
-    def private_ip_file(self, result):
+    def private_ip_file(self, result, shared_vol_config=None):
+
+        if not shared_vol_config:
+            try:
+                shared_vol_config = self.middleware.call_sync('ctdb.shared.volume.config')
+            except Exception:
+                self.logger.error('Failed to retrieve ctdb shared volume configuration', exc_info=True)
+                return result
 
         pri_e_file = Path(CTDBConfig.ETC_PRI_IP_FILE.value)
-        pri_c_file = Path(CTDBConfig.GM_PRI_IP_FILE.value)
+        pri_c_file = Path(shared_vol_config['mountpoint'], CTDBConfig.PRIVATE_IP_FILE.value)
 
         # the private ip file is the only ip file
         # that is needed for ctdb to be started
@@ -89,8 +102,14 @@ class CtdbInitService(Service):
         this_node = self.middleware.call_sync('ctdb.general.pnn')
         result = {'logit': True, 'success': False}
 
+        try:
+            shared_vol_config = self.middleware.call_sync('ctdb.shared.volume.config')
+        except Exception:
+            self.logger.error('Failed to retrieve ctdb shared volume configuration', exc_info=True)
+            return result
+
         pub_e_file = Path(CTDBConfig.ETC_PUB_IP_FILE.value)
-        pub_c_file = Path(f'{CTDBConfig.GM_PUB_IP_FILE.value}_{this_node}')
+        pub_c_file = Path(shared_vol_config['mountpoint'], f'{CTDBConfig.PUBLIC_IP_FILE.value}_{this_node}')
         pub_c_file.touch()
 
         try:

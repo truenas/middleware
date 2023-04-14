@@ -1,26 +1,28 @@
 import base64
+import errno
 import fcntl
+import json
+import pyglfs
 import os
+import stat
 import threading
 
 from contextlib import contextmanager
 from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
-from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
+from middlewared.plugins.gluster_linux.pyglfs_utils import glfs, lock_file_open
 from middlewared.service import Service
-from middlewared.service_exception import CallError
 from middlewared.utils.path import pathref_open
+from pathlib import Path
 
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = os.environ.get('FREENAS_PWENC_SECRET', '/data/pwenc_secret')
 PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
 
-CLPWENC_PATH = os.path.join(
-    FuseConfig.FUSE_PATH_BASE.value,
-    CTDBConfig.CTDB_VOL_NAME.value,
-)
+CTDB_VOL_INFO_FILE = CTDBConfig.CTDB_VOL_INFO_FILE.value
 
 
 class PWEncService(Service):
@@ -66,8 +68,11 @@ class PWEncService(Service):
             finally:
                 fcntl.lockf(fd, fcntl.LOCK_UN)
 
-    def generate_secret(self, reset_passwords=True):
-        secret = os.urandom(PWENC_BLOCK_SIZE)
+    def _read_secret(self):
+        with open(self.secret_path, 'rb', opener=self._secret_opener) as f:
+            self.secret = f.read()
+
+    def _write_secret(self, secret, reset_passwords):
         with open(self.secret_path, 'wb', opener=self._secret_opener) as f:
             with self._lock_secrets(f.fileno()):
                 os.fchmod(f.fileno(), 0o600)
@@ -81,6 +86,9 @@ class PWEncService(Service):
                 if reset_passwords:
                     self._reset_passwords()
 
+    def generate_secret(self, reset_passwords=True):
+        self._write_secret(os.urandom(PWENC_BLOCK_SIZE), reset_passwords)
+
     def check(self):
         try:
             settings = self.middleware.call_sync('datastore.config', 'system.settings')
@@ -93,8 +101,7 @@ class PWEncService(Service):
     @classmethod
     def get_secret(cls):
         if cls.secret is None:
-            with open(cls.secret_path, 'rb', opener=cls._secret_opener) as f:
-                cls.secret = f.read()
+            cls._read_secret(cls)
 
         return cls.secret
 
@@ -115,71 +122,101 @@ class CLPWEncService(PWEncService):
         private = True
 
     secret = None
-    secret_path = os.path.join(
-        CLPWENC_PATH,
-        '.cluster_private',
-        'clpwenc_secret'
-    )
+    ctdb_info = None
+    secret_dir_uuid = None
+
+    def _secret_permcheck(self, hdl, mode, is_dir):
+        if stat.S_IMODE(hdl.cached_stat.st_mode) != 0o700:
+            hdl.open(os.O_DIRECTORY if is_dir else os.O_RDWR).fchmod(0o700)
+
+        if hdl.cached_stat.st_uid != 0 or hdl.cached_stat.st_gid != 0:
+            hdl.open(os.O_DIRECTORY if is_dir else os.O_RDWR).fchown(0, 0)
+
+    def _lookup_secret_dir_uuid(self):
+        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
+            root_hdl = vol.open_by_uuid(self.ctdb_info['uuid'])
+            try:
+                secret_dir = root_hdl.lookup('.cluster_private')
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+
+                secret_dir = root_hdl.mkdir('.cluster_private', mode=0o700)
+
+            self.secret_dir_uuid = secret_dir.uuid
+
+    def _init_secret_dir(self):
+        if self.ctdb_info is None:
+            self.ctdb_info = json.loads(Path(CTDB_VOL_INFO_FILE).read_text())
+
+        if self.secret_dir_uuid is None:
+            self._lookup_secret_dir_uuid()
+
+    def _read_secret(self):
+        # Since this is called inside a class method skip _init_secret_dir() call
+        ctdb_info = json.loads(Path(CTDB_VOL_INFO_FILE).read_text())
+        with glfs.get_volume_handle(ctdb_info['volume_name']) as vol:
+            secret_dir = vol.open_by_uuid(ctdb_info['uuid']).lookup('.cluster_private')
+            secret = secret_dir.lookup('clpwenc_secret')
+            self.secret = secret.contents()
+
+    def _write_secret(self, secret, reset_passwords):
+        self._init_secret_dir()
+        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
+            secret_dir = vol.open_by_uuid(self.secret_dir_uuid)
+            self._secret_permcheck(secret_dir, 0o700, True)
+            try:
+                secret_file = secret_dir.lookup('clpwenc_secret')
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                secret_file = secret_dir.create('clpwenc_secret', os.O_RDWR | os.O_CREAT)
+
+            self._secret_permcheck(secret_file, 0o600, False)
+            with lock_file_open(secret_file, os.O_RDWR) as fd:
+                fd.ftruncate(0)
+                fd.pwrite(secret, 0)
+                fd.fsync()
 
     def _reset_passwords(self):
-        return
+        raise NotImplementedError
 
     @staticmethod
     def _secret_opener(path, flags):
-        with pathref_open(CLPWENC_PATH, force=True, mode=0o755) as ctdb_path:
-            st = os.fstat(ctdb_path)
-            if st.st_ino != 1:
-                raise CallError(
-                    f'Unexpected inode number on {CLPWENC_PATH}. '
-                    'This strongly indicates that the ctdb shared volume '
-                    'is no longer mounted.'
-                )
-
-            with pathref_open(
-                ".cluster_private", mode=0o700, dir_fd=ctdb_path, mkdir=True
-            ) as priv:
-                return os.open(os.path.basename(path), flags, dir_fd=priv)
-
-    @contextmanager
-    def check_file(self, flags):
-        def opener(path, flags):
-            with pathref_open(CLPWENC_PATH, force=True, mode=0o755) as ctdb_path:
-                st = os.fstat(ctdb_path)
-                if st.st_ino != 1:
-                    raise CallError(
-                        f'Unexpected inode number on {CLPWENC_PATH}. '
-                        'This strongly indicates that the ctdb shared volume '
-                        'is no longer mounted.'
-                    )
-
-                with pathref_open(
-                    '.cluster_private', force=True, mode=0o700, dir_fd=ctdb_path, mkdir=True
-                ) as priv:
-                    return os.open(path, flags, dir_fd=priv)
-
-        out_file = open('.check_file', flags, opener=opener)
-        try:
-            yield out_file
-        finally:
-            out_file.close()
+        raise NotImplementedError
 
     def check(self):
-        try:
-            with self.check_file('r') as f:
-                data = f.read()
-        except FileNotFoundError:
-            # this error is raise explicitly in case where our check_file
-            # does not exist. Intermediate paths will be made if needed
-            # assuming that the ctdb_shared_volume is mounted. If it's
-            # not mounted then we expect this to fail / exception to
-            # not be blocked here.
-            return False
+        self._init_secret_dir()
+        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
+            secret_dir = vol.open_by_uuid(self.secret_dir_uuid)
+            self._secret_permcheck(secret_dir, 0o700, True)
+            try:
+                check_file = secret_dir.lookup('.check_file')
 
-        return self.decrypt(data) == PWENC_CHECK
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+
+                return False
+
+            return self.decrypt(check_file.contents()) == PWENC_CHECK
 
     def _reset_pwenc_check_field(self):
-        with self.check_file('w') as f:
-            f.write(self.encrypt(PWENC_CHECK))
+        self._init_secret_dir()
+        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
+            secret_dir = vol.open_by_uuid(self.secret_dir_uuid)
+            self._secret_permcheck(secret_dir, 0o700, True)
+            try:
+                check_file = secret_dir.lookup('.check_file')
+
+            except pyglfs.GLFSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                check_file = secret_dir.create('.check_file', os.O_RDWR)
+
+            with lock_file_open(check_file, os.O_RDWR) as fd:
+                fd.ftruncate(0)
+                fd.pwrite(self.encrypt(PWENC_CHECK), 0)
 
     def encrypt(self, data):
         return encrypt(data, True)

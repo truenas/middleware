@@ -10,6 +10,7 @@ from dns.exception import DNSException
 from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.schema import Bool, returns
 from middlewared.utils.path import CLUSTER_PATH_PREFIX
+from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.service import Service, job, ValidationErrors, private, accepts
 from middlewared.service_exception import CallError
 
@@ -243,11 +244,10 @@ class CTDBConfig(enum.Enum):
     # local gluster fuse client mount related config
     LOCAL_MOUNT_BASE = FuseConfig.FUSE_PATH_BASE.value
     CTDB_VOL_NAME = 'ctdb_shared_vol'
+    CTDB_VOL_INFO_FILE = f'{MIDDLEWARE_RUN_DIR}/ctdb_vol_info'
     CTDB_LOCAL_MOUNT = os.path.join(LOCAL_MOUNT_BASE, CTDB_VOL_NAME)
-    GM_RECOVERY_FILE = os.path.join(CTDB_LOCAL_MOUNT, REC_FILE)
-    GM_PRI_IP_FILE = os.path.join(CTDB_LOCAL_MOUNT, PRIVATE_IP_FILE)
-    GM_PUB_IP_FILE = os.path.join(CTDB_LOCAL_MOUNT, PUBLIC_IP_FILE)
-    GM_CLUSTERED_SERVICES = os.path.join(CTDB_LOCAL_MOUNT, '.clustered_services')
+
+    CLUSTERED_SERVICES = '.clustered_services'
 
     # ctdb etc config
     CTDB_ETC = '/etc/ctdb'
