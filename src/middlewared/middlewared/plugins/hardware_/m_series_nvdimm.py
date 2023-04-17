@@ -146,7 +146,7 @@ class MseriesNvdimmService(Service):
     def state_flags(self, nvindex):
         try:
             fl = sysctl.filter(f'dev.nvdimm.{nvindex}.flags')[0].value
-            state_flags = fl.strip('<')[-1].rstrip('>').split(',')
+            state_flags = fl.split('<')[-1].rstrip('>').split(',')
         except Exception:
             state_flags = []
 
