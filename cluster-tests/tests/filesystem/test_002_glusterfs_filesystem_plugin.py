@@ -273,3 +273,78 @@ def test_004_setattrs(request):
                 }]
             })
             assert res.get('error') is None, res
+
+
+def test_005_rmtree(request):
+    depends(request, ['HAS_ROOT_UUID'])
+    ip = CLUSTER_IPS[0]
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'gluster.filesystem.mkdir',
+        'params': [{
+            'volume_name': CLUSTER_INFO['GLUSTER_VOLUME'],
+            'parent_uuid': None,
+            'path': 'to_delete'
+        }]
+    })
+
+    assert res.get('error') is None, res
+    root = res['result']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'gluster.filesystem.create_file',
+        'params': [{
+            'volume_name': CLUSTER_INFO['GLUSTER_VOLUME'],
+            'parent_uuid': root['uuid'],
+            'path': 'testfile1'
+        }]
+    })
+
+    assert res.get('error') is None, res
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'gluster.filesystem.mkdir',
+        'params': [{
+            'volume_name': CLUSTER_INFO['GLUSTER_VOLUME'],
+            'parent_uuid': root['uuid'],
+            'path': 'subdir'
+        }]
+    })
+
+    assert res.get('error') is None, res
+    subdir = res['result']
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'gluster.filesystem.create_file',
+        'params': [{
+            'volume_name': CLUSTER_INFO['GLUSTER_VOLUME'],
+            'parent_uuid': subdir['uuid'],
+            'path': 'testfile2'
+        }]
+    })
+
+    assert res.get('error') is None, res
+
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'gluster.filesystem.rmtree',
+        'params': [{
+            'volume_name': CLUSTER_INFO['GLUSTER_VOLUME'],
+            'parent_uuid': None,
+            'path': 'to_delete'
+        }]
+    })
+
+    assert res.get('error') is None, res
+
+    try:
+        status = wait_on_job(res['result'], ip, 300)
+    except JobTimeOut:
+        assert False, JobTimeOut
+    else:
+        assert status['state'] == 'SUCCESS', status

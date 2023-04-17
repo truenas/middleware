@@ -398,3 +398,85 @@ class GlusterFilesystemService(Service):
 
             fd = self.get_object_handle(vol, data['uuid']).open(os.O_RDWR)
             fd.pwrite(payload, data['options']['offset'])
+
+    @accepts(Dict(
+        'glfs-rmtree',
+        Str('volume_name', required=True),
+        Str('parent_uuid', null=True, required=True, validators=[UUID()]),
+        Str('path', required=True),
+        Ref('gluster-volume-options')
+    ))
+    @job()
+    def rmtree(self, job, data):
+        """
+        Recursively unlink the contents of the gluster object specified by UUID.
+
+        Parameters:
+        ----------
+        `volume_name` - the name of the glusterfs volume where the object is located.
+        `parent_uuid` - the UUID of the parent object.
+        `path` - path to recursively remove
+
+        Returns:
+        ------
+        None
+        """
+        def prune_tree(root, target_depth, dir_list):
+            # This function resets us back to the depth specified
+            if not dir_list:
+                return False
+
+            while dir_list[-1].depth != target_depth:
+                to_delete = dir_list.pop()
+                if dir_list:
+                    dir_list[-1].handle.unlink(to_delete.name)
+                else:
+                    root.unlink(to_delete.name)
+                    return False
+
+            return True
+
+        vol = glfs.init_volume_mount(data['volume_name'], data['gluster-volume-options'])
+        parent = self.get_object_handle(vol, data['parent_uuid'])
+        hdl = parent.lookup(data['path'])
+
+        # pyglf.FTSEntry objects track their depth in directory tree
+        # allowing us to basically walk back directory components that are
+        # empty. In most cases this list will have fewer than 10 items (unless
+        # the tree is exceptionally deep).
+        dir_list = []
+
+        for entry in hdl.fts_open():
+            last_dir = dir_list[-1] if dir_list else None
+
+            if last_dir and entry.depth <= last_dir.depth:
+                if not prune_tree(hdl, entry.depth, dir_list):
+                    hdl.unlink(entry.name)
+                    continue
+
+                to_delete = dir_list.pop()
+
+                if not dir_list:
+                    hdl.unlink(to_delete.name)
+                    hdl.unlink(entry.name)
+                    continue
+
+                dir_list[-1].handle.unlink(to_delete.name)
+                dir_list[-1].handle.unlink(entry.name)
+                continue
+
+            if entry.file_type == 'DIRECTORY':
+                dir_list.append(entry)
+                continue
+
+            if last_dir:
+                last_dir.handle.unlink(entry.name)
+            else:
+                hdl.unlink(entry.name)
+
+        # Remove any remaining empty tree components before deleting our target path
+        prune_tree(hdl, 0, dir_list)
+        if dir_list:
+            hdl.unlink(dir_list[-1].name)
+
+        parent.unlink(data['path'])
