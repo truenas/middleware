@@ -8,6 +8,7 @@ Create Date: 2021-08-26 14:35:02.063560+00:00
 from alembic import op
 import sqlalchemy as sa
 import enum
+import json
 
 
 # revision identifiers, used by Alembic.
@@ -206,7 +207,7 @@ def upgrade():
         entry = {
             "acltemplate_name": i.name,
             "acltemplate_acltype": acltype,
-            "acltemplate_acl": i.value["acl"],
+            "acltemplate_acl": json.dumps(i.value["acl"]),
             "acltemplate_builtin": True,
         }
         conn.execute(
