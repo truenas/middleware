@@ -1,3 +1,4 @@
+'''
 from datetime import datetime
 import isodate
 import json
@@ -122,3 +123,4 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
         if me_drive not in result:
             result.insert(0, me_drive)
         return result
+'''  # noqa
