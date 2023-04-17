@@ -5,6 +5,8 @@ Revises: a3ee46e3860e
 Create Date: 2022-07-11 10:37:18.068244+00:00
 
 """
+import json
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -152,7 +154,7 @@ def upgrade():
         entry = {
             "acltemplate_name": i['name'],
             "acltemplate_acltype": i['type'],
-            "acltemplate_acl": i["acl"],
+            "acltemplate_acl": json.dumps(i["acl"]),
             "acltemplate_builtin": True,
             "acltemplate_comment": comment,
         }
