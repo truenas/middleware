@@ -127,6 +127,12 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
                     {'dev': dev, 'rv': run_fw, 'uv': nvdimm['recommended_firmware']}
                 ))
 
+        if 'NOT_ARMED' in nvdimm['state_flags']:
+            alerts.append(Alert(
+                NVDIMMAlertClass,
+                {'dev': dev, 'value': 'ARM_STATUS', 'status': 'NOT ARMED'}
+            ))
+
         if not old_bios_alert_already_generated and nvdimm['old_bios']:
             alerts.append(Alert(OldBiosVersionAlertClass))
             old_bios_alert_already_generated = True

@@ -2,6 +2,8 @@ import glob
 import re
 import subprocess
 
+import sysctl
+
 from middlewared.service import Service
 
 
@@ -141,6 +143,15 @@ class MseriesNvdimmService(Service):
 
         return result
 
+    def state_flags(self, nvindex):
+        try:
+            fl = sysctl.filter(f'dev.nvdimm.{nvindex}.flags')[0].value
+            state_flags = fl.strip('<')[-1].rstrip('>').split(',')
+        except Exception:
+            state_flags = []
+
+        return state_flags
+
     def info(self):
         results = []
         sys = ("TRUENAS-M40", "TRUENAS-M50", "TRUENAS-M60")
@@ -150,12 +161,13 @@ class MseriesNvdimmService(Service):
         try:
             for nmem in glob.glob("/dev/nvdimm*"):
                 output, specrev = self.run_ixnvdimm(nmem)
-
+                index = int(nmem[len('/dev/nvdimm'):])
                 info = {
-                    'index': int(nmem[len('/dev/nvdimm'):]),
+                    'index': index,
                     'dev': nmem.removeprefix('/dev/'),
                     'dev_path': nmem,
-                    'specrev': int(specrev.strip())
+                    'specrev': int(specrev.strip()),
+                    'state_flags': self.state_flags(index),
                 }
                 info.update(self.health_info(output))
                 info.update(self.vendor_info(output))
