@@ -2,13 +2,16 @@ import io
 import os
 import requests
 import shutil
-import subprocess
 import tarfile
 
 from middlewared.schema import accepts, returns
 from middlewared.service import CallError, job, private, Service
 
-from .utils import DEBUG_MAX_SIZE
+from ixdiagnose.config import conf
+from ixdiagnose.event import event_callbacks
+from ixdiagnose.run import generate_debug
+
+from .utils import DEBUG_MAX_SIZE, get_debug_execution_dir
 
 
 class SystemService(Service):
@@ -22,40 +25,28 @@ class SystemService(Service):
         Result value will be the absolute path of the file.
         """
         system_dataset_path = self.middleware.call_sync('systemdataset.config')['path']
-        if system_dataset_path is not None:
-            direc = os.path.join(system_dataset_path, 'ixdiagnose')
-        else:
-            direc = '/var/tmp/ixdiagnose'
-        dump = os.path.join(direc, 'ixdiagnose.tgz')
+        execution_dir = get_debug_execution_dir(system_dataset_path)
+        dump = os.path.join(execution_dir, 'ixdiagnose.tgz')
 
         # Be extra safe in case we have left over from previous run
-        if os.path.exists(direc):
-            shutil.rmtree(direc)
+        shutil.rmtree(execution_dir, ignore_errors=True)
 
-        cp = subprocess.Popen(
-            ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            encoding='utf-8', errors='ignore', bufsize=1,
-        )
+        conf.apply({
+            'compress': True,
+            'debug_path': os.path.join(execution_dir, 'debug'),
+            'clean_debug_path': True,
+            'compressed_path': dump,
+        })
 
-        for line in iter(cp.stdout.readline, ''):
-            line = line.rstrip()
+        def progress_callback(percent, desc):
+            job.set_progress(percent, desc)
 
-            if line.startswith('**') and '%: ' in line:
-                percent, desc = line.split('%: ', 1)
-                try:
-                    percent = int(percent.split()[-1])
-                except ValueError:
-                    continue
-                job.set_progress(percent, desc)
-        _, stderr = cp.communicate()
+        event_callbacks.register(progress_callback)
 
-        if cp.returncode != 0:
-            raise CallError(f'Failed to generate debug file: {stderr}')
-
-        job.set_progress(100, 'Debug generation finished')
-
-        return dump
+        try:
+            return generate_debug()
+        except Exception as e:
+            raise CallError(f'Failed to generate debug: {e!r}')
 
     @accepts()
     @returns()
