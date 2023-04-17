@@ -2,11 +2,14 @@ import io
 import os
 import requests
 import shutil
-import subprocess
 import tarfile
 
 from middlewared.schema import accepts, returns
 from middlewared.service import CallError, job, private, Service
+
+from ixdiagnose.config import conf
+from ixdiagnose.event import event_callbacks
+from ixdiagnose.run import generate_debug
 
 from .utils import DEBUG_MAX_SIZE
 
@@ -32,30 +35,22 @@ class SystemService(Service):
         if os.path.exists(direc):
             shutil.rmtree(direc)
 
-        cp = subprocess.Popen(
-            ['ixdiagnose', '-d', direc, '-s', '-F', '-p'],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            encoding='utf-8', errors='ignore', bufsize=1,
-        )
+        conf.apply({
+            'compress': True,
+            'debug_path': os.path.join(direc, 'debug'),
+            'clean_debug_path': True,
+            'compressed_path': dump,
+        })
 
-        for line in iter(cp.stdout.readline, ''):
-            line = line.rstrip()
+        def progress_callback(percent, desc):
+            job.set_progress(percent, desc)
 
-            if line.startswith('**') and '%: ' in line:
-                percent, desc = line.split('%: ', 1)
-                try:
-                    percent = int(percent.split()[-1])
-                except ValueError:
-                    continue
-                job.set_progress(percent, desc)
-        _, stderr = cp.communicate()
+        event_callbacks.register(progress_callback)
 
-        if cp.returncode != 0:
-            raise CallError(f'Failed to generate debug file: {stderr}')
-
-        job.set_progress(100, 'Debug generation finished')
-
-        return dump
+        try:
+            return generate_debug()
+        except Exception as e:
+            raise CallError(f'Failed to generate debug: {e!r}')
 
     @accepts()
     @returns()
