@@ -245,8 +245,7 @@ class GlusterFilesystemService(Service):
     ))
     def contents(self, data):
         """
-        Remove the glusterfs filesystem object at the specified
-        path relative to the specified parent uuid.
+        Get the contents of a glusterfs filesystem object.
 
         Parameters:
         ----------
