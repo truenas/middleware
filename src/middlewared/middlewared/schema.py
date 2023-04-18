@@ -208,7 +208,7 @@ class LocalUsername(Attribute):
         if val_len <= 0:
             raise Error(self.name, 'Username must be at least 1 character in length')
         elif val_len > 32:
-            raise Error(self.name, 'Username cannot exceed 32 chars in length')
+            raise Error(self.name, 'Username cannot exceed 32 characters in length')
         elif val[0] not in valid_start:
             raise Error(self.name, 'Username must start with a lower-case letter or an underscore')
         elif '$' in val and val[-1] != '$':
