@@ -4,7 +4,7 @@ from mock import Mock
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
-    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm,
+    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm, LocalUsername
 )
 
 
@@ -768,3 +768,27 @@ def test__uri_schema(test_value, expected_error):
         assert ei.value.errors[0].errmsg == 'Not a valid URI'
     else:
         assert strv(self, test_value) == test_value
+
+
+@pytest.mark.parametrize('value,expected_to_fail', [
+    ('', True),
+    (f'{"a" * 33}', True),
+    (' bad', True),
+    ('a$a', True),
+    ('a!', True),
+    ('a$', False),
+    ('aaa', False),
+    ('aAA', False),
+    ('Aaa', False),
+])
+def test__localusername_schema(value, expected_to_fail):
+    @accepts(LocalUsername('username', required=True))
+    def user(self, data):
+        return data
+
+    self = Mock()
+    if expected_to_fail:
+        with pytest.raises(ValidationErrors):
+            user(self, value)
+    else:
+        assert user(self, value) == value

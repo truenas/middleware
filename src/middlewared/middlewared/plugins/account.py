@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, returns, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, returns, Str, LocalUsername
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, no_auth_required, pass_app, private, filterable, job
 )
@@ -412,7 +412,7 @@ class UserService(CRUDService):
     @accepts(Dict(
         'user_create',
         Int('uid'),
-        Str('username', required=True, max_length=16),
+        LocalUsername('username', required=True),
         Int('group'),
         Bool('group_create', default=False),
         Str('home', default=DEFAULT_HOME_PATH),
