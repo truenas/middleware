@@ -4,7 +4,7 @@ from mock import Mock
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
-    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm,
+    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm, LocalUsername
 )
 
 
