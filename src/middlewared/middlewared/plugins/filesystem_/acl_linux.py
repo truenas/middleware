@@ -44,7 +44,7 @@ class FilesystemService(Service, ACLBase):
                 raise
 
             verrors.add(f'{schema}.path', e.errmsg)
-            return
+            return loc
 
         path = data['path']
 
@@ -53,24 +53,24 @@ class FilesystemService(Service, ACLBase):
         except CallError as e:
             if e.errno == errno.EINVAL:
                 verrors.add('f{schema}.path', 'Must be an absolute path')
-                return
+                return loc
 
             raise e
 
         if st['type'] == 'FILE' and data['options']['recursive']:
             verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
-            return
+            return loc
 
         if st['is_ctldir']:
             verrors.add(f'{schema}.path',
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
-            return
+            return loc
 
         if loc is FSLocation.CLUSTER:
-            return
+            return loc
 
         if any(st['realpath'].startswith(prefix) for prefix in ('/home/admin/.ssh', '/root/.ssh')):
-            return
+            return loc
 
         if not st['realpath'].startswith('/mnt/'):
             verrors.add(
@@ -98,6 +98,8 @@ class FilesystemService(Service, ACLBase):
                 f'{schema}.path',
                 f'Changes to permissions of ix-applications dataset are not permitted: {path}.'
             )
+
+        return loc
 
     @private
     def path_get_acltype(self, path):
@@ -143,7 +145,7 @@ class FilesystemService(Service, ACLBase):
             verrors.add("filesystem.chown.uid",
                         "Please specify either user or group to change.")
 
-        self._common_perm_path_validate("filesystem.chown", data, verrors)
+        loc = self._common_perm_path_validate("filesystem.chown", data, verrors)
         verrors.check()
 
         if not options['recursive']:
@@ -153,6 +155,20 @@ class FilesystemService(Service, ACLBase):
 
         job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
         options['posixacl'] = True
+        if loc == FSLocation.CLUSTER:
+            parts = data['path'].split('/', 3)
+            target = self.middleware.call_sync('gluster.filesystem.lookup', {
+                'volume_name': parts[2],
+                'parent_uuid': None,
+                'path': parts[3],
+            })
+            glfs_job = self.middleware.call_sync('gluster.filesystem.setperm', {
+                'volume_name': parts[2],
+                'uuid': target['uuid'],
+                'options': {'uid': uid, 'gid': gid}
+            })
+            return job.wrap_sync(glfs_job)
+
         self.acltool(data['path'], 'chown', uid, gid, options)
         job.set_progress(100, 'Finished changing owner.')
 
@@ -187,7 +203,7 @@ class FilesystemService(Service, ACLBase):
         uid = -1 if data['uid'] is None else data.get('uid', -1)
         gid = -1 if data['gid'] is None else data.get('gid', -1)
 
-        self._common_perm_path_validate("filesystem.setperm", data, verrors)
+        loc = self._common_perm_path_validate("filesystem.setperm", data, verrors)
 
         current_acl = self.middleware.call_sync('filesystem.getacl', data['path'])
         acl_is_trivial = current_acl['trivial']
@@ -223,6 +239,20 @@ class FilesystemService(Service, ACLBase):
         if not options['recursive']:
             job.set_progress(100, 'Finished setting permissions.')
             return
+
+        if loc == FSLocation.CLUSTER:
+            parts = data['path'].split('/', 3)
+            target = self.middleware.call_sync('gluster.filesystem.lookup', {
+                'volume_name': parts[2],
+                'parent_uuid': None,
+                'path': parts[3],
+            })
+            glfs_job = self.middleware.call_sync('gluster.filesystem.setperm', {
+                'volume_name': parts[2],
+                'uuid': target['uuid'],
+                'options': {'uid': uid, 'gid': gid, 'mode': mode, 'acl_operation': 'STRIP'}
+            })
+            return job.wrap_sync(glfs_job)
 
         action = 'clone' if mode else 'strip'
         job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
@@ -654,6 +684,20 @@ class FilesystemService(Service, ACLBase):
             job.set_progress(100, 'Finished setting POSIX1e ACL.')
             return
 
+        if data['loc'] == FSLocation.CLUSTER:
+            parts = data['path'].split('/', 3)
+            target = self.middleware.call_sync('gluster.filesystem.lookup', {
+                'volume_name': parts[2],
+                'parent_uuid': None,
+                'path': parts[3],
+            })
+            glfs_job = self.middleware.call_sync('gluster.filesystem.setperm', {
+                'volume_name': parts[2],
+                'uuid': target['uuid'],
+                'options': {'uid': uid, 'gid': gid, 'acl_operation': 'INHERIT'}
+            })
+            return job.wrap_sync(glfs_job)
+
         options['posixacl'] = True
         self.acltool(data['path'],
                      'clone' if not do_strip else 'strip',
@@ -663,7 +707,7 @@ class FilesystemService(Service, ACLBase):
 
     def setacl(self, job, data):
         verrors = ValidationErrors()
-        self._common_perm_path_validate("filesystem.setacl", data, verrors)
+        data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
         verrors.check()
 
         data['path'] = data['path'].replace('CLUSTER:', '/cluster')
