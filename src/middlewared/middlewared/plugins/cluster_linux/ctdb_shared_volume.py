@@ -181,7 +181,7 @@ class CtdbSharedVolumeService(Service):
         return await self.middleware.call('gluster.volume.query', [('name', '=', CTDB_VOL_NAME)])
 
     @job(lock=CRE_OR_DEL_LOCK)
-    async def teardown(self, job):
+    async def teardown(self, job, force=False):
         """
         If this method is called, it's expected that the end-user knows what they're doing. They
         also expect that this will _PERMANENTLY_ delete all the ctdb shared volume information. We
@@ -189,13 +189,17 @@ class CtdbSharedVolumeService(Service):
         system is in a "clustered" state. This method _MUST_ be called on each node in the cluster
         to fully "teardown" the cluster config.
 
+        `force`: boolean, when True will forcefully stop all relevant cluster services before
+            wiping the configuration.
+
         NOTE: THERE IS NO COMING BACK FROM THIS.
         """
-        for vol in await self.middleware.call('gluster.volume.query'):
-            if vol['name'] != CTDB_VOL_NAME:
-                # If someone calls this method, we expect that all other gluster volumes
-                # have been destroyed
-                raise CallError(f'{vol["name"]!r} must be removed before deleting {CTDB_VOL_NAME!r}')
+        if not force:
+            for vol in await self.middleware.call('gluster.volume.query'):
+                if vol['name'] != CTDB_VOL_NAME:
+                    # If someone calls this method, we expect that all other gluster volumes
+                    # have been destroyed
+                    raise CallError(f'{vol["name"]!r} must be removed before deleting {CTDB_VOL_NAME!r}')
         else:
             # we have to stop gluster service because it spawns a bunch of child processes
             # for the ctdb shared volume. This also stops ctdb, smb and unmounts all the
@@ -204,8 +208,8 @@ class CtdbSharedVolumeService(Service):
             await self.middleware.call('service.stop', 'glusterd')
 
         job.set_progress(75, 'Removing cluster related configuration files and directories.')
-        teardown_job = await self.middleware.call('cluster.utils.teardown_cluster')
-        await teardown_job.wait()
+        wipe_config_job = await self.middleware.call('cluster.utils.wipe_config')
+        await wipe_config_job.wait()
 
         job.set_progress(99, 'Disabling cluster service')
         await self.middleware.call('service.update', 'glusterd', {'enable': False})
