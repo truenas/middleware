@@ -768,3 +768,26 @@ def test__uri_schema(test_value, expected_error):
         assert ei.value.errors[0].errmsg == 'Not a valid URI'
     else:
         assert strv(self, test_value) == test_value
+
+
+@pytest.mark.parametrize('value,expected_to_fail', [
+    ('', True),
+    (f'{"a" * 33}', True),
+    (' bad', True),
+    ('a$a', True),
+    ('a!', True),
+    ('a$', False),
+    ('aaa', False),
+    ('aAA', False),
+])
+def test__localusername_schema(value, expected_to_fail):
+    @accepts(LocalUsername('username', required=True))
+    def user(self, data):
+        return data
+
+    self = Mock()
+    if expected_to_fail:
+        with pytest.raises(ValidationErrors):
+            user(self, value)
+    else:
+        assert user(self, value) == value
