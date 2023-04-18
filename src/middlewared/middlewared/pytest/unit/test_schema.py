@@ -779,6 +779,7 @@ def test__uri_schema(test_value, expected_error):
     ('a$', False),
     ('aaa', False),
     ('aAA', False),
+    ('Aaa', False),
 ])
 def test__localusername_schema(value, expected_to_fail):
     @accepts(LocalUsername('username', required=True))
