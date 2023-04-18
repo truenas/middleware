@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import json
+import string
 import textwrap
 import warnings
 from collections import defaultdict
@@ -192,6 +193,30 @@ class Attribute(object):
         cp = copy.deepcopy(self)
         cp.register = False
         return cp
+
+
+class LocalUsername(Attribute):
+    def to_json_schema(self, parent=None):
+        return {**self._to_json_schema_common(parent), 'type': 'string'}
+
+    def validate(self, value):
+        # see man 8 useradd, specifically the CAVEATS section
+        val = str(value)
+        val_len = len(val)
+        valid_chars = string.ascii_letters + string.digits + '_' + '-' + '$'
+        valid_start = string.ascii_letters + '_'
+        if val_len <= 0:
+            raise Error(self.name, 'Username must be at least 1 character in length')
+        elif val_len > 32:
+            raise Error(self.name, 'Username cannot exceed 32 chars in length')
+        elif val[0] not in valid_start:
+            raise Error(self.name, 'Username must start with a lower-case letter or an underscore')
+        elif '$' in val and val[-1] != '$':
+            raise Error(self.name, 'Username must end with a dollar sign character')
+        elif any((char not in valid_chars for char in val)):
+            raise Error(self.name, f'Valid characters for a username are: {", ".join(valid_chars)!r}')
+
+        return super().validate(val)
 
 
 class Any(Attribute):
