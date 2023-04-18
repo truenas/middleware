@@ -168,12 +168,12 @@ class ClusterUtils(Service):
         return files, dirs
 
     @private
-    @job(lock='teardown_cluster', lock_queue_size=1)
-    def teardown_cluster(self, job):
+    @job(lock='wipe_config', lock_queue_size=1)
+    def wipe_config(self, job):
         """
         This can be called on its own after all the gluster volumes
         have been stopped and deleted (including the ctdb shared volume).
-        However, this is called by ctdb.shared.volume.teardown to maintain
+        NOTE: this is called by ctdb.shared.volume.teardown to maintain
         backwards compatbility with TrueCommand.
         """
         files, dirs = self.state_to_be_removed()
