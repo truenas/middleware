@@ -114,6 +114,12 @@ class SystemService(Service):
 
     @private
     def license(self):
+        return self._get_license()
+
+    @staticmethod
+    def _get_license():
+        # NOTE: this is called in truenas/migrate113 repo so before you remove/rename
+        # this method, be sure and account for it over there
         try:
             with open(LICENSE_FILE) as f:
                 licenseobj = License.load(f.read().strip('\n'))
