@@ -1,9 +1,9 @@
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.validators import Range, Hostname
+from middlewared.validators import Hostname, Match, Range
 from middlewared.service import SystemServiceService, ValidationErrors, private
-import middlewared.sqlalchemy as sa
 
+import middlewared.sqlalchemy as sa
 
 import os
 
@@ -54,8 +54,16 @@ class S3Service(SystemServiceService):
         Str('bindip'),
         Int('bindport', validators=[Range(min=1, max=65535)]),
         Int('console_bindport', validators=[Range(min=1, max=65535)]),
-        Str('access_key', max_length=20),
-        Str('secret_key', max_length=40),
+        Str(
+            'access_key', max_length=20, validators=[
+                Match(r'^[^"]*$', explanation='Double quotes are not allowed in access key')
+            ]
+        ),
+        Str(
+            'secret_key', max_length=40, validators=[
+                Match(r'^[^"]*$', explanation='Double quotes are not allowed in secret key')
+            ]
+        ),
         Bool('browser'),
         Str('storage_path'),
         Int('certificate', null=True),
