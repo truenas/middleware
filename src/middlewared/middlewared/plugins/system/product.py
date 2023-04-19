@@ -117,59 +117,55 @@ class SystemService(Service):
         return 'LINUX'
 
     @private
-    async def license(self):
-        return await self.middleware.run_in_thread(self._get_license)
+    def license(self):
+        return self._get_license()
 
     @staticmethod
     def _get_license():
-        if not os.path.exists(LICENSE_FILE):
-            return
-
-        with open(LICENSE_FILE, 'r') as f:
-            license_file = f.read().strip('\n')
-
+        # NOTE: this is called in truenas/migrate113 repo so before you remove/rename
+        # this method, be sure and account for it over there
         try:
-            licenseobj = License.load(license_file)
+            with open(LICENSE_FILE) as f:
+                licenseobj = License.load(f.read().strip('\n'))
         except Exception:
             return
 
         license = {
-            "model": licenseobj.model,
-            "system_serial": licenseobj.system_serial,
-            "system_serial_ha": licenseobj.system_serial_ha,
-            "contract_type": ContractType(licenseobj.contract_type).name.upper(),
-            "contract_start": licenseobj.contract_start,
-            "contract_end": licenseobj.contract_end,
-            "legacy_contract_hardware": (
+            'model': licenseobj.model,
+            'system_serial': licenseobj.system_serial,
+            'system_serial_ha': licenseobj.system_serial_ha,
+            'contract_type': ContractType(licenseobj.contract_type).name.upper(),
+            'contract_start': licenseobj.contract_start,
+            'contract_end': licenseobj.contract_end,
+            'legacy_contract_hardware': (
                 licenseobj.contract_hardware.name.upper()
                 if licenseobj.contract_type == ContractType.legacy
                 else None
             ),
-            "legacy_contract_software": (
+            'legacy_contract_software': (
                 licenseobj.contract_software.name.upper()
                 if licenseobj.contract_type == ContractType.legacy
                 else None
             ),
-            "customer_name": licenseobj.customer_name,
-            "expired": licenseobj.expired,
-            "features": [],
-            "addhw": licenseobj.addhw,
-            "addhw_detail": [
-                f"{quantity} × " + (f"{LICENSE_ADDHW_MAPPING[code]} Expansion shelf" if code in LICENSE_ADDHW_MAPPING
-                                    else f"<Unknown hardware {code}>")
-                for quantity, code in licenseobj.addhw
-            ],
+            'customer_name': licenseobj.customer_name,
+            'expired': licenseobj.expired,
+            'features': [i.name.upper() for i in licenseobj.features],
+            'addhw': licenseobj.addhw,
+            'addhw_detail': [],
         }
-        for feature in licenseobj.features:
-            license["features"].append(feature.name.upper())
-        # Licenses issued before 2017-04-14 had a bug in the feature bit
-        # for fibre channel, which means they were issued having
-        # dedup+jails instead.
-        if (
-            Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14) and
-            Features.dedup in licenseobj.features and Features.jails in licenseobj.features
-        ):
-            license["features"].append(Features.fibrechannel.name.upper())
+
+        for quantity, code in licenseobj.addhw:
+            try:
+                license['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]} Expansion shelf')
+            except KeyError:
+                license['addhw_detail'].append(f'<Unknown hardware {code}>')
+
+        if Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14):
+            # Licenses issued before 2017-04-14 had a bug in the feature bit for fibrechannel, which
+            # means they were issued having dedup+jails instead.
+            if Features.dedup in licenseobj.features and Features.jails in licenseobj.features:
+                license['features'].append(Features.fibrechannel.name.upper())
+
         return license
 
     @private
