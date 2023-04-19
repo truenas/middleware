@@ -121,27 +121,27 @@ class SystemService(Service):
             return
 
         license = {
-            "model": licenseobj.model,
-            "system_serial": licenseobj.system_serial,
-            "system_serial_ha": licenseobj.system_serial_ha,
-            "contract_type": ContractType(licenseobj.contract_type).name.upper(),
-            "contract_start": licenseobj.contract_start,
-            "contract_end": licenseobj.contract_end,
-            "legacy_contract_hardware": (
+            'model': licenseobj.model,
+            'system_serial': licenseobj.system_serial,
+            'system_serial_ha': licenseobj.system_serial_ha,
+            'contract_type': ContractType(licenseobj.contract_type).name.upper(),
+            'contract_start': licenseobj.contract_start,
+            'contract_end': licenseobj.contract_end,
+            'legacy_contract_hardware': (
                 licenseobj.contract_hardware.name.upper()
                 if licenseobj.contract_type == ContractType.legacy
                 else None
             ),
-            "legacy_contract_software": (
+            'legacy_contract_software': (
                 licenseobj.contract_software.name.upper()
                 if licenseobj.contract_type == ContractType.legacy
                 else None
             ),
-            "customer_name": licenseobj.customer_name,
-            "expired": licenseobj.expired,
-            "features": [i.name.upper() for i in licenseobj.features],
-            "addhw": licenseobj.addhw,
-            "addhw_detail": [],
+            'customer_name': licenseobj.customer_name,
+            'expired': licenseobj.expired,
+            'features': [i.name.upper() for i in licenseobj.features],
+            'addhw': licenseobj.addhw,
+            'addhw_detail': [],
         }
 
         for quantity, code in licenseobj.addhw:
@@ -157,7 +157,7 @@ class SystemService(Service):
             Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14) and
             Features.dedup in licenseobj.features and Features.jails in licenseobj.features
         ):
-            license["features"].append(Features.fibrechannel.name.upper())
+            license['features'].append(Features.fibrechannel.name.upper())
         return license
 
     @private
