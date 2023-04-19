@@ -117,19 +117,10 @@ class SystemService(Service):
         return 'LINUX'
 
     @private
-    async def license(self):
-        return await self.middleware.run_in_thread(self._get_license)
-
-    @staticmethod
-    def _get_license():
-        if not os.path.exists(LICENSE_FILE):
-            return
-
-        with open(LICENSE_FILE, 'r') as f:
-            license_file = f.read().strip('\n')
-
+    def license(self):
         try:
-            licenseobj = License.load(license_file)
+            with open(LICENSE_FILE) as f:
+                licenseobj = License.load(f.read().strip('\n'))
         except Exception:
             return
 
