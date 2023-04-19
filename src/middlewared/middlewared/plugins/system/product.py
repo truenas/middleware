@@ -143,16 +143,17 @@ class SystemService(Service):
             ),
             "customer_name": licenseobj.customer_name,
             "expired": licenseobj.expired,
-            "features": [],
+            "features": [i.name.upper() for i in licenseobj.features],
             "addhw": licenseobj.addhw,
-            "addhw_detail": [
-                f"{quantity} × " + (f"{LICENSE_ADDHW_MAPPING[code]} Expansion shelf" if code in LICENSE_ADDHW_MAPPING
-                                    else f"<Unknown hardware {code}>")
-                for quantity, code in licenseobj.addhw
-            ],
+            "addhw_detail": [],
         }
-        for feature in licenseobj.features:
-            license["features"].append(feature.name.upper())
+
+        for quantity, code in licenseobj.addhw:
+            try:
+                license['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]}')
+            except KeyError:
+                license['addhw_detail'].append(f'<Unknown hardware {code}>')
+
         # Licenses issued before 2017-04-14 had a bug in the feature bit
         # for fibre channel, which means they were issued having
         # dedup+jails instead.
