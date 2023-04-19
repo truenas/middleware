@@ -156,7 +156,7 @@ class SystemService(Service):
 
         for quantity, code in licenseobj.addhw:
             try:
-                license['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]}')
+                license['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]} Expansion shelf')
             except KeyError:
                 license['addhw_detail'].append(f'<Unknown hardware {code}>')
 
