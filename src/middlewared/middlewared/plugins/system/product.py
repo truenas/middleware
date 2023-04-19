@@ -154,14 +154,12 @@ class SystemService(Service):
             except KeyError:
                 license['addhw_detail'].append(f'<Unknown hardware {code}>')
 
-        # Licenses issued before 2017-04-14 had a bug in the feature bit
-        # for fibre channel, which means they were issued having
-        # dedup+jails instead.
-        if (
-            Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14) and
-            Features.dedup in licenseobj.features and Features.jails in licenseobj.features
-        ):
-            license['features'].append(Features.fibrechannel.name.upper())
+        if Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14):
+            # Licenses issued before 2017-04-14 had a bug in the feature bit for fibrechannel, which
+            # means they were issued having dedup+jails instead.
+            if Features.dedup in licenseobj.features and Features.jails in licenseobj.features:
+                license['features'].append(Features.fibrechannel.name.upper())
+
         return license
 
     @private
