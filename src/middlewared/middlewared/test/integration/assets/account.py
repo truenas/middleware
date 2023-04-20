@@ -4,7 +4,7 @@ import types
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, client, ssh
 
 
 @contextlib.contextmanager
@@ -41,7 +41,7 @@ def group(data):
 
 
 @contextlib.contextmanager
-def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_shell):
+def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_shell, roles=None):
     with group({
         "name": group_name,
     }) as g:
@@ -50,6 +50,7 @@ def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_sh
             "local_groups": [g["gid"]],
             "ds_groups": [],
             "allowlist": allowlist,
+            "roles": roles or [],
             "web_shell": web_shell,
         }):
             with dataset(f"{username}_homedir") as homedir:
@@ -67,3 +68,17 @@ def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_sh
                     "password": password,
                 }):
                     yield types.SimpleNamespace(username=username, password=password)
+
+
+@contextlib.contextmanager
+def unprivileged_user_client(roles):
+    with unprivileged_user(
+        username="unprivileged",
+        group_name="unprivileged_users",
+        privilege_name="Unprivileged users",
+        allowlist=[],
+        roles=roles,
+        web_shell=False,
+    ) as t:
+        with client(auth=(t.username, t.password)) as c:
+            yield c

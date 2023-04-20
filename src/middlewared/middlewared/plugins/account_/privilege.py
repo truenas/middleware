@@ -20,6 +20,7 @@ class PrivilegeModel(sa.Model):
     local_groups = sa.Column(sa.JSON(type=list))
     ds_groups = sa.Column(sa.JSON(type=list))
     allowlist = sa.Column(sa.JSON(type=list))
+    roles = sa.Column(sa.JSON(type=list))
     web_shell = sa.Column(sa.Boolean())
 
 
@@ -42,6 +43,7 @@ class PrivilegeService(CRUDService):
         List("local_groups", items=[Int("local_group")]),
         List("ds_groups", items=[Int("ds_group_gid"), SID("ds_group_sid")]),
         List("allowlist", items=[Ref("allowlist_item")]),
+        List("roles", items=[Str("role")]),
         Bool("web_shell", required=True),
     )
 
@@ -173,6 +175,10 @@ class PrivilegeService(CRUDService):
         for i, ds_group_id in enumerate(data["ds_groups"]):
             if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
                 verrors.add(f"{schema_name}.ds_groups.{i}", "This Directory Service group does not exist")
+
+        for i, role in enumerate(data["roles"]):
+            if role not in self.middleware.role_manager.roles:
+                verrors.add(f"{schema_name}.roles.{i}", "Invalid role")
 
         verrors.check()
 
@@ -334,10 +340,16 @@ class PrivilegeService(CRUDService):
     @private
     async def compose_privilege(self, privileges):
         compose = {
+            'roles': set(),
             'allowlist': [],
             'web_shell': False,
         }
         for privilege in privileges:
+            for role in privilege['roles']:
+                compose['roles'] |= self.middleware.role_manager.roles_for_fole(role)
+
+                compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role))
+
             for item in privilege['allowlist']:
                 compose['allowlist'].append(item)
 

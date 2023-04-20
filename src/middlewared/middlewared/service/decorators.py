@@ -170,10 +170,11 @@ def no_auth_required(fn):
     return fn
 
 
-def pass_app(rest=False):
+def pass_app(*, require=False, rest=False):
     """Pass the application instance as parameter to the method."""
     def wrapper(fn):
         fn._pass_app = {
+            'require': require,
             'rest': rest,
         }
         return fn

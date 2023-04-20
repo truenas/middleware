@@ -8,4 +8,5 @@ Middleware Daemon
     development.rst
     process_pool.rst
     jobs.rst
+    roles.rst
     plugins/index.rst

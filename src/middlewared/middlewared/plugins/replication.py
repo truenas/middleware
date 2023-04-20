@@ -2,9 +2,10 @@ from datetime import datetime, time
 import os
 import re
 
+from middlewared.auth import fake_app
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dataset, Dict, Int, List, Patch, returns, Str
-from middlewared.service import item_method, job, private, CallError, CRUDService, ValidationErrors
+from middlewared.service import item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import is_child
 from middlewared.validators import Port, Range, ReplicationSnapshotNamingSchema, Unique
@@ -92,6 +93,7 @@ class ReplicationService(CRUDService):
         datastore_extend = "replication.extend"
         datastore_extend_context = "replication.extend_context"
         cli_namespace = "task.replication"
+        role_prefix = "REPLICATION_TASK"
 
     @private
     async def extend_context(self, rows, extra):
@@ -218,7 +220,8 @@ class ReplicationService(CRUDService):
             strict=True,
         )
     )
-    async def do_create(self, data):
+    @pass_app(require=True)
+    async def do_create(self, app, data):
         """
         Create a Replication Task
 
@@ -305,7 +308,7 @@ class ReplicationService(CRUDService):
         """
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_create", await self._validate(data))
+        verrors.add_child("replication_create", await self._validate(app, data))
 
         verrors.check()
 
@@ -330,7 +333,8 @@ class ReplicationService(CRUDService):
         "replication_update",
         ("attr", {"update": True}),
     ))
-    async def do_update(self, id, data):
+    @pass_app(require=True)
+    async def do_update(self, app, id, data):
         """
         Update a Replication Task with specific `id`
 
@@ -382,7 +386,7 @@ class ReplicationService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_update", await self._validate(new, id))
+        verrors.add_child("replication_update", await self._validate(app, new, id))
 
         verrors.check()
 
@@ -437,7 +441,11 @@ class ReplicationService(CRUDService):
         return response
 
     @item_method
-    @accepts(Int("id"), Bool("really_run", default=True, hidden=True))
+    @accepts(
+        Int("id"),
+        Bool("really_run", default=True, hidden=True),
+        roles=["REPLICATION_TASK_WRITE"],
+    )
     @job(logs=True)
     async def run(self, job, id, really_run):
         """
@@ -484,7 +492,7 @@ class ReplicationService(CRUDService):
         data["enabled"] = True
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_run_onetime", await self._validate(data))
+        verrors.add_child("replication_run_onetime", await self._validate(fake_app(), data))
 
         verrors.check()
 
@@ -495,7 +503,7 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
-    async def _validate(self, data, id=None):
+    async def _validate(self, app, data, id=None):
         verrors = ValidationErrors()
 
         await self._ensure_unique(verrors, "", "name", data["name"], id)
@@ -538,6 +546,10 @@ class ReplicationService(CRUDService):
             if data["hold_pending_snapshots"]:
                 verrors.add("hold_pending_snapshots", "Pull replication tasks can't hold pending snapshots because "
                                                       "they don't do source retention")
+
+            if app.authenticated_credentials.has_role("REPLICATION_TASK_WRITE"):
+                if not app.authenticated_credentials.has_role("REPLICATION_TASK_WRITE_PULL"):
+                    verrors.add("direction", "You don't have permissions to use PULL replication")
 
         # Transport
 
@@ -718,7 +730,8 @@ class ReplicationService(CRUDService):
         return verrors, snapshot_tasks
 
     @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
-             Int("ssh_credentials", null=True, default=None))
+             Int("ssh_credentials", null=True, default=None),
+             roles=["REPLICATION_TASK_WRITE"])
     @returns(List("datasets", items=[Str("dataset")]))
     async def list_datasets(self, transport, ssh_credentials):
         """
@@ -744,7 +757,8 @@ class ReplicationService(CRUDService):
 
     @accepts(Str("dataset", required=True),
              Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
-             Int("ssh_credentials", null=True, default=None))
+             Int("ssh_credentials", null=True, default=None),
+             roles=["REPLICATION_TASK_WRITE"])
     async def create_dataset(self, dataset, transport, ssh_credentials):
         """
         Creates dataset on remote side
@@ -768,7 +782,7 @@ class ReplicationService(CRUDService):
 
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
-    @accepts()
+    @accepts(roles=["REPLICATION_TASK_WRITE"])
     @returns(List("naming_schemas", items=[Str("naming_schema")]))
     async def list_naming_schemas(self):
         """
@@ -806,6 +820,7 @@ class ReplicationService(CRUDService):
                 }],
             ),
         ],
+        roles=["REPLICATION_TASK_WRITE"],
     )
     @returns(Dict(
         Int("total"),
@@ -838,6 +853,7 @@ class ReplicationService(CRUDService):
         Dataset("target_dataset", required=True),
         Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL", "LEGACY"], required=True),
         Int("ssh_credentials", null=True, default=None),
+        roles=["REPLICATION_TASK_WRITE"],
     )
     @returns(Dict(
         additional_attrs=True,

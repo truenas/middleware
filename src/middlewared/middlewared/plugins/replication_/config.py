@@ -17,6 +17,7 @@ class ReplicationConfigService(ConfigService):
         namespace = "replication.config"
         datastore = "storage.replication_config"
         cli_namespace = "task.replication.config"
+        role_prefix = "REPLICATION_TASK_CONFIG"
 
     @accepts(
         Dict(

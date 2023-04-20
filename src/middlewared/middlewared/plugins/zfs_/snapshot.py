@@ -4,6 +4,7 @@ import libzfs
 
 from middlewared.schema import accepts, Bool, Dict, List, Str
 from middlewared.service import CallError, CRUDService, filterable, private, ValidationErrors
+from middlewared.service_exception import InstanceNotFound
 from middlewared.utils import filter_list, filter_getattrs
 from middlewared.validators import Match, ReplicationSnapshotNamingSchema
 
@@ -18,6 +19,8 @@ class ZFSSnapshot(CRUDService):
         namespace = 'zfs.snapshot'
         process_pool = True
         cli_namespace = 'storage.snapshot'
+        role_prefix = 'SNAPSHOT'
+        role_separate_delete = True
 
     @private
     def count(self, dataset_names='*', recursive=False):
@@ -249,12 +252,15 @@ class ZFSSnapshot(CRUDService):
         else:
             return self.middleware.call_sync('zfs.snapshot.get_instance', snap_id)
 
-    @accepts(Dict(
-        'snapshot_remove',
-        Str('dataset', required=True),
-        Str('name', required=True),
-        Bool('defer_delete')
-    ))
+    @accepts(
+        Dict(
+            'snapshot_remove',
+            Str('dataset', required=True),
+            Str('name', required=True),
+            Bool('defer_delete')
+        ),
+        roles=['SNAPSHOT_DELETE'],
+    )
     def remove(self, data):
         """
         Remove a snapshot from a given dataset.
@@ -289,6 +295,9 @@ class ZFSSnapshot(CRUDService):
                 snap = zfs.get_snapshot(id)
                 snap.delete(defer=options['defer'], recursive=options['recursive'])
         except libzfs.ZFSException as e:
+            if e.code == libzfs.Error.NOENT:
+                raise InstanceNotFound(str(e))
+
             raise CallError(str(e))
         else:
             return True

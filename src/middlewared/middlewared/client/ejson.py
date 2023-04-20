@@ -14,6 +14,8 @@ class JSONEncoder(json.JSONEncoder):
             return {'$date': int(calendar.timegm(obj.timetuple()) * 1000)}
         elif type(obj) is time:
             return {'$time': str(obj)}
+        elif isinstance(obj, set):
+            return {'$set': list(obj)}
         return super(JSONEncoder, self).default(obj)
 
 
@@ -24,6 +26,8 @@ def object_hook(obj):
             return datetime.fromtimestamp(obj['$date'] / 1000, tz=timezone.utc) + timedelta(milliseconds=obj['$date'] % 1000)
         if '$time' in obj:
             return time(*[int(i) for i in obj['$time'].split(':')])
+        if '$set' in obj:
+            return set(obj['$set'])
     if obj_len == 2 and '$type' in obj and '$value' in obj:
         if obj['$type'] == 'date':
             return date(*[int(i) for i in obj['$value'].split('-')])

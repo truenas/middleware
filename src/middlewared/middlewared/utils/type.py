@@ -8,6 +8,6 @@ def copy_function_metadata(f, nf):
             continue
         if i.startswith('_'):
             setattr(nf, i, getattr(f, i))
-    for i in ["accepts", "returns"]:
+    for i in ["accepts", "returns", "roles"]:
         if hasattr(f, i):
             setattr(nf, i, getattr(f, i))

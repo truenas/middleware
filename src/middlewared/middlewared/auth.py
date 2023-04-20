@@ -21,6 +21,9 @@ class SessionManagerCredentials:
     def authorize(self, method, resource):
         return True
 
+    def has_role(self, role):
+        return True
+
     def notify_used(self):
         pass
 
@@ -38,6 +41,9 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
 
     def authorize(self, method, resource):
         return self.allowlist.authorize(method, resource)
+
+    def has_role(self, role):
+        return role in self.user["privilege"]["roles"]
 
     def dump(self):
         return {
@@ -79,3 +85,11 @@ class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
 
 def is_ha_connection(remote_addr, remote_port):
     return remote_port <= 1024 and remote_addr in ('169.254.10.1', '169.254.10.2')
+
+
+class FakeApplication:
+    authenticated_credentials = SessionManagerCredentials()
+
+
+def fake_app():
+    return FakeApplication()
