@@ -59,7 +59,7 @@ def test_get_chart_release_logs(request):
 def test_get_chart_exec_result(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-exec'
-    with official_chart_release('qbittorrent', release_name) as chart_release:
+    with official_chart_release('nginx-proxy-manager', release_name) as chart_release:
         with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
