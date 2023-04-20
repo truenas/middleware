@@ -23,7 +23,7 @@ Adding a new third-party python module or upgrading an existing python module
 
     .. code-block:: shell
 
-        docker run --rm -v $(pwd):/work -w /work debian:bookworm sh -c 'apt-get update && apt-get install -y git libffi-dev python3-virtualenv && python3 generate.py
+        docker run --rm -v $(pwd):/work -w /work debian:bookworm sh -c 'apt-get update && apt-get install -y git libffi-dev python3-virtualenv && python3 generate.py'
 
 #. Ensure that the resulting diff is a small as possible. Use `constraints.txt` to pin down some indirect dependencies
    to the versions shipped with Debian.

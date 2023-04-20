@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Dataset, Dict, Int, Str
-from middlewared.service import item_method, Service
+from middlewared.service import item_method, pass_app, Service
 
 
 class ReplicationService(Service):
@@ -12,9 +12,11 @@ class ReplicationService(Service):
             Str("name", required=True),
             Dataset("target_dataset", required=True),
             strict=True,
-        )
+        ),
+        roles=["REPLICATION_TASK_WRITE"],
     )
-    async def restore(self, id, data):
+    @pass_app(require=True, rest=True)
+    async def restore(self, app, id, data):
         """
         Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).
         """
@@ -55,4 +57,4 @@ class ReplicationService(Service):
         data["auto"] = False
         data["enabled"] = False  # Do not run it automatically
 
-        return await self.middleware.call("replication.create", data)
+        return await self.middleware.call("replication.create", data, app=app)

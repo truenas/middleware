@@ -24,6 +24,8 @@ def service_config(klass, config):
         'cli_namespace': None,
         'cli_private': False,
         'cli_description': None,
+        'role_prefix': None,
+        'role_separate_delete': False,
         'verbose_name': klass.__name__.replace('Service', ''),
     }
     config_attrs.update({

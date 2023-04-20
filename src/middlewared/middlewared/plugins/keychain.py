@@ -175,10 +175,11 @@ class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelega
         return f"Replication task {row['name']}"
 
     async def unbind(self, row):
-        await self.middleware.call("replication.update", row["id"], {"enabled": False})
         await self.middleware.call("datastore.update", "storage.replication", row["id"], {
+            "repl_enabled": False,
             "repl_ssh_credentials": None,
         })
+        await self.middleware.call("zettarepl.update_tasks")
 
 
 class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
@@ -240,6 +241,7 @@ class KeychainCredentialService(CRUDService):
     class Config:
         datastore = "system.keychaincredential"
         cli_namespace = "system.keychain_credential"
+        role_prefix = "KEYCHAIN_CREDENTIAL"
 
     ENTRY = Patch(
         "keychain_credential_create", "keychain_credential_entry",
@@ -458,7 +460,7 @@ class KeychainCredentialService(CRUDService):
 
             return credential
 
-    @accepts()
+    @accepts(roles=["KEYCHAIN_CREDENTIAL_WRITE"])
     @returns(Dict(
         "ssh_key_pair",
         Str("private_key", max_length=None, required=True),
@@ -494,12 +496,15 @@ class KeychainCredentialService(CRUDService):
             "public_key": public_key,
         }
 
-    @accepts(Dict(
-        "keychain_remote_ssh_host_key_scan",
-        Str("host", required=True, empty=False),
-        Str("port", default=22),
-        Int("connect_timeout", default=10),
-    ))
+    @accepts(
+        Dict(
+            "keychain_remote_ssh_host_key_scan",
+            Str("host", required=True, empty=False),
+            Str("port", default=22),
+            Int("connect_timeout", default=10),
+        ),
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
+    )
     @returns(Str("remove_ssh_host_key", max_length=None))
     async def remote_ssh_host_key_scan(self, data):
         """
@@ -535,20 +540,23 @@ class KeychainCredentialService(CRUDService):
         else:
             raise CallError(f"ssh-keyscan failed: {proc.stdout + proc.stderr}")
 
-    @accepts(Dict(
-        "keychain_remote_ssh_semiautomatic_setup",
-        Str("name", required=True),
-        Str("url", required=True, validators=[URL()]),
-        Str("token", private=True),
-        Str("admin_username", default="root"),
-        Str("password", private=True),
-        Str("otp_token", private=True),
-        Str("username", default="root"),
-        Int("private_key", required=True),
-        Int("connect_timeout", default=10),
-        Bool("sudo", default=False),
-        register=True,
-    ))
+    @accepts(
+        Dict(
+            "keychain_remote_ssh_semiautomatic_setup",
+            Str("name", required=True),
+            Str("url", required=True, validators=[URL()]),
+            Str("token", private=True),
+            Str("admin_username", default="root"),
+            Str("password", private=True),
+            Str("otp_token", private=True),
+            Str("username", default="root"),
+            Int("private_key", required=True),
+            Int("connect_timeout", default=10),
+            Bool("sudo", default=False),
+            register=True,
+        ),
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
+    )
     @returns(Ref("keychain_credential_entry"))
     def remote_ssh_semiautomatic_setup(self, data):
         """

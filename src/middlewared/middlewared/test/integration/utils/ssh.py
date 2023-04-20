@@ -7,7 +7,9 @@ try:
     from auto_config import user as default_user, password as default_password, ip as default_ip
     from functions import SSH_TEST
 except ImportError:
-    pass
+    default_user = None
+    default_password = None
+    default_ip = None
 
 __all__ = ["ssh"]
 

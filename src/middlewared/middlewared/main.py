@@ -6,6 +6,7 @@ from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
 from .restful import authenticate, copy_multipart_to_pipe, RESTfulAPI
+from .role import ROLES, RoleManager
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
 import middlewared.service
@@ -886,6 +887,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.mocks = defaultdict(list)
         self.socket_messages_queue = deque(maxlen=200)
         self.tasks = set()
+        self.role_manager = RoleManager(ROLES)
 
     def create_task(self, coro, *, name=None):
         task = self.loop.create_task(coro, name=name)
@@ -923,6 +925,27 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             on_module_end=on_module_end,
             on_modules_loaded=on_modules_loaded,
         )
+
+        for namespace, service in self.get_services().items():
+            if service._config.role_prefix:
+                self.role_manager.register_method(f'{service._config.namespace}.config',
+                                                  [f'{service._config.role_prefix}_READ'])
+                self.role_manager.register_method(f'{service._config.namespace}.query',
+                                                  [f'{service._config.role_prefix}_READ'])
+                self.role_manager.register_method(f'{service._config.namespace}.create',
+                                                  [f'{service._config.role_prefix}_WRITE'])
+                self.role_manager.register_method(f'{service._config.namespace}.update',
+                                                  [f'{service._config.role_prefix}_WRITE'])
+                if service._config.role_separate_delete:
+                    self.role_manager.register_method(f'{service._config.namespace}.delete',
+                                                      [f'{service._config.role_prefix}_DELETE'])
+                else:
+                    self.role_manager.register_method(f'{service._config.namespace}.delete',
+                                                      [f'{service._config.role_prefix}_WRITE'])
+
+            for method_name in dir(service):
+                if roles := getattr(getattr(service, method_name), 'roles', None):
+                    self.role_manager.register_method(f'{service._config.namespace}.{method_name}', roles)
 
         return setup_funcs
 
@@ -1276,6 +1299,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         args = []
         if hasattr(methodobj, '_pass_app'):
+            if methodobj._pass_app['require'] and app is None:
+                raise CallError('`app` is required')
+
             args.append(app)
 
         if params:
