@@ -2,7 +2,7 @@ from datetime import time
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, Int, List, Str, Time
+from middlewared.schema import Bool, Dict, Int, List, Time
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Range
 
@@ -28,8 +28,8 @@ class PoolResilverService(ConfigService):
     ENTRY = Dict(
         'pool_resilver_entry',
         Int('id', required=True),
-        Str('begin', validators=[Time()], required=True),
-        Str('end', validators=[Time()], required=True),
+        Time('begin', required=True),
+        Time('end', required=True),
         Bool('enabled', required=True),
         List('weekday', required=True, items=[Int('weekday', validators=[Range(min=1, max=7)])])
     )
@@ -44,14 +44,6 @@ class PoolResilverService(ConfigService):
     @private
     async def validate_fields_and_update(self, data, schema):
         verrors = ValidationErrors()
-
-        begin = data.get('begin')
-        if begin:
-            data['begin'] = time(int(begin.split(':')[0]), int(begin.split(':')[1]))
-
-        end = data.get('end')
-        if end:
-            data['end'] = time(int(end.split(':')[0]), int(end.split(':')[1]))
 
         weekdays = data.get('weekday')
         if not weekdays:
