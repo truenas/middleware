@@ -303,7 +303,7 @@ class FailoverEventsService(Service):
                     break
 
             # means all zpools are already imported
-            if event == 'MASTER' and not needs_imported:
+            if fobj['volumes'] and event == 'MASTER' and not needs_imported:
                 logger.warning('Received a MASTER event but zpools are already imported, ignoring.')
                 raise IgnoreFailoverEvent()
 
