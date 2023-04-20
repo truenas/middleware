@@ -733,7 +733,12 @@ class FailoverEventsService(Service):
         # do something with iscsi service here
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
-        self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+        try:
+            self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+        except Exception as e:
+            ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+            if isinstance(e, CallError) and e.errno not in ignore:
+                logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
