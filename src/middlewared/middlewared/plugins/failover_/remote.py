@@ -11,8 +11,7 @@ from functools import partial
 from middlewared.client import Client, ClientException, CallTimeout, CALL_TIMEOUT
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils import start_daemon_thread
-from middlewared.utils.threading import set_thread_name
+from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.validators import Range
 
 

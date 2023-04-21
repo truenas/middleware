@@ -45,11 +45,11 @@ from zettarepl.zettarepl import create_zettarepl
 from middlewared.client import Client, ClientException
 from middlewared.logger import setup_logging
 from middlewared.service import CallError, Service
-from middlewared.utils import start_daemon_thread
 from middlewared.utils.cgroups import move_to_root_cgroups
 from middlewared.utils.size import format_size
 import middlewared.utils.osc as osc
 from middlewared.utils.string import make_sentence
+from middlewared.utils.threading import start_daemon_thread
 
 INVALID_DATASETS = (
     re.compile(r"boot-pool($|/)"),

@@ -6,7 +6,7 @@ import socketserver
 
 from middlewared.event import EventSource
 from middlewared.service import private, Service
-from middlewared.utils import start_daemon_thread
+from middlewared.utils.threading import start_daemon_thread
 
 
 class GraphiteServer(socketserver.TCPServer):
