@@ -3,6 +3,11 @@
     from middlewared.plugins.cluster_linux.utils import CTDBConfig
     from pathlib import Path
 
+    filters = ['srv_service', '=', 'glusterd']
+    opts = {'get': True}
+    if not middleware.call_sync('datastore.query', 'services.services', filters, opts)['srv_enable']:
+        raise FileShouldNotExist()
+
     r_file = CTDBConfig.REC_FILE.value
     p_dir = CTDBConfig.PER_DB_DIR.value
     s_dir = CTDBConfig.STA_DB_DIR.value
