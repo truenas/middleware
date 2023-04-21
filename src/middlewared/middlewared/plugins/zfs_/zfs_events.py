@@ -6,7 +6,7 @@ import time
 from middlewared.alert.base import (
     Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass, SimpleOneShotAlertClass
 )
-from middlewared.utils import start_daemon_thread
+from middlewared.utils.threading import start_daemon_thread
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 

@@ -3,7 +3,8 @@ import subprocess
 import time
 
 from middlewared.service import private, Service
-from middlewared.utils import run, start_daemon_thread
+from middlewared.utils import run
+from middlewared.utils.threading import start_daemon_thread
 
 
 class DeviceService(Service):

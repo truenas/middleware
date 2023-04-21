@@ -9,7 +9,6 @@ from functools import wraps, cache
 from threading import Lock
 
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.threading import start_daemon_thread  # noqa
 
 MID_PID = None
 MIDDLEWARE_RUN_DIR = '/var/run/middleware'
