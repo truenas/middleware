@@ -231,7 +231,7 @@ class Job:
     logs_fd: None
 
     def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb):
-        self._finished = asyncio.Event(loop=middleware.loop)
+        self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
         self.serviceobj = serviceobj
