@@ -98,10 +98,10 @@ class SystemGeneralService(Service):
         errors = []
         for host in hosts:
             try:
-                reader, writer = await asyncio.wait_for(asyncio.open_connection(
+                reader, writer = await asyncio.wait_for(self.middleware.create_task(asyncio.open_connection(
                     host,
                     port=port,
-                ), timeout=5)
+                )), timeout=5)
                 writer.close()
 
                 return f'{protocol}://{host}:{port}'

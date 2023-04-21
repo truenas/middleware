@@ -24,7 +24,7 @@ class VMService(Service, VMSupervisorMixin):
         try:
             self._system_supports_virtualization()
             if not await self.middleware.call('service.started', 'libvirtd'):
-                await asyncio.wait_for(libvirtd_started(self.middleware), timeout=timeout)
+                await asyncio.wait_for(self.middleware.create_task(libvirtd_started(self.middleware)), timeout=timeout)
             # We want to do this before initializing libvirt connection
             await self.middleware.run_in_thread(self._open)
             await self.middleware.run_in_thread(self._check_connection_alive)

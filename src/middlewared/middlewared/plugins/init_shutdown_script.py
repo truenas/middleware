@@ -224,7 +224,7 @@ class InitShutdownScriptService(CRUDService):
 
         for i, task in enumerate(tasks):
             try:
-                await asyncio.wait_for(self.execute_task(task), timeout=task['timeout'])
+                await asyncio.wait_for(self.middleware.create_task(self.execute_task(task)), timeout=task['timeout'])
             except asyncio.TimeoutError:
                 if task['type'] == 'COMMAND':
                     cmd = task['command']

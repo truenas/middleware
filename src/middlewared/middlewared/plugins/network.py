@@ -1641,7 +1641,9 @@ class InterfaceService(CRUDService):
             # update dhclient.conf before we run dhclient to ensure the hostname/fqdn
             # and/or the supersede routers config options are set properly
             await self.middleware.call('etc.generate', 'dhclient')
-            await asyncio.wait([self.run_dhcp(interface, wait_dhcp) for interface in run_dhcp])
+            await asyncio.wait([
+                self.middleware.create_task(self.run_dhcp(interface, wait_dhcp)) for interface in run_dhcp
+            ])
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
