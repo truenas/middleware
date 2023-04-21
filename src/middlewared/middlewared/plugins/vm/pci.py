@@ -6,8 +6,9 @@ from xml.etree import ElementTree as etree
 from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
+from middlewared.utils.gpu import SENSITIVE_PCI_DEVICE_TYPES
 
-from .utils import get_virsh_command_args, SENSITIVE_PCI_DEVICE_TYPES
+from .utils import get_virsh_command_args
 
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')

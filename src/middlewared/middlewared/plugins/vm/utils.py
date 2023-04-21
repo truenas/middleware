@@ -5,11 +5,6 @@ ACTIVE_STATES = ['RUNNING', 'SUSPENDED']
 LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
-SENSITIVE_PCI_DEVICE_TYPES = (
-    'Bridge',
-    'memory',
-    'SMBus',
-)
 
 
 def create_element(*args, **kwargs):

@@ -2,11 +2,15 @@ import pyudev
 import re
 import subprocess
 
-from middlewared.plugins.vm.utils import SENSITIVE_PCI_DEVICE_TYPES
 from middlewared.service import CallError
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
+SENSITIVE_PCI_DEVICE_TYPES = (
+    'Bridge',
+    'memory',
+    'SMBus',
+)
 
 
 def get_gpus():
