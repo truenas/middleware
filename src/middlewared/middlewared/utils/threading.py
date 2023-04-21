@@ -3,9 +3,8 @@ from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from itertools import count
 import logging
 import os
+import setproctitle
 import threading
-
-import prctl
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ counter = count(1)
 
 
 def set_thread_name(name):
-    prctl.set_name(name)
+    setproctitle.setthreadtitle(name)
 
 
 def start_daemon_thread(*args, **kwargs):
