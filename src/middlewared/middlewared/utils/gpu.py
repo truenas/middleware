@@ -2,7 +2,7 @@ import pyudev
 import re
 import subprocess
 
-from middlewared.service import CallError
+from middlewared.service_exception import CallError
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
