@@ -18,6 +18,7 @@ import uuid
 from collections import defaultdict
 from io import BytesIO
 
+from fenced.fence import ExitCode as FencedExitCodes
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs import ZFSSetPropertyError
@@ -748,6 +749,19 @@ class PoolService(CRUDService):
             }, 'pool_create.encryption_options',
         )
 
+        is_ha = await self.middleware.call('failover.licensed')
+        if is_ha and (rc := await self.middleware.call('failover.fenced.start')):
+            if rc == FencedExitCodes.ALREADY_RUNNING.value:
+                try:
+                    await self.middleware.call('failover.fenced.signal', {'reload': True})
+                except Exception:
+                    self.logger.error('Unhandled exception reloading fenced', exc_info=True)
+            else:
+                err = 'Unexpected error starting fenced'
+                for i in filter(lambda x: x.value == rc, FencedExitCodes):
+                    err = i.name
+                raise CallError(err)
+
         await self.__common_validation(verrors, data, 'pool_create')
         disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
         verrors.add_child(
@@ -763,7 +777,7 @@ class PoolService(CRUDService):
                 await (await self.middleware.call('disk.resize', log_disks, True)).wait()
 
         await self.middleware.call('pool.format_disks', job, disks)
-        if await self.middleware.call('failover.licensed'):
+        if is_ha:
             try:
                 await self.middleware.call('failover.call_remote', 'disk.retaste')
             except Exception as e:
