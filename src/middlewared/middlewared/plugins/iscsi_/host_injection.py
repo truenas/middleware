@@ -56,7 +56,7 @@ class iSCSIHostsInjectionService(Service):
                     self.middleware.logger.error("Unhandled exception in iscsi.host.injection", exc_info=True)
 
                 try:
-                    await asyncio.wait_for(run_event.wait(), 5)
+                    await asyncio.wait_for(self.middleware.create_task(run_event.wait()), 5)
                     return
                 except asyncio.TimeoutError:
                     continue

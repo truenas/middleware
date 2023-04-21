@@ -59,8 +59,9 @@ class ClusterEventsApplication(object):
         return res
 
     async def _post(self, url, headers, json, session, timeout):
-        post_req = session.post(url, headers=headers, json=json)
-        return await asyncio.wait_for(post_req, timeout=timeout)
+        return await asyncio.wait_for(self.middleware.create_task(
+            session.post(url, headers=headers, json=json)
+        ), timeout=timeout)
 
     async def forward_event(self, data):
         peer_urls = []

@@ -599,11 +599,11 @@ class KerberosService(TDBWrapConfigService):
 
         try:
             klist = await asyncio.wait_for(
-                run(['klist', '-ef', ccache], check=False, stdout=subprocess.PIPE),
+                self.middleware.create_task(run(['klist', '-ef', ccache], check=False, stdout=subprocess.PIPE)),
                 timeout=data['timeout']
             )
         except asyncio.TimeoutError:
-            raise CallError('Attempt to list kerberos tickets timeod out after {data["timeout"]} seconds')
+            raise CallError(f'Attempt to list kerberos tickets timed out after {data["timeout"]} seconds')
 
         if klist.returncode != 0:
             raise CallError(f'klist failed with error: {klist.stderr.decode()}')
@@ -645,7 +645,7 @@ class KerberosService(TDBWrapConfigService):
             return await self.start()
 
         try:
-            kinit = await asyncio.wait_for(run(['kinit', '-R'], check=False), timeout=15)
+            kinit = await asyncio.wait_for(self.middleware.create_task(run(['kinit', '-R'], check=False)), timeout=15)
             if kinit.returncode != 0:
                 raise CallError(f'kinit -R failed with error: {kinit.stderr.decode()}')
         except asyncio.TimeoutError:
@@ -663,7 +663,7 @@ class KerberosService(TDBWrapConfigService):
         _klist_test will return false if there is not a TGT or if the TGT has expired.
         """
         try:
-            ret = await asyncio.wait_for(self._klist_test(), timeout=10.0)
+            ret = await asyncio.wait_for(self.middleware.create_task(self._klist_test()), timeout=10.0)
             return ret
         except asyncio.TimeoutError:
             self.logger.debug('kerberos ticket status check timed out after 10 seconds.')
@@ -698,7 +698,7 @@ class KerberosService(TDBWrapConfigService):
         """
         await self.middleware.call('etc.generate', 'kerberos')
         try:
-            await asyncio.wait_for(self._kinit(), timeout=kinit_timeout)
+            await asyncio.wait_for(self.middleware.create_task(self._kinit()), timeout=kinit_timeout)
         except asyncio.TimeoutError:
             raise CallError(f'Timed out hung kinit after [{kinit_timeout}] seconds')
 

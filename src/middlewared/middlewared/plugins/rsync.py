@@ -453,7 +453,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             if data['enabled'] and data['validate_rpath'] and connect_kwargs:
                 try:
                     async with await asyncio.wait_for(
-                        asyncssh.connect(**connect_kwargs), timeout=5,
+                        self.middleware.create_task(asyncssh.connect(**connect_kwargs)), timeout=5,
                     ) as conn:
                         await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
                 except asyncio.TimeoutError:

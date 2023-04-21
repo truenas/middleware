@@ -47,7 +47,7 @@ class GlusterdService(SimpleService):
         # systemd[1]: glusterd.service: Unit process 1376703 (glusterfsd) remains running after unit stopped.
         # systemd[1]: glusterd.service: Unit process 1376720 (glusterfs) remains running after unit stopped.
         # This prevents from tank/.system/ctdb_shared_vol from being unmounted
-        futures = [self.middleware.call('service.terminate_process', pid)
+        futures = [self.middleware.create_task(self.middleware.call('service.terminate_process', pid))
                    for pid in await self.middleware.run_in_thread(self._glusterd_pids)]
         if futures:
             await asyncio.wait(futures)

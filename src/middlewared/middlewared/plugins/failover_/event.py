@@ -65,7 +65,7 @@ class FailoverEventsService(Service):
     async def restart_service(self, service, timeout):
         logger.info('Restarting %s', service)
         return await asyncio.wait_for(
-            self.middleware.call('service.restart', service, self.HA_PROPAGATE),
+            self.middleware.create_task(self.middleware.call('service.restart', service, self.HA_PROPAGATE)),
             timeout=timeout,
         )
 

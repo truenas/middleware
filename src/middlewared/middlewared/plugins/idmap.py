@@ -1048,7 +1048,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         try:
             ret = await asyncio.wait_for(
-                self.middleware.call(method, to_check),
+                self.middleware.create_task(self.middleware.call(method, to_check)),
                 timeout=idmap_timeout
             )
             name = ret[key]

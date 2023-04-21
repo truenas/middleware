@@ -1880,7 +1880,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 timeout = None
                 if hasattr(service, 'terminate_timeout'):
                     try:
-                        timeout = await asyncio.wait_for(self.call(f'{service_name}.terminate_timeout'), 5)
+                        timeout = await asyncio.wait_for(
+                            self.create_task(self.call(f'{service_name}.terminate_timeout')), 5
+                        )
                     except Exception:
                         self.logger.error(
                             'Failed to retrieve terminate timeout value for %s', service_name, exc_info=True
@@ -1890,7 +1892,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 # used, we still give it the standard default 10 seconds timeout to ensure a clean exit
                 timeout = timeout or 10
                 try:
-                    await asyncio.wait_for(service.terminate(), timeout)
+                    await asyncio.wait_for(self.create_task(service.terminate()), timeout)
                 except Exception:
                     self.logger.error('Failed to terminate %s', service_name, exc_info=True)
 
