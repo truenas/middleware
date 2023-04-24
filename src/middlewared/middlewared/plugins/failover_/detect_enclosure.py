@@ -71,7 +71,8 @@ class EnclosureDetectionService(Service):
                         if ses_addr == sas_addr:
                             NODE = 'A'
                             break
-                    elif (reg := re.search(HA_HARDWARE.XSERIES_NODEB.value, info)) is not None:
+
+                    if (reg := re.search(HA_HARDWARE.XSERIES_NODEB.value, info)) is not None:
                         ses_addr = hex(int(reg.group(1), 16) - 1)
                         if ses_addr == sas_addr:
                             NODE = 'B'
