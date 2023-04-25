@@ -34,7 +34,7 @@ class Route:
         self.scope = scope
         self.preferred_source = preferred_source
 
-    def __getstate__(self):
+    def asdict(self):
         return {
             'network': str(self.network),
             'netmask': str(self.netmask),
@@ -100,11 +100,11 @@ class RouteTable:
     def __eq__(self, other):
         return self.table_id == other.table_id
 
-    def __getstate__(self):
+    def asdict(self):
         return {
             "id": self.table_id,
             "name": self.table_name,
-            "routes": [r.__getstate__() for r in self.routes],
+            "routes": [r.asdict() for r in self.routes],
         }
 
 

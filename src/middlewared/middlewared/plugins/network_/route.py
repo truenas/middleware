@@ -38,7 +38,7 @@ class RouteService(Service):
         Get current/applied network routes.
         """
         rtable = netif.RoutingTable()
-        return filter_list([r.__getstate__() for r in rtable.routes], filters, options)
+        return filter_list([r.asdict() for r in rtable.routes], filters, options)
 
     @private
     async def configured_default_ipv4_route(self):
@@ -109,7 +109,7 @@ class RouteService(Service):
                     #       gateway manually (even though dhclient will
                     #       do this for us) it will fail expectedly here.
                     # Either way, let's log the error.
-                    gw = ipv4_gateway.__getstate__()['gateway']
+                    gw = ipv4_gateway.asdict()['gateway']
                     self.logger.error('Failed adding %s as default gateway: %r', gw, e)
             elif ipv4_gateway != routing_table.default_route_ipv4:
                 _from = routing_table.default_route_ipv4.gateway

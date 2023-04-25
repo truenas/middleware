@@ -91,7 +91,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
     def tx_queues(self):
         return self._txq
 
-    def __getstate__(self, address_stats=False, vrrp_config=None):
+    def asdict(self, address_stats=False, vrrp_config=None):
         state = {
             'name': self.name,
             'orig_name': self.orig_name,
@@ -109,7 +109,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
             'supported_media': [],
             'media_options': None,
             'link_address': self.link_address or '',
-            'aliases': [i.__getstate__(stats=address_stats) for i in self.addresses],
+            'aliases': [i.asdict(stats=address_stats) for i in self.addresses],
             'vrrp_config': vrrp_config,
             'rx_queues': self.rx_queues,
             'tx_queues': self.tx_queues,

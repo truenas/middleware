@@ -55,7 +55,7 @@ class LinkAddress(object):
     def __str__(self):
         return self.address
 
-    def __getstate__(self):
+    def asdict(self):
         return {
             'ifname': self.ifname,
             'address': self.address
@@ -100,7 +100,7 @@ class InterfaceAddress(object):
     def __hash__(self):
         return hash((self.af, self.address, self.netmask, self.broadcast, self.dest_address))
 
-    def __getstate__(self, stats=False):
+    def asdict(self, stats=False):
         ret = {
             'type': self.af.name,
             'address': self.address.address if type(self.address) is LinkAddress else str(self.address)

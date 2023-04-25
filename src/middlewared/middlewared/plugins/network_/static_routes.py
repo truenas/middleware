@@ -98,14 +98,14 @@ class StaticRouteService(CRUDService):
                 continue
 
             if route not in [default_route_ipv4, default_route_ipv6] and route.gateway is not None:
-                self.logger.debug('Removing route %r', route.__getstate__())
+                self.logger.debug('Removing route %r', route.asdict())
                 try:
                     rt.delete(route)
                 except Exception as e:
                     self.logger.warning('Failed to remove route: %r', e)
 
         for route in new_routes:
-            self.logger.debug('Adding route %r', route.__getstate__())
+            self.logger.debug('Adding route %r', route.asdict())
             try:
                 rt.add(route)
             except Exception as e:
