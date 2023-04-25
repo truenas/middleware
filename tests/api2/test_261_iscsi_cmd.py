@@ -3,6 +3,7 @@
 # License: BSD
 
 import contextlib
+import enum
 import os
 import random
 import socket
@@ -10,20 +11,22 @@ import string
 import sys
 from time import sleep
 
+import iscsi
 import pyscsi
 import pytest
+from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
 from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from assets.REST.pool import dataset
-from assets.REST.snapshot import snapshot, snapshot_rollback
-
 from auto_config import dev_test, ha, hostname, isns_ip, pool_name
 from functions import DELETE, GET, POST, PUT
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
                        isns_connection)
+
+from assets.REST.pool import dataset
+from assets.REST.snapshot import snapshot, snapshot_rollback
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -56,6 +59,25 @@ skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
                                                 reason="Invalid initiatorname will be presented")
 
 pyscsi_has_report_target_port_groups = 'ReportTargetPortGroups' in dir(pyscsi.pyscsi.scsi)
+
+# See: https://github.com/python-scsi/cython-iscsi/pull/8
+pyscsi_supports_check_condition = hasattr(iscsi.Task, 'raw_sense')
+skip_no_check_condition = pytest.mark.skipif(not pyscsi_supports_check_condition, "PYSCSI does not support CHECK CONDITION")
+
+
+# The following strings are taken from pyscsi/pyscsi/scsi_exception
+class CheckType(enum.Enum):
+    CHECK_CONDITION = "CheckCondition"
+    CONDITIONS_MET = "ConditionsMet"
+    BUSY_STATUS = "BusyStatus"
+    RESERVATION_CONFLICT = "ReservationConflict"
+    TASK_SET_FULL = "TaskSetFull"
+    ACA_ACTIVE = "ACAActive"
+    TASK_ABORTED = "TaskAborted"
+
+    def __str__(self):
+        return self.value
+
 
 # Some constants
 MB = 1024 * 1024
@@ -347,13 +369,42 @@ def TUR(s):
     Perform a TEST UNIT READY.
 
     :param s: a pyscsi.SCSI instance
-
-    Will retry once, if necessary.
     """
-    try:
-        s.testunitready()
-    except TypeError:
-        s.testunitready()
+    s.testunitready()
+    # try:
+    #     s.testunitready()
+    # except TypeError:
+    #     s.testunitready()
+
+
+def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
+    """
+    Expect a CHECK CONDITION containing the specified text.
+
+    :param s: a pyscsi.SCSI instance
+    :param text: string expected as part of the CHECK CONDITION
+    :param check_type: CheckType enum of the expected CHECK_CONDITION
+
+    Issue a TEST UNIT READY and verify that the expected CHECK CONDITION is raised.
+
+    If this version of pyscsi(/cython-iscsi) does not support CHECK CONDITION
+    then just swallow the condition by issuing another TEST UNIT READY.
+    """
+    assert type(check_type) == CheckType, f"Parameter '{check_type}' is not a CheckType"
+    if pyscsi_supports_check_condition:
+        with pytest.raises(Exception) as excinfo:
+            s.testunitready()
+
+        e = excinfo.value
+        assert e.__class__.__name__ == str(check_type), f"Unexpected CHECK CONDITION type.  Got '{e.__class__.__name__}', expected {str(check_type)}"
+        if text:
+            assert text in str(e), f"Exception did not match: {text}"
+    else:
+        # If we cannot detect a CHECK CONDITION, then swallow it by retrying a TUR
+        try:
+            s.testunitready()
+        except TypeError:
+            s.testunitready()
 
 
 def _verify_inquiry(s):
@@ -1024,7 +1075,8 @@ def test_12_pblocksize_setting(request):
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
-            TUR(s)
+            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
             data = s.readcapacity16().result
             assert data['block_length'] == 2048, data
             assert data['lbppbe'] == 1, data
@@ -1034,7 +1086,8 @@ def test_12_pblocksize_setting(request):
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
-            TUR(s)
+            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
             data = s.readcapacity16().result
             assert data['block_length'] == 512, data
             assert data['lbppbe'] == 0, data
@@ -1052,7 +1105,8 @@ def test_12_pblocksize_setting(request):
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
-            TUR(s)
+            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
             data = s.readcapacity16().result
             assert data['block_length'] == 4096, data
             assert data['lbppbe'] == 2, data
@@ -1253,32 +1307,34 @@ def _pr_release(s, pr_type, scope=LU_SCOPE, **kwargs):
                            **kwargs)
 
 
-def _swallow_check_condition(s):
-    # Issue a TEST UNIT READY to swallow any CHECK CONDITION
-    # (may handle otherwise when python-scsi / cython-iscsi
-    # support CHECK CONDITION better - currently broken)
-    # print("Swallowing CHECK CONDITION")
-    TUR(s)
-
-
 @contextlib.contextmanager
 def _pr_registration(s, key):
     _pr_register_key(s, key)
     try:
         yield
     finally:
-        _swallow_check_condition(s)
         _pr_unregister_key(s, key)
+        # There is room for improvement here wrt SPC-5 5.14.11.2.3, but not urgent as
+        # we are hygenic wrt releasing reservations before unregistering keys
 
 
 @contextlib.contextmanager
-def _pr_reservation(s, pr_type, scope=LU_SCOPE, **kwargs):
+def _pr_reservation(s, pr_type, scope=LU_SCOPE, other_connections=[], **kwargs):
+    assert s not in other_connections, "Invalid parameter mix"
     _pr_reserve(s, pr_type, scope, **kwargs)
     try:
         yield
     finally:
-        _swallow_check_condition(s)
         _pr_release(s, pr_type, scope, **kwargs)
+        # Do processing as specified by SPC-5 5.14.11.2.2 Releasing
+        # For the time being we will ignore the NUAR bit from SPC-5 7.5.11 Control mode page
+        if pr_type in [PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY,
+                       PR_TYPE.EXCLUSIVE_ACCESS_REGISTRANTS_ONLY,
+                       PR_TYPE.WRITE_EXCLUSIVE_ALL_REGISTRANTS,
+                       PR_TYPE.EXCLUSIVE_ACCESS_ALL_REGISTRANTS]:
+            sleep(5)
+            for s2 in other_connections:
+                expect_check_condition(s2, sense_ascq_dict[0x2A04])  # "RESERVATIONS RELEASED"
 
 
 @skip_persistent_reservations
@@ -1314,10 +1370,8 @@ def _pr_expect_reservation_conflict(s):
         yield
         assert False, "Failed to get expected PERSISTENT CONFLICT"
     except Exception as e:
-        if e.__class__.__name__ != 'ReservationConflict':
+        if e.__class__.__name__ != str(CheckType.RESERVATION_CONFLICT):
             raise e
-    finally:
-        _swallow_check_condition(s)
 
 
 def _check_persistent_reservations(s1, s2):
@@ -1335,7 +1389,7 @@ def _check_persistent_reservations(s1, s2):
         _pr_check_registered_keys(s2, [PR_KEY1])
         _pr_check_reservation(s2)
 
-        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1, other_connections=[s2]):
             _pr_check_registered_keys(s1, [PR_KEY1])
             _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
             _pr_check_registered_keys(s2, [PR_KEY1])
@@ -1352,7 +1406,7 @@ def _check_persistent_reservations(s1, s2):
             _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
             _pr_check_reservation(s2)
 
-            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1, other_connections=[s2]):
                 _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
                 _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
                 _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
@@ -1363,13 +1417,12 @@ def _check_persistent_reservations(s1, s2):
             _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
             _pr_check_reservation(s2)
 
-            with _pr_reservation(s2, PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY, reservation_key=PR_KEY2):
+            with _pr_reservation(s2, PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY, reservation_key=PR_KEY2, other_connections=[s1]):
                 _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
                 _pr_check_reservation(s1, {'reservation_key': PR_KEY2, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY})
                 _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
                 _pr_check_reservation(s2, {'reservation_key': PR_KEY2, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE_REGISTRANTS_ONLY})
 
-            TUR(s1)
             _pr_check_registered_keys(s1, [PR_KEY1, PR_KEY2])
             _pr_check_reservation(s1)
             _pr_check_registered_keys(s2, [PR_KEY1, PR_KEY2])
@@ -1397,7 +1450,7 @@ def _check_persistent_reservations(s1, s2):
     with _pr_registration(s1, PR_KEY1):
         with _pr_registration(s2, PR_KEY2):
 
-            # With registrations only both initiators can write
+            # With registrations only, both initiators can write
             s1.write16(0, 1, deadbeef)
             s2.write16(1, 1, dancing_queen)
             r = s1.read16(1, 1)
@@ -1405,7 +1458,7 @@ def _check_persistent_reservations(s1, s2):
             r = s2.read16(0, 1)
             assert r.datain == deadbeef, r.datain
 
-            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1, other_connections=[s2]):
                 s1.writesame16(0, 2, zeros)
                 r = s2.read16(0, 2)
                 assert r.datain == zeros + zeros, r.datain
@@ -1420,12 +1473,12 @@ def _check_persistent_reservations(s1, s2):
                     with _pr_reservation(s2, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY2):
                         pass
 
-            with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS, reservation_key=PR_KEY1):
+            with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS, reservation_key=PR_KEY1, other_connections=[s2]):
                 with _pr_expect_reservation_conflict(s2):
                     r = s2.read16(0, 2)
                     assert r.datain == zeros + zeros, r.datain
 
-            with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, reservation_key=PR_KEY1):
+            with _pr_reservation(s1, PR_TYPE.EXCLUSIVE_ACCESS_REGISTRANTS_ONLY, reservation_key=PR_KEY1, other_connections=[s2]):
                 r = s2.read16(0, 2)
                 assert r.datain == zeros + zeros, r.datain
 
@@ -1763,8 +1816,8 @@ def test_17_alua_config(request):
 
                         # Let's failover
                         _ha_reboot_master()
-                        TUR(s1)
-                        TUR(s2)
+                        expect_check_condition(s1, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                        expect_check_condition(s2, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
                         _check_ha_node_configuration()
                         new_active_tpg = _get_active_target_portal_group()
@@ -1807,7 +1860,7 @@ def test_18_alua_basic_persistent_reservation(request):
                         _pr_check_reservation(s1)
                         _pr_check_reservation(s2)
 
-                        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1, other_connections=[s2]):
                             _pr_check_registered_keys(s1, [PR_KEY1])
                             _pr_check_registered_keys(s2, [PR_KEY1])
                             _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
