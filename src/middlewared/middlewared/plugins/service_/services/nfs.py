@@ -22,9 +22,6 @@ class NFSService(SimpleService):
                 errno.EINVAL
             )
 
-    async def systemd_extra_units(self):
-        return ["rpc-statd"]
-
     async def after_start(self):
         await self._systemd_unit("rpc-statd", "start")
 
