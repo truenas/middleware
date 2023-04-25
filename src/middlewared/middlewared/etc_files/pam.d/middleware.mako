@@ -13,6 +13,6 @@
 ${'\n'.join(dsp['primary'])}
 @include common-auth-unix
 %endif
-account	required	pam_deny.so
+@include common-account
 password	required	pam_deny.so
 session	required	pam_deny.so
