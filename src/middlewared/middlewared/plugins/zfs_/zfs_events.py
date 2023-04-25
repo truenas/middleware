@@ -23,7 +23,7 @@ class ScanWatch(object):
     def run(self):
         while not self._cancel.wait(2):
             with libzfs.ZFS() as zfs:
-                scan = zfs.get(self.pool).scrub.__getstate__()
+                scan = zfs.get(self.pool).scrub.asdict()
             if scan['state'] == 'SCANNING':
                 self.send_scan(scan)
             elif scan['state'] == 'FINISHED':
@@ -34,7 +34,7 @@ class ScanWatch(object):
     def send_scan(self, scan=None):
         if not scan:
             with libzfs.ZFS() as zfs:
-                scan = zfs.get(self.pool).scrub.__getstate__()
+                scan = zfs.get(self.pool).scrub.asdict()
         self.middleware.send_event('zfs.pool.scan', 'CHANGED', fields={
             'scan': scan,
             'name': self.pool,
