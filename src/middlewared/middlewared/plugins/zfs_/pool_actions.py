@@ -174,13 +174,13 @@ class ZFSPoolService(Service):
 
     def scrub_state(self, name):
         with libzfs.ZFS() as zfs:
-            return zfs.get(name).scrub.__getstate__()
+            return zfs.get(name).scrub.asdict()
 
     @accepts()
     def find_import(self):
         sp = self.get_search_paths()
         with libzfs.ZFS() as zfs:
-            return [i.__getstate__() for i in zfs.find_import(search_paths=sp)]
+            return [i.asdict() for i in zfs.find_import(search_paths=sp)]
 
     @accepts(
         Str('name_or_guid'),
@@ -250,6 +250,6 @@ class ZFSPoolService(Service):
                 vdev = find_vdev(pool, vname)
                 if not vdev:
                     raise CallError(f'{vname} not found in {name}', errno.ENOENT)
-                return vdev.__getstate__()
+                return vdev.asdict()
         except libzfs.ZFSException as e:
             raise CallError(str(e))

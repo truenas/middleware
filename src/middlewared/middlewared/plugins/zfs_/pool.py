@@ -24,11 +24,11 @@ class ZFSPoolService(CRUDService):
             # Handle `id` or `name` filter specially to avoiding getting every property for all zpools
             if filters and len(filters) == 1 and list(filters[0][:2]) in (['id', '='], ['name', '=']):
                 try:
-                    pools = [zfs.get(filters[0][2]).__getstate__(**state_kwargs)]
+                    pools = [zfs.get(filters[0][2]).asdict(**state_kwargs)]
                 except libzfs.ZFSException:
                     pools = []
             else:
-                pools = [i.__getstate__(**state_kwargs) for i in zfs.pools]
+                pools = [i.asdict(**state_kwargs) for i in zfs.pools]
         return filter_list(pools, filters, options)
 
     @accepts(
