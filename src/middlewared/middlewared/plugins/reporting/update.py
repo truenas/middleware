@@ -159,7 +159,7 @@ class ReportingService(ConfigService):
     ))
     def graphs(self, filters, options):
         return filter_list([
-            i.__getstate__() for i in self.__rrds.values() if i.has_data()
+            i.asdict() for i in self.__rrds.values() if i.has_data()
         ], filters, options)
 
     def __rquery_to_start_end(self, query):

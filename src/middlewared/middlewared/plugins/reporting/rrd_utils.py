@@ -92,7 +92,7 @@ class RRDBase(object, metaclass=RRDMeta):
     def get_rrd_types(self, identifier):
         return self.rrd_types
 
-    def __getstate__(self):
+    def asdict(self):
         return {
             'name': self.name,
             'title': self.get_title(),

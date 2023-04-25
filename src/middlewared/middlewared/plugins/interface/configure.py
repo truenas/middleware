@@ -151,7 +151,7 @@ class InterfaceService(Service):
         # If we have bridge/vlan/lagg not in the database at all
         # it gets destroy, otherwise just bring it down.
         if (name not in cloned_interfaces and
-                self.middleware.call_sync('interface.type', iface.__getstate__()) in [
+                self.middleware.call_sync('interface.type', iface.asdict()) in [
                     InterfaceType.BRIDGE, InterfaceType.LINK_AGGREGATION, InterfaceType.VLAN,
                 ]):
             netif.destroy_interface(name)

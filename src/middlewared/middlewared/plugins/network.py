@@ -190,7 +190,7 @@ class InterfaceService(CRUDService):
                 vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
                 iface_extend_kwargs.update(dict(vrrp_config=vrrp_config))
             try:
-                data[name] = self.iface_extend(iface.__getstate__(**iface_extend_kwargs), configs, ha_hardware)
+                data[name] = self.iface_extend(iface.asdict(**iface_extend_kwargs), configs, ha_hardware)
             except OSError:
                 self.logger.warn('Failed to get interface state for %s', name, exc_info=True)
         for name, config in filter(lambda x: x[0] not in data, configs.items()):
@@ -1827,7 +1827,7 @@ class InterfaceService(CRUDService):
             try:
                 if iface.orig_name.startswith(ignore_nics):
                     continue
-                aliases_list = iface.__getstate__()['aliases']
+                aliases_list = iface.asdict()['aliases']
             except FileNotFoundError:
                 # This happens on freebsd where we have a race condition when the interface
                 # might no longer possibly exist when we try to retrieve data from it
