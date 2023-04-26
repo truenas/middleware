@@ -65,7 +65,7 @@ class PoolDatasetService(Service):
                         (mountpoint := dataset_mountpoint(dataset)) and
                         path.startswith(mountpoint + '/')
                     ) or
-                    (dataset['type'] == 'VOLUME' and path.startswith(zvol_name_to_path(dataset['name']) + '/'))
+                    (dataset['type'] == 'VOLUME' and zvol_name_to_path(dataset['name']) == path)
                 ):
                     result.append(vm)
                     break
