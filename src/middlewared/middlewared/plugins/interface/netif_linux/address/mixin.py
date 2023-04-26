@@ -59,10 +59,11 @@ class AddressMixin:
                 ))
 
             for mac in ipr.link('dump', ifname=self.name):
-                addresses.append(InterfaceAddress(
-                    AddressFamily(AddressFamily.LINK.value),
-                    LinkAddress(self.name, mac.get_attr('IFLA_ADDRESS'))
-                ))
+                if (mac_addr := mac.get_attr('IFLA_ADDRESS')):
+                    addresses.append(InterfaceAddress(
+                        AddressFamily(AddressFamily.LINK.value),
+                        LinkAddress(self.name, mac_addr)
+                    ))
 
         return addresses
 
