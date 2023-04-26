@@ -48,22 +48,19 @@ class AddressMixin:
             # strict_check forces kernel to do the filtering increasing performance
             for ip4 in ipr.addr('dump', label=self.name, family=AddressFamily.INET.value):
                 addresses.append(InterfaceAddress(
-                    AddressFamily(ip4['family']),
+                    AddressFamily.INET,
                     ipaddress.IPv4Interface(f'{ip4.get_attr("IFA_ADDRESS")}/{ip4["prefixlen"]}'),
                 ))
 
             for ip6 in ipr.addr('dump', label=self.name, family=AddressFamily.INET6.value):
                 addresses.append(InterfaceAddress(
-                    AddressFamily(ip6['family']),
+                    AddressFamily.INET6,
                     ipaddress.IPv6Interface(f'{ip6.get_attr("IFA_ADDRESS")}/{ip6["prefixlen"]}'),
                 ))
 
             for mac in ipr.link('dump', ifname=self.name):
                 if (mac_addr := mac.get_attr('IFLA_ADDRESS')):
-                    addresses.append(InterfaceAddress(
-                        AddressFamily(AddressFamily.LINK.value),
-                        LinkAddress(self.name, mac_addr)
-                    ))
+                    addresses.append(InterfaceAddress(AddressFamily.LINK, LinkAddress(self.name, mac_addr)))
 
         return addresses
 
