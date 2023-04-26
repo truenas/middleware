@@ -1,15 +1,11 @@
-# -*- coding=utf-8 -*-
 import ipaddress
-import logging
 
-import netifaces
+from pyroute2 import IPRoute
 
 from middlewared.plugins.interface.netif_linux.utils import run
 
 from .ipv6 import ipv6_netmask_to_prefixlen
 from .types import AddressFamily, InterfaceAddress, LinkAddress
-
-logger = logging.getLogger(__name__)
 
 __all__ = ["AddressMixin"]
 
@@ -46,36 +42,28 @@ class AddressMixin:
 
         run(cmd)
 
-    @property
-    def addresses(self):
+    def _get_addresses(self):
         addresses = []
+        with IPRoute(strict_check=True) as ipr:
+            # strict_check forces kernel to do the filtering increasing performance
+            for ip4 in ipr.addr('dump', label=self.name, family=AddressFamily.INET.value):
+                addresses.append(InterfaceAddress(
+                    AddressFamily.INET,
+                    ipaddress.IPv4Interface(f'{ip4.get_attr("IFA_ADDRESS")}/{ip4["prefixlen"]}'),
+                ))
 
-        for family, family_addresses in netifaces.ifaddresses(self.name).items():
-            try:
-                af = AddressFamily(family)
-            except ValueError:
-                logger.warning("Unknown address family %r for interface %r", family, self.name)
-                continue
+            for ip6 in ipr.addr('dump', label=self.name, family=AddressFamily.INET6.value):
+                addresses.append(InterfaceAddress(
+                    AddressFamily.INET6,
+                    ipaddress.IPv6Interface(f'{ip6.get_attr("IFA_ADDRESS")}/{ip6["prefixlen"]}'),
+                ))
 
-            for addr in family_addresses:
-                if af is AddressFamily.LINK:
-                    address = LinkAddress(self.name, addr["addr"])
-                elif af is AddressFamily.INET:
-                    address = ipaddress.IPv4Interface(f'{addr["addr"]}/{addr["netmask"]}')
-                elif af is AddressFamily.INET6:
-                    try:
-                        if "/" in addr["netmask"]:
-                            prefixlen = int(addr["netmask"].split("/")[1])
-                        else:
-                            prefixlen = ipv6_netmask_to_prefixlen(addr["netmask"])
-                    except ValueError:
-                        logger.warning("Invalid IPv6 netmask %r for interface %r", addr["netmask"], self.name)
-                        continue
-
-                    address = ipaddress.IPv6Interface(f'{addr["addr"].split("%")[0]}/{prefixlen}')
-                else:
-                    continue
-
-                addresses.append(InterfaceAddress(af, address))
+            for mac in ipr.link('dump', ifname=self.name):
+                if (mac_addr := mac.get_attr('IFLA_ADDRESS')):
+                    addresses.append(InterfaceAddress(AddressFamily.LINK, LinkAddress(self.name, mac_addr)))
 
         return addresses
+
+    @property
+    def addresses(self):
+        return self._get_addresses()
