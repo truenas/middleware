@@ -26,6 +26,7 @@ class CatalogService(Service):
         'item_details',
         Str('name', required=True),
         List('categories', items=[Str('category')], required=True),
+        List('maintainers', required=True),
         Str('app_readme', null=True, required=True),
         Str('location', required=True),
         Bool('healthy', required=True),

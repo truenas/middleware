@@ -28,6 +28,7 @@ class AppService(Service):
         Bool('healthy', required=True),
         Bool('installed', required=True),
         List('categories', required=True),
+        List('maintainers', required=True),
         Str('name', required=True),
         Str('title', required=True),
         Str('description', required=True),

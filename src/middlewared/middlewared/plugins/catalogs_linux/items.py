@@ -57,6 +57,7 @@ class CatalogService(Service):
                     'recommended': False,
                     'title': 'Chia',
                     'description': 'App description here',
+                    'maintainers': [],
                 }
             }
         }
