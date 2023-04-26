@@ -31,7 +31,7 @@ class Resources(enum.Enum):
 
 def get_action_context(release_name):
     return copy.deepcopy({
-        'addNvidiaRuntimeClass': True,
+        'addNvidiaRuntimeClass': False,
         'nvidiaRuntimeClassName': NVIDIA_RUNTIME_CLASS_NAME,
         'operation': None,
         'isInstall': False,
@@ -43,10 +43,13 @@ def get_action_context(release_name):
 
 
 async def add_context_to_configuration(config, context_dict, middleware, release_name):
-    context_dict[CONTEXT_KEY_NAME]['kubernetes_config'] = {
-        k: v for k, v in (await middleware.call('kubernetes.config')).items()
-        if k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
-    }
+    context_dict[CONTEXT_KEY_NAME].update({
+        'kubernetes_config': {
+            k: v for k, v in (await middleware.call('kubernetes.config')).items()
+            if k in ('cluster_cidr', 'service_cidr', 'cluster_dns_ip')
+        },
+        'addNvidiaRuntimeClass': config.get(CONTEXT_KEY_NAME, {}).get('addNvidiaRuntimeClass', False),
+    })
     if 'global' in config:
         config['global'].update(context_dict)
         config.update(context_dict)

@@ -9,11 +9,12 @@ except ImportError:
 from middlewared.schema import Cron, Dict, Int, List, Str
 from middlewared.service import private, Service
 from .schema import get_list_item_from_value
-from .utils import get_network_attachment_definition_name, RESERVED_NAMES
+from .utils import CONTEXT_KEY_NAME, get_network_attachment_definition_name, RESERVED_NAMES
 
 REF_MAPPING = {
     'definitions/certificate': 'certificate',
     'definitions/certificateAuthority': 'certificate_authorities',
+    'definitions/gpuConfiguration': 'gpu_configuration',
     'normalize/interfaceConfiguration': 'interface_configuration',
     'normalize/acl': 'acl',
     'normalize/ixVolume': 'ix_volume',
@@ -66,6 +67,16 @@ class ChartReleaseService(Service):
                 f'chart.release.normalize_{REF_MAPPING[ref]}', question_attr, value, complete_config, context
             )
 
+        return value
+
+    @private
+    async def normalize_gpu_configuration(self, attr, value, complete_config, context):
+        assert isinstance(attr, Dict) is True
+        nvidia_attr = {'addNvidiaRuntimeClass': bool(value.get('nvidia.com/gpu'))}
+        try:
+            complete_config[CONTEXT_KEY_NAME].update(nvidia_attr)
+        except KeyError:
+            complete_config[CONTEXT_KEY_NAME] = nvidia_attr
         return value
 
     @private
