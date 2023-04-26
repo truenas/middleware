@@ -222,7 +222,7 @@ class NISService(ConfigService):
         if ypbind.returncode != 0:
             await self.set_state(DSStatus['FAULTED'])
             errmsg = ypbind.stderr.decode().strip()
-            if 'ypbind not running' not in errmsg:
+            if 'ypbind not running' not in errmsg and 'no such process' not in errmsg:
                 raise CallError(f'ypbind failed to stop: [{ypbind.stderr.decode().strip()}]')
 
         await self.middleware.call('cache.pop', 'NIS_State')
