@@ -9,6 +9,8 @@ PACKAGES=(
     python3-babel
     # Integration and unit test utils, python package management
     python3-pip
+    python3-pyfakefs
+    python3-pyotp
     python3-pytest
     python3-pytest-asyncio
     python3-pytest-dependency
@@ -24,11 +26,9 @@ PACKAGES=(
 PIP_PACKAGES=(
     asyncmock
     asynctest
-    pyfakefs
-    pyotp
 )
 
 chmod +x /usr/bin/apt*
 apt update
 apt install -y "${PACKAGES[@]}"
-pip install "${PIP_PACKAGES[@]}"
+pip install --break-system-packages "${PIP_PACKAGES[@]}"
