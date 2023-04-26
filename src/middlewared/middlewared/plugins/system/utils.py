@@ -1,4 +1,5 @@
 import enum
+import os
 import re
 
 
@@ -20,6 +21,10 @@ class Lifecycle:
         self.SYSTEM_READY = False
         # Flag telling whether the system is shutting down
         self.SYSTEM_SHUTTING_DOWN = False
+
+
+def get_debug_execution_dir(system_dataset_path: str) -> str:
+    return '/var/tmp/ixdiagnose' if system_dataset_path is None else os.path.join(system_dataset_path, 'ixdiagnose')
 
 
 lifecycle_conf = Lifecycle()
