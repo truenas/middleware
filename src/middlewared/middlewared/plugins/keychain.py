@@ -249,7 +249,7 @@ class KeychainCredentialService(CRUDService):
 
     @accepts(Dict(
         "keychain_credential_create",
-        Str("name", required=True),
+        Str("name", required=True, empty=False),
         Str("type", required=True),
         Dict("attributes", additional_attrs=True, required=True, private=True),
         register=True,

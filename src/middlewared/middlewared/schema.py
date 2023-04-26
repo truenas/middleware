@@ -253,7 +253,7 @@ class Str(EnumMixin, Attribute):
             value = str(value)
         if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
-        if not self.empty and not value:
+        if not self.empty and not value.strip():
             raise Error(self.name, 'Empty value not allowed')
         return value
 
