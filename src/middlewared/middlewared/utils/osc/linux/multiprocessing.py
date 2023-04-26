@@ -1,13 +1,7 @@
-# -*- coding=utf-8 -*-
-import logging
-import signal
-
-import prctl
-
-logger = logging.getLogger(__name__)
+from middlewared.utils.prctl import set_pdeath_sig
 
 __all__ = ["die_with_parent"]
 
 
 def die_with_parent():
-    prctl.set_pdeathsig(signal.SIGKILL)
+    set_pdeath_sig()
