@@ -2,11 +2,12 @@ import contextlib
 
 from functions import DELETE, POST
 
-from .iscsi_proto import iscsi_scsi_connect, iscsi_scsi_connection
+from .iscsi_proto import (initiator_name_supported, iscsi_scsi_connect,
+                          iscsi_scsi_connection)
 from .iSNSP.client import iSNSPClient
+from .ms_rpc import MS_RPC
 from .nfs_proto import SSH_NFS
 from .smb_proto import SMB
-from .ms_rpc import MS_RPC
 
 
 @contextlib.contextmanager

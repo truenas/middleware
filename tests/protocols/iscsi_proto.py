@@ -1,7 +1,19 @@
-import contextlib                                                                                                                                               
+import contextlib
+import inspect
+
 import pyscsi
-from pyscsi.utils import init_device
 from pyscsi.pyscsi.scsi import SCSI
+from pyscsi.utils import init_device
+
+
+def initiator_name_supported():
+    """
+    Returns whether a non-None initiator name may be supplied.
+
+    This can have an impact on what kinds of tests can be run.
+    """
+    return 'initiator_name' in inspect.signature(init_device).parameters
+
 
 def iscsi_scsi_connect(host, iqn, lun=0, user=None, secret=None, target_user=None, target_secret=None):
     """
