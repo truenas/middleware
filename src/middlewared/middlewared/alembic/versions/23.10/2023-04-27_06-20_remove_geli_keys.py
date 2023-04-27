@@ -20,6 +20,8 @@ def upgrade():
         batch_op.drop_column('vol_encrypt')
         batch_op.drop_column('vol_encryptkey')
 
+    op.drop_table('storage_encrypteddisk')
+
 
 def downgrade():
     pass
