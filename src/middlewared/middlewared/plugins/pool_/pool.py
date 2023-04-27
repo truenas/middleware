@@ -21,7 +21,6 @@ class PoolModel(sa.Model):
     vol_name = sa.Column(sa.String(120), unique=True)
     vol_guid = sa.Column(sa.String(50))
     vol_encrypt = sa.Column(sa.Integer(), default=0)
-    vol_encryptkey = sa.Column(sa.String(50))
 
 
 class EncryptedDiskModel(sa.Model):

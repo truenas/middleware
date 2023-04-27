@@ -183,9 +183,7 @@ class PoolService(Service):
         # update db
         pool_id = await self.middleware.call('datastore.insert', 'storage.volume', {
             'vol_name': pool_name,
-            'vol_encrypt': 0,  # TODO: remove (geli not supported)
             'vol_guid': guid,
-            'vol_encryptkey': '',  # TODO: remove (geli not supported)
         })
         await self.middleware.call('pool.scrub.create', {'pool': pool_id})
 
