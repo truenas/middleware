@@ -16,7 +16,7 @@ MIGRATION_MANIFEST_SCHEMA = {
     'patternProperties': {
         '.*': {
             'type': 'array',
-            'items': [{'type': 'string'}],
+            'items': {'type': 'string'},
         },
     },
 }
