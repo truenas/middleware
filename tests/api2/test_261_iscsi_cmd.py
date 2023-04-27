@@ -16,7 +16,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import dev_test, hostname, ip, isns_ip, pool_name
 from functions import DELETE, GET, POST, PUT, SSH_TEST
-from protocols import iscsi_scsi_connection, isns_connection
+from protocols import (initiator_name_supported, iscsi_scsi_connection,
+                       isns_connection)
 
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
@@ -27,6 +28,9 @@ MB_512=512*MB
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
+skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
+                                                reason="Invalid initiatorname will be presented")
 
 digit = ''.join(random.choices(string.digits, k=2))
 
@@ -543,6 +547,8 @@ def test_04_readwrite16_zvol_extent(request):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
 
+
+@skip_invalid_initiatorname
 def test_05_chap(request):
     """
     This tests that CHAP auth operates as expected.
@@ -581,6 +587,8 @@ def test_05_chap(request):
                                 with iscsi_scsi_connection(ip, iqn, 0, user, secret) as s:
                                     _verify_inquiry(s)
 
+
+@skip_invalid_initiatorname
 def test_06_mutual_chap(request):
     """
     This tests that Mutual CHAP auth operates as expected.
