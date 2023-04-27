@@ -65,7 +65,6 @@ class PoolService(Service):
         'pool_import',
         Str('guid', required=True),
         Str('name'),
-        Str('passphrase', private=True),
         Bool('enable_attachments'),
     ))
     @returns(Bool('successful_import'))
@@ -75,8 +74,6 @@ class PoolService(Service):
         Import a pool found with `pool.import_find`.
 
         If a `name` is specified the pool will be imported using that new name.
-
-        `passphrase` DEPRECATED. GELI not supported on SCALE.
 
         If `enable_attachments` is set to true, attachments that were disabled during pool export will be
         re-enabled.
@@ -201,7 +198,7 @@ class PoolService(Service):
             await self.middleware.call('keyvalue.delete', key)
 
         self.middleware.create_task(self.middleware.call('service.restart', 'collectd'))
-        await self.middleware.call_hook('pool.post_import', {'passphrase': data.get('passphrase'), **pool})
+        await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
