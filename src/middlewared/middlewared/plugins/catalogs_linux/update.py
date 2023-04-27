@@ -12,7 +12,7 @@ from middlewared.validators import Match
 from .utils import convert_repository_to_path, get_cache_key
 
 OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
-OFFICIAL_LABEL = 'OFFICIAL'
+OFFICIAL_LABEL = 'TRUENAS'
 TMP_IX_APPS_DIR = '/tmp/ix-applications'
 
 
