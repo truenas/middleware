@@ -174,11 +174,6 @@ class PoolService(CRUDService):
 
     @private
     def pool_extend(self, pool, context):
-
-        """
-        If pool is encrypted we need to check if the pool is imported
-        or if all geli providers exist.
-        """
         if context['extra'].get('is_upgraded'):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 

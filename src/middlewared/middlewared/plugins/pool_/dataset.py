@@ -445,9 +445,8 @@ class PoolDatasetService(CRUDService):
         `sparse` and `volblocksize` are only used for type=VOLUME.
 
         `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
-        There are 2 cases where ZFS encryption is not allowed for a dataset:
-        1) Pool in question is GELI encrypted.
-        2) If the parent dataset is encrypted with a passphrase and `name` is being created
+        There is 1 case where ZFS encryption is not allowed for a dataset:
+        1) If the parent dataset is encrypted with a passphrase and `name` is being created
            with a key for encrypting the dataset.
 
         `encryption_options` specifies configuration for encryption of dataset for `name` pool.
@@ -608,13 +607,6 @@ class PoolDatasetService(CRUDService):
         if data['encryption']:
             if inherit_encryption_properties:
                 verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
-            if (
-                    await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
-            )['encrypt']:
-                verrors.add(
-                    'pool_dataset_create.encryption',
-                    'Encrypted datasets cannot be created on a GELI encrypted pool.'
-                )
 
             if not data['encryption_options']['passphrase']:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
