@@ -31,8 +31,6 @@ class BootService(Service):
         'pool_entry', 'get_state',
         ('rm', {'name': 'id'}),
         ('rm', {'name': 'guid'}),
-        ('rm', {'name': 'encrypt'}),
-        ('rm', {'name': 'encryptkey'})
     ))
     async def get_state(self):
         """
