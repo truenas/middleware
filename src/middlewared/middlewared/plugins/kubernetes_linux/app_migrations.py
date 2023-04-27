@@ -9,6 +9,7 @@ from catalog_validation.schema.migration_schema import APP_MIGRATION_SCHEMA
 from middlewared.plugins.catalogs_linux.update import OFFICIAL_LABEL
 from middlewared.plugins.chart_releases_linux.utils import get_namespace
 from middlewared.service import Service
+from middlewared.utils.python import get_middlewared_dir
 
 
 MIGRATION_MANIFEST_SCHEMA = {
@@ -121,9 +122,9 @@ class KubernetesAppMigrationsService(Service):
         })
 
     def load_migrations(self, catalog):
+        migrations = self.official_migrations() if catalog['label'] == OFFICIAL_LABEL else {}
         migrations_path = os.path.join(catalog['location'], '.migrations')
         if os.path.isdir(migrations_path):
-            migrations = {}
             for migration in sorted(os.listdir(migrations_path)):
                 try:
                     with open(os.path.join(migrations_path, migration), 'r') as f:
@@ -143,7 +144,21 @@ class KubernetesAppMigrationsService(Service):
 
             return migrations
         else:
-            return {}
+            return migrations
+
+    def official_migrations(self):
+        migrations = {}
+        for migration in filter(
+            lambda name: name.endswith('.json'),
+            sorted(os.listdir(os.path.join(get_middlewared_dir(), 'plugins/kubernetes_linux/app_migrations')))
+        ):
+            with open(
+                os.path.join(get_middlewared_dir(), 'plugins/kubernetes_linux/app_migrations', migration), 'r'
+            ) as f:
+                data = json.loads(f.read())
+            migrations[migration] = data
+
+        return migrations
 
     def update_migrations(self, applied_migrations):
         with open(self.migration_file_path(), 'w') as f:
