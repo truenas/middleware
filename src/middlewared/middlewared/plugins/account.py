@@ -692,6 +692,7 @@ class UserService(CRUDService):
             old_mode = None
 
         home = data.get('home') or user['home']
+        had_home = user['home'] != DEFAULT_HOME_PATH
         has_home = home != DEFAULT_HOME_PATH
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
@@ -740,19 +741,19 @@ class UserService(CRUDService):
             must_change_pdb_entry = True
 
         # Copy the home directory if it changed
+        home_copy = False
+        home_old = None
         if (
             has_home and
             'home' in data and
             data['home'] != user['home'] and
             not data['home'].startswith(f'{user["home"]}/')
         ):
-            home_copy = True
-            home_old = user['home']
+            if had_home:
+                home_copy = True
+                home_old = user['home']
             if data.get('home_create', False):
                 data['home'] = os.path.join(data['home'], data.get('username') or user['username'])
-
-        else:
-            home_copy = False
 
         # After this point user dict has values from data
         renew_2fa_secret = data.pop('renew_twofactor_secret', False)
@@ -763,23 +764,8 @@ class UserService(CRUDService):
             mode_to_set = '700' if old_mode is None else old_mode
 
         # squelch any potential problems when this occurs
-        await self.middleware.call('user.recreate_homedir_if_not_exists', has_home, user, group, mode_to_set)
-
-        if home_copy and not os.path.isdir(user['home']):
-            try:
-                os.makedirs(user['home'])
-                perm_job = await self.middleware.call('filesystem.setperm', {
-                    'path': user['home'],
-                    'uid': user['uid'],
-                    'gid': group['bsdgrp_gid'],
-                    'mode': mode_to_set,
-                    'options': {'stripacl': True},
-                })
-                await perm_job.wait()
-            except OSError:
-                self.logger.warn('Failed to chown homedir', exc_info=True)
-            if not os.path.isdir(user['home']):
-                raise CallError(f'{user["home"]} is not a directory')
+        if has_home:
+            await self.middleware.call('user.recreate_homedir_if_not_exists', user, group, mode_to_set)
 
         home_mode = user.pop('home_mode', None)
         if user['immutable']:
@@ -850,10 +836,13 @@ class UserService(CRUDService):
         return pk
 
     @private
-    def recreate_homedir_if_not_exists(self, has_home, user, group, mode):
+    def recreate_homedir_if_not_exists(self, user, group, mode):
         # sigh, nothing is stopping someone from removing the homedir
         # from the CLI so recreate the original directory in this case
-        if has_home and not os.path.exists(user['home']):
+        if not os.path.isdir(user['home']):
+            if os.path.exists(user['home']):
+                raise CallError(f'{user["home"]!r} already exists and is not a directory')
+
             self.logger.debug('Homedir %r for %r does not exist so recreating it', user['home'], user['username'])
             try:
                 os.makedirs(user['home'])
