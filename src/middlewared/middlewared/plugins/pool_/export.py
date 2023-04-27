@@ -15,18 +15,6 @@ class PoolService(Service):
 
     @private
     def cleanup_after_export(self, poolinfo, opts):
-        if poolinfo['encrypt'] > 0:
-            try:
-                # this is CORE GELI encryption which doesn't exist on SCALE
-                # so it means someone upgraded from CORE to SCALE and their
-                # db has an entry with a GELI based encrypted pool in it so
-                # we'll remove the GELI key files associated with the zpool
-                os.remove(poolinfo['encryptkey'])
-            except Exception:
-                # not fatal, and doesn't really matter since SCALE can't
-                # use this zpool anyways
-                pass
-
         try:
             if all((opts['destroy'], opts['cascade'])) and (contents := os.listdir(poolinfo['path'])):
                 if len(contents) == 1 and contents[0] == 'ix-applications':
