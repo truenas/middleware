@@ -17,9 +17,6 @@ class PoolService(Service):
     @job(lock=lambda args: f'pool_attach_{args[0]}')
     async def attach(self, job, oid, options):
         """
-        For TrueNAS Core/Enterprise platform, if the `oid` pool is passphrase GELI encrypted, `passphrase`
-        must be specified for this operation to succeed.
-
         `target_vdev` is the GUID of the vdev where the disk needs to be attached. In case of STRIPED vdev, this
         is the STRIPED disk GUID which will be converted to mirror. If `target_vdev` is mirror, it will be converted
         into a n-way mirror.
