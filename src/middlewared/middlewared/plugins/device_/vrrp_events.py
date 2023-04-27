@@ -1,7 +1,9 @@
 from os import mkfifo
-from prctl import set_name
 from threading import Thread
 from time import sleep
+
+from middlewared.utils.prctl import set_name
+
 VRRP_THREAD = None
 
 
