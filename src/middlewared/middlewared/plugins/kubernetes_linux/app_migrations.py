@@ -96,7 +96,8 @@ class KubernetesAppMigrationsService(Service):
 
     async def apply_migration(self, catalog_label, migrations):
         apps = collections.defaultdict(list)
-        for chart_release in await self.middleware.call('chart.release.query'):
+        chart_releases = await self.middleware.call('chart.release.query')
+        for chart_release in chart_releases:
             apps[(chart_release['chart_metadata']['name'], chart_release['catalog_train'])].append(chart_release['id'])
 
         for migration in migrations:
@@ -108,6 +109,15 @@ class KubernetesAppMigrationsService(Service):
                         self.logger.error(
                             'Failed to migrate %r application to %r train in %r catalog',
                             update_app, migration['new_train'], catalog_label, exc_info=True,
+                        )
+            elif migration['action'] == 'rename_catalog':
+                for update_app in filter(lambda app: app['catalog'] == migration['old_catalog'], chart_releases):
+                    try:
+                        await self.move_app_to_different_catalog(update_app, migration['new_catalog'])
+                    except Exception:
+                        self.logger.error(
+                            'Failed to migrate %r application to %r catalog',
+                            update_app, migration['new_catalog'], exc_info=True,
                         )
 
     async def move_app(self, app_name, new_train):
