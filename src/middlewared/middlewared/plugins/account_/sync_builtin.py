@@ -238,7 +238,7 @@ class UserService(Service):
                     "username": name,
                     "home": home,
                     "shell": shell,
-                    "full_name": gecos,
+                    "full_name": gecos.split(",")[0],
                     "builtin": True,
                     "group": group["id"],
                     "smb": False,
