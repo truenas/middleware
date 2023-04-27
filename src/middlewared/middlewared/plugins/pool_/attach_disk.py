@@ -26,9 +26,6 @@ class PoolService(Service):
         """
         pool = await self.middleware.call('pool.get_instance', oid)
         verrors = ValidationErrors()
-        if not pool['is_decrypted']:
-            verrors.add('oid', 'Pool must be unlocked for this action.')
-            verrors.check()
         topology = pool['topology']
         topology_type = vdev = None
         for i in topology:

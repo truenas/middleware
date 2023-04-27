@@ -17,9 +17,6 @@ class VolumeStatusAlertSource(AlertSource):
 
         alerts = []
         for pool in await self.middleware.call("pool.query"):
-            if not pool["is_decrypted"]:
-                continue
-
             if not pool["healthy"] or pool["warning"]:
                 if await self.middleware.call("system.is_enterprise"):
                     try:

@@ -790,9 +790,6 @@ class ZettareplService(Service):
         if pools[pool]["status"] == "OFFLINE":
             return f"Pool {pool} is offline"
 
-        if not pools[pool]["is_decrypted"]:
-            return f"Pool {pool} is locked"
-
     @asynccontextmanager
     async def _handle_ssh_exceptions(self):
         try:

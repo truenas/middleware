@@ -40,10 +40,6 @@ class PoolService(CRUDService):
         Int('id', required=True),
         Str('name', required=True),
         Str('guid', required=True),
-        Int('encrypt', required=True),
-        Str('encryptkey', required=True),
-        Str('encryptkey_path', null=True, required=True),
-        Bool('is_decrypted', required=True),
         Str('status', required=True),
         Str('path', required=True),
         Dict(
@@ -156,8 +152,6 @@ class PoolService(CRUDService):
                 'source': 'DEFAULT',
                 'value': 'off'
             },
-            'encryptkey_path': None,
-            'is_decrypted': True,
         }
 
         if info := await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)]):
