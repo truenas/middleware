@@ -13,7 +13,7 @@ MIGRATION_MANIFEST_SCHEMA = {
     'properties': {
         'migrations': {
             'type': 'array',
-            'items': [{'type': 'string'}],
+            'items': {'type': 'string'},
         },
     },
     'required': [
