@@ -121,6 +121,17 @@ class KubernetesAppMigrationsService(Service):
             }
         })
 
+    async def move_app_to_different_catalog(self, app_name, new_catalog_name):
+        await self.middleware.call('k8s.namespace.update', get_namespace(app_name), {
+            'body': {
+                'metadata': {
+                    'labels': {
+                        'catalog': new_catalog_name,
+                    },
+                }
+            }
+        })
+
     def load_migrations(self, catalog):
         migrations = self.official_migrations() if catalog['label'] == OFFICIAL_LABEL else {}
         migrations_path = os.path.join(catalog['location'], '.migrations')
