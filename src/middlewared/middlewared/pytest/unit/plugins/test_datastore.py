@@ -334,11 +334,11 @@ async def test__string_filters(filter, ids):
 @pytest.mark.asyncio
 async def test_delete_not_in():
     async with datastore_test() as ds:
-        await ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
-        await ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
-        await ds.execute("INSERT INTO test_string VALUES (3, 'dolor')")
-        await ds.execute("INSERT INTO test_string VALUES (4, 'sit')")
-        await ds.execute("INSERT INTO test_string VALUES (5, 'amer')")
+        ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
+        ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
+        ds.execute("INSERT INTO test_string VALUES (3, 'dolor')")
+        ds.execute("INSERT INTO test_string VALUES (4, 'sit')")
+        ds.execute("INSERT INTO test_string VALUES (5, 'amer')")
 
         await ds.delete("test_string", [["string", "nin", ["Lorem", "dolor"]]])
 

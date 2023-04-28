@@ -1,7 +1,6 @@
 import asyncio
 import logging
-
-from asynctest import CoroutineMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 from middlewared.plugins.datastore.read import DatastoreService
 from middlewared.settings import conf
@@ -15,10 +14,10 @@ class Middleware(SchemasMixin, dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self['failover.licensed'] = Mock(return_value=False)
-        self['system.is_freenas'] = Mock(return_value=True)
+        self['failover.licensed'] = AsyncMock(return_value=False)
+        self['system.is_freenas'] = AsyncMock(return_value=True)
 
-        self.call_hook = CoroutineMock()
+        self.call_hook = AsyncMock()
         self.call_hook_inline = Mock()
         self.event_register = Mock()
         self.send_event = Mock()

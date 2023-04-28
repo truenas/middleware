@@ -1,8 +1,7 @@
 # -*- coding=utf-8 -*-
 import logging
-from unittest.mock import ANY
+from unittest.mock import ANY, AsyncMock
 
-from asyncmock import AsyncMock
 import pytest
 import sqlalchemy as sa
 
