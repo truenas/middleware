@@ -8,5 +8,5 @@ pyvmomi==7.0.3
 requests
 websocket-client>=1.4.2
 pyotp
-PYSCSI
-cython-iscsi
+cython-iscsi @ git+https://github.com/truenas/cython-iscsi.git@tester
+PYSCSI @ git+https://github.com/truenas/python-scsi.git@tester
