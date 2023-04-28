@@ -13,6 +13,8 @@ import middlewared.sqlalchemy as sa
 from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl
 
+NFS_VOLUME_TYPES = ('NFS', 'NFS41')
+
 
 class VMWareModel(sa.Model):
     __tablename__ = 'storage_vmwareplugin'
@@ -210,7 +212,7 @@ class VMWareService(CRUDService):
 
         datastores = []
         for k, v in self.__get_datastores(data).items():
-            if v["type"] == "NFS":
+            if v["type"] in NFS_VOLUME_TYPES:
                 description = f"NFS mount {v['remote_path']!r} on {' or '.join(v['remote_hostnames'])}"
                 matches = [f"{hostname}:{v['remote_path']}" for hostname in v["remote_hostnames"]]
             elif v["type"] == "VMFS":
@@ -221,6 +223,7 @@ class VMWareService(CRUDService):
                 )
                 matches = v["extent"]
             else:
+                self.logger.debug("Unknown volume type %r", v["type"])
                 continue
 
             datastores.append({
@@ -321,7 +324,7 @@ class VMWareService(CRUDService):
                         'local': host_mount_info.volume.local,
                         'ssd': host_mount_info.volume.ssd
                     }
-                elif host_mount_info.volume.type in ('NFS', 'NFS41'):
+                elif host_mount_info.volume.type in NFS_VOLUME_TYPES:
                     datastores[host_mount_info.volume.name] = {
                         'type': host_mount_info.volume.type,
                         'capacity': host_mount_info.volume.capacity,
