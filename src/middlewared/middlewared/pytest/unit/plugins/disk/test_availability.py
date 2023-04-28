@@ -1,4 +1,5 @@
-from asynctest import Mock
+from unittest.mock import AsyncMock
+
 import pytest
 
 from middlewared.plugins.disk_.availability import DiskService
@@ -17,7 +18,7 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.asyncio
 async def test__disk_service__check_disks_availability(disks, allow_duplicate_serials, errors):
     m = Middleware()
-    m["disk.query"] = Mock(return_value=[
+    m["disk.query"] = AsyncMock(return_value=[
         {"devname": "sda", "serial": "1", "lunid": None},
         {"devname": "sdb", "serial": "2", "lunid": "0"},
         {"devname": "sdc", "serial": "2", "lunid": "1"},
@@ -26,7 +27,7 @@ async def test__disk_service__check_disks_availability(disks, allow_duplicate_se
         {"devname": "sdf", "serial": " EVEN WORSE USB DRIVE ", "lunid": None},
         {"devname": "sdg", "serial": " EVEN WORSE USB DRIVE ", "lunid": None},
     ])
-    m["disk.get_reserved"] = Mock(return_value=["sdb", "sde"])
+    m["disk.get_reserved"] = AsyncMock(return_value=["sdb", "sde"])
 
     verrors = await DiskService(m).check_disks_availability(disks, allow_duplicate_serials)
     assert [e.errmsg for e in verrors.errors] == errors

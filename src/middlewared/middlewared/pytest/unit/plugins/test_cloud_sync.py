@@ -242,9 +242,16 @@ def test__get_dataset_recursive_5():
     assert recursive is False
 
 
+def lock_mock(*args, **kwargs):
+    m = Mock(*args, **kwargs)
+    m._reader_lock._lock = Mock()
+    m._writer_lock._lock = Mock()
+    return m
+
+
 def test__fs_lock_manager_1():
     flm = FsLockManager()
-    flm._lock = Mock
+    flm._lock = lock_mock
     flm._choose_lock = lambda lock, direction: lock
 
     lock = flm.lock("/mnt/tank/work", Mock())
@@ -254,7 +261,7 @@ def test__fs_lock_manager_1():
 
 def test__fs_lock_manager_2():
     flm = FsLockManager()
-    flm._lock = Mock
+    flm._lock = lock_mock
     flm._choose_lock = lambda lock, direction: lock
 
     lock = flm.lock("/mnt/tank/work", Mock())
@@ -264,7 +271,7 @@ def test__fs_lock_manager_2():
 
 def test__fs_lock_manager_3():
     flm = FsLockManager()
-    flm._lock = Mock
+    flm._lock = lock_mock
     flm._choose_lock = lambda lock, direction: lock
 
     lock = flm.lock("/mnt/tank/work", Mock())

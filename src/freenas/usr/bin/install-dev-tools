@@ -23,10 +23,7 @@ PACKAGES=(
     # Unpack core dumps (https://jira.ixsystems.com/browse/NAS-113855)
     zstd
 )
-PIP_PACKAGES=(
-    asyncmock
-    asynctest
-)
+PIP_PACKAGES=()
 
 chmod +x /usr/bin/apt*
 apt update

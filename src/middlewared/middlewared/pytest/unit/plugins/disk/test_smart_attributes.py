@@ -1,6 +1,6 @@
 import textwrap
+from unittest.mock import AsyncMock
 
-from asynctest import Mock
 import pytest
 
 from middlewared.plugins.disk_.smart_attributes import DiskService
@@ -11,7 +11,7 @@ from middlewared.pytest.unit.middleware import Middleware
 async def test__disk_service__sata_dom_lifetime_left():
 
     m = Middleware()
-    m["disk.smartctl"] = Mock(return_value=textwrap.dedent("""\
+    m["disk.smartctl"] = AsyncMock(return_value=textwrap.dedent("""\
         smartctl 6.6 2017-11-05 r4594 [FreeBSD 11.2-STABLE amd64] (local build)
         Copyright (C) 2002-17, Bruce Allen, Christian Franke, www.smartmontools.org
 
