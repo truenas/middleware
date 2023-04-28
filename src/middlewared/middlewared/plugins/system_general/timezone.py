@@ -34,6 +34,5 @@ class SystemGeneralService(Service):
                     zone_name = f'{relpath}/{timezone}'
                 else:
                     zone_name = timezone
-                if 'Etc/GMT' not in zone_name:
-                    timezones[zone_name] = zone_name
+                timezones[zone_name] = zone_name
         return timezones
