@@ -129,6 +129,9 @@ class AlertPolicy:
 
         return gone_alerts, new_alerts
 
+    def delete_alert(self, alert):
+        self.last_key_value_alerts.pop(alert.uuid, None)
+
 
 def get_alert_level(alert, classes):
     return AlertLevel[classes.get(alert.klass.name, {}).get("level", alert.klass.level.name)]
@@ -406,12 +409,17 @@ class AlertService(Service):
             await self._send_alert_changed_event(alert)
 
     def _delete_on_dismiss(self, alert):
-        self.alerts.remove(alert)
+        try:
+            self.alerts.remove(alert)
+            removed = True
+        except ValueError:
+            removed = False
 
         for policy in self.policies.values():
-            policy.last_key_value_alerts.pop(alert.uuid, None)
+            policy.delete_alert(alert)
 
-        self._send_alert_deleted_event(alert)
+        if removed:
+            self._send_alert_deleted_event(alert)
 
     @accepts(Str("uuid"))
     @returns()
