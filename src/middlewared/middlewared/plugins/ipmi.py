@@ -152,7 +152,7 @@ class IPMIService(CRUDService):
         run(get_cmd(['arp', 'generate', 'on']), **options)
 
         if passwd := data.get('password'):
-            cp = run(get_cmd(['ipmitool', 'user', 'set', 'password', '2', passwd]), capture_output=True)
+            cp = run(['ipmitool', 'user', 'set', 'password', '2', passwd], capture_output=True)
             if cp.returncode != 0:
                 err = '\n'.join(cp.stderr.decode().split('\n'))
                 raise CallError(f'Failed setting password: {err!r}')
