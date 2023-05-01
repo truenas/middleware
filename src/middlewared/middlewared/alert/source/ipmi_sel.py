@@ -1,45 +1,7 @@
 from datetime import datetime, timedelta
-import logging
-import os
 
-from middlewared.alert.base import (AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
-                                    UnavailableException)
+from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.service_exception import CallError
-from middlewared.utils import run
-
-logger = logging.getLogger(__name__)
-
-
-def has_ipmi():
-    return any(os.path.exists(p) for p in ["/dev/ipmi0", "/dev/ipmi/0", "/dev/ipmidev/0"])
-
-
-class IpmiTool:
-    def __init__(self):
-        self.errors = 0
-
-    async def __call__(self, args):
-        result = await run(["ipmitool"] + args, check=False, encoding="utf8", errors="ignore")
-        if result.returncode != 0:
-            self.errors += 1
-            if self.errors < 5:
-                raise UnavailableException()
-
-            raise CallError(f"ipmitool failed (code={result.returncode}): {result.stderr}")
-
-        self.errors = 0
-        return result.stdout
-
-
-ipmitool = IpmiTool()
-
-
-def parse_sel_information(output):
-    return {
-        k.strip(): v.strip()
-        for k, v in [line.split(":", 1) for line in output.split("\n") if line.strip() and ":" in line]
-    }
 
 
 class IPMISELAlertClass(AlertClass, DismissableAlertClass):
@@ -68,11 +30,18 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
         return [a for a in alerts if a.datetime > alert.datetime]
 
 
+class IPMISELSpaceLeftAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.WARNING
+    title = "IPMI System Event Log Low Space Left"
+    text = "IPMI System Event Log low space left: %(free)s (%(used)s used)."
+
+
 class IPMISELAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
 
-    async def get_sensor_values():
+    async def get_sensor_values(self):
         # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
         sensor_types = (
             "Redundancy State",
@@ -108,7 +77,7 @@ class IPMISELAlertSource(AlertSource):
         )
         return sensor_types, sensor_events_to_alert_on, sensor_events_to_ignore
 
-    async def product_sel_elist_alerts(self):
+    async def produce_sel_elist_alerts(self):
         stypes, do_alert, ignore = await self.get_sensor_values()
         records = []
         for i in (await (await self.middleware.call("ipmi.sel.elist")).wait()):
@@ -142,39 +111,34 @@ class IPMISELAlertSource(AlertSource):
 
         return alerts
 
+    async def produce_sel_low_space_alert(self):
+        info = (await (await self.middleware.call("ipmi.sel.info")).wait())
+        free_bytes = alloc_tot = alloc_us = None
+        if (free_bytes := info.get("free_space_remaining")) is not None:
+            free_bytes = free_bytes.split(" ", 1)[0]
+            if (alloc_tot := info.get("number_of_possible_allocation_units")) is not None:
+                if (alloc_us := info.get("allocation_unit_size")) is not None:
+                    alloc_us = alloc_us.split(" ", 1)[0]
+
+        alert = None
+        upper_threshold = 90  # percent
+        if all((i is not None and i.isdigit()) for i in (free_bytes, alloc_tot, alloc_us)):
+            free_bytes = int(free_bytes)
+            total_bytes_avail = int(alloc_us) * int(alloc_tot)
+            used_bytes = total_bytes_avail - free_bytes
+            if (used_bytes / 100) > upper_threshold:
+                alert = Alert(
+                    IPMISELSpaceLeftAlertClass,
+                    {"free": f"{free_bytes} bytes free", "used": f"{used_bytes} bytes used"},
+                    key=None,
+                )
+
+        return alert
+
     async def check(self):
-        return await self.produce_sel_elist_alerts()
+        alerts = []
+        alerts.extend(await self.produce_sel_elist_alerts())
+        if (low_space_alert := await self.produce_sel_low_space_alert()) is not None:
+            alerts.append(low_space_alert)
 
-
-class IPMISELSpaceLeftAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "IPMI System Event Log Low Space Left"
-    text = "IPMI System Event Log low space left: %(free)s (%(used)s used)."
-
-
-class IPMISELSpaceLeftAlertSource(AlertSource):
-    schedule = IntervalSchedule(timedelta(minutes=5))
-
-    async def check(self):
-        if not await self.middleware.run_in_thread(has_ipmi):
-            return
-
-        return self._produce_alert_for_ipmitool_output(await ipmitool(["sel", "info"]))
-
-    def _produce_alert_for_ipmitool_output(self, output):
-        sel_information = parse_sel_information(output)
-        try:
-            percent_used = int(sel_information["Percent Used"].rstrip("%"))
-        except ValueError:
-            return
-
-        if percent_used > 90:
-            return Alert(
-                IPMISELSpaceLeftAlertClass,
-                {
-                    "free": sel_information["Free Space"],
-                    "used": sel_information["Percent Used"],
-                },
-                key=None,
-            )
+        return alerts
