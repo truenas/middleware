@@ -310,6 +310,7 @@ class AuthService(Service):
         if errors:
             raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
+    @cli_private
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_user(self, username, password):
@@ -318,6 +319,7 @@ class AuthService(Service):
         """
         return await self.check_password(username, password)
 
+    @cli_private
     @accepts(Str('username'), Str('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_password(self, username, password):
