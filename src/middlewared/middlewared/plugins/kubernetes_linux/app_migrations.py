@@ -113,7 +113,7 @@ class KubernetesAppMigrationsService(Service):
             elif migration['action'] == 'rename_catalog':
                 for update_app in filter(lambda app: app['catalog'] == migration['old_catalog'], chart_releases):
                     try:
-                        await self.move_app_to_different_catalog(update_app, migration['new_catalog'])
+                        await self.move_app_to_different_catalog(update_app['name'], migration['new_catalog'])
                     except Exception:
                         self.logger.error(
                             'Failed to migrate %r application to %r catalog',
