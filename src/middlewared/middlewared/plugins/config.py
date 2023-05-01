@@ -213,12 +213,6 @@ class ConfigService(Service):
             try:
                 cur.execute("SELECT version_num FROM alembic_version")
                 alembic_version = cur.fetchone()[0]
-            except sqlite3.OperationalError as e:
-                if e.args[0] == "no such table: alembic_version":
-                    # FN/TN < 12 so ensure it's not a random SQLite file
-                    cur.execute("SELECT 1 FROM django_migrations")
-                else:
-                    raise
             finally:
                 cur.close()
         except sqlite3.OperationalError as e:
@@ -232,9 +226,6 @@ class ConfigService(Service):
 
     @private
     def validate_alembic(self, alembic_version):
-        if alembic_version is None:
-            return
-
         for root, _, files in os.walk(os.path.join(get_middlewared_dir(), 'alembic', 'versions')):
             for name in filter(lambda x: x.endswith('.py'), files):
                 with open(os.path.join(root, name)) as f:
