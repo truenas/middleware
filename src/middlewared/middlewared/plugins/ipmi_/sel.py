@@ -38,14 +38,8 @@ class IpmiSelService(Service):
         """Query IPMI System Event Log (SEL) extended list"""
         rv = []
         job.set_progress(78, 'Enumerating extended event log info')
-        output = get_sel_data('elist')
-        len_output = len(output) or 1
-        increment = round(79 / len_output, 3)  # remaining ~19% of progress
-        progress_percent = 79
-        for line in output:
+        for line in get_sel_data('elist'):
             if (values := line.strip().split(',')) and len(values) == 6:
-                progress_percent += increment
-                job.set_progress(progress_percent, 'Parsing extended event log info')
                 rv.append({
                     'id': values[0].strip(),
                     'date': values[1].strip(),
@@ -65,14 +59,8 @@ class IpmiSelService(Service):
         """Query General information about the IPMI System Event Log"""
         rv = {}
         job.set_progress(78, 'Enumerating general extended event log info')
-        output = get_sel_data('info')
-        len_output = len(output) or 1
-        increment = round(79 / len_output, 3)  # remaining ~19% of progress
-        progress_percent = 79
-        for line in output:
+        for line in get_sel_data('info'):
             if (values := line.strip().split(':')) and len(values) == 2:
-                progress_percent += increment
-                job.set_progress(progress_percent, 'Parsing general extended event log info')
                 entry, value = values
                 rv[entry.strip().replace(' ', '_').lower()] = value.strip()
 
