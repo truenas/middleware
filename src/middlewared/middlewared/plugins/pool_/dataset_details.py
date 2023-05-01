@@ -201,29 +201,11 @@ class PoolDatasetService(Service):
                 'snapshots_count': True,
             }
         }
-        collapsed = []
         datasets = self.middleware.call_sync('pool.dataset.query', [], options)
-        mntinfo = getmntinfo()
-        info = self.build_details(mntinfo)
+        mnt_info = getmntinfo()
+        info = self.build_details(mnt_info)
         for dataset in datasets:
-            self.collapse_dataset_rewrite(dataset, info, mntinfo)
-
-        for i in collapsed:
-            atime, case, readonly = self.get_mntinfo(i, mntinfo)
-            i['locked'] = i['locked']
-            i['atime'] = atime
-            i['casesensitive'] = case
-            i['readonly'] = readonly
-            i['thick_provisioned'] = any((i['reservation']['value'], i['refreservation']['value']))
-            i['nfs_shares'] = self.get_nfs_shares(i, info['nfs'])
-            i['smb_shares'] = self.get_smb_shares(i, info['smb'])
-            i['iscsi_shares'] = self.get_iscsi_shares(i, info['iscsi'])
-            i['vms'] = self.get_vms(i, info['vm'])
-            i['apps'] = self.get_apps(i, info['app'])
-            i['replication_tasks_count'] = self.get_repl_tasks_count(i, info['repl'])
-            i['snapshot_tasks_count'] = self.get_snapshot_tasks_count(i, info['snap'])
-            i['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(i, info['cloud'])
-            i['rsync_tasks_count'] = self.get_rsync_tasks_count(i, info['rsync'])
+            self.collapse_datasets(dataset, info, mnt_info)
 
         return datasets
 
@@ -246,16 +228,10 @@ class PoolDatasetService(Service):
         dataset['rsync_tasks_count'] = self.get_rsync_tasks_count(dataset, info['rsync'])
 
     @private
-    def collapse_dataset_rewrite(self, dataset, info, mnt_info):
+    def collapse_datasets(self, dataset, info, mnt_info):
         self.normalize_dataset(dataset, info, mnt_info)
         for child in dataset.get('children', []):
-            self.collapse_dataset_rewrite(child, info, mnt_info)
-
-    @private
-    def collapse_datasets(self, dataset, collapsed):
-        collapsed.append(dataset)
-        for child in dataset.get('children', []):
-            self.collapse_datasets(child, collapsed)
+            self.collapse_datasets(child, info, mnt_info)
 
     @private
     def get_mount_info(self, path, mntinfo):
