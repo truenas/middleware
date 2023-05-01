@@ -203,11 +203,11 @@ class PoolDatasetService(Service):
         }
         collapsed = []
         datasets = self.middleware.call_sync('pool.dataset.query', [], options)
-        for dataset in datasets:
-            self.collapse_datasets(dataset, collapsed)
-
         mntinfo = getmntinfo()
         info = self.build_details(mntinfo)
+        for dataset in datasets:
+            self.collapse_dataset_rewrite(dataset, info, mntinfo)
+
         for i in collapsed:
             atime, case, readonly = self.get_mntinfo(i, mntinfo)
             i['locked'] = i['locked']
@@ -226,6 +226,30 @@ class PoolDatasetService(Service):
             i['rsync_tasks_count'] = self.get_rsync_tasks_count(i, info['rsync'])
 
         return datasets
+
+    @private
+    def normalize_dataset(self, dataset, info, mnt_info):
+        atime, case, readonly = self.get_mntinfo(dataset, mnt_info)
+        dataset['locked'] = dataset['locked']
+        dataset['atime'] = atime
+        dataset['casesensitive'] = case
+        dataset['readonly'] = readonly
+        dataset['thick_provisioned'] = any((dataset['reservation']['value'], dataset['refreservation']['value']))
+        dataset['nfs_shares'] = self.get_nfs_shares(dataset, info['nfs'])
+        dataset['smb_shares'] = self.get_smb_shares(dataset, info['smb'])
+        dataset['iscsi_shares'] = self.get_iscsi_shares(dataset, info['iscsi'])
+        dataset['vms'] = self.get_vms(dataset, info['vm'])
+        dataset['apps'] = self.get_apps(dataset, info['app'])
+        dataset['replication_tasks_count'] = self.get_repl_tasks_count(dataset, info['repl'])
+        dataset['snapshot_tasks_count'] = self.get_snapshot_tasks_count(dataset, info['snap'])
+        dataset['cloudsync_tasks_count'] = self.get_cloudsync_tasks_count(dataset, info['cloud'])
+        dataset['rsync_tasks_count'] = self.get_rsync_tasks_count(dataset, info['rsync'])
+
+    @private
+    def collapse_dataset_rewrite(self, dataset, info, mnt_info):
+        self.normalize_dataset(dataset, info, mnt_info)
+        for child in dataset.get('children', []):
+            self.collapse_dataset_rewrite(child, info, mnt_info)
 
     @private
     def collapse_datasets(self, dataset, collapsed):
