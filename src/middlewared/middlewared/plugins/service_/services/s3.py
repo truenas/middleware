@@ -7,6 +7,7 @@ class S3Service(SimpleService):
     name = "s3"
 
     etc = ["s3"]
+    deprecated = True
 
     systemd_unit = "minio"
 
