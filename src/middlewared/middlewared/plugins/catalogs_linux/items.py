@@ -58,6 +58,7 @@ class CatalogService(Service):
                     'title': 'Chia',
                     'description': 'App description here',
                     'maintainers': [],
+                    'tags': ['finance', 'crypto', 'blockchain'],
                 }
             }
         }
