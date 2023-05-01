@@ -2,9 +2,8 @@ import os
 from subprocess import run, DEVNULL
 from functools import cache
 
-from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, filterable_returns, ValidationErrors, job
+from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
@@ -163,28 +162,6 @@ class IPMIService(CRUDService):
             raise CallError(f'Failed enabling user: {err!r}')
 
         return rc
-
-    @filterable
-    @filterable_returns(List('events_log', items=[Dict('event', additional_attrs=True)]))
-    @job(lock='query_sel', lock_queue_size=3)
-    def query_sel(self, job, filters, options):
-        """Query IPMI system extended event log."""
-        results = []
-        job.set_progress(50, 'Enumerating extended event log')
-        cp = run(['ipmitool', '-c', 'sel', 'elist'], capture_output=True)  # this is slowwww
-        if cp.returncode == 0 and cp.stdout:
-            job.set_progress(95, 'Parsing extended event log')
-            for record in parse_ipmitool_output(cp.stdout.decode()):
-                results.append(record._asdict())
-            job.set_progress(100, 'Parsing extended event log complete')
-
-        return filter_list(results, filters, options)
-
-    @accepts()
-    @returns()
-    def clear_sel(self):
-        """Clear IPMI system event log."""
-        run(['ipmitool', 'sel', 'clear'], stdout=DEVNULL, stderr=DEVNULL)
 
 
 async def setup(middleware):
