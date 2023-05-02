@@ -11,7 +11,7 @@ SEL_LOCK = 'sel_lock'
 def get_sel_data(data):
     cmd = ['ipmi-sel']
     if data == 'elist':
-        cmd.extend(['--comma-separated-output', '--non-abbreviated-units'])
+        cmd.extend(['-v', '--no-header-output', '--comma-separated-output', '--non-abbreviated-units'])
     elif data == 'info':
         cmd.extend(['--info'])
     else:
@@ -39,14 +39,15 @@ class IpmiSelService(Service):
         rv = []
         job.set_progress(78, 'Enumerating extended event log info')
         for line in get_sel_data('elist'):
-            if (values := line.strip().split(',')) and len(values) == 6:
+            if (values := line.strip().split(',')) and len(values) == 7:
                 rv.append({
                     'id': values[0].strip(),
                     'date': values[1].strip(),
                     'time': values[2].strip(),
                     'name': values[3].strip(),
                     'type': values[4].strip(),
-                    'event': values[5].strip(),
+                    'event_direction': values[5].strip(),
+                    'event': values[6].strip(),
                 })
 
         job.set_progress(100, 'Parsing extended event log complete')
