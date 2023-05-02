@@ -410,8 +410,22 @@ class EnclosureService(Service):
                 mapped[0]["elements"].update(orig_encs[enc_num]["elements"])
                 mapped[0]["elements"]["Array Device Slot"] = {}
 
+            is_r50 = mapped[0]["model"].startswith(("R50", "R50B", "R50BM"))
             for slot, mapping in enumerate(slots, start=1):
-                orig_slot = orig_encs[mapping.num]["elements"]["Array Device Slot"][mapping.slot]
+                dev_ses_num = mapping.num
+                if is_r50:
+                    # R50, R50B, and R50BM can be cabled in a way that
+                    # makes our hard-coded mapping.num attribute (/dev/ses#) be incorrect.
+                    # (i.e. mapping.num == 3 == /dev/ses3 equals last 24 drives on R50BM but
+                    #  it could be cabled incorrectly which means that /dev/ses3 is actually
+                    #  the first 24 drives)
+                    orig_name = orig_encs[dev_ses_num]["name"]
+                    if "eDrawer4048S1" in orig_name:
+                        dev_ses_num = 2
+                    elif "eDrawer4048S2" in orig_name:
+                        dev_ses_num = 3
+
+                orig_slot = orig_encs[dev_ses_num]["elements"]["Array Device Slot"][mapping.slot]
                 mapped[0]["elements"]["Array Device Slot"].update({
                     slot: {
                         "descriptor": f"Disk #{slot}",
@@ -420,8 +434,8 @@ class EnclosureService(Service):
                         "value_raw": orig_slot["value_raw"],
                         "dev": orig_slot["dev"],
                         "original": {
-                            "enclosure_id": orig_encs[mapping.num]["id"],
-                            "number": mapping.num,
+                            "enclosure_id": orig_encs[dev_ses_num]["id"],
+                            "number": dev_ses_num,
                             "slot": mapping.slot,
                         },
                     },

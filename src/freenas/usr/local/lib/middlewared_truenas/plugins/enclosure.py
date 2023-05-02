@@ -34,7 +34,7 @@ class EnclosureService(CRUDService):
         }
         enclosures = []
         for enc in self.__get_enclosures(prod):
-            enclosure = {
+            enclosures.append({
                 'id': enc.encid,
                 'number': enc.num,
                 'name': enc.encname,
@@ -43,13 +43,7 @@ class EnclosureService(CRUDService):
                 'controller': enc.controller,
                 'label': labels.get(enc.encid) or enc.encname,
                 'elements': enc.elements,
-            }
-            if 'eDrawer4048S1' in enclosure['name']:
-                # Ensure R50's first expander is first in
-                # the list independent of how it was cabled
-                enclosures.insert(0, enclosure)
-            else:
-                enclosures.append(enclosure)
+            })
 
         # map the enclosures (if needed)
         enclosures = self.middleware.call_sync('enclosure.map_enclosures', enclosures, prod, prod_vers)
