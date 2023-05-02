@@ -12,7 +12,6 @@ from middlewared.test.integration.utils import call
 
 
 PAYLOAD = (
-    ('s3.config', 's3.update', ['bindport', 'console_bindport'], {'access_key': '12345678', 'secret_key': '123456789'}),
     ('ftp.config', 'ftp.update', ['port'], {}),
     ('webdav.config', 'webdav.update', ['tcpport', 'tcpportssl'], {}),
     ('rsyncd.config', 'rsyncd.update', ['port'], {}),

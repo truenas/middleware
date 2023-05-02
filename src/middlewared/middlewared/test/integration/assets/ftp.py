@@ -18,10 +18,10 @@ def ftp_server(config):
 
 
 @contextlib.contextmanager
-def anonymous_ftp_server(config=None):
+def anonymous_ftp_server(config=None, dataset_name="anonftp"):
     config = config or {}
 
-    with dataset("anonftp") as ds:
+    with dataset(dataset_name) as ds:
         path = f"/mnt/{ds}"
         ssh(f"chmod 777 {path}")
         with ftp_server({

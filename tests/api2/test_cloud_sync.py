@@ -3,8 +3,8 @@ import time
 
 import pytest
 from pytest_dependency import depends
-from middlewared.test.integration.assets.cloud_sync import credential, task, local_s3_credential
-from middlewared.test.integration.assets.cloud_sync import local_s3_task, run_task
+from middlewared.test.integration.assets.cloud_sync import credential, task, local_ftp_credential
+from middlewared.test.integration.assets.cloud_sync import local_ftp_task, run_task
 from middlewared.test.integration.assets.ftp import anonymous_ftp_server, ftp_server_with_user_account
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool, ssh
@@ -21,7 +21,7 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 def test_include(request):
     depends(request, ["pool_04"], scope="session")
-    with local_s3_task({
+    with local_ftp_task({
         "include": ["/office/**", "/work/**"],
     }) as task:
         ssh(f'mkdir {task["path"]}/office')
@@ -34,12 +34,12 @@ def test_include(request):
 
         run_task(task)
 
-        assert ssh(f'ls /mnt/{pool}/cloudsync_remote/bucket') == 'office\nwork\n'
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote') == 'office\nwork\n'
 
 
 def test_exclude_recycle_bin(request):
     depends(request, ["pool_04"], scope="session")
-    with local_s3_task({
+    with local_ftp_task({
         "exclude": ["$RECYCLE.BIN/"],
     }) as task:
         ssh(f'mkdir {task["path"]}/\'$RECYCLE.BIN\'')
@@ -48,7 +48,7 @@ def test_exclude_recycle_bin(request):
 
         run_task(task)
 
-        assert ssh(f'ls /mnt/{pool}/cloudsync_remote/bucket') == 'file\n'
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote') == 'file\n'
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
@@ -109,7 +109,7 @@ def test_snapshot(request, has_zvol_sibling):
             ssh(f"zfs create -V 1gb {pool}/zvol")
 
         try:
-            with local_s3_task({
+            with local_ftp_task({
                 "path": f"/mnt/{ds}/dir1/dir2",
                 "bwlimit": [{"time": "00:00", "bandwidth": 1024 * 200}],  # So it'll take 5 seconds
                 "snapshot": True,
@@ -135,14 +135,13 @@ def test_snapshot(request, has_zvol_sibling):
 def test_sync_onetime(request):
     depends(request, ["pool_04"], scope="session")
     with dataset("cloudsync_local") as local_dataset:
-        with local_s3_credential() as c:
+        with local_ftp_credential() as c:
             call("cloudsync.sync_onetime", {
                 "direction": "PUSH",
                 "transfer_mode": "COPY",
                 "path": f"/mnt/{local_dataset}",
                 "credentials": c["id"],
                 "attributes": {
-                    "bucket": "bucket",
                     "folder": "",
                 },
             }, job=True)
@@ -153,7 +152,7 @@ def test_abort(request):
     with dataset("test") as ds:
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/blob bs=1M count=1")
 
-        with local_s3_task({
+        with local_ftp_task({
             "path": f"/mnt/{ds}",
             "bwlimit": [{"time": "00:00", "bandwidth": 1024 * 100}],  # So it'll take 10 seconds
         }) as task:
@@ -218,7 +217,7 @@ def test_create_empty_src_dirs(request, create_empty_src_dirs):
 
 def test_state_persist():
     with dataset("test") as ds:
-        with local_s3_task({
+        with local_ftp_task({
             "path": f"/mnt/{ds}",
         }) as task:
             call("cloudsync.sync", task["id"], job=True)
@@ -235,7 +234,7 @@ if ha:
         assert call("failover.status") == "MASTER"
 
         with dataset("test") as ds:
-            with local_s3_task({"path": f"/mnt/{ds}"}) as task:
+            with local_ftp_task({"path": f"/mnt/{ds}"}) as task:
                 call("cloudsync.sync", task["id"], job=True)
                 time.sleep(5)  # Job sending is not synchronous, allow it to propagate
 
