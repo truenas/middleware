@@ -1,62 +1,14 @@
-from datetime import timedelta
-import logging
-import os
+from datetime import datetime, timedelta
 
-from middlewared.alert.base import (AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource,
-                                    UnavailableException)
+from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.plugins.ipmi_.utils import parse_ipmitool_output
-from middlewared.service_exception import CallError
-from middlewared.utils import run
-
-logger = logging.getLogger(__name__)
-
-
-def has_ipmi():
-    return any(os.path.exists(p) for p in ["/dev/ipmi0", "/dev/ipmi/0", "/dev/ipmidev/0"])
-
-
-class IpmiTool:
-    def __init__(self):
-        self.errors = 0
-
-    async def __call__(self, args):
-        result = await run(["ipmitool"] + args, check=False, encoding="utf8", errors="ignore")
-        if result.returncode != 0:
-            self.errors += 1
-            if self.errors < 5:
-                raise UnavailableException()
-
-            raise CallError(f"ipmitool failed (code={result.returncode}): {result.stderr}")
-
-        self.errors = 0
-        return result.stdout
-
-
-ipmitool = IpmiTool()
-
-
-def parse_sel_information(output):
-    return {
-        k.strip(): v.strip()
-        for k, v in [line.split(":", 1) for line in output.split("\n") if line.strip() and ":" in line]
-    }
 
 
 class IPMISELAlertClass(AlertClass, DismissableAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI System Event"
-
-    @classmethod
-    def format(cls, args):
-        text = "%(sensor)s %(direction)s %(event)s"
-        if args["verbose"] is not None:
-            text += ": %(verbose)s."
-        else:
-            text += "."
-
-        return text % args
+    text = "Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)"
 
     async def dismiss(self, alerts, alert):
         datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
@@ -69,72 +21,70 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
         return [a for a in alerts if a.datetime > alert.datetime]
 
 
+class IPMISELSpaceLeftAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.WARNING
+    title = "IPMI System Event Log Low Space Left"
+    text = "IPMI System Event Log low space left: %(free)s (%(used)s)."
+
+
 class IPMISELAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(minutes=5))
-
     dismissed_datetime_kv_key = "alert:ipmi_sel:dismissed_datetime"
 
-    # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
+    async def get_sensor_values(self):
+        # https://github.com/openbmc/ipmitool/blob/master/include/ipmitool/ipmi_sel.h#L297
+        sensor_types = (
+            "Redundancy State",
+            "Temperature",
+            "Voltage",
+            "Current",
+            "Fan",
+            "Physical Security",
+            "Platform Security",
+            "Processor",
+            "Power Supply",
+            "Memory",
+            "System Firmware Error",
+            "Critical Interrupt",
+            "Management Subsystem Health",
+            "Battery",
+        )
+        sensor_events_to_alert_on = (
+            ("Power Unit", "Soft-power control failure"),
+            ("Power Unit", "Failure detected"),
+            ("Power Unit", "Predictive failure"),
+            ("Event Logging Disabled", "Log full"),
+            ("Event Logging Disabled", "Log almost full"),
+            ("System Event", "Undetermined system hardware failure"),
+            ("Cable/Interconnect", "Config Error"),
+        )
 
-    IPMI_SENSORS = (
-        "Redundancy State",
-        "Temperature",
-        "Voltage",
-        "Current",
-        "Fan",
-        "Physical Security",
-        "Platform Security",
-        "Processor",
-        "Power Supply",
-        "Memory",
-        "System Firmware Error",
-        "Critical Interrupt",
-        "Management Subsystem Health",
-        "Battery",
-    )
+        sensor_events_to_ignore = (
+            ("Redundancy State", "Fully Redundant"),
+            ("Processor", "Presence detected"),
+            ("Power Supply", "Presence detected"),
+            ("Power Supply", "Fully Redundant"),
+        )
+        return sensor_types, sensor_events_to_alert_on, sensor_events_to_ignore
 
-    IPMI_EVENTS_WHITELIST = (
-        ("Power Unit", "Soft-power control failure"),
-        ("Power Unit", "Failure detected"),
-        ("Power Unit", "Predictive failure"),
-        ("Event Logging Disabled", "Log full"),
-        ("Event Logging Disabled", "Log almost full"),
-        ("System Event", "Undetermined system hardware failure"),
-        ("Cable/Interconnect", "Config Error"),
-    )
+    async def produce_sel_elist_alerts(self):
+        stypes, do_alert, ignore = await self.get_sensor_values()
+        records = []
+        for i in (await (await self.middleware.call("ipmi.sel.elist")).wait()):
+            found_alert1 = i["type"].startswith(stypes)
+            found_alert2 = any(i["type"].startswith(s) and i["event"] == e for s, e in do_alert)
+            ignore_alert = any(i["type"].startswith(s) and i["event"] == e for s, e in ignore)
+            if (found_alert1 or found_alert2) and not ignore_alert:
+                try:
+                    i.update({"datetime": datetime.strptime(f"{i['date']}{i['time']}", "%b-%d-%Y%H:%M:%S")})
+                except ValueError:
+                    # no guarantee of the format that is used in the ipmi sel
+                    continue
+                else:
+                    records.append(i)
 
-    IPMI_EVENTS_BLACKLIST = (
-        ("Redundancy State", "Fully Redundant"),
-        ("Processor", "Presence detected"),
-        ("Power Supply", "Presence detected"),
-        ("Power Supply", "Fully Redundant"),
-    )
-
-    async def check(self):
-        if not await self.middleware.run_in_thread(has_ipmi):
-            return
-
-        return await self._produce_alerts_for_ipmitool_output(await ipmitool(["-c", "sel", "elist"]))
-
-    async def _produce_alerts_for_ipmitool_output(self, output):
         alerts = []
-
-        records = parse_ipmitool_output(output)
-
-        records = [
-            record for record in records
-            if (
-                (
-                    any(record.sensor.startswith(sensor)
-                        for sensor in self.IPMI_SENSORS) or
-                    any(record.sensor.startswith(sensor) and record.event == event
-                        for sensor, event in self.IPMI_EVENTS_WHITELIST)
-                ) and
-                not any(record.sensor.startswith(sensor) and record.event == event
-                        for sensor, event in self.IPMI_EVENTS_BLACKLIST)
-            )
-        ]
-
         if records:
             if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
                 dismissed_datetime = (
@@ -142,56 +92,48 @@ class IPMISELAlertSource(AlertSource):
                 )
             else:
                 # Prevent notifying about existing alerts on first install/upgrade
-                dismissed_datetime = max(record.datetime for record in records)
+                dismissed_datetime = max(record["datetime"] for record in records)
                 await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, dismissed_datetime)
 
-            for record in records:
-                if record.datetime <= dismissed_datetime:
-                    continue
-
-                args = dict(record._asdict())
-                args.pop("id")
-                args.pop("datetime")
-
+            for record in filter(lambda x: x["datetime"] > dismissed_datetime, records[:]):
+                record.pop("id")
+                dt = record.pop("datetime")
                 alerts.append(Alert(
                     IPMISELAlertClass,
-                    args,
-                    key=[args, record.datetime.isoformat()],
-                    datetime=record.datetime,
-                ))
+                    {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
+                    key=[record, dt.isoformat()], datetime=dt)
+                )
 
         return alerts
 
+    async def produce_sel_low_space_alert(self):
+        info = (await (await self.middleware.call("ipmi.sel.info")).wait())
+        free_bytes = alloc_tot = alloc_us = None
+        if (free_bytes := info.get("free_space_remaining")) is not None:
+            free_bytes = free_bytes.split(" ", 1)[0]
+            if (alloc_tot := info.get("number_of_possible_allocation_units")) is not None:
+                if (alloc_us := info.get("allocation_unit_size")) is not None:
+                    alloc_us = alloc_us.split(" ", 1)[0]
 
-class IPMISELSpaceLeftAlertClass(AlertClass):
-    category = AlertCategory.HARDWARE
-    level = AlertLevel.WARNING
-    title = "IPMI System Event Log Low Space Left"
-    text = "IPMI System Event Log low space left: %(free)s (%(used)s used)."
+        alert = None
+        upper_threshold = 90  # percent
+        if all((i is not None and i.isdigit()) for i in (free_bytes, alloc_tot, alloc_us)):
+            free_bytes = int(free_bytes)
+            total_bytes_avail = int(alloc_us) * int(alloc_tot)
+            used_bytes = total_bytes_avail - free_bytes
+            if (used_bytes / 100) > upper_threshold:
+                alert = Alert(
+                    IPMISELSpaceLeftAlertClass,
+                    {"free": f"{free_bytes} bytes free", "used": f"{used_bytes} bytes used"},
+                    key=None,
+                )
 
-
-class IPMISELSpaceLeftAlertSource(AlertSource):
-    schedule = IntervalSchedule(timedelta(minutes=5))
+        return alert
 
     async def check(self):
-        if not await self.middleware.run_in_thread(has_ipmi):
-            return
+        alerts = []
+        alerts.extend(await self.produce_sel_elist_alerts())
+        if (low_space_alert := await self.produce_sel_low_space_alert()) is not None:
+            alerts.append(low_space_alert)
 
-        return self._produce_alert_for_ipmitool_output(await ipmitool(["sel", "info"]))
-
-    def _produce_alert_for_ipmitool_output(self, output):
-        sel_information = parse_sel_information(output)
-        try:
-            percent_used = int(sel_information["Percent Used"].rstrip("%"))
-        except ValueError:
-            return
-
-        if percent_used > 90:
-            return Alert(
-                IPMISELSpaceLeftAlertClass,
-                {
-                    "free": sel_information["Free Space"],
-                    "used": sel_information["Percent Used"],
-                },
-                key=None,
-            )
+        return alerts
