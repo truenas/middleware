@@ -28,4 +28,6 @@ PIP_PACKAGES=()
 chmod +x /usr/bin/apt*
 apt update
 apt install -y "${PACKAGES[@]}"
-pip install --break-system-packages "${PIP_PACKAGES[@]}"
+if [ "${#PIP_PACKAGES[@]}" -gt 0 ]; then
+    pip install --break-system-packages "${PIP_PACKAGES[@]}"
+fi
