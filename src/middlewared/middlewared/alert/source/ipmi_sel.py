@@ -8,16 +8,7 @@ class IPMISELAlertClass(AlertClass, DismissableAlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI System Event"
-
-    @classmethod
-    def format(cls, args):
-        text = "%(sensor)s %(direction)s %(event)s"
-        if args["verbose"] is not None:
-            text += ": %(verbose)s."
-        else:
-            text += "."
-
-        return text % args
+    text = "Sensor: '%(name)s' had an '%(event_direction)s' (%(event)s)"
 
     async def dismiss(self, alerts, alert):
         datetimes = [a.datetime for a in alerts if a.datetime <= alert.datetime]
@@ -34,7 +25,7 @@ class IPMISELSpaceLeftAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = "IPMI System Event Log Low Space Left"
-    text = "IPMI System Event Log low space left: %(free)s (%(used)s used)."
+    text = "IPMI System Event Log low space left: %(free)s (%(used)s)."
 
 
 class IPMISELAlertSource(AlertSource):
@@ -107,7 +98,11 @@ class IPMISELAlertSource(AlertSource):
             for record in filter(lambda x: x["datetime"] > dismissed_datetime, records[:]):
                 record.pop("id")
                 dt = record.pop("datetime")
-                alerts.append(Alert(IPMISELAlertClass, record, key=[record, dt.isoformat()], datetime=dt))
+                alerts.append(Alert(
+                    IPMISELAlertClass,
+                    {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
+                    key=[record, dt.isoformat()], datetime=dt)
+                )
 
         return alerts
 
