@@ -10,8 +10,8 @@
 % if network_config['hosts']:
 ${network_config['hosts']}
 % endif
-127.0.0.1	localhost
 127.0.0.1	${hostname}.${domain_name} ${hostname}
+127.0.0.1	localhost
 
 # The following lines are desirable for IPv6 capable hosts
 ::1	localhost ip6-localhost ip6-loopback
