@@ -40,6 +40,7 @@ class CatalogService(Service):
         Str('latest_human_version', required=True, null=True),
         Str('last_update', required=True, null=True),
         Str('icon_url', required=True, null=True),
+        Str('home', required=True),
     ))
     def get_item_details(self, item_name, options):
         """
