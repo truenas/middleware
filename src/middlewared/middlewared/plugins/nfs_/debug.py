@@ -6,7 +6,7 @@ import os
 import enum
 
 
-class NFSDBG(enum.Flag):
+class NFSDBG(enum.Enum):
     # include/uapi/linux/nfs_fs.h
     NONE = 0x0000
     VFS = 0x0001
