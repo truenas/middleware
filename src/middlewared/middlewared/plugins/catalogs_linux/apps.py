@@ -76,3 +76,25 @@ class AppService(Service):
         Retrieve list of valid categories which have associated applications.
         """
         return sorted(list(await self.middleware.call('catalog.retrieve_mapped_categories')))
+
+    @accepts(Str('app_name'), Str('catalog'), Str('train'))
+    @returns(List(items=[Ref('available_apps')]))
+    def similar(self, app_name, catalog, train):
+        """
+        Retrieve applications which are similar to `app_name`.
+        """
+        available_apps = self.available()
+        app = filter_list(
+            available_apps, [['name', '=', app_name], ['catalog', '=', catalog], ['train', '=', train]], {'get': True}
+        )
+        similar_apps = []
+        for to_check_app in available_apps:
+            if all(to_check_app[k] == app[k] for k in ('name', 'catalog', 'train')):
+                continue
+
+            for key in ('categories', 'tags'):
+                if set(app[key]).intersection(to_check_app[key]):
+                    similar_apps.append(to_check_app)
+                    break
+
+        return similar_apps
