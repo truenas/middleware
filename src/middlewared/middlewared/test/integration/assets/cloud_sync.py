@@ -1,7 +1,7 @@
 import contextlib
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.s3 import s3_server
+from middlewared.test.integration.assets.ftp import anonymous_ftp_server
 from middlewared.test.integration.utils import call
 
 
@@ -43,38 +43,32 @@ def task(data):
 
 
 @contextlib.contextmanager
-def local_s3_credential(credential_params=None):
-    credential_params = credential_params or {}
-
-    with dataset("cloudsync_remote") as remote_dataset:
-        with s3_server(remote_dataset) as s3:
-            with credential({
-                "provider": "S3",
-                "attributes": {
-                    "access_key_id": s3.access_key,
-                    "secret_access_key": s3.secret_key,
-                    "endpoint": "http://localhost:9000",
-                    "skip_region": True,
-                    **credential_params,
-                },
-            }) as c:
-                yield c
+def local_ftp_credential():
+    with anonymous_ftp_server(dataset_name="cloudsync_remote") as ftp:
+        with credential({
+            "provider": "FTP",
+            "attributes": {
+                "host": "localhost",
+                "port": 21,
+                "user": ftp.username,
+                "pass": ftp.password,
+            },
+        }) as c:
+            yield c
 
 
 @contextlib.contextmanager
-def local_s3_task(params=None, credential_params=None):
+def local_ftp_task(params=None):
     params = params or {}
-    credential_params = credential_params or {}
 
     with dataset("cloudsync_local") as local_dataset:
-        with local_s3_credential(credential_params) as c:
+        with local_ftp_credential() as c:
             with task({
                 "direction": "PUSH",
                 "transfer_mode": "COPY",
                 "path": f"/mnt/{local_dataset}",
                 "credentials": c["id"],
                 "attributes": {
-                    "bucket": "bucket",
                     "folder": "",
                 },
                 **params,

@@ -62,11 +62,6 @@ class CertificateChecksAlertSource(AlertSource):
                 'type': _type,
             },
             {
-                'id': (await self.middleware.call('s3.config'))['certificate'],
-                'service': 'S3',
-                'type': _type,
-            },
-            {
                 'id': (await self.middleware.call('webdav.config'))['certssl'],
                 'service': 'Webdav',
                 'type': _type,

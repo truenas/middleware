@@ -288,7 +288,6 @@ def test_14_verify_sysds_can_be_moved_while_services_are_running(request):
     depends(request, ["second_pool"])
     services = {i['service']: i for i in GET('/service').json()}
     services_list = list(services.keys())
-    services_list.remove('s3')
     for service in services_list:
         results = POST("/service/start/", {"service": service})
         assert results.status_code == 200, results.text

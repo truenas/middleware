@@ -32,7 +32,6 @@ class PoolDatasetService(Service):
 
         check_services = {
             'kubernetes': 'Applications',
-            's3': 'S3',
             **services
         }
 

@@ -22,7 +22,6 @@ disable nmbd.service
 disable nfs*
 disable rsync.service
 disable nscd.service
-disable minio.service
 disable snmpd.service
 disable snmp-agent.service
 disable ssh*

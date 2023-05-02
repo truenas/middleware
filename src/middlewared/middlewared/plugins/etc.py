@@ -156,9 +156,6 @@ class EtcService(Service):
         'sysctl': [
             {'type': 'mako', 'path': 'sysctl.d/tunables.conf'},
         ],
-        's3': [
-            {'type': 'py', 'path': 'local/minio/configure', 'checkpoint': 'pool_import'},
-        ],
         'smartd': [
             {'type': 'mako', 'path': 'default/smartmontools'},
             {'type': 'py', 'path': 'smartd'},
