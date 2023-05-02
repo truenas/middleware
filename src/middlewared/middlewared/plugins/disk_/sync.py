@@ -2,7 +2,7 @@ import re
 import errno
 from datetime import datetime, timedelta
 
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
 from middlewared.service_exception import CallError
 
@@ -113,9 +113,12 @@ class DiskService(Service, ServiceChangeMixin):
         return f'{{devicename}}{name}'
 
     @private
-    @accepts()
+    @accepts(Dict(
+        'options',
+        Bool('zfs_guid', default=False),
+    ))
     @job(lock='disk.sync_all')
-    def sync_all(self, job):
+    def sync_all(self, job, opts):
         """
         Synchronize all disks with the cache in database.
         """
@@ -252,6 +255,10 @@ class DiskService(Service, ServiceChangeMixin):
                 self.middleware.send_event('disk.query', 'CHANGED', id=change, fields=disks[change])
             for delete in deleted:
                 self.middleware.send_event('disk.query', 'REMOVED', id=delete)
+
+        if opts['zfs_guid']:
+            job.set_progress(95, 'Synchronizing ZFS GUIDs')
+            self.middleware.call_sync('disk.sync_all_zfs_guid')
 
         if licensed and status == 'MASTER':
             job.set_progress(96, 'Synchronizing database to standby controller')
