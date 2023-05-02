@@ -420,9 +420,9 @@ class EnclosureService(Service):
                     #  it could be cabled incorrectly which means that /dev/ses3 is actually
                     #  the first 24 drives)
                     orig_name = orig_encs[dev_ses_num]["name"]
-                    if 'eDrawer4048S1' in orig_name:
+                    if "eDrawer4048S1" in orig_name:
                         dev_ses_num = 2
-                    elif 'eDrawer4048S2' in orig_name:
+                    elif "eDrawer4048S2" in orig_name:
                         dev_ses_num = 3
 
                 orig_slot = orig_encs[dev_ses_num]["elements"]["Array Device Slot"][mapping.slot]
