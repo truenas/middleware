@@ -119,8 +119,7 @@ class EtcService(Service):
                 {'method': 'nfs.config'},
             ],
             'entries': [
-                {'type': 'mako', 'path': 'default/nfs-common'},
-                {'type': 'mako', 'path': 'default/nfs-kernel-server'},
+                {'type': 'mako', 'path': 'nfs.conf.d/local.conf'},
                 {'type': 'mako', 'path': 'default/rpcbind'},
                 {'type': 'mako', 'path': 'idmapd.conf'},
                 {'type': 'mako', 'path': 'exports', 'checkpoint': 'interface_sync'},
