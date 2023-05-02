@@ -107,7 +107,7 @@ class ActiveDirectoryService(Service):
                 SRV.DOMAINCONTROLLER.name,
                 ad['site'],
                 2,
-                ad['timeout'],
+                ad['dns_timeout'],
                 ad['verbose_logging']
             )
             if len(res) == 0:
