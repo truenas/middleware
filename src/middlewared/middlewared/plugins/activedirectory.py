@@ -682,7 +682,7 @@ class ActiveDirectoryService(ConfigService):
 
         if not smb['workgroup'] or smb['workgroup'] == 'WORKGROUP':
             netbios_domain_name = dc_info['Pre-Win2k Domain']
-            await self.middleware.call('datastore.update', 'services.cifs', {'cifs_srv_workgroup': netbios_domain_name})
+            await self.middleware.call('datastore.update', 'services.cifs', 1, {'cifs_srv_workgroup': netbios_domain_name})
 
         await self.middleware.call('etc.generate', 'smb')
 
@@ -1267,7 +1267,7 @@ class ActiveDirectoryService(ConfigService):
         fails if there is more than a 5 minute time difference between the AD domain and the member server.
         """
         ntp_servers = await self.middleware.call('system.ntpserver.query')
-        if len(ntp_servers) != 3 or filter_list(ntp_servers, [['freebsd.pool.ntp.org', 'in', 'address']], {'count': True}) != 3:
+        if len(ntp_servers) != 3 or filter_list(ntp_servers, [["address", "$", "freebsd.pool.ntp.org"]], {'count': True}) != 3:
             return
 
         try:
