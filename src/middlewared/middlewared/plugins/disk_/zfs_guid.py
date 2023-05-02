@@ -83,7 +83,10 @@ class DiskService(Service):
             guid = disk_to_guid.get(disk["devname"])
             if guid is not None and guid != disk["zfs_guid"]:
                 if not disk["expiretime"]:
-                    self.logger.debug("Setting disk %r zfs_guid %r", disk["identifier"], guid)
+                    self.logger.debug(
+                        "Setting disk %r (%r) zfs_guid %r",
+                        disk["identifier"], disk["devname"], guid,
+                    )
                     events.add(disk["identifier"])
                     await self.middleware.call(
                         "datastore.update", "storage.disk", disk["identifier"],
@@ -92,7 +95,10 @@ class DiskService(Service):
             elif disk["zfs_guid"]:
                 devname = disk_to_guid.inv.get(disk["zfs_guid"])
                 if devname is not None and devname != disk["devname"]:
-                    self.logger.debug("Removing disk %r zfs_guid as %r has it", disk["identifier"], devname)
+                    self.logger.debug(
+                        "Removing disk %r (%r) zfs_guid %r as %r has it",
+                        disk["identifier"], disk["devname"], disk["zfs_guid"], devname,
+                    )
                     events.add(disk["identifier"])
                     await self.middleware.call(
                         "datastore.update", "storage.disk", disk["identifier"],
