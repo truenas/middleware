@@ -9,8 +9,6 @@ from collections import defaultdict
 from datetime import datetime
 
 from middlewared.service import Service
-from middlewared.utils import osc
-
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 
@@ -114,9 +112,7 @@ class UsageService(Service):
         usage_stats = {}
         for func in filter(
             lambda f: (
-                f.startswith('gather_') and callable(getattr(self, f)) and (
-                    not f.endswith(('_freebsd', '_linux')) or f.rsplit('_', 1)[-1].upper() == osc.SYSTEM
-                ) and (not restrict_usage or f in restrict_usage)
+                f.startswith('gather_') and callable(getattr(self, f)) and (not restrict_usage or f in restrict_usage)
             ),
             dir(self)
         ):
@@ -251,7 +247,7 @@ class UsageService(Service):
             }
         }
 
-    async def gather_applications_linux(self, context):
+    async def gather_applications(self, context):
         # We want to retrieve following information
         # 1) No of installed chart releases
         # 2) catalog items with versions installed
@@ -391,19 +387,6 @@ class UsageService(Service):
                 'zvols': context['total_zvols'],
                 'datasets': context['total_datasets'],
             }]
-        }
-
-    async def gather_plugins_freebsd(self, context):
-        try:
-            plugins = await self.middleware.call('plugin.query')
-        except Exception:
-            plugins = []
-
-        return {
-            'plugins': [
-                {'name': p['plugin'], 'version': p['version']}
-                for p in plugins
-            ]
         }
 
     async def gather_pools(self, context):
