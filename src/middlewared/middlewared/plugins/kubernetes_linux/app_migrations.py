@@ -9,6 +9,7 @@ from catalog_validation.schema.migration_schema import APP_MIGRATION_SCHEMA
 from middlewared.plugins.catalogs_linux.update import OFFICIAL_LABEL
 from middlewared.plugins.chart_releases_linux.utils import get_namespace
 from middlewared.service import Service
+from middlewared.utils.python import get_middlewared_dir
 
 
 MIGRATION_MANIFEST_SCHEMA = {
@@ -95,7 +96,8 @@ class KubernetesAppMigrationsService(Service):
 
     async def apply_migration(self, catalog_label, migrations):
         apps = collections.defaultdict(list)
-        for chart_release in await self.middleware.call('chart.release.query'):
+        chart_releases = await self.middleware.call('chart.release.query')
+        for chart_release in chart_releases:
             apps[(chart_release['chart_metadata']['name'], chart_release['catalog_train'])].append(chart_release['id'])
 
         for migration in migrations:
@@ -107,6 +109,15 @@ class KubernetesAppMigrationsService(Service):
                         self.logger.error(
                             'Failed to migrate %r application to %r train in %r catalog',
                             update_app, migration['new_train'], catalog_label, exc_info=True,
+                        )
+            elif migration['action'] == 'rename_catalog':
+                for update_app in filter(lambda app: app['catalog'] == migration['old_catalog'], chart_releases):
+                    try:
+                        await self.move_app_to_different_catalog(update_app['name'], migration['new_catalog'])
+                    except Exception:
+                        self.logger.error(
+                            'Failed to migrate %r application to %r catalog',
+                            update_app, migration['new_catalog'], exc_info=True,
                         )
 
     async def move_app(self, app_name, new_train):
@@ -120,10 +131,21 @@ class KubernetesAppMigrationsService(Service):
             }
         })
 
+    async def move_app_to_different_catalog(self, app_name, new_catalog_name):
+        await self.middleware.call('k8s.namespace.update', get_namespace(app_name), {
+            'body': {
+                'metadata': {
+                    'labels': {
+                        'catalog': new_catalog_name,
+                    },
+                }
+            }
+        })
+
     def load_migrations(self, catalog):
+        migrations = self.official_migrations() if catalog['label'] == OFFICIAL_LABEL else {}
         migrations_path = os.path.join(catalog['location'], '.migrations')
         if os.path.isdir(migrations_path):
-            migrations = {}
             for migration in sorted(os.listdir(migrations_path)):
                 try:
                     with open(os.path.join(migrations_path, migration), 'r') as f:
@@ -143,7 +165,21 @@ class KubernetesAppMigrationsService(Service):
 
             return migrations
         else:
-            return {}
+            return migrations
+
+    def official_migrations(self):
+        migrations = {}
+        for migration in filter(
+            lambda name: name.endswith('.json'),
+            sorted(os.listdir(os.path.join(get_middlewared_dir(), 'plugins/kubernetes_linux/app_migrations')))
+        ):
+            with open(
+                os.path.join(get_middlewared_dir(), 'plugins/kubernetes_linux/app_migrations', migration), 'r'
+            ) as f:
+                data = json.loads(f.read())
+            migrations[migration] = data
+
+        return migrations
 
     def update_migrations(self, applied_migrations):
         with open(self.migration_file_path(), 'w') as f:
