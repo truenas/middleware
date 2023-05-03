@@ -6,7 +6,6 @@ import subprocess
 import time
 
 from middlewared.service import CallError, private, Service
-from middlewared.utils import osc
 from middlewared.utils.size import format_size
 
 logger = logging.getLogger(__name__)
@@ -27,12 +26,15 @@ class UpdateService(Service):
 
         for file, checksum in manifest["checksums"].items():
             progress_callback(0, f"Verifying {file}")
-            if osc.IS_FREEBSD:
-                our_checksum = subprocess.run(["sha1", os.path.join(mounted, file)], **run_kw).stdout.split()[-1]
-            else:
-                our_checksum = subprocess.run(["sha1sum", os.path.join(mounted, file)], **run_kw).stdout.split()[0]
+            our_checksum = subprocess.run(["sha1sum", os.path.join(mounted, file)], **run_kw).stdout.split()[0]
             if our_checksum != checksum:
                 raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
+
+        self._execute_truenas_install(mounted, {
+            "json": True,
+            "old_root": "/",
+            "precheck": True,
+        }, progress_callback)
 
         command = {
             "disks": self.middleware.call_sync("boot.get_disks"),
@@ -43,11 +45,11 @@ class UpdateService(Service):
             **options,
         }
 
-        if osc.IS_FREEBSD:
-            command["devices"] = self.middleware.call_sync("zfs.pool.get_devices", boot_pool_name)
+        self._execute_truenas_install(mounted, command, progress_callback)
 
+    def _execute_truenas_install(self, cwd, command, progress_callback):
         p = subprocess.Popen(
-            ["python3", "-m", "truenas_install"], cwd=mounted, stdin=subprocess.PIPE,
+            ["python3", "-m", "truenas_install"], cwd=cwd, stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding="utf-8", errors="ignore",
         )
         p.stdin.write(json.dumps(command))
