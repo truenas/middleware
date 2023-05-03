@@ -29,6 +29,7 @@ jobs:
 
       - name: Deploy
         run: |
+          ./src/freenas/usr/bin/install-dev-tools
           cd src/middlewared ; make reinstall_container
           cp -a /__w/middleware/middleware/src/middlewared/middlewared/pytest /usr/local/lib/python3.11/dist-packages/middlewared/
                
