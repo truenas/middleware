@@ -1,5 +1,5 @@
 import pytest
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from middlewared.common.smart.smartctl import get_smartctl_args, SMARTCTX
 

@@ -1,4 +1,4 @@
-from mock import ANY, Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from middlewared.plugins.nfs import SharingNFSService
 

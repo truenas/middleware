@@ -1,5 +1,5 @@
 import pytest
-from mock import Mock
+from unittest.mock import Mock
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
