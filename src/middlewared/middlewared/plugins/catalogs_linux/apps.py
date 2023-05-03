@@ -36,6 +36,7 @@ class AppService(Service):
         Str('app_readme', required=True),
         Str('location', required=True),
         Str('healthy_error', required=True, null=True),
+        Str('home', required=True),
         Str('last_update', required=True),
         Str('latest_version', required=True),
         Str('latest_app_version', required=True),

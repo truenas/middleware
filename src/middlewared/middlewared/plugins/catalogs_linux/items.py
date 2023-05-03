@@ -59,6 +59,7 @@ class CatalogService(Service):
                     'description': 'App description here',
                     'maintainers': [],
                     'tags': ['finance', 'crypto', 'blockchain'],
+                    'home': 'https://www.chia.net/',
                 }
             }
         }
