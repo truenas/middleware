@@ -1,6 +1,6 @@
 import pytest
 
-from mock import Mock, patch, mock_open
+from unittest.mock import Mock, patch, mock_open
 
 from middlewared.plugins.ups import UPSService
 

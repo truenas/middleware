@@ -1,5 +1,5 @@
 import pytest
-from mock import Mock
+from unittest.mock import Mock
 
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
