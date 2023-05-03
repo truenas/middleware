@@ -75,19 +75,36 @@ class UsageService(Service):
             )
 
     def get_gather_context(self):
-        datasets = self.middleware.call_sync('zfs.dataset.query')
+        opts = {'extra': {
+            'properties': [
+                'type', 'name', 'available',
+                'used', 'usedbydataset', 'usedbysnapshots',
+                'usedbychildren', 'usedbyrefreservation',
+            ],
+            'snapshots_count': True
+        }}
         context = {
             'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
             'zvols': [],
             'datasets': {},
+            'total_snapshots': 0,
+            'total_datasets': 0,
+            'total_zvols': 0,
         }
-        for ds in datasets:
+        for ds in self.middleware.call_sync('zfs.dataset.query', [], opts):
+            context['total_snapshots'] += ds['snapshot_count']
             if '/' not in ds['id']:
                 context['root_datasets'][ds['id']] = ds
+                context['total_datasets'] += 1
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
+                context['total_zvols'] += 1
+            elif ds['type'] == 'FILESYSTEM':
+                context['total_datasets'] += 1
+
             context['datasets'][ds['id']] = ds
+
         return context
 
     def gather(self, restrict_usage=None):
@@ -363,33 +380,17 @@ class UsageService(Service):
     async def gather_system_version(self, context):
         return {'version': await self.middleware.call('system.version')}
 
-    async def retrieve_system_hash(self):
-        return await self.middleware.call('system.host_id')
-
     async def gather_system(self, context):
-        platform = 'TrueNAS-{}'.format(await self.middleware.call(
-            'system.product_type'
-        ))
-
-        usage_version = 1
-        datasets = await self.middleware.call(
-            'zfs.dataset.query', [('type', '!=', 'VOLUME')], {'count': True}
-        )
-        users = await self.middleware.call(
-            'user.query', [], {'count': True}
-        )
-        snapshots = await self.middleware.call(
-            'zfs.snapshot.query', [], {'count': True}
-        )
-        zvols = await self.middleware.call(
-            'zfs.dataset.query', [('type', '=', 'VOLUME')], {'count': True}
-        )
-
         return {
-            'system_hash': await self.retrieve_system_hash(),
-            'platform': platform,
-            'usage_version': usage_version,
-            'system': [{'users': users, 'snapshots': snapshots, 'zvols': zvols, 'datasets': datasets}]
+            'system_hash': await self.middleware.call('system.host_id'),
+            'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
+            'usage_version': 1,
+            'system': [{
+                'users': await self.middleware.call('user.query', [], {'count': True}),
+                'snapshots': context['total_snapshots'],
+                'zvols': context['total_zvols'],
+                'datasets': context['total_datasets'],
+            }]
         }
 
     async def gather_plugins_freebsd(self, context):
@@ -417,8 +418,7 @@ class UsageService(Service):
             vdevs = 0
             type = 'UNKNOWN'
 
-            pd = context['root_datasets'].get(p['name'])
-            if not pd:
+            if (pd := context['root_datasets'].get(p['name'])) is None:
                 self.logger.error('%r is missing, skipping collection', p['name'])
                 continue
             else:
