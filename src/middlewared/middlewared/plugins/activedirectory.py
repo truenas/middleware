@@ -1332,6 +1332,9 @@ class ActiveDirectoryService(ConfigService):
         if netads.returncode != 0:
             self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
 
+        await self.middleware.call('activedirectory.update', {'enable': False, 'site': None})
+        await self.set_state(DSStatus['DISABLED'])
+
         if smb_ha_mode != 'LEGACY':
             krb_princ = await self.middleware.call(
                 'kerberos.keytab.query',
@@ -1351,7 +1354,6 @@ class ActiveDirectoryService(ConfigService):
             except Exception:
                 self.logger.debug("Failed to remove stale secrets file.", exc_info=True)
 
-        await self.middleware.call('activedirectory.update', {'enable': False, 'site': None})
         if smb_ha_mode == 'LEGACY' and (await self.middleware.call('failover.status')) == 'MASTER':
             try:
                 await self.middleware.call('failover.call_remote', 'activedirectory.leave', [data])
