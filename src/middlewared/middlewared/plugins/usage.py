@@ -311,67 +311,22 @@ class UsageService(Service):
         return output
 
     async def gather_network(self, context):
-        network = context['network']
+        info = {'network': {'bridges': [], 'lags': [], 'phys': [], 'vlans': []}}
+        for i in context['network']:
+            if i['type'] == 'BRIDGE':
+                info['network']['bridges'].append({'members': i['bridge_members'], 'mtu': i['mtu']})
+            elif i['type'] == 'LINK_AGGREGATION':
+                info['network']['lags'].append({'members': i['lag_ports'], 'mtu': i['mtu'], 'type': i['lag_protocol']})
+            elif i['type'] == 'PHYSICAL':
+                info['network']['phys'].append({
+                    'name': i['name'], 'mtu': i['mtu'], 'dhcp': i['ipv4_dhcp'], 'slaac': i['ipv6_auto']
+                })
+            elif i['type'] == 'VLAN':
+                info['network']['vlans'].append({
+                    'mtu': i['mtu'], 'name': i['name'], 'tag': i['vlan_tag'], 'pcp': i['vlan_pcp']
+                })
 
-        async def gather_bridges():
-            bridge_list = []
-            for b in network:
-                if b['type'] == 'BRIDGE':
-                    bridge_list.append(
-                        {
-                            'members': b['bridge_members'],
-                            'mtu': b['mtu'],
-                        }
-                    )
-            return {'bridges': bridge_list}
-
-        async def gather_lags():
-            lag_list = []
-            for i in network:
-                if i['type'] == 'LINK_AGGREGATION':
-                    lag_list.append(
-                        {
-                            'members': i['lag_ports'],
-                            'mtu': i['mtu'],
-                            'type': i['lag_protocol']
-                        }
-                    )
-            return {'lags': lag_list}
-
-        async def gather_physical():
-            phys_list = []
-            for i in network:
-                if i['type'] == 'PHYSICAL':
-                    phys_list.append(
-                        {
-                            'name': i['name'],
-                            'mtu': i['mtu'],
-                            'dhcp': i['ipv4_dhcp'],
-                            'slaac': i['ipv6_auto']
-                        }
-                    )
-            return {'phys': phys_list}
-
-        async def gather_vlans():
-            vlan_list = []
-            for v in network:
-                if v['type'] == 'VLAN':
-                    vlan_list.append(
-                        {
-                            'mtu': v['mtu'],
-                            'name': v['name'],
-                            'tag': v['vlan_tag'],
-                            'pcp': v['vlan_pcp']
-                        }
-                    )
-            return {'vlans': vlan_list}
-
-        bridges = await gather_bridges()
-        lags = await gather_lags()
-        phys = await gather_physical()
-        vlans = await gather_vlans()
-
-        return {'network': {**bridges, **lags, **phys, **vlans}}
+        return info
 
     async def gather_system_version(self, context):
         return {'version': await self.middleware.call('system.version')}
