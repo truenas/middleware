@@ -106,6 +106,9 @@ class ChartReleaseService(Service):
             self.middleware.send_event(
                 'chart.release.query', 'CHANGED', id=name, fields=cached_chart_release['data']
             )
+            self.middleware.send_event(
+                'chart.release.events', 'CHANGED', id=name, fields={'events': await self.events(name)}
+            )
 
     @private
     async def poll_chart_release_status(self, name):
@@ -133,5 +136,6 @@ async def chart_release_event(middleware, event_type, args):
 
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
+    middleware.event_register('chart.release.events', 'Application deployment events')
     if await middleware.call('kubernetes.validate_k8s_setup', False):
         middleware.create_task(middleware.call('chart.release.refresh_events_state'))
