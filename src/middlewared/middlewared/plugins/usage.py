@@ -4,11 +4,11 @@ import random
 import aiohttp
 import os
 
-from copy import deepcopy
 from collections import defaultdict
 from datetime import datetime
 
 from middlewared.service import Service
+from middlewared.utils.osc import getmntinfo
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 
@@ -86,6 +86,7 @@ class UsageService(Service):
             'root_datasets': {},
             'total_capacity': 0,
             'datasets_total_size': 0,
+            'datasets_total_size_recursive': 0,
             'zvols_total_size': 0,
             'zvols': [],
             'datasets': {},
@@ -93,6 +94,7 @@ class UsageService(Service):
             'total_datasets': 0,
             'total_zvols': 0,
             'services': [],
+            'mntinfo': getmntinfo(),
         }
         for i in self.middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'}):
             context['services'].append({'name': i['service'], 'enabled': i['enable']})
@@ -113,6 +115,7 @@ class UsageService(Service):
             elif ds['type'] == 'FILESYSTEM':
                 context['total_datasets'] += 1
 
+            context['datasets_total_size_recursive'] += ds['properties']['used']['parsed']
             context['datasets'][ds['id']] = ds
 
         return context
@@ -141,48 +144,47 @@ class UsageService(Service):
         return {'total_capacity': context['total_capacity']}
 
     def gather_backup_data(self, context):
-        backed = {
-            'cloudsync': 0,
-            'rsynctask': 0,
-            'zfs_replication': 0,
-            'total_size': 0,
-        }
-        datasets_data = context['datasets']
-        datasets = deepcopy(datasets_data)
+        backed = {'cloudsync': 0, 'rsynctask': 0, 'zfs_replication': 0, 'total_size': 0}
+        filters = [['enabled', '=', True], ['direction', '=', 'PUSH'], ['locked', '=', False]]
+        tasks_found = {'cloudsync': set(), 'rsynctask': set()}
         for namespace in ('cloudsync', 'rsynctask'):
-            task_datasets = deepcopy(datasets_data)
-            for task in self.middleware.call_sync(
-                f'{namespace}.query', [['enabled', '=', True], ['direction', '=', 'PUSH'], ['locked', '=', False]]
-            ):
+            opposite_namespace = 'rsynctask' if namespace == 'cloudsync' else 'cloudsync'
+            for task in self.middleware.call_sync(f'{namespace}.query', filters):
                 try:
-                    task_ds = self.middleware.call_sync('zfs.dataset.path_to_dataset', task['path'])
+                    task_ds = self.middleware.call_sync('zfs.dataset.path_to_dataset', task['path'], context['mntinfo'])
                 except Exception:
-                    self.logger.error('Unable to retrieve dataset of path %r', task['path'], exc_info=True)
-                    task_ds = None
+                    self.logger.error('Failed mapping path %r to dataset', task['path'], exc_info=True)
+                else:
+                    if (task_ds and task_ds in context['datasets']) and (task_ds not in tasks_found[namespace]):
+                        # dataset for the task was found, and exists and hasn't already been calculated
+                        size = context['datasets'][task_ds]['properties']['used']['parsed']
+                        backed[namespace] += size
+                        if task_ds not in tasks_found[opposite_namespace]:
+                            # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
+                            # so we don't want to add to the total backed up size because it will report
+                            # an inflated number. Instead we only add to the total backed up size when it's
+                            # a dataset only being backed up by a singular cloud/rsync/replication task
+                            backed['total_size'] += size
 
-                if task_ds:
-                    task_ds_data = task_datasets.pop(task_ds, None)
-                    if task_ds_data:
-                        backed[namespace] += task_ds_data['properties']['used']['parsed']
-                    ds = datasets.pop(task_ds, None)
-                    if ds:
-                        backed['total_size'] += ds['properties']['used']['parsed']
+                        tasks_found[namespace].add(task_ds)
 
-        repl_datasets = deepcopy(datasets_data)
-        for task in self.middleware.call_sync(
-            'replication.query', [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
-        ):
-            for source in filter(lambda s: s in repl_datasets, task['source_datasets']):
-                r_ds = repl_datasets.pop(source, None)
-                if r_ds:
-                    backed['zfs_replication'] += r_ds['properties']['used']['parsed']
-                ds = datasets.pop(source, None)
-                if ds:
-                    backed['total_size'] += ds['properties']['used']['parsed']
+        repls_found = set()
+        filters = [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
+        for task in self.middleware.call_sync('replication.query', filters):
+            for source in filter(lambda s: s in context['datasets'] and s not in repls_found, task['source_datasets']):
+                size = context['datasets'][source]['properties']['used']['parsed']
+                backed['zfs_replication'] += size
+                repls_found.add(source)
+                if source not in tasks_found['cloudsync'] and source not in tasks_found['rsynctask']:
+                    # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
+                    # so we don't want to add to the total backed up size because it will report
+                    # an inflated number. Instead we only add to the total backed up size when it's
+                    # a dataset only being backed up by a singular cloud/rsync/replication task
+                    backed['total_size'] += size
 
         return {
             'data_backup_stats': backed,
-            'data_without_backup_size': sum([ds['properties']['used']['parsed'] for ds in datasets.values()], start=0)
+            'data_without_backup_size': context['datasets_total_size_recursive'] - backed['total_size']
         }
 
     def gather_filesystem_usage(self, context):
