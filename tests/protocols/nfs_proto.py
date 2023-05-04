@@ -1,6 +1,4 @@
 import sys
-import enum
-import subprocess
 from functions import SSH_TEST
 from platform import system
 
@@ -81,7 +79,6 @@ class SSH_NFS(NFS):
         super().__init__(hostname, path, **kwargs)
         self._mount_user = kwargs.get('mount_user', self._user)
         self._mount_password = kwargs.get('mount_password', self._password)
-
 
     def acl_from_text(self, text):
         out = []
@@ -227,10 +224,10 @@ class SSH_NFS(NFS):
 
     def mkdir(self, path):
         mkdir = SSH_TEST(
-            f"mkdir {self._localpath}/{path}",
+            f"mkdir -p {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if mkdir['result'] == False:
+        if mkdir['result'] is False:
             raise RuntimeError(mkdir['stderr'])
 
     def rmdir(self, path):
@@ -238,7 +235,7 @@ class SSH_NFS(NFS):
             f"rmdir {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if rmdir['result'] == False:
+        if rmdir['result'] is False:
             raise RuntimeError(rmdir['stderr'])
 
     def ls(self, path):
@@ -246,17 +243,17 @@ class SSH_NFS(NFS):
             f"ls {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if ls['result'] == False:
+        if ls['result'] is False:
             raise RuntimeError(ls['stderr'])
 
         return ls['output']
 
-    def rename(self, src, dst): 
+    def rename(self, src, dst):
         mv = SSH_TEST(
             f"mv {self._localpath}/{src} {self._localpath}/{dst}",
             self._user, self._password, self._ip
         )
-        if mv['result'] == False:
+        if mv['result'] is False:
             raise RuntimeError(mv['stderr'])
 
     def unlink(self, path):
@@ -264,7 +261,7 @@ class SSH_NFS(NFS):
             f"rm {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if rm['result'] == False:
+        if rm['result'] is False:
             raise RuntimeError(rm['stderr'])
 
     def getacl(self, path):
@@ -273,7 +270,7 @@ class SSH_NFS(NFS):
             f"nfs4_getfacl {self._localpath}/{path}",
             self._user, self._password, self._ip
         )
-        if getfacl['result'] == False:
+        if getfacl['result'] is False:
             raise RuntimeError(getfacl['stderr'])
 
         return self.acl_from_text(getfacl['output'])
@@ -287,7 +284,7 @@ class SSH_NFS(NFS):
             self._user, self._password, self._ip
         )
 
-        if setfacl['result'] == False:
+        if setfacl['result'] is False:
             raise RuntimeError(setfacl['stderr'])
 
     def getxattr(self, path, xattr_name):
@@ -295,7 +292,7 @@ class SSH_NFS(NFS):
 
         cmd = ['getfattr', '--only-values', '-m', xattr_name, f'{self._localpath}/{path}']
         getxattr = SSH_TEST(' '.join(cmd), self._user, self._password, self._ip)
-        if getxattr['result'] == False:
+        if getxattr['result'] is False:
             raise RuntimeError(getxattr['stderr'])
 
         return getxattr['output']
@@ -305,7 +302,7 @@ class SSH_NFS(NFS):
 
         cmd = ['setfattr', '-n', xattr_name, '-v', value, f'{self._localpath}/{path}']
         setxattr = SSH_TEST(' '.join(cmd), self._user, self._password, self._ip)
-        if setxattr['result'] == False:
+        if setxattr['result'] is False:
             raise RuntimeError(setxattr['stderr'])
 
     def create(self, path, is_dir=False):
@@ -314,7 +311,7 @@ class SSH_NFS(NFS):
             f'{"mkdir" if is_dir else "touch"} {self._localpath}/{path}',
             self._user, self._password, self._ip
         )
-        if create['result'] == False:
+        if create['result'] is False:
             raise RuntimeError(create['stderr'])
 
     def server_side_copy(self, path1, path2):
@@ -340,18 +337,20 @@ class SSH_NFS(NFS):
         cmd.append(f'"{";".join(python_script)}"')
 
         rv = SSH_TEST(' '.join(cmd), self._user, self._password, self._ip)
-        if rv['result'] == False:
+        if rv['result'] is False:
             raise RuntimeError(rv['stderr'])
 
     def mount(self):
-        mkdir = SSH_TEST(f"mkdir {self._localpath}", self._mount_user, self._mount_password, self._ip)
+        mkdir = SSH_TEST(f"mkdir -p {self._localpath}", self._mount_user, self._mount_password, self._ip)
+        if mkdir['result'] is False:
+            raise RuntimeError(mkdir['stderr'])
         mnt_opts = f'vers={self._version}'
         if self._use_kerberos:
-            mnt_opts +=',sec=krb5'
+            mnt_opts += ',sec=krb5'
 
         cmd = ['mount.nfs', '-o', mnt_opts, f'{self._hostname}:{self._path}', self._localpath]
         do_mount = SSH_TEST(" ".join(cmd), self._mount_user, self._mount_password, self._ip)
-        if do_mount['result'] == False:
+        if do_mount['result'] is False:
             raise RuntimeError(do_mount['stderr'])
 
         self._mounted = True
@@ -361,7 +360,7 @@ class SSH_NFS(NFS):
             return
 
         do_umount = SSH_TEST(f"umount -f {self._localpath}", self._mount_user, self._mount_password, self._ip)
-        if do_umount['result'] == False:
+        if do_umount['result'] is False:
             raise RuntimeError(do_umount['stderr'])
 
         self._mounted = False
