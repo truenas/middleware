@@ -393,18 +393,11 @@ class UsageService(Service):
         return {'pools': pool_list, 'total_raw_capacity': total_raw_capacity}
 
     async def gather_services(self, context):
-        services = await self.middleware.call('service.query', [], {'extra': {'include_state': False}})
-        service_list = []
+        services = []
+        for s in await self.middleware.call('service.query', [], {'extra': {'include_state': False}}):
+            services.append({'enabled': s['enable'], 'name': s['service']})
 
-        for s in services:
-            service_list.append(
-                {
-                    'enabled': s['enable'],
-                    'name': s['service']
-                }
-            )
-
-        return {'services': service_list}
+        return {'services': services}
 
     async def gather_sharing(self, context):
         sharing_list = []
