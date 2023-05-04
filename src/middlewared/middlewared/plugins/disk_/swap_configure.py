@@ -23,7 +23,7 @@ class DiskService(Service):
         swap_redundancy = await self.middleware.call('disk.swap_redundancy')
         used_partitions_in_mirror = set()
         create_swap_devices = {}
-        if await self.middleware.call('system.is_ha_capable'):
+        if await self.middleware.call('system.is_ha_capable') or await self.swap_boot_partitions_exist():
             disks = []
         else:
             disks = await self.middleware.call('pool.get_disks')
@@ -31,7 +31,11 @@ class DiskService(Service):
         existing_swap_devices = {'mirrors': [], 'partitions': []}
         mirrors = await self.middleware.call('disk.get_swap_mirrors')
         encrypted_mirrors = {m['encrypted_provider']: m for m in mirrors if m['encrypted_provider']}
-        all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
+        all_partitions = {
+            p['name']: p
+            for disk in disks
+            for p in await self.middleware.call('disk.list_partitions', disk)
+        }
         await self.middleware.call('disk.remove_degraded_mirrors')
 
         for device in await self.middleware.call('disk.get_swap_devices'):
@@ -81,7 +85,7 @@ class DiskService(Service):
             for i in range(int(len(partitions) / swap_redundancy)):
                 if (
                     len(create_swap_devices) + len(existing_swap_devices['mirrors']) +
-                        len(existing_swap_devices['partitions'])
+                    len(existing_swap_devices['partitions'])
                 ) > MIRROR_MAX:
                     break
                 part_list = partitions[0:swap_redundancy]
@@ -208,6 +212,15 @@ class DiskService(Service):
             name = f'swap{i}'
             if name not in used_names:
                 return name
+
+    @private
+    async def swap_boot_partitions_exist(self):
+        valid_swap_part_uuids = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
+        return any([
+            partition['partition_type'] in valid_swap_part_uuids
+            for disk in await self.middleware.call('boot.get_disks')
+            for partition in await self.middleware.call('disk.list_partitions', disk)
+        ])
 
     @private
     async def swap_redundancy(self):
