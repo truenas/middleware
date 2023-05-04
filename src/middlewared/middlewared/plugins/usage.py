@@ -334,20 +334,12 @@ class UsageService(Service):
         }
 
     async def gather_pools(self, context):
-        pools = await self.middleware.call('pool.query')
+        total_raw_capacity = 0  # zpool list -p -o size summed together of all zpools
         pool_list = []
-
-        # zpool list -p -o size summed together of all zpools
-        total_raw_capacity = 0
-        for p in pools:
-            if p['status'] == 'OFFLINE':
-                continue
-
+        for p in filter(lambda x: x['status'] != 'OFFLINE', await self.middleware.call('pool.query')):
             total_raw_capacity += p['size']
-            disks = 0
-            vdevs = 0
-            type = 'UNKNOWN'
-
+            disks = vdevs = 0
+            _type = 'UNKNOWN'
             if (pd := context['root_datasets'].get(p['name'])) is None:
                 self.logger.error('%r is missing, skipping collection', p['name'])
                 continue
@@ -357,27 +349,25 @@ class UsageService(Service):
             for d in p['topology']['data']:
                 if not d.get('path'):
                     vdevs += 1
-                    type = d['type']
+                    _type = d['type']
                     disks += len(d['children'])
                 else:
                     disks += 1
-                    type = 'STRIPE'
+                    _type = 'STRIPE'
 
-            pool_list.append(
-                {
-                    'capacity': pd['used']['parsed'] + pd['available']['parsed'],
-                    'disks': disks,
-                    'encryption': bool(p['encrypt']),
-                    'l2arc': bool(p['topology']['cache']),
-                    'type': type.lower(),
-                    'usedbydataset': pd['usedbydataset']['parsed'],
-                    'usedbysnapshots': pd['usedbysnapshots']['parsed'],
-                    'usedbychildren': pd['usedbychildren']['parsed'],
-                    'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
-                    'vdevs': vdevs if vdevs else disks,
-                    'zil': bool(p['topology']['log'])
-                }
-            )
+            pool_list.append({
+                'capacity': pd['used']['parsed'] + pd['available']['parsed'],
+                'disks': disks,
+                'encryption': bool(p['encrypt']),
+                'l2arc': bool(p['topology']['cache']),
+                'type': _type.lower(),
+                'usedbydataset': pd['usedbydataset']['parsed'],
+                'usedbysnapshots': pd['usedbysnapshots']['parsed'],
+                'usedbychildren': pd['usedbychildren']['parsed'],
+                'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
+                'vdevs': vdevs if vdevs else disks,
+                'zil': bool(p['topology']['log'])
+            })
 
         return {'pools': pool_list, 'total_raw_capacity': total_raw_capacity}
 
