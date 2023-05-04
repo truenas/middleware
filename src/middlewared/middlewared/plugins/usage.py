@@ -407,79 +407,48 @@ class UsageService(Service):
         return {'services': service_list}
 
     async def gather_sharing(self, context):
-        services = ['iscsi', 'nfs', 'smb', 'webdav']
         sharing_list = []
-
-        async def gather_service(service):
-            namespace = f'sharing.{service}' if service != 'iscsi' \
-                else 'iscsi.targetextent'
-            shares = await self.middleware.call(f'{namespace}.query')
-
-            # AUX params wanted?
-            for s in shares:
+        for service in {'iscsi', 'nfs', 'smb', 'webdav'}:
+            service_upper = service.upper()
+            namespace = f'sharing.{service}' if service != 'iscsi' else 'iscsi.targetextent'
+            for s in await self.middleware.call(f'{namespace}.query'):
                 if service == 'smb':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'home': s['home'],
-                            'timemachine': s['timemachine'],
-                            'browsable': s['browsable'],
-                            'recyclebin': s['recyclebin'],
-                            'shadowcopy': s['shadowcopy'],
-                            'guestok': s['guestok'],
-                            'abe': s['abe'],
-                            'acl': s['acl'],
-                            'fsrvp': s['fsrvp'],
-                            'streams': s['streams'],
-                        }
-                    )
+                    sharing_list.append({
+                        'type': service_upper,
+                        'home': s['home'],
+                        'timemachine': s['timemachine'],
+                        'browsable': s['browsable'],
+                        'recyclebin': s['recyclebin'],
+                        'shadowcopy': s['shadowcopy'],
+                        'guestok': s['guestok'],
+                        'abe': s['abe'],
+                        'acl': s['acl'],
+                        'fsrvp': s['fsrvp'],
+                        'streams': s['streams'],
+                    })
                 elif service == 'nfs':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'readonly': s['ro'],
-                            'quiet': s['quiet']
-                        }
-                    )
+                    sharing_list.append({'type': service_upper, 'readonly': s['ro'], 'quiet': s['quiet']})
                 elif service == 'webdav':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'readonly': s['ro'],
-                            'changeperms': s['perm']
-                        }
-                    )
+                    sharing_list.append({'type': service_upper, 'readonly': s['ro'], 'changeperms': s['perm']})
                 elif service == 'iscsi':
-                    target = await self.middleware.call(
-                        'iscsi.target.query', [('id', '=', s['target'])],
-                        {'get': True}
-                    )
-                    extent = await self.middleware.call(
-                        'iscsi.extent.query', [('id', '=', s['extent'])],
-                        {'get': True}
-                    )
-
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'mode': target['mode'],
-                            'groups': target['groups'],
-                            'iscsi_type': extent['type'],
-                            'filesize': extent['filesize'],
-                            'blocksize': extent['blocksize'],
-                            'pblocksize': extent['pblocksize'],
-                            'avail_threshold': extent['avail_threshold'],
-                            'insecure_tpc': extent['insecure_tpc'],
-                            'xen': extent['xen'],
-                            'rpm': extent['rpm'],
-                            'readonly': extent['ro'],
-                            'legacy': extent['vendor'] == 'FreeBSD',
-                            'vendor': extent['vendor'],
-                        }
-                    )
-
-        for s in services:
-            await gather_service(s)
+                    tar = await self.middleware.call('iscsi.target.query', [('id', '=', s['target'])], {'get': True})
+                    ext = await self.middleware.call('iscsi.extent.query', [('id', '=', s['extent'])], {'get': True})
+                    sharing_list.append({
+                        'type': service_upper,
+                        'mode': tar['mode'],
+                        'groups': tar['groups'],
+                        'iscsi_type': ext['type'],
+                        'filesize': ext['filesize'],
+                        'blocksize': ext['blocksize'],
+                        'pblocksize': ext['pblocksize'],
+                        'avail_threshold': ext['avail_threshold'],
+                        'insecure_tpc': ext['insecure_tpc'],
+                        'xen': ext['xen'],
+                        'rpm': ext['rpm'],
+                        'readonly': ext['ro'],
+                        'legacy': ext['vendor'] == 'FreeBSD',
+                        'vendor': ext['vendor'],
+                    })
 
         return {'shares': sharing_list}
 
