@@ -9,18 +9,15 @@ class UsageService(Service):
         private = True
 
     async def firstboot(self):
-        hash = await self.middleware.call('usage.retrieve_system_hash')
-        version = (await self.middleware.call('usage.gather_system_version', {}))['version']
+        _hash = await self.middleware.call('system.host_id')
+        version = await self.middleware.call('system.version')
         retries = self.FAILED_RETRIES
-
         while retries:
             try:
                 await self.middleware.call('usage.submit_stats', {
                     'platform': 'TrueNAS-SCALE',
-                    'system_hash': hash,
-                    'firstboot': [{
-                        'version': version,
-                    }]
+                    'system_hash': _hash,
+                    'firstboot': [{'version': version}]
                 })
             except Exception:
                 retries -= 1
