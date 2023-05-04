@@ -84,6 +84,7 @@ class UsageService(Service):
         context = {
             'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
+            'total_capacity': 0,
             'datasets_total_size': 0,
             'zvols_total_size': 0,
             'zvols': [],
@@ -98,6 +99,9 @@ class UsageService(Service):
                 context['root_datasets'][ds['id']] = ds
                 context['total_datasets'] += 1
                 context['datasets_total_size'] += ds['properties']['used']['parsed']
+                context['total_capacity'] += (
+                    ds['properties']['used']['parsed'] + ds['properties']['available']['parsed']
+                )
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
                 context['total_zvols'] += 1
@@ -130,12 +134,7 @@ class UsageService(Service):
         return usage_stats
 
     def gather_total_capacity(self, context):
-        return {
-            'total_capacity': sum(
-                d['properties']['used']['parsed'] + d['properties']['available']['parsed']
-                for d in context['root_datasets'].values()
-            )
-        }
+        return {'total_capacity': context['total_capacity']}
 
     def gather_backup_data(self, context):
         backed = {
