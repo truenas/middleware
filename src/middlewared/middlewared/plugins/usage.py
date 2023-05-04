@@ -195,13 +195,7 @@ class UsageService(Service):
     async def gather_rsyncmod_stats(self, context):
         return {
             'rsyncmod': {
-                'enabled': (
-                    await self.middleware.call(
-                        'service.query',
-                        [['service', '=', 'rsync']],
-                        {'get': True, 'extra': {'include_state': False}}
-                    )
-                )['enable'],
+                'enabled': [i for i in context['services'] if i['service'] == 'rsync'][0]['enable'],
                 'rsync_modules': await self.middleware.call('rsyncmod.query', [], {'count': True}),
             }
         }
