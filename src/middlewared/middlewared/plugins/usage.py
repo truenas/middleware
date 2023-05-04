@@ -484,47 +484,37 @@ class UsageService(Service):
         return {'shares': sharing_list}
 
     async def gather_vms(self, context):
-        vms = await self.middleware.call('vm.query')
-        vm_list = []
-
-        for v in vms:
-            nics = 0
-            disks = 0
+        vms = []
+        for v in await self.middleware.call('vm.query'):
+            nics = disks = 0
             display_list = []
-
             for d in v['devices']:
                 dtype = d['dtype']
-
                 if dtype == 'NIC':
                     nics += 1
                 elif dtype == 'DISK':
                     disks += 1
                 elif dtype == 'DISPLAY':
                     attrs = d['attributes']
+                    display_list.append({
+                        'wait': attrs.get('wait'),
+                        'resolution': attrs.get('resolution'),
+                        'web': attrs.get('web')
+                    })
 
-                    display_list.append(
-                        {
-                            'wait': attrs.get('wait'),
-                            'resolution': attrs.get('resolution'),
-                            'web': attrs.get('web')
-                        }
-                    )
+            vms.append({
+                'bootloader': v['bootloader'],
+                'memory': v['memory'],
+                'vcpus': v['vcpus'],
+                'autostart': v['autostart'],
+                'time': v['time'],
+                'nics': nics,
+                'disks': disks,
+                'display_devices': len(display_list),
+                'display_devices_configs': display_list
+            })
 
-            vm_list.append(
-                {
-                    'bootloader': v['bootloader'],
-                    'memory': v['memory'],
-                    'vcpus': v['vcpus'],
-                    'autostart': v['autostart'],
-                    'time': v['time'],
-                    'nics': nics,
-                    'disks': disks,
-                    'display_devices': len(display_list),
-                    'display_devices_configs': display_list
-                }
-            )
-
-        return {'vms': vm_list}
+        return {'vms': vms}
 
 
 async def setup(middleware):
