@@ -92,7 +92,11 @@ class UsageService(Service):
             'total_snapshots': 0,
             'total_datasets': 0,
             'total_zvols': 0,
+            'services': [],
         }
+        for i in self.middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'}):
+            context['services'].append({'name': i['service'], 'enabled': i['enable']})
+
         for ds in self.middleware.call_sync('zfs.dataset.query', [], opts):
             context['total_snapshots'] += ds['snapshot_count']
             if '/' not in ds['id']:
@@ -195,7 +199,7 @@ class UsageService(Service):
     async def gather_rsyncmod_stats(self, context):
         return {
             'rsyncmod': {
-                'enabled': [i for i in context['services'] if i['service'] == 'rsync'][0]['enable'],
+                'enabled': [i for i in context['services'] if i['name'] == 'rsync'][0]['enabled'],
                 'rsync_modules': await self.middleware.call('rsyncmod.query', [], {'count': True}),
             }
         }
@@ -372,11 +376,7 @@ class UsageService(Service):
         return {'pools': pool_list, 'total_raw_capacity': total_raw_capacity}
 
     async def gather_services(self, context):
-        services = []
-        for s in await self.middleware.call('service.query', [], {'extra': {'include_state': False}}):
-            services.append({'enabled': s['enable'], 'name': s['service']})
-
-        return {'services': services}
+        return {'services': context['services']}
 
     async def gather_sharing(self, context):
         sharing_list = []
