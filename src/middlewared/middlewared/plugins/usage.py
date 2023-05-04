@@ -84,6 +84,8 @@ class UsageService(Service):
         context = {
             'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
+            'datasets_total_size': 0,
+            'zvols_total_size': 0,
             'zvols': [],
             'datasets': {},
             'total_snapshots': 0,
@@ -95,9 +97,11 @@ class UsageService(Service):
             if '/' not in ds['id']:
                 context['root_datasets'][ds['id']] = ds
                 context['total_datasets'] += 1
+                context['datasets_total_size'] += ds['properties']['used']['parsed']
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
                 context['total_zvols'] += 1
+                context['zvols_total_size'] += ds['properties']['used']['parsed']
             elif ds['type'] == 'FILESYSTEM':
                 context['total_datasets'] += 1
 
@@ -180,16 +184,8 @@ class UsageService(Service):
 
     def gather_filesystem_usage(self, context):
         return {
-            'datasets': {
-                'total_size': sum(
-                    [d['properties']['used']['parsed'] for d in context['root_datasets'].values()], start=0
-                )
-            },
-            'zvols': {
-                'total_size': sum(
-                    [d['properties']['used']['parsed'] for d in context['zvols']], start=0
-                ),
-            },
+            'datasets': {'total_size': context['datasets_total_size']},
+            'zvols': {'total_size': context['zvols_total_size']},
         }
 
     async def gather_ha_stats(self, context):
