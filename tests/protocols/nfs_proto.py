@@ -253,7 +253,7 @@ class SSH_NFS(NFS):
 
     def rename(self, src, dst): 
         mv = SSH_TEST(
-            f"mv {self._localpath}/{path} {self._localpath}/{path}",
+            f"mv {self._localpath}/{src} {self._localpath}/{dst}",
             self._user, self._password, self._ip
         )
         if mv['result'] == False:
