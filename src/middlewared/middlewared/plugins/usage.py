@@ -348,10 +348,13 @@ class UsageService(Service):
         pools = await self.middleware.call('pool.query')
         pool_list = []
 
+        # zpool list -p -o size summed together of all zpools
+        total_raw_capacity = 0
         for p in pools:
             if p['status'] == 'OFFLINE':
                 continue
 
+            total_raw_capacity += p['size']
             disks = 0
             vdevs = 0
             type = 'UNKNOWN'
@@ -374,7 +377,6 @@ class UsageService(Service):
             pool_list.append(
                 {
                     'capacity': pd['used']['parsed'] + pd['available']['parsed'],
-                    'raw_capacity': p['size'],
                     'disks': disks,
                     'encryption': bool(p['encrypt']),
                     'l2arc': bool(p['topology']['cache']),
@@ -388,7 +390,7 @@ class UsageService(Service):
                 }
             )
 
-        return {'pools': pool_list}
+        return {'pools': pool_list, 'total_raw_capacity': total_raw_capacity}
 
     async def gather_services(self, context):
         services = await self.middleware.call('service.query', [], {'extra': {'include_state': False}})
