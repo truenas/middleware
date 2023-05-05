@@ -1,16 +1,3 @@
-# Defaults for kexec initscript
-# sourced by /etc/init.d/kexec and /etc/init.d/kexec-load
-
-# Load a kexec kernel (true/false)
-LOAD_KEXEC=true
-
-# Kernel and initrd image
-KERNEL_IMAGE="/vmlinuz"
-INITRD="/initrd.img"
-
-# If empty, use current /proc/cmdline
-APPEND=""
-
 # Load the default kernel from grub config (true/false)
 # if this is set to false, clean reboots will bypass the
 # grub boot menu which prevents upgrades from working
