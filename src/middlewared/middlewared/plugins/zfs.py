@@ -698,7 +698,7 @@ class ZFSDatasetService(CRUDService):
         if mntinfo is None:
             mntinfo = getmntinfo(st.st_dev)[st.st_dev]
         else:
-            mntinfo = mntinfo(st.st_dev)
+            mntinfo = mntinfo[st.st_dev]
 
         ds_name = mntinfo['mount_source']
         if mntinfo['fs_type'] != 'zfs':
