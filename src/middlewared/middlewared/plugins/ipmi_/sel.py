@@ -37,6 +37,9 @@ class IpmiSelService(Service):
     def elist(self, job, filters, options):
         """Query IPMI System Event Log (SEL) extended list"""
         rv = []
+        if not self.middleware.call_sync('system.dmidecode_info')['has-ipmi']:
+            return rv
+
         job.set_progress(78, 'Enumerating extended event log info')
         for line in get_sel_data('elist'):
             if (values := line.strip().split(',')) and len(values) == 7:
@@ -59,6 +62,9 @@ class IpmiSelService(Service):
     def info(self, job):
         """Query General information about the IPMI System Event Log"""
         rv = {}
+        if not self.middleware.call_sync('system.dmidecode_info')['has-ipmi']:
+            return rv
+
         job.set_progress(78, 'Enumerating general extended event log info')
         for line in get_sel_data('info'):
             if (values := line.strip().split(':')) and len(values) == 2:
@@ -72,6 +78,7 @@ class IpmiSelService(Service):
     @returns()
     @job(lock=SEL_LOCK, lock_queue_size=1)
     def clear(self, job):
-        cp = run(['ipmi-sel', '--clear'], check_output=True)
-        if cp.returncode:
-            raise CallError(cp.stderr.decode().strip() or f'Unexpected failure with returncode: {cp.returncode!r}')
+        if self.middleware.call_sync('system.dmidecode_info')['has-ipmi']:
+            cp = run(['ipmi-sel', '--clear'], check_output=True)
+            if cp.returncode:
+                raise CallError(cp.stderr.decode().strip() or f'Unexpected failure with returncode: {cp.returncode!r}')
