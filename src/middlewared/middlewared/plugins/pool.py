@@ -1044,7 +1044,8 @@ class PoolService(CRUDService):
                     # Use encrypted_provider and not disk because a disk is not a guarantee
                     # to point to correct device if its locked and its not in the system
                     # (e.g. temporarily). See #50291
-                    if disk_name := await self.middleware.call('disk.label_to_disk', prov, False, cache):
+                    provider = prov['encrypted_provider']
+                    if disk_name := await self.middleware.call('disk.label_to_disk', provider, False, cache):
                         for d in filter(lambda x: x['name'] == disk_name, disks_in_db):
                             disk_path = os.path.join('/dev', d['devname'])
                             if await self.middleware.run_in_thread(os.path.exists, disk_path):
