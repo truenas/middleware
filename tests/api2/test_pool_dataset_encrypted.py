@@ -2,7 +2,7 @@ import errno
 
 import pytest
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
@@ -26,3 +26,18 @@ def test_delete_locked_dataset():
         call("filesystem.stat", f"/mnt/{ds}")
 
     assert ve.value.errno == errno.ENOENT
+
+
+def test_unencrypted_dataset_within_encrypted_dataset():
+    with dataset("test", encryption_props()) as ds:
+        with pytest.raises(ValidationErrors) as ve:
+            call("pool.dataset.create", {
+                "name": f"{ds}/child",
+                "encryption": False,
+                "inherit_encryption": False,
+            })
+
+        assert any(
+            "Cannot create an unencrypted dataset within an encrypted dataset" in error.errmsg
+            for error in ve.value.errors
+        ) is True, ve
