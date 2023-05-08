@@ -348,7 +348,7 @@ class KubernetesService(Service):
     async def create_update_k8s_datasets(self, k8s_ds):
         create_props_default = self.k8s_props_default()
         for dataset_name in await self.kubernetes_datasets(k8s_ds):
-            custom_props = self.kubernetes_dataset_custom_props(ds=dataset_name.split('/')[-1])
+            custom_props = self.kubernetes_dataset_custom_props(ds=dataset_name.split('/', 1)[-1])
             # got custom properties, need to re-calculate
             # the update and create props.
             create_props = dict(create_props_default, **custom_props) if custom_props else create_props_default
