@@ -663,7 +663,8 @@ class PoolService(CRUDService):
         if (
             zfs_pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool['name']]])
         ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
-            properties['ashift'] = {'value': "12"}
+            # https://ixsystems.atlassian.net/browse/NAS-112093
+            properties['ashift'] = {'value': '12'}
 
         if properties:
             await self.middleware.call('zfs.pool.update', pool['name'], {'properties': properties})
