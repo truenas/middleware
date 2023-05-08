@@ -579,6 +579,12 @@ class PoolDatasetService(CRUDService):
         if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
 
+        if parent_ds['encrypted'] and data['encryption'] is False and not inherit_encryption_properties:
+            verrors.add(
+                'pool_dataset_create.encryption',
+                'Cannot create an unencrypted dataset within an encrypted dataset.'
+            )
+
         if data['encryption']:
             if inherit_encryption_properties:
                 verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
