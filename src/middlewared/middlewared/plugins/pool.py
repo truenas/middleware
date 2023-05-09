@@ -22,6 +22,7 @@ from collections import defaultdict
 import sysctl
 from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 from middlewared.plugins.disk_.overprovision_base import CanNotBeOverprovisionedException
+from middlewared.plugins.pool_.utils import get_dataset_parents
 from middlewared.plugins.zfs import ZFSSetPropertyError
 from middlewared.schema import (
     accepts, Attribute, Bool, Cron, Dict, EnumMixin, Int, List, Patch, Str, UnixPerm, Any, Ref,
@@ -3011,6 +3012,18 @@ class PoolDatasetService(CRUDService):
         inherit_encryption_properties = data.pop('inherit_encryption')
         if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
+
+        for parent in get_dataset_parents(data['name']):
+            if (
+                check_ds := await self.middleware.call('pool.dataset.get_instance_quick', parent)
+            ) and check_ds['encrypted'] and data['encryption'] is False and not inherit_encryption_properties:
+                # This was a design decision when native zfs encryption support was added to provide a simple
+                # straight workflow not allowing end users to create unencrypted datasets within an encrypted dataset.
+                verrors.add(
+                    'pool_dataset_create.encryption',
+                    f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
+                )
+                break
 
         if data['encryption']:
             if inherit_encryption_properties:
