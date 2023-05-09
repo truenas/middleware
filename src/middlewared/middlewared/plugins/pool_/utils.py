@@ -3,6 +3,8 @@ import itertools
 import json
 import os
 
+from pathlib import Path
+
 from middlewared.service_exception import CallError
 from middlewared.utils.size import MB
 
@@ -112,6 +114,10 @@ def retrieve_keys_from_file(job):
         raise CallError('Please specify correct format for input file')
 
     return data
+
+
+def get_dataset_parents(dataset: str) -> list:
+    return [parent.as_posix() for parent in Path(dataset).parents][:-1]
 
 
 class ZFSKeyFormat(enum.Enum):
