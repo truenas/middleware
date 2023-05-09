@@ -3328,7 +3328,14 @@ class PoolDatasetService(CRUDService):
                 'extra': {'recursive': False},
             })
             if check_ds['encrypted']:
-                if data['encryption'] is False and (not inherit_encryption_properties or unencrypted_parent):
+                if unencrypted_parent:
+                    verrors.add(
+                        'pool_dataset_create.name',
+                        'Creating an unencrypted dataset within an encrypted dataset is not allowed. '
+                        f'In this case, {unencrypted_parent!r} must be moved to an unencrypted dataset.'
+                    )
+                    break
+                elif data['encryption'] is False and not inherit_encryption_properties:
                     # This was a design decision when native zfs encryption support was added to
                     # provide a simple straight workflow not allowing end users to create unencrypted
                     # datasets within an encrypted dataset.
@@ -3341,7 +3348,7 @@ class PoolDatasetService(CRUDService):
                 # The unencrypted parent story is pool/encrypted/unencrypted/new_ds so in this case
                 # we want to make sure user does not specify inherit encryption as it will lead to new_ds
                 # not getting encryption props from pool/encrypted.
-                unencrypted_parent = True
+                unencrypted_parent = check_parent
 
             if (
                 check_ds := await self.middleware.call('zfs.dataset.query', [['name', '=', check_parent]], {
