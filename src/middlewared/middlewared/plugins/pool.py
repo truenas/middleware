@@ -3013,15 +3013,18 @@ class PoolDatasetService(CRUDService):
         if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
 
-        for parent in get_dataset_parents(data['name']):
+        for check_parent in get_dataset_parents(data['name']):
             if (
-                check_ds := await self.middleware.call('pool.dataset.get_instance_quick', parent)
+                check_ds := await self.middleware.call('zfs.dataset.query', [['name', '=', check_parent]], {
+                    'get': True,
+                    'extra': {'recursive': False},
+                })
             ) and check_ds['encrypted'] and data['encryption'] is False and not inherit_encryption_properties:
                 # This was a design decision when native zfs encryption support was added to provide a simple
                 # straight workflow not allowing end users to create unencrypted datasets within an encrypted dataset.
                 verrors.add(
                     'pool_dataset_create.encryption',
-                    f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
+                    f'Cannot create an unencrypted dataset within an encrypted dataset ({check_parent}).'
                 )
                 break
 
