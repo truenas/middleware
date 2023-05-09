@@ -76,7 +76,7 @@ class BootService(Service):
         `expand` option will determine whether the new disk partition will be
                  the maximum available or the same size as the current disk.
         """
-
+        await self.check_update_ashift_property()
         disks = list(await self.get_disks())
         if len(disks) > 1:
             raise CallError('3-way mirror not supported')
@@ -128,6 +128,7 @@ class BootService(Service):
         """
         Detach given `dev` from boot pool.
         """
+        await self.check_update_ashift_property()
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
         await self.update_initramfs()
 
@@ -139,6 +140,7 @@ class BootService(Service):
         Replace device `label` on boot pool with `dev`.
         """
         format_opts = {}
+        await self.check_update_ashift_property()
         disks = list(await self.get_disks())
         swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
         if swap_part:
@@ -221,6 +223,7 @@ class BootService(Service):
 
     @private
     async def expand(self):
+        await self.check_update_ashift_property()
         boot_pool = await self.middleware.call('boot.pool_name')
         for device in await self.middleware.call('zfs.pool.get_devices', boot_pool):
             try:
@@ -267,6 +270,17 @@ class BootService(Service):
         swap_types = await self.middleware.call('disk.get_valid_swap_partition_type_uuids')
         partitions_without_swap = [p for p in partitions if p['partition_type'] not in swap_types]
         return len(partitions_without_swap) == 2 and partitions[0]['size'] == 524288
+
+    @private
+    async def check_update_ashift_property(self):
+        properties = {}
+        if (
+            zfs_pool := await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)])
+        ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
+            properties['ashift'] = {'value': '12'}
+
+        if properties:
+            await self.middleware.call('zfs.pool.update', BOOT_POOL_NAME, {'properties': properties})
 
 
 async def setup(middleware):
