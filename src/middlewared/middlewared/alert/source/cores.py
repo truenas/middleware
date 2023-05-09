@@ -29,7 +29,6 @@ class CoreFilesArePresentAlertSource(AlertSource):
             "nfs-blkmap.service",
             "nfs-idmapd.service",
             "nfs-mountd.service",
-            "nfsdcld.service",
             "rpc-statd.service",
             "rpcbind.service",
             # SMB related service(s)
