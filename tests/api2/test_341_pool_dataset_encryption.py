@@ -27,7 +27,7 @@ child_dataset_url = child_dataset.replace('/', '%2F')
 
 
 @pytest.mark.dependency(name="CREATED_POOL")
-def test_001_create_a_normal_pool(request):
+def test_create_a_normal_pool(request):
     depends(request, ['pool_04'], scope='session')
     global pool_id, pool_disks
     # Get one disk for encryption testing
@@ -50,7 +50,7 @@ def test_001_create_a_normal_pool(request):
     pool_id = job_status['results']['result']['id']
 
 
-def test_002_create_a_passphrase_encrypted_root_on_normal_pool(request):
+def test_create_a_passphrase_encrypted_root_on_normal_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -68,14 +68,14 @@ def test_002_create_a_passphrase_encrypted_root_on_normal_pool(request):
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-def test_003_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_004_add_the_comment_on_the_passphrase_encrypted_root(request):
+def test_add_the_comment_on_the_passphrase_encrypted_root(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'comments': 'testing encrypted dataset'
@@ -84,7 +84,7 @@ def test_004_add_the_comment_on_the_passphrase_encrypted_root(request):
     assert results.status_code == 200, results.text
 
 
-def test_005_change_a_passphrase_encrypted_root_key_encryption(request):
+def test_change_a_passphrase_encrypted_root_key_encryption(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -99,20 +99,20 @@ def test_005_change_a_passphrase_encrypted_root_key_encryption(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_006_verify_that_the_dataset_encrypted_root_changed_to_key_encryption(request):
+def test_verify_that_the_dataset_encrypted_root_changed_to_key_encryption(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_007_delete_passphrase_encrypted_root(request):
+def test_delete_passphrase_encrypted_root(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_008_create_not_encrypted_dataset_on_a_normal_pool(request):
+def test_create_not_encrypted_dataset_on_a_normal_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -123,13 +123,13 @@ def test_008_create_not_encrypted_dataset_on_a_normal_pool(request):
     assert results.json()['key_format']['value'] is None, results.text
 
 
-def test_009_delete_not_encrypted_dataset(request):
+def test_delete_not_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_010_create_a_dataset_with_inherit_encryption_true_on_a_normal_pool(request):
+def test_create_a_dataset_with_inherit_encryption_true_on_a_normal_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -139,20 +139,20 @@ def test_010_create_a_dataset_with_inherit_encryption_true_on_a_normal_pool(requ
     assert results.status_code == 200, results.text
 
 
-def test_011_verify_that_the_dataset_created_is_not_encrypted_like_the_parrent(request):
+def test_verify_that_the_dataset_created_is_not_encrypted_like_the_parrent(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] is None, results.text
 
 
-def test_012_delete_dataset(request):
+def test_delete_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_013_try_to_create_an_encrypted_dataset_with_pbkdf2itersl_zero(request):
+def test_try_to_create_an_encrypted_dataset_with_pbkdf2itersl_zero(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -167,7 +167,7 @@ def test_013_try_to_create_an_encrypted_dataset_with_pbkdf2itersl_zero(request):
     assert 'Should be greater or equal than 100000' in results.text, results.text
 
 
-def test_014_try_to_create_an_encrypted_dataset_with_inherit_encryption_true(request):
+def test_try_to_create_an_encrypted_dataset_with_inherit_encryption_true(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -182,14 +182,14 @@ def test_014_try_to_create_an_encrypted_dataset_with_inherit_encryption_true(req
     assert 'Must be disabled when encryption is enabled' in results.text, results.text
 
 
-def test_015_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_016_try_to_create_an_encrypted_dataset_with_passphrase_and_generate_key(request):
+def test_try_to_create_an_encrypted_dataset_with_passphrase_and_generate_key(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -205,7 +205,7 @@ def test_016_try_to_create_an_encrypted_dataset_with_passphrase_and_generate_key
     assert 'Must be disabled when dataset is to be encrypted with passphrase' in results.text, results.text
 
 
-def test_017_create_an_encrypted_root_with_generate_key(request):
+def test_create_an_encrypted_root_with_generate_key(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -220,13 +220,13 @@ def test_017_create_an_encrypted_root_with_generate_key(request):
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_018_delete_generate_key_encrypted_root(request):
+def test_delete_generate_key_encrypted_root(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_019_create_an_encrypted_root_with_a_key(request):
+def test_create_an_encrypted_root_with_a_key(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -241,14 +241,14 @@ def test_019_create_an_encrypted_root_with_a_key(request):
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_020_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_021_make_sure_we_are_not_able_to_lock_key_encrypted_dataset(request):
+def test_make_sure_we_are_not_able_to_lock_key_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -265,7 +265,7 @@ def test_021_make_sure_we_are_not_able_to_lock_key_encrypted_dataset(request):
         job_status['results']['error']
 
 
-def test_022_change_a_key_encrypted_dataset_to_passphrase(request):
+def test_change_a_key_encrypted_dataset_to_passphrase(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -280,21 +280,21 @@ def test_022_change_a_key_encrypted_dataset_to_passphrase(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_023_verify_that_the_dataset_changed_to_passphrase(request):
+def test_verify_that_the_dataset_changed_to_passphrase(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-def test_024_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_025_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked(request):
+def test_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -309,7 +309,7 @@ def test_025_lock_passphrase_encrypted_datasets_and_ensure_they_get_locked(reque
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_026_verify_passphrase_encrypted_root_is_locked(request):
+def test_verify_passphrase_encrypted_root_is_locked(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -330,7 +330,7 @@ def test_026_verify_passphrase_encrypted_root_is_locked(request):
         assert False, str(job_status_result)
 
 
-def test_027_unlock_passphrase_encrypted_datasets_with_wrong_passphrase(request):
+def test_unlock_passphrase_encrypted_datasets_with_wrong_passphrase(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -352,7 +352,7 @@ def test_027_unlock_passphrase_encrypted_datasets_with_wrong_passphrase(request)
     assert job_status['results']['result']['failed'][dataset]['error'] == 'Invalid Key', str(job_status['results'])
 
 
-def test_028_verify_passphrase_encrypted_root_still_locked(request):
+def test_verify_passphrase_encrypted_root_still_locked(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -373,7 +373,7 @@ def test_028_verify_passphrase_encrypted_root_still_locked(request):
         assert False, str(job_status_result)
 
 
-def test_029_unlock_passphrase_encrypted_datasets(request):
+def test_unlock_passphrase_encrypted_datasets(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -395,7 +395,7 @@ def test_029_unlock_passphrase_encrypted_datasets(request):
     assert job_status['results']['result']['unlocked'] == [dataset], str(job_status['results'])
 
 
-def test_030_verify_passphrase_encrypted_root_is_unlocked(request):
+def test_verify_passphrase_encrypted_root_is_unlocked(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -416,13 +416,13 @@ def test_030_verify_passphrase_encrypted_root_is_unlocked(request):
         assert False, str(job_status_result)
 
 
-def test_031_delete_encrypted_dataset(request):
+def test_delete_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_032_delete_pool(request):
+def test_delete_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'cascade': True,
@@ -436,7 +436,7 @@ def test_032_delete_pool(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_033_create_a_passphrase_encrypted_pool(request):
+def test_create_a_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     global pool_id
     payload = {
@@ -461,14 +461,14 @@ def test_033_create_a_passphrase_encrypted_pool(request):
     pool_id = job_status['results']['result']['id']
 
 
-def test_034_verify_pool_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_pool_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_035_verify_the_pool_dataset_is_passphrase_encrypted_and_algorithm_encryption(request):
+def test_verify_the_pool_dataset_is_passphrase_encrypted_and_algorithm_encryption(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{encrypted_pool_name}/')
     assert results.status_code == 200, results.text
@@ -476,7 +476,7 @@ def test_035_verify_the_pool_dataset_is_passphrase_encrypted_and_algorithm_encry
     assert results.json()['encryption_algorithm']['value'] == 'AES-128-CCM', results.text
 
 
-def test_036_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool(request):
+def test_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -493,14 +493,14 @@ def test_036_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool(req
     assert results.status_code == 200, results.text
 
 
-def test_037_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_038_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_pool(request):
+def test_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -515,38 +515,20 @@ def test_038_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encr
     assert job_status['state'] == 'FAILED', str(job_status['results'])
 
 
-def test_039_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_040_delete_encrypted_dataset(request):
+def test_delete_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_041_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool(request):
-    depends(request, ['CREATED_POOL'])
-    payload = {
-        'name': dataset,
-        'encryption': False,
-        'inherit_encryption': False
-    }
-    results = POST('/pool/dataset/', payload)
-    assert results.status_code == 200, results.text
-    assert results.json()['key_format']['value'] is None, results.text
-
-
-def test_042_delete_not_encrypted_dataset(request):
-    depends(request, ['CREATED_POOL'])
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
-    assert results.status_code == 200, results.text
-
-
-def test_043_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool(request):
+def test_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -557,13 +539,13 @@ def test_043_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypte
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-def test_044_delete_encrypted_dataset(request):
+def test_delete_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_045_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_encrypted_pool(request):
+def test_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -577,7 +559,7 @@ def test_045_try_to_create_an_encrypted_root_with_generate_key_on_passphrase_enc
     assert results.status_code == 422, results.text
 
 
-def test_046_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool(request):
+def test_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -591,14 +573,14 @@ def test_046_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_po
     assert results.status_code == 422, results.text
 
 
-def test_047_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_048_delete_the_passphrase_encrypted_pool_with_is_datasets(request):
+def test_delete_the_passphrase_encrypted_pool_with_is_datasets(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'cascade': True,
@@ -612,7 +594,7 @@ def test_048_delete_the_passphrase_encrypted_pool_with_is_datasets(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_049_creating_a_key_encrypted_pool(request):
+def test_creating_a_key_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     global pool_id
     payload = {
@@ -637,14 +619,14 @@ def test_049_creating_a_key_encrypted_pool(request):
     pool_id = job_status['results']['result']['id']
 
 
-def test_050_verify_pool_does_not_leak_encryption_key_into_middleware_log(request):
+def test_verify_pool_does_not_leak_encryption_key_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{pool_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_051_verify_the_pool_dataset_is_hex_key_encrypted_and_algorithm_encryption(request):
+def test_verify_the_pool_dataset_is_hex_key_encrypted_and_algorithm_encryption(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{encrypted_pool_name}/')
     assert results.status_code == 200, results.text
@@ -652,7 +634,7 @@ def test_051_verify_the_pool_dataset_is_hex_key_encrypted_and_algorithm_encrypti
     assert results.json()['encryption_algorithm']['value'] == 'AES-128-CCM', results.text
 
 
-def test_052_creating_a_key_encrypted_root_on_key_encrypted_pool(request):
+def test_creating_a_key_encrypted_root_on_key_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -667,14 +649,14 @@ def test_052_creating_a_key_encrypted_root_on_key_encrypted_pool(request):
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_053_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_054_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool(request):
+def test_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -689,21 +671,21 @@ def test_054_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool(req
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_055_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_056_verify_the_dataset_changed_to_passphrase(request):
+def test_verify_the_dataset_changed_to_passphrase(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-def test_057_lock_passphrase_encrypted_dataset(request):
+def test_lock_passphrase_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -718,14 +700,14 @@ def test_057_lock_passphrase_encrypted_dataset(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_058_verify_the_dataset_is_locked(request):
+def test_verify_the_dataset_is_locked(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['locked'] is True, results.text
 
 
-def test_059_verify_passphrase_encrypted_root_unlock_successful_is_false(request):
+def test_verify_passphrase_encrypted_root_unlock_successful_is_false(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -745,7 +727,7 @@ def test_059_verify_passphrase_encrypted_root_unlock_successful_is_false(request
         assert False, str(job_status_result)
 
 
-def test_060_unlock_passphrase_encrypted_datasets(request):
+def test_unlock_passphrase_encrypted_datasets(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -767,14 +749,14 @@ def test_060_unlock_passphrase_encrypted_datasets(request):
     assert job_status['results']['result']['unlocked'] == [dataset], str(job_status['results'])
 
 
-def test_061_verify_pool_dataset_unlock_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_unlock_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_062_verify_passphrase_encrypted_root_is_unlocked(request):
+def test_verify_passphrase_encrypted_root_is_unlocked(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -794,31 +776,13 @@ def test_062_verify_passphrase_encrypted_root_is_unlocked(request):
         assert False, str(job_status_result)
 
 
-def test_063_delete_encrypted_dataset(request):
+def test_delete_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_064_create_an_not_encrypted_dataset_on_a_key_encrypted_pool(request):
-    depends(request, ['CREATED_POOL'])
-    payload = {
-        'name': dataset,
-        'encryption': False,
-        'inherit_encryption': False
-    }
-    results = POST('/pool/dataset/', payload)
-    assert results.status_code == 200, results.text
-    assert results.json()['key_format']['value'] is None, results.text
-
-
-def test_065_delete_encrypted_dataset(request):
-    depends(request, ['CREATED_POOL'])
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
-    assert results.status_code == 200, results.text
-
-
-def test_066_create_an_dataset_with_inherit_encryption_from_the_key_encrypted_pool(request):
+def test_create_an_dataset_with_inherit_encryption_from_the_key_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -829,13 +793,13 @@ def test_066_create_an_dataset_with_inherit_encryption_from_the_key_encrypted_po
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_067_delete_encrypted_dataset(request):
+def test_delete_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_068_create_an_encrypted_dataset_with_generate_key_on_key_encrypted_pool(request):
+def test_create_an_encrypted_dataset_with_generate_key_on_key_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -849,13 +813,13 @@ def test_068_create_an_encrypted_dataset_with_generate_key_on_key_encrypted_pool
     assert results.status_code == 200, results.text
 
 
-def test_069_delete_generate_key_encrypted_dataset(request):
+def test_delete_generate_key_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
 
 
-def test_070_create_a_passphrase_encrypted_root_dataset_parrent(request):
+def test_create_a_passphrase_encrypted_root_dataset_parrent(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -869,14 +833,14 @@ def test_070_create_a_passphrase_encrypted_root_dataset_parrent(request):
     assert results.status_code == 200, results.text
 
 
-def test_071_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_072_create_a_passphrase_encrypted_root_child_of_passphrase_parent(request):
+def test_create_a_passphrase_encrypted_root_child_of_passphrase_parent(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': child_dataset,
@@ -890,14 +854,14 @@ def test_072_create_a_passphrase_encrypted_root_child_of_passphrase_parent(reque
     assert results.status_code == 200, results.text
 
 
-def test_073_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_074_lock_passphrase_encrypted_root_with_is_child(request):
+def test_lock_passphrase_encrypted_root_with_is_child(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -909,7 +873,7 @@ def test_074_lock_passphrase_encrypted_root_with_is_child(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
-def test_075_verify_the_parrent_encrypted_root_unlock_successful_is_false(request):
+def test_verify_the_parrent_encrypted_root_unlock_successful_is_false(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -929,14 +893,14 @@ def test_075_verify_the_parrent_encrypted_root_unlock_successful_is_false(reques
         assert False, str(job_status_result)
 
 
-def test_076_verify_the_dataset_is_locked(request):
+def test_verify_the_dataset_is_locked(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['locked'] is True, results.text
 
 
-def test_077_verify_the_chid_of_the_encrypted_root_parent_unlock_successful_is_false(request):
+def test_verify_the_chid_of_the_encrypted_root_parent_unlock_successful_is_false(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': child_dataset
@@ -956,14 +920,14 @@ def test_077_verify_the_chid_of_the_encrypted_root_parent_unlock_successful_is_f
         assert False, str(job_status_result)
 
 
-def test_078_verify_the_child_dataset_is_locked(request):
+def test_verify_the_child_dataset_is_locked(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{child_dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['locked'] is True, results.text
 
 
-def test_079_try_to_unlock_the_child_of_lock_parent_encrypted_root(request):
+def test_try_to_unlock_the_child_of_lock_parent_encrypted_root(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': child_dataset,
@@ -986,14 +950,14 @@ def test_079_try_to_unlock_the_child_of_lock_parent_encrypted_root(request):
     assert job_status['results']['result'] is None, str(job_status['results'])
 
 
-def test_080_verify_pool_dataset_unlock_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_unlock_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_081_Verify_chid_unlock_successful_is_still_false(request):
+def test_Verify_chid_unlock_successful_is_still_false(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': child_dataset
@@ -1013,7 +977,7 @@ def test_081_Verify_chid_unlock_successful_is_still_false(request):
         assert False, str(job_status_result)
 
 
-def test_082_unlock_parent_dataset_with_child_recursively(request):
+def test_unlock_parent_dataset_with_child_recursively(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset,
@@ -1039,7 +1003,7 @@ def test_082_unlock_parent_dataset_with_child_recursively(request):
     assert job_status['results']['result']['unlocked'] == [dataset, child_dataset], str(job_status['results'])
 
 
-def test_083_verify_pool_dataset_unlock_with_child_dataset_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_unlock_with_child_dataset_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
@@ -1049,7 +1013,7 @@ def test_083_verify_pool_dataset_unlock_with_child_dataset_does_not_leak_passphr
     assert results['result'] is False, str(results['output'])
 
 
-def test_084_verify_the_parent_dataset_unlock_successful_is_true(request):
+def test_verify_the_parent_dataset_unlock_successful_is_true(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': dataset
@@ -1069,14 +1033,14 @@ def test_084_verify_the_parent_dataset_unlock_successful_is_true(request):
         assert False, str(job_status_result)
 
 
-def test_085_verify_the_dataset_is_unlocked(request):
+def test_verify_the_dataset_is_unlocked(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{child_dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['locked'] is False, results.text
 
 
-def test_086_verify_the_child_dataset_unlock_successful_is_true(request):
+def test_verify_the_child_dataset_unlock_successful_is_true(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'id': child_dataset
@@ -1096,14 +1060,14 @@ def test_086_verify_the_child_dataset_unlock_successful_is_true(request):
         assert False, str(job_status_result)
 
 
-def test_087_verify_the_child_dataset_is_unlocked(request):
+def test_verify_the_child_dataset_is_unlocked(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{child_dataset_url}/')
     assert results.status_code == 200, results.text
     assert results.json()['locked'] is False, results.text
 
 
-def test_088_delete_dataset_with_is_child_recursive(request):
+def test_delete_dataset_with_is_child_recursive(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         "recursive": True,
@@ -1112,7 +1076,7 @@ def test_088_delete_dataset_with_is_child_recursive(request):
     assert results.status_code == 200, results.text
 
 
-def test_089_creating_a_key_encrypted_dataset_on_key_encrypted_pool(request):
+def test_creating_a_key_encrypted_dataset_on_key_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -1126,14 +1090,14 @@ def test_089_creating_a_key_encrypted_dataset_on_key_encrypted_pool(request):
     assert results.status_code == 200, results.text
 
 
-def test_090_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_encryption_key_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_091_create_a_passphrase_encrypted_root_from_key_encrypted_root(request):
+def test_create_a_passphrase_encrypted_root_from_key_encrypted_root(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': child_dataset,
@@ -1147,34 +1111,34 @@ def test_091_create_a_passphrase_encrypted_root_from_key_encrypted_root(request)
     assert results.status_code == 200, results.text
 
 
-def test_092_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
+def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
     depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
 
 
-def test_093_verify_the_new_passprase_encrypted_root_is_passphrase(request):
+def test_verify_the_new_passprase_encrypted_root_is_passphrase(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{child_dataset_url}')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'PASSPHRASE', results.text
 
 
-def test_094_run_inherit_parent_encryption_properties_on_the_passprase(request):
+def test_run_inherit_parent_encryption_properties_on_the_passprase(request):
     depends(request, ['CREATED_POOL'])
     results = POST('/pool/dataset/inherit_parent_encryption_properties', child_dataset)
     assert results.status_code == 200, results.text
 
 
-def test_095_verify_the_the_child_got_props_by_the_parent_root(request):
+def test_verify_the_the_child_got_props_by_the_parent_root(request):
     depends(request, ['CREATED_POOL'])
     results = GET(f'/pool/dataset/id/{child_dataset_url}')
     assert results.status_code == 200, results.text
     assert results.json()['key_format']['value'] == 'HEX', results.text
 
 
-def test_096_delete_the_key_encrypted_pool_with_all_the_dataset(request):
+def test_delete_the_key_encrypted_pool_with_all_the_dataset(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'cascade': True,
