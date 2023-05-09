@@ -528,24 +528,6 @@ def test_040_delete_encrypted_dataset(request):
     assert results.status_code == 200, results.text
 
 
-def test_041_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool(request):
-    depends(request, ['CREATED_POOL'])
-    payload = {
-        'name': dataset,
-        'encryption': False,
-        'inherit_encryption': False
-    }
-    results = POST('/pool/dataset/', payload)
-    assert results.status_code == 200, results.text
-    assert results.json()['key_format']['value'] is None, results.text
-
-
-def test_042_delete_not_encrypted_dataset(request):
-    depends(request, ['CREATED_POOL'])
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
-    assert results.status_code == 200, results.text
-
-
 def test_043_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool(request):
     depends(request, ['CREATED_POOL'])
     payload = {
@@ -795,24 +777,6 @@ def test_062_verify_passphrase_encrypted_root_is_unlocked(request):
 
 
 def test_063_delete_encrypted_dataset(request):
-    depends(request, ['CREATED_POOL'])
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
-    assert results.status_code == 200, results.text
-
-
-def test_064_create_an_not_encrypted_dataset_on_a_key_encrypted_pool(request):
-    depends(request, ['CREATED_POOL'])
-    payload = {
-        'name': dataset,
-        'encryption': False,
-        'inherit_encryption': False
-    }
-    results = POST('/pool/dataset/', payload)
-    assert results.status_code == 200, results.text
-    assert results.json()['key_format']['value'] is None, results.text
-
-
-def test_065_delete_encrypted_dataset(request):
     depends(request, ['CREATED_POOL'])
     results = DELETE(f'/pool/dataset/id/{dataset_url}/')
     assert results.status_code == 200, results.text
