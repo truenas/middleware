@@ -80,7 +80,7 @@ class BootService(Service):
         `expand` option will determine whether the new disk partition will be
                  the maximum available or the same size as the current disk.
         """
-
+        await self.check_update_ashift_property()
         disks = list(await self.get_disks())
         if len(disks) > 1:
             raise CallError('3-way mirror not supported')
@@ -123,6 +123,7 @@ class BootService(Service):
         """
         Detach given `dev` from boot pool.
         """
+        await self.check_update_ashift_property()
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev)
 
     @accepts(Str('label'), Str('dev'))
@@ -130,6 +131,7 @@ class BootService(Service):
         """
         Replace device `label` on boot pool with `dev`.
         """
+        await self.check_update_ashift_property()
         format_opts = {}
         disks = list(await self.get_disks())
         swap_part = await self.middleware.call('disk.get_partition', disks[0], 'SWAP')
