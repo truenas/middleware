@@ -172,6 +172,17 @@ class BootService(Service):
         """
         return (await self.middleware.call('system.advanced.config'))['boot_scrub']
 
+    @private
+    async def check_update_ashift_property(self):
+        properties = {}
+        if (
+            zfs_pool := await self.middleware.call('zfs.pool.query', [('name', '=', BOOT_POOL_NAME)])
+        ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
+            properties['ashift'] = {'value': '12'}
+
+        if properties:
+            await self.middleware.call('zfs.pool.update', BOOT_POOL_NAME, {'properties': properties})
+
 
 async def setup(middleware):
     global BOOT_POOL_NAME
