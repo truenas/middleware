@@ -579,17 +579,28 @@ class PoolDatasetService(CRUDService):
         if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
 
+        unencrypted_parent = False
         for parent in get_dataset_parents(data['name']):
-            if (check_ds := await self.middleware.call(
-                'pool.dataset.get_instance_quick', parent, {'encryption': True}
-            )) and check_ds['encrypted'] and data['encryption'] is False and not inherit_encryption_properties:
-                # This was a design decision when native zfs encryption support was added to provide a simple
-                # straight workflow not allowing end users to create unencrypted datasets within an encrypted dataset.
-                verrors.add(
-                    'pool_dataset_create.encryption',
-                    f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
-                )
-                break
+            check_ds = await self.middleware.call('pool.dataset.get_instance_quick', parent, {'encryption': True})
+            if check_ds['encrypted']:
+                if unencrypted_parent:
+                    verrors.add(
+                        'pool_dataset_create.name',
+                        'Creating an encrypted dataset within an unencrypted dataset is not allowed. '
+                        f'In this case, {unencrypted_parent!r} must be moved to an unencrypted dataset.'
+                    )
+                    break
+                elif data['encryption'] is False and not inherit_encryption_properties:
+                    # This was a design decision when native zfs encryption support was added to provide
+                    # a simple straight workflow not allowing end users to create unencrypted datasets
+                    # within an encrypted dataset.
+                    verrors.add(
+                        'pool_dataset_create.encryption',
+                        f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
+                    )
+                    break
+            else:
+                unencrypted_parent = parent
 
         if data['encryption']:
             if inherit_encryption_properties:
