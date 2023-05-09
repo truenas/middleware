@@ -160,7 +160,7 @@ def test_08_delete_restore_cloudsync(request):
     assert result.status_code == 200, result.text
 
 
-def test_96_delete_cloud_credentials_error(request, env, task):
+def test_96_delete_cloud_credentials_error(request, task):
     depends(request, ["pool_04"], scope="session")
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 422
