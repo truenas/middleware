@@ -870,10 +870,18 @@ class PoolService(CRUDService):
                         'datastore.update', 'storage.volume', id, {'encrypt': 1}, {'prefix': 'vol_'},
                     )
 
+        properties = {}
         if 'autotrim' in data:
-            await self.middleware.call('zfs.pool.update', pool['name'], {'properties': {
-                'autotrim': {'value': data['autotrim'].lower()},
-            }})
+            properties['autotrim'] = {'value': data['autotrim'].lower()}
+
+        if (
+            zfs_pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool['name']]])
+        ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
+            # https://ixsystems.atlassian.net/browse/NAS-112093
+            properties['ashift'] = {'value': '12'}
+
+        if properties:
+            await self.middleware.call('zfs.pool.update', pool['name'], {'properties': properties})
 
         pool = await self.get_instance(id)
         await self.middleware.call('disk.sync_zfs_guid', pool)
