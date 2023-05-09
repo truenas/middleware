@@ -25,35 +25,56 @@ class EnclosureStatusAlertSource(AlertSource):
     run_on_backup_node = False
     bad = ('Critical', 'Noncritical', 'Unknown', 'Unrecoverable')
 
+    bad_elements = []
+
     async def check(self):
-        alerts = []
-
+        good_enclosures = []
+        bad_elements = []
         for enc in await self.middleware.call('enclosure.query'):
-            if enc.get('status') == 'OK':
-                # m/x/z series devices return an overall status for the enclosure.
-                # In the situations where it's OK, just move on.
-                alerts.append(Alert(EnclosureHealthyAlertClass, args=[enc['number'], enc['name']]))
-            else:
-                for element_type, element_values in enc['elements'].items():
-                    for slot, value in element_values.items():
-                        if value['status'] in self.bad:
-                            if enc['name'] == 'ECStream 3U16+4R-4X6G.3 d10c' and value['descriptor'] == '1.8V Sensor':
-                                # The 1.8V sensor is bugged on the echostream enclosure (Z-series).
-                                # The management chip loses it's mind and claims undervoltage, but
-                                # scoping this confirms the voltage is fine.
-                                # Ignore alerts from this element. Redmine # 10077
-                                continue
+            good_enclosures.append([enc['number'], enc['name']])
 
-                            # getting here means that we came across an element that isn't reporting
-                            # a status we expect AND the overall enclosure status isn't "OK"
-                            # (or isn't reported at all)
-                            alerts.append(Alert(EnclosureUnhealthyAlertClass, args=[
-                                enc['number'],
-                                enc['name'],
-                                value['descriptor'],
-                                slot,
-                                hex(slot),
-                                value['status']
-                            ]))
+            for element_type, element_values in enc['elements'].items():
+                for slot, value in element_values.items():
+                    if value['status'] in self.bad:
+                        if enc['name'] == 'ECStream 3U16+4R-4X6G.3 d10c' and value['descriptor'] == '1.8V Sensor':
+                            # The 1.8V sensor is bugged on the echostream enclosure (Z-series).
+                            # The management chip loses it's mind and claims undervoltage, but
+                            # scoping this confirms the voltage is fine.
+                            # Ignore alerts from this element. Redmine # 10077
+                            continue
+
+                        # getting here means that we came across an element that isn't reporting
+                        # a status we expect AND the overall enclosure status isn't "OK"
+                        # (or isn't reported at all)
+                        args = [
+                            enc['number'],
+                            enc['name'],
+                            value['descriptor'],
+                            slot,
+                            hex(slot),
+                            value['status']
+                        ]
+                        for i, (another_args, count) in enumerate(self.bad_elements):
+                            if another_args == args:
+                                bad_elements.append((args, count + 1))
+                                break
+                        else:
+                            bad_elements.append((args, 1))
+
+        self.bad_elements = bad_elements
+
+        alerts = []
+        for args, count in bad_elements:
+            # We only report unhealthy enclosure elements if they were unhealthy 5 probes in a row (1 probe = 1 minute)
+            if count >= 5:
+                try:
+                    good_enclosures.remove(args[:2])
+                except ValueError:
+                    pass
+
+                alerts.append(Alert(EnclosureUnhealthyAlertClass, args=args))
+
+        for args in good_enclosures:
+            alerts.append(Alert(EnclosureHealthyAlertClass, args=args))
 
         return alerts
