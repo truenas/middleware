@@ -16,8 +16,8 @@ from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
-    dataset_mountpoint, get_props_of_interest_mapping, none_normalize, ZFS_COMPRESSION_ALGORITHM_CHOICES,
-    ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
+    dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize,
+    ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
 )
 
 
@@ -579,9 +579,7 @@ class PoolDatasetService(CRUDService):
         if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
 
-        for parent in [
-            parent_ds['id'].rsplit('/', i)[0] for i in range(0, parent_ds['id'].count('/'))
-        ] + [parent_ds['id']]:
+        for parent in get_dataset_parents(data['name']):
             if (check_ds := await self.middleware.call(
                 'pool.dataset.get_instance_quick', parent, {'encryption': True}
             )) and check_ds['encrypted'] and data['encryption'] is False and not inherit_encryption_properties:
