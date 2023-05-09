@@ -600,6 +600,9 @@ class PoolDatasetService(CRUDService):
                     )
                     break
             else:
+                # The unencrypted parent story is pool/encrypted/unencrypted/new_ds so in this case
+                # we want to make sure user does not specify inherit encryption as it will lead to new_ds
+                # not getting encryption props from pool/encrypted.
                 unencrypted_parent = parent
 
         if data['encryption']:
