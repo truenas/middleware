@@ -3353,7 +3353,7 @@ class PoolDatasetService(CRUDService):
             if (
                 check_ds := await self.middleware.call('zfs.dataset.query', [['name', '=', check_parent]], {
                     'get': True,
-                    'extra': {'recursive': False},
+                    'extra': {'retrieve_children': False},
                 })
             ) and check_ds['encrypted'] and data['encryption'] is False and not inherit_encryption_properties:
                 # This was a design decision when native zfs encryption support was added to provide a simple
