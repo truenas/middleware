@@ -503,7 +503,9 @@ class ChartReleaseService(CRUDService):
         else:
             await self.middleware.call('chart.release.refresh_events_state', data['release_name'])
             job.set_progress(100, 'Chart release created')
-            return await self.get_instance(data['release_name'])
+            chart_release = await self.get_instance(data['release_name'])
+            await self.middleware.call_hook('app.post_create', chart_release)
+            return chart_release
 
     @accepts(
         Str('chart_release'),
@@ -625,6 +627,7 @@ class ChartReleaseService(CRUDService):
 
         await self.middleware.call('chart.release.remove_chart_release_from_events_state', release_name)
         await self.middleware.call('chart.release.clear_chart_release_portal_cache', release_name)
+        await self.middleware.call_hook(f'app.post_delete', release_name)
         await self.middleware.call('alert.oneshot_delete', 'ChartReleaseUpdate', release_name)
         if options['delete_unused_images']:
             job.set_progress(97, 'Deleting unused container images')

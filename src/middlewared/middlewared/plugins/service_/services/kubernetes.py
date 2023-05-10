@@ -91,6 +91,7 @@ class KubernetesService(SimpleService):
             self.middleware.logger.error('Failed to remove iptable rules for kubernetes service: %r', e)
 
     async def after_stop(self):
+        await self.middleware.call('k8s.app.mapping.unregister_services')
         await self._systemd_unit('kube-router', 'stop')
         await self._systemd_unit('cni-dhcp', 'stop')
         await self.middleware.call('k8s.cni.cleanup_cni')

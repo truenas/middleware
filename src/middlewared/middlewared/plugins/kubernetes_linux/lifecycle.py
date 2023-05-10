@@ -147,6 +147,9 @@ class KubernetesService(Service):
         # Let's run app migrations if any
         await self.middleware.call('k8s.app.migration.run')
 
+        # Let's update app's mapping
+        await self.middleware.call('k8s.app.mapping.setup')
+
         node_config = await self.middleware.call('k8s.node.config')
         await self.middleware.call(
             'k8s.node.remove_taints', [
