@@ -58,14 +58,15 @@ class PoolDatasetService(Service):
                 if not path:
                     continue
 
-                if (
-                    (
-                        dataset['type'] == 'FILESYSTEM' and
-                        (mountpoint := dataset_mountpoint(dataset)) and
-                        path.startswith(mountpoint + '/')
-                    ) or
-                    (dataset['type'] == 'VOLUME' and zvol_name_to_path(dataset['name']) == path)
-                ):
+                unlock = False
+                if dataset['type'] == 'FILESYSTEM' and (mountpoint := dataset_mountpoint(dataset)):
+                    unlock = path.startswith(mountpoint + '/') or path.startswith(
+                        zvol_name_to_path(dataset['name']) + '/'
+                    )
+                elif dataset['type'] == 'VOLUME' and zvol_name_to_path(dataset['name']) == path:
+                    unlock = True
+
+                if unlock:
                     result.append(vm)
                     break
 
