@@ -67,6 +67,7 @@ class ReplicationModel(sa.Model):
     repl_properties_override = sa.Column(sa.JSON())
     repl_replicate = sa.Column(sa.Boolean())
     repl_encryption = sa.Column(sa.Boolean())
+    repl_encryption_inherit = sa.Column(sa.Boolean(), nullable=True)
     repl_encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
     repl_encryption_key_format = sa.Column(sa.String(120), nullable=True)
     repl_encryption_key_location = sa.Column(sa.Text(), nullable=True)
@@ -163,6 +164,7 @@ class ReplicationService(CRUDService):
             Dict("properties_override", additional_attrs=True),
             Bool("replicate", default=False),
             Bool("encryption", default=False),
+            Bool("encryption_inherit", null=True, default=None),
             Str("encryption_key", null=True, default=None),
             Str("encryption_key_format", enum=["HEX", "PASSPHRASE"], null=True, default=None),
             Str("encryption_key_location", null=True, default=None),
@@ -640,9 +642,10 @@ class ReplicationService(CRUDService):
                     )
 
         if data["encryption"]:
-            for k in ["encryption_key", "encryption_key_format", "encryption_key_location"]:
-                if data[k] is None:
-                    verrors.add(k, "This property is required when remote dataset encryption is enabled")
+            if not data["encryption_inherit"]:
+                for k in ["encryption_key", "encryption_key_format", "encryption_key_location"]:
+                    if data[k] is None:
+                        verrors.add(k, "This property is required when remote dataset encryption is enabled")
 
         if data["schedule"]:
             if not data["auto"]:
