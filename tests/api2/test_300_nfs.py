@@ -80,6 +80,57 @@ def parse_server_config(fname="local.conf"):
     return rv
 
 
+def confirm_nfsd_processes(expected=16):
+    '''
+    Confirm the expected number of nfsd processes are running
+    '''
+    result = SSH_TEST("cat /proc/fs/nfsd/threads", user, password, ip)
+    assert int(result['output']) == expected, result
+
+
+def confirm_mountd_processes(expected=16):
+    '''
+    Confirm the expected number of mountd processes are running
+    '''
+    rx_mountd = r"rpc\.mountd"
+    result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
+    # We subtract one to account for the rpc.mountd thread manager
+    assert int(result['output']) - 1 == expected
+
+
+def confirm_rpc_processes(expected=['idmap', 'bind', 'statd']):
+    '''
+    Confirm the expected rpc processes are running
+    '''
+
+    rx_mountd = r"rpc\.mountd"
+    result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
+    # We subtract one to account for the rpc.mountd thread manager
+    assert int(result['output']) - 1 == expected
+
+
+class NFS_CONFIG:
+    '''
+    This is used to restore the NFS config to it's original state
+    '''
+    default_nfs_config = {}
+
+
+def save_nfs_config():
+    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major']
+    get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
+    res = make_ws_request(ip, get_conf_cmd)
+    assert res.get('error') is None, res
+    NFS_CONFIG.default_nfs_config = res['result']
+    [NFS_CONFIG.default_nfs_config.pop(key) for key in exclude]
+
+
+def restore_nfs_config():
+    set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
+    res = make_ws_request(ip, set_conf_cmd)
+    assert res.get('error') is None, res
+
+
 @contextlib.contextmanager
 def nfs_dataset(name, options=None, acl=None, mode=None):
     assert "/" not in name
@@ -104,6 +155,13 @@ def nfs_dataset(name, options=None, acl=None, mode=None):
         # dataset may be busy
         sleep(10)
         result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
+        retry = 6
+        # Under some circumstances, the dataset can balk at being deleted
+        # leaving the dataset mounted which then buggers up subsequent tests
+        while result.status_code != 200 and retry > 0:
+            sleep(10)
+            result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
+            retry -= 1
         assert result.status_code == 200, result.text
 
 
@@ -123,17 +181,44 @@ def nfs_share(path, options=None):
         assert result.status_code == 200, result.text
 
 
+@contextlib.contextmanager
+def nfs_config(options=None):
+    '''
+    Use this to restore settings after the test
+    '''
+    get_conf = {'msg': 'method', 'method': 'nfs.config', 'params': []}
+    restore_conf = {'msg': 'method', 'method': 'nfs.update', 'params': []}
+
+    try:
+        res = make_ws_request(ip, get_conf)
+        assert res.get('error') is None, res
+        excl = ['id', 'v4_krb_enabled', 'v4_owner_major']
+        nfsconf = res['result']
+        [nfsconf.pop(key) for key in excl]
+        restore_conf.update({'params': [nfsconf]})
+        yield
+    finally:
+        res = make_ws_request(ip, restore_conf)
+        assert res.get('error') is None, res
+
+
 # Enable NFS server
 def test_01_creating_the_nfs_server():
-    paylaod = {"servers": 10,
-               "mountd_port": 618,
-               "allow_nonroot": False,
-               "udp": False,
-               "rpcstatd_port": 871,
-               "rpclockd_port": 32803,
-               "protocols": ["NFSV3", "NFSV4"]}
-    results = PUT("/nfs/", paylaod)
+    # initialize default_nfs_config for later restore
+    save_nfs_config()
+
+    payload = {
+        "servers": 10,
+        "mountd_port": 618,
+        "allow_nonroot": False,
+        "udp": False,
+        "rpcstatd_port": 871,
+        "rpclockd_port": 32803,
+        "protocols": ["NFSV3", "NFSV4"]
+    }
+    results = PUT("/nfs/", payload)
     assert results.status_code == 200, results.text
+    # The service is not yet enabled, so we cannot yet confirm the settings
 
 
 def test_02_creating_dataset_nfs(request):
@@ -192,6 +277,8 @@ def test_08_starting_nfs_service(request):
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
     sleep(1)
+    confirm_nfsd_processes(10)
+    confirm_mountd_processes(10)
 
 
 def test_09_checking_to_see_if_nfs_service_is_running(request):
@@ -202,6 +289,7 @@ def test_09_checking_to_see_if_nfs_service_is_running(request):
 
 @pytest.mark.parametrize('vers', [3, 4])
 def test_10_perform_basic_nfs_ops(request, vers):
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     with SSH_NFS(ip, NFS_PATH, vers=vers, user=user, password=password, ip=ip) as n:
         n.create('testfile')
         n.mkdir('testdir')
@@ -217,6 +305,7 @@ def test_10_perform_basic_nfs_ops(request, vers):
 
 
 def test_11_perform_server_side_copy(request):
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip) as n:
         n.server_side_copy('ssc1', 'ssc2')
 
@@ -228,13 +317,16 @@ def test_19_updating_the_nfs_service(request):
     Latter goal is achieved by reading the nfs config file
     and verifying that the value here was set correctly.
     """
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = PUT("/nfs/", {"servers": "50"})
     assert results.status_code == 200, results.text
 
     s = parse_server_config()
     assert int(s['nfsd']['threads']) == 50, str(s)
     assert int(s['mountd']['threads']) == 50, str(s)
+
+    confirm_nfsd_processes(50)
+    confirm_mountd_processes(50)
 
 
 def test_20_update_nfs_share(request):
@@ -353,27 +445,55 @@ def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
 def test_33_check_nfs_share_ro(request):
     """
     Verify that toggling `ro` will cause appropriate change in
-    exports file.
+    exports file. We also verify with write tests on a local mount.
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
+    # Make sure we end up in the original state with 'rw'
+    try:
+        # Confirm 'rw' initial state and create a file and dir
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'ro': True})
-    assert results.status_code == 200, results.text
+        # Create the file and dir
+        with SSH_NFS(ip, NFS_PATH, user=user, password=password, ip=ip) as n:
+            n.create("testfile_should_pass")
+            n.mkdir("testdir_should_pass")
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert "rw" not in parsed[0]['opts'][0]['parameters'], str(parsed)
+        # Change to 'ro'
+        results = PUT(f"/sharing/nfs/id/{nfsid}/", {'ro': True})
+        assert results.status_code == 200, results.text
 
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'ro': False})
-    assert results.status_code == 200, results.text
+        # Confirm 'ro' state and behavior
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert "rw" not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
+        # Attempt create and delete
+        with SSH_NFS(ip, NFS_PATH, user=user, password=password, ip=ip) as n:
+            with pytest.raises(RuntimeError) as re:
+                n.create("testfile_should_fail")
+                assert False, "Should not have been able to create a new file"
+            assert 'cannot touch' in str(re), re
+
+            with pytest.raises(RuntimeError) as re:
+                n.mkdir("testdir_should_fail")
+                assert False, "Should not have been able to create a new directory"
+            assert 'cannot create directory' in str(re), re
+
+    finally:
+        results = PUT(f"/sharing/nfs/id/{nfsid}/", {'ro': False})
+        assert results.status_code == 200, results.text
+
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+        # Cleanup the file and dir
+        with SSH_NFS(ip, NFS_PATH, user=user, password=password, ip=ip) as n:
+            n.unlink("testfile_should_pass")
+            n.rmdir("testdir_should_pass")
 
 
 def test_34_check_nfs_share_maproot(request):
@@ -645,7 +765,8 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
 def test_39_check_nfs_service_protocols_parameter(request):
     """
     This test verifies that changing the `protocols` option generates expected
-    changes in nfs kernel server config.
+    changes in nfs kernel server config.  In most cases we will also confirm
+    the settings have taken effect.
 
     For the time being this test will also exercise the deprecated `v4` option
     to the same effect, but this will later be removed.
@@ -655,6 +776,8 @@ def test_39_check_nfs_service_protocols_parameter(request):
     be updated.
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
+    results = GET("/service?service=nfs")
+    assert results.json()[0]["state"] == "RUNNING", results
 
     # Check existing config (both NFSv3 & NFSv4 configured)
     results = GET("/nfs")
@@ -681,6 +804,10 @@ def test_39_check_nfs_service_protocols_parameter(request):
     assert s['nfsd']["vers3"] == 'y', str(s)
     assert s['nfsd']["vers4"] == 'n', str(s)
 
+    # Confirm setting has taken effect: v4->off, v3->on
+    results = SSH_TEST("rpcinfo -s | grep 100003", user, password, ip)
+    assert results['output'].strip().split()[1] == '3', results
+
     # Try (and fail) to turn off both
     results = PUT("/nfs/", {"protocols": []})
     assert results.status_code != 200, results.text
@@ -699,6 +826,10 @@ def test_39_check_nfs_service_protocols_parameter(request):
     assert s['nfsd']["vers3"] == 'n', str(s)
     assert s['nfsd']["vers4"] == 'y', str(s)
 
+    # Confirm setting has taken effect: v4->on, v3->off
+    results = SSH_TEST("rpcinfo -s | grep 100003", user, password, ip)
+    assert results['output'].strip().split()[1] == '4', results
+
     # Finally turn both back on again
     results = PUT("/nfs/", {"protocols": ["NFSV3", "NFSV4"]})
     assert results.status_code == 200, results.text
@@ -713,6 +844,10 @@ def test_39_check_nfs_service_protocols_parameter(request):
     assert s['nfsd']["vers3"] == 'y', str(s)
     assert s['nfsd']["vers4"] == 'y', str(s)
 
+    # Confirm setting has taken effect: v4->on, v3->on
+    results = SSH_TEST("rpcinfo -s | grep 100003", user, password, ip)
+    assert results['output'].strip().split()[1] == '4,3', results
+
 
 def test_40_check_nfs_service_udp_parameter(request):
     """
@@ -720,25 +855,41 @@ def test_40_check_nfs_service_udp_parameter(request):
     in nfs kernel server config.
     """
     depends(request, ["pool_04", "ssh_password"], scope="session")
+    with nfs_config():
+        get_payload = {'msg': 'method', 'method': 'nfs.config', 'params': []}
+        set_payload = {'msg': 'method', 'method': 'nfs.update', 'params': []}
 
-    results = GET("/nfs")
-    assert results.status_code == 200, results.text
-    assert results.json()['udp'] is False, results.text
+        # Initial state should be disabled:
+        #    DB == False, conf == 'n'
+        res = make_ws_request(ip, get_payload)
+        assert res['result']['udp'] is False, res
+        s = parse_server_config()
+        assert s['nfsd']["udp"] == 'n', str(s)
 
-    s = parse_server_config()
-    assert s['nfsd']["udp"] == 'n', str(s)
+        # Multiple restarts cause systemd failures.  Reset the systemd counters.
+        svcs_to_reset = "nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd"
+        results = SSH_TEST(f"systemctl reset-failed {svcs_to_reset}", user, password, ip)
+        assert results['result'] is True
 
-    results = PUT("/nfs/", {"udp": True})
-    assert results.status_code == 200, results.text
+        # Confirm we can enable:
+        #    DB == True, conf =='y', rpc will indicate supported
+        set_payload['params'] = [{'udp': True}]
+        res = make_ws_request(ip, set_payload)
+        assert res['result']['udp'] is True, res
+        s = parse_server_config()
+        assert s['nfsd']["udp"] == 'y', str(s)
+        res = SSH_TEST(f"rpcinfo -T udp {ip} mount", user, password, ip)
+        assert "ready and waiting" in res['output'], res
 
-    s = parse_server_config()
-    assert s['nfsd']["udp"] == 'y', str(s)
-
-    results = PUT("/nfs/", {"udp": False})
-    assert results.status_code == 200, results.text
-
-    s = parse_server_config()
-    assert s['nfsd']["udp"] == 'n', str(s)
+        # Confirm we can disable:
+        #    DB == False, conf =='n', rpc will indicate not supported
+        set_payload['params'] = [{'udp': False}]
+        res = make_ws_request(ip, set_payload)
+        assert res['result']['udp'] is False, res
+        s = parse_server_config()
+        assert s['nfsd']["udp"] == 'n', str(s)
+        res = SSH_TEST(f"rpcinfo -T udp {ip} mount", user, password, ip)
+        assert "Program not registered" in res['stderr']
 
 
 def test_41_check_nfs_service_ports(request):
@@ -880,7 +1031,7 @@ def test_44_check_nfs_xattr_support(request):
     Mount path via NFS 4.2, create a file and dir,
     and write + read xattr on each.
     """
-    depends(request, ["pool_04"], scope="session")
+    depends(request, ["pool_04", "ssh_password"], scope="session")
     xattr_nfs_path = f'/mnt/{pool_name}/test_nfs4_xattr'
     with nfs_dataset("test_nfs4_xattr"):
         with nfs_share(xattr_nfs_path):
@@ -902,24 +1053,35 @@ def test_45_check_setting_runtime_debug(request):
     """
     depends(request, ["pool_04"], scope="session")
     disabled = {"NFS": ["NONE"], "NFSD": ["NONE"], "NLM": ["NONE"], "RPC": ["NONE"]}
+    enabled = {"NFS": ["PROC", "XDR", "CLIENT", "MOUNT", "XATTR_CACHE"],
+               "NFSD": ["ALL"],
+               "NLM": ["CLIENT", "CLNTLOCK", "SVC"],
+               "RPC": ["CALL", "NFS", "TRANS"]}
 
-    get_payload = {'msg': 'method', 'method': 'nfs.get_debug', 'params': []}
-    set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [["NFSD"], ["ALL"]]}
-    res = make_ws_request(ip, get_payload)
-    assert res['result'] == disabled, res
+    try:
+        get_payload = {'msg': 'method', 'method': 'nfs.get_debug', 'params': []}
+        res = make_ws_request(ip, get_payload)
+        assert res['result'] == disabled, res
 
-    make_ws_request(ip, set_payload)
-    res = make_ws_request(ip, get_payload)
-    assert res['result']['NFSD'] == ["ALL"], res
+        set_payload = {'msg': 'method', 'method': 'nfs.set_debug', 'params': [enabled]}
+        make_ws_request(ip, set_payload)
+        res = make_ws_request(ip, get_payload)
+        assert set(res['result']['NFS']) == set(enabled['NFS']), f"Mismatch on NFS: {res}"
+        assert set(res['result']['NFSD']) == set(enabled['NFSD']), f"Mismatch on NFSD: {res}"
+        assert set(res['result']['NLM']) == set(enabled['NLM']), f"Mismatch on NLM: {res}"
+        assert set(res['result']['RPC']) == set(enabled['RPC']), f"Mismatch on RPC: {res}"
 
-    set_payload['params'][1] = ["NONE"]
-    make_ws_request(ip, set_payload)
-    res = make_ws_request(ip, get_payload)
-    assert res['result'] == disabled, res
+    finally:
+        set_payload['params'] = [disabled]
+        make_ws_request(ip, set_payload)
+        res = make_ws_request(ip, get_payload)
+        assert res['result'] == disabled, res
 
 
 def test_50_stoping_nfs_service(request):
     depends(request, ["pool_04"], scope="session")
+    # Restore original settings before we stop
+    restore_nfs_config()
     payload = {"service": "nfs"}
     results = POST("/service/stop/", payload)
     assert results.status_code == 200, results.text
@@ -953,6 +1115,9 @@ def test_52_check_adjusting_threadpool_mode(request):
 
 
 def test_53_set_bind_ip():
+    '''
+    This test requires a static IP address
+    '''
     res = GET("/nfs/bindip_choices")
     assert res.status_code == 200, res.text
     assert ip in res.json(), res.text
