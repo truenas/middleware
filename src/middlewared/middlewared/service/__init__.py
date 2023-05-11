@@ -6,7 +6,7 @@ from middlewared.utils import filter_list # noqa
 
 from .compound_service import CompoundService # noqa
 from .config_service import ConfigService # noqa
-from .core_service import CoreService, MIDDLEWARE_RUN_DIR # noqa
+from .core_service import CoreService, MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH # noqa
 from .crud_service import CRUDService # noqa
 from .decorators import (
     cli_private, filterable, filterable_returns, item_method, job, lock, no_auth_required, pass_app,
