@@ -8,18 +8,7 @@ set PID [spawn vm console "$vm"]
 send_user "Spawned PID: $PID \n"
 
 expect {
-  "https://" {
-    sleep .5
-    exit 0
-  }
-
-  "login:" {
-    sleep .5
-  }
-}
-
-expect {
-  "https://" {
+  "Enter an option from 1-11:" {
     sleep .5
     exit 0
   }
