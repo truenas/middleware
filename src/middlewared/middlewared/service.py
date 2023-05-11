@@ -117,28 +117,6 @@ class throttle(object):
             return wrapper
 
 
-def filterable(fn):
-    fn._filterable = True
-    if hasattr(fn, 'wraps'):
-        fn.wraps._filterable = True
-    return accepts(Ref('query-filters'), Ref('query-options'))(fn)
-
-
-def filterable_returns(schema):
-    def filterable_internal(fn):
-        operator = OROperator(
-            Int('count'),
-            schema,
-            List('query_result', items=[schema.copy()]),
-            name='filterable_result',
-        )
-        fn._filterable_schema = operator
-        if hasattr(fn, 'wraps'):
-            fn.wraps._filterable_schema = operator
-        return returns(operator)(fn)
-    return filterable_internal
-
-
 def get_datastore_primary_key_schema(klass):
     return convert_schema({
         'type': klass._config.datastore_primary_key_type,
