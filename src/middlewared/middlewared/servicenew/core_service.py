@@ -21,7 +21,7 @@ from middlewared.pipe import Pipes
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
-from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR, osc
+from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.validators import IpAddress, Range
 
@@ -512,20 +512,10 @@ class CoreService(Service):
         return 'pong'
 
     def _ping_host(self, host, timeout):
-        if osc.IS_LINUX:
-            process = run(['ping', '-4', '-w', f'{timeout}', host])
-        else:
-            process = run(['ping', '-t', f'{timeout}', host])
-
-        return process.returncode == 0
+        return run(['ping', '-4', '-w', f'{timeout}', host]).returncode == 0
 
     def _ping6_host(self, host, timeout):
-        if osc.IS_LINUX:
-            process = run(['ping6', '-w', f'{timeout}', host])
-        else:
-            process = run(['ping6', '-X', f'{timeout}', host])
-
-        return process.returncode == 0
+        return run(['ping6', '-w', f'{timeout}', host]).returncode == 0
 
     @accepts(
         Dict(
