@@ -223,6 +223,10 @@ class DiskService(Service):
         ])
 
     @private
+    async def create_swap_partition(self):
+        return not (await self.middleware.call('system.is_ha_capable') or await self.swap_boot_partitions_exist())
+
+    @private
     async def swap_redundancy(self):
         group_size = 2
         pools = await self.middleware.call('pool.query', [['status', 'nin', ('OFFLINE', 'FAULTED')]])
