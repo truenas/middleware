@@ -41,14 +41,6 @@ get_or_insert_lock = asyncio.Lock()
 MIDDLEWARE_STARTED_SENTINEL_PATH = os.path.join(MIDDLEWARE_RUN_DIR, "middlewared-started")
 
 
-def item_method(fn):
-    """Flag method as an item method.
-    That means it operates over a single item in the collection,
-    by an unique identifier."""
-    fn._item_method = True
-    return fn
-
-
 def job(lock=None, lock_queue_size=None, logs=False, process=False, pipes=None, check_pipes=True, transient=False,
         description=None, abortable=False):
     """
