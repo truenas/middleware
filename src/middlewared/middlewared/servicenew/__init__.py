@@ -14,10 +14,11 @@ from .service_mixin import ServiceChangeMixin # noqa
 from .sharing_service import SharingService, SharingTaskService, TaskPathService # noqa
 from .system_service import SystemServiceService # noqa
 from .tdbw_config import TDBWrapConfigService # noqa
+from .tdbw_crud import TDBWrapCRUDService # noqa
 from .throttle import throttle # noqa
 
 
 ABSTRACT_SERVICES = ( # noqa
     CompoundService, ConfigService, CRUDService, SharingService, SharingTaskService,
-    SystemServiceService, TaskPathService, TDBWrapConfigService,
+    SystemServiceService, TaskPathService, TDBWrapConfigService, TDBWrapCRUDService,
 )
