@@ -2,9 +2,8 @@ import errno
 import os
 
 from base64 import b64encode, b64decode
-from middlewared.service import (Service, CallError, job,
-                                 accepts, Dict, Str, Int, Bool, List,
-                                 Ref, private)
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
+from middlewared.service import Service, CallError, job, private
 from middlewared.schema import Path
 from middlewared.validators import UUID
 from middlewared.plugins.gluster_linux.pyglfs_utils import glfs
