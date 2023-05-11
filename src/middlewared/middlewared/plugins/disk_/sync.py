@@ -1,7 +1,6 @@
 import os
 import time
 import re
-import shlex
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Str
@@ -176,7 +175,7 @@ class DiskService(Service, ServiceChangeMixin):
 
             found_ident = next(disk_xml.iterfind(f'.//config[ident="{_ident}"]/../../name'), None)
             if found_ident is not None:
-                found_lunid = next(disk_xml.iterfind(f'.//config[lunid={shlex.quote(_lunid)}]/../../name'), None)
+                found_lunid = next(disk_xml.iterfind(f'.//config[lunid="{_lunid}"]/../../name'), None)
                 if found_lunid is not None:
                     # means the identifier and lunid given to us
                     # matches a disk on the system so just return
