@@ -49,7 +49,8 @@ setup(
             get_assets('assets') +
             get_assets('etc_files') +
             get_assets('migration') +
-            get_assets('plugins/kubernetes_linux/migrations')
+            get_assets('plugins/kubernetes_linux/migrations') +
+            get_assets('plugins/kubernetes_linux/app_migrations')
         ),
     },
     include_package_data=True,
