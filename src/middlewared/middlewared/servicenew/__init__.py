@@ -4,6 +4,7 @@ from middlewared.service_exception import ( # noqa
 
 from .compound_service import CompoundService # noqa
 from .config_service import ConfigService # noqa
+from .crud_service import CRUDService # noqa
 from .decorators import (
     cli_private, filterable, filterable_returns, item_method, job, lock, no_auth_required, pass_app,
     periodic, private, rest_api_metadata, skip_arg, threaded,
@@ -16,5 +17,5 @@ from .throttle import throttle # noqa
 
 
 ABSTRACT_SERVICES = ( # noqa
-    CompoundService, ConfigService, SystemServiceService, TDBWrapConfigService,
+    CompoundService, ConfigService, CRUDService, SystemServiceService, TDBWrapConfigService,
 )
