@@ -48,17 +48,6 @@ def get_datastore_primary_key_schema(klass):
     })
 
 
-class Service(object, metaclass=ServiceBase):
-    """
-    Generic service abstract class
-
-    This is meant for services that do not follow any standard.
-    """
-    def __init__(self, middleware):
-        self.logger = Logger(type(self).__name__).getLogger()
-        self.middleware = middleware
-
-
 class ServiceChangeMixin:
     async def _service_change(self, service, verb):
 
