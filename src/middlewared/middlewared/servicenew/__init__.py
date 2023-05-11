@@ -11,11 +11,12 @@ from .decorators import (
 ) # noqa
 from .service import Service # noqa
 from .service_mixin import ServiceChangeMixin # noqa
+from .sharing_service import SharingTaskService # noqa
 from .system_service import SystemServiceService # noqa
 from .tdbw_config import TDBWrapConfigService # noqa
 from .throttle import throttle # noqa
 
 
 ABSTRACT_SERVICES = ( # noqa
-    CompoundService, ConfigService, CRUDService, SystemServiceService, TDBWrapConfigService,
+    CompoundService, ConfigService, CRUDService, SharingTaskService, SystemServiceService, TDBWrapConfigService,
 )
