@@ -11,6 +11,7 @@ from .decorators import (
 ) # noqa
 from .service import Service # noqa
 from .service_mixin import ServiceChangeMixin # noqa
+from .service_part import ServicePartBase # noqa
 from .sharing_service import SharingService, SharingTaskService, TaskPathService # noqa
 from .system_service import SystemServiceService # noqa
 from .tdbw_config import TDBWrapConfigService # noqa
