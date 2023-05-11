@@ -30,6 +30,7 @@ class AppService(Service):
         List('categories', required=True),
         List('maintainers', required=True),
         List('tags', required=True),
+        List('sources', required=True, items=[Str('source')]),
         Str('name', required=True),
         Str('title', required=True),
         Str('description', required=True),
