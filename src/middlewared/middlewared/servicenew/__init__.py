@@ -10,7 +10,8 @@ from .decorators import (
 ) # noqa
 from .service import Service # noqa
 from .service_mixin import ServiceChangeMixin # noqa
+from tdbw_config import TDBWrapConfigService # noqa
 from .throttle import throttle # noqa
 
 
-ABSTRACT_SERVICES = (CompoundService, ConfigService) # noqa
+ABSTRACT_SERVICES = (CompoundService, ConfigService, TDBWrapConfigService) # noqa
