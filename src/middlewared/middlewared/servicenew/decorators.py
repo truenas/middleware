@@ -9,6 +9,14 @@ LOCKS = defaultdict(asyncio.Lock)
 THREADING_LOCKS = defaultdict(threading.Lock)
 
 
+def item_method(fn):
+    """Flag method as an item method.
+    That means it operates over a single item in the collection,
+    by an unique identifier."""
+    fn._item_method = True
+    return fn
+
+
 def lock(lock_str):
     def lock_fn(fn):
         if asyncio.iscoroutinefunction(fn):
