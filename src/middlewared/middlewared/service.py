@@ -36,7 +36,7 @@ from middlewared.utils.type import copy_function_metadata
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.validators import Range, IpAddress
 
-PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
+
 get_or_insert_lock = asyncio.Lock()
 MIDDLEWARE_STARTED_SENTINEL_PATH = os.path.join(MIDDLEWARE_RUN_DIR, "middlewared-started")
 
@@ -115,43 +115,6 @@ class throttle(object):
                 return fn(*args, **kwargs)
 
             return wrapper
-
-
-def rest_api_metadata(extra_methods=None):
-    """
-    Allow having endpoints specify explicit rest methods.
-
-    Explicit methods should be a list which specifies what methods the function should be available
-    at other then the default one it is already going to be. This is useful when we want to maintain
-    backwards compatibility with endpoints which were not expecting payload before but are now and users
-    still would like to consume them with previous method which would be GET whereas it's POST now.
-    """
-    def wrapper(fn):
-        fn._rest_api_metadata = {
-            'extra_methods': extra_methods,
-        }
-        return fn
-    return wrapper
-
-
-def periodic(interval, run_on_start=True):
-    def wrapper(fn):
-        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
-        return fn
-
-    return wrapper
-
-
-def private(fn):
-    """Do not expose method in public API"""
-    fn._private = True
-    return fn
-
-
-def cli_private(fn):
-    """Do not expose method in CLI"""
-    fn._cli_private = True
-    return fn
 
 
 def filterable(fn):
