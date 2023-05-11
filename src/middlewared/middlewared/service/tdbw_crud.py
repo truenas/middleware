@@ -240,4 +240,3 @@ class TDBWrapCRUDService(CRUDService):
     async def do_delete(self, id):
         res = await self.direct_delete(id)
         return res
-
