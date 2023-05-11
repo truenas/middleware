@@ -1,7 +1,8 @@
 import json
 import time
 
-from middlewared.service import accepts, Any, job, Service
+from middlewared.schema import accepts, Any
+from middlewared.service import job, Service
 
 
 class RestTestService(Service):

@@ -11,8 +11,8 @@ import pyudev
 import async_timeout
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
-from middlewared.schema import Bool, Dict, Int, returns
-from middlewared.service import accepts, List, private, Ref, Service, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.itertools import grouper
 
