@@ -41,22 +41,6 @@ from middlewared.validators import Range, IpAddress
 MIDDLEWARE_STARTED_SENTINEL_PATH = os.path.join(MIDDLEWARE_RUN_DIR, "middlewared-started")
 
 
-class SharingService(SharingTaskService):
-    locked_alert_class = 'ShareLocked'
-
-    @private
-    async def human_identifier(self, share_task):
-        return share_task['name']
-
-
-class TaskPathService(SharingTaskService):
-    locked_alert_class = 'TaskLocked'
-
-    @private
-    async def human_identifier(self, share_task):
-        return await self.get_path_field(share_task)
-
-
 class TDBWrapCRUDService(CRUDService):
     """
     Config service with optional clustered backend

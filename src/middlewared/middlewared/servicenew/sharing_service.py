@@ -164,3 +164,19 @@ class SharingTaskService(CRUDService):
         rv = await super().delete(app, id, *args)
         await self.remove_locked_alert(id)
         return rv
+
+
+class SharingService(SharingTaskService):
+    locked_alert_class = 'ShareLocked'
+
+    @private
+    async def human_identifier(self, share_task):
+        return share_task['name']
+
+
+class TaskPathService(SharingTaskService):
+    locked_alert_class = 'TaskLocked'
+
+    @private
+    async def human_identifier(self, share_task):
+        return await self.get_path_field(share_task)
