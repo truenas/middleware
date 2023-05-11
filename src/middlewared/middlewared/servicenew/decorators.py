@@ -131,3 +131,34 @@ def lock(lock_str):
         return l_fn
 
     return lock_fn
+
+
+def no_auth_required(fn):
+    """Authentication is not required to use the given method."""
+    fn._no_auth_required = True
+    return fn
+
+
+def pass_app(rest=False):
+    """Pass the application instance as parameter to the method."""
+    def wrapper(fn):
+        fn._pass_app = {
+            'rest': rest,
+        }
+        return fn
+    return wrapper
+
+
+def skip_arg(count=0):
+    """Skip "count" arguments when validating accepts"""
+    def wrap(fn):
+        fn._skip_arg = count
+        return fn
+    return wrap
+
+
+def threaded(pool):
+    def m(fn):
+        fn._thread_pool = pool
+        return fn
+    return m
