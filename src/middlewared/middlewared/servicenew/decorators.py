@@ -1,12 +1,19 @@
 import asyncio
 import threading
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from functools import wraps
 
 
 LOCKS = defaultdict(asyncio.Lock)
+PeriodicTaskDescriptor = namedtuple('PeriodicTaskDescriptor', ['interval', 'run_on_start'])
 THREADING_LOCKS = defaultdict(threading.Lock)
+
+
+def cli_private(fn):
+    """Do not expose method in CLI"""
+    fn._cli_private = True
+    return fn
 
 
 def item_method(fn):
@@ -144,6 +151,37 @@ def pass_app(rest=False):
     def wrapper(fn):
         fn._pass_app = {
             'rest': rest,
+        }
+        return fn
+    return wrapper
+
+
+def periodic(interval, run_on_start=True):
+    def wrapper(fn):
+        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
+        return fn
+
+    return wrapper
+
+
+def private(fn):
+    """Do not expose method in public API"""
+    fn._private = True
+    return fn
+
+
+def rest_api_metadata(extra_methods=None):
+    """
+    Allow having endpoints specify explicit rest methods.
+
+    Explicit methods should be a list which specifies what methods the function should be available
+    at other then the default one it is already going to be. This is useful when we want to maintain
+    backwards compatibility with endpoints which were not expecting payload before but are now and users
+    still would like to consume them with previous method which would be GET whereas it's POST now.
+    """
+    def wrapper(fn):
+        fn._rest_api_metadata = {
+            'extra_methods': extra_methods,
         }
         return fn
     return wrapper
