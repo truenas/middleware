@@ -175,6 +175,7 @@ class DiskService(Service, ServiceChangeMixin):
 
             found_ident = next(disk_xml.iterfind(f'.//config[ident="{_ident}"]/../../name'), None)
             if found_ident is not None:
+                _lunid = _lunid.replace('"', '%22')  # replace double-quote with utf8 url encoded value
                 found_lunid = next(disk_xml.iterfind(f'.//config[lunid="{_lunid}"]/../../name'), None)
                 if found_lunid is not None:
                     # means the identifier and lunid given to us
