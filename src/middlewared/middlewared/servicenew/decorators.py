@@ -4,6 +4,8 @@ import threading
 from collections import defaultdict, namedtuple
 from functools import wraps
 
+from middlewared.schema import accepts, Int, List, OROperator, Ref, returns
+
 
 LOCKS = defaultdict(asyncio.Lock)
 PeriodicTaskDescriptor = namedtuple('PeriodicTaskDescriptor', ['interval', 'run_on_start'])
@@ -14,6 +16,28 @@ def cli_private(fn):
     """Do not expose method in CLI"""
     fn._cli_private = True
     return fn
+
+
+def filterable(fn):
+    fn._filterable = True
+    if hasattr(fn, 'wraps'):
+        fn.wraps._filterable = True
+    return accepts(Ref('query-filters'), Ref('query-options'))(fn)
+
+
+def filterable_returns(schema):
+    def filterable_internal(fn):
+        operator = OROperator(
+            Int('count'),
+            schema,
+            List('query_result', items=[schema.copy()]),
+            name='filterable_result',
+        )
+        fn._filterable_schema = operator
+        if hasattr(fn, 'wraps'):
+            fn.wraps._filterable_schema = operator
+        return returns(operator)(fn)
+    return filterable_internal
 
 
 def item_method(fn):
