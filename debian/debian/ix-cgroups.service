@@ -1,8 +1,12 @@
 [Unit]
 Description=Enable required cgroups for TrueNAS
 DefaultDependencies=no
-# We want to set it up before starting middleware because of NAS-120085
-Before=middlewared.service
+# We want to do this after ix-zfs and before network is setup
+# systemd disables cpuset during boot phase and after much
+# fiddling, this combination of deps addresses our usecase
+# and keeps systemd happy at the end of the day
+Before=network-pre.target
+After=ix-zfs.service
 
 [Service]
 Type=oneshot
