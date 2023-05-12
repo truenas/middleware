@@ -527,7 +527,7 @@ def test_040_delete_encrypted_dataset(request):
     assert results.status_code == 200, results.text
 
 
-def test_041_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool(request):
+def test_041_verify_creating_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool_failes(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -535,14 +535,8 @@ def test_041_create_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool(reque
         'inherit_encryption': False
     }
     results = POST('/pool/dataset/', payload)
-    assert results.status_code == 200, results.text
+    assert results.status_code == 422, results.text
     assert results.json()['key_format']['value'] is None, results.text
-
-
-def test_042_delete_not_encrypted_dataset(request):
-    depends(request, ['CREATED_POOL'])
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
-    assert results.status_code == 200, results.text
 
 
 def test_043_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool(request):
@@ -798,7 +792,7 @@ def test_063_delete_encrypted_dataset(request):
     assert results.status_code == 200, results.text
 
 
-def test_064_create_an_not_encrypted_dataset_on_a_key_encrypted_pool(request):
+def test_064_verify_creating_a_not_encrypted_dataset_on_a_key_encrypted_pool_fails(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
@@ -806,14 +800,8 @@ def test_064_create_an_not_encrypted_dataset_on_a_key_encrypted_pool(request):
         'inherit_encryption': False
     }
     results = POST('/pool/dataset/', payload)
-    assert results.status_code == 200, results.text
+    assert results.status_code == 422, results.text
     assert results.json()['key_format']['value'] is None, results.text
-
-
-def test_065_delete_encrypted_dataset(request):
-    depends(request, ['CREATED_POOL'])
-    results = DELETE(f'/pool/dataset/id/{dataset_url}/')
-    assert results.status_code == 200, results.text
 
 
 def test_066_create_an_dataset_with_inherit_encryption_from_the_key_encrypted_pool(request):
