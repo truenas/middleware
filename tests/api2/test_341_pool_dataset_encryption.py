@@ -527,7 +527,7 @@ def test_040_delete_encrypted_dataset(request):
     assert results.status_code == 200, results.text
 
 
-def test_041_verify_creating_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool_failes(request):
+def test_041_verify_creating_a_not_encrypted_dataset_on_a_passphrase_encrypted_pool_fails(request):
     depends(request, ['CREATED_POOL'])
     payload = {
         'name': dataset,
