@@ -1190,7 +1190,7 @@ class UserService(CRUDService):
 
         if 'home' in data:
             if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
-                check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
+                await check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
 
         if 'home_mode' in data:
             try:
