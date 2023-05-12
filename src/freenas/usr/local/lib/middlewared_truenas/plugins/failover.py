@@ -142,18 +142,12 @@ class FailoverService(ConfigService):
             **NOTE**
                 This setting does NOT effect the `disabled` or `master` parameters.
         """
-        master = data.pop('master', NOT_PROVIDED)
-
+        master = data.pop('master', True)  # The node making the call is the one we want to make MASTER by default
         old = await self.middleware.call('datastore.config', 'system.failover')
-
         new = old.copy()
         new.update(data)
 
-        if master is NOT_PROVIDED:
-            # The node making the call is the one we want to make MASTER by default
-            new['master_node'] = await self.middleware.call('failover.node')
-        else:
-            new['master_node'] = await self._master_node(master)
+        new['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
