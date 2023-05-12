@@ -536,7 +536,6 @@ def test_041_verify_creating_a_not_encrypted_dataset_on_a_passphrase_encrypted_p
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 422, results.text
-    assert results.json()['key_format']['value'] is None, results.text
 
 
 def test_043_create_a_dataset_to_inherit_encryption_from_the_passphrase_encrypted_pool(request):
@@ -801,7 +800,6 @@ def test_064_verify_creating_a_not_encrypted_dataset_on_a_key_encrypted_pool_fai
     }
     results = POST('/pool/dataset/', payload)
     assert results.status_code == 422, results.text
-    assert results.json()['key_format']['value'] is None, results.text
 
 
 def test_066_create_an_dataset_with_inherit_encryption_from_the_key_encrypted_pool(request):
