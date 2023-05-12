@@ -25,7 +25,7 @@ import enum
 
 from functools import partial
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -143,8 +143,7 @@ class FailoverService(ConfigService):
                 This setting does NOT effect the `disabled` or `master` parameters.
         """
         master = data.pop('master', True)  # The node making the call is the one we want to make MASTER by default
-        old = await self.middleware.call('datastore.config', 'system.failover')
-        new = old.copy()
+        new = await self.middleware.call('datastore.config', 'system.failover')
         new.update(data)
 
         new['master_node'] = await self._master_node(master)
