@@ -25,7 +25,7 @@ import enum
 
 from functools import partial
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import (
     job, no_auth_required, pass_app, private, throttle, CallError, ConfigService, ValidationErrors,
 )
@@ -142,18 +142,11 @@ class FailoverService(ConfigService):
             **NOTE**
                 This setting does NOT effect the `disabled` or `master` parameters.
         """
-        master = data.pop('master', NOT_PROVIDED)
-
-        old = await self.middleware.call('datastore.config', 'system.failover')
-
-        new = old.copy()
+        master = data.pop('master', True)  # The node making the call is the one we want to make MASTER by default
+        new = await self.middleware.call('datastore.config', 'system.failover')
         new.update(data)
 
-        if master is not NOT_PROVIDED:
-            # The node making the call is the one we want to make MASTER by default
-            new['master_node'] = await self.middleware.call('failover.node')
-        else:
-            new['master_node'] = await self._master_node(master)
+        new['master_node'] = await self._master_node(master)
 
         verrors = ValidationErrors()
         if new['disabled'] is False:
@@ -375,7 +368,7 @@ class FailoverService(ConfigService):
 
         crit_ints = [i for i in await self.middleware.call('interface.query') if i.get('failover_critical', False)]
         for i in crit_ints:
-            await self.middleware.call('failover.events.event', i['name'], 'forcetakeover')
+            await self.middleware.call('failover.event', i['name'], i['failover_vhid'], 'forcetakeover')
             return True
         else:
             # if there are no interfaces marked critical for failover and this method was
