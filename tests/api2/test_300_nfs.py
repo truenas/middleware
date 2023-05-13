@@ -98,15 +98,41 @@ def confirm_mountd_processes(expected=16):
     assert int(result['output']) - 1 == expected
 
 
-def confirm_rpc_processes(expected=['idmap', 'bind', 'statd']):
+def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
     '''
     Confirm the expected rpc processes are running
+    NB: This only supports the listed names
     '''
+    prepend = {'idmapd': 'rpc.', 'bind': 'rpc', 'statd': 'rpc.'}
+    for n in expected:
+        procname = prepend[n] + n
+        result = SSH_TEST(f"pgrep {procname}", user, password, ip)
+        assert len(result['output'].splitlines()) > 0
 
-    rx_mountd = r"rpc\.mountd"
-    result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
-    # We subtract one to account for the rpc.mountd thread manager
-    assert int(result['output']) - 1 == expected
+
+def confirm_nfs_version(expected=[]):
+    '''
+    Confirm the expected NFS versions are 'enabled and supported'
+    Possible values for expected:
+        ["3"] means NFSv3 only
+        ["4"] means NFSv4 only
+        ["3","4"] means both NFSv3 and NFSv4
+    '''
+    results = SSH_TEST("rpcinfo -s | grep ' nfs '", user, password, ip)
+    for v in expected:
+        assert v in results['output'].strip().split()[1], results
+
+
+def reset_svcs(svcs_to_reset):
+    '''
+    Systemd services can get disabled if they restart too
+    many times or too quickly.   This can happen during testing.
+    Input a space delimited string of systemd services to reset.
+    Example usage:
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+    '''
+    results = SSH_TEST(f"systemctl reset-failed {svcs_to_reset}", user, password, ip)
+    assert results['result'] is True
 
 
 class NFS_CONFIG:
@@ -117,6 +143,13 @@ class NFS_CONFIG:
 
 
 def save_nfs_config():
+    '''
+    Save the NFS configuration DB at the start of this test module.
+    This is used to restore the settings _before_ NFS is disabled near
+    the end of the testing. There might be a way to do this with a fixture,
+    but it also might require refactoring of the tests.
+    This is called at the start of test_01_creating_the_nfs_server.
+    '''
     exclude = ['id', 'v4_krb_enabled', 'v4_owner_major']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     res = make_ws_request(ip, get_conf_cmd)
@@ -126,6 +159,12 @@ def save_nfs_config():
 
 
 def restore_nfs_config():
+    '''
+    Restore the NFS configuration to the settings saved by save_nfs_config.
+    This should be called _before_ NFS is shutdown to ensure the NFS conf file in /etc
+    matches the DB settings.
+    This is called at the start of test_50_stoping_nfs_service.
+    '''
     set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
     res = make_ws_request(ip, set_conf_cmd)
     assert res.get('error') is None, res
@@ -184,7 +223,10 @@ def nfs_share(path, options=None):
 @contextlib.contextmanager
 def nfs_config(options=None):
     '''
-    Use this to restore settings after the test
+    Use this to restore settings when changed within a test function.
+    Example usage:
+    with nfs_config():
+        <code that modifies NFS config>
     '''
     get_conf = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     restore_conf = {'msg': 'method', 'method': 'nfs.update', 'params': []}
@@ -279,6 +321,7 @@ def test_08_starting_nfs_service(request):
     sleep(1)
     confirm_nfsd_processes(10)
     confirm_mountd_processes(10)
+    confirm_rpc_processes()
 
 
 def test_09_checking_to_see_if_nfs_service_is_running(request):
@@ -327,6 +370,7 @@ def test_19_updating_the_nfs_service(request):
 
     confirm_nfsd_processes(50)
     confirm_mountd_processes(50)
+    confirm_rpc_processes()
 
 
 def test_20_update_nfs_share(request):
@@ -779,6 +823,9 @@ def test_39_check_nfs_service_protocols_parameter(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "RUNNING", results
 
+    # Multiple restarts cause systemd failures.  Reset the systemd counters.
+    reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
     # Check existing config (both NFSv3 & NFSv4 configured)
     results = GET("/nfs")
     assert results.status_code == 200, results.text
@@ -789,6 +836,7 @@ def test_39_check_nfs_service_protocols_parameter(request):
     s = parse_server_config()
     assert s['nfsd']["vers3"] == 'y', str(s)
     assert s['nfsd']["vers4"] == 'y', str(s)
+    confirm_nfs_version(['3', '4'])
 
     # Turn off NFSv4 (v3 on)
     results = PUT("/nfs/", {"protocols": ["NFSV3"]})
@@ -805,8 +853,7 @@ def test_39_check_nfs_service_protocols_parameter(request):
     assert s['nfsd']["vers4"] == 'n', str(s)
 
     # Confirm setting has taken effect: v4->off, v3->on
-    results = SSH_TEST("rpcinfo -s | grep 100003", user, password, ip)
-    assert results['output'].strip().split()[1] == '3', results
+    confirm_nfs_version(['3'])
 
     # Try (and fail) to turn off both
     results = PUT("/nfs/", {"protocols": []})
@@ -827,8 +874,7 @@ def test_39_check_nfs_service_protocols_parameter(request):
     assert s['nfsd']["vers4"] == 'y', str(s)
 
     # Confirm setting has taken effect: v4->on, v3->off
-    results = SSH_TEST("rpcinfo -s | grep 100003", user, password, ip)
-    assert results['output'].strip().split()[1] == '4', results
+    confirm_nfs_version(['4'])
 
     # Finally turn both back on again
     results = PUT("/nfs/", {"protocols": ["NFSV3", "NFSV4"]})
@@ -845,8 +891,7 @@ def test_39_check_nfs_service_protocols_parameter(request):
     assert s['nfsd']["vers4"] == 'y', str(s)
 
     # Confirm setting has taken effect: v4->on, v3->on
-    results = SSH_TEST("rpcinfo -s | grep 100003", user, password, ip)
-    assert results['output'].strip().split()[1] == '4,3', results
+    confirm_nfs_version(['3', '4'])
 
 
 def test_40_check_nfs_service_udp_parameter(request):
@@ -867,9 +912,7 @@ def test_40_check_nfs_service_udp_parameter(request):
         assert s['nfsd']["udp"] == 'n', str(s)
 
         # Multiple restarts cause systemd failures.  Reset the systemd counters.
-        svcs_to_reset = "nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd"
-        results = SSH_TEST(f"systemctl reset-failed {svcs_to_reset}", user, password, ip)
-        assert results['result'] is True
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
 
         # Confirm we can enable:
         #    DB == True, conf =='y', rpc will indicate supported
@@ -1057,6 +1100,7 @@ def test_45_check_setting_runtime_debug(request):
                "NFSD": ["ALL"],
                "NLM": ["CLIENT", "CLNTLOCK", "SVC"],
                "RPC": ["CALL", "NFS", "TRANS"]}
+    failure = {"RPC": ["CALL", "NFS", "TRANS", "NONE"]}
 
     try:
         get_payload = {'msg': 'method', 'method': 'nfs.get_debug', 'params': []}
@@ -1071,6 +1115,10 @@ def test_45_check_setting_runtime_debug(request):
         assert set(res['result']['NLM']) == set(enabled['NLM']), f"Mismatch on NLM: {res}"
         assert set(res['result']['RPC']) == set(enabled['RPC']), f"Mismatch on RPC: {res}"
 
+        # Test failure case.  This should generate an ValueError exception on the system
+        set_payload['params'] = [failure]
+        res = make_ws_request(ip, set_payload)
+        assert res['error']['errname'] == "EINVAL", res['error']['errname']
     finally:
         set_payload['params'] = [disabled]
         make_ws_request(ip, set_payload)

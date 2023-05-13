@@ -149,13 +149,16 @@ class NFSService(Service):
                 return rv
 
             for x in opts:
-                rv += self.dbgcls[svc][x].value
+                rv = rv | self.dbgcls[svc][x].value
 
             return rv
 
         for svc, opts in services.items():
             if opts == []:
                 continue
+            if "NONE" in opts and len(opts) > 1:
+                raise ValueError(f"Cannot specify another value with NONE: {svc}={opts}")
+
             to_set = "0x%0.4X" % debug_level_to_int(svc, opts)
 
             with open(f"/proc/sys/sunrpc/{svc.lower()}_debug", "w") as f:
