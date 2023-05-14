@@ -212,7 +212,7 @@ class LDAPClient(Service):
             pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['options']['dns_timeout'])
 
             self._setup_ssl(data)
-            if data['security']['ssl'] == SSL.USESTARTTLS.name:
+            if SSL(data['security']['ssl']) == SSL.USESTARTTLS:
                 try:
                     self._handle.start_tls_s()
 
@@ -784,6 +784,10 @@ class LDAPService(TDBWrapConfigService):
         if data['has_samba_schema'] and not ldap_has_samba_schema:
             verrors.add('ldap_update.has_samba_schema',
                         'Remote LDAP server does not have Samba schema extensions.')
+
+        if data['has_samba_schema'] and SSL(data['ssl']) == SSL.NOSSL:
+            verrors.add('ldap_update.has_samba_schema',
+                        'Encryption is required in order to use legacy Samba schema.')
 
     @private
     async def autodetect_ldap_settings(self, data):
