@@ -23,6 +23,7 @@ PIP_PACKAGES=(
 )
 
 chmod +x /usr/bin/apt*
+chmod +x /usr/bin/dpkg
 apt update
 apt install -y "${PACKAGES[@]}"
 pip install "${PIP_PACKAGES[@]}"
