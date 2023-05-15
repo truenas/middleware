@@ -1,6 +1,10 @@
+import contextlib
+
 import docker
 import re
+
 from collections import defaultdict
+from subprocess import DEVNULL, PIPE, Popen
 from typing import Dict, Union
 
 from middlewared.service import CallError
@@ -83,3 +87,25 @@ def get_chart_releases_consuming_image(
 
 def get_docker_client() -> docker.DockerClient:
     return docker.from_env()
+
+
+@contextlib.contextmanager
+def docker_auth(auth: dict) -> None:
+    """
+    Authenticates docker client in a context manager with given credentials using subprocess and a
+    try/finally block to logout
+    """
+    if auth:
+        cp = Popen(['docker', 'login', '-u', auth['username'], '-p', auth['password']], stderr=PIPE, stdout=DEVNULL)
+        stderr = cp.communicate()[1]
+        if cp.returncode != 0:
+            raise CallError(f'Failed to login to docker registry: {stderr.decode()}')
+
+    try:
+        yield
+    finally:
+        if auth:
+            cp = Popen(['docker', 'logout'], stderr=PIPE, stdout=DEVNULL)
+            stderr = cp.communicate()[1]
+            if cp.returncode != 0:
+                raise CallError(f'Failed to logout from docker registry: {stderr.decode()}')
