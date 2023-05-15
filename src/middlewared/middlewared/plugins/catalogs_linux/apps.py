@@ -61,6 +61,9 @@ class AppService(Service):
 
         for catalog in self.middleware.call_sync('catalog.query'):
             for train, train_data in self.middleware.call_sync('catalog.items', catalog['label']).items():
+                if train not in catalog['preferred_trains']:
+                    continue
+
                 for app_data in train_data.values():
                     results.append({
                         'catalog': catalog['label'],
