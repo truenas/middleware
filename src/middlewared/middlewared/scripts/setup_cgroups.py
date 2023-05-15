@@ -1,18 +1,16 @@
 #!/usr/bin/python3
 import contextlib
 import os
-import re
 
 
 CGROUP_ROOT_PATH = '/sys/fs/cgroup'
 CGROUP_AVAILABLE_CONTROLLERS_PATH = os.path.join(CGROUP_ROOT_PATH, 'cgroup.subtree_control')
-RE_CGROUP_CONTROLLERS = re.compile(r'(\w+)\s+')
 
 
 def get_available_controllers_for_consumption() -> set:
     try:
         with open(CGROUP_AVAILABLE_CONTROLLERS_PATH, 'r') as f:
-            return set(RE_CGROUP_CONTROLLERS.findall(f.read()))
+            return set(f.read().split())
     except FileNotFoundError:
         raise Exception(
             'Unable to determine cgroup controllers which are available for consumption as '
@@ -38,7 +36,7 @@ def main():
     system_supported_controllers_path = os.path.join(CGROUP_ROOT_PATH, 'cgroup.controllers')
     try:
         with open(system_supported_controllers_path, 'r') as f:
-            available_controllers = set(RE_CGROUP_CONTROLLERS.findall(f.read()))
+            available_controllers = set(f.read().split())
     except FileNotFoundError:
         raise Exception(
             'Unable to determine available cgroup controllers as '
