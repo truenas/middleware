@@ -43,6 +43,10 @@ def main():
             f'{system_supported_controllers_path!r} does not exist'
         )
 
+    # What we are doing here is that we get controllers which are supported and required by k8s to function
+    # then we check if they are available for consumption, if not we try to add them to subtree control
+    # and then do a final check to confirm they have been added as desired
+
     needed_controllers = supported_controllers & available_controllers
     available_controllers_for_consumption = get_available_controllers_for_consumption()
     if missing_controllers := needed_controllers - available_controllers_for_consumption:
