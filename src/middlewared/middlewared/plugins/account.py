@@ -191,6 +191,9 @@ class UserService(CRUDService):
 
     @private
     def _read_authorized_keys(self, homedir):
+        if not homedir:
+            return None
+
         keysfile = f'{homedir}/.ssh/authorized_keys'
         rv = None
         with suppress(FileNotFoundError):
