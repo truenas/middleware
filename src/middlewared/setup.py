@@ -20,7 +20,10 @@ def get_assets(name):
     )
     result = []
     for root, dirs, files in os.walk(os.path.join(base_path, name)):
-        result.append(f'{os.path.relpath(root, base_path)}/*')
+        result.extend([f'{os.path.relpath(root, base_path)}/*'] + [
+            os.path.join(os.path.relpath(root, base_path), file)
+            for file in filter(lambda f: f == '.gitkeep', files)
+        ])
     return result
 
 
