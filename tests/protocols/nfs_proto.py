@@ -83,6 +83,9 @@ class SSH_NFS(NFS):
     def acl_from_text(self, text):
         out = []
         for e in text.splitlines():
+            if not e or e.startswith('#'):
+                continue
+
             entry = {
                 "tag": None,
                 "id": -1,
