@@ -3,6 +3,7 @@ import contextlib
 import errno
 import itertools
 import os
+import subprocess
 
 from copy import deepcopy
 from datetime import datetime
@@ -11,7 +12,7 @@ from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
-from .utils import DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO
+from .utils import DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO, docker_auth
 
 
 DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
@@ -107,7 +108,7 @@ class DockerImagesService(CRUDService):
     )
     @returns(List(items=[Dict('pull_result_entry', Str('status'), additional_attrs=True)]))
     @job()
-    async def pull(self, job, data):
+    def pull(self, job, data):
         """
         `from_image` is the name of the image to pull. Format for the name is "registry/repo/image" where
         registry may be omitted and it will default to docker registry in this case.
@@ -117,19 +118,13 @@ class DockerImagesService(CRUDService):
 
         `docker_authentication` should be specified if image to be retrieved is under a private repository.
         """
-        await self.docker_checks()
-        # TODO: Have job progress report downloading progress
-        async with aiodocker.Docker() as docker:
-            try:
-                response = await docker.images.pull(
-                    from_image=data['from_image'], tag=data['tag'], auth=data['docker_authentication']
-                )
-            except aiodocker.DockerError as e:
-                raise CallError(f'Failed to pull image: {e.message}')
+        self.middleware.call_sync('container.image.docker_checks')
 
-        await self.middleware.call('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
+        with docker_auth(data.get('docker_authentication')):
+            subprocess.run(['docker', 'pull', f'{data["from_image"]}:{data["tag"]}'], check=True)
 
-        return response
+        self.middleware.call_sync('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
+        job.set_progress(100, 'Image pulled successfully')
 
     @accepts(
         Str('id'),

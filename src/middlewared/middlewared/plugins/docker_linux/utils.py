@@ -95,15 +95,17 @@ def docker_auth(auth: dict) -> None:
     Authenticates docker client in a context manager with given credentials using subprocess and a
     try/finally block to logout
     """
-    cp = Popen(['docker', 'login', '-u', auth['username'], '-p', auth['password']], stderr=PIPE, stdout=DEVNULL)
-    stderr = cp.communicate()[1]
-    if cp.returncode != 0:
-        raise CallError(f'Failed to login to docker registry: {stderr.decode()}')
+    if auth:
+        cp = Popen(['docker', 'login', '-u', auth['username'], '-p', auth['password']], stderr=PIPE, stdout=DEVNULL)
+        stderr = cp.communicate()[1]
+        if cp.returncode != 0:
+            raise CallError(f'Failed to login to docker registry: {stderr.decode()}')
 
     try:
         yield
     finally:
-        cp = Popen(['docker', 'logout'], stderr=PIPE, stdout=DEVNULL)
-        stderr = cp.communicate()[1]
-        if cp.returncode != 0:
-            raise CallError(f'Failed to logout from docker registry: {stderr.decode()}')
+        if auth:
+            cp = Popen(['docker', 'logout'], stderr=PIPE, stdout=DEVNULL)
+            stderr = cp.communicate()[1]
+            if cp.returncode != 0:
+                raise CallError(f'Failed to logout from docker registry: {stderr.decode()}')
