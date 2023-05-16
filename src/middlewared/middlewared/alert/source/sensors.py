@@ -19,11 +19,11 @@ class PowerSupplyAlertClass(AlertClass):
 
 class SensorsAlertSource(AlertSource):
 
-    def should_alert(self):
-        if self.middleware.call_sync('dmidecode_info')['system-product-name'].startswith('TRUENAS-R'):
+    async def should_alert(self):
+        if (await self.middleware.call('system.dmidecode_info'))['system-product-name'].startswith('TRUENAS-R'):
             # r-series
             return True
-        elif self.middleware.call_sync('failover.hardware') == 'ECHOWARP':
+        elif await self.middleware.call('failover.hardware') == 'ECHOWARP':
             # m-series
             return True
 
@@ -31,10 +31,10 @@ class SensorsAlertSource(AlertSource):
 
     async def check(self):
         alerts = []
-        if not self.should_alert():
+        if not await self.should_alert():
             return alerts
 
-        for i in await self.middleware.call('ipmi.sensor.query'):
+        for i in await self.middleware.call('ipmi.sensors.query'):
             if i['state'] != 'Nominal' and i['reading'] != 'N/A':
                 if i['type'] == 'Power Supply' and i['event']:
                     alerts.append(Alert(
