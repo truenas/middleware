@@ -1089,7 +1089,6 @@ class TestFixtureInitiatorName:
     @pytest.fixture(scope='class')
     def create_target(self):
         with configured_target(target_name, "FILE"):
-            print("TARGET configured")
             yield
 
     params = [
@@ -1110,7 +1109,7 @@ class TestFixtureInitiatorName:
         """
         Deliberately send SCST some invalid initiator names and ensure it behaves OK.
         """
-        # depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+        depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
 
         if expected:
             with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
