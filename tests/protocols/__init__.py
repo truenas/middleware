@@ -52,6 +52,7 @@ def nfs_share(path, options=None):
         result = DELETE(f"/sharing/nfs/id/{id}/")
         assert result.status_code == 200, result.text
 
+
 @contextlib.contextmanager
 def isns_connection(host, initiator_iqn, **kwargs):
     c = iSNSPClient(host, initiator_iqn, **kwargs)

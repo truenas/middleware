@@ -1081,6 +1081,45 @@ def test_14_test_isns(request):
             assert iqn not in base_iqns, iqn
 
 
+class TestFixtureInitiatorName:
+    """Fixture for test_15_invalid_initiator_name"""
+
+    iqn = f'{basename}:{target_name}'
+
+    @pytest.fixture(scope='class')
+    def create_target(self):
+        with configured_target(target_name, "FILE"):
+            yield
+
+    params = [
+        (None, True),
+        ("iqn.1991-05.com.microsoft:fake-host", True),
+        ("iqn.1991-05.com.microsoft:fake-/-host", False),
+        ("iqn.1991-05.com.microsoft:fake-#-host", False),
+        ("iqn.1991-05.com.microsoft:fake-%s-host", False),
+        ("iqn.1991-05.com.microsoft:unicode-\u6d4b\u8bd5-ok", True),		# 测试
+        ("iqn.1991-05.com.microsoft:unicode-\u30c6\u30b9\u30c8-ok", True),	# テスト
+        ("iqn.1991-05.com.microsoft:unicode-\u180E-bad", False),		# Mongolian vowel separator
+        ("iqn.1991-05.com.microsoft:unicode-\u2009-bad", False),		# Thin Space
+        ("iqn.1991-05.com.microsoft:unicode-\uFEFF-bad", False),		# Zero width no-break space
+    ]
+
+    @pytest.mark.parametrize("initiator_name, expected", params)
+    def test_15_invalid_initiator_name(self, request, create_target, initiator_name, expected):
+        """
+        Deliberately send SCST some invalid initiator names and ensure it behaves OK.
+        """
+        depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+
+        if expected:
+            with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
+                _verify_inquiry(s)
+        else:
+            with pytest.raises(RuntimeError) as ve:
+                with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
+                    assert False, "Should not have been able to connect with invalid initiator name."
+                assert 'Unable to connect to' in str(ve), ve
+
 def test_99_teardown(request):
     # Disable iSCSI service
     depends(request, ["iscsi_cmd_00"])
