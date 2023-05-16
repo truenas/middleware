@@ -309,7 +309,8 @@ class EtcService(Service):
             {
                 'type': 'mako', 'local_path': 'local/openvpn/server/openvpn_server.conf',
                 'path': 'local/openvpn/server/server.conf'
-            }
+            },
+            {'type': 'py', 'path': 'local/openvpn/server/perms'},
         ],
         'openvpn_client': [
             {
