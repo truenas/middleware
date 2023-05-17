@@ -32,7 +32,7 @@ class InternalInterfaceService(Service):
                     if ZSERIES_PCI_ID and ZSERIES_PCI_SUBSYS_ID in data:
                         return [i.split('/')[4].strip()]
 
-        if hardware in ('PUMA', 'ECHOWARP'):
+        if hardware in ('PUMA', 'ECHOWARP', 'F1'):
             return ['ntb0']
 
         return []
