@@ -1,6 +1,8 @@
 import errno
 import os
 
+from pathlib import Path
+
 from middlewared.service import CallError
 
 
@@ -14,15 +16,13 @@ def fix_perms(middleware):
     else:
         raise CallError('Unable to locate "nobody" user', errno=errno.ENOENT)
 
-    os.makedirs(LOGS_FOLDER, exist_ok=True)
-    for path in (
-        LOGS_FOLDER, *map(lambda file: os.path.join(LOGS_FOLDER, file), ('openvpn.log', 'openvpn-status.log'))
+    log_dir = Path(LOGS_FOLDER)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    for path_attr in (
+        log_dir, *map(lambda file_name: log_dir / file_name, ('openvpn.log', 'openvpn-status.log'))
     ):
-        if not os.path.exists(path):
-            with open(path, 'w'):
-                pass
-        if os.stat(path).st_uid != nobody_uid or os.stat(path).st_gid != nobody_gid:
-            os.chown(path, uid=nobody_uid, gid=nobody_gid)
+        path_attr.touch(exist_ok=True)
+        os.chown(path_attr.absolute().as_posix(), uid=nobody_uid, gid=nobody_gid)
 
 
 def render(service, middleware):
