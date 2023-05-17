@@ -85,9 +85,7 @@ class DNSService(Service):
             if interfaces:
                 interfaces = [i['int_interface'] for i in interfaces if i['int_dhcp']]
             else:
-                ignore = self.middleware.call_sync('interface.internal_interfaces')
-                ignore.extend(self.middleware.call_sync('failover.internal_interfaces'))
-                ignore = tuple(ignore)
+                ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
                 interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
 
             dns_from_dhcp = set()
@@ -117,7 +115,9 @@ class DNSService(Service):
                     Str('name', required=True),
                     Str('type', enum=['A', 'AAAA'], default='A'),
                     Int('ttl', default=3600),
-                    IPAddr('address', required=True, excluded_address_types=['MULTICAST', 'GLOBAL', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED']),
+                    IPAddr('address', required=True, excluded_address_types=[
+                        'MULTICAST', 'GLOBAL', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED'
+                    ]),
                     Bool('do_ptr', default=True)
                 )
             ],
