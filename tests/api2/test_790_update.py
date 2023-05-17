@@ -186,7 +186,10 @@ if os.path.exists(f'{apifolder}/config.cfg') is True:
     version = configs['NAS_CONFIG']['version']
 
     def test_16_verify_TrueNAS_trains():
-        if 'INTERNAL' in version:
+        if 'INTERNAL' in version and any(line in version for line in ['-RELEASE', '-U']):
+            train = version.rsplit('-', maxsplit=3)[0] + '-STABLE'
+            current = version.rsplit('-', maxsplit=3)[0].lower() + '-internal'
+        elif 'INTERNAL' in version:
             train = version.rsplit('-', maxsplit=2)[0] + '-STABLE'
             current = version.rsplit('-', maxsplit=1)[0].lower()
         elif any(line in version for line in ['-RELEASE', '-U']):

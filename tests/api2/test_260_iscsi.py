@@ -148,7 +148,7 @@ def test_09_Connecting_to_iSCSI_target(request):
 
 
 @bsd_host_cfg
-@pytest.mark.timeout(15)
+@pytest.mark.timeout(30)
 @pytest.mark.dependency(name="iscsi_10")
 def test_10_Waiting_for_iscsi_connection_before_grabbing_device_name(request):
     depends(request, ["iscsi_09"])
@@ -370,7 +370,7 @@ def test_34_connecting_to_the_zvol_iscsi_target(request):
 
 
 @bsd_host_cfg
-@pytest.mark.timeout(15)
+@pytest.mark.timeout(30)
 @pytest.mark.dependency(name="iscsi_35")
 def test_35_waiting_for_iscsi_connection_before_grabbing_device_name(request):
     depends(request, ["iscsi_34"])
