@@ -19,7 +19,8 @@ class EnclosureDetectionService(Service):
     @cache
     def detect(self):
         HARDWARE = NODE = 'MANUAL'
-        if self.middleware.call_sync('system.dmidecode_info')['system-product-name'] == 'BHYVE':
+        product = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+        if product == 'BHYVE':
             # bhyve host configures a scsi_generic device that when sent an inquiry will
             # respond with a string that we use to determine the position of the node
             ctx = Context()
@@ -34,6 +35,14 @@ class EnclosureDetectionService(Service):
                         NODE = 'B'
                         HARDWARE = 'BHYVE'
                         break
+
+            return HARDWARE, NODE
+        elif 'TRUENAS-F1' in product:
+            HARDWARE = 'F1'
+            rv = subprocess.run(['ipmi-raw', '0', '3c', '0e'], stdout=subprocess.PIPE)
+            if rv.stdout:
+                # Viking info via VSS2249RQ Management Over IPMI document Section 5.5 page 15
+                NODE = 'A' if rv.stdout.decode().strip()[-1] == '0' else 'B'
 
             return HARDWARE, NODE
 

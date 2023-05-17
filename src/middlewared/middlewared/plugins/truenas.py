@@ -34,6 +34,7 @@ PLATFORM_PREFIXES = (
     'TRUENAS-Z',  # z-series
     'TRUENAS-X',  # x-series
     'TRUENAS-M',  # m-series AND current mini platforms
+    'TRUENAS-F1',  # f1-series
     'TRUENAS-R',  # freenas certified replacement
     'FREENAS-MINI',  # minis tagged with legacy information
 )
