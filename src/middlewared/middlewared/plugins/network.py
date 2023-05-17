@@ -177,14 +177,12 @@ class InterfaceService(CRUDService):
             i['int_interface']: i
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
-        ha_hardware = self.middleware.call_sync('system.product_type') == 'SCALE_ENTERPRISE'
-        if ha_hardware:
-            internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
+        ha_hardware = self.middleware.call_sync('system.is_ha_capable')
+        ignore = self.middleware.call_sync('failover.internal_interfaces')
         for name, iface in netif.list_interfaces().items():
-            if iface.cloned and name not in configs:
+            if (name in ignore) or (iface.cloned and name not in configs):
                 continue
-            if ha_hardware and name in internal_ifaces:
-                continue
+
             iface_extend_kwargs = {}
             if ha_hardware:
                 vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
@@ -1788,14 +1786,6 @@ class InterfaceService(CRUDService):
 
         """
         list_of_ip = []
-        ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
-        ignore_nics.extend(self.middleware.call_sync(
-            'failover.internal_interfaces'
-        ))
-        if choices['loopback']:
-            ignore_nics.remove('lo')
-
-        ignore_nics = tuple(ignore_nics)
         static_ips = {}
         if choices['static']:
             licensed = self.middleware.call_sync('failover.licensed')
@@ -1823,10 +1813,13 @@ class InterfaceService(CRUDService):
                     'broadcast': 'ff02::1',
                 })
 
-        for iface in list(netif.list_interfaces().values()):
+        ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
+        if choices['loopback']:
+            ignore_nics.remove('lo')
+
+        ignore_nics = tuple(ignore_nics)
+        for iface in filter(lambda x: not x.orig_name.startswith(ignore_nics), list(netif.list_interfaces().values())):
             try:
-                if iface.orig_name.startswith(ignore_nics):
-                    continue
                 aliases_list = iface.asdict()['aliases']
             except FileNotFoundError:
                 # This happens on freebsd where we have a race condition when the interface
