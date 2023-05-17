@@ -15,11 +15,11 @@ def fix_perms(middleware):
 
     log_dir = Path('/var/log/openvpn')
     log_dir.mkdir(parents=True, exist_ok=True)
-    for path_attr in (
-        log_dir, *map(lambda file_name: log_dir / file_name, ('openvpn.log', 'openvpn-status.log'))
-    ):
-        path_attr.touch(exist_ok=True)
-        os.chown(path_attr.absolute().as_posix(), uid=nobody_uid, gid=nobody_gid)
+    os.chown(log_dir.absolute().as_posix(), uid=nobody_uid, gid=nobody_gid)
+    for file_name in ('openvpn.log', 'openvpn-status.log'):
+        file_attr = log_dir / file_name
+        file_attr.touch(exist_ok=True)
+        os.chown(file_attr.absolute().as_posix(), uid=nobody_uid, gid=nobody_gid)
 
 
 def render(service, middleware):
