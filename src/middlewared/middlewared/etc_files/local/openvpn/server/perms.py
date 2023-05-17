@@ -6,9 +6,6 @@ from pathlib import Path
 from middlewared.service import CallError
 
 
-LOGS_FOLDER = '/var/log/openvpn'
-
-
 def fix_perms(middleware):
     if nobody_user := middleware.call_sync('user.query', [('username', '=', 'nobody')]):
         nobody_uid = nobody_user[0]['uid']
@@ -16,7 +13,7 @@ def fix_perms(middleware):
     else:
         raise CallError('Unable to locate "nobody" user', errno=errno.ENOENT)
 
-    log_dir = Path(LOGS_FOLDER)
+    log_dir = Path('/var/log/openvpn')
     log_dir.mkdir(parents=True, exist_ok=True)
     for path_attr in (
         log_dir, *map(lambda file_name: log_dir / file_name, ('openvpn.log', 'openvpn-status.log'))
