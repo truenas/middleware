@@ -22,7 +22,7 @@ class SystemServiceService(ConfigService):
         )
 
     @private
-    async def _update_service(self, old, new, verb=None, options={}):
+    async def _update_service(self, old, new, verb=None, options=None):
         await self.middleware.call(
             'datastore.update', self._config.datastore, old['id'], new, {'prefix': self._config.datastore_prefix}
         )
