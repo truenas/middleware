@@ -233,6 +233,12 @@ class DistributedLockManagerService(Service):
 
     @private
     async def add_node(self, nodeid):
+        """
+        Possible future enhancement.
+
+        Handle addition of a node.
+        """
+        raise NotImplementedError("add_node not currently implemented")
         # if await self.middleware.call('failover.remote_connected'):
         node = self.nodes.get(nodeid)
         if node:
@@ -241,8 +247,11 @@ class DistributedLockManagerService(Service):
     @private
     async def remove_node(self, nodeid):
         """
+        Possible future enhancement.
+
         Handle a node failure.
         """
+        raise NotImplementedError("remove_node not currently implemented")
         node = self.nodes.get(nodeid)
         if node:
             # Remove the node from any lockspaces it is in
@@ -294,5 +303,6 @@ def remote_down_event(middleware, *args, **kwargs):
 
 async def setup(middleware):
     middleware.register_hook('udev.dlm', udev_dlm_hook)
+    # Comment out placeholder call for possible future enhancement.
     # await middleware.call('failover.remote_on_connect', remote_status_event)
     await middleware.call('failover.remote_on_disconnect', remote_down_event)

@@ -30,7 +30,7 @@ def to_sockaddr(address, port=None):
             bytes_ = [int(i) for i in address.split('.')]
             addr.sin_addr = (ctypes.c_byte * 4)(*bytes_)
     else:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError('IPv6 not implemented')
 
     return addr
 
@@ -180,6 +180,7 @@ class KernelDistributedLockManagerService(Service):
         self.logger.debug('Removing node %s from lockspace %s', nodeid, lockspace_name)
         node_path = os.path.join(KernelDistributedLockManagerService.SPACES_DIR, lockspace_name, 'nodes', '%d' % nodeid)
         with contextlib.suppress(FileNotFoundError):
+            # Have verified that this directory under /sys will NOT fail with ENOTEMPTY
             os.rmdir(node_path)
 
     def lockspace_leave(self, lockspace_name):

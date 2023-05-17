@@ -735,6 +735,7 @@ class FailoverEventsService(Service):
                 while not self.run_call('service.start', 'iscsitarget') and timeout > 0:
                     logger.warning('Waiting one second to allow iscsitarget to start')
                     sleep(1)
+                    timeout -= 1
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:
