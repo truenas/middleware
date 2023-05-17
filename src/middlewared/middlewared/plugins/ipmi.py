@@ -97,7 +97,7 @@ class IPMIService(CRUDService):
                 Range(8, 16)
             ]),
             Bool('dhcp'),
-            Int('vlan', null=True),
+            Int('vlan', validators=[Range(0, 4094)], null=True),
             register=True
         )
     )
