@@ -220,6 +220,12 @@ class Path(Str):
         return os.path.normpath(value.strip().strip("/").strip())
 
 
+class Password(Str):
+    def __init__(self, *args, **kwargs):
+        self.private = True
+        super().__init__(*args, **kwargs)
+
+
 class Dir(Str):
 
     def validate(self, value):
