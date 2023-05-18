@@ -11,7 +11,7 @@ from middlewared.utils import run
 from middlewared.validators import Range
 
 
-RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
+RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool scrub', re.MULTILINE)
 
 
 class ScrubError(CallError):
