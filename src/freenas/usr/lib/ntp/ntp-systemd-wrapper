@@ -1,8 +1,0 @@
-#!/bin/sh
-
-DAEMON=/usr/sbin/ntpd
-PIDFILE=/var/run/ntpd.pid
-CONFFILE=/etc/ntp.conf
-UGID=$(getent passwd ntp | cut -f 3,4 -d:) || true
-
-exec $DAEMON -p $PIDFILE -c "$CONFFILE" -u "$UGID"
