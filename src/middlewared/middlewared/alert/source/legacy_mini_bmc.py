@@ -1,7 +1,4 @@
-import re
-import subprocess
-
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
 
 URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
 
@@ -18,29 +15,18 @@ class TrueNASMiniBMCAlertClass(AlertClass):
     products = ("SCALE",)
 
 
-class TrueNASMiniBMCAlertSource(ThreadedAlertSource):
+class TrueNASMiniBMCAlertSource(AlertSource):
     products = ("SCALE",)
 
-    def check_sync(self):
-        data = self.middleware.call_sync('system.dmidecode_info')
-        systemname = data['system-product-name']
-        boardname = data['baseboard-product-name']
-
-        if "freenas" in systemname.lower() and boardname == "C2750D4I":
-            mcinfo = subprocess.run(
-                ["ipmitool", "mc", "info"],
-                capture_output=True, text=True,
-            ).stdout
-            reg = re.search(r"Firmware Revision.*: (\S+)", mcinfo, flags=re.M)
-            if not reg:
-                return
-            fwver = reg.group(1)
-            try:
-                fwver = [int(i) for i in fwver.split(".")]
-            except ValueError:
-                return
-
-            if len(fwver) < 2 or not (fwver[0] == 0 and fwver[1] < 30):
-                return
+    async def check(self):
+        dmi = await self.middleware.call("system.dmidecode_info")
+        if "freenas" in dmi["system-product-name"].lower() and dmi["baseboard-product-name"] == "C2750D4I":
+            if (fwver := (await self.middleware.call("ipmi.mc.info")).get("firmware_revision", None)):
+                try:
+                    fwver = [int(i) for i in fwver.split(".")]
+                    if len(fwver) < 2 or not (fwver[0] == 0 and fwver[1] < 30):
+                        return
+                except ValueError:
+                    return
 
             return Alert(TrueNASMiniBMCAlertClass)
