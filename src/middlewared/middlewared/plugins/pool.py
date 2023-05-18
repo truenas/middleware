@@ -46,8 +46,7 @@ logger = logging.getLogger(__name__)
 
 GELI_KEYPATH = '/data/geli'
 
-RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+zpool scrub', re.MULTILINE)
-RE_HISTORY_ZPOOL_CREATE = re.compile(r'^([0-9\.\:\-]{19})\s+zpool create', re.MULTILINE)
+RE_HISTORY_ZPOOL_SCRUB = re.compile(r'^([0-9\.\:\-]{19})\s+(py-libzfs: )?zpool scrub', re.MULTILINE)
 ZFS_CHECKSUM_CHOICES = [
     'ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR',
 ]
