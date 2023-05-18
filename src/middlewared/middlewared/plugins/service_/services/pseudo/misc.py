@@ -107,7 +107,7 @@ class NtpdService(SimpleService):
     etc = ["ntpd"]
     restartable = True
 
-    systemd_unit = "ntp"
+    systemd_unit = "chronyd"
 
 
 class OpenVmToolsService(SimpleService):

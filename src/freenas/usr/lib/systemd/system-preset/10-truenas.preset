@@ -9,7 +9,7 @@ enable tmp.mount
 enable zfs-zed.service
 enable collectd.service
 enable nginx.service
-enable ntp.service
+enable chronyd.service
 enable rrdcached.service
 enable smartmontools.service
 enable syslog-ng.service
