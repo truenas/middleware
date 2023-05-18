@@ -1,14 +1,9 @@
-import glob
+from pathlib import Path
 
 from pyroute2 import NDB
 
 from middlewared.service import Service
 from middlewared.utils.functools import cache
-
-
-ZSERIES_PCI_ID = 'PCI_ID=8086:10D3'
-ZSERIES_PCI_SUBSYS_ID = 'PCI_SUBSYS_ID=8086:A01F'
-INTERFACE_GLOB = '/sys/class/net/*/device/uevent'
 
 
 class InternalInterfaceService(Service):
@@ -20,23 +15,22 @@ class InternalInterfaceService(Service):
     @cache
     def detect(self):
         hardware = self.middleware.call_sync('failover.hardware')
-        # Return BHYVE heartbeat interface
         if hardware == 'BHYVE':
             return ['enp0s6f1']
-
-        # Detect Z-series heartbeat interface
-        if hardware == 'ECHOSTREAM':
-            for i in glob.iglob(INTERFACE_GLOB):
-                with open(i, 'r') as f:
-                    data = f.read()
-
-                    if ZSERIES_PCI_ID and ZSERIES_PCI_SUBSYS_ID in data:
-                        return [i.split('/')[4].strip()]
-
-        if hardware in ('PUMA', 'ECHOWARP', 'F1'):
+        elif hardware == 'ECHOSTREAM':
+            # z-series
+            for i in Path('/sys/class/net/').iterdir():
+                try:
+                    data = (i / 'device/uevent').read_text()
+                    if 'PCI_ID=8086:10D3' in data and 'PCI_SUBSYS_ID=8086:A01F' in data:
+                        return [i.name]
+                except FileNotFoundError:
+                    continue
+        elif hardware in ('PUMA', 'ECHOWARP', 'F1'):
+            # {x/m/f1}-series
             return ['ntb0']
-
-        return []
+        else:
+            return []
 
     async def pre_sync(self):
 
