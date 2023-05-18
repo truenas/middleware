@@ -2,7 +2,7 @@ from subprocess import run, DEVNULL
 from functools import cache
 
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Password, returns, Str
-from middlewared.service import CallError, CRUDService, filterable, filterable_returns, ValidationErrors
+from middlewared.service import CallError, CRUDService, filterable, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.validators import Netmask, PasswordComplexity, Range
 
@@ -12,7 +12,7 @@ def lan_channels():
     channels = []
     out = run(['ipmi-config', '--listsections'], capture_output=True)
     for line in filter(lambda x: x.startswith('Lan_Channel_Channel'), out.stdout.decode().split('\n')):
-        if (channel := line.split('Lan_Channel_Channel_')[0]) and channel.isdigit():
+        if (channel := line.split('Lan_Channel_Channel_')[-1]) and channel.isdigit():
             channels.append(int(channel))
 
     return channels
@@ -37,7 +37,6 @@ class IPMILanService(CRUDService):
         return channels
 
     @filterable
-    @filterable_returns(List('lan_channels_info', items=[Dict('lan_info', additional_attrs=True)]))
     def query(self, filters, options):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
@@ -51,9 +50,10 @@ class IPMILanService(CRUDService):
                 try:
                     name, value = i.strip().split()
                     data[name.lower()] = value.lower()
-                    result.append(data)
                 except ValueError:
-                    continue
+                    break
+
+            result.append(data)
 
         return filter_list(result, filters, options)
 
