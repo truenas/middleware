@@ -650,7 +650,7 @@ class JobProgressBuffer:
             self.pending_update_body = args, kwargs
 
             if self.pending_update is None:
-                self.pending_update = asyncio.get_event_loop().call_later(self.interval, self._do_pending_update)
+                self.pending_update = self.job.loop.call_later(self.interval, self._do_pending_update)
 
     def cancel(self):
         if self.pending_update is not None:
