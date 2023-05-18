@@ -187,7 +187,7 @@ class ActiveDirectoryService(Service):
         return ret
 
     @private
-    async def check_nameservers(self, domain, site=None):
+    async def check_nameservers(self, domain, site=None, lifetime=10):
         def get_host(srv_prefix):
             if site and site != 'Default-First-Site-Name':
                 if 'msdcs' in srv_prefix.value:
@@ -210,15 +210,25 @@ class ActiveDirectoryService(Service):
                     resp = await self.middleware.call('dnsclient.forward_lookup', {
                         'names': [name],
                         'record_type': 'SRV',
-                        'dns_client_options': {'nameservers': [entry['nameserver']]}
+                        'dns_client_options': {
+                            'nameservers': [entry['nameserver']],
+                            'lifetime': lifetime,
+                        }
                     })
                 except dns.resolver.NXDOMAIN:
                     raise CallError(
                         f'{name}: Nameserver {entry["nameserver"]} failed to resolve SRV '
-                        'record for domain {domain}. This may indicate a DNS misconfiguration '
+                        f'record for domain {domain}. This may indicate a DNS misconfiguration '
                         'on the TrueNAS server.',
                         errno.EINVAL
                     )
+                except Exception as e:
+                    raise CallError(
+                        f'{name}: Nameserver {entry["nameserver"]} failed to resolve SRV '
+                        f'record for domain {domain} : {e}',
+                        errno.EINVAL
+                    )
+
                 else:
                     servers.extend(resp)
 
@@ -245,7 +255,10 @@ class ActiveDirectoryService(Service):
             host = f"{srv_prefix.value}{domain}."
 
         servers = self.middleware.call_sync('dnsclient.forward_lookup', {
-            'names': [host], 'record_type': 'SRV', 'query-options': {'order_by': ['priority', 'weight']}
+            'names': [host],
+            'record_type': 'SRV',
+            'query-options': {'order_by': ['priority', 'weight']},
+            'dns_client_options': {'lifetime': timeout},
         })
 
         output = []
@@ -263,10 +276,11 @@ class ActiveDirectoryService(Service):
         return output
 
     @private
-    async def netbiosname_is_ours(self, netbios_name, domain_name):
+    async def netbiosname_is_ours(self, netbios_name, domain_name, lifetime=10):
         try:
             dns_addresses = set([x['address'] for x in await self.middleware.call('dnsclient.forward_lookup', {
-                'names': [f'{netbios_name}.{domain_name}']
+                'names': [f'{netbios_name}.{domain_name}'],
+                'dns_client_options': {'lifetime': lifetime},
             })])
         except dns.resolver.NXDOMAIN:
             raise CallError(f'DNS forward lookup of [{netbios_name}] failed.', errno.ENOENT)

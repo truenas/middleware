@@ -15,6 +15,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.plugins.directoryservices import DSStatus
 from middlewared.plugins.idmap import DSType
+from middlewared.validators import Range
 
 AD_SMBCONF_PARAMS = {
     "server role": "member server",
@@ -214,7 +215,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
     @private
     async def common_validate(self, new, old, verrors):
         try:
-            if not (await self.middleware.call('activedirectory.netbiosname_is_ours', new['netbiosname'], new['domainname'])):
+            if not (await self.middleware.call('activedirectory.netbiosname_is_ours', new['netbiosname'], new['domainname'], new['dns_timeout'])):
                 verrors.add(
                     'activedirectory_update.netbiosname',
                     f'NetBIOS name [{new["netbiosname"]}] appears to be in use by another computer in Active Directory DNS. '
@@ -287,7 +288,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),
         Int('timeout', default=60),
-        Int('dns_timeout', default=10),
+        Int('dns_timeout', default=10, validators=[Range(min=5, max=40)]),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
         Str('createcomputer'),
         Str('netbiosname'),
@@ -464,7 +465,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 await self.middleware.call(
                     'activedirectory.check_nameservers',
                     new['domainname'],
-                    new['site']
+                    new['site'],
+                    new['dns_timeout']
                 )
             except CallError as e:
                 raise ValidationError(
