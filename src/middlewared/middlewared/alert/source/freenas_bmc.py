@@ -1,27 +1,25 @@
-import logging
 import re
 import subprocess
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 
-logger = logging.getLogger("FreeNASBMCAlert")
+URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
 
 
-class FreeNASBMCAlertClass(AlertClass):
+class TrueNASMiniBMCAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Critical IPMI Firmware Update Available"
     text = (
         "A critical IPMI firmware update is available for this system. Please see "
-        "<a href=\"https://www.truenas.com/docs/hardware/legacy/mini-gen2/fn-bmc-watchdog/\" target=\"_blank\">"
+        f"<a href=\"{URL}\" target=\"_blank\">"
         "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
     )
+    products = ("SCALE",)
 
-    products = ("CORE",)
 
-
-class FreeNASBMCAlertSource(ThreadedAlertSource):
-    products = ("CORE",)
+class TrueNASMiniBMCAlertSource(ThreadedAlertSource):
+    products = ("SCALE",)
 
     def check_sync(self):
         data = self.middleware.call_sync('system.dmidecode_info')
@@ -40,10 +38,9 @@ class FreeNASBMCAlertSource(ThreadedAlertSource):
             try:
                 fwver = [int(i) for i in fwver.split(".")]
             except ValueError:
-                logger.warning("Failed to parse BMC firmware version: {}".format(fwver))
                 return
 
-            if len(fwver) < 2 or not(fwver[0] == 0 and fwver[1] < 30):
+            if len(fwver) < 2 or not (fwver[0] == 0 and fwver[1] < 30):
                 return
 
-            return Alert(FreeNASBMCAlertClass)
+            return Alert(TrueNASMiniBMCAlertClass)
