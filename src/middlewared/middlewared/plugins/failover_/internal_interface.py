@@ -1,6 +1,7 @@
 import glob
 
-from middlewared.plugins.interface.netif import netif
+from pyroute2 import NDB
+
 from middlewared.service import Service
 from middlewared.utils.functools import cache
 
@@ -61,28 +62,10 @@ class InternalInterfaceService(Service):
         await self.middleware.run_in_thread(self.sync, iface, internal_ip)
 
     def sync(self, iface, internal_ip):
-
-        try:
-            iface = netif.get_interface(iface)
-        except KeyError:
-            self.logger.error(f'Internal interface:"{iface}" not found.')
-            return
-
-        configured = False
-        for address in iface.addresses:
-            if address.af != netif.AddressFamily.INET:
-                continue
-
-            # Internal interface is already configured
-            if str(address.address) == internal_ip:
-                configured = True
-
-        if not configured:
-            iface.add_address(self.middleware.call_sync('interface.alias_to_addr', {
-                'address': internal_ip,
-                'netmask': '24',
-            }))
-
-        # testing shows that the z-series interface is not brought up automatically
-        # so we need to up the interface after we apply the IP address
-        iface.up()
+        with NDB(log='off') as ndb:
+            try:
+                with ndb.interfaces[iface] as dev:
+                    if not any(i.address == internal_ip for i in dev.ipaddr.summary()):
+                        dev.add_ip(f'{internal_ip}/24').set(state='up')
+            except KeyError:
+                return
