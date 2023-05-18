@@ -779,3 +779,18 @@ def test_58_create_new_user_existing_home_path(request):
             'home_create': True,
         })
         assert results.status_code == 422, results.text
+
+
+def test_59_create_user_ro_dataset(request):
+    user_info = {
+        'username': 't1',
+        "full_name": 'T1',
+        'group_create': True,
+        'password': 'test1234',
+        'home_mode': '770',
+        'home_create': True,
+    }
+    with tmp_dataset(pool_name, 'ro_user_ds', {'readonly': 'ON'}) as ds:
+        user_info['home'] = ds['mountpoint']
+        results = POST("/user/", user_info)
+        assert results.status_code == 422, results.text
