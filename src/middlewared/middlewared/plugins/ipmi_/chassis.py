@@ -1,7 +1,6 @@
-from subprocess import run, DEVNULL, PIPE
+from subprocess import run, DEVNULL
 
-from middlewared.service import Service, filterable, filterable_returns
-from middlewared.utils import filter_list
+from middlewared.service import Service
 from middlewared.schema import Str, Dict, accepts, returns
 
 
@@ -11,9 +10,9 @@ class IpmiChassisService(Service):
         namespace = 'ipmi.chassis'
         cli_namespace = 'service.ipmi.chassis'
 
-    @filterable
-    @filterable_returns(Dict('chassis_info', additional_attrs=True))
-    def query(self, filters, options):
+    @accepts()
+    @returns(Dict('chassis_info', additional_attrs=True))
+    def info(self, filters, options):
         """Return looks like:
         {
             "system_power": "on",
@@ -31,12 +30,15 @@ class IpmiChassisService(Service):
         }
         """
         rv = {}
-        out = run(['ipmi-chassis', '--get-chassis-status'], stdout=PIPE, stderr=PIPE).stdout.decode().split('\n')
-        for line in filter(lambda x: x, out):
+        if not self.middleware.call_sync('ipmi.is_loaded'):
+            return rv
+
+        out = run(['ipmi-chassis', '--get-chassis-status'], capture_output=True)
+        for line in filter(lambda x: x, out.stdout.decode().split('\n')):
             ele, status = line.split(':', 1)
             rv[ele.strip().replace(' ', '_').lower()] = status.strip()
 
-        return filter_list(rv, filters, options)
+        return rv
 
     @accepts(Str('verb', default='ON', enum=['ON', 'OFF']))
     @returns()
