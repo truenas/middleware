@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime
 
 from middlewared.client import ejson as json
+from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 from middlewared.schema import Dict, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 
@@ -27,6 +28,11 @@ class KubernetesService(Service):
         """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
         name = backup_name or datetime.utcnow().strftime('%F_%T')
+        if not validate_snapshot_name(f'a@{name}'):
+            # The a@ added is just cosmetic as the function requires a complete snapshot name
+            # with the dataset name included in it
+            raise CallError(f'{name!r} is not a valid snapshot name. It should be a valid ZFS snapshot name')
+
         snap_name = BACKUP_NAME_PREFIX + name
         if self.middleware.call_sync('zfs.snapshot.query', [['id', '=', snap_name]]):
             raise CallError(f'{snap_name!r} snapshot already exists', errno=errno.EEXIST)
