@@ -12,7 +12,7 @@ class IpmiMcService(Service):
 
     @accepts()
     @returns(Dict('mc_info', additional_attrs=True))
-    def info(self, filters, options):
+    def info(self):
         """Return looks like:
             {
                 'auxiliary_firmware_revision_information': '00000006h',

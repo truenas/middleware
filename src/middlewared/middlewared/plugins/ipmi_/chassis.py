@@ -12,7 +12,7 @@ class IpmiChassisService(Service):
 
     @accepts()
     @returns(Dict('chassis_info', additional_attrs=True))
-    def info(self, filters, options):
+    def info(self):
         """Return looks like:
         {
             "system_power": "on",
