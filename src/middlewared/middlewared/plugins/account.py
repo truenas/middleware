@@ -583,11 +583,12 @@ class UserService(CRUDService):
                     dest_file = os.path.join(data['home'], f)
                 if not os.path.exists(dest_file):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
-                    await self.middleware.call('filesystem.chown', {
+                    chown_job = await self.middleware.call('filesystem.chown', {
                         'path': dest_file,
                         'uid': data['uid'],
                         'gid': group['gid'],
                     })
+                    await chown_job.wait()
 
             data['sshpubkey'] = sshpubkey
             try:
