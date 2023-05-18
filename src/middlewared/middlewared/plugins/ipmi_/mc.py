@@ -1,8 +1,7 @@
 from subprocess import run
 
-from middlewared.service import Service, filterable, filterable_returns
-from middlewared.utils import filter_list
-from middlewared.schema import Dict
+from middlewared.service import Service
+from middlewared.schema import accepts, returns, Dict
 
 
 class IpmiMcService(Service):
@@ -11,9 +10,9 @@ class IpmiMcService(Service):
         namespace = 'ipmi.mc'
         cli_namespace = 'service.ipmi.mc'
 
-    @filterable
-    @filterable_returns(Dict('mc_info', additional_attrs=True))
-    def query(self, filters, options):
+    @accepts()
+    @returns(Dict('mc_info', additional_attrs=True))
+    def info(self):
         """Return looks like:
             {
                 'auxiliary_firmware_revision_information': '00000006h',
@@ -44,4 +43,4 @@ class IpmiMcService(Service):
             ele, status = line.split(':', 1)
             rv[ele.strip().replace(' ', '_').lower()] = status.strip()
 
-        return filter_list(rv, filters, options)
+        return rv
