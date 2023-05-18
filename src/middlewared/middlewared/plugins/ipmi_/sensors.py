@@ -33,7 +33,7 @@ class IpmiSensorsService(Service):
     @private
     def query_impl(self):
         rv = []
-        if not self.middleware.call_sync('system.dmidecode_info')['has-ipmi']:
+        if not self.middleware.call_sync('ipmi.is_loaded'):
             return rv
 
         mseries = self.middleware.call_sync('failover.hardware') == 'ECHOWARP'
