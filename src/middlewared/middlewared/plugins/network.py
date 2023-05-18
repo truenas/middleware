@@ -1855,6 +1855,17 @@ async def configure_http_proxy(middleware, *args, **kwargs):
 
 
 async def attach_interface(middleware, iface):
+    platform, node_position = await middleware.call('failover.ha_mode')
+    if iface == 'ntb0' and platform == 'F1' and node_position == 'B':
+        # The F1 HA platform is an AMD system. This means it's using a different
+        # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
+        # operates subtly differently than the Intel driver. If the A controller
+        # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
+        # When the A controller comes back online, the ntb0 interface is hot-plugged
+        # (i.e. added). For this platform we need to re-add the ip address.
+        await middleware.call('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
+        return
+
     ignore = await middleware.call('interface.internal_interfaces')
     if any((i.startswith(iface) for i in ignore)):
         return
