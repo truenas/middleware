@@ -2,18 +2,16 @@
 Change official catalog label
 
 Revision ID: 441144fa08e7
-Revises: 7035fa70c0c0
-Create Date: 2023-04-27 08:00:08.436590+00:00
+Revises: 08539dfd0500
+Create Date: 2023-05-18 08:00:08.436590+00:00
 
 """
-import json
-
 from alembic import op
 
 
 # revision identifiers, used by Alembic.
 revision = '441144fa08e7'
-down_revision = '7035fa70c0c0'
+down_revision = '08539dfd0500'
 branch_labels = None
 depends_on = None
 
