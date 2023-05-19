@@ -1,6 +1,5 @@
 import base64
 import contextlib
-
 import pyotp
 
 import middlewared.sqlalchemy as sa
