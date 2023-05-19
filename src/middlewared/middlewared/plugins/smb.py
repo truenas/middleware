@@ -1186,6 +1186,7 @@ class SharingSMBService(SharingService):
             await self.middleware.call('sharing.smb.reg_addshare', new)
 
         elif not old_is_locked and new_is_locked:
+            await self.close_share(newname)
             await self.middleware.call('smb.sharesec.toggle_share', newname, False)
             try:
                 await self.middleware.call('sharing.smb.reg_delshare', oldname)
@@ -1195,6 +1196,9 @@ class SharingSMBService(SharingService):
                                     old['name'], exc_info=True)
 
         if new['enabled'] != old['enabled']:
+            if not new['enabled']:
+                await self.close_share(newname)
+
             await self.middleware.call('smb.sharesec.toggle_share', newname, new['enabled'])
             check_mdns = True
 
