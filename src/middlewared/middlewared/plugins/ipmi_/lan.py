@@ -10,10 +10,17 @@ from middlewared.validators import Netmask, PasswordComplexity, Range
 @cache
 def lan_channels():
     channels = []
-    out = run(['ipmi-config', '--listsections'], capture_output=True)
-    for line in filter(lambda x: x.startswith('Lan_Channel_Channel'), out.stdout.decode().split('\n')):
-        if (channel := line.split('Lan_Channel_Channel_')[-1]) and channel.isdigit():
-            channels.append(int(channel))
+    out = run(['bmc-info', '--get-channel-info'], capture_output=True)
+    lines = out.stdout.decode().split('\n')
+    for idx, line in filter(lambda x: x[1], enumerate(lines)):
+        # lines that we're interested in look like
+        # Channel : 1
+        # Medium Type : 802.3 LAN
+        if (key_value := line.split(':')) and len(key_value) == 2 and '802.3 LAN' in key_value[1]:
+            try:
+                channels.append(int(lines[idx - 1].split(':')[-1].strip()))
+            except (IndexError, ValueError):
+                continue
 
     return channels
 
@@ -41,7 +48,8 @@ class IPMILanService(CRUDService):
         """Query available IPMI Channels with `query-filters` and `query-options`."""
         result = []
         for channel in self.channels():
-            cp = run(['ipmi-config', '--checkout', f'--section=Lan_Conf_Channel_{channel}'], capture_output=True)
+            section = 'Lan_Conf' if channel == 1 else f'Lan_Conf_Channel_{channel}'
+            cp = run(['ipmi-config', '--checkout', f'--section={section}'], capture_output=True)
             if cp.returncode != 0:
                 raise CallError(f'Failed to get details from channel {channel}: {cp.stderr}')
 
