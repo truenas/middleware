@@ -245,7 +245,7 @@ class PrivilegeService(CRUDService):
         for privilege in await self.middleware.call('datastore.query', 'account.privilege'):
             if group['gid'] in privilege['local_groups']:
                 raise CallError(
-                    f'This group is used by privilege {privilege["name"]!r}. Please remove it from that privilege'
+                    f'This group is used by privilege {privilege["name"]!r}. Please remove it from that privilege '
                     'first, then delete the group.',
                     errno.EACCES,
                 )
