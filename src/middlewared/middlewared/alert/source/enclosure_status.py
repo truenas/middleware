@@ -50,15 +50,15 @@ class EnclosureStatusAlertSource(AlertSource):
         for enc in await self.middleware.call('enclosure.query'):
             good_enclosures.append([enc['number'], enc['name']])
 
-            for element_type, element_values in enc['elements'].items():
-                for slot, value in element_values.items():
+            for element_values in enc['elements']:
+                for value in element_values['elements']:
                     if await self.should_report(enc, value):
                         args = [
                             enc['number'],
                             enc['name'],
                             value['descriptor'],
-                            slot,
-                            hex(slot),
+                            value['slot'],
+                            hex(value['slot']),
                             value['status']
                         ]
                         for i, (another_args, count) in enumerate(self.bad_elements):
