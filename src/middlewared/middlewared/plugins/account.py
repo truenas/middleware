@@ -862,7 +862,6 @@ class UserService(CRUDService):
         Dict(
             'options',
             Bool('delete_group', default=True),
-            Bool('delete_ssh', default=True),
         ),
     )
     @returns(Int('primary_key'))
@@ -896,12 +895,11 @@ class UserService(CRUDService):
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
-        if options['delete_ssh']:
-            if user['home'] and user['home'] != DEFAULT_HOME_PATH:
-                try:
-                    shutil.rmtree(os.path.join(user['home'], '.ssh'))
-                except Exception:
-                    pass
+        if user['home'] and user['home'] != DEFAULT_HOME_PATH:
+            try:
+                await self.middleware.run_in_thread(shutil.rmtree, os.path.join(user['home'], '.ssh'))
+            except Exception:
+                pass
 
         if user['smb']:
             await run('smbpasswd', '-x', user['username'], check=False)
