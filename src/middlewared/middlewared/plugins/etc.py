@@ -315,9 +315,6 @@ class EtcService(Service):
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
         ],
-        'tftp': [
-            {'type': 'mako', 'path': 'default/tftpd-hpa'},
-        ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},
         ],

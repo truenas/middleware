@@ -32,7 +32,6 @@ systemctl disable ssh.service
 
 systemctl disable scst
 systemctl disable inadyn
-systemctl disable tftpd-hpa
 systemctl disable proftpd
 systemctl disable nmbd
 systemctl disable smbd
