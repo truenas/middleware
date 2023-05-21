@@ -857,7 +857,14 @@ class UserService(CRUDService):
                     'options': {'stripacl': True},
                 }).wait_sync(raise_error=True)
 
-    @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Bool('delete_group', default=True),
+            Bool('delete_ssh', default=True),
+        ),
+    )
     @returns(Int('primary_key'))
     async def do_delete(self, pk, options):
         """
@@ -888,6 +895,13 @@ class UserService(CRUDService):
                     await self.middleware.call('group.delete', user['group']['id'])
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
+
+        if options['delete_ssh']:
+            if user['home'] and user['home'] != DEFAULT_HOME_PATH:
+                try:
+                    shutil.rmtree(os.path.join(user['home'], '.ssh'))
+                except Exception:
+                    pass
 
         if user['smb']:
             await run('smbpasswd', '-x', user['username'], check=False)
