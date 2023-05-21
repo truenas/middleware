@@ -2575,6 +2575,10 @@ class PoolDatasetService(CRUDService):
                     failed[name]['error'] = f'Failed to mount dataset: {e}'
                 else:
                     unlocked.append(name)
+                    try:
+                        self.middleware.call_sync('filesystem.set_immutable', False, mount_path)
+                    except Exception:
+                        pass
 
         for failed_ds in failed:
             failed_datasets = {}
