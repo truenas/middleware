@@ -16,7 +16,6 @@ from .rsync import RsyncService
 from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
-from .tftp import TFTPService
 from .truecommand import TruecommandService
 from .ups import UPSService
 from .webdav import WebDAVService
@@ -71,7 +70,6 @@ all_services = [
     SMARTDService,
     SNMPService,
     SSHService,
-    TFTPService,
     UPSService,
     WebDAVService,
     WSDService,
