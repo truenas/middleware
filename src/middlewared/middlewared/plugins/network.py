@@ -179,6 +179,12 @@ class InterfaceService(CRUDService):
         }
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('failover.internal_interfaces')
+        if self.middleware.call_sync('failover.ha_mode')[0] == 'F1':
+            # The eno1 interface needs to be masked on the F1 HA platform because
+            # this interface is shared with the BMC. Details for why this is done
+            # can be obtained from platform team.
+            ignore.append('eno1')
+
         for name, iface in netif.list_interfaces().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
