@@ -35,7 +35,7 @@ if not ha:
     def chart_release(app_name, values):
         call(
             "chart.release.create", {
-                "catalog": "OFFICIAL",
+                "catalog": "TRUENAS",
                 "item": "ix-chart",
                 "release_name": app_name,
                 "values": values,
@@ -193,7 +193,7 @@ if not ha:
         depends(request, ['pull_public_image'])
         global tc_release_id
         payload = {
-            'catalog': 'OFFICIAL',
+            'catalog': 'TRUENAS',
             'item': 'ix-chart',
             'release_name': 'minio',
             'train': 'charts',
@@ -218,7 +218,7 @@ if not ha:
         results = GET(f'/chart/release/id/{tc_release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['catalog'] == 'OFFICIAL', results.text
+        assert results.json()['catalog'] == 'TRUENAS', results.text
 
     def test_15_get_minio_ix_chart_train(request):
         depends(request, ['tc_chart_release'])
