@@ -48,13 +48,12 @@ class EnclosureStatusAlertSource(AlertSource):
         good_enclosures = []
         bad_elements = []
         for enc in await self.middleware.call('enclosure.query'):
-            good_enclosures.append([enc['number'], enc['name']])
+            good_enclosures.append([enc['name']])
 
             for element_values in enc['elements']:
                 for value in element_values['elements']:
                     if await self.should_report(enc, value):
                         args = [
-                            enc['number'],
                             enc['name'],
                             value['descriptor'],
                             value['slot'],
@@ -75,7 +74,7 @@ class EnclosureStatusAlertSource(AlertSource):
             # We only report unhealthy enclosure elements if they were unhealthy 5 probes in a row (1 probe = 1 minute)
             if count >= 5:
                 try:
-                    good_enclosures.remove(args[:2])
+                    good_enclosures.remove(args[:1])
                 except ValueError:
                     pass
 
