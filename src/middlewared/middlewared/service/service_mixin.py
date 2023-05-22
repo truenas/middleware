@@ -2,7 +2,7 @@ from middlewared.service_exception import CallError
 
 
 class ServiceChangeMixin:
-    async def _service_change(self, service, verb):
+    async def _service_change(self, service, verb, options=None):
 
         svc_state = (await self.middleware.call(
             'service.query',
@@ -16,7 +16,7 @@ class ServiceChangeMixin:
         await self.middleware.call('etc.generate', 'rc')
 
         if svc_state == 'running':
-            started = await self.middleware.call(f'service.{verb}', service)
+            started = await self.middleware.call(f'service.{verb}', service, options or {})
 
             if not started:
                 raise CallError(

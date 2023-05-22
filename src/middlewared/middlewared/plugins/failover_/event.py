@@ -728,8 +728,14 @@ class FailoverEventsService(Service):
             logger.info('Restarting SSH')
             self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
 
-        # TODO: ALUA on SCALE??
-        # do something with iscsi service here
+        # If ALUA is configured reload the iscsitarget service (to regen config) and then start SCST
+        if self.run_call('iscsi.global.alua_enabled'):
+            if not self.run_call('service.reload', 'iscsitarget'):
+                timeout = 5
+                while not self.run_call('service.start', 'iscsitarget') and timeout > 0:
+                    logger.warning('Waiting one second to allow iscsitarget to start')
+                    sleep(1)
+                    timeout -= 1
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:

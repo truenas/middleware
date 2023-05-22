@@ -136,14 +136,24 @@ class ISCSIGlobalService(SystemServiceService):
         ))
 
         verrors.check()
-        licensed = await self.middleware.call('failover.licensed')
 
         new['isns_servers'] = '\n'.join(servers)
 
-        await self._update_service(old, new)
+        licensed = await self.middleware.call('failover.licensed')
+        if licensed and old['alua'] != new['alua']:
+            if not new['alua']:
+                await self.middleware.call('failover.call_remote', 'service.stop', ['iscsitarget'])
+                await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
 
-        if old['alua'] != new['alua']:
-            await self.middleware.call('etc.generate', 'loader')
+        await self._update_service(old, new, options={'ha_propagate': False})
+
+        if licensed and old['alua'] != new['alua']:
+            if new['alua']:
+                await self.middleware.call('failover.call_remote', 'service.start', ['iscsitarget'])
+            # Force a scst.conf update
+            # When turning off ALUA we want to clean up scst.conf, and when turning it on
+            # we want to give any existing target a kick to come up as a dev_disk
+            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
 
         # If we have just turned off iSNS then work around a short-coming in scstadmin reload
         if old['isns_servers'] != new['isns_servers'] and not servers:

@@ -1075,6 +1075,10 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         ha_configured = False
 
     if ha_configured:
+        # Perform basic initialization of DLM, in case it is needed by iSCSI ALUA
+        middleware.logger.warning('[HA] Initialize DLM')
+        await middleware.call('dlm.create')
+
         # If HA is already configured and failover has been disabled,
         # and we have gotten to this point, then this means a few things could be happening.
         #    1. a new interface is being added
@@ -1139,7 +1143,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         middleware.logger.debug('[HA] Starting SSH on standby node')
         await middleware.call('failover.call_remote', 'service.start', ['ssh'])
 
-    middleware.logger.debug('[HA] Resfreshing failover status')
+    middleware.logger.debug('[HA] Refreshing failover status')
     await middleware.call('failover.status_refresh')
 
     middleware.logger.info('[HA] Setup complete')

@@ -1,11 +1,16 @@
+import asyncio
 import errno
+import os
+import pathlib
 import re
+import subprocess
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Patch, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
-from middlewared.utils import run
+from middlewared.utils import UnexpectedFailure, run
+from collections import defaultdict
 
 from .utils import AUTHMETHOD_LEGACY_MAP
 
@@ -119,7 +124,12 @@ class iSCSITargetService(CRUDService):
             await self.middleware.call('datastore.delete', self._config.datastore, pk)
             raise e
 
-        await self._service_change('iscsitarget', 'reload')
+        # First process the local (MASTER) config
+        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+
+        # Then process the remote (BACKUP) config if we are HA and ALUA is enabled.
+        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
 
         return await self.get_instance(pk)
 
@@ -301,7 +311,12 @@ class iSCSITargetService(CRUDService):
 
         await self.__save_groups(id, groups, oldgroups)
 
-        await self._service_change('iscsitarget', 'reload')
+        # First process the local (MASTER) config
+        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+
+        # Then process the BACKUP config if we are HA and ALUA is enabled.
+        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
 
         return await self.get_instance(id)
 
@@ -326,19 +341,30 @@ class iSCSITargetService(CRUDService):
         )
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
 
+        # If HA and ALUA handle BACKUP first
+        if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
+            await self.middleware.call('failover.call_remote', 'iscsi.target.remove_target', [target["name"]])
+            await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
+            await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_target', [target["name"]])
+
+        await self.middleware.call('iscsi.target.remove_target', target["name"])
+        await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
+
+        return rv
+
+    @private
+    @accepts(Str('name'))
+    async def remove_target(self, name):
+        # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
+        # So this is the best way to do this without going through a restart of the service
         if await self.middleware.call('service.started', 'iscsitarget'):
-            # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
-            # So this is the best way to do this without going through a restart of the service
             g_config = await self.middleware.call('iscsi.global.config')
             cp = await run([
                 'scstadmin', '-force', '-noprompt', '-rem_target',
-                f'{g_config["basename"]}:{target["name"]}', '-driver', 'iscsi'
+                f'{g_config["basename"]}:{name}', '-driver', 'iscsi'
             ], check=False)
             if cp.returncode:
-                self.middleware.logger.error('Failed to remove %r target: %s', target['name'], cp.stderr.decode())
-
-        await self._service_change('iscsitarget', 'reload')
-        return rv
+                self.middleware.logger.error('Failed to remove %r target: %s', name, cp.stderr.decode())
 
     @private
     async def active_sessions_for_targets(self, target_id_list):
@@ -370,3 +396,229 @@ class iSCSITargetService(CRUDService):
         if data.get("alias", None) == "":
             data['alias'] = None
         return data
+
+    @private
+    async def discover(self, ip):
+        cmd = ['iscsiadm', '-m', 'discovery', '-t', 'st', '-p', ip]
+        err = f'DISCOVER: {ip!r}'
+        try:
+            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        except Exception as e:
+            err += f' ERROR: {str(e)}'
+            raise UnexpectedFailure(err)
+        else:
+            if cp.returncode != 0:
+                err += f' ERROR: {cp.stdout}'
+                raise OSError(cp.returncode, os.strerror(cp.returncode), err)
+
+    @private
+    async def login_iqn(self, ip, iqn, no_wait=False):
+        cmd = ['iscsiadm', '-m', 'node', '-p', ip, '-T', iqn, '--login']
+        if no_wait:
+            cmd.append('--no_wait')
+        err = f'LOGIN: {ip!r} {iqn!r}'
+        try:
+            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        except Exception as e:
+            err += f' ERROR: {str(e)}'
+            raise UnexpectedFailure(err)
+        else:
+            if cp.returncode != 0:
+                err += f' ERROR: {cp.stdout}'
+                raise OSError(cp.returncode, os.strerror(cp.returncode), err)
+
+    @private
+    async def logout_iqn(self, ip, iqn, no_wait=False):
+        cmd = ['iscsiadm', '-m', 'node', '-p', ip, '-T', iqn, '--logout']
+        if no_wait:
+            cmd.append('--no_wait')
+        err = f'LOGOUT: {ip!r} {iqn!r}'
+        try:
+            cp = await run(cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        except Exception as e:
+            err += f' ERROR: {str(e)}'
+            raise UnexpectedFailure(err)
+        else:
+            if cp.returncode != 0:
+                err += f' ERROR: {cp.stdout}'
+                raise OSError(cp.returncode, os.strerror(cp.returncode), err)
+
+    @private
+    def logged_in_iqns(self):
+        """
+        :return: dict keyed by iqn, with the unsurfaced disk name as the value
+        """
+        results = {}
+        p = pathlib.Path('/sys/devices/platform')
+        for targetname in p.glob('host*/session*/iscsi_session/session*/targetname'):
+            iqn = targetname.read_text().strip()
+            for disk in targetname.parent.glob('device/target*/*/scsi_disk'):
+                results[iqn] = disk.parent.name
+                break
+        return results
+
+    @private
+    def set_genhd_hidden_ips(self, ips):
+        """
+        Set the kernel parameter /sys/module/iscsi_tcp/parameters/genhd_hidden_ips to the
+        specified string, if not already set to it.
+        """
+        p = pathlib.Path('/sys/module/iscsi_tcp/parameters/genhd_hidden_ips')
+        if not p.exists():
+            try:
+                subprocess.run(["modprobe", "iscsi_tcp"])
+            except subprocess.CalledProcessError as e:
+                self.logger.error('Failed to load iscsi_tcp kernel module. Error %r', e)
+        if p.read_text().rstrip() != ips:
+            p.write_text(ips)
+
+    @private
+    async def login_ha_targets(self, no_wait=False, raise_error=False):
+        """
+        When called on a HA BACKUP node will attempt to login to all internal HA targets,
+        used in ALUA.
+
+        :return: dict keyed by target name, with the unsurfaced disk name or None as the value
+        """
+        targets = await self.middleware.call('iscsi.target.query')
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+
+        iqns = {}
+        for target in targets:
+            name = target['name']
+            iqns[name] = f'{global_basename}:HA:{name}'
+
+        # Check what's already logged in
+        existing = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+        # Generate the set of things we want to login
+        todo = set()
+        for iqn in iqns.values():
+            if iqn not in existing:
+                todo.add(iqn)
+
+        if todo:
+            remote_ip = await self.middleware.call('failover.remote_ip')
+
+            # Ensure we have configured our kernel so that when we login to the
+            # peer controller's iSCSI targets no disk surfaces.
+            await self.middleware.call('iscsi.target.set_genhd_hidden_ips', remote_ip)
+
+            # Now we need to do an iscsiadm discovery
+            await self.discover(remote_ip)
+
+            # Then login the targets (in parallel)
+            exceptions = await asyncio.gather(*[self.login_iqn(remote_ip, iqn, no_wait) for iqn in todo], return_exceptions=True)
+            failures = []
+            for iqn, exc in zip(todo, exceptions):
+                if isinstance(exc, Exception):
+                    failures.append(str(exc))
+                else:
+                    self.logger.info('Successfully logged into %r', iqn)
+
+                if failures:
+                    err = f'Failure logging in to targets: {", ".join(failures)}'
+                    if raise_error:
+                        raise CallError(err)
+                    else:
+                        self.logger.error(err)
+
+            # Regen existing as it should have now changed
+            existing = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+        # Now calculate the result to hand back.
+        result = {}
+        for name, iqn in iqns.items():
+            result[name] = existing.get(iqn, None)
+
+        return result
+
+    @private
+    async def logout_ha_target(self, name, no_wait=False):
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+        iqn = f'{global_basename}:HA:{name}'
+        existing = await self.middleware.call('iscsi.target.logged_in_iqns')
+        if iqn in existing:
+            remote_ip = await self.middleware.call('failover.remote_ip')
+            await self.middleware.call('iscsi.target.logout_iqn', remote_ip, iqn, no_wait)
+
+    @private
+    async def logout_ha_targets(self, no_wait=False, raise_error=False):
+        """
+        When called on a HA BACKUP node will attempt to login to all internal HA targets,
+        used in ALUA.
+        """
+        targets = await self.middleware.call('iscsi.target.query')
+        global_basename = (await self.middleware.call('iscsi.global.config'))['basename']
+
+        iqns = {}
+        for target in targets:
+            name = target['name']
+            iqns[name] = f'{global_basename}:HA:{name}'
+
+        # Check what's already logged in
+        existing = await self.middleware.call('iscsi.target.logged_in_iqns')
+
+        # Generate the set of things we want to logout (don't assume every IQN, just the HA ones)
+        todo = set()
+        for iqn in iqns.values():
+            if iqn in existing:
+                todo.add(iqn)
+
+        if todo:
+            remote_ip = await self.middleware.call('failover.remote_ip')
+
+            # Logout the targets (in parallel)
+            exceptions = await asyncio.gather(*[self.logout_iqn(remote_ip, iqn, no_wait) for iqn in todo], return_exceptions=True)
+            failures = []
+            for iqn, exc in zip(todo, exceptions):
+                if isinstance(exc, Exception):
+                    failures.append(str(exc))
+                else:
+                    self.logger.info('Successfully logged out from %r', iqn)
+
+                if failures:
+                    err = f'Failure logging out from targets: {", ".join(failures)}'
+                    if raise_error:
+                        raise CallError(err)
+                    else:
+                        self.logger.error(err)
+
+    @private
+    def clustered_extents(self):
+        extents = []
+        basepath = pathlib.Path('/sys/kernel/scst_tgt/handlers')
+        for p in basepath.glob('*/*/cluster_mode'):
+            with p.open() as f:
+                if f.readline().strip() == '1':
+                    extents.append(p.parent.name)
+        return extents
+
+    @private
+    async def cluster_mode_targets(self):
+        """
+        Returns a list of target names that are currently in cluster_mode on this controller.
+        """
+        targets = await self.middleware.call('iscsi.target.query')
+        extents = await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])
+        assoc = await self.middleware.call('iscsi.targetextent.query')
+
+        # Generate a dict, keyed by target ID whose value is a set of associated extent names
+        target_extents = defaultdict(set)
+        for a_tgt in filter(
+            lambda a: a['extent'] in extents and not extents[a['extent']]['locked'],
+            assoc
+        ):
+            target_extents[a_tgt['target']].add(extents[a_tgt['extent']]['name'])
+
+        # Check sysfs to see what extents are in cluster mode
+        cl_extents = set(await self.middleware.call('iscsi.target.clustered_extents'))
+
+        # Now iterate over all the targets and return a list of those whose extents are all
+        # in cluster mode.
+        result = []
+        for target in targets:
+            if target_extents[target['id']].issubset(cl_extents):
+                result.append(target['name'])
+
+        return result
