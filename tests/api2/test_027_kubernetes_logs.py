@@ -16,7 +16,7 @@ from auto_config import ip
 @contextlib.contextmanager
 def official_chart_release(chart_name, release_name):
     payload = {
-        'catalog': 'OFFICIAL',
+        'catalog': 'TRUENAS',
         'item': chart_name,
         'release_name': release_name,
         'train': 'community',
