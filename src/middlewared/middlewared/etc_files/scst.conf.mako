@@ -24,7 +24,7 @@
     # - TARGET GROUPs and rel_tgt_id are tied to the controller,
     #   *not* to whether it is currently the MASTER or BACKUP
     #
-    ha_capable = middleware.call_sync("system.is_ha_capable")
+    is_ha = middleware.call_sync('failover.licensed')
     alua_enabled = middleware.call_sync("iscsi.global.alua_enabled")
     failover_status = middleware.call_sync("failover.status")
     node = middleware.call_sync("failover.node")
@@ -96,7 +96,7 @@
 ## If we are on a HA system then write out a cluster name, we'll hard-code
 ## it to "HA"
 ##
-% if failover_status != "SINGLE":
+% if is_ha:
 cluster_name HA
 % endif
 ##
@@ -104,7 +104,7 @@ cluster_name HA
 ## kernel module to get loaded on SCST startup), but only populate it on the
 ## ALUA BACKUP node.
 ##
-% if ha_capable:
+% if is_ha:
 HANDLER dev_disk {
 %     if alua_enabled and failover_status == "BACKUP":
 %         for name, value in logged_in_targets.items():
@@ -184,7 +184,7 @@ TARGET_DRIVER iscsi {
         ${spacing}LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
     % endfor
 </%def>\
-% for idx, target in enumerate(targets):
+% for idx, target in enumerate(targets, start=1):
     TARGET ${global_config['basename']}:${target['name']} {
 <%
     # SCST does not allow us to set authentication at a group level, so it is going to be set at
@@ -227,10 +227,10 @@ TARGET_DRIVER iscsi {
 ##
 %       if alua_enabled:
 %           if node == "A":
-        rel_tgt_id ${idx + 1}
+        rel_tgt_id ${idx}
 %           endif
 %           if node == "B":
-        rel_tgt_id ${idx + 32001}
+        rel_tgt_id ${idx + 32000}
 %           endif
 %       endif
 ##
@@ -282,14 +282,14 @@ ${retrieve_luns(target['id'], ' ' * 4)}\
 ## from the peer node.  These will have the flipped rel_tgt_id
 ##
 % if alua_enabled and failover_status == "MASTER":
-%     for idx, target in enumerate(targets):
+%     for idx, target in enumerate(targets, start=1):
     TARGET ${global_config['basename']}:HA:${target['name']} {
         allowed_portal ${local_ip}
 %       if node == "A":
-        rel_tgt_id ${idx + 32001}
+        rel_tgt_id ${idx + 32000}
 %       endif
 %       if node == "B":
-        rel_tgt_id ${idx + 1}
+        rel_tgt_id ${idx}
 %       endif
         enabled 1
         forward_dst 1
@@ -362,13 +362,13 @@ DEVICE_GROUP targets {
                 group_id ${nodes[nodes[node]["other"]]["group_id"]}
                 state active
 
-% for idx, target in enumerate(targets):
+% for idx, target in enumerate(targets, start=1):
                 TARGET ${global_config['basename']}:alt:${target['name']} {
 %     if node == "A":
-                   rel_tgt_id ${idx + 32001}
+                   rel_tgt_id ${idx + 32000}
 %     endif
 %     if node == "B":
-                   rel_tgt_id ${idx + 1}
+                   rel_tgt_id ${idx}
 %     endif
                 }
 % endfor
