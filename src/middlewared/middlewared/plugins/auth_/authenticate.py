@@ -3,7 +3,7 @@ import hmac
 
 import pam
 
-from middlewared.service import Service, private
+from middlewared.service import CallError, Service, private
 
 
 class AuthService(Service):
@@ -13,11 +13,15 @@ class AuthService(Service):
 
     @private
     async def authenticate(self, username, password):
-        if '@' in username:
-            username = username.split('@')[0]
-            local = False
-        else:
+        try:
+            # We should use this method to translate username to make sure all the different variations
+            # of ad usernames are properly handled as the old logic was not taking them into account
+            user = await self.middleware.call('user.translate_username', username)
+        except CallError:
             local = True
+        else:
+            username = user['username']
+            local = user['local']
 
         if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             root = await self.middleware.call(
