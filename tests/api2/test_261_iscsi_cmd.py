@@ -2,13 +2,16 @@
 
 # License: BSD
 
+import enum
 import os
 import random
 import string
 import sys
 from time import sleep
 
+import iscsi
 import pytest
+from pyscsi.pyscsi.scsi_sense import sense_ascq_dict
 from pytest_dependency import depends
 
 apifolder = os.getcwd()
@@ -26,6 +29,21 @@ MB_512=512*MB
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
+pyscsi_supports_check_condition = hasattr(iscsi.Task, 'raw_sense')
+
+# The following strings are taken from pyscsi/pyscsi/scsi_exception
+class CheckType(enum.Enum):
+    CHECK_CONDITION = "CheckCondition"
+    CONDITIONS_MET = "ConditionsMet"
+    BUSY_STATUS = "BusyStatus"
+    RESERVATION_CONFLICT = "ReservationConflict"
+    TASK_SET_FULL = "TaskSetFull"
+    ACA_ACTIVE = "ACAActive"
+    TASK_ABORTED = "TaskAborted"
+
+    def __str__(self):
+        return self.value
 
 digit = ''.join(random.choices(string.digits, k=2))
 
@@ -262,13 +280,39 @@ def TUR(s):
     Perform a TEST UNIT READY.
 
     :param s: a pyscsi.SCSI instance
-
-    Will retry once, if necessary.
     """
-    try:
-        s.testunitready()
-    except TypeError:
-        s.testunitready()
+    s.testunitready()
+
+
+def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
+    """
+    Expect a CHECK CONDITION containing the specified text.
+
+    :param s: a pyscsi.SCSI instance
+    :param text: string expected as part of the CHECK CONDITION
+    :param check_type: CheckType enum of the expected CHECK_CONDITION
+
+    Issue a TEST UNIT READY and verify that the expected CHECK CONDITION is raised.
+
+    If this version of pyscsi(/cython-iscsi) does not support CHECK CONDITION
+    then just swallow the condition by issuing another TEST UNIT READY.
+    """
+    assert type(check_type) == CheckType, f"Parameter '{check_type}' is not a CheckType"
+    if pyscsi_supports_check_condition:
+        with pytest.raises(Exception) as excinfo:
+            s.testunitready()
+
+        e = excinfo.value
+        assert e.__class__.__name__ == str(check_type), f"Unexpected CHECK CONDITION type.  Got '{e.__class__.__name__}', expected {str(check_type)}"
+        if text:
+            assert text in str(e), f"Exception did not match: {text}"
+    else:
+        # If we cannot detect a CHECK CONDITION, then swallow it by retrying a TUR
+        try:
+            s.testunitready()
+        except TypeError:
+            s.testunitready()
+
 
 def _verify_inquiry(s):
     """
@@ -916,7 +960,8 @@ def test_12_pblocksize_setting(request):
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
-            TUR(s)
+            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
             data = s.readcapacity16().result
             assert data['block_length'] == 2048, data
             assert data['lbppbe'] == 1, data
@@ -926,7 +971,8 @@ def test_12_pblocksize_setting(request):
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
-            TUR(s)
+            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
             data = s.readcapacity16().result
             assert data['block_length'] == 512, data
             assert data['lbppbe'] == 0, data
@@ -944,7 +990,8 @@ def test_12_pblocksize_setting(request):
             results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
             assert results.status_code == 200, results.text
 
-            TUR(s)
+            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
             data = s.readcapacity16().result
             assert data['block_length'] == 4096, data
             assert data['lbppbe'] == 2, data
