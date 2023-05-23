@@ -1,5 +1,5 @@
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
-from middlewared.schema import Bool, Dict, List, Str, Int
+from middlewared.schema import Bool, Dict, List, SID, Str, Int
 from middlewared.service import (accepts, filterable, private, periodic, CRUDService)
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils import run, filter_list
@@ -361,7 +361,7 @@ class ShareSec(CRUDService):
             items=[
                 Dict(
                     'aclentry',
-                    Str('ae_who_sid', default=None),
+                    SID('ae_who_sid', default=None),
                     Dict(
                         'ae_who_name',
                         Str('domain', default=''),
@@ -410,7 +410,7 @@ class ShareSec(CRUDService):
                 items=[
                     Dict(
                         'aclentry',
-                        Str('ae_who_sid', default=None),
+                        SID('ae_who_sid', default=None),
                         Dict(
                             'ae_who_name',
                             Str('domain', default=''),
