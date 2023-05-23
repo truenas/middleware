@@ -445,11 +445,9 @@ class AuthService(Service):
         user = await self.middleware.call('auth.authenticate', username, password)
         twofactor_auth = await self.middleware.call('auth.twofactor.config')
 
-        if twofactor_auth['enabled'] and (
-            await self.middleware.call(
-                'user.query', [['username', '=', username], ['twofactor_auth_configured', '=', True]]
-            )
-        ):
+        if user and twofactor_auth['enabled'] and (await self.middleware.call(
+            'user.translate_username', user['username']
+        ))['twofactor_auth_configured']:
             # We should run user.verify_twofactor_token regardless of check_user result to prevent guessing
             # passwords with a timing attack
             if not await self.middleware.call('user.verify_twofactor_token', username, otp_token):
