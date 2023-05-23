@@ -97,7 +97,7 @@ class UserService(Service):
         else:
             await self.middleware.call(
                 'datastore.insert', 'account.twofactor_user_auth', {
-                    'secret': None,
+                    'secret': secret,
                     'user': None,
                     'user_sid': user['sid'],
                 }
