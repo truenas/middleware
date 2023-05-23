@@ -1022,7 +1022,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if domain is None:
             domain = (await self.config())['domainname']
 
-        lookup = await self.cache_flush_retry([SMBCmd.NET.value, '--json', '-S', domain, 'ads', 'lookup'])
+        lookup = await self.cache_flush_retry([SMBCmd.NET.value, '--json', '-S', domain, '--realm', domain, 'ads', 'lookup'])
         if lookup.returncode != 0:
             raise CallError("Failed to look up Domain Controller information: "
                             f"{lookup.stderr.decode().strip()}")

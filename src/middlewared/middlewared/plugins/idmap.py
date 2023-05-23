@@ -979,6 +979,37 @@ class IdmapDomainService(TDBWrapCRUDService):
         return {'mapped': mapped, 'unmapped': results['unmapped']}
 
     @private
+    def convert_unixids(self, id_list):
+        payload = []
+        for entry in id_list:
+            unixid = entry.get("id")
+            id = IDType[entry.get("id_type", "GROUP")]
+            payload.append({
+                'id_type': id.wbc_str(),
+                'id': unixid
+            })
+
+        try:
+            client = WBClient()
+            results = client.users_and_groups_to_sids(payload)
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
+
+        mapped = {unixid: {
+            'type': entry.sid_type['parsed'][4:],
+            'id': entry.id,
+            'sid': entry.sid,
+            'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
+        } for unixid, entry in results['mapped'].items()}
+
+        unmapped = {unixid: {
+            'id_type': 'GROUP' if unixid.startswith('GID') else 'USER',
+            'id': entry.id,
+        } for unixid, entry in results['unmapped'].items()}
+
+        return {'mapped': mapped, 'unmapped': unmapped}
+
+    @private
     def sid_to_name(self, sid):
         try:
             client = WBClient()
