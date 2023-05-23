@@ -486,11 +486,8 @@ class DSCache(Service):
         ds_state = await self.middleware.call('directoryservices.get_state')
         enabled_ds = None
         extra = options.get("extra", {})
-<<<<<<< HEAD
         get_smb = 'SMB' in extra.get('additional_information', [])
-=======
         options.pop('get', None)  # This needs to happen as otherwise `res` will become a list of keys of user attrs
->>>>>>> 6129cf51ef (Fix bug in dscahe.query)
 
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
