@@ -92,8 +92,8 @@ class TwoFactorAuthService(ConfigService):
     @private
     async def get_user_config(self, user_id, local_user):
         filters = [
-            ['user', '=', user_id], ['user_sid', '=', None]
-        ] if local_user else [['user_sid', '=', user_id], ['user', '=', None]]
+            ['user_id', '=', user_id], ['user_sid', '=', None]
+        ] if local_user else [['user_sid', '=', user_id], ['user_id', '=', None]]
         if config := await self.middleware.call('datastore.query', 'account.twofactor_user_auth', filters):
             return {
                 **config[0],
