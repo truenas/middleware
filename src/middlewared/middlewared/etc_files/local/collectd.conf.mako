@@ -35,7 +35,6 @@ LoadPlugin aggregation
 LoadPlugin cpu
 LoadPlugin df
 LoadPlugin disk
-LoadPlugin exec
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
@@ -71,10 +70,6 @@ LoadPlugin python
 <Plugin "disk">
 	Disk "/^disk/by-partuuid/"
 	IgnoreSelected true
-</Plugin>
-
-<Plugin "exec">
-	NotificationExec "nobody" "/usr/local/libexec/collectd_alert.py"
 </Plugin>
 
 <Plugin "interface">
