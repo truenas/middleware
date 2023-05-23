@@ -20,7 +20,7 @@ class UserService(Service):
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
         )
         if not user_twofactor_config['secret']:
-            raise CallError(f'{user["username"]!r} user does not has two factor authentication configured')
+            raise CallError(f'{user["username"]!r} user does not have two factor authentication configured')
 
         return pyotp.totp.TOTP(
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
@@ -82,6 +82,8 @@ class UserService(Service):
         )
 
         # Add some sanity checks here
+        # The sanity check is only for local users because they should always have a db record in our 2fa
+        # table. For AD users, we don't have a db record for them until they configure 2fa explicitly.
         if user['local'] and not twofactor_auth['exists']:
             raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
 
