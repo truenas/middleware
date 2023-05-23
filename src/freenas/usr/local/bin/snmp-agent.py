@@ -4,7 +4,6 @@ import time
 import contextlib
 import pathlib
 from datetime import datetime, timedelta
-from decimal import Decimal
 
 import libzfs
 import netsnmpagent
