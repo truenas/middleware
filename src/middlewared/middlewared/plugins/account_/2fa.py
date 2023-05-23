@@ -66,7 +66,7 @@ class UserService(Service):
         return await self.middleware.call(
             'user.query', [['username', '=', user['pw_name']]], {
                 'get': True,
-                'extra': {'additional_information': ['DS']},
+                'extra': {'additional_information': ['DS', 'SMB']},
             }
         )
 
