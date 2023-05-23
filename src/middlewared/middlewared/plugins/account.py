@@ -290,7 +290,8 @@ class UserService(CRUDService):
                 lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
             ):
                 dssearch_results[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
-            return dssearch_results
+
+            return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options

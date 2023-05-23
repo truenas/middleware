@@ -532,6 +532,9 @@ class DSCache(Service):
 
         entries_by_id = sorted(entries, key=lambda i: i['id'])
         res.extend(filter_list(entries_by_id, filters, options))
+
+        # FIXME: This is broken and will break with groups/users as well, filters/options should be
+        #  respected here, let's fix this please
         return res
 
     @job(lock="dscache_refresh")
