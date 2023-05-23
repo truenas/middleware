@@ -181,7 +181,6 @@ class UserService(CRUDService):
 
         return {
             'memberships': memberships,
-            'global_2fa_configured': (await self.middleware.call('auth.twofactor.config'))['enabled'],
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
                     'datastore.query', 'account.twofactor_user_auth', [['user_id', '!=', None]]
@@ -211,7 +210,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
-        user['twofactor_auth_configured'] = ctx['global_2fa_configured'] and bool(ctx['user_2fa_mapping'][user['id']])
+        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
 
         return user
 
@@ -280,12 +279,7 @@ class UserService(CRUDService):
         if dssearch:
             dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
             # For AD users, we will not have 2FA attribute normalized so let's do that
-            global_2fa_configured = (await self.middleware.call('auth.twofactor.config'))['enabled']
-            if global_2fa_configured:
-                ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
-            else:
-                ad_users_2fa_mapping = {}
-
+            ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
             for index, user in enumerate(filter(
                 lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
             ):
