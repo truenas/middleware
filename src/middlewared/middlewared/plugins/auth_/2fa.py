@@ -116,7 +116,7 @@ class TwoFactorAuthService(ConfigService):
         mapping = {
             user['sid']: user for user in self.middleware.call_sync(
                 'user.query', [['local', '=', False], ['sid', '!=', None]], {
-                    'extra': {'additional_information': ['DS']},
+                    'extra': {'additional_information': ['DS', 'SMB']},
                 }
             )
         }
