@@ -13,15 +13,22 @@ class AuthService(Service):
 
     @private
     async def authenticate(self, username, password):
-        try:
-            # We should use this method to translate username to make sure all the different variations
-            # of ad usernames are properly handled as the old logic was not taking them into account
-            user = await self.middleware.call('user.translate_username', username)
-        except CallError:
+        # root and admin must always be local
+        # since they may be used by system processes we
+        # optimize away the more complex translate_username call
+        if username == 'root' or 'username' == 'admin':
             local = True
+
         else:
-            username = user['username']
-            local = user['local']
+            try:
+                # We should use this method to translate username to make sure all the different variations
+                # of ad usernames are properly handled as the old logic was not taking them into account
+                user = await self.middleware.call('user.translate_username', username)
+            except CallError:
+                local = True
+            else:
+                username = user['username']
+                local = user['local']
 
         if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             root = await self.middleware.call(

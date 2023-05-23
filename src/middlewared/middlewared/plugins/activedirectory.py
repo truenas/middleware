@@ -609,6 +609,40 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('idmap.update', idmap_id, idmap)
 
     @private
+    async def add_privileges(self, domain_name, workgroup):
+        """
+        Grant Domain Admins full control of server
+        """
+        existing_privileges = await self.middleware.call(
+            'privilege.query',
+            [["name", "=", domain_name]]
+        )
+        if existing_privileges:
+            return
+
+        domain_info = await self.middleware.call('idmap.domain_info', workgroup)
+        await self.middleware.call('privilege.create', {
+            'name': domain_name,
+            'ds_groups': [f'{domain_info["sid"]}-512'],
+            'allowlist': [{'method': '*', 'resource': '*'}],
+            'web_shell': True
+        })
+
+    @private
+    async def remove_privileges(self, domain_name):
+        """
+        Remove any auto-granted domain privileges
+        """
+        existing_privileges = await self.middleware.call(
+            'privilege.query',
+            [["name", "=", domain_name]]
+        )
+        if not existing_privileges:
+            return
+
+        await self.middleware.call('privilege.delete', existing_privileges[0]['id'])
+
+    @private
     @job(lock="AD_start_stop")
     async def start(self, job):
         """
@@ -771,6 +805,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
         await self.middleware.call('service.reload', 'idmap')
+
+        if ret == neterr.JOINED:
+            job.set_progress(100, 'Granting privileges to domain admins.')
+            try:
+                await self.add_privileges(ad['domainname'], dc_info['Pre-Win2k Domain'])
+            except Exception:
+                self.logger.warning('Failed to grant Domain Admins privileges', exc_info=True)
+
         return ret.name
 
     @private
@@ -1057,6 +1099,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 'kerberos_principal': '',
             }
         }
+
+        try:
+            await self.remove_privileges(ad['domainname'])
+        except Exception:
+            self.logger.warning('Failed to remove Domain Admins privileges', exc_info=True)
 
         job.set_progress(5, 'Obtaining kerberos ticket for privileged user.')
         cred = await self.middleware.call('kerberos.get_cred', payload)
