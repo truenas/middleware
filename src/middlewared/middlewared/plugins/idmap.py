@@ -964,6 +964,12 @@ class IdmapDomainService(TDBWrapCRUDService):
 
     @private
     def convert_sids(self, sidlist):
+        """
+        Internal bulk conversion method Windows-style SIDs to Unix IDs (uid or gid)
+        This ends up being a de-facto wrapper around wbcCtxSidsToUnixIds from
+        libwbclient (single winbindd request), and so it is the preferred
+        method of batch conversion.
+        """
         try:
             client = WBClient()
             results = client.sids_to_users_and_groups(sidlist)
@@ -980,6 +986,12 @@ class IdmapDomainService(TDBWrapCRUDService):
 
     @private
     def convert_unixids(self, id_list):
+        """
+        Internal bulk conversion method for Unix IDs (uid or gid) to Windows-style
+        SIDs. This ends up being a de-facto wrapper around wbcCtxUnixIdsToSids
+        from libwbclient (single winbindd request), and so it is the preferred
+        method of batch conversion.
+        """
         payload = []
         for entry in id_list:
             unixid = entry.get("id")
