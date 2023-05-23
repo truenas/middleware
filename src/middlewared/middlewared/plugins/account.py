@@ -184,7 +184,7 @@ class UserService(CRUDService):
             'global_2fa_configured': (await self.middleware.call('auth.twofactor.config'))['enabled'],
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
-                    'datastore.query', 'account.twofactor_user_auth'
+                    'datastore.query', 'account.twofactor_user_auth', [['user_id', '!=', None]]
                 )
             }),
         }
