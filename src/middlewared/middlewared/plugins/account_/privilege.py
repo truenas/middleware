@@ -1,7 +1,7 @@
 import enum
 import errno
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str, Patch
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -40,7 +40,7 @@ class PrivilegeService(CRUDService):
         Str("builtin_name", null=True),
         Str("name", required=True, empty=False),
         List("local_groups", items=[Int("local_group")]),
-        List("ds_groups", items=[Int("ds_group")]),
+        List("ds_groups", items=[Int("ds_group_gid"), SID("ds_group_sid")]),
         List("allowlist", items=[Ref("allowlist_item")]),
         Bool("web_shell", required=True),
     )
@@ -102,7 +102,12 @@ class PrivilegeService(CRUDService):
         old = await self.get_instance(id)
         new = old.copy()
         new["local_groups"] = [g["gid"] for g in new["local_groups"]]
-        new["ds_groups"] = [g["gid"] for g in new["ds_groups"]]
+
+        # Preference is for SID values rather than GIDS because they are universally unique
+        new["ds_groups"] = []
+        for g in old["ds_groups"]:
+            new["ds_groups"].append(g["gid"] if not g["sid"] else g["sid"])
+
         new.update(data)
 
         verrors = ValidationErrors()
@@ -173,19 +178,25 @@ class PrivilegeService(CRUDService):
             raise verrors
 
     async def _groups(self):
-        return {
-            group["gid"]: group
-            for group in await self.middleware.call(
-                "group.query",
-                [],
-                {"extra": {"additional_information": ["DS"]}},
+        groups = await self.middleware.call(
+            "group.query",
+            [],
+            {"extra": {"additional_information": ["DS", "SMB"]}},
+        )
+        by_gid = {group["gid"]: group for group in groups}
+        by_sid = {
+            group["sid"]: group
+            for group in filter_list(
+                groups, [["sid", "!=", None], ["local", "=", False]],
             )
         }
+
+        return {'by_gid': by_gid, 'by_sid': by_sid}
 
     def _local_groups(self, groups, local_groups, *, include_nonexistent=True):
         result = []
         for gid in local_groups:
-            if group := groups.get(gid):
+            if group := groups['by_gid'].get(gid):
                 if group["local"]:
                     result.append(group)
             else:
@@ -198,15 +209,31 @@ class PrivilegeService(CRUDService):
         return result
 
     async def _ds_groups(self, groups, ds_groups, *, include_nonexistent=True):
+        """
+        Directory services group privileges may assigned by either GID or SID.
+        preference is for latter if it is available. The primary case where it
+        will not be available is if this is not active directory.
+        """
         result = []
-        for gid in ds_groups:
-            if (group := groups.get(gid)) is None:
+        for xid in ds_groups:
+            if isinstance(xid, int):
+                if (group := groups['by_gid'].get(xid)) is None:
+                    gid = xid
+            else:
+                if (group := groups['by_sid'].get(xid)) is None:
+                    unixid = await self.middleware.call('idmap.sid_to_unixid', xid)
+                    if unixid is None or unixid['id_type'] == 'USER':
+                        gid = -1
+                    else:
+                        gid = unixid['id']
+
+            if group is None:
                 try:
                     group = await self.middleware.call(
                         "group.query",
                         [["gid", "=", gid]],
                         {
-                            "extra": {"additional_information": ["DS"]},
+                            "extra": {"additional_information": ["DS", "SMB"]},
                             "get": True,
                         },
                     )
@@ -214,6 +241,7 @@ class PrivilegeService(CRUDService):
                     if include_nonexistent:
                         result.append({
                             "gid": gid,
+                            "sid": None,
                             "group": None,
                         })
 
@@ -261,7 +289,33 @@ class PrivilegeService(CRUDService):
 
     @private
     async def privileges_for_groups(self, groups_key, group_ids):
-        group_ids = set(group_ids)
+        """
+        group_ids here are based on NSS group_list output.
+
+        Directory services groups may have privileges assigned by SID, which
+        are set on the domain controller rather than locally on TrueNAS.
+
+        This means we expand the set of group_ids to include SID mappings for
+        permissions evaluation.
+
+        If for some reason libwbclient raises an exception during the attempt
+        to convert unix gids to SIDs, then the domain is probably unhealthy and
+        permissions failure is acceptable. We do not need to log here as there will
+        be other failures / alerts and we don't want to spam logs unnecessarily.
+        """
+        if groups_key == 'ds_groups':
+            try:
+                sids = await self.middleware.call(
+                    'idmap.convert_unixids',
+                    [{'id_type': 'GROUP', 'id': x} for x in group_ids]
+                )
+            except Exception:
+                group_ids = set(group_ids)
+            else:
+                group_ids = set(group_ids) | set([s['sid'] for s in sids['mapped'].values()])
+        else:
+            group_ids = set(group_ids)
+
         return [
             privilege for privilege in await self.middleware.call('datastore.query', 'account.privilege')
             if set(privilege[groups_key]) & group_ids

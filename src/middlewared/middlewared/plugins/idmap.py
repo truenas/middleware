@@ -964,6 +964,12 @@ class IdmapDomainService(TDBWrapCRUDService):
 
     @private
     def convert_sids(self, sidlist):
+        """
+        Internal bulk conversion method Windows-style SIDs to Unix IDs (uid or gid)
+        This ends up being a de-facto wrapper around wbcCtxSidsToUnixIds from
+        libwbclient (single winbindd request), and so it is the preferred
+        method of batch conversion.
+        """
         try:
             client = WBClient()
             results = client.sids_to_users_and_groups(sidlist)
@@ -977,6 +983,43 @@ class IdmapDomainService(TDBWrapCRUDService):
         } for sid, entry in results['mapped'].items()}
 
         return {'mapped': mapped, 'unmapped': results['unmapped']}
+
+    @private
+    def convert_unixids(self, id_list):
+        """
+        Internal bulk conversion method for Unix IDs (uid or gid) to Windows-style
+        SIDs. This ends up being a de-facto wrapper around wbcCtxUnixIdsToSids
+        from libwbclient (single winbindd request), and so it is the preferred
+        method of batch conversion.
+        """
+        payload = []
+        for entry in id_list:
+            unixid = entry.get("id")
+            id = IDType[entry.get("id_type", "GROUP")]
+            payload.append({
+                'id_type': id.wbc_str(),
+                'id': unixid
+            })
+
+        try:
+            client = WBClient()
+            results = client.users_and_groups_to_sids(payload)
+        except wbclient.WBCError as e:
+            raise CallError(str(e), WBCErr[e.error_code], e.error_code)
+
+        mapped = {unixid: {
+            'type': entry.sid_type['parsed'][4:],
+            'id': entry.id,
+            'sid': entry.sid,
+            'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
+        } for unixid, entry in results['mapped'].items()}
+
+        unmapped = {unixid: {
+            'id_type': 'GROUP' if unixid.startswith('GID') else 'USER',
+            'id': entry.id,
+        } for unixid, entry in results['unmapped'].items()}
+
+        return {'mapped': mapped, 'unmapped': unmapped}
 
     @private
     def sid_to_name(self, sid):
