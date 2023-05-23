@@ -13,6 +13,7 @@ import ipaddress
 import os
 import pprint
 from urllib.parse import urlparse
+import wbclient
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
@@ -310,6 +311,37 @@ class Password(Str):
     def __init__(self, *args, **kwargs):
         self.private = True
         super().__init__(*args, **kwargs)
+
+
+class SID(Str):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        value = super().clean(value)
+
+        if value is None:
+            return value
+
+        value = value.strip()
+        return value.upper()
+
+    def validate(self, value):
+        if value is None:
+            return value
+
+        verrors = ValidationErrors()
+
+        if not wbclient.sid_is_valid(value):
+            verrors.add(
+                self.name,
+                'SID is malformed. See MS-DTYP Section 2.4 for SID type specifications. '
+                'Typically SIDs refer to existing objects on the local or remote server '
+                'and so an appropriate value should be queried prior to submitting to API '
+                'endpoints.'
+            )
+
+        verrors.check()
 
 
 class Dataset(Path):
