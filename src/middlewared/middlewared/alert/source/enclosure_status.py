@@ -21,8 +21,7 @@ class EnclosureStatusAlertSource(AlertSource):
     products = ("SCALE_ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
-    bad = ('critical', 'noncritical', 'unknown', 'unrecoverable', 'not installed')
-
+    bad = ('critical', 'noncritical', 'unknown', 'unrecoverable')
     bad_elements = []
 
     async def should_report(self, enclosure, element):
