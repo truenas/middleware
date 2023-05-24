@@ -4,7 +4,6 @@ import time
 import contextlib
 import pathlib
 from datetime import datetime, timedelta
-from decimal import Decimal
 
 import libzfs
 import netsnmpagent
@@ -21,11 +20,11 @@ def get_kstat():
             for lineno, line in enumerate(f, start=1):
                 if lineno > 2 and (info := line.strip()):
                     name, _, data = info.split()
-                    kstat[f"kstat.zfs.misc.arcstats.{name}"] = Decimal(int(data))
+                    kstat[f"kstat.zfs.misc.arcstats.{name}"] = int(data)
     except Exception:
         return kstat
     else:
-        kstat["vfs.zfs.version.spa"] = Decimal(5000)
+        kstat["vfs.zfs.version.spa"] = 5000
 
     return kstat
 
@@ -462,13 +461,13 @@ if __name__ == "__main__":
             arc_efficiency = get_arc_efficiency(kstat)
 
             prefix = "kstat.zfs.misc.arcstats"
-            zfs_arc_size.update(kstat[f"{prefix}.size"] / 1024)
-            zfs_arc_meta.update(kstat[f"{prefix}.arc_meta_used"] / 1024)
-            zfs_arc_data.update(kstat[f"{prefix}.data_size"] / 1024)
-            zfs_arc_hits.update(kstat[f"{prefix}.hits"] % 2 ** 32)
-            zfs_arc_misses.update(kstat[f"{prefix}.misses"] % 2 ** 32)
-            zfs_arc_c.update(kstat[f"{prefix}.c"] / 1024)
-            zfs_arc_p.update(kstat[f"{prefix}.p"] / 1024)
+            zfs_arc_size.update(int(kstat[f"{prefix}.size"] / 1024))
+            zfs_arc_meta.update(int(kstat[f"{prefix}.arc_meta_used"] / 1024))
+            zfs_arc_data.update(int(kstat[f"{prefix}.data_size"] / 1024))
+            zfs_arc_hits.update(int(kstat[f"{prefix}.hits"] % 2 ** 32))
+            zfs_arc_misses.update(int(kstat[f"{prefix}.misses"] % 2 ** 32))
+            zfs_arc_c.update(int(kstat[f"{prefix}.c"] / 1024))
+            zfs_arc_p.update(int(kstat[f"{prefix}.p"] / 1024))
             zfs_arc_miss_percent.update(str(get_zfs_arc_miss_percent(kstat)).encode("ascii"))
             zfs_arc_cache_hit_ratio.update(str(arc_efficiency["cache_hit_ratio"]["per"][:-1]).encode("ascii"))
             zfs_arc_cache_miss_ratio.update(str(arc_efficiency["cache_miss_ratio"]["per"][:-1]).encode("ascii"))
