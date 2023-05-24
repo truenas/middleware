@@ -59,7 +59,7 @@ class RouteService(Service):
             if interfaces:
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
-                ignore = tuple(self.middleware.call_sync('interface.internal_interfaces'))
+                ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
                 interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
 
             for interface in interfaces:
