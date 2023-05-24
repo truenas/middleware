@@ -271,7 +271,7 @@ class UpdateService(Service):
         if update is False:
             raise ValueError('No update available')
 
-        await self.middleware.call('update.install_impl', job, location)
+        await self.middleware.call('update.install', job, os.path.join(location, 'update.sqsh'), {})
         await self.middleware.call('cache.put', 'update.applied', True)
         await self.middleware.call_hook('update.post_update')
 
@@ -322,13 +322,10 @@ class UpdateService(Service):
         if not update_file.exists():
             raise CallError('File does not exist.', errno.ENOENT)
 
-        # dest_extracted is only used on freebsd and ignored on linux
-        dest_extracted = os.path.join(str(update_file.parent), '.update')
-
         try:
             try:
                 self.middleware.call_sync(
-                    'update.install_manual_impl', job, str(update_file.absolute()), dest_extracted, options,
+                    'update.install', job, str(update_file.absolute()), options,
                 )
             except Exception as e:
                 self.logger.debug('Applying manual update failed', exc_info=True)
@@ -338,9 +335,6 @@ class UpdateService(Service):
         finally:
             if os.path.exists(path):
                 os.unlink(path)
-
-            if os.path.exists(dest_extracted):
-                shutil.rmtree(dest_extracted, ignore_errors=True)
 
         if path.startswith(UPLOAD_LOCATION):
             self.middleware.call_sync('update.destroy_upload_location')
@@ -373,8 +367,7 @@ class UpdateService(Service):
         if not os.path.isdir(dest):
             raise CallError('Destination is not a directory')
 
-        destfile = os.path.join(dest, 'manualupdate.tar')
-        dest_extracted = os.path.join(dest, '.update')
+        destfile = os.path.join(dest, 'manualupdate.sqsh')
 
         try:
             job.set_progress(10, 'Writing uploaded file to disk')
@@ -383,15 +376,12 @@ class UpdateService(Service):
                     shutil.copyfileobj, job.pipes.input.r, f, 1048576,
                 )
 
-            await self.middleware.call('update.install_manual_impl', job, destfile, dest_extracted)
+            await self.middleware.call('update.install', job, destfile, {})
 
             job.set_progress(95, 'Cleaning up')
         finally:
             if os.path.exists(destfile):
                 os.unlink(destfile)
-
-            if os.path.exists(dest_extracted):
-                shutil.rmtree(dest_extracted, ignore_errors=True)
 
         if dest == UPLOAD_LOCATION:
             await self.middleware.call('update.destroy_upload_location')
