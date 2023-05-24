@@ -277,15 +277,17 @@ class UserService(CRUDService):
                 }})
 
         if dssearch:
-            dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
-            # For AD users, we will not have 2FA attribute normalized so let's do that
-            ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
-            for index, user in enumerate(filter(
-                lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
-            ):
-                dssearch_results[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+            ds_state = await self.middleware.call('directoryservices.get_state')
+            if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
+                dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
+                # For AD users, we will not have 2FA attribute normalized so let's do that
+                ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
+                for index, user in enumerate(filter(
+                    lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
+                ):
+                    dssearch_results[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
 
-            return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
+                return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -1503,7 +1505,9 @@ class GroupService(CRUDService):
             additional_information.remove('DS')
 
         if dssearch:
-            return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+            ds_state = await self.middleware.call('directoryservices.get_state')
+            if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
+                return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         if 'SMB' in additional_information:
             smb_groupmap = await self.middleware.call("smb.groupmap_list")
