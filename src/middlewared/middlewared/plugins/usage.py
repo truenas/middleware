@@ -324,12 +324,14 @@ class UsageService(Service):
         return info
 
     async def gather_system_version(self, context):
-        return {'version': await self.middleware.call('system.version')}
+        return {
+            'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
+            'version': await self.middleware.call('system.version')
+        }
 
     async def gather_system(self, context):
         return {
             'system_hash': await self.middleware.call('system.host_id'),
-            'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
             'usage_version': 1,
             'system': [{
                 'users': await self.middleware.call('user.query', [], {'count': True}),
