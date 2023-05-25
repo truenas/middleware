@@ -1166,13 +1166,13 @@ class LDAPService(TDBWrapConfigService):
         if ldap['has_samba_schema']:
             await self.middleware.call(
                 'alert.oneshot_create',
-                'DeprecatedService',
-                {'service': LDAP_DEPRECATED}
+                'DeprecatedServiceConfiguration',
+                {'config': LDAP_DEPRECATED}
             )
             job.set_progress(70, 'Storing LDAP password for SMB configuration')
             await self.middleware.call('smb.store_ldap_admin_password')
         else:
-            await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', LDAP_DEPRECATED)
+            await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
 
         await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Restarting dependent services')
@@ -1198,7 +1198,7 @@ class LDAPService(TDBWrapConfigService):
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
         await self.direct_update({"enable": False})
 
-        await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', LDAP_DEPRECATED)
+        await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
         await self.set_state(DSStatus['LEAVING'])
         job.set_progress(10, 'Rewriting configuration files.')
         await self.middleware.call('etc.generate', 'rc')
