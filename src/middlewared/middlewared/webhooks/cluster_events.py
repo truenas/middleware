@@ -79,7 +79,7 @@ class ClusterEventsApplication(object):
             )
             token = encode({'dummy': 'data'}, secret, algorithm='HS256')
             headers = {
-                'JWTOKEN': token.decode('utf-8'),
+                'JWTOKEN': token,
                 'content-type': 'application/json'
             }
 
@@ -115,7 +115,7 @@ class ClusterEventsApplication(object):
         )
         token = request.headers.get('JWTOKEN', None)
         try:
-            decode(token.encode('utf-8'), secret, algorithm='HS256')
+            decode(token, secret, algorithms='HS256')
         except (DecodeError, InvalidSignatureError):
             # signature failed due to bad secret (or no secret)
             # or decode failed because no token or invalid

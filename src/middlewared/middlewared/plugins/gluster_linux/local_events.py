@@ -63,7 +63,7 @@ class GlusterLocalEventsService(Service):
         await self.middleware.call('gluster.localevents.validate', data)
         secret = await self.middleware.call('gluster.localevents.get_set_jwt_secret')
         token = jwt.encode({'dummy': 'data'}, secret, algorithm='HS256')
-        headers = {'JWTOKEN': token.decode('utf-8'), 'content-type': 'application/json'}
+        headers = {'JWTOKEN': token, 'content-type': 'application/json'}
         async with aiohttp.ClientSession() as sess:
             status = reason = None
             try:
