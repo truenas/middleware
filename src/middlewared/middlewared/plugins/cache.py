@@ -6,6 +6,7 @@ from middlewared.plugins.pwenc import encrypt, decrypt
 from middlewared.plugins.idmap import SID_LOCAL_USER_PREFIX
 
 from collections import namedtuple
+import errno
 import os
 import time
 import pwd
@@ -352,7 +353,7 @@ class DSCache(Service):
         elif not entry:
             raise KeyError(who_str if who_str else who_id)
 
-        if not options['smb']:
+        if entry and not options['smb']:
             entry['sid'] = None
             entry['nt_name'] = None
 
@@ -417,6 +418,10 @@ class DSCache(Service):
                     'id_type': 'USER',
                     'id': user_obj['pw_uid'],
                 })
+            except CallError as e:
+                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
+                    self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
+                sid = None
             except Exception:
                 self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
                 sid = None
@@ -457,8 +462,12 @@ class DSCache(Service):
                     'id_type': 'GROUP',
                     'id': grp_obj['gr_gid'],
                 })
+            except CallError as e:
+                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
+                    self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
+                sid = None
             except Exception:
-                self.logger.error('Failed to retrieve SID for uid: %d', grp.gr_gid, exc_info=True)
+                self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
                 sid = None
 
             if sid:
@@ -502,26 +511,17 @@ class DSCache(Service):
         if not enabled_ds:
             return res
 
-        if is_name_check and filters[0][1] == '=':
+        if (is_name_check or is_id_check) and filters[0][1] == '=':
             # exists in local sqlite database, return results
             if res:
                 return res
 
+            key = 'who' if is_name_check else 'id'
             entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
-                'who': filters[0][2],
+                key: filters[0][2],
             }, {'synthesize': True, 'smb': get_smb})
-            return [entry] if entry else []
 
-        if is_id_check and filters[0][1] == '=':
-            # exists in local sqlite database, return results
-            if res:
-                return res
-
-            entry = await self.retrieve(enabled_ds.upper(), {
-                'idtype': objtype[:-1],
-                'id': filters[0][2],
-            }, {'synthesize': True})
             return [entry] if entry else []
 
         entries = await self.entries(enabled_ds.upper(), objtype[:-1])

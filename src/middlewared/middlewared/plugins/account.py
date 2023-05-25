@@ -1507,7 +1507,8 @@ class GroupService(CRUDService):
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+                dssearch_results = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+                return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
 
         if 'SMB' in additional_information:
             smb_groupmap = await self.middleware.call("smb.groupmap_list")

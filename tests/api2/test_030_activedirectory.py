@@ -271,6 +271,20 @@ def test_07_enable_leave_activedirectory(request):
         addresses = [x['address'] for x in res['result']]
         assert ip in addresses
 
+        res = make_ws_request(ip, {
+            'msg': 'method',
+            'method': 'privilege.query',
+            'params': [[['name', 'C=', AD_DOMAIN]]]
+        })
+        error = res.get('error')
+        assert error is None, str(error)
+        assert len(res['result']) == 1, str(res['result'])
+
+        assert len(res['result'][0]['ds_groups']) == 1, str(res['result'])
+        assert res['result'][0]['ds_groups'][0]['name'].endswith('domain admins')
+        assert res['result'][0]['ds_groups'][0]['sid'].endswith('512')
+        assert res['result'][0]['allowlist'][0] == {'method': '*', 'resource': '*'}
+
     results = GET('/activedirectory/get_state/')
     assert results.status_code == 200, results.text
     assert results.json() == 'DISABLED', results.text
@@ -281,6 +295,15 @@ def test_07_enable_leave_activedirectory(request):
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
     assert results.json() is False, results.text
+
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'privilege.query',
+        'params': [[['name', 'C=', AD_DOMAIN]]]
+    })
+    error = res.get('error')
+    assert error is None, str(error)
+    assert len(res['result']) == 0, str(res['result'])
 
 
 def test_08_activedirectory_smb_ops(request):
@@ -423,18 +446,34 @@ def test_10_account_privilege_authentication(request):
     ):
         call("system.general.update", {"ds_auth": True})
         try:
-            gid = call("user.get_user_obj", {"username": AD_USER})["pw_gid"]
+            # RID 513 is constant for "Domain Users"
+            domain_sid = call("idmap.domain_info", AD_DOMAIN.split(".")[0])['sid']
             with privilege({
                 "name": "AD privilege",
                 "local_groups": [],
-                "ds_groups": [gid],
+                "ds_groups": [f"{domain_sid}-513"],
                 "allowlist": [{"method": "CALL", "resource": "system.info"}],
                 "web_shell": False,
             }):
-                with client(auth=(f"{AD_USER}@", ADPASSWORD)) as c:
+                with client(auth=(f"limiteduser@{AD_DOMAIN}", ADPASSWORD)) as c:
                     methods = c.call("core.get_methods")
 
                 assert "system.info" in methods
                 assert "pool.create" not in methods
+
+                # ADUSERNAME is member of domain admins and will have
+                # all privileges
+                with client(auth=(f"{ADUSERNAME}@{AD_DOMAIN}", ADPASSWORD)) as c:
+                    methods = c.call("core.get_methods")
+
+                assert "pool.create" in methods
+
+                # Alternative formatting for user name <DOMAIN>\<username>.
+                # this should also work for auth
+                with client(auth=(AD_USER, ADPASSWORD)) as c:
+                    methods = c.call("core.get_methods")
+
+                assert "pool.create" in methods
+
         finally:
             call("system.general.update", {"ds_auth": False})

@@ -94,6 +94,13 @@ class ActiveDirectoryService(Service):
                 # This may simply mean entry was not found
                 validated_ips.append(ip)
 
+            except dns.resolver.LifetimeTimeout:
+                self.logger.warning(
+                    '%s: DNS operation timed out while trying to resolve reverse pointer '
+                    'for IP address.',
+                    ip
+                )
+
             except dns.resolver.NoNameservers:
                 self.logger.warning(
                     'No nameservers configured to handle reverse pointer for %s. '
