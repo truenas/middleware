@@ -12,6 +12,7 @@ from auto_config import ntpServer, user, password, ip
 from auto_config import dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+CONFIG_FILE = '/etc/chrony/chrony.conf'
 
 
 @pytest.fixture(scope='module')
@@ -42,7 +43,7 @@ def test_02_Check_ntpserver_configured_using_api(ntp_dict):
 
 def test_03_Checking_ntpserver_configured_using_ssh(request):
     depends(request, ["ssh_password"], scope="session")
-    cmd = f'fgrep "{ntpServer}" /etc/ntp.conf'
+    cmd = f'fgrep "{ntpServer}" {CONFIG_FILE}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results
 
@@ -68,7 +69,7 @@ def test_05_Removing_non_AD_NTP_servers(ntp_dict):
 
 def test_06_Checking_ntpservers_num_configured_using_ssh(ntp_dict, request):
     depends(request, ["ssh_password"], scope="session")
-    results = SSH_TEST('grep -R ^server /etc/ntp.conf', user, password, ip)
+    results = SSH_TEST(f'grep -R ^server {CONFIG_FILE}', user, password, ip)
     assert results['result'] is True, results
     assert len(results['output'].strip().split('\n')) == \
         len(ntp_dict['servers']), results['output']
