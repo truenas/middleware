@@ -14,6 +14,7 @@ class DeprecatedServiceAlertClass(AlertClass, SimpleOneShotAlertClass):
         "This service is scheduled for removal in a future version of SCALE. "
         f"Before upgrading, please check {URL} to confirm whether or not "
         "the service has been removed in the next version of SCALE."
+    )
 
     async def create(self, args):
         return Alert(DeprecatedServiceAlertClass, args, key=args['service'])
