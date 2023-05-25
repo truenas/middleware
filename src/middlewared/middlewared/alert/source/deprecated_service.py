@@ -8,10 +8,10 @@ class DeprecatedServiceAlertClass(AlertClass, SimpleOneShotAlertClass):
     level = AlertLevel.WARNING
     title = "Deprecated Service is Running"
     text = (
-        "The following active service is deprecated in SCALE Bluefin %(service)s."
-        " This service is scheduled for removal in the next SCALE major version (Cobia)."
-        " Please plan to migrate these services to the equivalent SCALE application"
-        " before upgrading to the next SCALE major version. For additional details"
+        "The following active service is deprecated %(service)s."
+        " This service is scheduled for removal in a future SCALE version."
+        " Please plan to migrate this service to the equivalent SCALE application"
+        " before upgrading to the next version of SCALE. For additional details"
         f" and migration tutorials, see {URL}."
     )
 
