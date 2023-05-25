@@ -77,7 +77,7 @@ def get_schema(variable_details, update, existing=NOT_PROVIDED):
     # Validation is ensured at chart level to ensure that we don't have enum for say boolean
     obj_kwargs = {k: schema_details[k] for k in filter(
         lambda k: k in schema_details,
-        ('required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null', 'additional_attrs', 'editable')
+        ('required', 'default', 'private', 'ipv4', 'ipv6', 'cidr', 'null', 'additional_attrs', 'editable', 'empty')
     )}
     if schema_details.get('immutable') and cur_val is not NOT_PROVIDED:
         obj_kwargs['default'] = cur_val
