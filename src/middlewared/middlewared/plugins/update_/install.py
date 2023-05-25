@@ -11,6 +11,7 @@ from middlewared.utils.size import format_size
 logger = logging.getLogger(__name__)
 
 run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+STARTING_INSTALLER = "Starting installer"
 
 
 class UpdateService(Service):
@@ -30,6 +31,7 @@ class UpdateService(Service):
             if our_checksum != checksum:
                 raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
 
+        progress_callback(0, "Running pre-checks")
         warning = self._execute_truenas_install(mounted, {
             "json": True,
             "old_root": "/",
@@ -38,6 +40,7 @@ class UpdateService(Service):
         if warning and raise_warnings:
             raise CallError(warning, errno.EAGAIN)
 
+        progress_callback(0, STARTING_INSTALLER)
         command = {
             "disks": self.middleware.call_sync("boot.get_disks"),
             "json": True,
@@ -46,7 +49,6 @@ class UpdateService(Service):
             "src": mounted,
             **options,
         }
-
         self._execute_truenas_install(mounted, command, progress_callback)
 
     def _execute_truenas_install(self, cwd, command, progress_callback):
