@@ -250,33 +250,45 @@ class UpdateService(Service):
 
     @accepts(Dict(
         'update',
-        Str('train', required=False),
+        Bool('resume', default=False),
+        Str('train', null=True, default=None),
         Bool('reboot', default=False),
-        required=False,
     ))
     @job(lock='update')
     async def update(self, job, attrs):
         """
         Downloads (if not already in cache) and apply an update.
+
+        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
+        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, update
+        process will be continued using an already downloaded file without performing any extra checks.
         """
-        trains = await self.middleware.call('update.get_trains')
-        train = attrs.get('train') or trains['selected']
-
-        if attrs.get('train'):
-            await self.middleware.run_in_thread(self.__set_train, attrs.get('train'), trains)
-
         location = await self.middleware.call('update.get_update_location')
 
-        update = await self.middleware.call('update.download_update', job, train, location, 50)
-        if update is False:
-            raise ValueError('No update available')
+        if attrs['resume']:
+            options = {'raise_warnings': False}
+        else:
+            options = {}
 
-        await self.middleware.call('update.install', job, os.path.join(location, 'update.sqsh'), {})
+            trains = await self.middleware.call('update.get_trains')
+
+            if attrs['train']:
+                await self.middleware.run_in_thread(self.__set_train, attrs['train'], trains)
+                train = attrs['train']
+            else:
+                train = trains['selected']
+
+            update = await self.middleware.call('update.download_update', job, train, location, 50)
+            if not update:
+                raise CallError('No update available')
+
+        await self.middleware.call('update.install', job, os.path.join(location, 'update.sqsh'), options)
         await self.middleware.call('cache.put', 'update.applied', True)
         await self.middleware.call_hook('update.post_update')
 
-        if attrs.get('reboot'):
+        if attrs['reboot']:
             await self.middleware.call('system.reboot', {'delay': 10})
+
         return True
 
     @accepts()
@@ -301,16 +313,25 @@ class UpdateService(Service):
         Str('path'),
         Dict(
             'options',
+            Bool('resume', default=False),
             Bool('cleanup', default=True),
         )
     )
-    @job(lock='updatemanual')
+    @job(lock='update')
     def manual(self, job, path, options):
         """
         Update the system using a manual update file.
 
         `path` must be the absolute path to the update file.
+
+        `options.resume` should be set to `true` if a previous call to this method returned a `CallError` with
+        `errno=EAGAIN` meaning that an upgrade can be performed with a warning and that warning is accepted.
+
+        If `options.cleanup` is set to `false` then the manual update file won't be removed on update success and
+        newly created BE won't be removed on update failure (useful for debugging purposes).
         """
+        if options.pop('resume'):
+            options['raise_warnings'] = False
 
         update_file = pathlib.Path(path)
 
@@ -322,19 +343,28 @@ class UpdateService(Service):
         if not update_file.exists():
             raise CallError('File does not exist.', errno.ENOENT)
 
+        unlink_file = True
         try:
             try:
                 self.middleware.call_sync(
                     'update.install', job, str(update_file.absolute()), options,
                 )
             except Exception as e:
-                self.logger.debug('Applying manual update failed', exc_info=True)
-                raise CallError(str(e), errno.EFAULT)
+                if isinstance(e, CallError):
+                    if e.errno == errno.EAGAIN:
+                        unlink_file = False
+
+                    raise
+                else:
+                    self.logger.debug('Applying manual update failed', exc_info=True)
+                    raise CallError(str(e), errno.EFAULT)
 
             job.set_progress(95, 'Cleaning up')
         finally:
-            if os.path.exists(path):
-                os.unlink(path)
+            if options['cleanup']:
+                if unlink_file:
+                    if os.path.exists(path):
+                        os.unlink(path)
 
         if path.startswith(UPLOAD_LOCATION):
             self.middleware.call_sync('update.destroy_upload_location')
@@ -343,24 +373,36 @@ class UpdateService(Service):
 
     @accepts(Dict(
         'updatefile',
-        Str('destination', null=True),
+        Bool('resume', default=False),
+        Str('destination', null=True, default=None),
     ))
-    @job(lock='updatemanual', pipes=['input'])
+    @job(lock='update')
     async def file(self, job, options):
         """
         Updates the system using the uploaded .tar file.
 
+        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
+        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, re-uploading
+        the file is not necessary.
+
         Use null `destination` to create a temporary location.
         """
 
-        dest = options.get('destination')
+        if options['resume']:
+            update_options = {'raise_warnings': False}
+        else:
+            update_options = {}
+
+        dest = options['destination']
 
         if not dest:
-            try:
-                await self.middleware.call('update.create_upload_location')
-                dest = UPLOAD_LOCATION
-            except Exception as e:
-                raise CallError(str(e))
+            if not options['resume']:
+                try:
+                    await self.middleware.call('update.create_upload_location')
+                except Exception as e:
+                    raise CallError(str(e))
+
+            dest = UPLOAD_LOCATION
         elif not dest.startswith('/mnt/'):
             raise CallError('Destination must reside within a pool')
 
@@ -369,19 +411,32 @@ class UpdateService(Service):
 
         destfile = os.path.join(dest, 'manualupdate.sqsh')
 
+        unlink_destfile = True
         try:
-            job.set_progress(10, 'Writing uploaded file to disk')
-            with open(destfile, 'wb') as f:
-                await self.middleware.run_in_thread(
-                    shutil.copyfileobj, job.pipes.input.r, f, 1048576,
-                )
+            if options['resume']:
+                if not os.path.exists(destfile):
+                    raise CallError('There is no uploaded file to resume')
+            else:
+                job.check_pipe('input')
+                job.set_progress(10, 'Writing uploaded file to disk')
+                with open(destfile, 'wb') as f:
+                    await self.middleware.run_in_thread(
+                        shutil.copyfileobj, job.pipes.input.r, f, 1048576,
+                    )
 
-            await self.middleware.call('update.install', job, destfile, {})
+            try:
+                await self.middleware.call('update.install', job, destfile, update_options)
+            except CallError as e:
+                if e.errno == errno.EAGAIN:
+                    unlink_destfile = False
+
+                raise
 
             job.set_progress(95, 'Cleaning up')
         finally:
-            if os.path.exists(destfile):
-                os.unlink(destfile)
+            if unlink_destfile:
+                if os.path.exists(destfile):
+                    os.unlink(destfile)
 
         if dest == UPLOAD_LOCATION:
             await self.middleware.call('update.destroy_upload_location')
