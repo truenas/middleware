@@ -500,7 +500,6 @@ class IPAddr(Str):
 
         return value
 
-
     def validate(self, value):
         if value is None:
             return value
@@ -515,6 +514,7 @@ class IPAddr(Str):
         verrors.check()
 
         return super().validate(value)
+
 
 class Time(Str):
 

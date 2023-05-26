@@ -692,6 +692,7 @@ def test__schema_ipaddr_network(value, expected):
     else:
         assert ipaddrv(self, value) == expected
 
+
 @pytest.mark.parametrize("value,expected", [
     ('192.168.0.0/24', None),
     ('192.168.0.0/255.255.255.0', None),
@@ -701,7 +702,7 @@ def test__schema_ipaddr_network(value, expected):
 ])
 def test__schema_ipaddr_validate(value, expected):
     network = value.find('/') != -1
-    ipaddr = IPAddr(network = network)
+    ipaddr = IPAddr(network=network)
     if expected is ValidationErrors:
         with pytest.raises(ValidationErrors):
             ipaddr.validate(value)
