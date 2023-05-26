@@ -1,5 +1,4 @@
 from .cifs import CIFSService
-from .dynamicdns import DynamicDNSService
 from .ftp import FTPService
 from .haproxy import HAProxyService
 from .iscsitarget import ISCSITargetService
@@ -10,15 +9,11 @@ from .netbios import NetBIOSService
 from .nfs import NFSService
 from .nscd import NSCDService
 from .nslcd import NSSPamLdapdService
-from .openvpn_client import OpenVPNClientService
-from .openvpn_server import OpenVPNServerService
-from .rsync import RsyncService
 from .smartd import SMARTDService
 from .snmp import SNMPService
 from .ssh import SSHService
 from .truecommand import TruecommandService
 from .ups import UPSService
-from .webdav import WebDAVService
 from .wsd import WSDService
 from .keepalived import KeepalivedService
 from .glusterd import GlusterdService
@@ -56,7 +51,6 @@ from .pseudo.misc import (
 all_services = [
     CIFSService,
     DSCacheService,
-    DynamicDNSService,
     FTPService,
     ISCSITargetService,
     MDNSService,
@@ -64,14 +58,10 @@ all_services = [
     NFSService,
     NSCDService,
     NSSPamLdapdService,
-    OpenVPNClientService,
-    OpenVPNServerService,
-    RsyncService,
     SMARTDService,
     SNMPService,
     SSHService,
     UPSService,
-    WebDAVService,
     WSDService,
     ActiveDirectoryService,
     LdapService,

@@ -86,68 +86,6 @@ CERTIFICATE_PROFILES = {
         'lifetime': DEFAULT_LIFETIME_DAYS,
         'digest_algorithm': 'SHA256'
     },
-    'Openvpn Server Certificate': {
-        'cert_extensions': {
-            'BasicConstraints': {
-                'enabled': True,
-                'ca': False,
-                'extension_critical': True
-            },
-            'AuthorityKeyIdentifier': {
-                'enabled': True,
-                'authority_cert_issuer': True,
-                'extension_critical': False
-            },
-            'ExtendedKeyUsage': {
-                'enabled': True,
-                'extension_critical': True,
-                'usages': [
-                    'SERVER_AUTH',
-                ]
-            },
-            'KeyUsage': {
-                'enabled': True,
-                'extension_critical': True,
-                'digital_signature': True,
-                'key_encipherment': True
-            }
-        },
-        'key_length': 2048,
-        'key_type': 'RSA',
-        'lifetime': DEFAULT_LIFETIME_DAYS,
-        'digest_algorithm': 'SHA256'
-    },
-    'Openvpn Client Certificate': {
-        'cert_extensions': {
-            'BasicConstraints': {
-                'enabled': True,
-                'ca': False,
-                'extension_critical': True
-            },
-            'AuthorityKeyIdentifier': {
-                'enabled': True,
-                'authority_cert_issuer': True,
-                'extension_critical': False
-            },
-            'ExtendedKeyUsage': {
-                'enabled': True,
-                'extension_critical': True,
-                'usages': [
-                    'CLIENT_AUTH',
-                ]
-            },
-            'KeyUsage': {
-                'enabled': True,
-                'extension_critical': True,
-                'digital_signature': True,
-                'key_agreement': True,
-            }
-        },
-        'key_length': 2048,
-        'key_type': 'RSA',
-        'lifetime': DEFAULT_LIFETIME_DAYS,
-        'digest_algorithm': 'SHA256'
-    }
 }
 CSR_PROFILES = copy.deepcopy(CERTIFICATE_PROFILES)
 for key, schema in filter(lambda v: 'cert_extensions' in v[1], CSR_PROFILES.items()):

@@ -3,57 +3,6 @@ import contextlib
 from middlewared.test.integration.utils import call
 
 
-OPENVPN_CLIENT_CERT_EXT = {
-    'BasicConstraints': {
-        'enabled': True,
-        'ca': False,
-        'extension_critical': True
-    },
-    'AuthorityKeyIdentifier': {
-        'enabled': True,
-        'authority_cert_issuer': True,
-        'extension_critical': False
-    },
-    'ExtendedKeyUsage': {
-        'enabled': True,
-        'extension_critical': True,
-        'usages': [
-            'CLIENT_AUTH',
-        ]
-    },
-    'KeyUsage': {
-        'enabled': True,
-        'extension_critical': True,
-        'digital_signature': True,
-        'key_agreement': True,
-    }
-}
-
-OPENVPN_SERVER_CERT_EXT = {
-    'BasicConstraints': {
-        'enabled': True,
-        'extension_critical': True
-    },
-    'AuthorityKeyIdentifier': {
-        'enabled': True,
-        'authority_cert_issuer': True
-    },
-    'ExtendedKeyUsage': {
-        'enabled': True,
-        'usages': [
-            'SERVER_AUTH'
-        ],
-        'extension_critical': True
-    },
-    'KeyUsage': {
-        'enabled': True,
-        'extension_critical': True,
-        'digital_signature': True,
-        'key_encipherment': True,
-    }
-}
-
-
 def get_cert_params():
     return {
         'key_type': 'RSA',

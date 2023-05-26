@@ -22,7 +22,6 @@ class PoolDatasetService(Service):
             'ftp': 'FTP',
             'iscsitarget': 'iSCSI',
             'nfs': 'NFS',
-            'webdav': 'WebDAV',
         }
 
         result = {}

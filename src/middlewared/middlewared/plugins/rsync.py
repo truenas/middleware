@@ -33,12 +33,11 @@ import os
 import shlex
 import tempfile
 
-from middlewared.async_validators import validate_port
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
-from middlewared.validators import Range, Match
+from middlewared.validators import Range
 from middlewared.service import (
-    CallError, SystemServiceService, ValidationErrors, job, item_method, private, SharingService, TaskPathService,
+    CallError, ValidationErrors, job, item_method, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.osc import run_command_with_user_context
@@ -80,192 +79,6 @@ class RsyncReturnCode(enum.Enum):
             cls.VANISHED,
             cls.DEL_LIMIT
         ]])
-
-
-class RsyncdModel(sa.Model):
-    __tablename__ = 'services_rsyncd'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    rsyncd_port = sa.Column(sa.Integer(), default=873)
-    rsyncd_auxiliary = sa.Column(sa.Text())
-
-
-class RsyncdService(SystemServiceService):
-
-    class Config:
-        datastore = 'services.rsyncd'
-        service = 'rsync'
-        datastore_prefix = 'rsyncd_'
-        cli_namespace = 'service.rsync'
-
-    ENTRY = Dict(
-        'rsyncd_entry',
-        Int('port', required=True, validators=[Range(min=1, max=65535)]),
-        Int('id', required=True),
-        Str('auxiliary', required=True, max_length=None),
-    )
-
-    async def do_update(self, data):
-        """
-        Update Rsyncd Service Configuration.
-
-        `auxiliary` attribute can be used to pass on any additional parameters from rsyncd.conf(5).
-        """
-        old = await self.config()
-
-        new = old.copy()
-        new.update(data)
-
-        verrors = ValidationErrors()
-        verrors.extend(await validate_port(self.middleware, 'rsyncd.port', new['port'], 'rsyncd'))
-        verrors.check()
-
-        await self._update_service(old, new)
-
-        return new
-
-
-class RsyncModModel(sa.Model):
-    __tablename__ = 'services_rsyncmod'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    rsyncmod_name = sa.Column(sa.String(120))
-    rsyncmod_comment = sa.Column(sa.String(120))
-    rsyncmod_path = sa.Column(sa.String(255))
-    rsyncmod_mode = sa.Column(sa.String(120), default="rw")
-    rsyncmod_maxconn = sa.Column(sa.Integer(), default=0)
-    rsyncmod_user = sa.Column(sa.String(120), default="nobody")
-    rsyncmod_group = sa.Column(sa.String(120), default="nobody")
-    rsyncmod_hostsallow = sa.Column(sa.Text())
-    rsyncmod_hostsdeny = sa.Column(sa.Text())
-    rsyncmod_auxiliary = sa.Column(sa.Text())
-    rsyncmod_enabled = sa.Column(sa.Boolean())
-
-
-class RsyncModService(SharingService):
-
-    share_task_type = 'Rsync Module'
-
-    class Config:
-        datastore = 'services.rsyncmod'
-        datastore_prefix = 'rsyncmod_'
-        datastore_extend = 'rsyncmod.rsync_mod_extend'
-        cli_namespace = 'service.rsync_mod'
-
-    ENTRY = Patch(
-        'rsyncmod_create', 'rsyncmod_entry',
-        ('add', Bool('locked')),
-        ('add', Int('id')),
-    )
-
-    @private
-    async def rsync_mod_extend(self, data):
-        data['hostsallow'] = data['hostsallow'].split()
-        data['hostsdeny'] = data['hostsdeny'].split()
-        data['mode'] = data['mode'].upper()
-        return data
-
-    @private
-    async def common_validation(self, data, schema_name):
-        verrors = ValidationErrors()
-
-        await self.validate_path_field(data, schema_name, verrors)
-
-        for entity in ('user', 'group'):
-            value = data.get(entity)
-            try:
-                await self.middleware.call(f'{entity}.get_{entity}_obj', {f'{entity}name': value})
-            except Exception:
-                verrors.add(
-                    f'{schema_name}.{entity}',
-                    f'Please specify a valid {entity}'
-                )
-
-        verrors.check()
-
-        data['hostsallow'] = ' '.join(data['hostsallow'])
-        data['hostsdeny'] = ' '.join(data['hostsdeny'])
-        data['mode'] = data['mode'].lower()
-
-        return data
-
-    @accepts(Dict(
-        'rsyncmod_create',
-        Bool('enabled', default=True),
-        Str('name', validators=[Match(r'[^/\]]')]),
-        Str('comment'),
-        Str('path', required=True, max_length=RSYNC_PATH_LIMIT),
-        Str('mode', enum=['RO', 'RW', 'WO'], required=True),
-        Int('maxconn'),
-        Str('user', default='nobody'),
-        Str('group', default='nobody'),
-        List('hostsallow', items=[Str('hostsallow')]),
-        List('hostsdeny', items=[Str('hostdeny')]),
-        Str('auxiliary', max_length=None),
-        register=True,
-    ))
-    async def do_create(self, data):
-        """
-        Create a Rsyncmod module.
-
-        `path` represents the path to a dataset. Path length is limited to 1023 characters maximum as per the limit
-        enforced by FreeBSD. It is possible that we reach this max length recursively while transferring data. In that
-        case, the user must ensure the maximum path will not be too long or modify the recursed path to shorter
-        than the limit.
-
-        `maxconn` is an integer value representing the maximum number of simultaneous connections. Zero represents
-        unlimited.
-
-        `hostsallow` is a list of patterns to match hostname/ip address of a connecting client. If list is empty,
-        all hosts are allowed.
-
-        `hostsdeny` is a list of patterns to match hostname/ip address of a connecting client. If the pattern is
-        matched, access is denied to the client. If no client should be denied, this should be left empty.
-
-        `auxiliary` attribute can be used to pass on any additional parameters from rsyncd.conf(5).
-        """
-
-        data = await self.common_validation(data, 'rsyncmod_create')
-
-        data['id'] = await self.middleware.call(
-            'datastore.insert',
-            self._config.datastore,
-            data,
-            {'prefix': self._config.datastore_prefix}
-        )
-
-        await self._service_change('rsync', 'reload')
-
-        return await self.get_instance(data['id'])
-
-    @accepts(Int('id'), Patch('rsyncmod_create', 'rsyncmod_update', ('attr', {'update': True})))
-    async def do_update(self, id, data):
-        """
-        Update Rsyncmod module of `id`.
-        """
-        module = await self.get_instance(id)
-        module.update(data)
-
-        module = await self.common_validation(module, 'rsyncmod_update')
-        module.pop(self.locked_field)
-
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            id,
-            module,
-            {'prefix': self._config.datastore_prefix}
-        )
-
-        await self._service_change('rsync', 'reload')
-
-        return await self.get_instance(id)
-
-    async def do_delete(self, id):
-        """
-        Delete Rsyncmod module of `id`.
-        """
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
 
 class RsyncTaskModel(sa.Model):
@@ -818,16 +631,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             })
 
 
-class RsyncModuleFSAttachmentDelegate(LockableFSAttachmentDelegate):
-    name = 'rsync_module'
-    title = 'Rsync Module'
-    service = 'rsync'
-    service_class = RsyncModService
-
-    async def restart_reload_services(self, attachments):
-        await self._service_change('rsync', 'reload')
-
-
 class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     name = 'rsync'
     title = 'Rsync Task'
@@ -839,7 +642,6 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('pool.dataset.register_attachment_delegate', RsyncModuleFSAttachmentDelegate(middleware))
     await middleware.call('pool.dataset.register_attachment_delegate', RsyncFSAttachmentDelegate(middleware))
     await middleware.call('network.general.register_activity', 'rsync', 'Rsync')
     await middleware.call('rsynctask.persist_task_state_on_job_complete')

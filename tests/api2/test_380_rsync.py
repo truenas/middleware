@@ -5,7 +5,6 @@ import sys
 import os
 import pytest
 from pytest_dependency import depends
-from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, RC_TEST, DELETE, POST, SSH_TEST
@@ -17,16 +16,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 @pytest.fixture(scope='module')
 def rsynctask_dict():
     return {}
-
-
-def test_01_Configuring_rsyncd_service():
-    results = PUT('/rsyncd/', {'port': 873})
-    assert results.status_code == 200
-
-
-def test_02_Checking_that_API_reports_rsyncd_service():
-    results = GET("/rsyncd/")
-    assert results.status_code == 200, results.text
 
 
 def test_03_create_root_ssh_key(request):
@@ -51,38 +40,6 @@ def test_04_Creating_rsync_task(request, rsynctask_dict):
     assert results.status_code == 200, results.text
     rsynctask_dict.update(results.json())
     assert isinstance(rsynctask_dict['id'], int) is True
-
-
-def test_05_Enable_rsyncd_service(request):
-    depends(request, ["pool_04"], scope="session")
-    results = PUT('/service/id/rsync/', {'enable': True})
-    assert results.status_code == 200, results.text
-
-
-def test_06_Checking_to_see_if_rsyncd_service_is_enabled(request):
-    depends(request, ["pool_04"], scope="session")
-    results = GET('/service?service=rsync')
-    assert results.json()[0]['enable'] is True, results
-
-
-def test_07_Testing_rsync_access(request):
-    depends(request, ["pool_04"], scope="session")
-    RC_TEST(f'rsync -avn {ip}::testmod') is True
-
-
-def test_08_Starting_rsyncd_service(request):
-    depends(request, ["pool_04"], scope="session")
-    results = POST("/service/start/",
-                   {'service': 'rsync'}
-                   )
-    assert results.status_code == 200, results.text
-    sleep(1)
-
-
-def test_09_Checking_to_see_if_rsyncd_service_is_running(request):
-    depends(request, ["pool_04"], scope="session")
-    results = GET("/service?service=rsync")
-    assert results.json()[0]['state'] == 'RUNNING', results.text
 
 
 def test_10_Disable_rsync_task(request, rsynctask_dict):

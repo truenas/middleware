@@ -41,8 +41,6 @@ class PWEncService(Service):
         for table, field in (
             ('directoryservice_activedirectory', 'ad_bindpw'),
             ('directoryservice_ldap', 'ldap_bindpw'),
-            ('services_dynamicdns', 'ddns_password'),
-            ('services_webdav', 'webdav_password'),
             ('services_ups', 'ups_monpwd'),
             ('system_email', 'em_pass'),
         ):
