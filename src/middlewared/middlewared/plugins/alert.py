@@ -199,6 +199,13 @@ class AlertService(Service):
 
         self.blocked_failover_alerts_until = 0
 
+        self.sources_run_times = defaultdict(lambda: {
+            "last": [],
+            "max": 0,
+            "total_count": 0,
+            "total_time": 0,
+        })
+
     @private
     async def load(self):
         for module in load_modules(os.path.join(get_middlewared_dir(), "alert", "source")):
@@ -748,6 +755,13 @@ class AlertService(Service):
         return False
 
     @private
+    async def sources_stats(self):
+        return {
+            k: {"avg": v["total_time"] / v["total_count"] if v["total_count"] != 0 else 0, **v}
+            for k, v in sorted(self.sources_run_times.items(), key=lambda t: t[0])
+        }
+
+    @private
     async def run_source(self, source_name):
         try:
             return [dict(alert.__dict__, klass=alert.klass.name)
@@ -779,6 +793,7 @@ class AlertService(Service):
     async def __run_source(self, source_name):
         alert_source = ALERT_SOURCES[source_name]
 
+        start = time.monotonic()
         try:
             alerts = (await alert_source.check()) or []
         except UnavailableException:
@@ -804,6 +819,13 @@ class AlertService(Service):
         else:
             if not isinstance(alerts, list):
                 alerts = [alerts]
+        finally:
+            run_time = time.monotonic() - start
+            source_stat = self.sources_run_times[source_name]
+            source_stat["last"] = source_stat["last"][-9:] + [run_time]
+            source_stat["max"] = max(source_stat["max"], run_time)
+            source_stat["total_count"] += 1
+            source_stat["total_time"] += run_time
 
         keys = set()
         unique_alerts = []
