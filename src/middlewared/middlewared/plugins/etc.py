@@ -136,6 +136,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'pam.d/common-password'},
                 {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
                 {'type': 'mako', 'path': 'pam.d/common-session'},
+                {'type': 'mako', 'path': 'security/pam_winbind.conf'},
             ]
         },
         'pam_middleware': [
@@ -257,7 +258,6 @@ class EtcService(Service):
         ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
-            {'type': 'mako', 'path': 'security/pam_winbind.conf', 'checkpoint': 'pool_import'},
         ],
         'ctdb': [
             {
