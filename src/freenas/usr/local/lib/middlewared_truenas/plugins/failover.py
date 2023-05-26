@@ -616,7 +616,8 @@ class FailoverService(ConfigService):
         unlock_job = await self.middleware.call(
             'pool.dataset.unlock', pool_name, {
                 'recursive': True,
-                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()]
+                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()],
+                'toggle_attachments': False,
             }
         )
         return await job.wrap(unlock_job)
