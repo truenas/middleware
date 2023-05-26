@@ -7,7 +7,6 @@ for file in \
     /etc/cron.d/mdadm \
     /etc/cron.d/sysstat \
     /etc/cron.daily/apt-compat \
-    /etc/cron.daily/apache2 \
     /etc/cron.daily/calendar \
     /etc/cron.daily/exim4-base \
     /etc/cron.daily/dpkg \
@@ -31,7 +30,6 @@ systemctl disable ssh.service
 # we disable them explicitly
 
 systemctl disable scst
-systemctl disable inadyn
 systemctl disable proftpd
 systemctl disable nmbd
 systemctl disable smbd

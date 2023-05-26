@@ -78,7 +78,6 @@ Homepage: https://github.com/freenas/freenas
 Package: middlewared
 Architecture: all
 Depends: alembic,
-         apache2,
          avahi-daemon,
          bsd-mailx,
          collectd-core,
@@ -94,7 +93,6 @@ Depends: alembic,
          jq,
          k3s,
          krb5-user,
-         libapache2-mpm-itk,
          libpam-krb5,
          libpam-oath,
          libsasl2-modules-gssapi-mit,

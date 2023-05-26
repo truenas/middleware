@@ -675,8 +675,6 @@ class SystemDatasetService(ConfigService):
                 restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'glusterd'):
                 restart.insert(0, 'glusterd')
-            if self.middleware.call_sync('service.started_or_enabled', 'webdav'):
-                restart.append('webdav')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
                 restart.append('open-vm-tools')
             if self.middleware.call_sync('service.started', 'idmap'):

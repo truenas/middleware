@@ -62,21 +62,6 @@ class CertificateChecksAlertSource(AlertSource):
                 'type': _type,
             },
             {
-                'id': (await self.middleware.call('webdav.config'))['certssl'],
-                'service': 'Webdav',
-                'type': _type,
-            },
-            {
-                'id': (await self.middleware.call('openvpn.server.config'))['server_certificate'],
-                'service': 'OpenVPN Server',
-                'type': _type,
-            },
-            {
-                'id': (await self.middleware.call('openvpn.client.config'))['client_certificate'],
-                'service': 'OpenVPN Client',
-                'type': _type,
-            },
-            {
                 'id': (await self.middleware.call('system.general.config'))['ui_certificate']['id'],
                 'service': 'Web UI',
                 'type': _type,
@@ -89,22 +74,6 @@ class CertificateChecksAlertSource(AlertSource):
         ]
         return service_certs
 
-    async def _get_cas(self):
-        _type = 'root certificate authority'
-        ca_certs = [
-            {
-                'id': (await self.middleware.call('openvpn.server.config'))['root_ca'],
-                'service': 'Web UI',
-                'type': _type,
-            },
-            {
-                'id': (await self.middleware.call('openvpn.client.config'))['root_ca'],
-                'service': 'Syslog',
-                'type': _type,
-            },
-        ]
-        return ca_certs
-
     async def check(self):
         alerts = []
 
@@ -114,7 +83,6 @@ class CertificateChecksAlertSource(AlertSource):
 
         # service certs/cas
         check_for_revocation = await self._get_service_certs()
-        check_for_revocation.extend(await self._get_cas())
 
         parsed = {}
         for cert in certs:

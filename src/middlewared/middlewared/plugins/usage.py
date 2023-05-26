@@ -384,7 +384,7 @@ class UsageService(Service):
 
     async def gather_sharing(self, context):
         sharing_list = []
-        for service in {'iscsi', 'nfs', 'smb', 'webdav'}:
+        for service in {'iscsi', 'nfs', 'smb'}:
             service_upper = service.upper()
             namespace = f'sharing.{service}' if service != 'iscsi' else 'iscsi.targetextent'
             for s in await self.middleware.call(f'{namespace}.query'):
@@ -404,8 +404,6 @@ class UsageService(Service):
                     })
                 elif service == 'nfs':
                     sharing_list.append({'type': service_upper, 'readonly': s['ro'], 'quiet': s['quiet']})
-                elif service == 'webdav':
-                    sharing_list.append({'type': service_upper, 'readonly': s['ro'], 'changeperms': s['perm']})
                 elif service == 'iscsi':
                     tar = await self.middleware.call('iscsi.target.query', [('id', '=', s['target'])], {'get': True})
                     ext = await self.middleware.call('iscsi.extent.query', [('id', '=', s['extent'])], {'get': True})

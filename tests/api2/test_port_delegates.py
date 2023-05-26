@@ -13,8 +13,6 @@ from middlewared.test.integration.utils import call
 
 PAYLOAD = (
     ('ftp.config', 'ftp.update', ['port'], {}),
-    ('webdav.config', 'webdav.update', ['tcpport', 'tcpportssl'], {}),
-    ('rsyncd.config', 'rsyncd.update', ['port'], {}),
 )
 
 
