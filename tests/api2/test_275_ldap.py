@@ -93,7 +93,7 @@ def test_06_setup_and_enabling_ldap(do_ldap_connection):
 
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
-    assert any([x for x in results.json() if x['klass'] == 'DeprecatedService']), results.text
+    assert any([x for x in results.json() if x['klass'] == 'DeprecatedServiceConfiguration']), results.text
 
 
 def test_08_verify_ldap_enable_is_true(request):
