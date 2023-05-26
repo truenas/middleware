@@ -210,7 +210,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
-        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
+        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'].get(user['id']))
 
         return user
 
