@@ -501,6 +501,21 @@ class IPAddr(Str):
         return value
 
 
+    def validate(self, value):
+        if value is None:
+            return value
+
+        verrors = ValidationErrors()
+
+        try:
+            self.clean(value)
+        except (Error, ValueError) as e:
+            verrors.add(self.name, str(e))
+
+        verrors.check()
+
+        return super().validate(value)
+
 class Time(Str):
 
     def clean(self, value):
