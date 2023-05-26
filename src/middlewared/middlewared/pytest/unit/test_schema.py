@@ -675,6 +675,8 @@ def test__schema_ipaddr_cidr_allow_zone_index(value, expected):
     ('192.168.0.0/24', '192.168.0.0/24'),
     ('192.168.0.0/255.255.255.0', '192.168.0.0/24'),
     ('192.168.0.1', '192.168.0.1/32'),
+    ('192.168.0.999', ValidationErrors),
+    ('BOGUS.NAME', ValidationErrors),
 ])
 def test__schema_ipaddr_network(value, expected):
 
@@ -689,6 +691,22 @@ def test__schema_ipaddr_network(value, expected):
             ipaddrv(self, value)
     else:
         assert ipaddrv(self, value) == expected
+
+@pytest.mark.parametrize("value,expected", [
+    ('192.168.0.0/24', None),
+    ('192.168.0.0/255.255.255.0', None),
+    ('192.168.0.1', None),
+    ('192.168.0.999', ValidationErrors),
+    ('BOGUS.NAME', ValidationErrors),
+])
+def test__schema_ipaddr_validate(value, expected):
+    network = value.find('/') != -1
+    ipaddr = IPAddr(network = network)
+    if expected is ValidationErrors:
+        with pytest.raises(ValidationErrors):
+            ipaddr.validate(value)
+    else:
+        assert ipaddr.validate(value) == expected
 
 
 def test__schema_str_default():
