@@ -188,6 +188,9 @@ def devices_xml(vm_data, context):
         'children': [create_element('target', type='virtio', name='org.qemu.guest_agent.0')]
     }))
     devices.append(create_element('serial', type='pty'))
+    if vm_data['min_memory']:
+        # memballoon device needs to be added if memory ballooning is enabled
+        devices.append(create_element('memballoon', model='virtio', autodeflate='on'))
     return create_element('devices', attribute_dict={'children': devices})
 
 
