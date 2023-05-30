@@ -51,7 +51,7 @@ if not ha:
         payload = {
             "item_name": "ipfs",
             "item_version_details": {
-                "catalog": "OFFICIAL",
+                "catalog": "TRUENAS",
                 "train": 'community'
             }
         }
@@ -66,7 +66,7 @@ if not ha:
         depends(request, ['setup_kubernetes', 'ipfs_version'], scope='session')
         global release_id
         payload = {
-            'catalog': 'OFFICIAL',
+            'catalog': 'TRUENAS',
             'item': 'ipfs',
             'release_name': 'ipfs',
             'train': 'community',
@@ -84,7 +84,7 @@ if not ha:
         results = GET(f'/chart/release/id/{release_id}/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['catalog'] == 'OFFICIAL', results.text
+        assert results.json()['catalog'] == 'TRUENAS', results.text
 
     def test_08_get_ipfs_chart_release_catalog_train(request):
         depends(request, ['release_ipfs'])
