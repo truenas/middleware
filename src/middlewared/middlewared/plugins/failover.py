@@ -21,6 +21,7 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
+from middlewared.plugins.update_.install import STARTING_INSTALLER
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -627,6 +628,8 @@ class FailoverService(ConfigService):
     @accepts(Dict(
         'failover_upgrade',
         Str('train', empty=False),
+        Bool('resume', default=False),
+        Bool('resume_manual', default=False),
     ))
     @returns(Bool())
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
@@ -641,17 +644,24 @@ class FailoverService(ConfigService):
 
         Once both upgrades are applied, the Standby Controller will reboot. This job will wait for
         that job to complete before finalizing.
+
+        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
+        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, you also
+        have to set `resume_manual` to `true` if a previous call to this method was performed using update file upload.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only run on Active Controller.')
 
-        try:
-            job.check_pipe('input')
-        except ValueError:
-            updatefile = False
+        if not options['resume']:
+            try:
+                job.check_pipe('input')
+            except ValueError:
+                updatefile = False
+            else:
+                updatefile = True
         else:
-            updatefile = True
+            updatefile = options['resume_manual']
 
         train = options.get('train')
         if train:
@@ -659,12 +669,12 @@ class FailoverService(ConfigService):
 
         local_path = self.middleware.call_sync('update.get_update_location')
 
-        if updatefile:
+        updatefile_name = 'updatefile.sqsh'
+        updatefile_localpath = os.path.join(local_path, updatefile_name)
+        if not options['resume'] and updatefile:
             # means manual update file was provided so write it
             # to local storage
-            updatefile_name = 'updatefile.tar'
             job.set_progress(None, 'Uploading update file')
-            updatefile_localpath = os.path.join(local_path, updatefile_name)
             os.makedirs(local_path, exist_ok=True)
             with open(updatefile_localpath, 'wb') as f:
                 shutil.copyfileobj(job.pipes.input.r, f, 1048576)
@@ -673,7 +683,7 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise CallError('Standby Controller is not ready.')
 
-            if not updatefile:
+            if not options['resume'] and not updatefile:
                 # means no update file was provided so go out to
                 # the interwebz and download it
                 def download_callback(j):
@@ -688,12 +698,13 @@ class FailoverService(ConfigService):
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            self.middleware.call_sync('failover.call_remote', 'update.destroy_upload_location')
-            remote_path = self.middleware.call_sync(
-                'failover.call_remote', 'update.create_upload_location'
-            ) or '/var/tmp/firmware'
+            if not options['resume']:
+                self.middleware.call_sync('failover.call_remote', 'update.destroy_upload_location')
+                remote_path = self.middleware.call_sync('failover.call_remote', 'update.create_upload_location')
+            else:
+                remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_upload_location')
 
-            if updatefile:
+            if not options['resume'] and updatefile:
                 # means update file was provided to us so send it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
@@ -708,10 +719,13 @@ class FailoverService(ConfigService):
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
 
+            local_started_installer = False
             update_remote_descr = update_local_descr = 'Starting upgrade'
 
             def callback(j, controller):
-                nonlocal update_local_descr, update_remote_descr
+                nonlocal local_started_installer, update_local_descr, update_remote_descr
+                if controller == 'LOCAL' and j['progress']['description'] == STARTING_INSTALLER:
+                    local_started_installer = True
                 if j['state'] != 'RUNNING':
                     return
                 if controller == 'LOCAL':
@@ -727,10 +741,29 @@ class FailoverService(ConfigService):
                 update_method = 'update.manual'
                 update_remote_args = [os.path.join(remote_path, updatefile_name)]
                 update_local_args = [updatefile_localpath]
+                if options['resume']:
+                    update_remote_args.append({'resume': True})
+                    update_local_args.append({'resume': True})
             else:
                 update_method = 'update.update'
                 update_remote_args = []
                 update_local_args = []
+                if options['resume']:
+                    update_remote_args.append({'resume': True})
+                    update_local_args.append({'resume': True})
+
+            # upgrade the local (active) controller
+            ljob = self.middleware.call_sync(
+                update_method, *update_local_args,
+                job_on_progress_cb=partial(callback, controller='LOCAL')
+            )
+            # Wait for local installer to pass pre-checks and start the install process itself so that we do not start
+            # remote upgrade if a pre-check fails.
+            while not local_started_installer:
+                try:
+                    ljob.wait_sync(raise_error=True, timeout=1)
+                except TimeoutError:
+                    pass
 
             if local_version == remote_version:
                 # start the upgrade on the remote (standby) controller
@@ -743,11 +776,6 @@ class FailoverService(ConfigService):
             else:
                 rjob = None
 
-            # upgrade the local (active) controller
-            ljob = self.middleware.call_sync(
-                update_method, *update_local_args,
-                job_on_progress_cb=partial(callback, controller='LOCAL')
-            )
             ljob.wait_sync(raise_error=True)
 
             remote_boot_id = self.middleware.call_sync('failover.call_remote', 'system.boot_id')

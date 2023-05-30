@@ -378,7 +378,7 @@ class Job:
                 raise CallError(self.error)
         return self.result
 
-    def wait_sync(self, raise_error=False):
+    def wait_sync(self, raise_error=False, timeout=None):
         """
         Synchronous method to wait for a job in another thread.
         """
@@ -389,7 +389,9 @@ class Job:
             event.set()
 
         fut.add_done_callback(done)
-        event.wait()
+        if not event.wait(timeout):
+            fut.cancel()
+            raise TimeoutError()
         if raise_error:
             if self.error:
                 if isinstance(self.exc_info[1], CallError):
