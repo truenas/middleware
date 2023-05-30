@@ -12,6 +12,10 @@ from .utils_linux import run_kw
 
 class UpdateService(Service):
     @private
+    def get_upload_location(self):
+        return UPLOAD_LOCATION
+
+    @private
     def create_upload_location(self):
         if not os.path.ismount(UPLOAD_LOCATION):
             subprocess.run(["mount", "-o", "size=2800M", "-t", "tmpfs", "none", UPLOAD_LOCATION], **run_kw)
