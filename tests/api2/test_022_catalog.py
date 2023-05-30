@@ -43,38 +43,38 @@ if not ha:
         assert isinstance(results.json(), list), results.text
 
     def test_02_search_for_official_catalog_with_the_label():
-        results = GET('/catalog/?label=OFFICIAL')
+        results = GET('/catalog/?label=TRUENAS')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), list), results.text
-        assert results.json()[0]['id'] == 'OFFICIAL', results.text
+        assert results.json()[0]['id'] == 'TRUENAS', results.text
 
     def test_03_get_official_catalog_with_id():
-        results = GET('/catalog/id/OFFICIAL/')
+        results = GET('/catalog/id/TRUENAS/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
-        assert results.json()['label'] == 'OFFICIAL', results.text
+        assert results.json()['label'] == 'TRUENAS', results.text
 
     def test_04_verify_official_catalog_repository_with_id():
-        results = GET('/catalog/id/OFFICIAL/')
+        results = GET('/catalog/id/TRUENAS/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()['repository'] == official_repository, results.text
 
     def test_05_verify_official_catalog_repository_with_id():
-        results = GET('/catalog/id/OFFICIAL/')
+        results = GET('/catalog/id/TRUENAS/')
         assert results.status_code == 200, results.text
         assert isinstance(results.json(), dict), results.text
         assert results.json()['repository'] == official_repository, results.text
 
     def test_06_validate_official_catalog():
-        results = POST('/catalog/validate/', 'OFFICIAL')
+        results = POST('/catalog/validate/', 'TRUENAS')
         assert results.status_code == 200, results.text
         job_id = results.json()
         job_status = wait_on_job(job_id, 300)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
     def test_07_sync_official_catalog():
-        results = POST('/catalog/sync/', 'OFFICIAL')
+        results = POST('/catalog/sync/', 'TRUENAS')
         assert results.status_code == 200, results.text
         job_id = results.json()
         job_status = wait_on_job(job_id, 300)
@@ -85,7 +85,7 @@ if not ha:
     @pytest.mark.parametrize('chart', official_charts)
     def test_08_get_official_catalog_item(chart):
         payload = {
-            'label': 'OFFICIAL',
+            'label': 'TRUENAS',
             'options': {
                 'cache': True
             }
