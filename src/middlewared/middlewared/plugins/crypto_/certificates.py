@@ -554,7 +554,8 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_update',
             Bool('revoked'),
-            Str('name')
+            Int('renew_days', validators=[Range(min=1, max=30)]),
+            Str('name'),
         )
     )
     @job(lock='cert_update')
@@ -602,6 +603,12 @@ class CertificateService(CRUDService):
                 await validate_cert_name(
                     self.middleware, new['name'], self._config.datastore,
                     verrors, 'certificate_update.name'
+                )
+
+            if not new.get('acme') and data.get('renew_days'):
+                verrors.add(
+                    'certificate_update.renew_days',
+                    'Certificate renewal days is only supported for ACME certificates'
                 )
 
             if new['revoked'] and new['cert_type_CSR']:
