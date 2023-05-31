@@ -11,6 +11,12 @@ from middlewared.client import Client
 
 logger = logging.getLogger(__name__)
 
+"""The point of this script is so that the development team can ask a user
+to run this script from the command line during the unfortunate event the
+main middleware process "hangs". (We've had past situations where asyncio
+main event loop hung up). The idea is to at least allow user to get us some
+information so we can try and deduce what might be going on."""
+
 
 def main():
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
