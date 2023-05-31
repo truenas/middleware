@@ -595,7 +595,7 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if any(new[k] != old[k] for k in ('name', 'revoked')):
+        if any(new.get(k) != old.get(k) for k in ('name', 'revoked', 'renew_days')):
 
             verrors = ValidationErrors()
 
