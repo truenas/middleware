@@ -172,7 +172,7 @@ class CertificateService(CRUDService):
             Int('csr_id'),
             Int('signedby'),
             Int('key_length', enum=[2048, 4096]),
-            Int('renew_days'),
+            Int('renew_days', validators=[Range(min=1, max=30)]),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
