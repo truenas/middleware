@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from middlewared.service import Service
-from middlewared.schema import accepts, returns, List, Dict
+from middlewared.schema import accepts, returns, Dict
 
 
 class HardwareMemoryService(Service):
@@ -11,7 +11,7 @@ class HardwareMemoryService(Service):
         cli_namespace = 'system.hardware.memory'
 
     @accepts()
-    @returns(List('mem_ctrls', items=[Dict('mem_ctrl', additional_attrs=True)]))
+    @returns(Dict('mem_ctrl', additional_attrs=True))
     def error_info(self):
         results = {}
         mc_path = Path('/sys/devices/system/edac/mc')
