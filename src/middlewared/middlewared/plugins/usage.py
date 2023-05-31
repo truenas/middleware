@@ -198,14 +198,6 @@ class UsageService(Service):
             'ha_licensed': await self.middleware.call('failover.licensed'),
         }
 
-    async def gather_rsyncmod_stats(self, context):
-        return {
-            'rsyncmod': {
-                'enabled': [i for i in context['services'] if i['name'] == 'rsync'][0]['enabled'],
-                'rsync_modules': await self.middleware.call('rsyncmod.query', [], {'count': True}),
-            }
-        }
-
     async def gather_directory_service_stats(self, context):
         config = await self.middleware.call('ldap.config')
         return {
