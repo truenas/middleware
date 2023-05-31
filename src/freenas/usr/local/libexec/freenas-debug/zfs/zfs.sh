@@ -91,6 +91,10 @@ zfs_func()
 	done
 	section_footer
 
+	section_header "disk.query with zpool and enclosure info"
+	midclt call disk.query '[]' '{"extra": {"pools": true}, "select": ["name", "serial", "lunid", "size", "enclosure", "pool"]}' |jq
+	section_footer
+
 	section_header  "kstat"
 	sysctl kstat.zfs.misc.fletcher_4_bench
 	sysctl kstat.zfs.misc.vdev_raidz_bench
