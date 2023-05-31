@@ -629,16 +629,15 @@ class CertificateService(CRUDService):
 
             verrors.check()
 
+            to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
             if old['revoked'] != new['revoked'] and new['revoked']:
-                revoked = {'revoked_date': datetime.datetime.utcnow()}
-            else:
-                revoked = {}
+                to_update['revoked_date'] = datetime.datetime.utcnow()
 
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
                 id,
-                {'name': new['name'], **revoked},
+                {'name': new['name'], **to_update},
                 {'prefix': self._config.datastore_prefix}
             )
 
