@@ -12,7 +12,7 @@ from protocols import SMB
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test, send_file
+from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test, send_file, wait_on_job
 from utils import create_dataset
 from auto_config import ip, pool_name, password, user, hostname, dev_test
 
@@ -378,7 +378,7 @@ def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
 
 
 def test_042_recyclebin_functional_test(request):
-    with create_dataset(f'{dataset}/subds', {'share_type': 'SMB'}):
+    with create_dataset(f'{DATASET}/subds', {'share_type': 'SMB'}):
         with smb_connection(
             host=ip,
             share=SMB_NAME,
