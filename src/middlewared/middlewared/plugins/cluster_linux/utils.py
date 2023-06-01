@@ -1,18 +1,20 @@
-import os
 import asyncio
 import enum
 import errno
-import time
+import os
 import shutil
+import time
 from ipaddress import ip_address
 
 from dns.exception import DNSException
+
 from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.schema import Bool, returns
-from middlewared.utils.path import CLUSTER_PATH_PREFIX
-from middlewared.utils import MIDDLEWARE_RUN_DIR
-from middlewared.service import Service, job, ValidationErrors, private, accepts
+from middlewared.service import (Service, ValidationErrors, accepts, job,
+                                 private)
 from middlewared.service_exception import CallError
+from middlewared.utils import MIDDLEWARE_RUN_DIR
+from middlewared.utils.path import CLUSTER_PATH_PREFIX
 
 
 class ClusterUtils(Service):
@@ -99,7 +101,7 @@ class ClusterUtils(Service):
         key = f'{prefix}_cluster_time_req_{my_node}'
         tz = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
         try:
-            ntp_peer = await self.middleware.call('system.ntpserver.peers', [('status', '$', 'PEER')])
+            ntp_peer = await self.middleware.call('system.ntpserver.peers', [('active', '=', True)])
         except CallError as e:
             if e.errno != errno.ECONNREFUSED:
                 raise
@@ -128,7 +130,7 @@ class ClusterUtils(Service):
         tz = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
 
         cl_job = await self.middleware.call('clusterjob.submit', 'cluster.utils.time_callback', my_node)
-        ntp_peer = await self.middleware.call('system.ntpserver.peers', [('status', '$', 'PEER')])
+        ntp_peer = await self.middleware.call('system.ntpserver.peers', [('active', '=', True)])
         my_time = time.clock_gettime(time.CLOCK_REALTIME)
         await cl_job.wait(raise_error=True)
 
