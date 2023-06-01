@@ -1822,6 +1822,7 @@ class InterfaceService(CRUDService):
         ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
         if choices['loopback']:
             ignore_nics.remove('lo')
+            static_ips['127.0.0.1'] = '127.0.0.1'
 
         ignore_nics = tuple(ignore_nics)
         for iface in filter(lambda x: not x.orig_name.startswith(ignore_nics), list(netif.list_interfaces().values())):
