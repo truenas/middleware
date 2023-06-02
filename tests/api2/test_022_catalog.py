@@ -14,9 +14,9 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 # TODO: why does this not run on HA?
 if not ha:
     official_repository = 'https://github.com/truenas/charts.git'
-    custom_repository = 'https://github.com/ericbsd/charts.git'
+    custom_repository = 'https://github.com/ericbsd/charts-1.git'
     github_official_charts = 'https://api.github.com/repos/truenas/charts/contents/charts/'
-    github_custom_charts = 'https://api.github.com/repos/ericbsd/charts/contents/charts/'
+    github_custom_charts = 'https://api.github.com/repos/ericbsd/charts-1/contents/charts/'
     official_charts = []
     for chart_dict in GET(github_official_charts).json():
         if chart_dict['type'] == 'dir':
@@ -33,7 +33,7 @@ if not ha:
         'branch': 'master',
         'builtin': False,
         'preferred_trains': ['charts'],
-        'location': '/tmp/ix-applications/catalogs/github_com_ericbsd_charts_git_master',
+        'location': '/tmp/ix-applications/catalogs/github_com_ericbsd_charts-1_git_master',
         'id': 'CUSTOMCHART'
     }
 
