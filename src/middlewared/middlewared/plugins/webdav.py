@@ -5,7 +5,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.async_validators import validate_port
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.schema import accepts, returns, Bool, Dict, Int, Patch, Str, ValidationErrors
-from middlewared.service import SharingService, SystemServiceService, private
+from middlewared.service import SharingService, SystemServiceService, private, ValidationError
 
 
 WEBDAV_USER = 'webdav'
@@ -79,6 +79,11 @@ class WebDAVSharingService(SharingService):
         `perm` when enabled automatically recursively changes the ownership of this share to
         webdav ( user and group both ).
         """
+        err = (
+            'This feature is deprecated. '
+            'Please use the WebDAV application from the Apps catalog to create new WebDAV shares.'
+        )
+        raise ValidationError('webdav_share_create.new', err)
 
         await self.validate_data(data, 'webdav_share_create')
 
