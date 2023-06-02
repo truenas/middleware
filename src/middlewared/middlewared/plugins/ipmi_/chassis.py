@@ -11,6 +11,12 @@ class IpmiChassisService(Service):
         cli_namespace = 'service.ipmi.chassis'
 
     @accepts()
+    def query(self):
+        # This is a shim for the webUI for 22.12.3+
+        # and has been removed/refactored in Cobia
+        return self.info()
+
+    @accepts()
     @returns(Dict('chassis_info', additional_attrs=True))
     def info(self):
         """Return looks like:

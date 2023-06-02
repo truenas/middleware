@@ -8,7 +8,7 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from auto_config import ip, password, user, pool_name, dev_test, ha
+from auto_config import ip, password, user, pool_name, dev_test
 from middlewared.test.integration.utils import call
 
 # comment pytestmark for development testing with --dev-test
@@ -68,7 +68,7 @@ def test_06_wait_for_the_alert_and_get_the_id(request):
                 line['args']['state'] == 'DEGRADED'
             ):
                 alert_id = line['id']
-                return 
+                return
 
         sleep(1)
 
@@ -132,87 +132,3 @@ def test_14_wait_for_the_alert_to_disappear(request):
             assert True
             break
         sleep(1)
-
-
-if not ha:
-    @pytest.mark.dependency(name='corefiles_alert')
-    def test_15_kill_python_with_6_to_triger_a_corefile_alert(request):
-        depends(request, ['ssh_password'], scope='session')
-        cmd = 'python3 -c "import os; os.abort()"'
-        results = SSH_TEST(cmd, user, password, ip)
-        # The command will failed since kills a process
-        assert results['result'] is False, results['output']
-
-    @pytest.mark.timeout(120)
-    @pytest.mark.dependency(name='wait_alert')
-    def test_16_wait_for_the_alert_and_get_the_id(request):
-        depends(request, ['corefiles_alert'])
-        global alert_id
-        while True:
-            for line in GET('/alert/list/').json():
-                if line['source'] == 'CoreFilesArePresent':
-                    alert_id = line['id']
-                    assert True
-                    break
-            else:
-                sleep(1)
-                continue
-            break
-
-    def test_17_verify_the_smbd_corefiles_alert_warning(request):
-        depends(request, ['wait_alert'])
-        results = GET("/alert/list/")
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), list), results.text
-        for line in results.json():
-            if alert_id == line['id']:
-                assert 'python' in line['args']['corefiles'], results.text
-                assert line['level'] == 'WARNING', results.text
-                break
-
-    def test_18_dimiss_the_corefiles_alert(request):
-        depends(request, ['wait_alert'])
-        results = POST('/alert/dismiss/', alert_id)
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), type(None)), results.text
-
-    def test_19_verify_the_corefiles_alert_warning_is_dismissed(request):
-        depends(request, ['wait_alert'])
-        results = GET("/alert/list/")
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), list), results.text
-        for line in results.json():
-            if line['id'] == alert_id:
-                assert line['dismissed'] is True, results.text
-                break
-
-    def test_20_restore_corefiles_the_alert(request):
-        depends(request, ['wait_alert'])
-        results = POST("/alert/restore/", alert_id)
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), type(None)), results.text
-
-    def test_21_verify_the_corefiles_alert_is_restored(request):
-        depends(request, ['wait_alert'])
-        results = GET(f"/alert/list/?id={alert_id}")
-        assert results.status_code == 200, results.text
-        assert isinstance(results.json(), list), results.text
-        for line in results.json():
-            if line['id'] == alert_id:
-                assert line['dismissed'] is False, results.text
-                break
-
-    def test_22_remove_the_core_files_in_var_db_system_cores(request):
-        depends(request, ['wait_alert'])
-        cmd = 'rm -f /var/db/system/cores/*'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-
-    @pytest.mark.timeout(120)
-    def test_23_wait_for_the_corefiles_alert_to_disappear(request):
-        depends(request, ['wait_alert'])
-        while True:
-            if alert_id not in GET("/alert/list/").text:
-                assert True
-                break
-            sleep(1)

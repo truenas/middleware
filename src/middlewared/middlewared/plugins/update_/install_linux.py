@@ -13,21 +13,10 @@ logger = logging.getLogger(__name__)
 
 class UpdateService(Service):
     @private
-    def install_impl(self, job, location):
-        self._install(
-            os.path.join(location, "update.sqsh"),
-            lambda progress, description: job.set_progress((0.5 + 0.5 * progress) * 100, description),
-        )
+    def install(self, job, path, options):
+        def progress_callback(progress, description):
+            job.set_progress((0.5 + 0.5 * progress) * 100, description)
 
-    @private
-    def install_manual_impl(self, job, path, dest_extracted, options=None):
-        self._install(
-            path,
-            lambda progress, description: job.set_progress((0.5 + 0.5 * progress) * 100, description),
-            options,
-        )
-
-    def _install(self, path, progress_callback, options=None):
         progress_callback(0, "Reading update file")
         with mount_update(path) as mounted:
             with open(os.path.join(mounted, "manifest.json")) as f:
