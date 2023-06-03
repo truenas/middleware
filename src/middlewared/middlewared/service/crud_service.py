@@ -177,14 +177,11 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     @pass_app(rest=True)
     async def update(self, app, id, data):
-        rv = await self.middleware._call(
-            f'{self._config.namespace}.update', self, self.do_update, [id, data], app=app,
+        return await self.middleware._call(
+            f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
+                self.do_update, 'update', 'CHANGED', id,
+            ), [id, data], app=app,
         )
-        await self.middleware.call_hook(f'{self._config.namespace}.post_update', rv)
-        if self._config.event_send:
-            if isinstance(rv, dict) and 'id' in rv:
-                self.middleware.send_event(f'{self._config.namespace}.query', 'CHANGED', id=rv['id'], fields=rv)
-        return rv
 
     @pass_app(rest=True)
     async def delete(self, app, id, *args):
