@@ -1184,15 +1184,6 @@ async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
 
 
-async def hook_pool_post_import(middleware, pool):
-    if pool and pool['encrypt'] == 2 and pool['passphrase']:
-        await middleware.call(
-            'failover.update_encryption_keys', {
-                'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
-            }
-        )
-
-
 async def hook_pool_dataset_unlock(middleware, datasets):
     datasets = [
         {'name': ds['name'], 'passphrase': ds['encryption_key']}
@@ -1307,7 +1298,6 @@ async def setup(middleware):
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
-    middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
     middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
     middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)
