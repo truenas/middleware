@@ -183,7 +183,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
     @pass_app(rest=True)
     async def delete(self, app, id, *args):
         return await self.middleware._call(
-            f'{self._config.namespace}.delete', self, self._get_crud_wrapper_func(
+            f'{self._config.namespace}.delete', self, await self._get_crud_wrapper_func(
                 self.do_delete, 'delete', 'REMOVED', id,
             ), [id] + list(args), app=app,
         )
