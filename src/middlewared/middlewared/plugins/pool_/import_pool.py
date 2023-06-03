@@ -242,10 +242,7 @@ class PoolService(Service):
 
         job.set_progress(0, 'Beginning pools import')
 
-        pools = self.middleware.call_sync('pool.query', [
-            ('encrypt', '<', 2),
-            ('status', '=', 'OFFLINE')
-        ])
+        pools = self.middleware.call_sync('pool.query', [('status', '=', 'OFFLINE')])
         for i, pool in enumerate(pools):
             # Importing pools is currently 80% of the job because we may still need
             # to set ACL mode for windows

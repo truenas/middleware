@@ -358,7 +358,6 @@ class UsageService(Service):
             pool_list.append({
                 'capacity': pd['used']['parsed'] + pd['available']['parsed'],
                 'disks': disks,
-                'encryption': bool(p['encrypt']),
                 'l2arc': bool(p['topology']['cache']),
                 'type': _type.lower(),
                 'usedbydataset': pd['usedbydataset']['parsed'],
