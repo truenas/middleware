@@ -2,15 +2,15 @@
 Remove geli related keys
 
 Revision ID: d2a26c29efca
-Revises: 55836e7dac39
-Create Date: 2023-04-27 06:20:01.757983+00:00
+Revises: 1519ee5b6e29
+Create Date: 2023-06-04 00:20:01.757983+00:00
 
 """
 from alembic import op
 
 
 revision = 'd2a26c29efca'
-down_revision = '55836e7dac39'
+down_revision = '1519ee5b6e29'
 branch_labels = None
 depends_on = None
 
