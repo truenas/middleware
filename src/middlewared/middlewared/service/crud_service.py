@@ -166,14 +166,11 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     @pass_app(rest=True)
     async def create(self, app, data):
-        rv = await self.middleware._call(
-            f'{self._config.namespace}.create', self, self.do_create, [data], app=app,
+        return await self.middleware._call(
+            f'{self._config.namespace}.create', self, await self._get_crud_wrapper_func(
+                self.do_create, 'create', 'ADDED',
+            ), [data], app=app,
         )
-        await self.middleware.call_hook(f'{self._config.namespace}.post_create', rv)
-        if self._config.event_send:
-            if isinstance(rv, dict) and 'id' in rv:
-                self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=rv['id'], fields=rv)
-        return rv
 
     @pass_app(rest=True)
     async def update(self, app, id, data):
@@ -185,28 +182,26 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
 
     @pass_app(rest=True)
     async def delete(self, app, id, *args):
-        rv = await self.middleware._call(
-            f'{self._config.namespace}.delete', self, self.do_delete, [id] + list(args), app=app,
+        return await self.middleware._call(
+            f'{self._config.namespace}.delete', self, self._get_crud_wrapper_func(
+                self.do_delete, 'delete', 'REMOVED', id,
+            ), [id] + list(args), app=app,
         )
-        await self.middleware.call_hook(f'{self._config.namespace}.post_delete', rv)
-        if self._config.event_send:
-            self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id)
-        return rv
 
-    async def _get_crud_wrapper_func(self, func, action, event_type, oid):
+    async def _get_crud_wrapper_func(self, func, action, event_type, oid=None):
         if asyncio.iscoroutinefunction(func):
             async def nf(*args, **kwargs):
                 rv = await func(*args, **kwargs)
                 await self.middleware.call_hook(f'{self._config.namespace}.post_{action}', rv)
                 if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid)
+                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid or rv['id'])
                 return rv
         else:
             def nf(*args, **kwargs):
                 rv = func(*args, **kwargs)
                 self.middleware.call_hook_sync(f'{self._config.namespace}.post_{action}', rv)
                 if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
-                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid)
+                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid or rv['id'])
                 return rv
 
         copy_function_metadata(func, nf)
