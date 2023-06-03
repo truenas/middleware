@@ -850,6 +850,42 @@ def test_015_ftp_configuration(request):
             validate_proftp_conf()
 
 
+def test_017_ftp_port(request):
+    '''
+    Confirm config changes get reflected in proftpd.conf
+    '''
+    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+
+    with ftp_server():
+        payload = {
+            'msg': 'method', 'method': 'service.query',
+            'params': [[["service", "=", "ftp"]], {'get': True}]
+        }
+        res = make_ws_request(ip, payload)
+        assert res.get('error') is None, res
+        result = res['result']
+        assert result["state"] == "RUNNING"
+
+        # Confirm FTP is listening on the default port
+        res = SSH_TEST("ss -tlpn", user, password, ip)
+        sslist = res['output'].splitlines()
+        ftp_entry = [line for line in sslist if "ftp" in line]
+        ftpPort = ftp_entry[0].split()[3][2:]
+        assert ftpPort == "21", f"Expected default FTP port, but found {ftpPort}"
+
+        # Test port change
+        changes = {
+            'port': 22222
+        }
+        with ftp_configure(changes):
+            validate_proftp_conf()
+            res = SSH_TEST("ss -tlpn", user, password, ip)
+            sslist = res['output'].splitlines()
+            ftp_entry = [line for line in sslist if "ftp" in line]
+            ftpPort = ftp_entry[0].split()[3][2:]
+            assert ftpPort == "22222", f"Expected '22222' FTP port, but found {ftpPort}"
+
+
 def test_020_login_attempts(request):
     '''
     Test our ability to change and trap excessive failed login attempts
@@ -875,11 +911,10 @@ def test_020_login_attempts(request):
             # Try with good values this time
             ftpObj.login(user='FTPfatfingeruser', passwd="secret")
             assert login_attempt < MaxTries, "Failed to limit login attempts"
-    ftp_set_config(DB_DFLT)
 
 
 @pytest.mark.parametrize('setting', [True, False])
-def test_025_root_login(request, setting):
+def test_030_root_login(request, setting):
     '''
     Test the WebUI "Allow Root Login" setting.
     In our DB the setting is "rootlogin" and "RootLogin" in proftpd.conf.
@@ -904,17 +939,13 @@ def test_025_root_login(request, setting):
         except all_errors as e:
             # The 'False' setting is expected to fail
             assert setting is False, f"Unexpected failure, rootlogin={setting}, but got {e}"
-    ftp_set_config(DB_DFLT)
 
 
-anon_login_parms = [
+@pytest.mark.parametrize('setting,ftpConfig', [
     (True, {"onlyanonymous": True, "anonpath": "anonftpDS", "onlylocal": False}),
     (False, {"onlyanonymous": False, "anonpath": "", "onlylocal": True}),
-]
-
-
-@pytest.mark.parametrize('setting,ftpConfig', anon_login_parms)
-def test_026_anon_login(request, setting, ftpConfig):
+])
+def test_031_anon_login(request, setting, ftpConfig):
     '''
     Test the WebUI "Allow Anonymous Login" setting.
     In our DB the setting is "onlyanonymous" and an "Anonymous" section in proftpd.conf.
@@ -936,32 +967,83 @@ def test_026_anon_login(request, setting, ftpConfig):
             assert 'ftp' in ftpusers
         except all_errors as e:
             assert setting is False, f"Unexpected failure, rootlogin={setting}, but got {e}"
-    ftp_set_config(DB_DFLT)
 
 
-@pytest.mark.parametrize('user,expect_to_pass', [("FTPlocaluser", True), ("BadUser", False)])
-def test_027_local_login(request, user, expect_to_pass):
+@pytest.mark.parametrize('localuser,expect_to_pass', [
+    ("FTPlocaluser", True),
+    ("BadUser", False)
+])
+def test_032_local_login(request, localuser, expect_to_pass):
     depends(request, ["pool_04", "init_dflt_config"], scope="session")
     with ftp_user_ds_and_srvr_conn('ftplocalDS', 'FTPlocaluser', {"onlylocal": True}) as ftpdata:
         ftpObj = ftpdata.ftp
         try:
-            ftpObj.login(user, 'secret')
+            ftpObj.login(localuser, 'secret')
             assert expect_to_pass, f"Unexpected behavior: {user} should not have been allowed to login"
         except all_errors as e:
             assert not expect_to_pass, f"Unexpected behavior: {user} should have been allowed to login. {e}"
-    ftp_set_config(DB_DFLT)
 
 
-passive_port_test_parms = [
+def test_040_reverse_dns(request):
+    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    ftp_conf = {"onlylocal": True, "reversedns": True}
+    with ftp_user_ds_and_srvr_conn('ftplocalDS', 'FTPlocaluser', ftp_conf) as ftpdata:
+        ftpObj = ftpdata.ftp
+        try:
+            ftpObj.login('FTPlocaluser', 'secret')
+        except all_errors as e:
+            assert False, f"Login failed with reverse DNS enabled. {e}"
+
+
+@pytest.mark.parametrize('masq_type, expect_to_pass',
+                         [("hostname", True), ("ip_addr", True), ("invalid.domain", False)])
+def test_045_masquerade_address(request, masq_type, expect_to_pass):
+    '''
+    TrueNAS tooltip:
+        Public IP address or hostname. Set if FTP clients cannot connect through a NAT device.
+    We test masqaddress with: hostname, IP address and an invalid fqdn.
+    '''
+    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    payload = {'msg': 'method', 'method': 'network.configuration.config', 'params': []}
+    res = make_ws_request(ip, payload)
+    assert res.get('error') is None, res
+    netconfig = res['result']
+    if masq_type == 'hostname':
+        masqaddr = netconfig['hostname']
+        if netconfig['domain'] and netconfig['domain'] != "local":
+            masqaddr = masqaddr + "." + netconfig['domain']
+    elif masq_type == 'ip_addr':
+        masqaddr = ip
+    else:
+        masqaddr = masq_type
+
+    ftp_conf = {"onlylocal": True, "masqaddress": masqaddr}
+    with pytest.raises(Exception) if not expect_to_pass else contextlib.nullcontext():
+        with ftp_user_ds_and_srvr_conn('ftplocalDS', 'FTPlocaluser', ftp_conf) as ftpdata:
+            ftpObj = ftpdata.ftp
+            try:
+                ftpObj.login('FTPlocaluser', 'secret')
+                res = ftpObj.sendcmd('PASV')
+                assert res.startswith("227 Entering Passive Mode")
+                srvr_ip, p1, p2 = res.split('(', 1)[1].split(')')[0].rsplit(',', 2)
+                srvr_ip = srvr_ip.replace(',', '.')
+                # If the masquerade is our hostname the presented IP address will
+                # be the 'local' IP address
+                if masq_type == "hostname":
+                    assert srvr_ip == '127.0.0.1'
+                else:
+                    assert srvr_ip == ip
+            except all_errors as e:
+                assert False, f"FTP failed with masqaddres = '{masqaddr}'. {e}"
+
+
+@pytest.mark.parametrize('testing,ftpConfig,expect_to_pass', [
     ("config", {"passiveportsmin": 100}, False),
     ("config", {"passiveportsmin": 3000, "passiveportsmax": 2000}, False),
     ("config", {"passiveportsmin": 2000, "passiveportsmax": 2000}, False),
     ("run", {"passiveportsmin": 22222, "passiveportsmax": 22223}, True),
-]
-
-
-@pytest.mark.parametrize('testing,ftpConfig,expect_to_pass', passive_port_test_parms)
-def test_030_passive_ports(request, testing, ftpConfig, expect_to_pass):
+])
+def test_050_passive_ports(request, testing, ftpConfig, expect_to_pass):
     '''
     Test the passive port range setting.
     NB: The proFTPd documentation for this setting states:
@@ -993,10 +1075,9 @@ def test_030_passive_ports(request, testing, ftpConfig, expect_to_pass):
                 assert pasv_port == ftpdata.ftpConf['passiveportsmin']
             except all_errors as e:
                 assert expect_to_pass is False, f"Unexpected failure, {e}"
-        ftp_set_config(DB_DFLT)
 
 
-def test_031_no_activity_timeout(request):
+def test_055_no_activity_timeout(request):
     '''
     Test the WebUI "Timeout" setting.  In our DB it is "timeout" and "TimeoutIdle" in proftpd.conf.
         | The TimeoutIdle directive configures the maximum number of seconds that proftpd will
@@ -1014,10 +1095,9 @@ def test_031_no_activity_timeout(request):
         except all_errors as e:
             chkstr = f"Idle timeout ({ftpdata.ftpConf['timeout']} seconds)"
             assert chkstr in str(e), e
-    ftp_set_config(DB_DFLT)
 
 
-def test_032_no_xfer_timeout(request):
+def test_056_no_xfer_timeout(request):
     '''
     This tests the WebUI "Notransfer Timeout" setting.  In our DB it is "timeout_notransfer"
     and "TimeoutNoTranfer" in proftpd.conf.
@@ -1037,17 +1117,13 @@ def test_032_no_xfer_timeout(request):
         except all_errors as e:
             chkstr = f"No transfer timeout ({ftpdata.ftpConf['timeout_notransfer']} seconds)"
             assert chkstr in str(e), e
-    ftp_set_config(DB_DFLT)
 
 
-bandwidth_limiter_test_parms = [
+@pytest.mark.parametrize('testwho,ftp_setup_func', [
     ('anon', ftp_anon_ds_and_srvr_conn),
     ('local', ftp_user_ds_and_srvr_conn),
-]
-
-
-@pytest.mark.parametrize('testwho,ftp_setup_func', bandwidth_limiter_test_parms)
-def test_035_bandwidth_limiter(request, testwho, ftp_setup_func):
+])
+def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
     FileSize = 64  # KiB
     ulRate = 8  # KiB
     dlRate = 16  # KiB
@@ -1095,17 +1171,13 @@ def test_035_bandwidth_limiter(request, testwho, ftp_setup_func):
             # Clean up
             if os.path.exists(localfname):
                 os.remove(localfname)
-    ftp_set_config(DB_DFLT)
 
 
-ftp_umask_test_parms = [
+@pytest.mark.parametrize('fmask,f_expect,dmask,d_expect', [
     ("000", "0666", "000", "0777"),
     ("007", "0660", "002", "0775"),
-]
-
-
-@pytest.mark.parametrize('fmask,f_expect,dmask,d_expect', ftp_umask_test_parms)
-def test_037_umask(request, fmask, f_expect, dmask, d_expect):
+])
+def test_065_umask(request, fmask, f_expect, dmask, d_expect):
     depends(request, ["pool_04", "init_dflt_config"], scope="session")
     localfile = "/tmp/localfile"
     fname = "filemask" + fmask
@@ -1143,8 +1215,11 @@ def test_037_umask(request, fmask, f_expect, dmask, d_expect):
                 os.remove(localfile)
 
 
-@pytest.mark.parametrize('ftpConf,expect_to_pass', [({}, False), ({'resume': True}, True)])
-def test_040_resume_xfer(request, ftpConf, expect_to_pass):
+@pytest.mark.parametrize('ftpConf,expect_to_pass', [
+    ({}, False),
+    ({'resume': True}, True)
+])
+def test_070_resume_xfer(request, ftpConf, expect_to_pass):
     depends(request, ["pool_04", "init_dflt_config"], scope="session")
 
     def upload_partial(ftp, src, tgt, NumKiB=128):
@@ -1232,12 +1307,11 @@ def test_040_resume_xfer(request, ftpConf, expect_to_pass):
 
         except all_errors as e:
             if expect_to_pass:
-                assert False, f"Unexpected failure in {processing} test: {e}"
+                assert False, f"Unexpected failure in resumed {processing} test: {e}"
         finally:
             # Clean up
             if os.path.exists(localfname):
                 os.remove(localfname)
-    ftp_set_config(DB_DFLT)
 
 
 class UserTests:
@@ -1271,7 +1345,7 @@ class UserTests:
     ]
 
     @pytest.mark.parametrize("user_test,run_data", ftp_user_tests)
-    def test_050_ftp_user(self, setup, user_test, run_data):
+    def test_080_ftp_user(self, setup, user_test, run_data):
         try:
             user_test(setup, run_data)
         except all_errors as e:
@@ -1306,7 +1380,6 @@ class TestAnonUser(UserTests):
             except all_errors as e:
                 login_error = e
             assert login_error is None
-        ftp_set_config(DB_DFLT)
 
 
 class TestLocalUser(UserTests):
@@ -1334,7 +1407,6 @@ class TestLocalUser(UserTests):
             except all_errors as e:
                 login_error = e
             assert login_error is None
-        ftp_set_config(DB_DFLT)
 
 
 class TestFTPSUser(UserTests):
@@ -1366,10 +1438,9 @@ class TestFTPSUser(UserTests):
             except all_errors as e:
                 login_error = e
             assert login_error is None
-        ftp_set_config(DB_DFLT)
 
 
-def test_099_ftp_service_stop():
+def test_100_ftp_service_stop():
     # Stop FTP service
     payload = {
         'msg': 'method',
