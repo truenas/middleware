@@ -1,9 +1,11 @@
+import asyncio
 import copy
 import errno
 
 from middlewared.service_exception import CallError, InstanceNotFound
 from middlewared.schema import accepts, Any, Bool, convert_schema, Dict, Int, List, OROperator, Patch, Ref, returns
 from middlewared.utils import filter_list
+from middlewared.utils.type import copy_function_metadata
 
 from .base import ServiceBase
 from .decorators import filterable, pass_app, private
@@ -193,6 +195,25 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         if self._config.event_send:
             self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id)
         return rv
+
+    async def _get_crud_wrapper_func(self, func, action, event_type, oid):
+        if asyncio.iscoroutinefunction(func):
+            async def nf(*args, **kwargs):
+                rv = await func(*args, **kwargs)
+                await self.middleware.call_hook(f'{self._config.namespace}.post_{action}', rv)
+                if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
+                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid)
+                return rv
+        else:
+            def nf(*args, **kwargs):
+                rv = func(*args, **kwargs)
+                self.middleware.call_hook_sync(f'{self._config.namespace}.post_{action}', rv)
+                if self._config.event_send and (action == 'delete' or isinstance(rv, dict) and 'id' in rv):
+                    self.middleware.send_event(f'{self._config.namespace}.query', event_type, id=oid)
+                return rv
+
+        copy_function_metadata(func, nf)
+        return nf
 
     @accepts(
         Any('id'),
