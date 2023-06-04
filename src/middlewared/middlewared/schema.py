@@ -613,7 +613,7 @@ class Int(EnumMixin, Attribute):
         if value is None:
             return value
         if not isinstance(value, int) or isinstance(value, bool):
-            if isinstance(value, str) and value.isdigit():
+            if isinstance(value, str) and value.lstrip('-').isdigit():
                 return int(value)
             raise Error(self.name, 'Not an integer')
         return value
