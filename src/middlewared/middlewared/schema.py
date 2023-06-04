@@ -614,6 +614,8 @@ class Int(EnumMixin, Attribute):
             return value
         if not isinstance(value, int) or isinstance(value, bool):
             if isinstance(value, str) and value.lstrip('-').isdigit():
+                if value.lstrip('-') != value:
+                    return int('-' + value.lstrip('-'))
                 return int(value)
             raise Error(self.name, 'Not an integer')
         return value
