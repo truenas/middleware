@@ -202,6 +202,8 @@ def test__schema_int_not_null():
 @pytest.mark.parametrize("value,expected", [
     (3, 3),
     ('3', 3),
+    ('-3', -3),
+    (-3, -3),
     (3.0, ValidationErrors),
     ('FOO', ValidationErrors),
     (False, ValidationErrors),
