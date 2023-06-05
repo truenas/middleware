@@ -28,7 +28,7 @@ from config import (
     FREEIPA_IP,
     FREEIPA_BASEDN,
     FREEIPA_BINDDN,
-    FREEIPA_BINDPASSWORD,
+    FREEIPA_BINDPW,
     FREEIPA_HOSTNAME,
 )
 
@@ -37,7 +37,7 @@ def do_freeipa_connection(request):
     with ldap(
         FREEIPA_BASEDN,
         FREEIPA_BINDDN,
-        FREEIPA_BINDPASSWORD,
+        FREEIPA_BINDPW,
         FREEIPA_HOSTNAME,
         validate_certificates=False,
     ) as ldap_conn:
@@ -53,7 +53,7 @@ def test_01_setup_and_enabling_freeipa(do_freeipa_connection):
 
 
 def test_02_verify_ldap_enable_is_true(request):
-    depends(request, ["setup_ldap"], scope="session")
+    depends(request, ["setup_freeipa"], scope="session")
     results = GET("/ldap/")
     assert results.json()["enable"] is True, results.text
 
@@ -63,7 +63,7 @@ def test_03_verify_that_the_freeipa_user_id_exist_on_the_nas(request):
     """
     get_user_obj is a wrapper around the pwd module.
     """
-    depends(request, ["setup_ldap"])
+    depends(request, ["setup_freeipa"], scope="session")
     payload = {
         "username": "ixauto_restricted",
         "get_groups": True
