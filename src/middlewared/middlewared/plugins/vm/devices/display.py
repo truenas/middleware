@@ -23,9 +23,9 @@ class DISPLAY(Device):
         Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
         Int('port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
         Int('web_port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
-        Str('bind', default='0.0.0.0'),
+        Str('bind', default='127.0.0.1'),
         Bool('wait', default=False),
-        Str('password', default=None, null=True, private=True),
+        Str('password', private=True, required=True, null=False, empty=False),
         Bool('web', default=True),
         Str('type', default='SPICE', enum=['SPICE', 'VNC']),
     )
