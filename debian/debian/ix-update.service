@@ -4,6 +4,8 @@ DefaultDependencies=no
 
 Before=middlewared.service
 
+ConditionEnvironment=!_BOOT_TRUENAS_CORE
+
 [Service]
 Type=oneshot
 RemainAfterExit=yes
