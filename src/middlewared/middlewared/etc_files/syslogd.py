@@ -289,6 +289,9 @@ def configure_syslog(middleware):
                 dst = os.path.join(log_path, item)
                 item = os.path.join("/var/log", item)
 
+                if os.path.islink(item):
+                    continue
+
                 if os.path.isdir(item):
                     # Pick up any new directories and sync them
                     if not os.path.isdir(dst):
