@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import copy
 import json
 import string
@@ -610,13 +611,13 @@ class Int(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Int, self).clean(value)
-        if value is None:
+        if value is None or (not isinstance(value, bool) and isinstance(value, int)):
             return value
-        if not isinstance(value, int) or isinstance(value, bool):
-            if isinstance(value, str) and value.isdigit():
+        elif isinstance(value, str):
+            with contextlib.suppress(ValueError):
                 return int(value)
-            raise Error(self.name, 'Not an integer')
-        return value
+
+        raise Error(self.name, 'Not an integer')
 
     def to_json_schema(self, parent=None):
         return {
