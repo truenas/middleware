@@ -24,17 +24,13 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client
 
-try:
-    from config import (
-        FREEIPA_IP,
-        FREEIPA_BASEDN,
-        FREEIPA_BINDDN,
-        FREEIPA_BINDPASSWORD,
-        FREEIPA_HOSTNAME,
-    )
-except ImportError:
-    Reason = 'FREEIPA* variable are not setup in config.py'
-    pytestmark = pytest.mark.skipif(True, reason=Reason)
+from config import (
+    FREEIPA_IP,
+    FREEIPA_BASEDN,
+    FREEIPA_BINDDN,
+    FREEIPA_BINDPASSWORD,
+    FREEIPA_HOSTNAME,
+)
 
 @pytest.fixture(scope="module")
 def do_freeipa_connection(request):
