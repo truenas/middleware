@@ -1786,15 +1786,16 @@ class InterfaceService(CRUDService):
 
         """
         list_of_ip = []
+        static_ips = {}
         ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
         ignore_nics.extend(self.middleware.call_sync(
             'failover.internal_interfaces'
         ))
         if choices['loopback']:
             ignore_nics.remove('lo')
+            static_ips['127.0.0.1'] = '127.0.0.1'
 
         ignore_nics = tuple(ignore_nics)
-        static_ips = {}
         if choices['static']:
             licensed = self.middleware.call_sync('failover.licensed')
             for i in self.middleware.call_sync('interface.query'):
