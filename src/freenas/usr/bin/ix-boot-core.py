@@ -20,5 +20,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     subprocess.run(["zpool", "set", f"bootfs={name}", boot_pool], check=True)
+    subprocess.run(["mount", "-t", "zfs", f"{boot_pool}/grub", "/boot/grub"])
     subprocess.run(["update-grub"], check=True)
     subprocess.run(["reboot"], check=True)
