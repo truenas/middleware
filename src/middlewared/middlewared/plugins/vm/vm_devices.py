@@ -109,7 +109,7 @@ class VMDeviceService(CRUDService):
         """
         return {
             d['address']: d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True, 'any': True}
+                'interface.ip_in_use', {'static': True, 'any': True, 'loopback': True}
             )
         }
 
