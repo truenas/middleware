@@ -32,7 +32,7 @@ def format_ntp_packet(data):
 @dataclasses.dataclass(slots=True)
 class NTPClient:
     host: str
-    timeout: int = 1  # second
+    timeout: int = 5  # second
 
     def make_request(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
