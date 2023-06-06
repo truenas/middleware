@@ -1,15 +1,13 @@
 import errno
 import subprocess
 
-import ntplib
-
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.ntp_.enums import Mode, State
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, Str, accepts
-from middlewared.service import (CRUDService, ValidationErrors, filterable,
-                                 private)
+from middlewared.service import CRUDService, ValidationErrors, filterable, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
+from middlewared.plugins.ntp_.client import NTPClient
 
 
 class NTPModel(sa.Model):
@@ -39,7 +37,9 @@ class NTPPeer:
         self._jitter = initial_data['jitter']
 
     @classmethod
-    def from_chronyc_sources(cls, mode, state, remote, stratum, poll_interval, reach, lastrx, offset, offset_measured, jitter):
+    def from_chronyc_sources(
+        cls, mode, state, remote, stratum, poll_interval, reach, lastrx, offset, offset_measured, jitter
+    ):
         """Construct a NTPPeer object from one line of output from chronyc sources -c"""
         # From chronyc man page (https://chrony.tuxfamily.org/doc/4.3/chronyc.html)
         # -c This option enables printing of reports in a comma-separated values (CSV) format. Reverse DNS lookups
@@ -183,16 +183,10 @@ class NTPServerService(CRUDService):
     @staticmethod
     @private
     def test_ntp_server(addr):
-        client = ntplib.NTPClient()
-        server_alive = False
         try:
-            response = client.request(addr)
-            if response.version:
-                server_alive = True
+            return bool(NTPClient(addr).make_request()['version'])
         except Exception:
-            pass
-
-        return server_alive
+            return False
 
     @private
     @filterable
