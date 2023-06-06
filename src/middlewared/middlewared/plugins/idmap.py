@@ -970,6 +970,9 @@ class IdmapDomainService(TDBWrapCRUDService):
         libwbclient (single winbindd request), and so it is the preferred
         method of batch conversion.
         """
+        if not sidlist:
+            raise CallError("List of SIDS to convert must contain at least one entry")
+
         try:
             client = WBClient()
             results = client.sids_to_users_and_groups(sidlist)

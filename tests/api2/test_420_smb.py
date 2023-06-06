@@ -17,6 +17,8 @@ from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, cmd_test, send_file
+from assets.REST.pool import dataset
+from protocols import smb_connection, smb_share
 from utils import create_dataset
 from auto_config import ip, pool_name, password, user, hostname, dev_test
 # comment pytestmark for development testing with --dev-test
