@@ -1151,6 +1151,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
         payload = {
             'enable': False,
             'site': None,
+            'bindname': '',
+            'bindpw': '',
             'kerberos_realm': None,
             'kerberos_principal': '',
             'domainname': '',
