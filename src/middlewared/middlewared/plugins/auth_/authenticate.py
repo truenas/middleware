@@ -16,7 +16,7 @@ class AuthService(Service):
         # root and admin must always be local
         # since they may be used by system processes we
         # optimize away the more complex translate_username call
-        if username == 'root' or 'username' == 'admin':
+        if username in ('root', 'admin'):
             local = True
 
         else:
