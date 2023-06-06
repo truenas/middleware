@@ -173,7 +173,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias']:
+        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias', 'bindpw']:
             if key in ad:
                 ad.pop(key)
 
@@ -549,6 +549,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'to match active directory value of %s', ret['domainname'], exc_info=True
                     )
 
+            if not await self.middleware.call('kerberos._klist_test'):
+                await self.middleware.call('kerberos.start')
+
             job = (await self.middleware.call('activedirectory.start')).id
 
         elif not new['enable'] and old['enable']:
@@ -744,7 +747,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             if kt_id:
                 self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
                 ad = await self.direct_update({
-                    'bindpw': '',
                     'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
                 })
 
