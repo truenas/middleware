@@ -23,11 +23,6 @@ USER_INFO = {'user': {'name': 'root', 'uid': 0}, 'group': {'name': 'root', 'gid'
 
 
 @pytest.fixture(scope='module')
-def webdav_dict():
-    return {}
-
-
-@pytest.fixture(scope='module')
 def pool_dict():
     return {}
 
@@ -67,22 +62,15 @@ def test_03_verify_webdav_dataset_permissions(request):
     assert data['gid'] == USER_INFO['group']['gid']
 
 
-def test_04_create_webdav_share(request, webdav_dict):
+def test_04_create_webdav_share(request):
     depends(request, ["pool_04"], scope="session")
     results = POST('/sharing/webdav/', {
         'name': SHARE_NAME,
         'comment': 'Auto-created by API tests',
         'path': DATASET_PATH
     })
-    assert results.status_code == 200, results.text
-    webdav_dict.update(results.json())
-    assert isinstance(webdav_dict['id'], int) is True
-
-
-def test_05_verify_webdav_share_exists(request, webdav_dict):
-    depends(request, ["pool_04"], scope="session")
-    results = GET(f'/sharing/webdav/id/{webdav_dict["id"]}')
-    assert results.status_code == 200, results.text
+    assert results.status_code == 422, results.text
+    assert 'This feature is deprecated.' in results.text, results.text
 
 
 def test_06_enable_webdav_service(request):
@@ -107,43 +95,6 @@ def test_09_verify_webdav_service_is_running(request):
     depends(request, ["pool_04"], scope="session")
     results = GET('/service?service=webdav')
     assert results.json()[0]['state'] == 'RUNNING', results.text
-
-
-def test_10_change_comment_for_webdav_share(request, webdav_dict):
-    depends(request, ["pool_04"], scope="session")
-    results = PUT(f'/sharing/webdav/id/{webdav_dict["id"]}/', {'comment': 'foobar'})
-    assert results.status_code == 200, results.text
-
-
-def test_11_verify_comment_was_changed_for_webdav_share(request, webdav_dict):
-    depends(request, ["pool_04"], scope="session")
-    results = GET(f'/sharing/webdav?id={webdav_dict["id"]}')
-    assert results.status_code == 200, results.text
-    assert results.json()[0]['comment'] == 'foobar'
-
-
-def test_12_change_webdav_password(request):
-    depends(request, ["pool_04"], scope="session")
-    results = PUT('/webdav/', {'password': 'ixsystems'})
-    assert results.status_code == 200, results.text
-
-
-def test_13_verify_webdav_password_was_changed(request):
-    depends(request, ["pool_04"], scope="session")
-    results = GET('/webdav/')
-    assert results.json()['password'] == 'ixsystems', results.text
-
-
-def test_14_delete_webdav_share(request, webdav_dict):
-    depends(request, ["pool_04"], scope="session")
-    results = DELETE(f'/sharing/webdav/id/{webdav_dict["id"]}/')
-    assert results.status_code == 200, results.text
-
-
-def test_15_verify_webdav_share_was_deleted(request, webdav_dict):
-    depends(request, ["pool_04"], scope="session")
-    results = GET(f'/sharing/webdav/id/{webdav_dict["id"]}/')
-    assert results.status_code == 404, results.status_code
 
 
 def test_16_stop_webdav_service(request):
