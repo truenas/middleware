@@ -316,11 +316,12 @@ def ftp_dataset(name, options=None):
 
 
 @contextlib.contextmanager
-def ftp_configure(changes={}):
+def ftp_configure(changes=None):
     '''
     Apply requested FTP configuration changes.
     Restore original setting when done
     '''
+    changes = changes or {}
     payload = {'msg': 'method', 'method': 'ftp.config', 'params': []}
     res = make_ws_request(ip, payload)
     assert res.get('error') is None, res
