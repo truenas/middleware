@@ -47,6 +47,18 @@ class IDType(enum.Enum):
 
         return val
 
+    def parse_wbc_id_type(type_in):
+        if type_in == wbclient.ID_TYPE_UID:
+            return IDType.USER.value
+
+        if type_in == wbclient.ID_TYPE_GID:
+            return IDType.GROUP.value
+
+        if type_in == wbclient.ID_TYPE_BOTH:
+            return IDType.BOTH.value
+
+        raise ValueError(f'{type_in}: invalid winbind ID type')
+
 
 class WBClient:
     def __init__(self, **kwargs):

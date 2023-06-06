@@ -971,7 +971,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
 
         mapped = {sid: {
-            'type': entry.sid_type['parsed'][4:],
+            'type': IDType.parse_wbc_id_type(entry.id_type),
             'id': entry.id,
             'name': f'{entry.domain}{client.ctx.separator.decode()}{entry.name}',
         } for sid, entry in results['mapped'].items()}
