@@ -19,6 +19,7 @@ from types import SimpleNamespace
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from assets.REST.pool import dataset as ftp_dataset
 from functions import SSH_TEST
 from functions import make_ws_request, send_file
 from auto_config import pool_name, ha
@@ -288,34 +289,6 @@ def validate_proftp_conf():
 
 
 @contextlib.contextmanager
-def ftp_dataset(name, options=None):
-    assert "/" not in name
-    options = options or {}
-
-    dataset = f"{pool_name}/{name}"
-
-    payload = {'msg': 'method', 'method': 'pool.dataset.create',
-               'params': [{"name": dataset, **options}]}
-    res = make_ws_request(ip, payload)
-    assert res.get('error') is None, res
-
-    try:
-        yield dataset
-    finally:
-        # dataset may be busy
-        sleep(2)
-        payload = {'msg': 'method', 'method': 'pool.dataset.delete',
-                   'params': [dataset, {"recursive": True}]}
-        res = make_ws_request(ip, payload)
-        retry = 6
-        while res.get('error') is not None and retry > 0:
-            sleep(2)
-            res = make_ws_request(ip, payload)
-            retry -= 1
-        assert res.get('error') is None, res
-
-
-@contextlib.contextmanager
 def ftp_configure(changes=None):
     '''
     Apply requested FTP configuration changes.
@@ -395,12 +368,12 @@ def ftp_user(data):
 
 
 @contextlib.contextmanager
-def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, withConn=None):
+def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, withConn=None, **kwargs):
     FTPconfig = FTPconfig or {}
     withConn = withConn or True
 
-    with ftp_dataset(dsname) as ds:
-        ds_path = f"/mnt/{ds}"
+    with ftp_dataset(pool_name, dsname, **kwargs) as ds_conf:
+        ds_path = f"/mnt/{ds_conf['name']}"
 
         # Add files and dirs
         ftp_dirs_and_files = INIT_DIRS_AND_FILES.copy()
@@ -423,11 +396,11 @@ def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, wi
 
 
 @contextlib.contextmanager
-def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=None, useFTPS=False):
+def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=None, useFTPS=False, **kwargs):
     FTPconfig = FTPconfig or {}
 
-    with ftp_dataset(dsname) as ds:
-        ds_path = f"/mnt/{ds}"
+    with ftp_dataset(pool_name, dsname, **kwargs) as ds_conf:
+        ds_path = f"/mnt/{ds_conf['name']}"
         with ftp_user({
             "username": username,
             "group_create": True,
@@ -1189,10 +1162,8 @@ def test_065_umask(request, fmask, f_expect, dmask, d_expect):
         'filemask': fmask,
         'dirmask': dmask
     }
-    with ftp_anon_ds_and_srvr_conn('anonftpDS', ftp_umask) as ftpdata:
+    with ftp_anon_ds_and_srvr_conn('anonftpDS', ftp_umask, mode='777') as ftpdata:
         ftpObj = ftpdata.ftp
-        results = SSH_TEST(f"chmod 777 {ftpdata.ftpConf['anonpath']}", user, password, ip)
-        assert results['result'] is True, results
         try:
             ftpObj.login()
 
@@ -1245,9 +1216,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
                     assert data, "Unexpected receive error"
                     file.write(data)
 
-    with ftp_anon_ds_and_srvr_conn('anonftpDS', ftpConf, withConn=False) as ftpdata:
-        results = SSH_TEST(f"chmod 777 {ftpdata.ftpConf['anonpath']}", user, password, ip)
-        assert results['result'] is True, results
+    with ftp_anon_ds_and_srvr_conn('anonftpDS', ftpConf, withConn=False, mode='777') as ftpdata:
         localfname = "/tmp/localfile"
         remotefname = "remotefile"
         remotepath = f"{ftpdata.ftpConf['anonpath']}/{remotefname}"
@@ -1307,8 +1276,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             ftpObj.quit()
 
         except all_errors as e:
-            if expect_to_pass:
-                assert False, f"Unexpected failure in resumed {processing} test: {e}"
+            assert not expect_to_pass, f"Unexpected failure in resumed {processing} test: {e}"
         finally:
             # Clean up
             if os.path.exists(localfname):
