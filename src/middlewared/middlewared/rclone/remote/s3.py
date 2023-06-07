@@ -97,3 +97,15 @@ class S3RcloneRemote(BaseRcloneRemote):
                 result["region"] = ""
 
         return result
+
+    def get_restic_config(self, task):
+        url = task["credentials"]["attributes"].get("endpoint", "").rstrip("/")
+        if not url:
+            url = "s3.amazonaws.com"
+
+        env = {
+            "AWS_ACCESS_KEY_ID": task["credentials"]["attributes"]["access_key_id"],
+            "AWS_SECRET_ACCESS_KEY": task["credentials"]["attributes"]["secret_access_key"],
+        }
+
+        return url, env
