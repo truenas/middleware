@@ -243,21 +243,6 @@ class Application:
                         message['method'],
                         self.middleware.dump_args(message.get('params', []), method_name=message['method'])
                     ), exc_info=True)
-                    self.middleware.create_task(self.__crash_reporting(sys.exc_info()))
-
-    async def __crash_reporting(self, exc_info):
-        if self.middleware.crash_reporting.is_disabled():
-            self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
-        elif self.middleware.crash_reporting_semaphore.locked():
-            self.logger.debug('[Crash Reporting] skipped due too many running instances')
-        else:
-            async with self.middleware.crash_reporting_semaphore:
-                extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                await self.middleware.run_in_thread(
-                    self.middleware.crash_reporting.report,
-                    exc_info,
-                    extra_log_files,
-                )
 
     def can_subscribe(self, name):
         if event := self.middleware.events.get_event(name):
@@ -874,7 +859,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             'middlewared', debug_level, log_format
         ).getLogger()
         self.logger.info('Starting %s middleware', sw_version())
-        self.crash_reporting = SentryCrashReporting()
         self.crash_reporting_semaphore = asyncio.Semaphore(value=2)
         self.loop_debug = loop_debug
         self.loop_monitor = loop_monitor
