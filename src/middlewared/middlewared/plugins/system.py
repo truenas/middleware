@@ -2,7 +2,6 @@ import asyncio
 from datetime import datetime, date, timezone, timedelta
 from middlewared.event import EventSource
 from middlewared.i18n import set_language
-from middlewared.logger import CrashReporting
 from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, List, Str
 from middlewared.service import (
     CallError, ConfigService, no_auth_required, job, pass_app, private, rest_api_metadata,
@@ -901,7 +900,6 @@ class SystemGeneralModel(sa.Model):
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
     stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
     stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
     stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
 
@@ -934,10 +932,6 @@ class SystemGeneralService(ConfigService):
                 [['id', '=', data['ui_certificate']['id']]],
                 {'get': True}
             )
-
-        data['crash_reporting_is_set'] = data['crash_reporting'] is not None
-        if data['crash_reporting'] is None:
-            data['crash_reporting'] = True
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
@@ -1267,7 +1261,6 @@ class SystemGeneralService(ConfigService):
                                      'F_INFO', 'F_DEBUG', 'F_IS_DEBUG']),
             Str('syslogserver'),
             Str('timezone', empty=False),
-            Bool('crash_reporting', null=True),
             Bool('usage_collection', null=True),
             update=True,
         )
@@ -1303,8 +1296,6 @@ class SystemGeneralService(ConfigService):
 
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
-        if not config.pop('crash_reporting_is_set'):
-            config['crash_reporting'] = None
         if not config.pop('usage_collection_is_set'):
             config['usage_collection'] = None
         new_config = config.copy()
@@ -1337,9 +1328,6 @@ class SystemGeneralService(ConfigService):
 
         if config['language'] != new_config['language']:
             await self.middleware.call('system.general.set_language')
-
-        if config['crash_reporting'] != new_config['crash_reporting']:
-            await self.middleware.call('system.general.set_crash_reporting')
 
         await self.middleware.call('service.start', 'ssl')
 
@@ -1476,10 +1464,6 @@ class SystemGeneralService(ConfigService):
     def set_language(self):
         language = self.middleware.call_sync('system.general.config')['language']
         set_language(language)
-
-    @private
-    def set_crash_reporting(self):
-        CrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
 
 async def _update_birthday_data(middleware, birthday=None):
@@ -1717,7 +1701,6 @@ async def setup(middleware):
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 
     await middleware.call('system.general.set_language')
-    await middleware.call('system.general.set_crash_reporting')
 
     if osc.IS_FREEBSD:
         middleware.create_task(middleware.call('system.advanced.autotune', 'sysctl'))
