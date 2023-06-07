@@ -53,7 +53,6 @@ async def setup(middleware):
     middleware.logger.debug(f'Timezone set to {settings["timezone"]}')
 
     await middleware.call('system.general.set_language')
-    await middleware.call('system.general.set_crash_reporting')
 
     CRASH_DIR = '/data/crash'
     os.makedirs(CRASH_DIR, exist_ok=True)
