@@ -24,7 +24,6 @@ from .utils.service.call import ServiceCallMixin
 from .utils.threading import set_thread_name, IoThreadPoolExecutor
 from .utils.type import copy_function_metadata
 from .webui_auth import addr_in_allowlist, WebUIAuth
-from .logging.sentry_crash_reporting import SentryCrashReporting
 from .worker import main_worker, worker_init
 from .webhooks.cluster_events import ClusterEventsApplication
 from aiohttp import web
