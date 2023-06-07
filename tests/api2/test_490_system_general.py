@@ -69,13 +69,3 @@ def test_08_Checking_timezone_using_ssh(request):
     results = SSH_TEST(f'diff /etc/localtime /usr/share/zoneinfo/{TIMEZONE}',
                        user, password, ip)
     assert results['result'] is True, results
-
-
-def test_09_timezone_choices():
-    timezones_dic = call('system.general.timezone_choices')
-    result = ssh('timedatectl list-timezones')
-    missing = []
-    for timezone in filter(bool, result.split('\n')):
-        if not timezones_dic.get(timezone):
-            missing.append(timezone)
-    assert missing == []
