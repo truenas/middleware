@@ -4,8 +4,6 @@ import logging.handlers
 import os
 import sys
 
-import sentry_sdk
-
 from .utils import sw_version, sw_version_is_stable
 
 
@@ -39,87 +37,6 @@ def trace(self, message, *args, **kws):
 
 logging.addLevelName(logging.TRACE, "TRACE")
 logging.Logger.trace = trace
-
-
-class CrashReporting(object):
-    enabled_in_settings = False
-
-    """
-    Pseudo-Class for remote crash reporting
-    """
-
-    def __init__(self):
-        if sw_version_is_stable():
-            self.sentinel_file_path = '/tmp/.crashreporting_disabled'
-        else:
-            self.sentinel_file_path = '/data/.crashreporting_disabled'
-        self.logger = logging.getLogger('middlewared.logger.CrashReporting')
-        sentry_sdk.init(
-            'https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
-            release=sw_version(),
-            integrations=[],
-            default_integrations=False,
-        )
-        sentry_sdk.utils.MAX_STRING_LENGTH = 10240
-        # FIXME: remove this when 0.10.3 is released
-        strip_string = sentry_sdk.utils.strip_string
-        sentry_sdk.utils.strip_string = lambda s: strip_string(s, sentry_sdk.utils.MAX_STRING_LENGTH)
-        sentry_sdk.utils.slim_string = sentry_sdk.utils.strip_string
-        sentry_sdk.serializer.strip_string = sentry_sdk.utils.strip_string
-        sentry_sdk.serializer.slim_string = sentry_sdk.utils.strip_string
-
-    def is_disabled(self):
-        """
-        Check the existence of sentinel file and its absolute path
-        against STABLE and DEVELOPMENT branches.
-
-        Returns:
-            bool: True if crash reporting is disabled, False otherwise.
-        """
-        # Allow report to be disabled via sentinel file or environment var,
-        # if FreeNAS current train is STABLE, the sentinel file path will be /tmp/,
-        # otherwise it's path will be /data/ and can be persistent.
-
-        if not self.enabled_in_settings:
-            return True
-
-        if os.path.exists(self.sentinel_file_path) or 'CRASHREPORTING_DISABLED' in os.environ:
-            return True
-
-        if os.stat(__file__).st_dev != os.stat('/').st_dev:
-            return True
-
-        return False
-
-    def report(self, exc_info, log_files):
-        """"
-        Args:
-            exc_info (tuple): Same as sys.exc_info().
-            request (obj, optional): It is the HTTP Request.
-            sw_version (str): The current middlewared version.
-            t_log_files (tuple): A tuple with log file absolute path and name.
-        """
-        if self.is_disabled():
-            return
-
-        data = {}
-        for path, name in log_files:
-            if os.path.exists(path):
-                with open(path, 'r') as absolute_file_path:
-                    contents = absolute_file_path.read()[-10240:]
-                    data[name] = contents
-
-        self.logger.debug('Sending a crash report...')
-        try:
-            with sentry_sdk.configure_scope() as scope:
-                payload_size = 0
-                for k, v in data.items():
-                    if payload_size + len(v) < 190000:
-                        scope.set_extra(k, v)
-                        payload_size += len(v)
-                sentry_sdk.capture_exception(exc_info)
-        except Exception:
-            self.logger.debug('Failed to send crash report', exc_info=True)
 
 
 class LoggerFormatter(logging.Formatter):
