@@ -4,9 +4,6 @@ import logging.handlers
 import os
 import sys
 
-from .utils import sw_version, sw_version_is_stable
-
-
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 # asyncio runs in debug mode but we do not need INFO/DEBUG
