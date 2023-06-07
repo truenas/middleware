@@ -4,7 +4,6 @@ import syslog
 import middlewared.sqlalchemy as sa
 
 from middlewared.async_validators import validate_port
-from middlewared.logging.sentry_crash_reporting import SentryCrashReporting
 from middlewared.schema import accepts, Bool, Datetime, Dict, Int, IPAddr, List, Patch, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.utils import run
@@ -33,7 +32,6 @@ class SystemGeneralModel(sa.Model):
     stg_wizardshown = sa.Column(sa.Boolean(), default=False)
     stg_pwenc_check = sa.Column(sa.String(100))
     stg_guicertificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
-    stg_crash_reporting = sa.Column(sa.Boolean(), nullable=True)
     stg_usage_collection = sa.Column(sa.Boolean(), nullable=True)
     stg_ds_auth = sa.Column(sa.Boolean(), default=False)
 
@@ -68,11 +66,9 @@ class SystemGeneralService(ConfigService):
         Str('kbdmap', required=True),
         Str('language', empty=False, required=True),
         Str('timezone', empty=False, required=True),
-        Bool('crash_reporting', null=True, required=True),
         Bool('usage_collection', null=True, required=True),
         Datetime('birthday', required=True),
         Bool('wizardshown', required=True),
-        Bool('crash_reporting_is_set', required=True),
         Bool('usage_collection_is_set', required=True),
         Bool('ds_auth', required=True),
         Int('id', required=True),
@@ -93,10 +89,6 @@ class SystemGeneralService(ConfigService):
             data['ui_certificate'] = await self.middleware.call(
                 'certificate.get_instance', data['ui_certificate']['id']
             )
-
-        data['crash_reporting_is_set'] = data['crash_reporting'] is not None
-        if data['crash_reporting'] is None:
-            data['crash_reporting'] = True
 
         data['usage_collection_is_set'] = data['usage_collection'] is not None
         if data['usage_collection'] is None:
@@ -195,7 +187,6 @@ class SystemGeneralService(ConfigService):
     @accepts(
         Patch(
             'system_general_entry', 'general_settings',
-            ('rm', {'name': 'crash_reporting_is_set'}),
             ('rm', {'name': 'usage_collection_is_set'}),
             ('rm', {'name': 'wizardshown'}),
             ('rm', {'name': 'id'}),
@@ -245,8 +236,6 @@ class SystemGeneralService(ConfigService):
 
         config = await self.config()
         config['ui_certificate'] = config['ui_certificate']['id'] if config['ui_certificate'] else None
-        if not config.pop('crash_reporting_is_set'):
-            config['crash_reporting'] = None
         if not config.pop('usage_collection_is_set'):
             config['usage_collection'] = None
         new_config = config.copy()
@@ -280,9 +269,6 @@ class SystemGeneralService(ConfigService):
         if config['language'] != new_config['language']:
             await self.middleware.call('system.general.set_language')
 
-        if config['crash_reporting'] != new_config['crash_reporting']:
-            await self.middleware.call('system.general.set_crash_reporting')
-
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam_middleware')
 
@@ -305,10 +291,6 @@ class SystemGeneralService(ConfigService):
         await self.middleware.call('etc.generate', 'keyboard')
         await run(['setupcon'], check=False)
         await run(['localectl', 'set-keymap', kbdmap], check=False)
-
-    @private
-    def set_crash_reporting(self):
-        SentryCrashReporting.enabled_in_settings = self.middleware.call_sync('system.general.config')['crash_reporting']
 
     @accepts()
     @returns(Int('remaining_seconds', null=True))
