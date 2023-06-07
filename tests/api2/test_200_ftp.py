@@ -742,7 +742,7 @@ def test_001_validate_default_configuration(request, ftp_init_db_dflt):
         diffs = {}
         for setting in set(DB_DFLT) & set(db):
             # Special cases: ftp_anonpath is 'nullable' in the DB, but the default is False
-            if setting == "anonpath" and db[setting] == '':
+            if setting == "anonpath" and (db[setting] == '' or db[setting] is None):
                 db[setting] = False
             # Special cases: Restore 'None' for empty string
             if setting in ['banner', 'options', 'masqaddress'] and db[setting] == '':
