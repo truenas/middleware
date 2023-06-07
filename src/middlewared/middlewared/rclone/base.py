@@ -22,6 +22,8 @@ class BaseRcloneRemote:
 
     extra_methods = []
 
+    restic = False
+
     def __init__(self, middleware):
         self.middleware = middleware
 
@@ -42,3 +44,6 @@ class BaseRcloneRemote:
 
     async def cleanup(self, task, config):
         pass
+
+    def get_restic_config(self, task):
+        raise NotImplementedError

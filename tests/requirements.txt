@@ -1,3 +1,4 @@
+boto3
 pytest
 pytest-dependency
 pytest-rerunfailures

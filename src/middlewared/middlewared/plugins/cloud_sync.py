@@ -1,7 +1,10 @@
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, List, Patch, Str
+from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
+from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
+from middlewared.plugins.cloud.path import get_remote_path, check_local_path
+from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, job, private, TaskPathService,
 )
@@ -9,10 +12,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen, run
 from middlewared.utils.lang import undefined
 from middlewared.utils.path import FSLocation
-from middlewared.utils.plugins import load_modules, load_classes
-from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.service.task_state import TaskStateMixin
-from middlewared.validators import Range, Time
 from middlewared.validators import validate_schema
 
 import aiorwlock
@@ -33,13 +33,10 @@ import re
 import shlex
 import subprocess
 import tempfile
-import textwrap
 
 RE_TRANSF1 = re.compile(r"Transferred:\s*(?P<progress_1>.+), (?P<progress>[0-9]+)%$")
 RE_TRANSF2 = re.compile(r"Transferred:\s*(?P<progress_1>.+, )(?P<progress>[0-9]+)%, (?P<progress_2>.+)$")
 RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)?$")
-
-REMOTES = {}
 
 OAUTH_URL = "https://www.truenas.com/oauth"
 
@@ -132,29 +129,6 @@ class RcloneConfig:
             self.tmp_file.close()
         if self.tmp_file_filter:
             self.tmp_file_filter.close()
-
-
-def get_remote_path(provider, attributes):
-    remote_path = attributes["folder"].rstrip("/")
-    if not remote_path:
-        remote_path = "/"
-    if provider.buckets:
-        remote_path = f"{attributes['bucket']}/{remote_path.lstrip('/')}"
-    return remote_path
-
-
-async def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
-    error_text_path = error_text_path or path
-
-    if not os.path.exists(path):
-        raise CallError(f"Directory {error_text_path!r} does not exist")
-
-    if not os.path.isdir(path):
-        raise CallError(f"{error_text_path!r} is not a directory")
-
-    if check_mountpoint:
-        if not await middleware.call("filesystem.is_dataset_path", path):
-            raise CallError(f"Directory {error_text_path!r} must reside within volume mount point")
 
 
 async def rclone(middleware, job, cloud_sync, dry_run):
@@ -706,40 +680,22 @@ class CredentialsService(CRUDService):
             raise verrors
 
 
-class CloudSyncModel(sa.Model):
+class CloudSyncModel(CloudTaskModelMixin, sa.Model):
     __tablename__ = 'tasks_cloudsync'
 
-    id = sa.Column(sa.Integer(), primary_key=True)
-    description = sa.Column(sa.String(150))
-    direction = sa.Column(sa.String(10), default='PUSH')
-    path = sa.Column(sa.String(255))
-    attributes = sa.Column(sa.JSON())
-    minute = sa.Column(sa.String(100), default="00")
-    hour = sa.Column(sa.String(100), default="*")
-    daymonth = sa.Column(sa.String(100), default="*")
-    month = sa.Column(sa.String(100), default='*')
-    dayweek = sa.Column(sa.String(100), default="*")
-    enabled = sa.Column(sa.Boolean(), default=True)
-    credential_id = sa.Column(sa.ForeignKey('system_cloudcredentials.id'), index=True)
-    transfer_mode = sa.Column(sa.String(20), default='sync')
+    direction = sa.Column(sa.String(10))
+    transfer_mode = sa.Column(sa.String(20))
+
     encryption = sa.Column(sa.Boolean())
-    filename_encryption = sa.Column(sa.Boolean(), default=True)
+    filename_encryption = sa.Column(sa.Boolean())
     encryption_password = sa.Column(sa.EncryptedText())
     encryption_salt = sa.Column(sa.EncryptedText())
-    args = sa.Column(sa.Text())
-    post_script = sa.Column(sa.Text())
-    pre_script = sa.Column(sa.Text())
-    snapshot = sa.Column(sa.Boolean())
-    bwlimit = sa.Column(sa.JSON(type=list))
-    include = sa.Column(sa.JSON(type=list))
-    exclude = sa.Column(sa.JSON(type=list))
-    transfers = sa.Column(sa.Integer(), nullable=True)
+
     create_empty_src_dirs = sa.Column(sa.Boolean())
     follow_symlinks = sa.Column(sa.Boolean())
-    job = sa.Column(sa.JSON(type=None))
 
 
-class CloudSyncService(TaskPathService, TaskStateMixin):
+class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     local_fs_lock_manager = FsLockManager()
     remote_fs_lock_manager = FsLockManager()
@@ -781,73 +737,22 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
         return cloud_sync
 
     @private
-    async def _get_credentials(self, credentials_id):
-        try:
-            return await self.middleware.call("datastore.query", "system.cloudcredentials",
-                                              [("id", "=", credentials_id)], {"get": True})
-        except IndexError:
-            return None
-
-    @private
     async def _basic_validate(self, verrors, name, data):
         if data["encryption"]:
             if not data["encryption_password"]:
                 verrors.add(f"{name}.encryption_password", "This field is required when encryption is enabled")
 
-        credentials = await self._get_credentials(data["credentials"])
-        if not credentials:
-            verrors.add(f"{name}.credentials", "Invalid credentials")
-
-        try:
-            shlex.split(data["args"])
-        except ValueError as e:
-            verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
-
-        if verrors:
-            raise verrors
-
-        provider = REMOTES[credentials["provider"]]
-
-        schema = []
-
-        if provider.buckets:
-            schema.append(Str("bucket", required=True, empty=False))
-
-        schema.append(Str("folder", required=True))
-
-        schema.extend(provider.task_schema)
-
-        schema.extend(self.common_task_schema(provider))
-
-        attributes_verrors = validate_schema(schema, data["attributes"])
-
-        if not attributes_verrors:
-            await provider.pre_save_task(data, credentials, verrors)
-
-        verrors.add_child(f"{name}.attributes", attributes_verrors)
+        await super()._basic_validate(verrors, name, data)
 
     @private
     async def _validate(self, verrors, name, data):
-        await self._basic_validate(verrors, name, data)
-
-        for i, (limit1, limit2) in enumerate(zip(data["bwlimit"], data["bwlimit"][1:])):
-            if limit1["time"] >= limit2["time"]:
-                verrors.add(f"{name}.bwlimit.{i + 1}.time", f"Invalid time order: {limit1['time']}, {limit2['time']}")
-
-        await self.validate_path_field(data, name, verrors)
+        await super()._validate(verrors, name, data)
 
         if data["snapshot"]:
             if data["direction"] != "PUSH":
                 verrors.add(f"{name}.snapshot", "This option can only be enabled for PUSH tasks")
             if data["transfer_mode"] == "MOVE":
                 verrors.add(f"{name}.snapshot", "This option can not be used for MOVE transfer mode")
-            if await self.middleware.call("filesystem.is_cluster_path", data["path"]):
-                verrors.add(f"{name}.snapshot", "This option can not be used for cluster paths")
-            elif await self.middleware.call("pool.dataset.query",
-                                            [["name", "^", os.path.relpath(data["path"], "/mnt") + "/"],
-                                             ["type", "=", "FILESYSTEM"]]):
-                verrors.add(f"{name}.snapshot", "This option is only available for datasets that have no further "
-                                                "nesting")
 
     @private
     async def _validate_folder(self, verrors, name, data):
@@ -885,34 +790,18 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
 
     @accepts(Dict(
         "cloud_sync_create",
-        Str("description", default=""),
+        *cloud_task_schema,
+
         Str("direction", enum=["PUSH", "PULL"], required=True),
         Str("transfer_mode", enum=["SYNC", "COPY", "MOVE"], required=True),
-        Str("path", required=True),
-        Int("credentials", required=True),
+
         Bool("encryption", default=False),
         Bool("filename_encryption", default=False),
         Str("encryption_password", default=""),
         Str("encryption_salt", default=""),
-        Cron(
-            "schedule",
-            defaults={"minute": "00"},
-            required=True
-        ),
+
         Bool("create_empty_src_dirs", default=False),
         Bool("follow_symlinks", default=False),
-        Int("transfers", null=True, default=None, validators=[Range(min=1)]),
-        List("bwlimit", items=[Dict("cloud_sync_bwlimit",
-                                    Str("time", validators=[Time()]),
-                                    Int("bandwidth", validators=[Range(min=1)], null=True))]),
-        List("include", items=[Str("path", empty=False)]),
-        List("exclude", items=[Str("path", empty=False)]),
-        Dict("attributes", additional_attrs=True, required=True),
-        Bool("snapshot", default=False),
-        Str("pre_script", default="", max_length=None),
-        Str("post_script", default="", max_length=None),
-        Str("args", default="", max_length=None),
-        Bool("enabled", default=True),
         register=True,
     ))
     async def do_create(self, cloud_sync):
@@ -1290,7 +1179,7 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
                             "property": field.name,
                             "schema": field.to_json_schema()
                         }
-                        for field in provider.task_schema + self.common_task_schema(provider)
+                        for field in provider.task_schema + self._common_task_schema(provider)
                     ],
                 }
                 for provider in REMOTES.values()
@@ -1298,25 +1187,10 @@ class CloudSyncService(TaskPathService, TaskStateMixin):
             key=lambda provider: provider["title"].lower()
         )
 
-    @private
-    def common_task_schema(self, provider):
-        schema = []
 
-        if provider.fast_list:
-            schema.append(Bool("fast_list", default=False, title="Use --fast-list", description=textwrap.dedent("""\
-                Use fewer transactions in exchange for more RAM. This may also speed up or slow down your
-                transfer. See [rclone documentation](https://rclone.org/docs/#fast-list) for more details.
-            """).rstrip()))
-
-        return schema
-
-
-remote_classes = []
-for module in load_modules(os.path.join(get_middlewared_dir(), "rclone", "remote")):
-    for cls in load_classes(module, BaseRcloneRemote, []):
-        remote_classes.append(cls)
-        for method_name in cls.extra_methods:
-            setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
+for cls in remote_classes:
+    for method_name in cls.extra_methods:
+        setattr(CloudSyncService, f"{cls.name.lower()}_{method_name}", getattr(cls, method_name))
 
 
 class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
@@ -1330,10 +1204,6 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
 
 async def setup(middleware):
-    for cls in remote_classes:
-        remote = cls(middleware)
-        REMOTES[remote.name] = remote
-
     await middleware.call('pool.dataset.register_attachment_delegate', CloudSyncFSAttachmentDelegate(middleware))
     await middleware.call('network.general.register_activity', 'cloud_sync', 'Cloud sync')
     await middleware.call('cloudsync.persist_task_state_on_job_complete')
