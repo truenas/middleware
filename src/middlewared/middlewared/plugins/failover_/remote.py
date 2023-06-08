@@ -265,8 +265,12 @@ class FailoverService(Service):
             options['job'] = 'RETURN'
         try:
             return self.CLIENT.call(method, *args, **options)
-        except CallTimeout:
-            raise CallError('Call timeout', errno.ETIMEDOUT)
+        except Exception as e:
+            ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+            if isinstance(e, CallTimeout) or (e.errno and e.errno in ignore):
+                self.logger.trace('Failed to call %r on remote node', method, exc_info=True)
+            else:
+                raise CallError(str(e), errno.EFAULT)
 
     @private
     def get_remote_os_version(self):
