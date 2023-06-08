@@ -465,12 +465,8 @@ class PoolService(CRUDService):
         if is_ha:
             try:
                 await self.middleware.call('failover.call_remote', 'disk.retaste')
-            except Exception as e:
-                ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                if isinstance(e, CallError) and e.errno in ignore:
-                    pass
-                else:
-                    self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+            except Exception:
+                self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 
         options = {
             'feature@lz4_compress': 'enabled',

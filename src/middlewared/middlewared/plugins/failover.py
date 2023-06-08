@@ -427,12 +427,8 @@ class FailoverService(ConfigService):
         if (ld := await self.get_disks_local()) is not None:
             try:
                 rd = await self.middleware.call('failover.call_remote', 'failover.get_disks_local')
-            except Exception as e:
-                ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                if isinstance(e, CallError) and e.errno in ignore:
-                    return result
-                else:
-                    self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
+            except Exception:
+                self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
             else:
                 result['missing_local'] = sorted(set(rd) - set(ld))
                 result['missing_remote'] = sorted(set(ld) - set(rd))
@@ -1259,10 +1255,8 @@ async def service_remote(middleware, service, verb, options):
         await middleware.call('failover.call_remote', 'core.bulk', [
             f'service.{verb}', [[service, options]]
         ])
-    except Exception as e:
-        ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-        if isinstance(e, CallError) and e.errno not in ignore:
-            middleware.logger.warning(f'Failed to run {verb}({service})', exc_info=True)
+    except Exception:
+        middleware.logger.warning('Failed to run %s(%s)', verb, service, exc_info=True)
 
 
 async def ready_system_sync_keys(middleware):
