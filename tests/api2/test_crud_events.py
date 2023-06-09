@@ -118,3 +118,29 @@ def test_event_update_on_job_method():
             assert_result(context, 'tunable.query', tunable['id'], 'changed')
     finally:
         call('tunable.delete', tunable['id'], job=True)
+
+
+def test_event_delete_on_non_job_method():
+    root_ca = call('certificateauthority.create', {
+        **get_cert_params(),
+        'name': 'test_root_ca_delete_event',
+        'create_type': 'CA_CREATE_INTERNAL',
+    })
+    with gather_events('certificateauthority.query') as context:
+        assert root_ca['CA_type_internal'] is True, root_ca
+        assert context['result'] is None, context
+
+        call('certificateauthority.delete', root_ca['id'])
+
+        assert_result(context, 'certificateauthority.query', root_ca['id'], 'removed')
+
+
+def test_event_delete_on_job_method():
+    tunable = call('tunable.create', {
+        'type': 'SYSCTL',
+        'var': 'kernel.watchdog',
+        'value': '1',
+    }, job=True)
+    with gather_events('tunable.query') as context:
+        call('tunable.delete', tunable['id'], job=True)
+        assert_result(context, 'tunable.query', tunable['id'], 'removed')
