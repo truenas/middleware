@@ -1,6 +1,8 @@
+import contextlib
 import functools
 import os
 import sys
+import threading
 
 from middlewared.client import Client
 from middlewared.test.integration.utils.client import host_websocket_uri, password
@@ -14,16 +16,15 @@ def auth():
     return 'root', password()
 
 
-def event_thread(event_endpoint: str):
+def event_thread(event_endpoint: str, context: dict):
     with Client(host_websocket_uri(), py_exceptions=False) as c:
         c.call('auth.login', *auth())
 
-        event_msg = None
         subscribe_payload = c.event_payload()
         event = subscribe_payload['event']
+        context['event'] = event
 
         def cb(mtype, **message):
-            nonlocal event_msg
             if len(message) != 3 or not all(
                 k in message for k in ('id', 'msg', 'collection')
             ) or message['collection'] != event_endpoint or message['msg'] not in (
@@ -31,15 +32,21 @@ def event_thread(event_endpoint: str):
             ):
                 return
 
-            event_msg = message
+            context['result'] = message
             event.set()
 
         c.subscribe(event_endpoint, cb, subscribe_payload)
+        event.wait(timeout=context['timeout'])
 
-        if not event.wait():
-            return event_msg
 
-        if subscribe_payload['error']:
-            return event_msg
-
-        return event_msg
+@contextlib.contextmanager
+def gather_events(event_endpoint: str):
+    context = {'result': None, 'event': None, 'timeout': 300}
+    thread = threading.Thread(target=event_thread, args=(event_endpoint, context))
+    thread.start()
+    try:
+        yield context
+    finally:
+        if context['event']:
+            context['event'].set()
+        thread.join(timeout=5)
