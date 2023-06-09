@@ -85,3 +85,19 @@ def test_event_create_on_job_method():
                 }, context['result']
             finally:
                 call('certificate.delete', cert['id'], job=True)
+
+
+def test_event_update_on_non_job_method():
+    with root_certificate_authority('root_ca_update_event_test') as root_ca:
+        with gather_events('certificateauthority.query') as context:
+            assert root_ca['CA_type_internal'] is True, root_ca
+            assert context['result'] is None, context
+
+            call('certificateauthority.update', root_ca['id'], {})
+
+            assert context['result'] is not None, context
+            assert context['result'] == {
+                'msg': 'changed',
+                'collection': 'certificateauthority.query',
+                'id': root_ca['id'],
+            }, context['result']
