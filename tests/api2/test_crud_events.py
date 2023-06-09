@@ -96,3 +96,17 @@ def test_event_update_on_non_job_method():
             call('certificateauthority.update', root_ca['id'], {})
 
             assert_result(context, 'certificateauthority.query', root_ca['id'], 'changed')
+
+
+def test_event_update_on_job_method():
+    tunable = call('tunable.create', {
+        'type': 'SYSCTL',
+        'var': 'kernel.watchdog',
+        'value': '1',
+    }, job=True)
+    try:
+        with gather_events('tunable.query') as context:
+            call('tunable.update', tunable['id'], {'value': '0'}, job=True)
+            assert_result(context, 'tunable.query', tunable['id'], 'changed')
+    finally:
+        call('tunable.delete', tunable['id'], job=True)
