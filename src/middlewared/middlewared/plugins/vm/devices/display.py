@@ -3,7 +3,7 @@ import subprocess
 
 from urllib.parse import urlencode, quote_plus
 
-from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.schema import Bool, Dict, Int, Str, ValidationErrors
 from middlewared.validators import Range
 
 from .device import Device
@@ -57,7 +57,8 @@ class DISPLAY(Device):
         return f'{protocol}://{host}/{path}{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
 
     def is_available(self):
-        return self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
+        bind_ip_available = self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
+        return bind_ip_available and not self.validate_port_attrs(self.data)
 
     def resolution(self):
         return self.data['attributes']['resolution']
@@ -123,6 +124,13 @@ class DISPLAY(Device):
 
             self.middleware.call_sync('vm.device.validate_display_devices', verrors, vm_instance)
 
+        self.validate_port_attrs(device, verrors)
+
+        if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
+            verrors.add('attributes.bind', 'Requested bind address is not valid')
+
+    def validate_port_attrs(self, device, verrors=None):
+        verrors = verrors or ValidationErrors()
         display_devices_ports = self.middleware.call_sync(
             'vm.all_used_display_device_ports', [['id', '!=', device.get('id')]]
         )
@@ -133,7 +141,7 @@ class DISPLAY(Device):
                 if dev_attrs[key] in display_devices_ports:
                     verrors.add(
                         f'attributes.{key}',
-                        'Specified display port is already in use by another Display device'
+                        f'Specified display port({dev_attrs[key]}) is already in use by another Display device'
                     )
                 else:
                     verrors.extend(self.middleware.call_sync(
@@ -141,6 +149,4 @@ class DISPLAY(Device):
                     ))
             else:
                 device['attributes'][key] = new_ports.pop(0)
-
-        if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
-            verrors.add('attributes.bind', 'Requested bind address is not valid')
+        return verrors
