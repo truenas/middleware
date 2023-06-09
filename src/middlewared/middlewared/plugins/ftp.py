@@ -24,7 +24,7 @@ class FTPModel(sa.Model):
     ftp_dirmask = sa.Column(sa.String(3), default="022")
     ftp_fxp = sa.Column(sa.Boolean(), default=False)
     ftp_resume = sa.Column(sa.Boolean(), default=False)
-    ftp_defaultroot = sa.Column(sa.Boolean(), default=False)
+    ftp_defaultroot = sa.Column(sa.Boolean(), default=True)
     ftp_ident = sa.Column(sa.Boolean(), default=False)
     ftp_reversedns = sa.Column(sa.Boolean(), default=False)
     ftp_masqaddress = sa.Column(sa.String(120))
@@ -197,8 +197,13 @@ class FTPService(SystemServiceService):
         if new["onlyanonymous"]:
             if not new["anonpath"]:
                 verrors.add("ftp_update.anonpath", "This field is required for anonymous login")
-            else:
-                await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
+        else:
+            # Anonymous is disabled, clear the anonpath
+            if new["anonpath"] is not None:
+                new["anonpath"] = None
+
+        if new["anonpath"] is not None:
+            await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
 
         if new["tls"]:
             if not new["ssltls_certificate"]:
