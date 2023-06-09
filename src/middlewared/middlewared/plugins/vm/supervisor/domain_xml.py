@@ -132,7 +132,7 @@ def devices_xml(vm_data, context):
     usb_controllers = {'nec-xhci': 0}
     virtual_device_no = Nid(1)
     devices = []
-    for device in filter(lambda d: d.is_available(), context['devices']):
+    for device in context['devices']:
         if isinstance(device, (DISK, CDROM, RAW)):
             if device.data['attributes'].get('type') == 'VIRTIO':
                 disk_no = virtual_device_no()
