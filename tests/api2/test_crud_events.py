@@ -64,3 +64,24 @@ def test_event_create_on_non_job_method():
                 'collection': 'certificateauthority.query',
                 'id': root_ca['id'],
             }, context['result']
+
+
+def test_event_create_on_job_method():
+    with gather_events('certificate.query') as context:
+        with root_certificate_authority('root_ca_create_event_test') as root_ca:
+            cert = call('certificate.create', {
+                'name': 'cert_test',
+                'signedby': root_ca['id'],
+                'create_type': 'CERTIFICATE_CREATE_INTERNAL',
+                **get_cert_params(),
+            }, job=True)
+            try:
+                assert cert['cert_type_internal'] is True, cert
+                assert context['result'] is not None, context
+                assert context['result'] == {
+                    'msg': 'added',
+                    'collection': 'certificate.query',
+                    'id': cert['id'],
+                }, context['result']
+            finally:
+                call('certificate.delete', cert['id'], job=True)
