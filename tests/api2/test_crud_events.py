@@ -23,6 +23,7 @@ def event_thread(event_endpoint: str, context: dict):
     with Client(host_websocket_uri(), py_exceptions=False) as c:
         assert c.call('auth.login', *auth()) is True
 
+        context['start_event'].set()
         subscribe_payload = c.event_payload()
         event = subscribe_payload['event']
         context['event'] = event
@@ -44,9 +45,16 @@ def event_thread(event_endpoint: str, context: dict):
 
 @contextlib.contextmanager
 def gather_events(event_endpoint: str, context_args: dict = None):
-    context = {'result': None, 'event': None, 'timeout': 60, **(context_args or {})}
+    context = {
+        'result': None,
+        'event': None,
+        'start_event': threading.Event(),
+        'timeout': 60,
+        **(context_args or {})
+    }
     thread = threading.Thread(target=event_thread, args=(event_endpoint, context))
     thread.start()
+    context['start_event'].wait(timeout=30)
     try:
         yield context
     finally:
