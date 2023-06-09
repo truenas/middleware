@@ -179,7 +179,9 @@ class LDAPClient(Service):
         In theory this should be accessible with an anonymous bind. In practice,
         it's better to use proper auth because configurations can vary wildly.
         """
-        results = LdapClient.search('', pyldap.SCOPE_BASE, '(objectclass=*)')
+        results = LdapClient.search(
+            data['ldap-configuration'], '', pyldap.SCOPE_BASE, '(objectclass=*)'
+        )
         return self.parse_results(results)
 
     @accepts(Dict(
