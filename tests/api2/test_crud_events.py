@@ -3,6 +3,7 @@ import functools
 import os
 import sys
 import threading
+import typing
 
 from middlewared.client import Client
 from middlewared.test.integration.assets.crypto import get_cert_params, root_certificate_authority
@@ -54,16 +55,20 @@ def gather_events(event_endpoint: str, context_args: dict = None):
         thread.join(timeout=5)
 
 
+def assert_result(context: dict, event_endpoint: str, oid: typing.Union[int, str], event_type: str) -> None:
+    assert context['result'] is not None, context
+    assert context['result'] == {
+        'msg': event_type,
+        'collection': event_endpoint,
+        'id': oid,
+    }, context['result']
+
+
 def test_event_create_on_non_job_method():
     with gather_events('certificateauthority.query') as context:
         with root_certificate_authority('root_ca_create_event_test') as root_ca:
             assert root_ca['CA_type_internal'] is True, root_ca
-            assert context['result'] is not None, context
-            assert context['result'] == {
-                'msg': 'added',
-                'collection': 'certificateauthority.query',
-                'id': root_ca['id'],
-            }, context['result']
+            assert_result(context, 'certificateauthority.query', root_ca['id'], 'added')
 
 
 def test_event_create_on_job_method():
@@ -77,12 +82,7 @@ def test_event_create_on_job_method():
             }, job=True)
             try:
                 assert cert['cert_type_internal'] is True, cert
-                assert context['result'] is not None, context
-                assert context['result'] == {
-                    'msg': 'added',
-                    'collection': 'certificate.query',
-                    'id': cert['id'],
-                }, context['result']
+                assert_result(context, 'certificate.query', cert['id'], 'added')
             finally:
                 call('certificate.delete', cert['id'], job=True)
 
@@ -95,9 +95,4 @@ def test_event_update_on_non_job_method():
 
             call('certificateauthority.update', root_ca['id'], {})
 
-            assert context['result'] is not None, context
-            assert context['result'] == {
-                'msg': 'changed',
-                'collection': 'certificateauthority.query',
-                'id': root_ca['id'],
-            }, context['result']
+            assert_result(context, 'certificateauthority.query', root_ca['id'], 'changed')
