@@ -38,15 +38,15 @@ def test_001_verify_system_dataset_functionality():
         assert results['basename'] == pool_info['bp_sysds_basename']
 
         """
-        Now that we've verified the systemd dataset on boot-pool we do the follwing:
+        Now that we've verified the system dataset is on the boot-pool we do the follwing:
         1. get unused disks
         2. create a 1 disk striped zpool
         3. verify system dataset automagically migrated to this pool
         4. if this is HA, wait for standby to reboot (since we reboot standby
             on system dataset migrate)
-        5. join AD temporarily and try to move system dataset (this should fail by design)
-        5. export the zpool and wipe the disks
-        6. verify system dataset automagically migrated BACK to boot pool
+        5. start the smb service and migrate the system dataset to boot-pool
+        6. create a 2nd zpool and ensure the system dataset doesn't migrate to it
+        7. cleanup both zpools by exporting them
         """
         unused_disks = [i['name'] for i in c.call('disk.get_unused')]
         assert len(unused_disks) >= 2
@@ -109,7 +109,5 @@ def test_001_verify_system_dataset_functionality():
             assert sysds['basename'] == pool_info['bp_sysds_basename']
             assert c.call('service.stop', 'cifs') is False  # the way we return service status is horrible
         finally:
-            if pool1 is not None:
-                c.call('pool.export', pool1['id'], {'destroy': True}, job=True)
-            if pool2 is not None:
-                c.call('pool.export', pool2['id'], {'destroy': True}, job=True)
+            for pool in filter(lambda x: x is not None, (pool1, pool2)):
+                c.call('pool.export', pool['id'], {'destroy': True}, job=True)
