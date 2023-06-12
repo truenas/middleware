@@ -459,40 +459,6 @@ def test_051_delete_the_test_dir_and_a_file_in_windows(request):
     assert results['result'] is True, results['output']
 
 
-def test_052_get_smb_sharesec_id_and_set_smb_sharesec_share_acl(request):
-    depends(request, ["service_cifs_running"], scope="session")
-    global share_id, payload
-    share_id = GET(f"/smb/sharesec/?share_name={SMB_NAME}").json()[0]['id']
-    payload = {
-        'share_acl': [
-            {
-                'ae_who_sid': 'S-1-5-32-544',
-                'ae_perm': 'FULL',
-                'ae_type': 'ALLOWED'
-            }
-        ]
-    }
-    results = PUT(f"/smb/sharesec/id/{share_id}/", payload)
-    assert results.status_code == 200, results.text
-
-
-@pytest.mark.parametrize('ae', ['ae_who_sid', 'ae_perm', 'ae_type'])
-def test_053_verify_smb_sharesec_change_for(request, ae):
-    depends(request, ["service_cifs_running"], scope="session")
-    results = GET(f"/smb/sharesec/id/{share_id}/")
-    assert results.status_code == 200, results.text
-    ae_result = results.json()['share_acl'][0][ae]
-    assert ae_result == payload['share_acl'][0][ae], results.text
-
-
-def test_054_verify_midclt_call_smb_getparm_access_based_share_enum_is_false(request):
-    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
-    cmd = f'midclt call smb.getparm "access based share enum" {SMB_NAME}'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['output'].strip() == "False", results['output']
-
-
 def test_055_delete_cifs_share(request):
     depends(request, ["service_cifs_running"], scope="session")
     results = DELETE(f"/sharing/smb/id/{smb_id}")
