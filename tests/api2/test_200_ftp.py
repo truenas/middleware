@@ -26,7 +26,6 @@ from auto_config import pool_name, ha
 from auto_config import dev_test, password, user
 from protocols import ftp_connect, ftp_connection
 from protocols import ftps_connection
-# from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.assets.account import user as ftp_user
 
 # comment pytestmark for development testing with --dev-test
@@ -343,29 +342,6 @@ def ftp_server():
         }
         res = make_ws_request(ip, payload)
         assert res.get('error') is None, res
-
-
-# @contextlib.contextmanager
-# def ftp_user(data):
-#     try:
-#         payload = {'msg': 'method', 'method': 'user.create', 'params': [data]}
-#         res = make_ws_request(ip, payload)
-#         assert res.get('error') is None, res
-#         userID = res['result']
-
-#         payload = {'msg': 'method', 'method': 'user.get_instance', 'params': [userID]}
-#         res = make_ws_request(ip, payload)
-#         assert res.get('error') is None, res
-#         userInstance = res['result']
-
-#         yield userInstance
-#     finally:
-#         try:
-#             payload = {'msg': 'method', 'method': 'user.delete', 'params': [userID]}
-#             res = make_ws_request(ip, payload)
-#             assert res.get('error') is None, res
-#         except InstanceNotFound:
-#             pass
 
 
 @contextlib.contextmanager
