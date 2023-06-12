@@ -83,7 +83,7 @@ def test_001_verify_system_dataset_functionality():
                 pool2 = c.call(
                     'pool.create', {
                         'name': pool_name2,
-                        'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[0]]}]}
+                        'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[1]]}]}
                     },
                     job=True
                 )
