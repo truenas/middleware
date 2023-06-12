@@ -422,7 +422,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'system dataset is on the boot pool'
                     )
 
-        elif new['enable'] and old['enable']:
+        if new['enable'] and old['enable']:
             permitted_keys = [
                 'verbose_logging',
                 'use_default_domain',
@@ -439,7 +439,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'Parameter may not be changed while the Active Directory service is enabled.'
                     )
 
-        if new['enable'] and not old['enable']:
+        elif new['enable'] and not old['enable']:
             """
             Currently run two health checks prior to validating domain.
             1) Attempt to kinit with user-provided credentials. This is used to
@@ -527,6 +527,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 raise ValidationError(
                     method, f'Failed to validate bind credentials: {msg}'
                 )
+
+        elif not new['enable'] and new['bindpw']:
+            raise ValidationError(
+                'activedirectory.bindpw',
+                'The Active Directory bind password is only used when enabling the active '
+                'directory service for the first time and is not stored persistently. Therefore it '
+                'is only valid when enabling the service.'
+            )
 
         new = await self.ad_compress(new)
         ret = await super().do_update(new)
