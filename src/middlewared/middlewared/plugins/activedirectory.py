@@ -664,7 +664,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await spn_job.wait()
 
         job.set_progress(70, 'Storing computer account keytab.')
-        if not (kt_id := await self.middleware.call('kerberos.keytab.store_samba_keytab')):
+        if not await self.middleware.call('kerberos.keytab.store_samba_keytab'):
             raise CallError("Failed to store machine account keytab")
 
     @private
@@ -1003,6 +1003,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
         netads = await run(cmd, check=False)
         if netads.returncode != 0:
             self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
+            return False
+
+        return True
 
     @accepts(Str('domain', default=''))
     @returns(Dict(
@@ -1148,7 +1151,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
         job.set_progress(10, 'Leaving Active Directory domain.')
-        await self._net_ads_leave(data)
+        left_successfully = await self._net_ads_leave(data)
 
         job.set_progress(15, 'Removing DNS entries')
         await self.middleware.call('activedirectory.unregister_dns', ad)
@@ -1167,7 +1170,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             except MatchNotFound:
                 pass
 
-        if netads.returncode == 0 and smb_ha_mode != 'CLUSTERED':
+        if left_successfully and smb_ha_mode != 'CLUSTERED':
             try:
                 pdir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
                 ts = time.time()
