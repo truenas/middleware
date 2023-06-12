@@ -646,7 +646,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('privilege.delete', existing_privileges[0]['id'])
 
     @private
-    async def post_join_setup(self, data):
+    async def post_join_setup(self, job, data):
         ad = data['ad_config']
         smb = data['smb_config']
         smb_ha_mode = data['ha_mode']
@@ -755,7 +755,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             await self._net_ads_join(ad)
 
             try:
-                await self.post_join_setup({
+                await self.post_join_setup(job, {
                     'ad_config': ad,
                     'smb_config': smb,
                     'ha_mode': smb_ha_mode
