@@ -646,6 +646,28 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('privilege.delete', existing_privileges[0]['id'])
 
     @private
+    async def post_join_setup(self, data):
+        ad = data['ad_config']
+        smb = data['smb_config']
+        smb_ha_mode = data['ha_mode']
+
+        await self.middleware.call('activedirectory.register_dns', ad, smb, smb_ha_mode)
+
+        """
+        Manipulating the SPN entries must be done with elevated privileges. Add NFS service
+        principals while we have these on-hand.
+        Since this may potentially take more than a minute to complete, run in background job.
+        """
+        job.set_progress(60, 'Adding NFS Principal entries.')
+        # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
+        spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
+        await spn_job.wait()
+
+        job.set_progress(70, 'Storing computer account keytab.')
+        if not (kt_id := await self.middleware.call('kerberos.keytab.store_samba_keytab')):
+            raise CallError("Failed to store machine account keytab")
+
+    @private
     @job(lock="AD_start_stop")
     async def start(self, job):
         """
@@ -731,58 +753,56 @@ class ActiveDirectoryService(TDBWrapConfigService):
             job.set_progress(50, 'Joining Active Directory Domain')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join(ad)
-            await self.middleware.call('activedirectory.register_dns', ad, smb, smb_ha_mode)
-            """
-            Manipulating the SPN entries must be done with elevated privileges. Add NFS service
-            principals while we have these on-hand.
-            Since this may potentially take more than a minute to complete, run in background job.
-            """
-            job.set_progress(60, 'Adding NFS Principal entries.')
-            # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
-            spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
-            await spn_job.wait()
 
-            job.set_progress(70, 'Storing computer account keytab.')
-            kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
-            if kt_id:
-                self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
-                ad = await self.direct_update({
-                    'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
+            try:
+                await self.post_join_setup({
+                    'ad_config': ad,
+                    'smb_config': smb,
+                    'ha_mode': smb_ha_mode
                 })
+            except Exception:
+                self.logger.error("Tasks subsequent to Active Directory join failed. "
+                                  "Attempting to roll-back join attempt.", exc_info=True)
+                await self._net_ads_leave({'username': ad['bindname']})
+                raise
 
-                job.set_progress(75, 'Performing kinit using new computer account.')
-                """
-                Remove our temporary administrative ticket and replace with machine account.
+            ad = await self.direct_update({
+                'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
+            })
 
-                Sysvol replication may not have completed (new account only exists on the DC we're
-                talking to) and so during this operation we need to hard-code which KDC we use for
-                the new kinit.
-                """
-                domain_info = await self.domain_info(ad['domainname'])
-                payload = {
-                    'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
-                    'conf': {
-                        'domainname': ad['domainname'],
-                        'kerberos_principal': ad['kerberos_principal'],
-                    }
+            job.set_progress(75, 'Performing kinit using new computer account.')
+
+            """
+            Remove our temporary administrative ticket and replace with machine account.
+
+            Sysvol replication may not have completed (new account only exists on the DC we're
+            talking to) and so during this operation we need to hard-code which KDC we use for
+            the new kinit.
+            """
+            domain_info = await self.domain_info(ad['domainname'])
+            cred = await self.middleware.call('kerberos.get_cred', {
+                'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                'conf': {
+                    'domainname': ad['domainname'],
+                    'kerberos_principal': ad['kerberos_principal'],
                 }
-                cred = await self.middleware.call('kerberos.get_cred', payload)
-                await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
-                await self.middleware.call('kerberos.do_kinit', {
-                    'krb5_cred': cred,
-                    'kinit-options': {
-                        'kdc_override': {'domain': ad['domainname'], 'kdc': domain_info['KDC server']}
-                    }
-                })
-                await self.middleware.call('kerberos.wait_for_renewal')
-                await self.middleware.call('etc.generate', 'kerberos')
-
-            ret = neterr.JOINED
+            })
+            await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
+            await self.middleware.call('kerberos.do_kinit', {
+                'krb5_cred': cred,
+                'kinit-options': {
+                    'kdc_override': {'domain': ad['domainname'], 'kdc': domain_info['KDC server']}
+                }
+            })
+            await self.middleware.call('kerberos.wait_for_renewal')
+            await self.middleware.call('etc.generate', 'kerberos')
 
             job.set_progress(80, 'Configuring idmap backend and NTP servers.')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.set_idmap(ad['allow_trusted_doms'], ad['domainname'])
             await self.middleware.call('activedirectory.set_ntp_servers')
+
+            ret = neterr.JOINED
 
         await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.reload', 'idmap')
@@ -968,6 +988,22 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         return neterr.JOINED
 
+    @private
+    async def _net_ads_leave(self, data):
+        await self.middleware.call('kerberos.check_ticket')
+
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-U', data['username'],
+            'ads', 'leave',
+        ]
+
+        netads = await run(cmd, check=False)
+        if netads.returncode != 0:
+            self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
+
     @accepts(Str('domain', default=''))
     @returns(Dict(
         IPAddr('LDAP server'),
@@ -1112,16 +1148,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
         job.set_progress(10, 'Leaving Active Directory domain.')
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '-U', data['username'],
-            'ads', 'leave',
-        ]
-        netads = await run(cmd, check=False)
-        if netads.returncode != 0:
-            self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
+        await self._net_ads_leave(data)
 
         job.set_progress(15, 'Removing DNS entries')
         await self.middleware.call('activedirectory.unregister_dns', ad)
