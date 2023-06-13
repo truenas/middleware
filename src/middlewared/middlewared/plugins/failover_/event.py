@@ -587,6 +587,8 @@ class FailoverEventsService(Service):
             # meanwhile.
             self.run_call('kmip.initialize_keys')
 
+        self.run_call('interface.persist_link_addresses')
+
         logger.info('Failover event complete.')
 
         # clear the description and set the result
@@ -744,6 +746,14 @@ class FailoverEventsService(Service):
             ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
             if isinstance(e, CallError) and e.errno not in ignore:
                 logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
+
+        try:
+            self.run_call('failover.call_remote', 'interface.persist_link_addresses')
+        except Exception as e:
+            ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+            if isinstance(e, CallError) and e.errno not in ignore:
+                logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
+                               exc_info=True)
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'

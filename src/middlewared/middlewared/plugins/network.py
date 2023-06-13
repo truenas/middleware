@@ -55,6 +55,7 @@ class NetworkInterfaceModel(sa.Model):
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
     int_link_address = sa.Column(sa.String(17), nullable=True)
+    int_link_address_b = sa.Column(sa.String(17), nullable=True)
 
 
 class NetworkLaggInterfaceModel(sa.Model):
@@ -1225,11 +1226,16 @@ class InterfaceService(CRUDService):
                         {'int_interface': new['name']},
                     )
 
+            link_address_update = {'int_link_address': iface['state']['link_address']}
+            if await self.middleware.call('system.is_enterprise_ix_hardware'):
+                if await self.middleware.call('failover.node') == 'B':
+                    link_address_update = {'int_link_address_b': iface['state']['link_address']}
+
             await self.middleware.call(
                 'datastore.update',
                 'network.interfaces',
                 config['id'],
-                {'int_link_address': iface['state']['link_address']},
+                link_address_update,
             )
 
             if iface['type'] == 'BRIDGE':
