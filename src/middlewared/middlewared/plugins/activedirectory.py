@@ -872,6 +872,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
             await cl_reload.wait()
 
+        await self.middleware.call('smb.initialize_globals')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')

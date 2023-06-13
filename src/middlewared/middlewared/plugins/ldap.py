@@ -991,6 +991,7 @@ class LDAPService(TDBWrapConfigService):
         job.set_progress(30, 'Reconfiguring SMB service.')
         await self.middleware.call('smb.synchronize_passdb')
         await self.middleware.call('smb.synchronize_group_mappings')
+        await self.middleware.call('smb.initialize_globals')
         await self._service_change('cifs', 'restart')
 
         job.set_progress(50, 'Clearing directory service cache.')
