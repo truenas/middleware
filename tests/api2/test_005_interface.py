@@ -103,11 +103,6 @@ def test_001_configure_interface(request, ws_client, iface_to_use, get_payload):
     assert reality == set(get_payload[1])
 
     if ha:
-        # the other test modules that are run after this one _ASSUME_ that this
-        # test has re-enabled failover on the HA VM
-        ws_client.call('failover.update', {'disabled': False})
-        assert ws_client.call('failover.config')['disabled'] is False
-
         # let's go 1-step further and validate that the VIP accepts connections
         with client(host_ip=os.environ['virtual_ip']) as c:
             assert c.call('core.ping') == 'pong'
