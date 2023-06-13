@@ -385,6 +385,7 @@ def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=N
             "full_name": username + " User",
             "password": "secret",
             "home_create": False,
+            "smb": False,
             "groups": [ftp_get_ftp_group()],
         }):
             # Add a dirs and files
