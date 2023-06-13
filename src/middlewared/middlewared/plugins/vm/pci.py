@@ -99,7 +99,7 @@ class VMDeviceService(Service):
                 'vendor': 'Not Available',
             },
             'controller_type': controller_type,
-            'critical': (k.lower() in controller_type.lower() for k in SENSITIVE_PCI_DEVICE_TYPES),
+            'critical': any(k.lower() in controller_type.lower() for k in SENSITIVE_PCI_DEVICE_TYPES),
             'iommu_group': {},
             'available': False,
             'drivers': [],
