@@ -20,9 +20,19 @@ def convert_topology(zfs, vdevs):
             topology[vdev['root'].lower()].extend(children)
         else:
             z_vdev = libzfs.ZFSVdev(zfs, 'disk')
-            z_vdev.type = vdev['type'].lower()
             z_vdev.children = children
-            topology[vdev['root'].lower()].append(z_vdev)
+            if vdev['type'].startswith('DRAID'):
+                z_vdev.type = 'draid'
+                topology['draid'].append({
+                    'disk': z_vdev,
+                    'parameters': {
+                        'children': len(children),
+                        'draid_parity': int(vdev['type'][-1]),
+                    }
+                })
+            else:
+                z_vdev.type = vdev['type'].lower()
+                topology[vdev['root'].lower()].append(z_vdev)
     return topology
 
 

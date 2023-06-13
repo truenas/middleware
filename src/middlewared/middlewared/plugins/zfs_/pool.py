@@ -39,7 +39,11 @@ class ZFSPoolService(CRUDService):
                 Dict(
                     'vdev',
                     Str('root', enum=['DATA', 'CACHE', 'LOG', 'SPARE', 'SPECIAL', 'DEDUP'], required=True),
-                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    Str(
+                        'type', enum=[
+                            'DRAID1', 'DRAID2', 'DRAID3', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'
+                        ], required=True,
+                    ),
                     List('devices', items=[Str('disk')], required=True),
                 ),
             ], required=True),

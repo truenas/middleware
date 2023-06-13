@@ -294,10 +294,16 @@ class PoolService(CRUDService):
                     else:
                         spare['disks'].append(i['path'])
                 else:
-                    rv.append({
+                    entry = {
                         'type': i['type'],
                         'disks': [j['type'] for j in i['children']],
-                    })
+                    }
+                    if i['type'] == 'DRAID':
+                        # This needs to happen because type here says draid only and we need to
+                        # normalize it so that it reflects the parity as well i.e DRAID1, DRAID2, etc.
+                        # sample value of name here is: draid1:1d:2c:0s-0
+                        entry['type'] = f'{i["type"]}{i["name"][len("draid"):len("draid") + 1]}'
+                    rv.append(entry)
             return rv
 
         for topology_type in ('data', 'special', 'dedup'):
@@ -310,6 +316,9 @@ class PoolService(CRUDService):
                 minmap = {
                     'STRIPE': 1,
                     'MIRROR': 2,
+                    'DRAID1': 2,
+                    'DRAID2': 3,
+                    'DRAID3': 4,
                     'RAIDZ1': 3,
                     'RAIDZ2': 4,
                     'RAIDZ3': 5,
@@ -359,7 +368,9 @@ class PoolService(CRUDService):
             List('data', items=[
                 Dict(
                     'datavdevs',
-                    Str('type', enum=['RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'], required=True),
+                    Str('type', enum=[
+                        'DRAID1', 'DRAID2', 'DRAID3', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'
+                    ], required=True),
                     List('disks', items=[Str('disk')], required=True),
                 ),
             ], required=True),
