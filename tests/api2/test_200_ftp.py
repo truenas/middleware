@@ -26,7 +26,7 @@ from auto_config import pool_name, ha
 from auto_config import dev_test, password, user
 from protocols import ftp_connect, ftp_connection
 from protocols import ftps_connection
-from middlewared.service_exception import InstanceNotFound
+from middlewared.test.integration.assets.account import user as ftp_user
 
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
@@ -345,29 +345,6 @@ def ftp_server():
 
 
 @contextlib.contextmanager
-def ftp_user(data):
-    try:
-        payload = {'msg': 'method', 'method': 'user.create', 'params': [data]}
-        res = make_ws_request(ip, payload)
-        assert res.get('error') is None, res
-        userID = res['result']
-
-        payload = {'msg': 'method', 'method': 'user.get_instance', 'params': [userID]}
-        res = make_ws_request(ip, payload)
-        assert res.get('error') is None, res
-        userInstance = res['result']
-
-        yield userInstance
-    finally:
-        try:
-            payload = {'msg': 'method', 'method': 'user.delete', 'params': [userID]}
-            res = make_ws_request(ip, payload)
-            assert res.get('error') is None, res
-        except InstanceNotFound:
-            pass
-
-
-@contextlib.contextmanager
 def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, withConn=None, **kwargs):
     FTPconfig = FTPconfig or {}
     withConn = withConn or True
@@ -408,6 +385,7 @@ def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=N
             "full_name": username + " User",
             "password": "secret",
             "home_create": False,
+            "smb": False,
             "groups": [ftp_get_ftp_group()],
         }):
             # Add a dirs and files
@@ -860,9 +838,16 @@ def test_017_ftp_port(request):
             assert ftpPort == "22222", f"Expected '22222' FTP port, but found {ftpPort}"
 
 
-def test_020_login_attempts(request):
+# @pytest.mark.parametrize("NumTries,expect_to_pass"m )
+@pytest.mark.parametrize('NumFailedTries,expect_to_pass', [
+    (2, True),
+    (3, False)
+])
+def test_020_login_attempts(request, NumFailedTries, expect_to_pass):
     '''
     Test our ability to change and trap excessive failed login attempts
+    1) Test good password before running out of tries
+    2) Test good password after running out of tries
     '''
     depends(request, ["pool_04", "init_dflt_config"], scope="session")
     login_setup = {
@@ -872,8 +857,7 @@ def test_020_login_attempts(request):
     with ftp_user_ds_and_srvr_conn('ftplocalDS', 'FTPfatfingeruser', login_setup) as loginftp:
         MaxTries = loginftp.ftpConf['loginattempt']
         ftpObj = loginftp.ftp
-        login_attempt = 0
-        for login_attempt in range(0, MaxTries):
+        for login_attempt in range(0, NumFailedTries):
             try:
                 # Attempt login with bad password
                 ftpObj.login(user='FTPfatfingeruser', passwd="secrfet")
@@ -881,10 +865,15 @@ def test_020_login_attempts(request):
                 assert True, f"Unexpected login failure: {all_e}"
             except EOFError as eof_e:
                 assert True, f"Unexpected disconnect: {eof_e}"
-        with pytest.raises(EOFError):
-            # Try with good values this time
+        if expect_to_pass:
+            # Try with correct password
             ftpObj.login(user='FTPfatfingeruser', passwd="secret")
-            assert login_attempt < MaxTries, "Failed to limit login attempts"
+            assert expect_to_pass is True
+        else:
+            with pytest.raises(EOFError):
+                # Try with correct password, but already exceeded number of tries
+                ftpObj.login(user='FTPfatfingeruser', passwd="secret")
+                assert login_attempt < MaxTries, "Failed to limit login attempts"
 
 
 @pytest.mark.parametrize('setting', [True, False])
