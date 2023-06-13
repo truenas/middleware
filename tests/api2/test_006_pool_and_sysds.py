@@ -1,113 +1,173 @@
 import sys
-import time
 import os
-
-import pytest
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import ha, ip, dev_test
+
+import pytest
+from pytest_dependency import depends
+
+from auto_config import ha, ip, pool_name
 from middlewared.test.integration.utils.client import client
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
+@pytest.fixture(scope='module')
+def ws_client():
+    # by the time this test is called in the pipeline,
+    # the HA VM should have networking configured so
+    # we can use the VIP
+    with client(host_ip=os.environ['virtual_ip'] if ha else ip) as c:
+        yield c
 
 
-def test_001_verify_system_dataset_functionality():
-    ip_to_be_used = ip
-    if ha and os.environ.get('virtual_ip', False):
-        ip_to_be_used = os.environ['controller1_ip']
+@pytest.fixture(scope='module')
+def pool_data():
+    return dict()
 
-    with client(host_ip=ip_to_be_used) as c:
-        bp_name = c.call('boot.pool_name')
-        pool_info = {
-            'bp_name': bp_name,
-            'bp_sysds_basename': f'{bp_name}/.system',
-            'zp_name1': 'cargo1',
-            'zp_name2': 'cargo2',
-        }
-        """
-        When a system is first installed or all zpools are deleted
-        then we place the system dataset on the boot pool. Since our
-        CI pipelines always start with a fresh VM, we can safely assume
-        that there are no zpools (created or imported) by the time this
-        test runs and so we can assert this accordingly.
-        """
-        results = c.call('systemdataset.config')
-        assert isinstance(results, dict)
-        assert results['pool'] == pool_info['bp_name']
-        assert results['basename'] == pool_info['bp_sysds_basename']
 
-        """
-        Now that we've verified the system dataset is on the boot-pool we do the follwing:
+@pytest.mark.dependency(name='SYSDS')
+def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
+    """
+    When a system is first installed or all zpools are deleted
+    then we place the system dataset on the boot pool. Since our
+    CI pipelines always start with a fresh VM, we can safely assume
+    that there are no zpools (created or imported) by the time this
+    test runs and so we can assert this accordingly.
+    """
+    bp_name = ws_client.call('boot.pool_name')
+    bp_basename = f'{bp_name}/.system'
+    sysds = ws_client.call('systemdataset.config')
+    assert bp_name == sysds['pool']
+    assert bp_basename == sysds['basename']
+
+
+@pytest.mark.dependency(name='PERM_ZPOOL_CREATED')
+def test_002_create_permanent_zpool(request, ws_client):
+    """
+    This creates the "permanent" zpool which is used by every other
+    test module in the pipeline.
+    More specifically we do the following:
         1. get unused disks
         2. create a 1 disk striped zpool
         3. verify system dataset automagically migrated to this pool
-        4. if this is HA, wait for standby to reboot (since we reboot standby
-            on system dataset migrate)
-        5. start the smb service and migrate the system dataset to boot-pool
-        6. create a 2nd zpool and ensure the system dataset doesn't migrate to it
-        7. cleanup both zpools by exporting them
-        """
-        unused_disks = [i['name'] for i in c.call('disk.get_unused')]
-        assert len(unused_disks) >= 2
-        pool_name1, pool_name2 = pool_info['zp_name1'], pool_info['zp_name2']
-        pool1, pool2 = None, None
-        try:
-            pool1 = c.call(
-                'pool.create', {
-                    'name': pool_name1,
-                    'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[0]]}]}
-                },
-                job=True
-            )
-        except Exception as e:
-            assert False, e
-        else:
-            results = c.call('systemdataset.config')
-            assert isinstance(results, dict)
-            assert results['pool'] == pool_name1
-            assert results['basename'] == f'{pool_name1}/.system'
-            if ha:
-                # on HA systems, when first zpool is created we reboot
-                # the standby so the system dataset related operations
-                # can complete properly
-                max_wait, wait_time, sleep_time = 120, 0, 1
-                while wait_time < max_wait:
-                    if c.call('failover.call_remote', 'core.ping') == 'pong':
-                        break
-                    else:
-                        time.sleep(sleep_time)
-                        wait_time += sleep_time
+    """
+    depends(request, ['SYSDS'])
+    unused_disks = ws_client.call('disk.get_unused')
+    assert len(unused_disks) >= 2
 
-            try:
-                pool2 = c.call(
-                    'pool.create', {
-                        'name': pool_name2,
-                        'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[1]]}]}
-                    },
-                    job=True
-                )
-            except Exception as e:
-                assert False, e
-            else:
-                # we've created a 2nd pool, so let's ensure the system dataset doesn't automatically
-                # migrate to this one since it should already exist on `pool_name1`
-                results = c.call('systemdataset.config')
-                assert isinstance(results, dict)
-                assert results['pool'] == pool_name1
-                assert results['basename'] == f'{pool_name1}/.system'
+    try:
+        ws_client.call(
+            'pool.create', {
+                'name': pool_name,
+                'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[0]['name']]}]}
+            },
+            job=True
+        )
+    except Exception as e:
+        assert False, e
+    else:
+        results = ws_client.call('systemdataset.config')
+        assert results['pool'] == pool_name
+        assert results['basename'] == f'{pool_name}/.system'
 
-            # finally, let's start the smb service and make sure that we can move system dataset
-            # while the service is started (end-user is prompted in the webUI that this will cause
-            # service disruption)
-            smb_svc = c.call('service.query', [['service', '=', 'cifs']], {'get': True})
-            if smb_svc['state'] != 'RUNNING':
-                assert c.call('service.start', 'cifs')
 
-            sysds = c.call('systemdataset.update', {'pool': pool_info['bp_name']}, job=True)
-            assert sysds['pool'] == pool_info['bp_name']
-            assert sysds['basename'] == pool_info['bp_sysds_basename']
-            assert c.call('service.stop', 'cifs') is False  # the way we return service status is horrible
-        finally:
-            for pool in filter(lambda x: x is not None, (pool1, pool2)):
-                c.call('pool.export', pool['id'], {'destroy': True}, job=True)
+@pytest.mark.dependency(name='POOL_FUNCTIONALITY1')
+def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(request, ws_client, pool_data):
+    """
+    This tests a few items related to zpool creation logic:
+    1. disk.get_unused should NOT show disks that are a part of a zpool that is
+        currently imported
+    2. make sure the system dataset doesn't migrate to the 2nd zpool that we create
+        since it should only be migrating to the 1st zpool that is created
+    """
+    depends(request, ['PERM_ZPOOL_CREATED'])
+    unused_disks = ws_client.call('disk.get_unused')
+    assert len(unused_disks) >= 1
+
+    try:
+        pool = ws_client.call(
+            'pool.create', {
+                'name': 'temp',
+                'topology': {'data': [{'type': 'STRIPE', 'disks': [unused_disks[0]['name']]}]}
+            },
+            job=True
+        )
+    except Exception as e:
+        assert False, e
+    else:
+        pool_data[pool['name']] = pool
+        # disk should not show up in `exported_zpool` keys since it's still imported
+        unused_disks = ws_client.call('disk.get_unused', False)
+        assert not any((i['exported_zpool'] == pool['name'] for i in unused_disks))
+
+        sysds = ws_client.call('systemdataset.config')
+        assert pool['name'] != sysds['pool']
+        assert f'{pool["name"]}/.system' != sysds['basename']
+
+
+def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, pool_data):
+    """
+    This does a few things:
+    1. set some bad zfs dataset properties to mimic importing a foreign pool
+        that does not follow the paradigm we expect
+    2. export the zpool without wiping the disk and verify that disk.get_unused
+        still shows the relevant disk as being part of an exported zpool
+    3. middleware attempts to normalize certain ZFS dataset properties so that
+        importing a foreign pool doesn't break our configuration. Currently we
+        do this by resetting the mountpoint of datasets, and disabling sharenfs
+        property. This test simultates such a situation by creating a test pool
+        setting parameters that must be migrated, then exporting the pool and
+        re-importing it. Once this is complete, we check whether properties
+        have been set to their correct new values.
+    4. clean up the pool by exporting and wiping the disks
+    5. finally, if this is HA enable failover since all tests after this one
+        expect it to be turned on
+    """
+    depends(request, ['POOL_FUNCTIONALITY1'])
+    zp_name = list(pool_data.keys())[0]
+    with pytest.raises(Exception):
+        # should prevent setting this property at root dataset
+        ws_client.call('zfs.dataset.update', zp_name, {'properties': {'sharenfs': {'value': 'on'}}})
+
+    # create a dataset and set some "bad" properties
+    ds_name = f'{zp_name}/ds1'
+    ws_client.call('pool.dataset.create', {'name': ds_name})
+    ws_client.call('zfs.dataset.update', ds_name, {
+        'properties': {'sharenfs': {'value': 'on'}, 'mountpoint': {'value': 'legacy'}}
+    })
+
+    # export zpool
+    try:
+        ws_client.call('pool.export', pool_data[zp_name]['id'], job=True)
+    except Exception as e:
+        assert False, e
+
+    imported = False
+    try:
+        # disk should show up in `exported_zpool` keys since zpool was exported
+        # without wiping the disk
+        unused_disks = ws_client.call('disk.get_unused', False)
+        assert any((i['exported_zpool'] == zp_name for i in unused_disks))
+
+        # pool should be available to be imported again
+        available_pools = ws_client.call('pool.import_find', job=True)
+        assert len(available_pools) == 1 and available_pools[0]['name'] == zp_name
+
+        # import it
+        imported = ws_client.call('pool.import_pool', {'guid': available_pools[0]['guid']}, job=True)
+        assert imported
+
+        # verify the properties were normalized
+        for ds in (ds_name, zp_name):
+            rv = ws_client.call('zfs.dataset.query', [['id', '=', ds]], {'get': True})
+            assert rv['properties']['mountpoint']['value'] != 'legacy'
+            assert rv['properties']['sharenfs']['value'] == 'off'
+    finally:
+        if imported:
+            temp_id = ws_client.call('pool.query', [['name', '=', zp_name]], {'get': True})['id']
+            options = {'cascade': True, 'restart_services': True, 'destroy': True}
+            ws_client.call('pool.export', temp_id, options, job=True)
+
+        if ha:
+            # every test after this one expects this to be enabled
+            ws_client.call('failover.update', {'disabled': False, 'master': True})
+            assert ws_client.call('failover.config')['disabled'] is False
