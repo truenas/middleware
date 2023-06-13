@@ -696,6 +696,8 @@ class FailoverService(Service):
                     logger.warning('Initializing KMIP keys')
                     self.run_call('kmip.initialize_keys')
 
+                self.run_call('interface.persist_link_addresses')
+
                 logger.warning('Failover event complete.')
         except AlreadyLocked:
             logger.warning('Failover event handler failed to aquire master lockfile')
@@ -889,6 +891,8 @@ class FailoverService(Service):
 
                 # Sync GELI and/or ZFS encryption keys from MASTER node
                 self.middleware.call_sync('failover.sync_keys_from_remote_node')
+
+                self.run_call('failover.call_remote', 'interface.persist_link_addresses')
 
             # if we're the backup controller then it means
             # the SED drives have already been unlocked so
