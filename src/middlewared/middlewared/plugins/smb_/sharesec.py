@@ -196,6 +196,16 @@ class ShareSec(CRUDService):
         If the `option` `resolve_sids` is set to `False` then the returned ACL will not
         contain names.
         """
+        if share_name.upper() == 'HOMES':
+            share_filter = [['home', '=', True]]
+        else:
+            share_filter = [['name', 'C=', share_name]]
+
+        try:
+            await self.middleware.call('sharing.smb.query', share_filter, {'get': True})
+        except MatchNotFound:
+            raise CallError(f'{share_name}: share does not exist')
+
         sharesec = await self._sharesec(action='--view', share=share_name)
         share_sd = f'[{share_name.upper()}]\n{sharesec}'
         return await self.parse_share_sd(share_sd, options)
@@ -246,6 +256,16 @@ class ShareSec(CRUDService):
 
         `ae_type` can be ALLOWED or DENIED.
         """
+        if data['share_name'].upper() == 'HOMES':
+            share_filter = [['home', '=', True]]
+        else:
+            share_filter = [['name', 'C=', data['share_name']]]
+
+        try:
+            config_share = await self.middleware.call('sharing.smb.query', share_filter, {'get': True})
+        except MatchNotFound:
+            raise CallError(f'{data["share_name"]}: share does not exist')
+
         ae_list = []
         for entry in data['share_acl']:
             ae_list.append(await self._ae_to_string(entry))
@@ -254,7 +274,6 @@ class ShareSec(CRUDService):
         if not db_commit:
             return
 
-        config_share = await self.middleware.call('sharing.smb.query', [('name', '=', data['share_name'])], {'get': True})
         await self.middleware.call('datastore.update', 'sharing.cifs_share', config_share['id'],
                                    {'cifs_share_acl': ' '.join(ae_list)})
 
