@@ -22,14 +22,13 @@ sys.path.append(apifolder)
 
 from auto_config import dev_test, ha, hostname, isns_ip, pool_name
 from functions import DELETE, GET, POST, PUT
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.utils import call
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
                        isns_connection)
 
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
-from middlewared.test.integration.utils import call
-from middlewared.service_exception import ValidationErrors
-
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
