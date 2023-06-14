@@ -1,10 +1,8 @@
 import re
-import errno
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.service_exception import CallError
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
@@ -268,12 +266,8 @@ class DiskService(Service, ServiceChangeMixin):
             # improvement this provides is substantial
             try:
                 self.middleware.call_sync('failover.datastore.send')
-            except Exception as e:
-                ignore = (errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                if isinstance(e, CallError) and e.errno in ignore:
-                    pass
-                else:
-                    self.logger.warning('Unexpected failure syncing database to standby controller', exc_info=True)
+            except Exception:
+                self.logger.warning('Unexpected failure syncing database to standby controller', exc_info=True)
 
         job.set_progress(100, 'Syncing all disks complete')
         return 'OK'

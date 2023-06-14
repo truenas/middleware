@@ -486,7 +486,7 @@ class Client:
 
         try:
             if not c.returned.wait(timeout):
-                raise CallTimeout("Call timeout")
+                raise CallTimeout("Call timeout", errno.ETIMEDOUT)
 
             if c.errno:
                 if c.py_exception:

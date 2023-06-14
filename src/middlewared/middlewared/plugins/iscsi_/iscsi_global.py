@@ -5,8 +5,7 @@ import socket
 import middlewared.sqlalchemy as sa
 from middlewared.async_validators import validate_port
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import (CallError, SystemServiceService,
-                                 ValidationErrors, private)
+from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
 from middlewared.validators import IpAddress, Port, Range
 
@@ -125,7 +124,11 @@ class ISCSIGlobalService(SystemServiceService):
                 server_addresses.append(result)
         if server_addresses:
             # For the valid addresses, we will check connectivity in parallel
-            coroutines = [self.middleware.call('iscsi.global.port_is_listening', ip, port) for (server, ip, port) in server_addresses]
+            coroutines = [
+                self.middleware.call(
+                    'iscsi.global.port_is_listening', ip, port
+                ) for (server, ip, port) in server_addresses
+            ]
             results = await asyncio.gather(*coroutines)
             for (server, ip, port), result in zip(server_addresses, results):
                 if not result:
@@ -161,11 +164,8 @@ class ISCSIGlobalService(SystemServiceService):
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
-                except Exception as e:
-                    if isinstance(e, CallError) and e.errno == CallError.ENOMETHOD:
-                        pass
-                    else:
-                        self.logger.error('Unhandled exception in stop_active_isns on remote controller', exc_info=True)
+                except Exception:
+                    self.logger.error('Unhandled exception in stop_active_isns on remote controller', exc_info=True)
 
         return await self.config()
 

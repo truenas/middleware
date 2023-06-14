@@ -267,12 +267,8 @@ class FailoverEventsService(Service):
                     wait_id = self.middleware.call_sync('core.job_wait', i['id'])
                     wait_id.wait_sync(raise_error=True)
                     logger.info('Failover job event with id "%d" finished', i['id'])
-                except Exception as e:
-                    ignore = (errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                    if isinstance(e, CallError) and e.errno in ignore:
-                        pass
-                    else:
-                        logger.warning('Failover job event with id "%d" failed', i['id'], exc_info=True)
+                except Exception:
+                    logger.warning('Failover job event with id "%d" failed', i['id'], exc_info=True)
 
     def _event(self, ifname, event):
 
@@ -742,10 +738,8 @@ class FailoverEventsService(Service):
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:
             self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node')
-        except Exception as e:
-            ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-            if isinstance(e, CallError) and e.errno not in ignore:
-                logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
+        except Exception:
+            logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
 
         try:
             self.run_call('failover.call_remote', 'interface.persist_link_addresses')
