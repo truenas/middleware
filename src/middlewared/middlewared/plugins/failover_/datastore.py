@@ -120,6 +120,10 @@ class FailoverDatastoreService(Service):
         os.rename(FREENAS_DATABASE_REPLICATED, FREENAS_DATABASE)
         self.middleware.call_sync('datastore.setup')
 
+    async def force_send(self):
+        if await self.middleware.call('failover.status') == 'MASTER':
+            await self.middleware.call('failover.datastore.set_failure')
+
 
 def hook_datastore_execute_write(middleware, sql, params, options):
     # This code is executed in SQLite thread and blocks it (in order to avoid replication query race conditions)
