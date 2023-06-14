@@ -37,7 +37,6 @@ def test_01_Create_initshutdownscript_command(initshutdowncmd_dict):
 
 
 def test_02_Touch_initshutdownscript_script_file(request):
-    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'touch "{TESTSCRIPT}"', user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -82,7 +81,6 @@ def test_07_Check_that_API_reports_the_script_as_updated(initshutdownsc_dict):
 
 
 def test_08_Delete_script_file(request):
-    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'rm "{TESTSCRIPT}"', user, password, ip)
     assert results['result'] is True, results['output']
 

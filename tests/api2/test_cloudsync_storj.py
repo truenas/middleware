@@ -73,7 +73,6 @@ def test_storj_list_directory(storj_credential):
 
 
 def test_storj_sync(request, storj_credential):
-    depends(request, ["pool_04"], scope="session")
 
     with dataset("test") as ds:
         with task({

@@ -102,7 +102,6 @@ SMB_PWD = "smb1234"
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
 def test_001_creating_smb_dataset(request):
-    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"
@@ -604,7 +603,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     Iterate through AFP xattrs and set them on testfile
     via SSH.
     """
-    depends(request, ["AFP_ENABLED", "ssh_password"], scope="session")
+    depends(request, ["AFP_ENABLED"], scope="session")
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
@@ -678,7 +677,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
     Read xattr that was set via SMB protocol directly via
     SSH and verify that data is the same.
     """
-    depends(request, ["XATTR_CHECK_SMB_WRITE", "ssh_password"], scope="session")
+    depends(request, ["XATTR_CHECK_SMB_WRITE"], scope="session")
     # Netatalk-compatible xattr gets additional
     # metadata written to it, which makes comparison
     # of all bytes problematic.

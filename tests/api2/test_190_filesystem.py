@@ -69,7 +69,6 @@ def test_03_get_filesystem_stat_(path):
 
 
 def test_04_test_filesystem_statfs_fstype(request):
-    depends(request, ["pool_04"], scope="session")
     # test zfs fstype first
     parent_path = f'/mnt/{pool_name}'
     results = POST('/filesystem/statfs/', parent_path)
@@ -108,7 +107,6 @@ def test_04_test_filesystem_statfs_fstype(request):
 
 
 def test_05_set_immutable_flag_on_path(request):
-    depends(request, ["pool_04"], scope="session")
     t_path = os.path.join('/mnt', pool_name, 'random_directory_immutable')
     t_child_path = os.path.join(t_path, 'child')
 
@@ -149,7 +147,6 @@ def test_07_test_filesystem_stat_filetype(request):
     There is an additional check to make sure that paths
     in the ZFS CTL directory (.zfs) are properly flagged.
     """
-    depends(request, ["pool_04"], scope="session")
     ds_name = 'stat_test'
     snap_name = f'{ds_name}_snap1'
     path = f'/mnt/{pool_name}/{ds_name}'
@@ -208,7 +205,6 @@ def test_08_test_fiilesystem_statfs_flags(request):
     This test verifies that changing ZFS properties via
     middleware causes mountinfo changes visible via statfs.
     """
-    depends(request, ["pool_04"], scope="session")
     ds_name = 'statfs_test'
     target = f'{pool_name}/{ds_name}'
     target_url = target.replace('/', '%2F')

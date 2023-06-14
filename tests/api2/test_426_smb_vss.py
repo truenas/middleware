@@ -114,7 +114,6 @@ def check_previous_version_contents(path, contents, offset):
 @pytest.mark.parametrize('ds', [dataset, dataset_nested])
 @pytest.mark.dependency(name="VSS_DATASET_CREATED")
 def test_001_creating_smb_dataset(request, ds):
-    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": ds,
         "share_type": "SMB"
@@ -166,7 +165,7 @@ def test_003_changing_dataset_owner(request):
 
 @pytest.mark.dependency(name="VSS_SHARE_CREATED")
 def test_004_creating_a_smb_share_path(request):
-    depends(request, ["VSS_DATASET_CREATED", "ssh_password"], scope="session")
+    depends(request, ["VSS_DATASET_CREATED"], scope="session")
     global payload, results, smb_id
     payload = {
         "comment": "SMB VSS Testing Share",

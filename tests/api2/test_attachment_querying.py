@@ -16,7 +16,6 @@ CHILD_DATASET = f'{PARENT_DATASET}/child_dataset'
 
 
 def test_attachment_with_child_path(request):
-    depends(request, ['pool_04'], scope='session')
     with dataset(PARENT_DATASET) as parent_dataset:
         parent_path = f'/mnt/{parent_dataset}'
         assert call('pool.dataset.attachments_with_path', parent_path) == []

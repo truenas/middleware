@@ -20,7 +20,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 
 def test_change_retention(request):
-    depends(request, ["pool_04"], scope="session")
 
     tz = pytz.timezone(call("system.info")["timezone"])
 
@@ -98,7 +97,6 @@ def test_change_retention(request):
 
 
 def test_delete_retention(request):
-    depends(request, ["pool_04"], scope="session")
 
     tz = pytz.timezone(call("system.info")["timezone"])
 

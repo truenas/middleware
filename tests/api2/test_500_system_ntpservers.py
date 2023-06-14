@@ -66,7 +66,6 @@ class TestBadNtpServer:
         assert data[0]['address'] == badNtpServer, data
 
     def test_03_Checking_ntpserver_configured_using_ssh(self, request):
-        depends(request, ["ssh_password"], scope="session")
         cmd = f'fgrep "{badNtpServer}" {CONFIG_FILE}'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results
@@ -90,7 +89,6 @@ class TestBadNtpServer:
             ntp_dict['servers'].pop(k)
 
     def test_06_Checking_ntpservers_num_configured_using_ssh(self, ntp_dict, request):
-        depends(request, ["ssh_password"], scope="session")
         results = SSH_TEST(f'grep -R ^server {CONFIG_FILE}', user, password, ip)
         assert results['result'] is True, results
         assert len(results['output'].strip().split('\n')) == \

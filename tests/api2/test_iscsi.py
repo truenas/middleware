@@ -25,7 +25,6 @@ def iscsi_extent(data):
 
 
 def test__iscsi_extent__disk_choices(request):
-    depends(request, ["pool_04"], scope="session")
     with dataset("test zvol", {
         "type": "VOLUME",
         "volsize": 1024000,
@@ -54,7 +53,6 @@ def test__iscsi_extent__disk_choices(request):
 
 
 def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
-    depends(request, ["pool_04"], scope="session")
     with dataset("test zvol", {
         "type": "VOLUME",
         "volsize": 1024000,
@@ -73,7 +71,6 @@ def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
 
 
 def test__iscsi_extent__locked(request):
-    depends(request, ["pool_04"], scope="session")
     with dataset("test zvol", {
         "type": "VOLUME",
         "volsize": 1024000,

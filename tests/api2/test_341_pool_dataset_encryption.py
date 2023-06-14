@@ -28,7 +28,6 @@ child_dataset_url = child_dataset.replace('/', '%2F')
 
 @pytest.mark.dependency(name="CREATED_POOL")
 def test_create_a_normal_pool(request):
-    depends(request, ['pool_04'], scope='session')
     global pool_id, pool_disks
     # Get one disk for encryption testing
     pool_disks = [POST('/disk/get_unused/', controller_a=ha).json()[0]['name']]
@@ -69,7 +68,6 @@ def test_create_a_passphrase_encrypted_root_on_normal_pool(request):
 
 
 def test_verify_pool_dataset_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -183,7 +181,6 @@ def test_try_to_create_an_encrypted_dataset_with_inherit_encryption_true(request
 
 
 def test_verify_pool_encrypted_dataset_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -242,7 +239,6 @@ def test_create_an_encrypted_root_with_a_key(request):
 
 
 def test_verify_pool_encrypted_root_dataset_does_not_leak_encryption_key_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -288,7 +284,6 @@ def test_verify_that_the_dataset_changed_to_passphrase(request):
 
 
 def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -462,7 +457,6 @@ def test_create_a_passphrase_encrypted_pool(request):
 
 
 def test_verify_pool_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_pool_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -494,7 +488,6 @@ def test_create_a_passphrase_encrypted_root_on_passphrase_encrypted_pool(request
 
 
 def test_verify_pool_encrypted_root_dataset_change_key_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -516,7 +509,6 @@ def test_try_to_change_a_passphrase_encrypted_root_to_key_on_passphrase_encrypte
 
 
 def test_verify_pool_dataset_change_key_does_not_leak_passphrase_into_middleware_log_after_key_change(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -574,7 +566,6 @@ def test_try_to_create_an_encrypted_root_with_key_on_passphrase_encrypted_pool(r
 
 
 def test_verify_pool_key_encrypted_dataset_does_not_leak_encryption_key_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -620,7 +611,6 @@ def test_creating_a_key_encrypted_pool(request):
 
 
 def test_verify_pool_does_not_leak_encryption_key_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{pool_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -650,7 +640,6 @@ def test_creating_a_key_encrypted_root_on_key_encrypted_pool(request):
 
 
 def test_verify_pool_dataset_does_not_leak_encryption_hex_key_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{dataset_token_hex}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -672,7 +661,6 @@ def test_change_a_key_encrypted_root_to_passphrase_on_key_encrypted_pool(request
 
 
 def test_verify_pool_encrypted_root_key_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -750,7 +738,6 @@ def test_unlock_passphrase_key_encrypted_datasets(request):
 
 
 def test_verify_pool_dataset_unlock_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -834,7 +821,6 @@ def test_create_a_passphrase_encrypted_root_dataset_parrent(request):
 
 
 def test_verify_pool_passphrase_encrypted_root_dataset_parrent_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -855,7 +841,6 @@ def test_create_a_passphrase_encrypted_root_child_of_passphrase_parent(request):
 
 
 def test_verify_encrypted_root_child_of_passphrase_parent_dataset_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -951,7 +936,6 @@ def test_try_to_unlock_the_child_of_lock_parent_encrypted_root(request):
 
 
 def test_verify_child_of_lock_parent_encrypted_root_dataset_unlock_do_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase2" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -1004,7 +988,6 @@ def test_unlock_parent_dataset_with_child_recursively(request):
 
 
 def test_verify_pool_dataset_unlock_with_child_dataset_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -1091,7 +1074,6 @@ def test_creating_a_key_encrypted_dataset_on_key_encrypted_pool(request):
 
 
 def test_verify_pool_encrypted_dataset_on_key_encrypted_pool_does_not_leak_encryption_key_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -1112,7 +1094,6 @@ def test_create_a_passphrase_encrypted_root_from_key_encrypted_root(request):
 
 
 def test_verify_ncrypted_root_from_key_encrypted_root_does_not_leak_passphrase_into_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "my_passphrase" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])

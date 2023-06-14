@@ -17,7 +17,6 @@ url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
 if update:
     def test_00_get_update_conf_for_internals_and_nightly(request):
-        depends(request, ["ssh_password"], scope="session")
         version = GET("/system/info/").json()['version']
         update_conf = 'truenas-update.conf'
         fetch_cmd = f'fetch {url}{update_conf}'

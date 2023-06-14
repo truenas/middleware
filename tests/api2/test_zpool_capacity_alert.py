@@ -8,7 +8,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 
 def test__does_not_emit_alert(request):
-    depends(request, ["pool_04"], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
             "name": pool,
@@ -23,7 +22,6 @@ def test__does_not_emit_alert(request):
 
 
 def test__emits_alert(request):
-    depends(request, ["pool_04"], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
             "name": pool,
@@ -42,7 +40,6 @@ def test__emits_alert(request):
 
 
 def test__does_not_flap_alert(request):
-    depends(request, ["pool_04"], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
             "name": pool,

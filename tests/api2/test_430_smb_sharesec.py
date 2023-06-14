@@ -103,14 +103,14 @@ def test_07_set_smb_acl_by_unix_id(request):
 
 
 def test_24_delete_share_info_tdb(request):
-    depends(request, ["sharesec_acl_set", "ssh_password"], scope="session")
+    depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'rm /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
 
 
 def test_25_verify_share_info_tdb_is_deleted(request):
-    depends(request, ["sharesec_acl_set", "ssh_password"], scope="session")
+    depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, results['output']
@@ -124,7 +124,7 @@ def test_25_verify_share_info_tdb_is_deleted(request):
 
 
 def test_27_restore_sharesec_with_flush_share_info(request):
-    depends(request, ["sharesec_acl_set", "ssh_password"], scope="session")
+    depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'midclt call smb.sharesec._flush_share_info'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -138,7 +138,7 @@ def test_27_restore_sharesec_with_flush_share_info(request):
 
 
 def test_29_verify_share_info_tdb_is_created(request):
-    depends(request, ["sharesec_acl_set", "ssh_password"], scope="session")
+    depends(request, ["sharesec_acl_set"], scope="session")
     cmd = 'test -f /var/db/system/samba4/share_info.tdb'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -146,7 +146,7 @@ def test_29_verify_share_info_tdb_is_created(request):
 
 @pytest.mark.dependency(name="sharesec_rename")
 def test_30_rename_smb_share_and_verify_share_info_moved(request):
-    depends(request, ["sharesec_acl_set", "ssh_password"], scope="session")
+    depends(request, ["sharesec_acl_set"], scope="session")
     results = PUT(f"/sharing/smb/id/{share_info['id']}/",
                   {"name": "my_sharesec2"})
     assert results.status_code == 200, results.text
@@ -161,7 +161,7 @@ def test_30_rename_smb_share_and_verify_share_info_moved(request):
 
 
 def test_31_toggle_share_and_verify_acl_preserved(request):
-    depends(request, ["sharesec_rename", "ssh_password"], scope="session")
+    depends(request, ["sharesec_rename"], scope="session")
 
     results = PUT(f"/sharing/smb/id/{share_info['id']}/",
                   {"enabled": False})

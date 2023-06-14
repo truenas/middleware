@@ -44,7 +44,6 @@ def lock_dataset(dataset_name):
 
 
 def test_service_restart_on_unlock_dataset(request):
-    depends(request, ['pool_04'], scope='session')
     service_name = 'smb'
     registered_name = 'cifs'
     with dataset('testsvcunlock', data={

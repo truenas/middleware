@@ -40,7 +40,6 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     assert bp_basename == sysds['basename']
 
 
-@pytest.mark.dependency(name='PERM_ZPOOL_CREATED')
 def test_002_create_permanent_zpool(request, ws_client):
     """
     This creates the "permanent" zpool which is used by every other
@@ -63,7 +62,7 @@ def test_002_create_permanent_zpool(request, ws_client):
             job=True
         )
     except Exception as e:
-        assert False, e
+        pytest.exit(f"Unable to create test pool: {e!r}. Aborting tests.")
     else:
         results = ws_client.call('systemdataset.config')
         assert results['pool'] == pool_name
@@ -71,7 +70,7 @@ def test_002_create_permanent_zpool(request, ws_client):
 
 
 @pytest.mark.dependency(name='POOL_FUNCTIONALITY1')
-def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(request, ws_client, pool_data):
+def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, pool_data):
     """
     This tests a few items related to zpool creation logic:
     1. disk.get_unused should NOT show disks that are a part of a zpool that is
@@ -79,7 +78,6 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(request, ws_
     2. make sure the system dataset doesn't migrate to the 2nd zpool that we create
         since it should only be migrating to the 1st zpool that is created
     """
-    depends(request, ['PERM_ZPOOL_CREATED'])
     unused_disks = ws_client.call('disk.get_unused')
     assert len(unused_disks) >= 1
 

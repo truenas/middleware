@@ -26,7 +26,6 @@ def test_03_create_root_ssh_key(request):
 
 
 def test_04_Creating_rsync_task(request, rsynctask_dict):
-    depends(request, ["pool_04"], scope="session")
     payload = {
         'user': 'root',
         'mode': 'SSH',
@@ -43,35 +42,31 @@ def test_04_Creating_rsync_task(request, rsynctask_dict):
 
 
 def test_10_Disable_rsync_task(request, rsynctask_dict):
-    depends(request, ["pool_04"], scope="session")
     id = rsynctask_dict['id']
     results = PUT(f'/rsynctask/id/{id}/', {'enabled': False})
     assert results.status_code == 200, results.text
 
 
 def test_11_Check_that_API_reports_the_rsync_task_as_disabled(request, rsynctask_dict):
-    depends(request, ["pool_04"], scope="session")
     id = rsynctask_dict['id']
     results = GET(f'/rsynctask?id={id}')
     assert results.json()[0]['enabled'] is False
 
 
 def test_12_Delete_rsync_task(request, rsynctask_dict):
-    depends(request, ["pool_04"], scope="session")
     id = rsynctask_dict['id']
     results = DELETE(f'/rsynctask/id/{id}/')
     assert results.status_code == 200, results.text
 
 
 def test_13_Check_that_the_API_reports_rsync_task_as_deleted(request, rsynctask_dict):
-    depends(request, ["pool_04"], scope="session")
     id = rsynctask_dict['id']
     results = GET(f'/rsynctask?id={id}')
     assert results.json() == [], results.text
 
 
 def test_14_remove_root_ssh_key(request):
-    depends(request, ["pool_04", "ssh_key"], scope="session")
+    depends(request, ["ssh_key"], scope="session")
     cmd = 'rm /root/.ssh/id_rsa*'
     results = SSH_TEST(cmd, user, None, ip)
     assert results['result'] is True, results['output']

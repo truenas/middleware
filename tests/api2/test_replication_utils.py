@@ -31,5 +31,4 @@ def localhost_ssh_connection():
 
 @pytest.mark.parametrize("transport", ["SSH", "SSH+NETCAT"])
 def test_list_datasets_ssh(request, localhost_ssh_connection, transport):
-    depends(request, ["pool_04"], scope="session")
     assert pool in call("replication.list_datasets", transport, localhost_ssh_connection)
