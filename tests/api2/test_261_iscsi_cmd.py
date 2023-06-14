@@ -27,6 +27,9 @@ from protocols import (initiator_name_supported, iscsi_scsi_connection,
 
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
+from middlewared.test.integration.utils import call
+from middlewared.service_exception import ValidationErrors
+
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -281,54 +284,63 @@ def target_extent_associate(target_id, extent_id, lun_id=0):
 
 
 @contextlib.contextmanager
-def configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
+def initiator_portal():
     with initiator() as initiator_config:
         with portal() as portal_config:
-            portal_id = portal_config['id']
-            with target(target_name, [{'portal': portal_id}], alias) as target_config:
-                target_id = target_config['id']
-                with dataset(pool_name, dataset_name) as dataset_config:
-                    with file_extent(pool_name, dataset_name, file_name, filesize=filesize, extent_name=extent_name) as extent_config:
-                        extent_id = extent_config['id']
-                        with target_extent_associate(target_id, extent_id):
-                            yield {
-                                'initiator': initiator_config,
-                                'portal': portal_config,
-                                'target': target_config,
-                                'dataset': dataset_config,
-                                'extent': extent_config,
-                            }
+            yield {
+                'initiator': initiator_config,
+                'portal': portal_config,
+            }
 
 
 @contextlib.contextmanager
-def configured_target_to_zvol_extent(target_name, zvol, alias=None, extent_name='zvol_extent'):
-    with initiator() as initiator_config:
-        with portal() as portal_config:
-            portal_id = portal_config['id']
-            with target(target_name, [{'portal': portal_id}], alias) as target_config:
-                target_id = target_config['id']
-                with zvol_dataset(zvol) as dataset_config:
-                    with zvol_extent(zvol, extent_name=extent_name) as extent_config:
-                        extent_id = extent_config['id']
-                        with target_extent_associate(target_id, extent_id):
-                            yield {
-                                'initiator': initiator_config,
-                                'portal': portal_config,
-                                'target': target_config,
-                                'dataset': dataset_config,
-                                'extent': extent_config,
-                            }
+def configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name, alias=None, filesize=MB_512, extent_name='extent'):
+    portal_id = config['portal']['id']
+    with target(target_name, [{'portal': portal_id}], alias) as target_config:
+        target_id = target_config['id']
+        with dataset(pool_name, dataset_name) as dataset_config:
+            with file_extent(pool_name, dataset_name, file_name, filesize=filesize, extent_name=extent_name) as extent_config:
+                extent_id = extent_config['id']
+                with target_extent_associate(target_id, extent_id):
+                    newconfig = config.copy()
+                    newconfig.update({
+                        'target': target_config,
+                        'dataset': dataset_config,
+                        'extent': extent_config,
+                    })
+                    yield newconfig
 
 
 @contextlib.contextmanager
-def configured_target(name, extent_type):
+def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent'):
+    portal_id = config['portal']['id']
+    with target(target_name, [{'portal': portal_id}], alias) as target_config:
+        target_id = target_config['id']
+        with zvol_dataset(zvol) as dataset_config:
+            with zvol_extent(zvol, extent_name=extent_name) as extent_config:
+                extent_id = extent_config['id']
+                with target_extent_associate(target_id, extent_id):
+                    newconfig = config.copy()
+                    newconfig.update({
+                        'target': target_config,
+                        'dataset': dataset_config,
+                        'extent': extent_config,
+                    })
+                    yield newconfig
+
+
+@contextlib.contextmanager
+def configured_target(config, name, extent_type):
     assert extent_type in ["FILE", "VOLUME"]
     if extent_type == "FILE":
-        with configured_target_to_file_extent(name, pool_name, dataset_name, file_name, extent_name=name) as config:
-            yield config
+        ds_name = f"iscsids{name}"
+        with configured_target_to_file_extent(config, name, pool_name, ds_name, file_name, extent_name=name) as newconfig:
+            yield newconfig
     elif extent_type == "VOLUME":
-        with configured_target_to_zvol_extent(name, zvol, extent_name=name) as config:
-            yield config
+        zvol_name = f"ds{name}"
+        zvol = f'{pool_name}/{zvol_name}'
+        with configured_target_to_zvol_extent(config, name, zvol, extent_name=name) as newconfig:
+            yield newconfig
 
 
 @contextlib.contextmanager
@@ -663,9 +675,10 @@ def test_03_readwrite16_file_extent(request):
     a file extent based iSCSI target.
     """
     depends(request, ["iscsi_cmd_00"], scope="session")
-    with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
-        iqn = f'{basename}:{target_name}'
-        target_test_readwrite16(ip, iqn)
+    with initiator_portal() as config:
+        with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name):
+            iqn = f'{basename}:{target_name}'
+            target_test_readwrite16(ip, iqn)
 
 
 def test_04_readwrite16_zvol_extent(request):
@@ -674,9 +687,10 @@ def test_04_readwrite16_zvol_extent(request):
     a zvol extent based iSCSI target.
     """
     depends(request, ["iscsi_cmd_00"], scope="session")
-    with configured_target_to_zvol_extent(target_name, zvol):
-        iqn = f'{basename}:{target_name}'
-        target_test_readwrite16(ip, iqn)
+    with initiator_portal() as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol):
+            iqn = f'{basename}:{target_name}'
+            target_test_readwrite16(ip, iqn)
 
 
 @skip_invalid_initiatorname
@@ -974,10 +988,11 @@ def test_08_snapshot_zvol_extent(request):
     """
     depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
-    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
-        target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
-    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
-        target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+    with initiator_portal() as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
+            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
+        with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
+            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
 
 
 def test_09_snapshot_file_extent(request):
@@ -986,10 +1001,11 @@ def test_09_snapshot_file_extent(request):
     """
     depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
-    with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name) as iscsi_config:
-        target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
-    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
-        target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+    with initiator_portal() as config:
+        with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
+            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
+        with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
+            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
 
 
 def test_10_target_alias(request):
@@ -1010,32 +1026,33 @@ def test_10_target_alias(request):
 
     A = data['A']
     B = data['B']
-    with configured_target_to_file_extent(A['name'], pool_name, dataset_name, A['file'], A['alias']) as iscsi_config:
-        with target(B['name'], [{'portal': iscsi_config['portal']['id']}]) as targetB_config:
-            with file_extent(pool_name, dataset_name, B['file'], extent_name="extentB") as extentB_config:
-                with target_extent_associate(targetB_config['id'], extentB_config['id']):
-                    # Created two targets, one with an alias, one without.  Check them.
-                    targets = get_targets()
-                    assert targets[A['name']]['alias'] == A['alias'], targets[A['name']]['alias']
-                    assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
+    with initiator_portal() as config:
+        with configured_target_to_file_extent(config, A['name'], pool_name, dataset_name, A['file'], A['alias']) as iscsi_config:
+            with target(B['name'], [{'portal': iscsi_config['portal']['id']}]) as targetB_config:
+                with file_extent(pool_name, dataset_name, B['file'], extent_name="extentB") as extentB_config:
+                    with target_extent_associate(targetB_config['id'], extentB_config['id']):
+                        # Created two targets, one with an alias, one without.  Check them.
+                        targets = get_targets()
+                        assert targets[A['name']]['alias'] == A['alias'], targets[A['name']]['alias']
+                        assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
-                    # Update alias for B
-                    set_target_alias(targets[B['name']]['id'], B['alias'])
-                    targets = get_targets()
-                    assert targets[A['name']]['alias'] == A['alias'], targets[A['name']]['alias']
-                    assert targets[B['name']]['alias'] == B['alias'], targets[B['name']]['alias']
+                        # Update alias for B
+                        set_target_alias(targets[B['name']]['id'], B['alias'])
+                        targets = get_targets()
+                        assert targets[A['name']]['alias'] == A['alias'], targets[A['name']]['alias']
+                        assert targets[B['name']]['alias'] == B['alias'], targets[B['name']]['alias']
 
-                    # Clear alias for A
-                    set_target_alias(targets[A['name']]['id'], "")
-                    targets = get_targets()
-                    assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
-                    assert targets[B['name']]['alias'] == B['alias'], targets[B['name']]['alias']
+                        # Clear alias for A
+                        set_target_alias(targets[A['name']]['id'], "")
+                        targets = get_targets()
+                        assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
+                        assert targets[B['name']]['alias'] == B['alias'], targets[B['name']]['alias']
 
-                    # Clear alias for B
-                    set_target_alias(targets[B['name']]['id'], "")
-                    targets = get_targets()
-                    assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
-                    assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
+                        # Clear alias for B
+                        set_target_alias(targets[B['name']]['id'], "")
+                        targets = get_targets()
+                        assert targets[A['name']]['alias'] is None, targets[A['name']]['alias']
+                        assert targets[B['name']]['alias'] is None, targets[B['name']]['alias']
 
 
 def test_11_modify_portal(request):
@@ -1062,64 +1079,65 @@ def test_12_pblocksize_setting(request):
     """
     depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
-    with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name) as iscsi_config:
-        extent_config = iscsi_config['extent']
-        with iscsi_scsi_connection(ip, iqn) as s:
-            TUR(s)
-            data = s.readcapacity16().result
-            # By default 512 << 3 == 4096
-            assert data['lbppbe'] == 3, data
+    with initiator_portal() as config:
+        with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
+            extent_config = iscsi_config['extent']
+            with iscsi_scsi_connection(ip, iqn) as s:
+                TUR(s)
+                data = s.readcapacity16().result
+                # By default 512 << 3 == 4096
+                assert data['lbppbe'] == 3, data
 
-            # First let's just change the blocksize to 2K
-            payload = {'blocksize': 2048}
-            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-            assert results.status_code == 200, results.text
+                # First let's just change the blocksize to 2K
+                payload = {'blocksize': 2048}
+                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+                assert results.status_code == 200, results.text
 
-            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
-            data = s.readcapacity16().result
-            assert data['block_length'] == 2048, data
-            assert data['lbppbe'] == 1, data
+                data = s.readcapacity16().result
+                assert data['block_length'] == 2048, data
+                assert data['lbppbe'] == 1, data
 
-            # Now let's change it back to 512, but also set pblocksize
-            payload = {'blocksize': 512, 'pblocksize': True}
-            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-            assert results.status_code == 200, results.text
+                # Now let's change it back to 512, but also set pblocksize
+                payload = {'blocksize': 512, 'pblocksize': True}
+                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+                assert results.status_code == 200, results.text
 
-            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
-            data = s.readcapacity16().result
-            assert data['block_length'] == 512, data
-            assert data['lbppbe'] == 0, data
+                data = s.readcapacity16().result
+                assert data['block_length'] == 512, data
+                assert data['lbppbe'] == 0, data
 
-    with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
-        extent_config = iscsi_config['extent']
-        with iscsi_scsi_connection(ip, iqn) as s:
-            TUR(s)
-            data = s.readcapacity16().result
-            # We created a vol with volblocksize == 16K (512 << 5)
-            assert data['lbppbe'] == 5, data
+        with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
+            extent_config = iscsi_config['extent']
+            with iscsi_scsi_connection(ip, iqn) as s:
+                TUR(s)
+                data = s.readcapacity16().result
+                # We created a vol with volblocksize == 16K (512 << 5)
+                assert data['lbppbe'] == 5, data
 
-            # First let's just change the blocksize to 4K
-            payload = {'blocksize': 4096}
-            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-            assert results.status_code == 200, results.text
+                # First let's just change the blocksize to 4K
+                payload = {'blocksize': 4096}
+                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+                assert results.status_code == 200, results.text
 
-            expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                expect_check_condition(s, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
 
-            data = s.readcapacity16().result
-            assert data['block_length'] == 4096, data
-            assert data['lbppbe'] == 2, data
+                data = s.readcapacity16().result
+                assert data['block_length'] == 4096, data
+                assert data['lbppbe'] == 2, data
 
-            # Now let's also set pblocksize
-            payload = {'pblocksize': True}
-            results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
-            assert results.status_code == 200, results.text
+                # Now let's also set pblocksize
+                payload = {'pblocksize': True}
+                results = PUT(f"/iscsi/extent/id/{extent_config['id']}", payload)
+                assert results.status_code == 200, results.text
 
-            TUR(s)
-            data = s.readcapacity16().result
-            assert data['block_length'] == 4096, data
-            assert data['lbppbe'] == 0, data
+                TUR(s)
+                data = s.readcapacity16().result
+                assert data['block_length'] == 4096, data
+                assert data['lbppbe'] == 0, data
 
 
 def generate_name(length, base="target"):
@@ -1136,19 +1154,165 @@ def test_13_test_target_name(request, extent_type):
     """
     depends(request, ["iscsi_cmd_00"], scope="session")
 
-    name64 = generate_name(64)
-    with configured_target(name64, extent_type):
-        iqn = f'{basename}:{name64}'
-        target_test_readwrite16(ip, iqn)
-
-    name65 = generate_name(65)
-    with pytest.raises(AssertionError) as ve:
-        with configured_target(name65, extent_type):
-            assert False, f"Should not have been able to create a target with name length {len(name65)}."
-            iqn = f'{basename}:{name65}'
+    with initiator_portal() as config:
+        name64 = generate_name(64)
+        with configured_target(config, name64, extent_type):
+            iqn = f'{basename}:{name64}'
             target_test_readwrite16(ip, iqn)
-    assert "iscsi_extent_create.name" in str(ve), ve
-    assert "Value greater than 64 not allowed" in str(ve), ve
+
+        name65 = generate_name(65)
+        with pytest.raises(AssertionError) as ve:
+            with configured_target(config, name65, extent_type):
+                assert False, f"Should not have been able to create a target with name length {len(name65)}."
+                iqn = f'{basename}:{name65}'
+                target_test_readwrite16(ip, iqn)
+        assert "iscsi_extent_create.name" in str(ve), ve
+        assert "Value greater than 64 not allowed" in str(ve), ve
+
+
+@pytest.mark.parametrize('extent_type', ["FILE", "VOLUME"])
+def test_14_target_lun_extent_modify(request, extent_type):
+    """
+    Perform some tests of the iscsi.targetextent.update API, including
+    trying tp provide invalid
+    """
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+
+    name1 = f'{target_name}1'
+    name2 = f'{target_name}2'
+    name3 = f'{target_name}3'
+    name4 = f'{target_name}4'
+
+    @contextlib.contextmanager
+    def expect_lun_in_use_failure():
+        with pytest.raises(ValidationErrors) as ve:
+            yield
+            assert False, "Should not be able to associate because LUN in use"
+        assert "LUN ID is already being used for this target." in str(ve.value)
+
+    @contextlib.contextmanager
+    def expect_extent_in_use_failure():
+        with pytest.raises(ValidationErrors) as ve:
+            yield
+            assert False, "Should not be able to associate because extent in use"
+        assert "Extent is already in use" in str(ve.value)
+
+    # The following will create the extents with the same name as the target.
+    with initiator_portal() as config:
+        with configured_target(config, name1, extent_type) as config1:
+            with configured_target(config, name2, extent_type) as config2:
+                with configured_target(config, name3, extent_type) as config3:
+                    # Create an extra extent to 'play' with
+                    with zvol_dataset(zvol):
+                        with zvol_extent(zvol, extent_name=name4) as config4:
+                            # First we will attempt some new, but invalid associations
+
+                            # LUN in use
+                            with expect_lun_in_use_failure():
+                                payload = {
+                                    'target': config1['target']['id'],
+                                    'lunid': 0,
+                                    'extent': config4['id']
+                                }
+                                call('iscsi.targetextent.create', payload)
+
+                            # extent in use
+                            with expect_extent_in_use_failure():
+                                payload = {
+                                    'target': config1['target']['id'],
+                                    'lunid': 1,
+                                    'extent': config2['extent']['id']
+                                }
+                                call('iscsi.targetextent.create', payload)
+
+                            # Now succeed in creating a new target/lun/extent association
+                            payload = {
+                                'target': config1['target']['id'],
+                                'lunid': 1,
+                                'extent': config4['id']
+                            }
+                            call('iscsi.targetextent.create', payload)
+
+                            # Get the current config
+                            results = GET('/iscsi/targetextent')
+                            assert results.status_code == 200, results.text
+                            textents = results.json()
+
+                            # Now perform some updates that will not succeed
+                            textent4 = next(textent for textent in textents if textent['extent'] == config4['id'])
+
+                            # Attempt some invalid updates
+                            # LUN in use
+                            with expect_lun_in_use_failure():
+                                payload = {
+                                    'target': textent4['target'],
+                                    'lunid': 0,
+                                    'extent': textent4['extent']
+                                }
+                                call('iscsi.targetextent.update', textent4['id'], payload)
+
+                            # extent in use in another target
+                            with expect_extent_in_use_failure():
+                                payload = {
+                                    'target': textent4['target'],
+                                    'lunid': textent4['lunid'],
+                                    'extent': config3['extent']['id']
+                                }
+                                call('iscsi.targetextent.update', textent4['id'], payload)
+
+                            # extent in use in this target
+                            with expect_extent_in_use_failure():
+                                payload = {
+                                    'target': textent4['target'],
+                                    'lunid': textent4['lunid'],
+                                    'extent': config1['extent']['id']
+                                }
+                                call('iscsi.targetextent.update', textent4['id'], payload)
+
+                            # Move a target to LUN 1
+                            textent2 = next(textent for textent in textents if textent['extent'] == config2['extent']['id'])
+                            payload = {
+                                'target': textent2['target'],
+                                'lunid': 1,
+                                'extent': textent2['extent']
+                            }
+                            call('iscsi.targetextent.update', textent2['id'], payload)
+
+                            # Try to move it (to target1) just by changing the target, will clash
+                            with expect_lun_in_use_failure():
+                                payload = {
+                                    'target': config1['target']['id'],
+                                    'lunid': 1,
+                                    'extent': textent2['extent']
+                                }
+                                call('iscsi.targetextent.update', textent2['id'], payload)
+
+                            # But can move it elsewhere (target3)
+                            payload = {
+                                'target': config3['target']['id'],
+                                'lunid': 1,
+                                'extent': textent2['extent']
+                            }
+                            call('iscsi.targetextent.update', textent2['id'], payload)
+
+                            # Delete textent4 association
+                            call('iscsi.targetextent.delete', textent4['id'])
+
+                            # Now can do the move that previously failed
+                            payload = {
+                                'target': config1['target']['id'],
+                                'lunid': 1,
+                                'extent': textent2['extent']
+                            }
+                            call('iscsi.targetextent.update', textent2['id'], payload)
+
+                            # Restore it
+                            payload = {
+                                'target': config2['target']['id'],
+                                'lunid': 0,
+                                'extent': textent2['extent']
+                            }
+                            call('iscsi.targetextent.update', textent2['id'], payload)
 
 
 def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
@@ -1159,12 +1323,13 @@ def _isns_wait_for_iqn(isns_client, iqn, timeout=10):
     return iqns
 
 
-def test_14_test_isns(request):
+def test_15_test_isns(request):
     """
     Test ability to register targets with iSNS.
     """
     # Will use a more unique target name than usual, just in case several test
     # runs are hitting the same iSNS server at the same time.
+    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
     _host = socket.gethostname()
     _rand = ''.join(random.choices(string.digits + string.ascii_lowercase, k=12))
     _name_base = f'isnstest:{_host}:{_rand}'
@@ -1182,35 +1347,37 @@ def test_14_test_isns(request):
 
         # Create target1 and ensure it is still not present (because we
         # haven't switched on iSNS yet).
-        with configured_target_to_file_extent(_target1,
-                                              pool_name,
-                                              dataset_name,
-                                              file_name) as iscsi_config:
-            iqns = set(isns_client.list_targets())
-            assert _iqn1 not in iqns, _iqn1
+        with initiator_portal() as config:
+            with configured_target_to_file_extent(config,
+                                                  _target1,
+                                                  pool_name,
+                                                  dataset_name,
+                                                  file_name) as iscsi_config:
+                iqns = set(isns_client.list_targets())
+                assert _iqn1 not in iqns, _iqn1
 
-            # Now turn on the iSNS server
-            with isns_enabled():
-                iqns = _isns_wait_for_iqn(isns_client, _iqn1)
-                assert _iqn1 in iqns, _iqn1
+                # Now turn on the iSNS server
+                with isns_enabled():
+                    iqns = _isns_wait_for_iqn(isns_client, _iqn1)
+                    assert _iqn1 in iqns, _iqn1
 
-                # Create another target and ensure it shows up too
-                with target(_target2,
-                            [{'portal': iscsi_config['portal']['id']}]
-                            ) as target2_config:
-                    target_id = target2_config['id']
-                    with zvol_dataset(zvol):
-                        with zvol_extent(zvol) as extent_config:
-                            extent_id = extent_config['id']
-                            with target_extent_associate(target_id, extent_id):
-                                iqns = _isns_wait_for_iqn(isns_client, _iqn2)
-                                for inq in [_iqn1, _iqn2]:
-                                    assert iqn in iqns, iqn
+                    # Create another target and ensure it shows up too
+                    with target(_target2,
+                                [{'portal': iscsi_config['portal']['id']}]
+                                ) as target2_config:
+                        target_id = target2_config['id']
+                        with zvol_dataset(zvol):
+                            with zvol_extent(zvol) as extent_config:
+                                extent_id = extent_config['id']
+                                with target_extent_associate(target_id, extent_id):
+                                    iqns = _isns_wait_for_iqn(isns_client, _iqn2)
+                                    for inq in [_iqn1, _iqn2]:
+                                        assert iqn in iqns, iqn
 
-            # Now that iSNS is disabled again, ensure that our target is
-            # no longer advertised
-            iqns = set(isns_client.list_targets())
-            assert _iqn1 not in iqns, _iqn1
+                # Now that iSNS is disabled again, ensure that our target is
+                # no longer advertised
+                iqns = set(isns_client.list_targets())
+                assert _iqn1 not in iqns, _iqn1
 
         # Finally let's ensure that neither target is present.
         base_iqns = set(isns_client.list_targets())
@@ -1225,8 +1392,9 @@ class TestFixtureInitiatorName:
 
     @pytest.fixture(scope='class')
     def create_target(self):
-        with configured_target(target_name, "FILE"):
-            yield
+        with initiator_portal() as config:
+            with configured_target(config, target_name, "FILE"):
+                yield
 
     params = [
         (None, True),
@@ -1242,7 +1410,7 @@ class TestFixtureInitiatorName:
     ]
 
     @pytest.mark.parametrize("initiator_name, expected", params)
-    def test_15_invalid_initiator_name(self, request, create_target, initiator_name, expected):
+    def test_16_invalid_initiator_name(self, request, create_target, initiator_name, expected):
         """
         Deliberately send SCST some invalid initiator names and ensure it behaves OK.
         """
@@ -1339,29 +1507,30 @@ def _pr_reservation(s, pr_type, scope=LU_SCOPE, other_connections=[], **kwargs):
 
 @skip_persistent_reservations
 @pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
-def test_16_basic_persistent_reservation(request):
+def test_17_basic_persistent_reservation(request):
     depends(request, ["iscsi_cmd_00"], scope="session")
-    with configured_target_to_zvol_extent(target_name, zvol):
-        iqn = f'{basename}:{target_name}'
-        with iscsi_scsi_connection(ip, iqn) as s:
-            TUR(s)
+    with initiator_portal() as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol):
+            iqn = f'{basename}:{target_name}'
+            with iscsi_scsi_connection(ip, iqn) as s:
+                TUR(s)
 
-            _pr_check_registered_keys(s, [])
-            _pr_check_reservation(s)
-
-            with _pr_registration(s, PR_KEY1):
-                _pr_check_registered_keys(s, [PR_KEY1])
+                _pr_check_registered_keys(s, [])
                 _pr_check_reservation(s)
 
-                with _pr_reservation(s, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                with _pr_registration(s, PR_KEY1):
                     _pr_check_registered_keys(s, [PR_KEY1])
-                    _pr_check_reservation(s, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+                    _pr_check_reservation(s)
 
-                _pr_check_registered_keys(s, [PR_KEY1])
+                    with _pr_reservation(s, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1):
+                        _pr_check_registered_keys(s, [PR_KEY1])
+                        _pr_check_reservation(s, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+
+                    _pr_check_registered_keys(s, [PR_KEY1])
+                    _pr_check_reservation(s)
+
+                _pr_check_registered_keys(s, [])
                 _pr_check_reservation(s)
-
-            _pr_check_registered_keys(s, [])
-            _pr_check_reservation(s)
 
 
 @contextlib.contextmanager
@@ -1495,18 +1664,19 @@ def _check_persistent_reservations(s1, s2):
 
 @skip_persistent_reservations
 @skip_multi_initiator
-def test_17_persistent_reservation_two_initiators(request):
+def test_18_persistent_reservation_two_initiators(request):
     depends(request, ["iscsi_cmd_00"], scope="session")
-    with configured_target_to_zvol_extent(target_name, zvol):
-        iqn = f'{basename}:{target_name}'
-        with iscsi_scsi_connection(ip, iqn) as s1:
-            s1.blocksize = 512
-            TUR(s1)
-            initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
-            with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_name2) as s2:
-                s2.blocksize = 512
-                TUR(s2)
-                _check_persistent_reservations(s1, s2)
+    with initiator_portal() as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol):
+            iqn = f'{basename}:{target_name}'
+            with iscsi_scsi_connection(ip, iqn) as s1:
+                s1.blocksize = 512
+                TUR(s1)
+                initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
+                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_name2) as s2:
+                    s2.blocksize = 512
+                    TUR(s2)
+                    _check_persistent_reservations(s1, s2)
 
 
 def _serial_number(s):
@@ -1726,7 +1896,7 @@ def _ha_reboot_master(delay=900):
 
 
 @pytest.mark.dependency(name="iscsi_alua_config")
-def test_18_alua_config(request):
+def test_19_alua_config(request):
     """
     Test various aspects of ALUA configuration.
     """
@@ -1739,142 +1909,146 @@ def test_18_alua_config(request):
         _check_ha_node_configuration()
 
     # Next create a target
-    with configured_target_to_file_extent(target_name,
-                                          pool_name,
-                                          dataset_name,
-                                          file_name
-                                          ) as iscsi_config:
-        # Login to the target and ensure that things look reasonable.
-        iqn = f'{basename}:{target_name}'
-        api_serial_number = iscsi_config['extent']['serial']
-        api_naa = iscsi_config['extent']['naa']
-        with iscsi_scsi_connection(ip, iqn) as s:
-            _verify_ha_inquiry(s, api_serial_number, api_naa)
+    with initiator_portal() as config:
+        with configured_target_to_file_extent(config,
+                                              target_name,
+                                              pool_name,
+                                              dataset_name,
+                                              file_name
+                                              ) as iscsi_config:
+            # Login to the target and ensure that things look reasonable.
+            iqn = f'{basename}:{target_name}'
+            api_serial_number = iscsi_config['extent']['serial']
+            api_naa = iscsi_config['extent']['naa']
+            with iscsi_scsi_connection(ip, iqn) as s:
+                _verify_ha_inquiry(s, api_serial_number, api_naa)
 
+            if ha:
+                # Only perform this section on a HA system
+
+                with alua_enabled():
+                    results = GET('/iscsi/global')
+                    assert results.status_code == 200, results.text
+                    assert results.json()['alua'], results.text
+
+                    # We will login to the target on BOTH controllers and make sure
+                    # we see the same target.  Observe that we supply tpgs=1 as
+                    # part of the check
+                    with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                        _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
+                        with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                            _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+
+                            _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                            _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+
+                            tpgs = {
+                                CONTROLLER_A_TARGET_PORT_GROUP_ID: [1],
+                                CONTROLLER_B_TARGET_PORT_GROUP_ID: [32001]
+                            }
+                            active_tpg = _get_active_target_portal_group()
+                            _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
+                            _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
+
+                # Ensure ALUA is off again
+                results = GET('/iscsi/global')
+                assert results.status_code == 200, results.text
+                assert not results.json()['alua'], results.text
+
+        # At this point we have no targets and ALUA is off
         if ha:
-            # Only perform this section on a HA system
-
+            # Now turn on ALUA again
             with alua_enabled():
                 results = GET('/iscsi/global')
                 assert results.status_code == 200, results.text
                 assert results.json()['alua'], results.text
 
-                # We will login to the target on BOTH controllers and make sure
-                # we see the same target.  Observe that we supply tpgs=1 as
-                # part of the check
-                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
-                    _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
-                    with iscsi_scsi_connection(controller2_ip, iqn) as s2:
-                        _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
+                # Then create a target (with ALUA already enabled)
+                with configured_target_to_file_extent(config,
+                                                      target_name,
+                                                      pool_name,
+                                                      dataset_name,
+                                                      file_name
+                                                      ) as iscsi_config:
+                    iqn = f'{basename}:{target_name}'
+                    api_serial_number = iscsi_config['extent']['serial']
+                    api_naa = iscsi_config['extent']['naa']
+                    # Login to the target and ensure that things look reasonable.
+                    with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                        _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
 
-                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+                        with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                            _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
 
-                        tpgs = {
-                            CONTROLLER_A_TARGET_PORT_GROUP_ID: [1],
-                            CONTROLLER_B_TARGET_PORT_GROUP_ID: [32001]
-                        }
-                        active_tpg = _get_active_target_portal_group()
-                        _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
-                        _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
+                            _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                            _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+
+                            # Use the tpgs & active_tpg from above
+                            _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
+                            _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
+
+                            # Let's failover
+                            _ha_reboot_master()
+                            expect_check_condition(s1, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+                            expect_check_condition(s2, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
+
+                            _check_ha_node_configuration()
+                            new_active_tpg = _get_active_target_portal_group()
+                            assert new_active_tpg != active_tpg
+
+                            _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
+                            _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
+
+                            _verify_ha_report_target_port_groups(s1, tpgs, new_active_tpg)
+                            _verify_ha_report_target_port_groups(s2, tpgs, new_active_tpg)
 
             # Ensure ALUA is off again
             results = GET('/iscsi/global')
             assert results.status_code == 200, results.text
             assert not results.json()['alua'], results.text
 
-    # At this point we have no targets and ALUA is off
-    if ha:
-        # Now turn on ALUA again
-        with alua_enabled():
-            results = GET('/iscsi/global')
-            assert results.status_code == 200, results.text
-            assert results.json()['alua'], results.text
-
-            # Then create a target (with ALUA already enabled)
-            with configured_target_to_file_extent(target_name,
-                                                  pool_name,
-                                                  dataset_name,
-                                                  file_name
-                                                  ) as iscsi_config:
-                iqn = f'{basename}:{target_name}'
-                api_serial_number = iscsi_config['extent']['serial']
-                api_naa = iscsi_config['extent']['naa']
-                # Login to the target and ensure that things look reasonable.
-                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
-                    _verify_ha_inquiry(s1, api_serial_number, api_naa, 1)
-
-                    with iscsi_scsi_connection(controller2_ip, iqn) as s2:
-                        _verify_ha_inquiry(s2, api_serial_number, api_naa, 1)
-
-                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
-
-                        # Use the tpgs & active_tpg from above
-                        _verify_ha_report_target_port_groups(s1, tpgs, active_tpg)
-                        _verify_ha_report_target_port_groups(s2, tpgs, active_tpg)
-
-                        # Let's failover
-                        _ha_reboot_master()
-                        expect_check_condition(s1, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
-                        expect_check_condition(s2, sense_ascq_dict[0x2900])  # "POWER ON, RESET, OR BUS DEVICE RESET OCCURRED"
-
-                        _check_ha_node_configuration()
-                        new_active_tpg = _get_active_target_portal_group()
-                        assert new_active_tpg != active_tpg
-
-                        _verify_ha_device_identification(s1, api_naa, 1, CONTROLLER_A_TARGET_PORT_GROUP_ID)
-                        _verify_ha_device_identification(s2, api_naa, 32001, CONTROLLER_B_TARGET_PORT_GROUP_ID)
-
-                        _verify_ha_report_target_port_groups(s1, tpgs, new_active_tpg)
-                        _verify_ha_report_target_port_groups(s2, tpgs, new_active_tpg)
-
-        # Ensure ALUA is off again
-        results = GET('/iscsi/global')
-        assert results.status_code == 200, results.text
-        assert not results.json()['alua'], results.text
-
 
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_19_alua_basic_persistent_reservation(request):
+def test_20_alua_basic_persistent_reservation(request):
     # Don't need to specify "iscsi_cmd_00" here
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     # Turn on ALUA
     with alua_enabled():
-        with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
-            iqn = f'{basename}:{target_name}'
-            # Login to the target on each controller
-            with iscsi_scsi_connection(controller1_ip, iqn) as s1:
-                with iscsi_scsi_connection(controller2_ip, iqn) as s2:
-                    # Now we can do some basic tests
-                    _pr_check_registered_keys(s1, [])
-                    _pr_check_registered_keys(s2, [])
-                    _pr_check_reservation(s1)
-                    _pr_check_reservation(s2)
-
-                    with _pr_registration(s1, PR_KEY1):
-                        _pr_check_registered_keys(s1, [PR_KEY1])
-                        _pr_check_registered_keys(s2, [PR_KEY1])
+        with initiator_portal() as config:
+            with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name):
+                iqn = f'{basename}:{target_name}'
+                # Login to the target on each controller
+                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                    with iscsi_scsi_connection(controller2_ip, iqn) as s2:
+                        # Now we can do some basic tests
+                        _pr_check_registered_keys(s1, [])
+                        _pr_check_registered_keys(s2, [])
                         _pr_check_reservation(s1)
                         _pr_check_reservation(s2)
 
-                        with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1, other_connections=[s2]):
+                        with _pr_registration(s1, PR_KEY1):
                             _pr_check_registered_keys(s1, [PR_KEY1])
                             _pr_check_registered_keys(s2, [PR_KEY1])
-                            _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
-                            _pr_check_reservation(s2, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+                            _pr_check_reservation(s1)
+                            _pr_check_reservation(s2)
 
-                        _pr_check_registered_keys(s1, [PR_KEY1])
-                        _pr_check_registered_keys(s2, [PR_KEY1])
+                            with _pr_reservation(s1, PR_TYPE.WRITE_EXCLUSIVE, reservation_key=PR_KEY1, other_connections=[s2]):
+                                _pr_check_registered_keys(s1, [PR_KEY1])
+                                _pr_check_registered_keys(s2, [PR_KEY1])
+                                _pr_check_reservation(s1, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+                                _pr_check_reservation(s2, {'reservation_key': PR_KEY1, 'scope': LU_SCOPE, 'type': PR_TYPE.WRITE_EXCLUSIVE})
+
+                            _pr_check_registered_keys(s1, [PR_KEY1])
+                            _pr_check_registered_keys(s2, [PR_KEY1])
+                            _pr_check_reservation(s1)
+                            _pr_check_reservation(s2)
+
+                        _pr_check_registered_keys(s1, [])
+                        _pr_check_registered_keys(s2, [])
                         _pr_check_reservation(s1)
                         _pr_check_reservation(s2)
-
-                    _pr_check_registered_keys(s1, [])
-                    _pr_check_registered_keys(s2, [])
-                    _pr_check_reservation(s1)
-                    _pr_check_reservation(s2)
 
     # Ensure ALUA is off again
     results = GET('/iscsi/global')
@@ -1885,22 +2059,23 @@ def test_19_alua_basic_persistent_reservation(request):
 @skip_persistent_reservations
 @skip_multi_initiator
 @skip_ha_tests
-def test_20_alua_persistent_reservation_two_initiators(request):
+def test_21_alua_persistent_reservation_two_initiators(request):
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     with alua_enabled():
-        with configured_target_to_zvol_extent(target_name, zvol):
-            iqn = f'{basename}:{target_name}'
-            # Login to the target on each controller
-            with iscsi_scsi_connection(controller1_ip, iqn) as s1:
-                s1.blocksize = 512
-                TUR(s1)
-                initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
-                with iscsi_scsi_connection(controller2_ip, iqn, initiator_name=initiator_name2) as s2:
-                    s2.blocksize = 512
-                    TUR(s2)
-                    _check_persistent_reservations(s1, s2)
-                    # Do it all again, the other way around
-                    _check_persistent_reservations(s2, s1)
+        with initiator_portal() as config:
+            with configured_target_to_zvol_extent(config, target_name, zvol):
+                iqn = f'{basename}:{target_name}'
+                # Login to the target on each controller
+                with iscsi_scsi_connection(controller1_ip, iqn) as s1:
+                    s1.blocksize = 512
+                    TUR(s1)
+                    initiator_name2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:second"
+                    with iscsi_scsi_connection(controller2_ip, iqn, initiator_name=initiator_name2) as s2:
+                        s2.blocksize = 512
+                        TUR(s2)
+                        _check_persistent_reservations(s1, s2)
+                        # Do it all again, the other way around
+                        _check_persistent_reservations(s2, s1)
 
 
 def test_99_teardown(request):
