@@ -37,7 +37,7 @@ def test_03_get_alert_list_policies():
 
 @pytest.mark.dependency(name='degrade_pool')
 def test_04_degrading_a_pool_to_create_an_alert(request):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, [pool_name, "ssh_password"], scope="session")
     global gptid
     get_pool = GET(f"/pool/?name={pool_name}").json()[0]
     id_path = '/dev/disk/by-partuuid/'

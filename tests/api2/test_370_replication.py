@@ -9,7 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE
-from auto_config import dev_test
+from auto_config import pool_name, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -37,7 +37,7 @@ def periodic_snapshot_tasks():
 
 
 def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     for plugin in ["replication", "pool/snapshottask"]:
         for i in GET(f"/{plugin}/").json():
             assert DELETE(f"/{plugin}/id/{i['id']}").status_code == 200
@@ -222,7 +222,7 @@ def test_00_bootstrap(request, credentials, periodic_snapshot_tasks):
      "periodic_snapshot_tasks.1"),
 ])
 def test_create_replication(request, credentials, periodic_snapshot_tasks, req, error):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     if "ssh_credentials" in req:
         req["ssh_credentials"] = credentials["id"]
 

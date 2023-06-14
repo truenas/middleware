@@ -13,7 +13,7 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 
 def test_01_create_scrub_for_same_pool(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     global pool_id
     pool_id = GET(f"/pool/?name={pool_name}").json()[0]["id"]
     result = POST("/pool/scrub/", {
@@ -35,7 +35,7 @@ def test_01_create_scrub_for_same_pool(request):
 
 
 def test_02_get_pool_name_scrub_id(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     global scrub_id
     result = GET(f"/pool/scrub/?pool_name={pool_name}")
     assert result.status_code == 200, result.text
@@ -43,7 +43,7 @@ def test_02_get_pool_name_scrub_id(request):
 
 
 def test_03_update_scrub(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = PUT(f"/pool/scrub/id/{scrub_id}/", {
         "pool": pool_id,
         "threshold": 2,
@@ -61,13 +61,13 @@ def test_03_update_scrub(request):
 
 
 def test_04_delete_scrub(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = DELETE(f"/pool/scrub/id/{scrub_id}/")
     assert result.status_code == 200, result.text
 
 
 def test_05_create_scrub(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST("/pool/scrub/", {
         "pool": pool_id,
         "threshold": 1,

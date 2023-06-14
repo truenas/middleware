@@ -173,7 +173,7 @@ def test_01_check_dataset_endpoint():
 
 @pytest.mark.dependency(name="DATASET_CREATED")
 def test_02_create_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_DATASET,
@@ -1164,7 +1164,7 @@ def test_29_deleting_homedir_user(request):
 
 
 def test_30_delete_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )

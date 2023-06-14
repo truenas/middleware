@@ -3,12 +3,12 @@ from pytest_dependency import depends
 from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, mock, pool
 
-from auto_config import dev_test
+from auto_config import dev_test, pool_name
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test__does_not_emit_alert(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
             "name": pool,
@@ -23,7 +23,7 @@ def test__does_not_emit_alert(request):
 
 
 def test__emits_alert(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
             "name": pool,
@@ -42,7 +42,7 @@ def test__emits_alert(request):
 
 
 def test__does_not_flap_alert(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with mock("zfs.pool.query", return_value=[
         {
             "name": pool,

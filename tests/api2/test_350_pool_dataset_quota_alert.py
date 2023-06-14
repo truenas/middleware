@@ -10,8 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST
-from auto_config import ip, pool_name, user, password
-from auto_config import dev_test
+from auto_config import dev_test, ip, pool_name, user, password
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -56,7 +55,7 @@ G = 1024 * 1024 * 1024
     ),
 ])
 def test_dataset_quota_alert(request, datasets, expected_alerts):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, [pool_name, "ssh_password"], scope="session")
     assert "" in datasets
 
     try:

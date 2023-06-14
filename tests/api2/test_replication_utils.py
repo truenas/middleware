@@ -1,7 +1,7 @@
 import pytest
 from pytest_dependency import depends
 from middlewared.test.integration.utils import call, pool
-from auto_config import dev_test
+from auto_config import pool_name, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -31,5 +31,5 @@ def localhost_ssh_connection():
 
 @pytest.mark.parametrize("transport", ["SSH", "SSH+NETCAT"])
 def test_list_datasets_ssh(request, localhost_ssh_connection, transport):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     assert pool in call("replication.list_datasets", transport, localhost_ssh_connection)

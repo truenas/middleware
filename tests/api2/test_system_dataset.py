@@ -4,7 +4,7 @@ from pytest_dependency import depends
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, pool, ssh
 
-from auto_config import dev_test
+from auto_config import pool_name, dev_test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
@@ -27,7 +27,7 @@ def write_to_log(string):
 
 
 def test_system_dataset_migrate(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
 
     config = call("systemdataset.config")
     assert config["pool"] == pool
@@ -48,7 +48,7 @@ def test_system_dataset_migrate(request):
 
 @pytest.mark.parametrize("lock", [False, True])
 def test_migrate_to_a_pool_with_passphrase_encrypted_root_dataset(request, lock):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
 
     config = call("systemdataset.config")
     assert config["pool"] == pool
@@ -68,7 +68,7 @@ def test_migrate_to_a_pool_with_passphrase_encrypted_root_dataset(request, lock)
 
 
 def test_lock_passphrase_encrypted_pool_with_system_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
 
     with another_pool({"encryption": True, "encryption_options": {"passphrase": "passphrase"}}):
         call("systemdataset.update", {"pool": "test"}, job=True)

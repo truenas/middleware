@@ -52,7 +52,7 @@ def test_01_check_dataset_endpoint():
 
 @pytest.mark.dependency(name="DATASET_CREATED")
 def test_02_create_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': MODE_DATASET

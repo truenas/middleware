@@ -62,7 +62,7 @@ def test_001_setting_auxilary_parameters_for_mount_smbfs(request):
 
 @pytest.mark.dependency(name="create_dataset")
 def test_002_creating_smb_dataset(request):
-    depends(request, ["pool_04", "smb_001"], scope="session")
+    depends(request, [pool_name, "smb_001"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB",

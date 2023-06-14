@@ -22,7 +22,7 @@ def test_01_create_test_datasets(request, acltype):
     This test shouldn't fail unless pool.dataset endpoint is
     thoroughly broken.
     """
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': f'{pool_name}/acltemplate_{acltype.lower()}',

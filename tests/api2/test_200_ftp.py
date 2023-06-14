@@ -707,7 +707,7 @@ def test_001_validate_default_configuration(request, ftp_init_db_dflt):
     with migration code.
     NB1: This expects FTP to be in the default configuration
     '''
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     ftp_set_config(DB_DFLT)
 
     with ftp_server():
@@ -765,7 +765,7 @@ def test_010_ftp_service_start(request):
     Confirm we can start the FTP service with the default config
     Confirm the proftpd.conf file was generated
     '''
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     # Start FTP service
     with ftp_server():
         # Get current
@@ -787,7 +787,7 @@ def test_015_ftp_configuration(request):
     '''
     Confirm config changes get reflected in proftpd.conf
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
 
     with ftp_server():
         changes = {
@@ -806,7 +806,7 @@ def test_017_ftp_port(request):
     '''
     Confirm config changes get reflected in proftpd.conf
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
 
     with ftp_server():
         payload = {
@@ -849,7 +849,7 @@ def test_020_login_attempts(request, NumFailedTries, expect_to_pass):
     1) Test good password before running out of tries
     2) Test good password after running out of tries
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     login_setup = {
         "onlylocal": True,
         "loginattempt": 3,
@@ -882,7 +882,7 @@ def test_030_root_login(request, setting):
     Test the WebUI "Allow Root Login" setting.
     In our DB the setting is "rootlogin" and "RootLogin" in proftpd.conf.
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     # Enable root login for the anonymous config
     ftp_setup = {
         "rootlogin": setting,
@@ -913,7 +913,7 @@ def test_031_anon_login(request, setting, ftpConfig):
     Test the WebUI "Allow Anonymous Login" setting.
     In our DB the setting is "onlyanonymous" and an "Anonymous" section in proftpd.conf.
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     if setting is True:
         # Fixup anonpath
         ftpConfig['anonpath'] = f"/mnt/{pool_name}/{ftpConfig['anonpath']}"
@@ -937,7 +937,7 @@ def test_031_anon_login(request, setting, ftpConfig):
     ("BadUser", False)
 ])
 def test_032_local_login(request, localuser, expect_to_pass):
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     with ftp_user_ds_and_srvr_conn('ftplocalDS', 'FTPlocaluser', {"onlylocal": True}) as ftpdata:
         ftpObj = ftpdata.ftp
         try:
@@ -948,7 +948,7 @@ def test_032_local_login(request, localuser, expect_to_pass):
 
 
 def test_040_reverse_dns(request):
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     ftp_conf = {"onlylocal": True, "reversedns": True}
     with ftp_user_ds_and_srvr_conn('ftplocalDS', 'FTPlocaluser', ftp_conf) as ftpdata:
         ftpObj = ftpdata.ftp
@@ -966,7 +966,7 @@ def test_045_masquerade_address(request, masq_type, expect_to_pass):
         Public IP address or hostname. Set if FTP clients cannot connect through a NAT device.
     We test masqaddress with: hostname, IP address and an invalid fqdn.
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     payload = {'msg': 'method', 'method': 'network.configuration.config', 'params': []}
     res = make_ws_request(ip, payload)
     assert res.get('error') is None, res
@@ -1013,7 +1013,7 @@ def test_050_passive_ports(request, testing, ftpConfig, expect_to_pass):
         | Should no open ports be found within the configured range, the server will default
         | to a random kernel-assigned port, and a message logged.
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     if testing == 'config':
         try:
             with ftp_configure(ftpConfig):
@@ -1046,7 +1046,7 @@ def test_055_no_activity_timeout(request):
         | The TimeoutIdle directive configures the maximum number of seconds that proftpd will
         ! allow clients to stay connected without receiving any data on either the control or data connection
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     with ftp_anon_ds_and_srvr_conn('anonftpDS', {'timeout': 3}) as ftpdata:
         ftpObj = ftpdata.ftp
         try:
@@ -1068,7 +1068,7 @@ def test_056_no_xfer_timeout(request):
         | is allowed to spend connected, after authentication, without issuing a data transfer command
         | which results in a data connection (i.e. sending/receiving a file, or requesting a directory listing)
     '''
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     with ftp_anon_ds_and_srvr_conn('anonftpDS', {'timeout_notransfer': 3}) as ftpdata:
         ftpObj = ftpdata.ftp
         try:
@@ -1093,7 +1093,7 @@ def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
     ulConf = testwho + 'userbw'
     dlConf = testwho + 'userdlbw'
 
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     ftp_anon_bw_limit = {
         ulConf: ulRate,  # upload limit
         dlConf: dlRate   # download limit
@@ -1141,7 +1141,7 @@ def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
     ("007", "0660", "002", "0775"),
 ])
 def test_065_umask(request, fmask, f_expect, dmask, d_expect):
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
     localfile = "/tmp/localfile"
     fname = "filemask" + fmask
     dname = "dirmask" + dmask
@@ -1181,7 +1181,7 @@ def test_065_umask(request, fmask, f_expect, dmask, d_expect):
     ({'resume': True}, True)
 ])
 def test_070_resume_xfer(request, ftpConf, expect_to_pass):
-    depends(request, ["pool_04", "init_dflt_config"], scope="session")
+    depends(request, [pool_name, "init_dflt_config"], scope="session")
 
     def upload_partial(ftp, src, tgt, NumKiB=128):
         with open(src, 'rb') as file:
@@ -1318,7 +1318,7 @@ class TestAnonUser(UserTests):
     """
     @pytest.fixture(scope='class')
     def setup(self, request):
-        depends(request, ["pool_04", "init_dflt_config"], scope="session")
+        depends(request, [pool_name, "init_dflt_config"], scope="session")
 
         with ftp_anon_ds_and_srvr_conn('anonftpDS') as anonftp:
             # Make the directory owned by the anonymous ftp user
@@ -1344,7 +1344,7 @@ class TestLocalUser(UserTests):
 
     @pytest.fixture(scope='class')
     def setup(self, request):
-        depends(request, ["pool_04", "init_dflt_config"], scope="session")
+        depends(request, [pool_name, "init_dflt_config"], scope="session")
 
         local_setup = {
             "onlylocal": True,
@@ -1371,7 +1371,7 @@ class TestFTPSUser(UserTests):
 
     @pytest.fixture(scope='class')
     def setup(self, request):
-        depends(request, ["pool_04", "init_dflt_config"], scope="session")
+        depends(request, [pool_name, "init_dflt_config"], scope="session")
 
         # We include tls_opt_no_session_reuse_required because python
         # ftplib has a long running issue with support for it.

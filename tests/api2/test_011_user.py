@@ -320,7 +320,7 @@ def test_30_creating_home_dataset(request):
     we verify that ACL is being stripped properly from
     the newly-created home directory.
     """
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB",

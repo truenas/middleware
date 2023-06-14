@@ -39,13 +39,13 @@ def task():
 
 
 def test_01_create_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST("/pool/dataset/", {"name": dataset})
     assert result.status_code == 200, result.text
 
 
 def test_02_create_cloud_credentials(request, credentials):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST("/cloudsync/credentials/", {
         "name": "Test",
         "provider": "S3",
@@ -59,7 +59,7 @@ def test_02_create_cloud_credentials(request, credentials):
 
 
 def test_03_update_cloud_credentials(request, credentials):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = PUT(f"/cloudsync/credentials/id/{credentials['id']}/", {
         "name": "Test",
         "provider": "S3",
@@ -72,7 +72,7 @@ def test_03_update_cloud_credentials(request, credentials):
 
 
 def test_04_create_cloud_sync(request, credentials, task):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST("/cloudsync/", {
         "description": "Test",
         "direction": "PULL",
@@ -97,7 +97,7 @@ def test_04_create_cloud_sync(request, credentials, task):
 
 
 def test_05_update_cloud_sync(request, credentials, task):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = PUT(f"/cloudsync/id/{task['id']}/", {
         "description": "Test",
         "direction": "PULL",
@@ -121,7 +121,7 @@ def test_05_update_cloud_sync(request, credentials, task):
 
 
 def test_06_run_cloud_sync(request, task):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
+    depends(request, [pool_name, "ssh_password"], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/sync/")
     assert result.status_code == 200, result.text
     for i in range(120):
@@ -144,7 +144,7 @@ def test_06_run_cloud_sync(request, task):
 
 
 def test_07_restore_cloud_sync(request, task):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = POST(f"/cloudsync/id/{task['id']}/restore/", {
         "transfer_mode": "COPY",
         "path": dataset_path,
@@ -156,25 +156,25 @@ def test_07_restore_cloud_sync(request, task):
 
 
 def test_96_delete_cloud_credentials_error(request, credentials):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 422
     assert "This credential is used by cloud sync task" in result.json()["message"]
 
 
 def test_97_delete_cloud_sync(request, task):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = DELETE(f"/cloudsync/id/{task['id']}/")
     assert result.status_code == 200, result.text
 
 
 def test_98_delete_cloud_credentials(request, credentials):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = DELETE(f"/cloudsync/credentials/id/{credentials['id']}/")
     assert result.status_code == 200, result.text
 
 
 def test_99_destroy_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
     assert result.status_code == 200, result.text

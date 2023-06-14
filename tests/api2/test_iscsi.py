@@ -9,7 +9,7 @@ from pytest_dependency import depends
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.pool import dataset
-from auto_config import dev_test
+from auto_config import pool_name, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -25,7 +25,7 @@ def iscsi_extent(data):
 
 
 def test__iscsi_extent__disk_choices(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with dataset("test zvol", {
         "type": "VOLUME",
         "volsize": 1024000,
@@ -54,7 +54,7 @@ def test__iscsi_extent__disk_choices(request):
 
 
 def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with dataset("test zvol", {
         "type": "VOLUME",
         "volsize": 1024000,
@@ -73,7 +73,7 @@ def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
 
 
 def test__iscsi_extent__locked(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with dataset("test zvol", {
         "type": "VOLUME",
         "volsize": 1024000,

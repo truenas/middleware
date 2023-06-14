@@ -35,7 +35,7 @@ def test_cputemp():
 
 
 def test_reporting_still_working_after_the_system_dataset_changes(request, reporing_data):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
 
     pool_disk = [POST('/disk/get_unused/').json()[0]['name']]
     payload = {

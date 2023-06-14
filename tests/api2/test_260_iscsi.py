@@ -94,7 +94,7 @@ def test_03_Add_iSCSI_target(request):
 
 @pytest.mark.dependency(name="iscsi_04")
 def test_04_Add_a_iSCSI_file_extent(request):
-    depends(request, ["pool_04", "iscsi_03"], scope="session")
+    depends(request, [pool_name, "iscsi_03"], scope="session")
     global extent_id
     payload = {
         'type': 'FILE',
@@ -295,7 +295,7 @@ def test_27_Delete_iSCSI_file_extent(request):
 
 @pytest.mark.dependency(name="iscsi_28")
 def test_28_creating_zvol_for_the_iscsi_share(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     global results, payload
     payload = {
         'name': zvol,

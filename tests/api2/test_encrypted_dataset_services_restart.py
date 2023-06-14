@@ -2,6 +2,8 @@ import contextlib
 
 import pytest
 from pytest_dependency import depends
+
+from auto_config import pool_name
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.pool import dataset
 
@@ -44,7 +46,7 @@ def lock_dataset(dataset_name):
 
 
 def test_service_restart_on_unlock_dataset(request):
-    depends(request, ['pool_04'], scope='session')
+    depends(request, [pool_name], scope='session')
     service_name = 'smb'
     registered_name = 'cifs'
     with dataset('testsvcunlock', data={

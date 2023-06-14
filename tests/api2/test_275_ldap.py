@@ -126,7 +126,7 @@ def test_09_account_privilege_authentication(request):
 
 @pytest.mark.dependency(name="ldap_dataset")
 def test_09_creating_ldap_dataset_for_smb(request):
-    depends(request, ["pool_04", "setup_ldap"], scope="session")
+    depends(request, [pool_name, "setup_ldap"], scope="session")
     results = POST("/pool/dataset/", {"name": dataset, "share_type": "SMB"})
     assert results.status_code == 200, results.text
 

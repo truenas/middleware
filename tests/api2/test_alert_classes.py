@@ -6,7 +6,7 @@ from pytest_dependency import depends
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 
-from auto_config import dev_test
+from auto_config import pool_name, dev_test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
@@ -39,7 +39,7 @@ def test__nonexisting_alert_class():
 
 
 def test__disable_proactive_support_for_valid_alert_class(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     call("alertclasses.update", {
         "classes": {
             "ZpoolCapacityNotice": {
@@ -50,7 +50,7 @@ def test__disable_proactive_support_for_valid_alert_class(request):
 
 
 def test__disable_proactive_support_for_invalid_alert_class(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with pytest.raises(ValidationErrors) as ve:
         call("alertclasses.update", {
             "classes": {

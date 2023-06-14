@@ -13,14 +13,14 @@ from middlewared.test.integration.utils import assert_creates_job, call
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job
-from auto_config import dev_test
+from auto_config import dev_test, pool_name
 from pytest_dependency import depends
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test_change_retention(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
 
     tz = pytz.timezone(call("system.info")["timezone"])
 
@@ -98,7 +98,7 @@ def test_change_retention(request):
 
 
 def test_delete_retention(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
 
     tz = pytz.timezone(call("system.info")["timezone"])
 

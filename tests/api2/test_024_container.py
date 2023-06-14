@@ -483,7 +483,7 @@ if not ha:
 
     @pytest.mark.dependency(name='hostpath-dataset')
     def test_36_create_datasets_hostpath(request):
-        depends(request, ['pool_04'], scope='session')
+        depends(request, [pool_name], scope='session')
         result = POST('/pool/dataset/', {'name': f'{pool_name}/tc-hostpath'})
         assert result.status_code == 200, result.text
 

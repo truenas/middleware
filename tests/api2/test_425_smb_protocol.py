@@ -102,7 +102,7 @@ SMB_PWD = "smb1234"
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
 def test_001_creating_smb_dataset(request):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"

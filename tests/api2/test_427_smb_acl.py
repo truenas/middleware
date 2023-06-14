@@ -163,7 +163,7 @@ def test_003_test_perms(request):
     correct NT ACL bit gets toggled when viewed through SMB
     protocol.
     """
-    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    depends(request, ["SMB_SERVICE_STARTED", pool_name], scope="session")
 
     ds = 'nfs4acl_perms_smb'
     path = f'/mnt/{pool_name}/{ds}'
@@ -196,7 +196,7 @@ def test_004_test_flags(request):
     correct NT ACL bit gets toggled when viewed through SMB
     protocol.
     """
-    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    depends(request, ["SMB_SERVICE_STARTED", pool_name], scope="session")
 
     ds = 'nfs4acl_flags_smb'
     path = f'/mnt/{pool_name}/{ds}'
@@ -228,7 +228,7 @@ def test_005_test_map_modify(request):
     grants an access mask equaivalent to MODIFY or FULL depending on whether it's
     the file owner or group / other.
     """
-    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    depends(request, ["SMB_SERVICE_STARTED", pool_name], scope="session")
 
     ds = 'nfs4acl_map_modify'
     path = f'/mnt/{pool_name}/{ds}'
@@ -244,7 +244,7 @@ def test_005_test_map_modify(request):
 
 
 def test_006_test_preserve_dynamic_id_mapping(request):
-    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    depends(request, ["SMB_SERVICE_STARTED", pool_name], scope="session")
     def _find_owner_rights(acl):
         for entry in acl:
             if 'owner rights' in entry['who']:
@@ -291,7 +291,7 @@ def test_006_test_preserve_dynamic_id_mapping(request):
 
 
 def test_007_test_disable_autoinherit(request):
-    depends(request, ["SMB_SERVICE_STARTED", "pool_04"], scope="session")
+    depends(request, ["SMB_SERVICE_STARTED", pool_name], scope="session")
     ds = 'nfs4acl_disable_inherit'
     path = f'/mnt/{pool_name}/{ds}'
     with create_dataset(f'{pool_name}/{ds}', {'share_type': 'SMB'}):

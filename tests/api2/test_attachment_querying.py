@@ -6,6 +6,7 @@ from pytest_dependency import depends
 
 sys.path.append(os.getcwd())
 
+from auto_config import pool_name
 from middlewared.test.integration.assets.nfs import nfs_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client
@@ -16,7 +17,7 @@ CHILD_DATASET = f'{PARENT_DATASET}/child_dataset'
 
 
 def test_attachment_with_child_path(request):
-    depends(request, ['pool_04'], scope='session')
+    depends(request, [pool_name], scope='session')
     with dataset(PARENT_DATASET) as parent_dataset:
         parent_path = f'/mnt/{parent_dataset}'
         assert call('pool.dataset.attachments_with_path', parent_path) == []

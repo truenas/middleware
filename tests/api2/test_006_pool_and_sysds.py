@@ -40,7 +40,7 @@ def test_001_check_sysdataset_exists_on_boot_pool(ws_client):
     assert bp_basename == sysds['basename']
 
 
-@pytest.mark.dependency(name='PERM_ZPOOL_CREATED')
+@pytest.mark.dependency(name=pool_name)
 def test_002_create_permanent_zpool(request, ws_client):
     """
     This creates the "permanent" zpool which is used by every other
@@ -79,7 +79,7 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(request, ws_
     2. make sure the system dataset doesn't migrate to the 2nd zpool that we create
         since it should only be migrating to the 1st zpool that is created
     """
-    depends(request, ['PERM_ZPOOL_CREATED'])
+    depends(request, [pool_name])
     unused_disks = ws_client.call('disk.get_unused')
     assert len(unused_disks) >= 1
 

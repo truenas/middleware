@@ -10,7 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job, SSH_TEST
-from auto_config import ha, ip, password, user, dev_test
+from auto_config import pool_name, ha, ip, password, user, dev_test
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
@@ -28,7 +28,7 @@ child_dataset_url = child_dataset.replace('/', '%2F')
 
 @pytest.mark.dependency(name="CREATED_POOL")
 def test_create_a_normal_pool(request):
-    depends(request, ['pool_04'], scope='session')
+    depends(request, [pool_name], scope='session')
     global pool_id, pool_disks
     # Get one disk for encryption testing
     pool_disks = [POST('/disk/get_unused/', controller_a=ha).json()[0]['name']]

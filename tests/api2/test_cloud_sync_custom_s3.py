@@ -11,7 +11,7 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test
+from auto_config import pool_name, dev_test
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason=reason)
@@ -30,7 +30,7 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
     )
 ])
 def test_custom_s3(request, credential_attributes, result):
-    depends(request, ["pool_04"], scope="session")
+    depends(request, [pool_name], scope="session")
     with dataset("test") as ds:
         with credential({
             "name": "S3",
