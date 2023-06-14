@@ -101,3 +101,15 @@ def test_group_next_gid():
             return result
     """):
         assert call("group.get_next_gid") == next_gid + 1
+
+
+def test_remove_only_local_administrator_password_enabled_user():
+    root = call("user.query", [["username", "=", "root"]], {"get": True})
+    with pytest.raises(ValidationErrors) as ve:
+        call("user.update", root["id"], {"password_disabled": True})
+
+    assert ve.value.errors[0].attribute == "user_update.password_disabled"
+    assert ve.value.errors[0].errmsg == (
+        "After disabling password for this user no password-enabled local user will have built-in privilege "
+        "'Local Administrator'."
+    )

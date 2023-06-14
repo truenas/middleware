@@ -633,6 +633,12 @@ class UserService(CRUDService):
 
         verrors = ValidationErrors()
 
+        if data.get('password_disabled'):
+            try:
+                await self.middleware.call('privilege.before_user_password_disable', user)
+            except CallError as e:
+                verrors.add('user_update.password_disabled', e.errmsg)
+
         if 'group' in data:
             group = await self.middleware.call('datastore.query', 'account.bsdgroups', [
                 ('id', '=', data['group'])
