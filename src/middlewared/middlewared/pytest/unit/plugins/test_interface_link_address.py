@@ -6,7 +6,7 @@ from asyncmock import AsyncMock
 import pytest
 import sqlalchemy as sa
 
-from middlewared.plugins.interface.link_address import setup as link_address_setup
+from middlewared.plugins.interface.link_address import InterfaceService, setup as link_address_setup
 from middlewared.pytest.unit.plugins.test_datastore import Model, datastore_test
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,9 @@ async def test__interface_link_address_setup(test):
     real_interfaces, database, result = test
 
     async with datastore_test() as ds:
-        ds.middleware["system.is_ha_capable"] = AsyncMock(return_value=False)
+        ds.middleware["failover.node"] = AsyncMock(return_value="MANUAL")
+        ds.middleware["failover.status"] = AsyncMock(return_value="SINGLE")
+        ds.middleware["interface.persist_link_addresses"] = InterfaceService(ds.middleware).persist_link_addresses
 
         query = ds.middleware["datastore.query"]
 
