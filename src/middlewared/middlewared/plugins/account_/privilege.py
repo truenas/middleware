@@ -255,7 +255,18 @@ class PrivilegeService(CRUDService):
         return result
 
     @private
+    async def before_user_password_disable(self, user):
+        return await self.before_user_deactivation(
+            user,
+            'After disabling password for this user no password-enabled local user',
+        )
+
+    @private
     async def before_user_delete(self, user):
+        return await self.before_user_deactivation(user, 'After deleting this user no local user')
+
+    @private
+    async def before_user_deactivation(self, user, error_text):
         for privilege in await self.middleware.call(
             'datastore.query',
             'account.privilege',
@@ -264,7 +275,7 @@ class PrivilegeService(CRUDService):
             if not await self.middleware.call('group.has_password_enabled_user', privilege['local_groups'],
                                               [user['id']]):
                 raise CallError(
-                    f'After deleting this user no local user will have built-in privilege {privilege["name"]!r}.',
+                    f'{error_text} will have built-in privilege {privilege["name"]!r}.',
                     errno.EACCES,
                 )
 
