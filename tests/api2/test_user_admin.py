@@ -22,7 +22,7 @@ def admin():
     # Connect before removing root password
     with client() as c:
         try:
-            c.call("user.update", root_id, {"password_disabled": True})
+            c.call("datastore.update", "account.bsdusers", root_id, {"bsdusr_password_disabled": True})
             c.call("user.setup_local_administrator", "admin", "admin")
             # Quickly restore root password before anyone notices
             c.call("datastore.update", "account.bsdusers", root_id, root_backup)
