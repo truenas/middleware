@@ -33,7 +33,8 @@ def test_001_is_system_ready(ws_client):
     # will be non-deterministic because middleware plugins
     # internally expect that the system is ready before
     # propertly responding to REST/WS requests.
-    assert ws_client.call('system.ready'), f'System is not ready. Currently: {ws_client.call("system.state")}'
+    if not ws_client.call('system.ready'):
+        pytest.exit(f'System is not ready. Currently: {ws_client.call("system.state")}. Aborting tests.')
 
 
 def test_002_firstboot_checks(ws_client):
