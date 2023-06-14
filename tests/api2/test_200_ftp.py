@@ -1085,9 +1085,9 @@ def test_056_no_xfer_timeout(request):
     ('local', ftp_user_ds_and_srvr_conn),
 ])
 def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
-    FileSize = 64  # KiB
-    ulRate = 8  # KiB
-    dlRate = 16  # KiB
+    FileSize = 1024  # KiB
+    ulRate = 64  # KiB
+    dlRate = 128  # KiB
     ulConf = testwho + 'userbw'
     dlConf = testwho + 'userdlbw'
 
@@ -1118,13 +1118,13 @@ def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
             ElapsedTime = int(ftp_upload_binary_file(ftpObj, localfname, ftpfname))
             xfer_rate = int(FileSize / ElapsedTime)
             # This typically will match exactly, but in actual testing this might vary a little
-            assert (ulRate - 1) <= xfer_rate <= (ulRate + 1),\
+            assert (ulRate - 2) <= xfer_rate <= (ulRate + 2),\
                 f"Failed upload rate limiter: Expected {ulRate}, but sensed rate is {xfer_rate}"
 
             ElapsedTime = int(ftp_download_binary_file(ftpObj, ftpfname, localfname))
             xfer_rate = int(FileSize / ElapsedTime)
             # Allow for small variance
-            assert (dlRate - 1) <= xfer_rate <= (dlRate + 1),\
+            assert (dlRate - 2) <= xfer_rate <= (dlRate + 2),\
                 f"Failed download rate limiter: Expected {dlRate}, but sensed rate is {xfer_rate}"
         except all_errors as e:
             assert False, f"Unexpected failure: {e}"
