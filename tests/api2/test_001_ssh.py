@@ -92,7 +92,8 @@ def test_004_enable_and_start_ssh(ws_client):
 
 def test_005_ssh_using_root_password(ip_to_use):
     results = SSH_TEST('ls -la', user, password, ip_to_use)
-    assert results['result'] is True, results['output']
+    if not results['result']:
+        pytest.exit(f"SSH is not usable: {results['output']}. Aborting tests.")
 
 
 def test_006_setup_and_login_using_root_ssh_key(ip_to_use):
