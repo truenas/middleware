@@ -57,7 +57,6 @@ def test_05_Checking_that_API_reports_the_cronjob_as_updated(cronjob_dict):
 
 
 def test_06_Deleting_test_file_created_by_cronjob(request):
-    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'rm "{TESTFILE}"', user, password, ip)
     assert results['result'] is True, results['output']
 

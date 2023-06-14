@@ -231,7 +231,6 @@ def test_01_snapshot_query_filter_dataset_props_name(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_dataset("ds-snapshot-simple-query-name", ['name'])
 
 def test_02_snapshot_query_filter_dataset_props_createtxg(request):
@@ -240,7 +239,6 @@ def test_02_snapshot_query_filter_dataset_props_createtxg(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['createtxg'])
 
 def test_03_snapshot_query_filter_dataset_props_name_createtxg(request):
@@ -249,7 +247,6 @@ def test_03_snapshot_query_filter_dataset_props_name_createtxg(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_dataset("ds-snapshot-simple-query-name-createtxg", ['name', 'createtxg'])
     _test_simple_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg-name", ['createtxg', 'name'])
 
@@ -259,7 +256,6 @@ def test_04_snapshot_query_filter_dataset_props_used(request):
 
     The results should be regular (NON fast-path) query that returns 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used'])
     _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'name'])
     _test_full_snapshot_query_filter_dataset("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])
@@ -363,7 +359,6 @@ def test_05_snapshot_query_filter_snapshot_props_name(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-name", ['name'])
 
 def test_06_snapshot_query_filter_snapshot_props_createtxg(request):
@@ -372,7 +367,6 @@ def test_06_snapshot_query_filter_snapshot_props_createtxg(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['createtxg'])
 
 def test_07_snapshot_query_filter_snapshot_props_name_createtxg(request):
@@ -381,7 +375,6 @@ def test_07_snapshot_query_filter_snapshot_props_name_createtxg(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-name-createtxg", ['name', 'createtxg'])
     _test_simple_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg-name", ['createtxg', 'name'])
 
@@ -391,7 +384,6 @@ def test_08_snapshot_query_filter_snapshot_props_used(request):
 
     The results should be regular (NON fast-path) query that returns 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used'])
     _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used', 'name'])
     _test_full_snapshot_query_filter_snapshot("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])
@@ -492,7 +484,6 @@ def test_09_snapshot_query_filter_pool_props_name(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-name", ['name'])
 
 def test_10_snapshot_query_filter_pool_props_createtxg(request):
@@ -501,7 +492,6 @@ def test_10_snapshot_query_filter_pool_props_createtxg(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['createtxg'])
 
 def test_11_snapshot_query_filter_pool_props_name_createtxg(request):
@@ -510,7 +500,6 @@ def test_11_snapshot_query_filter_pool_props_name_createtxg(request):
 
     The results should be simple (fast-path) without 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-name-createtxg", ['name', 'createtxg'])
     _test_simple_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg-name", ['createtxg', 'name'])
 
@@ -520,7 +509,6 @@ def test_12_snapshot_query_filter_pool_props_used(request):
 
     The results should be regular (NON fast-path) query that returns 'properties'.
     """
-    depends(request, ["pool_04"], scope="session")
     _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used'])
     _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used', 'name'])
     _test_full_snapshot_query_filter_pool("ds-snapshot-simple-query-createtxg", ['used', 'name', 'createtxg'])

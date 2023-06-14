@@ -527,7 +527,7 @@ def test_01_inquiry(request):
     This tests the Vendor and Product information in an INQUIRY response
     are 'TrueNAS' and 'iSCSI Disk' respectively.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -548,7 +548,7 @@ def test_02_read_capacity16(request):
 
     It performs this test with a couple of sizes for both file & zvol based targets.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with initiator():
         with portal() as portal_config:
             portal_id = portal_config['id']
@@ -662,7 +662,7 @@ def test_03_readwrite16_file_extent(request):
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a file extent based iSCSI target.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
@@ -673,7 +673,7 @@ def test_04_readwrite16_zvol_extent(request):
     This tests WRITE SAME (16), READ (16) and WRITE (16) operations with
     a zvol extent based iSCSI target.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with configured_target_to_zvol_extent(target_name, zvol):
         iqn = f'{basename}:{target_name}'
         target_test_readwrite16(ip, iqn)
@@ -684,7 +684,7 @@ def test_05_chap(request):
     """
     This tests that CHAP auth operates as expected.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     with initiator():
@@ -724,7 +724,7 @@ def test_06_mutual_chap(request):
     """
     This tests that Mutual CHAP auth operates as expected.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     user = "user1"
     secret = 'sec1' + ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
     peer_user = "user2"
@@ -777,7 +777,7 @@ def test_07_report_luns(request):
     """
     This tests REPORT LUNS and accessing multiple LUNs on a target.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with initiator():
         with portal() as portal_config:
@@ -972,7 +972,7 @@ def test_08_snapshot_zvol_extent(request):
     """
     This tests snapshots with a zvol extent based iSCSI target.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with configured_target_to_zvol_extent(target_name, zvol) as iscsi_config:
         target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
@@ -984,7 +984,7 @@ def test_09_snapshot_file_extent(request):
     """
     This tests snapshots with a file extent based iSCSI target.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name) as iscsi_config:
         target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
@@ -999,7 +999,7 @@ def test_10_target_alias(request):
     At the moment SCST does not use the alias usefully (e.g. TargetAlias in
     LOGIN response).  When this is rectified this test should be extended.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
 
     data = {}
     for t in ["A", "B"]:
@@ -1042,7 +1042,7 @@ def test_11_modify_portal(request):
     """
     Test that we can modify a target portal.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with portal() as portal_config:
         assert portal_config['comment'] == 'Default portal', portal_config
         # First just change the comment
@@ -1060,7 +1060,7 @@ def test_12_pblocksize_setting(request):
     This tests whether toggling pblocksize has the desired result on READ CAPACITY 16, i.e.
     whether setting it results in LOGICAL BLOCKS PER PHYSICAL BLOCK EXPONENT being zero.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     iqn = f'{basename}:{target_name}'
     with configured_target_to_file_extent(target_name, pool_name, dataset_name, file_name) as iscsi_config:
         extent_config = iscsi_config['extent']
@@ -1134,7 +1134,7 @@ def test_13_test_target_name(request, extent_type):
     """
     Test the user-supplied target name.
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
 
     name64 = generate_name(64)
     with configured_target(name64, extent_type):
@@ -1246,7 +1246,7 @@ class TestFixtureInitiatorName:
         """
         Deliberately send SCST some invalid initiator names and ensure it behaves OK.
         """
-        depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+        depends(request, ["iscsi_cmd_00"], scope="session")
 
         if expected:
             with iscsi_scsi_connection(ip, TestFixtureInitiatorName.iqn, initiator_name=initiator_name) as s:
@@ -1340,7 +1340,7 @@ def _pr_reservation(s, pr_type, scope=LU_SCOPE, other_connections=[], **kwargs):
 @skip_persistent_reservations
 @pytest.mark.dependency(name="iscsi_basic_persistent_reservation")
 def test_16_basic_persistent_reservation(request):
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with configured_target_to_zvol_extent(target_name, zvol):
         iqn = f'{basename}:{target_name}'
         with iscsi_scsi_connection(ip, iqn) as s:
@@ -1496,7 +1496,7 @@ def _check_persistent_reservations(s1, s2):
 @skip_persistent_reservations
 @skip_multi_initiator
 def test_17_persistent_reservation_two_initiators(request):
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     with configured_target_to_zvol_extent(target_name, zvol):
         iqn = f'{basename}:{target_name}'
         with iscsi_scsi_connection(ip, iqn) as s1:
@@ -1839,7 +1839,7 @@ def test_18_alua_config(request):
 @skip_multi_initiator
 @skip_ha_tests
 def test_19_alua_basic_persistent_reservation(request):
-    # Don't need to specify "pool_04", "iscsi_cmd_00" here
+    # Don't need to specify "iscsi_cmd_00" here
     depends(request, ["iscsi_alua_config", "iscsi_basic_persistent_reservation"], scope="session")
     # Turn on ALUA
     with alua_enabled():

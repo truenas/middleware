@@ -34,7 +34,6 @@ def user():
 
 
 def test_root_api_key_websocket(request):
-    depends(request, ["ssh_password"], scope="session")
     """We should be able to call a method with root API key using Websocket."""
     with api_key([{"method": "*", "resource": "*"}]) as key:
         with user():
@@ -45,7 +44,6 @@ def test_root_api_key_websocket(request):
 
 
 def test_allowed_api_key_websocket(request):
-    depends(request, ["ssh_password"], scope="session")
     """We should be able to call a method with API key that allows that call using Websocket."""
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         with user():
@@ -56,7 +54,6 @@ def test_allowed_api_key_websocket(request):
 
 
 def test_denied_api_key_websocket(request):
-    depends(request, ["ssh_password"], scope="session")
     """We should not be able to call a method with API key that does not allow that call using Websocket."""
     with api_key([{"method": "CALL", "resource": "system.info_"}]) as key:
         with user():

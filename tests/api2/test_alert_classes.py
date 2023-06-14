@@ -39,7 +39,6 @@ def test__nonexisting_alert_class():
 
 
 def test__disable_proactive_support_for_valid_alert_class(request):
-    depends(request, ["pool_04"], scope="session")
     call("alertclasses.update", {
         "classes": {
             "ZpoolCapacityNotice": {
@@ -50,7 +49,6 @@ def test__disable_proactive_support_for_valid_alert_class(request):
 
 
 def test__disable_proactive_support_for_invalid_alert_class(request):
-    depends(request, ["pool_04"], scope="session")
     with pytest.raises(ValidationErrors) as ve:
         call("alertclasses.update", {
             "classes": {

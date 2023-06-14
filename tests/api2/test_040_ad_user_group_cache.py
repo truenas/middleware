@@ -76,7 +76,7 @@ def test_07_check_for_ad_users(request):
     This test validates that we can query AD users using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["INITIAL_CACHE_FILL", "ssh_password"], scope="session")
+    depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     cmd = "wbinfo -u"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
@@ -100,7 +100,7 @@ def test_08_check_for_ad_groups(request):
     This test validates that we can query AD groups using
     filter-option {"extra": {"search_dscache": True}}
     """
-    depends(request, ["INITIAL_CACHE_FILL", "ssh_password"], scope="session")
+    depends(request, ["INITIAL_CACHE_FILL"], scope="session")
     cmd = "wbinfo -g"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
@@ -127,7 +127,7 @@ def test_09_check_directoryservices_cache_refresh(request):
     This currently happens once per 24 hours. Result of failure here will
     be lack of users/groups visible in webui.
     """
-    depends(request, ["AD_USERS_CACHED", "AD_GROUPS_CACHED", "ssh_password"], scope="session")
+    depends(request, ["AD_USERS_CACHED", "AD_GROUPS_CACHED"], scope="session")
     rebuild_ok = False
 
     """
@@ -180,7 +180,7 @@ def test_10_check_lazy_initialization_of_users_and_groups_by_name(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["REBUILD_AD_CACHE", "ssh_password"], scope="session")
+    depends(request, ["REBUILD_AD_CACHE"], scope="session")
     global ad_user_id
     global ad_domain_users_id
     domain_prefix = f'{WORKGROUP.upper()}{WINBIND_SEPARATOR}'
@@ -247,7 +247,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     to only hit the cache. Code paths are slightly different for lookups
     by id or by name and so they are tested separately.
     """
-    depends(request, ["LAZY_INITIALIZATION_BY_NAME", "ssh_password"], scope="session")
+    depends(request, ["LAZY_INITIALIZATION_BY_NAME"], scope="session")
 
     cmd = 'rm -f /root/tdb/persistent/*'
     results = SSH_TEST(cmd, user, password, ip)

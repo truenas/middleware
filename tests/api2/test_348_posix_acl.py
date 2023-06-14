@@ -78,7 +78,6 @@ def test_01_check_dataset_endpoint():
 
 @pytest.mark.dependency(name="DATASET_CREATED")
 def test_02_create_dataset(request):
-    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_DATASET,
@@ -355,7 +354,7 @@ We first create a child dataset to verify that ACLs do not change unless
 
 
 def test_12_prepare_recursive_tests(request):
-    depends(request, ["HAS_POSIX_ACLS", "ssh_password"], scope="session")
+    depends(request, ["HAS_POSIX_ACLS"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET,
@@ -533,7 +532,6 @@ def test_20_delete_child_dataset(request):
 
 
 def test_30_delete_dataset(request):
-    depends(request, ["pool_04"], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{DATASET_URL}/'
     )

@@ -9,7 +9,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 
 def test_snapshot_total_count_alert(request):
-    depends(request, ["pool_04"], scope="session")
     with dataset("snapshot_count") as ds:
         base = call("zfs.snapshot.query", [], {"count": True})
         with mock("pool.snapshottask.max_total_count", return_value=base + 10):
@@ -30,7 +29,6 @@ def test_snapshot_total_count_alert(request):
 
 
 def test_snapshot_count_alert(request):
-    depends(request, ["pool_04"], scope="session")
     with dataset("snapshot_count") as ds:
         with mock("pool.snapshottask.max_count", return_value=10):
             for i in range(10):

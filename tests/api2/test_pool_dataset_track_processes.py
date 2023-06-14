@@ -43,7 +43,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
     ),
 ])
 def test__open_path_and_check_proc(request, datasets, file_open_path, arg_path):
-    depends(request, ["pool_04"], scope="session")
     with contextlib.ExitStack() as stack:
         for name, data in datasets:
             stack.enter_context(dataset(name, data))

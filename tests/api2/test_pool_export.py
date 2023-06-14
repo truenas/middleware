@@ -16,7 +16,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development 
 
 
 def test_systemdataset_migrate_error(request):
-    depends(request, ["pool_04"], scope="session")
     """
     On HA this test will fail with the error below if failover is enable:
     [ENOTSUP] Disable failover before exporting last pool on system.

@@ -56,7 +56,6 @@ def test_query_attachment_delegate(ssh_credentials, data, path, include):
 
 @pytest.mark.parametrize("exclude_mountpoint_property", [True, False])
 def test_run_onetime__exclude_mountpoint_property(request, exclude_mountpoint_property):
-    depends(request, ["pool_04"], scope="session")
     with dataset("src") as src:
         with dataset("src/legacy") as src_legacy:
             ssh(f"zfs set mountpoint=legacy {src_legacy}")

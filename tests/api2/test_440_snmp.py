@@ -34,7 +34,6 @@ def test_02_Enable_SNMP_service_at_boot():
 
 
 def test_03_verify_snmp_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = f"""grep -R "{PASSWORD}" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
