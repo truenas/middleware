@@ -132,12 +132,12 @@ class SystemGeneralService(Service):
 
         urls = set()
         for i in await self.middleware.call('interface.ip_in_use', kwargs):
-            http_url = http_proto + i["address"] if i['type'] == 'INET' else f'[{i["address"]}]'
+            http_url = http_proto + (i["address"] if i['type'] == 'INET' else f'[{i["address"]}]')
             http_url += f':{http_port}'
 
             https_url = None
             if https_proto is not None:
-                https_url = https_proto + i["address"] if i['type'] == 'INET' else f'[{i["address"]}]'
+                https_url = https_proto + (i["address"] if i['type'] == 'INET' else f'[{i["address"]}]')
                 https_url += f':{https_port}'
 
             if all_ip4 or all_ip6:
