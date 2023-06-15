@@ -2,6 +2,7 @@
 import os
 import re
 import sqlite3
+import subprocess
 
 from middlewared.utils.db import query_config_table
 
@@ -31,6 +32,16 @@ def modify_openssl_config(enable_fips: bool) -> None:
         f.write(config)
 
 
+def configure_fips(enable_fips: bool) -> None:
+    if enable_fips:
+        subprocess.check_call([
+            'openssl', 'fipsinstall', '-out', FIPS_MODULE_FILE,
+            '-module', '/usr/lib/x86_64-linux-gnu/ossl-modules/fips.so',
+        ], timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    modify_openssl_config(enable_fips)
+
+
 def main() -> None:
     validate_system_state()
     try:
@@ -40,7 +51,7 @@ def main() -> None:
         # so we should always enable fips as a good default then
         security_settings = {'enable_fips': True}
 
-    modify_openssl_config(security_settings['enable_fips'])
+    configure_fips(security_settings['enable_fips'])
 
 
 if __name__ == '__main__':
