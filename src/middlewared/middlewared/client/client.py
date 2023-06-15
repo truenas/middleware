@@ -251,7 +251,8 @@ class ValidationErrors(ClientException):
 
 
 class CallTimeout(ClientException):
-    pass
+    def __init__(self):
+        super().__init__("Call timeout", errno.ETIMEDOUT)
 
 
 class Client:
@@ -486,7 +487,7 @@ class Client:
 
         try:
             if not c.returned.wait(timeout):
-                raise CallTimeout("Call timeout", errno.ETIMEDOUT)
+                raise CallTimeout()
 
             if c.errno:
                 if c.py_exception:

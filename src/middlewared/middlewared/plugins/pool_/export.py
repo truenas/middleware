@@ -157,7 +157,8 @@ class PoolService(Service):
 
             if await self.middleware.call('failover.licensed'):
                 try:
-                    await self.middleware.call('failover.call_remote', 'disk.retaste')
+                    await self.middleware.call('failover.call_remote', 'disk.retaste', [],
+                                               {'raise_connect_error': False})
                 except Exception:
                     self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 

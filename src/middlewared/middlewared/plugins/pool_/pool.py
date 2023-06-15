@@ -464,7 +464,7 @@ class PoolService(CRUDService):
         await self.middleware.call('pool.format_disks', job, disks)
         if is_ha:
             try:
-                await self.middleware.call('failover.call_remote', 'disk.retaste')
+                await self.middleware.call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
             except Exception:
                 self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 
