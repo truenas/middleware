@@ -9,7 +9,7 @@ from middlewared.utils.db import query_config_table
 FIPS_MODULE_FILE = '/usr/lib/ssl/fipsmodule.cnf'
 OPENSSL_CONFIG_FILE = '/etc/ssl/openssl.cnf'
 OPENSSL_FIPS_FILE = '/etc/ssl/openssl_fips.cnf'
-RE_INCLUDE_FIPS = re.compile(fr'.include {re.escape(OPENSSL_FIPS_FILE)}\s*$')
+RE_INCLUDE_FIPS = re.compile(fr'\s*\.include {re.escape(OPENSSL_FIPS_FILE)}\s*$')
 
 
 def validate_system_state() -> None:
@@ -25,7 +25,7 @@ def modify_openssl_config(enable_fips: bool) -> None:
     if enable_fips and not RE_INCLUDE_FIPS.search(config):
         config += f'\n.include {OPENSSL_FIPS_FILE}\n'
     elif not enable_fips and RE_INCLUDE_FIPS.search(config):
-        config = RE_INCLUDE_FIPS.sub('', config)
+        config = RE_INCLUDE_FIPS.sub('\n', config)
 
     with open(OPENSSL_CONFIG_FILE, 'w') as f:
         f.write(config)
