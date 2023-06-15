@@ -1175,7 +1175,7 @@ def test_14_target_lun_extent_modify(request, extent_type):
     Perform some tests of the iscsi.targetextent.update API, including
     trying tp provide invalid
     """
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
 
     name1 = f'{target_name}1'
     name2 = f'{target_name}2'
@@ -1328,7 +1328,7 @@ def test_15_test_isns(request):
     """
     # Will use a more unique target name than usual, just in case several test
     # runs are hitting the same iSNS server at the same time.
-    depends(request, ["pool_04", "iscsi_cmd_00"], scope="session")
+    depends(request, ["iscsi_cmd_00"], scope="session")
     _host = socket.gethostname()
     _rand = ''.join(random.choices(string.digits + string.ascii_lowercase, k=12))
     _name_base = f'isnstest:{_host}:{_rand}'
