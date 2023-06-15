@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-import re
+import sqlite3
 
 from middlewared.utils.db import query_config_table
 
@@ -18,7 +18,12 @@ def validate_system_state():
 
 def main():
     validate_system_state()
-    security_settings = query_config_table('system_security')
+    try:
+        security_settings = query_config_table('system_security')
+    except sqlite3.OperationalError:
+        # This is for the case when users are upgrading and in that case table will not exist
+        # so we should always enable fips as a good default then
+        security_settings = {'enable_fips': True}
 
 
 if __name__ == '__main__':
