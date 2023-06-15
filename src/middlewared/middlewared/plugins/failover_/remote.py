@@ -10,7 +10,7 @@ from functools import partial
 
 from middlewared.client import Client, ClientException, CallTimeout, CALL_TIMEOUT
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
-from middlewared.service import CallError, Service, job, private
+from middlewared.service import CallError, Service, private
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.validators import Range
 
@@ -177,7 +177,7 @@ class RemoteClient(object):
                 rjob = rjob[0]
                 if rjob['state'] == 'FAILED':
                     raise CallError(
-                        f'Failed to send {local_path} to Standby Controller: {job["error"]}.'
+                        f'Failed to send {local_path} to Standby Controller: {rjob["error"]}.'
                     )
                 elif rjob['state'] == 'ABORTED':
                     raise CallError(
