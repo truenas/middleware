@@ -694,14 +694,10 @@ class FailoverService(ConfigService):
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            if not options['resume']:
-                self.middleware.call_sync('failover.call_remote', 'update.destroy_upload_location')
-                remote_path = self.middleware.call_sync('failover.call_remote', 'update.create_upload_location')
-            else:
-                remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_upload_location')
+            remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_update_location')
 
-            if not options['resume'] and updatefile:
-                # means update file was provided to us so send it to the standby
+            if not options['resume']:
+                # Replicate uploaded or downloaded update it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
                 for f in os.listdir(local_path):
