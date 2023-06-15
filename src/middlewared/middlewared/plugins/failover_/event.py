@@ -737,17 +737,17 @@ class FailoverEventsService(Service):
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:
-            self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node')
+            self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node', [],
+                          {'raise_connect_error': False})
         except Exception:
             logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
 
         try:
-            self.run_call('failover.call_remote', 'interface.persist_link_addresses')
-        except Exception as e:
-            ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-            if isinstance(e, CallError) and e.errno not in ignore:
-                logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
-                               exc_info=True)
+            self.run_call('failover.call_remote', 'interface.persist_link_addresses', [],
+                          {'raise_connect_error': False})
+        except Exception:
+            logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
+                           exc_info=True)
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'

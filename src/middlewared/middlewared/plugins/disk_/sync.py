@@ -265,7 +265,7 @@ class DiskService(Service, ServiceChangeMixin):
             # entire database to the remote node after we're done. The (potential) speed
             # improvement this provides is substantial
             try:
-                self.middleware.call_sync('failover.datastore.send')
+                self.middleware.call_sync('failover.datastore.send', [], {'raise_connect_error': False})
             except Exception:
                 self.logger.warning('Unexpected failure syncing database to standby controller', exc_info=True)
 
