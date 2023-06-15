@@ -286,6 +286,7 @@ def test_060_create_base_file_for_streams_tests(request):
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile", "w")
     c.close(fd)
+    c.mkdir("streamstestdir")
     c.disconnect()
 
 
@@ -302,11 +303,22 @@ def test_061_create_and_write_stream_smb2(request):
     c.write(fd, b'test1', 0)
     c.close(fd)
 
-    fd2 = c.create_file("streamstestfile:smb2_stream", "w")
-    contents = c.read(fd2, 0, 5)
+    fd2 = c.create_file("streamstestdir:smb2_stream", "w")
+    c.write(f2, b'test2', 0)
     c.close(fd2)
+
+    fd3 = c.create_file("streamstestfile:smb2_stream", "w")
+    contents = c.read(fd3, 0, 5)
+    c.close(fd3)
+
+    fd4 = c.create_file("streamstestdir:smb2_stream", "w")
+    contents2 = c.read(fd4, 0, 5)
+    c.close(fd4)
+
+    c.rmdir("streamstestdir")
     c.disconnect()
     assert(contents.decode() == "test1")
+    assert(contents2.decode() == "test2")
 
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB2")
