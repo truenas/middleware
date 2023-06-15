@@ -9,7 +9,7 @@ from middlewared.utils.db import query_config_table
 FIPS_MODULE_FILE = '/usr/lib/ssl/fipsmodule.cnf'
 OPENSSL_CONFIG_FILE = '/etc/ssl/openssl.cnf'
 OPENSSL_FIPS_FILE = '/etc/ssl/openssl_fips.cnf'
-RE_INCLUDE_FIPS = re.compile(fr'^.include {re.escape(OPENSSL_FIPS_FILE)}$')
+RE_INCLUDE_FIPS = re.compile(fr'.include {re.escape(OPENSSL_FIPS_FILE)}\s*$')
 
 
 def validate_system_state() -> None:
