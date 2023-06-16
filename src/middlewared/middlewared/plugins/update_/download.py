@@ -12,7 +12,7 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import osc
 from middlewared.utils.size import format_size
 
-from .utils import scale_update_server
+from .utils import DOWNLOAD_UPDATE_FILE, scale_update_server
 
 
 class UpdateService(Service):
@@ -22,7 +22,7 @@ class UpdateService(Service):
 
         train_check = self.middleware.call_sync("update.check_train", train)
         if train_check["status"] == "AVAILABLE":
-            dst = os.path.join(location, "update.sqsh")
+            dst = os.path.join(location, DOWNLOAD_UPDATE_FILE)
             if os.path.exists(dst):
                 job.set_progress(0, "Verifying existing update")
                 if osc.IS_FREEBSD:
