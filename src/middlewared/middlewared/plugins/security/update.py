@@ -63,7 +63,7 @@ class SystemSecurityService(ConfigService):
 
     @private
     async def fips_enabled(self):
-        cp = await run(['openssl',  'list', '-providers'], check=False)
+        cp = await run(['openssl', 'list', '-providers'], check=False)
         if cp.returncode:
             raise CallError(f'Failed to determine if fips is enabled: {cp.stderr.decode()}')
 
