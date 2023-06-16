@@ -20,7 +20,7 @@ def upgrade():
     op.create_table(
         'system_security',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('enable_fips', sa.Boolean(), nullable=False, server_default='1'),
+        sa.Column('enable_fips', sa.Boolean(), nullable=False, server_default='0'),
         sa.PrimaryKeyConstraint('id'),
     )
 

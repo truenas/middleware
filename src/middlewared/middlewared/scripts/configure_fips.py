@@ -48,8 +48,9 @@ def main() -> None:
         security_settings = query_config_table('system_security')
     except sqlite3.OperationalError:
         # This is for the case when users are upgrading and in that case table will not exist
-        # so we should always enable fips as a good default then
-        security_settings = {'enable_fips': True}
+        # so we should always disable fips as a default because users might not be able to ssh
+        # into the system
+        security_settings = {'enable_fips': False}
 
     configure_fips(security_settings['enable_fips'])
 
