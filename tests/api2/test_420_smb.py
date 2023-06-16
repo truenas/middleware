@@ -386,7 +386,7 @@ def test_042_recyclebin_functional_test(request):
     {'global': {'aapl_extensions': False}, 'share': {}},
 ])
 def test_043_recyclebin_functional_test_subdir(request, smb_config):
-    depends(request, ["service_cifs_running", "ssh_password"], scope="session")
+    depends(request, ["service_cifs_running"], scope="session")
     tmp_ds = f"{pool_name}/recycle_test"
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'
