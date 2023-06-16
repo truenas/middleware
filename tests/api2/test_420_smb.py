@@ -21,6 +21,7 @@ from assets.REST.pool import dataset
 from protocols import smb_connection, smb_share
 from utils import create_dataset
 from auto_config import ip, pool_name, password, user, hostname, dev_test
+from middlewared.test.integration.assets.smb import smb_share
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -48,6 +49,7 @@ root_path_verification = {
     "group": "root",
     "acl": False
 }
+
 
 @pytest.mark.dependency(name="smb_001")
 def test_001_setting_auxilary_parameters_for_mount_smbfs(request):
@@ -331,6 +333,42 @@ def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
     assert vfs_object in results['output'], results['output']
 
 
+def do_recycle_ops(c, has_subds=False):
+    # Our recycle repository should be auto-created on connect.
+    fd = c.create_file('testfile.txt', 'w')
+    c.write(fd, b'foo')
+    c.close(fd, True)
+
+    # Above close op also deleted the file and so
+    # we expect file to now exist in the user's .recycle directory
+    fd = c.create_file('.recycle/shareuser/testfile.txt', 'r')
+    val = c.read(fd, 0, 3)
+    c.close(fd)
+    assert val == b'foo'
+
+    # re-open so that we can set DELETE_ON_CLOSE
+    # this verifies that SMB client can purge file from recycle bin
+    c.close(c.create_file('.recycle/shareuser/testfile.txt', 'w'), True)
+    assert c.ls('.recycle/shareuser/') == []
+
+    if not has_subds:
+        return
+
+    # nested datasets get their own recycle bin to preserve atomicity of
+    # rename op.
+    fd = c.create_file('subds/testfile2.txt', 'w')
+    c.write(fd, b'boo')
+    c.close(fd, True)
+
+    fd = c.create_file('subds/.recycle/shareuser/testfile2.txt', 'r')
+    val = c.read(fd, 0, 3)
+    c.close(fd)
+    assert val == b'boo'
+
+    c.close(c.create_file('subds/.recycle/shareuser/testfile2.txt', 'w'), True)
+    assert c.ls('subds/.recycle/shareuser/') == []
+
+
 def test_042_recyclebin_functional_test(request):
     with create_dataset(f'{dataset}/subds', {'share_type': 'SMB'}):
         with smb_connection(
@@ -339,36 +377,69 @@ def test_042_recyclebin_functional_test(request):
             username='shareuser',
             password='testing',
         ) as c:
-            # Our recycle repository should be auto-created on connect.
-            fd = c.create_file('testfile.txt', 'w')
-            c.write(fd, b'foo')
-            c.close(fd, True)
+            do_recycle_ops(c, True)
 
-            # Above close op also deleted the file and so
-            # we expect file to now exist in the user's .recycle directory
-            fd = c.create_file('.recycle/shareuser/testfile.txt', 'r')
-            val = c.read(fd, 0, 3)
-            c.close(fd)
-            assert val == b'foo'
 
-            # re-open so that we can set DELETE_ON_CLOSE
-            # this verifies that SMB client can purge file from recycle bin
-            c.close(c.create_file('.recycle/shareuser/testfile.txt', 'w'), True)
-            assert c.ls('.recycle/shareuser/') == []
+@pytest.mark.parametrize('smb_config', [
+    {'global': {'aapl_extensions': True}, 'share': {'aapl_name_mangling': True}},
+    {'global': {'aapl_extensions': True}, 'share': {'aapl_name_mangling': False}},
+    {'global': {'aapl_extensions': False}, 'share': {}},
+])
+def test_043_recyclebin_functional_test_subdir(request, smb_config):
+    depends(request, ["service_cifs_running"], scope="session")
+    tmp_ds = f"{pool_name}/recycle_test"
+    tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
+    tmp_share_name = 'recycle_test'
 
-            # nested datasets get their own recycle bin to preserve atomicity of
-            # rename op.
-            fd = c.create_file('subds/testfile2.txt', 'w')
-            c.write(fd, b'boo')
-            c.close(fd, True)
+    results = PUT("/smb/", smb_config['global'])
+    assert results.status_code == 200, results.text
 
-            fd = c.create_file('subds/.recycle/shareuser/testfile2.txt', 'r')
-            val = c.read(fd, 0, 3)
-            c.close(fd)
-            assert val == b'boo'
+    # basic tests of recyclebin operations
+    with create_dataset(tmp_ds, {'share_type': 'SMB'}):
+        results = SSH_TEST(f'mkdir {tmp_ds_path}', user, password, ip)
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
-            c.close(c.create_file('subds/.recycle/shareuser/testfile2.txt', 'w'), True)
-            assert c.ls('subds/.recycle/shareuser/') == []
+        with smb_share(tmp_ds_path, tmp_share_name, {
+            'purpose': 'NO_PRESET',
+            'recyclebin': True
+        } | smb_config['share']) as s:
+            with smb_connection(
+                host=ip,
+                share=tmp_share_name,
+                username='shareuser',
+                password='testing',
+            ) as c:
+                do_recycle_ops(c)
+
+    # more abusive test where first TCON op is opening file in subdir to delete
+    with create_dataset(tmp_ds, {'share_type': 'SMB'}):
+        ops = [
+            f'mkdir {tmp_ds_path}',
+            f'mkdir {tmp_ds_path}/subdir',
+            f'touch {tmp_ds_path}/subdir/testfile',
+            f'chown shareuser {tmp_ds_path}/subdir/testfile',
+        ]
+        results = SSH_TEST(';'.join(ops), user, password, ip)
+        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+
+        with smb_share(tmp_ds_path, tmp_share_name, {
+            'purpose': 'NO_PRESET',
+            'recyclebin': True
+        } | smb_config['share']) as s:
+            with smb_connection(
+                host=ip,
+                share=tmp_share_name,
+                username='shareuser',
+                password='testing',
+            ) as c:
+                fd = c.create_file('subdir/testfile', 'w')
+                c.write(fd, b'boo')
+                c.close(fd, True)
+
+                fd = c.create_file('.recycle/shareuser/subdir/testfile', 'r')
+                val = c.read(fd, 0, 3)
+                c.close(fd)
+                assert val == b'boo'
 
 
 @windows_host_cred
