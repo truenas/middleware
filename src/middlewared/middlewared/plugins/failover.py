@@ -717,21 +717,24 @@ class FailoverService(ConfigService):
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
 
             local_started_installer = False
-            update_remote_descr = update_local_descr = 'Starting upgrade'
+            local_progress = remote_progress = 0
+            local_descr = remote_descr = 'Starting upgrade'
 
             def callback(j, controller):
-                nonlocal local_started_installer, update_local_descr, update_remote_descr
+                nonlocal local_started_installer, local_progress, remote_progress, local_descr, remote_descr
                 if controller == 'LOCAL' and j['progress']['description'] == STARTING_INSTALLER:
                     local_started_installer = True
-                if j['state'] != 'RUNNING':
+                if j['state'] not in ['RUNNING', 'SUCCESS']:
                     return
                 if controller == 'LOCAL':
-                    update_local_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
+                    local_progress = j["progress"]["percent"]
+                    local_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 else:
-                    update_remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
+                    remote_progress = j["progress"]["percent"]
+                    remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 job.set_progress(
-                    None,
-                    f'Active Controller: {update_local_descr}\n' + f'Standby Controller: {update_remote_descr}'
+                    min(local_progress, remote_progress),
+                    f'Active Controller: {local_descr}\n' + f'Standby Controller: {remote_descr}'
                 )
 
             if updatefile:
