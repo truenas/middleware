@@ -6,6 +6,8 @@ import re
 DEFAULT_SCALE_UPDATE_SERVER = "https://update.ixsystems.com/scale"
 SCALE_MANIFEST_FILE = "/data/manifest.json"
 
+DOWNLOAD_UPDATE_FILE = "update.sqsh"
+
 UPLOAD_LOCATION = "/var/tmp/firmware"
 
 SEP = re.compile(r"[-.]")

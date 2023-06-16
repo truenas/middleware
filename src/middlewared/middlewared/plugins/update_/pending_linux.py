@@ -5,7 +5,7 @@ import subprocess
 
 from middlewared.service import private, Service
 
-from .utils import SCALE_MANIFEST_FILE
+from .utils import SCALE_MANIFEST_FILE, DOWNLOAD_UPDATE_FILE
 from .utils_linux import mount_update
 
 run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
@@ -14,14 +14,14 @@ run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encodi
 class UpdateService(Service):
     @private
     def get_pending_in_path(self, path):
-        if not os.path.exists(os.path.join(path, "update.sqsh")):
+        if not os.path.exists(os.path.join(path, DOWNLOAD_UPDATE_FILE)):
             return []
 
         with open(SCALE_MANIFEST_FILE) as f:
             old_manifest = json.load(f)
 
         try:
-            with mount_update(os.path.join(path, "update.sqsh")) as mounted:
+            with mount_update(os.path.join(path, DOWNLOAD_UPDATE_FILE)) as mounted:
                 with open(os.path.join(mounted, "manifest.json")) as f:
                     new_manifest = json.load(f)
         except Exception:
