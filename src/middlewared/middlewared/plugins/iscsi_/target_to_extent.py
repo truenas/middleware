@@ -135,6 +135,7 @@ class iSCSITargetToExtentService(CRUDService):
         target = data['target']
         old_target = old.get('target')
         extent = data['extent']
+        old_extent = old.get('extent')
         if data.get('lunid') is None:
             lunids = [
                 o['lunid'] for o in await self.query(
@@ -161,7 +162,9 @@ class iSCSITargetToExtentService(CRUDService):
                 f'LUN ID must be a positive integer and lower than {lun_map_size - 1}'
             )
 
-        if old_lunid != lunid and await self.query([
+        # If either the LUN or the target name have changed then
+        # ensure that we are not clashing with something pre-existing
+        if (old_lunid != lunid or old_target != target) and await self.query([
             ('lunid', '=', lunid), ('target', '=', target)
         ], {'force_sql_filters': True}):
             verrors.add(
@@ -169,10 +172,14 @@ class iSCSITargetToExtentService(CRUDService):
                 'LUN ID is already being used for this target.'
             )
 
-        if old_target != target and await self.query([
-            ('target', '=', target), ('extent', '=', extent)
+        # Need to ensure that a particular extent is only ever used in
+        # a single target (at a single LUN) at a time.  Failure to
+        # do so would result in a mechanism to avoid any SCSI based
+        # locking, and therefore could result in data corruption.
+        if old_extent != extent and await self.query([
+            ('extent', '=', extent)
         ], {'force_sql_filters': True}):
             verrors.add(
-                f'{schema_name}.target',
-                'Extent is already in this target.'
+                f'{schema_name}.extent',
+                'Extent is already in use.'
             )
