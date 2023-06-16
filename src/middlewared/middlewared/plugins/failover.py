@@ -22,6 +22,7 @@ from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.update_.install import STARTING_INSTALLER
+from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -708,13 +709,16 @@ class FailoverService(ConfigService):
                 # means update file was provided to us so send it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-                for f in os.listdir(local_path):
-                    self.middleware.call_sync(
-                        'failover.send_file',
-                        token,
-                        os.path.join(local_path, f),
-                        os.path.join(remote_path, f)
-                    )
+                if updatefile:
+                    f = updatefile_name
+                else:
+                    f = DOWNLOAD_UPDATE_FILE
+                self.middleware.call_sync(
+                    'failover.send_file',
+                    token,
+                    os.path.join(local_path, f),
+                    os.path.join(remote_path, f)
+                )
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
