@@ -54,6 +54,11 @@ class SystemSecurityService(ConfigService):
             new,
         )
 
+        if new['enable_fips'] != old['enable_fips']:
+            # TODO: We likely need to do some SSH magic as well
+            #  let's investigate the exact configuration there
+            await self.middleware.call('etc.generate', 'fips')
+
         return await self.config()
 
     @private
