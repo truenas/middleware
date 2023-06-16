@@ -415,7 +415,7 @@ class AuthService(Service):
             await asyncio.sleep(random.randint(1, 5))
         return user_authenticated and (
             await self.middleware.call('auth.twofactor.config')
-        )['enabled'] and (
+        )['enabled'] and bool(
             await self.middleware.call(
                 'user.query', [['username', '=', username], ['twofactor_auth_configured', '=', True]]
             )
