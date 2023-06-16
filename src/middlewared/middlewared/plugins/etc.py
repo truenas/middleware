@@ -102,6 +102,9 @@ class EtcService(Service):
         'grub': [
             {'type': 'py', 'path': 'grub', 'checkpoint': 'post_init'},
         ],
+        'fips': [
+            {'type': 'py', 'path': 'fips', 'checkpoint': None},
+        ],
         'keyboard': [
             {'type': 'mako', 'path': 'default/keyboard'},
             {'type': 'mako', 'path': 'vconsole.conf'},
