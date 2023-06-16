@@ -3,6 +3,7 @@ import re
 
 from pyudev import Context
 
+from libsg3.ses import EnclosureDevice
 from middlewared.service import Service
 from middlewared.utils.functools import cache
 from .ha_hardware import HA_HARDWARE
@@ -47,14 +48,12 @@ class EnclosureDetectionService(Service):
             return HARDWARE, NODE
 
         for enc in self.middleware.call_sync("enclosure.list_ses_enclosures"):
-            proc = subprocess.run(
-                ['/usr/bin/sg_ses', '-p', 'ed', enc],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            if proc.stdout:
-                info = proc.stdout.decode(errors='ignore', encoding='utf8')
-
+            try:
+                info = EnclosureDevice(enc).get_element_descriptor()
+            except OSError:
+                self.logger.warning('Error querying element descriptor page for %r', enc, exc_info=True)
+                continue
+            else:
                 if re.search(HA_HARDWARE.ZSERIES_ENCLOSURE.value, info):
                     # Z-series Hardware (Echostream)
                     HARDWARE = 'ECHOSTREAM'
