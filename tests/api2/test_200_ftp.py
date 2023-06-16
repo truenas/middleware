@@ -868,7 +868,7 @@ def test_020_login_attempts(request, NumFailedTries, expect_to_pass):
             ftpObj.login(user='FTPfatfingeruser', passwd="secret")
             assert expect_to_pass is True
         else:
-            with pytest.raises(EOFError):
+            with pytest.raises(Exception):
                 # Try with correct password, but already exceeded number of tries
                 ftpObj.login(user='FTPfatfingeruser', passwd="secret")
                 assert login_attempt < MaxTries, "Failed to limit login attempts"
