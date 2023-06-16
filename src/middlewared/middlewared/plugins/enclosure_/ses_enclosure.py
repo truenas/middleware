@@ -1,7 +1,6 @@
-from subprocess import run, PIPE
-
 from pyudev import Context
 
+from libsg3.ses import EnclosureDevice
 from middlewared.service import private, Service
 
 
@@ -15,21 +14,19 @@ class EnclosureService(Service):
     @private
     def get_ses_enclosures(self):
         output = {}
-        opts = {'encoding': 'utf-8', 'errors': 'ignore', 'stdout': PIPE, 'stderr': PIPE}
         for i, name in enumerate(self.list_ses_enclosures()):
-            p = run(["sg_ses", "--page=cf", name], **opts)
-            if p.returncode != 0:
-                self.logger.warning("Error querying enclosure configuration page %r: %s", name, p.stderr)
+            dev = EnclosureDevice(name)
+            try:
+                cf = dev.get_configuration()
+            except OSError:
+                self.logger.warning('Error querying configuration page for %r', name, exc_info=True)
                 continue
-            else:
-                cf = p.stdout
 
-            p = run(["sg_ses", "-i", "--page=es", name], **opts)
-            if p.returncode != 0:
-                self.logger.debug("Error querying enclosure status page %r: %s", name, p.stderr)
+            try:
+                es = dev.get_enclosure_status()
+            except OSError:
+                self.logger.warning('Error querying enclosure status page for %r', name, exc_info=True)
                 continue
-            else:
-                es = p.stdout
 
             output[i] = (name.removeprefix('/dev/'), (cf, es))
 
