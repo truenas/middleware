@@ -4,7 +4,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import ConfigService
 
 
-class SystemGeneralModel(sa.Model):
+class SystemSecurityModel(sa.Model):
     __tablename__ = 'system_security'
 
     id = sa.Column(sa.Integer(), primary_key=True)
@@ -14,7 +14,9 @@ class SystemGeneralModel(sa.Model):
 class SystemSecurityService(ConfigService):
 
     class Config:
+        cli_namespace = 'system.security'
         datastore = 'system.security'
+        namespace = 'system.security'
 
     ENTRY = Dict(
         'system_security_entry',
