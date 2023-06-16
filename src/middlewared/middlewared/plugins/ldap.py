@@ -1,9 +1,7 @@
 import enum
 import errno
-import grp
 import ipaddress
 import ldap as pyldap
-import pwd
 import socket
 import struct
 
@@ -15,6 +13,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
+from middlewared.plugins.ldap_.nslcd_utils import MidNslcdClient
 from middlewared.validators import Range
 
 LDAP_SMBCONF_PARAMS = {
@@ -875,6 +874,9 @@ class LDAPService(TDBWrapConfigService):
             await self.middleware.call('etc.generate', 'ldap')
             await self.middleware.call('service.start', 'nslcd')
 
+        if not MidNslcdClient().is_alive():
+            raise CallError('nss-pam-ldapd daemon control socket is not available')
+
         await self.set_state(DSStatus['HEALTHY'])
         return True
 
@@ -1021,39 +1023,27 @@ class LDAPService(TDBWrapConfigService):
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 100000000
-        cache_data = {'users': {}, 'groups': {}}
-
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
-        self.middleware.call_sync('cache.pop', 'LDAP_cache')
-
         if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
-            self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
             self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
             return
 
-        pwd_list = pwd.getpwall()
-        grp_list = grp.getgrall()
-
-        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
-        local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
+        pwd_list = MidNslcdClient().getpwall()
+        grp_list = MidNslcdClient().getgrall()
 
         for u in pwd_list:
-            is_local_user = True if u.pw_uid in local_uid_list else False
-            if is_local_user:
-                continue
-
             entry = {
                 'id': user_next_index,
-                'uid': u.pw_uid,
-                'username': u.pw_name,
+                'uid': u['pw_uid'],
+                'username': u['pw_name'],
                 'unixhash': None,
                 'smbhash': None,
                 'group': {},
-                'home': '',
+                'home': u['pw_dir'],
                 'shell': '',
-                'full_name': u.pw_gecos,
+                'full_name': u['pw_gecos'],
                 'builtin': False,
                 'email': '',
                 'password_disabled': False,
@@ -1072,15 +1062,11 @@ class LDAPService(TDBWrapConfigService):
             user_next_index += 1
 
         for g in grp_list:
-            is_local_user = True if g.gr_gid in local_gid_list else False
-            if is_local_user:
-                continue
-
             entry = {
                 'id': group_next_index,
-                'gid': g.gr_gid,
-                'name': g.gr_name,
-                'group': g.gr_name,
+                'gid': g['gr_gid'],
+                'name': g['gr_name'],
+                'group': g['gr_name'],
                 'builtin': False,
                 'sudo_commands': [],
                 'sudo_commands_nopasswd': [],
