@@ -626,6 +626,19 @@ class Int(EnumMixin, Attribute):
         }
 
 
+class Timestamp(Int):
+
+    def validate(self, value):
+        super().validate(value)
+        if value is None:
+            return value
+
+        try:
+            datetime.fromtimestamp(value)
+        except ValueError:
+            raise Error(self.name, 'Not a valid timestamp')
+
+
 class Float(EnumMixin, Attribute):
 
     def clean(self, value):
