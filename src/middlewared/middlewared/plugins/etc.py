@@ -88,6 +88,10 @@ class EtcService(Service):
                 {'type': 'py', 'path': 'web_ui_root_login_alert'},
             ]
         },
+        'netdata': [
+            {'type': 'mako', 'path': 'netdata/netdata.conf'},
+            {'type': 'mako', 'path': 'netdata/charts.d/exclude_netdata.conf'},
+        ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
             {'type': 'py', 'path': 'fstab_configure', 'checkpoint_linux': 'post_init'}
