@@ -1,11 +1,6 @@
 <%
     import os
 
-    if not middleware.call_sync('reporting.setup'):
-        # Let's exit this if setup related disk operations fail
-        middleware.logger.error('Rrdcached configuration file could not be generated')
-        raise FileShouldNotExist()
-
     systemdatasetconfig = middleware.call_sync('systemdataset.config')
     if not systemdatasetconfig['path']:
         middleware.logger.error('rrdcached: system dataset is not properly configured. '

@@ -52,6 +52,7 @@ class CPUPlugin(RRDBase):
         return args
 
 
+# TODO: We probably need to enable sensors to get temperature data
 class CPUTempPlugin(RRDBase):
 
     title = 'CPU Temperature'
@@ -87,6 +88,7 @@ class CPUTempPlugin(RRDBase):
         return args
 
 
+# TODO: Same for sensors here
 class DiskTempPlugin(RRDBase):
 
     vertical_label = '\u00b0C'

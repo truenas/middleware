@@ -1,9 +1,4 @@
 <%
-	if not middleware.call_sync('reporting.setup'):
-		# Let's exit this if collectd related disk operations fail
-		middleware.logger.error('Collectd configuration file could not be generated')
-		return None
-
 	reporting_config = middleware.call_sync('reporting.config')
 	graphite = reporting_config['graphite']
 	graphite_separateinstances = reporting_config['graphite_separateinstances']
