@@ -26,7 +26,7 @@ def test_restart_vm_on_dataset_unlock(zvol):
         call("pool.dataset.lock", ds, job=True)
 
         if zvol:
-            device = {"dtype": "DISK", "attributes": {"path": f"/dev/zvol/{ds}/child"}}
+            device = {"dtype": "DISK", "attributes": {"path": f"/dev/zvol/{ds}"}}
         else:
             device = {"dtype": "RAW", "attributes": {"path": f"/mnt/{ds}/child"}}
 
