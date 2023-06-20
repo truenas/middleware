@@ -47,6 +47,9 @@ class SystemSecurityService(ConfigService):
         new = old.copy()
         new.update(data)
 
+        if new == old:
+            return new
+
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
