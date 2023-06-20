@@ -8,6 +8,8 @@ from middlewared.service import ConfigService, private
 from middlewared.schema import accepts, Patch, List, Dict, Int, Str, Bool, IPAddr, Ref, ValidationErrors
 from middlewared.validators import Match, Hostname
 
+HOSTS_FILE_EARMARKER = '# STATIC ENTRIES'
+
 
 class NetworkConfigurationModel(sa.Model):
     __tablename__ = 'network_globalconfiguration'
@@ -52,7 +54,7 @@ class NetworkConfigurationService(ConfigService):
         Str('httpproxy', required=True),
         Bool('netwait_enabled', required=True),
         List('netwait_ip', required=True, items=[Str('netwait_ip')]),
-        Str('hosts', required=True),
+        List('hosts', required=True, items=[Str('host')]),
         List('domains', required=True, items=[Str('domain')]),
         Dict(
             'service_announcement',
@@ -81,6 +83,33 @@ class NetworkConfigurationService(ConfigService):
     )
 
     @private
+    def read_etc_hosts_file(self):
+        rv = []
+        try:
+            with open('/etc/hosts') as f:
+                lines = f.read().splitlines()
+        except FileNotFoundError:
+            return rv
+
+        try:
+            start_pos = lines.index(HOSTS_FILE_EARMARKER) + 1
+        except ValueError:
+            # someone has manually modified file potentially
+            return rv
+
+        try:
+            for idx in range(start_pos, len(lines)):
+                if (entry := lines[idx].strip()):
+                    rv.append(entry)
+        except IndexError:
+            # mako program should write file with an empty newline
+            # but if someone manually removes it, make sure we dont
+            # crash here
+            return rv
+
+        return rv
+
+    @private
     def network_config_extend(self, data):
         # hostname_local will be used when the hostname of the current machine
         # needs to be used so it works with either TrueNAS SCALE or SCALE_ENTERPRISE
@@ -95,6 +124,10 @@ class NetworkConfigurationService(ConfigService):
 
         data['domains'] = data['domains'].split()
         data['netwait_ip'] = data['netwait_ip'].split()
+        if (hosts := data['hosts'].strip()):
+            data['hosts'] = hosts.split('\n')
+        else:
+            data['hosts'] = []
 
         data['state'] = {
             'ipv4gateway': '',
@@ -102,6 +135,7 @@ class NetworkConfigurationService(ConfigService):
             'nameserver1': '',
             'nameserver2': '',
             'nameserver3': '',
+            'hosts': self.read_etc_hosts_file(),
         }
         summary = self.middleware.call_sync('network.general.summary')
         for default_route in summary['default_routes']:
@@ -119,78 +153,60 @@ class NetworkConfigurationService(ConfigService):
         return data
 
     @private
+    async def validate_nameservers(self, verrors, data, schema):
+        verrors = ValidationErrors()
+
+        ns_ints = []
+        for ns, ns_value in filter(lambda x: x[0].startswith('nameserver') and x[1], data.items()):
+            schema = f'{schema}.{ns}'
+            ns_ints.append(int(ns[-1]))
+            try:
+                nameserver_ip = ipaddress.ip_address(ns_value)
+            except ValueError as e:
+                verrors.add(schema, str(e))
+            else:
+                if nameserver_ip.is_loopback:
+                    verrors.add(schema, 'Loopback is not a valid nameserver')
+                elif nameserver_ip.is_unspecified:
+                    verrors.add(schema, 'Unspecified addresses are not valid as nameservers')
+                elif nameserver_ip.version == 4:
+                    if ns_value == '255.255.255.255':
+                        verrors.add(schema, 'This is not a valid nameserver address')
+                    elif ns_value.startswith('169.254'):
+                        verrors.add(schema, '169.254/16 subnet is not valid for nameserver')
+
+        len_ns_ints = len(ns_ints)
+        if len_ns_ints >= 2:
+            ns_ints = sorted(ns_ints)
+            for i in range(len_ns_ints - 1):
+                if ns_ints[i - 1] - ns_ints[i] != 1:
+                    verrors.add(
+                        f'{schema}.nameserver{i}',
+                        'When providing nameservers, they must be provided in consecutive order '
+                        '(i.e. nameserver1, nameserver2, nameserver3)'
+                    )
+
+    @private
     async def validate_general_settings(self, data, schema):
         verrors = ValidationErrors()
 
-        for key in [key for key in data.keys() if 'nameserver' in key]:
-            nameserver_value = data.get(key)
-            if nameserver_value:
-                try:
-                    nameserver_ip = ipaddress.ip_address(nameserver_value)
-                except ValueError as e:
-                    verrors.add(
-                        f'{schema}.{key}',
-                        str(e)
-                    )
-                else:
-                    if nameserver_ip.is_loopback:
-                        verrors.add(
-                            f'{schema}.{key}',
-                            'Loopback is not a valid nameserver'
-                        )
-                    elif nameserver_ip.is_unspecified:
-                        verrors.add(
-                            f'{schema}.{key}',
-                            'Unspecified addresses are not valid as nameservers'
-                        )
-                    elif nameserver_ip.version == 4:
-                        if nameserver_value == '255.255.255.255':
-                            verrors.add(
-                                f'{schema}.{key}',
-                                'This is not a valid nameserver address'
-                            )
-                        elif nameserver_value.startswith('169.254'):
-                            verrors.add(
-                                f'{schema}.{key}',
-                                '169.254/16 subnet is not valid for nameserver'
-                            )
+        await self.validate_nameservers(verrors, data, schema)
 
-                    nameserver_number = int(key[-1])
-                    for i in range(nameserver_number - 1, 0, -1):
-                        if f'nameserver{i}' in data.keys() and not data[f'nameserver{i}']:
-                            verrors.add(
-                                f'{schema}.{key}',
-                                f'Must fill out namserver{i} before filling out {key}'
-                            )
-
-        ipv4_gateway_value = data.get('ipv4gateway')
-        if ipv4_gateway_value:
+        if (ipv4_gateway_value := data.get('ipv4gateway')):
             if not await self.middleware.call(
-                    'route.ipv4gw_reachable',
-                    ipaddress.ip_address(ipv4_gateway_value).exploded
+                'route.ipv4gw_reachable',
+                ipaddress.ip_address(ipv4_gateway_value).exploded
             ):
-                verrors.add(
-                    f'{schema}.ipv4gateway',
-                    f'Gateway {ipv4_gateway_value} is unreachable'
-                )
+                verrors.add(f'{schema}.ipv4gateway', f'Gateway {ipv4_gateway_value} is unreachable')
 
-        netwait_ip = data.get('netwait_ip')
-        if netwait_ip:
-            for ip in netwait_ip:
-                try:
-                    ipaddress.ip_address(ip)
-                except ValueError as e:
-                    verrors.add(
-                        f'{schema}.netwait_ip',
-                        f'{e.__str__()}'
-                    )
+        for ip in data.get('netwait_ip', []):
+            try:
+                ipaddress.ip_address(ip)
+            except ValueError as e:
+                verrors.add(f'{schema}.netwait_ip', f'{e.__str__()}')
 
-        if data.get('domains'):
-            if len(data.get('domains')) > 5:
-                verrors.add(
-                    f'{schema}.domains',
-                    'No more than 5 additional domains are allowed'
-                )
+        if (domains := data.get('domains', [])) and len(domains) > 5:
+            verrors.add(f'{schema}.domains', 'No more than 5 additional domains are allowed')
 
         return verrors
 
@@ -288,9 +304,10 @@ class NetworkConfigurationService(ConfigService):
         # and doesn't exist in the database
         new_config.pop('hostname_local', None)
 
-        # normalize the `domains` and `netwait_ip` keys
+        # normalize the `domains`, `hosts`, and `netwait_ip` keys
         new_config['domains'] = ' '.join(new_config.get('domains', []))
         new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
+        new_config['hosts'] = '\n'.join(new_config.get('hosts', []))
 
         # update the db
         await self.middleware.call(
@@ -309,10 +326,11 @@ class NetworkConfigurationService(ConfigService):
             except Exception:
                 self.logger.warning('Failed to set hostname on standby storage controller', exc_info=True)
 
-        # dns domain name changed
+        # dns domain name changed or /etc/hosts table changed
         licensed = await self.middleware.call('failover.licensed')
         domainname_changed = new_config['domain'] != config['domain']
-        if domainname_changed:
+        hosts_table_changed = new_config['hosts'] != config['hosts']
+        if domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')
             service_actions.add(('collectd', 'restart'))
             service_actions.add(('nscd', 'reload'))
@@ -320,7 +338,10 @@ class NetworkConfigurationService(ConfigService):
                 try:
                     await self.middleware.call('failover.call_remote', 'etc.generate', ['hosts'])
                 except Exception:
-                    self.logger.warning('Failed to set domain name on standby storage controller', exc_info=True)
+                    self.logger.warning(
+                        'Unexpected failure updating domain name and/or hosts table on standby controller',
+                        exc_info=True
+                    )
 
         # anything related to resolv.conf changed
         dnssearch_changed = new_config['domains'] != config['domains']

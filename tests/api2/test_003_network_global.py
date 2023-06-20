@@ -24,6 +24,7 @@ def ws_client(ip_to_use):
 @pytest.fixture(scope='module')
 def netinfo(ws_client):
     domain_to_use = domain
+    hosts = ['192.168.1.150 fakedomain.doesnt.exist', '172.16.50.100 another.fakeone']
     if ha and (domain_to_use := os.environ.get('domain', None)) is not None:
         info = {
             'domain': domain_to_use,
@@ -33,6 +34,7 @@ def netinfo(ws_client):
             'hostname_virtual': os.environ['hostname_virtual'],
             'nameserver1': os.environ['primary_dns'],
             'nameserver2': os.environ.get('secondary_dns', ''),
+            'hosts': hosts,
         }
     else:
         # NOTE: on a non-HA system, this method is assuming
@@ -43,7 +45,7 @@ def netinfo(ws_client):
         assert isinstance(ans, dict)
         assert isinstance(ans['default_routes'], list) and ans['default_routes']
         assert isinstance(ans['nameservers'], list) and ans['nameservers']
-        info = {'domain': domain_to_use, 'hostname': hostname, 'ipv4gateway': ans['default_routes'][0]}
+        info = {'domain': domain_to_use, 'hostname': hostname, 'ipv4gateway': ans['default_routes'][0], 'hosts': hosts}
         for idx, nameserver in enumerate(ans['nameservers'], start=1):
             if idx > 3:
                 # only 3 nameservers allowed via the API
@@ -59,10 +61,29 @@ def test_001_set_and_verify_network_global_settings_database(ws_client, netinfo)
     assert all(config[k] == netinfo[k] for k in netinfo)
 
 
+def test_002_verify_network_global_settings_state(request, ws_client, netinfo):
+    depends(request, ['NET_CONFIG'])
+    state = ws_client.call('network.configuration.config')['state']
+    assert set(state['hosts']) == set(netinfo['hosts'])
+    assert state['ipv4gateway'] == netinfo['ipv4gateway']
+    for key in filter(lambda x: x.startswith('nameserver'), netinfo):
+        assert state[key] == netinfo[key]
+
+    """
+    HA isn't fully operational by the time this test runs so testing
+    the functionality on the remote node is guaranteed to fail. We
+    should probably rearrange order of tests and fix this at some point.
+    if ha:
+        state = ws_client.call('failover.call_remote', 'network.configuration.config')['state']
+        assert set(state['hosts']) == set(netinfo['hosts'])
+        assert state['ipv4gateway'] == netinfo['ipv4gateway']
+        for key in filter(lambda x: x.startswith('nameserver'), netinfo):
+            assert state[key] == netinfo[key]
+    """
+
+
 @pytest.mark.dependency(name='GENERAL')
-def test_002_verify_network_general_summary(request, ws_client, netinfo, ip_to_use):
+def test_003_verify_network_general_summary(request, ws_client, netinfo, ip_to_use):
     depends(request, ['NET_CONFIG'])
     summary = ws_client.call('network.general.summary')
-    assert set(summary['nameservers']) == set([netinfo[i] for i in netinfo if i.startswith('nameserver')])
-    assert summary['default_routes'][0] == netinfo['ipv4gateway']
     assert any(i.startswith(ip_to_use) for i in summary['ips'][interface]['IPV4'])
