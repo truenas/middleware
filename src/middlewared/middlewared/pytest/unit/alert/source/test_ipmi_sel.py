@@ -6,7 +6,7 @@ from mock import ANY, Mock
 import pytest
 
 from middlewared.alert.source.ipmi_sel import (
-    IPMISELRecord, parse_ipmitool_output, parse_sel_information,
+    IPMISELRecord, parse_ipmitool_output, parse_sel_information, remove_deasserted_records,
     IPMISELAlertClass, IPMISELSpaceLeftAlertClass,
     IPMISELAlertSource, IPMISELSpaceLeftAlertSource,
     Alert
@@ -188,3 +188,38 @@ def test_ipmi_sel_space_left_alert_source__emits():
         },
         key=None,
     )
+
+
+@pytest.mark.parametrize("records,result", [
+    (
+        [
+            IPMISELRecord(
+                id=9,
+                datetime=datetime(2017, 4, 20, 6, 3, 7),
+                sensor="PS2 Status",
+                event="Power Supply Failure detected",
+                direction="Asserted",
+                verbose=None,
+            ),
+            IPMISELRecord(
+                id=10,
+                datetime=datetime(2017, 4, 20, 6, 3, 8),
+                sensor="PS2 Status",
+                event="Power Supply Failure detected",
+                direction="Deasserted",
+                verbose=None,
+            ),
+            IPMISELRecord(
+                id=11,
+                datetime=datetime(2017, 4, 20, 6, 3, 9),
+                sensor="Sensor #255",
+                event="Event Offset = 00h",
+                direction="Asserted",
+                verbose=None,
+            ),
+        ],
+        [2],
+    )
+])
+def test_remove_deasserted_records(records, result):
+    assert remove_deasserted_records(records) == [records[i] for i in result]
