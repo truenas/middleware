@@ -263,15 +263,15 @@ class FailoverService(Service):
             `raise_connect_error`: If false, will not raise an exception if a connection error to the other node
                 happens, or connection/call timeout happens, or method does not exist on the remote node.
         """
-        options = options or {}
         if options.pop('job_return'):
             options['job'] = 'RETURN'
+        raise_connect_error = options.pop('raise_connect_error')
         try:
             return self.CLIENT.call(method, *args, **options)
         except ClientException as e:
             ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
             if e.errno in ignore:
-                if options['raise_connect_error']:
+                if raise_connect_error:
                     raise CallError(str(e), errno.EFAULT)
                 else:
                     self.logger.trace('Failed to call %r on remote node', method, exc_info=True)
