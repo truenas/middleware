@@ -205,6 +205,10 @@ class FTPService(SystemServiceService):
         if new["masqaddress"]:
             await resolve_hostname(self.middleware, verrors, "ftp_update.masqaddress", new["masqaddress"])
 
+        if new["tls_opt_no_cert_request"]:
+            verrors.add("ftp_update.tls_opt_no_cert_request",
+                        "Setting is deprecated and cannot be set")
+
         if verrors:
             raise verrors
 
