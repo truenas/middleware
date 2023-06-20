@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import re
@@ -231,7 +232,12 @@ class EnclosureService(CRUDService):
                         return
 
     @private
-    def sync_disk(self, id, enclosure_info=None):
+    def sync_disk(self, id, enclosure_info=None, retry=False):
+        """
+        :param id:
+        :param enclosure_info:
+        :param retry: retry once more in 60 seconds if no enclosure slot for disk is found
+        """
         disk = self.middleware.call_sync(
             'disk.query',
             [['identifier', '=', id]],
@@ -241,6 +247,15 @@ class EnclosureService(CRUDService):
         try:
             enclosure, element = self._get_slot_for_disk(disk["name"], enclosure_info)
         except MatchNotFound:
+            if retry:
+                async def delayed():
+                    await asyncio.sleep(60)
+                    await self.middleware.call('enclosure.sync_disk', id, enclosure_info)
+
+                self.middleware.run_coroutine(delayed(), wait=False)
+
+                return
+
             disk_enclosure = None
         else:
             disk_enclosure = {

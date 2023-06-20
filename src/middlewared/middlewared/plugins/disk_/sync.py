@@ -56,7 +56,10 @@ class DiskService(Service, ServiceChangeMixin):
 
         await self.restart_services_after_sync()
 
-        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+        # We have expansion shelves that take up to 60 seconds before the disk will be mapped to the enclosure slot in
+        # the sysfs structure. There is no way around it, unfortunately. We should ask `enclosure.sync_disk` to retry
+        # itself if it fails to map the disk to enclosure.
+        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], None, True)
 
     @private
     def log_disk_info(self, sys_disks):
