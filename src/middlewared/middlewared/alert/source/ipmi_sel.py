@@ -1,7 +1,24 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+
+
+def remove_deasserted_records(records):
+    records = records.copy()
+    assertions = defaultdict(lambda: defaultdict(set))
+    for i, record in enumerate(records):
+        event_assertions = assertions[record["name"]][record["event"]]
+        if record["event_direction"] == "Assertion Event":
+            event_assertions.add(i)
+        if record["event_direction"] == "Deassertion Event":
+            for j in event_assertions:
+                records[j] = None
+            records[i] = None
+            event_assertions.clear()
+
+    return list(filter(None, records))
 
 
 class IPMISELAlertClass(AlertClass, DismissableAlertClass):
@@ -84,6 +101,8 @@ class IPMISELAlertSource(AlertSource):
                 else:
                     records.append(i)
 
+        records = remove_deasserted_records(records)
+
         alerts = []
         if records:
             if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
@@ -95,7 +114,7 @@ class IPMISELAlertSource(AlertSource):
                 dismissed_datetime = max(record["datetime"] for record in records)
                 await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, dismissed_datetime)
 
-            for record in filter(lambda x: x["datetime"] > dismissed_datetime, records[:]):
+            for record in filter(lambda x: x["datetime"] > dismissed_datetime, records):
                 record.pop("id")
                 dt = record.pop("datetime")
                 alerts.append(Alert(
