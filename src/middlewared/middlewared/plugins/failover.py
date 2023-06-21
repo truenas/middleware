@@ -161,12 +161,12 @@ class FailoverService(ConfigService):
     async def hardware(self):
         """
         Returns the hardware type for an HA system.
-          ECHOSTREAM
-          ECHOWARP
-          F1
-          PUMA
-          BHYVE
-          MANUAL
+          ECHOSTREAM (z-series)
+          ECHOWARP (m-series)
+          LAJOLLA2 (f-series)
+          PUMA (x-series)
+          BHYVE (HA VMs for CI)
+          MANUAL (everything else)
         """
         return (await self.middleware.call('failover.ha_mode'))[0]
 

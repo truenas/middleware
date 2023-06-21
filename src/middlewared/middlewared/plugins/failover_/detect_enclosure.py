@@ -38,8 +38,8 @@ class EnclosureDetectionService(Service):
                         break
 
             return HARDWARE, NODE
-        elif 'TRUENAS-F1' in product:
-            HARDWARE = 'F1'
+        elif product.startswith('TRUENAS-F'):
+            HARDWARE = 'LAJOLL2'
             rv = subprocess.run(['ipmi-raw', '0', '3c', '0e'], stdout=subprocess.PIPE)
             if rv.stdout:
                 # Viking info via VSS2249RQ Management Over IPMI document Section 5.5 page 15

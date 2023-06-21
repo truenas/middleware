@@ -166,17 +166,17 @@ class EnclosureService(Service):
         return self.fake_nvme_enclosure(*self.map_r50_or_r50b_impl(info, acpihandles))
 
     @private
-    def map_r30_or_f1(self, prod):
+    def map_r30_or_fseries(self, prod):
         if prod == 'R30':
             _id = 'r30_nvme_enclosure'
             name = 'R30 NVMe Enclosure'
             model = 'R30'
             count = 16  # r30 has 16 nvme drive bays in head-unit (all nvme flash system)
         else:
-            _id = 'f1_nvme_enclosure'
-            name = 'F1 NVMe Enclosure'
-            model = 'F1'
-            count = 24  # F1 has 24 nvme drive bays in head-unit (all nvme flash system)
+            _id = f'{prod.lower()}_nvme_enclosure'
+            name = f'{prod} NVMe Enclosure'
+            model = prod
+            count = 24  # f-series has 24 nvme drive bays in head-unit (all nvme flash system)
 
         ctx = Context()
         nvmes = {}
@@ -205,7 +205,7 @@ class EnclosureService(Service):
                 '38': 14, '39': 16, '43': 13, '44': 15,
             }
         else:
-            # F1 vendor is nice to us and nvme phys slots start at 1
+            # f-series vendor is nice to us and nvme phys slots start at 1
             # and increment in a human readable way already
             webui_map = {
                 '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
@@ -225,7 +225,7 @@ class EnclosureService(Service):
     @private
     def valid_hardware(self, prod):
         prefix = 'TRUENAS-'
-        models = ['R30', 'R50', 'R50B', 'R50BM', 'M50', 'M60', 'F1']
+        models = ['R30', 'R50', 'R50B', 'R50BM', 'M50', 'M60', 'F60', 'F100', 'F130']
         if prod != 'TRUENAS-' and any((j in prod for j in [f'{prefix}{i}' for i in models])):
             return prod.split('-')[1]
 
@@ -237,9 +237,9 @@ class EnclosureService(Service):
 
         if prod in ('R50', 'R50B'):
             return self.map_r50_or_r50b(prod)
-        elif prod in ('R30', 'F1'):
+        elif prod in ('R30', 'F60', 'F100', 'F130'):
             # all nvme systems which we need to handle separately
-            return self.map_r30_or_f1(prod)
+            return self.map_r30_or_fseries(prod)
         else:
             # M50/60 and R50BM use same plx nvme bridge
             return self.map_plx_nvme(prod)

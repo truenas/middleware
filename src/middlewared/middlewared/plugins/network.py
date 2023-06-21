@@ -180,8 +180,8 @@ class InterfaceService(CRUDService):
         }
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('failover.internal_interfaces')
-        if self.middleware.call_sync('failover.ha_mode')[0] == 'F1':
-            # The eno1 interface needs to be masked on the F1 HA platform because
+        if self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F'):
+            # The eno1 interface needs to be masked on the f-series platform because
             # this interface is shared with the BMC. Details for why this is done
             # can be obtained from platform team.
             ignore.append('eno1')
@@ -1869,8 +1869,8 @@ async def configure_http_proxy(middleware, *args, **kwargs):
 
 async def attach_interface(middleware, iface):
     platform, node_position = await middleware.call('failover.ha_mode')
-    if iface == 'ntb0' and platform == 'F1' and node_position == 'B':
-        # The F1 HA platform is an AMD system. This means it's using a different
+    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
+        # The f-series platform is an AMD system. This means it's using a different
         # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
         # operates subtly differently than the Intel driver. If the A controller
         # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
