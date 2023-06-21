@@ -51,7 +51,7 @@ class SystemSecurityService(ConfigService):
 
         if new['enable_fips'] and not await self.middleware.call('system.license'):
             verrors.add(
-                'system_security_update.passthrough_mode',
+                'system_security_update.enable_fips',
                 'Can only be enabled on licensed iX enterprise hardware'
             )
 
