@@ -9,8 +9,8 @@ import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, POST
-from auto_config import dev_test
+from functions import PUT, GET, POST, SSH_TEST
+from auto_config import dev_test, user, password, ip
 # comment pytestmark for development testing with --dev-test
 pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
@@ -19,7 +19,10 @@ def test_01_Configuring_ftp():
     payload = {"clients": 10, "rootlogin": True}
     results = PUT("/ftp/", payload)
     assert results.status_code == 200, results.text
-
+    # Confirm we block no_cert_request: NAS-122463
+    payload = {"tls_opt_no_cert_request": True}
+    results = PUT("/ftp/", payload)
+    assert results.status_code != 200, results.text
 
 def test_02_Look_at_ftp_cofiguration():
     results = GET("/ftp/")
@@ -42,7 +45,9 @@ def test_05_Starting_ftp_service():
     payload = {"service": "ftp"}
     results = POST("/service/start/", payload)
     assert results.status_code == 200, results.text
-
+    # Confirm excluded settings: NAS-122463
+    results = SSH_TEST("grep MultilineRFC2228: /etc/local/proftpd.conf", user, password, ip)
+    assert results['result'] is False
 
 def test_06_Checking_to_see_if_FTP_service_is_enabled():
     results = GET('/service?service=ftp')
