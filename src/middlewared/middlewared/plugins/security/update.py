@@ -4,7 +4,6 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
-from middlewared.utils import run
 
 
 class SystemSecurityModel(sa.Model):
