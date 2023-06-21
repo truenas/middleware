@@ -1,15 +1,12 @@
-import os
 import pytest
-import sys
 
 from middlewared.test.integration.utils import call
 
 
-sys.path.append(os.getcwd())
-
-
-@pytest.mark.parametrize("flag", [
+@pytest.mark.parametrize('flag', [
     True,
+    False,
+    True,  # Doing it again just to ensure system is still consistent
     False,
 ])
 def test_fips(flag):
