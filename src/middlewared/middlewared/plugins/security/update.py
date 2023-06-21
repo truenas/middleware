@@ -76,4 +76,4 @@ class SystemSecurityService(ConfigService):
         if cp.returncode:
             raise CallError(f'Failed to determine if fips is enabled: {cp.stderr.decode()}')
 
-        return 'OpenSSL FIPS Provider' in cp.stdout.decode()
+        return b'OpenSSL FIPS Provider' in cp.stdout
