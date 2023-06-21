@@ -37,8 +37,8 @@ class IPMILanService(CRUDService):
         """Return a list of available IPMI channels."""
         channels = []
         if self.middleware.call_sync('ipmi.is_loaded') and (channels := lan_channels()):
-            if self.middleware.call_sync('failover.ha_mode')[0] == 'F1':
-                # We cannot expose IPMI lan channel 8 on the F1 HA product
+            if self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F'):
+                # We cannot expose IPMI lan channel 8 on the f-series platform
                 channels = [i for i in channels if i != 8]
 
         return channels
