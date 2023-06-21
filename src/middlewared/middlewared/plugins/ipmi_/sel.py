@@ -79,6 +79,6 @@ class IpmiSelService(Service):
     @job(lock=SEL_LOCK, lock_queue_size=1)
     def clear(self, job):
         if self.middleware.call_sync('ipmi.is_loaded'):
-            cp = run(['ipmi-sel', '--clear'], check_output=True)
+            cp = run(['ipmi-sel', '--clear'], capture_output=True)
             if cp.returncode:
                 raise CallError(cp.stderr.decode().strip() or f'Unexpected failure with returncode: {cp.returncode!r}')
