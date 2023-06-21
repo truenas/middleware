@@ -207,7 +207,6 @@ class SSHCredentials(KeychainCredentialType):
         Str("username", default="root"),
         Int("private_key", required=True),
         Str("remote_host_key", required=True),
-        Str("cipher", enum=["STANDARD", "FAST", "DISABLED"], default="STANDARD"),
         Int("connect_timeout", default=10),
     ]
 
@@ -274,8 +273,6 @@ class KeychainCredentialService(CRUDService):
            * `username` (default root)
            * `private_key` (Keychain Credential ID)
            * `remote_host_key` (you can use `keychaincredential.remote_ssh_host_key_scan` do discover it)
-           * `cipher`: one of `STANDARD`, `FAST`, or `DISABLED` (last requires special support from both SSH server and
-             client)
            * `connect_timeout` (default 10)
 
         .. examples(websocket)::
@@ -550,7 +547,6 @@ class KeychainCredentialService(CRUDService):
         Str("otp_token", private=True),
         Str("username", default="root"),
         Int("private_key", required=True),
-        Str("cipher", enum=["STANDARD", "FAST", "DISABLED"], default="STANDARD"),
         Int("connect_timeout", default=10),
         Bool("sudo", default=False),
         register=True,
@@ -563,7 +559,7 @@ class KeychainCredentialService(CRUDService):
         Perform semi-automatic SSH connection setup with other FreeNAS machine. It creates a `SSH_CREDENTIALS`
         credential with specified `name` that can be used to connect to FreeNAS machine with specified `url` and
         temporary auth `token`. Other FreeNAS machine adds `private_key` to allowed `username`'s private keys. Other
-        `SSH_CREDENTIALS` attributes such as `cipher` and `connect_timeout` can be specified as well.
+        `SSH_CREDENTIALS` attributes such as `connect_timeout` can be specified as well.
 
         .. examples(websocket)::
 
@@ -640,7 +636,6 @@ class KeychainCredentialService(CRUDService):
                 "username": data["username"],
                 "private_key": replication_key["id"],
                 "remote_host_key": process_ssh_keyscan_output(response["host_key"]),
-                "cipher": data["cipher"],
                 "connect_timeout": data["connect_timeout"],
             }
         })

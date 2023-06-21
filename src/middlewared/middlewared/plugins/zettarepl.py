@@ -862,7 +862,7 @@ class ZettareplService(Service):
         except CallError as e:
             raise CallError(f"Error while querying SSH key pair for credentials {credentials['id']}: {e!s}")
 
-        return {
+        transport = {
             "hostname": credentials["attributes"]["host"],
             "port": credentials["attributes"]["port"],
             "username": credentials["attributes"]["username"],
@@ -870,6 +870,11 @@ class ZettareplService(Service):
             "host-key": credentials["attributes"]["remote_host_key"],
             "connect-timeout": credentials["attributes"]["connect_timeout"],
         }
+
+        if (await self.middleware.call("system.security.config"))["enable_fips"]:
+            transport["cipher"] = "fips"
+
+        return transport
 
     def _is_empty_definition(self, definition):
         return not definition["periodic-snapshot-tasks"] and not definition["replication-tasks"]
