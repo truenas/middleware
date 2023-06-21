@@ -1,13 +1,10 @@
-import re
+import subprocess
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, private, ValidationErrors
 from middlewared.utils import run
-
-
-RE_FIPS = re.compile(r'name:\s+OpenSSL FIPS Provider')
 
 
 class SystemSecurityModel(sa.Model):
@@ -75,9 +72,10 @@ class SystemSecurityService(ConfigService):
         return await self.config()
 
     @private
-    async def fips_enabled(self):
-        cp = await run(['openssl', 'list', '-providers'], check=False)
+    def fips_enabled(self):
+        cp = subprocess.Popen(['openssl', 'list', '-providers'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = cp.communicate()
         if cp.returncode:
-            raise CallError(f'Failed to determine if fips is enabled: {cp.stderr.decode()}')
+            raise CallError(f'Failed to determine if fips is enabled: {stderr.decode()}')
 
-        return bool(RE_FIPS.search(cp.stdout.decode()))
+        return 'OpenSSL FIPS Provider' in stdout.decode()
