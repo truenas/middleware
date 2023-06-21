@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import os
-import re
+import shutil
 import sqlite3
 import subprocess
 
@@ -9,27 +9,22 @@ from middlewared.utils.db import query_config_table
 
 FIPS_MODULE_FILE = '/usr/lib/ssl/fipsmodule.cnf'
 OPENSSL_CONFIG_FILE = '/etc/ssl/openssl.cnf'
+BASE_OPENSSL_CONFIG_FILE = '/conf/base/etc/ssl/openssl.cnf'
 OPENSSL_FIPS_FILE = '/etc/ssl/openssl_fips.cnf'
-RE_INCLUDE_FIPS = re.compile(fr'\s*\.include {re.escape(OPENSSL_FIPS_FILE)}\s*$')
 
 
 def validate_system_state() -> None:
-    for path in (FIPS_MODULE_FILE, OPENSSL_CONFIG_FILE, OPENSSL_FIPS_FILE):
+    for path in (FIPS_MODULE_FILE, OPENSSL_CONFIG_FILE, OPENSSL_FIPS_FILE, BASE_OPENSSL_CONFIG_FILE):
         if not os.path.exists(path):
             raise Exception(f'{path!r} does not exist')
 
 
 def modify_openssl_config(enable_fips: bool) -> None:
-    with open(OPENSSL_CONFIG_FILE, 'r') as f:
-        config = f.read()
+    shutil.copyfile(BASE_OPENSSL_CONFIG_FILE, OPENSSL_CONFIG_FILE)
 
-    if enable_fips and not RE_INCLUDE_FIPS.search(config):
-        config += f'\n.include {OPENSSL_FIPS_FILE}\n'
-    elif not enable_fips and RE_INCLUDE_FIPS.search(config):
-        config = RE_INCLUDE_FIPS.sub('\n', config)
-
-    with open(OPENSSL_CONFIG_FILE, 'w') as f:
-        f.write(config)
+    if enable_fips:
+        with open(OPENSSL_CONFIG_FILE, 'a') as f:
+            f.write(f'\n.include {OPENSSL_FIPS_FILE}\n')
 
 
 def configure_fips(enable_fips: bool) -> None:
