@@ -3,7 +3,7 @@ import re
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import CallError, ConfigService, private
+from middlewared.service import CallError, ConfigService, private, ValidationErrors
 from middlewared.utils import run
 
 
@@ -49,6 +49,16 @@ class SystemSecurityService(ConfigService):
 
         if new == old:
             return new
+
+        verrors = ValidationErrors()
+
+        if new['enable_fips'] and not await self.middleware.call('system.license'):
+            verrors.add(
+                'system_security_update.passthrough_mode',
+                'Can only be enabled on licensed iX enterprise hardware'
+            )
+
+        verrors.check()
 
         await self.middleware.call(
             'datastore.update',
