@@ -72,9 +72,8 @@ class SystemSecurityService(ConfigService):
 
     @private
     def fips_enabled(self):
-        cp = subprocess.Popen(['openssl', 'list', '-providers'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = cp.communicate()
+        cp = subprocess.run(['openssl', 'list', '-providers'], capture_output=True)
         if cp.returncode:
-            raise CallError(f'Failed to determine if fips is enabled: {stderr.decode()}')
+            raise CallError(f'Failed to determine if fips is enabled: {cp.stderr.decode()}')
 
-        return 'OpenSSL FIPS Provider' in stdout.decode()
+        return 'OpenSSL FIPS Provider' in cp.stdout.decode()
