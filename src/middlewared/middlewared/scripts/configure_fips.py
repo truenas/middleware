@@ -41,7 +41,7 @@ def main() -> None:
     validate_system_state()
     try:
         security_settings = query_config_table('system_security')
-    except sqlite3.OperationalError:
+    except (sqlite3.OperationalError, IndexError):
         # This is for the case when users are upgrading and in that case table will not exist
         # so we should always disable fips as a default because users might not be able to ssh
         # into the system
