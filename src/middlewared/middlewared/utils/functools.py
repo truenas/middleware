@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import functools
 
 from middlewared.utils.lang import undefined
@@ -15,7 +16,7 @@ def cache(func):
             if value == undefined:
                 value = await func(self)
 
-            return value
+            return copy.deepcopy(value)
     else:
         @functools.wraps(func)
         def wrapped(self):
@@ -24,6 +25,6 @@ def cache(func):
             if value == undefined:
                 value = func(self)
 
-            return value
+            return copy.deepcopy(value)
 
     return wrapped
