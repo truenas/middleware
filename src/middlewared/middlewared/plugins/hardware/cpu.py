@@ -39,7 +39,7 @@ class HardwareCpuService(Service):
     @returns()
     def set_governor(self, governor):
         """Set the cpu governor to `governor` on all cpus"""
-        curr_gov = sef.current_governor()
+        curr_gov = self.current_governor()
         if curr_gov is None:
             raise ValidationError('hardware.cpu.governor', 'Changing cpu governor is not supported')
         elif curr_gov == governor:
