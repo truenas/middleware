@@ -16,6 +16,8 @@ class EncryptedDatasetAlertClass(AlertClass):
 
 class UnencryptedDatasetsAlertSource(AlertSource):
 
+    schedule = IntervalSchedule(timedelta(hours=12))
+
     async def check(self):
         unencrypted_datasets = []
         for dataset in await self.middleware.call('pool.dataset.query', [['encrypted', '=', True]]):
