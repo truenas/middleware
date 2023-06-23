@@ -1,28 +1,14 @@
 import contextlib
-import functools
-import os
-import sys
 import threading
 import typing
 
-from middlewared.client import Client
 from middlewared.test.integration.assets.crypto import get_cert_params, root_certificate_authority
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.client import host_websocket_uri, password
-
-
-sys.path.append(os.getcwd())
-
-
-@functools.cache
-def auth():
-    return 'root', password()
+from middlewared.test.integration.utils.client import client
 
 
 def event_thread(event_endpoint: str, context: dict):
-    with Client(host_websocket_uri(), py_exceptions=False) as c:
-        assert c.call('auth.login', *auth()) is True
-
+    with client(py_exceptions=False) as c:
         context['start_event'].set()
         subscribe_payload = c.event_payload()
         event = subscribe_payload['event']
@@ -64,12 +50,12 @@ def gather_events(event_endpoint: str, context_args: dict = None):
 
 
 def assert_result(context: dict, event_endpoint: str, oid: typing.Union[int, str], event_type: str) -> None:
-    assert context['result'] is not None, context
+    assert context['result'] is not None
     assert context['result'] == {
         'msg': event_type,
         'collection': event_endpoint,
         'id': oid,
-    }, context['result']
+    }
 
 
 def test_event_create_on_non_job_method():
