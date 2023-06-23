@@ -26,7 +26,8 @@ def event_thread(event_endpoint: str, context: dict):
             event.set()
 
         c.subscribe(event_endpoint, cb, subscribe_payload)
-        event.wait(timeout=context['timeout'])
+        if not event.wait(timeout=context['timeout']):
+            raise Exception('Timed out waiting for CRUD event to be generated')
 
 
 @contextlib.contextmanager
@@ -40,7 +41,9 @@ def gather_events(event_endpoint: str, context_args: dict = None):
     }
     thread = threading.Thread(target=event_thread, args=(event_endpoint, context))
     thread.start()
-    context['start_event'].wait(timeout=30)
+    if not context['start_event'].wait(timeout=30):
+        raise Exception('Timed out waiting for event thread to start')
+
     try:
         yield context
     finally:
