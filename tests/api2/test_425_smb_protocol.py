@@ -304,7 +304,7 @@ def test_061_create_and_write_stream_smb2(request):
     c.close(fd)
 
     fd2 = c.create_file("streamstestdir:smb2_stream", "w")
-    c.write(f2, b'test2', 0)
+    c.write(fd2, b'test2', 0)
     c.close(fd2)
 
     fd3 = c.create_file("streamstestfile:smb2_stream", "w")
