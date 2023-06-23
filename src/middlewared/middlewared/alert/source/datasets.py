@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
+from middlewared.alert.schedule import IntervalSchedule
 
 
 class EncryptedDatasetAlertClass(AlertClass):
@@ -17,6 +20,11 @@ class UnencryptedDatasetsAlertSource(AlertSource):
         unencrypted_datasets = []
         for dataset in await self.middleware.call('pool.dataset.query', [['encrypted', '=', True]]):
             for child in dataset['children']:
+                if child['name'] == f'{child["pool"]}/ix-applications' or child['name'].startswith(
+                    f'{child["pool"]}/ix-applications/'
+                ):
+                    continue
+
                 if not child['encrypted']:
                     unencrypted_datasets.append(child['name'])
 
