@@ -397,7 +397,7 @@ class ChartReleaseService(CRUDService):
         """
         await self.middleware.call('kubernetes.validate_k8s_setup')
         if await self.query([['id', '=', data['release_name']]]):
-            raise CallError(f'Chart release with {data["release_name"]} already exists.', errno=errno.EEXIST)
+            raise CallError(f'Chart release with {data["release_name"]!r} name already exists.', errno=errno.EEXIST)
 
         catalog = await self.middleware.call('catalog.get_instance', data['catalog'])
         item_details = await self.middleware.call('catalog.get_item_details', data['item'], {
