@@ -10,37 +10,6 @@ class CertificateAuthorityService(Service):
         cli_namespace = 'system.certificate.authority'
 
     PROFILES = {
-        'Openvpn Root CA': {
-            'cert_extensions': {
-                'AuthorityKeyIdentifier': {
-                    'enabled': True,
-                    'authority_cert_issuer': True,
-                    'extension_critical': False
-                },
-                'KeyUsage': {
-                    'enabled': True,
-                    'key_cert_sign': True,
-                    'crl_sign': True,
-                    'extension_critical': True
-                },
-                'BasicConstraints': {
-                    'enabled': True,
-                    'ca': True,
-                    'extension_critical': True
-                },
-                'ExtendedKeyUsage': {
-                    'enabled': True,
-                    'extension_critical': False,
-                    'usages': [
-                        'SERVER_AUTH', 'CLIENT_AUTH',
-                    ]
-                }
-            },
-            'key_length': 2048,
-            'key_type': 'RSA',
-            'lifetime': DEFAULT_LIFETIME_DAYS,
-            'digest_algorithm': 'SHA256'
-        },
         'CA': {
             'key_length': 2048,
             'key_type': 'RSA',

@@ -132,7 +132,7 @@ def devices_xml(vm_data, context):
     usb_controllers = {'nec-xhci': 0}
     virtual_device_no = Nid(1)
     devices = []
-    for device in filter(lambda d: d.is_available(), context['devices']):
+    for device in context['devices']:
         if isinstance(device, (DISK, CDROM, RAW)):
             if device.data['attributes'].get('type') == 'VIRTIO':
                 disk_no = virtual_device_no()
@@ -188,6 +188,9 @@ def devices_xml(vm_data, context):
         'children': [create_element('target', type='virtio', name='org.qemu.guest_agent.0')]
     }))
     devices.append(create_element('serial', type='pty'))
+    if vm_data['min_memory']:
+        # memballoon device needs to be added if memory ballooning is enabled
+        devices.append(create_element('memballoon', model='virtio', autodeflate='on'))
     return create_element('devices', attribute_dict={'children': devices})
 
 

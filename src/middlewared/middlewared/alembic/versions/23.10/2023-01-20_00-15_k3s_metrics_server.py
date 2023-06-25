@@ -1,4 +1,5 @@
 """Add apps metrics server
+
 Revision ID: 9c44b7e06dff
 Revises: 2bef686cbf7d
 Create Date: 2023-01-20 00:20:00.702138+00:00

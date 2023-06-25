@@ -166,11 +166,17 @@ class EnclosureService(Service):
         return self.fake_nvme_enclosure(*self.map_r50_or_r50b_impl(info, acpihandles))
 
     @private
-    def map_r30(self):
-        _id = 'r30_nvme_enclosure'
-        name = 'R30 NVMe Enclosure'
-        model = 'R30'
-        count = 16  # r30 has 16 nvme drive bays in head-unit (all nvme flash system)
+    def map_r30_or_fseries(self, prod):
+        if prod == 'R30':
+            _id = 'r30_nvme_enclosure'
+            name = 'R30 NVMe Enclosure'
+            model = 'R30'
+            count = 16  # r30 has 16 nvme drive bays in head-unit (all nvme flash system)
+        else:
+            _id = f'{prod.lower()}_nvme_enclosure'
+            name = f'{prod} NVMe Enclosure'
+            model = prod
+            count = 24  # f-series has 24 nvme drive bays in head-unit (all nvme flash system)
 
         ctx = Context()
         nvmes = {}
@@ -188,15 +194,25 @@ class EnclosureService(Service):
                 except (IndexError, AttributeError):
                     continue
 
-        # the keys in this dictionary are the 16 physical pcie slot ids
+        # the keys in this dictionary are the physical pcie slot ids
         # and the values are the slots that the webUI uses to map them
         # to their physical locations in a human manageable way
-        webui_map = {
-            '27': 1, '26': 7, '25': 2, '24': 8,
-            '37': 3, '36': 9, '35': 4, '34': 10,
-            '45': 5, '47': 11, '40': 6, '41': 12,
-            '38': 14, '39': 16, '43': 13, '44': 15,
-        }
+        if prod == 'R30':
+            webui_map = {
+                '27': 1, '26': 7, '25': 2, '24': 8,
+                '37': 3, '36': 9, '35': 4, '34': 10,
+                '45': 5, '47': 11, '40': 6, '41': 12,
+                '38': 14, '39': 16, '43': 13, '44': 15,
+            }
+        else:
+            # f-series vendor is nice to us and nvme phys slots start at 1
+            # and increment in a human readable way already
+            webui_map = {
+                '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
+                '7': 7, '8': 8, '9': 9, '10': 10, '11': 11, '12': 12,
+                '13': 13, '14': 14, '15': 15, '16': 16, '17': 17, '18': 18,
+                '19': 19, '20': 20, '21': 21, '22': 22, '23': 23, '24': 24,
+            }
 
         mapped = {}
         for i in Path('/sys/bus/pci/slots').iterdir():
@@ -209,7 +225,7 @@ class EnclosureService(Service):
     @private
     def valid_hardware(self, prod):
         prefix = 'TRUENAS-'
-        models = ['R30', 'R50', 'R50B', 'R50BM', 'M50', 'M60']
+        models = ['R30', 'R50', 'R50B', 'R50BM', 'M50', 'M60', 'F60', 'F100', 'F130']
         if prod != 'TRUENAS-' and any((j in prod for j in [f'{prefix}{i}' for i in models])):
             return prod.split('-')[1]
 
@@ -219,11 +235,11 @@ class EnclosureService(Service):
         if not prod:
             return []
 
-        if prod == 'R50' or prod == 'R50B':
+        if prod in ('R50', 'R50B'):
             return self.map_r50_or_r50b(prod)
-        elif prod == 'R30':
-            # all nvme system which we need to handle separately
-            return self.map_r30()
+        elif prod in ('R30', 'F60', 'F100', 'F130'):
+            # all nvme systems which we need to handle separately
+            return self.map_r30_or_fseries(prod)
         else:
             # M50/60 and R50BM use same plx nvme bridge
             return self.map_plx_nvme(prod)

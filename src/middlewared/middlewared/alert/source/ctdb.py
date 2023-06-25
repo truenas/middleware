@@ -1,12 +1,15 @@
 import errno
-
 from datetime import timedelta
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, SimpleOneShotAlertClass
+
+from middlewared.alert.base import (Alert, AlertCategory, AlertClass,
+                                    AlertLevel, AlertSource,
+                                    SimpleOneShotAlertClass)
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.ntp import NTPPeer
 from middlewared.service_exception import CallError
 
 ALLOWED_OFFSET_CLOCK_REALTIME = 120
-ALLOWED_OFFSET_NTP = 300000
+ALLOWED_OFFSET_NTP = 300
 
 
 class CtdbInitFailAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -45,7 +48,7 @@ class ClusteredClockOffsetAlertSource(AlertSource):
             return entry['clock_realtime']
 
         def get_offset(entry):
-            return abs(entry['ntp_peer']['offset'])
+            return abs(NTPPeer(entry['ntp_peer']).offset_in_secs)
 
         if not await self.middleware.call('cluster.utils.is_clustered'):
             return
@@ -119,7 +122,7 @@ class ClusteredClockOffsetAlertSource(AlertSource):
             )
 
         worst_offset = max(rv, key=get_offset)
-        if abs(worst_offset['ntp_peer']['offset']) > ALLOWED_OFFSET_NTP:
+        if abs(NTPPeer(worst_offset['ntp_peer']).offset_in_secs) > ALLOWED_OFFSET_NTP:
             errmsg = f'NTP offset of node {ips[worst_offset["pnn"]]["address"]} exceeds 5 minutes.'
             return Alert(
                 ClusteredClockAlertClass,

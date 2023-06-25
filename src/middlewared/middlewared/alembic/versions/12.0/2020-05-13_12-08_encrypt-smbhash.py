@@ -21,9 +21,9 @@ depends_on = None
 def upgrade():
     table = "account_bsdusers"
     conn = op.get_bind()
-    for row in conn.execute(f"SELECT id, bsdusr_smbhash FROM {table}").fetchall():
+    for row in conn.execute(f"SELECT id, bsdusr_smbhash FROM {table} WHERE bsdusr_unixhash != '*'").fetchall():
         encrypted_hash = encrypt(row["bsdusr_smbhash"])
-        conn.execute(f"UPDATE {table} SET bsdusr_smbhash=? WHERE id = {row['id']}", encrypted_hash)
+        conn.execute(f"UPDATE {table} SET bsdusr_smbhash = ? WHERE id = {row['id']}", encrypted_hash)
 
 
 def downgrade():

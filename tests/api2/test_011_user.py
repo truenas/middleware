@@ -114,7 +114,7 @@ def test_02_creating_user_testuser(request):
 
 
 def test_03_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["user_01", "ssh_password"], scope="session")
+    depends(request, ["user_01"], scope="session")
     cmd = """grep -R "test1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -229,7 +229,7 @@ def test_15_updating_user_testuser_info(request):
 
 
 def test_16_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["user_02", "user_01", "ssh_password"], scope="session")
+    depends(request, ["user_02", "user_01"], scope="session")
     cmd = """grep -R "testing123" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -300,7 +300,6 @@ def test_27_creating_shareuser_to_test_sharing(request):
 
 
 def test_28_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password"], scope="session")
     cmd = """grep -R "testing" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -320,7 +319,6 @@ def test_30_creating_home_dataset(request):
     we verify that ACL is being stripped properly from
     the newly-created home directory.
     """
-    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB",
@@ -378,7 +376,7 @@ def test_31_creating_user_with_homedir(request):
 
 
 def test_32_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
+    depends(request, ["USER_CREATED"], scope="session")
     cmd = """grep -R "test1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -421,7 +419,7 @@ def test_36_homedir_check_perm(to_test, request):
 
 
 def test_37_homedir_testfile_create(request):
-    depends(request, ["HOMEDIR_EXISTS", "ssh_password"], scope="session")
+    depends(request, ["HOMEDIR_EXISTS"], scope="session")
     testfile = f'/mnt/{dataset}/testuser2/testfile.txt'
 
     cmd = f'touch {testfile}; chown {next_uid} {testfile}'
@@ -513,7 +511,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
     This test verifies that the passdb user is disabled
     when "locked" is set to True.
     """
-    depends(request, ["USER_CREATED", "ssh_password"], scope="session")
+    depends(request, ["USER_CREATED"], scope="session")
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -591,7 +589,7 @@ def test_46_creating_non_smb_user(request):
 
 
 def test_47_verify_post_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
+    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
     cmd = """grep -R "testabcd" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -644,7 +642,7 @@ def test_50_convert_to_smb_user(request):
 
 
 def test_51_verify_put_user_do_not_leak_password_in_middleware_log(request):
-    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
+    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
     cmd = """grep -R "testabcd1234" /var/log/middlewared.log"""
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is False, str(results['output'])
@@ -673,7 +671,7 @@ def test_52_converted_smb_user_passb_entry_exists(request):
 
 
 def test_53_add_user_to_sudoers(request):
-    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
+    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
     results = PUT(f"/user/id/{testuser_id}", {"sudo_commands": ["ALL"], "sudo_commands_nopasswd": []})
     assert results.status_code == 200, results.text
 
@@ -691,7 +689,7 @@ def test_53_add_user_to_sudoers(request):
 
 
 def test_54_disable_password_auth(request):
-    depends(request, ["ssh_password", "NON_SMB_USER_CREATED"], scope="session")
+    depends(request, ["NON_SMB_USER_CREATED"], scope="session")
     results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True})
     assert results.status_code == 200, results.text
 
@@ -778,4 +776,19 @@ def test_58_create_new_user_existing_home_path(request):
             'home': os.path.join(user['home'], 'canary'),
             'home_create': True,
         })
+        assert results.status_code == 422, results.text
+
+
+def test_59_create_user_ro_dataset(request):
+    user_info = {
+        'username': 't1',
+        "full_name": 'T1',
+        'group_create': True,
+        'password': 'test1234',
+        'home_mode': '770',
+        'home_create': True,
+    }
+    with tmp_dataset(pool_name, 'ro_user_ds', {'readonly': 'ON'}) as ds:
+        user_info['home'] = ds['mountpoint']
+        results = POST("/user/", user_info)
         assert results.status_code == 422, results.text

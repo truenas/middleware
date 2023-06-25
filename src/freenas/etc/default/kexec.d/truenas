@@ -1,0 +1,6 @@
+# Load the default kernel from grub config (true/false)
+# if this is set to false, clean reboots will bypass the
+# grub boot menu which prevents upgrades from working
+# because the new boot environment doesnt get booted into
+# (even though the upgrade applied and was activated)
+USE_GRUB_CONFIG=true

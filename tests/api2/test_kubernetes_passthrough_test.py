@@ -19,7 +19,6 @@ APP_NAME = 'syncthing'
 
 @pytest.mark.dependency(name='default_kubernetes_cluster')
 def test_01_default_kubernetes_cluster(request):
-    depends(request, ['pool_04'], scope='session')
     config = call('kubernetes.update', {'passthrough_mode': False, 'pool': pool_name}, job=True)
     assert config['passthrough_mode'] is False
 
@@ -27,7 +26,7 @@ def test_01_default_kubernetes_cluster(request):
 @pytest.mark.dependency(name='install_chart_release')
 def test_02_install_chart_release(request):
     depends(request, ['default_kubernetes_cluster'])
-    payload = {'catalog': 'OFFICIAL', 'item': 'syncthing', 'release_name': APP_NAME, 'train': 'charts'}
+    payload = {'catalog': 'TRUENAS', 'item': 'syncthing', 'release_name': APP_NAME, 'train': 'charts'}
     call('chart.release.create', payload, job=True)
     assert call('chart.release.get_instance', APP_NAME)['name'] == APP_NAME
 
@@ -59,7 +58,7 @@ if ha:
 
     def test_07_install_chart_release_app(request):
         depends(request, ['setup_kubernetes_passthrough_mode'])
-        payload = {'catalog': 'OFFICIAL', 'item': 'test-syncthing', 'release_name': 'syncthing', 'train': 'charts'}
+        payload = {'catalog': 'TRUENAS', 'item': 'test-syncthing', 'release_name': 'syncthing', 'train': 'charts'}
         with pytest.raises(ClientException) as e:
             call('chart.release.create', payload, job=True)
             assert e == 'Kubernetes operations are not allowed with passthrough mode enabled'

@@ -68,21 +68,21 @@ def update_zfs_default(root):
 def get_current_gpu_pci_ids(root):
     adv_config = query_config_table("system_advanced", os.path.join(root, FREENAS_DATABASE[1:]), "adv_")
     to_isolate = [gpu for gpu in get_gpus() if gpu["addr"]["pci_slot"] in adv_config.get("isolated_gpu_pci_ids", [])]
-    return [dev["pci_id"] for gpu in to_isolate for dev in gpu["devices"]]
+    return [dev["pci_slot"] for gpu in to_isolate for dev in gpu["devices"]]
 
 
 def update_pci_module_files(root, config):
     def get_path(p):
         return os.path.join(root, p)
 
-    pci_ids = config["pci_ids"]
+    pci_slots = config["pci_ids"]
     for path in map(
         get_path, [
+            'etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh',
             "etc/initramfs-tools/modules",
             "etc/modules",
             "etc/modprobe.d/kvm.conf",
             "etc/modprobe.d/nvidia.conf",
-            "etc/modprobe.d/vfio.conf",
         ]
     ):
         with contextlib.suppress(Exception):
@@ -91,16 +91,16 @@ def update_pci_module_files(root, config):
     os.makedirs(get_path("etc/initramfs-tools"), exist_ok=True)
     os.makedirs(get_path("etc/modprobe.d"), exist_ok=True)
 
-    if not pci_ids:
+    if not pci_slots:
         return
 
     for path in map(get_path, ["etc/initramfs-tools/modules", "etc/modules"]):
         with open(path, "w") as f:
-            f.write(textwrap.dedent(f"""\
+            f.write(textwrap.dedent("""\
                 vfio
                 vfio_iommu_type1
                 vfio_virqfd
-                vfio_pci ids={','.join(pci_ids)}
+                vfio_pci
             """))
 
     with open(get_path("etc/modprobe.d/kvm.conf"), "w") as f:
@@ -113,8 +113,17 @@ def update_pci_module_files(root, config):
             softdep nvidia* pre: vfio-pci
         """))
 
-    with open(get_path("etc/modprobe.d/vfio.conf"), "w") as f:
-        f.write(f"options vfio-pci ids={','.join(pci_ids)}\n")
+    with open(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), "w") as f:
+        f.write(textwrap.dedent(f"""\
+            #!/bin/sh
+            PREREQS=""
+            DEVS="{' '.join(pci_slots)}"
+            for DEV in $DEVS;
+              do echo "vfio-pci" > /sys/bus/pci/devices/$DEV/driver_override
+            done
+            modprobe -i vfio-pci
+        """))
+    os.chmod(get_path("etc/initramfs-tools/scripts/init-top/truenas_bind_vfio.sh"), 0o755)
 
 
 def update_pci_initramfs_config(root):

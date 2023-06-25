@@ -4,11 +4,11 @@ import random
 import aiohttp
 import os
 
-from copy import deepcopy
 from collections import defaultdict
 from datetime import datetime
 
 from middlewared.service import Service
+from middlewared.utils.osc import getmntinfo
 
 USAGE_URL = 'https://usage.truenas.com/submit'
 
@@ -84,23 +84,38 @@ class UsageService(Service):
         context = {
             'network': self.middleware.call_sync('interface.query'),
             'root_datasets': {},
+            'total_capacity': 0,
+            'datasets_total_size': 0,
+            'datasets_total_size_recursive': 0,
+            'zvols_total_size': 0,
             'zvols': [],
             'datasets': {},
             'total_snapshots': 0,
             'total_datasets': 0,
             'total_zvols': 0,
+            'services': [],
+            'mntinfo': getmntinfo(),
         }
+        for i in self.middleware.call_sync('datastore.query', 'services.services', [], {'prefix': 'srv_'}):
+            context['services'].append({'name': i['service'], 'enabled': i['enable']})
+
         for ds in self.middleware.call_sync('zfs.dataset.query', [], opts):
             context['total_snapshots'] += ds['snapshot_count']
             if '/' not in ds['id']:
                 context['root_datasets'][ds['id']] = ds
                 context['total_datasets'] += 1
+                context['datasets_total_size'] += ds['properties']['used']['parsed']
+                context['total_capacity'] += (
+                    ds['properties']['used']['parsed'] + ds['properties']['available']['parsed']
+                )
             elif ds['type'] == 'VOLUME':
                 context['zvols'].append(ds)
                 context['total_zvols'] += 1
+                context['zvols_total_size'] += ds['properties']['used']['parsed']
             elif ds['type'] == 'FILESYSTEM':
                 context['total_datasets'] += 1
 
+            context['datasets_total_size_recursive'] += ds['properties']['used']['parsed']
             context['datasets'][ds['id']] = ds
 
         return context
@@ -126,89 +141,61 @@ class UsageService(Service):
         return usage_stats
 
     def gather_total_capacity(self, context):
-        return {
-            'total_capacity': sum(
-                d['properties']['used']['parsed'] + d['properties']['available']['parsed']
-                for d in context['root_datasets'].values()
-            )
-        }
+        return {'total_capacity': context['total_capacity']}
 
     def gather_backup_data(self, context):
-        backed = {
-            'cloudsync': 0,
-            'rsynctask': 0,
-            'zfs_replication': 0,
-            'total_size': 0,
-        }
-        datasets_data = context['datasets']
-        datasets = deepcopy(datasets_data)
+        backed = {'cloudsync': 0, 'rsynctask': 0, 'zfs_replication': 0, 'total_size': 0}
+        filters = [['enabled', '=', True], ['direction', '=', 'PUSH'], ['locked', '=', False]]
+        tasks_found = {'cloudsync': set(), 'rsynctask': set()}
         for namespace in ('cloudsync', 'rsynctask'):
-            task_datasets = deepcopy(datasets_data)
-            for task in self.middleware.call_sync(
-                f'{namespace}.query', [['enabled', '=', True], ['direction', '=', 'PUSH'], ['locked', '=', False]]
-            ):
+            opposite_namespace = 'rsynctask' if namespace == 'cloudsync' else 'cloudsync'
+            for task in self.middleware.call_sync(f'{namespace}.query', filters):
                 try:
-                    task_ds = self.middleware.call_sync('zfs.dataset.path_to_dataset', task['path'])
+                    task_ds = self.middleware.call_sync('zfs.dataset.path_to_dataset', task['path'], context['mntinfo'])
                 except Exception:
-                    self.logger.error('Unable to retrieve dataset of path %r', task['path'], exc_info=True)
-                    task_ds = None
+                    self.logger.error('Failed mapping path %r to dataset', task['path'], exc_info=True)
+                else:
+                    if (task_ds and task_ds in context['datasets']) and (task_ds not in tasks_found[namespace]):
+                        # dataset for the task was found, and exists and hasn't already been calculated
+                        size = context['datasets'][task_ds]['properties']['used']['parsed']
+                        backed[namespace] += size
+                        if task_ds not in tasks_found[opposite_namespace]:
+                            # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
+                            # so we don't want to add to the total backed up size because it will report
+                            # an inflated number. Instead we only add to the total backed up size when it's
+                            # a dataset only being backed up by a singular cloud/rsync/replication task
+                            backed['total_size'] += size
 
-                if task_ds:
-                    task_ds_data = task_datasets.pop(task_ds, None)
-                    if task_ds_data:
-                        backed[namespace] += task_ds_data['properties']['used']['parsed']
-                    ds = datasets.pop(task_ds, None)
-                    if ds:
-                        backed['total_size'] += ds['properties']['used']['parsed']
+                        tasks_found[namespace].add(task_ds)
 
-        repl_datasets = deepcopy(datasets_data)
-        for task in self.middleware.call_sync(
-            'replication.query', [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
-        ):
-            for source in filter(lambda s: s in repl_datasets, task['source_datasets']):
-                r_ds = repl_datasets.pop(source, None)
-                if r_ds:
-                    backed['zfs_replication'] += r_ds['properties']['used']['parsed']
-                ds = datasets.pop(source, None)
-                if ds:
-                    backed['total_size'] += ds['properties']['used']['parsed']
+        repls_found = set()
+        filters = [['enabled', '=', True], ['transport', '!=', 'LOCAL'], ['direction', '=', 'PUSH']]
+        for task in self.middleware.call_sync('replication.query', filters):
+            for source in filter(lambda s: s in context['datasets'] and s not in repls_found, task['source_datasets']):
+                size = context['datasets'][source]['properties']['used']['parsed']
+                backed['zfs_replication'] += size
+                repls_found.add(source)
+                if source not in tasks_found['cloudsync'] and source not in tasks_found['rsynctask']:
+                    # a "task" (cloudsync, rsync, replication) can be backing up the same dataset
+                    # so we don't want to add to the total backed up size because it will report
+                    # an inflated number. Instead we only add to the total backed up size when it's
+                    # a dataset only being backed up by a singular cloud/rsync/replication task
+                    backed['total_size'] += size
 
         return {
             'data_backup_stats': backed,
-            'data_without_backup_size': sum([ds['properties']['used']['parsed'] for ds in datasets.values()], start=0)
+            'data_without_backup_size': context['datasets_total_size_recursive'] - backed['total_size']
         }
 
     def gather_filesystem_usage(self, context):
         return {
-            'datasets': {
-                'total_size': sum(
-                    [d['properties']['used']['parsed'] for d in context['root_datasets'].values()], start=0
-                )
-            },
-            'zvols': {
-                'total_size': sum(
-                    [d['properties']['used']['parsed'] for d in context['zvols']], start=0
-                ),
-            },
+            'datasets': {'total_size': context['datasets_total_size']},
+            'zvols': {'total_size': context['zvols_total_size']},
         }
 
     async def gather_ha_stats(self, context):
         return {
             'ha_licensed': await self.middleware.call('failover.licensed'),
-        }
-
-    async def gather_rsyncmod_stats(self, context):
-        return {
-            'rsyncmod': {
-                'enabled': (
-                    await self.middleware.call(
-                        'service.query',
-                        [['service', '=', 'rsync']],
-                        {'get': True, 'extra': {'include_state': False}}
-                    )
-                )['enable'],
-                'rsync_modules': await self.middleware.call('rsyncmod.query', [], {'count': True}),
-            }
         }
 
     async def gather_directory_service_stats(self, context):
@@ -329,12 +316,14 @@ class UsageService(Service):
         return info
 
     async def gather_system_version(self, context):
-        return {'version': await self.middleware.call('system.version')}
+        return {
+            'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
+            'version': await self.middleware.call('system.version')
+        }
 
     async def gather_system(self, context):
         return {
             'system_hash': await self.middleware.call('system.host_id'),
-            'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
             'usage_version': 1,
             'system': [{
                 'users': await self.middleware.call('user.query', [], {'count': True}),
@@ -345,17 +334,12 @@ class UsageService(Service):
         }
 
     async def gather_pools(self, context):
-        pools = await self.middleware.call('pool.query')
+        total_raw_capacity = 0  # zpool list -p -o size summed together of all zpools
         pool_list = []
-
-        for p in pools:
-            if p['status'] == 'OFFLINE':
-                continue
-
-            disks = 0
-            vdevs = 0
-            type = 'UNKNOWN'
-
+        for p in filter(lambda x: x['status'] != 'OFFLINE', await self.middleware.call('pool.query')):
+            total_raw_capacity += p['size']
+            disks = vdevs = 0
+            _type = 'UNKNOWN'
             if (pd := context['root_datasets'].get(p['name'])) is None:
                 self.logger.error('%r is missing, skipping collection', p['name'])
                 continue
@@ -365,163 +349,106 @@ class UsageService(Service):
             for d in p['topology']['data']:
                 if not d.get('path'):
                     vdevs += 1
-                    type = d['type']
+                    _type = d['type']
                     disks += len(d['children'])
                 else:
                     disks += 1
-                    type = 'STRIPE'
+                    _type = 'STRIPE'
 
-            pool_list.append(
-                {
-                    'capacity': pd['used']['parsed'] + pd['available']['parsed'],
-                    'disks': disks,
-                    'encryption': bool(p['encrypt']),
-                    'l2arc': bool(p['topology']['cache']),
-                    'type': type.lower(),
-                    'usedbydataset': pd['usedbydataset']['parsed'],
-                    'usedbysnapshots': pd['usedbysnapshots']['parsed'],
-                    'usedbychildren': pd['usedbychildren']['parsed'],
-                    'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
-                    'vdevs': vdevs if vdevs else disks,
-                    'zil': bool(p['topology']['log'])
-                }
-            )
+            pool_list.append({
+                'capacity': pd['used']['parsed'] + pd['available']['parsed'],
+                'disks': disks,
+                'l2arc': bool(p['topology']['cache']),
+                'type': _type.lower(),
+                'usedbydataset': pd['usedbydataset']['parsed'],
+                'usedbysnapshots': pd['usedbysnapshots']['parsed'],
+                'usedbychildren': pd['usedbychildren']['parsed'],
+                'usedbyrefreservation': pd['usedbyrefreservation']['parsed'],
+                'vdevs': vdevs if vdevs else disks,
+                'zil': bool(p['topology']['log'])
+            })
 
-        return {'pools': pool_list}
+        return {'pools': pool_list, 'total_raw_capacity': total_raw_capacity}
 
     async def gather_services(self, context):
-        services = await self.middleware.call('service.query', [], {'extra': {'include_state': False}})
-        service_list = []
-
-        for s in services:
-            service_list.append(
-                {
-                    'enabled': s['enable'],
-                    'name': s['service']
-                }
-            )
-
-        return {'services': service_list}
+        return {'services': context['services']}
 
     async def gather_sharing(self, context):
-        services = ['iscsi', 'nfs', 'smb', 'webdav']
         sharing_list = []
-
-        async def gather_service(service):
-            namespace = f'sharing.{service}' if service != 'iscsi' \
-                else 'iscsi.targetextent'
-            shares = await self.middleware.call(f'{namespace}.query')
-
-            # AUX params wanted?
-            for s in shares:
+        for service in {'iscsi', 'nfs', 'smb'}:
+            service_upper = service.upper()
+            namespace = f'sharing.{service}' if service != 'iscsi' else 'iscsi.targetextent'
+            for s in await self.middleware.call(f'{namespace}.query'):
                 if service == 'smb':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'home': s['home'],
-                            'timemachine': s['timemachine'],
-                            'browsable': s['browsable'],
-                            'recyclebin': s['recyclebin'],
-                            'shadowcopy': s['shadowcopy'],
-                            'guestok': s['guestok'],
-                            'abe': s['abe'],
-                            'acl': s['acl'],
-                            'fsrvp': s['fsrvp'],
-                            'streams': s['streams'],
-                        }
-                    )
+                    sharing_list.append({
+                        'type': service_upper,
+                        'home': s['home'],
+                        'timemachine': s['timemachine'],
+                        'browsable': s['browsable'],
+                        'recyclebin': s['recyclebin'],
+                        'shadowcopy': s['shadowcopy'],
+                        'guestok': s['guestok'],
+                        'abe': s['abe'],
+                        'acl': s['acl'],
+                        'fsrvp': s['fsrvp'],
+                        'streams': s['streams'],
+                    })
                 elif service == 'nfs':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'readonly': s['ro'],
-                            'quiet': s['quiet']
-                        }
-                    )
-                elif service == 'webdav':
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'readonly': s['ro'],
-                            'changeperms': s['perm']
-                        }
-                    )
+                    sharing_list.append({'type': service_upper, 'readonly': s['ro'], 'quiet': s['quiet']})
                 elif service == 'iscsi':
-                    target = await self.middleware.call(
-                        'iscsi.target.query', [('id', '=', s['target'])],
-                        {'get': True}
-                    )
-                    extent = await self.middleware.call(
-                        'iscsi.extent.query', [('id', '=', s['extent'])],
-                        {'get': True}
-                    )
-
-                    sharing_list.append(
-                        {
-                            'type': service.upper(),
-                            'mode': target['mode'],
-                            'groups': target['groups'],
-                            'iscsi_type': extent['type'],
-                            'filesize': extent['filesize'],
-                            'blocksize': extent['blocksize'],
-                            'pblocksize': extent['pblocksize'],
-                            'avail_threshold': extent['avail_threshold'],
-                            'insecure_tpc': extent['insecure_tpc'],
-                            'xen': extent['xen'],
-                            'rpm': extent['rpm'],
-                            'readonly': extent['ro'],
-                            'legacy': extent['vendor'] == 'FreeBSD',
-                            'vendor': extent['vendor'],
-                        }
-                    )
-
-        for s in services:
-            await gather_service(s)
+                    tar = await self.middleware.call('iscsi.target.query', [('id', '=', s['target'])], {'get': True})
+                    ext = await self.middleware.call('iscsi.extent.query', [('id', '=', s['extent'])], {'get': True})
+                    sharing_list.append({
+                        'type': service_upper,
+                        'mode': tar['mode'],
+                        'groups': tar['groups'],
+                        'iscsi_type': ext['type'],
+                        'filesize': ext['filesize'],
+                        'blocksize': ext['blocksize'],
+                        'pblocksize': ext['pblocksize'],
+                        'avail_threshold': ext['avail_threshold'],
+                        'insecure_tpc': ext['insecure_tpc'],
+                        'xen': ext['xen'],
+                        'rpm': ext['rpm'],
+                        'readonly': ext['ro'],
+                        'legacy': ext['vendor'] == 'FreeBSD',
+                        'vendor': ext['vendor'],
+                    })
 
         return {'shares': sharing_list}
 
     async def gather_vms(self, context):
-        vms = await self.middleware.call('vm.query')
-        vm_list = []
-
-        for v in vms:
-            nics = 0
-            disks = 0
+        vms = []
+        for v in await self.middleware.call('vm.query'):
+            nics = disks = 0
             display_list = []
-
             for d in v['devices']:
                 dtype = d['dtype']
-
                 if dtype == 'NIC':
                     nics += 1
                 elif dtype == 'DISK':
                     disks += 1
                 elif dtype == 'DISPLAY':
                     attrs = d['attributes']
+                    display_list.append({
+                        'wait': attrs.get('wait'),
+                        'resolution': attrs.get('resolution'),
+                        'web': attrs.get('web')
+                    })
 
-                    display_list.append(
-                        {
-                            'wait': attrs.get('wait'),
-                            'resolution': attrs.get('resolution'),
-                            'web': attrs.get('web')
-                        }
-                    )
+            vms.append({
+                'bootloader': v['bootloader'],
+                'memory': v['memory'],
+                'vcpus': v['vcpus'],
+                'autostart': v['autostart'],
+                'time': v['time'],
+                'nics': nics,
+                'disks': disks,
+                'display_devices': len(display_list),
+                'display_devices_configs': display_list
+            })
 
-            vm_list.append(
-                {
-                    'bootloader': v['bootloader'],
-                    'memory': v['memory'],
-                    'vcpus': v['vcpus'],
-                    'autostart': v['autostart'],
-                    'time': v['time'],
-                    'nics': nics,
-                    'disks': disks,
-                    'display_devices': len(display_list),
-                    'display_devices_configs': display_list
-                }
-            )
-
-        return {'vms': vm_list}
+        return {'vms': vms}
 
 
 async def setup(middleware):

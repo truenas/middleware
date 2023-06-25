@@ -6,14 +6,6 @@ from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert,
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
-HW_MODELS = (
-    'X10', 'X20',
-    'M30', 'M40', 'M50', 'M60',
-    'R10', 'R20', 'R20A', 'R20B', 'R40', 'R50',
-    'Z20', 'Z30', 'Z35', 'Z50',
-)
-
-
 class LicenseAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
@@ -68,52 +60,17 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             if standby_serial not in (standby_license['system_serial'], standby_license['system_serial_ha']):
                 alerts.append(Alert(LicenseAlertClass, 'System serial of standby node does not match license.',))
 
-        chassis_hardware = self.middleware.call_sync('truenas.get_chassis_hardware')
-        hardware = chassis_hardware.replace('TRUENAS-', '').split('-')
-
-        if hardware[0] == 'UNKNOWN':
+        model = self.middleware.call_sync('truenas.get_chassis_hardware').removeprefix('TRUENAS-').split('-')[0]
+        if model == 'UNKNOWN':
             alerts.append(Alert(LicenseAlertClass, 'TrueNAS is running on unsupported hardware.'))
-        else:
-            if hardware[0] == 'M':
-                if not local_license['model'].startswith('M'):
-                    alerts.append(Alert(
-                        LicenseAlertClass,
-                        (
-                            'Your license was issued for model "%s" but it was '
-                            ' detected as M series.'
-                        ) % local_license['model']
-                    ))
-            elif hardware[0] == 'X':
-                if not local_license['model'].startswith('X'):
-                    alerts.append(Alert(
-                        LicenseAlertClass,
-                        (
-                            'Your license was issued for model "%s" but it was '
-                            ' detected as X series.'
-                        ) % local_license['model']
-                    ))
-            elif hardware[0] == 'Z':
-                if not local_license['model'].startswith('Z'):
-                    alerts.append(Alert(
-                        LicenseAlertClass,
-                        (
-                            'Your license was issued for model "%s" but it was '
-                            ' detected as Z series.'
-                        ) % local_license['model']
-                    ))
-            else:
-                if hardware[0] in HW_MODELS:
-                    if hardware[0] != local_license['model']:
-                        alerts.append(Alert(
-                            LicenseAlertClass,
-                            (
-                                'Your license was issued for model "%(license)s" '
-                                'but it was detected as "%(model)s".'
-                            ) % {
-                                'model': hardware[0],
-                                'license': local_license['model'],
-                            }
-                        ))
+        elif model != local_license['model']:
+            alerts.append(Alert(
+                LicenseAlertClass,
+                (
+                    f'Your license was issued for model {local_license["model"]!r} '
+                    f'but the system was detected as model {model!r}'
+                )
+            ))
 
         enc_nums = defaultdict(lambda: 0)
         seen_ids = []
@@ -246,7 +203,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         """).format(**{
                             "customer_name": customer_name,
                             "opening": opening,
-                            "chassis_hardware": chassis_hardware,
+                            "chassis_hardware": model,
                             "serial_numbers": serial_numbers,
                             "contract_start": contract_start,
                             "contract_expiration": contract_expiration,

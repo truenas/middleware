@@ -15,7 +15,7 @@ class ZFSDatasetService(Service):
         private = True
         process_pool = True
 
-    def path_to_dataset(self, path):
+    def path_to_dataset(self, path, mntinfo=None):
         """
         Convert `path` to a ZFS dataset name. This
         performs lookup through mountinfo.
@@ -29,7 +29,11 @@ class ZFSDatasetService(Service):
         boot_pool = self.middleware.call_sync("boot.pool_name")
 
         st = os.stat(path)
-        mntinfo = getmntinfo(st.st_dev)[st.st_dev]
+        if mntinfo is None:
+            mntinfo = getmntinfo(st.st_dev)[st.st_dev]
+        else:
+            mntinfo = mntinfo[st.st_dev]
+
         ds_name = mntinfo['mount_source']
         if mntinfo['fs_type'] != 'zfs':
             raise CallError(f'{path}: path is not a ZFS filesystem')

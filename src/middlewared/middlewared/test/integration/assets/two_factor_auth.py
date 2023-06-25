@@ -8,9 +8,9 @@ from middlewared.test.integration.utils import call
 @contextlib.contextmanager
 def enabled_twofactor_auth():
     try:
-        yield call('auth.twofactor.update', {'enabled': True})
+        yield call('auth.twofactor.update', {'enabled': True, 'window': 3, 'interval': 60})
     finally:
-        call('auth.twofactor.update', {'enabled': False})
+        call('auth.twofactor.update', {'enabled': False, 'window': 0, 'interval': 30})
 
 
 def get_user_secret(user_id: int, get: typing.Optional[bool] = True) -> typing.Union[dict, list]:

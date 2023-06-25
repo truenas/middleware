@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import os
 import re
-import subprocess
 import pathlib
 from collections import OrderedDict
 
+from libsg3.ses import EnclosureDevice
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.service_exception import MatchNotFound
@@ -61,8 +62,6 @@ class EnclosureLabelModel(sa.Model):
 
 
 class EnclosureService(CRUDService):
-
-    ENCLOSURES_NOT_FOUND_LOGGED = False
 
     class Config:
         cli_namespace = 'storage.enclosure'
@@ -208,16 +207,37 @@ class EnclosureService(CRUDService):
 
     @accepts(Str("enclosure_id"), Int("slot"), Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"]))
     def set_slot_status(self, enclosure_id, slot, status):
-        enclosure, element = self._get_slot(lambda element: element["slot"] == slot, [["id", "=", enclosure_id]])
         if enclosure_id == 'r30_nvme_enclosure':
             r30_set_slot_status(slot, status)
-        else:
-            ses_slot = self._get_ses_slot(enclosure, element)
-            if not ses_slot.device_slot_set(status.lower()):
-                raise CallError("Error setting slot status")
+            return
+
+        for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
+            enc = EnclosureDevice(i)
+            if (data := enc.status()) and data['id'] == enclosure_id:
+                for idx, info in filter(lambda x: x[0] == slot and x[1]['type'] == 23, data['elements'].items()):
+                    if status == 'CLEAR':
+                        actions = (('get=ident', 'clear=ident'), ('get=fault', 'clear=fault'))
+                    else:
+                        actions = ((f'get={status[:5].lower()}', f'clear={status[:5].lower()}'))
+
+                    try:
+                        for getit, setit in actions:
+                            if enc.set_control(slot, getit):  # returns 1 if it's currently turned on
+                                enc.set_control(slot, setit)
+                    except OSError:
+                        msg = f'Failed to {status} slot {slot!r} on enclosure {i!r}'
+                        self.logger.warning(msg, exc_info=True)
+                        raise CallError(msg)
+                    else:
+                        return
 
     @private
-    def sync_disk(self, id, enclosure_info=None):
+    def sync_disk(self, id, enclosure_info=None, retry=False):
+        """
+        :param id:
+        :param enclosure_info:
+        :param retry: retry once more in 60 seconds if no enclosure slot for disk is found
+        """
         disk = self.middleware.call_sync(
             'disk.query',
             [['identifier', '=', id]],
@@ -227,6 +247,15 @@ class EnclosureService(CRUDService):
         try:
             enclosure, element = self._get_slot_for_disk(disk["name"], enclosure_info)
         except MatchNotFound:
+            if retry:
+                async def delayed():
+                    await asyncio.sleep(60)
+                    await self.middleware.call('enclosure.sync_disk', id, enclosure_info)
+
+                self.middleware.run_coroutine(delayed(), wait=False)
+
+                return
+
             disk_enclosure = None
         else:
             disk_enclosure = {
@@ -243,108 +272,22 @@ class EnclosureService(CRUDService):
         """
         Sync enclosure of a given ZFS pool
         """
-
-        encs = self.__get_enclosures()
-        if len(list(encs)) == 0:
-            if not self.ENCLOSURES_NOT_FOUND_LOGGED:
-                self.logger.debug("Enclosure not found, skipping enclosure sync")
-                self.ENCLOSURES_NOT_FOUND_LOGGED = True
-            return None
-
-        if pool is None:
-            pools = [pool["name"] for pool in self.middleware.call_sync("pool.query")]
-        else:
-            pools = [pool]
-
-        seen_devs = []
-        label2disk = {}
-        hardware = self.middleware.call_sync("truenas.get_chassis_hardware")
-        for pool in pools:
-            try:
-                pool = self.middleware.call_sync("zfs.pool.query", [["name", "=", pool]], {"get": True})
-            except IndexError:
-                continue
-
-            label2disk.update({
-                label: self.middleware.call_sync("disk.label_to_disk", label)
-                for label in self.middleware.call_sync("zfs.pool.get_devices", pool["id"])
-            })
-
-            for dev in self.middleware.call_sync("zfs.pool.find_not_online", pool["id"]):
-                if dev["path"] is None:
-                    continue
-
-                label = dev["path"].replace("/dev/", "")
-                seen_devs.append(label)
-
-                disk = label2disk.get(label)
-                if disk is None:
-                    continue
-
-            if hardware.startswith("TRUENAS-Z"):
-                # We want spares to have identify set on the enclosure slot for
-                # Z-series systems only see #32706 for details. Gist is that
-                # the other hardware platforms "identify" light is red which
-                # causes customer confusion because they see red and think
-                # something is wrong.
-                spare_value = "identify"
-            else:
-                spare_value = "clear"
-
-            for node in pool["groups"]["spare"]:
-                if node["path"] is None:
-                    continue
-
-                label = node["path"].replace("/dev/", "")
-                disk = label2disk.get(label)
-                if disk is None:
-                    continue
-
-                if node["status"] != "AVAIL":
-                    # when a hot-spare gets automatically attached to a zpool
-                    # its status is reported as "UNAVAIL"
-                    continue
-
-                seen_devs.append(node["path"])
-
-                element = encs.find_device_slot(disk)
-                if element:
-                    self.logger.debug(f"{spare_value}ing bay slot for %r", disk)
-                    element.device_slot_set(spare_value)
-
-            """
-            Go through all devs in the pool
-            Make sure the enclosure status is clear for everything else
-            """
-            for label, disk in label2disk.items():
-                if label in seen_devs:
-                    continue
-
-                seen_devs.append(label)
-
+        for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
+            enc = EnclosureDevice(i)
+            for slot, info in filter(lambda x: x[0] != 0 and x[1]['type'] == 23, enc.status()['elements'].items()):
+                # slot 0 is the group identifer disk slots
+                # type 23 is "Array Device Slot" (i.e. disks)
+                slot_str = f'{slot - 1}'
                 try:
-                    element = encs.find_device_slot(disk)
-                    if element:
-                        element.device_slot_set("clear")
-                except AssertionError:
-                    # happens for pmem devices since those
-                    # are NVDIMM sticks internal to each
-                    # controller
-                    continue
-
-        disks = []
-        for label in seen_devs:
-            disk = label2disk.get(label)
-            if disk is not None:
-                disks.append(disk)
-
-        """
-        Clear all slots without an attached disk
-        """
-        for enc in encs:
-            for element in enc.iter_by_name().get("Array Device Slot", []):
-                if not element.devname or element.devname not in disks:
-                    element.device_slot_set("clear")
+                    if enc.set_control(slot_str, 'get=ident'):
+                        # identify light is on, clear it
+                        enc.set_control(slot_str, 'clear=ident')
+                    if enc.set_control(slot_str, 'get=fault'):
+                        # fault light is on, clear it
+                        enc.set_control(slot_str, 'clear=fault')
+                except OSError:
+                    self.logger.warning('Failed to clear slot %r on enclosure %r', slot, i, exc_info=True)
+                    return
 
     def __get_enclosures(self):
         return Enclosures(
@@ -1038,23 +981,8 @@ class ArrayDevSlot(Element):
         Returns:
             True if the command succeeded, False otherwise
         """
-        if status == "clear":
-            commands = ["--clear=fault", "--clear=ident"]
-        else:
-            if status == "identify":
-                commands = ["--set=ident"]
-            else:
-                commands = [f"--set={status}"]
-
-        ok = True
-        for cmd in commands:
-            cmd = ["sg_ses", "--index", str(self.slot - 1), cmd, f"/dev/{self.enclosure.devname}"]
-            p = subprocess.run(cmd, encoding="utf-8", errors="ignore", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if p.returncode != 0:
-                logger.warning("%r failed: %s", cmd, p.stderr)
-                ok = False
-
-        return ok
+        # Impossible to be used in an efficient way so it's a NO-OP
+        return True
 
     @property
     def identify(self):

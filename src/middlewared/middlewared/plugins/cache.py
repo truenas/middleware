@@ -6,6 +6,7 @@ from middlewared.plugins.pwenc import encrypt, decrypt
 from middlewared.plugins.idmap import SID_LOCAL_USER_PREFIX
 
 from collections import namedtuple
+import errno
 import os
 import time
 import pwd
@@ -301,7 +302,11 @@ class DSCache(Service):
             Str('who'),
             Int('id'),
         ),
-        Dict('options', Bool('synthesize', default=False))
+        Dict(
+            'options',
+            Bool('synthesize', default=False),
+            Bool('smb', default=False)
+        )
     )
     async def retrieve(self, ds, data, options):
         who_str = data.get('who')
@@ -313,6 +318,7 @@ class DSCache(Service):
         tdb_name = f'{ds.lower()}_{data["idtype"].lower()}'
         prefix = "NAME" if who_str else "ID"
         tdb_key = f'{prefix}_{who_str if who_str else who_id}'
+        name_key = "username" if data['idtype'] == 'USER' else 'group'
 
         try:
             entry = await self.middleware.call("tdb.fetch", {"name": tdb_name, "key": tdb_key})
@@ -328,20 +334,28 @@ class DSCache(Service):
             try:
                 if data['idtype'] == 'USER':
                     pwdobj = await self.middleware.call('dscache.get_uncached_user',
-                                                        who_str, who_id)
+                                                        who_str, who_id, False, True)
                     entry = await self.middleware.call('idmap.synthetic_user',
                                                        ds.lower(), pwdobj)
+                    entry['sid'] = pwdobj['sid_info']['sid']
                 else:
                     grpobj = await self.middleware.call('dscache.get_uncached_group',
-                                                        who_str, who_id)
+                                                        who_str, who_id, True)
                     entry = await self.middleware.call('idmap.synthetic_group',
                                                        ds.lower(), grpobj)
+                    entry['sid'] = grpobj['sid_info']['sid']
+
                 await self.insert(ds, data['idtype'], entry)
+                entry['nt_name'] = entry[name_key]
             except KeyError:
                 entry = None
 
         elif not entry:
             raise KeyError(who_str if who_str else who_id)
+
+        if entry and not options['smb']:
+            entry['sid'] = None
+            entry['nt_name'] = None
 
         return entry
 
@@ -404,6 +418,10 @@ class DSCache(Service):
                     'id_type': 'USER',
                     'id': user_obj['pw_uid'],
                 })
+            except CallError as e:
+                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
+                    self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
+                sid = None
             except Exception:
                 self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
                 sid = None
@@ -418,7 +436,7 @@ class DSCache(Service):
 
         return user_obj
 
-    def get_uncached_group(self, groupname=None, gid=None):
+    def get_uncached_group(self, groupname=None, gid=None, sid_info=False):
         """
         Returns dictionary containing grp_struct data for
         the specified group or gid. Will raise an exception
@@ -431,11 +449,36 @@ class DSCache(Service):
             g = grp.getgrgid(gid)
         else:
             return {}
-        return {
+
+        grp_obj = {
             'gr_name': g.gr_name,
             'gr_gid': g.gr_gid,
             'gr_mem': g.gr_mem
         }
+
+        if sid_info:
+            try:
+                sid = self.middleware.call_sync('idmap.unixid_to_sid', {
+                    'id_type': 'GROUP',
+                    'id': grp_obj['gr_gid'],
+                })
+            except CallError as e:
+                if e.errno not in (errno.ENOENT, errno.ENOTCONN):
+                    self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
+                sid = None
+            except Exception:
+                self.logger.error('Failed to retrieve SID for gid: %d', grp.gr_gid, exc_info=True)
+                sid = None
+
+            if sid:
+                grp_obj['sid_info'] = {
+                    'sid': sid,
+                    'domain_information': self.parse_domain_info(sid)
+                }
+            else:
+                grp_obj['sid_info'] = None
+
+        return grp_obj
 
     @accepts(
         Str('objtype', enum=['USERS', 'GROUPS'], default='USERS'),
@@ -452,6 +495,8 @@ class DSCache(Service):
         ds_state = await self.middleware.call('directoryservices.get_state')
         enabled_ds = None
         extra = options.get("extra", {})
+        get_smb = 'SMB' in extra.get('additional_information', [])
+        options.pop('get', None)  # This needs to happen as otherwise `res` will become a list of keys of user attrs
 
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
@@ -466,43 +511,30 @@ class DSCache(Service):
         if not enabled_ds:
             return res
 
-        if is_name_check and filters[0][1] == '=':
+        if (is_name_check or is_id_check) and filters[0][1] == '=':
             # exists in local sqlite database, return results
             if res:
                 return res
 
+            key = 'who' if is_name_check else 'id'
             entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
-                'who': filters[0][2],
-            }, {'synthesize': True})
-            return [entry] if entry else []
+                key: filters[0][2],
+            }, {'synthesize': True, 'smb': get_smb})
 
-        if is_id_check and filters[0][1] == '=':
-            # exists in local sqlite database, return results
-            if res:
-                return res
-
-            entry = await self.retrieve(enabled_ds.upper(), {
-                'idtype': objtype[:-1],
-                'id': filters[0][2],
-            }, {'synthesize': True})
             return [entry] if entry else []
 
         entries = await self.entries(enabled_ds.upper(), objtype[:-1])
-        if 'SMB' in extra.get('additional_information', []):
+        if not get_smb:
             for entry in entries:
-                sid = await self.middleware.call('idmap.unixid_to_sid', {
-                    'id_type': objtype[:-1],
-                    'id': entry[f'{objtype[0].lower()}id'],
-                })
-                name_key = "username" if objtype == 'USERS' else 'group'
-                entry.update({
-                    'nt_name': entry[name_key],
-                    'sid': sid,
-                })
+                entry['sid'] = None
+                entry['nt_name'] = None
 
         entries_by_id = sorted(entries, key=lambda i: i['id'])
         res.extend(filter_list(entries_by_id, filters, options))
+
+        # FIXME: This is broken and will break with groups/users as well, filters/options should be
+        #  respected here, let's fix this please
         return res
 
     @job(lock="dscache_refresh")

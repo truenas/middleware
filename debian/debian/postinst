@@ -7,7 +7,6 @@ for file in \
     /etc/cron.d/mdadm \
     /etc/cron.d/sysstat \
     /etc/cron.daily/apt-compat \
-    /etc/cron.daily/apache2 \
     /etc/cron.daily/calendar \
     /etc/cron.daily/exim4-base \
     /etc/cron.daily/dpkg \
@@ -31,8 +30,6 @@ systemctl disable ssh.service
 # we disable them explicitly
 
 systemctl disable scst
-systemctl disable inadyn
-systemctl disable tftpd-hpa
 systemctl disable proftpd
 systemctl disable nmbd
 systemctl disable smbd
@@ -40,6 +37,7 @@ systemctl disable winbind
 systemctl disable wsdd
 systemctl disable walinuxagent
 systemctl disable openipmi
+systemctl disable nfs-server
 
 # nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced
@@ -54,7 +52,7 @@ usermod -a -G dialout nut
 chown root:nut /lib/nut/usbhid-ups
 
 # Copy to /conf/base
-for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf; do
+for bit in /etc/aliases /etc/group /etc/passwd /etc/syslog-ng/syslog-ng.conf /etc/ssl/openssl.cnf; do
     mkdir -p "$(dirname "/conf/base/$bit")"
     cp -aR "$bit" "/conf/base/$bit"
 done

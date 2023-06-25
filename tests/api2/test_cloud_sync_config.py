@@ -18,7 +18,7 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 def test_rclone_config_writer_bool(request):
-    #depends(request, ["pool_04"], scope="session")
+    #
     with dataset("test") as ds:
         with credential({
             "name": "Google Cloud Storage",

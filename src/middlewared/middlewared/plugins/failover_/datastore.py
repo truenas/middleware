@@ -1,7 +1,7 @@
 import os
 import time
 
-from middlewared.service import CallError, Service
+from middlewared.service import Service
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import thread_pool
 from middlewared.utils.threading import start_daemon_thread, set_thread_name
@@ -82,6 +82,10 @@ class FailoverDatastoreService(Service):
         os.rename(FREENAS_DATABASE_REPLICATED, FREENAS_DATABASE)
         self.middleware.call_sync('datastore.setup')
 
+    async def force_send(self):
+        if await self.middleware.call('failover.status') == 'MASTER':
+            await self.middleware.call('failover.datastore.set_failure')
+
 
 def hook_datastore_execute_write(middleware, sql, params, options):
     # This code is executed in SQLite thread and blocks it (in order to avoid replication query race conditions)
@@ -113,12 +117,6 @@ def hook_datastore_execute_write(middleware, sql, params, options):
             },
         )
     except Exception as e:
-        if isinstance(e, CallError) and e.errno == CallError.ENOMETHOD:
-            # the other node is running an old version so it'll fail as expected
-            # just ignore this error since the other node will eventually be updated
-            # to the same version as the current node
-            return
-
         middleware.logger.warning('Error replicating SQL on the remote node: %r', e)
         middleware.call_sync('failover.datastore.set_failure')
 

@@ -9,7 +9,7 @@ enable tmp.mount
 enable zfs-zed.service
 enable collectd.service
 enable nginx.service
-enable ntp.service
+enable chronyd.service
 enable rrdcached.service
 enable smartmontools.service
 enable syslog-ng.service
@@ -27,13 +27,11 @@ disable snmp-agent.service
 disable ssh*
 disable wg-quick*
 disable nut-*
-disable apache2.service
 disable wsdd.service
 disable libvirtd.service
 disable winbind.service
 disable glusterd*
 disable kubelet*
-disable openvpn*
 disable nvidia-*
 disable libvirt*
 disable k3s*

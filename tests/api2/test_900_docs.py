@@ -16,6 +16,5 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 def test_core_get_methods(request):
-    depends(request, ["pool_04", "ssh_password"], scope="session")
     results = SSH_TEST("midclt call core.get_methods", user, password, ip)
     assert results['result'] is True, results

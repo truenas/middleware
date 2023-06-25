@@ -1,11 +1,10 @@
 from pathlib import Path
 from contextlib import suppress
 
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.utils import run
 from middlewared.utils.cgroups import move_to_root_cgroups
-from middlewared.service import (Service, CallError, job,
-                                 accepts, Dict, Str, Bool,
-                                 ValidationErrors, private)
+from middlewared.service import Service, CallError, job, ValidationErrors, private
 from middlewared.schema import returns
 from middlewared.plugins.cluster_linux.utils import FuseConfig
 

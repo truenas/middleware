@@ -11,12 +11,13 @@ from middlewared.utils.size import format_size
 logger = logging.getLogger(__name__)
 
 run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8", errors="ignore")
+STARTING_INSTALLER = "Starting installer"
 
 
 class UpdateService(Service):
     @private
-    def install_scale(self, mounted, progress_callback, options=None):
-        options = options or {}
+    def install_scale(self, mounted, progress_callback, options):
+        raise_warnings = options.pop("raise_warnings", True)
 
         with open(os.path.join(mounted, "manifest.json")) as f:
             manifest = json.load(f)
@@ -30,12 +31,16 @@ class UpdateService(Service):
             if our_checksum != checksum:
                 raise CallError(f"Checksum mismatch for {file!r}: {our_checksum} != {checksum}")
 
-        self._execute_truenas_install(mounted, {
+        progress_callback(0, "Running pre-checks")
+        warning = self._execute_truenas_install(mounted, {
             "json": True,
             "old_root": "/",
             "precheck": True,
         }, progress_callback)
+        if warning and raise_warnings:
+            raise CallError(warning, errno.EAGAIN)
 
+        progress_callback(0, STARTING_INSTALLER)
         command = {
             "disks": self.middleware.call_sync("boot.get_disks"),
             "json": True,
@@ -44,7 +49,6 @@ class UpdateService(Service):
             "src": mounted,
             **options,
         }
-
         self._execute_truenas_install(mounted, command, progress_callback)
 
     def _execute_truenas_install(self, cwd, command, progress_callback):
@@ -69,11 +73,16 @@ class UpdateService(Service):
                 else:
                     raise ValueError(f"Invalid truenas_install JSON: {data!r}")
         p.wait()
+
+        if error is not None:
+            result = error
+        else:
+            result = stderr
+
         if p.returncode != 0:
-            if error is not None:
-                raise CallError(error)
-            else:
-                raise CallError(stderr)
+            raise CallError(result)
+        else:
+            return result
 
     @private
     def ensure_free_space(self, pool_name, size):

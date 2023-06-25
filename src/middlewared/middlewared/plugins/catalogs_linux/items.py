@@ -60,6 +60,8 @@ class CatalogService(Service):
                     'maintainers': [],
                     'tags': ['finance', 'crypto', 'blockchain'],
                     'home': 'https://www.chia.net/',
+                    'screenshots': [],
+                    'sources': [],
                 }
             }
         }

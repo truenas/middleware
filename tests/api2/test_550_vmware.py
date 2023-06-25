@@ -40,7 +40,6 @@ if vmw_credentials:
         assert isinstance(results.json(), list) is True, results.text
 
     def test_03_verify_vmware_get_datastore_do_not_leak_password(request):
-        depends(request, ["ssh_password"], scope="session")
         cmd = f"grep -R \"{os.environ['VMWARE_PASSWORD']}\" " \
             "/var/log/middlewared.log"
         results = SSH_TEST(cmd, user, password, ip)

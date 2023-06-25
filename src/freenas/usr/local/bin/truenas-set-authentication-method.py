@@ -55,6 +55,10 @@ if __name__ == "__main__":
         c.execute("SELECT last_insert_rowid()")
         user_id = dict(c.fetchone())["last_insert_rowid()"]
 
+        c.execute("""
+        INSERT INTO account_twofactor_user_auth (secret, user_id) VALUES (?, ?)
+        """, (None, user_id))
+
         c.execute("SELECT id FROM account_bsdgroups WHERE bsdgrp_group = 'builtin_administrators'")
         builtin_administrators_group_id = dict(c.fetchone())["id"]
 

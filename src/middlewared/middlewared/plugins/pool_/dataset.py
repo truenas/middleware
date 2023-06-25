@@ -16,8 +16,8 @@ from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
 
 from .utils import (
-    dataset_mountpoint, get_props_of_interest_mapping, none_normalize, ZFS_COMPRESSION_ALGORITHM_CHOICES,
-    ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
+    dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize,
+    ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
 )
 
 
@@ -445,9 +445,8 @@ class PoolDatasetService(CRUDService):
         `sparse` and `volblocksize` are only used for type=VOLUME.
 
         `encryption` when enabled will create an ZFS encrypted root dataset for `name` pool.
-        There are 2 cases where ZFS encryption is not allowed for a dataset:
-        1) Pool in question is GELI encrypted.
-        2) If the parent dataset is encrypted with a passphrase and `name` is being created
+        There is 1 case where ZFS encryption is not allowed for a dataset:
+        1) If the parent dataset is encrypted with a passphrase and `name` is being created
            with a key for encrypting the dataset.
 
         `encryption_options` specifies configuration for encryption of dataset for `name` pool.
@@ -579,16 +578,35 @@ class PoolDatasetService(CRUDService):
         if not inherit_encryption_properties:
             encryption_dict = {'encryption': 'off'}
 
+        unencrypted_parent = False
+        for parent in get_dataset_parents(data['name']):
+            check_ds = await self.middleware.call('pool.dataset.get_instance_quick', parent, {'encryption': True})
+            if check_ds['encrypted']:
+                if unencrypted_parent:
+                    verrors.add(
+                        'pool_dataset_create.name',
+                        'Creating an encrypted dataset within an unencrypted dataset is not allowed. '
+                        f'In this case, {unencrypted_parent!r} must be moved to an unencrypted dataset.'
+                    )
+                    break
+                elif data['encryption'] is False and not inherit_encryption_properties:
+                    # This was a design decision when native zfs encryption support was added to provide
+                    # a simple straight workflow not allowing end users to create unencrypted datasets
+                    # within an encrypted dataset.
+                    verrors.add(
+                        'pool_dataset_create.encryption',
+                        f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
+                    )
+                    break
+            else:
+                # The unencrypted parent story is pool/encrypted/unencrypted/new_ds so in this case
+                # we want to make sure user does not specify inherit encryption as it will lead to new_ds
+                # not getting encryption props from pool/encrypted.
+                unencrypted_parent = parent
+
         if data['encryption']:
             if inherit_encryption_properties:
                 verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
-            if (
-                    await self.middleware.call('pool.query', [['name', '=', data['name'].split('/')[0]]], {'get': True})
-            )['encrypt']:
-                verrors.add(
-                    'pool_dataset_create.encryption',
-                    'Encrypted datasets cannot be created on a GELI encrypted pool.'
-                )
 
             if not data['encryption_options']['passphrase']:
                 # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE

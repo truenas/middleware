@@ -267,12 +267,8 @@ class FailoverEventsService(Service):
                     wait_id = self.middleware.call_sync('core.job_wait', i['id'])
                     wait_id.wait_sync(raise_error=True)
                     logger.info('Failover job event with id "%d" finished', i['id'])
-                except Exception as e:
-                    ignore = (errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                    if isinstance(e, CallError) and e.errno in ignore:
-                        pass
-                    else:
-                        logger.warning('Failover job event with id "%d" failed', i['id'], exc_info=True)
+                except Exception:
+                    logger.warning('Failover job event with id "%d" failed', i['id'], exc_info=True)
 
     def _event(self, ifname, event):
 
@@ -587,6 +583,8 @@ class FailoverEventsService(Service):
             # meanwhile.
             self.run_call('kmip.initialize_keys')
 
+        self.run_call('interface.persist_link_addresses')
+
         logger.info('Failover event complete.')
 
         # clear the description and set the result
@@ -728,16 +726,28 @@ class FailoverEventsService(Service):
             logger.info('Restarting SSH')
             self.run_call('service.restart', 'ssh', self.HA_PROPAGATE)
 
-        # TODO: ALUA on SCALE??
-        # do something with iscsi service here
+        # If ALUA is configured reload the iscsitarget service (to regen config) and then start SCST
+        if self.run_call('iscsi.global.alua_enabled'):
+            if not self.run_call('service.reload', 'iscsitarget'):
+                timeout = 5
+                while not self.run_call('service.start', 'iscsitarget') and timeout > 0:
+                    logger.warning('Waiting one second to allow iscsitarget to start')
+                    sleep(1)
+                    timeout -= 1
 
         logger.info('Syncing encryption keys from MASTER node (if any)')
         try:
-            self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node')
-        except Exception as e:
-            ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-            if isinstance(e, CallError) and e.errno not in ignore:
-                logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
+            self.run_call('failover.call_remote', 'failover.sync_keys_to_remote_node', [],
+                          {'raise_connect_error': False})
+        except Exception:
+            logger.warning('Unhandled exception syncing keys from MASTER node', exc_info=True)
+
+        try:
+            self.run_call('failover.call_remote', 'interface.persist_link_addresses', [],
+                          {'raise_connect_error': False})
+        except Exception:
+            logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
+                           exc_info=True)
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'

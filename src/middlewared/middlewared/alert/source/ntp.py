@@ -1,8 +1,10 @@
 import time
 from datetime import timedelta
 
-from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
+from middlewared.alert.base import (Alert, AlertCategory, AlertClass,
+                                    AlertLevel, AlertSource)
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.ntp import NTPPeer
 
 
 class NTPHealthCheckAlertClass(AlertClass):
@@ -22,7 +24,7 @@ class NTPHealthCheckAlertSource(AlertSource):
             return
 
         try:
-            peers = await self.middleware.call("system.ntpserver.peers")
+            peers = [NTPPeer(p) for p in (await self.middleware.call("system.ntpserver.peers"))]
         except Exception:
             self.middleware.logger.warning("Failed to retrieve peers.", exc_info=True)
             peers = []
@@ -30,18 +32,18 @@ class NTPHealthCheckAlertSource(AlertSource):
         if not peers:
             return
 
-        active_peer = [x for x in peers if x['status'].endswith('PEER')]
+        active_peer = [x for x in peers if x.is_active()]
         if not active_peer:
             return Alert(
                 NTPHealthCheckAlertClass,
-                {'reason': f'No Active NTP peers: {[{x["remote"]: x["status"]} for x in peers]}'}
+                {'reason': f'No Active NTP peers: {[{str(x)} for x in peers]}'}
             )
 
         peer = active_peer[0]
-        if peer['offset'] < 300000:
+        if peer.offset_in_secs < 300:
             return
 
         return Alert(
             NTPHealthCheckAlertClass,
-            {'reason': f'{peer["remote"]} has an offset of {peer["offset"]}, which exceeds permitted value of 5 minutes.'}
+            {'reason': f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'}
         )

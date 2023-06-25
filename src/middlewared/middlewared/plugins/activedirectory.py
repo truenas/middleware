@@ -173,7 +173,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         foreign entries.
         kinit will fail if domain name is lower-case.
         """
-        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias']:
+        for key in ['netbiosname', 'netbiosname_b', 'netbiosalias', 'bindpw']:
             if key in ad:
                 ad.pop(key)
 
@@ -422,7 +422,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'system dataset is on the boot pool'
                     )
 
-        elif new['enable'] and old['enable']:
+        if new['enable'] and old['enable']:
             permitted_keys = [
                 'verbose_logging',
                 'use_default_domain',
@@ -439,7 +439,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'Parameter may not be changed while the Active Directory service is enabled.'
                     )
 
-        if new['enable'] and not old['enable']:
+        elif new['enable'] and not old['enable']:
             """
             Currently run two health checks prior to validating domain.
             1) Attempt to kinit with user-provided credentials. This is used to
@@ -528,6 +528,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     method, f'Failed to validate bind credentials: {msg}'
                 )
 
+        elif not new['enable'] and new['bindpw']:
+            raise ValidationError(
+                'activedirectory.bindpw',
+                'The Active Directory bind password is only used when enabling the active '
+                'directory service for the first time and is not stored persistently. Therefore it '
+                'is only valid when enabling the service.'
+            )
+
         new = await self.ad_compress(new)
         ret = await super().do_update(new)
 
@@ -548,6 +556,9 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'Failed to update domain name in network configuration '
                         'to match active directory value of %s', ret['domainname'], exc_info=True
                     )
+
+            if not await self.middleware.call('kerberos._klist_test'):
+                await self.middleware.call('kerberos.start')
 
             job = (await self.middleware.call('activedirectory.start')).id
 
@@ -607,6 +618,62 @@ class ActiveDirectoryService(TDBWrapConfigService):
             idmap['range_low'], idmap['range_high'] = await self.middleware.call('idmap.get_next_idmap_range')
         idmap['dns_domain_name'] = our_domain.upper()
         await self.middleware.call('idmap.update', idmap_id, idmap)
+
+    @private
+    async def add_privileges(self, domain_name, workgroup):
+        """
+        Grant Domain Admins full control of server
+        """
+        existing_privileges = await self.middleware.call(
+            'privilege.query',
+            [["name", "=", domain_name]]
+        )
+        if existing_privileges:
+            return
+
+        domain_info = await self.middleware.call('idmap.domain_info', workgroup)
+        await self.middleware.call('privilege.create', {
+            'name': domain_name,
+            'ds_groups': [f'{domain_info["sid"]}-512'],
+            'allowlist': [{'method': '*', 'resource': '*'}],
+            'web_shell': True
+        })
+
+    @private
+    async def remove_privileges(self, domain_name):
+        """
+        Remove any auto-granted domain privileges
+        """
+        existing_privileges = await self.middleware.call(
+            'privilege.query',
+            [["name", "=", domain_name]]
+        )
+        if not existing_privileges:
+            return
+
+        await self.middleware.call('privilege.delete', existing_privileges[0]['id'])
+
+    @private
+    async def post_join_setup(self, job, data):
+        ad = data['ad_config']
+        smb = data['smb_config']
+        smb_ha_mode = data['ha_mode']
+
+        await self.middleware.call('activedirectory.register_dns', ad, smb, smb_ha_mode)
+
+        """
+        Manipulating the SPN entries must be done with elevated privileges. Add NFS service
+        principals while we have these on-hand.
+        Since this may potentially take more than a minute to complete, run in background job.
+        """
+        job.set_progress(60, 'Adding NFS Principal entries.')
+        # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
+        spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
+        await spn_job.wait()
+
+        job.set_progress(70, 'Storing computer account keytab.')
+        if not await self.middleware.call('kerberos.keytab.store_samba_keytab'):
+            raise CallError("Failed to store machine account keytab")
 
     @private
     @job(lock="AD_start_stop")
@@ -694,59 +761,56 @@ class ActiveDirectoryService(TDBWrapConfigService):
             job.set_progress(50, 'Joining Active Directory Domain')
             self.logger.debug(f"Test join to {ad['domainname']} failed. Performing domain join.")
             await self._net_ads_join(ad)
-            await self.middleware.call('activedirectory.register_dns', ad, smb, smb_ha_mode)
-            """
-            Manipulating the SPN entries must be done with elevated privileges. Add NFS service
-            principals while we have these on-hand.
-            Since this may potentially take more than a minute to complete, run in background job.
-            """
-            job.set_progress(60, 'Adding NFS Principal entries.')
-            # Skip health check for add_nfs_spn since by this point our AD join should be de-facto healthy.
-            spn_job = await self.middleware.call('activedirectory.add_nfs_spn', ad['netbiosname'], ad['domainname'], False, False)
-            await spn_job.wait()
 
-            job.set_progress(70, 'Storing computer account keytab.')
-            kt_id = await self.middleware.call('kerberos.keytab.store_samba_keytab')
-            if kt_id:
-                self.logger.debug('Successfully generated keytab for computer account. Clearing bind credentials')
-                ad = await self.direct_update({
-                    'bindpw': '',
-                    'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
+            try:
+                await self.post_join_setup(job, {
+                    'ad_config': ad,
+                    'smb_config': smb,
+                    'ha_mode': smb_ha_mode
                 })
+            except Exception:
+                self.logger.error("Tasks subsequent to Active Directory join failed. "
+                                  "Attempting to roll-back join attempt.", exc_info=True)
+                await self._net_ads_leave({'username': ad['bindname']})
+                raise
 
-                job.set_progress(75, 'Performing kinit using new computer account.')
-                """
-                Remove our temporary administrative ticket and replace with machine account.
+            ad = await self.direct_update({
+                'kerberos_principal': f'{ad["netbiosname"].upper()}$@{ad["domainname"]}'
+            })
 
-                Sysvol replication may not have completed (new account only exists on the DC we're
-                talking to) and so during this operation we need to hard-code which KDC we use for
-                the new kinit.
-                """
-                domain_info = await self.domain_info(ad['domainname'])
-                payload = {
-                    'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
-                    'conf': {
-                        'domainname': ad['domainname'],
-                        'kerberos_principal': ad['kerberos_principal'],
-                    }
+            job.set_progress(75, 'Performing kinit using new computer account.')
+
+            """
+            Remove our temporary administrative ticket and replace with machine account.
+
+            Sysvol replication may not have completed (new account only exists on the DC we're
+            talking to) and so during this operation we need to hard-code which KDC we use for
+            the new kinit.
+            """
+            domain_info = await self.domain_info(ad['domainname'])
+            cred = await self.middleware.call('kerberos.get_cred', {
+                'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
+                'conf': {
+                    'domainname': ad['domainname'],
+                    'kerberos_principal': ad['kerberos_principal'],
                 }
-                cred = await self.middleware.call('kerberos.get_cred', payload)
-                await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
-                await self.middleware.call('kerberos.do_kinit', {
-                    'krb5_cred': cred,
-                    'kinit-options': {
-                        'kdc_override': {'domain': ad['domainname'], 'kdc': domain_info['KDC server']}
-                    }
-                })
-                await self.middleware.call('kerberos.wait_for_renewal')
-                await self.middleware.call('etc.generate', 'kerberos')
-
-            ret = neterr.JOINED
+            })
+            await self.middleware.run_in_thread(os.unlink, '/etc/krb5.conf')
+            await self.middleware.call('kerberos.do_kinit', {
+                'krb5_cred': cred,
+                'kinit-options': {
+                    'kdc_override': {'domain': ad['domainname'], 'kdc': domain_info['KDC server']}
+                }
+            })
+            await self.middleware.call('kerberos.wait_for_renewal')
+            await self.middleware.call('etc.generate', 'kerberos')
 
             job.set_progress(80, 'Configuring idmap backend and NTP servers.')
             await self.middleware.call('service.update', 'cifs', {'enable': True})
             await self.set_idmap(ad['allow_trusted_doms'], ad['domainname'])
             await self.middleware.call('activedirectory.set_ntp_servers')
+
+            ret = neterr.JOINED
 
         await self.middleware.call('idmap.synchronize')
         await self.middleware.call('service.reload', 'idmap')
@@ -771,6 +835,14 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         job.set_progress(100, f'Active Directory start completed with status [{ret.name}]')
         await self.middleware.call('service.reload', 'idmap')
+
+        if ret == neterr.JOINED:
+            job.set_progress(100, 'Granting privileges to domain admins.')
+            try:
+                await self.add_privileges(ad['domainname'], dc_info['Pre-Win2k Domain'])
+            except Exception:
+                self.logger.warning('Failed to grant Domain Admins privileges', exc_info=True)
+
         return ret.name
 
     @private
@@ -800,6 +872,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             cl_reload = await self.middleware.call('clusterjob.submit', 'activedirectory.cluster_reload', 'STOP')
             await cl_reload.wait()
 
+        await self.middleware.call('smb.initialize_globals')
         await self.middleware.call('service.start', 'cifs')
         await self.set_state(DSStatus['DISABLED'].name)
         job.set_progress(100, 'Active Directory stop completed.')
@@ -924,6 +997,25 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         return neterr.JOINED
 
+    @private
+    async def _net_ads_leave(self, data):
+        await self.middleware.call('kerberos.check_ticket')
+
+        cmd = [
+            SMBCmd.NET.value,
+            '--use-kerberos', 'required',
+            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
+            '-U', data['username'],
+            'ads', 'leave',
+        ]
+
+        netads = await run(cmd, check=False)
+        if netads.returncode != 0:
+            self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
+            return False
+
+        return True
+
     @accepts(Str('domain', default=''))
     @returns(Dict(
         IPAddr('LDAP server'),
@@ -1022,7 +1114,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if domain is None:
             domain = (await self.config())['domainname']
 
-        lookup = await self.cache_flush_retry([SMBCmd.NET.value, '--json', '-S', domain, 'ads', 'lookup'])
+        lookup = await self.cache_flush_retry([SMBCmd.NET.value, '--json', '-S', domain, '--realm', domain, 'ads', 'lookup'])
         if lookup.returncode != 0:
             raise CallError("Failed to look up Domain Controller information: "
                             f"{lookup.stderr.decode().strip()}")
@@ -1058,21 +1150,17 @@ class ActiveDirectoryService(TDBWrapConfigService):
             }
         }
 
+        try:
+            await self.remove_privileges(ad['domainname'])
+        except Exception:
+            self.logger.warning('Failed to remove Domain Admins privileges', exc_info=True)
+
         job.set_progress(5, 'Obtaining kerberos ticket for privileged user.')
         cred = await self.middleware.call('kerberos.get_cred', payload)
         await self.middleware.call('kerberos.do_kinit', {'krb5_cred': cred})
 
         job.set_progress(10, 'Leaving Active Directory domain.')
-        cmd = [
-            SMBCmd.NET.value,
-            '--use-kerberos', 'required',
-            '--use-krb5-ccache', krb5ccache.SYSTEM.value,
-            '-U', data['username'],
-            'ads', 'leave',
-        ]
-        netads = await run(cmd, check=False)
-        if netads.returncode != 0:
-            self.logger.warning("Failed to leave domain: %s", netads.stderr.decode())
+        left_successfully = await self._net_ads_leave(data)
 
         job.set_progress(15, 'Removing DNS entries')
         await self.middleware.call('activedirectory.unregister_dns', ad)
@@ -1091,7 +1179,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
             except MatchNotFound:
                 pass
 
-        if netads.returncode == 0 and smb_ha_mode != 'CLUSTERED':
+        if left_successfully and smb_ha_mode != 'CLUSTERED':
             try:
                 pdir = await self.middleware.call("smb.getparm", "private directory", "GLOBAL")
                 ts = time.time()
@@ -1104,6 +1192,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
         payload = {
             'enable': False,
             'site': None,
+            'bindname': '',
+            'bindpw': '',
             'kerberos_realm': None,
             'kerberos_principal': '',
             'domainname': '',

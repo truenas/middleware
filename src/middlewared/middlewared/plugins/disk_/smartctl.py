@@ -2,7 +2,8 @@ import asyncio
 import subprocess
 
 from middlewared.common.smart.smartctl import get_smartctl_args, smartctl, SMARTCTX
-from middlewared.service import accepts, Bool, Dict, CallError, List, private, Service, Str
+from middlewared.schema import accepts, Bool, Dict, List, Str
+from middlewared.service import CallError, private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 
 

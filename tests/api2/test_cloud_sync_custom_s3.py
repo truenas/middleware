@@ -30,7 +30,6 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
     )
 ])
 def test_custom_s3(request, credential_attributes, result):
-    depends(request, ["pool_04"], scope="session")
     with dataset("test") as ds:
         with credential({
             "name": "S3",

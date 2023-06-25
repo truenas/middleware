@@ -13,7 +13,7 @@ from .utils import get_virsh_command_args
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 RE_IOMMU_ENABLED = re.compile(r'QEMU.*if IOMMU is enabled.*:\s*PASS.*')
-RE_PCI_CONTROLLER_TYPE = re.compile(r'^[\w:.]+\s+([\w\s]+)\s+\[')
+RE_PCI_CONTROLLER_TYPE = re.compile(r'^[\w:.]+\s+([\w\s-]+)\s+\[')
 RE_PCI_NAME = re.compile(r'^([\w:.]+)\s+')
 
 
@@ -99,7 +99,9 @@ class VMDeviceService(Service):
                 'vendor': 'Not Available',
             },
             'controller_type': controller_type,
-            'critical': (k.lower() in controller_type.lower() for k in SENSITIVE_PCI_DEVICE_TYPES),
+            'critical': any(
+                not controller_type or k.lower() in controller_type.lower() for k in SENSITIVE_PCI_DEVICE_TYPES
+            ),
             'iommu_group': {},
             'available': False,
             'drivers': [],

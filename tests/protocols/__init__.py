@@ -2,6 +2,7 @@ import contextlib
 
 from functions import DELETE, POST
 
+from .ftp_proto import ftp_connect, ftps_connect, ftp_connection, ftps_connection
 from .iscsi_proto import (initiator_name_supported, iscsi_scsi_connect,
                           iscsi_scsi_connection)
 from .iSNSP.client import iSNSPClient
@@ -51,6 +52,7 @@ def nfs_share(path, options=None):
     finally:
         result = DELETE(f"/sharing/nfs/id/{id}/")
         assert result.status_code == 200, result.text
+
 
 @contextlib.contextmanager
 def isns_connection(host, initiator_iqn, **kwargs):

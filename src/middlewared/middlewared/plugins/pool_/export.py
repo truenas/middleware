@@ -15,18 +15,6 @@ class PoolService(Service):
 
     @private
     def cleanup_after_export(self, poolinfo, opts):
-        if poolinfo['encrypt'] > 0:
-            try:
-                # this is CORE GELI encryption which doesn't exist on SCALE
-                # so it means someone upgraded from CORE to SCALE and their
-                # db has an entry with a GELI based encrypted pool in it so
-                # we'll remove the GELI key files associated with the zpool
-                os.remove(poolinfo['encryptkey'])
-            except Exception:
-                # not fatal, and doesn't really matter since SCALE can't
-                # use this zpool anyways
-                pass
-
         try:
             if all((opts['destroy'], opts['cascade'])) and (contents := os.listdir(poolinfo['path'])):
                 if len(contents) == 1 and contents[0] == 'ix-applications':
@@ -169,13 +157,10 @@ class PoolService(Service):
 
             if await self.middleware.call('failover.licensed'):
                 try:
-                    await self.middleware.call('failover.call_remote', 'disk.retaste')
-                except Exception as e:
-                    ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                    if isinstance(e, CallError) and e.errno in ignore:
-                        pass
-                    else:
-                        self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+                    await self.middleware.call('failover.call_remote', 'disk.retaste', [],
+                                               {'raise_connect_error': False})
+                except Exception:
+                    self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 
             job.set_progress(85, 'Syncing disk changes')
             djob = await self.middleware.call('disk.sync_all')

@@ -1,14 +1,10 @@
 import enum
 import errno
-import grp
 import ipaddress
 import ldap as pyldap
-import pwd
 import socket
 import struct
-import copy
 
-from ldap.controls import SimplePagedResultsControl
 from urllib.parse import urlparse
 from middlewared.schema import accepts, returns, Bool, Dict, Int, List, Str, Ref, LDAP_DN
 from middlewared.service import job, private, TDBWrapConfigService, Service, ValidationErrors
@@ -16,7 +12,8 @@ from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
-from concurrent.futures import ThreadPoolExecutor
+from middlewared.plugins.ldap_.ldap_client import LdapClient
+from middlewared.plugins.ldap_.nslcd_utils import MidNslcdClient
 from middlewared.validators import Range
 
 LDAP_SMBCONF_PARAMS = {
@@ -57,11 +54,6 @@ class LDAPClient(Service):
     class Config:
         private = True
 
-    thread_pool = ThreadPoolExecutor(1)
-    pagesize = 1024
-    _handle = None
-    ldap_parameters = None
-
     @accepts(Dict(
         'ldap-configuration',
         List('uri_list', required=True),
@@ -86,17 +78,13 @@ class LDAPClient(Service):
         ),
         register=True,
     ))
-    async def validate_credentials(self, data):
+    def validate_credentials(self, data):
         """
         Verify that credentials are working by closing any existing LDAP bind
         and performing a fresh bind.
         """
         try:
-            await self.middleware.run_in_executor(self.thread_pool, self._open, data, True)
-
-        except CallError:
-            raise
-
+            LdapClient.open(data, True)
         except Exception as e:
             self._convert_exception(e)
 
@@ -134,201 +122,6 @@ class LDAPClient(Service):
         else:
             raise CallError(str(ex))
 
-    @private
-    def _setup_ssl(self, data):
-        if SSL(data['security']['ssl']) == SSL.NOSSL:
-            return
-
-        cert = data['security']['client_certificate']
-        if cert:
-            pyldap.set_option(
-                pyldap.OPT_X_TLS_CERTFILE,
-                f"/etc/certificates/{cert}.crt"
-            )
-            pyldap.set_option(
-                pyldap.OPT_X_TLS_KEYFILE,
-                f"/etc/certificates/{cert}.key"
-            )
-
-        pyldap.set_option(
-            pyldap.OPT_X_TLS_CACERTFILE,
-            '/etc/ssl/certs/ca-certificates.crt'
-        )
-
-        if data['security']['validate_certificates']:
-            pyldap.set_option(
-                pyldap.OPT_X_TLS_REQUIRE_CERT,
-                pyldap.OPT_X_TLS_DEMAND
-            )
-        else:
-            pyldap.set_option(
-                pyldap.OPT_X_TLS_REQUIRE_CERT,
-                pyldap.OPT_X_TLS_ALLOW
-            )
-
-        try:
-            pyldap.set_option(pyldap.OPT_X_TLS_NEWCTX, 0)
-        except Exception:
-            self.logger.warning('Failed to initialize new TLS context.', exc_info=True)
-
-        return
-
-    @private
-    def _open(self, data, force_new=False):
-        """
-        We can only intialize a single host. In this case,
-        we iterate through a list of hosts until we get one that
-        works and then use that to set our LDAP handle.
-
-        SASL GSSAPI bind only succeeds when DNS reverse lookup zone
-        is correctly populated. Fall through to simple bind if this
-        fails.
-        """
-        bound = False
-        if self._handle and self.ldap_parameters == data and not force_new:
-            return
-
-        elif self._handle:
-            try:
-                self._close()
-                self._handle = None
-            except Exception:
-                self.logger.warning("Failed to close stale LDAP connection")
-
-        if not data['uri_list']:
-            raise CallError("No URIs specified")
-
-        saved_error = None
-        for server in data['uri_list']:
-            try:
-                self._handle = pyldap.initialize(server)
-            except Exception:
-                self.logger.debug(f'Failed to initialize ldap connection to [{server}]', exc_info=True)
-                self._handle = None
-                continue
-
-            pyldap.protocol_version = pyldap.VERSION3
-            pyldap.set_option(pyldap.OPT_REFERRALS, 0)
-            pyldap.set_option(pyldap.OPT_NETWORK_TIMEOUT, data['options']['dns_timeout'])
-
-            self._setup_ssl(data)
-            if data['security']['ssl'] == SSL.USESTARTTLS.name:
-                try:
-                    self._handle.start_tls_s()
-
-                except pyldap.LDAPError as e:
-                    self.logger.warning('Encountered error initializing start_tls', exc_info=True)
-                    saved_error = e
-                    self._handle = None
-                    continue
-
-            try:
-                if data['bind_type'] == 'ANONYMOUS':
-                    bound = self._handle.simple_bind_s()
-                    break
-
-                elif data['bind_type'] == 'EXTERNAL':
-                    bound = self._handle.sasl_non_interactive_bind_s('EXTERNAL')
-                    break
-
-                elif data['bind_type'] == 'GSSAPI':
-                    self._handle.set_option(pyldap.OPT_X_SASL_NOCANON, 1)
-                    self._handle.sasl_gssapi_bind_s()
-                    bound = True
-                    break
-
-                else:
-                    bound = self._handle.simple_bind_s(
-                        data['credentials']['binddn'],
-                        data['credentials']['bindpw']
-                    )
-                    break
-
-            except Exception as e:
-                saved_error = e
-                self.logger.warning('%s: bind to host %s failed',
-                                    data['bind_type'], server, exc_info=True)
-                self._handle = None
-                continue
-
-        if not bound:
-            self.handle = None
-            if saved_error:
-                raise saved_error
-            else:
-                raise CallError(f"Failed to bind to URIs: {data['uri_list']}")
-
-        self.ldap_parameters = copy.deepcopy(data)
-        return
-
-    def _close(self):
-        if self._handle:
-            self._handle.unbind()
-            self._handle = None
-            self.ldap_parameters = None
-
-    def _search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', sizelimit=0):
-        self._open(ldap_config)
-        result = []
-        serverctrls = None
-        clientctrls = None
-        paged = SimplePagedResultsControl(
-            criticality=False,
-            size=self.pagesize,
-            cookie=''
-        )
-        paged_ctrls = {SimplePagedResultsControl.controlType: SimplePagedResultsControl}
-        retry = True
-
-        page = 0
-        while True:
-            serverctrls = [paged]
-
-            try:
-                id = self._handle.search_ext(
-                    basedn,
-                    scope,
-                    filterstr=filter,
-                    attrlist=None,
-                    attrsonly=0,
-                    serverctrls=serverctrls,
-                    clientctrls=clientctrls,
-                    timeout=ldap_config['options']['timeout'],
-                    sizelimit=sizelimit
-                )
-
-                (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
-                    id, resp_ctrl_classes=paged_ctrls
-                )
-            except Exception:
-                # our session may have died, try to re-open one time before failing.
-                if not retry:
-                    raise
-
-                self._open(ldap_config, True)
-                retry = False
-                continue
-
-            result.extend(rdata)
-
-            paged.size = 0
-            paged.cookie = cookie = None
-            for sc in serverctrls:
-                if sc.controlType == SimplePagedResultsControl.controlType:
-                    cookie = sc.cookie
-                    if cookie:
-                        paged.cookie = cookie
-                        paged.size = self.pagesize
-
-                        break
-
-            if not cookie:
-                break
-
-            page += 1
-
-        return result
-
     def parse_results(self, results):
         res = []
         for r in results:
@@ -354,23 +147,19 @@ class LDAPClient(Service):
         'get-samba-domain',
         Ref('ldap-configuration'),
     ))
-    async def get_samba_domains(self, data):
+    def get_samba_domains(self, data):
         """
         This returns a list of configured samba domains on the LDAP
         server. This is used to determine whether the LDAP server has
         The Samba LDAP schema. In this case, the SMB service can be
         configured to use Samba's ldapsam passdb backend.
         """
-        filter = '(objectclass=sambaDomain)'
-        results = []
         try:
-            results = await self.middleware.run_in_executor(
-                self.thread_pool,
-                self._search,
+            results = LdapClient.search(
                 data['ldap-configuration'],
                 data['ldap-configuration']['basedn'],
                 pyldap.SCOPE_SUBTREE,
-                filter
+                '(objectclass=sambaDomain)'
             )
         except Exception as e:
             self._convert_exception(e)
@@ -381,7 +170,7 @@ class LDAPClient(Service):
         'get-root-dse',
         Ref('ldap-configuration'),
     ))
-    async def get_root_dse(self, data):
+    def get_root_dse(self, data):
         """
         root DSE query is defined in RFC4512 as a search operation
         with an empty baseObject, scope of baseObject, and a filter of
@@ -389,39 +178,30 @@ class LDAPClient(Service):
         In theory this should be accessible with an anonymous bind. In practice,
         it's better to use proper auth because configurations can vary wildly.
         """
-        filter = '(objectclass=*)'
-        results = await self.middleware.run_in_executor(
-            self.thread_pool,
-            self._search,
-            data['ldap-configuration'],
-            '',
-            pyldap.SCOPE_BASE,
-            filter
+        results = LdapClient.search(
+            data['ldap-configuration'], '', pyldap.SCOPE_BASE, '(objectclass=*)'
         )
         return self.parse_results(results)
 
     @accepts(Dict(
         'get-dn',
-        Str('dn', default='', null=True),
+        LDAP_DN('dn', default='', null=True),
         Str('scope', default='SUBTREE', enum=['BASE', 'SUBTREE']),
         Ref('ldap-configuration'),
     ))
-    async def get_dn(self, data):
-        dn = data['dn'] or data['ldap-configuration']['basedn']
-        filter = '(objectclass=*)'
-        results = await self.middleware.run_in_executor(
-            self.thread_pool,
-            self._search,
+    def get_dn(self, data):
+        results = LdapClient.search(
             data['ldap-configuration'],
-            dn,
+            data['dn'] or data['ldap-configuration']['basedn'],
             pyldap.SCOPE_SUBTREE if data['scope'] == 'SUBTREE' else pyldap.SCOPE_BASE,
-            filter
+            '(objectclass=*)'
         )
+
         return self.parse_results(results)
 
     @accepts()
-    async def close_handle(self):
-        await self.middleware.run_in_executor(self.thread_pool, self._close)
+    def close_handle(self):
+        LdapClient.close()
 
 
 class LDAPModel(sa.Model):
@@ -785,6 +565,10 @@ class LDAPService(TDBWrapConfigService):
             verrors.add('ldap_update.has_samba_schema',
                         'Remote LDAP server does not have Samba schema extensions.')
 
+        if data['has_samba_schema'] and SSL(data['ssl']) == SSL.NOSSL:
+            verrors.add('ldap_update.has_samba_schema',
+                        'Encryption is required in order to use legacy Samba schema.')
+
     @private
     async def autodetect_ldap_settings(self, data):
         if data['auxiliary_parameters']:
@@ -815,7 +599,6 @@ class LDAPService(TDBWrapConfigService):
 
             default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
             aux_params = [
-                'map group member uniqueMember',
                 f'base passwd cn=users,cn=accounts,{default_naming_context}',
                 f'base group cn=groups,cn=accounts,{default_naming_context}',
             ]
@@ -1091,6 +874,9 @@ class LDAPService(TDBWrapConfigService):
             await self.middleware.call('etc.generate', 'ldap')
             await self.middleware.call('service.start', 'nslcd')
 
+        if not MidNslcdClient().is_alive():
+            raise CallError('nss-pam-ldapd daemon control socket is not available')
+
         await self.set_state(DSStatus['HEALTHY'])
         return True
 
@@ -1162,13 +948,13 @@ class LDAPService(TDBWrapConfigService):
         if ldap['has_samba_schema']:
             await self.middleware.call(
                 'alert.oneshot_create',
-                'DeprecatedService',
-                {'service': LDAP_DEPRECATED}
+                'DeprecatedServiceConfiguration',
+                {'config': LDAP_DEPRECATED}
             )
             job.set_progress(70, 'Storing LDAP password for SMB configuration')
             await self.middleware.call('smb.store_ldap_admin_password')
         else:
-            await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', LDAP_DEPRECATED)
+            await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
 
         await self.set_state(DSStatus['HEALTHY'])
         job.set_progress(80, 'Restarting dependent services')
@@ -1194,7 +980,7 @@ class LDAPService(TDBWrapConfigService):
         job.set_progress(0, 'Preparing to stop LDAP directory service.')
         await self.direct_update({"enable": False})
 
-        await self.middleware.call('alert.oneshot_delete', 'DeprecatedService', LDAP_DEPRECATED)
+        await self.middleware.call('alert.oneshot_delete', 'DeprecatedServiceConfiguration', LDAP_DEPRECATED)
         await self.set_state(DSStatus['LEAVING'])
         job.set_progress(10, 'Rewriting configuration files.')
         await self.middleware.call('etc.generate', 'rc')
@@ -1207,6 +993,7 @@ class LDAPService(TDBWrapConfigService):
         job.set_progress(30, 'Reconfiguring SMB service.')
         await self.middleware.call('smb.synchronize_passdb')
         await self.middleware.call('smb.synchronize_group_mappings')
+        await self.middleware.call('smb.initialize_globals')
         await self._service_change('cifs', 'restart')
 
         job.set_progress(50, 'Clearing directory service cache.')
@@ -1236,39 +1023,27 @@ class LDAPService(TDBWrapConfigService):
     @job(lock='fill_ldap_cache')
     def fill_cache(self, job, force=False):
         user_next_index = group_next_index = 100000000
-        cache_data = {'users': {}, 'groups': {}}
-
         if self.middleware.call_sync('cache.has_key', 'LDAP_cache') and not force:
             raise CallError('LDAP cache already exists. Refusing to generate cache.')
 
-        self.middleware.call_sync('cache.pop', 'LDAP_cache')
-
         if (self.middleware.call_sync('ldap.config'))['disable_freenas_cache']:
-            self.middleware.call_sync('cache.put', 'LDAP_cache', cache_data)
             self.logger.debug('LDAP cache is disabled. Bypassing cache fill.')
             return
 
-        pwd_list = pwd.getpwall()
-        grp_list = grp.getgrall()
-
-        local_uid_list = list(u['uid'] for u in self.middleware.call_sync('user.query'))
-        local_gid_list = list(g['gid'] for g in self.middleware.call_sync('group.query'))
+        pwd_list = MidNslcdClient().getpwall()
+        grp_list = MidNslcdClient().getgrall()
 
         for u in pwd_list:
-            is_local_user = True if u.pw_uid in local_uid_list else False
-            if is_local_user:
-                continue
-
             entry = {
                 'id': user_next_index,
-                'uid': u.pw_uid,
-                'username': u.pw_name,
+                'uid': u['pw_uid'],
+                'username': u['pw_name'],
                 'unixhash': None,
                 'smbhash': None,
                 'group': {},
-                'home': '',
+                'home': u['pw_dir'],
                 'shell': '',
-                'full_name': u.pw_gecos,
+                'full_name': u['pw_gecos'],
                 'builtin': False,
                 'email': '',
                 'password_disabled': False,
@@ -1287,15 +1062,11 @@ class LDAPService(TDBWrapConfigService):
             user_next_index += 1
 
         for g in grp_list:
-            is_local_user = True if g.gr_gid in local_gid_list else False
-            if is_local_user:
-                continue
-
             entry = {
                 'id': group_next_index,
-                'gid': g.gr_gid,
-                'name': g.gr_name,
-                'group': g.gr_name,
+                'gid': g['gr_gid'],
+                'name': g['gr_name'],
+                'group': g['gr_name'],
                 'builtin': False,
                 'sudo_commands': [],
                 'sudo_commands_nopasswd': [],

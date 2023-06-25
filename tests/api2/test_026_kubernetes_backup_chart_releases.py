@@ -29,7 +29,7 @@ if not ha:
         payload = {
             "item_name": "plex",
             "item_version_details": {
-                "catalog": "OFFICIAL",
+                "catalog": "TRUENAS",
                 "train": 'charts'
             }
         }
@@ -43,7 +43,7 @@ if not ha:
         depends(request, ['setup_kubernetes', 'plex_version'], scope='session')
         global plex_id
         payload = {
-            'catalog': 'OFFICIAL',
+            'catalog': 'TRUENAS',
             'item': 'plex',
             'release_name': 'myplex',
             'train': 'charts',
@@ -114,7 +114,7 @@ if not ha:
         depends(request, ['setup_kubernetes'], scope='session')
         global ipfs_id
         payload = {
-            'catalog': 'OFFICIAL',
+            'catalog': 'TRUENAS',
             'item': 'ipfs',
             'release_name': 'ipfs',
             'train': 'community'

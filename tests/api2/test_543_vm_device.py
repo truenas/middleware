@@ -31,7 +31,6 @@ def data():
 
 
 def test_01_vm_disk_choices(request):
-    depends(request, ["pool_04"], scope="session")
     with dataset('test zvol', {'type': 'VOLUME', 'volsize': 1024000}) as ds:
         results = GET('/vm/device/disk_choices')
         assert isinstance(results.json(), dict), results.json()
@@ -99,7 +98,6 @@ if support_virtualization:
 
     @pytest.mark.dependency(name='DISK_CDROM_DATASET')
     def test_10_create_dataset_for_disk_and_cdrom(request):
-        depends(request, ["pool_04"], scope="session")
         results = POST("/pool/dataset/", payload={"name": DISK_DATASET})
         assert results.status_code == 200, results.text
 

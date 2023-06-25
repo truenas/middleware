@@ -258,7 +258,7 @@ def test_27_full_groupmap_check(request):
     """
     Full check of groupmap contents
     """
-    depends(request, ["SMB_GROUP_CREATED", "ssh_password"], scope="session")
+    depends(request, ["SMB_GROUP_CREATED"], scope="session")
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])

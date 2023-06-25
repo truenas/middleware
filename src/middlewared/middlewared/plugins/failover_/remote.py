@@ -8,9 +8,9 @@ import time
 from collections import defaultdict
 from functools import partial
 
-from middlewared.client import Client, ClientException, CallTimeout, CALL_TIMEOUT
+from middlewared.client import Client, ClientException, CALL_TIMEOUT
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
-from middlewared.service import CallError, Service, job, private
+from middlewared.service import CallError, Service, private
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.validators import Range
 
@@ -177,7 +177,7 @@ class RemoteClient(object):
                 rjob = rjob[0]
                 if rjob['state'] == 'FAILED':
                     raise CallError(
-                        f'Failed to send {local_path} to Standby Controller: {job["error"]}.'
+                        f'Failed to send {local_path} to Standby Controller: {rjob["error"]}.'
                     )
                 elif rjob['state'] == 'ABORTED':
                     raise CallError(
@@ -216,6 +216,17 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid for call_remote', errno.EHOSTUNREACH)
         return remote
 
+    @private
+    async def local_ip(self):
+        node = await self.middleware.call('failover.node')
+        if node == 'A':
+            local = '169.254.10.1'
+        elif node == 'B':
+            local = '169.254.10.2'
+        else:
+            raise CallError(f'Node {node} invalid', errno.EHOSTUNREACH)
+        return local
+
     @accepts(
         Str('method'),
         List('args'),
@@ -226,6 +237,7 @@ class FailoverService(Service):
             Bool('job_return', default=None, null=True),
             Any('callback', default=None, null=True),
             Float('connect_timeout', default=2.0, validators=[Range(min=2.0, max=1800.0)]),
+            Bool('raise_connect_error', default=True),
         ),
     )
     @returns(Any(null=True))
@@ -248,14 +260,23 @@ class FailoverService(Service):
                 NOTE: Only applies if `method` is a job
             `connect_timeout`: Maximum amount of time in seconds to wait
                 for remote connection to become available.
+            `raise_connect_error`: If false, will not raise an exception if a connection error to the other node
+                happens, or connection/call timeout happens, or method does not exist on the remote node.
         """
-        options = options or {}
         if options.pop('job_return'):
             options['job'] = 'RETURN'
+        raise_connect_error = options.pop('raise_connect_error')
         try:
             return self.CLIENT.call(method, *args, **options)
-        except CallTimeout:
-            raise CallError('Call timeout', errno.ETIMEDOUT)
+        except ClientException as e:
+            ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+            if e.errno in ignore:
+                if raise_connect_error:
+                    raise CallError(str(e), errno.EFAULT)
+                else:
+                    self.logger.trace('Failed to call %r on remote node', method, exc_info=True)
+            else:
+                raise CallError(str(e), errno.EFAULT)
 
     @private
     def get_remote_os_version(self):

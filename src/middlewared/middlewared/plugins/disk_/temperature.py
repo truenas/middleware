@@ -11,8 +11,8 @@ import pyudev
 import async_timeout
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
-from middlewared.schema import Bool, Dict, Int, returns
-from middlewared.service import accepts, List, private, Ref, Service, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.itertools import grouper
 
@@ -174,16 +174,32 @@ class DiskService(Service):
                                 # of lines to the file
                                 pass
 
-                            if (ft := line.split('\t')) and (temp := list(filter(lambda x: 'temperature' in x, ft))):
-                                try:
-                                    temp = temp[-1].split(';')[1]
-                                except IndexError:
-                                    continue
-                                else:
-                                    if temp.isdigit():
-                                        rv[disks[serial]] = int(temp)
+                            if temp := self.parse_sata_or_sas_disk_temp(i.as_posix(), line):
+                                rv[disks[serial]] = temp
 
         return rv
+
+    @private
+    def parse_sata_or_sas_disk_temp(self, filename, line):
+        if filename.endswith('.ata.csv'):
+            if (ft := line.split('\t')) and (temp := list(filter(lambda x: x.startswith(('190;', '194;')), ft))):
+                try:
+                    temp = temp[-1].split(';')[2]
+                except IndexError:
+                    return None
+                else:
+                    if temp.isdigit():
+                        return int(temp)
+
+        if filename.endswith('.scsi.csv'):
+            if (ft := line.split('\t')) and (temp := list(filter(lambda x: 'temperature' in x, ft))):
+                try:
+                    temp = temp[-1].split(';')[1]
+                except IndexError:
+                    return None
+                else:
+                    if temp.isdigit():
+                        return int(temp)
 
     @private
     def read_nvme_temps(self, disks):

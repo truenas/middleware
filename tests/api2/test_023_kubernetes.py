@@ -22,7 +22,6 @@ if not ha:
 
     @pytest.mark.dependency(name='setup_kubernetes')
     def test_02_setup_kubernetes(request):
-        depends(request, ["pool_04"], scope="session")
         global payload
         gateway = GET("/network/general/summary/").json()['default_routes'][0]
         payload = {

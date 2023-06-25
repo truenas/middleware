@@ -21,6 +21,8 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
+from middlewared.plugins.update_.install import STARTING_INSTALLER
+from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -159,11 +161,12 @@ class FailoverService(ConfigService):
     async def hardware(self):
         """
         Returns the hardware type for an HA system.
-          ECHOSTREAM
-          ECHOWARP
-          PUMA
-          BHYVE
-          MANUAL
+          ECHOSTREAM (z-series)
+          ECHOWARP (m-series)
+          LAJOLLA2 (f-series)
+          PUMA (x-series)
+          BHYVE (HA VMs for CI)
+          MANUAL (everything else)
         """
         return (await self.middleware.call('failover.ha_mode'))[0]
 
@@ -424,13 +427,10 @@ class FailoverService(ConfigService):
         result = {'missing_local': list(), 'missing_remote': list()}
         if (ld := await self.get_disks_local()) is not None:
             try:
-                rd = await self.middleware.call('failover.call_remote', 'failover.get_disks_local')
-            except Exception as e:
-                ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                if isinstance(e, CallError) and e.errno in ignore:
-                    return result
-                else:
-                    self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
+                rd = await self.middleware.call('failover.call_remote', 'failover.get_disks_local', [],
+                                                {'raise_connect_error': False})
+            except Exception:
+                self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
             else:
                 result['missing_local'] = sorted(set(rd) - set(ld))
                 result['missing_remote'] = sorted(set(ld) - set(rd))
@@ -626,6 +626,8 @@ class FailoverService(ConfigService):
     @accepts(Dict(
         'failover_upgrade',
         Str('train', empty=False),
+        Bool('resume', default=False),
+        Bool('resume_manual', default=False),
     ))
     @returns(Bool())
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
@@ -640,17 +642,24 @@ class FailoverService(ConfigService):
 
         Once both upgrades are applied, the Standby Controller will reboot. This job will wait for
         that job to complete before finalizing.
+
+        `resume` should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN`
+        meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, you also
+        have to set `resume_manual` to `true` if a previous call to this method was performed using update file upload.
         """
 
         if self.middleware.call_sync('failover.status') != 'MASTER':
             raise CallError('Upgrade can only run on Active Controller.')
 
-        try:
-            job.check_pipe('input')
-        except ValueError:
-            updatefile = False
+        if not options['resume']:
+            try:
+                job.check_pipe('input')
+            except ValueError:
+                updatefile = False
+            else:
+                updatefile = True
         else:
-            updatefile = True
+            updatefile = options['resume_manual']
 
         train = options.get('train')
         if train:
@@ -658,12 +667,12 @@ class FailoverService(ConfigService):
 
         local_path = self.middleware.call_sync('update.get_update_location')
 
-        if updatefile:
+        updatefile_name = 'updatefile.sqsh'
+        updatefile_localpath = os.path.join(local_path, updatefile_name)
+        if not options['resume'] and updatefile:
             # means manual update file was provided so write it
             # to local storage
-            updatefile_name = 'updatefile.tar'
             job.set_progress(None, 'Uploading update file')
-            updatefile_localpath = os.path.join(local_path, updatefile_name)
             os.makedirs(local_path, exist_ok=True)
             with open(updatefile_localpath, 'wb') as f:
                 shutil.copyfileobj(job.pipes.input.r, f, 1048576)
@@ -672,7 +681,7 @@ class FailoverService(ConfigService):
             if not self.middleware.call_sync('failover.call_remote', 'system.ready'):
                 raise CallError('Standby Controller is not ready.')
 
-            if not updatefile:
+            if not options['resume'] and not updatefile:
                 # means no update file was provided so go out to
                 # the interwebz and download it
                 def download_callback(j):
@@ -687,49 +696,74 @@ class FailoverService(ConfigService):
 
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
-            self.middleware.call_sync('failover.call_remote', 'update.destroy_upload_location')
-            remote_path = self.middleware.call_sync(
-                'failover.call_remote', 'update.create_upload_location'
-            ) or '/var/tmp/firmware'
+            remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_update_location')
 
-            if updatefile:
-                # means update file was provided to us so send it to the standby
+            if not options['resume']:
+                # Replicate uploaded or downloaded update it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-                for f in os.listdir(local_path):
-                    self.middleware.call_sync(
-                        'failover.send_file',
-                        token,
-                        os.path.join(local_path, f),
-                        os.path.join(remote_path, f)
-                    )
+                if updatefile:
+                    f = updatefile_name
+                else:
+                    f = DOWNLOAD_UPDATE_FILE
+                self.middleware.call_sync(
+                    'failover.send_file',
+                    token,
+                    os.path.join(local_path, f),
+                    os.path.join(remote_path, f)
+                )
 
             local_version = self.middleware.call_sync('system.version')
             remote_version = self.middleware.call_sync('failover.call_remote', 'system.version')
 
-            update_remote_descr = update_local_descr = 'Starting upgrade'
+            local_started_installer = False
+            local_progress = remote_progress = 0
+            local_descr = remote_descr = 'Starting upgrade'
 
             def callback(j, controller):
-                nonlocal update_local_descr, update_remote_descr
-                if j['state'] != 'RUNNING':
+                nonlocal local_started_installer, local_progress, remote_progress, local_descr, remote_descr
+                if controller == 'LOCAL' and j['progress']['description'] == STARTING_INSTALLER:
+                    local_started_installer = True
+                if j['state'] not in ['RUNNING', 'SUCCESS']:
                     return
                 if controller == 'LOCAL':
-                    update_local_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
+                    local_progress = j["progress"]["percent"]
+                    local_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 else:
-                    update_remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
+                    remote_progress = j["progress"]["percent"]
+                    remote_descr = f'{int(j["progress"]["percent"])}%: {j["progress"]["description"]}'
                 job.set_progress(
-                    None,
-                    f'Active Controller: {update_local_descr}\n' + f'Standby Controller: {update_remote_descr}'
+                    min(local_progress, remote_progress),
+                    f'Active Controller: {local_descr}\n' + f'Standby Controller: {remote_descr}'
                 )
 
             if updatefile:
                 update_method = 'update.manual'
                 update_remote_args = [os.path.join(remote_path, updatefile_name)]
                 update_local_args = [updatefile_localpath]
+                if options['resume']:
+                    update_remote_args.append({'resume': True})
+                    update_local_args.append({'resume': True})
             else:
                 update_method = 'update.update'
                 update_remote_args = []
                 update_local_args = []
+                if options['resume']:
+                    update_remote_args.append({'resume': True})
+                    update_local_args.append({'resume': True})
+
+            # upgrade the local (active) controller
+            ljob = self.middleware.call_sync(
+                update_method, *update_local_args,
+                job_on_progress_cb=partial(callback, controller='LOCAL')
+            )
+            # Wait for local installer to pass pre-checks and start the install process itself so that we do not start
+            # remote upgrade if a pre-check fails.
+            while not local_started_installer:
+                try:
+                    ljob.wait_sync(raise_error=True, timeout=1)
+                except TimeoutError:
+                    pass
 
             if local_version == remote_version:
                 # start the upgrade on the remote (standby) controller
@@ -742,11 +776,6 @@ class FailoverService(ConfigService):
             else:
                 rjob = None
 
-            # upgrade the local (active) controller
-            ljob = self.middleware.call_sync(
-                update_method, *update_local_args,
-                job_on_progress_cb=partial(callback, controller='LOCAL')
-            )
             ljob.wait_sync(raise_error=True)
 
             remote_boot_id = self.middleware.call_sync('failover.call_remote', 'system.boot_id')
@@ -1074,6 +1103,10 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         ha_configured = False
 
     if ha_configured:
+        # Perform basic initialization of DLM, in case it is needed by iSCSI ALUA
+        middleware.logger.warning('[HA] Initialize DLM')
+        await middleware.call('dlm.create')
+
         # If HA is already configured and failover has been disabled,
         # and we have gotten to this point, then this means a few things could be happening.
         #    1. a new interface is being added
@@ -1138,7 +1171,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         middleware.logger.debug('[HA] Starting SSH on standby node')
         await middleware.call('failover.call_remote', 'service.start', ['ssh'])
 
-    middleware.logger.debug('[HA] Resfreshing failover status')
+    middleware.logger.debug('[HA] Refreshing failover status')
     await middleware.call('failover.status_refresh')
 
     middleware.logger.info('[HA] Setup complete')
@@ -1149,15 +1182,6 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 async def hook_pool_export(middleware, pool=None, *args, **kwargs):
     await middleware.call('enclosure.sync_zpool', pool)
     await middleware.call('failover.remove_encryption_keys', {'pools': [pool]})
-
-
-async def hook_pool_post_import(middleware, pool):
-    if pool and pool['encrypt'] == 2 and pool['passphrase']:
-        await middleware.call(
-            'failover.update_encryption_keys', {
-                'pools': [{'name': pool['name'], 'passphrase': pool['passphrase']}]
-            }
-        )
 
 
 async def hook_pool_dataset_unlock(middleware, datasets):
@@ -1234,11 +1258,9 @@ async def service_remote(middleware, service, verb, options):
     try:
         await middleware.call('failover.call_remote', 'core.bulk', [
             f'service.{verb}', [[service, options]]
-        ])
-    except Exception as e:
-        ignore = (errno.ECONNRESET, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-        if isinstance(e, CallError) and e.errno not in ignore:
-            middleware.logger.warning(f'Failed to run {verb}({service})', exc_info=True)
+        ], {'raise_connect_error': False})
+    except Exception:
+        middleware.logger.warning('Failed to run %s(%s)', verb, service, exc_info=True)
 
 
 async def ready_system_sync_keys(middleware):
@@ -1274,7 +1296,6 @@ async def setup(middleware):
     middleware.register_hook('pool.post_create_or_update', hook_setup_ha, sync=True)
     middleware.register_hook('pool.post_export', hook_pool_export, sync=True)
     middleware.register_hook('pool.post_import', hook_setup_ha, sync=True)
-    middleware.register_hook('pool.post_import', hook_pool_post_import, sync=True)
     middleware.register_hook('dataset.post_create', hook_pool_dataset_post_create, sync=True)
     middleware.register_hook('dataset.post_delete', hook_pool_dataset_post_delete_lock, sync=True)
     middleware.register_hook('dataset.post_lock', hook_pool_dataset_post_delete_lock, sync=True)

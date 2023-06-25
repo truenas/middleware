@@ -59,16 +59,8 @@ class RouteService(Service):
             if interfaces:
                 interfaces = [interface['int_interface'] for interface in interfaces if interface['int_dhcp']]
             else:
-                interfaces = []
-                internal_interfaces = await self.middleware.call('interface.internal_interfaces')
-                internal_interfaces.extend(await self.middleware.call('failover.internal_interfaces'))
-                internal_interfaces = tuple(internal_interfaces)
-                for interface in netif.list_interfaces().keys():
-                    if not interface.startswith(internal_interfaces):
-                        # only add interfaces that are not marked
-                        # as internal interfaces since those are
-                        # managed differently
-                        interfaces.append(interface)
+                ignore = tuple(await self.middleware.call('interface.internal_interfaces'))
+                interfaces = list(filter(lambda x: not x.startswith(ignore), netif.list_interfaces().keys()))
 
             for interface in interfaces:
                 dhclient_running, dhclient_pid = await self.middleware.call('interface.dhclient_status', interface)

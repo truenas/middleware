@@ -181,10 +181,9 @@ class UserService(CRUDService):
 
         return {
             'memberships': memberships,
-            'global_2fa_configured': (await self.middleware.call('auth.twofactor.config'))['enabled'],
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
-                    'datastore.query', 'account.twofactor_user_auth'
+                    'datastore.query', 'account.twofactor_user_auth', [['user_id', '!=', None]]
                 )
             }),
         }
@@ -211,7 +210,7 @@ class UserService(CRUDService):
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
 
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
-        user['twofactor_auth_configured'] = ctx['global_2fa_configured'] and bool(ctx['user_2fa_mapping'][user['id']])
+        user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
 
         return user
 
@@ -278,7 +277,17 @@ class UserService(CRUDService):
                 }})
 
         if dssearch:
-            return await self.middleware.call('dscache.query', 'USERS', filters, options)
+            ds_state = await self.middleware.call('directoryservices.get_state')
+            if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
+                dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
+                # For AD users, we will not have 2FA attribute normalized so let's do that
+                ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
+                for index, user in enumerate(filter(
+                    lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
+                ):
+                    dssearch_results[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+
+                return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -302,8 +311,25 @@ class UserService(CRUDService):
         )
 
     @private
+    def validate_homedir_mountinfo(self, verrors, schema, dev):
+        mntinfo = self.middleware.call_sync(
+            'filesystem.mount_info',
+            [['device_id.dev_t', '=', dev]],
+            {'get': True}
+        )
+
+        if 'RO' in mntinfo['mount_opts']:
+            verrors.add(f'{schema}.home', 'Path has the ZFS readonly property set.')
+            return False
+
+        if mntinfo['fs_type'] != 'zfs':
+            verrors.add(f'{schema}.home', 'Path is not on a ZFS filesystem')
+            return False
+
+        return True
+
+    @private
     def validate_homedir_path(self, verrors, schema, data, users):
-        needs_additional_validation = True
         p = Path(data['home'])
 
         if not p.is_absolute():
@@ -336,7 +362,21 @@ class UserService(CRUDService):
                     f'{data["home"]}: path specified to use as home directory does not exist.'
                 )
 
-            return False
+            if not p.parent.exists():
+                verrors.add(
+                    f'{schema}.home',
+                    f'{p.parent}: parent path of specified home directory does not exist.'
+                )
+
+            if not verrors:
+                self.validate_homedir_mountinfo(verrors, schema, p.parent.stat().st_dev)
+
+        elif self.validate_homedir_mountinfo(verrors, schema, p.stat().st_dev):
+            if self.middleware.call_sync('filesystem.is_immutable', data['home']):
+                verrors.add(
+                    f'{schema}.home',
+                    f'{data["home"]}: home directory path is immutable.'
+                )
 
         in_use = filter_list(users, [('home', '=', data['home'])])
         if in_use:
@@ -345,7 +385,6 @@ class UserService(CRUDService):
                 f'{data["home"]}: homedir already used by {in_use[0]["username"]}.',
                 errno.EEXIST
             )
-            needs_additional_validation = False
 
         if not data['home'].startswith('/mnt/'):
             verrors.add(
@@ -353,8 +392,12 @@ class UserService(CRUDService):
                 '"Home Directory" must begin with /mnt/ or set to '
                 f'{DEFAULT_HOME_PATH}.'
             )
-            needs_additional_validation = False
-        elif not any(
+
+        if verrors:
+            # if we're already going to error out, skip more expensive tests
+            return False
+
+        if not any(
             data['home'] == i['path'] or data['home'].startswith(i['path'] + '/')
             for i in self.middleware.call_sync('pool.query')
         ):
@@ -363,21 +406,18 @@ class UserService(CRUDService):
                 f'The path for the home directory "({data["home"]})" '
                 'must include a volume or dataset.'
             )
-            needs_additional_validation = False
         elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', data['home']):
             verrors.add(
                 f'{schema}.home',
                 'Path component for "Home Directory" is currently encrypted and locked'
             )
-            needs_additional_validation = False
         elif len(p.resolve().parents) == 2 and not data.get('home_create'):
             verrors.add(
                 f'{schema}.home',
                 f'The specified path is a ZFS pool mountpoint "({data["home"]})".'
             )
-            needs_additional_validation = False
 
-        return needs_additional_validation
+        return p.exists() and not verrors
 
     @private
     def setup_homedir(self, path, username, mode, uid, gid, create=False):
@@ -583,11 +623,12 @@ class UserService(CRUDService):
                     dest_file = os.path.join(data['home'], f)
                 if not os.path.exists(dest_file):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
-                    await self.middleware.call('filesystem.chown', {
+                    chown_job = await self.middleware.call('filesystem.chown', {
                         'path': dest_file,
                         'uid': data['uid'],
                         'gid': group['gid'],
                     })
+                    await chown_job.wait()
 
             data['sshpubkey'] = sshpubkey
             try:
@@ -603,7 +644,6 @@ class UserService(CRUDService):
         Patch(
             'user_create',
             'user_update',
-            ('add', Bool('renew_twofactor_secret', default=False)),
             ('attr', {'update': True}),
             ('rm', {'name': 'group_create'}),
         ),
@@ -622,6 +662,12 @@ class UserService(CRUDService):
             same_user_logged_in = False
 
         verrors = ValidationErrors()
+
+        if data.get('password_disabled'):
+            try:
+                await self.middleware.call('privilege.before_user_password_disable', user)
+            except CallError as e:
+                verrors.add('user_update.password_disabled', e.errmsg)
 
         if 'group' in data:
             group = await self.middleware.call('datastore.query', 'account.bsdgroups', [
@@ -660,6 +706,7 @@ class UserService(CRUDService):
             old_mode = None
 
         home = data.get('home') or user['home']
+        had_home = user['home'] != DEFAULT_HOME_PATH
         has_home = home != DEFAULT_HOME_PATH
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
@@ -708,22 +755,21 @@ class UserService(CRUDService):
             must_change_pdb_entry = True
 
         # Copy the home directory if it changed
+        home_copy = False
+        home_old = None
         if (
             has_home and
             'home' in data and
             data['home'] != user['home'] and
             not data['home'].startswith(f'{user["home"]}/')
         ):
-            home_copy = True
-            home_old = user['home']
+            if had_home:
+                home_copy = True
+                home_old = user['home']
             if data.get('home_create', False):
                 data['home'] = os.path.join(data['home'], data.get('username') or user['username'])
 
-        else:
-            home_copy = False
-
         # After this point user dict has values from data
-        renew_2fa_secret = data.pop('renew_twofactor_secret', False)
         user.update(data)
 
         mode_to_set = user.get('home_mode')
@@ -731,23 +777,8 @@ class UserService(CRUDService):
             mode_to_set = '700' if old_mode is None else old_mode
 
         # squelch any potential problems when this occurs
-        await self.middleware.call('user.recreate_homedir_if_not_exists', has_home, user, group, mode_to_set)
-
-        if home_copy and not os.path.isdir(user['home']):
-            try:
-                os.makedirs(user['home'])
-                perm_job = await self.middleware.call('filesystem.setperm', {
-                    'path': user['home'],
-                    'uid': user['uid'],
-                    'gid': group['bsdgrp_gid'],
-                    'mode': mode_to_set,
-                    'options': {'stripacl': True},
-                })
-                await perm_job.wait()
-            except OSError:
-                self.logger.warn('Failed to chown homedir', exc_info=True)
-            if not os.path.isdir(user['home']):
-                raise CallError(f'{user["home"]} is not a directory')
+        if has_home:
+            await self.middleware.call('user.recreate_homedir_if_not_exists', user, group, mode_to_set)
 
         home_mode = user.pop('home_mode', None)
         if user['immutable']:
@@ -797,15 +828,6 @@ class UserService(CRUDService):
             groups = user.pop('groups')
             await self.__set_groups(pk, groups)
 
-        if renew_2fa_secret:
-            twofactor_auth_id = (await self.middleware.call('auth.twofactor.get_user_config', pk))['id']
-            await self.middleware.call(
-                'datastore.update',
-                'account.twofactor_user_auth',
-                twofactor_auth_id,
-                {'secret': await self.middleware.call('auth.twofactor.generate_base32_secret')}
-            )
-
         user = await self.user_compress(user)
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
@@ -818,10 +840,13 @@ class UserService(CRUDService):
         return pk
 
     @private
-    def recreate_homedir_if_not_exists(self, has_home, user, group, mode):
+    def recreate_homedir_if_not_exists(self, user, group, mode):
         # sigh, nothing is stopping someone from removing the homedir
         # from the CLI so recreate the original directory in this case
-        if has_home and not os.path.exists(user['home']):
+        if not os.path.isdir(user['home']):
+            if os.path.exists(user['home']):
+                raise CallError(f'{user["home"]!r} already exists and is not a directory')
+
             self.logger.debug('Homedir %r for %r does not exist so recreating it', user['home'], user['username'])
             try:
                 os.makedirs(user['home'])
@@ -836,7 +861,13 @@ class UserService(CRUDService):
                     'options': {'stripacl': True},
                 }).wait_sync(raise_error=True)
 
-    @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
+    @accepts(
+        Int('id'),
+        Dict(
+            'options',
+            Bool('delete_group', default=True),
+        ),
+    )
     @returns(Int('primary_key'))
     async def do_delete(self, pk, options):
         """
@@ -867,6 +898,12 @@ class UserService(CRUDService):
                     await self.middleware.call('group.delete', user['group']['id'])
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
+
+        if user['home'] and user['home'] != DEFAULT_HOME_PATH:
+            try:
+                await self.middleware.run_in_thread(shutil.rmtree, os.path.join(user['home'], '.ssh'))
+            except Exception:
+                pass
 
         if user['smb']:
             await run('smbpasswd', '-x', user['username'], check=False)
@@ -1099,6 +1136,7 @@ class UserService(CRUDService):
 
         await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
                   input=json.dumps({'username': username, 'password': password}).encode('utf-8'))
+        await self.middleware.call('failover.datastore.force_send')
 
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
@@ -1190,7 +1228,7 @@ class UserService(CRUDService):
 
         if 'home' in data:
             if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
-                check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
+                await check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
 
         if 'home_mode' in data:
             try:
@@ -1474,7 +1512,10 @@ class GroupService(CRUDService):
             additional_information.remove('DS')
 
         if dssearch:
-            return await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+            ds_state = await self.middleware.call('directoryservices.get_state')
+            if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
+                dssearch_results = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
+                return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
 
         if 'SMB' in additional_information:
             smb_groupmap = await self.middleware.call("smb.groupmap_list")

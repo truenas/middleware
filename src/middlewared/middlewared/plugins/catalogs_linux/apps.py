@@ -30,6 +30,8 @@ class AppService(Service):
         List('categories', required=True),
         List('maintainers', required=True),
         List('tags', required=True),
+        List('screenshots', required=True, items=[Str('screenshot')]),
+        List('sources', required=True, items=[Str('source')]),
         Str('name', required=True),
         Str('title', required=True),
         Str('description', required=True),
@@ -60,6 +62,9 @@ class AppService(Service):
 
         for catalog in self.middleware.call_sync('catalog.query'):
             for train, train_data in self.middleware.call_sync('catalog.items', catalog['label']).items():
+                if train not in catalog['preferred_trains']:
+                    continue
+
                 for app_data in train_data.values():
                     results.append({
                         'catalog': catalog['label'],
@@ -88,14 +93,25 @@ class AppService(Service):
         app = filter_list(
             available_apps, [['name', '=', app_name], ['catalog', '=', catalog], ['train', '=', train]], {'get': True}
         )
-        similar_apps = []
+        similar_apps = {}
+
+        # Calculate the number of common categories/tags between app and other apps
+        app_categories = set(app['categories'])
+        app_tags = set(app['tags'])
+        app_similarity = {}
+
         for to_check_app in available_apps:
             if all(to_check_app[k] == app[k] for k in ('name', 'catalog', 'train')):
                 continue
 
-            for key in ('categories', 'tags'):
-                if set(app[key]).intersection(to_check_app[key]):
-                    similar_apps.append(to_check_app)
-                    break
+            common_categories = set(to_check_app['categories']).intersection(app_categories)
+            common_tags = set(to_check_app['tags']).intersection(app_tags)
+            similarity_score = len(common_categories) + len(common_tags)
+            if similarity_score:
+                app_similarity[to_check_app['name']] = similarity_score
+                similar_apps[to_check_app['name']] = to_check_app
 
-        return similar_apps
+        # Sort apps based on the similarity score in descending order
+        sorted_apps = sorted(app_similarity.keys(), key=lambda x: app_similarity[x], reverse=True)
+
+        return [similar_apps[app] for app in sorted_apps]

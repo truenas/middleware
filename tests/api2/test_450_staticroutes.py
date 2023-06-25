@@ -42,7 +42,6 @@ def test_02_check_staticroute_configured_using_api(sr_dict):
 
 
 def test_03_checking_staticroute_configured_using_ssh(request):
-    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'netstat -4rn|grep -E ^{DESTINATION}', user, password, ip)
     assert results['result'] is True, results
     assert results['output'].strip().split()[1] == GATEWAY, results
@@ -62,6 +61,5 @@ def test_05_check_staticroute_unconfigured_using_api(sr_dict):
 
 
 def test_06_checking_staticroute_unconfigured_using_ssh(request):
-    depends(request, ["ssh_password"], scope="session")
     results = SSH_TEST(f'netstat -4rn|grep -E ^{DESTINATION}', user, password, ip)
     assert results['result'] is False, results

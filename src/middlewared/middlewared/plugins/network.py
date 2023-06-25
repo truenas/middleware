@@ -55,6 +55,7 @@ class NetworkInterfaceModel(sa.Model):
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
     int_link_address = sa.Column(sa.String(17), nullable=True)
+    int_link_address_b = sa.Column(sa.String(17), nullable=True)
 
 
 class NetworkLaggInterfaceModel(sa.Model):
@@ -177,14 +178,18 @@ class InterfaceService(CRUDService):
             i['int_interface']: i
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
-        ha_hardware = self.middleware.call_sync('system.product_type') == 'SCALE_ENTERPRISE'
-        if ha_hardware:
-            internal_ifaces = self.middleware.call_sync('failover.internal_interfaces')
+        ha_hardware = self.middleware.call_sync('system.is_ha_capable')
+        ignore = self.middleware.call_sync('failover.internal_interfaces')
+        if self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F'):
+            # The eno1 interface needs to be masked on the f-series platform because
+            # this interface is shared with the BMC. Details for why this is done
+            # can be obtained from platform team.
+            ignore.append('eno1')
+
         for name, iface in netif.list_interfaces().items():
-            if iface.cloned and name not in configs:
+            if (name in ignore) or (iface.cloned and name not in configs):
                 continue
-            if ha_hardware and name in internal_ifaces:
-                continue
+
             iface_extend_kwargs = {}
             if ha_hardware:
                 vrrp_config = self.middleware.call_sync('interfaces.vrrp_config', name)
@@ -1221,11 +1226,16 @@ class InterfaceService(CRUDService):
                         {'int_interface': new['name']},
                     )
 
+            link_address_update = {'int_link_address': iface['state']['link_address']}
+            if await self.middleware.call('system.is_enterprise_ix_hardware'):
+                if await self.middleware.call('failover.node') == 'B':
+                    link_address_update = {'int_link_address_b': iface['state']['link_address']}
+
             await self.middleware.call(
                 'datastore.update',
                 'network.interfaces',
                 config['id'],
-                {'int_link_address': iface['state']['link_address']},
+                link_address_update,
             )
 
             if iface['type'] == 'BRIDGE':
@@ -1788,14 +1798,6 @@ class InterfaceService(CRUDService):
 
         """
         list_of_ip = []
-        ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
-        ignore_nics.extend(self.middleware.call_sync(
-            'failover.internal_interfaces'
-        ))
-        if choices['loopback']:
-            ignore_nics.remove('lo')
-
-        ignore_nics = tuple(ignore_nics)
         static_ips = {}
         if choices['static']:
             licensed = self.middleware.call_sync('failover.licensed')
@@ -1823,10 +1825,14 @@ class InterfaceService(CRUDService):
                     'broadcast': 'ff02::1',
                 })
 
-        for iface in list(netif.list_interfaces().values()):
+        ignore_nics = self.middleware.call_sync('interface.internal_interfaces')
+        if choices['loopback']:
+            ignore_nics.remove('lo')
+            static_ips['127.0.0.1'] = '127.0.0.1'
+
+        ignore_nics = tuple(ignore_nics)
+        for iface in filter(lambda x: not x.orig_name.startswith(ignore_nics), list(netif.list_interfaces().values())):
             try:
-                if iface.orig_name.startswith(ignore_nics):
-                    continue
                 aliases_list = iface.asdict()['aliases']
             except FileNotFoundError:
                 # This happens on freebsd where we have a race condition when the interface
@@ -1862,6 +1868,17 @@ async def configure_http_proxy(middleware, *args, **kwargs):
 
 
 async def attach_interface(middleware, iface):
+    platform, node_position = await middleware.call('failover.ha_mode')
+    if iface == 'ntb0' and platform == 'LAJOLLA2' and node_position == 'B':
+        # The f-series platform is an AMD system. This means it's using a different
+        # driver for the ntb heartbeat interface (AMD vs Intel). The AMD ntb driver
+        # operates subtly differently than the Intel driver. If the A controller
+        # is rebooted, the B controllers ntb0 interface is hot-plugged (i.e. removed).
+        # When the A controller comes back online, the ntb0 interface is hot-plugged
+        # (i.e. added). For this platform we need to re-add the ip address.
+        await middleware.call('failover.internal_interface.sync', 'ntb0', '169.254.10.2')
+        return
+
     ignore = await middleware.call('interface.internal_interfaces')
     if any((i.startswith(iface) for i in ignore)):
         return

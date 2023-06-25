@@ -20,7 +20,10 @@ def get_assets(name):
     )
     result = []
     for root, dirs, files in os.walk(os.path.join(base_path, name)):
-        result.append(f'{os.path.relpath(root, base_path)}/*')
+        result.extend([f'{os.path.relpath(root, base_path)}/*'] + [
+            os.path.join(os.path.relpath(root, base_path), file)
+            for file in filter(lambda f: f == '.gitkeep', files)
+        ])
     return result
 
 
@@ -49,7 +52,8 @@ setup(
             get_assets('assets') +
             get_assets('etc_files') +
             get_assets('migration') +
-            get_assets('plugins/kubernetes_linux/migrations')
+            get_assets('plugins/kubernetes_linux/migrations') +
+            get_assets('plugins/kubernetes_linux/app_migrations')
         ),
     },
     include_package_data=True,
@@ -64,6 +68,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
+            'configure_fips = middlewared.scripts.configure_fips:main',
+            'setup_cgroups = middlewared.scripts.setup_cgroups:main',
             'middlewared = middlewared.main:main',
             'midclt = middlewared.client.client:main',
             'midgdb = middlewared.scripts.gdb:main',

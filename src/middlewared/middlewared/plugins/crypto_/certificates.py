@@ -172,7 +172,7 @@ class CertificateService(CRUDService):
             Int('csr_id'),
             Int('signedby'),
             Int('key_length', enum=[2048, 4096]),
-            Int('renew_days'),
+            Int('renew_days', validators=[Range(min=1, max=30)]),
             Int('type'),
             Int('lifetime'),
             Int('serial', validators=[Range(min=1)]),
@@ -554,7 +554,8 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_update',
             Bool('revoked'),
-            Str('name')
+            Int('renew_days', validators=[Range(min=1, max=30)]),
+            Str('name'),
         )
     )
     @job(lock='cert_update')
@@ -594,7 +595,7 @@ class CertificateService(CRUDService):
 
         new.update(data)
 
-        if any(new[k] != old[k] for k in ('name', 'revoked')):
+        if any(new.get(k) != old.get(k) for k in ('name', 'revoked', 'renew_days')):
 
             verrors = ValidationErrors()
 
@@ -602,6 +603,12 @@ class CertificateService(CRUDService):
                 await validate_cert_name(
                     self.middleware, new['name'], self._config.datastore,
                     verrors, 'certificate_update.name'
+                )
+
+            if not new.get('acme') and data.get('renew_days'):
+                verrors.add(
+                    'certificate_update.renew_days',
+                    'Certificate renewal days is only supported for ACME certificates'
                 )
 
             if new['revoked'] and new['cert_type_CSR']:
@@ -622,16 +629,15 @@ class CertificateService(CRUDService):
 
             verrors.check()
 
+            to_update = {'renew_days': new['renew_days']} if data.get('renew_days') else {}
             if old['revoked'] != new['revoked'] and new['revoked']:
-                revoked = {'revoked_date': datetime.datetime.utcnow()}
-            else:
-                revoked = {}
+                to_update['revoked_date'] = datetime.datetime.utcnow()
 
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
                 id,
-                {'name': new['name'], **revoked},
+                {'name': new['name'], **to_update},
                 {'prefix': self._config.datastore_prefix}
             )
 

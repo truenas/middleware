@@ -1,10 +1,11 @@
 import base64
+import contextlib
 import pyotp
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
-from middlewared.service import ConfigService, private
+from middlewared.service import CallError, ConfigService, periodic, private
 from middlewared.validators import Range
 
 
@@ -14,6 +15,7 @@ class TwoFactoryUserAuthModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     secret = sa.Column(sa.EncryptedText(), nullable=True, default=None)
     user_id = sa.Column(sa.ForeignKey('account_bsdusers.id', ondelete='CASCADE'), index=True, nullable=True)
+    user_sid = sa.Column(sa.String(length=255), nullable=True, index=True, unique=True)
 
 
 class TwoFactorAuthModel(sa.Model):
@@ -88,10 +90,21 @@ class TwoFactorAuthService(ConfigService):
         return await self.config()
 
     @private
-    async def get_user_config(self, user_id):
-        return await self.middleware.call(
-            'datastore.query', 'account.twofactor_user_auth', [['user', '=', user_id]], {'get': True}
-        )
+    async def get_user_config(self, user_id, local_user):
+        filters = [
+            ['user_id', '=', user_id], ['user_sid', '=', None]
+        ] if local_user else [['user_sid', '=', user_id], ['user_id', '=', None]]
+        if config := await self.middleware.call('datastore.query', 'account.twofactor_user_auth', filters):
+            return {
+                **config[0],
+                'exists': True,
+            }
+        else:
+            return {
+                'secret': None,
+                filters[0][0]: user_id,
+                'exists': False,
+            }
 
     @private
     def generate_base32_secret(self):
@@ -99,12 +112,50 @@ class TwoFactorAuthService(ConfigService):
 
     @private
     def get_users_config(self):
-        return [
-            {
-                'username': config['user']['bsdusr_username'],
-                'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode()
-            }
-            for config in self.middleware.call_sync(
-                'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
+        users = []
+        mapping = {
+            user['sid']: user for user in self.middleware.call_sync(
+                'user.query', [['local', '=', False], ['sid', '!=', None]], {
+                    'extra': {'additional_information': ['DS', 'SMB']},
+                }
             )
-        ]
+        }
+        for config in self.middleware.call_sync(
+            'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
+        ):
+            username = None
+            if config['user']:
+                username = config['user']['bsdusr_username']
+            elif user := mapping.get(config['user_sid']):
+                username = user['username']
+
+            if username:
+                users.append({
+                    'username': username,
+                    'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode()
+                })
+
+        return users
+
+    @private
+    async def get_ad_users(self):
+        return {
+            entry['user_sid']: entry for entry in await self.middleware.call(
+                'datastore.query', 'account.twofactor_user_auth', [['user_sid', '!=', None]]
+            )
+        }
+
+    @periodic(interval=86400, run_on_start=False)
+    @private
+    async def remove_expired_secrets(self):
+        if (await self.middleware.call('directoryservices.get_state'))['activedirectory'] != 'HEALTHY':
+            return
+
+        ad_users = await self.get_ad_users()
+        ad_users_sid_mapping = {user['sid']: user for user in ad_users}
+
+        with contextlib.suppress(CallError):
+            for unmapped_user_sid in (await self.middleware.call('idmap.convert_sids', list(ad_users)))['unmapped']:
+                await self.middleware.call(
+                    'datastore.delete', 'account.twofactor_user_auth', ad_users_sid_mapping[unmapped_user_sid]['id']
+                )

@@ -223,6 +223,9 @@ class UserService(Service):
                                      existing_user["group"]["bsdgrp_group"], group["group"])
                     update["group"] = group["id"]
 
+                if existing_user["home"] != home:
+                    update["home"] = home
+
                 if update:
                     self.middleware.call_sync(
                         "datastore.update",

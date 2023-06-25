@@ -19,6 +19,8 @@ from auto_config import (
 )
 from pytest_dependency import depends
 from protocols import SMB, smb_connection, smb_share
+from samba import ntstatus
+from samba import NTSTATUSError
 
 reason = 'Skipping for test development testing'
 # comment pytestmark for development testing with --dev-test
@@ -100,7 +102,6 @@ SMB_PWD = "smb1234"
 
 @pytest.mark.dependency(name="SMB_DATASET_CREATED")
 def test_001_creating_smb_dataset(request):
-    depends(request, ["pool_04"], scope="session")
     payload = {
         "name": dataset,
         "share_type": "SMB"
@@ -290,6 +291,7 @@ def test_060_create_base_file_for_streams_tests(request):
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile", "w")
     c.close(fd)
+    c.mkdir("streamstestdir")
     c.disconnect()
 
 
@@ -306,11 +308,22 @@ def test_061_create_and_write_stream_smb2(request):
     c.write(fd, b'test1', 0)
     c.close(fd)
 
-    fd2 = c.create_file("streamstestfile:smb2_stream", "w")
-    contents = c.read(fd2, 0, 5)
+    fd2 = c.create_file("streamstestdir:smb2_stream", "w")
+    c.write(fd2, b'test2', 0)
     c.close(fd2)
+
+    fd3 = c.create_file("streamstestfile:smb2_stream", "w")
+    contents = c.read(fd3, 0, 5)
+    c.close(fd3)
+
+    fd4 = c.create_file("streamstestdir:smb2_stream", "w")
+    contents2 = c.read(fd4, 0, 5)
+    c.close(fd4)
+
+    c.rmdir("streamstestdir")
     c.disconnect()
     assert(contents.decode() == "test1")
+    assert(contents2.decode() == "test2")
 
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB2")
@@ -602,7 +615,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     Iterate through AFP xattrs and set them on testfile
     via SSH.
     """
-    depends(request, ["AFP_ENABLED", "ssh_password"], scope="session")
+    depends(request, ["AFP_ENABLED"], scope="session")
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
@@ -676,7 +689,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
     Read xattr that was set via SMB protocol directly via
     SSH and verify that data is the same.
     """
-    depends(request, ["XATTR_CHECK_SMB_WRITE", "ssh_password"], scope="session")
+    depends(request, ["XATTR_CHECK_SMB_WRITE"], scope="session")
     # Netatalk-compatible xattr gets additional
     # metadata written to it, which makes comparison
     # of all bytes problematic.
@@ -762,6 +775,27 @@ def test_180_create_share_multiple_dirs_deep(request):
 
         results = POST('/filesystem/stat/', os.path.join(dirs_path, 'nested_dirs_file'))
         assert results.status_code == 200, results.text
+
+def test_181_create_and_disable_share(request):
+    depends(request, ["SMB_USER_CREATED"])
+    with create_dataset(pool_name, 'smb_disabled', options={'share_type': 'SMB'}) as ds:
+        with smb_share(ds['mountpoint'], {'name': 'TO_DISABLE'}) as tmp_id:
+            with smb_connection(
+                host=ip,
+                share='TO_DISABLE',
+                username=SMB_USER,
+                password=SMB_PWD,
+                smb1=False
+            ) as c:
+                results = PUT(f"/sharing/smb/id/{tmp_id}/", {"enabled": False})
+                assert results.status_code == 200, results.text
+
+                try:
+                    fd = c.create_file('canary', "w")
+                except NTSTATUSError as status:
+                    assert status.args[0] == ntstatus.NT_STATUS_NETWORK_NAME_DELETED, str(status)
+                else:
+                    assert c.connected is True
 
 
 @pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")

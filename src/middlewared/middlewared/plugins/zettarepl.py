@@ -745,11 +745,14 @@ class ZettareplService(Service):
         }
 
         if replication_task["encryption"]:
-            definition["encryption"] = {
-                "key": replication_task["encryption_key"],
-                "key-format": replication_task["encryption_key_format"].lower(),
-                "key-location": replication_task["encryption_key_location"],
-            }
+            if replication_task["encryption_inherit"]:
+                definition["encryption"] = "inherit"
+            else:
+                definition["encryption"] = {
+                    "key": replication_task["encryption_key"],
+                    "key-format": replication_task["encryption_key_format"].lower(),
+                    "key-location": replication_task["encryption_key_location"],
+                }
         if replication_task["naming_schema"]:
             definition["naming-schema"] = replication_task["naming_schema"]
         if replication_task["also_include_naming_schema"]:
@@ -786,9 +789,6 @@ class ZettareplService(Service):
 
         if pools[pool]["status"] == "OFFLINE":
             return f"Pool {pool} is offline"
-
-        if not pools[pool]["is_decrypted"]:
-            return f"Pool {pool} is locked"
 
     @asynccontextmanager
     async def _handle_ssh_exceptions(self):

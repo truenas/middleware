@@ -27,7 +27,6 @@ def write_to_log(string):
 
 
 def test_system_dataset_migrate(request):
-    depends(request, ["pool_04"], scope="session")
 
     config = call("systemdataset.config")
     assert config["pool"] == pool
@@ -48,7 +47,6 @@ def test_system_dataset_migrate(request):
 
 @pytest.mark.parametrize("lock", [False, True])
 def test_migrate_to_a_pool_with_passphrase_encrypted_root_dataset(request, lock):
-    depends(request, ["pool_04"], scope="session")
 
     config = call("systemdataset.config")
     assert config["pool"] == pool
@@ -68,7 +66,6 @@ def test_migrate_to_a_pool_with_passphrase_encrypted_root_dataset(request, lock)
 
 
 def test_lock_passphrase_encrypted_pool_with_system_dataset(request):
-    depends(request, ["pool_04"], scope="session")
 
     with another_pool({"encryption": True, "encryption_options": {"passphrase": "passphrase"}}):
         call("systemdataset.update", {"pool": "test"}, job=True)

@@ -90,7 +90,7 @@ class PoolService(Service):
         """
         disks = []
         for pool in await self.middleware.call('pool.query', [] if not oid else [('id', '=', oid)]):
-            if pool['is_decrypted'] and pool['status'] != 'OFFLINE':
+            if pool['status'] != 'OFFLINE':
                 disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
 

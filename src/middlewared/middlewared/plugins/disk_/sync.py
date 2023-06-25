@@ -1,10 +1,8 @@
 import re
-import errno
 from datetime import datetime, timedelta
 
 from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, private, Service, ServiceChangeMixin
-from middlewared.service_exception import CallError
 
 RE_IDENT = re.compile(r'^\{(?P<type>.+?)\}(?P<value>.+)$')
 
@@ -58,7 +56,10 @@ class DiskService(Service, ServiceChangeMixin):
 
         await self.restart_services_after_sync()
 
-        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'])
+        # We have expansion shelves that take up to 60 seconds before the disk will be mapped to the enclosure slot in
+        # the sysfs structure. There is no way around it, unfortunately. We should ask `enclosure.sync_disk` to retry
+        # itself if it fails to map the disk to enclosure.
+        await self.middleware.call('enclosure.sync_disk', disk['disk_identifier'], None, True)
 
     @private
     def log_disk_info(self, sys_disks):
@@ -267,13 +268,9 @@ class DiskService(Service, ServiceChangeMixin):
             # entire database to the remote node after we're done. The (potential) speed
             # improvement this provides is substantial
             try:
-                self.middleware.call_sync('failover.datastore.send')
-            except Exception as e:
-                ignore = (errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                if isinstance(e, CallError) and e.errno in ignore:
-                    pass
-                else:
-                    self.logger.warning('Unexpected failure syncing database to standby controller', exc_info=True)
+                self.middleware.call_sync('failover.datastore.send', [], {'raise_connect_error': False})
+            except Exception:
+                self.logger.warning('Unexpected failure syncing database to standby controller', exc_info=True)
 
         job.set_progress(100, 'Syncing all disks complete')
         return 'OK'

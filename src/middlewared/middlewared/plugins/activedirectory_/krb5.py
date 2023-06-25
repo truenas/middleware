@@ -116,6 +116,7 @@ class ActiveDirectoryService(Service):
             SRV.KERBEROSDOMAINCONTROLLER.name,
             ad['site'],
             3,
+            ad['dns_timeout'],
             ad['verbose_logging'],
         )
         if len(res) != 3:

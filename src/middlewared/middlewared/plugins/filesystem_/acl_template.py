@@ -55,7 +55,7 @@ class ACLTemplateService(CRUDService):
             )
 
         for idx, ace in enumerate(data['acl']):
-            if ace['id'] is None:
+            if ace.get('id') is None:
                 verrors.add(f'{schema}.{idx}.id', 'null id is not permitted.')
 
     @accepts(Dict(

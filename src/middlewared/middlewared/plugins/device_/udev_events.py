@@ -32,6 +32,7 @@ def udev_events(middleware):
             monitor = pyudev.Monitor.from_netlink(context)
             monitor.set_receive_buffer_size(_256MB)
             monitor.filter_by(subsystem='block')
+            monitor.filter_by(subsystem='dlm')
             monitor.filter_by(subsystem='net')
             for device in iter(monitor.poll, None):
                 middleware.call_hook_sync(

@@ -107,7 +107,7 @@ def test_08_test_backend_options(request, backend):
     DS_TYPE_DEFAULT_DOMAIN have hard-coded ids and
     so we don't need to look them up.
     """
-    depends(request, ["GATHERED_BACKEND_OPTIONS", "ssh_password"], scope="session")
+    depends(request, ["GATHERED_BACKEND_OPTIONS"], scope="session")
     opts = BACKEND_OPTIONS[backend]['parameters'].copy()
     set_secret = False
 
@@ -345,7 +345,7 @@ def test_12_idmap_low_high_range_inversion_fail(request):
 
 @pytest.mark.dependency(name="CREATED_NEW_DOMAIN")
 def test_13_idmap_new_domain(request):
-    depends(request, ["AD_IS_HEALTHY", "ssh_password"], scope="session")
+    depends(request, ["AD_IS_HEALTHY"], scope="session")
     global dom_id
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
@@ -369,7 +369,7 @@ def test_14_idmap_new_domain_duplicate_fail(request):
     It should not be possible to create a new domain that
     has a name conflict with an existing one.
     """
-    depends(request, ["AD_IS_HEALTHY", "ssh_password"], scope="session")
+    depends(request, ["AD_IS_HEALTHY"], scope="session")
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']

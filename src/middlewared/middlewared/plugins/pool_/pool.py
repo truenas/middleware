@@ -20,17 +20,6 @@ class PoolModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     vol_name = sa.Column(sa.String(120), unique=True)
     vol_guid = sa.Column(sa.String(50))
-    vol_encrypt = sa.Column(sa.Integer(), default=0)
-    vol_encryptkey = sa.Column(sa.String(50))
-
-
-class EncryptedDiskModel(sa.Model):
-    __tablename__ = 'storage_encrypteddisk'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    encrypted_volume_id = sa.Column(sa.ForeignKey('storage_volume.id', ondelete='CASCADE'))
-    encrypted_disk_id = sa.Column(sa.ForeignKey('storage_disk.disk_identifier', ondelete='SET NULL'), nullable=True)
-    encrypted_provider = sa.Column(sa.String(120), unique=True)
 
 
 class PoolService(CRUDService):
@@ -40,10 +29,6 @@ class PoolService(CRUDService):
         Int('id', required=True),
         Str('name', required=True),
         Str('guid', required=True),
-        Int('encrypt', required=True),
-        Str('encryptkey', required=True),
-        Str('encryptkey_path', null=True, required=True),
-        Bool('is_decrypted', required=True),
         Str('status', required=True),
         Str('path', required=True),
         Dict(
@@ -156,8 +141,6 @@ class PoolService(CRUDService):
                 'source': 'DEFAULT',
                 'value': 'off'
             },
-            'encryptkey_path': None,
-            'is_decrypted': True,
         }
 
         if info := await self.middleware.call('zfs.pool.query', [('name', '=', pool_name)]):
@@ -191,11 +174,6 @@ class PoolService(CRUDService):
 
     @private
     def pool_extend(self, pool, context):
-
-        """
-        If pool is encrypted we need to check if the pool is imported
-        or if all geli providers exist.
-        """
         if context['extra'].get('is_upgraded'):
             pool['is_upgraded'] = self.middleware.call_sync('pool.is_upgraded_by_name', pool['name'])
 
@@ -486,13 +464,9 @@ class PoolService(CRUDService):
         await self.middleware.call('pool.format_disks', job, disks)
         if is_ha:
             try:
-                await self.middleware.call('failover.call_remote', 'disk.retaste')
-            except Exception as e:
-                ignore = (CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
-                if isinstance(e, CallError) and e.errno in ignore:
-                    pass
-                else:
-                    self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+                await self.middleware.call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
+            except Exception:
+                self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -656,10 +630,18 @@ class PoolService(CRUDService):
             if extend_job.error:
                 raise CallError(extend_job.error)
 
+        properties = {}
         if 'autotrim' in data:
-            await self.middleware.call('zfs.pool.update', pool['name'], {'properties': {
-                'autotrim': {'value': data['autotrim'].lower()},
-            }})
+            properties['autotrim'] = {'value': data['autotrim'].lower()}
+
+        if (
+            zfs_pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool['name']]])
+        ) and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
+            # https://ixsystems.atlassian.net/browse/NAS-112093
+            properties['ashift'] = {'value': '12'}
+
+        if properties:
+            await self.middleware.call('zfs.pool.update', pool['name'], {'properties': properties})
 
         pool = await self.get_instance(id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)

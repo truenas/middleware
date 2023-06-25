@@ -102,6 +102,9 @@ class EtcService(Service):
         'grub': [
             {'type': 'py', 'path': 'grub', 'checkpoint': 'post_init'},
         ],
+        'fips': [
+            {'type': 'py', 'path': 'fips', 'checkpoint': None},
+        ],
         'keyboard': [
             {'type': 'mako', 'path': 'default/keyboard'},
             {'type': 'mako', 'path': 'vconsole.conf'},
@@ -136,6 +139,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'pam.d/common-password'},
                 {'type': 'mako', 'path': 'pam.d/common-session-noninteractive'},
                 {'type': 'mako', 'path': 'pam.d/common-session'},
+                {'type': 'mako', 'path': 'security/pam_winbind.conf'},
             ]
         },
         'pam_middleware': [
@@ -173,31 +177,6 @@ class EtcService(Service):
         'udev': [
             {'type': 'py', 'path': 'udev'},
         ],
-        'webdav': {
-            'ctx': [
-                {'method': 'sharing.webdav.query', 'args': [[('enabled', '=', True)]]},
-                {'method': 'webdav.config'},
-            ],
-            'entries': [
-                {
-                    'type': 'mako',
-                    'local_path': 'local/apache24/httpd.conf',
-                    'path': 'local/apache2/apache2.conf',
-                },
-                {
-                    'type': 'mako',
-                    'local_path': 'local/apache24/Includes/webdav.conf',
-                    'path': 'local/apache2/Includes/webdav.conf',
-                    'checkpoint': 'pool_import'
-                },
-                {
-                    'type': 'py',
-                    'local_path': 'local/apache24/webdav_config',
-                    'path': 'local/apache2/webdav_config',
-                    'checkpoint': 'pool_import',
-                },
-            ]
-        },
         'nginx': [
             {'type': 'mako', 'path': 'local/nginx/nginx.conf', 'checkpoint': 'interface_sync'}
         ],
@@ -252,12 +231,8 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nut/nut.conf', 'owner': 'root', 'group': 'nut', 'mode': 0o440},
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
-        'rsync': [
-            {'type': 'mako', 'path': 'local/rsyncd.conf', 'checkpoint': 'pool_import'}
-        ],
         'smb': [
             {'type': 'mako', 'path': 'local/smb4.conf'},
-            {'type': 'mako', 'path': 'security/pam_winbind.conf', 'checkpoint': 'pool_import'},
         ],
         'ctdb': [
             {
@@ -291,31 +266,13 @@ class EtcService(Service):
             ]
         },
         'ntpd': [
-            {'type': 'mako', 'path': 'ntp.conf'}
+            {'type': 'mako', 'path': 'chrony/chrony.conf'}
         ],
         'localtime': [
             {'type': 'py', 'path': 'localtime_config'}
         ],
-        'inadyn': [
-            {'type': 'mako', 'path': 'local/inadyn.conf'}
-        ],
-        'openvpn_server': [
-            {
-                'type': 'mako', 'local_path': 'local/openvpn/server/openvpn_server.conf',
-                'path': 'local/openvpn/server/server.conf'
-            }
-        ],
-        'openvpn_client': [
-            {
-                'type': 'mako', 'local_path': 'local/openvpn/client/openvpn_client.conf',
-                'path': 'local/openvpn/client/client.conf'
-            }
-        ],
         'kmip': [
             {'type': 'mako', 'path': 'pykmip/pykmip.conf'}
-        ],
-        'tftp': [
-            {'type': 'mako', 'path': 'default/tftpd-hpa'},
         ],
         'truecommand': [
             {'type': 'mako', 'path': 'wireguard/ix-truecommand.conf'},

@@ -173,7 +173,6 @@ def test_01_check_dataset_endpoint():
 
 @pytest.mark.dependency(name="DATASET_CREATED")
 def test_02_create_dataset(request):
-    depends(request, ["pool_04"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_DATASET,
@@ -367,7 +366,7 @@ We first create a child dataset to verify that ACLs do not change unless
 
 
 def test_12_prepare_recursive_tests(request):
-    depends(request, ["HAS_NFS4_ACLS", "ssh_password"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS"], scope="session")
     result = POST(
         '/pool/dataset/', {
             'name': ACLTEST_SUBDATASET,
@@ -585,7 +584,7 @@ def test_21_creating_shareuser_to_test_acls(request):
 
 @pytest.mark.dependency(name="HAS_TESTFILE")
 def test_22_prep_testfile(request):
-    depends(request, ["ACL_USER_CREATED", "ssh_password"], scope="session")
+    depends(request, ["ACL_USER_CREATED"], scope="session")
     cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -622,7 +621,7 @@ def test_23_test_acl_function_deny(perm, request):
     acltest user, then attempt to perform an action that
     should result in failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -720,7 +719,7 @@ def test_24_test_acl_function_allow(perm, request):
     acltest user, then attempt to perform an action that
     should result in success.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -815,7 +814,7 @@ def test_25_test_acl_function_omit(perm, request):
     on presence of the particular permissions bit. Then we omit
     it. This should result in a failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09", "ssh_password"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -900,7 +899,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     they grant no more permissions than intended. Some bits cannot
     be tested in isolation effectively using built in utilities.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -1010,7 +1009,7 @@ def test_26_file_execute_deny(request):
     Base permset with everyone@ FULL_CONTROL, but ace added on
     top explictly denying EXECUTE. Attempt to execute file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1059,7 +1058,7 @@ def test_27_file_execute_allow(request):
     READ_ATTRIBUTES are also granted beecause we need to be able to
     stat and read our test script.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1111,7 +1110,7 @@ def test_28_file_execute_omit(request):
     Grant user all permissions except EXECUTE. Attempt to execute
     file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "ssh_password", "acl_pool_perm_09"], scope="session")
+    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1164,7 +1163,6 @@ def test_29_deleting_homedir_user(request):
 
 
 def test_30_delete_dataset(request):
-    depends(request, ["pool_04"], scope="session")
     result = DELETE(
         f'/pool/dataset/id/{dataset_url}/'
     )

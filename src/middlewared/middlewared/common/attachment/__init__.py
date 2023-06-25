@@ -89,6 +89,14 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
             filters += [[self.locked_field, '=', options['locked']]]
         return filters
 
+    async def start_service(self):
+        if not (
+            service_obj := await self.middleware.call('service.query', [['service', '=', self.service]])
+        ) or not service_obj[0]['enable'] or service_obj[0]['state'] == 'RUNNING':
+            return
+
+        await self.middleware.call('service.start', self.service)
+
     async def query(self, path, enabled, options=None):
         results = []
         options = options or {}
@@ -149,6 +157,7 @@ class LockableFSAttachmentDelegate(FSAttachmentDelegate):
             return is_child
 
     async def start(self, attachments):
+        await self.start_service()
         for attachment in attachments:
             await self.remove_alert(attachment)
         if attachments:

@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import copy
 import json
 import string
@@ -13,6 +14,7 @@ import ipaddress
 import os
 import pprint
 from urllib.parse import urlparse
+import wbclient
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
@@ -312,6 +314,37 @@ class Password(Str):
         super().__init__(*args, **kwargs)
 
 
+class SID(Str):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        value = super().clean(value)
+
+        if value is None:
+            return value
+
+        value = value.strip()
+        return value.upper()
+
+    def validate(self, value):
+        if value is None:
+            return value
+
+        verrors = ValidationErrors()
+
+        if not wbclient.sid_is_valid(value):
+            verrors.add(
+                self.name,
+                'SID is malformed. See MS-DTYP Section 2.4 for SID type specifications. '
+                'Typically SIDs refer to existing objects on the local or remote server '
+                'and so an appropriate value should be queried prior to submitting to API '
+                'endpoints.'
+            )
+
+        verrors.check()
+
+
 class Dataset(Path):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('empty', False)
@@ -468,6 +501,21 @@ class IPAddr(Str):
 
         return value
 
+    def validate(self, value):
+        if value is None:
+            return value
+
+        verrors = ValidationErrors()
+
+        try:
+            self.clean(value)
+        except (Error, ValueError) as e:
+            verrors.add(self.name, str(e))
+
+        verrors.check()
+
+        return super().validate(value)
+
 
 class Time(Str):
 
@@ -563,13 +611,13 @@ class Int(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(Int, self).clean(value)
-        if value is None:
+        if value is None or (not isinstance(value, bool) and isinstance(value, int)):
             return value
-        if not isinstance(value, int) or isinstance(value, bool):
-            if isinstance(value, str) and value.isdigit():
+        elif isinstance(value, str):
+            with contextlib.suppress(ValueError):
                 return int(value)
-            raise Error(self.name, 'Not an integer')
-        return value
+
+        raise Error(self.name, 'Not an integer')
 
     def to_json_schema(self, parent=None):
         return {

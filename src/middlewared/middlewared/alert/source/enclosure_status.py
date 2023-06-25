@@ -21,7 +21,8 @@ class EnclosureStatusAlertSource(AlertSource):
     products = ("SCALE_ENTERPRISE",)
     failover_related = True
     run_on_backup_node = False
-    bad = ('critical', 'noncritical', 'unknown', 'unrecoverable', 'not installed')
+    bad = ('critical', 'noncritical', 'unknown', 'unrecoverable')
+    bad_elements = []
 
     async def should_report(self, enclosure, element):
         should_report = True
@@ -43,23 +44,42 @@ class EnclosureStatusAlertSource(AlertSource):
         return should_report
 
     async def check(self):
-        alerts = []
+        good_enclosures = []
+        bad_elements = []
         for enc in await self.middleware.call('enclosure.query'):
-            healthy = True
-            for ele in sum([e['elements'] for e in enc['elements']], []):
-                if await self.should_report(enc, ele):
-                    healthy = False
-                    alerts.append(Alert(EnclosureUnhealthyAlertClass, args=[
-                        enc['name'],
-                        ele['name'],
-                        ele['status'],
-                        ele['value'],
-                        ele['value_raw'],
-                    ]))
+            good_enclosures.append([enc['name']])
 
-            if healthy:
-                # we've iterated all elements of a given enclosure and nothing
-                # was reported as unhealthy
-                alerts.append(Alert(EnclosureHealthyAlertClass, args=[enc['name']]))
+            for element_values in enc['elements']:
+                for value in element_values['elements']:
+                    if await self.should_report(enc, value):
+                        args = [
+                            enc['name'],
+                            value['descriptor'],
+                            value['slot'],
+                            hex(value['slot']),
+                            value['status']
+                        ]
+                        for i, (another_args, count) in enumerate(self.bad_elements):
+                            if another_args == args:
+                                bad_elements.append((args, count + 1))
+                                break
+                        else:
+                            bad_elements.append((args, 1))
+
+        self.bad_elements = bad_elements
+
+        alerts = []
+        for args, count in bad_elements:
+            # We only report unhealthy enclosure elements if they were unhealthy 5 probes in a row (1 probe = 1 minute)
+            if count >= 5:
+                try:
+                    good_enclosures.remove(args[:1])
+                except ValueError:
+                    pass
+
+                alerts.append(Alert(EnclosureUnhealthyAlertClass, args=args))
+
+        for args in good_enclosures:
+            alerts.append(Alert(EnclosureHealthyAlertClass, args=args))
 
         return alerts

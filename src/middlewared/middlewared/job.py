@@ -377,7 +377,7 @@ class Job:
                 raise CallError(self.error)
         return self.result
 
-    def wait_sync(self, raise_error=False):
+    def wait_sync(self, raise_error=False, timeout=None):
         """
         Synchronous method to wait for a job in another thread.
         """
@@ -388,7 +388,9 @@ class Job:
             event.set()
 
         fut.add_done_callback(done)
-        event.wait()
+        if not event.wait(timeout):
+            fut.cancel()
+            raise TimeoutError()
         if raise_error:
             if self.error:
                 if isinstance(self.exc_info[1], CallError):
@@ -650,7 +652,7 @@ class JobProgressBuffer:
             self.pending_update_body = args, kwargs
 
             if self.pending_update is None:
-                self.pending_update = asyncio.get_event_loop().call_later(self.interval, self._do_pending_update)
+                self.pending_update = self.job.loop.call_later(self.interval, self._do_pending_update)
 
     def cancel(self):
         if self.pending_update is not None:

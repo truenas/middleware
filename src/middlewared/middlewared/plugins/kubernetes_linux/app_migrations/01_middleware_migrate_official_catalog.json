@@ -1,0 +1,7 @@
+[
+  {
+    "action": "rename_catalog",
+    "old_catalog": "OFFICIAL",
+    "new_catalog": "TRUENAS"
+  }
+]

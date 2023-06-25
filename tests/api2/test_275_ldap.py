@@ -93,7 +93,7 @@ def test_06_setup_and_enabling_ldap(do_ldap_connection):
 
     results = GET("/alert/list/")
     assert results.status_code == 200, results.text
-    assert any([x for x in results.json() if x['klass'] == 'DeprecatedService']), results.text
+    assert any([x for x in results.json() if x['klass'] == 'DeprecatedServiceConfiguration']), results.text
 
 
 def test_08_verify_ldap_enable_is_true(request):
@@ -126,13 +126,13 @@ def test_09_account_privilege_authentication(request):
 
 @pytest.mark.dependency(name="ldap_dataset")
 def test_09_creating_ldap_dataset_for_smb(request):
-    depends(request, ["pool_04", "setup_ldap"], scope="session")
+    depends(request, ["setup_ldap"], scope="session")
     results = POST("/pool/dataset/", {"name": dataset, "share_type": "SMB"})
     assert results.status_code == 200, results.text
 
 
 def test_10_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
-    depends(request, ["setup_ldap", "ssh_password"], scope="session")
+    depends(request, ["setup_ldap"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is True, str(results['output'])
     assert LDAPUSER in results['output'], str(results['output'])
@@ -272,7 +272,7 @@ def test_23_restarting_cifs_service_after_changing_has_samba_schema(request):
 
 
 def test_24_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is False, results['output']
 
@@ -313,7 +313,7 @@ def test_28_verify_if_cifs_service_is_running(request):
 
 
 def test_29_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is True, results['output']
 
@@ -361,7 +361,7 @@ def test_34_restarting_cifs_service_after_changing_has_samba_schema(request):
 
 
 def test_35_verify_that_the_ldap_user_is_not_listed_with_pdbedit(request):
-    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap", "ssh_password"], scope="session")
+    depends(request, ["setup_ldap", "ldap_dataset", "smb_share_ldap"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is False, results['output']
 
