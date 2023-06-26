@@ -39,7 +39,7 @@ def gather_events(event_endpoint: str, context_args: dict = None):
         'timeout': 60,
         **(context_args or {})
     }
-    thread = threading.Thread(target=event_thread, args=(event_endpoint, context))
+    thread = threading.Thread(target=event_thread, args=(event_endpoint, context), daemon=True)
     thread.start()
     if not context['start_event'].wait(timeout=30):
         raise Exception('Timed out waiting for event thread to start')
@@ -53,7 +53,6 @@ def gather_events(event_endpoint: str, context_args: dict = None):
 
 
 def assert_result(context: dict, event_endpoint: str, oid: typing.Union[int, str], event_type: str) -> None:
-    assert context['result'] is not None
     assert context['result'] == {
         'msg': event_type,
         'collection': event_endpoint,
