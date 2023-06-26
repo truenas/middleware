@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.disk_.temperature import get_temperature, DiskService
+from middlewared.utils.disks import parse_sata_or_sas_disk_temp, parse_smartctl_for_temperature_output
 
 
 @pytest.mark.parametrize("stdout,temperature", [
@@ -20,7 +20,7 @@ from middlewared.plugins.disk_.temperature import get_temperature, DiskService
     ("Current Drive Temperature:     31 C", 31),
 ])
 def test__get_temperature(stdout, temperature):
-    assert get_temperature(stdout) == temperature
+    assert parse_smartctl_for_temperature_output(stdout) == temperature
 
 
 @pytest.mark.parametrize("filename,line,result", [
@@ -36,4 +36,4 @@ def test__get_temperature(stdout, temperature):
     ),
 ])
 def test_parse_sata_or_sas_disk_temp(filename, line, result):
-    assert DiskService(None).parse_sata_or_sas_disk_temp(filename, line) == result
+    assert parse_sata_or_sas_disk_temp(filename, line) == result

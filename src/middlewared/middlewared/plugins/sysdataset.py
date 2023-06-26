@@ -602,6 +602,7 @@ class SystemDatasetService(ConfigService):
                 f'rrd-{uuid}', f'configs-{uuid}',
                 'webui', 'services',
                 'glusterd', CTDBConfig.CTDB_VOL_NAME.value,
+                f'netdata-{uuid}',
             ]
         ]
 
@@ -670,7 +671,7 @@ class SystemDatasetService(ConfigService):
             # the system dataset so any service that could potentially open
             # a file descriptor underneath /var/log will no longer need to be
             # stopped/restarted to allow the system dataset to migrate
-            restart = ['collectd', 'rrdcached']
+            restart = ['collectd', 'rrdcached', 'netdata']
             if self.middleware.call_sync('service.started', 'cifs'):
                 restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'glusterd'):

@@ -3,8 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.plugins.reporting.cpu_temperatures import ReportingService
-from middlewared.pytest.unit.middleware import Middleware
+from middlewared.utils.cpu import _generic_cpu_temperatures
 
 
 @pytest.mark.parametrize("reading,result", [
@@ -48,5 +47,4 @@ from middlewared.pytest.unit.middleware import Middleware
     )
 ])
 def test_generic_cpu_temperatures(reading, result):
-    es = ReportingService(None)
-    assert es._generic_cpu_temperatures(reading) == result
+    assert _generic_cpu_temperatures(reading) == result

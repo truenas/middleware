@@ -6,6 +6,7 @@ from .kuberouter import KubeRouterService
 from .kubernetes import KubernetesService
 from .mdns import MDNSService
 from .netbios import NetBIOSService
+from .netdata import NetdataService
 from .nfs import NFSService
 from .nscd import NSCDService
 from .nslcd import NSSPamLdapdService
@@ -65,6 +66,7 @@ all_services = [
     WSDService,
     ActiveDirectoryService,
     LdapService,
+    NetdataService,
     NisService,
     IdmapService,
     OpenIpmiService,

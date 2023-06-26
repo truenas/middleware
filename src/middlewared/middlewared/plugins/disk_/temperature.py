@@ -1,56 +1,16 @@
 import asyncio
+import async_timeout
 import os
-import re
 import subprocess
 import time
 import math
-import pathlib
-import contextlib
-
-import pyudev
-import async_timeout
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.disks import get_disks_temperatures, parse_smartctl_for_temperature_output
 from middlewared.utils.itertools import grouper
-
-
-def get_temperature(stdout):
-    # ataprint.cpp
-
-    data = {}
-    for s in re.findall(r'^((190|194) .+)', stdout, re.M):
-        s = s[0].split()
-        try:
-            data[s[1]] = int(s[9])
-        except (IndexError, ValueError):
-            pass
-    for k in ['Temperature_Celsius', 'Temperature_Internal', 'Drive_Temperature',
-              'Temperature_Case', 'Case_Temperature', 'Airflow_Temperature_Cel']:
-        if k in data:
-            return data[k]
-
-    reg = re.search(r'194\s+Temperature_Celsius[^\n]*', stdout, re.M)
-    if reg:
-        return int(reg.group(0).split()[9])
-
-    # nvmeprint.cpp
-
-    reg = re.search(r'Temperature:\s+([0-9]+) Celsius', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
-
-    reg = re.search(r'Temperature Sensor [0-9]+:\s+([0-9]+) Celsius', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
-
-    # scsiprint.cpp
-
-    reg = re.search(r'Current Drive Temperature:\s+([0-9]+) C', stdout, re.M)
-    if reg:
-        return int(reg.group(1))
 
 
 class DiskService(Service):
@@ -106,7 +66,7 @@ class DiskService(Service):
     async def temperature_uncached(self, name, powermode):
         output = await self.middleware.call('disk.smartctl', name, ['-a', '-n', powermode.lower()], {'silent': True})
         if output is not None:
-            return get_temperature(output)
+            return parse_smartctl_for_temperature_output(output)
 
     @private
     async def reset_temperature_cache(self):
@@ -159,71 +119,6 @@ class DiskService(Service):
         return dict(zip(names, await asyncio_map(temperature, names, 8)))
 
     @private
-    def read_sata_or_sas_disk_temps(self, disks):
-        rv = {}
-        with contextlib.suppress(FileNotFoundError):
-            for i in pathlib.Path('/var/lib/smartmontools').iterdir():
-                # TODO: throw this into multiple threads since we're reading data from disk
-                # to make this really go brrrrr (even though it only takes ~0.2 seconds on 439 disk system)
-                if i.is_file() and i.suffix == '.csv':
-                    if serial := next((k for k in disks if i.as_posix().find(k) != -1), None):
-                        with open(i.as_posix()) as f:
-                            for line in f:
-                                # iterate to the last line in the file without loading all of it
-                                # into memory since `smartd` could have written 1000's (or more)
-                                # of lines to the file
-                                pass
-
-                            if temp := self.parse_sata_or_sas_disk_temp(i.as_posix(), line):
-                                rv[disks[serial]] = temp
-
-        return rv
-
-    @private
-    def parse_sata_or_sas_disk_temp(self, filename, line):
-        if filename.endswith('.ata.csv'):
-            if (ft := line.split('\t')) and (temp := list(filter(lambda x: x.startswith(('190;', '194;')), ft))):
-                try:
-                    temp = temp[-1].split(';')[2]
-                except IndexError:
-                    return None
-                else:
-                    if temp.isdigit():
-                        return int(temp)
-
-        if filename.endswith('.scsi.csv'):
-            if (ft := line.split('\t')) and (temp := list(filter(lambda x: 'temperature' in x, ft))):
-                try:
-                    temp = temp[-1].split(';')[1]
-                except IndexError:
-                    return None
-                else:
-                    if temp.isdigit():
-                        return int(temp)
-
-    @private
-    def read_nvme_temps(self, disks):
-        # we store nvme disks in db with their namespaces (i.e. nvme1n1, nvme2n1, etc)
-        # but the hwmon sysfs sensors structure references the nvme devices via nvme1, nvme2
-        # so we simply take first 5 chars so they map correctly
-        nvme_disks = {v[:5]: v for v in disks.values() if v.startswith('nvme')}
-        rv = {}
-        ctx = pyudev.Context()
-        for i in filter(lambda x: x.parent.sys_name in nvme_disks, ctx.list_devices(subsystem='hwmon')):
-            if temp := i.attributes.get('temp1_input'):
-                try:
-                    # https://www.kernel.org/doc/Documentation/hwmon/sysfs-interface
-                    # temperature is reported in millidegree celsius so must convert back to celsius
-                    # we also round to nearest whole number for backwards compatbility
-                    rv[nvme_disks[i.parent.sys_name]] = round(int(temp.decode()) * 0.001)
-                except Exception:
-                    # if this fails the caller of this will subprocess out to smartctl and try to
-                    # get the temperature for the drive so dont crash here
-                    continue
-
-        return rv
-
-    @private
     def read_temps(self):
         """
         The main consumer of this endpoint is the disktemp.py collectd python plugin
@@ -235,22 +130,7 @@ class DiskService(Service):
         However, if we can't get a drive temperature using these methods for whatever reason then
         we will fall back to subprocessing out to smartctl and trying to parse the temperature.
         """
-        disks = {
-            i['serial']: i['name'] for i in self.middleware.call_sync('datastore.query', 'storage.disk', [
-                ['serial', '!=', ''],
-                ['togglesmart', '=', True],
-                ['hddstandby', '=', 'Always On'],
-            ], {'prefix': 'disk_'})
-        }
-        temps = self.read_sata_or_sas_disk_temps(disks)
-        temps.update(self.read_nvme_temps(disks))
-
-        for disk in set(disks.values()) - set(temps.keys()):
-            # try to subprocess and run smartctl for any disk that we didn't get the temp
-            # for using the much quicker methods
-            temps.update({disk: self.middleware.call_sync('disk.temperature_uncached', disk, 'never')})
-
-        return temps
+        return get_disks_temperatures()
 
     @private
     def get_temp_value(self, value):

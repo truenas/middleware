@@ -1,15 +1,14 @@
+import humanfriendly
 import psutil
 import time
-
-import humanfriendly
 
 from middlewared.event import EventSource
 from middlewared.schema import Dict, Float, Int
 from middlewared.validators import Range
 
-from .iostat import DiskStats
-from .ifstat import IfStats
 from .arcstat import ZfsArcStats
+from .ifstat import IfStats
+from .iostat import DiskStats
 
 
 class RealtimeEventSource(EventSource):
@@ -138,6 +137,12 @@ class RealtimeEventSource(EventSource):
             # Virtual memory use
             data['memory'] = self.get_memory_info(data['zfs']['arc_size'])
             data['virtual_memory'] = psutil.virtual_memory()._asdict()
+
+            # this gathers the most recent metric recorded via netdata (for all charts)
+            # allmetrics = self.middleware.call_sync('netdata.get_all_metrics')
+
+            # memory info (including zfs arc)
+            # data.update(self.middleware.call_sync('reporting.memory.info', allmetrics))
 
             # Get CPU usage %
             data['cpu'] = {}

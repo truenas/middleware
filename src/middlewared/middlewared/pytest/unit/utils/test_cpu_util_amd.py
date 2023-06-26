@@ -1,10 +1,9 @@
 # -*- coding=utf-8 -*-
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
-from middlewared.plugins.reporting.cpu_temperatures import ReportingService
-from middlewared.pytest.unit.middleware import Middleware
+from middlewared.utils.cpu import _amd_cpu_temperatures
 
 
 @pytest.mark.parametrize("model,core_count,reading,result", [
@@ -37,7 +36,9 @@ from middlewared.pytest.unit.middleware import Middleware
     }, dict(enumerate([40] * 16))),
 ])
 def test_amd_cpu_temperatures(model, core_count, reading, result):
-    middleware = Middleware()
-    middleware["system.cpu_info"] = Mock(return_value={"cpu_model": model, "physical_core_count": core_count})
-    es = ReportingService(middleware)
-    assert es._amd_cpu_temperatures(reading) == result
+    with patch(
+        "middlewared.utils.cpu.cpu_info", Mock(
+            return_value={"cpu_model": model, "physical_core_count": core_count}
+        )
+    ):
+        assert _amd_cpu_temperatures(reading) == result
