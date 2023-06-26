@@ -48,6 +48,14 @@ class ReportingService(Service):
             'recursive': True,
             'posixacl': True,
         })
+        os.makedirs('/var/log/netdata', exist_ok=True)
+        self.middleware.call_sync(
+            'filesystem.acltool', '/var/log/netdata', 'chown',
+            self.NETDATA_UID, self.NETDATA_GID, {
+                'recursive': True,
+                'posixacl': True,
+            }
+        )
 
         return True
 

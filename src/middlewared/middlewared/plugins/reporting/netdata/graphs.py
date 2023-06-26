@@ -38,6 +38,23 @@ class DISKPlugin(GraphBase):
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return f'disk.{identifier}'
 
+    def normalize_metrics(self, metrics) -> dict:
+        metrics = super().normalize_metrics(metrics)
+        if len(metrics['legend']) < 3:
+            for to_add in {'time', 'reads', 'writes'} - set(metrics['legend']):
+                metrics['legend'].append(to_add)
+
+        write_column = metrics['legend'].index('writes')
+        for index, data in enumerate(metrics['data']):
+            data_length = len(data)
+            if data_length < 3:
+                for i in range(3 - data_length):
+                    data.append(0)
+
+            if data[write_column] is not None:
+                metrics['data'][index][write_column] = abs(data[write_column])
+        return metrics
+
 
 class InterfacePlugin(GraphBase):
 
@@ -50,6 +67,23 @@ class InterfacePlugin(GraphBase):
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return f'net.{identifier}'
+
+    def normalize_metrics(self, metrics) -> dict:
+        metrics = super().normalize_metrics(metrics)
+        if len(metrics['legend']) < 3:
+            for to_add in {'time', 'received', 'sent'} - set(metrics['legend']):
+                metrics['legend'].append(to_add)
+
+        sent_column = metrics['legend'].index('sent')
+        for index, data in enumerate(metrics['data']):
+            data_length = len(data)
+            if data_length < 3:
+                for i in range(3 - data_length):
+                    data.append(0)
+
+            if data[sent_column] is not None:
+                metrics['data'][index][sent_column] = abs(data[sent_column])
+        return metrics
 
 
 class LoadPlugin(GraphBase):
@@ -79,28 +113,6 @@ class MemoryPlugin(GraphBase):
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'system.ram'
-
-
-class NFSStatPlugin(GraphBase):
-
-    title = 'NFS input/output stats'
-
-    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'nfsd.io'
-
-
-class ProcessesPlugin(GraphBase):
-
-    title = 'System Processes State'
-    vertical_label = 'Processes'
-
-    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return 'system.processes_state'
-
-    def query_parameters(self) -> dict:
-        return super().query_parameters() | {
-            'dimensions': 'running|sleeping_uninterruptible|sleeping_interruptible|stopped|zombie',
-        }
 
 
 class SwapPlugin(GraphBase):

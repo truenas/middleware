@@ -27,10 +27,10 @@ class ReportingMemoryService(Service):
         system_total = [system_free + system_used, sys_ram_unit]
 
         # swap
-        if system_swaps := allmetrics['system.swap']:
+        if system_swaps := allmetrics.get('system.swap', {}):
             swap_unit = system_swaps['units']
-            swap_free = [allmetrics['system.swap']['dimensions']['free']['value'], swap_unit]
-            swap_used = [allmetrics['system.swap']['dimensions']['used']['value'], swap_unit]
+            swap_free = [system_swaps['dimensions']['free']['value'], swap_unit]
+            swap_used = [system_swaps['dimensions']['used']['value'], swap_unit]
             swap_total = [swap_free + swap_used, swap_unit]
         else:
             swap_free, swap_used, swap_total = [0.0, 'MiB'], [0.0, 'MiB'], [0.0, 'MiB']

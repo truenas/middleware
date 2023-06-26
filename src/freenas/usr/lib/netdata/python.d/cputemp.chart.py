@@ -28,4 +28,4 @@ class Service(SimpleService):
         return True
 
     def _get_data(self):
-        return cpu_temperatures() or {str(i): None for i in range(cpu_info()['core_count'])}
+        return cpu_temperatures() or {str(i): 0 for i in range(cpu_info()['core_count'])}

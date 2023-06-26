@@ -1,10 +1,6 @@
 <%
-	import os
-
 	from middlewared.plugins.reporting.netdata.utils import NETDATA_PORT
 
-	# Let's ensure that /var/log/netdata directory exists
-	os.makedirs('/var/log/netdata', exist_ok=True)
 
 	if not middleware.call_sync('reporting.netdata_setup'):
 		# Let's exit if netdata storage is not in place
@@ -19,7 +15,7 @@
 	web files group = root
 	# Netdata is not designed to be exposed to potentially hostile
 	# networks. See https://github.com/netdata/netdata/issues/164
-	bind socket to IP = 0.0.0.0:${NETDATA_PORT}
+	bind socket to IP = 127.0.0.1:${NETDATA_PORT}
 
 [db]
 	mode = dbengine
@@ -108,7 +104,7 @@
 [plugin:proc:/proc/diskstats]
 	enable new disks detected at runtime = yes
 	performance metrics for physical disks = yes
-	performance metrics for virtual disks = no
+	performance metrics for virtual disks = yes
 	performance metrics for partitions = no
 	bandwidth for all disks = auto
 	operations for all disks = auto

@@ -41,9 +41,11 @@ def cpu_temperatures() -> dict:
     sensors = json.loads(cp.stdout)
     amd_sensor = sensors.get('k10temp-pci-00c3')
     if amd_sensor:
-        return _amd_cpu_temperatures(amd_sensor)
+        data = _amd_cpu_temperatures(amd_sensor)
     else:
-        return _generic_cpu_temperatures(sensors)
+        data = _generic_cpu_temperatures(sensors)
+
+    return {str(k): v for k, v in data.items()}
 
 
 def _generic_cpu_temperatures(sensors: dict) -> dict:
@@ -57,20 +59,18 @@ def _generic_cpu_temperatures(sensors: dict) -> dict:
                     temperatures[chip][int(m.group(1))] = value
                     break
 
-    return {
-        str(k): v for k, v in dict(enumerate(sum(
-            [
-                [temperatures[chip][core] for core in sorted(temperatures[chip].keys())]
-                for chip in sorted(temperatures.keys())
-            ],
-            [],
-        ))).items()
-    }
+    return dict(enumerate(sum(
+        [
+            [temperatures[chip][core] for core in sorted(temperatures[chip].keys())]
+            for chip in sorted(temperatures.keys())
+        ],
+        [],
+    )))
 
 
 def _amd_cpu_temperatures(amd_sensor: dict) -> dict:
     cpu_model = cpu_info()['cpu_model']
-    core_count = cpu_info()['core_count']
+    core_count = cpu_info()['physical_core_count']
 
     ccds = []
     for k, v in amd_sensor.items():

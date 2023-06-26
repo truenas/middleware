@@ -1,7 +1,6 @@
 import aiohttp
 import aiohttp.client_exceptions
 import asyncio
-import async_timeout
 import contextlib
 
 from .exceptions import ApiException
@@ -20,13 +19,12 @@ class ClientMixin:
         resource = resource.removeprefix('/')
         uri = f'{NETDATA_URI}/{version}/{resource}'
         try:
-            async with async_timeout.timeout(timeout):
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(uri) as resp:
-                        if resp.status != 200:
-                            raise ApiException(f'Received {resp.status!r} response code from {uri!r}')
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
+                async with session.get(uri) as resp:
+                    if resp.status != 200:
+                        raise ApiException(f'Received {resp.status!r} response code from {uri!r}')
 
-                        yield resp
+                    yield resp
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {resource!r} call: {e!r}')
 

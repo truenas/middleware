@@ -33,4 +33,4 @@ class Service(SimpleService):
             get_disks_for_temperature_reading()
         ):
             self.charts['temperatures'].add_dimension([non_registered_disks.id])
-        return get_disks_temperatures() or {disk.id: None for disk in get_disks_for_temperature_reading()}
+        return get_disks_temperatures() or {disk.id: 0 for disk in get_disks_for_temperature_reading()}

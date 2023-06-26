@@ -84,8 +84,10 @@ class GraphBase(metaclass=GraphMeta):
         data = {
             'name': self.name,
             'identifier': identifier or self.name,
-            **self.normalize_metrics(await Netdata.get_chart_metrics(
-                self.get_chart_name(identifier), self.query_parameters() | query_params,
+            **(await self.middleware.run_in_thread(
+                self.normalize_metrics, await Netdata.get_chart_metrics(
+                    self.get_chart_name(identifier), self.query_parameters() | query_params,
+                ),
             )),
             'start': query_params['after'],
             'end': query_params['before'],

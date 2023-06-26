@@ -120,9 +120,9 @@ class ReportingService(Service):
             {
                 "id": "6841f242-840a-11e6-a437-00e04d680384",
                 "msg": "method",
-                "method": "reporting.get_data",
+                "method": "reporting.netdata_get_data",
                 "params": [
-                    [{"name": "nfsstat"}],
+                    [{"name": "cpu"}],
                     {"unit": "HOURLY"},
                 ]
             }
@@ -145,7 +145,7 @@ class ReportingService(Service):
         query_params = await self.middleware.call('reporting.translate_query_params', query)
         rv = []
         for graph_plugin in self.__graphs.values():
-            idents = graph_plugin.get_identifiers()
+            idents = await graph_plugin.get_identifiers()
             if idents is None:
                 idents = [None]
             for ident in idents:
