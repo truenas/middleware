@@ -24,8 +24,6 @@ class NetworkConfigurationModel(sa.Model):
     gc_nameserver2 = sa.Column(sa.String(45), default='')
     gc_nameserver3 = sa.Column(sa.String(45), default='')
     gc_httpproxy = sa.Column(sa.String(255))
-    gc_netwait_enabled = sa.Column(sa.Boolean(), default=False)
-    gc_netwait_ip = sa.Column(sa.String(300))
     gc_hosts = sa.Column(sa.Text(), default='')
     gc_domains = sa.Column(sa.Text(), default='')
     gc_service_announcement = sa.Column(sa.JSON(type=dict), default={'mdns': True, 'wsdd': True, "netbios": False})
@@ -52,8 +50,6 @@ class NetworkConfigurationService(ConfigService):
         IPAddr('nameserver2', required=True),
         IPAddr('nameserver3', required=True),
         Str('httpproxy', required=True),
-        Bool('netwait_enabled', required=True),
-        List('netwait_ip', required=True, items=[Str('netwait_ip')]),
         List('hosts', required=True, items=[Str('host')]),
         List('domains', required=True, items=[Str('domain')]),
         Dict(
@@ -123,7 +119,6 @@ class NetworkConfigurationService(ConfigService):
                 data['hostname_local'] = data['hostname_b']
 
         data['domains'] = data['domains'].split()
-        data['netwait_ip'] = data['netwait_ip'].split()
         if (hosts := data['hosts'].strip()):
             data['hosts'] = hosts.split('\n')
         else:
@@ -199,12 +194,6 @@ class NetworkConfigurationService(ConfigService):
             ):
                 verrors.add(f'{schema}.ipv4gateway', f'Gateway {ipv4_gateway_value} is unreachable')
 
-        for ip in data.get('netwait_ip', []):
-            try:
-                ipaddress.ip_address(ip)
-            except ValueError as e:
-                verrors.add(f'{schema}.netwait_ip', f'{e.__str__()}')
-
         if (domains := data.get('domains', [])) and len(domains) > 5:
             verrors.add(f'{schema}.domains', 'No more than 5 additional domains are allowed')
 
@@ -251,9 +240,6 @@ class NetworkConfigurationService(ConfigService):
         `nameserver3` is tertiary DNS server.
 
         `httpproxy` attribute must be provided if a proxy is to be used for network operations.
-
-        `netwait_enabled` is a boolean attribute which when set indicates that network services will not start at
-        boot unless they are able to ping the addresses listed in `netwait_ip` list.
 
         `service_announcement` determines the broadcast protocols that will be used to advertise the server.
         `netbios` enables the NetBIOS name server (NBNS), which starts concurrently with the SMB service. SMB clients
@@ -304,9 +290,7 @@ class NetworkConfigurationService(ConfigService):
         # and doesn't exist in the database
         new_config.pop('hostname_local', None)
 
-        # normalize the `domains`, `hosts`, and `netwait_ip` keys
         new_config['domains'] = ' '.join(new_config.get('domains', []))
-        new_config['netwait_ip'] = ' '.join(new_config.get('netwait_ip', []))
         new_config['hosts'] = '\n'.join(new_config.get('hosts', []))
 
         # update the db
