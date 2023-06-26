@@ -1,14 +1,14 @@
 import errno
 import os
 
-import middlewared.sqlalchemy as sa
-
 from fenced.fence import ExitCode as FencedExitCodes
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.schema import Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
+import middlewared.sqlalchemy as sa
+from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
 from .utils import ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE
@@ -225,10 +225,56 @@ class PoolService(CRUDService):
         # regenerate crontab because of scrub
         await self.middleware.call('service.restart', 'cron')
 
-    async def __common_validation(self, verrors, data, schema_name, old=None):
+    async def _process_topology(self, schema_name, data, old=None):
+        verrors = ValidationErrors()
 
-        if 'topology' not in data:
-            return
+        verrors.add_child(
+            schema_name,
+            await self._validate_topology(data, old),
+        )
+        verrors.check()
+
+        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
+        verrors.add_child(
+            schema_name,
+            await self.middleware.call('disk.check_disks_availability', list(disks),
+                                       data['allow_duplicate_serials']),
+        )
+        verrors.check()
+
+        disks_cache = dict(map(lambda x: (x['devname'], x), await self.middleware.call('disk.query')))
+        min_data_size = min([
+            disks_cache[disk]['size']
+            for disk in (
+                sum([vdev['disks'] for vdev in data['topology'].get('data', [])], []) +
+                (
+                    [
+                        device['disk']
+                        for device in await self.middleware.call(
+                            'pool.flatten_topology',
+                            {'data': old['topology']['data']},
+                        )
+                        if device['type'] == 'DISK'
+                    ]
+                    if old else []
+                )
+            )
+            if disk in disks_cache
+        ])
+        for spare_disk in data['topology'].get('spares') or []:
+            spare_size = disks_cache[spare_disk]['size']
+            if spare_size < min_data_size:
+                verrors.add(
+                    f'{schema_name}.topology',
+                    f'Spare {spare_disk} ({format_size(spare_size)}) is smaller than the smallest data disk '
+                    f'({format_size(min_data_size)})'
+                )
+        verrors.check()
+
+        return disks, vdevs
+
+    async def _validate_topology(self, data, old=None):
+        verrors = ValidationErrors()
 
         def disk_to_stripe(topology_type):
             """
@@ -271,13 +317,13 @@ class PoolService(CRUDService):
                 mindisks = minmap[vdev['type']]
                 if numdisks < mindisks:
                     verrors.add(
-                        f'{schema_name}.topology.{topology_type}.{i}.disks',
+                        f'topology.{topology_type}.{i}.disks',
                         f'You need at least {mindisks} disk(s) for this vdev type.',
                     )
 
                 if lastdatatype and lastdatatype != vdev['type']:
                     verrors.add(
-                        f'{schema_name}.topology.{topology_type}.{i}.type',
+                        f'topology.{topology_type}.{i}.type',
                         f'You are not allowed to create a pool with different {topology_type} vdev types '
                         f'({lastdatatype} and {vdev["type"]}).',
                     )
@@ -287,9 +333,11 @@ class PoolService(CRUDService):
             value = data['topology'].get(i)
             if value and len(value) > 1:
                 verrors.add(
-                    f'{schema_name}.topology.{i}',
+                    f'topology.{i}',
                     f'Only one row for the virtual device of type {i} is allowed.',
                 )
+
+        return verrors
 
     @accepts(Dict(
         'pool_create',
@@ -434,6 +482,8 @@ class PoolService(CRUDService):
             }, 'pool_create.encryption_options',
         )
 
+        verrors.check()
+
         is_ha = await self.middleware.call('failover.licensed')
         if is_ha and (rc := await self.middleware.call('failover.fenced.start')):
             if rc == FencedExitCodes.ALREADY_RUNNING.value:
@@ -447,13 +497,7 @@ class PoolService(CRUDService):
                     err = i.name
                 raise CallError(err)
 
-        await self.__common_validation(verrors, data, 'pool_create')
-        disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-        verrors.add_child(
-            'pool_create',
-            await self.middleware.call('disk.check_disks_availability', list(disks), data['allow_duplicate_serials']),
-        )
-        verrors.check()
+        disks, vdevs = await self._process_topology('pool_create', data)
 
         if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
             if log_disks := {disk: osize
@@ -606,19 +650,9 @@ class PoolService(CRUDService):
         """
         pool = await self.get_instance(id)
 
-        verrors = ValidationErrors()
-
-        await self.__common_validation(verrors, data, 'pool_update', old=pool)
         disks = vdevs = None
         if 'topology' in data:
-            disks, vdevs = await self.__convert_topology_to_vdevs(data['topology'])
-            verrors.add_child(
-                'pool_update',
-                await self.middleware.call(
-                    'disk.check_disks_availability', list(disks), data['allow_duplicate_serials']
-                )
-            )
-        verrors.check()
+            disks, vdevs = await self._process_topology('pool_update', data, pool)
 
         if disks and vdevs:
             await self.middleware.call('pool.format_disks', job, disks)
