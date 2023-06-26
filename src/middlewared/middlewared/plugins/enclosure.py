@@ -1,19 +1,28 @@
 import asyncio
 import logging
 import os
-import re
 import pathlib
+import re
 from collections import OrderedDict
 
-from libsg3.ses import EnclosureDevice
+try:
+    from libsg3.ses import EnclosureDevice
+except ImportError:
+    # this happens on our CI/CD runners as
+    # they do not install the py-libsg3 module
+    # to run our api integration tests
+    # client.py has a similar issue with py-libzfs
+    LIBSG3 = False
+else:
+    LIBSG3 = True
+import middlewared.sqlalchemy as sa
+from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
+from middlewared.plugins.enclosure_.r30_drive_identify import \
+    set_slot_status as r30_set_slot_status
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.service_exception import MatchNotFound
-from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
-import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
-from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
-
 
 logger = logging.getLogger(__name__)
 
@@ -211,25 +220,26 @@ class EnclosureService(CRUDService):
             r30_set_slot_status(slot, status)
             return
 
-        for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
-            enc = EnclosureDevice(i)
-            if (data := enc.status()) and data['id'] == enclosure_id:
-                for idx, info in filter(lambda x: x[0] == slot and x[1]['type'] == 23, data['elements'].items()):
-                    if status == 'CLEAR':
-                        actions = (('get=ident', 'clear=ident'), ('get=fault', 'clear=fault'))
-                    else:
-                        actions = ((f'get={status[:5].lower()}', f'clear={status[:5].lower()}'))
+        if LIBSG3:
+            for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
+                enc = EnclosureDevice(i)
+                if (data := enc.status()) and data['id'] == enclosure_id:
+                    for idx, info in filter(lambda x: x[0] == slot and x[1]['type'] == 23, data['elements'].items()):
+                        if status == 'CLEAR':
+                            actions = (('get=ident', 'clear=ident'), ('get=fault', 'clear=fault'))
+                        else:
+                            actions = ((f'get={status[:5].lower()}', f'clear={status[:5].lower()}'))
 
-                    try:
-                        for getit, setit in actions:
-                            if enc.set_control(slot, getit):  # returns 1 if it's currently turned on
-                                enc.set_control(slot, setit)
-                    except OSError:
-                        msg = f'Failed to {status} slot {slot!r} on enclosure {i!r}'
-                        self.logger.warning(msg, exc_info=True)
-                        raise CallError(msg)
-                    else:
-                        return
+                        try:
+                            for getit, setit in actions:
+                                if enc.set_control(slot, getit):  # returns 1 if it's currently turned on
+                                    enc.set_control(slot, setit)
+                        except OSError:
+                            msg = f'Failed to {status} slot {slot!r} on enclosure {i!r}'
+                            self.logger.warning(msg, exc_info=True)
+                            raise CallError(msg)
+                        else:
+                            return
 
     @private
     def sync_disk(self, id, enclosure_info=None, retry=False):
@@ -272,22 +282,23 @@ class EnclosureService(CRUDService):
         """
         Sync enclosure of a given ZFS pool
         """
-        for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
-            enc = EnclosureDevice(i)
-            for slot, info in filter(lambda x: x[0] != 0 and x[1]['type'] == 23, enc.status()['elements'].items()):
-                # slot 0 is the group identifer disk slots
-                # type 23 is "Array Device Slot" (i.e. disks)
-                slot_str = f'{slot - 1}'
-                try:
-                    if enc.set_control(slot_str, 'get=ident'):
-                        # identify light is on, clear it
-                        enc.set_control(slot_str, 'clear=ident')
-                    if enc.set_control(slot_str, 'get=fault'):
-                        # fault light is on, clear it
-                        enc.set_control(slot_str, 'clear=fault')
-                except OSError:
-                    self.logger.warning('Failed to clear slot %r on enclosure %r', slot, i, exc_info=True)
-                    return
+        if LIBSG3:
+            for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
+                enc = EnclosureDevice(i)
+                for slot, info in filter(lambda x: x[0] != 0 and x[1]['type'] == 23, enc.status()['elements'].items()):
+                    # slot 0 is the group identifer disk slots
+                    # type 23 is "Array Device Slot" (i.e. disks)
+                    slot_str = f'{slot - 1}'
+                    try:
+                        if enc.set_control(slot_str, 'get=ident'):
+                            # identify light is on, clear it
+                            enc.set_control(slot_str, 'clear=ident')
+                        if enc.set_control(slot_str, 'get=fault'):
+                            # fault light is on, clear it
+                            enc.set_control(slot_str, 'clear=fault')
+                    except OSError:
+                        self.logger.warning('Failed to clear slot %r on enclosure %r', slot, i, exc_info=True)
+                        return
 
     def __get_enclosures(self):
         return Enclosures(
