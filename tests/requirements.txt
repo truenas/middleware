@@ -4,3 +4,4 @@ pytest-rerunfailures
 pytest-timeout
 requests
 websocket-client
+pysnmplib
