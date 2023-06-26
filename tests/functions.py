@@ -3,18 +3,18 @@
 # Author: Eric Turgeon
 # License: BSD
 
-import requests
 import json
 import os
 import re
-import websocket
 import uuid
-from subprocess import run, Popen, PIPE
+from subprocess import PIPE, Popen, TimeoutExpired, run
 from time import sleep
 from urllib.parse import urlparse
 
-from auto_config import api_url, user, password
+import requests
+import websocket
 
+from auto_config import api_url, password, user
 
 if "controller1_ip" in os.environ:
     controller1_ip = os.environ["controller1_ip"]
@@ -118,6 +118,34 @@ def SSH_TEST(command, username, passwrd, host):
         return {'result': False, 'output': output, 'stderr': stderr, 'return_code': process.returncode}
     else:
         return {'result': True, 'output': output, 'stderr': stderr, 'return_code': process.returncode}
+
+
+def async_SSH_start(command, username, passwrd, host):
+    cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
+    cmd += [
+        "ssh",
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "VerifyHostKeyDNS=no",
+        "-o",
+        "LogLevel=quiet",
+        f"{username}@{host}",
+        command
+    ]
+    return Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+
+
+def async_SSH_done(proc, timeout=120):
+    try:
+        outs, errs = proc.communicate(timeout=timeout)
+    except TimeoutExpired:
+        proc.kill()
+        outs, errs = proc.communicate()
+
+    return outs, errs
 
 
 def send_file(file, destination, username, passwrd, host):
