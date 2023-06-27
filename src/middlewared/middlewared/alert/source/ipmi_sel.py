@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from datetime import datetime
 import csv
 from datetime import timedelta
@@ -76,6 +76,22 @@ def parse_sel_information(output):
         k.strip(): v.strip()
         for k, v in [line.split(":", 1) for line in output.split("\n") if line.strip() and ":" in line]
     }
+
+
+def remove_deasserted_records(records):
+    records = records.copy()
+    assertions = defaultdict(lambda: defaultdict(set))
+    for i, record in enumerate(records):
+        event_assertions = assertions[record.sensor][record.event]
+        if record.direction == "Asserted":
+            event_assertions.add(i)
+        if record.direction == "Deasserted":
+            for j in event_assertions:
+                records[j] = None
+            records[i] = None
+            event_assertions.clear()
+
+    return list(filter(None, records))
 
 
 class IPMISELAlertClass(AlertClass, DismissableAlertClass):
@@ -169,6 +185,8 @@ class IPMISELAlertSource(AlertSource):
                         for sensor, event in self.IPMI_EVENTS_BLACKLIST)
             )
         ]
+
+        records = remove_deasserted_records(records)
 
         if records:
             if await self.middleware.call("keyvalue.has_key", self.dismissed_datetime_kv_key):
