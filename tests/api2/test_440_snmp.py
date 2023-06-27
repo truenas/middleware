@@ -1,21 +1,78 @@
 #!/usr/bin/env python3
 # License: BSD
 
-import pytest
-import sys
 import os
+import sys
+from time import sleep
+
+import pytest
+from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
+                          ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
 from pytest_dependency import depends
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, GET, POST, SSH_TEST
-from auto_config import ip, password, user, dev_test
+from auto_config import dev_test, ha, interface, password, user
+from functions import GET, POST, PUT, SSH_TEST, async_SSH_done, async_SSH_start
+
+if ha and "virtual_ip" in os.environ:
+    ip = os.environ["virtual_ip"]
+    controller1_ip = os.environ['controller1_ip']
+    controller2_ip = os.environ['controller2_ip']
+else:
+    from auto_config import ip
+
 # comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
 TRAPS = False
 CONTACT = 'root@localhost.com'
 LOCATION = 'Maryville, TN'
 PASSWORD = 'testing1234'
+
+
+def get_sysname(hostip, community):
+    iterator = getCmd(SnmpEngine(),
+                      CommunityData(community),
+                      UdpTransportTarget((hostip, 161)),
+                      ContextData(),
+                      ObjectType(ObjectIdentity('SNMPv2-MIB', 'sysName', 0)))
+    errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+    assert errorIndication is None, errorIndication
+    assert errorStatus == 0, errorStatus
+    value = str(varBinds[0])
+    _prefix = "SNMPv2-MIB::sysName.0 = "
+    assert value.startswith(_prefix), value
+    return value[len(_prefix):]
+
+
+def validate_snmp_get_sysname_uses_same_ip(hostip):
+    """Test that when we query a particular interface by SNMP the response comes from the same IP."""
+
+    # Write the test in a manner that is portable between Linux and FreeBSD ... which means
+    # *not* using 'any' as the interface name.  We will use the interface supplied by the
+    # test runner instead.
+    print(f"Testing {hostip}")
+    p = async_SSH_start(f"tcpdump -t -i {interface} -n udp port 161 -c2", user, password, hostip)
+    # Give some time so that the tcpdump has started before we proceed
+    sleep(5)
+
+    get_sysname(hostip, COMMUNITY)
+
+    # Now collect and process the tcpdump output
+    outs, errs = async_SSH_done(p, 20)
+    output = outs.strip()
+    assert len(output), f"No output from tcpdump:{outs}"
+    lines = output.split("\n")
+    assert len(lines) == 2, f"Unexpected number of lines output by tcpdump: {outs}"
+    for line in lines:
+        assert line.split()[0] == 'IP'
+    # print(errs)
+    get_dst = lines[0].split()[3].rstrip(':')
+    reply_src = lines[1].split()[1]
+    assert get_dst == reply_src
+    assert get_dst.endswith(".161")
 
 
 def test_01_Configure_SNMP():
@@ -70,3 +127,14 @@ def test_08_Validate_that_SNMP_settings_are_preserved():
     assert data['contact'] == CONTACT
     assert data['location'] == LOCATION
     assert data['v3_password'] == PASSWORD
+
+
+def test_09_get_sysname_reply_uses_same_ip():
+    validate_snmp_get_sysname_uses_same_ip(ip)
+
+
+@skip_ha_tests
+def test_10_ha_get_sysname_reply_uses_same_ip():
+    validate_snmp_get_sysname_uses_same_ip(ip)
+    validate_snmp_get_sysname_uses_same_ip(controller1_ip)
+    validate_snmp_get_sysname_uses_same_ip(controller2_ip)
