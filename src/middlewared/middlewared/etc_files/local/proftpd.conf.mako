@@ -15,7 +15,6 @@ User nobody
 Group nogroup
 Umask ${ftp['filemask']} ${ftp['dirmask']}
 SyslogFacility ftp
-MultilineRFC2228 off
 DisplayLogin /var/run/proftpd/proftpd.motd
 DeferWelcome off
 TimeoutIdle ${ftp['timeout']}
@@ -131,7 +130,6 @@ AuthOrder mod_auth_unix.c
                     ('common_name_required', 'CommonNameRequired'),
                     ('enable_diags', 'EnableDiags'),
                     ('export_cert_data', 'ExportCertData'),
-                    ('no_cert_request', 'NoCertRequest'),
                     ('no_empty_fragments', 'NoEmptyFragments'),
                     ('no_session_reuse_required', 'NoSessionReuseRequired'),
                     ('stdenvvars', 'StdEnvVars'),
