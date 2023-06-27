@@ -124,15 +124,19 @@ class TwoFactorAuthService(ConfigService):
             'datastore.query', 'account.twofactor_user_auth', [['secret', '!=', None]]
         ):
             username = None
+            ad_user = False
             if config['user']:
                 username = config['user']['bsdusr_username']
             elif user := mapping.get(config['user_sid']):
                 username = user['username']
+                ad_user = True
 
             if username:
                 users.append({
                     'username': username,
-                    'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode()
+                    'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode(),
+                    'row_id': config['id'],
+                    'ad_user': ad_user,
                 })
 
         return users
