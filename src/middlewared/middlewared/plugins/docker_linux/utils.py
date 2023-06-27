@@ -90,13 +90,19 @@ def get_docker_client() -> docker.DockerClient:
 
 
 @contextlib.contextmanager
-def docker_auth(auth: dict) -> None:
+def docker_auth(auth: dict, registry: str) -> None:
     """
     Authenticates docker client in a context manager with given credentials using subprocess and a
     try/finally block to logout
     """
     if auth:
-        cp = Popen(['docker', 'login', '-u', auth['username'], '-p', auth['password']], stderr=PIPE, stdout=DEVNULL)
+        docker_login_args = ['docker', 'login']
+        if registry != DEFAULT_DOCKER_REGISTRY:
+            docker_login_args.append(registry)
+
+        cp = Popen(
+            docker_login_args + ['-u', auth['username'], '-p', auth['password']], stderr=PIPE, stdout=DEVNULL
+        )
         stderr = cp.communicate()[1]
         if cp.returncode != 0:
             raise CallError(f'Failed to login to docker registry: {stderr.decode()}')
