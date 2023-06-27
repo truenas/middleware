@@ -8,6 +8,7 @@ from time import sleep
 import pytest
 from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
                           ObjectType, SnmpEngine, UdpTransportTarget, getCmd)
+from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
