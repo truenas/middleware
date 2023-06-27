@@ -78,6 +78,19 @@ class TwoFactorAuthService(ConfigService):
 
         config.update(data)
 
+        if config == old_config:
+            return
+
+        if any(config[k] != old_config[k] for k in ['otp_digits', 'interval']):
+            # Now we want to reset all the secrets for local/non-local users
+            for user in await self.middleware.call('auth.twofactor.get_users_config'):
+                if user['ad_user']:
+                    await self.middleware.call('datastore.delete', 'account.twofactor_user_auth', user['row_id'])
+                else:
+                    await self.middleware.call('datastore.update', 'account.twofactor_user_auth', user['row_id'], {
+                        'secret': None,
+                    })
+
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
