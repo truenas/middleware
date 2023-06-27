@@ -10,7 +10,7 @@ from middlewared.schema import (
     accepts, Any, Attribute, EnumMixin, Bool, Dict, Int, List, NOT_PROVIDED, Patch, Ref, returns, Str
 )
 from middlewared.service import (
-    CallError, CRUDService, filterable, item_method, job, pass_app, private, ValidationErrors
+    CallError, CRUDService, filterable, InstanceNotFound, item_method, job, pass_app, private, ValidationErrors
 )
 from middlewared.utils import filter_list
 from middlewared.validators import Exact, Match, Or, Range
@@ -580,7 +580,11 @@ class PoolDatasetService(CRUDService):
 
         unencrypted_parent = False
         for parent in get_dataset_parents(data['name']):
-            check_ds = await self.middleware.call('pool.dataset.get_instance_quick', parent, {'encryption': True})
+            try:
+                check_ds = await self.middleware.call('pool.dataset.get_instance_quick', parent, {'encryption': True})
+            except InstanceNotFound:
+                continue
+
             if check_ds['encrypted']:
                 if unencrypted_parent:
                     verrors.add(
