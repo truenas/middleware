@@ -12,7 +12,9 @@ from middlewared.schema import Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service import accepts, CallError, filterable, job, private, CRUDService
 from middlewared.utils import filter_list
 
-from .utils import DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO, docker_auth
+from .utils import (
+    DEFAULT_DOCKER_IMAGES_LIST_PATH, DEFAULT_DOCKER_REGISTRY, DEFAULT_DOCKER_REPO, docker_auth, normalize_reference,
+)
 
 
 DEFAULT_DOCKER_IMAGES_PATH = '/usr/local/share/docker_images/docker-images.tar'
@@ -120,7 +122,9 @@ class DockerImagesService(CRUDService):
         """
         self.middleware.call_sync('container.image.docker_checks')
 
-        with docker_auth(data.get('docker_authentication')):
+        with docker_auth(
+            data.get('docker_authentication'), normalize_reference(data['from_image'])['registry']
+        ):
             subprocess.run(['docker', 'pull', f'{data["from_image"]}:{data["tag"]}'], check=True)
 
         self.middleware.call_sync('container.image.clear_update_flag_for_tag', f'{data["from_image"]}:{data["tag"]}')
