@@ -16,7 +16,7 @@ def clone_repository(
             (['--depth', str(depth)], depth),
         )
     ):
-        args.append(arg)
+        args.extend(arg)
 
     cp = subprocess.run(['git', 'clone'] + args + [repository_uri, destination], capture_output=True)
     if cp.returncode:
