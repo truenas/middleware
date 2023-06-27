@@ -34,7 +34,7 @@ from middlewared.schema import (
 from middlewared.service import (
     ConfigService, filterable, item_method, job, pass_app, private, CallError, CRUDService, ValidationErrors, periodic
 )
-from middlewared.service_exception import InstanceNotFound, ValidationError
+from middlewared.service_exception import InstanceNotFound, MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, run
 from middlewared.utils.asyncio_ import asyncio_map
@@ -3339,7 +3339,7 @@ class PoolDatasetService(CRUDService):
                     'get': True,
                     'extra': {'recursive': False},
                 })
-            except InstanceNotFound:
+            except MatchNotFound:
                 continue
 
             if check_ds['encrypted']:
