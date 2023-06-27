@@ -23,7 +23,7 @@ class SlackAlertService(ThreadedAlertService):
             self.attributes["url"],
             headers={"Content-type": "application/json"},
             data=json.dumps({
-                "text": html.escape(html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts))),
+                "text": html.escape(html2text.html2text(self._format_alerts(alerts, gone_alerts, new_alerts)), quote=False),
             }),
             timeout=INTERNET_TIMEOUT,
         )
