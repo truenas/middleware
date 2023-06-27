@@ -1,14 +1,11 @@
-import contextlib
-import git
 import logging
 import os
-import shutil
 import threading
 
 from collections import defaultdict
-from git.exc import GitCommandError
 
 from middlewared.service import CallError
+from middlewared.utils.git import clone_repository, checkout_repository, update_repo, validate_git_repo
 
 
 GIT_LOCK = defaultdict(threading.Lock)
@@ -19,42 +16,27 @@ def convert_repository_to_path(git_repository_uri, branch):
     return git_repository_uri.split('://', 1)[-1].replace('/', '_').replace('.', '_') + f'_{branch}'
 
 
-def clone_repository(repository_uri, destination, depth, branch):
-    shutil.rmtree(destination, ignore_errors=True)
-    return git.Repo.clone_from(repository_uri, destination, env=os.environ.copy(), depth=depth, branch=branch)
-
-
-def get_repo(destination):
-    with contextlib.suppress(git.InvalidGitRepositoryError, git.NoSuchPathError):
-        return git.Repo(destination)
-
-
 def pull_clone_repository(repository_uri, parent_dir, branch, depth=1):
     with GIT_LOCK[repository_uri]:
         os.makedirs(parent_dir, exist_ok=True)
         destination = os.path.join(parent_dir, convert_repository_to_path(repository_uri, branch))
-        repo = get_repo(destination)
-        clone_repo = not bool(repo)
-        if repo:
+        valid_repo = validate_git_repo(destination)
+        clone_repo = not bool(valid_repo)
+        if valid_repo:
             # We will try to checkout branch and do a git pull, if any of these operations fail,
             # we will clone the repository again.
             # Why they might fail is if user has been manually playing with the repo or repo was force-pushed
             try:
-                repo.git.checkout(branch)
-                repo.git.pull()
-            except GitCommandError:
+                checkout_repository(destination, branch)
+                update_repo(destination, branch)
+            except CallError:
                 clone_repo = True
 
         if clone_repo:
             try:
-                repo = clone_repository(repository_uri, destination, depth, branch)
-            except GitCommandError as e:
+                clone_repository(repository_uri, destination, branch, depth)
+            except CallError as e:
                 raise CallError(f'Failed to clone {repository_uri!r} repository at {destination!r} destination: {e}')
-            else:
-                try:
-                    repo.git.checkout(branch)
-                except GitCommandError as e:
-                    raise CallError(f'Failed to checkout {branch!r} branch for {repository_uri!r} repository: {e}')
 
         return True
 
