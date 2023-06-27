@@ -3334,10 +3334,14 @@ class PoolDatasetService(CRUDService):
 
         unencrypted_parent = False
         for check_parent in get_dataset_parents(data['name']):
-            check_ds = await self.middleware.call('zfs.dataset.query', [['name', '=', check_parent]], {
-                'get': True,
-                'extra': {'recursive': False},
-            })
+            try:
+                check_ds = await self.middleware.call('zfs.dataset.query', [['name', '=', check_parent]], {
+                    'get': True,
+                    'extra': {'recursive': False},
+                })
+            except InstanceNotFound:
+                continue
+
             if check_ds['encrypted']:
                 if unencrypted_parent:
                     verrors.add(
