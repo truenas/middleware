@@ -157,6 +157,16 @@ class ZFSPoolService(Service):
                     pool = zfs.get(name)
 
                     if action == 'START':
+                        running_scrubs = len([
+                            pool for pool in zfs.pools
+                            if pool.scrub.state == libzfs.ScanState.SCANNING
+                        ])
+                        if running_scrubs >= 10:
+                            raise CallError(
+                                f'{running_scrubs} scrubs are already running. Running too many scrubs simultaneously '
+                                'will result in an unresponsive system. Refusing to start scrub.'
+                            )
+
                         pool.start_scrub()
                     else:
                         pool.stop_scrub()
