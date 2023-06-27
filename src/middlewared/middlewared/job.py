@@ -433,10 +433,13 @@ class Job:
                     raise
         except asyncio.CancelledError:
             self.set_state('ABORTED')
-        except Exception:
+        except Exception as e:
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
-            logger.error("Job %r failed", self.method, exc_info=True)
+            if isinstance(e, CallError):
+                logger.error("Job %r failed: %r", self.method, e)
+            else:
+                logger.error("Job %r failed", self.method, exc_info=True)
         finally:
             await self.__close_logs()
             await self.__close_pipes()
