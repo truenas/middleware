@@ -42,7 +42,6 @@ class FTPModel(sa.Model):
     ftp_tls_opt_common_name_required = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_enable_diags = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_export_cert_data = sa.Column(sa.Boolean(), default=False)
-    ftp_tls_opt_no_cert_request = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_no_empty_fragments = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_no_session_reuse_required = sa.Column(sa.Boolean(), default=False)
     ftp_tls_opt_stdenvvars = sa.Column(sa.Boolean(), default=False)
@@ -98,7 +97,6 @@ class FTPService(SystemServiceService):
         Bool('tls_opt_common_name_required', required=True),
         Bool('tls_opt_enable_diags', required=True),
         Bool('tls_opt_export_cert_data', required=True),
-        Bool('tls_opt_no_cert_request', required=True),
         Bool('tls_opt_no_empty_fragments', required=True),
         Bool('tls_opt_no_session_reuse_required', required=True),
         Bool('tls_opt_stdenvvars', required=True),
