@@ -504,7 +504,7 @@ class GlusterFilesystemService(Service):
             fd = hdl.open(os.O_DIRECTORY)
             xat_buf = fd.fgetxattr('system.posix_acl_default')
 
-        if data['options']['uid'] == -1 and data['options']['gid'] == -1 and data['options']['mode'] is None:
+        if data['options']['uid'] == -1 and data['options']['gid'] == -1 and data['options'].get('mode') is None:
             attrs = None
         else:
             attrs = data['options']
