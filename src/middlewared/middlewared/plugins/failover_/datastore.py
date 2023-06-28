@@ -5,6 +5,7 @@ from middlewared.service import Service
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import thread_pool
 from middlewared.utils.threading import start_daemon_thread, set_thread_name
+from middlewared.utils import db as db_utils
 
 FREENAS_DATABASE_REPLICATED = f'{FREENAS_DATABASE}.replicated'
 RAISE_ALERT_SYNC_RETRY_TIME = 1200  # 20mins (some platforms take 15-20mins to reboot)
@@ -79,6 +80,43 @@ class FailoverDatastoreService(Service):
         self.middleware.call_sync('alert.oneshot_delete', 'FailoverSyncFailed', None)
 
     def receive(self):
+        # Take the following example:
+        # 1. upgrade both HA controllers
+        # 2. standby controller reboots (by design) into the newly OS version
+        # 3. active controller does NOT reboot (by design)
+        # 4. for some unpredictable reason, upgrade is not "finalized"
+        #   (i.e. reboot the active to failover to the newly upgraded controller, etc)
+        # 5. User (or something inside middleware) makes a change to the database on the active
+        #   (remember it's running the "old" version compared to the standby)
+        # 6. active controller makes changes to local db or the user decides to "sync to peer"
+        # 7. active controller replicates the entire database to the standby
+        # 8. because the standby is running a newer version, then the schema migrations that could
+        #   have occurred on the standby are now lost because the database was replaced _entirely_
+        #   with a copy from the active controller (running an old version)
+        #
+        # The worst part about this scenario is that the standby controller will continue to run
+        # without issue until:
+        # 1. a change is made on the standby that tries to reference the new schema
+        # 2. OR the standby controller reboots (or middlewared service restarts)
+        #
+        # If either of these occur, middlewared service will fail to start and crash early in startup
+        # because the newer middleware will try to query the database referencing the potential changes
+        # that occurred in the schema migration of the upgrade. There is no easy solution to this problem
+        # once you're in this state outside of rolling back to the previous BE and performing a much more
+        # disruptive upgrade. (i.e. booting the ISO and performing an upgrade that way so db replication
+        # doesn't occur since middlewared service isn't running) (i.e. take the entire system down)
+        #
+        # To prevent this, we check to make sure the local database alembic revision matches the replicated
+        # database that has been sent to us.
+        loc_vers = db_utils.query_config_table('alembic_version')['version_num']
+        rep_vers = db_utils.query_config_table('alembic_version', FREENAS_DATABASE_REPLICATED)['version_num']
+        if loc_vers != rep_vers:
+            self.logger.warning(
+                'Received database alembic revision (%s) does not match local database alembic revision (%s)',
+                rep_vers, loc_vers
+            )
+            return
+
         os.rename(FREENAS_DATABASE_REPLICATED, FREENAS_DATABASE)
         self.middleware.call_sync('datastore.setup')
 
