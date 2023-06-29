@@ -39,6 +39,16 @@ class ClusteredClockAlertClass(AlertClass):
     text = "%(errmsg)s"
 
 
+class ClusteredConfigRedundancyAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.CLUSTERING
+    level = AlertLevel.WARNING
+    title = "Clustered configuration volume lacks adequate redundancy"
+    text = "%(errmsg)s"
+
+    async def delete(self, alerts, query):
+        return []
+
+
 class ClusteredClockOffsetAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False

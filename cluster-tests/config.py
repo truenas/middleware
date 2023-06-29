@@ -43,11 +43,11 @@ CLUSTER_LDAP = {
 }
 
 TIMEOUTS = {
-    'FUSE_OP_TIMEOUT': environ.get('FUSE_OP_TIMEOUT', 10),
+    'FUSE_OP_TIMEOUT': environ.get('FUSE_OP_TIMEOUT', 60),,
     'FAILOVER_WAIT_TIMEOUT': environ.get('FAILOVER_WAIT_TIMEOUT', 10),
     'MONITOR_TIMEOUT': environ.get('MONITOR_TIMEOUT', 20),
-    'CTDB_IP_TIMEOUT': environ.get('CTDB_IP_TIMEOUT', 20),
-    'VOLUME_TIMEOUT': environ.get('VOLUME_TIMEOUT', 120),
+    'CTDB_IP_TIMEOUT': environ.get('CTDB_IP_TIMEOUT', 60),
+    'VOLUME_TIMEOUT': environ.get('VOLUME_TIMEOUT', 600),
 }
 
 CLEANUP_TEST_DIR = 'tests/cleanup'

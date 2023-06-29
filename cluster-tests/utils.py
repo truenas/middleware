@@ -50,7 +50,10 @@ def wait_on_job(_id, ip, timeout):
 
     url = f'http://{ip}/api/v2.0/core/get_jobs/?id={_id}'
     while timeout > 0:
-        job = make_request('get', url).json()[0]
+        res = make_request('get', url)
+        assert res.status_code == 200, job.text
+
+        job = res.json()[0]
         state = job['state']
         if state in ('RUNNING', 'WAITING'):
             time.sleep(1)

@@ -139,6 +139,7 @@ class ClusterJob(Service):
             'is_job': is_job,
             'status': CLStatus.ACTIVE.name
         }
+        ctdb_config = await self.middleware.call('ctdb.shared.volume.config')
         await self.wait_for_method(job, method, 10)
         for node in (await self.middleware.call('ctdb.general.status'))['nodemap']['nodes']:
             if node['this_node'] or node['pnn'] == -1:
@@ -150,7 +151,7 @@ class ClusterJob(Service):
 
         data = {
             "event": "CLJOBS_PROCESS",
-            "name": CTDBConfig.CTDB_VOL_NAME.value,
+            "name": ctdb_config["volume_name"],
             "forward": True
         }
         await self.middleware.call('gluster.localevents.send', data)

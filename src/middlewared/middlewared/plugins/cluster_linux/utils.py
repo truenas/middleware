@@ -13,7 +13,6 @@ from middlewared.schema import Bool, returns
 from middlewared.service import (Service, ValidationErrors, accepts, job,
                                  private)
 from middlewared.service_exception import CallError
-from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.path import CLUSTER_PATH_PREFIX
 
 
@@ -162,7 +161,7 @@ class ClusterUtils(Service):
 
         files.extend(GlusterConfig.FILES_TO_REMOVE.value.copy())
 
-        interest = (f'.system/{CTDBConfig.CTDB_VOL_NAME.value}', '.system/glusterd')
+        interest = (f'.system/{CTDBConfig.LEGACY_CTDB_VOL_NAME.value}', '.system/glusterd')
         mount_info = self.middleware.call_sync('filesystem.mount_info')
         for i in filter(lambda x: x['mount_source'].endswith(interest), mount_info):
             dirs.append(i['mountpoint'])
@@ -244,10 +243,9 @@ class CTDBConfig(enum.Enum):
     GENERAL_FILE = 'ctdb.conf'
 
     # local gluster fuse client mount related config
-    LOCAL_MOUNT_BASE = FuseConfig.FUSE_PATH_BASE.value
-    CTDB_VOL_NAME = 'ctdb_shared_vol'
-    CTDB_VOL_INFO_FILE = f'{MIDDLEWARE_RUN_DIR}/ctdb_vol_info'
-    CTDB_LOCAL_MOUNT = os.path.join(LOCAL_MOUNT_BASE, CTDB_VOL_NAME)
+    LEGACY_CTDB_VOL_NAME = 'ctdb_shared_vol'
+    CTDB_VOL_INFO_FILE = '/data/ctdb_vol_info'
+    CTDB_STATE_DIR = '.clustered_system'
 
     CLUSTERED_SERVICES = '.clustered_services'
 
@@ -268,6 +266,7 @@ class CTDBConfig(enum.Enum):
         ETC_REC_FILE,
         ETC_PRI_IP_FILE,
         ETC_PUB_IP_FILE,
+        CTDB_VOL_INFO_FILE,
     ]
 
     # used in the ctdb.shared.volume.teardown method

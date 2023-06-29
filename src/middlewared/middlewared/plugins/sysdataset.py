@@ -546,9 +546,10 @@ class SystemDatasetService(ConfigService):
         init_job = self.middleware.call_sync('gluster.eventsd.init')
         init_job.wait_sync()
         if init_job.error:
+            config = self.middleware.call_sync('ctdb.shared.volume.config')
             self.logger.error(
                 'Failed to initialize %s directory with error: %s',
-                CTDBConfig.CTDB_VOL_NAME.value,
+                config['volume_name'],
                 init_job.error
             )
 
@@ -601,7 +602,7 @@ class SystemDatasetService(ConfigService):
                 'cores', 'samba4',
                 f'rrd-{uuid}', f'configs-{uuid}',
                 'webui', 'services',
-                'glusterd', CTDBConfig.CTDB_VOL_NAME.value,
+                'glusterd', CTDBConfig.LEGACY_CTDB_VOL_NAME.value,
                 f'netdata-{uuid}',
             ]
         ]

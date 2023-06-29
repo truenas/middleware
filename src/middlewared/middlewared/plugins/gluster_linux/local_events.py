@@ -22,6 +22,7 @@ class AllowedEvents(enum.Enum):
     CTDB_STOP = 'CTDB_STOP'
     SMB_STOP = 'SMB_STOP'
     CLJOBS_PROCESS = 'CLJOBS_PROCESS'
+    SYSTEM_VOL_CHANGE = 'SYSTEM_VOL_CHANGE'
 
 
 class GlusterLocalEventsService(Service):
@@ -57,6 +58,7 @@ class GlusterLocalEventsService(Service):
         Str('event', required=True),
         Str('name', required=True),
         Bool('forward', default=True),
+        additional_attrs=True,
     ))
     @private
     async def send(self, data):
@@ -79,7 +81,8 @@ class GlusterLocalEventsService(Service):
             if status is not None:
                 # something failed
                 raise CallError(
-                    f'Failed to send event: {data["event"]} with status code of: {status} with reason: {reason}'
+                    f'Failed to send event: {data["event"]} with status code of: {status} '
+                    f'with reason: {reason}'
                 )
 
     @accepts()

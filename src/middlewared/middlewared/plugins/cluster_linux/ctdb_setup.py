@@ -19,6 +19,15 @@ class CtdbInitService(Service):
         if not await self.middleware.call('service.started', 'glusterd'):
             return result
 
+        # Wait for any pending update of ctdb metadata volume to complete
+        update_job = await self.middleware.call('core.get_jobs', [
+            ('method', '=', 'ctdb.shared.volume.update'),
+            ('state', '=', 'RUNNING')
+        ])
+        if update_job:
+            wait_id = await self.middleware.call('core.job_wait', update_job[0]['id'])
+            await wait_id.wait()
+
         try:
             shared_vol_config = await self.middleware.call('ctdb.shared.volume.config')
         except Exception:

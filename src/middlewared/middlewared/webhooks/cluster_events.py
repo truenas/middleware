@@ -28,6 +28,8 @@ class ClusterEventsApplication(object):
                 method = ('service.stop', 'cifs')
             elif event == 'CLJOBS_PROCESS':
                 method = 'clusterjob.process_queue'
+            elif event == 'SYSTEM_VOL_CHANGE':
+                method = 'ctdb.shared.volume.update'
 
             if method is not None:
                 if event.startswith('VOLUME'):
@@ -36,6 +38,8 @@ class ClusterEventsApplication(object):
                     await self.middleware.call(method[0], method[1])
                 elif event == 'CLJOBS_PROCESS':
                     await self.middleware.call(method)
+                elif event == 'SYSTEM_VOL_CHANGE':
+                    await self.middleware.call(method, {'name': name, 'uuid': data['uuid']})
 
                 if data.pop('forward', False):
                     # means the request originated from localhost
