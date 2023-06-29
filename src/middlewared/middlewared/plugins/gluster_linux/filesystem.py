@@ -479,3 +479,64 @@ class GlusterFilesystemService(Service):
             hdl.unlink(dir_list[-1].name)
 
         parent.unlink(data['path'])
+
+    @accepts(Dict(
+        'glfs-setperm',
+        Str('volume_name', required=True),
+        Str('uuid', required=True, validators=[UUID()]),
+        Dict(
+            'options',
+            Int('uid', default=-1),
+            Int('gid', default=-1),
+            Int('mode'),
+            Str('acl_operation', enum=['STRIP', 'INHERIT']),
+        ),
+        Ref('gluster-volume-options')
+    ))
+    @job()
+    def setperm(self, job, data):
+        job.set_progress(50, 'Initializing glusterfs volume mount.')
+        vol = glfs.init_volume_mount(data['volume_name'], data['gluster-volume-options'])
+        hdl = self.get_object_handle(vol, data['uuid'])
+
+        acl_op = data['options'].pop('acl_operation', None)
+        if acl_op == 'INHERIT':
+            fd = hdl.open(os.O_DIRECTORY)
+            xat_buf = fd.fgetxattr('system.posix_acl_default')
+
+        if data['options']['uid'] == -1 and data['options']['gid'] == -1 and data['options'].get('mode') is None:
+            attrs = None
+        else:
+            attrs = data['options']
+
+        if attrs:
+            hdl.setattrs(**attrs)
+
+        job.set_progress(50, 'Preparing to set permissions.')
+
+        for idx, entry in enumerate(hdl.fts_open()):
+            # Update status only every 100 files
+            open_flags = os.O_DIRECTORY if entry.file_type == 'DIRECTORY' else os.O_RDWR
+            if idx % 100 == 0:
+                job.set_progress(50, f'Setting permissions: {entry.parent_path}/{entry.name}')
+
+            if acl_op == 'INHERIT':
+                fd = entry.handle.open(open_flags)
+                if entry.file_type == 'DIRECTORY':
+                    fd.fsetxattr('system.posix_acl_default', xat_buf, 0)
+
+                fd.fsetxattr('system.posix_acl_access', xat_buf, 0)
+
+            elif acl_op == 'STRIP':
+                # TODO: we should probably add option to pyglfs to ignore errors on rmxattr
+                # so that we can avoid listing them per file.
+                fd = entry.handle.open(open_flags)
+                xattrs = fd.flistxattr()
+                if 'system.posix_acl_default' in xattrs:
+                    fd.fremovexattr('system.posix_acl_default')
+
+                if 'system.posix_acl_access' in xattrs:
+                    fd.fremovexattr('system.posix_acl_access')
+
+            if attrs:
+                entry.handle.setattrs(**attrs)
