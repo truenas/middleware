@@ -130,7 +130,7 @@ class IPMIService(CRUDService):
         rc = 0
         options = {'stdout': DEVNULL, 'stderr': DEVNULL}
         if data.get('dhcp'):
-            rc |= run(get_cmd(id, ['dhcp']), **options).returncode
+            rc |= run(get_cmd(['dhcp']), **options).returncode
         else:
             rc |= run(get_cmd(['ipsrc', 'static']), **options).returncode
             rc |= run(get_cmd(['ipaddr', data['ipaddress']]), **options).returncode
