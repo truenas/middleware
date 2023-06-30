@@ -1,7 +1,7 @@
 import logging
-from logging.config import dictConfig
 import logging.handlers
 import os
+import queue
 
 from .logging.console_formatter import ConsoleLogFormatter
 
@@ -51,7 +51,7 @@ logging.addLevelName(logging.TRACE, "TRACE")
 logging.Logger.trace = trace
 
 
-class Logger(object):
+class Logger:
     """Pseudo-Class for Logger - Wrapper for logging module"""
     def __init__(
         self, application_name, debug_level=None,
@@ -61,73 +61,10 @@ class Logger(object):
         self.debug_level = debug_level or 'DEBUG'
         self.log_format = log_format
 
-        self.DEFAULT_LOGGING = {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'loggers': {
-                '': {
-                    'level': 'NOTSET',
-                    'handlers': ['file'],
-                },
-                'zettarepl': {
-                    'level': 'NOTSET',
-                    'handlers': ['zettarepl_file'],
-                    'propagate': False,
-                },
-                'failover': {
-                    'level': 'NOTSET',
-                    'handlers': ['failover_file'],
-                    'propagate': False,
-                },
-            },
-            'handlers': {
-                'file': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': LOGFILE,
-                    'mode': 'a',
-                    'maxBytes': 10485760,
-                    'backupCount': 5,
-                    'encoding': 'utf-8',
-                    'formatter': 'file',
-                },
-                'zettarepl_file': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': ZETTAREPL_LOGFILE,
-                    'mode': 'a',
-                    'maxBytes': 10485760,
-                    'backupCount': 5,
-                    'encoding': 'utf-8',
-                    'formatter': 'zettarepl_file',
-                },
-                'failover_file': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': FAILOVER_LOGFILE,
-                    'mode': 'a',
-                    'maxBytes': 10485760,
-                    'backupCount': 5,
-                    'encoding': 'utf-8',
-                    'formatter': 'file',
-                },
-            },
-            'formatters': {
-                'file': {
-                    'format': self.log_format,
-                    'datefmt': '%Y/%m/%d %H:%M:%S',
-                },
-                'zettarepl_file': {
-                    'format': '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s',
-                    'datefmt': '%Y/%m/%d %H:%M:%S',
-                },
-            },
-        }
-
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
-    def configure_logging(self, output_option='file'):
+    def configure_logging(self, output_option):
         """
         Configure the log output to file or console.
             `output_option` str: Default is `file`, can be set to `console`.
@@ -139,7 +76,23 @@ class Logger(object):
             console_handler.setFormatter(ConsoleLogFormatter(self.log_format, datefmt=time_format))
             logging.root.addHandler(console_handler)
         else:
-            dictConfig(self.DEFAULT_LOGGING)
+            # Use `QueueHandler` to avoid blocking IO in asyncio main loop
+            for name, filename, log_format in [
+                (None, LOGFILE, self.log_format),
+                ('failover', FAILOVER_LOGFILE, self.log_format),
+                ('zettarepl', ZETTAREPL_LOGFILE,
+                 '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'),
+            ]:
+                log_queue = queue.Queue()
+                queue_handler = logging.handlers.QueueHandler(log_queue)
+                file_handler = logging.handlers.RotatingFileHandler(filename, 'a', 10485760, 5, 'utf-8')
+                file_handler.setLevel(logging.DEBUG)
+                file_handler.setFormatter(logging.Formatter(log_format, '%Y/%m/%d %H:%M:%S'))
+                queue_listener = logging.handlers.QueueListener(log_queue, file_handler)
+                queue_listener.start()
+                logging.getLogger(name).addHandler(queue_handler)
+                if name is not None:
+                    logging.getLogger(name).propagate = False
 
             # Make sure various log files are not readable by everybody.
             # umask could be another approach but chmod was chosen so
