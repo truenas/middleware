@@ -49,7 +49,7 @@ class IPMILanService(CRUDService):
         result = []
         for channel in self.channels():
             section = 'Lan_Conf' if channel == 1 else f'Lan_Conf_Channel_{channel}'
-            cp = run(['ipmi-config', '--checkout', f'--section={section}'], capture_output=True)
+            cp = run(['ipmi-config', '--checkout', f'--section={section}', '--verbose'], capture_output=True)
             if cp.returncode != 0:
                 raise CallError(f'Failed to get details from channel {channel}: {cp.stderr}')
 
@@ -57,7 +57,13 @@ class IPMILanService(CRUDService):
             for i in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), cp.stdout.decode().split('\n')):
                 try:
                     name, value = i.strip().split()
-                    data[name.lower()] = value.lower()
+                    name, value = name.lower(), value.lower()
+                    if value in ('no', 'yes'):
+                        value = True if value == 'yes' else False
+                    elif value.isdigit():
+                        value = int(value)
+
+                    data[name] = value
                 except ValueError:
                     break
 
