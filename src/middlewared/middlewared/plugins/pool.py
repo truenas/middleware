@@ -1056,7 +1056,11 @@ class PoolService(CRUDService):
                     provider = prov['encrypted_provider']
                     if disk_name := await self.middleware.call('disk.label_to_disk', provider, False, cache):
                         for d in filter(lambda x: x['name'] == disk_name, disks_in_db):
-                            disk_path = os.path.join('/dev', d['devname'])
+                            if d['multipath_name']:
+                                devname = f'multipath/{d["multipath_name"]}'
+                            else:
+                                devname = d['name']
+                            disk_path = os.path.join('/dev', devname)
                             if await self.middleware.run_in_thread(os.path.exists, disk_path):
                                 yield d['devname']
 
