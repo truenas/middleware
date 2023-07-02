@@ -79,7 +79,7 @@ class TwoFactorAuthService(ConfigService):
         config.update(data)
 
         if config == old_config:
-            return
+            return config
 
         if any(config[k] != old_config[k] for k in ['otp_digits', 'interval']):
             # Now we want to reset all the secrets for local/non-local users
