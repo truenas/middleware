@@ -51,12 +51,18 @@ class VMSupervisor(LibvirtConnectionMixin):
         else:
             if not self._domain.isActive():
                 # We have a domain defined and it is not running
-                self.undefine_domain()
+                self.undefine_domain(for_update=True)
 
         if not self._domain:
             # This ensures that when a domain has been renamed, we undefine the previous domain name - if object
             # persists in this case of VMSupervisor - else it's the users responsibility to take care of this case
-            self.libvirt_domain_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
+            new_name = f'{self.vm_data["id"]}_{self.vm_data["name"]}'
+            if new_name != self.libvirt_domain_name:
+                old_nvram_filename = f'/var/lib/libvirt/qemu/nvram/{self.libvirt_domain_name}_VARS.fd'
+                with contextlib.suppress(FileNotFoundError):
+                    os.rename(old_nvram_filename,
+                              f'/var/lib/libvirt/qemu/nvram/{new_name}_VARS.fd')
+                self.libvirt_domain_name = new_name
             self.__define_domain()
 
     def status(self):
@@ -95,14 +101,18 @@ class VMSupervisor(LibvirtConnectionMixin):
 
         self._domain = self.LIBVIRT_CONNECTION.lookupByName(self.libvirt_domain_name)
 
-    def undefine_domain(self):
+    def undefine_domain(self, for_update=False):
         if self._domain.isActive():
             raise CallError(f'Domain {self.libvirt_domain_name} is active. Please stop it first')
 
-        with contextlib.suppress(OSError):
-            os.unlink(f'/var/lib/libvirt/qemu/nvram/{self.libvirt_domain_name}_VARS.fd')
+        flags = 0
 
-        self._domain.undefine()
+        if for_update:
+            flags |= libvirt.VIR_DOMAIN_UNDEFINE_KEEP_NVRAM
+        else:
+            flags |= libvirt.VIR_DOMAIN_UNDEFINE_NVRAM
+
+        self._domain.undefineFlags(flags)
         self._domain = None
 
     def __getattribute__(self, item):
