@@ -49,9 +49,6 @@ except ImportError:
 skip_persistent_reservations = pytest.mark.skipif(not pyscsi_has_persistent_reservations,
                                                   reason="PYSCSI does not support persistent reservations")
 
-skip_extended_copy4 = pytest.mark.skipif(not hasattr(pyscsi.pyscsi.scsi.SCSI, 'extendedcopy4'),
-                                         reason="PYSCSI does not support extended copy (3/4)")
-
 skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
                                           reason="PYSCSI does not support persistent reservations")
 
@@ -2159,7 +2156,6 @@ def _xcopy_test(s1, s2, adds1=None, adds2=None):
         validate_blocks(adds2, 0, 20, [10, 12, 13])
 
 
-@skip_extended_copy4
 @pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
 @pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
 def test_22_extended_copy(request, extent1, extent2):
@@ -2183,7 +2179,6 @@ def test_22_extended_copy(request, extent1, extent2):
                         _xcopy_test(s1, s2)
 
 
-@skip_extended_copy4
 @skip_ha_tests
 @pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
 @pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
