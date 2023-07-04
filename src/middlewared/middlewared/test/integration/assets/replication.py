@@ -4,7 +4,7 @@ from middlewared.test.integration.utils import call
 
 
 @contextlib.contextmanager
-def task(data):
+def replication_task(data):
     task = call("replication.create", data)
 
     try:
