@@ -8,16 +8,13 @@ from .logging.console_formatter import ConsoleLogFormatter
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 # asyncio runs in debug mode but we do not need INFO/DEBUG
-logging.getLogger('asyncio').setLevel(logging.WARN)
+logging.getLogger('asyncio').setLevel(logging.WARNING)
 # We dont need internal aiohttp debug logging
-logging.getLogger('aiohttp.internal').setLevel(logging.WARN)
+logging.getLogger('aiohttp.internal').setLevel(logging.WARNING)
 # We dont need internal botocore debug logging
-logging.getLogger('botocore').setLevel(logging.WARN)
+logging.getLogger('botocore').setLevel(logging.WARNING)
 # we dont need websocket debug messages
-logging.getLogger('websocket').setLevel(logging.CRITICAL)
-# we dont need GitPython debug messages (used in catalogs)
-logging.getLogger('git.cmd').setLevel(logging.CRITICAL)
-logging.getLogger('git.repo').setLevel(logging.CRITICAL)
+logging.getLogger('websocket').setLevel(logging.WARNING)
 # issues garbage warnings
 logging.getLogger('googleapiclient').setLevel(logging.ERROR)
 # registered 'pbkdf2_sha256' handler: <class 'passlib.handlers.pbkdf2.pbkdf2_sha256'>
@@ -27,13 +24,13 @@ logging.getLogger('pyroute2.ndb').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink').setLevel(logging.CRITICAL)
 logging.getLogger('pyroute2.netlink.nlsocket').setLevel(logging.CRITICAL)
 # It logs each call made to the k8s api server when in debug mode, so we set the level to warn
-logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARN)
-logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARN)
+logging.getLogger('kubernetes_asyncio.client.rest').setLevel(logging.WARNING)
+logging.getLogger('kubernetes_asyncio.config.kube_config').setLevel(logging.WARNING)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 # ACME is very verbose in logging the request it sends with headers etc, let's not pollute the logs
 # with that much information and raise the log level in this case
-logging.getLogger('acme.client').setLevel(logging.WARN)
-logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARN)
+logging.getLogger('acme.client').setLevel(logging.WARNING)
+logging.getLogger('certbot_dns_cloudflare._internal.dns_cloudflare').setLevel(logging.WARNING)
 
 
 LOGFILE = '/var/log/middlewared.log'
