@@ -235,9 +235,10 @@ class Application:
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
-                self.send_error(message, adapted.errno, str(adapted), sys.exc_info(), extra=adapted.extra)
+                self.send_error(message, adapted.errno, str(adapted) or repr(adapted), sys.exc_info(),
+                                extra=adapted.extra)
             else:
-                self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
+                self.send_error(message, errno.EINVAL, str(e) or repr(e), sys.exc_info())
                 if not self._py_exceptions:
                     self.logger.warn('Exception while calling {}(*{})'.format(
                         message['method'],
