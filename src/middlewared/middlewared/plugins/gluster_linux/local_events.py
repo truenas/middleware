@@ -4,12 +4,14 @@ import jwt
 import enum
 import asyncio
 import os
+import time
 
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Str, Bool, returns
 from middlewared.service import (accepts, Service,
                                  private, ValidationErrors)
 from .utils import GlusterConfig
+from uuid import uuid4
 
 
 SECRETS_FILE = GlusterConfig.SECRETS_FILE.value
@@ -63,7 +65,7 @@ class GlusterLocalEventsService(Service):
     async def send(self, data):
         await self.middleware.call('gluster.localevents.validate', data)
         secret = await self.middleware.call('gluster.localevents.get_set_jwt_secret')
-        token = jwt.encode({'dummy': 'data'}, secret, algorithm='HS256')
+        token = jwt.encode({'ts': int(time.time()), 'msg_id': uuid4().hex}, secret, algorithm='HS256')
         headers = {'JWTOKEN': token.decode('utf-8'), 'content-type': 'application/json'}
         async with aiohttp.ClientSession() as sess:
             status = reason = None
