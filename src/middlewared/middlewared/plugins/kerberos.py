@@ -798,8 +798,7 @@ class KerberosRealmService(TDBWrapCRUDService):
 
         verrors.add_child('kerberos_realm_create', await self._validate(data))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         data = await self.kerberos_compress(data)
         id = await super().do_create(data)
@@ -889,8 +888,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
         verrors.add_child('kerberos_principal_create', await self._validate(data))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         id = await super().do_create(data)
         await self.middleware.call('etc.generate', 'kerberos')
@@ -916,8 +914,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
         verrors.add_child('kerberos_principal_update', await self._validate(new))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await super().do_update(id, new)
         await self.middleware.call('etc.generate', 'kerberos')

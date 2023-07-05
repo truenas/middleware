@@ -144,8 +144,7 @@ class Attribute(object):
             except ValueError as e:
                 verrors.add(self.name, str(e))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     def to_json_schema(self, parent=None):
         """This method should return the json-schema v4 equivalent for the
@@ -725,8 +724,7 @@ class List(EnumMixin, Attribute):
             else:
                 verrors.extend(attr_verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         super().validate(value)
 
@@ -895,8 +893,7 @@ class Dict(Attribute):
                 except ValidationErrors as e:
                     verrors.add_child(self.name, e)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     def to_json_schema(self, parent=None):
         schema = {
@@ -1011,8 +1008,7 @@ class Cron(Dict):
             if v not in Cron.FIELDS:
                 verrors.add(self.name, f'Unexpected {v} value')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         try:
             iter = croniter_for_schedule(value)
@@ -1033,8 +1029,7 @@ class Cron(Dict):
             else:
                 verrors.add(self.name, 'Specified schedule does not match specified time interval')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
 
 class Ref(object):
@@ -1401,8 +1396,7 @@ def accepts(*schema, deprecated=None):
 
                 kwargs[kwarg] = clean_and_validate_arg(verrors, attr, value)
 
-            if verrors:
-                raise verrors
+            verrors.check()
 
             return args, kwargs
 

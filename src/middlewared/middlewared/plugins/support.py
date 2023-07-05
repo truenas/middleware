@@ -89,8 +89,7 @@ class SupportService(ConfigService):
                     field = prefix + key
                     if not config_data[field]:
                         verrors.add(f'support_update.{field}', 'This field is required')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.middleware.call(
             'datastore.update',

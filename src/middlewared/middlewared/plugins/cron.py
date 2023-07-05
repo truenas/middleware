@@ -144,8 +144,7 @@ class CronJobService(CRUDService):
             }
         """
         verrors, data = await self.validate_data(data, 'cron_job_create')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         Cron.convert_schedule_to_db_format(data)
 
@@ -169,8 +168,7 @@ class CronJobService(CRUDService):
         task_data.update(data)
         verrors, task_data = await self.validate_data(task_data, 'cron_job_update')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         Cron.convert_schedule_to_db_format(task_data)
         Cron.convert_schedule_to_db_format(original_data)

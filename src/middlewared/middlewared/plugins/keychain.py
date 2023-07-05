@@ -435,13 +435,11 @@ class KeychainCredentialService(CRUDService):
             attributes_verrors = validate_schema(type.credentials_schema, data["attributes"])
             verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await type.validate_and_pre_save(self.middleware, verrors, f"{schema_name}.attributes", data["attributes"])
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     @private
     @accepts(Int("id"), Str("type"))

@@ -154,8 +154,7 @@ class InitShutdownScriptService(CRUDService):
                 data['command'] = ''
                 data['script'] = ''
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     @private
     async def execute_task(self, task):

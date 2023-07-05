@@ -307,8 +307,7 @@ class ReplicationService(CRUDService):
         verrors = ValidationErrors()
         verrors.add_child("replication_create", await self._validate(data))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
         await self.compress(data)
@@ -385,8 +384,7 @@ class ReplicationService(CRUDService):
         verrors = ValidationErrors()
         verrors.add_child("replication_update", await self._validate(new, id))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
         await self.compress(new)
@@ -488,8 +486,7 @@ class ReplicationService(CRUDService):
         verrors = ValidationErrors()
         verrors.add_child("replication_run_onetime", await self._validate(data))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if data.get("ssh_credentials") is not None:
             data["ssh_credentials"] = await self.middleware.call(

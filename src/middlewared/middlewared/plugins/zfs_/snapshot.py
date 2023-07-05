@@ -177,8 +177,7 @@ class ZFSSnapshot(CRUDService):
         if name and not validate_snapshot_name(f'{dataset}@{name}'):
             verrors.add('snapshot_create.name', 'Invalid snapshot name')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         vmware_context = None
         if data['vmware_sync']:

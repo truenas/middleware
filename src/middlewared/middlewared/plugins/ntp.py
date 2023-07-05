@@ -244,7 +244,6 @@ class NTPServerService(CRUDService):
             verrors.add(f'{schema_name}.maxpoll',
                         'Max Poll should be higher than Min Poll')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         return data

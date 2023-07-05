@@ -220,8 +220,7 @@ class FTPService(SystemServiceService):
 
         verrors.extend(await validate_port(self.middleware, "ftp_update.port", new["port"], "ftp"))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self._update_service(old, new)
 

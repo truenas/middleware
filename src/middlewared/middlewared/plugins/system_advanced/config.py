@@ -221,8 +221,7 @@ class SystemAdvancedService(ConfigService):
         config_data.update(data)
 
         verrors, config_data = await self.__validate_fields('advanced_settings_update', config_data)
-        if verrors:
-            raise verrors
+        verrors.check()
 
         if config_data != original_data:
             if original_data.get('sed_user'):

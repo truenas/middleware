@@ -242,8 +242,7 @@ class SystemGeneralService(ConfigService):
         new_config.update(data)
 
         verrors = await self.validate_general_settings(new_config, 'general_settings_update')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         keys = new_config.keys()
         for key in list(keys):

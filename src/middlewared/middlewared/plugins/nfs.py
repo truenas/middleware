@@ -234,8 +234,7 @@ class NFSService(SystemServiceService):
         if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.nfs_compress(new)
 
@@ -321,8 +320,7 @@ class SharingNFSService(SharingService):
 
         await self.validate(data, "sharingnfs_create", verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.compress(data)
         data["id"] = await self.middleware.call(
@@ -357,8 +355,7 @@ class SharingNFSService(SharingService):
 
         await self.validate(new, "sharingnfs_update", verrors, old=old)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.compress(new)
         await self.middleware.call(

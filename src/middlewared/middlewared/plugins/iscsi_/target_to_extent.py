@@ -45,8 +45,7 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self.validate(data, 'iscsi_targetextent_create', verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         data['id'] = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
@@ -85,8 +84,7 @@ class iSCSITargetToExtentService(CRUDService):
 
         await self.validate(new, 'iscsi_targetextent_update', verrors, old)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.middleware.call(
             'datastore.update', self._config.datastore, id, new,

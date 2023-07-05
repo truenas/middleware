@@ -676,8 +676,7 @@ class CredentialsService(CRUDService):
             attributes_verrors = validate_schema(provider.credentials_schema, data["attributes"])
             verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
 
 class CloudSyncModel(CloudTaskModelMixin, sa.Model):
@@ -838,13 +837,11 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await self._validate(verrors, "cloud_sync_create", cloud_sync)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self._validate_folder(verrors, "cloud_sync_create", cloud_sync)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         cloud_sync = await self._compress(cloud_sync)
 
@@ -870,13 +867,11 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await self._validate(verrors, "cloud_sync_update", cloud_sync)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self._validate_folder(verrors, "cloud_sync_update", cloud_sync)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         cloud_sync = await self._compress(cloud_sync)
 
@@ -972,8 +967,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await self._basic_validate(verrors, "cloud_sync", dict(cloud_sync))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         credentials = await self._get_credentials(cloud_sync["credentials"])
 
@@ -1053,13 +1047,11 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await self._validate(verrors, "cloud_sync_sync_onetime", cloud_sync)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self._validate_folder(verrors, "cloud_sync_sync_onetime", cloud_sync)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         cloud_sync["credentials"] = await self._get_credentials(cloud_sync["credentials"])
 
