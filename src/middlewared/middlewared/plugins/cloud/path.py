@@ -1,4 +1,5 @@
 import os
+import stat
 
 from middlewared.service import CallError
 
@@ -15,11 +16,13 @@ def get_remote_path(provider, attributes):
 async def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
     error_text_path = error_text_path or path
 
-    if not await middleware.run_in_thread(os.path.exists, path):
+    try:
+        info = await middleware.run_in_thread(os.stat, path)
+    except FileNotFoundError:
         raise CallError(f"Directory {error_text_path!r} does not exist")
-
-    if not await middleware.run_in_thread(os.path.isdir, path):
-        raise CallError(f"{error_text_path!r} is not a directory")
+    else:
+        if not stat.S_ISDIR(info.st_mode):
+            raise CallError(f"{error_text_path!r} is not a directory")
 
     if check_mountpoint:
         if not await middleware.call("filesystem.is_dataset_path", path):
