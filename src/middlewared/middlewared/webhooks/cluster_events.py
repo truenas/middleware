@@ -134,7 +134,10 @@ class ClusterEventsApplication(object):
         secret = await self.middleware.call(
             'gluster.localevents.get_set_jwt_secret'
         )
-        token = request.headers.get('JWTOKEN', None)
+        if not (token := request.headers.get('JWTOKEN', None)):
+            self.middleware.logger.debug('Received spurious message without JWTOKEN in header')
+            return await self.response(status_code=401)
+
         try:
             decoded = decode(token, secret, algorithms='HS256')
         except (DecodeError, InvalidSignatureError):
@@ -162,7 +165,7 @@ class ClusterEventsApplication(object):
             self.middleware.logger.warning('Received expired message from cluster peer')
             return await self.response(status_code=401)
 
-        if not await self.check_received(decoded['msg_id']):
+        if not await self.check_received(msg_id):
             self.middleware.logger.warning('Received duplicate message from cluster peer')
             return await self.response(status_code=401)
 
