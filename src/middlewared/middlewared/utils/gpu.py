@@ -7,8 +7,9 @@ from middlewared.service_exception import CallError
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
 SENSITIVE_PCI_DEVICE_TYPES = (
-    'Bridge',
-    'memory',
+    'PCI Bridge',
+    'ISA Bridge',
+    'RAM memory',
     'SMBus',
 )
 
