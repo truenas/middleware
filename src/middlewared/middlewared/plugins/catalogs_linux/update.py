@@ -39,7 +39,14 @@ class CatalogService(CRUDService):
 
     ENTRY = Dict(
         'catalog_entry',
-        Str('label', required=True, validators=[Match(r'^\w+[\w.-]*$')], max_length=60),
+        Str(
+            'label', required=True, validators=[Match(
+                r'^\w+[\w.-]*$',
+                explanation='Label must start with a alphanumeric character and can include '
+                            'alphanumeric characters, dots, and dashes.'
+            )],
+            max_length=60,
+        ),
         Str('repository', required=True, empty=False),
         Str('branch', required=True, empty=False),
         Str('location', required=True),
