@@ -3,6 +3,7 @@ import contextlib
 import jwt
 import enum
 import asyncio
+import os
 
 from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Str, Bool, returns
@@ -140,4 +141,5 @@ class GlusterLocalEventsService(Service):
 
         self.JWT_SECRET = data['secret']
         with open(SECRETS_FILE, 'w+') as f:
+            os.fchmod(f.fileno(), 0o600)
             f.write(data['secret'])
