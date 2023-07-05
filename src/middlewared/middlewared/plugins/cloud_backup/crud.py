@@ -94,8 +94,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         await self._validate(verrors, "cloud_backup_update", cloud_backup)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         cloud_backup = await self._compress(cloud_backup)
 

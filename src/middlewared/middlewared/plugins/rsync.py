@@ -418,8 +418,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             }
         """
         verrors, data = await self.validate_rsync_task(data, 'rsync_task_create')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         Cron.convert_schedule_to_db_format(data)
 
@@ -453,8 +452,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         new.update(data)
 
         verrors, new = await self.validate_rsync_task(new, 'rsync_task_update')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         Cron.convert_schedule_to_db_format(new)
 

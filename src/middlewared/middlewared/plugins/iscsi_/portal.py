@@ -145,8 +145,7 @@ class ISCSIPortalService(CRUDService):
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsiportal_create')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         # tag attribute increments sequentially
         data['tag'] = (await self.middleware.call(
@@ -220,8 +219,7 @@ class ISCSIPortalService(CRUDService):
 
         verrors = ValidationErrors()
         await self.__validate(verrors, new, 'iscsiportal_update', old)
-        if verrors:
-            raise verrors
+        verrors.check()
 
         listen = new.pop('listen')
         new['discoveryauthgroup'] = new.pop('discovery_authgroup', None)

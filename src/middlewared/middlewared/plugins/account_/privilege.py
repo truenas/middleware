@@ -174,8 +174,7 @@ class PrivilegeService(CRUDService):
             if not await self._ds_groups(groups, [ds_group_id], include_nonexistent=False):
                 verrors.add(f"{schema_name}.ds_groups.{i}", "This Directory Service group does not exist")
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     async def _groups(self):
         groups = await self.middleware.call(

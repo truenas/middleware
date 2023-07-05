@@ -1016,8 +1016,7 @@ class AlertServiceService(CRUDService):
         verrors.add_child(f"{schema_name}.attributes",
                           validate_schema(list(factory.schema.attrs.values()), service["attributes"]))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     @accepts(Dict(
         "alert_service_create",
@@ -1219,8 +1218,7 @@ class AlertClassesService(ConfigService):
                     "Proactive support is not supported by this alert class",
                 )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.middleware.call("datastore.update", self._config.datastore, old["id"], new)
 

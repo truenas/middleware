@@ -307,8 +307,7 @@ class CertificateService(CRUDService):
             verrors, 'certificate_create.name'
         )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         job.set_progress(10, 'Initial validation complete')
 
@@ -485,8 +484,7 @@ class CertificateService(CRUDService):
                 'Private key is required when importing a certificate'
             )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         job.set_progress(50, 'Validation complete')
 

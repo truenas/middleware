@@ -68,8 +68,7 @@ class VMWareService(CRUDService):
                 'Failed to connect: ' + str(e)
             )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     @accepts(
         Dict(

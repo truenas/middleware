@@ -164,8 +164,7 @@ class MailService(ConfigService):
 
         self.__password_verify(new['pass'], 'mail_update.pass', verrors)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
 
@@ -300,8 +299,7 @@ class MailService(ConfigService):
                 raise CallError('This message was already sent in the given interval')
 
         verrors = self.__password_verify(config['pass'], 'mail_update.pass')
-        if verrors:
-            raise verrors
+        verrors.check()
         to = message.get('to')
         if not to:
             to = self.middleware.call_sync('mail.local_administrators_emails')

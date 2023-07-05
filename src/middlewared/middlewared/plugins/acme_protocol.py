@@ -152,8 +152,7 @@ class ACMERegistrationService(CRUDService):
                 'A registration with the specified directory uri already exists'
             )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         key = jose.JWKRSA(key=rsa.generate_private_key(
             public_exponent=data['JWK_create']['public_exponent'],

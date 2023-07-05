@@ -85,8 +85,7 @@ class SNMPService(SystemServiceService):
                 'This field is requires when SNMPv3 private protocol is specified',
             )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self._update_service(old, new)
 

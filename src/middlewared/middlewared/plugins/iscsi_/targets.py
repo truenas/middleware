@@ -110,8 +110,7 @@ class iSCSITargetService(CRUDService):
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsi_target_create')
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.compress(data)
         groups = data.pop('groups')
@@ -294,8 +293,7 @@ class iSCSITargetService(CRUDService):
 
         verrors = ValidationErrors()
         await self.__validate(verrors, new, 'iscsi_target_create', old=old)
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.compress(new)
         groups = new.pop('groups')

@@ -463,8 +463,7 @@ class CertificateAuthorityService(CRUDService):
                     'Revoked certificates cannot be added to system\'s trusted store'
                 )
 
-            if verrors:
-                raise verrors
+            verrors.check()
 
             await self.middleware.call(
                 'datastore.update',

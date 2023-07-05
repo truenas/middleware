@@ -353,8 +353,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         verrors = ValidationErrors()
         await self.common_validation(verrors, 'vm_update', new, old=old)
-        if verrors:
-            raise verrors
+        verrors.check()
 
         new.pop('devices')
         new.pop('status', None)

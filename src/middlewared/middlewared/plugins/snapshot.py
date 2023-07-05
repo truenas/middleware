@@ -141,8 +141,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         verrors.add_child('periodic_snapshot_create', await self._validate(data))
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         Cron.convert_schedule_to_db_format(data, begin_end=True)
 
@@ -223,8 +222,7 @@ class PeriodicSnapshotTaskService(CRUDService):
                     )
                     break
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         Cron.convert_schedule_to_db_format(new, begin_end=True)
 

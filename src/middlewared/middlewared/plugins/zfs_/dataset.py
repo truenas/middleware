@@ -125,8 +125,7 @@ class ZFSDatasetService(CRUDService):
         if '/' not in data['name']:
             verrors.add('name', 'You need a full name, e.g. pool/newdataset')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         properties = data.get('properties') or {}
         sparse = properties.pop('sparse', False)

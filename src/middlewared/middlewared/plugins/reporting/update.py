@@ -112,8 +112,7 @@ class ReportingService(ConfigService):
                         'must be confirmed by setting confirm_rrd_destroy flag',
                     )
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
         await self.middleware.call(
             'datastore.update',

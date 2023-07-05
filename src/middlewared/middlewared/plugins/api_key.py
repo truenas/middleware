@@ -178,8 +178,7 @@ class ApiKeyService(CRUDService):
 
         await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     def _generate(self):
         return "".join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(64)])

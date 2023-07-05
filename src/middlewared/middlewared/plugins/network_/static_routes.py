@@ -127,8 +127,7 @@ class StaticRouteService(CRUDService):
         if (':' in data['destination']) != (':' in data['gateway']):
             verrors.add(f'{schema_name}.destination', 'Destination and gateway address families must match')
 
-        if verrors:
-            raise verrors
+        verrors.check()
 
     def _netif_route(self, staticroute):
         ip_interface = ipaddress.ip_interface(staticroute['destination'])
