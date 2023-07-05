@@ -2077,6 +2077,140 @@ def test_21_alua_persistent_reservation_two_initiators(request):
                         _check_persistent_reservations(s2, s1)
 
 
+def _get_designator(s, designator_type):
+    x = s.inquiry(evpd=1, page_code=0x83)
+    for designator in x.result["designator_descriptors"]:
+        if designator["designator_type"] == designator_type:
+            del designator["piv"]
+            return designator
+
+
+def _xcopy_test(s1, s2, adds1=None, adds2=None):
+    zeros = bytearray(512)
+    deadbeef = bytearray.fromhex("deadbeef") * 128
+
+    def validate_blocks(s, start, end, beefy_list):
+        for lba in range(start, end):
+            r = s.read16(lba, 1)
+            if lba in beefy_list:
+                assert r.datain == deadbeef, r.datain
+            else:
+                assert r.datain == zeros, r.datain
+
+    d1 = _get_designator(s1, 3)
+    d2 = _get_designator(s2, 3)
+
+    # First let's write zeros to the first 20 blocks using WRITE SAME (16)
+    s1.writesame16(0, 20, zeros)
+    s2.writesame16(0, 20, zeros)
+
+    # Write some deadbeef
+    s1.write16(1, 1, deadbeef)
+    s1.write16(3, 1, deadbeef)
+    s1.write16(4, 1, deadbeef)
+
+    # Check that the blocks were written correctly
+    validate_blocks(s1, 0, 20, [1, 3, 4])
+    validate_blocks(s2, 0, 20, [])
+    if adds1:
+        validate_blocks(adds1, 0, 20, [1, 3, 4])
+    if adds2:
+        validate_blocks(adds2, 0, 20, [])
+
+    # XCOPY
+    s1.extendedcopy4(
+        priority=1,
+        list_identifier=0x34,
+        target_descriptor_list=[
+            {
+                "descriptor_type_code": "Identification descriptor target descriptor",
+                "peripheral_device_type": 0x00,
+                "target_descriptor_parameters": d1,
+                "device_type_specific_parameters": {"disk_block_length": 512},
+            },
+            {
+                "descriptor_type_code": "Identification descriptor target descriptor",
+                "peripheral_device_type": 0x00,
+                "target_descriptor_parameters": d2,
+                "device_type_specific_parameters": {"disk_block_length": 512},
+            },
+        ],
+        segment_descriptor_list=[
+            {
+                "descriptor_type_code": "Copy from block device to block device",
+                "dc": 1,
+                "source_target_descriptor_id": 0,
+                "destination_target_descriptor_id": 1,
+                "block_device_number_of_blocks": 4,
+                "source_block_device_logical_block_address": 1,
+                "destination_block_device_logical_block_address": 10,
+            }
+        ],
+    )
+
+    validate_blocks(s1, 0, 20, [1, 3, 4])
+    validate_blocks(s2, 0, 20, [10, 12, 13])
+    if adds1:
+        validate_blocks(adds1, 0, 20, [1, 3, 4])
+    if adds2:
+        validate_blocks(adds2, 0, 20, [10, 12, 13])
+
+
+@pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
+@pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
+def test_22_extended_copy(request, extent1, extent2):
+    # print(f"Extended copy {extent1} -> {extent2}")
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, extent1):
+            with configured_target(config, name2, extent2):
+                with iscsi_scsi_connection(ip, iqn1) as s1:
+                    with iscsi_scsi_connection(ip, iqn2) as s2:
+                        s1.testunitready()
+                        s1.blocksize = 512
+                        s2.testunitready()
+                        s2.blocksize = 512
+                        _xcopy_test(s1, s2)
+
+
+@skip_ha_tests
+@pytest.mark.parametrize('extent2', ["FILE", "VOLUME"])
+@pytest.mark.parametrize('extent1', ["FILE", "VOLUME"])
+def test_23_ha_extended_copy(request, extent1, extent2):
+    depends(request, ["iscsi_alua_config"], scope="session")
+
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    with alua_enabled():
+        with initiator_portal() as config:
+            with configured_target(config, name1, extent1):
+                with configured_target(config, name2, extent2):
+                    with iscsi_scsi_connection(controller1_ip, iqn1) as sa1:
+                        with iscsi_scsi_connection(controller1_ip, iqn2) as sa2:
+                            with iscsi_scsi_connection(controller2_ip, iqn1) as sb1:
+                                with iscsi_scsi_connection(controller2_ip, iqn2) as sb2:
+                                    sa1.testunitready()
+                                    sa1.blocksize = 512
+                                    sa2.testunitready()
+                                    sa2.blocksize = 512
+                                    sb1.testunitready()
+                                    sb1.blocksize = 512
+                                    sb2.testunitready()
+                                    sb2.blocksize = 512
+                                    _xcopy_test(sa1, sa2, sb1, sb2)
+                                    # Now re-run the test using the other controller
+                                    _xcopy_test(sb1, sb2, sa1, sa2)
+
+
 def test_99_teardown(request):
     # Disable iSCSI service
     depends(request, ["iscsi_cmd_00"])

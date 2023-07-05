@@ -2,8 +2,38 @@
     import os
 
     from collections import defaultdict
+    from pathlib import Path
 
     global_config = middleware.call_sync('iscsi.global.config')
+
+    def existing_copy_manager_luns():
+        luns = {}
+        p = Path('/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns')
+        if p.is_dir():
+            for lun in p.iterdir():
+                if lun.is_dir() and lun.name != 'mgmt':
+                    link = Path(lun, 'device')
+                    if link.is_symlink():
+                        target = link.readlink()
+                        luns[int(lun.name)] = target.name
+        return luns
+
+    def calc_copy_manager_luns(devices, force_insert=False):
+        cml = existing_copy_manager_luns()
+        # Remove any devices not present
+        for key in list(cml):
+            if cml[key] not in devices:
+                del cml[key]
+        if force_insert:
+            # Add any devices not yet in cml
+            to_add = set(devices) - set(cml.values())
+            start_count = 0
+            for device in to_add:
+                keys = list(cml)
+                while start_count in keys:
+                    start_count += 1
+                cml[start_count] = device
+        return cml
 
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
@@ -58,6 +88,7 @@
         associated_targets[a_tgt['target']].append(a_tgt)
 
     # Let's map extents to respective ios
+    all_extent_names = []
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
         if extent['locked']:
@@ -82,6 +113,7 @@
 
         extent['name'] = extent['name'].replace('.', '_')  # CORE ctl device names are incompatible with SCALE SCST
         extents_io[extents_io_key].append(extent)
+        all_extent_names.append(extent['name'])
 
         extent['t10_dev_id'] = extent['serial']
         if not extent['xen']:
@@ -91,6 +123,11 @@
 
     target_hosts = middleware.call_sync('iscsi.host.get_target_hosts')
     hosts_iqns = middleware.call_sync('iscsi.host.get_hosts_iqns')
+
+    if alua_enabled and failover_status == "BACKUP":
+        cml = calc_copy_manager_luns(logged_in_targets.values(), True)
+    else:
+        cml = calc_copy_manager_luns(all_extent_names)
 %>\
 ##
 ## If we are on a HA system then write out a cluster name, we'll hard-code
@@ -122,16 +159,17 @@ HANDLER dev_disk {
 }
 % endif
 ##
-## Write "TARGET_DRIVER copy_manager" sections only on the ALUA BACKUP node.
+## Write "TARGET_DRIVER copy_manager" section as otherwise CM
+## can get confused wrt LUNs present when a new target is
+## added (although no problem if SCST is restarted after all
+## configuration changes have been made).
 ##
-% if alua_enabled and failover_status == "BACKUP":
+% if len(cml):
 TARGET_DRIVER copy_manager {
         TARGET copy_manager_tgt {
-%     for idx, (name, value) in enumerate(logged_in_targets.items()):
-%         if value:
-                LUN ${idx} ${value}
-%         endif
-%     endfor
+%       for key in sorted(cml):
+                LUN ${key} ${cml[key]}
+%       endfor
         }
 }
 % endif
