@@ -1,6 +1,7 @@
 import os
 import re
 
+from pyudev import Context
 from xml.etree import ElementTree as etree
 
 from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
@@ -12,13 +13,9 @@ from .utils import get_virsh_command_args, SENSITIVE_PCI_DEVICE_TYPES
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 RE_IOMMU_ENABLED = re.compile(r'QEMU.*if IOMMU is enabled.*:\s*PASS.*')
-RE_PCI_CONTROLLER_TYPE = re.compile(r'^[\w:.]+\s+([\w\s-]+)\s+\[')
-RE_PCI_NAME = re.compile(r'^([\w:.]+)\s+')
 
 
 class VMDeviceService(Service):
-
-    PCI_DEVICES = None
 
     class Config:
         namespace = 'vm.device'
@@ -85,7 +82,7 @@ class VMDeviceService(Service):
         """
         await self.middleware.call('vm.check_setup_libvirt')
         pci_id = RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)
-        controller_type = (await self.get_pci_devices()).get(pci_id)
+        controller_type = (await self.middleware.run_in_thread(self.get_pci_devices)).get(pci_id)
 
         data = {
             'capability': {
@@ -170,18 +167,11 @@ class VMDeviceService(Service):
         return mapping
 
     @private
-    async def get_pci_devices(self):
-        if self.PCI_DEVICES is None:
-            self.PCI_DEVICES = {}
-            cp = await run(['lspci', '-nnD'], check=False, encoding='utf8', errors='ignore')
-            if not cp.returncode:
-                for pci_device_str in cp.stdout.splitlines():
-                    pci_id = RE_PCI_NAME.findall(pci_device_str)
-                    controller_type = RE_PCI_CONTROLLER_TYPE.findall(pci_device_str)
-                    if pci_id:
-                        self.PCI_DEVICES[pci_id[0]] = controller_type[0] if controller_type else None
-
-        return self.PCI_DEVICES
+    def get_pci_devices(self):
+        return {
+            i.sys_name: i.properties.get('ID_PCI_SUBCLASS_FROM_DATABASE', 'Unassigned class')
+            for i in Context().list_devices(subsystem='pci')
+        }
 
     @accepts()
     @returns(Ref('passthrough_device_choices'))
