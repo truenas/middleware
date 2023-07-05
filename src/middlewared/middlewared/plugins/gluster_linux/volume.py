@@ -324,7 +324,7 @@ class GlusterVolumeService(CRUDService):
             --value-- is the value to be given to the option
         """
 
-        options = {'args': (data['name'],), 'kwargs': data['opts']}
+        options = {'args': (data['name'], data['opts'])}
         return await self.middleware.call('gluster.method.run', volume.optset, options)
 
     @accepts(Dict(
