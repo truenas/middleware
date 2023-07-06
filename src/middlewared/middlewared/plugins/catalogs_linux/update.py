@@ -42,8 +42,7 @@ class CatalogService(CRUDService):
         Str(
             'label', required=True, validators=[Match(
                 r'^\w+[\w.-]*$',
-                explanation='Label must start with a alphanumeric character and can include '
-                            'alphanumeric characters, dots, and dashes.'
+                explanation='Label must start with a alphanumeric character and can include dots and dashes.'
             )],
             max_length=60,
         ),
