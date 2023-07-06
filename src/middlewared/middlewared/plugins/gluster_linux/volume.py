@@ -2,7 +2,6 @@ from glustercli.cli import volume, quota
 
 from middlewared.utils import filter_list
 from middlewared.service import CRUDService, accepts, job, filterable, private, ValidationErrors
-from middlewared.service_exception import CallError
 from middlewared.schema import Dict, Str, Int, Bool, List, Ref, returns
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from .utils import GlusterConfig, set_gluster_workdir_dataset, get_gluster_workdir_dataset, format_bricks
@@ -242,20 +241,6 @@ class GlusterVolumeService(CRUDService):
             return
 
         if volume_id == meta_config['volume_name']:
-            # if the ctdb shared volume is being deleted then call
-            # the ctdb shared volume specific API since it handles
-            # other items
-            """
-            if not force:
-                raise CallError(
-                    f'{id}: gluster volume currently hosts mission-critical cluster '
-                    'and `force` was not specified. Forcing volume deletion will attempt to '
-                    'migrate to another gluster volume if available. If another gluster '
-                    'volume is not available then forcible deletion will break the cluster '
-                    'in a way that is not recoverable without manual intervention.'
-                )
-            """
-
             volumes = await self.middleware.call('gluster.volume.list')
             try:
                 volumes.remove(volume_id)

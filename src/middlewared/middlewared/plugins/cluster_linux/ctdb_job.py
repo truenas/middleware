@@ -1,6 +1,5 @@
 from middlewared.service import Service, private, job, periodic
 from middlewared.service_exception import CallError
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
 import time
 import errno

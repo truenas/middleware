@@ -3,6 +3,7 @@ import os
 import stat
 
 from base64 import b64encode, b64decode
+from pyglfs import GLFSError
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str, Ref
 from middlewared.service import Service, CallError, job, private
 from middlewared.schema import Path
@@ -578,7 +579,7 @@ class GlusterFilesystemService(Service):
             if entry.file_type == 'DIRECTORY':
                 try:
                     dst_hdl_lst.append(dst.mkdir(entry.name, mode=new_mode))
-                except pyglfs.GLFSError as e:
+                except GLFSError as e:
                     if e.errno != errno.EEXIST:
                         raise
                     existing_hdl = dst.lookup(entry.name)
@@ -589,7 +590,7 @@ class GlusterFilesystemService(Service):
             elif entry.file_type == 'FILE':
                 try:
                     hdl = dst.create(entry.name, os.O_RDWR, mode=new_mode)
-                except pyglfs.GLFSError as e:
+                except GLFSError as e:
                     if e.errno != errno.EEXIST or not data['force']:
                         raise
 
