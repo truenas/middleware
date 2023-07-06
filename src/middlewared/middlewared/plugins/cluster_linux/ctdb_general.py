@@ -2,13 +2,10 @@ import ctdb
 import json
 import os
 
+from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from middlewared.schema import Bool, Dict, Int, IPAddr, List, returns, Str
 from middlewared.service import CallError, Service, accepts, private, filterable
 from middlewared.utils import run, filter_list
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
-
-
-CTDB_VOL = CTDBConfig.CTDB_VOL_NAME.value
 
 
 class CtdbGeneralService(Service):
@@ -219,10 +216,15 @@ class CtdbGeneralService(Service):
         #           return bool(open('/file/on/disk', 'r').read())
         # or something...
         try:
+            with open(CTDBConfig.CTDB_VOL_INFO_FILE.value, 'r') as f:
+                ctdb_vol_config = json.loads(f.read())
+        except Exception:
+            return False
+        try:
             # gluster volume root has inode of 1.
             # if gluster isn't mounted it will be different
             # if volume is unhealthy this will fail
-            if os.stat(f'/cluster/{CTDB_VOL}').st_ino != 1:
+            if os.stat(f'/cluster/{ctdb_vol_config["volume_name"]}').st_ino != 1:
                 return False
         except Exception:
             return False

@@ -293,7 +293,7 @@ class TDBService(Service, TDBMixin, SchemaMixin):
                 continue
 
             with entry['lock']:
-                if entry['handle_internal'].validate_handle():
+                if entry['handle_internal'] and entry['handle_internal'].validate_handle():
                     entry['handle_internal'].close()
 
     @private

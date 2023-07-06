@@ -8,7 +8,7 @@ from .utils import GlusterConfig, set_gluster_workdir_dataset, get_gluster_workd
 
 
 GLUSTER_JOB_LOCK = GlusterConfig.CLI_LOCK.value
-CTDB_VOL_NAME = CTDBConfig.CTDB_VOL_NAME.value
+LEGACY_CTDB_VOL_NAME = CTDBConfig.LEGACY_CTDB_VOL_NAME.value
 FUSE_BASE = FuseConfig.FUSE_PATH_BASE.value
 
 
@@ -70,7 +70,7 @@ class GlusterVolumeService(CRUDService):
         verrors = ValidationErrors()
         create_request = schema_name == 'glustervolume_create'
 
-        if data['name'] == CTDB_VOL_NAME and create_request:
+        if data['name'] == LEGACY_CTDB_VOL_NAME and create_request:
             verrors.add(
                 f'{schema_name}.{data["name"]}',
                 f'"{data["name"]}" is a reserved name. Choose a different volume name.'
@@ -134,11 +134,6 @@ class GlusterVolumeService(CRUDService):
         # events for which we act upon (i.e. FUSE mounting)
         await self.middleware.call('service.start', 'glustereventsd')
 
-        # before we create the gluster volume, we need to ensure
-        # the ctdb shared volume is setup
-        ctdb_job = await self.middleware.call('ctdb.shared.volume.create')
-        await ctdb_job.wait(raise_error=True)
-
         name = data.pop('name')
         bricks = await format_bricks(data.pop('bricks'))
         options = {'args': (name, bricks,), 'kwargs': data}
@@ -146,6 +141,21 @@ class GlusterVolumeService(CRUDService):
         await self.middleware.call('gluster.method.run', volume.create, options)
         await self.middleware.call('gluster.volume.start', {'name': name})
         await self.middleware.call('gluster.volume.store_workdir')
+
+        # we need to wait on the local FUSE mount job since
+        # ctdb daemon config is dependent on it being mounted
+        fuse_mount_job = await self.middleware.call('core.get_jobs', [
+            ('method', '=', 'gluster.fuse.mount'),
+            ('arguments.0.name', '=', name),
+            ('state', '=', 'RUNNING')
+        ])
+        if fuse_mount_job:
+            wait_id = await self.middleware.call('core.job_wait', fuse_mount_job[0]['id'])
+            await wait_id.wait()
+
+        ctdb_job = await self.middleware.call('ctdb.shared.volume.create')
+        await ctdb_job.wait(raise_error=True)
+
         return await self.middleware.call('gluster.volume.query', [('id', '=', name)])
 
     @accepts(Dict(
@@ -211,7 +221,7 @@ class GlusterVolumeService(CRUDService):
     @accepts(Str('id'))
     @returns()
     @job(lock=GLUSTER_JOB_LOCK)
-    async def do_delete(self, job, id):
+    async def do_delete(self, job, volume_id):
         """
         Delete a gluster volume.
 
@@ -219,20 +229,34 @@ class GlusterVolumeService(CRUDService):
                 to be deleted
         """
 
-        args = {'args': ((await self.get_instance(id))['name'],)}
+        args = {'args': ((await self.get_instance(volume_id))['name'],)}
+        try:
+            meta_config = await self.middleware.call('ctdb.shared.volume.config')
+        except Exception:
+            self.logger.debug("Failed to retrieve metadata volume", exc_info=True)
+            meta_config = {'volume_name': None}
 
-        if id == CTDB_VOL_NAME:
-            # if the ctdb shared volume is being deleted then call
-            # the ctdb shared volume specific API since it handles
-            # other items
+        if volume_id == CTDBConfig.LEGACY_CTDB_VOL_NAME.value:
             await (await self.middleware.call('ctdb.shared.volume.delete')).wait(raise_error=True)
-        else:
-            # need to unmount the FUSE mountpoint (if it exists) and
-            # send the request to do the same to all other peers in
-            # the TSP before we delete the volume
-            data = {'event': 'VOLUME_STOP', 'name': id, 'forward': True}
-            await self.middleware.call('gluster.localevents.send', data)
-            await self.middleware.call('gluster.method.run', volume.delete, args)
+            return
+
+        if volume_id == meta_config['volume_name']:
+            volumes = await self.middleware.call('gluster.volume.list')
+            try:
+                volumes.remove(volume_id)
+            except ValueError:
+                pass
+
+            if volumes:
+                migrate_job = await self.middleware.call('ctdb.shared.volume.migrate', {'name': volumes[0]})
+                await migrate_job.wait(raise_error=True)
+
+        # need to unmount the FUSE mountpoint (if it exists) and
+        # send the request to do the same to all other peers in
+        # the TSP before we delete the volume
+        data = {'event': 'VOLUME_STOP', 'name': volume_id, 'forward': True}
+        await self.middleware.call('gluster.localevents.send', data)
+        await self.middleware.call('gluster.method.run', volume.delete, args)
 
     @accepts(Dict(
         'volume_info',

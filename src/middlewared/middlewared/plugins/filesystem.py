@@ -109,12 +109,17 @@ class FilesystemService(Service):
                 f'For example: "{FuseConfig.FUSE_PATH_SUBST.value}GLSMB/SHARE"'
             )
 
-        if gluster_volume == CTDBConfig.CTDB_VOL_NAME.value and not ignore_ctdb:
+        if gluster_volume == CTDBConfig.LEGACY_CTDB_VOL_NAME.value and not ignore_ctdb:
             raise CallError('access to ctdb volume is not permitted.', errno.EPERM)
 
         is_mounted = self.middleware.call_sync('gluster.fuse.is_mounted', {'name': gluster_volume})
         if not is_mounted:
             raise CallError(f'{gluster_volume}: cluster volume is not mounted.', errno.ENXIO)
+
+        ctdb_vol = self.middleware.call_sync('ctdb.shared.volume.config')['volume_name']
+        if ctdb_vol == gluster_volume:
+            if volpath.startswith(CTDBConfig.CTDB_STATE_DIR.value):
+                raise CallError('access to cluster state directory is not permitted.', errno.EPERM)
 
         return os.path.join(FuseConfig.FUSE_PATH_BASE.value, gluster_volume, volpath)
 
