@@ -27,7 +27,7 @@ def iscsi_extent(data):
 def test__iscsi_extent__disk_choices(request):
     with dataset("test zvol", {
         "type": "VOLUME",
-        "volsize": 1032192,
+        "volsize": 1048576,
     }) as ds:
         # Make snapshots available for devices
         call("zfs.dataset.update", ds, {"properties": {"snapdev": {"parsed": "visible"}}})
@@ -55,7 +55,7 @@ def test__iscsi_extent__disk_choices(request):
 def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
     with dataset("test zvol", {
         "type": "VOLUME",
-        "volsize": 1032192,
+        "volsize": 1048576,
     }) as ds:
         with pytest.raises(ValidationErrors) as e:
             with iscsi_extent({
@@ -73,7 +73,7 @@ def test__iscsi_extent__create_with_invalid_disk_with_whitespace(request):
 def test__iscsi_extent__locked(request):
     with dataset("test zvol", {
         "type": "VOLUME",
-        "volsize": 1032192,
+        "volsize": 1048576,
         "inherit_encryption": False,
         "encryption": True,
         "encryption_options": {"passphrase": "testtest"},
