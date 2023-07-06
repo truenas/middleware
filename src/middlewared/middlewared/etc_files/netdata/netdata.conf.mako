@@ -16,6 +16,7 @@
 	# Netdata is not designed to be exposed to potentially hostile
 	# networks. See https://github.com/netdata/netdata/issues/164
 	bind socket to IP = 127.0.0.1:${NETDATA_PORT}
+	update_every = 1
 
 [db]
 	mode = dbengine
