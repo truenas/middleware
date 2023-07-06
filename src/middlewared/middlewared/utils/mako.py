@@ -11,6 +11,7 @@ __all__ = ["get_template"]
 lookup = TemplateLookup(
     directories=[os.path.dirname(os.path.dirname(__file__))],
     module_directory="/run/mako",
+    imports=["from middlewared.utils.mako_filters import indent, json, markdown"]
 )
 
 

@@ -1,4 +1,4 @@
-## Websocket Protocol
+${'##'} Websocket Protocol
 
 TrueNAS uses DDP: https://github.com/meteor/meteor/blob/devel/packages/ddp/DDP.md .
 
@@ -8,9 +8,9 @@ Websocket endpoint: `/websocket`
 
 e.g. `ws://truenas.domain/websocket`
 
-### Example of connection
+${'###'} Example of connection
 
-#### Client connects to websocket endpoint and sends a `connect` message.
+${'####'} Client connects to websocket endpoint and sends a `connect` message.
 
     :::javascript
     {
@@ -19,7 +19,7 @@ e.g. `ws://truenas.domain/websocket`
       "support": ["1"]
     }
 
-#### Server answers with either `connected` or `failed`.
+${'####'} Server answers with either `connected` or `failed`.
 
     :::javascript
     {
@@ -27,7 +27,7 @@ e.g. `ws://truenas.domain/websocket`
       "session": "b4a4d164-6bc7-11e6-8a93-00e04d680384"
     }
 
-### Authentication
+${'###'} Authentication
 
 Authentication happens by calling the `auth.login` method.
 

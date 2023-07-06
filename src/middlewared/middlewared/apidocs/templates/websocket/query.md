@@ -1,12 +1,12 @@
-## Query Methods
+${'##'} Query Methods
 
 TrueNAS API has multiple query methods including `pool.query`, `disk.query`, `vm.query`, and many more.
 
 The arguments for these methods support multiple options and filters that are similar to SQL queries.
 
-### Query Filters
+${'###'} Query Filters
 
-#### Basic Usage
+${'####'} Basic Usage
 
 Query Filters are primarily an array of conditions, with each condition also represented as an array.
 
@@ -23,7 +23,7 @@ Javascript:
     ]
 
 
-#### Supported Operators
+${'####'} Supported Operators
 | Operator       | Description     |
 | :------------- | :----------: |
 | '=' |  x == y |
@@ -44,7 +44,7 @@ Javascript:
 
 Specifing the prefix 'C' will perform a case-insensitive version of the filter, e.g. `C=`.
 
-#### Multiple Filters
+${'####'} Multiple Filters
 
 We can use `disk.query` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:
 
@@ -56,7 +56,7 @@ Javascript:
     ]
 
 
-#### Conjunctions
+${'####'} Conjunctions
 
 Queries with no defined conjunction assume `AND`. However, the conjunction `OR` is also supported by using the syntax illustrated below. We can use `chart.release.query` with `OR` to filter chart releases by name.
 
@@ -70,13 +70,13 @@ Javascript:
     ]
 
 
-### Query Options
+${'###'} Query Options
 
 Query Options are objects that can further customize the results returned by a Query Method.
 
 Properties of a Query Option include `extend | extend_context | prefix | extra | order_by | select | count | get | limit | offset`
 
-#### Count
+${'####'} Count
 
 Use the `count` option to get the number of results returned.
 
@@ -87,7 +87,7 @@ Javascript:
     }
 
 
-#### Limit
+${'####'} Limit
 
 Use the `limit` option to limit the number of results returned.
 
@@ -98,7 +98,7 @@ Javascript:
     }
 
 
-#### Offset
+${'####'} Offset
 
 Use the `offset` option to remove the first items from a returned list.
 
@@ -109,7 +109,7 @@ Javascript:
     }
 
 
-#### Select
+${'####'} Select
 
 Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings.
 
@@ -120,7 +120,7 @@ Javascript:
     }
 
 
-#### Order By
+${'####'} Order By
 
 Use the `order_by` option to specify which field determines the sort order. Fields must be provided in an
 array of strings.

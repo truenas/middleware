@@ -1,4 +1,4 @@
-from .apidocs import app as apidocs_app
+from .apidocs import routes as apidocs_routes
 from .auth import is_ha_connection
 from .client import ejson as json
 from .common.event_source.manager import EventSourceManager
@@ -30,7 +30,6 @@ from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
-from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict, deque
 
 import argparse
@@ -1785,6 +1784,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.app = app = web.Application(middlewares=[
             normalize_path_middleware(redirect_class=HTTPPermanentRedirect)
         ], loop=self.loop)
+        self.app['middleware'] = self
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
@@ -1806,7 +1806,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
-        app.router.add_route('*', '/api/docs{path_info:.*}', WSGIHandler(apidocs_app))
+        app.router.add_routes(apidocs_routes)
         app.router.add_route('*', '/ui{path_info:.*}', WebUIAuth(self))
 
         self.fileapp = FileApplication(self, self.loop)

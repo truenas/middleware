@@ -189,11 +189,11 @@
                     <a href="#websocket_services">Websocket Services</a>
                 </li>
 
-                {% for service in services %}
+                % for service in services:
                 <li>
-                  <a href="#{{ service.name }}">{{ service.name }}</a>
+                  <a href="#${service['name']}">${service['name']}</a>
                 </li>
-                {% endfor %}
+                % endfor
 
                 <li class="sidebar-brand">
                     <a href="#websocket_events">Websocket Events</a>
@@ -215,92 +215,92 @@
              <div class="col-lg-12">
 
                <span id="websocket_protocol">
-               {{ protocol|markdown|safe }}
+               ${protocol|markdown}
                </span>
 
                <hr />
 
                <span id="websocket_services">
-             {% for service in services %}
-              <h2 id="{{ service.name }}">{{ service.name }}</h2>
-              {% for mname, method in service.methods.items() %}
+             % for service in services:
+              <h2 id="${service['name']}">${service['name']}</h2>
+              % for mname, method in service['methods'].items():
                <table class="table">
                  <thead>
                    <tr><th>
-                       {{ mname }}
-                       {% if method.job %}
+                       ${mname}
+                       % if method['job']:
                             <div class="tool_tip" style="margin-left: 20px;">Job
                                 <span class="tooltip_text">
                                     This endpoint is a Job. Please refer to the <a href="#jobs">Jobs</a> section for details.
-                                    {% if method.downloadable %}
+                                    % if method['downloadable']:
                                     <br>
                                     A file can be downloaded from this endpoint. Please refer to the <a href="#jobs">Jobs</a> section to download a file.
-                                    {% endif %}
-                                    {% if method.uploadable %}
+                                    % endif
+                                    % if method['uploadable']:
                                     <br>
                                     A file can be uploaded to this endpoint. Please refer to the <a href="#jobs">Jobs</a> section to upload a file.
-                                    {% endif %}
+                                    % endif
                                 </span>
                             </div>
-                       {% endif %}
+                       % endif
                    </th></tr>
-                   {% if method.accepts %}
+                   % if method['accepts']:
                    <tr><th>
                      Arguments:
                      <div>
-                     {% for accept in method.accepts %}
+                     % for accept in method['accepts']:
                      <div style="float: left; margin-right: 10px;">
-                       <div style="background-color: #ddd; white-space: pre; font-family: Courier;">{{ accept|json }}</div>
+                       <div style="background-color: #ddd; white-space: pre; font-family: Courier;">${accept|n,json}</div>
                      </div>
-                     {% endfor %}
+                     % endfor
                      <div style="clear: both;"></div>
                      </div>
                    </th></tr>
-                   {% endif %}
-                   {% if method.returns %}
+                   % endif
+                   % if method['returns']:
                    <tr><th>
                      Return Arguments:
                      <div>
-                     {% for return_schema in method.returns %}
+                     % for return_schema in method['returns']:
                      <div style="float: left; margin-right: 10px;">
-                       <div style="background-color: #ddd; white-space: pre; font-family: Courier;">{{ return_schema|json }}</div>
+                       <div style="background-color: #ddd; white-space: pre; font-family: Courier;">${return_schema|n,json}</div>
                      </div>
-                     {% endfor %}
+                     % endfor
                      <div style="clear: both;"></div>
                      </div>
                    </th></tr>
-                   {% endif %}
+                   % endif
                  </thead>
                  <tbody>
                    <tr><td>
-                     {% if method.description %}
-                       {{ method.description|markdown|safe }}
-                     {% else %}
+                     % if method['description']:
+                       ${method['description']|markdown}
+                     % else:
                        -
-                     {% endif %}
+                     % endif
                    </td></tr>
-                   {% for example in method.examples.get('__all__', []) %}
-                   <tr><td>{{ example|markdown|safe }}</td></tr>
-                   {% endfor %}
-                   {% for example in method.examples.get('websocket', []) %}
-                   <tr><td>{{ example|markdown|safe }}</td></tr>
-                   {% endfor %}
+                   % for example in method['examples'].get('__all__', []):
+                   <tr><td>${example|markdown}</td></tr>
+                   % endfor
+                   % for example in method['examples'].get('websocket', []):
+                   <tr><td>${example|markdown}</td></tr>
+                   % endfor
                  </tbody>
                </table>
-              {% endfor %}
-             {% endfor %}
+              % endfor
+             % endfor
                </span>
 
                <span id="websocket_events">
-                {{ events|markdown|safe }}
+                ${events|markdown}
                </span>
 
                <span id="jobs">
-               {{ jobs|markdown|safe }}
+               ${jobs|markdown}
                </span>
 
                  <span id="query_methods">
-                 {{ query_filters|markdown|safe }}
+                 ${query_filters|markdown}
                  </span>
 
              </div>

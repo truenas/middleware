@@ -1,59 +1,48 @@
-import json
-import markdown
-from markdown.extensions.codehilite import CodeHiliteExtension
+import aiohttp.web
 
-from .proxy import ReverseProxied
-from flask import Flask, render_template
-from middlewared.client import Client
-
-app = Flask(__name__)
-app.wsgi_app = ReverseProxied(app.wsgi_app)
+from middlewared.utils.mako import get_template
 
 
-@app.template_filter()
-def json_filter(value):
-    if isinstance(value, dict):
-        value.pop('_required_', None)
-    return json.dumps(value, indent=True)
+async def render_template(request, name, **kwargs):
+    return await request.app['middleware'].run_in_thread(
+        lambda: get_template(f'apidocs/templates/{name}').render(**kwargs)
+    )
 
 
-@app.template_filter()
-def markdown_filter(value):
-    if not value:
-        return value
-    return markdown.markdown(value, extensions=[CodeHiliteExtension(noclasses=True)])
+async def render_to_response(request, name, **kwargs):
+    return aiohttp.web.Response(text=await render_template(request, name, **kwargs), content_type='text/html')
 
 
-app.jinja_env.filters['json'] = json_filter
-app.jinja_env.filters['markdown'] = markdown_filter
+routes = aiohttp.web.RouteTableDef()
 
 
-@app.route('/')
-def main():
-    return render_template('index.html')
+@routes.get('/api/docs/')
+async def index(request):
+    return await render_to_response(request, 'index.html')
 
 
-@app.route('/restful/')
-def restful():
-    return render_template('restful.html')
+@routes.get('/api/docs/restful/')
+async def restful(request):
+    return await render_to_response(request, 'restful.html')
 
 
-@app.route('/websocket/')
-def websocket():
+@routes.get('/api/docs/websocket/')
+async def websocket(request):
+    middleware = request.app['middleware']
     services = []
-    # FIXME: better way to call middleware using asyncio insteaad of using client
-    with Client() as c:
-        for name in sorted(c.call('core.get_services')):
-            services.append({
-                'name': name,
-                'methods': c.call('core.get_methods', name)
-            })
-        events = render_template('websocket/events.md', **{'events': c.call('core.get_events')})
+    for name in sorted(await middleware.call('core.get_services')):
+        services.append({
+            'name': name,
+            'methods': await middleware.call('core.get_methods', name),
+        })
+    events = await render_template(request, 'websocket/events.md', **{
+        'events': await middleware.call('core.get_events')
+    })
 
-    query_filters = render_template('websocket/query.md')
-    protocol = render_template('websocket/protocol.md')
-    jobs = render_template('websocket/jobs.md')
-    return render_template('websocket.html', **{
+    query_filters = await render_template(request, 'websocket/query.md')
+    protocol = await render_template(request, 'websocket/protocol.md')
+    jobs = await render_template(request, 'websocket/jobs.md')
+    return await render_to_response(request, 'websocket.html', **{
         'events': events,
         'services': services,
         'protocol': protocol,
