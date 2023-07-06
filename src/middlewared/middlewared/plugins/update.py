@@ -250,6 +250,7 @@ class UpdateService(Service):
 
     @accepts(Dict(
         'update',
+        Str('dataset_name', null=True, default=None),
         Bool('resume', default=False),
         Str('train', null=True, default=None),
         Bool('reboot', default=False),
@@ -313,6 +314,7 @@ class UpdateService(Service):
         Str('path'),
         Dict(
             'options',
+            Str('dataset_name', null=True, default=None),
             Bool('resume', default=False),
             Bool('cleanup', default=True),
         )
