@@ -111,6 +111,10 @@ class CtdbSharedVolumeService(Service):
             options = {'args': (CTDB_VOL_NAME, bricks,)}
             options['kwargs'] = {'replica': len(con_peers), 'force': True}
             await self.middleware.call('gluster.method.run', volume.create, options)
+            await self.middleware.call('gluster.volume.optset', {
+                'name': CTDB_VOL_NAME,
+                'opts': {'auth.allow': 'NONE'}
+            })
 
         # make sure the shared volume is configured properly to prevent
         # possibility of split-brain/data corruption with ctdb service
