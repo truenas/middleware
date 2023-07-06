@@ -266,6 +266,13 @@ http {
             proxy_set_header X-Scheme $Scheme;
         }
 
+        location /_clusterevents {
+            proxy_pass http://127.0.0.1:6000/_clusterevents;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr $remote_addr;
+            proxy_set_header X-Real-Remote-Port $remote_port;
+        }
+
         location /_download {
             proxy_pass http://127.0.0.1:6000;
             proxy_http_version 1.1;

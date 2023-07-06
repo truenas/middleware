@@ -65,7 +65,7 @@ class ClusterEventsApplication(object):
 
     async def _post(self, url, headers, json, session, timeout):
         return await asyncio.wait_for(self.middleware.create_task(
-            session.post(url, headers=headers, json=json)
+            session.post(url, headers=headers, json=json, ssl=False)
         ), timeout=timeout)
 
     async def forward_event(self, msg_info, data):
@@ -74,9 +74,7 @@ class ClusterEventsApplication(object):
         for i in await self.middleware.call('gluster.peer.status', localhost):
             if i['state'] == '3' and i['connected'] == 'Connected':
                 if i['status'] == 'Peer in Cluster':
-                    uri = 'http://' + i['hostname']
-                    uri += ':6000/_clusterevents'
-                    peer_urls.append(uri)
+                    peer_urls.append(f'https://{i["hostname"]}/_clusterevents')
 
         if peer_urls:
             secret = await self.middleware.call(
