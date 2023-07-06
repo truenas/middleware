@@ -12,7 +12,6 @@ from .utils import get_virsh_command_args, SENSITIVE_PCI_DEVICE_TYPES
 
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
-RE_IOMMU_ENABLED = re.compile(r'QEMU.*if IOMMU is enabled.*:\s*PASS.*')
 
 
 class VMDeviceService(Service):
@@ -23,12 +22,8 @@ class VMDeviceService(Service):
     @accepts()
     @returns(Bool())
     async def iommu_enabled(self):
-        """
-        Returns "true" if iommu is enabled, "false" otherwise
-        """
-        cp = await run(['virt-host-validate'], check=False)
-        # We still check for stdout because if some check in it fails, the command will have a non zero exit code
-        return bool(RE_IOMMU_ENABLED.findall((cp.stdout or b'').decode()))
+        """Returns "true" if iommu is enabled, "false" otherwise"""
+        return await self.middleware.run_in_thread(os.path.exists, '/sys/kernel/iommu_groups')
 
     @private
     def retrieve_node_information(self, xml):
