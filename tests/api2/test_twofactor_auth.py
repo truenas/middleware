@@ -77,8 +77,8 @@ def test_user_2fa_secret_renewal():
         'password': TEST_PASSWORD_2,
         'full_name': TEST_USERNAME_2,
     }) as user_obj:
-        call('user.renew_2fa_secret', user_obj['username'])
         with enabled_twofactor_auth():
+            call('user.renew_2fa_secret', user_obj['username'])
             assert call(
                 'auth.get_login_user', TEST_USERNAME_2, TEST_PASSWORD_2,
                 get_2fa_totp_token(get_user_secret(user_obj['id'])['secret'])
