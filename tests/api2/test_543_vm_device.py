@@ -31,7 +31,7 @@ def data():
 
 
 def test_01_vm_disk_choices(request):
-    with dataset('test zvol', {'type': 'VOLUME', 'volsize': 1032192}) as ds:
+    with dataset('test zvol', {'type': 'VOLUME', 'volsize': 1048576}) as ds:
         results = GET('/vm/device/disk_choices')
         assert isinstance(results.json(), dict), results.json()
         assert results.json().get(f'/dev/zvol/{ds.replace(" ", "+")}') == f'{ds}'

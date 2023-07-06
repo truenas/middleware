@@ -18,7 +18,7 @@ def encryption_props():
 @pytest.mark.parametrize("zvol", [True, False])
 def test_restart_vm_on_dataset_unlock(zvol):
     if zvol:
-        data = {"type": "VOLUME", "volsize": 1032192}
+        data = {"type": "VOLUME", "volsize": 1048576}
     else:
         data = {}
 
