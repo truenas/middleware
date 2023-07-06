@@ -42,6 +42,7 @@ class GlusterVolumeService(CRUDService):
         Str('mnt_options'),
         Str('fs_name'),
         additional_attrs=True,
+        register=True
     )
 
     @filterable
@@ -125,6 +126,9 @@ class GlusterVolumeService(CRUDService):
         `disperse_data` Integer representing number of disperse data bricks
         `redundancy` Integer representing number of redundancy bricks
         `force` Boolean, if True ignore potential warnings
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
 
         schema_name = 'glustervolume_create'
@@ -153,9 +157,6 @@ class GlusterVolumeService(CRUDService):
             wait_id = await self.middleware.call('core.job_wait', fuse_mount_job[0]['id'])
             await wait_id.wait()
 
-        ctdb_job = await self.middleware.call('ctdb.shared.volume.create')
-        await ctdb_job.wait(raise_error=True)
-
         return await self.middleware.call('gluster.volume.query', [('id', '=', name)])
 
     @accepts(Dict(
@@ -170,6 +171,9 @@ class GlusterVolumeService(CRUDService):
 
         `name` String representing name of gluster volume
         `force` Boolean, if True forcefully start the gluster volume
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
         name = data.pop('name')
         options = {'args': (name,), 'kwargs': data}
@@ -211,6 +215,9 @@ class GlusterVolumeService(CRUDService):
 
         `name` String representing name of gluster volume
         `force` Boolean, if True forcefully stop the gluster volume
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
         name = data.pop('name')
 
@@ -227,6 +234,9 @@ class GlusterVolumeService(CRUDService):
 
         `id` String representing name of gluster volume
                 to be deleted
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
 
         args = {'args': ((await self.get_instance(volume_id))['name'],)}
@@ -346,6 +356,9 @@ class GlusterVolumeService(CRUDService):
         `opts` Dict where
             --key-- is the name of the option
             --value-- is the value to be given to the option
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
 
         options = {'args': (data['name'], data['opts'])}
@@ -363,6 +376,9 @@ class GlusterVolumeService(CRUDService):
 
         `name` String representing name of gluster volume
         `enable` Boolean, if True enable quota else disable it
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
 
         method = quota.enable if data['enable'] else quota.disable

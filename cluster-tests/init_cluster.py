@@ -167,6 +167,36 @@ def setup_network(ip):
         result['ERROR'] = 'Failed to commit static IP information for {ip}:{ans.text}'
         return result
 
+    print(f'Allowing root SSH {ip}')
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'user.update',
+        'params': [1, {'ssh_password_enabled': True}],
+    })
+    if res.get('error', {}):
+        result['ERROR'] = res['error'].get('reason', 'root user update failed')
+        return result
+
+    print(f'Enabling SSH on boot {ip}')
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'service.update',
+        'params': ['ssh', {'enable': True}]
+    })
+    if res.get('error', {}):
+        result['ERROR'] = res['error'].get('reason', 'SSH enable failed')
+        return result
+
+    print(f'Starting SSH {ip}')
+    res = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'service.start',
+        'params': ['ssh', {'silent': False}]
+    })
+    if res.get('error', {}):
+        result['ERROR'] = res['error'].get('reason', 'SSH start failed')
+        return result
+
     return result
 
 
@@ -187,7 +217,7 @@ def get_os_version(ip):
 
 def init():
     with ThreadPoolExecutor() as exc:
-        nodes_ip_keys = ('NODE_A_IP', 'NODE_B_IP', 'NODE_C_IP')
+        nodes_ip_keys = ('NODE_A_IP', 'NODE_B_IP', 'NODE_C_IP', 'NODE_D_IP')
         ips = [v for k, v in CLUSTER_INFO.items() if k in nodes_ip_keys]
         errors = []
 

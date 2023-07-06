@@ -87,6 +87,9 @@ class GlusterFuseService(Service):
                 gluster volumes
         `raise` Boolean if True raise a CallError if the FUSE mount
                 fails
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
         schema_name = 'glusterfuse.mount'
         await self.middleware.call(
@@ -177,6 +180,9 @@ class GlusterFuseService(Service):
                 mounted gluster volumes
         `raise` Boolean if True raise a CallError if the FUSE mount
                 fails
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
         schema_name = 'glusterfuse.umount'
         await self.middleware.call(

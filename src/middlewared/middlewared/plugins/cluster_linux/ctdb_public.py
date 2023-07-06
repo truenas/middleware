@@ -168,6 +168,9 @@ class CtdbPublicIpService(CRUDService):
         `ip` string representing an IP v4/v6 address
         `netmask` integer representing a cidr notated netmask (i.e. 16/24/48/64 etc)
         `interface` string representing a network interface to apply the `ip`
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
 
         schema_name = 'public_create'
@@ -206,6 +209,9 @@ class CtdbPublicIpService(CRUDService):
         If `pnn` is not specified, then the operation applies to the current node.
         In order to remove an address cluster-wide, this method must be called on
         every node where the public IP address is configured.
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
         schema_name = 'public_delete'
         verrors = ValidationErrors()

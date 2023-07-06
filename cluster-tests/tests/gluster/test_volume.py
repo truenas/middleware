@@ -2,7 +2,7 @@ from time import sleep
 
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS, BRICK_PATH
 from utils import make_request, make_ws_request, wait_on_job, ssh_test
 from exceptions import JobTimeOut
 from pytest_dependency import depends
@@ -10,7 +10,7 @@ from pytest_dependency import depends
 
 GVOL = 'gvolumetest'
 DS_HIERARCHY = f'{CLUSTER_INFO["ZPOOL"]}/.glusterfs/{GVOL}/brick0'
-BRICK_PATH = f'/mnt/{DS_HIERARCHY}'
+BRICK_PATH2 = f'/mnt/{DS_HIERARCHY}'
 
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
@@ -52,7 +52,7 @@ def test_03_create_gluster_volume(volume, request):
     depends(request, ['MOUNT_DATASETS'])
     payload = {
         'name': volume,
-        'bricks': [{'peer_name': i, 'peer_path': BRICK_PATH} for i in CLUSTER_IPS],
+        'bricks': [{'peer_name': i, 'peer_path': BRICK_PATH2} for i in CLUSTER_IPS],
         'force': True,
     }
     ans = make_request('post', '/gluster/volume', data=payload)
@@ -157,3 +157,50 @@ def test_09_delete_gluster_volume(volume, request):
         ans = make_request('get', '/gluster/volume/list')
         assert ans.status_code == 200, ans.text
         assert volume not in ans.json(), ans.text
+
+@pytest.mark.dependency(name='CLUSTER_EXPANDED')
+def test_10_expand_cluster(request):
+    peers_config = [{
+        'private_address': CLUSTER_INFO['NODE_D_IP'],
+        'hostname': CLUSTER_INFO['NODE_D_DNS'],
+        'brick_path': BRICK_PATH,
+        'remote_credential': {
+            'username': CLUSTER_INFO['APIUSER'],
+            'password': CLUSTER_INFO['APIPASS']
+        }
+    }]
+
+    payload = {
+        'msg': 'method',
+        'method': 'cluster.management.add_nodes',
+        'params': [{
+            'new_cluster_nodes': peers_config,
+        }]
+    }
+    res = make_ws_request(CLUSTER_INFO['NODE_A_IP'], payload)
+    assert res.get('error') is None, str(res)
+
+    try:
+        status = wait_on_job(res['result'], CLUSTER_INFO['NODE_A_IP'], TIMEOUTS['VOLUME_TIMEOUT'])
+    except JobTimeOut:
+        assert False, JobTimeOut
+    else:
+        assert status['state'] == 'SUCCESS', str(status)
+
+    gluster_volume = status['result']['result']['gluster_volume'][0]
+    gluster_peers = status['result']['result']['gluster_peers']
+    ctdb_config = status['result']['result']['ctdb_configuration']
+
+    assert gluster_volume.get('name') == CLUSTER_INFO['GLUSTER_VOLUME'], str(gluster_volume)
+    assert len(gluster_volume.get('bricks', [])) == 4, str(gluster_volume)
+    assert len(gluster_peers) == 4, str(gluster_peers)
+    assert len(ctdb_config['private_ips']) == 4, str(ctdb_config['private_ips'])
+
+    res = make_ws_request(CLUSTER_INFO['NODE_D_IP'], {
+        'msg': 'method',
+        'method': 'ctdb.general.status',
+        'params': []
+    })
+
+    assert res.get('error') is None, str(res)
+    assert res['result']['all_healthy'] is True, str(res['result'])

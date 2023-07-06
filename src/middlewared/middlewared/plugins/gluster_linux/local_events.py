@@ -100,6 +100,9 @@ class GlusterLocalEventsService(Service):
         that are destined for the api endpoint at
         http://*:6000/_clusterevents for each peer
         in the trusted storage pool.
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
         if self.JWT_SECRET is None:
             with contextlib.suppress(FileNotFoundError):
@@ -134,6 +137,9 @@ class GlusterLocalEventsService(Service):
         that are destined for the api endpoint at
         http://*:6000/_clusterevents for each peer
         in the trusted storage pool.
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
 
         if not data['force'] and self.JWT_SECRET is not None:

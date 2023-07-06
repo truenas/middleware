@@ -7,6 +7,25 @@ from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
 from utils import make_request, make_ws_request, wait_on_job
 from exceptions import JobTimeOut
 
+
+@pytest.mark.parametrize('ip', [
+    CLUSTER_INFO['NODE_A_IP'],
+    CLUSTER_INFO['NODE_B_IP'],
+    CLUSTER_INFO['NODE_C_IP'],
+    CLUSTER_INFO['NODE_D_IP'],
+])
+def test_gather_debugs_before_teardown(ip, request):
+    ans = make_ws_request(ip, {'msg': 'method', 'method': 'system.debug_generate'})
+    assert ans.get('error') is None, ans
+    assert isinstance(ans['result'], int), ans
+    try:
+        status = wait_on_job(ans['result'], ip, 600)
+    except JobTimeOut:
+        assert False, f'Timed out waiting to generate debug on {ip!r}'
+    else:
+        assert status['state'] == 'SUCCESS', status
+
+
 @pytest.mark.dependency(name='STOP_GVOLS')
 def test_stop_all_gvols():
     ans = make_request('get', '/gluster/volume')
@@ -78,7 +97,7 @@ def test_delete_gvols(request):
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='CTDB_TEARDOWN')
 def test_ctdb_shared_vol_teardown(ip, request):
-    payload = {'msg': 'method', 'method': 'ctdb.shared.volume.teardown'}
+    payload = {'msg': 'method', 'method': 'ctdb.root_dir.teardown'}
     ans = make_ws_request(ip, payload)
     assert ans.get('error') is None, ans
     assert isinstance(ans['result'], int), ans
