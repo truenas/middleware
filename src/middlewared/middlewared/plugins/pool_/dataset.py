@@ -324,8 +324,12 @@ class PoolDatasetService(CRUDService):
                     verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
 
         elif data['type'] == 'VOLUME':
-            if mode == 'CREATE' and 'volsize' not in data:
-                verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
+            if mode == 'CREATE':
+                if 'volsize' not in data:
+                    verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
+                if 'volblocksize' not in data:
+                    # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
+                    data['volblocksize'] = '16K'
 
             for i in (
                 'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
