@@ -8,7 +8,6 @@ import time
 import aiohttp
 import async_timeout
 import requests
-import simplejson
 
 from middlewared.pipe import Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
@@ -350,7 +349,7 @@ class SupportService(ConfigService):
 
         try:
             data = r.json()
-        except simplejson.JSONDecodeError:
+        except ValueError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
 
