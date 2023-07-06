@@ -1,6 +1,8 @@
 import asyncio
 import base64
 import errno
+import json
+import itertools
 import logging
 import os
 import re
@@ -23,6 +25,7 @@ from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOO
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
+from middlewared.plugins.update_.utils_linux import mount_update
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 
@@ -694,6 +697,34 @@ class FailoverService(ConfigService):
                 if not djob.result:
                     raise CallError('No updates available.')
 
+            if updatefile:
+                effective_updatefile_name = updatefile_name
+            else:
+                effective_updatefile_name = DOWNLOAD_UPDATE_FILE
+
+            # `truenas-installer` automatically determines new BE dataset name based on the version and existing BE
+            # names. As BE names can be different on different controllers, automatic process can't be trusted to
+            # choose the same bootenv name on both controllers so we explicitly specify BE name for HA upgrades.
+            with mount_update(os.path.join(local_path, effective_updatefile_name)) as mounted:
+                with open(os.path.join(mounted, 'manifest.json')) as f:
+                    manifest = json.load(f)
+
+                bootenv_name = manifest['version']
+
+            existing_bootenvs = set([
+                be['name'] for be in self.middleware.call_sync('bootenv.query')
+            ] + [
+                be['name'] for be in self.middleware.call_sync('failover.call_remote', 'bootenv.query')
+            ])
+            if bootenv_name in existing_bootenvs:
+                for i in itertools.count(1):
+                    probe_bootenv_name = f"{bootenv_name}-{i}"
+                    if probe_bootenv_name not in existing_bootenvs:
+                        bootenv_name = probe_bootenv_name
+                        break
+
+            dataset_name = f'{self.middleware.call_sync("boot.pool_name")}/ROOT/{bootenv_name}'
+
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', True)
 
             remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_update_location')
@@ -702,15 +733,11 @@ class FailoverService(ConfigService):
                 # Replicate uploaded or downloaded update it to the standby
                 job.set_progress(None, 'Sending files to Standby Controller')
                 token = self.middleware.call_sync('failover.call_remote', 'auth.generate_token')
-                if updatefile:
-                    f = updatefile_name
-                else:
-                    f = DOWNLOAD_UPDATE_FILE
                 self.middleware.call_sync(
                     'failover.send_file',
                     token,
-                    os.path.join(local_path, f),
-                    os.path.join(remote_path, f)
+                    os.path.join(local_path, effective_updatefile_name),
+                    os.path.join(remote_path, effective_updatefile_name)
                 )
 
             local_version = self.middleware.call_sync('system.version')
@@ -737,20 +764,19 @@ class FailoverService(ConfigService):
                     f'Active Controller: {local_descr}\n' + f'Standby Controller: {remote_descr}'
                 )
 
+            update_options = {
+                'dataset_name': dataset_name,
+                'resume': options['resume'],
+            }
+
             if updatefile:
                 update_method = 'update.manual'
-                update_remote_args = [os.path.join(remote_path, updatefile_name)]
-                update_local_args = [updatefile_localpath]
-                if options['resume']:
-                    update_remote_args.append({'resume': True})
-                    update_local_args.append({'resume': True})
+                update_remote_args = [os.path.join(remote_path, updatefile_name), update_options]
+                update_local_args = [updatefile_localpath, update_options]
             else:
                 update_method = 'update.update'
-                update_remote_args = []
-                update_local_args = []
-                if options['resume']:
-                    update_remote_args.append({'resume': True})
-                    update_local_args.append({'resume': True})
+                update_remote_args = [update_options]
+                update_local_args = [update_options]
 
             # upgrade the local (active) controller
             ljob = self.middleware.call_sync(
