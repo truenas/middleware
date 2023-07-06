@@ -1,4 +1,4 @@
-## Jobs
+${'##'} Jobs
 
 Tasks which require significant time to execute or process a significant amount 
 of input or output are tagged as jobs.
@@ -9,9 +9,9 @@ in the output, or the output contains the result returned by the endpoint on com
 
 e.g. `ws://truenas.domain/websocket`
 
-### Example of connecting to endpoint marked as a job
+${'###'} Example of connecting to endpoint marked as a job
 
-#### Client connects to websocket endpoint and sends a `connect` message.
+${'####'} Client connects to websocket endpoint and sends a `connect` message.
 
     :::javascript
     {
@@ -21,7 +21,7 @@ e.g. `ws://truenas.domain/websocket`
         "params": []
     }
 
-#### Server answers with `job_id`.
+${'####'} Server answers with `job_id`.
 
     :::javascript
     {
@@ -30,7 +30,7 @@ e.g. `ws://truenas.domain/websocket`
       "result": 53
     }
 
-### Query Job Status
+${'###'} Query Job Status
 
 Job status can be queried with the `core.get_jobs` method.
 
@@ -53,12 +53,12 @@ Response:
       "result": [{"id": 53, "method": "catalog.sync_all", "arguments": [], "logs_path": null, "logs_excerpt": null, "progress": {"percent": 100, "description": "Syncing TEST catalog", "extra": null}, "result": null, "error": null, "exception": null, "exc_info": null, "state": "SUCCESS", "time_started": {"$date": 1571300596053}, "time_finished": null}]
     }
 
-### Uploading / Downloading Files
+${'###'} Uploading / Downloading Files
 
 There are some jobs which require input or output as files which can
 be uploaded or downloaded.
 
-#### Downloading a File
+${'####'} Downloading a File
 
 If a job gives a file as an output, this endpoint is to be used to download
 the output file.
@@ -98,7 +98,7 @@ Note:
 2) File download must begin within 60 seconds or the job is canceled.
 3) The file can only be downloaded once.
 
-#### Uploading a File
+${'####'} Uploading a File
 
 Files can be uploaded via HTTP POST request only. The upload endpoint is:
 
