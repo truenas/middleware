@@ -590,6 +590,21 @@ class Resource(object):
 
         return [filters, options] if filters or options else []
 
+    async def parse_rest_json_request(self, req, resp):
+        body, error = None, False
+        try:
+            body = await req.json()
+        except json.decoder.JSONDecodeError as e:
+            resp.set_status(400)
+            resp.headers['Content-type'] = 'application/json'
+            resp.text = json.dumps({
+                'message': f'json parse error: {e}',
+                'errno': errno.EINVAL,
+            }, indent=True)
+            error = True
+
+        return body, error
+
     async def do(self, http_method, req, resp, authenticated_credentials, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
 
@@ -658,11 +673,15 @@ class Resource(object):
                 else:
                     if await req.text():
                         has_request_body = True
-                        request_body = await req.json()
+                        request_body, error = await self.parse_rest_json_request(req, resp)
+                        if error:
+                            return resp
         else:
             if await req.text():
                 has_request_body = True
-                request_body = await req.json()
+                request_body, error = await self.parse_rest_json_request(req, resp)
+                if error:
+                    return resp
 
         download_pipe = None
         if method['downloadable']:
