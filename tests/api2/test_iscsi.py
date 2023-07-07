@@ -25,15 +25,12 @@ def iscsi_extent(data):
 
 
 def test__iscsi_extent__disk_choices(request):
-    with dataset("test zvol", {
-        "type": "VOLUME",
-        "volsize": 1048576,
-    }) as ds:
+    with dataset("test zvol", {"type": "VOLUME", "volsize": 1048576}) as ds:
         # Make snapshots available for devices
         call("zfs.dataset.update", ds, {"properties": {"snapdev": {"parsed": "visible"}}})
         call("zfs.snapshot.create", {"dataset": ds, "name": "snap-1"})
         assert call("iscsi.extent.disk_choices") == {
-            f'zvol/{ds.replace(" ", "+")}': f'{ds} (1000 KiB)',
+            f'zvol/{ds.replace(" ", "+")}': f'{ds} (1 MiB)',
             f'zvol/{ds.replace(" ", "+")}@snap-1': f'{ds}@snap-1 [ro]',
         }
 
