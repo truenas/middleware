@@ -379,12 +379,14 @@ def test__schema_dict_error_handler():
     assert ei.value.errors[0].attribute == 'create.repository'
 
 
-@pytest.mark.parametrize('items,value', [
-    ([List('b', items=[List('c', private=True)])], [[['a']]]),
-    ([Dict('b', Str('c', private=True))], [{'c': 'secret'}])
+@pytest.mark.parametrize('items,value,expected', [
+    ([List('b', items=[List('c', private=True)])], [[['a']]], [['********']]),
+    ([Dict('b', Str('c', private=True))], [{'c': 'secret'}], [{'c': '********'}]),
+    ([Dict('b', Str('c', private=True)), Dict('d', Str('e'))], [{'c': 'secret'}], [{'c': '********'}]),
+    ([Dict('b', Str('c')), Dict('d', Str('c', private=True))], [{'c': 'secret'}], ['********']),
 ])
-def test__schema_list_private_items(items, value):
-    assert List('a', items=items).dump(value) == '********'
+def test__schema_list_private_items(items, value, expected):
+    assert List('a', items=items).dump(value) == expected
 
 
 def test__schema_list_empty():
