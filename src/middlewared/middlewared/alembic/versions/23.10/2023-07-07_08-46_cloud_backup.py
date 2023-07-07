@@ -1,7 +1,7 @@
 """Cloud Backup
 
 Revision ID: 1cdfe58ae329
-Revises: 3c011188cbe2
+Revises: bd5cd1d802c7
 Create Date: 2023-06-07 08:46:16.249725+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '1cdfe58ae329'
-down_revision = '3c011188cbe2'
+down_revision = 'bd5cd1d802c7'
 branch_labels = None
 depends_on = None
 
