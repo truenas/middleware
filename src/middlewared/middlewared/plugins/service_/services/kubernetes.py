@@ -4,6 +4,7 @@ import os
 import re
 
 from middlewared.plugins.kubernetes_linux.k8s.config import remove_initialized_config
+from middlewared.plugins.kubernetes_linux.utils import Status
 from middlewared.utils import run
 
 from .base import SimpleService
@@ -38,6 +39,7 @@ class KubernetesService(SimpleService):
         )
 
     async def before_start(self):
+        await self.middleware.call('kubernetes.set_status', Status.INITIALIZING.value)
         await self.middleware.call('kubernetes.before_start_check')
         await self.mount_kubelet_dataset()
         await self.clear_chart_releases_cache()
@@ -82,6 +84,7 @@ class KubernetesService(SimpleService):
         self.middleware.create_task(self.middleware.call('kubernetes.post_start'))
 
     async def before_stop(self):
+        await self.middleware.call('kubernetes.set_status', Status.STOPPING.value)
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-stop', 'effect': 'NoExecute'}])
         await asyncio.sleep(10)
         await self.clear_chart_releases_cache()
@@ -91,6 +94,7 @@ class KubernetesService(SimpleService):
             self.middleware.logger.error('Failed to remove iptable rules for kubernetes service: %r', e)
 
     async def after_stop(self):
+        await self.middleware.call('kubernetes.set_status', Status.STOPPED.value)
         await self._systemd_unit('kube-router', 'stop')
         await self._systemd_unit('cni-dhcp', 'stop')
         await self.middleware.call('k8s.cni.cleanup_cni')
