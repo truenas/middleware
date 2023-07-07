@@ -1,3 +1,4 @@
+import enum
 import os
 
 
@@ -12,6 +13,14 @@ NODE_NAME = 'ix-truenas'
 NVIDIA_RUNTIME_CLASS_NAME = 'nvidia'
 OPENEBS_ZFS_GROUP_NAME = 'zfs.openebs.io'
 UPDATE_BACKUP_PREFIX = 'system-update-'
+
+
+class Status(enum.Enum):
+    RUNNING = 'running'
+    INITIALIZING = 'initializing'
+    STOPPED = 'stopped'
+    UNCONFIGURED = 'unconfigured'
+    FAILED = 'failed'
 
 
 def applications_ds_name(pool):
