@@ -6,8 +6,9 @@ LIBVIRT_URI = 'qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock'
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
 SENSITIVE_PCI_DEVICE_TYPES = (
-    'Bridge',
-    'memory',
+    'PCI Bridge',
+    'ISA Bridge',
+    'RAM memory',
     'SMBus',
 )
 
