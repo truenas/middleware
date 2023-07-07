@@ -12,12 +12,15 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
 from .k8s.config import reinitialize_config
+from .utils import Status
 
 
 START_LOCK = asyncio.Lock()
 
 
 class KubernetesService(Service):
+
+    STATUS = Status.UNCONFIGURED
 
     @private
     async def post_start(self):
@@ -394,6 +397,12 @@ class KubernetesService(Service):
             raise
 
         await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
+
+    @private
+    async def set_status(self, new_status):
+        assert new_status in Status.__members__
+        self.STATUS = Status(new_status)
+        # TODO: Let's perhaps send an event here ?
 
 
 async def _event_system_ready(middleware, event_type, args):
