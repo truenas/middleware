@@ -45,12 +45,14 @@ class KubernetesService(Service):
             await self.post_start_internal()
             await self.add_iptables_rules()
         except Exception as e:
+            await self.set_status(Status.FAILED.value)
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
         else:
             self.middleware.create_task(self.middleware.call('k8s.event.setup_k8s_events'))
             await self.middleware.call('chart.release.refresh_events_state')
             await self.middleware.call('alert.oneshot_delete', 'ApplicationsStartFailed', None)
+            await self.set_status(Status.RUNNING.value)
             self.middleware.create_task(self.redeploy_chart_releases_consuming_outdated_certs())
 
     @private
@@ -377,6 +379,7 @@ class KubernetesService(Service):
 
     @private
     async def start_service(self):
+        await self.set_status(Status.INITIALIZING.value)
         await self.before_start_check()
         await self.middleware.call('k8s.migration.scale_version_check')
         await self.middleware.call('k8s.migration.run')
@@ -394,6 +397,7 @@ class KubernetesService(Service):
                     {'error': e.errmsg},
                 )
 
+            await self.set_status(Status.FAILED.value)
             raise
 
         await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)

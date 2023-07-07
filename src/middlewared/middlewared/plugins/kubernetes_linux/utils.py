@@ -18,6 +18,7 @@ UPDATE_BACKUP_PREFIX = 'system-update-'
 class Status(enum.Enum):
     RUNNING = 'running'
     INITIALIZING = 'initializing'
+    STOPPING = 'stopping'
     STOPPED = 'stopped'
     UNCONFIGURED = 'unconfigured'
     FAILED = 'failed'
