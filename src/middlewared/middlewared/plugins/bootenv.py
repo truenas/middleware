@@ -3,7 +3,7 @@ from middlewared.schema import accepts, Bool, Datetime, Dict, Int, returns, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, filterable, item_method, job
 )
-from middlewared.utils import filter_list, osc, Popen, run
+from middlewared.utils import filter_list, Popen, run
 
 from datetime import datetime
 
@@ -18,7 +18,7 @@ class BootEnvService(CRUDService):
         datastore_primary_key_type = 'string'
         cli_namespace = 'system.bootenv'
 
-    BE_TOOL = 'zectl' if osc.IS_LINUX else 'beadm'
+    BE_TOOL = 'zectl'
     ENTRY = Dict(
         'bootenv_entry',
         Str('id'),
@@ -61,8 +61,8 @@ class BootEnvService(CRUDService):
                 'activated': 'n' in fields[1].lower(),
                 'can_activate': False,
                 'mountpoint': fields[2],
-                'space': None if osc.IS_LINUX else fields[3],
-                'created': datetime.strptime(fields[3 if osc.IS_LINUX else 4], '%Y-%m-%d %H:%M'),
+                'space': None,
+                'created': datetime.strptime(fields[3], '%Y-%m-%d %H:%M'),
                 'keep': False,
                 'rawspace': None
             }
@@ -140,13 +140,10 @@ class BootEnvService(CRUDService):
 
                 be['space'] = f'{round(float(be["space"][:-1]), 2)}{be["space"][-1]}'
 
-                if osc.IS_FREEBSD:
-                    be['can_activate'] = 'truenas:kernel_version' not in ds['properties']
-                if osc.IS_LINUX:
-                    be['can_activate'] = (
-                        'truenas:kernel_version' in ds['properties'] or
-                        'truenas:12' in ds['properties']
-                    )
+                be['can_activate'] = (
+                    'truenas:kernel_version' in ds['properties'] or
+                    'truenas:12' in ds['properties']
+                )
 
             results.append(be)
         return filter_list(results, filters, options)
@@ -165,7 +162,7 @@ class BootEnvService(CRUDService):
         try:
             subprocess.run([self.BE_TOOL, 'activate', oid], capture_output=True, text=True, check=True)
         except subprocess.CalledProcessError as cpe:
-            raise CallError(f'Failed to activate BE: {cpe.stdout.strip()}')
+            raise CallError(f'Failed to activate BE: {cpe.stdout.strip() + cpe.stderr.strip()}')
         else:
             return True
 
@@ -220,7 +217,7 @@ class BootEnvService(CRUDService):
             args += [
                 '-e', os.path.join(
                     await self.middleware.call('boot.pool_name'), 'ROOT', source
-                ) if osc.IS_LINUX else source
+                ),
             ]
         args.append(data['name'])
         try:
@@ -252,7 +249,7 @@ class BootEnvService(CRUDService):
 
     async def _clean_be_name(self, verrors, schema, name):
         beadm_names = (await (await Popen(
-            f"{self.BE_TOOL} list -H | awk '{{print ${1 if osc.IS_LINUX else 7}}}'",
+            f"{self.BE_TOOL} list -H | awk '{{print $1}}'",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
