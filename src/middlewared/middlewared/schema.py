@@ -22,6 +22,7 @@ from middlewared.utils import filter_list
 from middlewared.utils.cron import CRON_FIELDS, croniter_for_schedule
 
 NOT_PROVIDED = object()
+REDACTED_VALUE = "********"
 
 
 def convert_schema(spec):
@@ -131,7 +132,7 @@ class Attribute(object):
 
     def dump(self, value):
         if self.private:
-            return "********"
+            return REDACTED_VALUE
 
         return value
 
@@ -696,9 +697,50 @@ class List(EnumMixin, Attribute):
         return self.private or any(item.has_private() for item in self.items)
 
     def dump(self, value):
-        if self.has_private():
-            return '********'
-        return value
+        if self.private:
+            return REDACTED_VALUE
+
+        # No schema is specified for list items or a schema is specified but
+        # does not contain any private values. In this situation it's safe to
+        # simply dump the raw value
+        if not self.items or not self.has_private():
+            return value
+
+        # In most cases we'll only have a single item and so avoid validation loop
+        if len(self.items) == 1:
+            return [self.items[0].dump(x) for x in value]
+
+        # This is painful and potentially expensive. It would probably be best
+        # if developers simply avoided designing APIs in this way.
+        out_list = []
+        for i in value:
+            # Initialize the entry value to "private"
+            # If for some reason we can't validate the item then obscure the entry
+            # to prevent chance of accidental exposure of private data
+            entry = REDACTED_VALUE
+            for item in self.items:
+                # the item.clean() method may alter the value and so we need to
+                # make a deepcopy of it before validation
+                to_validate = copy.deepcopy(i)
+                try:
+                    to_validate = item.clean(to_validate)
+                    item.validate(to_validate)
+                except Exception:
+                    continue
+
+                # Check whether we've already successfully validated this entry
+                if entry != REDACTED_VALUE:
+                    # more than one of schemas fit this bill.
+                    # fail safe and make it private
+                    entry = REDACTED_VALUE
+                    break
+
+                # dump the original value and not the one that has been cleaned
+                entry = item.dump(i)
+
+            out_list.append(entry)
+
+        return out_list
 
     def validate(self, value):
         if value is None:
@@ -867,7 +909,7 @@ class Dict(Attribute):
 
     def dump(self, value):
         if self.private:
-            return "********"
+            return REDACTED_VALUE
 
         if not isinstance(value, dict):
             return value
@@ -1123,6 +1165,7 @@ class OROperator:
         self.resolved = False
         self.default = kwargs.get('default', None)
         self.has_default = 'default' in kwargs and kwargs['default'] is not NOT_PROVIDED
+        self.private = kwargs.get('private', False)
 
     @property
     def required(self):
@@ -1205,6 +1248,9 @@ class OROperator:
                 break
 
         return value
+
+    def has_private(self):
+        return self.private or any(schema.has_private() for schema in self.schemas)
 
 
 class ResolverError(Exception):
