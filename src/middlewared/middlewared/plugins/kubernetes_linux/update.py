@@ -10,7 +10,7 @@ from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
 from .k8s import ApiException, Node
-from .utils import applications_ds_name
+from .utils import applications_ds_name, Status
 
 
 class KubernetesModel(sa.Model):
@@ -486,6 +486,7 @@ class KubernetesService(ConfigService):
                     # host catalog repos temporarily. Otherwise, we should call this after k8s datasets have
                     # been initialised
                     await self.middleware.call('catalog.sync_all')
+                    await self.middleware.call('kubernetes.set_status', Status.UNCONFIGURED.value)
 
         return await self.config()
 
