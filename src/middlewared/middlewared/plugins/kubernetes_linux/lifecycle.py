@@ -286,7 +286,7 @@ class KubernetesService(Service):
             self.middleware.call_sync('kubernetes.status_change_internal')
         except Exception as e:
             self.middleware.call_sync('alert.oneshot_create', 'ApplicationsConfigurationFailed', {'error': str(e)})
-            await self.set_status(Status.FAILED.value)
+            self.middleware.call_sync('kubernetes.set_status', Status.FAILED.value)
             raise
         else:
             with open(config_path, 'w') as f:
