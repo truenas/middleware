@@ -16,13 +16,13 @@ UPDATE_BACKUP_PREFIX = 'system-update-'
 
 
 class Status(enum.Enum):
-    PENDING = 'pending'
-    RUNNING = 'running'
-    INITIALIZING = 'initializing'
-    STOPPING = 'stopping'
-    STOPPED = 'stopped'
-    UNCONFIGURED = 'unconfigured'
-    FAILED = 'failed'
+    PENDING = 'PENDING'
+    RUNNING = 'RUNNING'
+    INITIALIZING = 'INITIALIZING'
+    STOPPING = 'STOPPING'
+    STOPPED = 'STOPPED'
+    UNCONFIGURED = 'UNCONFIGURED'
+    FAILED = 'FAILED'
 
 
 def applications_ds_name(pool):
