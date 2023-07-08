@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime
 from typing import Dict
 
+from middlewared.schema import accepts, returns, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -409,6 +410,14 @@ class KubernetesService(Service):
         assert new_status in Status.__members__
         self.STATUS = Status(new_status)
         # TODO: Let's perhaps send an event here ?
+
+    @accepts()
+    @returns(Str())
+    async def status(self):
+        """
+        Returns the status of the Kubernetes service.
+        """
+        return self.STATUS.value
 
 
 async def _event_system_ready(middleware, event_type, args):
