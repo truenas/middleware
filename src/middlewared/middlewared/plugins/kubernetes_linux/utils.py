@@ -16,6 +16,7 @@ UPDATE_BACKUP_PREFIX = 'system-update-'
 
 
 class Status(enum.Enum):
+    PENDING = 'pending'
     RUNNING = 'running'
     INITIALIZING = 'initializing'
     STOPPING = 'stopping'
