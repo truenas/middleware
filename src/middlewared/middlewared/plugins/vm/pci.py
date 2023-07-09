@@ -19,9 +19,9 @@ class VMDeviceService(Service):
 
     @accepts()
     @returns(Bool())
-    async def iommu_enabled(self):
+    def iommu_enabled(self):
         """Returns "true" if iommu is enabled, "false" otherwise"""
-        return await self.middleware.run_in_thread(os.path.exists, '/sys/kernel/iommu_groups')
+        return os.path.exists('/sys/kernel/iommu_groups')
 
     @private
     def get_iommu_groups_info(self):
@@ -146,21 +146,19 @@ class VMDeviceService(Service):
         Str('description', empty=True, required=True),
         register=True,
     ))
-    async def passthrough_device(self, device):
+    def passthrough_device(self, device):
         """Retrieve details about `device` PCI device"""
-        await self.middleware.call('vm.check_setup_libvirt')
-        return await self.middleware.run_in_thread(
-            self.get_single_pci_device_details, RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)
-        )
+        self.middleware.call_sync('vm.check_setup_libvirt')
+        return self.get_single_pci_device_details(RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device))
 
     @accepts()
     @returns(List(items=[Ref('passthrough_device')], register=True))
-    async def passthrough_device_choices(self):
+    def passthrough_device_choices(self):
         """Available choices for PCI passthru devices"""
-        return await self.middleware.run_in_thread(self.get_all_pci_devices_details)
+        return self.get_all_pci_devices_details()
 
     @accepts()
     @returns(Ref('passthrough_device_choices'))
-    async def pptdev_choices(self):
+    def pptdev_choices(self):
         """Available choices for PCI passthru device"""
-        return await self.passthrough_device_choices()
+        return self.get_all_pci_devices_details()
