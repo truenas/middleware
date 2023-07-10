@@ -1,16 +1,13 @@
+import collections
 import os
+import pathlib
 import re
 
 from pyudev import Context
-from xml.etree import ElementTree as etree
 
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
-from middlewared.service import CallError, private, Service
-from middlewared.utils import run
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
+from middlewared.service import private, Service
 from middlewared.utils.gpu import SENSITIVE_PCI_DEVICE_TYPES
-
-from .utils import get_virsh_command_args
-
 
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 
@@ -22,33 +19,109 @@ class VMDeviceService(Service):
 
     @accepts()
     @returns(Bool())
-    async def iommu_enabled(self):
+    def iommu_enabled(self):
         """Returns "true" if iommu is enabled, "false" otherwise"""
-        return await self.middleware.run_in_thread(os.path.exists, '/sys/kernel/iommu_groups')
+        return os.path.exists('/sys/kernel/iommu_groups')
 
     @private
-    def retrieve_node_information(self, xml):
-        info = {'capability': {}, 'iommu_group': {'number': None, 'addresses': []}}
-        capability = next((e for e in list(xml) if e.tag == 'capability' and e.get('type') == 'pci'), None)
-        if capability is None:
-            return info
-
-        for child in list(capability):
-            if child.tag == 'iommuGroup':
-                if not child.get('number'):
+    def get_iommu_groups_info(self):
+        addresses = collections.defaultdict(list)
+        final = dict()
+        try:
+            for i in pathlib.Path('/sys/kernel/iommu_groups').glob('*/devices/*'):
+                if not i.is_dir() or not i.parent.parent.name.isdigit():
                     continue
-                info['iommu_group']['number'] = int(child.get('number'))
-                for address in list(child):
-                    info['iommu_group']['addresses'].append({
-                        'domain': address.get('domain'),
-                        'bus': address.get('bus'),
-                        'slot': address.get('slot'),
-                        'function': address.get('function'),
-                    })
-            elif not list(child) and child.text:
-                info['capability'][child.tag] = child.text
 
-        return info
+                iommu_group = int(i.parent.parent.name)
+                dbs, func = i.name.split('.')
+                dom, bus, slot = dbs.split(':')
+                addresses[iommu_group].append({
+                    'domain': f'0x{dom}',
+                    'bus': f'0x{bus}',
+                    'slot': f'0x{slot}',
+                    'function': f'0x{func}',
+                })
+                final[i.name] = {'number': iommu_group, 'addresses': addresses[iommu_group]}
+        except FileNotFoundError:
+            pass
+
+        return final
+
+    @private
+    def get_pci_device_details(self, obj, iommu_info):
+        data = {
+            'capability': {
+                'class': None,
+                'domain': None,
+                'bus': None,
+                'slot': None,
+                'function': None,
+                'product': 'Not Available',
+                'vendor': 'Not Available',
+            },
+            'controller_type': None,
+            'critical': False,
+            'iommu_group': {},
+            'available': False,
+            'drivers': [],
+            'error': None,
+            'device_path': None,
+            'reset_mechanism_defined': False,
+            'description': '',
+        }
+        if not (igi := iommu_info.get(obj.sys_name)):
+            data['error'] = 'Unable to determine iommu group'
+
+        dbs, func = obj.sys_name.split('.')
+        dom, bus, slot = dbs.split(':')
+        cap_class = f'{(obj.attributes.get("class") or b"").decode() or None}'
+        ctrl_type = obj.properties.get('ID_PCI_SUBCLASS_FROM_DATABASE')
+        drivers = []
+        if (driver := obj.properties.get('DRIVER')):
+            drivers.append(driver)
+
+        data['capability']['class'] = cap_class
+        data['capability']['domain'] = f'{int(dom, base=16)}'
+        data['capability']['bus'] = f'{int(bus, base=16)}'
+        data['capability']['slot'] = f'{int(slot, base=16)}'
+        data['capability']['function'] = f'{int(func, base=16)}'
+        data['capability']['product'] = obj.properties.get('ID_MODEL_FROM_DATABASE', 'Not Available')
+        data['capability']['vendor'] = obj.properties.get('ID_VENDOR_FROM_DATABASE', 'Not Available')
+        data['controller_type'] = ctrl_type
+        data['critical'] = any(not ctrl_type or i.lower() in ctrl_type.lower() for i in SENSITIVE_PCI_DEVICE_TYPES)
+        data['iommu_group'] = igi
+        data['available'] = all(i == 'vfio-pci' for i in drivers) and not data['critical']
+        data['drivers'] = drivers
+        data['device_path'] = os.path.join('/sys/bus/pci/devices', obj.sys_name)
+        data['reset_mechanism_defined'] = os.path.exists(os.path.join(data['device_path'], 'reset'))
+
+        prefix = obj.sys_name + (f' {ctrl_type!r}' if ctrl_type else '')
+        vendor = data['capability']['vendor'].strip()
+        suffix = data['capability']['product'].strip()
+        if vendor and suffix:
+            data['description'] = f'{prefix}: {suffix} by {vendor!r}'
+        else:
+            data['description'] = prefix
+
+        return data
+
+    @private
+    def get_all_pci_devices_details(self):
+        result = dict()
+        iommu_info = self.get_iommu_groups_info()
+        for i in Context().list_devices(subsystem='pci'):
+            key = f"pci_{i.sys_name.replace(':', '_').replace('.', '_')}"
+            result[key] = self.get_pci_device_details(i, iommu_info)
+        return result
+
+    @private
+    def get_single_pci_device_details(self, pcidev):
+        result = dict()
+        iommu_info = self.get_iommu_groups_info()
+        for i in filter(lambda x: x.sys_name == pcidev, Context().list_devices(subsystem='pci')):
+            key = f"pci_{i.sys_name.replace(':', '_').replace('.', '_')}"
+            result[key] = self.get_pci_device_details(i, iommu_info)
+        return result
 
     @accepts(Str('device'))
     @returns(Dict(
@@ -64,115 +137,40 @@ class VMDeviceService(Service):
             Str('vendor', null=True, required=True),
             required=True,
         ),
-        Dict('iommu_group', additional_attrs=True, required=True),
-        List('drivers', required=True),
+        Str('controller_type', null=True, required=True),
+        Dict(
+            'iommu_group',
+            Int('number', required=True),
+            List('addresses', items=[Dict(
+                'address',
+                Str('domain', required=True),
+                Str('bus', required=True),
+                Str('slot', required=True),
+                Str('function', required=True),
+            )]),
+            required=True,
+        ),
         Bool('available', required=True),
-        Bool('reset_mechanism_defined', required=True),
+        List('drivers', items=[Str('driver', required=False)], required=True),
         Str('error', null=True, required=True),
         Str('device_path', null=True, required=True),
+        Bool('reset_mechanism_defined', required=True),
+        Str('description', empty=True, required=True),
         register=True,
     ))
-    async def passthrough_device(self, device):
-        """
-        Retrieve details about `device` PCI device.
-        """
-        await self.middleware.call('vm.check_setup_libvirt')
-        pci_id = RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)
-        controller_type = (await self.middleware.run_in_thread(self.get_pci_devices)).get(pci_id)
-
-        data = {
-            'capability': {
-                'class': None,
-                'domain': None,
-                'bus': None,
-                'slot': None,
-                'function': None,
-                'product': 'Not Available',
-                'vendor': 'Not Available',
-            },
-            'controller_type': controller_type,
-            'critical': any(
-                not controller_type or k.lower() in controller_type.lower() for k in SENSITIVE_PCI_DEVICE_TYPES
-            ),
-            'iommu_group': {},
-            'available': False,
-            'drivers': [],
-            'error': None,
-            'device_path': os.path.join('/sys/bus/pci/devices', pci_id),
-            'reset_mechanism_defined': False,
-        }
-        cp = await run(get_virsh_command_args() + ['nodedev-dumpxml', device], check=False)
-        if cp.returncode:
-            data['error'] = cp.stderr.decode()
-            return data
-
-        xml = etree.fromstring(cp.stdout.decode().strip())
-        driver = next((e for e in list(xml) if e.tag == 'driver'), None)
-        drivers = [e.text for e in list(driver)] if driver is not None else []
-
-        node_info = await self.middleware.call('vm.device.retrieve_node_information', xml)
-        error_str = ''
-
-        if node_info['iommu_group'].get('number') is None:
-            error_str += 'Unable to determine iommu group\n'
-        if any(not node_info['capability'].get(k) for k in ('domain', 'bus', 'slot', 'function')):
-            error_str += 'Unable to determine PCI device address\n'
-
-        return {
-            **node_info,
-            **{k: data[k] for k in ('controller_type', 'critical', 'device_path')},
-            'drivers': drivers,
-            'available': not error_str and all(d == 'vfio-pci' for d in drivers) and not data['critical'],
-            'error': f'Following errors were found with the device:\n{error_str}' if error_str else None,
-            'reset_mechanism_defined': os.path.exists(os.path.join(data['device_path'], 'reset')),
-            'description': await self.get_pci_device_description(pci_id, controller_type, node_info),
-        }
-
-    @private
-    async def get_pci_device_description(self, pci_id, controller_type, node_info):
-        # e.g 86:00.0 3D Controller: Nvidia corporation gp100GL []
-        # We say string before ":" is prefix and the one after is suffix
-        prefix = str(pci_id) + (f' {controller_type!r}' if controller_type else '')
-        vendor = (node_info['capability'].get('vendor') or '').strip()
-        suffix = (node_info['capability'].get('product') or '').strip()
-        if vendor:
-            suffix = f'{suffix} by {vendor!r}'
-        return f'{prefix}: {suffix}' if suffix else prefix
+    def passthrough_device(self, device):
+        """Retrieve details about `device` PCI device"""
+        self.middleware.call_sync('vm.check_setup_libvirt')
+        return self.get_single_pci_device_details(RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device))
 
     @accepts()
     @returns(List(items=[Ref('passthrough_device')], register=True))
-    async def passthrough_device_choices(self):
-        """
-        Available choices for PCI passthru devices.
-        """
-        # We need to check if libvirtd is running because it's possible that no vm has been configured yet
-        # which will result in libvirtd not running and trying to list pci devices for passthrough fail.
-        await self.middleware.call('vm.check_setup_libvirt')
-
-        cp = await run(get_virsh_command_args() + ['nodedev-list', 'pci'], check=False)
-        if cp.returncode:
-            raise CallError(f'Unable to retrieve PCI devices: {cp.stderr.decode()}')
-        pci_devices = [k.strip() for k in cp.stdout.decode().split('\n') if k.strip()]
-        mapping = {}
-        for pci in pci_devices:
-            details = await self.passthrough_device(pci)
-            if details['error']:
-                continue
-            mapping[pci] = details
-
-        return mapping
-
-    @private
-    def get_pci_devices(self):
-        return {
-            i.sys_name: i.properties.get('ID_PCI_SUBCLASS_FROM_DATABASE', 'Unassigned class')
-            for i in Context().list_devices(subsystem='pci')
-        }
+    def passthrough_device_choices(self):
+        """Available choices for PCI passthru devices"""
+        return self.get_all_pci_devices_details()
 
     @accepts()
     @returns(Ref('passthrough_device_choices'))
-    async def pptdev_choices(self):
-        """
-        Available choices for PCI passthru device.
-        """
-        return await self.passthrough_device_choices()
+    def pptdev_choices(self):
+        """Available choices for PCI passthru device"""
+        return self.get_all_pci_devices_details()
