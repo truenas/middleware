@@ -5,7 +5,7 @@ import re
 
 from pyudev import Context
 
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.gpu import SENSITIVE_PCI_DEVICE_TYPES
 
@@ -96,8 +96,8 @@ class VMDeviceService(Service):
         data['reset_mechanism_defined'] = os.path.exists(os.path.join(data['device_path'], 'reset'))
 
         prefix = obj.sys_name + (f' {ctrl_type!r}' if ctrl_type else '')
-        vendor = (data['capability']['vendor'] or '').strip()
-        suffix = (data['capability']['product'] or '').strip()
+        vendor = data['capability']['vendor'].strip()
+        suffix = data['capability']['product'].strip()
         if vendor and suffix:
             data['description'] = f'{prefix}: {suffix} by {vendor!r}'
         else:
@@ -137,12 +137,24 @@ class VMDeviceService(Service):
             Str('vendor', null=True, required=True),
             required=True,
         ),
-        Dict('iommu_group', additional_attrs=True, required=True),
-        List('drivers', required=True),
+        Str('controller_type', null=True, required=True),
+        Dict(
+            'iommu_group',
+            Int('number', required=True),
+            List('addresses', items=[Dict(
+                'address',
+                Str('domain', required=True),
+                Str('bus', required=True),
+                Str('slot', required=True),
+                Str('function', required=True),
+            )]),
+            required=True,
+        ),
         Bool('available', required=True),
-        Bool('reset_mechanism_defined', required=True),
+        List('drivers', items=[Str('driver', required=False)], required=True),
         Str('error', null=True, required=True),
         Str('device_path', null=True, required=True),
+        Bool('reset_mechanism_defined', required=True),
         Str('description', empty=True, required=True),
         register=True,
     ))
