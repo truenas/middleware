@@ -346,7 +346,7 @@ class PrivilegeService(CRUDService):
         }
         for privilege in privileges:
             for role in privilege['roles']:
-                compose['roles'] |= self.middleware.role_manager.roles_for_fole(role)
+                compose['roles'] |= self.middleware.role_manager.roles_for_role(role)
 
                 compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role))
 
