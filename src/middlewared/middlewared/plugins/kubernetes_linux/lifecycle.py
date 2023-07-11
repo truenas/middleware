@@ -3,12 +3,12 @@ import errno
 import json
 import os
 import shutil
+import typing
 import uuid
 
 from datetime import datetime
-from typing import Dict
 
-from middlewared.schema import accepts, returns, Str
+from middlewared.schema import accepts, Dict, returns, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -312,7 +312,7 @@ class KubernetesService(Service):
         await self.middleware.call('catalog.sync_all')
 
     @private
-    def get_dataset_update_props(self, props: Dict) -> Dict:
+    def get_dataset_update_props(self, props: typing.Dict) -> typing.Dict:
         return {
             attr: value
             for attr, value in props.items()
@@ -369,7 +369,7 @@ class KubernetesService(Service):
         ]
 
     @private
-    def kubernetes_dataset_custom_props(self, ds: str) -> Dict:
+    def kubernetes_dataset_custom_props(self, ds: str) -> typing.Dict:
         props = {
             'ix-applications': {
                 'encryption': 'off'
@@ -424,7 +424,10 @@ class KubernetesService(Service):
         return {'status': self.STATUS.status.value, 'description': self.STATUS.description}
 
     @accepts()
-    @returns(Str())
+    @returns(Dict(
+        Str('status', enum=[e.value for e in Status]),
+        Str('description'),
+    ))
     async def status(self):
         """
         Returns the status of the Kubernetes service.
