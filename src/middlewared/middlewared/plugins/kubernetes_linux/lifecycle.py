@@ -46,7 +46,7 @@ class KubernetesService(Service):
             await self.post_start_internal()
             await self.add_iptables_rules()
         except Exception as e:
-            await self.set_status(Status.FAILED.value)
+            await self.set_status(Status.FAILED.value, str(e))
             await self.middleware.call('alert.oneshot_create', 'ApplicationsStartFailed', {'error': str(e)})
             raise
         else:
