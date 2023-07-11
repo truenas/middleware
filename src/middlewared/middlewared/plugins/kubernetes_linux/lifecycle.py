@@ -406,9 +406,12 @@ class KubernetesService(Service):
         await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
 
     @private
-    async def set_status(self, new_status):
+    async def set_status(self, new_status, extra=None):
         assert new_status in Status.__members__
-        self.STATUS = APPS_STATUS(Status(new_status), STATUS_DESCRIPTIONS[new_status])
+        self.STATUS = APPS_STATUS(
+            Status(new_status),
+            f'{STATUS_DESCRIPTIONS[new_status]}:\n{extra}' if extra else '',
+        )
         self.middleware.send_event('kubernetes.state', 'CHANGED', fields=await self.get_status_dict())
 
     @private
