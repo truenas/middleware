@@ -25,5 +25,16 @@ class Status(enum.Enum):
     FAILED = 'FAILED'
 
 
+STATUS_DESCRIPTIONS = {
+    Status.PENDING: 'Application(s) state is to be determined yet',
+    Status.RUNNING: 'Application(s) are currently running',
+    Status.INITIALIZING: 'Application(s) are being initialized',
+    Status.STOPPING: 'Application(s) are being stopped',
+    Status.STOPPED: 'Application(s) have been stopped',
+    Status.UNCONFIGURED: 'Application(s) are not configured',
+    Status.FAILED: 'Application(s) have failed to start',
+}
+
+
 def applications_ds_name(pool):
     return os.path.join(pool, 'ix-applications')
