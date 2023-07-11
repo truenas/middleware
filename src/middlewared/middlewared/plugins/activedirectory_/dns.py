@@ -72,7 +72,7 @@ class ActiveDirectoryService(Service):
             self.logger.warning(f'Failed to update DNS with payload [{payload}]: {e.errmsg}')
 
     @private
-    async def ipaddresses_to_register(self, data, raise_errors=True):
+    async def ipaddresses_to_register(self, data, valid_only=True):
         validated_ips = []
 
         if data['clustered']:
@@ -119,12 +119,12 @@ class ActiveDirectoryService(Service):
                 continue
 
             else:
-                if result[0]['target'].casefold() != data['hostname'].casefold() and raise_errors:
-                    raise CallError(
-                        f'Reverse lookup of {ip} points to {result[0]["target"]}'
-                        f'rather than our hostname of {data["hostname"]}.',
-                        errno.EINVAL
-                    )
+                if result[0]['target'].casefold() != data['hostname'].casefold():
+                    errmsg = f'Reverse lookup of {ip} points to {result[0]["target"]}, expected {data["hostname"]}.'
+                    self.logger.warning(errmsg)
+                    if valid_only:
+                        continue
+
                 validated_ips.append(ip)
 
         return validated_ips
