@@ -13,7 +13,7 @@ from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
 from .k8s.config import reinitialize_config
-from .utils import Status
+from .utils import APPS_STATUS, Status, STATUS_DESCRIPTIONS
 
 
 START_LOCK = asyncio.Lock()
@@ -21,7 +21,7 @@ START_LOCK = asyncio.Lock()
 
 class KubernetesService(Service):
 
-    STATUS = Status.PENDING
+    STATUS = APPS_STATUS(Status.PENDING, STATUS_DESCRIPTIONS[Status.PENDING])
 
     @private
     async def post_start(self):
@@ -408,8 +408,12 @@ class KubernetesService(Service):
     @private
     async def set_status(self, new_status):
         assert new_status in Status.__members__
-        self.STATUS = Status(new_status)
-        self.middleware.send_event('kubernetes.state', 'CHANGED', fields={'status': new_status})
+        self.STATUS = APPS_STATUS(Status(new_status), STATUS_DESCRIPTIONS[new_status])
+        self.middleware.send_event('kubernetes.state', 'CHANGED', fields=await self.get_status_dict())
+
+    @private
+    async def get_status_dict(self):
+        return {'status': self.STATUS.status.value, 'description': self.STATUS.description}
 
     @accepts()
     @returns(Str())
@@ -417,7 +421,7 @@ class KubernetesService(Service):
         """
         Returns the status of the Kubernetes service.
         """
-        return self.STATUS.value
+        return await self.get_status_dict()
 
     @private
     async def initialize_k8s_status(self):
