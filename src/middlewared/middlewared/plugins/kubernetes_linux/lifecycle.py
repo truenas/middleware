@@ -286,7 +286,7 @@ class KubernetesService(Service):
             self.middleware.call_sync('kubernetes.status_change_internal')
         except Exception as e:
             self.middleware.call_sync('alert.oneshot_create', 'ApplicationsConfigurationFailed', {'error': str(e)})
-            self.middleware.call_sync('kubernetes.set_status', Status.FAILED.value)
+            self.middleware.call_sync('kubernetes.set_status', Status.FAILED.value, str(e))
             raise
         else:
             with open(config_path, 'w') as f:
@@ -383,10 +383,14 @@ class KubernetesService(Service):
     @private
     async def start_service(self):
         await self.set_status(Status.INITIALIZING.value)
-        await self.before_start_check()
-        await self.middleware.call('k8s.migration.scale_version_check')
-        await self.middleware.call('k8s.migration.run')
-        await self.middleware.call('service.start', 'kubernetes')
+        try:
+            await self.before_start_check()
+            await self.middleware.call('k8s.migration.scale_version_check')
+            await self.middleware.call('k8s.migration.run')
+            await self.middleware.call('service.start', 'kubernetes')
+        except Exception as e:
+            await self.set_status(Status.FAILED.value, str(e))
+            raise
 
     @private
     async def before_start_check(self):
@@ -400,7 +404,7 @@ class KubernetesService(Service):
                     {'error': e.errmsg},
                 )
 
-            await self.set_status(Status.FAILED.value)
+            await self.set_status(Status.FAILED.value, f'Could not validate applications setup ({e.errmsg})')
             raise
 
         await self.middleware.call('alert.oneshot_delete', 'ApplicationsConfigurationFailed', None)
@@ -408,9 +412,10 @@ class KubernetesService(Service):
     @private
     async def set_status(self, new_status, extra=None):
         assert new_status in Status.__members__
+        new_status = Status(new_status)
         self.STATUS = APPS_STATUS(
-            Status(new_status),
-            f'{STATUS_DESCRIPTIONS[new_status]}:\n{extra}' if extra else '',
+            new_status,
+            f'{STATUS_DESCRIPTIONS[new_status]}:\n{extra}' if extra else STATUS_DESCRIPTIONS[new_status],
         )
         self.middleware.send_event('kubernetes.state', 'CHANGED', fields=await self.get_status_dict())
 
