@@ -3,6 +3,8 @@ import os
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import ServicePortDelegate
 
+from .utils import Status
+
 
 class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
     name = 'kubernetes'
@@ -47,7 +49,8 @@ class KubernetesFSAttachmentDelegate(FSAttachmentDelegate):
             return
         try:
             await self.middleware.call('service.start', 'kubernetes')
-        except Exception:
+        except Exception as e:
+            await self.middleware.call('kubernetes.set_status', Status.FAILED.value, str(e))
             self.middleware.logger.error('Failed to start kubernetes')
 
 
