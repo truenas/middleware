@@ -803,7 +803,7 @@ def test_59_create_user_ro_dataset(request):
 ])
 def test_60_immutable_user_validation(payload, request):
     # Glusterd happens to be an immutable 
-    user_req = GET('/user?username=glusterd')
+    user_req = GET('/user?username=gluster')
     assert user_req.status_code == 200, results.text
     userid = user_req.json()[0]['id']
 
