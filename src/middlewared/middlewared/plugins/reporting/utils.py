@@ -1,3 +1,6 @@
+K8S_PODS_COUNT = 20  # A default value has been assumed for now
+
+
 def calculate_disk_space_for_netdata(metrics: int, days: int) -> int:
     # Constants
     sec_per_day = 86400
@@ -114,4 +117,9 @@ def get_metrics_approximation(disk_count: int, core_count: int, interface_count:
 
         # smartd_logs
         'smart_log.temperature_celsius': disk_count,
+
+        # k8s pods stats
+        'k8s_cpu': K8S_PODS_COUNT,
+        'k8s_mem': K8S_PODS_COUNT,
+        'k8s_net': K8S_PODS_COUNT * 2,
     }
