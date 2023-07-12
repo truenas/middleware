@@ -173,10 +173,10 @@ class MailService(ConfigService):
         return await self.config()
 
     def __password_verify(self, password, schema, verrors=None):
-        if not password:
-            return
         if verrors is None:
             verrors = ValidationErrors()
+        if not password:
+            return verrors
         # FIXME: smtplib does not support non-ascii password yet
         # https://github.com/python/cpython/pull/8938
         try:
