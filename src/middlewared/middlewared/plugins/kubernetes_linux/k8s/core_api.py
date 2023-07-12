@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 
 from dateutil.parser import parse as datetime_parse
 
@@ -59,6 +60,12 @@ class Node(CoreAPI):
             taints.pop(index)
 
         await cls.update(node_object['metadata']['name'], {'spec': {'taints': taints}})
+
+    @classmethod
+    async def get_stats(cls):
+        return await cls.call(
+            os.path.join(cls.uri(object_name=NODE_NAME), 'proxy/stats/summary'), mode=RequestMode.GET.value
+        )
 
 
 class Service(CoreAPI):
