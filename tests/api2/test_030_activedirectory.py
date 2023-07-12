@@ -24,7 +24,7 @@ else:
     from auto_config import hostname
 
 try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
     AD_USER = fr"AD02\{ADUSERNAME.lower()}"
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
@@ -226,6 +226,7 @@ def test_07_enable_leave_activedirectory(request):
     global domain_users_id
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
         netbiosname=hostname,
+        createcomputer=AD_COMPUTER_OU,
         dns_timeout=15
     ) as ad:
         # Verify that we're not leaking passwords into middleware log
@@ -310,6 +311,7 @@ def test_08_activedirectory_smb_ops(request):
     depends(request, ["ad_works"], scope="session")
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
         netbiosname=hostname,
+        createcomputer=AD_COMPUTER_OU,
         dns_timeout=15
     ) as ad:
         with dataset(
@@ -442,6 +444,7 @@ def test_10_account_privilege_authentication(request):
 
     with active_directory(AD_DOMAIN, ADUSERNAME, ADPASSWORD,
         netbiosname=hostname,
+        createcomputer=AD_COMPUTER_OU,
         dns_timeout=15
     ):
         call("system.general.update", {"ds_auth": True})

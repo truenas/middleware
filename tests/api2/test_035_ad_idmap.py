@@ -18,7 +18,7 @@ from pytest_dependency import depends
 from time import sleep
 
 try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
     from config import (
         LDAPBASEDN,
         LDAPBINDDN,
@@ -59,6 +59,7 @@ def do_ad_connection(request):
         ADUSERNAME,
         ADPASSWORD,
         netbiosname=hostname,
+        createcomputer=AD_COMPUTER_OU,
     ) as ad:
         yield (request, ad)
 
