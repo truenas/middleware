@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from glustercli.cli import peer
 
 from middlewared.utils import filter_list
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, IPAddr, List, Ref, returns, Str
 from middlewared.service import private, job, filterable, CallError, CRUDService, ValidationErrors
 from .utils import GlusterConfig
 
@@ -26,7 +26,8 @@ class GlusterPeerService(CRUDService):
         Str('hostname', required=True),
         Str('connected', required=True),
         Str('state', required=True),
-        Str('status', required=True)
+        Str('status', required=True),
+        register=True
     )
 
     @filterable
@@ -69,10 +70,7 @@ class GlusterPeerService(CRUDService):
         return peers
 
     @private
-    async def common_validation(self, schema):
-        # TODO: adding or removing a peer to/from an existing TSP is not supported at
-        # this time since it requires expanding the ctdb_shared_vol. This is an
-        # involved process and will require proper design/implementation.
+    async def common_validation(self, schema, data):
         verrors = ValidationErrors()
         try:
             vol = (await self.middleware.call('ctdb.shared.volume.config'))['volume_name']
@@ -83,8 +81,8 @@ class GlusterPeerService(CRUDService):
             vol = None
 
         if vol and (await self.middleware.call('gluster.volume.exists_and_started', vol))['exists']:
-            verbiage = 'Adding to' if schema == 'gluster.peer.create' else 'Removing from'
-            verrors.add(schema, f'{verbiage} an existing trusted storage pool is not allowed at this time.')
+            if schema == 'gluster.peer.create' and not data.get('private_address'):
+                verrors.add(schema, 'Private address is required when adding new peer to existing cluster')
 
         if schema == 'gluster.peer.create' and len(await self.query()) == MAX_PEERS:
             verrors.add(schema, 'Maximum number of peers met ({MAX_PEERS})')
@@ -93,7 +91,8 @@ class GlusterPeerService(CRUDService):
 
     @accepts(Dict(
         'peer_create',
-        Str('hostname', required=True, max_length=253)
+        Str('hostname', required=True, max_length=253),
+        IPAddr('private_address')
     ))
     @job(lock=GLUSTER_JOB_LOCK)
     async def do_create(self, job, data):
@@ -101,29 +100,56 @@ class GlusterPeerService(CRUDService):
         Add peer to the Trusted Storage Pool.
 
         `hostname` String representing an IP(v4/v6) address or DNS name
+
+        `private_address` CTDB private address in ctdb nodes file to associate with this peer. This is
+            optimization to create ctdb node concurrently with gluster peer.
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
-        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.create')
+        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.create', data)
 
         # we need to verify that we can resolve the hostname to an IP address
         # or clustering, in general, is going to fail in spectacular ways
         await self.middleware.call('cluster.utils.resolve_hostnames', [data['hostname']])
 
         await self.middleware.call('gluster.method.run', peer.attach, {'args': (data['hostname'],)})
-        return await self.middleware.call('gluster.peer.query', [('hostname', '=', data['hostname'])])
+
+        this_peer = await self.middleware.call('gluster.peer.query', [('hostname', '=', data['hostname'])])
+        if data.get('private_address'):
+            public_ip_create_job = await self.middleware.call('ctdb.private.ips.create', {
+                'ip': data['private_address'],
+                'node_uuid': this_peer[0]['uuid']
+            })
+            await public_ip_create_job.wait()
+
+        return this_peer
 
     @accepts(Str('id'))
     @returns()
     @job(lock=GLUSTER_JOB_LOCK)
-    async def do_delete(self, job, id):
+    async def do_delete(self, job, peer_uuid):
         """
         Remove peer of `id` from the Trusted Storage Pool.
 
         `id` String representing the uuid of the peer
+
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
         """
-        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.delete')
+        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.delete', None)
+
+        this_peer = await self.get_instance(peer_uuid)
+        private_entry = await self.middleware.call('ctdb.private.ips.query', [['node_uuid', '=', peer_uuid]])
 
         await self.middleware.call(
-            'gluster.method.run', peer.detach, {'args': ((await self.get_instance(id))['hostname'],)})
+            'gluster.method.run', peer.detach, {'args': this_peer['hostname']})
+
+        # We cannot actually remove a nodes file entry without cluster-wide downtime
+        if private_entry:
+            await self.middleware.call('ctdb.private.ips.update', private_entry[0]['pnn'], {
+                'enable': False, 'node_uuid': peer_uuid
+            })
 
     @accepts(Dict(
         'peer_status',

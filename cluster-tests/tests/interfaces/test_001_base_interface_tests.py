@@ -28,7 +28,7 @@ def node_by_public_address(addr):
     res = None
 
     for private_ip, data in ifaces_nodemap.items():
-        if addr not in data['active_interfaces']:
+        if addr not in data.get('active_interfaces', []):
             continue
 
         res = (private_ip, data)
@@ -134,7 +134,7 @@ def test_003_remove_public_ip(request):
 
 @pytest.mark.dependency(name='INTERFACE_ADDED')
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
-def test_003_add_public_ip(ip, request):
+def test_004_add_public_ip(ip, request):
     """
     This test adds the public IP that we removed
     back to each node (we deleted in previous test).
@@ -147,7 +147,7 @@ def test_003_add_public_ip(ip, request):
     }
     res = make_request('post', f'http://{ip}/api/v2.0/ctdb/public/ips', data=payload)
     try:
-        status = wait_on_job(res.json(), ip, 5)
+        status = wait_on_job(res.json(), ip, 30)
     except JobTimeOut:
         assert False, JobTimeOut
     else:

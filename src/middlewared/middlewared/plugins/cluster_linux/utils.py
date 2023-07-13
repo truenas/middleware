@@ -255,6 +255,7 @@ class CTDBConfig(enum.Enum):
     ETC_REC_FILE = os.path.join(CTDB_ETC, REC_FILE)
     ETC_PRI_IP_FILE = os.path.join(CTDB_ETC, PRIVATE_IP_FILE)
     ETC_PUB_IP_FILE = os.path.join(CTDB_ETC, PUBLIC_IP_FILE)
+    MAX_CLOCKSKEW = 10
 
     # ctdb event scripts directories
     CTDB_ETC_EVENT_SCRIPT_DIR = os.path.join(CTDB_ETC, 'events/legacy')

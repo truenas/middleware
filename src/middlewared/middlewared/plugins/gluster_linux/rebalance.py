@@ -60,10 +60,11 @@ class GlusterRebalanceService(Service):
         `force` bool: If True, will forcefully start rebelance operation on `name`.
         """
         job.set_progress(50, f'Starting rebalance operation on {data["name"]!r}')
-        options = {'args': (data.pop('name'),), 'kwargs': data}
+        vol_name = data.pop('name')
+        options = {'args': (vol_name,), 'kwargs': data}
         await self.middleware.call('gluster.method.run', rebalance.start, options)
-        job.set_progress(100, f'Successfully started rebalance operation on {data["name"]!r}')
-        return await self.stop_or_status_impl(data['name'], 'status')
+        job.set_progress(100, f'Successfully started rebalance operation on {vol_name!r}')
+        return await self.stop_or_status_impl(vol_name, 'status')
 
     @accepts(Dict('rebalance_stop', Str('name', required=True)))
     @job(lock=LOCK)

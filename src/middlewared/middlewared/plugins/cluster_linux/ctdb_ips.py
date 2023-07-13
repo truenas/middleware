@@ -1,4 +1,5 @@
 import errno
+import json
 import os
 import pathlib
 
@@ -119,6 +120,9 @@ class CtdbIpService(Service):
         with lock_file_open(ctdb_file, os.O_RDWR, mode=0o644, owners=(0, 0)) as f:
             st = f.fstat()
             entry = data['ip'] if is_private else f'{data["ip"]}/{data["netmask"]} {data["interface"]}'
+            if is_private:
+                gluster_info = {'uuid': data['node_uuid']}
+                entry += f'#{json.dumps(gluster_info)}'
             if st.st_size > 0:
                 self.entry_check(f, entry, st.st_size)
             f.pwrite((entry + '\n').encode(), st.st_size)
@@ -144,11 +148,22 @@ class CtdbIpService(Service):
             # unexpected error
             try:
                 if is_private:
-                    index = lines.index(find_entry)
+                    index = None
+
+                    for idx, entry in enumerate(lines):
+                        if entry.startswith(f'{find_entry}#'):
+                            index = idx
+                            break
+
+                    if index is None:
+                        raise IndexError(f'{find_entry}: not found')
+
                     # on private ip file update, `new_entry` is just the inverse
                     # of `find_entry`.
                     # (i.e if find_entry = '192.168.1.150' new_entry = '#192.168.1.150')
                     new_entry = address if find_entry.startswith('#') else '#' + address
+                    gluster_info = {'uuid': data['node_uuid']}
+                    new_entry += f'#{json.dumps(gluster_info)}'
                 else:
                     # on public ip update, ctdb doesn't return the netmask information
                     # for the associated ip even though it requires one when creating.

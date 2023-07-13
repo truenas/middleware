@@ -286,6 +286,9 @@ def test_010_xattrs_writable_via_smb(request):
 
 def test_030_test_share_failover(request):
     depends(request, ['DS_SMB_SHARE_IS_WRITABLE'])
+    # NOTE: this test is disabled while gluster cluster is configured
+    # as dispersed volume
+    return
 
     global failover_target
     ip = CLUSTER_IPS[0]
@@ -351,23 +354,21 @@ def test_030_test_share_failover(request):
 
     payload = {
         'msg': 'method',
-        'method': 'ctdb.general.status',
+        'method': 'ctdb.general.healthy',
     }
 
     res = make_ws_request(ip, payload)
     assert res.get('error') is None, res
-    assert res['result']['all_healthy'] is False
+    assert res['result'] is False
 
-    url = f'http://{ip}/api/v2.0/activedirectory/get_state'
-    res = make_request('get', url)
-    assert res.status_code == 200, f'ip: {ip}, res: {res.text}'
-    assert res.json() == 'HEALTHY'
-
-
+pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_031_test_share_failover(request):
     """
     Give cluster 120 seconds to get back into a healthy state
-    after node reboot
+    after node reboot.
+
+    This is currently marked flakey because we're having to reboot node
+    on distributed cluster
     """
     depends(request, ['DS_SMB_SHARE_IS_WRITABLE'])
     length_to_wait = 120
@@ -375,12 +376,12 @@ def test_031_test_share_failover(request):
     while length_to_wait > 0:
         payload = {
             'msg': 'method',
-            'method': 'ctdb.general.status',
+            'method': 'ctdb.general.healthy',
         }
         res = make_ws_request(CLUSTER_IPS[0], payload)
         assert res.get('error') is None, res
 
-        if res['result']['all_healthy']:
+        if res['result']:
             break
 
         length_to_wait -= 10

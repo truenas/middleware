@@ -42,6 +42,8 @@ class GlusterConfig(enum.Enum):
     # of gluster peers for now
     MAX_PEERS = 20
 
+    MIN_PEERS = 3
+
     # Path containing dataset name where workdir was located
     # when the first gluster volume was created. This is
     # used for a sanity when generating gluster config.
@@ -78,6 +80,11 @@ def get_glusterd_uuid():
         current_uuid = f.readline()
 
     return current_uuid
+
+
+def get_parsed_glusterd_uuid():
+    uuid_str = get_glusterd_uuid().strip()
+    return uuid_str.strip('UUID=')
 
 
 def check_glusterd_info():
