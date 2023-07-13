@@ -29,7 +29,6 @@ class KubernetesModel(sa.Model):
     cni_config = sa.Column(sa.JSON(type=dict), default={})
     configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
-    validate_host_path = sa.Column(sa.Boolean(), default=True)
     passthrough_mode = sa.Column(sa.Boolean(), default=False)
     metrics_server = sa.Column(sa.Boolean(), default=False, nullable=False)
 
@@ -46,7 +45,6 @@ class KubernetesService(ConfigService):
         Bool('servicelb', required=True),
         Bool('configure_gpus', required=True),
         Bool('metrics_server', required=True),
-        Bool('validate_host_path', required=True),
         Bool('passthrough_mode', required=True),
         Str('pool', required=True, null=True),
         IPAddr('cluster_cidr', required=True, cidr=True, empty=True),
