@@ -95,9 +95,6 @@ class ChartReleaseService(Service):
                         var_attr, attr, f'{schema_name}.{index}', release_data,
                     )
 
-        if schema['type'] == 'hostpath':
-            await self.validate_host_path_field(value, verrors, schema_name)
-
         for validator_def in filter(lambda k: k in validation_mapping, schema.get('$ref', [])):
             await self.middleware.call(
                 f'chart.release.validate_{validation_mapping[validator_def]}',
