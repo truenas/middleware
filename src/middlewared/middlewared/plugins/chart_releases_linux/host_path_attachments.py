@@ -11,9 +11,7 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_host_source_path(self, path):
-        # Let's keep this endpoint in case we want to debug a path and this endpoint can do the
-        # work for us in case a user comes to us and complains and we want to verify if the path
-        # is problematic wrt usages and should or should not be used.
+        # We just validate now that the path is not in a locked dataset
         paths = {
             'path': path,
         }
