@@ -57,6 +57,5 @@ def render(service, middleware):
 
     with open('/etc/containerd.json', 'w') as f:
         f.write(json.dumps({
-            'verifyVolumes': config['validate_host_path'],
             'appsDataset': config['dataset'],
         }))
