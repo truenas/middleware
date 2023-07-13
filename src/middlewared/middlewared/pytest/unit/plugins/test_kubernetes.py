@@ -30,7 +30,6 @@ async def test_kubernetes_configuration_for_licensed_and_unlicensed_systems(ha_c
         'configure_gpus': True,
         'passthrough_mode': False,
         'servicelb': True,
-        'validate_host_path': True,
     }
 
     m['interface.choices'] = lambda *args: []
