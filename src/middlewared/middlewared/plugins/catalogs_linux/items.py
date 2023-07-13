@@ -211,6 +211,7 @@ class CatalogService(Service):
             'certificates': await self.middleware.call('chart.release.certificate_choices'),
             'certificate_authorities': await self.middleware.call('chart.release.certificate_authority_choices'),
             'system.general.config': await self.middleware.call('system.general.config'),
+            'unused_ports': await self.middleware.call('port.get_unused_ports'),
         }
 
     @private
