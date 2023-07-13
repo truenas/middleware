@@ -58,7 +58,6 @@ async def test_create_schema_formation():
         'node_ip': '192.168.0.10',
         'configure_gpus': True,
         'servicelb': True,
-        'validate_host_path': False,
         'passthrough_mode': False,
         'dataset': 'pool/ix-applications'
     }
