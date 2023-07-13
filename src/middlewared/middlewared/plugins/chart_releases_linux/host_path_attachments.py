@@ -59,14 +59,9 @@ class ChartReleaseService(Service):
             paths[f'path (real path of {path})'] = real_path
 
         for path_type, path_to_test in paths.items():
-            if err := await self.ix_mount_validation(path_to_test, path_type):
-                return err
-
             if path_to_test.startswith('/mnt/'):
                 if await self.middleware.call('pool.dataset.path_in_locked_datasets', path_to_test):
                     return f'Path {path_to_test!r} {path_type} is locked'
-                if err := await self.attached_path_validation(path_to_test, path_type):
-                    return err
 
 
 class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
