@@ -130,13 +130,19 @@ def get_schema(variable_details, update, existing=NOT_PROVIDED):
     return result
 
 
+def clean_subquestions_for_upgrade(variable, valid_attrs):
+    for sub in (variable['schema'].get('subquestions') or []):
+        valid_attrs[sub['variable']] = sub
+        if sub['schema'].get('subquestions'):
+            clean_subquestions_for_upgrade(sub, valid_attrs)
+
+
 def clean_value_of_attr_for_upgrade(orig_value, variable):
     value = deepcopy(orig_value)
     valid_attrs = {}
     for v in variable['schema']['attrs']:
         valid_attrs[v['variable']] = v
-        for sub in (v['schema'].get('subquestions') or []):
-            valid_attrs[sub['variable']] = sub
+        clean_subquestions_for_upgrade(v, valid_attrs)
 
     for k, v in orig_value.items():
         if k not in valid_attrs:
