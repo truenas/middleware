@@ -12,15 +12,6 @@ class ChartReleaseService(Service):
         namespace = 'chart.release'
 
     @private
-    async def ix_mount_validation(self, path, path_type):
-        path_list = [p for p in path.split('/') if p.strip()]
-        if safe_to_ignore_path(path):
-            if path_list and len(path_list) < 3 and path_list[0] == 'mnt':
-                return f'Invalid path {path}. Mounting root dataset or path outside a pool is not allowed'
-        else:
-            return f'{path!r} {path_type!r} not allowed to be mounted'
-
-    @private
     async def validate_host_source_path(self, path):
         # Let's keep this endpoint in case we want to debug a path and this endpoint can do the
         # work for us in case a user comes to us and complains and we want to verify if the path
