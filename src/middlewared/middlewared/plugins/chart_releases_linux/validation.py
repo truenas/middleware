@@ -120,7 +120,8 @@ class ChartReleaseService(Service):
 
     @private
     async def validate_host_path_field(self, value, verrors, schema_name):
-        pass
+        if err_str := await self.middleware.call('chart.release.validate_host_source_path', value):
+            verrors.add(schema_name, err_str)
 
     @private
     async def validate_port_available_on_node(self, verrors, value, question, schema_name, release_data):
