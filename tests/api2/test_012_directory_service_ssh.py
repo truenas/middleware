@@ -12,7 +12,7 @@ from assets.REST.directory_services import active_directory, ldap, override_name
 from middlewared.test.integration.utils import call
 
 try:
-    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer
+    from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
 except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
@@ -39,6 +39,7 @@ def do_ad_connection(request):
             ADUSERNAME,
             ADPASSWORD,
             netbiosname=hostname,
+            createcomputer=AD_COMPUTER_OU,
         ) as ad:
             yield (request, ad)
 
