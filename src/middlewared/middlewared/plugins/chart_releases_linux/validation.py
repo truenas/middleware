@@ -119,6 +119,10 @@ class ChartReleaseService(Service):
         return verrors
 
     @private
+    async def validate_host_path_field(self, value, verrors, schema_name):
+        pass
+
+    @private
     async def validate_port_available_on_node(self, verrors, value, question, schema_name, release_data):
         if release_data and value in [p['port'] for p in release_data['used_ports']]:
             # TODO: This still leaves a case where user has multiple ports in a single app and mixes
