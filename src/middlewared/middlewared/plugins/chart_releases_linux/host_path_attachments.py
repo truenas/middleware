@@ -3,8 +3,6 @@ import os
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.service import private, Service
 
-from .utils import is_ix_volume_path, safe_to_ignore_path
-
 
 class ChartReleaseService(Service):
 
