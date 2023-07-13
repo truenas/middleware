@@ -50,6 +50,7 @@ class InterfaceService(Service):
                 self.logger.info('Bringing up member interface %r in %r', member_iface.name, name)
                 member_iface.up()
 
+        for member in db_members:
             parent_interfaces.append(member)
 
         if iface.stp != bridge['stp']:
