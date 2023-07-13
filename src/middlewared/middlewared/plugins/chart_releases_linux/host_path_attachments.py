@@ -21,32 +21,6 @@ class ChartReleaseService(Service):
             return f'{path!r} {path_type!r} not allowed to be mounted'
 
     @private
-    async def attached_path_validation(self, path, path_type):
-        allowed_service_types = {
-            'Chart Releases',
-            'Rsync Task',
-            'Snapshot Task',
-            'Rsync Module',
-            'CloudSync Task',
-            'Replication',
-        }
-        in_use_attachments = []
-        for attachment_entry in filter(
-            lambda attachment: attachment['type'] not in allowed_service_types,
-            await self.middleware.call('pool.dataset.attachments_with_path', path, True)
-        ):
-            if attachment_entry['service'].lower() == 'kubernetes' and is_ix_volume_path(
-                path, (await self.middleware.call('kubernetes.config'))['dataset']
-            ):
-                continue
-
-            in_use_attachments.append(attachment_entry)
-
-        if in_use_attachments:
-            return f'Invalid mount {path!r} {path_type}. Following service(s) use this ' \
-                   f'path: {", ".join(attachment["type"] for attachment in in_use_attachments)}'
-
-    @private
     async def validate_host_source_path(self, path):
         # Let's keep this endpoint in case we want to debug a path and this endpoint can do the
         # work for us in case a user comes to us and complains and we want to verify if the path
