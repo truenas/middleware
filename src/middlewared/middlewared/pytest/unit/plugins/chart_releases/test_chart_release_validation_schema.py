@@ -45,6 +45,7 @@ async def test_create_schema_formation():
     chart_release_svc = ChartReleaseService(m)
 
     m['chart.release.validate_locked_host_path'] = chart_release_svc.validate_locked_host_path
+    m['chart.release.validate_host_source_path'] = chart_release_svc.validate_host_source_path
     m['kubernetes.config'] = lambda *args: {
         'id': 1,
         'pool': 'pool',
