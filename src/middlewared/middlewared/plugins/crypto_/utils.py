@@ -19,9 +19,6 @@ DEFAULT_CERT_NAME = 'truenas_default'
 # This constant defines the default lifetime of certificate ( https://support.apple.com/en-us/HT211025 )
 DEFAULT_LIFETIME_DAYS = 397
 EC_CURVES = [
-    'BrainpoolP512R1',
-    'BrainpoolP384R1',
-    'BrainpoolP256R1',
     'SECP256R1',
     'SECP384R1',
     'SECP521R1',
