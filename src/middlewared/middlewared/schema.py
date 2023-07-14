@@ -208,7 +208,7 @@ class LocalUsername(Attribute):
         # We aren't enforcing this for maximum backwards compatibility
         val = str(value)
         val_len = len(val)
-        valid_chars = string.ascii_letters + string.digits + '_' + '-' + '$'
+        valid_chars = string.ascii_letters + string.digits + '_' + '-' + '$' + '.'
         valid_start = string.ascii_letters + '_'
         if val_len <= 0:
             raise Error(self.name, 'Username must be at least 1 character in length')
