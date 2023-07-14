@@ -27,7 +27,7 @@ class DISPLAY(Device):
         Bool('wait', default=False),
         Str('password', private=True, required=True, null=False, empty=False),
         Bool('web', default=True),
-        Str('type', default='SPICE', enum=['SPICE', 'VNC']),
+        Str('type', default='SPICE', enum=['SPICE']),
     )
 
     def __init__(self, *args, **kwargs):
@@ -54,7 +54,7 @@ class DISPLAY(Device):
             params['password'] = password
 
         get_params = f'?{urlencode(params, quote_via=quote_plus)}'
-        return f'{protocol}://{host}/{path}{"spice_auto" if self.is_spice_type() else "vnc"}.html{get_params}'
+        return f'{protocol}://{host}/{path}spice_auto.html{get_params}'
 
     def is_available(self):
         bind_ip_available = self.data['attributes']['bind'] in self.middleware.call_sync('vm.device.bind_choices')
@@ -68,7 +68,7 @@ class DISPLAY(Device):
         #  video element to a graphic element
         attrs = self.data['attributes']
         return create_element(
-            'graphics', type='spice' if self.is_spice_type() else 'vnc', port=str(self.data['attributes']['port']),
+            'graphics', type='spice', port=str(self.data['attributes']['port']),
             attribute_dict={
                 'children': [
                     create_element('listen', type='address', address=self.data['attributes']['bind']),
@@ -99,7 +99,7 @@ class DISPLAY(Device):
         start_args = self.get_start_attrs()
         self.web_process = subprocess.Popen(
             [
-                'websockify', '--web', f'/usr/share/{"spice-html5" if self.is_spice_type() else "novnc"}/',
+                'websockify', '--web', f'/usr/share/spice-html5/',
                 '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
