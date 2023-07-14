@@ -1,6 +1,6 @@
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS 
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
 from utils import make_request, ssh_test, make_ws_request
 from pytest_dependency import depends
 from helpers import get_bool
@@ -15,6 +15,7 @@ BOOL_SMB_PARAMS = {
 
 SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/smb_share_01'
 SMB_SHARE_ID = None
+
 
 def test_000_get_node_list(request):
     global smb_node_list
@@ -506,11 +507,10 @@ def check_monitored_state(expected):
 @pytest.mark.dependency(name="SERVICE_MONITOR_STARTED")
 def test_33_enable_service_monitor(request):
     depends(request, ["SMB_SERVICE_STOPPED"])
-    ip = CLUSTER_IPS[0]
 
     status = get_service_state()
-    assert status['monitor_enable'] is False, str(entry)
-    assert status['service_enable'] is False, str(entry)
+    assert status['monitor_enable'] is False, str(status)
+    assert status['service_enable'] is False, str(status)
 
     # enable monitoring. SMB should start on all nodes
     payload = {
@@ -547,9 +547,9 @@ def test_35_break_smbd_and_check_monitor(request):
     # intentionally break SMB on node 0. Error should be reported.
     global smbd_victim
     smbd_victim = [x['address'] for x in smb_node_list if x['pnn'] == 0]
-    assert victim, str(smb_node_list)
+    assert smbd_victim, str(smb_node_list)
 
-    res = ssh_test(victim[0], 'chmod -x /usr/sbin/smbd')
+    res = ssh_test(smbd_victim[0], 'chmod -x /usr/sbin/smbd')
     assert res['result'], res['output']
 
     payload = {
@@ -562,14 +562,14 @@ def test_35_break_smbd_and_check_monitor(request):
 
     expected_state = {x['pnn']: x['pnn'] != 0 for x in smb_node_list}
     service_state = check_monitored_state(expected_state)
-    victim_state = [x for x in service_state['cluster_state'] if x['pnn'] == 0]
-    assert victim_state[0]['state']['error'] is not None, str(service_state)
+    smbd_victim_state = [x for x in service_state['cluster_state'] if x['pnn'] == 0]
+    assert smbd_victim_state[0]['state']['error'] is not None, str(service_state)
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_36_unbreak_smbd_and_check_monitor(request):
     depends(request, ["SERVICE_MONITOR_DISABLE_SMB"])
-    res = ssh_test(victim[0], 'chmod +x /usr/sbin/smbd')
+    res = ssh_test(smbd_victim[0], 'chmod +x /usr/sbin/smbd')
     assert res['result'], res['output']
 
     # Disable SMB again through monitor
