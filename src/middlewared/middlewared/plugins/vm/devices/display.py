@@ -124,7 +124,7 @@ class DISPLAY(Device):
 
             self.middleware.call_sync('vm.device.validate_display_devices', verrors, vm_instance)
 
-        self.validate_port_attrs(device, verrors)
+        verrors = self.validate_port_attrs(device, verrors)
 
         if device['attributes']['bind'] not in self.middleware.call_sync('vm.device.bind_choices'):
             verrors.add('attributes.bind', 'Requested bind address is not valid')
