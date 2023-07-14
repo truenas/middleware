@@ -3,7 +3,7 @@ import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.replication import task
+from middlewared.test.integration.assets.replication import replication_task
 
 
 @pytest.mark.parametrize("has_pull", [False, True])
@@ -41,7 +41,7 @@ def test_create_pull_replication(has_pull):
 def test_update_pull_replication(has_pull):
     with dataset("src") as src:
         with dataset("dst") as dst:
-            with task({
+            with replication_task({
                 "name": "Test",
                 "direction": "PUSH",
                 "transport": "LOCAL",
@@ -76,7 +76,7 @@ def test_update_pull_replication(has_pull):
 def test_restore_push_replication(has_pull):
     with dataset("src") as src:
         with dataset("dst") as dst:
-            with task({
+            with replication_task({
                 "name": "Test",
                 "direction": "PUSH",
                 "transport": "LOCAL",
