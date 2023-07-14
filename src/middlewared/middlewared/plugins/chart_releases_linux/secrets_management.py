@@ -41,7 +41,7 @@ class ChartReleaseService(Service):
             data = release_secret.pop('data')
             try:
                 release = json.loads(gzip.decompress(b64decode(b64decode(data['release']))).decode())
-            except binascii.Error:
+            except (binascii.Error, gzip.BadGzipFile):
                 # We ignore this keeping in line with helm behaviour where the secret malformed is ignored by helm
                 if release_secret['metadata']['name'] not in self.LOGGED_SECRET:
                     self.logger.error('Failed to parse %r secret', release_secret['metadata']['name'])
