@@ -85,7 +85,17 @@ def unlocked_zvols_fast(options=None, data=None):
             for file in files:
                 path = root + '/' + file
                 zvol_name = zvol_path_to_name(path)
-                dev_name = os.readlink(path).split('/')[-1]
+                try:
+                    dev_name = os.readlink(path).split('/')[-1]
+                except Exception:
+                    # this happens if the file is a regular file
+                    # saw this happend when a user logged into a system
+                    # via ssh and tried to "copy" a zvol using "dd" on
+                    # the cli and made a typo in the command. This created
+                    # a regular file. When we readlink() that file, it
+                    # crashed with OSError 22 Invalid Argument so we just
+                    # skip this file
+                    continue
 
                 out.update({
                     zvol_name: {
