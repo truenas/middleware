@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 PACKAGES=(
+    # need to make things work
+    make
     # open-iscsi is used to test authorized networks for iscsi
     open-iscsi
     # needed for running python3 setup.py install
