@@ -520,11 +520,6 @@ class CtdbRootDirService(Service):
             wait_id = await self.middleware.call('core.job_wait', fuse_mount_job[0]['id'])
             await wait_id.wait()
 
-        # Initialize clustered secrets
-        if not await self.middleware.call('clpwenc.check'):
-            self.logger.debug('Generating clustered pwenc secret')
-            await self.middleware.call('clpwenc.generate_secret')
-
         # Setup the ctdb daemon config. Without ctdb daemon running, none of the
         # sharing services (smb/nfs) will work in an active-active setting.
         priv_ctdb_ips = await self.middleware.call('ctdb.private.ips.query')
