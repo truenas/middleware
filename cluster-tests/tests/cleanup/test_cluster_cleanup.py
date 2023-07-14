@@ -10,6 +10,19 @@ from exceptions import JobTimeOut
 IGNORE = ['ctdb_shared_vol']  # TODO: dont hardcode this
 
 
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
+def test_gather_debugs_before_teardown(ip, request):
+    ans = make_ws_request(ip, {'msg': 'method', 'method': 'system.debug_generate'})
+    assert ans.get('error') is None, ans
+    assert isinstance(ans['result'], int), ans
+    try:
+        status = wait_on_job(ans['result'], ip, 600)
+    except JobTimeOut:
+        assert False, f'Timed out waiting to generate debug on {ip!r}'
+    else:
+        assert status['state'] == 'SUCCESS', status
+
+
 @pytest.mark.dependency(name='STOP_GVOLS')
 def test_stop_all_gvols():
     ans = make_request('get', '/gluster/volume')
