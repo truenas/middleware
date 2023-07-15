@@ -293,4 +293,3 @@ class Cron(Dict):
                 verrors.add(self.name, 'Specified schedule does not match specified time interval')
 
         verrors.check()
-

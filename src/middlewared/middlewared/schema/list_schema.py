@@ -141,4 +141,3 @@ class List(EnumMixin, Attribute):
         for item in self.items:
             cp.items.append(item.copy())
         return cp
-
