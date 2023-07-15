@@ -23,11 +23,12 @@ def upgrade():
     to_remove_ids = []
     vms_mapping = defaultdict(list)
     for row in map(dict, conn.execute("SELECT * FROM vm_device WHERE dtype = 'DISPLAY'").fetchall()):
-        vms_mapping[row['vm']].append(row)
+        vms_mapping[row['vm_id']].append(row)
 
-    for devices in vms_mapping.items():
+    for devices in vms_mapping.values():
         if len(devices) == 1:
             device = devices[0]
+            device['attributes'] = json.loads(device['attributes'])
             if device['attributes']['type'] == 'VNC':
                 device['attributes']['type'] = 'SPICE'
                 conn.execute('UPDATE vm_device SET attributes = ? WHERE id = ?', (
@@ -35,6 +36,7 @@ def upgrade():
                 ))
         else:
             for device in devices:
+                device['attributes'] = json.loads(device['attributes'])
                 if device['attributes']['type'] == 'VNC':
                     to_remove_ids.append(device['id'])
 
