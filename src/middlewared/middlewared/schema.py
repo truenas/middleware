@@ -36,26 +36,6 @@ def convert_schema(spec):
     raise ValueError(f'Unknown type: {t}')
 
 
-class Schemas(dict):
-
-    def add(self, schema):
-        if schema.name in self:
-            raise ValueError(f'Schema "{schema.name}" is already registered')
-        super().__setitem__(schema.name, schema)
-
-
-class Error(Exception):
-
-    def __init__(self, attribute, errmsg, errno=errno.EINVAL):
-        self.attribute = attribute
-        self.errmsg = errmsg
-        self.errno = errno
-        self.extra = None
-
-    def __str__(self):
-        return '[{0}] {1}'.format(self.attribute, self.errmsg)
-
-
 class EnumMixin(object):
 
     def __init__(self, *args, **kwargs):
