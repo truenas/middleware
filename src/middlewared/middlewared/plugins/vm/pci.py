@@ -48,8 +48,8 @@ class VMDeviceService(Service):
         return final
 
     @private
-    def get_pci_device_details(self, obj, iommu_info):
-        data = {
+    def get_pci_device_default_data(self):
+        return {
             'capability': {
                 'class': None,
                 'domain': None,
@@ -69,6 +69,10 @@ class VMDeviceService(Service):
             'reset_mechanism_defined': False,
             'description': '',
         }
+
+    @private
+    def get_pci_device_details(self, obj, iommu_info):
+        data = self.get_pci_device_default_data()
         if not (igi := iommu_info.get(obj.sys_name)):
             data['error'] = 'Unable to determine iommu group'
 
@@ -161,7 +165,13 @@ class VMDeviceService(Service):
     def passthrough_device(self, device):
         """Retrieve details about `device` PCI device"""
         self.middleware.call_sync('vm.check_setup_libvirt')
-        return self.get_single_pci_device_details(RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device))
+        if device_details := self.get_single_pci_device_details(RE_DEVICE_PATH.sub(r'\1:\2:\3.\4', device)):
+            return device_details[device]
+        else:
+            return {
+                **self.get_pci_device_default_data(),
+                'error': 'Device not found',
+            }
 
     @accepts()
     @returns(List(items=[Ref('passthrough_device')], register=True))
