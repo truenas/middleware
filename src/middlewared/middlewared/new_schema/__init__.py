@@ -1,4 +1,5 @@
 from .attribute import Attribute  # noqa
+from .dict_schema import Cron, Dict  # noqa
 from .enum import EnumMixin  # noqa
 from .exceptions import Error  # noqa
 from .integer_schema import Float, Int, Timestamp  # noqa
