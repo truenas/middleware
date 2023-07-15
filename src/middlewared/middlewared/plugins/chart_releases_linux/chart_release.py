@@ -12,7 +12,7 @@ from middlewared.plugins.container_runtime_interface.utils import normalize_refe
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, job, private
 from middlewared.utils import filter_list
-from middlewared.validators import Match
+from middlewared.validators import Match, Range
 
 from .utils import (
     add_context_to_configuration, CHART_NAMESPACE_PREFIX, CONTEXT_KEY_NAME, get_action_context,
@@ -373,7 +373,7 @@ class ChartReleaseService(CRUDService):
                         e.g abc123, abc, abcd-1232
                         '''
                     )
-                )]
+                ), Range(min=1, max=40)]
             ),
             Str('train', default='charts'),
             Str('version', default='latest'),
