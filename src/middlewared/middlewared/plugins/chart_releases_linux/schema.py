@@ -5,7 +5,7 @@ from itertools import chain
 from typing import Union
 
 from middlewared.service_exception import ValidationErrors
-from middlewared.schema import Bool, Cron, Dict, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str, URI
+from middlewared.schema import Bool, Cron, Dict, Dir, File, HostPath, Int, IPAddr, List, NOT_PROVIDED, Path, Str, URI
 from middlewared.validators import Match, Range, validate_schema
 
 
@@ -15,6 +15,8 @@ mapping = {
     'boolean': Bool,
     'path': Path,
     'hostpath': HostPath,
+    'hostpathdirectory': Dir,
+    'hostpathfile': File,
     'list': List,
     'dict': Dict,
     'ipaddr': IPAddr,
