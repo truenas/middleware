@@ -11,3 +11,7 @@ class Error(Exception):
 
     def __str__(self):
         return '[{0}] {1}'.format(self.attribute, self.errmsg)
+
+
+class ResolverError(Exception):
+    pass
