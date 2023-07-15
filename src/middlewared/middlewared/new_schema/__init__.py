@@ -2,5 +2,8 @@ from .attribute import Attribute  # noqa
 from .enum import EnumMixin  # noqa
 from .exceptions import Error  # noqa
 from .plugin_schema import Schemas  # noqa
+from .string_schema import ( # noqa
+    Dataset, Datetime, Dir, File, HostPath, IPAddr, LDAP_DN, Path, Password, SID, Str, Time, UnixPerm, URI
+)
 from .username import LocalUsername  # noqa
 from .utils import NOT_PROVIDED, REDACTED_VALUE  # noqa
