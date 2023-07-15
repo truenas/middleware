@@ -99,7 +99,7 @@ class DISPLAY(Device):
         start_args = self.get_start_attrs()
         self.web_process = subprocess.Popen(
             [
-                'websockify', '--web', f'/usr/share/spice-html5/',
+                'websockify', '--web', '/usr/share/spice-html5/',
                 '--wrap-mode=ignore', start_args['web_bind'], start_args['server_addr']
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
