@@ -1,6 +1,7 @@
 import aiohttp
 import contextlib
 import jwt
+import json
 import enum
 import asyncio
 import os
@@ -69,10 +70,12 @@ class GlusterLocalEventsService(Service):
         secret = await self.middleware.call('gluster.localevents.get_set_jwt_secret')
         token = jwt.encode({'ts': int(time.time()), 'msg_id': uuid4().hex}, secret, algorithm='HS256')
         headers = {'JWTOKEN': token, 'content-type': 'application/json'}
+        payload = await self.middleware.call('clpwenc.encrypt', json.dumps(data))
+
         async with aiohttp.ClientSession() as sess:
             status = reason = None
             try:
-                res = await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json=data, timeout=30)
+                res = await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json={'payload': payload}, timeout=30)
             except asyncio.exceptions.TimeoutError:
                 status = 500
                 reason = 'Timed out waiting for a response'

@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+import json
 import time
 
 from jwt import encode, decode
@@ -96,6 +97,7 @@ class ClusterEventsApplication(object):
                 'content-type': 'application/json'
             }
 
+            payload = await self.middleware.call('clpwenc.encrypt', json.dumps(data))
             # how long each POST request can take (in seconds)
             timeout = 10
 
@@ -104,7 +106,7 @@ class ClusterEventsApplication(object):
                 tasks = []
                 for url in peer_urls:
                     tasks.append(
-                        self._post(url, headers, data, session, timeout)
+                        self._post(url, headers, {'payload': payload}, session, timeout)
                     )
 
                 resps = await asyncio.gather(*tasks, return_exceptions=True)
@@ -174,5 +176,6 @@ class ClusterEventsApplication(object):
             return await self.response(status_code=401)
 
         self.received_messages.append(decoded)
-        await self.process_event(decoded, await request.json())
+        decrypted = await self.middleware.call('clpwenc.decrypt', (await request.json())['payload'])
+        await self.process_event(decoded, json.loads(decrypted))
         return await self.response()
