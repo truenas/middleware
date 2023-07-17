@@ -9,6 +9,7 @@ from middlewared.service import accepts, job, private, Service, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from middlewared.plugins.gluster_linux.utils import get_parsed_glusterd_uuid, GlusterConfig
+from middlewared.plugins.pwenc import PWENC_BLOCK_SIZE
 
 
 class ClusterPeerConnection:
@@ -443,7 +444,7 @@ class ClusterManagement(Service):
             peer_job.wait_sync(raise_error=True)
 
         job.set_progress(25, 'Configuring shared secret.')
-        secret = secrets.token_urlsafe(64)
+        secret = secrets.token_hex(PWENC_BLOCK_SIZE)
         for c in client_connections:
             c.call_fn('gluster.localevents.add_jwt_secret', {"secret": secret, "force": True})
 

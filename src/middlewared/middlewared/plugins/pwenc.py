@@ -1,10 +1,6 @@
 import base64
-import errno
 import fcntl
-import json
-import pyglfs
 import os
-import stat
 import threading
 
 from contextlib import contextmanager
@@ -12,10 +8,9 @@ from Cryptodome.Cipher import AES
 from Cryptodome.Util import Counter
 
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
-from middlewared.plugins.gluster_linux.pyglfs_utils import glfs, lock_file_open
+from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.service import Service
 from middlewared.utils.path import pathref_open
-from pathlib import Path
 
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = os.environ.get('FREENAS_PWENC_SECRET', '/data/pwenc_secret')
@@ -120,101 +115,22 @@ class CLPWEncService(PWEncService):
         private = True
 
     secret = None
-    ctdb_info = None
-    secret_dir_uuid = None
-
-    def _secret_permcheck(self, hdl, mode, is_dir):
-        if stat.S_IMODE(hdl.cached_stat.st_mode) != 0o700:
-            hdl.open(os.O_DIRECTORY if is_dir else os.O_RDWR).fchmod(0o700)
-
-        if hdl.cached_stat.st_uid != 0 or hdl.cached_stat.st_gid != 0:
-            hdl.open(os.O_DIRECTORY if is_dir else os.O_RDWR).fchown(0, 0)
-
-    def _lookup_secret_dir_uuid(self):
-        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
-            root_hdl = vol.open_by_uuid(self.ctdb_info['uuid'])
-            try:
-                secret_dir = root_hdl.lookup('.cluster_private')
-            except pyglfs.GLFSError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-
-                secret_dir = root_hdl.mkdir('.cluster_private', mode=0o700)
-
-            self.secret_dir_uuid = secret_dir.uuid
-
-    def _init_secret_dir(self):
-        if self.ctdb_info is None:
-            self.ctdb_info = json.loads(Path(CTDB_VOL_INFO_FILE).read_text())
-
-        if self.secret_dir_uuid is None:
-            self._lookup_secret_dir_uuid()
-
-    def _read_secret(self):
-        # Since this is called inside a class method skip _init_secret_dir() call
-        ctdb_info = json.loads(Path(CTDB_VOL_INFO_FILE).read_text())
-        with glfs.get_volume_handle(ctdb_info['volume_name']) as vol:
-            secret_dir = vol.open_by_uuid(ctdb_info['uuid']).lookup('.cluster_private')
-            secret = secret_dir.lookup('clpwenc_secret')
-            self.secret = secret.contents()
+    secret_path = GlusterConfig.SECRETS_FILE.value
+    lock = threading.RLock()
 
     def _write_secret(self, secret, reset_passwords):
-        self._init_secret_dir()
-        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
-            secret_dir = vol.open_by_uuid(self.secret_dir_uuid)
-            self._secret_permcheck(secret_dir, 0o700, True)
-            try:
-                secret_file = secret_dir.lookup('clpwenc_secret')
-            except pyglfs.GLFSError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-                secret_file = secret_dir.create('clpwenc_secret', os.O_RDWR | os.O_CREAT)
+        raise NotImplementedError
 
-            self._secret_permcheck(secret_file, 0o600, False)
-            with lock_file_open(secret_file, os.O_RDWR) as fd:
-                fd.ftruncate(0)
-                fd.pwrite(secret, 0)
-                fd.fsync()
+    def generate_secret(self, reset_passwords=True):
+        # secret is derived from our pre-shared localevent secret
+        raise NotImplementedError
 
     def _reset_passwords(self):
         raise NotImplementedError
 
-    @staticmethod
-    def _secret_opener(path, flags):
-        raise NotImplementedError
-
-    def check(self):
-        self._init_secret_dir()
-        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
-            secret_dir = vol.open_by_uuid(self.secret_dir_uuid)
-            self._secret_permcheck(secret_dir, 0o700, True)
-            try:
-                check_file = secret_dir.lookup('.check_file')
-
-            except pyglfs.GLFSError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-
-                return False
-
-            return self.decrypt(check_file.contents()) == PWENC_CHECK
-
-    def _reset_pwenc_check_field(self):
-        self._init_secret_dir()
-        with glfs.get_volume_handle(self.ctdb_info['volume_name']) as vol:
-            secret_dir = vol.open_by_uuid(self.secret_dir_uuid)
-            self._secret_permcheck(secret_dir, 0o700, True)
-            try:
-                check_file = secret_dir.lookup('.check_file')
-
-            except pyglfs.GLFSError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-                check_file = secret_dir.create('.check_file', os.O_RDWR)
-
-            with lock_file_open(check_file, os.O_RDWR) as fd:
-                fd.ftruncate(0)
-                fd.pwrite(self.encrypt(PWENC_CHECK), 0)
+    def _read_secret(self):
+        with open(self.secret_path, 'r', opener=self._secret_opener) as f:
+            self.secret = bytes.fromhex(f.read())
 
     def encrypt(self, data):
         return encrypt(data, True)
