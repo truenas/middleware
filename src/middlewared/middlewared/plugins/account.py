@@ -1148,6 +1148,7 @@ class UserService(CRUDService):
         await run('truenas-set-authentication-method.py', check=True, encoding='utf-8', errors='ignore',
                   input=json.dumps({'username': username, 'password': password}).encode('utf-8'))
         await self.middleware.call('failover.datastore.force_send')
+        await self.middleware.call('etc.generate', 'user')
 
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
