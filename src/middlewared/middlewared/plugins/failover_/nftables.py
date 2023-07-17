@@ -61,6 +61,9 @@ class NftablesService(Service):
 
         return True
 
+    def flush_chain_INPUT(self):
+        return not bool(run(['nft', 'flush', 'chain', 'filter', 'INPUT']).returncode)
+
     @accepts()
     @job(lock=JOB_LOCK)
     def drop_all(self, job):
@@ -84,6 +87,9 @@ class NftablesService(Service):
         if not vips:
             raise CallError('No VIP addresses detected on system')
 
+        if not self.flush_chain_INPUT():
+            self.logger.error('Failed flushing INPUT chain')
+
         return self.generate_rules({'drop': True, 'vips': vips})
 
     @accepts()
@@ -92,5 +98,8 @@ class NftablesService(Service):
         """Accepts all v4/v6 inbound traffic"""
         if not self.middleware.call_sync('failover.licensed'):
             return False
+
+        if not self.flush_chain_INPUT():
+            self.logger.error('Failed flushing INPUT chain')
 
         return self.generate_rules({'drop': False, 'vips': []})
