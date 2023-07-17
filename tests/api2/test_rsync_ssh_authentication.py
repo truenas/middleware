@@ -206,3 +206,36 @@ def test_state_persist(cleanup, localuser, remoteuser, src, dst, ssh_credentials
 
         row = call("datastore.query", "tasks.rsync", [["id", "=", t["id"]]], {"get": True})
         assert row["rsync_job"]["state"] == "SUCCESS"
+
+
+def test_local_path_with_whitespace(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    src = f"{src}/work stuff"
+    ssh(f"mkdir '{src}'")
+    ssh(f"touch '{src}/test2'")
+    ssh(f"chown -R localuser:localuser '{src}'")
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": dst,
+    }) as t:
+        run_task(t)
+
+    assert ssh(f"ls -1 '{dst}'") == "test2\n"
+
+
+def test_remotepath_with_whitespace(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    dst = f"{dst}/work stuff"
+    ssh(f"mkdir '{dst}'")
+    ssh(f"chown remoteuser:remoteuser '{dst}'")
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": dst,
+    }) as t:
+        run_task(t)
+
+    assert ssh(f"ls -1 '{dst}'") == "test\n"
