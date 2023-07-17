@@ -14,6 +14,7 @@ EVENT_FN_MAP = {
     'TAKEIP': 'event_not_implemented',
     'RELEASEIP': 'event_not_implemented',
     'IPREALLOCATED': 'event_ip_reallocated',
+    'LEADER': 'event_became_leader',
 }
 
 
@@ -28,6 +29,7 @@ class CtdbEventType(enum.Enum):
     TAKEIP = enum.auto()
     RELEASEIP = enum.auto()
     IPREALLOCATED = enum.auto()
+    LEADER = enum.auto()
 
     def get_fn(self):
         return EVENT_FN_MAP[self.name]
@@ -38,6 +40,21 @@ class CtdbEventService(Service):
     class Config:
         namespace = 'ctdb.event'
         private = True
+
+    def event_became_leader(self, data):
+        try:
+            node_info = self.middleware.call_sync(
+                'ctdb.private.ips.query',
+                [['this_node', '=', True]],
+                {'select': ['id', 'pnn', 'address', 'node_uuid'], 'get': True}
+            )
+        except Exception:
+            self.logger.error('Failed to generate cluster event', exc_info=True)
+            return
+
+        self.middleware.send_event(
+            'ctdb.status', 'CHANGED', fields={'event': data['event'], 'data': node_info}
+        )
 
     def event_ip_reallocated(self, data):
         """

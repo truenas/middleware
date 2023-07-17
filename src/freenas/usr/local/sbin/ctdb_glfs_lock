@@ -9,6 +9,7 @@ import pyglfs
 import signal
 import sys
 
+from middlewared.client import Client
 from time import sleep
 
 """
@@ -59,6 +60,15 @@ class GlusterConn:
             len=1
         )
         self.reclock_uuid = lock_file.uuid
+
+        # Attempt to send event that we became cluster leader to TrueCommand.
+        # Failure here should be non-fatal because we must avoid ping-ponging
+        # the recovery lock between nodes.
+        try:
+            with Client() as c:
+                c.call('ctdb.event.process', {'event': 'LEADER', 'status': 'SUCCESS'})
+        except Exception:
+            pass
 
     def liveness_check(self):
         """
