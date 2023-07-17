@@ -556,7 +556,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     '-e',
                     f'"ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}"'
                 ]
-                path_args = [path, f'{remote}:"{shlex.quote(rsync["remotepath"])}"']
+                path_args = [path, f'{remote}:{shlex.quote(rsync["remotepath"])}']
                 if rsync['direction'] != 'PUSH':
                     path_args.reverse()
                 line += path_args
