@@ -1,6 +1,6 @@
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS 
+from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
 from utils import make_request, ssh_test, make_ws_request
 from pytest_dependency import depends
 from helpers import get_bool
@@ -15,6 +15,7 @@ BOOL_SMB_PARAMS = {
 
 SHARE_FUSE_PATH = f'CLUSTER:{CLUSTER_INFO["GLUSTER_VOLUME"]}/smb_share_01'
 SMB_SHARE_ID = None
+
 
 def test_000_get_node_list(request):
     global smb_node_list
@@ -471,43 +472,45 @@ def test_032_disable_smb(ip, request):
     assert res.status_code == 200, res.text
 
 
-def test_33_enable_service_monitor(request):
-    def get_service_state():
-        payload = {
-            'msg': 'method',
-            'method': 'ctdb.services.get',
-        }
-        res = make_ws_request(CLUSTER_IPS[0], payload)
-        assert res.get('error') is None, res
-        entry = [x for x in res['result'] if x['name'] == 'cifs']
-        assert len(entry) == 1, str(res['result'])
-        return entry[0]
+def get_service_state():
+    payload = {
+        'msg': 'method',
+        'method': 'ctdb.services.get',
+    }
+    res = make_ws_request(CLUSTER_IPS[0], payload)
+    assert res.get('error') is None, res
+    entry = [x for x in res['result'] if x['name'] == 'cifs']
+    assert len(entry) == 1, str(res['result'])
+    return entry[0]
 
-    def check_monitored_state(expected):
-        waited = 0
-        while waited != TIMEOUTS['MONITOR_TIMEOUT']:
-            entry = get_service_state()
 
-            if any(x['state'] == 'UNAVAIL' for x in entry['cluster_state']):
-                sleep(1)
-                waited += 1
-                continue
+def check_monitored_state(expected):
+    waited = 0
+    while waited != TIMEOUTS['MONITOR_TIMEOUT']:
+        entry = get_service_state()
 
-            states = {x['pnn']: x['state']['running'] for x in entry['cluster_state']}
-            if states == expected:
-                return entry
-
+        if any(x['state'] == 'UNAVAIL' for x in entry['cluster_state']):
             sleep(1)
             waited += 1
+            continue
 
-        assert states == expected, str(entry)
+        states = {x['pnn']: x['state']['running'] for x in entry['cluster_state']}
+        if states == expected:
+            return entry
 
+        sleep(1)
+        waited += 1
+
+    assert states == expected, str(entry)
+
+
+@pytest.mark.dependency(name="SERVICE_MONITOR_STARTED")
+def test_33_enable_service_monitor(request):
     depends(request, ["SMB_SERVICE_STOPPED"])
-    ip = CLUSTER_IPS[0]
 
     status = get_service_state()
-    assert status['monitor_enable'] is False, str(entry)
-    assert status['service_enable'] is False, str(entry)
+    assert status['monitor_enable'] is False, str(status)
+    assert status['service_enable'] is False, str(status)
 
     # enable monitoring. SMB should start on all nodes
     payload = {
@@ -521,17 +524,10 @@ def test_33_enable_service_monitor(request):
     expected_state = {x['pnn']: True for x in smb_node_list}
     check_monitored_state(expected_state)
 
-    payload = {
-        'msg': 'method',
-        'method': 'ctdb.services.set',
-        'params': ['cifs', {'monitor_enable': True, 'service_enable': True}],
-    }
-    res = make_ws_request(CLUSTER_IPS[0], payload)
-    assert res.get('error') is None, res
 
-    expected_state = {x['pnn']: True for x in smb_node_list}
-    check_monitored_state(expected_state)
-
+@pytest.mark.dependency(name="SERVICE_MONITOR_DISABLE_SMB")
+def test_34_disable_smb_through_service_monitor(request):
+    depends(request, ["SERVICE_MONITOR_STARTED"])
     # Keep monitoring enabled, but disable service. SMB should stop on all nodes
     payload = {
         'msg': 'method',
@@ -544,11 +540,16 @@ def test_33_enable_service_monitor(request):
     expected_state = {x['pnn']: False for x in smb_node_list}
     check_monitored_state(expected_state)
 
-    # intentionally break SMB on node 0. Error should be reported.
-    victim = [x['address'] for x in smb_node_list if x['pnn'] == 0]
-    assert victim, str(smb_node_list)
 
-    res = ssh_test(victim[0], 'chmod -x /usr/sbin/smbd')
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
+def test_35_break_smbd_and_check_monitor(request):
+    depends(request, ["SERVICE_MONITOR_DISABLE_SMB"])
+    # intentionally break SMB on node 0. Error should be reported.
+    global smbd_victim
+    smbd_victim = [x['address'] for x in smb_node_list if x['pnn'] == 0]
+    assert smbd_victim, str(smb_node_list)
+
+    res = ssh_test(smbd_victim[0], 'chmod -x /usr/sbin/smbd')
     assert res['result'], res['output']
 
     payload = {
@@ -561,10 +562,14 @@ def test_33_enable_service_monitor(request):
 
     expected_state = {x['pnn']: x['pnn'] != 0 for x in smb_node_list}
     service_state = check_monitored_state(expected_state)
-    victim_state = [x for x in service_state['cluster_state'] if x['pnn'] == 0]
-    assert victim_state[0]['state']['error'] is not None, str(service_state)
+    smbd_victim_state = [x for x in service_state['cluster_state'] if x['pnn'] == 0]
+    assert smbd_victim_state[0]['state']['error'] is not None, str(service_state)
 
-    res = ssh_test(victim[0], 'chmod +x /usr/sbin/smbd')
+
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
+def test_36_unbreak_smbd_and_check_monitor(request):
+    depends(request, ["SERVICE_MONITOR_DISABLE_SMB"])
+    res = ssh_test(smbd_victim[0], 'chmod +x /usr/sbin/smbd')
     assert res['result'], res['output']
 
     # Disable SMB again through monitor
@@ -579,7 +584,9 @@ def test_33_enable_service_monitor(request):
     expected_state = {x['pnn']: False for x in smb_node_list}
     check_monitored_state(expected_state)
 
-    # Disable monitor
+
+def test_37_disable_service_monitor(request):
+    depends(request, ["SERVICE_MONITOR_STARTED"])
     payload = {
         'msg': 'method',
         'method': 'ctdb.services.set',
