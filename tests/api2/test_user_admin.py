@@ -24,6 +24,7 @@ def admin():
         try:
             c.call("datastore.update", "account.bsdusers", root_id, {"bsdusr_password_disabled": True})
             c.call("user.setup_local_administrator", "admin", "admin")
+            call("system.info", client_kwargs=dict(auth=("admin", "admin")))
             # Quickly restore root password before anyone notices
             c.call("datastore.update", "account.bsdusers", root_id, root_backup)
             c.call("etc.generate", "user")
