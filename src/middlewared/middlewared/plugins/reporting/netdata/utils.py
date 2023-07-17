@@ -3,9 +3,10 @@ import typing
 from urllib.parse import urlencode
 
 
-NETDATA_PORT = 22200  # FIXME: Change this to 6999
+NETDATA_PORT = 6999
 NETDATA_REQUEST_TIMEOUT = 30  # seconds
 NETDATA_URI = f'http://127.0.0.1:{NETDATA_PORT}/api'
+NETDATA_UPDATE_EVERY = 2  # seconds
 
 
 def get_query_parameters(query_params: typing.Optional[dict], prefix: str = '&') -> str:

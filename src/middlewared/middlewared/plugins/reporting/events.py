@@ -72,7 +72,7 @@ class RealtimeEventSource(EventSource):
                 'cpu': get_cpu_stats(netdata_metrics, cores),
                 'disks': get_disk_stats(netdata_metrics, list(self.middleware.call_sync('device.get_disks'))),
                 'interfaces': get_interface_stats(
-                    netdata_metrics, interval, [i['name'] for i in self.middleware.call_sync('interface.query')]
+                    netdata_metrics, [i['name'] for i in self.middleware.call_sync('interface.query')]
                 ),
             }
 
