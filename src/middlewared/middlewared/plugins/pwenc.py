@@ -130,7 +130,7 @@ class CLPWEncService(PWEncService):
 
     def _read_secret(self):
         with open(self.secret_path, 'r', opener=self._secret_opener) as f:
-            self.secret = bytes.from_hex(f.read())
+            self.secret = bytes.fromhex(f.read())
 
     def encrypt(self, data):
         return encrypt(data, True)
