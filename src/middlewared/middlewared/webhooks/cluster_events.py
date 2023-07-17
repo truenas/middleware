@@ -176,6 +176,6 @@ class ClusterEventsApplication(object):
             return await self.response(status_code=401)
 
         self.received_messages.append(decoded)
-        decrypted = await self.middleware.call('clpwenc.decrypt', request.json()['payload'])
+        decrypted = await self.middleware.call('clpwenc.decrypt', (await request.json())['payload'])
         await self.process_event(decoded, json.loads(decrypted))
         return await self.response()
