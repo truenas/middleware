@@ -272,7 +272,7 @@ class FailoverService(Service):
             ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
             if e.errno in ignore:
                 if raise_connect_error:
-                    raise CallError(str(e), errno.EFAULT)
+                    raise CallError(str(e), e.errno)
                 else:
                     self.logger.trace('Failed to call %r on remote node', method, exc_info=True)
             else:
