@@ -4,6 +4,7 @@
 
 import contextlib
 import enum
+import ipaddress
 import os
 import random
 import socket
@@ -21,7 +22,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from auto_config import dev_test, ha, hostname, isns_ip, pool_name
-from functions import DELETE, GET, POST, PUT
+from functions import DELETE, GET, POST, PUT, SSH_TEST
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
@@ -31,11 +32,12 @@ from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
 
 if ha and "virtual_ip" in os.environ:
+    from auto_config import password, user
     ip = os.environ["virtual_ip"]
     controller1_ip = os.environ['controller1_ip']
     controller2_ip = os.environ['controller2_ip']
 else:
-    from auto_config import ip
+    from auto_config import ip, password, user
 
 # Setup some flags that will enable/disable tests based upon the capabilities of the
 # python-scsi package in use
@@ -108,6 +110,16 @@ def other_node(node):
     if node == 'B':
         return 'A'
     raise ValueError("Invalid node supplied")
+
+
+def get_ip_addr(ip):
+    try:
+        ipaddress.ip_address(ip)
+        return ip
+    except ValueError:
+        actual_ip = socket.gethostbyname(ip)
+        ipaddress.ip_address(actual_ip)
+        return actual_ip
 
 
 @contextlib.contextmanager
@@ -2209,6 +2221,80 @@ def test_23_ha_extended_copy(request, extent1, extent2):
                                     _xcopy_test(sa1, sa2, sb1, sb2)
                                     # Now re-run the test using the other controller
                                     _xcopy_test(sb1, sb2, sa1, sa2)
+
+
+def test_24_iscsi_target_disk_login(request):
+    """
+    Tests whether a logged in iSCSI target shows up in disks.
+    """
+    depends(request, ["iscsi_cmd_00"], scope="session")
+    iqn = f'{basename}:{target_name}'
+
+    def fetch_disk_data(fetch_remote=False):
+        data = {}
+        if fetch_remote:
+            data['failover.get_disks_local'] = set(call('failover.call_remote', 'failover.get_disks_local'))
+            data['disk.get_unused'] = set([d['devname'] for d in call('failover.call_remote', 'disk.get_unused')])
+        else:
+            data['failover.get_disks_local'] = set(call('failover.get_disks_local'))
+            data['disk.get_unused'] = set([d['devname'] for d in call('disk.get_unused')])
+        return data
+
+    def check_disk_data(old, new, whenstr, internode_check=False):
+        # There are some items that we can't compare between 2 HA nodes
+        SINGLE_NODE_COMPARE_ONLY = ['disk.get_unused']
+        for key in old:
+            if internode_check and key in SINGLE_NODE_COMPARE_ONLY:
+                continue
+            assert old[key] == new[key], f"{key} does not match {whenstr}: {old[key]} {new[key]}"
+
+    if ha:
+        # In HA we will create an ALUA target and check the STANDBY node
+        data_before_l = fetch_disk_data()
+        data_before_r = fetch_disk_data(True)
+        check_disk_data(data_before_l, data_before_r, "initially", True)
+        with alua_enabled():
+            with initiator_portal() as config:
+                with configured_target_to_zvol_extent(config, target_name, zvol):
+                    sleep(5)
+                    data_after_l = fetch_disk_data()
+                    data_after_r = fetch_disk_data(True)
+                    check_disk_data(data_before_l, data_after_l, "after iSCSI ALUA target creation (Active)")
+                    check_disk_data(data_before_r, data_after_r, "after iSCSI ALUA target creation (Standby)")
+    else:
+        # In non-HA we will create a target and login to it from the same TrueNAS system
+        # Just in case IP was supplied as a hostname use actual_ip
+        actual_ip = get_ip_addr(ip)
+        data_before = fetch_disk_data()
+        with initiator_portal() as config:
+            with configured_target_to_zvol_extent(config, target_name, zvol):
+                data_after = fetch_disk_data()
+                check_disk_data(data_before, data_after, "after iSCSI target creation")
+
+                # Discover the target (loopback)
+                results = SSH_TEST(f"iscsiadm -m discovery -t st -p {actual_ip}", user, password, ip)
+                assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+                # Make SURE we find the target at the ip we expect
+                found_iqn = False
+                for line in results['output'].split('\n'):
+                    if not line.startswith(f'{actual_ip}:'):
+                        continue
+                    if line.split()[1] == iqn:
+                        found_iqn = True
+                assert found_iqn, f'Failed to find IQN {iqn}: out: {results["output"]}'
+
+                # Login the target
+                results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --login", user, password, ip)
+                assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+                # Allow some time for the disk to surface
+                sleep(5)
+                # Then check that everything looks OK
+                try:
+                    data_after = fetch_disk_data()
+                    check_disk_data(data_before, data_after, "after iSCSI target login")
+                finally:
+                    results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --logout", user, password, ip)
+                    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
 
 
 def test_99_teardown(request):
