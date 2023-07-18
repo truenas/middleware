@@ -5,10 +5,11 @@ import os
 
 from pyudev import Context
 
-from middlewared.service import Service, accepts, job
-from middlewared.schema import List, Str
+from middlewared.plugins.device_.device_info import (RE_NVME_PRIV,
+                                                     is_iscsi_device)
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
-from middlewared.plugins.device_.device_info import RE_NVME_PRIV
+from middlewared.schema import List, Str
+from middlewared.service import Service, accepts, job
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,8 @@ def retaste_disks_impl(disks: set = None):
         disks = set()
         for disk in Context().list_devices(subsystem='block', DEVTYPE='disk'):
             if disk.sys_name.startswith(DISKS_TO_IGNORE) or RE_NVME_PRIV.match(disk.sys_name):
+                continue
+            if is_iscsi_device(disk):
                 continue
             disks.add(f'/dev/{disk.sys_name}')
 
