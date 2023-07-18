@@ -1,5 +1,5 @@
 <%
-	from middlewared.plugins.reporting.netdata.utils import NETDATA_PORT
+	from middlewared.plugins.reporting.netdata.utils import NETDATA_PORT, NETDATA_UPDATE_EVERY
 
 
 	if not middleware.call_sync('reporting.netdata_setup'):
@@ -16,6 +16,7 @@
 	# Netdata is not designed to be exposed to potentially hostile
 	# networks. See https://github.com/netdata/netdata/issues/164
 	bind socket to IP = 127.0.0.1:${NETDATA_PORT}
+	update_every = ${NETDATA_UPDATE_EVERY}
 
 [db]
 	mode = dbengine
