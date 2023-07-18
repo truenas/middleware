@@ -1,5 +1,7 @@
 import typing
 
+from middlewared.utils.disks import get_disks_for_temperature_reading
+
 from .graph_base import GraphBase
 
 
@@ -195,3 +197,28 @@ class ARCResultPlugin(GraphBase):
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
         return self.IDENTIFIER_MAPPING[identifier]
+
+
+class DiskTempPlugin(GraphBase):
+
+    title = 'Disks Temperature'
+    vertical_label = 'Celsius'
+    disk_mapping = {}
+
+    async def get_identifiers(self) -> typing.Optional[list]:
+        all_charts = await self.all_charts()
+        for disk in (await self.middleware.run_in_thread(get_disks_for_temperature_reading)).values():
+            identifier = disk.id if disk.id.startswith('nvme') else disk.serial
+            if f'smart_log_smartd_log.disktemp.{identifier}' not in all_charts:
+                continue
+
+            self.disk_mapping[disk.id] = identifier
+        return list(self.disk_mapping.keys())
+
+    def normalize_metrics(self, metrics) -> dict:
+        metrics = super().normalize_metrics(metrics)
+        metrics['legend'][1] = 'temperature_value'
+        return metrics
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return f'smart_log_smartd_log.disktemp.{self.disk_mapping[identifier]}'

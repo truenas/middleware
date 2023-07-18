@@ -130,7 +130,7 @@ class DiskService(Service):
         However, if we can't get a drive temperature using these methods for whatever reason then
         we will fall back to subprocessing out to smartctl and trying to parse the temperature.
         """
-        return get_disks_temperatures()
+        return get_disks_temperatures(self.middleware.call_sync('netdata.get_all_metrics'))
 
     @private
     def get_temp_value(self, value):

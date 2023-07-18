@@ -1,8 +1,5 @@
-import contextlib
-import pathlib
 import pyudev
 import re
-import subprocess
 
 from dataclasses import dataclass
 from typing import Dict, Optional, List
@@ -57,36 +54,13 @@ def parse_smartctl_for_temperature_output(stdout: str) -> Optional[int]:
         return int(reg.group(1))
 
 
-def get_disks_for_temperature_reading() -> List[Disk]:
-    disks = []
+def get_disks_for_temperature_reading() -> Dict[str, Disk]:
+    disks = {}
     for disk in query_table('storage_disk', prefix='disk_'):
         if disk['serial'] != '' and bool(disk['togglesmart']) and disk['hddstandby'] == 'Always On':
-            disks.append(Disk(
-                id=disk['name'],
-                serial=disk['serial'],
-            ))
+            disks[disk['serial']] = Disk(id=disk['name'], serial=disk['serial'])
 
     return disks
-
-
-def read_sata_or_sas_disk_temps(disks: List[Disk]) -> Dict[str, int]:
-    rv = {}
-    with contextlib.suppress(FileNotFoundError):
-        for i in pathlib.Path('/var/lib/smartmontools').iterdir():
-            # TODO: throw this into multiple threads since we're reading data from disk
-            # to make this really go brrrrr (even though it only takes ~0.2 seconds on 439 disk system)
-            if i.is_file() and i.suffix == '.csv':
-                if disk := next((k for k in disks if i.as_posix().find(k.serial) != -1), None):
-                    with open(i.as_posix()) as f:
-                        for line in f:
-                            # iterate to the last line in the file without loading all of it
-                            # into memory since `smartd` could have written 1000's (or more)
-                            # of lines to the file
-                            pass
-                        if temp := parse_sata_or_sas_disk_temp(i.as_posix(), line):
-                            rv[disk.id] = temp
-
-    return rv
 
 
 def read_nvme_temps(disks: List[Disk]) -> Dict[str, int]:
@@ -111,42 +85,15 @@ def read_nvme_temps(disks: List[Disk]) -> Dict[str, int]:
     return rv
 
 
-def parse_sata_or_sas_disk_temp(filename: str, line: str) -> Optional[int]:
-    if filename.endswith('.ata.csv'):
-        if (ft := line.split('\t')) and (temp := list(filter(lambda x: x.startswith(('190;', '194;')), ft))):
-            try:
-                temp = temp[-1].split(';')[2]
-            except IndexError:
-                return None
-            else:
-                if temp.isdigit():
-                    return int(temp)
-
-    if filename.endswith('.scsi.csv'):
-        if (ft := line.split('\t')) and (temp := list(filter(lambda x: 'temperature' in x, ft))):
-            try:
-                temp = temp[-1].split(';')[1]
-            except IndexError:
-                return None
-            else:
-                if temp.isdigit():
-                    return int(temp)
-
-
-def get_disks_temperatures() -> Dict[str, Optional[int]]:
+def get_disks_temperatures(netdata_metrics) -> Dict[str, Optional[int]]:
     disks = get_disks_for_temperature_reading()
-    temperatures = read_sata_or_sas_disk_temps(disks)
-    temperatures.update(read_nvme_temps(disks))
-
-    for disk in set(disk.id for disk in disks) - set(temperatures.keys()):
-        # try to subprocess and run smartctl for any disk that we didn't get the temp
-        # for using the much quicker methods
-        cp = subprocess.run(['smartctl', f'/dev/{disk}', '-a', '-n', 'never'], capture_output=True)
-        if cp.returncode or not cp.stdout:
-            temperatures[disk] = None
+    temperatures = {}
+    for disk_temperature in filter(lambda k: 'smart_log' in k, netdata_metrics):
+        disk_name = disk_temperature.rsplit('.', 1)[-1]
+        value = netdata_metrics[disk_temperature]['dimensions'][disk_name]['value']
+        if disk_name.startswith('nvme'):
+            temperatures[disk_name] = value
         else:
-            temperatures.update({
-                disk: parse_smartctl_for_temperature_output(cp.stdout.decode(errors='ignore'))
-            })
+            temperatures[disks[disk_name].id] = value
 
     return temperatures
