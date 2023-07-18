@@ -2,15 +2,22 @@ import re
 
 import libsgio
 import pyudev
-
+from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 from middlewared.schema import Dict, returns
-from middlewared.service import accepts, private, Service
+from middlewared.service import Service, accepts, private
+from middlewared.utils.functools import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
-from middlewared.utils.functools import cache
-from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
+ISCSI_DEV_PATH = re.compile(r'/devices/platform/host[0-9]+/session[0-9]+/'
+                            'target[0-9]+:[0-9]+:[0-9]+/[0-9]+:[0-9]+:[0-9]+:[0-9]+/block/.*')
+
+
+def is_iscsi_device(dev):
+    """Return True if the specified pyudev device is iSCSI based."""
+    # The implementation may change at a later date
+    return ISCSI_DEV_PATH.match(dev.device_path) is not None
 
 
 class DeviceService(Service):
@@ -40,6 +47,8 @@ class DeviceService(Service):
         disks = {}
         for dev in ctx.list_devices(subsystem='block', DEVTYPE='disk'):
             if dev.sys_name.startswith(DISKS_TO_IGNORE) or RE_NVME_PRIV.match(dev.sys_name):
+                continue
+            if is_iscsi_device(dev):
                 continue
 
             try:
