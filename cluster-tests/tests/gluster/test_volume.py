@@ -167,7 +167,7 @@ def test_10_expand_cluster(request):
         'remote_credential': {
             'username': CLUSTER_INFO['APIUSER'],
             'password': CLUSTER_INFO['APIPASS']
-        }
+        },
     }]
 
     payload = {
@@ -175,6 +175,7 @@ def test_10_expand_cluster(request):
         'method': 'cluster.management.add_nodes',
         'params': [{
             'new_cluster_nodes': peers_config,
+            'options': {'rebalance_volume': True}
         }]
     }
     res = make_ws_request(CLUSTER_INFO['NODE_A_IP'], payload)

@@ -1,7 +1,12 @@
+import errno
+
 from glustercli.cli import rebalance
 
 from middlewared.service import Service, CallError, accepts, job
 from middlewared.schema import Dict, Str, Bool
+from middlewared.utils import filter_list
+from middlewared.validators import UUID
+from time import sleep
 
 LOCK = 'rebalance_lock'
 
@@ -26,6 +31,53 @@ class GlusterRebalanceService(Service):
                 raise
         else:
             return rv
+
+    @accepts(Dict(
+        'rebalance_task_wait',
+        Str('volume_name', required=True),
+        Str('task_id', validators=[UUID()], required=True)
+    ))
+    @job(lock=lambda args: f'rebalance_task_wait_{args}')
+    async def rebalance_task_wait(self, job, data):
+        """
+        This method can potentially be extremely long-running and so we only poll every
+        30 seconds.
+
+        Returns `gluster.rebalance.status` on successful completion
+        """
+        def get_failed(st):
+            return filter_list(st['nodes'], [['status', '=', 'failed']])
+
+        def get_remaining(st):
+            return filter_list(st['nodes'], [['status', 'nin', ['completed', 'failed', 'stopped']]])
+
+        def check_status(st):
+            if st['task_id'] != data['task_id']:
+                raise CallError(f'{data["task_id"]}: rebalance task not found for volume %s', errno.ENOENT)
+
+            if (failed := get_failed(st)):
+                names = ', '.join(x['node_name'] for x in failed)
+                raise CallError(f'The following nodes have failed status: {names}')
+
+            return get_remaining(st)
+
+        initial_status = await self.status({'name': data['volume_name']})
+        if not (remaining := check_status(initial_status)):
+            # Everything is complete
+            return initial_status
+
+        while remaining:
+            sleep(10)
+            remaining = check_status(await self.status({'name': data['volume_name']}))
+            percent_nodes_remaining = len(remaining) / len(initial_status['nodes'])
+            remaining_names = [x['node_name'] for x in remaining]
+            if remaining_names:
+                job.set_progress(
+                    100 - int(percent_nodes_remaining),
+                    f'Waiting for following nodes to complete rebalance: {", ".join(remaining_names)}'
+                )
+
+        return await self.status({'name': data['volume_name']})
 
     @accepts(Dict('fix_layout', Str('name', required=True)))
     @job(lock=LOCK)

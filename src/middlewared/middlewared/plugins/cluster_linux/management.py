@@ -184,7 +184,11 @@ class ClusterManagement(Service):
                 register=True
             )
         ], required=True),
-        Dict('options', Bool('skip_brick_add', default=False))
+        Dict(
+            'options',
+            Bool('skip_brick_add', default=False),
+            Bool('rebalance_volume', default=False),
+        )
     ))
     @returns(Dict(
         'cluster_information',
@@ -212,6 +216,8 @@ class ClusterManagement(Service):
         located. We will try to expand the gluster volume underlying our ctdb
         root directory with bricks on every node added to the cluster.
         `options.skip_brick_add` - Non-default parameter to skip adding bricks.
+        `options.rebalance_volume` - Non-default parameter to rebalance volume
+        after adding node(s) -- NOTE this may be _very_ long-running
         """
         if not self.middleware.call_sync('cluster.utils.is_clustered'):
             raise CallError('New node must be added via existing cluster member')
@@ -303,6 +309,17 @@ class ClusterManagement(Service):
                 'bricks': bricks
             })
             vol = add_bricks_job.wait_sync(raise_error=True)
+
+        if data['options']['rebalance_volume']:
+            job.set_progress(90, 'rebalancing volume.')
+            rebalance_start = self.middleware.call_sync('gluster.rebalance.start', {'name': vol[0]['name']})
+            status = rebalance_start.wait_sync(raise_error=True)
+
+            rebalance_wait = self.middleware.call_sync(
+                'gluster.rebalance.rebalance_task_wait',
+                {'volume_name': vol[0]['name'], 'task_id': status['task_id']}
+            )
+            job.wrap_sync(rebalance_wait)
 
         return {
             'gluster_volume': vol,
