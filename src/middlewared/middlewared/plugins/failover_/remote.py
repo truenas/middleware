@@ -268,8 +268,9 @@ class FailoverService(Service):
         raise_connect_error = options.pop('raise_connect_error')
         try:
             return self.CLIENT.call(method, *args, **options)
-        except ClientException as e:
-            ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNREFUSED, errno.ECONNABORTED, errno.EHOSTDOWN)
+        except (CallError, ClientException) as e:
+            ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET,
+                      errno.EHOSTDOWN, errno.EHOSTUNREACH)
             if e.errno in ignore:
                 if raise_connect_error:
                     raise CallError(str(e), e.errno)
