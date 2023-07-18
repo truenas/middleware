@@ -54,6 +54,8 @@ TIMEOUTS = {
     'MONITOR_TIMEOUT': environ.get('MONITOR_TIMEOUT', 20),
     'CTDB_IP_TIMEOUT': environ.get('CTDB_IP_TIMEOUT', 60),
     'VOLUME_TIMEOUT': environ.get('VOLUME_TIMEOUT', 600),
+    'VOLUME_TIMEOUT': environ.get('VOLUME_TIMEOUT', 120),
+    'LEADER_FAILOVER_TIMEOUT': environ.get('LEADER_FAILOVER_TIMEOUT', 60),
 }
 
 CLEANUP_TEST_DIR = 'tests/cleanup'
