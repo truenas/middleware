@@ -195,7 +195,7 @@ def main():
         existing_pid = PID_UNKNOWN
 
     if args.kill:
-        if existing_pid == -2:
+        if existing_pid == PID_UNKNOWN:
             sys.exit(0)
 
         if existing_pid == -1:
@@ -206,7 +206,7 @@ def main():
         sys.exit(0)
 
     if existing_pid != PID_UNKNOWN:
-        # optimization to avoid opining glusterfs handle if
+        # optimization to avoid opening glusterfs handle if
         # we already own the process
         try:
             with open(f'/proc/{existing_pid}/status', 'r') as f:
