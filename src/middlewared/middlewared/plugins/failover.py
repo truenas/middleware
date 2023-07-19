@@ -1130,7 +1130,7 @@ async def hook_setup_ha(middleware, *args, **kwargs):
 
     if ha_configured:
         # Perform basic initialization of DLM, in case it is needed by iSCSI ALUA
-        middleware.logger.warning('[HA] Initialize DLM')
+        middleware.logger.debug('[HA] Initialize DLM')
         await middleware.call('dlm.create')
 
         # If HA is already configured and failover has been disabled,
