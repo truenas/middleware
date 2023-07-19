@@ -71,7 +71,8 @@ class DiskService(Service):
 
             # add enclosure information
             i['enclosure'] = {}
-            if (enc_info := i.pop('enclosure_slot', None) is not None):
+            enc_info = i.pop('enclosure_slot', None)
+            if enc_info is not None:
                 i['enclosure'] = {'number': enc_info // 1000, 'slot': enc_info % 1000}
 
             # query partitions for the disk(s) if requested
