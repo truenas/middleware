@@ -24,11 +24,16 @@ def create_cluster():
         'brick_path': BRICK_PATH,
     }
 
+    # TODO: once we have more VMs available for cluster this
+    # should be switched to a more reasonable brick configuration
     payload = {
         'msg': 'method',
         'method': 'cluster.management.cluster_create',
         'params': [{
-            'volume_configuration': {'name': CLUSTER_INFO['GLUSTER_VOLUME']},
+            'volume_configuration': {
+                'name': CLUSTER_INFO['GLUSTER_VOLUME'],
+                'brick_layout': {'distribute_bricks': 3}
+            },
             'local_node_configuration': local_node,
             'peers': peers_config,
         }]

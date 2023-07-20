@@ -10,6 +10,7 @@ from middlewared.service_exception import CallError
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
 from middlewared.plugins.gluster_linux.utils import get_parsed_glusterd_uuid, GlusterConfig
 from middlewared.plugins.pwenc import PWENC_BLOCK_SIZE
+from middlewared.validators import Range
 
 
 class ClusterPeerConnection:
@@ -327,16 +328,120 @@ class ClusterManagement(Service):
             'ctdb_configuration': ctdb_config,
         }
 
+    @private
+    def detect_volume_type(self, data):
+        brick_layout = data['volume_configuration']['brick_layout']
+        volume_type = 'DISTRIBUTE'
+
+        if any(x.startswith('replica') for x in brick_layout.keys()):
+            distribute_key = 'replica_distribute'
+            volume_type = 'REPLICATE'
+
+        elif any(x.startswith('disperse') for x in brick_layout.keys()):
+            distribute_key = 'disperse_distribute'
+            volume_type = 'DISPERSE'
+
+        if volume_type != 'DISTRIBUTE':
+            if brick_layout[distribute_key] != 1:
+                volume_type = f'DISTRIBUTED_{volume_type}'
+
+        return volume_type
+
+    @private
+    def validate_brick_layout(self, schema, data, verrors=None):
+        """
+        Prevent users from doing something insane with volume configuration
+
+        NOTE: this will allow DISTRIBUTED volume (at least until we have better CI)
+        """
+        check_verrors = False
+        volume_type = self.detect_volume_type(data)
+        brick_cnt = len(data['peers']) + 1
+        brick_layout = data['volume_configuration']['brick_layout']
+        layout = None
+
+        if verrors is None:
+            verrors = ValidationErrors()
+            check_verrors = True
+
+        if volume_type == 'DISTRIBUTE':
+            total_bricks = brick_layout['distribute_bricks']
+            if total_bricks != brick_cnt:
+                verrors.add(
+                    f'{schema}.distribute_bricks',
+                    f'Count of bricks in payload [{brick_cnt}] does not match '
+                    f'count of bricks to use in distribute volume [{brick_layout["distribute_bricks"]}]'
+                )
+
+            layout = {}
+
+        elif volume_type.endswith('REPLICATE'):
+            total_bricks = 3 * brick_layout['replica_distribute']
+            if total_bricks != brick_cnt:
+                verrors.add(
+                    f'{schema}.replica',
+                    f'Count of bricks in payload [{brick_cnt}] does not match '
+                    f'count of bricks to use in replicated volume [{total_bricks}]. '
+                    'NOTE: only three-way replicas are supported and so when creating '
+                    'a DISTRIBUTED_REPLICATE volume, the node count provided must be '
+                    'divisible by three.'
+                )
+
+            layout = {'replica': brick_layout['replica']}
+
+        elif volume_type.endswith('DISPERSE'):
+            bricks_per_subvol = brick_layout['disperse_data'] + brick_layout['disperse_redundancy']
+            total_bricks = bricks_per_subvol * brick_layout['disperse_distribute']
+            if total_bricks != brick_cnt:
+                verrors.add(
+                    f'{schema}.disperse_data',
+                    f'Count of bricks in payload [{brick_cnt}] does not match '
+                    f'count of bricks to use in replicated volume [{total_bricks}]'
+                )
+
+            if bricks_per_subvol < 2 * brick_layout['disperse_redundancy']:
+                verrors.add(
+                    f'{schema}.disperse_redundancy',
+                    f'Specified number of bricks per dispersed volume [{bricks_per_subvol}] '
+                    f'is less than minimum required ({2 * brick_layout["disperse_redundancy"]}) '
+                    f'based on a redundancy level of {brick_layout["disperse_redundancy"]} per '
+                    'volume. `disperse_data` must be a minimum of two times the count of redundancy.'
+                )
+
+            layout = {
+                'disperse': bricks_per_subvol,
+                'disperse_data': brick_layout['disperse_data'],
+                'redundancy': brick_layout['disperse_redundancy']
+            }
+
+        if check_verrors:
+            verrors.check()
+
+        return {'volume_type': volume_type, 'layout': layout}
+
     @accepts(Dict(
         'cluster_configuration',
         Dict(
             'volume_configuration',
             Str('name', required=True),
-            Int('replica'),
-            Int('arbiter'),
-            Int('disperse'),
-            Int('disperse_data'),
-            Int('redundancy'),
+            OROperator(
+                Dict(
+                    'replicated_brick_layout',
+                    Int('replica_distribute', validators=[Range(min=1)], default=1)
+                ),
+                Dict(
+                    'dispersed_brick_layout',
+                    Int('disperse_data', validators=[Range(min=2)], required=True),
+                    Int('disperse_redundancy', validators=[Range(min=1)], default=1),
+                    Int('disperse_distribute', validators=[Range(min=1)], default=1)
+                ),
+                Dict(
+                    'distributed_brick_layout',
+                    Int('distribute_bricks', validators=[Range(min=3)], required=True)
+                ),
+                name='brick_layout',
+                required=True
+            ),
         ),
         Dict(
             'local_node_configuration',
@@ -422,6 +527,10 @@ class ClusterManagement(Service):
             verrors
         )
 
+        layout_info = self.validate_brick_layout(
+            'cluster_config.volume_configuration.brick_layout', data, verrors
+        )
+
         verrors.check()
 
         job.set_progress(5, 'Opening websocket connections to cluster peers.')
@@ -472,13 +581,23 @@ class ClusterManagement(Service):
             'peer_name': entry.hostname
         } for entry in client_connections]
 
-        create_payload = data['volume_configuration'] | {'bricks': bricks, 'force': True}
-        volume_create_job = self.middleware.call_sync('gluster.volume.create', create_payload)
+        create_payload = {'name': data['volume_configuration']['name']} | layout_info['layout']
+
+        volume_create_job = self.middleware.call_sync(
+            'gluster.volume.create',
+            create_payload | {'bricks': bricks, 'force': True}
+        )
         try:
             vol = volume_create_job.wait_sync(raise_error=True)
         except Exception:
             self.logger.error('Failed to create gluster volume', exc_info=True)
             raise
+
+        if vol[0]['type'] != layout_info['volume_type']:
+            raise CallError(
+                f'{vol[0]["type"]}: created volume does not match expected volume '
+                f'type of {layout_info["volume_type"]}'
+            )
 
         job.set_progress(75, 'Configuring CTDB.')
         current_node_uuid = get_parsed_glusterd_uuid()

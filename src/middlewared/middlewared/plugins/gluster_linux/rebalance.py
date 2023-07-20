@@ -6,7 +6,7 @@ from middlewared.service import Service, CallError, accepts, job
 from middlewared.schema import Dict, Str, Bool
 from middlewared.utils import filter_list
 from middlewared.validators import UUID
-from time import sleep
+from asyncio import sleep
 
 LOCK = 'rebalance_lock'
 
@@ -67,7 +67,7 @@ class GlusterRebalanceService(Service):
             return initial_status
 
         while remaining:
-            sleep(10)
+            await sleep(10)
             remaining = check_status(await self.status({'name': data['volume_name']}))
             percent_nodes_remaining = len(remaining) / len(initial_status['nodes'])
             remaining_names = [x['node_name'] for x in remaining]
