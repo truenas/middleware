@@ -565,6 +565,9 @@ class FailoverEventsService(Service):
         logger.info('Restarting remaining services')
         self.run_call('failover.events.restart_services', {'critical': False, 'timeout': 60})
 
+        logger.info('Restarting reporting metrics')
+        self.run_call('service.restart', 'netdata')
+
         self.run_call('failover.events.start_apps_vms')
         self.run_call('truecommand.start_truecommand_service')
         self.run_call('zettarepl.update_tasks')
@@ -714,8 +717,8 @@ class FailoverEventsService(Service):
         logger.info('Regenerating cron')
         self.run_call('etc.generate', 'cron')
 
-        logger.info('Stopping rrdcached')
-        self.run_call('service.stop', 'rrdcached', self.HA_PROPAGATE)
+        logger.info('Stopping reporting metrics')
+        self.run_call('service.stop', 'netdata', self.HA_PROPAGATE)
 
         self.run_call('truecommand.stop_truecommand_service')
 
