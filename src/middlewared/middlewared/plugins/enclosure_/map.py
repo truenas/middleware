@@ -438,6 +438,7 @@ class EnclosureService(Service):
         mapped = [
             {
                 "id": "mapped_enclosure_0",
+                "bsg": original_enclosure["bsg"],
                 "name": "Drive Bays",
                 "model": controller_enclosures[0]["model"],
                 "controller": True,

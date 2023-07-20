@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import logging
 import os
 import re
@@ -76,6 +77,7 @@ class EnclosureService(CRUDService):
         for enc in self.__get_enclosures():
             enclosure = {
                 "id": enc.encid,
+                "bsg": enc.devname,
                 "name": enc.name,
                 "model": enc.model,
                 "controller": enc.controller,
@@ -205,31 +207,49 @@ class EnclosureService(CRUDService):
 
         return self._get_ses_slot(enclosure, element)
 
+    def _get_original_disk_slot(self, enclosure_id, slot, info):
+        for i in filter(lambda x: x.get('name') == 'Array Device Slot', info['elements']):
+            for j in filter(lambda x: x['slot'] == slot, i['elements']):
+                if enclosure_id == 'mapped_enclosure_0':
+                    # we've mapped the drive slots in a convenient way for the administrator
+                    # to easily be able to identify drive slot 1 (when in reality, it's probably
+                    # physically cabled to slot 5 (or whatever))
+                    return j['original']['slot']
+                else:
+                    # a platform that doesn't require mapping the drives so we can just return
+                    # the slot passed to us
+                    return slot
+
     @accepts(Str("enclosure_id"), Int("slot"), Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"]))
     def set_slot_status(self, enclosure_id, slot, status):
         if enclosure_id == 'r30_nvme_enclosure':
             r30_set_slot_status(slot, status)
             return
 
-        for i in self.middleware.call_sync('enclosure.list_ses_enclosures'):
-            enc = EnclosureDevice(i)
-            if (data := enc.status()) and data['id'] == enclosure_id:
-                for idx, info in filter(lambda x: x[0] == slot and x[1]['type'] == 23, data['elements'].items()):
-                    if status == 'CLEAR':
-                        actions = (('get=ident', 'clear=ident'), ('get=fault', 'clear=fault'))
-                    else:
-                        actions = ((f'get={status[:5].lower()}', f'clear={status[:5].lower()}'))
+        try:
+            info = self.middleware.call_sync('enclosure.query', [['id', '=', enclosure_id]])[0]
+        except IndexError:
+            raise CallError(f'Enclosure with id: {enclosure_id!r} not found', errno.ENOENT)
 
-                    try:
-                        for getit, setit in actions:
-                            if enc.set_control(slot, getit):  # returns 1 if it's currently turned on
-                                enc.set_control(slot, setit)
-                    except OSError:
-                        msg = f'Failed to {status} slot {slot!r} on enclosure {i!r}'
-                        self.logger.warning(msg, exc_info=True)
-                        raise CallError(msg)
-                    else:
-                        return
+        # we cast the slot to a string because set_control() requires the first
+        # argument to be a string
+        mapped_slot = str(self._get_original_disk_slot(enclosure_id, slot, info))
+        if mapped_slot == 'None':
+            raise CallError(f'Slot: {slot!r} not found', errno.ENOENT)
+
+        if status == 'CLEAR':
+            actions = ('clear=ident', 'clear=fault')
+        else:
+            actions = (f'set={status[:5].lower()}',)
+
+        enc = EnclosureDevice(f'/dev/{info["bsg"]}')
+        try:
+            for action in actions:
+                enc.set_control(mapped_slot, action)
+        except OSError:
+            msg = f'Failed to {status} slot {slot!r} on enclosure {info["id"]!r}'
+            self.logger.warning(msg, exc_info=True)
+            raise CallError(msg)
 
     @private
     def sync_disk(self, id, enclosure_info=None, retry=False):
