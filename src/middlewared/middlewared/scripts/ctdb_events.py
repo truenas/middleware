@@ -92,7 +92,9 @@ class CtdbEvent:
             except (FileNotFoundError, json.decoder.JSONDecodeError):
                 self.node_status = {}
 
-        except FileNotFoundError:
+        except (FileNotFoundError, json.decoder.JSONDecodeError):
+            # The clustered services file is empty or missing.
+            # load the default values
             self.cl_services = deepcopy(CTDB_SERVICE_DEFAULTS)
 
         except OSError as e:
