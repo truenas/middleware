@@ -75,6 +75,7 @@ class UPSService(SystemServiceService):
         Str('shutdowncmd', null=True, required=True),
         Str('complete_identifier', required=True),
     )
+    LOGGED_ERRORS = []
 
     class Config:
         datastore = 'services.ups'
@@ -285,7 +286,10 @@ class UPSService(SystemServiceService):
         cp = await run('upsc', upsc_identifier, check=False)
         if cp.returncode:
             stats_output = ''
-            self.logger.error('Failed to retrieve ups information: %s', cp.stderr.decode())
+            stderr = cp.stderr.decode(errors='ignore')
+            if stderr not in self.LOGGED_ERRORS:
+                self.LOGGED_ERRORS.append(stderr)
+                self.logger.error('Failed to retrieve ups information: %s', stderr)
         else:
             stats_output = cp.stdout.decode()
 
