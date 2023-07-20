@@ -21,10 +21,7 @@ class VMService(Service):
 
         Returns a dict with two keys `port` and `web`.
         """
-        used_ports = await self.middleware.call('port.get_in_use')
-        all_ports = [
-            port_entry[1] for entry in used_ports for port_entry in entry['ports']
-        ]
+        all_ports = await self.middleware.call('port.get_all_used_ports')
 
         def get_next_port():
             for i in filter(lambda i: i not in all_ports, range(5900, 65535)):

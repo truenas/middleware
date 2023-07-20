@@ -35,6 +35,16 @@ class PortService(Service):
             raise ValueError(f'{delegate.namespace!r} delegate is already registered with Port Service')
         self.DELEGATES[delegate.namespace] = delegate
 
+    async def get_all_used_ports(self):
+        used_ports = await self.get_in_use()
+        return [
+            port_entry[1] for entry in used_ports for port_entry in entry['ports']
+        ]
+
+    async def get_unused_ports(self, lower_port_limit=1025):
+        used_ports = set(await self.get_all_used_ports())
+        return [i for i in range(lower_port_limit, 65535) if i not in used_ports]
+
     async def get_in_use(self):
         ports = []
         for delegate in self.DELEGATES.values():
