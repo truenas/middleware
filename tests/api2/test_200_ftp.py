@@ -21,7 +21,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from assets.REST.pool import dataset as ftp_dataset
 from functions import SSH_TEST
-from functions import make_ws_request, send_file
+from functions import make_ws_request, send_file, ping_host
 from auto_config import pool_name, ha
 from auto_config import dev_test, password, user
 from protocols import ftp_connect, ftp_connection
@@ -316,12 +316,43 @@ def ftp_configure(changes=None):
             validate_proftp_conf()
 
 
+def ftp_set_service_enable_state(state=None):
+    '''
+    Get and return the current state struct
+    Set the requested state
+    '''
+    restore_setting = None
+    if state is not None:
+        assert isinstance(state, bool)
+        get_payload = {
+            'msg': 'method', 'method': 'service.query',
+            'params': [[["service", "=", "ftp"]], {'get': True}]
+        }
+        # save current setting
+        res = make_ws_request(ip, get_payload)
+        restore_setting = res['result']['enable']
+
+        set_payload = {
+            'msg': 'method', 'method': 'service.update',
+            'params': ['ftp', {'enable': state}]
+        }
+
+        res = make_ws_request(ip, set_payload)
+        assert res.get('error') is None, res
+
+    return restore_setting
+
+
 @contextlib.contextmanager
-def ftp_server():
+def ftp_server(service_state=None):
     '''
     Start FTP server with current config
     Stop server when done
     '''
+    # service 'enable' state
+    if service_state is not None:
+        restore_state = ftp_set_service_enable_state(service_state)
+
     # Start FTP service
     payload = {
         'msg': 'method', 'method': 'service.start',
@@ -342,6 +373,10 @@ def ftp_server():
         }
         res = make_ws_request(ip, payload)
         assert res.get('error') is None, res
+
+        # Restore original service state
+        if service_state is not None:
+            ftp_set_service_enable_state(restore_state)
 
 
 @contextlib.contextmanager
@@ -735,28 +770,20 @@ def test_005_ftp_service_at_boot(request):
     '''
     Confirm we can enable FTP service at boot and restore current setting
     '''
+    # Get the current state and set the new state
+    restore_setting = ftp_set_service_enable_state(True)
+    assert restore_setting is False, f"Unexpected service at boot setting: enable={restore_setting}, expected False"
+
+    # Confirm we toggled the setting
     get_payload = {
         'msg': 'method', 'method': 'service.query',
         'params': [[["service", "=", "ftp"]], {'get': True}]
     }
-    set_payload = {
-        'msg': 'method', 'method': 'service.update',
-        'params': ['ftp', {'enable': True}]
-    }
-    # Check and save initial setting
-    res = make_ws_request(ip, get_payload)
-    restore_setting = res['result']['enable']
-    assert restore_setting is False, f"Unexpected service at boot setting: enable={restore_setting}"
-
-    res = make_ws_request(ip, set_payload)
-    assert res.get('error') is None, res
     res = make_ws_request(ip, get_payload)
     assert res['result']['enable'] is True, res
 
     # Restore original setting
-    set_payload['params'] = ['ftp', {'enable': restore_setting}]
-    res = make_ws_request(ip, set_payload)
-    assert res.get('error') is None, res
+    ftp_set_service_enable_state(restore_setting)
 
 
 def test_010_ftp_service_start(request):
@@ -1396,6 +1423,77 @@ class TestFTPSUser(UserTests):
             assert login_error is None
 
 
+@pytest.mark.skip(reason="Enable this when Jenkins infrastructure is better able to handle this test")
+def test_085_ftp_service_starts_after_reboot():
+    '''
+    NAS-123024
+    There is a bug in the Debian Bookwork proftpd install package
+    that enables proftpd.socket which blocks proftpd.service from starting.
+
+    We fixed this by disabling proftpd.socket. There is a different fix
+    in a Bookworm update that involves refactoring the systemd unit files.
+    '''
+
+    # Get FTP server with service enable state of 'True'
+    with ftp_server(True):
+        payload = {
+            'msg': 'method', 'method': 'service.query',
+            'params': [[["service", "=", "ftp"]], {'get': True}]
+        }
+        res = make_ws_request(ip, payload)
+        assert res.get('error') is None, res
+        result = res['result']
+        assert result["state"] == "RUNNING"
+        assert result["enable"] is True
+
+        # Reboot
+        payload = {
+            'msg': 'method', 'method': 'system.reboot',
+            'params': []
+        }
+        res = make_ws_request(ip, payload)
+        assert res.get('error') is None, res
+
+        # Wait for server to disappear
+        sleep(5)
+        TotalWait = 120  # 3 min
+        while TotalWait > 0 and ping_host(ip, 1) is True:
+            sleep(1)
+            TotalWait -= 1
+        assert ping_host(ip, 1) is not True
+
+        # Wait for server to return
+        sleep(10)
+        TotalWait = 120  # 3 min
+        while TotalWait > 0 and ping_host(ip, 1) is not True:
+            sleep(1)
+            TotalWait -= 1
+        assert ping_host(ip, 1) is True
+        # ip returns before websocket connection is ready
+        # Wait a few more seconds
+        sleep(10)
+
+        # Confirm FTP is running
+        TotalWait = 60
+        HaveConnection = False
+        while not HaveConnection and TotalWait > 0:
+            try:
+                payload = {
+                    'msg': 'method', 'method': 'service.query',
+                    'params': [[["service", "=", "ftp"]], {'get': True}]
+                }
+                res = make_ws_request(ip, payload)
+                assert res.get('error') is None, res
+                HaveConnection = True
+                break
+            except Exception:
+                pass
+            TotalWait -= 1
+            sleep(1)
+
+        assert res['result']['state'] == "RUNNING", f"Expected RUNNING but found {res['result']['state']}"
+
+
 def test_100_ftp_service_stop():
     # Stop FTP service
     payload = {
@@ -1406,7 +1504,7 @@ def test_100_ftp_service_stop():
     res = make_ws_request(ip, payload)
     assert res.get('error') is None, res
 
-    # Confirm we show as STOPPED
+    # Confirm we show as STOPPED and disabled
     payload = {
         'msg': 'method', 'method': 'service.query',
         'params': [
@@ -1416,4 +1514,5 @@ def test_100_ftp_service_stop():
     res = make_ws_request(ip, payload)
     assert res.get('error') is None, res
     result = res['result']
-    assert result["state"] == "STOPPED"
+    assert result['state'] == "STOPPED"
+    assert result['enable'] is False

@@ -42,6 +42,11 @@ systemctl disable nfs-server
 # nvidia-persistenced is not respecting vendor preset file so we disable it explicitly
 systemctl disable nvidia-persistenced
 
+# NAS-123024: disable proftpd.socket, if it starts it will block proftpd.service
+# proftpd.socket is used in conjunction with xinetd
+# NOTE: This should be reviewed on next update where the startup issue is fixed via a new systemd unit file.
+systemctl disable proftpd.socket
+
 # Update alternatives
 update-alternatives --install "/usr/sbin/sendmail" sendmail "/etc/find_alias_for_smtplib.sh" "10"
 update-alternatives --install "/usr/bin/vim" vim.tiny "/usr/bin/vim.tiny" "10"
