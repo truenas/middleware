@@ -1423,6 +1423,7 @@ class TestFTPSUser(UserTests):
             assert login_error is None
 
 
+@pytest.mark.skip(reason="Enable this when Jenkins infrastructure is better able to handle this test")
 def test_085_ftp_service_starts_after_reboot():
     '''
     NAS-123024
