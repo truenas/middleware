@@ -109,6 +109,7 @@ class SessionManager:
 
         if not is_internal_session(session):
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
+            app.should_log_websocket_messages = True
 
     def logout(self, app):
         session = self.sessions.pop(app.session_id, None)
