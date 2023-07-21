@@ -100,12 +100,6 @@ class ClusterPeerConnection:
                 f'{self.brick_path}: path is mountpoint on host {self.hostname}.'
             )
 
-        if stat_info['nlink'] != 2:
-            verrors.add(
-                f'{schema_name}.brick_path',
-                f'{self.brick_path}: path is mountpoint on host {self.hostname}.'
-            )
-
         try:
             dir_info = self.call_fn('filesystem.listdir', self.brick_path)
         except Exception as e:
