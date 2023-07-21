@@ -291,9 +291,19 @@ def test_06_verify_gluster_volume_fuse_cgroup(ip, request):
     assert '/usr/sbin/glusterfs' not in rv['output'], rv
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
 @pytest.mark.parametrize('volume', [GVOL])
 @pytest.mark.dependency(name='STOP_GVOLUME')
 def test_07_stop_gluster_volume(volume, request):
+    """
+    This test periodically fails with following error message:
+
+    "Another transaction is in progress. Please try again after some time"
+
+    It is most likely due to our testing infrastructure and so this test is
+    marked as flaky to give time for gluster volume to settle down before we
+    stop it.
+    """
     depends(request, ['STARTED_GVOLUME'])
     ans = make_request('post', '/gluster/volume/stop', data={'name': volume, 'force': True})
     assert ans.status_code == 200, ans.text
