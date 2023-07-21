@@ -78,6 +78,7 @@ class EtcService(Service):
             'ctx': [
                 {'method': 'user.query'},
                 {'method': 'group.query'},
+                {'method': 'cluster.utils.is_clustered'}
             ],
             'entries': [
                 {'type': 'mako', 'path': 'group'},

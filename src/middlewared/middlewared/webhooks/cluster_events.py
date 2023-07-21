@@ -6,6 +6,8 @@ import time
 from jwt import encode, decode
 from jwt.exceptions import DecodeError, InvalidSignatureError
 
+from middlewared.service_exception import CallError, ValidationError
+
 # Other cluster nodes should have time offset within a second of this node
 ALLOWED_SKEW = 10
 
@@ -36,6 +38,8 @@ class ClusterEventsApplication(object):
                 method = 'clusterjob.process_queue'
             elif event == 'SYSTEM_VOL_CHANGE':
                 method = 'ctdb.shared.volume.update'
+            elif event == 'CLUSTER_ACCOUNT':
+                method = 'ctdb.accounts.general.remote_op_recv'
 
             if method is not None:
                 if event.startswith('VOLUME'):
@@ -46,12 +50,23 @@ class ClusterEventsApplication(object):
                     await self.middleware.call(method)
                 elif event == 'SYSTEM_VOL_CHANGE':
                     await self.middleware.call(method, {'name': name, 'uuid': data['uuid']})
+                elif event == 'CLUSTER_ACCOUNT':
+                    await self.middleware.call(method, data)
 
                 if data.pop('forward', False):
                     # means the request originated from localhost
                     # so we need to forward it out to the other
                     # peers in the trusted storage pool
                     await self.forward_event(msg_info, data)
+
+    async def process_validation_error(self, err):
+        resp = aiohttp.web.Response(status=422)
+
+        result = {'message': err.errmsg, 'errno': err.errno}
+        resp.headers['Content-type'] = 'application/json'
+        resp.text = json.dumps(result, indent=True)
+
+        return resp
 
     async def response(self, status_code=200, err=None):
         if status_code == 200:
@@ -60,10 +75,12 @@ class ClusterEventsApplication(object):
             body = 'Unauthorized'
         elif status_code == 500:
             body = f'Failed with error: {err}'
+        elif status_code == 422:
+            return await self.process_validation_error(err)
         else:
             body = 'Unknown'
 
-        res = aiohttp.web.Response(status=status_code, body=body)
+        res = aiohttp.web.Response(status=status_code, text=body)
         res.set_status(status_code)
 
         return res
@@ -87,6 +104,7 @@ class ClusterEventsApplication(object):
             secret = await self.middleware.call(
                 'gluster.localevents.get_set_jwt_secret'
             )
+            responses = []
 
             # We are sending to peers that should never have seen this message
             # before. Reset our timer for the message because local processing
@@ -117,6 +135,16 @@ class ClusterEventsApplication(object):
                             url,
                             timeout
                         )
+                        continue
+
+                    responses.append(resp)
+
+            for resp in responses:
+                if resp.status == 500:
+                    raise CallError(resp.text)
+                elif resp.status == 422:
+                    msg = await resp.json()
+                    raise ValidationError('gluster.events.remote_response', f'{resp.url}| {msg["message"]}', msg['errno'])
 
     async def check_received(self, msg_id):
         current_ts = time.time()
@@ -177,5 +205,9 @@ class ClusterEventsApplication(object):
 
         self.received_messages.append(decoded)
         decrypted = await self.middleware.call('clpwenc.decrypt', (await request.json())['payload'])
-        await self.process_event(decoded, json.loads(decrypted))
+        try:
+            await self.process_event(decoded, json.loads(decrypted))
+        except ValidationError as e:
+            return await self.response(status_code=422, err=e)
+
         return await self.response()

@@ -7,7 +7,7 @@ import asyncio
 import os
 import time
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationError
 from middlewared.schema import Dict, Str, Bool, returns
 from middlewared.service import (accepts, Service,
                                  private, ValidationErrors)
@@ -27,6 +27,7 @@ class AllowedEvents(enum.Enum):
     SMB_STOP = 'SMB_STOP'
     CLJOBS_PROCESS = 'CLJOBS_PROCESS'
     SYSTEM_VOL_CHANGE = 'SYSTEM_VOL_CHANGE'
+    CLUSTER_ACCOUNT = 'CLUSTER_ACCOUNT'
 
 
 class GlusterLocalEventsService(Service):
@@ -80,7 +81,11 @@ class GlusterLocalEventsService(Service):
                 status = 500
                 reason = 'Timed out waiting for a response'
             else:
-                if res.status != 200:
+                if res.status == 422:
+                    msg = await res.json()
+                    raise ValidationError('gluster.localevents.send', msg['message'], msg['errno'])
+
+                elif res.status != 200:
                     status = res.status
                     reason = res.reason
 

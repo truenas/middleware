@@ -49,6 +49,16 @@ class ClusteredConfigRedundancyAlertClass(AlertClass, SimpleOneShotAlertClass):
         return []
 
 
+class ClusteredAccountCollisionAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.CLUSTERING
+    level = AlertLevel.CRITICAL
+    title = "Clustered account name(s) collide with local non-clustered accounts"
+    text = "%(errmsg)s"
+
+    async def delete(self, alerts, query):
+        return []
+
+
 class ClusteredClockOffsetAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
