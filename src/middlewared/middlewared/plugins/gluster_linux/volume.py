@@ -258,7 +258,7 @@ class GlusterVolumeService(CRUDService):
                 pass
 
             if volumes:
-                migrate_job = await self.middleware.call('ctdb.shared.volume.migrate', {'name': volumes[0]})
+                migrate_job = await self.middleware.call('ctdb.root_dir.migrate', {'name': volumes[0]})
                 await migrate_job.wait(raise_error=True)
 
         # need to unmount the FUSE mountpoint (if it exists) and
