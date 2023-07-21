@@ -14,6 +14,8 @@ from middlewared.validators import Range
 
 
 class ClusterPeerConnection:
+    expected_mnt_flags = {'RW', 'NOATIME', 'XATTR', 'POSIXACL', 'CASESENSITIVE'}
+
     def __do_connect(self):
         c = Client(f'ws://{self.private_address}:6000/websocket')
         cred = self.credentials
@@ -61,8 +63,10 @@ class ClusterPeerConnection:
             )
 
     def __validate_brick_path(self, schema_name, verrors):
+        stat_info = None
+
         try:
-            self.call_fn('filesystem.stat', self.brick_path)
+            stat_info = self.call_fn('filesystem.stat', self.brick_path)
         except CallError as e:
             if e.errno != errno.ENOENT:
                 raise
@@ -78,6 +82,63 @@ class ClusterPeerConnection:
             verrors.add(
                 f'{schema_name}.brick_path',
                 f'{self.brick_path}: path does not exist on host {self.hostname}.'
+            )
+
+        if stat_info is None:
+            return
+
+        if stat_info['type'] != 'DIRECTORY':
+            verrors.add(
+                f'{schema_name}.brick_path',
+                f'{self.brick_path}: path is not a directory on host {self.hostname}.'
+            )
+            return
+
+        if stat_info['is_mountpoint']:
+            verrors.add(
+                f'{schema_name}.brick_path',
+                f'{self.brick_path}: path is mountpoint on host {self.hostname}.'
+            )
+
+        if stat_info['nlink'] != 2:
+            verrors.add(
+                f'{schema_name}.brick_path',
+                f'{self.brick_path}: path is mountpoint on host {self.hostname}.'
+            )
+
+        try:
+            dir_info = self.call_fn('filesystem.listdir', self.brick_path)
+        except Exception as e:
+            raise CallError(
+                f'{self.brick_path}: failed to list directory on host {self.hostname}: {e}.'
+            )
+
+        if dir_info:
+            verrors.add(
+                f'{schema_name}.brick_path',
+                f'{self.brick_path}: directory is not empty on host {self.hostname}.'
+            )
+
+        try:
+            statfs = self.call_fn('filesystem.statfs', self.brick_path)
+        except Exception as e:
+            raise CallError(
+                f'{self.brick_path}: failed to statfs directory on host {self.hostname}: {e}.'
+            )
+
+        if statfs['fstype'] != 'zfs':
+            verrors.add(
+                f'{schema_name}.brick_path',
+                f'{self.brick_path}: path is not a ZFS filesystem on host {self.hostname}.'
+            )
+            return
+
+        if (flags := self.expected_mnt_flags - set(statfs['flags'])):
+            verrors.add(
+                f'{schema_name}.brick_path',
+                f'{self.brick_path}: the following unexpected mount flags are set '
+                f'on brick path on host {self.hostname}: {", ".join(flags)}. This indicates '
+                'non-standard ZFS dataset configuration on brick path.'
             )
 
     def __validate_dns(self, schema_name, hosts, verrors):
@@ -584,8 +645,7 @@ class ClusterManagement(Service):
         create_payload = {'name': data['volume_configuration']['name']} | layout_info['layout']
 
         volume_create_job = self.middleware.call_sync(
-            'gluster.volume.create',
-            create_payload | {'bricks': bricks, 'force': True}
+            'gluster.volume.create', create_payload | {'bricks': bricks}
         )
         try:
             vol = volume_create_job.wait_sync(raise_error=True)

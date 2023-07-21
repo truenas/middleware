@@ -2,7 +2,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils import make_request, make_ws_request, wait_on_job
-from config import CLUSTER_INFO, DATASET_HIERARCHY
+from config import BRICK_PATH, CLUSTER_INFO, DATASET_HIERARCHY
 from exceptions import JobTimeOut
 
 
@@ -111,6 +111,16 @@ def setup_zpool_and_datasets(ip):
         'msg': 'method',
         'method': 'zfs.dataset.mount',
         'params': [DATASET_HIERARCHY],
+    }
+    res = make_ws_request(ip, payload)
+    if res.get('error', {}):
+        result['ERROR'] = res['error'].get('reason', 'NO REASON GIVEN')
+
+    print(f'Creating brick directory "{BRICK_PATH}" on {ip}')
+    payload = {
+        'msg': 'method',
+        'method': 'filesystem.mkdir',
+        'params': [BRICK_PATH],
     }
     res = make_ws_request(ip, payload)
     if res.get('error', {}):
