@@ -1,6 +1,7 @@
 from time import sleep
 
 import contextlib
+import os
 import pytest
 
 from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS, BRICK_PATH
@@ -11,11 +12,12 @@ from pytest_dependency import depends
 
 GVOL = 'gvolumetest'
 DS_PREFIX = f'{CLUSTER_INFO["ZPOOL"]}/.glusterfs'
-DS_HIERARCHY = f'{DS_PREFIX}/{GVOL}/brick0'
-BRICK_PATH2 = f'/mnt/{DS_HIERARCHY}'
+DS_HIERARCHY = f'{DS_PREFIX}/{GVOL}'
+BRICK_PATH2 = f'/mnt/{DS_HIERARCHY}/brick0'
 
 REPLICATE = {
     'volume_name': 'test_rep',
+    'dataset_name': os.path.join(DS_PREFIX, 'test_rep'),
     'local_node_configuration': {
         'hostname': CLUSTER_INFO['NODE_A_DNS'],
         'brick_path': f'/mnt/{DS_PREFIX}/test_rep/brick0'
@@ -29,6 +31,7 @@ REPLICATE = {
 }
 DISTRIBUTED_REPLICATE = {
     'volume_name': 'test_drep',
+    'dataset_name': os.path.join(DS_PREFIX, 'test_drep'),
     'local_node_configuration': {
         'hostname': CLUSTER_INFO['NODE_A_DNS'],
         'brick_path': f'/mnt/{DS_PREFIX}/test_drep/brick0'
@@ -46,6 +49,7 @@ DISTRIBUTED_REPLICATE = {
 
 DISPERSED = {
     'volume_name': 'test_disp',
+    'dataset_name': os.path.join(DS_PREFIX, 'test_disp'),
     'local_node_configuration': {
         'hostname': CLUSTER_INFO['NODE_A_DNS'],
         'brick_path': f'/mnt/{DS_PREFIX}/test_disp/brick0'
@@ -62,6 +66,7 @@ DISPERSED = {
 
 DISTRIBUTED_DISPERSED = {
     'volume_name': 'test_ddisp',
+    'dataset_name': os.path.join(DS_PREFIX, 'test_ddisp'),
     'local_node_configuration': {
         'hostname': CLUSTER_INFO['NODE_A_DNS'],
         'brick_path': f'/mnt/{DS_PREFIX}/test_ddisp/brick0'
@@ -80,8 +85,7 @@ DISTRIBUTED_DISPERSED = {
 }
 
 
-def setup_dataset_heirarchy(ip, volume_name, brick):
-    datasets = f'{CLUSTER_INFO["ZPOOL"]}/.glusterfs/{volume_name}/{brick}'
+def setup_dataset_heirarchy(ip, datasets):
     payload = {
         'msg': 'method',
         'method': 'zfs.dataset.create',
@@ -99,6 +103,16 @@ def setup_dataset_heirarchy(ip, volume_name, brick):
         'msg': 'method',
         'method': 'zfs.dataset.mount',
         'params': [datasets],
+    }
+    res = make_ws_request(ip, payload)
+    assert not res.get('error', {}), res['error'].get('reason', 'NO REASON GIVEN')
+
+
+def create_brick(ip, datasets, brick):
+    payload = {
+        'msg': 'method',
+        'method': 'filesystem.mkdir',
+        'params': [os.path.join('/mnt', datasets, brick)],
     }
     res = make_ws_request(ip, payload)
     assert not res.get('error', {}), res['error'].get('reason', 'NO REASON GIVEN')
@@ -147,8 +161,11 @@ def create_gluster_volume(payload):
     yields volume info of new gluster volume
     """
     for ip in CLUSTER_IPS:
+        datasets = os.path.join(CLUSTER_INFO['ZPOOL'], '.glusterfs', payload['volume_name'])
+        setup_dataset_heirarchy(ip, datasets)
+
         for i in range(0, payload['node_brick_cnt']):
-            setup_dataset_heirarchy(ip, payload['volume_name'], f'brick{i}')
+            create_brick(ip, datasets, f'brick{i}')
 
     res = make_ws_request(CLUSTER_IPS[0], {
         'msg': 'method',
@@ -216,6 +233,14 @@ def test_02_mount_dataset_heirarchy(ip, request):
         'msg': 'method',
         'method': 'zfs.dataset.mount',
         'params': [DS_HIERARCHY],
+    }
+    res = make_ws_request(ip, payload)
+    assert not res.get('error', {}), res['error'].get('reason', 'NO REASON GIVEN')
+
+    payload = {
+        'msg': 'method',
+        'method': 'filesystem.mkdir',
+        'params': [BRICK_PATH2],
     }
     res = make_ws_request(ip, payload)
     assert not res.get('error', {}), res['error'].get('reason', 'NO REASON GIVEN')
