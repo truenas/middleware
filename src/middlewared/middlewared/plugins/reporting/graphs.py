@@ -56,6 +56,7 @@ class ReportingService(Service):
         results = []
         # TODO: Optimize this so when retrieving stats for multiple plugins we do not get all charts
         #  again and again
+        await graph_plugin.build_context()
         for identifier in (await graph_plugin.get_identifiers() or [None]):
             # TODO: Handle 404 gracefully which can happen if no metrics have been collected
             # so far for the identifier/chart in question
@@ -135,6 +136,8 @@ class ReportingService(Service):
                 graph_plugin = self.__graphs[i['name']]
             except KeyError:
                 raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
+            # Some plugin might need to build context
+            await graph_plugin.build_context()
             results.append(await graph_plugin.export(query_params, i['identifier'], aggregate=query['aggregate']))
 
         return results
@@ -145,6 +148,7 @@ class ReportingService(Service):
         query_params = await self.middleware.call('reporting.translate_query_params', query)
         rv = []
         for graph_plugin in self.__graphs.values():
+            await graph_plugin.build_context()
             idents = await graph_plugin.get_identifiers()
             if idents is None:
                 idents = [None]

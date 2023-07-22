@@ -56,6 +56,9 @@ class GraphBase(metaclass=GraphMeta):
     def get_vertical_label(self) -> str:
         return self.vertical_label
 
+    async def build_context(self):
+        pass
+
     async def as_dict(self) -> dict:
         return {
             'name': self.name,

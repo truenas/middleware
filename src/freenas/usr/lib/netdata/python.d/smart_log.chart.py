@@ -6,7 +6,6 @@ import os
 import re
 
 from copy import deepcopy
-from middlewared.utils.disks import read_nvme_temps, Disk
 from pathlib import Path
 from time import time
 
@@ -58,7 +57,7 @@ def get_nvme_disks():
 
         try:
             for j in filter(lambda x: x.is_dir() and x.name.startswith('nvme'), (i / 'device').iterdir()):
-                nvme_disks.append(j.name)
+                nvme_disks.append((j.name, str(i)))
                 break
         except FileNotFoundError:
             continue
@@ -211,19 +210,24 @@ class SCSIDisk(BaseDisk):
 
 
 class NVMEDisk(BaseDisk):
-    def __init__(self, name):
+    def __init__(self, name, hwmon_path):
         super().__init__(name, None)
-        self.disk_instance = Disk(id=name)
+        self.hwmon_path = hwmon_path
 
     def parser(self, data):
         return
 
+    def read_nvme_temp(self):
+        try:
+            return round(int((Path(self.hwmon_path) / 'temp1_input').read_text()) * 0.001)
+        except Exception:
+            return 0
+
     @handle_error(TypeError)
     def populate_attrs(self):
         self.attrs = list()
-        for temp in read_nvme_temps([self.disk_instance]).values():
-            self.attrs.append(AtaRaw(ATTR194, str(temp), str(temp)))
-
+        temp = str(self.read_nvme_temp())
+        self.attrs.append(AtaRaw(ATTR194, str(temp), str(temp)))
         return len(self.attrs)
 
     def data(self):
@@ -303,8 +307,8 @@ class Service(SimpleService):
             if not disk:
                 continue
             self.disks.append(disk)
-        for nvme in get_nvme_disks():
-            self.disks.append(NVMEDisk(nvme))
+        for nvme_name, nvme_path in get_nvme_disks():
+            self.disks.append(NVMEDisk(nvme_name, nvme_path))
         return len(self.disks)
 
     def create_disk_from_file(self, full_name, current_time):

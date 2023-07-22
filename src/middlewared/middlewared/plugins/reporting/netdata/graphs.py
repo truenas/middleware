@@ -205,7 +205,8 @@ class DiskTempPlugin(GraphBase):
     vertical_label = 'Celsius'
     disk_mapping = {}
 
-    async def get_identifiers(self) -> typing.Optional[list]:
+    async def build_context(self):
+        self.disk_mapping = {}
         all_charts = await self.all_charts()
         for disk in (await self.middleware.run_in_thread(get_disks_for_temperature_reading)).values():
             identifier = disk.id if disk.id.startswith('nvme') else disk.serial
@@ -213,6 +214,8 @@ class DiskTempPlugin(GraphBase):
                 continue
 
             self.disk_mapping[disk.id] = identifier
+
+    async def get_identifiers(self) -> typing.Optional[list]:
         return list(self.disk_mapping.keys())
 
     def normalize_metrics(self, metrics) -> dict:
