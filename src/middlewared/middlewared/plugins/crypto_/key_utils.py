@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 
 from .load_utils import load_private_key
-from .utils import EC_CURVES
+from .utils import EC_CURVES, EC_CURVE_DEFAULT
 
 
 def retrieve_signing_algorithm(data: dict, signing_key: typing.Union[
@@ -30,7 +30,7 @@ def retrieve_signing_algorithm(data: dict, signing_key: typing.Union[
         Bool('serialize', default=False),
         Int('key_length', default=2048),
         Str('type', default='RSA', enum=['RSA', 'EC']),
-        Str('curve', enum=EC_CURVES, default='BrainpoolP384R1')
+        Str('curve', enum=EC_CURVES, default=EC_CURVE_DEFAULT)
     )
 )
 def generate_private_key(options: dict) -> typing.Union[
