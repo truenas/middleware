@@ -1,13 +1,15 @@
 import errno
 import os
 
+import middlewared.sqlalchemy as sa
+
 from fenced.fence import ExitCode as FencedExitCodes
+
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.schema import Bool, Dict, Int, List, Patch, Ref, Str
 from middlewared.service import accepts, CallError, CRUDService, job, private, returns, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
-import middlewared.sqlalchemy as sa
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
@@ -691,3 +693,14 @@ class PoolService(CRUDService):
         pool = await self.get_instance(id)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
+
+    @accepts(Str('pool_name'))
+    @returns()
+    def validate_name(self, pool_name):
+        """
+        Validates `pool_name` is a valid name for a pool.
+        """
+        verrors = ValidationErrors()
+        if not validate_pool_name(pool_name):
+            verrors.add('pool_name', 'Invalid pool name', errno.EINVAL)
+        verrors.check()
