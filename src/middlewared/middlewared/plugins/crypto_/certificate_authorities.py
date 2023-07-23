@@ -221,7 +221,7 @@ class CertificateAuthorityService(CRUDService):
 
         Created certificate authorities use RSA keys by default. If an Elliptic Curve Key is desired, then it can be
         specified with the `key_type` attribute. If the `ec_curve` attribute is not specified for the Elliptic
-        Curve Key, default to using "BrainpoolP384R1" curve.
+        Curve Key, default to using "SECP384R1" curve.
 
         A type is selected by the Certificate Authority Service based on `create_type`. The rest of the values
         are validated accordingly and finally a certificate is made based on the selected type.
