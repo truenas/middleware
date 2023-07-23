@@ -41,6 +41,8 @@ class NetdataService(Service):
     def get_disk_space(self):
         # TODO: How should we expose graph_age for netdata right now wrt reporting.updte?
         #  Current discussion with Caleb was to store per second data for 7 days
+        # FIXME: Fix this based on disks dimensions as just multiplying by 2 is not enough because
+        #  more then one dimension of disk is being retrieved by netdata which results in quite a substantial number
         # 415 is an approximation right now based on the number of metrics we have
         metrics = 415 + (2 * len(get_disks_for_temperature_reading())) + cpu_info()['core_count']
         days = self.middleware.call_sync('reporting.config')['graph_age']

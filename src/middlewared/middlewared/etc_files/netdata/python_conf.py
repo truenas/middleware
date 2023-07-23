@@ -7,5 +7,5 @@ def render(service, middleware):
         enabled: yes
         default_run: no
         cputemp: yes
-        disktemp: yes
+        smart_log: yes
         '''))
