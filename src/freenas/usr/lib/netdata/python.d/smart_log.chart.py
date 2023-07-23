@@ -74,6 +74,20 @@ class BaseAtaSmartAttribute:
         raise NotImplementedError
 
 
+class BaseNvmeSmartValue:
+    def __init__(self, raw_value):
+        self.name = 'temperature'
+        self.raw_value = raw_value
+
+    def value(self):
+        raise NotImplementedError
+
+
+class NvmeRaw(BaseNvmeSmartValue):
+    def value(self):
+        return self.raw_value
+
+
 class AtaRaw(BaseAtaSmartAttribute):
     def value(self):
         return self.raw_value
@@ -227,7 +241,7 @@ class NVMEDisk(BaseDisk):
     def populate_attrs(self):
         self.attrs = list()
         temp = str(self.read_nvme_temp())
-        self.attrs.append(AtaRaw(ATTR194, str(temp), str(temp)))
+        self.attrs.append(NvmeRaw(temp))
         return len(self.attrs)
 
     def data(self):
@@ -290,10 +304,10 @@ class Service(SimpleService):
         current_time = time()
         for disk in self.disks[:]:
             if any(
-                    [
-                        not disk.alive,
-                        not disk.log_file.is_active(current_time, self.age),
-                    ]
+                [
+                    not disk.alive,
+                    not disk.log_file.is_active(current_time, self.age),
+                ]
             ):
                 self.disks.remove(disk.raw_name)
                 self.remove_disk_from_charts(disk)
