@@ -702,5 +702,12 @@ class PoolService(CRUDService):
         """
         verrors = ValidationErrors()
         if not validate_pool_name(pool_name):
-            verrors.add('pool_name', 'Invalid pool name', errno.EINVAL)
+            verrors.add(
+                'pool_name',
+                'Invalid pool name (please refer to https://openzfs.github.io/openzfs-docs/'
+                'man/8/zpool-create.8.html#DESCRIPTION for valid rules for pool name)',
+                errno.EINVAL
+            )
         verrors.check()
+
+        return True
