@@ -2,6 +2,7 @@
 # Description: smart netdata python.d module
 # Author: ilyam8, vorph1
 # SPDX-License-Identifier: GPL-3.0-or-later
+import contextlib
 import os
 import re
 
@@ -48,11 +49,6 @@ def get_nvme_disks():
             if not ((i / 'name').read_text().strip() == 'nvme'):
                 continue
         except FileNotFoundError:
-            continue
-
-        try:
-            round(int((i / 'temp1_input').read_text()) * 0.001)
-        except Exception:
             continue
 
         try:
@@ -316,11 +312,14 @@ class Service(SimpleService):
         self.debug('scanning {0}'.format(self.log_path))
         current_time = time()
 
-        for full_name in os.listdir(self.log_path):
-            disk = self.create_disk_from_file(full_name, current_time)
-            if not disk:
-                continue
-            self.disks.append(disk)
+        with contextlib.suppress(FileNotFoundError):
+            # log path will not exist in an all flash system
+            for full_name in os.listdir(self.log_path):
+                disk = self.create_disk_from_file(full_name, current_time)
+                if not disk:
+                    continue
+                self.disks.append(disk)
+
         for nvme_name, nvme_path in get_nvme_disks():
             self.disks.append(NVMEDisk(nvme_name, nvme_path))
         return len(self.disks)

@@ -60,6 +60,7 @@ class GraphBase(metaclass=GraphMeta):
         pass
 
     async def as_dict(self) -> dict:
+        await self.build_context()
         return {
             'name': self.name,
             'title': self.title,

@@ -210,7 +210,7 @@ class DiskTempPlugin(GraphBase):
         all_charts = await self.all_charts()
         for disk in (await self.middleware.run_in_thread(get_disks_for_temperature_reading)).values():
             identifier = disk.id if disk.id.startswith('nvme') else disk.serial
-            if f'smart_log_smartd_log.disktemp.{identifier}' not in all_charts:
+            if f'smart_log_smart.disktemp.{identifier}' not in all_charts:
                 continue
 
             self.disk_mapping[disk.id] = identifier
@@ -224,4 +224,4 @@ class DiskTempPlugin(GraphBase):
         return metrics
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return f'smart_log_smartd_log.disktemp.{self.disk_mapping[identifier]}'
+        return f'smart_log_smart.disktemp.{self.disk_mapping[identifier]}'
