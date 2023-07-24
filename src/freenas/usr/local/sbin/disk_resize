@@ -165,7 +165,7 @@ nvme)
 
 	# Identify controller properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
-	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '{ print $2 }' | xargs | tr ' ' ,`
+	ctrls=`nvme list-ctrl ${ctrlr} | awk -F: '/^\[\s*[0-9]+\]/ { print $2 }' | xargs | tr ' ' ,`
 
 	# Check Namespace Management is supported by the controller.
 	oacs=`echo "${idctrl}" | awk -F ' +: ' '$1 == "oacs" { print $2 }'`
