@@ -10,7 +10,6 @@ Package: truenas
 Architecture: all
 Depends: acl,
          cifs-utils,
-         collectd,
          console-setup,
          cpuid,
          gdb,

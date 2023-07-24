@@ -17,17 +17,9 @@ class UPSService(SimpleService):
             await self._systemd_unit("nut-server", "start")
         await self._unit_action("Start")
 
-    async def after_start(self):
-        if await self.middleware.call("service.started", "collectd"):
-            self.middleware.create_task(self.middleware.call("service.restart", "collectd"))
-
     async def before_stop(self):
         await self.middleware.call("ups.dismiss_alerts")
 
     async def stop(self):
         await self._unit_action("Stop")
         await self._systemd_unit("nut-server", "stop")
-
-    async def after_stop(self):
-        if await self.middleware.call("service.started", "collectd"):
-            self.middleware.create_task(self.middleware.call("service.restart", "collectd"))
