@@ -96,6 +96,12 @@ class SystemService(Service):
         return '.'.join(self.version_short().split('-')[0].split('.', 2)[0:2])
 
     @accepts()
+    @returns(Str('truenas_release_notes_url'))
+    def release_notes_url(self):
+        """Returns the release notes URL for the SCALE version that is currently installed"""
+        return f'https://truenas.com/docs/scale/{self.version_major()}'
+
+    @accepts()
     @returns(Str('truenas_version'))
     def version(self):
         """Returns the full name of the software version of the system."""
