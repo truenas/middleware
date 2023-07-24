@@ -85,6 +85,17 @@ class SystemService(Service):
         return sw_info()['version']
 
     @accepts()
+    @returns(Str('truenas_version_major'))
+    def version_major(self):
+        """Returns the software major version of the system."""
+        # some variation of the version string can look like:
+        # 23.10-MASTER-*, 23.10.0, 23.10, 23.10-INTERNAL.1, 23.10.0-INTERANL,
+        # 23.10.1, 23.10.0-CUSTOM-NAME, 23.10.0-BETA.1, 23.10.0-RC.1
+
+        # major is "23.10"
+        return '.'.join(self.version_short().split('-')[0].split('.', 2)[0:2])
+
+    @accepts()
     @returns(Str('truenas_version'))
     def version(self):
         """Returns the full name of the software version of the system."""
