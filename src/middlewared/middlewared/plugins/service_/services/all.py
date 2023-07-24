@@ -24,11 +24,9 @@ from .idmap import IdmapService
 from .openipmi import OpenIpmiService
 
 from .pseudo.ad import ActiveDirectoryService, LdapService, NisService
-from .pseudo.collectd import CollectDService, RRDCacheDService
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService
 from .pseudo.misc import (
     CronService,
-    DiskService,
     DSCacheService,
     KmipService,
     LoaderService,
@@ -77,12 +75,9 @@ all_services = [
     KubernetesService,
     KubeRouterService,
     OpenVmToolsService,
-    CollectDService,
-    RRDCacheDService,
     LibvirtdService,
     LibvirtGuestService,
     CronService,
-    DiskService,
     KmipService,
     HAProxyService,
     LoaderService,

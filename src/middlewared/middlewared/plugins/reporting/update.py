@@ -125,8 +125,6 @@ class ReportingService(ConfigService):
         if destroy_database:
             await self.clear(False)
 
-        await self.middleware.call('service.restart', 'collectd')
-
         return await self.config()
 
     @accepts(Bool('start_collectd', default=True, hidden=True))
@@ -135,16 +133,6 @@ class ReportingService(ConfigService):
         """
         Clear reporting database.
         """
-        await self.middleware.call('service.stop', 'rrdcached')
-        await run(
-            'sh', '-c', 'rm --one-file-system -rf /var/db/collectd/rrd/*',
-            check=False
-        )
-        await self.middleware.call('reporting.setup')
-        await self.middleware.call('service.start', 'rrdcached')
-
-        if start_collectd:
-            await self.middleware.call('service.start', 'collectd')
 
     @filterable
     @filterable_returns(Dict(

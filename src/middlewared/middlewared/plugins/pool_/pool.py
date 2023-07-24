@@ -223,7 +223,6 @@ class PoolService(CRUDService):
 
     @private
     async def restart_services(self):
-        await self.middleware.call('service.reload', 'disk')
         # regenerate crontab because of scrub
         await self.middleware.call('service.restart', 'cron')
 

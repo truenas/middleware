@@ -197,7 +197,6 @@ class PoolService(Service):
                             await delegate.toggle(attachments, True)
             await self.middleware.call('keyvalue.delete', key)
 
-        self.middleware.create_task(self.middleware.call('service.restart', 'collectd'))
         await self.middleware.call_hook('pool.post_import', pool)
         await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
         self.middleware.create_task(self.middleware.call('disk.swaps_configure'))

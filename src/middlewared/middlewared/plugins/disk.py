@@ -289,7 +289,6 @@ class DiskService(CRUDService):
                 await self.middleware.call('disk.toggle_smart_off', new['name'])
 
             await self.middleware.call('disk.update_smartctl_args_for_disks')
-            await self.middleware.call('service.restart', 'collectd')
             await self._service_change('smartd', 'restart')
             await self._service_change('snmp', 'restart')
 

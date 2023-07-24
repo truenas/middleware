@@ -18,20 +18,6 @@ class CronService(PseudoServiceBase):
         pass
 
 
-class DiskService(PseudoServiceBase):
-    name = "disk"
-
-    etc = ["fstab"]
-    restartable = True
-    reloadable = True
-
-    async def restart(self):
-        await self.reload()
-
-    async def reload(self):
-        self.middleware.create_task(self.middleware.call("service.restart", "collectd"))
-
-
 class KmipService(PseudoServiceBase):
     name = "kmip"
 
@@ -64,7 +50,6 @@ class HostnameService(PseudoServiceBase):
     async def reload(self):
         await self.middleware.call("etc.generate", "hostname")
         await self.middleware.call("service.restart", "mdns")
-        await self.middleware.call("service.restart", "collectd")
 
 
 class HttpService(PseudoServiceBase):

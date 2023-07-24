@@ -187,8 +187,6 @@ class SystemDatasetService(ConfigService):
     async def _post_setup_service_restart(self):
         await self.middleware.call('smb.setup_directories')
         # There is no need to wait this to finish
-        # Restarting rrdcached will ensure that we start/restart collectd as well
-        self.middleware.create_task(self.middleware.call('service.restart', 'rrdcached'))
         self.middleware.create_task(self.middleware.call('service.restart', 'syslogd'))
 
         # The following should be backgrounded since they may be quite
@@ -672,7 +670,7 @@ class SystemDatasetService(ConfigService):
             # the system dataset so any service that could potentially open
             # a file descriptor underneath /var/log will no longer need to be
             # stopped/restarted to allow the system dataset to migrate
-            restart = ['collectd', 'rrdcached', 'netdata']
+            restart = ['netdata']
             if self.middleware.call_sync('service.started', 'cifs'):
                 restart.insert(0, 'cifs')
             if self.middleware.call_sync('service.started', 'glusterd'):

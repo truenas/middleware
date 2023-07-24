@@ -301,7 +301,6 @@ class NetworkConfigurationService(ConfigService):
         service_actions = set()
         if lhost_changed:
             await self.middleware.call('etc.generate', 'hostname')
-            service_actions.add(('collectd', 'restart'))
             service_actions.add(('nscd', 'reload'))
 
         if rhost_changed:
@@ -316,7 +315,6 @@ class NetworkConfigurationService(ConfigService):
         hosts_table_changed = new_config['hosts'] != config['hosts']
         if domainname_changed or hosts_table_changed:
             await self.middleware.call('etc.generate', 'hosts')
-            service_actions.add(('collectd', 'restart'))
             service_actions.add(('nscd', 'reload'))
             if licensed:
                 try:

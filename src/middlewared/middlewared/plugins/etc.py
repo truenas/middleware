@@ -206,13 +206,6 @@ class EtcService(Service):
             },
 
         ],
-        'collectd': [
-            {
-                'type': 'mako', 'path': 'collectd/collectd.conf',
-                'local_path': 'local/collectd.conf', 'checkpoint': 'pool_import',
-            },
-            {'type': 'mako', 'path': 'default/rrdcached', 'checkpoint': 'pool_import'},
-        ],
         'motd': [
             {'type': 'mako', 'path': 'motd'}
         ],
