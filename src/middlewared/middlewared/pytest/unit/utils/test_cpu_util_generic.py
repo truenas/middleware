@@ -3,41 +3,39 @@ from unittest.mock import Mock
 
 import pytest
 
-from middlewared.utils.cpu import _generic_cpu_temperatures
+from middlewared.utils.cpu import generic_cpu_temperatures
 
 
 @pytest.mark.parametrize("reading,result", [
     (
         {
             "coretemp-isa-0001": {
-                "Core 1": {
-                    "temp3_crit_alarm": 0.0,
-                    "temp3_max": 82.0,
-                    "temp3_crit": 92.0,
-                    "temp3_input": 54.0
+                "coretemp-isa-0001_temp1": {
+                    "name": "Package id 1",
+                    "value": 45
                 },
-                "Core 0": {
-                    "temp2_crit": 92.0,
-                    "temp2_max": 82.0,
-                    "temp2_input": 55.0,
-                    "temp2_crit_alarm": 0.0
+                "coretemp-isa-0001_temp2": {
+                    "name": "Core 0",
+                    "value": 55.0
                 },
-            },
+                "coretemp-isa-0001_temp3": {
+                    "name": "Core 1",
+                    "value": 54.0
+                }},
             "coretemp-isa-0000": {
-                "Core 0": {
-                    "temp2_crit": 92.0,
-                    "temp2_max": 82.0,
-                    "temp2_input": 48.0,
-                    "temp2_crit_alarm": 0.0
+                "coretemp-isa-0000_temp1": {
+                    "name": "Package id 0",
+                    "value": 36
                 },
-                "Core 1": {
-                    "temp3_crit_alarm": 0.0,
-                    "temp3_max": 82.0,
-                    "temp3_crit": 92.0,
-                    "temp3_input": 49.0
+                "coretemp-isa-0000_temp2": {
+                    "name": "Core 0",
+                    "value": 48.0
                 },
-            },
-        },
+                "coretemp-isa-0000_temp3": {
+                    "name": "Core 1",
+                    "value": 49.0
+                }
+            }},
         {
             0: 48.0,
             1: 49.0,
@@ -47,4 +45,4 @@ from middlewared.utils.cpu import _generic_cpu_temperatures
     )
 ])
 def test_generic_cpu_temperatures(reading, result):
-    assert _generic_cpu_temperatures(reading) == result
+    assert generic_cpu_temperatures(reading) == result
