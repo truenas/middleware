@@ -17,7 +17,7 @@ class VolumeStatusAlertSource(AlertSource):
 
         alerts = []
         for pool in await self.middleware.call("pool.query"):
-            if not pool["healthy"] or pool["warning"]:
+            if not pool["healthy"] or (pool["warning"] and pool["status_code"] != "FEAT_DISABLED"):
                 if await self.middleware.call("system.is_enterprise"):
                     try:
                         await self.middleware.call("enclosure.sync_zpool", pool["name"])
