@@ -1,8 +1,6 @@
 import functools
-import json
 import psutil
 import re
-import subprocess
 
 from collections import defaultdict
 
@@ -36,28 +34,13 @@ def get_cpu_model():
         return model.group(1) if model else None
 
 
-def cpu_temperatures() -> dict:
-    cp = subprocess.run(['sensors', '-j'], capture_output=True, text=True)
-    sensors = json.loads(cp.stdout)
-    amd_sensor = sensors.get('k10temp-pci-00c3')
-    if amd_sensor:
-        data = _amd_cpu_temperatures(amd_sensor)
-    else:
-        data = _generic_cpu_temperatures(sensors)
-
-    return {str(k): v for k, v in data.items()}
-
-
-def _generic_cpu_temperatures(sensors: dict) -> dict:
+def generic_cpu_temperatures(cpu_metrics: dict) -> dict:
     temperatures = defaultdict(dict)
-    for chip, value in sensors.items():
-        for name, temps in value.items():
-            if not (m := RE_CORE.match(name)):
+    for chip_name in filter(lambda sen: sen.startswith('coretemp-isa'), cpu_metrics):
+        for temp in cpu_metrics[chip_name].values():
+            if not (m := RE_CORE.match(temp['name'])):
                 continue
-            for temp, value in temps.items():
-                if 'input' in temp:
-                    temperatures[chip][int(m.group(1))] = value
-                    break
+            temperatures[chip_name][int(m.group(1))] = temp['value']
 
     return dict(enumerate(sum(
         [
@@ -68,32 +51,30 @@ def _generic_cpu_temperatures(sensors: dict) -> dict:
     )))
 
 
-def _amd_cpu_temperatures(amd_sensor: dict) -> dict:
+def amd_cpu_temperatures(amd_metrics: dict) -> dict:
     cpu_model = cpu_info()['cpu_model']
     core_count = cpu_info()['physical_core_count']
+    amd_sensors = {}
+    for amd_sensor in amd_metrics.values():
+        amd_sensors[amd_sensor['name']] = amd_sensor['value']
 
     ccds = []
-    for k, v in amd_sensor.items():
+    for k, v in amd_sensors.items():
         if k.startswith('Tccd') and v:
-            t = list(v.values())[0]
-            if isinstance(t, (int, float)):
-                ccds.append(t)
+            if isinstance(v, (int, float)):
+                ccds.append(v)
     has_tdie = (
-        'Tdie' in amd_sensor and amd_sensor['Tdie'] and isinstance(list(amd_sensor['Tdie'].values())[0], (int, float))
+        'Tdie' in amd_sensors and amd_sensors['Tdie'] and isinstance(amd_sensors['Tdie'], (int, float))
     )
     if cpu_model.startswith(AMD_PREFER_TDIE) and has_tdie:
-        return _amd_cpu_tdie_temperatures(amd_sensor, core_count)
+        return dict(enumerate([amd_sensors['Tdie']] * core_count))
     elif ccds and core_count % len(ccds) == 0:
         return dict(enumerate(sum([[t] * (core_count // len(ccds)) for t in ccds], [])))
     elif has_tdie:
-        return _amd_cpu_tdie_temperatures(amd_sensor, core_count)
+        return dict(enumerate([amd_sensors['Tdie']] * core_count))
     elif (
-        'Tctl' in amd_sensor and amd_sensor['Tctl'] and isinstance(list(amd_sensor['Tctl'].values())[0], (int, float))
+        'Tctl' in amd_sensors and amd_sensors['Tctl'] and isinstance(amd_sensors['Tctl'], (int, float))
     ):
-        return dict(enumerate([list(amd_sensor['Tctl'].values())[0]] * core_count))
-    elif 'temp1' in amd_sensor and 'temp1_input' in amd_sensor['temp1']:
-        return dict(enumerate([amd_sensor['temp1']['temp1_input']] * core_count))
-
-
-def _amd_cpu_tdie_temperatures(amd_sensor: dict, core_count: int) -> dict:
-    return dict(enumerate([list(amd_sensor['Tdie'].values())[0]] * core_count))
+        return dict(enumerate([amd_sensors['Tctl']] * core_count))
+    elif 'temp1' in amd_sensors and 'temp1_input' in amd_sensors['temp1']:
+        return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))
