@@ -183,7 +183,7 @@ class GlusterVolumeService(CRUDService):
         # in the TSP to FUSE mount this volume locally
         data = {'event': 'VOLUME_START', 'name': name, 'forward': True}
         onnode = await self.middleware.call('gluster.localevents.send', data)
-        await onnode.wait()
+        await onnode.wait(raise_error=True)
 
         return result
 
