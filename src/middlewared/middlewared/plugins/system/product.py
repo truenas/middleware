@@ -84,18 +84,9 @@ class SystemService(Service):
         """Returns the short name of the software version of the system."""
         return sw_info()['version']
 
-    @private
-    def version_major_impl(self, version_str=None):
-        # some variation of the version string can look like:
-        # 23.10-MASTER-*, 23.10.0, 23.10, 23.10-INTERNAL.1, 23.10.0-INTERANL,
-        # 23.10.1, 23.10.0-CUSTOM-NAME, 23.10.0-BETA.1, 23.10.0-RC.1
-        # major is "23.10" in the above examples
-        to_format = self.version_short() if version_str is None else version_str
-        return '.'.join(to_format.split('-')[0].split('.', 2)[0:2])
-
     @accepts(Str('version_str', default=None, required=False))
-    @returns(Str('truenas_release_notes_url'))
-    def release_notes_url(self, version):
+    @returns(Str('truenas_release_notes_url', null=True))
+    def release_notes_url(self, version_str):
         """Returns the release notes URL for a version of SCALE.
 
         `version_str` str: represents a version to check against
@@ -103,7 +94,16 @@ class SystemService(Service):
         If `version` is not provided, then the release notes URL will return
             a link for the currently installed version of SCALE.
         """
-        return f'https://truenas.com/docs/scale/{self.version_major_impl(version)}'
+        to_format = self.version_short() if version_str is None else version_str
+        to_format = to_format.split('-')[0].split('.')  # looks like ['23', '10', '0', '1']
+        len_to_format = len(to_format)
+        if len_to_format >= 2:
+            maj_vers = '.'.join(to_format[0:2])
+            if len_to_format == 2:
+                # shouldn't happen in the wild but easy way to be safe
+                return f'https://truenas.com/docs/scale/scale{maj_vers}'
+            else:
+                return f'https://truenas.com/docs/scale/scale{maj_vers}/#{"".join(to_format)}'
 
     @accepts()
     @returns(Str('truenas_version'))
