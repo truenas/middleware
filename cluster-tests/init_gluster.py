@@ -3,6 +3,8 @@ from utils import make_request, make_ws_request, wait_on_job
 from helpers import ctdb_healthy
 from exceptions import JobTimeOut
 
+import json
+
 GPD = GLUSTER_PEERS_DNS
 URLS = [f'http://{ip}/api/v2.0' for ip in CLUSTER_IPS]
 
@@ -74,6 +76,15 @@ def add_public_ips_to_ctdb():
             else:
                 assert status['state'] == 'SUCCESS', status
 
+def generate_cluster_summary():
+    res = make_ws_request(CLUSTER_INFO['NODE_A_IP'], {
+        'msg': 'method',
+        'method': 'cluster.management.summary',
+        'params': []
+    })
+    assert res.get('error') is None, str(res)
+    print(json.dumps(res['result'], indent=4))
+
 
 def init():
     print('Creating cluster.')
@@ -82,3 +93,5 @@ def init():
     wait_on_ctdb()
     print('Adding CTDB public IPs to cluster')
     add_public_ips_to_ctdb()
+    print('Genearting summary')
+    generate_cluster_summary()
