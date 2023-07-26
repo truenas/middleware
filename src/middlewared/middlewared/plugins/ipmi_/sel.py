@@ -33,7 +33,7 @@ class IpmiSelService(Service):
 
     @filterable
     @filterable_returns(Dict('ipmi_elist', additional_attrs=True))
-    @job(lock=SEL_LOCK, lock_queue_size=1)
+    @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def elist(self, job, filters, options):
         """Query IPMI System Event Log (SEL) extended list"""
         rv = []
@@ -58,7 +58,7 @@ class IpmiSelService(Service):
 
     @accepts()
     @returns(Dict('ipmi_sel_info', additional_attrs=True))
-    @job(lock=SEL_LOCK, lock_queue_size=1)
+    @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def info(self, job):
         """Query General information about the IPMI System Event Log"""
         rv = {}
