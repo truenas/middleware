@@ -114,8 +114,9 @@ class CtdbEventService(Service):
             return
 
         ev = data.pop('event')
+        summary = self.middleware.call_sync('cluster.management.summary', {'include_volumes': False})
         self.middleware.send_event(
-            'ctdb.status', 'CHANGED', fields={'event': ev, 'data': data}
+            'ctdb.status', 'CHANGED', fields={'event': ev, 'data': summary}
         )
 
     def event_not_implemented(self, arg_unused):
