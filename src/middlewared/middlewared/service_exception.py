@@ -29,7 +29,7 @@ class ValidationError(CallException):
     attribute of a middleware method is invalid/not allowed.
     """
 
-    def __init__(self, attribute, errmsg, errno=errno.EFAULT):
+    def __init__(self, attribute, errmsg, errno=errno.EINVAL):
         self.attribute = attribute
         self.errmsg = errmsg
         self.errno = errno
