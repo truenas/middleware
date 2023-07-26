@@ -50,11 +50,18 @@ class IPMILanService(CRUDService):
         for channel in self.channels():
             section = 'Lan_Conf' if channel == 1 else f'Lan_Conf_Channel_{channel}'
             cp = run(['ipmi-config', '--checkout', f'--section={section}', '--verbose'], capture_output=True)
-            if cp.returncode != 0:
-                raise CallError(f'Failed to get details from channel {channel}: {cp.stderr}')
+            if cp.returncode != 0 and (stderr := cp.stderr.decode()):
+                # on the F-series platform, if you add the --verbose flag, then the return code is
+                # set to 1 but the correct information is given to stdout. Just check to see if there
+                # is stderr
+                # TODO: fix this in dragonfish (dependent on webUI changes to be made see NAS-123225)
+                # raise CallError(f'Failed to get details from channel {channel}: {stderr}')
+                self.logger.error('Failed to get details from channel %r with error %r', channel, stderr)
+            elif not (stdout := cp.stdout.decode()):
+                continue
 
             data = {'channel': channel, 'id': channel}
-            for i in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), cp.stdout.decode().split('\n')):
+            for i in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), stdout.split('\n')):
                 try:
                     name, value = i.strip().split()
                     name, value = name.lower(), value.lower()
