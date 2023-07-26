@@ -39,6 +39,8 @@ def get_action_context(release_name):
         'isUpgrade': False,
         'storageClassName': get_storage_class_name(release_name),
         'upgradeMetadata': {},
+        'hasSMBCSI': True,
+        'hasNFSCSI': True,
     })
 
 
