@@ -332,7 +332,7 @@ class ClusterManagement(Service):
             # collapse the active IPs dict into simple list
             for addr, info in public['active_ips'].items():
                 for entry in info:
-                    active_ips.append({'address': addr} | info.copy())
+                    active_ips.append({'address': addr} | entry.copy())
 
             if node:
                 node_info = {
