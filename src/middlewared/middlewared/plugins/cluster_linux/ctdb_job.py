@@ -124,7 +124,9 @@ class ClusterJob(Service):
         entry['status'] = status
         new_timeout = timeout_abs - now
 
-        await self.middleware.call('clustercache.put', key, entry, int(new_timeout), {'flag': 'REPLACE'})
+        await self.middleware.call(
+            'clustercache.put', key, entry, int(new_timeout), {'flag': 'REPLACE', 'private': True}
+        )
 
     @private
     @job(lock="cluster_job_send")
@@ -146,7 +148,7 @@ class ClusterJob(Service):
 
             job.set_progress(50, f'Setting job status indicator for node {node["address"]!r}')
             key = f'CLJOB_{method}_{node["pnn"]}'
-            await self.middleware.call('clustercache.put', key, payload, timeout)
+            await self.middleware.call('clustercache.put', key, payload, timeout, {'private': True})
 
         data = {
             "event": "CLJOBS_PROCESS",
