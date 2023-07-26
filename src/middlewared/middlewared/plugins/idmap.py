@@ -8,7 +8,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str, LDAP_D
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
 from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.directoryservices import SSL
-from middlewared.plugins.idmap_.utils import IDType, WBClient, WBCErr
+from middlewared.plugins.idmap_.utils import IDType, TRUENAS_IDMAP_MAX, WBClient, WBCErr
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
 from middlewared.validators import Range
@@ -636,8 +636,8 @@ class IdmapDomainService(TDBWrapCRUDService):
         'idmap_domain_create',
         Str('name', required=True),
         Str('dns_domain_name'),
-        Int('range_low', required=True, validators=[Range(min=1000, max=2147483647)]),
-        Int('range_high', required=True, validators=[Range(min=1000, max=2147483647)]),
+        Int('range_low', required=True, validators=[Range(min=1000, max=TRUENAS_IDMAP_MAX)]),
+        Int('range_high', required=True, validators=[Range(min=1000, max=TRUENAS_IDMAP_MAX)]),
         Str('idmap_backend', required=True, enum=[x.name for x in IdmapBackend]),
         Int('certificate', null=True),
         OROperator(

@@ -78,7 +78,7 @@ class SMBService(Service):
         return pdbentries
 
     @private
-    async def update_passdb_user(self, user):
+    async def update_passdb_user(self, user, clustered=False):
         if user['smbhash'] == user['pdb']:
             return
 
@@ -96,11 +96,8 @@ class SMBService(Service):
 
             # If we're clustered, next_rid will be -1 and we _must_ use passdb rid counter
             # this is because database ids can't be relied on to be consistent cluster-wide
-            next_rid = await self.middleware.call('smb.get_next_rid', 'USER', user['id'])
-
-            self.logger.debug("User [%s] does not exist in the passdb.tdb file. "
-                              "Creating entry with rid [%s].", username, next_rid)
-            if next_rid != -1:
+            if not clustered:
+                next_rid = await self.middleware.call('smb.get_next_rid', 'USER', user.get('id'))
                 cmd.extend(['-U', str(next_rid)])
 
             cmd.append('-t')
@@ -147,11 +144,6 @@ class SMBService(Service):
 
     @private
     async def remove_passdb_user(self, username):
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == "CLUSTERED":
-            self.logger.debug("passdb support not yet implemented in clustered TrueNAS.")
-            return
-
         deluser = await run([SMBCmd.PDBEDIT.value, '-d', '0', '-x', username], check=False)
         if deluser.returncode != 0:
             raise CallError(f'Failed to delete user [{username}]: {deluser.stderr.decode()}')
@@ -206,6 +198,24 @@ class SMBService(Service):
                 await asyncio.sleep(60)
 
     @private
+    async def passdb_sync_impl(self, conf_users, clustered=False):
+        pdb_users = await self.smbpasswd_dump()
+        for u in conf_users:
+            pdb_entry = pdb_users.pop(u['username'], None)
+            u.update({"pdb": pdb_entry})
+            await self.middleware.call('smb.update_passdb_user', u, clustered)
+
+        for entry in pdb_users.keys():
+            self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry)
+            try:
+                await self.remove_passdb_user(entry)
+            except Exception:
+                if not clustered:
+                    self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
+                    await self.passdb_reinit(conf_users)
+                    break
+
+    @private
     @job(lock="passdb_sync")
     async def synchronize_passdb(self, job):
         """
@@ -226,23 +236,12 @@ class SMBService(Service):
 
         if ha_mode == 'CLUSTERED':
             await self.set_cluster_lock_wait()
+            try:
+                conf_users = await self.middleware.call('cluster.accounts.user.query')
+                await self.passdb_sync_impl(conf_users, True)
+            finally:
+                await self.middleware.call("clustercache.pop", "PASSDB_LOCK")
+            return
 
         conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
-
-        pdb_users = await self.smbpasswd_dump()
-        for u in conf_users:
-            pdb_entry = pdb_users.pop(u['username'], None)
-            u.update({"pdb": pdb_entry})
-            await self.middleware.call('smb.update_passdb_user', u)
-
-        for entry in pdb_users.keys():
-            self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry)
-            try:
-                await self.remove_passdb_user(entry)
-            except Exception:
-                self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
-                await self.passdb_reinit(conf_users)
-                break
-
-        if ha_mode == "CLUSTERED":
-            await self.middleware.call("clustercache.pop", "PASSDB_LOCK")
+        await self.passdb_sync_impl(conf_users, False)

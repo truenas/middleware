@@ -425,9 +425,8 @@ class SMBService(Service):
         if await self.middleware.call('ldap.get_state') != "DISABLED":
             return
 
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == 'CLUSTERED':
-            await self.middleware.call('smb.set_cluster_lock_wait')
+        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
+            return
 
         groupmap = await self.groupmap_list()
         must_remove_cache = False
@@ -448,11 +447,6 @@ class SMBService(Service):
             "nt_name": g_dict[x]["group"],
             "group_type_str": "local"
         } for x in set_to_add]
-
-        if ha_mode != 'CLUSTERED':
-            for m in to_add:
-                dbid = m.pop("dbid")
-                m['rid'] = await self.middleware.call('smb.get_next_rid', 'GROUP', dbid)
 
         to_mod = [{
             "gid": g_dict[x]["gid"],
@@ -493,9 +487,6 @@ class SMBService(Service):
         must_remove_cache = await self.sync_builtins(groupmap['builtins'])
         await self.batch_groupmap(payload)
         await self.sync_foreign_groups()
-
-        if ha_mode == "CLUSTERED":
-            await self.middleware.call("clustercache.pop", "PASSDB_LOCK")
 
         if must_remove_cache:
             await self.middleware.call('tdb.wipe', {

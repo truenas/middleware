@@ -4,9 +4,10 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.validators import Email
+from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
+from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_DEFAULT_LOW
 
 import binascii
 import crypt
@@ -462,7 +463,7 @@ class UserService(CRUDService):
 
     @accepts(Dict(
         'user_create',
-        Int('uid'),
+        Int('uid', validators=[Range(0, TRUENAS_IDMAP_DEFAULT_LOW - 1)]),
         LocalUsername('username', required=True),
         Int('group'),
         Bool('group_create', default=False),
@@ -1182,6 +1183,21 @@ class UserService(CRUDService):
             {'prefix': 'bsdusr_'}
         )
 
+        if await self.middleware.call('cluster.utils.is_clustered'):
+            if data.get('smb') is True:
+                verrors.add(
+                    f'{schema}.smb',
+                    'Local non-clustered SMB users may not be created on clustered TrueNAS'
+                )
+
+            if 'username' in data and (await self.middleware.call('cluster.accounts.user.query', [
+                ['username', 'C=', data['username']]
+            ])):
+                verrors.add(
+                    f'{schema}.username',
+                    'Username is already in use by a clustered user.'
+                )
+
         if data.get('uid') is not None:
             try:
                 existing_user = await self.middleware.call(
@@ -1549,7 +1565,7 @@ class GroupService(CRUDService):
 
     @accepts(Dict(
         'group_create',
-        Int('gid'),
+        Int('gid', validators=[Range(0, TRUENAS_IDMAP_DEFAULT_LOW - 1)]),
         Str('name', required=True),
         Bool('smb', default=True),
         List('sudo_commands', items=[Str('command', empty=False)]),
@@ -1767,6 +1783,21 @@ class GroupService(CRUDService):
     async def __common_validation(self, verrors, data, schema, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
+
+        if await self.middleware.call('cluster.utils.is_clustered'):
+            if data.get('smb') is True:
+                verrors.add(
+                    f'{schema}.smb',
+                    'Local SMB groups may not be created on clustered TrueNAS'
+                )
+
+            if 'name' in data and (await self.middleware.call('cluster.accounts.group.query', [
+                ['group', 'C=', data['name']]
+            ])):
+                verrors.add(
+                    f'{schema}.name',
+                    'Name is already in use by a clustered group.'
+                )
 
         if 'name' in data:
             if data.get('smb'):
