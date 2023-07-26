@@ -84,22 +84,26 @@ class SystemService(Service):
         """Returns the short name of the software version of the system."""
         return sw_info()['version']
 
-    @accepts()
-    @returns(Str('truenas_version_major'))
-    def version_major(self):
-        """Returns the software major version of the system."""
+    @private
+    def version_major_impl(self, version_str=None):
         # some variation of the version string can look like:
         # 23.10-MASTER-*, 23.10.0, 23.10, 23.10-INTERNAL.1, 23.10.0-INTERANL,
         # 23.10.1, 23.10.0-CUSTOM-NAME, 23.10.0-BETA.1, 23.10.0-RC.1
+        # major is "23.10" in the above examples
+        to_format = self.version_short() if version_str is None else version_str
+        return '.'.join(to_format.split('-')[0].split('.', 2)[0:2])
 
-        # major is "23.10"
-        return '.'.join(self.version_short().split('-')[0].split('.', 2)[0:2])
-
-    @accepts()
+    @accepts(Str('version_str', default=None, required=False))
     @returns(Str('truenas_release_notes_url'))
-    def release_notes_url(self):
-        """Returns the release notes URL for the SCALE version that is currently installed"""
-        return f'https://truenas.com/docs/scale/{self.version_major()}'
+    def release_notes_url(self, version):
+        """Returns the release notes URL for a version of SCALE.
+
+        `version_str` str: represents a version to check against
+
+        If `version` is not provided, then the release notes URL will return
+            a link for the currently installed version of SCALE.
+        """
+        return f'https://truenas.com/docs/scale/{self.version_major_impl(version)}'
 
     @accepts()
     @returns(Str('truenas_version'))

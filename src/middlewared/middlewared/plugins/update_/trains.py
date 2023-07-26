@@ -45,6 +45,7 @@ class UpdateService(Service):
             }],
             "notice": None,
             "notes": None,
+            "release_notes_url": await self.middleware.call("system.release_notes_url", new_manifest["version"]),
             "changelog": new_manifest["changelog"],
             "version": new_manifest["version"],
             "filename": new_manifest["filename"],
