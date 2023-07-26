@@ -12,6 +12,9 @@ from middlewared.plugins.gluster_linux.utils import get_parsed_glusterd_uuid, Gl
 from middlewared.plugins.pwenc import PWENC_BLOCK_SIZE
 from middlewared.validators import Range
 
+VERSION_MAJOR = 1
+VERSION_MINOR = 0
+
 
 class ClusterPeerConnection:
     expected_mnt_flags = {'RW', 'NOATIME', 'XATTR', 'POSIXACL', 'CASESENSITIVE'}
@@ -218,6 +221,118 @@ class ClusterManagement(Service):
         raise CallError(
             f'Timed out waiting for following nodes to become healthy: {", ".join(unhealthy)}'
         )
+
+    @private
+    def version(self):
+        return {'major': VERSION_MAJOR, 'minor': VERSION_MINOR}
+
+    @accepts(Dict(
+        'summary_options',
+        Bool('include_volumes', default=True),
+    ))
+    @returns(Dict(
+        Bool('healthy'),
+        Dict('version', Int('major'), Int('minor')),
+        Dict(
+            'leader',
+            Int('pnn'),
+            Bool('this_node'),
+            Bool('enabled'),
+            Str('uuid'),
+            Dict(
+                'status',
+                Dict('node', List('flags'), Bool('partially_online')),
+                Dict('peering', Str('connected'), Str('state'), Str('status'))
+            ),
+            Str('private_address'),
+            Dict('virtual_addresses', List('configured'), List('active')),
+        ),
+        List('cluster_nodes', items=[
+            Dict(
+                'cluster_node',
+                Int('pnn'),
+                Bool('this_node'),
+                Bool('enabled'),
+                Str('uuid'),
+                Dict(
+                    'status',
+                    Dict('node', List('flags'), Bool('partially_online')),
+                    Dict('peering', Str('connected'), Str('state'), Str('status'))
+                ),
+                Str('private_address'),
+                Dict('virtual_addresses', List('configured'), List('active')),
+            )
+        ]),
+        List('cluster_volumes')
+    ))
+    def summary(self, data):
+        healthy = self.middleware.call_sync('ctdb.general.healthy')
+        leader = self.middleware.call_sync('ctdb.general.recovery_master')
+        nodes_file = self.middleware.call_sync('ctdb.private.ips.query')
+        vips = self.middleware.call_sync('ctdb.public.ips.query')
+        peers = self.middleware.call_sync('gluster.peer.query')
+        if data['include_volumes']:
+            volumes = self.middleware.call_sync('gluster.volume.query')
+        else:
+            volumes = None
+
+        nodes_status = self.middleware.call_sync('ctdb.general.status')
+        version = self.version()
+
+        output = {
+            'healthy': healthy,
+            'version': version,
+            'leader': None,
+            'cluster_nodes': [],
+            'cluster_volumes': volumes
+        }
+
+        for cluster_node in zip(nodes_file, vips):
+            private, public = cluster_node
+            peer = filter_list(peers, [['uuid', '=', private['node_uuid']]])
+            node = filter_list(nodes_status['nodemap']['nodes'], [['pnn', '=', private['pnn']]])
+            active_ips = []
+
+            # collapse the active IPs dict into simple list
+            for addr, info in public['active_ips'].items():
+                for entry in info:
+                    active_ips.append({'address': addr} | info.copy())
+
+            if node:
+                node_info = {
+                    'flags': node[0]['flags'],
+                    'partially_online': node[0]['partially_online']
+                }
+            else:
+                node_info = None
+
+            if peer:
+                peering_info = {
+                    'connected': peer[0]['connected'],
+                    'state': peer[0]['state'],
+                    'status': peer[0]['status']
+                }
+            else:
+                peering_info = None
+
+            entry = {
+                'pnn': private['pnn'],
+                'this_node': private['this_node'],
+                'enabled': private['enabled'],
+                'uuid': private['node_uuid'],
+                'status': {'node': node_info, 'peering': peering_info},
+                'private_address': private['address'],
+                'virtual_addresses': {
+                    'configured': list(public['configured_ips'].values()),
+                    'active': active_ips
+                },
+            }
+            output['cluster_nodes'].append(entry)
+
+            if entry['pnn'] == leader:
+                output['leader'] = entry
+
+        return output
 
     @accepts(Dict(
         'add_cluster_nodes',
