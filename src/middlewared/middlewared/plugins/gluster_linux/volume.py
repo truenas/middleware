@@ -182,7 +182,8 @@ class GlusterVolumeService(CRUDService):
         # this will send a request to all peers
         # in the TSP to FUSE mount this volume locally
         data = {'event': 'VOLUME_START', 'name': name, 'forward': True}
-        await self.middleware.call('gluster.localevents.send', data)
+        onnode = await self.middleware.call('gluster.localevents.send', data)
+        await onnode.wait()
 
         return result
 
@@ -222,7 +223,10 @@ class GlusterVolumeService(CRUDService):
         name = data.pop('name')
 
         # this will send a request to all peers in the TSP to unmount the FUSE mountpoint
-        await self.middleware.call('gluster.localevents.send', {'event': 'VOLUME_STOP', 'name': name, 'forward': True})
+        onnode = await self.middleware.call(
+            'gluster.localevents.send', {'event': 'VOLUME_STOP', 'name': name, 'forward': True}
+        )
+        await onnode.wait(raise_error=True)
         return await self.middleware.call('gluster.method.run', volume.stop, {'args': (name,), 'kwargs': data})
 
     @accepts(Str('id'))
@@ -265,7 +269,8 @@ class GlusterVolumeService(CRUDService):
         # send the request to do the same to all other peers in
         # the TSP before we delete the volume
         data = {'event': 'VOLUME_STOP', 'name': volume_id, 'forward': True}
-        await self.middleware.call('gluster.localevents.send', data)
+        onnode = await self.middleware.call('gluster.localevents.send', data)
+        await onnode.wait(raise_error=True)
         await self.middleware.call('gluster.method.run', volume.delete, args)
 
     @accepts(Dict(

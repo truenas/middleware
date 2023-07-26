@@ -123,11 +123,12 @@ class CtdbAccountsService(Service):
         # should be converted to a job or this method should be converted
         # to use the cluster jobs framework.
         config = await self.middleware.call('ctdb.root_dir.config')
-        await self.middleware.call('gluster.localevents.send', {
+        onnode = await self.middleware.call('gluster.localevents.send', {
             'event': 'CLUSTER_ACCOUNT',
             'name': config['volume_name'],
             'forward': True
         } | data)
+        await onnode.wait(raise_error=True)
 
 
 class ClusterUserService(CRUDService):

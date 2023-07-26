@@ -9,7 +9,7 @@ import time
 
 from middlewared.service_exception import CallError, ValidationError
 from middlewared.schema import Dict, Str, Bool, returns
-from middlewared.service import (accepts, Service,
+from middlewared.service import (accepts, job, Service,
                                  private, ValidationErrors)
 from .utils import GlusterConfig
 from uuid import uuid4
@@ -17,6 +17,8 @@ from uuid import uuid4
 
 SECRETS_FILE = GlusterConfig.SECRETS_FILE.value
 LOCAL_WEBHOOK_URL = GlusterConfig.LOCAL_WEBHOOK_URL.value
+EVENT_TIMEOUT = GlusterConfig.EVENT_TIMEOUT.value
+LOCK = "LOCAL_EVENTS_LOCK"
 
 
 class AllowedEvents(enum.Enum):
@@ -66,7 +68,8 @@ class GlusterLocalEventsService(Service):
         additional_attrs=True,
     ))
     @private
-    async def send(self, data):
+    @job(lock=LOCK)
+    async def send(self, job, data):
         await self.middleware.call('gluster.localevents.validate', data)
         secret = await self.middleware.call('gluster.localevents.get_set_jwt_secret')
         token = jwt.encode({'ts': int(time.time()), 'msg_id': uuid4().hex}, secret, algorithm='HS256')
@@ -76,7 +79,12 @@ class GlusterLocalEventsService(Service):
         async with aiohttp.ClientSession() as sess:
             status = reason = None
             try:
-                res = await sess.post(LOCAL_WEBHOOK_URL, headers=headers, json={'payload': payload}, timeout=30)
+                res = await sess.post(
+                    LOCAL_WEBHOOK_URL,
+                    headers=headers,
+                    json={'payload': payload},
+                    timeout=EVENT_TIMEOUT
+                )
             except asyncio.exceptions.TimeoutError:
                 status = 500
                 reason = 'Timed out waiting for a response'

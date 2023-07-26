@@ -56,6 +56,8 @@ class GlusterConfig(enum.Enum):
         UUID_BACKUP
     ]
 
+    EVENT_TIMEOUT = 300
+
 
 async def format_bricks(bricks):
     # bricks shoud look like [{"peer_name": "blah", "peer_path": "/blah/blah"}, {...]

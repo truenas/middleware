@@ -7,9 +7,11 @@ from jwt import encode, decode
 from jwt.exceptions import DecodeError, InvalidSignatureError
 
 from middlewared.service_exception import CallError, ValidationError
+from middlewared.plugins.gluster_linux.utils import GlusterConfig
 
 # Other cluster nodes should have time offset within a second of this node
 ALLOWED_SKEW = 10
+RESPONSE_TIMEOUT = GlusterConfig.EVENT_TIMEOUT.value - 10
 
 
 class ClusterEventsApplication(object):
@@ -116,15 +118,13 @@ class ClusterEventsApplication(object):
             }
 
             payload = await self.middleware.call('clpwenc.encrypt', json.dumps(data))
-            # how long each POST request can take (in seconds)
-            timeout = 10
 
             # now send the requests in parallel
             async with aiohttp.ClientSession() as session:
                 tasks = []
                 for url in peer_urls:
                     tasks.append(
-                        self._post(url, headers, {'payload': payload}, session, timeout)
+                        self._post(url, headers, {'payload': payload}, session, RESPONSE_TIMEOUT)
                     )
 
                 resps = await asyncio.gather(*tasks, return_exceptions=True)
@@ -133,7 +133,7 @@ class ClusterEventsApplication(object):
                         self.middleware.logger.error(
                             'Timed out sending event to %s after %d seconds',
                             url,
-                            timeout
+                            RESPONSE_TIMEOUT
                         )
                         continue
 

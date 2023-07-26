@@ -505,9 +505,10 @@ class CtdbRootDirService(Service):
         # try to mount it locally and send a request
         # to all the other peers in the TSP to also
         # FUSE mount it
-        await self.middleware.call('gluster.localevents.send', {
+        onnode = await self.middleware.call('gluster.localevents.send', {
             'event': 'VOLUME_START', 'name': vol, 'forward': True
         })
+        await onnode.wait(raise_error=True)
 
         # we need to wait on the local FUSE mount job since
         # ctdb daemon config is dependent on it being mounted
@@ -568,7 +569,8 @@ class CtdbRootDirService(Service):
         # this sends an event telling all peers in the TSP (including this system)
         # to start the ctdb service
         data = {'event': 'CTDB_START', 'name': vol, 'forward': True}
-        await self.middleware.call('gluster.localevents.send', data)
+        onnode = await self.middleware.call('gluster.localevents.send', data)
+        await onnode.wait(raise_error=True)
 
         if ip_info:
             # If we changed the nodes files here, then issue command to all nodes

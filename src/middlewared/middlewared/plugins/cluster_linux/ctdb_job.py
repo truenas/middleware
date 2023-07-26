@@ -153,6 +153,8 @@ class ClusterJob(Service):
             "name": ctdb_config["volume_name"],
             "forward": True
         }
-        await self.middleware.call('gluster.localevents.send', data)
+        onnode = await self.middleware.call('gluster.localevents.send', data)
+        await onnode.wait(raise_error=True)
+
         await self.wait_for_method(job, method, 90)
         job.set_progress(100, 'Finished submitting cluster job')
