@@ -33,6 +33,9 @@ class DISKPlugin(GraphBase):
     title = 'Disk I/O Bandwidth'
     vertical_label = 'Kibibytes/s'
 
+    def get_title(self):
+        return 'Disk I/O ({identifier})'
+
     async def get_identifiers(self) -> typing.Optional[list]:
         disks = {f'disk.{disk["name"]}' for disk in await self.middleware.call('disk.query')}
         return [disk.rsplit('.')[-1] for disk in (disks & set(await self.all_charts()))]
@@ -62,6 +65,9 @@ class InterfacePlugin(GraphBase):
 
     title = 'Interface Traffic'
     vertical_label = 'Kilobits/s'
+
+    def get_title(self):
+        return 'Interface Traffic ({identifier})'
 
     async def get_identifiers(self) -> typing.Optional[list]:
         ifaces = {f'net.{i["name"]}' for i in await self.middleware.call('interface.query')}
@@ -111,7 +117,7 @@ class LoadPlugin(GraphBase):
 class MemoryPlugin(GraphBase):
 
     title = 'Physical memory utilization'
-    vertical_label = 'Mebibytes/s'
+    vertical_label = 'Mebibytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'system.ram'
@@ -120,7 +126,7 @@ class MemoryPlugin(GraphBase):
 class SwapPlugin(GraphBase):
 
     title = 'Swap Utilization'
-    vertical_label = 'Mebibytes/s'
+    vertical_label = 'Mebibytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'system.swap'
@@ -146,6 +152,7 @@ class UptimePlugin(GraphBase):
 class ARCActualRatePlugin(GraphBase):
 
     title = 'ZFS Actual Cache Hits Rate'
+    vertical_label = 'Events/s'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'zfs.actual_hits_rate'
@@ -154,6 +161,7 @@ class ARCActualRatePlugin(GraphBase):
 class ARCRatePlugin(GraphBase):
 
     title = 'ZFS ARC Hits Rate'
+    vertical_label = 'Events/s'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'zfs.hits_rate'
@@ -204,6 +212,9 @@ class DiskTempPlugin(GraphBase):
     title = 'Disks Temperature'
     vertical_label = 'Celsius'
     disk_mapping = {}
+
+    def get_title(self):
+        return 'Disk Temperature {identifier}'
 
     async def build_context(self):
         self.disk_mapping = {}

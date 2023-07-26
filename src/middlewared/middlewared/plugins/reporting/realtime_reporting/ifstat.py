@@ -11,8 +11,8 @@ def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> 
     for interface_name in interfaces:
         link_state = bool(safely_retrieve_dimension(netdata_metrics, f'net_operstate.{interface_name}', 'up', 0))
         data[interface_name]['link_state'] = 'LINK_STATE_UP' if link_state else 'LINK_STATE_DOWN'
-        data[interface_name]['speed'] = safely_retrieve_dimension(
-            netdata_metrics, f'net_speed.{interface_name}', 'speed', 0
+        data[interface_name]['speed'] = normalize_value(safely_retrieve_dimension(
+            netdata_metrics, f'net_speed.{interface_name}', 'speed', 0), divisor=1000
         )
         if link_state:
             data[interface_name]['received_bytes'] = normalize_value(

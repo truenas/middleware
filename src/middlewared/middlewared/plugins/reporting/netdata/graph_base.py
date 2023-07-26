@@ -63,7 +63,7 @@ class GraphBase(metaclass=GraphMeta):
         await self.build_context()
         return {
             'name': self.name,
-            'title': self.title,
+            'title': self.get_title(),
             'vertical_label': self.vertical_label,
             'identifiers': await self.get_identifiers(),
         }
@@ -81,7 +81,10 @@ class GraphBase(metaclass=GraphMeta):
     def query_parameters(self) -> dict:
         return {
             'format': 'json',
-            'options': 'flip|nonzero'
+            'options': 'flip|nonzero',
+            'points': 2999,  # max supported points are 3000 in UI, we keep 2999 because netdata accounts for index 0
+            'group': 'average',
+            'gtime': 0,
         }
 
     async def export(self, query_params: dict, identifier: typing.Optional[str] = None, aggregate: bool = True):
