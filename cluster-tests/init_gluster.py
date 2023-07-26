@@ -93,5 +93,5 @@ def init():
     wait_on_ctdb()
     print('Adding CTDB public IPs to cluster')
     add_public_ips_to_ctdb()
-    print('Genearting summary')
+    print('Generating summary')
     generate_cluster_summary()
