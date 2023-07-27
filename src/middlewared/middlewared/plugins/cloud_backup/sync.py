@@ -1,8 +1,11 @@
 import asyncio
+from datetime import datetime
+import itertools
 import subprocess
 
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
 from middlewared.service import CallError, Service, item_method, job
 from middlewared.utils import Popen
@@ -13,58 +16,118 @@ async def restic(middleware, job, cloud_backup, dry_run):
 
     remote = REMOTES[cloud_backup["credentials"]["provider"]]
 
-    if await middleware.call("filesystem.is_cluster_path", cloud_backup["path"]):
-        local_path = await middleware.call("filesystem.resolve_cluster_path", cloud_backup["path"])
-        await check_local_path(
-            middleware,
-            local_path,
-            check_mountpoint=False,
-            error_text_path=cloud_backup["path"],
-        )
-    else:
-        local_path = cloud_backup["path"]
-        await check_local_path(middleware, local_path)
-
-    remote_path = get_remote_path(remote, cloud_backup["attributes"])
-
-    url, env = remote.get_restic_config(cloud_backup)
-
-    cmd = ["restic", "-r", f"{remote.rclone_type}:{url}/{remote_path}", "--verbose", "backup", local_path]
-    if dry_run:
-        cmd.append("-n")
-
-    env["RESTIC_PASSWORD"] = cloud_backup["password"]
-
-    job.middleware.logger.debug("Running %r", cmd)
-    proc = await Popen(
-        cmd,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    check_progress = asyncio.ensure_future(restic_check_progress(job, proc))
-    cancelled_error = None
+    snapshot = None
+    clone = None
+    stdin = None
+    cmd = None
     try:
-        try:
-            await proc.wait()
-        except asyncio.CancelledError as e:
-            cancelled_error = e
-            try:
-                await middleware.call("service.terminate_process", proc.pid)
-            except CallError as e:
-                job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
-    finally:
-        await asyncio.wait_for(check_progress, None)
+        if await middleware.call("filesystem.is_cluster_path", cloud_backup["path"]):
+            local_path = await middleware.call("filesystem.resolve_cluster_path", cloud_backup["path"])
+            await check_local_path(
+                middleware,
+                local_path,
+                check_mountpoint=False,
+                error_text_path=cloud_backup["path"],
+            )
+        else:
+            local_path = cloud_backup["path"]
+            if local_path.startswith("/dev/zvol"):
+                name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+                snapshot = (await middleware.call("zfs.snapshot.create", {
+                    "dataset": zvol_path_to_name(local_path),
+                    "name": name,
+                    "suspend_vms": True,
+                    "vmware_sync": True,
+                }))["name"]
 
-    if cancelled_error is not None:
-        raise cancelled_error
-    if proc.returncode != 0:
-        message = "".join(job.internal_data.get("messages", []))
-        if message and proc.returncode != 1:
-            if message and not message.endswith("\n"):
-                message += "\n"
-            message += f"restic failed with exit code {proc.returncode}"
-        raise CallError(message)
+                clone = zvol_path_to_name(local_path) + f"-{name}"
+                try:
+                    await middleware.call("zfs.snapshot.clone", {
+                        "snapshot": snapshot,
+                        "dataset_dst": clone,
+                    })
+                except Exception:
+                    clone = None
+                    raise
+
+                # zvol device might take a while to appear
+                for i in itertools.count():
+                    try:
+                        stdin = await middleware.run_in_thread(open, zvol_name_to_path(clone), "rb")
+                    except FileNotFoundError:
+                        if i >= 5:
+                            raise
+
+                        await asyncio.sleep(1)
+                    else:
+                        break
+
+                cmd = ["--stdin", "--stdin-filename", "volume"]
+            else:
+                await check_local_path(middleware, local_path)
+
+        if cmd is None:
+            cmd = [local_path]
+
+        remote_path = get_remote_path(remote, cloud_backup["attributes"])
+
+        url, env = remote.get_restic_config(cloud_backup)
+
+        cmd = ["restic", "-r", f"{remote.rclone_type}:{url}/{remote_path}", "--verbose", "backup"] + cmd
+        if dry_run:
+            cmd.append("-n")
+
+        env["RESTIC_PASSWORD"] = cloud_backup["password"]
+
+        job.middleware.logger.debug("Running %r", cmd)
+        proc = await Popen(
+            cmd,
+            env=env,
+            stdin=stdin,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        check_progress = asyncio.ensure_future(restic_check_progress(job, proc))
+        cancelled_error = None
+        try:
+            try:
+                await proc.wait()
+            except asyncio.CancelledError as e:
+                cancelled_error = e
+                try:
+                    await middleware.call("service.terminate_process", proc.pid)
+                except CallError as e:
+                    job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
+        finally:
+            await asyncio.wait_for(check_progress, None)
+
+        if cancelled_error is not None:
+            raise cancelled_error
+        if proc.returncode != 0:
+            message = "".join(job.internal_data.get("messages", []))
+            if message and proc.returncode != 1:
+                if message and not message.endswith("\n"):
+                    message += "\n"
+                message += f"restic failed with exit code {proc.returncode}"
+            raise CallError(message)
+    finally:
+        if stdin:
+            try:
+                stdin.close()
+            except Exception as e:
+                middleware.logger.warning(f"Error closing snapshot device: {e!r}")
+
+        if clone is not None:
+            try:
+                await middleware.call("zfs.dataset.delete", clone)
+            except Exception as e:
+                middleware.logger.warning(f"Error deleting cloned dataset {clone}: {e!r}")
+
+        if snapshot is not None:
+            try:
+                await middleware.call("zfs.snapshot.delete", snapshot)
+            except Exception as e:
+                middleware.logger.warning(f"Error deleting snapshot {snapshot}: {e!r}")
 
 
 async def restic_check_progress(job, proc):
