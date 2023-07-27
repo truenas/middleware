@@ -96,7 +96,8 @@ class JobsQueue(object):
         self.deque.add(job)
         self.queue.append(job)
 
-        job.send_event('ADDED', job.__encode__())
+        if not job.options["transient"]:
+            self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
@@ -321,7 +322,7 @@ class Job:
         """
         if self.description != description:
             self.description = description
-            self.send_event('CHANGED', self.__encode__())
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def set_progress(self, percent=None, description=None, extra=None):
         """
@@ -359,7 +360,7 @@ class Job:
                 logger.warning('Failed to run on progress callback', exc_info=True)
 
         if changed:
-            self.send_event('CHANGED', encoded)
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
 
         for wrapped in self.wrapped:
             wrapped.set_progress(**self.progress)
@@ -420,7 +421,7 @@ class Job:
                 raise asyncio.CancelledError()
             else:
                 self.set_state('RUNNING')
-                self.send_event('CHANGED', self.__encode__())
+                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
             self.future = asyncio.ensure_future(self.__run_body())
             try:
@@ -446,9 +447,10 @@ class Job:
 
             queue.release_lock(self)
             self._finished.set()
-            self.send_event('CHANGED', self.__encode__())
             if self.options['transient']:
                 queue.remove(self.id)
+            else:
+                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     async def __run_body(self):
         """
@@ -616,10 +618,6 @@ class Job:
 
     async def logs_fd_write(self, data):
         await self.middleware.run_in_thread(self.logs_fd.write, data)
-
-    def send_event(self, name, fields):
-        if not self.options['transient']:
-            self.middleware.send_event('core.get_jobs', name, id=self.id, fields=fields)
 
 
 class JobProgressBuffer:
