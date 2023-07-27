@@ -233,6 +233,7 @@ class ClusterManagement(Service):
     @returns(Dict(
         Bool('healthy'),
         Dict('version', Int('major'), Int('minor')),
+        Ref('root_dir_config', 'ctdb_root_dir_config'),
         Dict(
             'leader',
             Int('pnn'),
@@ -314,10 +315,12 @@ class ClusterManagement(Service):
 
         nodes_status = self.middleware.call_sync('ctdb.general.status')
         version = self.version()
+        ctdb_config = self.middleware.call_sync('ctdb.root_dir.config')
 
         output = {
             'healthy': healthy,
             'version': version,
+            'ctdb_root_dir_config': ctdb_config,
             'leader': None,
             'cluster_nodes': [],
             'cluster_volumes': volumes

@@ -133,6 +133,7 @@ class CtdbRootDirService(Service):
         data = {
             'volume_name': volume,
             'volume_mountpoint': str(volume_mp),
+            'volume_type': 'GLUSTER',
             'path': system_dir,
             'mountpoint': str(Path(f'{volume_mp}/{system_dir}')),
             'uuid': conf['uuid']
@@ -152,6 +153,7 @@ class CtdbRootDirService(Service):
         'root_dir_config',
         Str('volume_name'),
         Str('volume_mountpoint'),
+        Str('volume_type'),
         Str('path'),
         Str('mountpoint'),
         Str('uuid'),
