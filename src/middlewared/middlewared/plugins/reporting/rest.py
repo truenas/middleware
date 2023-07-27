@@ -1,10 +1,9 @@
 from middlewared.service import accepts, Service
 from middlewared.schema import Str, Dict, Int
 from middlewared.utils.cpu import cpu_info
-from middlewared.utils.disks import get_disks_for_temperature_reading
 
 from .netdata import Netdata
-from .utils import calculate_disk_space_for_netdata
+from .utils import calculate_disk_space_for_netdata, get_metrics_approximation
 
 
 class NetdataService(Service):
@@ -38,12 +37,15 @@ class NetdataService(Service):
     async def get_all_metrics(self):
         return await Netdata.get_all_metrics()
 
+    def calculated_metrics_count(self):
+        return sum(get_metrics_approximation(
+            len(self.middleware.call_sync('device.get_disks', False, True)),
+            cpu_info()['core_count'],
+            self.middleware.call_sync('interface.query', [], {'count': True}),
+            self.middleware.call_sync('zfs.pool.query', [], {'count': True}),
+        ).values())
+
     def get_disk_space(self):
-        # TODO: How should we expose graph_age for netdata right now wrt reporting.updte?
-        #  Current discussion with Caleb was to store per second data for 7 days
-        # FIXME: Fix this based on disks dimensions as just multiplying by 2 is not enough because
-        #  more then one dimension of disk is being retrieved by netdata which results in quite a substantial number
-        # 415 is an approximation right now based on the number of metrics we have
-        metrics = 415 + (2 * len(get_disks_for_temperature_reading())) + cpu_info()['core_count']
-        days = self.middleware.call_sync('reporting.config')['graph_age']
-        return calculate_disk_space_for_netdata(metrics, days)
+        return calculate_disk_space_for_netdata(
+            self.calculated_metrics_count(), 7
+        )  # We only want to maintain 7 days of stats
