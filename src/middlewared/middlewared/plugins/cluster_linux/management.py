@@ -22,8 +22,10 @@ class ClusterPeerConnection:
     def __do_connect(self):
         c = Client(f'ws://{self.private_address}:6000/websocket')
         cred = self.credentials
-        if (api_key := cred.get('api_key')):
-            authenticated = c.call('auth.login_with_api_key', api_key)
+        if (auth_token := cred.get('auth_token')):
+            authenticated = c.call('auth.login_with_token', auth_token)
+        elif (auth_key := cred.get('auth_key')):
+            authenticated = c.call('auth.login_with_api_key', auth_key)
         else:
             authenticated = c.call('auth.login', cred['username'], cred['password'])
 
@@ -384,7 +386,14 @@ class ClusterManagement(Service):
                         Str('username', required=True),
                         Str('password', required=True, private=True)
                     ),
-                    Str('api_key', required=True, private=True),
+                    Dict(
+                        'authentication_token',
+                        Str('auth_token', required=True, private=True),
+                    ),
+                    Dict(
+                        'api_key',
+                        Str('api_key', required=True, private=True),
+                    ),
                     name='remote_credential',
                 ),
                 Str('hostname', required=True),
