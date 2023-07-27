@@ -9,16 +9,31 @@ GPD = GLUSTER_PEERS_DNS
 URLS = [f'http://{ip}/api/v2.0' for ip in CLUSTER_IPS]
 
 
+def generate_auth_tokens():
+    # generate a temporary auth token for node
+    # defaults to 600 second ttl
+    tokens = []
+    for ip in CLUSTER_IPS:
+        res = make_ws_request(ip, {
+            'msg': 'method',
+            'method': 'auth.generate_token',
+        })
+        assert res.get('error') is None, str(res)
+        tokens.append(res['result'])
+
+    return tokens
+
+
 def create_cluster():
+    tokens = generate_auth_tokens()
+    assert len(tokens) == 3
+
     peers_config = [{
-        'private_address': CLUSTER_INFO[f'NODE_{node}_IP'],
-        'hostname': CLUSTER_INFO[f'NODE_{node}_DNS'],
+        'private_address': CLUSTER_INFO[f'NODE_{node[1]}_IP'],
+        'hostname': CLUSTER_INFO[f'NODE_{node[1]}_DNS'],
         'brick_path': BRICK_PATH,
-        'remote_credential': {
-            'username': CLUSTER_INFO['APIUSER'],
-            'password': CLUSTER_INFO['APIPASS']
-        }
-    } for node in ('B', 'C')]
+        'remote_credential': {'auth_token': tokens[node[0]]}
+    } for node in ((1, 'B'), (2, 'C'))]
 
     local_node = {
         'private_address': CLUSTER_INFO['NODE_A_IP'],
