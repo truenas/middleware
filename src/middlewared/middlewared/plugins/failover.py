@@ -435,8 +435,9 @@ class FailoverService(ConfigService):
             except Exception:
                 self.logger.error('Unhandled exception in get_disks_local on remote controller', exc_info=True)
             else:
-                result['missing_local'] = sorted(set(rd) - set(ld))
-                result['missing_remote'] = sorted(set(ld) - set(rd))
+                if rd is not None:
+                    result['missing_local'] = sorted(set(rd) - set(ld))
+                    result['missing_remote'] = sorted(set(ld) - set(rd))
 
         return result
 
