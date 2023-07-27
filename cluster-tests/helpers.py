@@ -2,10 +2,11 @@ import contextlib
 
 from time import sleep
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from middlewared.test.integration.utils import client
 from protocols import SMB
 from samba import NTSTATUSError
 
-from config import CLUSTER_IPS, TIMEOUTS 
+from config import CLIENT_AUTH, CLUSTER_IPS, TIMEOUTS
 from utils import make_request
 
 
@@ -75,3 +76,15 @@ def wait_reconnect(smb_connection):
 
         waited += 1
         sleep(1)
+
+
+@contextlib.contextmanager
+def client_and_events(ip_address):
+    events = []
+
+    def events_callback(event_type, **message):
+        events.append((event_type, message))
+
+    with client(auth=CLIENT_AUTH, host_ip=ip_address) as c:
+        c.subscribe('ctdb.status', callback=events_callback, sync=True)
+        yield (c, events)
