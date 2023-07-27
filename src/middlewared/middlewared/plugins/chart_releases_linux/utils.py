@@ -41,6 +41,8 @@ def get_action_context(release_name):
         'upgradeMetadata': {},
         'hasSMBCSI': True,
         'hasNFSCSI': True,
+        'smbProvisioner': 'smb.csi.k8s.io',
+        'nfsProvisioner': 'nfs.csi.k8s.io',
     })
 
 
