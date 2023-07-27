@@ -96,9 +96,7 @@ class JobsQueue(object):
 
         self.deque.add(job)
         self.queue.append(job)
-
-        if not job.options["transient"]:
-            self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
+        self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
@@ -448,10 +446,9 @@ class Job:
 
             queue.release_lock(self)
             self._finished.set()
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
             if self.options['transient']:
                 queue.remove(self.id)
-            else:
-                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     async def __run_body(self):
         """
