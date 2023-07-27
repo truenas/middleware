@@ -43,17 +43,13 @@ class CtdbEventService(Service):
 
     def event_became_leader(self, data):
         try:
-            node_info = self.middleware.call_sync(
-                'ctdb.private.ips.query',
-                [['this_node', '=', True]],
-                {'select': ['id', 'pnn', 'address', 'node_uuid'], 'get': True}
-            )
+            summary = self.middleware.call_sync('cluster.management.summary', {'include_volumes': False})
         except Exception:
             self.logger.error('Failed to generate cluster event', exc_info=True)
             return
 
         self.middleware.send_event(
-            'ctdb.status', 'CHANGED', fields={'event': data['event'], 'data': node_info}
+            'ctdb.status', 'CHANGED', fields={'event': data['event'], 'data': summary}
         )
 
     def event_ip_reallocated(self, data):
@@ -66,9 +62,9 @@ class CtdbEventService(Service):
         if not self.middleware.call_sync('ctdb.general.is_rec_master'):
             return
 
-        public_ips = self.middleware.call_sync('ctdb.general.ips')
+        summary = self.middleware.call_sync('cluster.management.summary', {'include_volumes': False})
         self.middleware.send_event(
-            'ctdb.status', 'CHANGED', fields={'event': data['event'], 'data': public_ips}
+            'ctdb.status', 'CHANGED', fields={'event': data['event'], 'data': summary}
         )
 
     def event_startup(self, data):
@@ -118,8 +114,9 @@ class CtdbEventService(Service):
             return
 
         ev = data.pop('event')
+        summary = self.middleware.call_sync('cluster.management.summary', {'include_volumes': False})
         self.middleware.send_event(
-            'ctdb.status', 'CHANGED', fields={'event': ev, 'data': data}
+            'ctdb.status', 'CHANGED', fields={'event': ev, 'data': summary}
         )
 
     def event_not_implemented(self, arg_unused):
