@@ -88,3 +88,24 @@ def test_double_init_error(s3_credential):
                 call("cloud_backup.init", t["id"], job=True)
 
             assert ve.value.error.rstrip().endswith("already initialized")
+
+
+def test_zvol_cloud_backup(s3_credential):
+    clean()
+
+    with dataset("cloud_backup", {"type": "VOLUME", "volsize": 1024 * 1024}) as zvol:
+        path = f"/dev/zvol/{zvol}"
+        ssh(f"dd if=/dev/urandom of={path} bs=1M count=1")
+
+        with task({
+            "path": path,
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+        }) as t:
+            call("cloud_backup.init", t["id"], job=True)
+
+            run_task(t)
