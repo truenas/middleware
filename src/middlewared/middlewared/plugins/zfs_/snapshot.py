@@ -210,7 +210,9 @@ class ZFSSnapshot(CRUDService):
             self.logger.error(f'Failed to snapshot {dataset}@{name}: {err}')
             raise CallError(f'Failed to snapshot {dataset}@{name}: {err}', errno_)
         else:
-            return self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
+            instance = self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
+            self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=instance['id'])
+            return instance
         finally:
             if affected_vms:
                 self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))
@@ -300,4 +302,6 @@ class ZFSSnapshot(CRUDService):
 
             raise CallError(str(e))
         else:
+            # TODO: Events won't be sent for child snapshots in recursive delete
+            self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id)
             return True
