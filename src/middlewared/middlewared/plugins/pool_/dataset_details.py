@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.service import Service, private
@@ -404,7 +405,7 @@ class PoolDatasetService(Service):
         count = 0
         for i in filter(lambda x: x['direction'] == 'PUSH', cldtasks):
             # we only care about cloud sync tasks that are configured to push
-            if i['path'] == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
+            if pathlib.Path(ds['mountpoint']).is_relative_to(i['path']):
                 count += 1
 
         return count
@@ -414,7 +415,7 @@ class PoolDatasetService(Service):
         count = 0
         for i in filter(lambda x: x['direction'] == 'PUSH', rsynctasks):
             # we only care about rsync tasks that are configured to push
-            if i['path'] == ds['mountpoint'] or i['mount_info'].get('mount_source') == ds['id']:
+            if pathlib.Path(ds['mountpoint']).is_relative_to(i['path']):
                 count += 1
 
         return count
