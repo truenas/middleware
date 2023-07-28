@@ -315,7 +315,18 @@ class ClusterManagement(Service):
         else:
             volumes = None
 
-        nodes_status = self.middleware.call_sync('ctdb.general.status')
+        try:
+            nodes_status = self.middleware.call_sync('ctdb.general.status')
+        except RuntimeError:
+            # if there is a mismatch between our nodes file and the node information inside
+            # then runtime error will be raised by the CTDB client (currently).
+            self.logger.warning(
+                'Failed to retrive node status. This may indicate that the in-memory nodes '
+                'file in CTDBD is stale. Attempting to refresh.', exc_info=True
+            )
+            self.middleware.call_sync('ctdb.private.ips.reload')
+            nodes_status = self.middleware.call_sync('ctdb.general.status')
+
         version = self.version()
         ctdb_config = self.middleware.call_sync('ctdb.root_dir.config')
 
