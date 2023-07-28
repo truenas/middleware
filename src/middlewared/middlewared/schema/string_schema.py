@@ -1,7 +1,14 @@
 import errno
 import ipaddress
 import os
-import wbclient
+try:
+    import wbclient
+except ImportError:
+    # During fresh install of TrueNAS lookup of libwbclient.so.0
+    # will fail without specifying an LD_LOOKUP_PATH within the
+    # freshly extracted TrueNAS SCALE squashfs filesystem. If we
+    # don't skip the ImportError then fresh SCALE install will fail.
+    pass
 
 from datetime import datetime, time, timezone
 from ldap import dn
