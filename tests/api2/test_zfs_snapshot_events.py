@@ -37,4 +37,5 @@ def test_delete():
 
             assert len(events) == 1, pprint.pformat(events, indent=2)
             assert events[0][0] == "REMOVED"
-            assert events[0][1] == {"collection": "zfs.snapshot.query", "msg": "removed", "id": f"{ds}@test"}
+            assert events[0][1] == {"collection": "zfs.snapshot.query", "msg": "removed", "id": f"{ds}@test",
+                                    "extra": {"recursive": False}}
