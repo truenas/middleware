@@ -303,5 +303,7 @@ class ZFSSnapshot(CRUDService):
             raise CallError(str(e))
         else:
             # TODO: Events won't be sent for child snapshots in recursive delete
-            self.middleware.send_event(f'{self._config.namespace}.query', 'REMOVED', id=id)
+            self.middleware.send_event(
+                f'{self._config.namespace}.query', 'REMOVED', id=id, recursive=options['recursive'],
+            )
             return True
