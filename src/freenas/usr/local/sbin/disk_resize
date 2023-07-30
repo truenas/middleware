@@ -1,5 +1,6 @@
 #!/bin/sh
 
+udevd_timeout=10
 dev=$1
 osize=$2
 
@@ -120,6 +121,11 @@ ata|sata)
 
 	if [ -z "${size}" ]; then
 		size=${maxsect}
+	fi
+	echo "Waiting up to ${udevd_timeout} seconds for udevd events to settle"
+	udevadm settle -t ${udevd_timeout}
+	if [ $? -ne 0 ]; then
+		echo "Resize may fail. Udevd events failed to settle within ${udevd_timeout} seconds."
 	fi
 	echo "Setting Max Sectors to ${size}"
 	hdparm --yes-i-know-what-i-am-doing -N p${size} /dev/${dev}	# NB: the p is for persistence
