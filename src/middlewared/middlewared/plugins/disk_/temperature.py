@@ -1,16 +1,14 @@
 import asyncio
-import async_timeout
-import os
-import subprocess
+import datetime
 import time
-import math
+
+import async_timeout
 
 from middlewared.common.smart.smartctl import SMARTCTL_POWERMODES
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.asyncio_ import asyncio_map
-from middlewared.utils.disks import get_disks_temperatures, parse_smartctl_for_temperature_output
-from middlewared.utils.itertools import grouper
+from middlewared.utils.disks import parse_smartctl_for_temperature_output
 
 
 class DiskService(Service):
@@ -118,64 +116,26 @@ class DiskService(Service):
 
         return dict(zip(names, await asyncio_map(temperature, names, 8)))
 
-    @private
-    def read_temps(self):
-        """
-        The main consumer of this endpoint is the disktemp.py collectd python plugin
-        which polls and calls this method every 300 seconds (5 mins). The way we configure
-        the smartd.conf, the temperature will be written to disk in csv file format for each
-        drive. However, smartd only supports writing temp information for sata/sas drives at
-        the moment. Luckily, the kernel (via the hwmon interface) reports nvme drive temperatures
-        (if the nvme drive supports it). This means we can get all drive temperatures quite quickly.
-        However, if we can't get a drive temperature using these methods for whatever reason then
-        we will fall back to subprocessing out to smartctl and trying to parse the temperature.
-        """
-        return get_disks_temperatures(self.middleware.call_sync('netdata.get_all_metrics'))
-
-    @private
-    def get_temp_value(self, value):
-        if math.isnan(value):
-            value = None
-        return value
-
-    @accepts(List('names', items=[Str('name')]), Int('days'))
+    @accepts(List('names', items=[Str('name')]), Int('days', default=7))
     @returns(Dict('temperatures', additional_attrs=True))
     def temperature_agg(self, names, days):
-        """
-        Returns min/max/avg temperature for `names` disks for the last `days` days.
-        """
-        disks = []
-        args = []
-        for name in names:
-            path = f'/var/db/collectd/rrd/localhost/disktemp-{name}/temperature.rrd'
-            if not os.path.exists(path):
-                continue
+        """Returns min/max/avg temperature for `names` disks for the last `days` days"""
+        # we only keep 7 days of historical data because we keep per second information
+        # which adds up to lots of used disk space quickly depending on the size of the
+        # system
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(days=min(days, 7))
+        opts = {'start': round(start.timestamp()), 'end': round(end.timestamp())}
+        final = dict()
+        for disk in self.middleware.call_sync('reporting.netdata_graph', 'disktemp', opts):
+            if disk['identifier'] in names:
+                final[disk['identifier']] = {
+                    'min': disk['aggregations']['min']['temperature_value'],
+                    'max': disk['aggregations']['max']['temperature_value'],
+                    'avg': disk['aggregations']['mean']['temperature_value'],
+                }
 
-            disks.append(name)
-            for DEF, VDEF in [('MIN', 'MINIMUM'), ('MAX', 'MAXIMUM'), ('AVERAGE', 'AVERAGE')]:
-                args.extend([
-                    f'DEF:{name}{DEF}=/var/db/collectd/rrd/localhost/disktemp-{name}/temperature.rrd:value:{DEF}',
-                    f'VDEF:v{name}{DEF}={name}{DEF},{VDEF}',
-                    f'PRINT:v{name}{DEF}:%lf',
-                ])
-
-        output = list(map(float, subprocess.run(
-            ['rrdtool', 'graph', 'x', '--daemon', 'unix:/var/run/rrdcached.sock', '--start', f'-{days}d', '--end',
-             'now'] + args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            encoding='ascii',
-        ).stdout.split()[1:]))  # The first line is `0x0`
-
-        result = {}
-        for disk, values in zip(disks, grouper(output, 3)):  # FIXME: `incomplete='strict' when we switch to python 3.10
-            result[disk] = {
-                'min': self.get_temp_value(values[0]),
-                'max': self.get_temp_value(values[1]),
-                'avg': self.get_temp_value(values[2]),
-            }
-
-        return result
+        return final
 
     @accepts(List('names', items=[Str('name')]))
     @returns(Ref('alert'))
