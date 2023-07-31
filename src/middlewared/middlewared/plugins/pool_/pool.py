@@ -1,5 +1,6 @@
 import errno
 import os
+import re
 
 import middlewared.sqlalchemy as sa
 
@@ -14,6 +15,10 @@ from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
 from .utils import ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE
+
+
+RE_DATA = re.compile(r':\d*d')
+RE_SPARE = re.compile(r':\d*s')
 
 
 class PoolModel(sa.Model):
@@ -206,6 +211,9 @@ class PoolService(CRUDService):
                     'type': t_vdev['type'],
                     'devices': vdev_devs_list,
                 }
+                if t_vdev['type'].startswith('DRAID'):
+                    vdev['draid_data_disks'] = t_vdev['draid_data_disks']
+                    vdev['draid_spare_disks'] = t_vdev['draid_spare_disks']
                 vdevs.append(vdev)
                 # cache and log devices should not have a swap
                 create_swap = True if i == 'data' else False
@@ -307,6 +315,8 @@ class PoolService(CRUDService):
                         # normalize it so that it reflects the parity as well i.e DRAID1, DRAID2, etc.
                         # sample value of name here is: draid1:1d:2c:0s-0
                         entry['type'] = f'{i["type"]}{i["name"][len("draid"):len("draid") + 1]}'
+                        entry['draid_spare_disks'] = int(RE_SPARE.findall(i['name'])[0][1:-1])
+                        entry['draid_data_disks'] = int(RE_DATA.findall(i['name'])[0][1:-1])
                     rv.append(entry)
             return rv
 
@@ -333,6 +343,29 @@ class PoolService(CRUDService):
                         f'topology.{topology_type}.{i}.disks',
                         f'You need at least {mindisks} disk(s) for this vdev type.',
                     )
+
+                if vdev['type'].startswith('DRAID'):
+                    vdev.update({
+                        'draid_data_disks': vdev.get('draid_data_disks'),
+                        'draid_spare_disks': vdev.get('draid_spare_disks', 0),
+                    })
+                    nparity = int(vdev['type'][-1:])
+                    verrors.extend(await self.middleware.call(
+                        'zfs.pool.validate_draid_configuration', f'{topology_type}.{i}', numdisks, nparity, vdev
+                    ))
+
+                    if data['topology'].get('spare'):
+                        verrors.add(
+                            'topology.spare',
+                            'Dedicated spare disks should not be used with dRAID.'
+                        )
+                else:
+                    for k in ('draid_data_disks', 'draid_spare_disks'):
+                        if k in vdev:
+                            verrors.add(
+                                f'topology.{topology_type}.{i}.{k}',
+                                'This property is only valid with dRAID vdevs.',
+                            )
 
                 if lastdatatype and lastdatatype != vdev['type']:
                     verrors.add(
@@ -376,6 +409,8 @@ class PoolService(CRUDService):
                         'DRAID1', 'DRAID2', 'DRAID3', 'RAIDZ1', 'RAIDZ2', 'RAIDZ3', 'MIRROR', 'STRIPE'
                     ], required=True),
                     List('disks', items=[Str('disk')], required=True),
+                    Int('draid_data_disks'),
+                    Int('draid_spare_disks'),
                 ),
             ], required=True),
             List('special', items=[
