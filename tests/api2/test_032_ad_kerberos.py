@@ -88,7 +88,7 @@ def check_export_sec(expected):
     regenerate_exports()
     results = SSH_TEST('cat /etc/exports', user, password, ip)
     assert results['result'] is True, results['stderr']
-    exports_config = results['output'].strip()
+    exports_config = results['stdout'].strip()
     sec = get_export_sec(exports_config)
     assert sec == expected, exports_config
 
@@ -98,9 +98,9 @@ def parse_krb5_conf(fn, split=None, state=None):
     assert results['result'] is True, results['output']
 
     if split:
-        krb5conf_lines = results['output'].split(split)
+        krb5conf_lines = results['stdout'].split(split)
     else:
-        krb5conf_lines = results['output'].splitlines()
+        krb5conf_lines = results['stdout'].splitlines()
 
     for idx, entry in enumerate(krb5conf_lines):
         fn(krb5conf_lines, idx, entry, state)

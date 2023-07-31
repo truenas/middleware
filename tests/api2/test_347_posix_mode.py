@@ -287,7 +287,7 @@ def file_mode_check(mode_bit):
         cmd = f'cat /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)
         assert results['result'] is True, results['output']
-        assert results['output'].strip() == "echo CANARY", results['output']
+        assert results['stdout'].strip() == "echo CANARY", results['output']
 
         cmd = f'echo "FAIL" >> /mnt/{MODE_DATASET}/canary'
         results = SSH_TEST(cmd, MODE_USER, MODE_PWD, ip)

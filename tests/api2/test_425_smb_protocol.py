@@ -704,7 +704,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
             f.write(f"NETATALK: {results['output']}")
 
     assert results['result'] is True, results['output']
-    xat_data = b64decode(results['output'])
+    xat_data = b64decode(results['stdout'])
     assert AFPXattr[xat]['bytes'] == xat_data, results['output']
 
 
@@ -728,7 +728,7 @@ def test_175_check_external_path(request):
 
         results = SSH_TEST('cat external_test_file', user, password, ip)
         assert results['result'] is True, results['output']
-        assert results['output'] == 'EXTERNAL_TEST'
+        assert results['stdout'] == 'EXTERNAL_TEST'
 
 
 def test_176_check_dataset_auto_create(request):

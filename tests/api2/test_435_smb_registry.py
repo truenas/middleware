@@ -120,7 +120,7 @@ def test_005_shares_in_registry(request):
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     for smb_share in SHARES:
         assert smb_share in reg_shares
 
@@ -143,7 +143,7 @@ def test_007_renamed_shares_in_registry(request):
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     for smb_share in SHARES:
         assert f'NEW_{smb_share}' in reg_shares
     assert len(reg_shares) == len(SHARES)
@@ -187,7 +187,7 @@ def test_008_test_presets(request, preset):
         cmd = f'midclt call smb.getparm "{aux.strip()}" {new_conf["name"]}'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, f"[{entry}]: {results['output']}"
-        assert val.strip() == results['output'].strip()
+        assert val.strip() == results['stdout'].strip()
 
     for k in to_test.keys():
         if k == "auxsmbconf":
@@ -239,7 +239,7 @@ def test_010_test_aux_param_on_update(request):
         cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['output'].strip()
+        out = results['stdout'].strip()
         inval = val.strip()
         # list cant be compared if item are not in the same place
         # converting to set have a valid comparison.
@@ -261,7 +261,7 @@ def test_010_test_aux_param_on_update(request):
         cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['output'].strip()
+        out = results['stdout'].strip()
         inval = val.strip()
         if aux.strip() == "vfs objects":
             new_obj = inval.split()
@@ -316,7 +316,7 @@ def test_011_test_aux_param_on_create(request):
         cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['output'].strip()
+        out = results['stdout'].strip()
         inval = val.strip()
         # list cant be compared if item are not in the same place
         # converting to set have a valid comparison.
@@ -338,7 +338,7 @@ def test_011_test_aux_param_on_create(request):
         cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['output'].strip()
+        out = results['stdout'].strip()
         inval = val.strip()
         if aux.strip() == "vfs objects":
             new_obj = inval.split()
@@ -372,7 +372,7 @@ def test_013_registry_is_empty(request):
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     assert len(reg_shares) == 0, results['output']
 
 
@@ -433,7 +433,7 @@ def test_016_verify_homeshare_in_registry(request):
     if results['result'] is not True:
         return
 
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     for share in reg_shares:
         if share.casefold() == "homes".casefold():
             has_homes_share = True
@@ -462,7 +462,7 @@ def test_018_verify_non_home_share_in_registry(request):
     if results['result'] is not True:
         return
 
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     for share in reg_shares:
         if share.casefold() == "HOME_CREATE".casefold():
             has_homes_share = True
@@ -491,7 +491,7 @@ def test_020_verify_homeshare_in_registry(request):
     if results['result'] is not True:
         return
 
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     for share in reg_shares:
         if share.casefold() == "homes".casefold():
             has_homes_share = True
@@ -509,7 +509,7 @@ def test_021_registry_has_single_entry(request):
     cmd = 'midclt call sharing.smb.reg_listshares'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     assert len(reg_shares) == 1, results['output']
 
 
@@ -538,7 +538,7 @@ def test_022_registry_rebuild_homes(request):
     if results['result'] is not True:
         return
 
-    reg_shares = json.loads(results['output'].strip())
+    reg_shares = json.loads(results['stdout'].strip())
     for share in reg_shares:
         if share.casefold() == "homes".casefold():
             has_homes_share = True

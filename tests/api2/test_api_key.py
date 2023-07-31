@@ -40,7 +40,7 @@ def test_root_api_key_websocket(request):
             cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
             results = SSH_TEST(cmd, user_, password, ip)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-        assert 'uptime' in str(results['output'])
+        assert 'uptime' in str(results['stdout'])
 
 
 def test_allowed_api_key_websocket(request):
@@ -50,7 +50,7 @@ def test_allowed_api_key_websocket(request):
             cmd = f"sudo -u testuser midclt -u ws://{ip}/websocket --api-key {key} call system.info"
             results = SSH_TEST(cmd, user_, password, ip)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-        assert 'uptime' in str(results['output'])
+        assert 'uptime' in str(results['stdout'])
 
 
 def test_denied_api_key_websocket(request):

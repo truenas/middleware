@@ -91,7 +91,7 @@ class TestBadNtpServer:
     def test_06_Checking_ntpservers_num_configured_using_ssh(self, ntp_dict, request):
         results = SSH_TEST(f'grep -R ^server {CONFIG_FILE}', user, password, ip)
         assert results['result'] is True, results
-        assert len(results['output'].strip().split('\n')) == \
+        assert len(results['stdout'].strip().split('\n')) == \
             len(ntp_dict['servers']), results['output']
 
     def test_07_check_alert_set(self, ntp_dict):
