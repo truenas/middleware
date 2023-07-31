@@ -32,12 +32,11 @@ class IpmiSensorsService(Service):
 
     @private
     def query_impl(self):
-        rv = []
+        rv, reread = [], None
         if not self.middleware.call_sync('ipmi.is_loaded'):
-            return rv
+            return rv, reread
 
         mseries = self.middleware.call_sync('failover.hardware') == 'ECHOWARP'
-        reread = None
         for line in filter(lambda x: x, get_sensors_data()):
             if (values := line.split(',')) and len(values) == 13:
                 sensor = {
