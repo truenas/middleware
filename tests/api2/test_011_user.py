@@ -60,7 +60,7 @@ home_acl = [
 def check_config_file(file_name, expected_line):
     results = SSH_TEST(f'cat {file_name}', user, password, ip)
     assert results['result'], results['output']
-    assert expected_line in results['output'].splitlines(), results['output']
+    assert expected_line in results['stdout'].splitlines(), results['output']
 
 
 @pytest.mark.dependency(name="user_01")
@@ -515,7 +515,7 @@ def test_42_verify_locked_smb_user_is_disabled(request):
     cmd = "midclt call smb.passdb_list true"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    pdb_list = json.loads(results['output'])
+    pdb_list = json.loads(results['stdout'])
     my_entry = None
     for entry in pdb_list:
         if entry['Unix username'] == "testuser2":

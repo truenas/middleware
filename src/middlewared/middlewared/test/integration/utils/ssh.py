@@ -17,5 +17,5 @@ __all__ = ["ssh"]
 def ssh(command, check=True, complete_response=False, *, user=default_user, password=default_password, ip=default_ip):
     result = SSH_TEST(command, user, password, ip)
     if check:
-        assert result["result"] is True, f"stdout: {result['output']}\nstderr: {result['stderr']}"
-    return result if complete_response else result["output"]
+        assert result["result"], result["output"]
+    return result if complete_response else result["stdout"]

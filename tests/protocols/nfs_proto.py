@@ -249,7 +249,7 @@ class SSH_NFS(NFS):
         if ls['result'] is False:
             raise RuntimeError(ls['stderr'])
 
-        return ls['output']
+        return ls['stdout']
 
     def rename(self, src, dst):
         mv = SSH_TEST(
@@ -276,7 +276,7 @@ class SSH_NFS(NFS):
         if getfacl['result'] is False:
             raise RuntimeError(getfacl['stderr'])
 
-        return self.acl_from_text(getfacl['output'])
+        return self.acl_from_text(getfacl['stdout'])
 
     def setacl(self, path, acl):
         self.validate(path)
@@ -298,7 +298,7 @@ class SSH_NFS(NFS):
         if getxattr['result'] is False:
             raise RuntimeError(getxattr['stderr'])
 
-        return getxattr['output']
+        return getxattr['stdout']
 
     def setxattr(self, path, xattr_name, value):
         self.validate(path)

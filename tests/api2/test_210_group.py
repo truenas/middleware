@@ -263,7 +263,7 @@ def test_27_full_groupmap_check(request):
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
 
-    gm = json.loads(results['output'].strip())
+    gm = json.loads(results['stdout'].strip())
     assert gm['localsid'], str(gm)
 
     for k, entry in gm['local_builtins'].items():
@@ -293,13 +293,13 @@ def test_27_full_groupmap_check(request):
     cmd = "midclt call smb.groupmap_listmem S-1-5-32-544"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
-    ba = json.loads(results['output'].strip())
+    ba = json.loads(results['stdout'].strip())
     assert gm['local_builtins']['544']['sid'] in ba, str(ba)
 
     cmd = "midclt call smb.groupmap_listmem S-1-5-32-546"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
-    bg = json.loads(results['output'].strip())
+    bg = json.loads(results['stdout'].strip())
     assert gm['local_builtins']['546']['sid'] in bg, str(bg)
 
 
