@@ -70,7 +70,7 @@ class RealtimeEventSource(EventSource):
                 'memory': get_memory_info(netdata_metrics),
                 'virtual_memory': psutil.virtual_memory()._asdict(),
                 'cpu': get_cpu_stats(netdata_metrics, cores),
-                'disks': get_disk_stats(netdata_metrics, list(self.middleware.call_sync('device.get_disks'))),
+                'disks': get_disk_stats(netdata_metrics, list(self.middleware.call_sync('device.get_disks', False, True))),
                 'interfaces': get_interface_stats(
                     netdata_metrics, [i['name'] for i in self.middleware.call_sync('interface.query')]
                 ),
