@@ -206,7 +206,7 @@ def test_021_verify_smb_getparm_path_homes(request):
     cmd = 'midclt call smb.getparm path homes'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert results['output'].strip() == f'{SMB_PATH}/%U'
+    assert results['stdout'].strip() == f'{SMB_PATH}/%U'
 
 
 def test_022_stoping_clif_service(request):
@@ -288,7 +288,7 @@ def test_037_verify_smb_getparm_fruit_time_machine_is_yes(request):
     cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    assert bool(results['output'].strip()) is True, results['output']
+    assert bool(results['stdout'].strip()) is True, results['output']
 
 
 def test_038_disable_time_machine(request):
@@ -455,7 +455,7 @@ def test_047_create_a_dir_and_a_file_in_windows(request):
     results3 = SSH_TEST(cmd3, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
     assert results3['result'] is True, results3['output']
     regex = re.compile(r"^.*testfile.*", re.MULTILINE)
-    data_list = regex.findall(results3['output'])[0].split()
+    data_list = regex.findall(results3['stdout'])[0].split()
     global created_time, created_date
     created_time = data_list[1]
     created_date = data_list[0]
@@ -491,7 +491,7 @@ def test_048_mount_the_smb_share_robocopy_testdir_to_the_share_windows_mount(req
     results = SSH_TEST(cmd, WIN_USERNAME, WIN_PASSWORD, WIN_HOST)
     assert results['result'] is True, results['output']
     regex = re.compile(r"^(?=.*testfile)(?!.*New).*", re.MULTILINE)
-    data_list = regex.findall(cmd_results['output'])[0].split()
+    data_list = regex.findall(cmd_results['stdout'])[0].split()
     global mounted_time, mounted_date
     mounted_time = data_list[1]
     mounted_date = data_list[0]
@@ -592,7 +592,7 @@ def test_057_create_new_smb_group_for_sid_test(request):
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    groupmaps = json.loads(results['output'].strip())
+    groupmaps = json.loads(results['stdout'].strip())
 
     test_entry = None
     for entry in groupmaps['local'].values():
@@ -621,7 +621,7 @@ def test_058_change_netbios_name_and_check_groupmap(request):
     cmd = "midclt call smb.groupmap_list"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    groupmaps = json.loads(results['output'].strip())
+    groupmaps = json.loads(results['stdout'].strip())
 
     test_entry = None
     for entry in groupmaps['local'].values():

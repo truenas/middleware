@@ -78,7 +78,7 @@ def ftp_init_db_dflt():
     rv_defaults = SSH_TEST("python3 ftpconf.py", user, password, ip)
     assert rv_defaults['result'], str(rv_defaults)
     global FTP_DEFAULT
-    FTP_DEFAULT = json.loads(rv_defaults['output'].strip())
+    FTP_DEFAULT = json.loads(rv_defaults['stdout'].strip())
 
     # clean up the temporary script
     os.remove('ftpconf.py')
@@ -123,7 +123,7 @@ def ftp_set_config(config={}):
 def parse_proftpd_conf():
     results = SSH_TEST("cat /etc/proftpd/proftpd.conf", user, password, ip)
     assert results['result'], str(results)
-    lines = results['output'].splitlines()
+    lines = results['stdout'].splitlines()
 
     rv = {}
     context = [{'server': None}]
@@ -216,7 +216,7 @@ def validate_proftp_conf():
     # The banner is saved to a file
     rv_motd = SSH_TEST("cat /var/run/proftpd/proftpd.motd", user, password, ip)
     assert rv_motd['result'], str(rv_motd)
-    motd = rv_motd['output'].strip()
+    motd = rv_motd['stdout'].strip()
     if ftpConf['banner']:
         assert motd == ftpConf['banner'], f"\nproftpd.motd = \'{motd}\'\nbanner = \'{ftpConf['banner']}\'"
 
@@ -1261,7 +1261,7 @@ def test_070_resume_xfer(request, ftpConf, expect_to_pass):
             remotesize = ftpObj.size(remotefname)
             results = SSH_TEST(f"sha256sum {remotepath}", user, password, ip)
             assert results['result'] is True, results
-            remote_chksum = results['output'].split()[0]
+            remote_chksum = results['stdout'].split()[0]
             assert remotesize == localsize
             assert remote_chksum == local_chksum
 

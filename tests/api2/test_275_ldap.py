@@ -135,7 +135,7 @@ def test_10_verify_that_the_ldap_user_is_listed_with_pdbedit(request):
     depends(request, ["setup_ldap"], scope="session")
     results = SSH_TEST(f'pdbedit -L {LDAPUSER}', user, password, ip)
     assert results['result'] is True, str(results['output'])
-    assert LDAPUSER in results['output'], str(results['output'])
+    assert LDAPUSER in results['stdout'], str(results['output'])
 
 
 @pytest.mark.dependency(name="LDAP_NSS_WORKING")

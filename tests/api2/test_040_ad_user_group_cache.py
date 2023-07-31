@@ -81,7 +81,7 @@ def test_07_check_for_ad_users(request):
     cmd = "wbinfo -u"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
-    wbinfo_entries = results['output'].splitlines()
+    wbinfo_entries = results['stdout'].splitlines()
 
     results = GET('/user', payload={
         'query-filters': [['local', '=', False]],
@@ -105,7 +105,7 @@ def test_08_check_for_ad_groups(request):
     cmd = "wbinfo -g"
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'], str(results['output'])
-    wbinfo_entries = results['output'].splitlines()
+    wbinfo_entries = results['stdout'].splitlines()
 
     results = GET('/group', payload={
         'query-filters': [['local', '=', False]],

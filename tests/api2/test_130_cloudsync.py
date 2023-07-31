@@ -132,7 +132,7 @@ def test_06_run_cloud_sync(request, task):
         cmd = f'cat {dataset_path}/freenas-test.txt'
         ssh_result = SSH_TEST(cmd, user, password, ip)
         assert ssh_result['result'] is True, ssh_result['output']
-        assert ssh_result['output'] == 'freenas-test\n', ssh_result['output']
+        assert ssh_result['stdout'] == 'freenas-test\n', ssh_result['output']
         return
     assert False, state
 
