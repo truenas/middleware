@@ -28,6 +28,8 @@ def convert_topology(zfs, vdevs):
                     'parameters': {
                         'children': len(children),
                         'draid_parity': int(vdev['type'][-1]),
+                        'draid_spare_disks': vdev['draid_spare_disks'],
+                        'draid_data_disks': vdev['draid_data_disks'],
                     }
                 })
             else:
