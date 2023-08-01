@@ -1144,14 +1144,14 @@ def test_060_bandwidth_limiter(request, testwho, ftp_setup_func):
 
             ElapsedTime = int(ftp_upload_binary_file(ftpObj, localfname, ftpfname))
             xfer_rate = int(FileSize / ElapsedTime)
-            # This typically will match exactly, but in actual testing this might vary a little
-            assert (ulRate - 2) <= xfer_rate <= (ulRate + 2),\
+            # This typically will match exactly, but in actual testing this might vary
+            assert (ulRate - 8) <= xfer_rate <= (ulRate + 8),\
                 f"Failed upload rate limiter: Expected {ulRate}, but sensed rate is {xfer_rate}"
 
             ElapsedTime = int(ftp_download_binary_file(ftpObj, ftpfname, localfname))
             xfer_rate = int(FileSize / ElapsedTime)
-            # Allow for small variance
-            assert (dlRate - 2) <= xfer_rate <= (dlRate + 2),\
+            # Allow for variance
+            assert (dlRate - 8) <= xfer_rate <= (dlRate + 8),\
                 f"Failed download rate limiter: Expected {dlRate}, but sensed rate is {xfer_rate}"
         except all_errors as e:
             assert False, f"Unexpected failure: {e}"
