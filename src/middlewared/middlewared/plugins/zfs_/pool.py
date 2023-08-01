@@ -2,8 +2,8 @@ import errno
 import libzfs
 import os
 
-from middlewared.schema import accepts, Bool, Dict, List, Str
-from middlewared.service import CallError, CRUDService, filterable, job
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.service import CallError, CRUDService, filterable, job, ValidationErrors
 from middlewared.utils import filter_list
 
 from .pool_utils import convert_topology, find_vdev
@@ -45,6 +45,8 @@ class ZFSPoolService(CRUDService):
                         ], required=True,
                     ),
                     List('devices', items=[Str('disk')], required=True),
+                    Int('draid_data_disks'),
+                    Int('draid_spare_disks'),
                 ),
             ], required=True),
             Dict('options', additional_attrs=True),
@@ -174,3 +176,21 @@ class ZFSPoolService(CRUDService):
             state = f.read()
 
         return state.strip()
+
+    def validate_draid_configuration(self, topology_type, numdisks, nparity, vdev):
+        verrors = ValidationErrors()
+        try:
+            libzfs.validate_draid_configuration(
+                numdisks, nparity, vdev['draid_spare_disks'], vdev['draid_data_disks'],
+            )
+        except libzfs.ZFSException as e:
+            verrors.add(
+                f'topology.{topology_type}.type',
+                str(e),
+            )
+        if vdev['draid_data_disks'] and (len(vdev['disks']) - nparity) % vdev['draid_data_disks'] != 0:
+            verrors.add(
+                f'topology.{topology_type}.type',
+                f'Total disks must be a multiple of "{vdev["draid_data_disks"]!r}" disks plus specified "{nparity!r}"'
+            )
+        return verrors
