@@ -99,11 +99,11 @@ class SystemService(Service):
         len_to_format = len(to_format)
         if len_to_format >= 2:
             maj_vers = '.'.join(to_format[0:2])
+            base_url = f'https://www.truenas.com/docs/scale/{maj_vers}/gettingstarted/scalereleasenotes'
             if len_to_format == 2:
-                # shouldn't happen in the wild but easy way to be safe
-                return f'https://truenas.com/docs/scale/scale{maj_vers}'
+                return base_url
             else:
-                return f'https://truenas.com/docs/scale/scale{maj_vers}/#{"".join(to_format)}'
+                return f'{base_url}/#{"".join(to_format)}'
 
     @accepts()
     @returns(Str('truenas_version'))
