@@ -1,5 +1,13 @@
 import subprocess
-from samba.samba3 import libsmb_samba_internal as libsmb
+import sys
+
+try:
+    from samba.samba3 import libsmb_samba_internal as libsmb
+except ModuleNotFoundError:
+    prefix_path = f'{sys.base_prefix}/lib/python{sys.version_info.major}/dist-packages'
+    sys.path.append(prefix_path)
+    from samba.samba3 import libsmb_samba_internal as libsmb
+
 from samba.dcerpc import security
 from samba.samba3 import param as s3param
 from samba import credentials
