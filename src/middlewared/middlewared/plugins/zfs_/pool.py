@@ -188,9 +188,5 @@ class ZFSPoolService(CRUDService):
                 f'topology.{topology_type}.type',
                 str(e),
             )
-        if vdev['draid_data_disks'] and (len(vdev['disks']) - nparity) % vdev['draid_data_disks'] != 0:
-            verrors.add(
-                f'topology.{topology_type}.type',
-                f'Total disks must be a multiple of "{vdev["draid_data_disks"]!r}" disks plus specified "{nparity!r}"'
-            )
+
         return verrors
