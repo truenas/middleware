@@ -112,12 +112,10 @@ def SSH_TEST(command, username, passwrd, host):
     # 120 second timeout, to make sure no SSH connection hang.
     process = run(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True,
                   timeout=120)
-    output = process.stdout
+    stdout = process.stdout
     stderr = process.stderr
-    if process.returncode != 0:
-        return {'result': False, 'output': output, 'stderr': stderr, 'return_code': process.returncode}
-    else:
-        return {'result': True, 'output': output, 'stderr': stderr, 'return_code': process.returncode}
+    return {'stdout': stdout, 'stderr': stderr, 'output': stdout + stderr, 'returncode': process.returncode,
+            'result': process.returncode == 0}
 
 
 def async_SSH_start(command, username, passwrd, host):

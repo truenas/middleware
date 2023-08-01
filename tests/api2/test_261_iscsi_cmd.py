@@ -2276,7 +2276,7 @@ def test_24_iscsi_target_disk_login(request):
                 assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
                 # Make SURE we find the target at the ip we expect
                 found_iqn = False
-                for line in results['output'].split('\n'):
+                for line in results['stdout'].split('\n'):
                     if not line.startswith(f'{actual_ip}:'):
                         continue
                     if line.split()[1] == iqn:

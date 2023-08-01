@@ -151,7 +151,7 @@ def test_08_test_backend_options(request, backend):
     cmd = f'midclt call smb.getparm "{IDMAP_CFG}: backend" GLOBAL'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    running_backend = results['output'].strip()
+    running_backend = results['stdout'].strip()
     assert running_backend == backend.lower(), results['output']
 
     if backend == "RID":
@@ -245,10 +245,10 @@ def test_08_test_backend_options(request, backend):
             v = 'stand-alone'
 
         try:
-            res = json.loads(results['output'].strip())
+            res = json.loads(results['stdout'].strip())
             assert res == v, f"{backend} - [{k}]: {res}"
         except json.decoder.JSONDecodeError:
-            res = results['output'].strip()
+            res = results['stdout'].strip()
             if isinstance(v, bool):
                 v = str(v)
 
@@ -264,7 +264,7 @@ def test_08_test_backend_options(request, backend):
         cmd = 'midclt call directoryservices.get_db_secrets'
         results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, results['output']
-        sec = json.loads(results['output'].strip())
+        sec = json.loads(results['stdout'].strip())
         sec_key = f"SECRETS/GENERIC/IDMAP_LDAP_{WORKGROUP}/{secret}"
         assert sec_key in sec[f'{hostname.upper()}$'], results['output']
         if sec_key in sec[f'{hostname.upper()}$']:
@@ -351,7 +351,7 @@ def test_13_idmap_new_domain(request):
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    low, high = json.loads(results['output'].strip())
+    low, high = json.loads(results['stdout'].strip())
 
     payload = {
         "name": "canary",
@@ -374,7 +374,7 @@ def test_14_idmap_new_domain_duplicate_fail(request):
     cmd = 'midclt call idmap.get_next_idmap_range'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
-    low, high = json.loads(results['output'].strip())
+    low, high = json.loads(results['stdout'].strip())
 
     payload = {
         "name": "canary",

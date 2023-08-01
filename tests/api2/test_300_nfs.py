@@ -33,8 +33,8 @@ NFS_PATH = "/mnt/" + dataset
 
 def parse_exports():
     results = SSH_TEST("cat /etc/exports", user, password, ip)
-    assert results['result'] is True, f"rc={results['return_code']}, {results['output']}, {results['stderr']}"
-    exp = results['output'].splitlines()
+    assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
+    exp = results['stdout'].splitlines()
     rv = []
     for idx, line in enumerate(exp):
         if not line or line.startswith('\t'):
@@ -62,8 +62,8 @@ def parse_exports():
 
 def parse_server_config(fname="local.conf"):
     results = SSH_TEST(f"cat /etc/nfs.conf.d/{fname}", user, password, ip)
-    assert results['result'] is True, f"rc={results['return_code']}, {results['output']}, {results['stderr']}"
-    conf = results['output'].splitlines()
+    assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
+    conf = results['stdout'].splitlines()
     rv = {'nfsd': {}, 'mountd': {}, 'statd': {}, 'lockd': {}}
     section = ''
 
@@ -85,7 +85,7 @@ def confirm_nfsd_processes(expected=16):
     Confirm the expected number of nfsd processes are running
     '''
     result = SSH_TEST("cat /proc/fs/nfsd/threads", user, password, ip)
-    assert int(result['output']) == expected, result
+    assert int(result['stdout']) == expected, result
 
 
 def confirm_mountd_processes(expected=16):
@@ -95,7 +95,7 @@ def confirm_mountd_processes(expected=16):
     rx_mountd = r"rpc\.mountd"
     result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
     # We subtract one to account for the rpc.mountd thread manager
-    assert int(result['output']) - 1 == expected
+    assert int(result['stdout']) - 1 == expected
 
 
 def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
@@ -120,7 +120,7 @@ def confirm_nfs_version(expected=[]):
     '''
     results = SSH_TEST("rpcinfo -s | grep ' nfs '", user, password, ip)
     for v in expected:
-        assert v in results['output'].strip().split()[1], results
+        assert v in results['stdout'].strip().split()[1], results
 
 
 def reset_svcs(svcs_to_reset):
