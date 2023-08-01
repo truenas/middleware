@@ -6,6 +6,9 @@ import init_cluster
 import init_gluster
 from config import CLEANUP_TEST_DIR
 
+from inspect import getcallargs
+from websocket import WebSocketApp
+
 
 def setup_args():
     parser = argparse.ArgumentParser()
@@ -19,6 +22,11 @@ def setup_args():
         '--initialize-gluster',
         action='store_true',
         default=False,
+        help='Setup the gluster cluster'
+    )
+    parser.add_argument(
+        '--pytest-path',
+        default='pytest',
         help='Setup the gluster cluster'
     )
 
@@ -55,7 +63,7 @@ def setup_api_results_dir(resultsfile='results.xml'):
 
 
 def setup_pytest_command(args, results_path, ignore=True):
-    cmd = ['pytest', '-v', '-rfesp', '-o', 'junit_family=xunit2', f'--junit-xml={results_path}']
+    cmd = [args.pytest_path, '-v', '-rfesp', '-o', 'junit_family=xunit2', f'--junit-xml={results_path}']
 
     # pytest is clever enough to search the "tests" subdirectory
     # and look at the argument that is passed and figure out if
@@ -72,8 +80,18 @@ def setup_pytest_command(args, results_path, ignore=True):
     return cmd
 
 
+def validate_modules():
+    # check that we have correct websocket client
+    getcallargs(WebSocketApp, *[None], **{'url': None, 'socket': None})
+
+
 def main():
     args = setup_args()
+
+    print('Validating modules')
+    validate_modules()
+    print('Modules validated')
+
     if args.initialize_cluster:
         print('Initializing cluster')
         init_cluster.init()

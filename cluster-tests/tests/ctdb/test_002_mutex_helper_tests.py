@@ -1,3 +1,4 @@
+import pprint
 import pytest
 
 from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS
@@ -96,7 +97,6 @@ def test_003_change_recovery_master(request):
 
         sleep(1)
         slept += 1
-
 
     assert res['result'] != recmaster
 
