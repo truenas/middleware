@@ -63,11 +63,11 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         model = self.middleware.call_sync('truenas.get_chassis_hardware').removeprefix('TRUENAS-').split('-')[0]
         if model == 'UNKNOWN':
             alerts.append(Alert(LicenseAlertClass, 'TrueNAS is running on unsupported hardware.'))
-        elif any(
+        elif any((
             # f-series has 2 license models F60 and F60-NR (NR is single-node only)
             (local_license['model'][0] == 'F' and model != local_license['model'].split('-')[0]),
             (model != local_license['model'])
-        ):
+        )):
             alerts.append(Alert(
                 LicenseAlertClass,
                 (
