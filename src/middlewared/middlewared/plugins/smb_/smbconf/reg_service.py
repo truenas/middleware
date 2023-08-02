@@ -42,7 +42,6 @@ class ShareSchema(RegistrySchema):
                     data_aux.pop(k)
 
         data_out['auxsmbconf'] = '\n'.join([f'{k}={v}' if v is not None else k for k, v in data_aux.items()])
-        data_out['enabled'] = True
         data_out['locked'] = False
 
         return
@@ -147,6 +146,12 @@ class ShareSchema(RegistrySchema):
                     "[%s] contains invalid auxiliary parameter: [%s]",
                     data_in['auxsmbconf'], param
                 )
+
+        # There are two situations in which a share may be unavailable:
+        # 1) it's encypted and locked
+        # 2) it's specifically flagged as disabled
+        if data_in.get('locked'):
+            data_out['available'] = {'parsed': False}
 
         self._normalize_config(data_out)
         return
@@ -471,6 +476,7 @@ class ShareSchema(RegistrySchema):
         RegObj("vuid", "tn:vuid", ''),
         RegObj("comment", "comment", ""),
         RegObj("guestok", "guest ok", False),
+        RegObj("enabled", "available", True),
         RegObj("hostsallow", "hosts allow", []),
         RegObj("hostsdeny", "hosts deny", []),
         RegObj("abe", "access based share enum", False),

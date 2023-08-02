@@ -155,7 +155,7 @@ class TDBService(Service, TDBMixin, SchemaMixin):
             elif state['data_type'] == 'STRING':
                 entry = tdb_data
             elif state['data_type'] == 'BYTES':
-                entry = b64encode(tdb_data)
+                entry = b64encode(tdb_data).decode()
 
             state['output'].append({"key": tdb_key, "val": entry})
             return True

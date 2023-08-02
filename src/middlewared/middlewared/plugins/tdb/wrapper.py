@@ -75,6 +75,9 @@ class TDBWrap(object):
         ok = True
         for i in self.hdl.keys():
             tdb_key = i.decode()
+            if self.options['data_type'] == 'BYTES':
+                tdb_key = tdb_key[:-1]
+
             tdb_val = self.get(tdb_key)
             ok = fn(tdb_key, tdb_val, private_data)
             if not ok:
