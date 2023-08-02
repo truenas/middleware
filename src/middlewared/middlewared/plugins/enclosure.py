@@ -1,7 +1,6 @@
 import asyncio
 import errno
 import logging
-import os
 import re
 import pathlib
 from collections import OrderedDict
@@ -384,15 +383,13 @@ class Enclosure(object):
 
     def _parse(self, data):
         cf, es = data
-
         self.encname = re.sub(r"\s+", " ", cf.splitlines()[0].strip())
-
         if m := re.search(r"\s+enclosure logical identifier \(hex\): ([0-9a-f]+)", cf):
             self.encid = m.group(1)
 
         self._set_model(cf)
-
         self.status = "OK"
+        self.map_disks_to_enclosure_slots()
 
         element_type = None
         element_number = None
@@ -412,18 +409,14 @@ class Enclosure(object):
             elif m := re.match(r"\s+Element ([0-9]+) descriptor:", line):
                 element_number = int(m.group(1))
             elif m := re.match(r"\s+([0-9a-f ]{11})", line):
-                if element_type is not None and element_number is not None:
-                    dev = ""
-                    if element_type == "Array Device Slot":
-                        dev = self._array_device_slot_dev(element_number)
-
+                if all((element_type, element_number, element_type != 'Array Device Slot')):
                     element = self._enclosure_element(
                         element_number + 1,
                         element_type,
                         self._parse_raw_value(m.group(1)),
                         None,
                         "",
-                        dev,
+                        "",
                     )
                     if element is not None:
                         self.append(element)
@@ -432,11 +425,12 @@ class Enclosure(object):
             else:
                 element_number = None
 
-    def _array_device_slot_dev(self, element_number):
+    def map_disks_to_enclosure_slots(self):
         """
         The sysfs directory structure is dynamic based on the enclosure that
         is attached.
         Here are some examples of what we've seen on internal hardware:
+            /sys/class/enclosure/19:0:6:0/SLOT_001/
             /sys/class/enclosure/13:0:0:0/Drive Slot #0_0000000000000000/
             /sys/class/enclosure/13:0:0:0/Disk #00/
             /sys/class/enclosure/13:0:0:0/Slot 00/
@@ -449,22 +443,51 @@ class Enclosure(object):
         If this file doesn't exist, it means 1 thing
             1. this isn't a drive slot directory
 
-        Once we've determined that there is a file named "slot", we can read it
-        and compare it to our `element_number` passed into us. The "slot" file
-        is always an integer so we don't need to convert to hexadecimal.
+        Once we've determined that there is a file named "slot", we can read the
+        contents of that file to get the slot number associated to the disk device.
+        The "slot" file is always an integer so we don't need to convert to hexadecimal.
         """
-        devname = self.devname.removeprefix('bsg/')  # why do we set this as 'bsg/13:0:0:0'...?
-        for enc_dir in filter(lambda x: devname == x.name, pathlib.Path("/sys/class/enclosure").iterdir()):
-            # any enclosures are enumerated here in this top level dir
-            # (i.e. /sys/class/enclosure/12:0:0:0, /sys/class/enclosure/13:0:0:0)
-            for i in filter(lambda x: x.is_dir(), enc_dir.iterdir()):
+        mapping = dict()
+        pci = self.devname.removeprefix('bsg/')  # why do we set this as 'bsg/13:0:0:0'...?
+        for i in filter(lambda x: x.is_dir(), pathlib.Path(f'/sys/class/enclosure/{pci}').iterdir()):
+            try:
+                slot = int((i / 'slot').read_text().strip())
+            except (FileNotFoundError, ValueError):
+                # not a slot directory
+                continue
+            else:
                 try:
-                    if (i / 'slot').read_text().strip() == str(element_number):
-                        return os.listdir(i / 'device/block')[0]
-                except (FileNotFoundError, IndexError):
-                    continue
+                    dev = next((i / 'device/block').iterdir(), None)
+                    mapping[slot] = dev.name if dev is not None else ''
+                except FileNotFoundError:
+                    # no disk in this slot
+                    mapping[slot] = ''
 
-        return ""
+        try:
+            if min(mapping) == 0:
+                # if the enclosure starts slots at 0 then we need
+                # to bump them by 1 to not cause confusion for
+                # end-user
+                mapping = {k + 1: v for k, v in mapping.items()}
+        except ValueError:
+            # means mapping is an empty dict (shouldn't happen)
+            return
+
+        disk_raw_values = dict()
+        for k, v in EnclosureDevice(f'/dev/{self.devname}').status()['elements'].items():
+            if v['type'] == 23 and v['descriptor'] != '<empty>':
+                disk_raw_values[k] = v['status']
+
+        for slot in sorted(mapping):
+            self.append(self._enclosure_element(
+                slot,
+                'Array Device Slot',
+                self._parse_raw_value(disk_raw_values.get(slot, 0)),
+                None,
+                '',
+                mapping[slot],  # disk
+            ))
+        return mapping
 
     def _set_model(self, data):
         if M_SERIES_REGEX.match(self.encname):
@@ -499,6 +522,8 @@ class Enclosure(object):
             self.model = "E16"
         elif self.encname.startswith("HGST H4102-J"):
             self.model = "ES102"
+        elif self.encname.startswith("VikingES NDS-41022-BB"):
+            self.model = "ES102S"
         elif self.encname.startswith("CELESTIC R0904"):
             self.model = "ES60"
         elif ES24_REGEX.match(self.encname):
@@ -509,9 +534,11 @@ class Enclosure(object):
             self.model = "ES12"
 
     def _parse_raw_value(self, value):
+        if isinstance(value, str):
+            value = [int(i.replace("0x", ""), 16) for i in value.split(' ')]
+
         newvalue = 0
-        for i, v in enumerate(value.split(' ')):
-            v = int(v.replace("0x", ""), 16)
+        for i, v in enumerate(value):
             newvalue |= v << (2 * (3 - i)) * 4
         return newvalue
 
