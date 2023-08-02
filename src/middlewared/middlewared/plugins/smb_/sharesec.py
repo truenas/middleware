@@ -11,6 +11,7 @@ import os
 import re
 
 RE_SHAREACLENTRY = re.compile(r"^ACL:(?P<ae_who_sid>.+):(?P<ae_type>.+)\/0x0\/(?P<ae_perm>.+)$")
+LOCAL_SHARE_INFO_FILE = os.path.join(SYSDATASET_PATH, 'samba4', 'share_info.tdb')
 
 
 class SIDType(enum.IntEnum):
@@ -44,41 +45,48 @@ class ShareSec(CRUDService):
     }
 
     @private
-    async def dup_share_acl(self, src, dst):
-        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
-            return
-
-        val = await self.middleware.call('tdb.fetch', {
-            'name': f'{SYSDATASET_PATH}/samba4/share_info.tdb',
-            'key': f'SECDESC/{src.lower()}',
+    async def fetch(self, share_name):
+        return await self.middleware.call('tdb.fetch', {
+            'name': LOCAL_SHARE_INFO_FILE,
+            'key': f'SECDESC/{share_name.lower()}',
             'tdb-options': self.tdb_options
         })
 
+    @private
+    async def store(self, share_name, val):
         await self.middleware.call('tdb.store', {
-            'name': f'{SYSDATASET_PATH}/samba4/share_info.tdb',
-            'key': f'SECDESC/{dst.lower()}',
+            'name': LOCAL_SHARE_INFO_FILE,
+            'key': f'SECDESC/{share_name.lower()}',
             'value': {'payload': val},
             'tdb-options': self.tdb_options
         })
 
     @private
-    async def toggle_share(self, share_name, enable):
-        # We intentionally leave cleanup of old share ACL to libsmbconf
-        # so that there's not potential to leave share unprotected
-        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
+    async def remove(self, share_name):
+        return await self.middleware.call('tdb.remove', {
+            'name': LOCAL_SHARE_INFO_FILE,
+            'key': f'SECDESC/{share_name.lower()}',
+            'tdb-options': self.tdb_options
+        })
+
+    @private
+    async def entries(self, share_name, filters, options):
+        # TDB file contains INFO/version key that we don't want to return
+        entries = await self.middleware.call('tdb.entries', {
+            'name': LOCAL_SHARE_INFO_FILE,
+            'key': f'SECDESC/{share_name.lower()}',
+            'query-filters': [['key', '^', 'SECDESC/']]
+        })
+
+        return filter_list(entries, filters, options)
+
+    @private
+    async def dup_share_acl(self, src, dst):
+        if (await self.middleware.call('cluster.utils.is_clustered')):
             return
 
-        if enable:
-            old = f'#{share_name.lower()}'
-            new = share_name.lower()
-        else:
-            old = share_name.lower()
-            new = f'#{share_name.lower()}'
-
-        try:
-            await self.dup_share_acl(old, new)
-        except MatchNotFound:
-            return
+        val = await self.fetch(src)
+        await self.store(dst, val)
 
     @private
     async def parse_share_sd(self, sd, options=None):
@@ -127,7 +135,8 @@ class ShareSec(CRUDService):
                     self.logger.debug('%s: failed to resolve SID to name: %s', acl_entry['ae_who_sid'], e)
 
                 except MatchNotFound:
-                    self.logger.warning('Foreign SID: %r in share ACL that cannot be resolved to name.', acl_entry['ae_who_sid'])
+                    self.logger.warning('Foreign SID: %r in share ACL that cannot be resolved to name.',
+                                        acl_entry['ae_who_sid'])
 
             parsed_share_sd['share_acl'].append(acl_entry)
 
@@ -275,8 +284,10 @@ class ShareSec(CRUDService):
         if not db_commit:
             return
 
+        new_acl_blob = await self.fetch(data['share_name'])
+
         await self.middleware.call('datastore.update', 'sharing.cifs_share', config_share['id'],
-                                   {'cifs_share_acl': ' '.join(ae_list)})
+                                   {'cifs_share_acl': new_acl_blob})
 
     async def _flush_share_info(self):
         """
@@ -285,41 +296,29 @@ class ShareSec(CRUDService):
         """
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for share in shares:
-            if share['share_acl']:
+            if share['share_acl'] and share['share_acl'].startswith('S-1-'):
                 await self._sharesec(
                     share=share['name'],
                     action='--replace',
                     args=','.join(share['share_acl'].split())
                 )
+            elif share['share_acl']:
+                share_name = 'HOMES' if share['home'] else share['name']
+                await self.store(share_name, share['share_acl'])
 
     @periodic(3600, run_on_start=False)
     @private
-    async def check_share_info_tdb(self):
-        """
-        Use cached mtime value for share_info.tdb to determine whether
-        to sync it up with what is stored in the freenas configuration file.
-        Samba will run normally if share_info.tdb does not exist (it will automatically
-        generate entries granting full control to world in this case). In this situation,
-        immediately call _flush_share_info.
-        """
-        old_mtime = 0
-        statedir = await self.middleware.call('smb.getparm', 'state directory', 'global')
-        shareinfo = f'{statedir}/share_info.tdb'
-        if not os.path.exists(shareinfo):
-            if not await self.middleware.call('service.started', 'cifs'):
-                return
-            else:
-                await self._flush_share_info()
-                return
-
-        if await self.middleware.call('cache.has_key', 'SHAREINFO_MTIME'):
-            old_mtime = await self.middleware.call('cache.get', 'SHAREINFO_MTIME')
-
-        if old_mtime == (os.stat(shareinfo)).st_mtime:
+    def check_share_info_tdb(self):
+        if self.middleware.call_sync('cluster.utils.is_clustered'):
             return
 
-        await self.middleware.call('smb.sharesec.synchronize_acls')
-        await self.middleware.call('cache.put', 'SHAREINFO_MTIME', (os.stat(shareinfo)).st_mtime)
+        if not os.path.exists(LOCAL_SHARE_INFO_FILE):
+            if not self.middleware.call_sync('service.started', 'cifs'):
+                return
+            else:
+                return self.middleware.call_sync('smb.sharesec._flush_share_info')
+
+        self.middleware.call_sync('smb.sharesec.synchronize_acls')
 
     @accepts()
     async def synchronize_acls(self):
@@ -332,37 +331,21 @@ class ShareSec(CRUDService):
         fakes a single S-1-1-0:ALLOW/0x0/FULL entry in the absence of an entry for a
         share in share_info.tdb.
         """
-        rc = await self.middleware.call('smb.sharesec._view_all', {'resolve_sids': False})
-        write_share_info = True
-
-        for i in rc:
-            if len(i['share_acl']) > 1:
-                write_share_info = False
-                break
-
-            if i['share_acl'][0]['ae_who_sid'] != 'S-1-1-0' or i['share_acl'][0]['ae_perm'] != 'FULL':
-                write_share_info = False
-                break
-
-        if write_share_info:
-            return await self._flush_share_info()
+        if not (entries := await self.entries()):
+            return
 
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for s in shares:
             share_name = s['name'] if not s['home'] else 'homes'
-            rc_info = filter_list(rc, [('share_name', '=', share_name)])
-            if not rc_info:
-                self.logger.debug("%s: no share_info.tdb entry", share_name)
+            if not (share_acl := filter_list(entries, [['key', '=', f'SECDESC/{share_name.lower()}']])):
                 continue
 
-            rc_acl = ' '.join([(await self._ae_to_string(i)) for i in rc_info[0]['share_acl']])
-            if rc_acl != s['share_acl']:
-                self.logger.debug('updating stored ACL on %s to %s', s['name'], rc_acl)
+            if share_acl[0] != s['share_acl']:
                 await self.middleware.call(
                     'datastore.update',
                     'sharing.cifs_share',
                     s['id'],
-                    {'cifs_share_acl': rc_acl}
+                    {'cifs_share_acl': share_acl[0]}
                 )
 
     @filterable

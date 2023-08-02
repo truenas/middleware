@@ -7,6 +7,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from assets.REST.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
+from middlewared.test.integration.utils import client
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from functions import make_ws_request, wait_on_job
 from auto_config import pool_name, user, password, ip, dev_test
@@ -125,9 +126,8 @@ def test_25_verify_share_info_tdb_is_deleted(request):
 
 def test_27_restore_sharesec_with_flush_share_info(request):
     depends(request, ["sharesec_acl_set"], scope="session")
-    cmd = 'midclt call smb.sharesec._flush_share_info'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    with client() as c:
+        c.call('smb.sharesec._flush_share_info')
 
     results = POST("/sharing/smb/getacl", {'share_name': share_info['name']})
     assert results.status_code == 200, results.text
