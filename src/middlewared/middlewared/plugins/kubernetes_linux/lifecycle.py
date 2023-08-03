@@ -384,6 +384,9 @@ class KubernetesService(Service):
     async def start_service(self):
         await self.set_status(Status.INITIALIZING.value)
         try:
+            if not await self.middleware.call('kubernetes.license_active'):
+                raise CallError('System is not licensed to use Applications')
+
             await self.before_start_check()
             await self.middleware.call('k8s.migration.scale_version_check')
             await self.middleware.call('k8s.migration.run')
