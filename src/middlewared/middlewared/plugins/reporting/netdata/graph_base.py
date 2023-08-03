@@ -3,6 +3,7 @@ import statistics
 import typing
 
 from .connector import Netdata
+from .exceptions import ClientConnectError, ApiException
 
 
 GRAPH_PLUGINS = {}
@@ -48,7 +49,11 @@ class GraphBase(metaclass=GraphMeta):
         return f"<Graph: {self.plugin}>"
 
     async def all_charts(self) -> typing.Dict[str, dict]:
-        return await Netdata.get_charts()
+        try:
+            return await Netdata.get_charts()
+        except ClientConnectError:
+            self.middleware.logger.debug('Failed to connect to netdata', exc_info=True)
+            return {}
 
     def get_title(self) -> str:
         return self.title
@@ -88,14 +93,23 @@ class GraphBase(metaclass=GraphMeta):
         }
 
     async def export(self, query_params: dict, identifier: typing.Optional[str] = None, aggregate: bool = True):
+        try:
+            chart_metrics = await Netdata.get_chart_metrics(
+                self.get_chart_name(identifier), self.query_parameters() | query_params,
+            )
+        except (ClientConnectError, ApiException):
+            self.middleware.logger.debug(
+                'Failed to connect to netdata when exporting %r data', self.get_chart_name(identifier), exc_info=True
+            )
+            chart_metrics = {
+                'labels': ['time'],
+                'data': [],
+            }
+
         data = {
             'name': self.name,
             'identifier': identifier or self.name,
-            **(await self.middleware.run_in_thread(
-                self.normalize_metrics, await Netdata.get_chart_metrics(
-                    self.get_chart_name(identifier), self.query_parameters() | query_params,
-                ),
-            )),
+            **(await self.middleware.run_in_thread(self.normalize_metrics, chart_metrics)),
             'start': query_params['after'],
             'end': query_params['before'],
             'aggregations': dict(),
