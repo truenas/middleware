@@ -2,7 +2,7 @@ from middlewared.service import accepts, Service
 from middlewared.schema import Str, Dict, Int
 from middlewared.utils.cpu import cpu_info
 
-from .netdata import Netdata
+from .netdata import ClientConnectError, Netdata
 from .utils import calculate_disk_space_for_netdata, get_metrics_approximation
 
 
@@ -35,7 +35,11 @@ class NetdataService(Service):
         return await Netdata.get_chart_metrics(chart, data)
 
     async def get_all_metrics(self):
-        return await Netdata.get_all_metrics()
+        try:
+            return await Netdata.get_all_metrics()
+        except ClientConnectError:
+            self.logger.debug('Failed to connect to netdata when retrieving all metrics', exc_info=True)
+            return {}
 
     def calculated_metrics_count(self):
         return sum(get_metrics_approximation(
