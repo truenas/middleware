@@ -3,7 +3,7 @@ import aiohttp.client_exceptions
 import asyncio
 import contextlib
 
-from .exceptions import ApiException
+from .exceptions import ApiException, ClientConnectError
 from .utils import NETDATA_URI, NETDATA_REQUEST_TIMEOUT
 
 
@@ -27,6 +27,8 @@ class ClientMixin:
                     yield resp
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {resource!r} call: {e!r}')
+        except aiohttp.client_exceptions.ClientConnectorError as e:
+            raise ClientConnectError(f'Failed to connect to {uri!r}: {e!r}')
 
     @classmethod
     async def api_call(cls, resource: str, timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1') -> dict:
