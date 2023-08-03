@@ -167,7 +167,7 @@ sas|scsi)
 nvme)
 	# Get controller and current namespace ID.
 	ctrlr=/dev/${dev%n*}
-	nsid=${dev##nvme*n}
+	nsid=`nvme get-ns-id /dev/${dev} | awk -F 'namespace-id:' '{ print $2 }'`
 
 	# Identify controller properties.
 	idctrl=`nvme id-ctrl ${ctrlr}`
