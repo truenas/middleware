@@ -1152,7 +1152,7 @@ class SharingSMBService(SharingService):
             if newname != oldname:
                 # This is disruptive change. Share is actually being removed and replaced.
                 # Forcibly closes any existing SMB sessions.
-                await self.close_share(oldname)
+                await self.toggle_share(oldname, False)
                 try:
                     await self.middleware.call('smb.sharesec.dup_share_acl', oldname, newname)
                 except MatchNotFound:
@@ -1183,24 +1183,15 @@ class SharingSMBService(SharingService):
             to add it.
             """
             check_mdns = True
-            await self.middleware.call('smb.sharesec.toggle_share', newname, True)
-            await self.middleware.call('sharing.smb.reg_addshare', new)
+            await self.toggle_share(newname, True)
 
         elif not old_is_locked and new_is_locked:
-            await self.close_share(newname)
-            await self.middleware.call('smb.sharesec.toggle_share', newname, False)
-            try:
-                await self.middleware.call('sharing.smb.reg_delshare', oldname)
-                check_mdns = True
-            except Exception:
-                self.logger.warning('Failed to remove locked share [%s]',
-                                    old['name'], exc_info=True)
+            await self.toggle_share(newname, False)
 
         if new['enabled'] != old['enabled']:
             if not new['enabled']:
-                await self.close_share(newname)
+                await self.toggle_share(newname, False)
 
-            await self.middleware.call('smb.sharesec.toggle_share', newname, new['enabled'])
             check_mdns = True
 
         if do_global_reload:
@@ -1237,7 +1228,7 @@ class SharingSMBService(SharingService):
         share_name = 'homes' if share['home'] else share['name']
         share_list = await self.middleware.call('sharing.smb.reg_listshares')
         if share_name in share_list:
-            await self.close_share(share_name)
+            await self.toggle_share(share_name, False)
             try:
                 await self.middleware.call('smb.sharesec._delete', share_name)
             except Exception:
@@ -1343,6 +1334,16 @@ class SharingSMBService(SharingService):
 
             self.logger.warn('Failed to close smb share [%s]: [%s]',
                              share_name, c.stderr.decode().strip())
+
+    @private
+    async def toggle_share(self, share_name, available):
+        if not available:
+            await self.close_share(share_name)
+
+        await self.middleware.call('sharing.smb.reg_setparm', {
+            'service': share_name,
+            'parameters': {'available': {'parsed': available}}
+        })
 
     @private
     async def clean(self, data, schema_name, verrors, id=None):
@@ -1966,7 +1967,8 @@ class SharingSMBService(SharingService):
         cf_reg = set([x.casefold() for x in registry_shares])
         to_add = cf_active - cf_reg
         to_del = cf_reg - cf_active
-        to_preserve_acl = cf_db & to_del
+        to_preserve = cf_db & to_del
+        to_sync = cf_active - to_add
 
         for share in to_add:
             share_conf = filter_list(active_shares, [['name', 'C=', share]])
@@ -1979,7 +1981,6 @@ class SharingSMBService(SharingService):
 
             try:
                 await self.middleware.call('sharing.smb.reg_addshare', share_conf[0])
-                await self.middleware.call('smb.sharesec.toggle_share', share, True)
             except ValueError:
                 self.logger.warning("Share [%s] has invalid configuration.", share, exc_info=True)
             except Exception:
@@ -1987,15 +1988,23 @@ class SharingSMBService(SharingService):
                                     share, exc_info=True)
 
         for share in to_del:
-            await self.middleware.call('sharing.smb.close_share', share)
-            try:
-                if share in to_preserve_acl:
-                    await self.middleware.call('smb.sharesec.toggle_share', share, False)
+            await self.middleware.call('sharing.smb.toggle_share', share, False)
+            if share in to_preserve:
+                continue
 
+            try:
                 await self.middleware.call('sharing.smb.reg_delshare', share)
             except Exception:
                 self.middleware.logger.warning('Failed to remove stale share [%s]',
                                                share, exc_info=True)
+
+        for share in to_sync:
+            share_conf = filter_list(active_shares, [['name', 'C=', share]])
+            conf_diff = await self.middleware.call('sharing.smb.diff_middleware_and_registry', share, share_conf[0])
+            try:
+                await self.middleware.call('sharing.smb.apply_conf_diff', share, conf_diff)
+            except Exception:
+                self.middleware.logger.warning('Failed to sync configuration for share %s', share, exc_info=True)
 
 
 async def pool_post_import(middleware, pool):
