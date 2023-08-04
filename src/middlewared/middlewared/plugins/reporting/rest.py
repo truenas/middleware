@@ -42,12 +42,12 @@ class NetdataService(Service):
             return {}
 
     def calculated_metrics_count(self):
-        return sum(get_metrics_approximation(
+        return get_metrics_approximation(
             len(self.middleware.call_sync('device.get_disks', False, True)),
             cpu_info()['core_count'],
             self.middleware.call_sync('interface.query', [], {'count': True}),
             self.middleware.call_sync('zfs.pool.query', [], {'count': True}),
-        ).values())
+        )
 
     def get_disk_space(self):
         return calculate_disk_space_for_netdata(
