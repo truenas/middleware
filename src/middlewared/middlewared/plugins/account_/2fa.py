@@ -85,6 +85,8 @@ class UserService(Service):
 
         twofactor_config = self.middleware.call_sync('auth.twofactor.config')
         if twofactor_config['enabled']:
+            # TODO: Let's try to stream line exception behaviour where we change this to either validation error
+            #  when this starts being used in a form or UI changes how they handle call errors
             raise CallError('Please disable Two Factor Authentication first')
 
         await self.middleware.call(
