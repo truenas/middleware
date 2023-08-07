@@ -71,6 +71,35 @@ class UserService(Service):
         )
 
     @accepts(Str('username'))
+    @returns()
+    async def unset_2fa_secret(self, username):
+        """
+        Unset two-factor authentication secret for `username`.
+        """
+        user = await self.translate_username(username)
+        twofactor_auth = await self.middleware.call(
+            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']
+        )
+        if not twofactor_auth['exists']:
+            # This will only happen for AD users and we don't have a db record for them until they configure 2fa
+            # in this case we don't do anything and the secret is already unset
+            return
+
+        twofactor_config = await self.middleware.call('auth.twofactor.config')
+        if twofactor_config['enabled']:
+            # TODO: Let's try to stream line exception behaviour where we change this to either validation error
+            #  when this starts being used in a form or UI changes how they handle call errors
+            raise CallError('Please disable Two Factor Authentication first')
+
+        await self.middleware.call(
+            'datastore.update',
+            'account.twofactor_user_auth',
+            twofactor_auth['id'], {
+                'secret': None,
+            }
+        )
+
+    @accepts(Str('username'))
     @returns(Ref('user_entry'))
     async def renew_2fa_secret(self, username):
         """
