@@ -83,6 +83,10 @@ class UserService(Service):
         if not twofactor_auth['exists']:
             raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
 
+        twofactor_config = self.middleware.call_sync('auth.twofactor.config')
+        if twofactor_config['enabled']:
+            raise CallError('Please disable Two Factor Authentication first')
+
         await self.middleware.call(
             'datastore.update',
             'account.twofactor_user_auth',
