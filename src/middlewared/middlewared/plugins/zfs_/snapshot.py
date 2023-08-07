@@ -211,7 +211,7 @@ class ZFSSnapshot(CRUDService):
             raise CallError(f'Failed to snapshot {dataset}@{name}: {err}', errno_)
         else:
             instance = self.middleware.call_sync('zfs.snapshot.get_instance', f'{dataset}@{name}')
-            self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=instance['id'])
+            self.middleware.send_event(f'{self._config.namespace}.query', 'ADDED', id=instance['id'], fields=instance)
             return instance
         finally:
             if affected_vms:
