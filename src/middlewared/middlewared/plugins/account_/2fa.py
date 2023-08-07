@@ -83,7 +83,7 @@ class UserService(Service):
         if not twofactor_auth['exists']:
             raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
 
-        twofactor_config = self.middleware.call_sync('auth.twofactor.config')
+        twofactor_config = await self.middleware.call('auth.twofactor.config')
         if twofactor_config['enabled']:
             # TODO: Let's try to stream line exception behaviour where we change this to either validation error
             #  when this starts being used in a form or UI changes how they handle call errors
