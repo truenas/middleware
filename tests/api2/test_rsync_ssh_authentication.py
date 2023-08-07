@@ -60,8 +60,6 @@ def remoteuser():
 def src(localuser):
     with dataset("src") as src:
         path = f"/mnt/{src}"
-        ssh(f"touch {path}/test")
-        ssh(f"chown -R localuser:localuser {path}")
         yield path
 
 
@@ -80,9 +78,12 @@ def ssh_credentials(remoteuser):
 
 
 @pytest.fixture(scope="function")
-def cleanup(localuser, dst):
+def cleanup(localuser, src, dst):
     ssh(f"rm -rf {localuser['home']}/.ssh")
-    ssh(f"rm -rf {dst}/test")
+    ssh(f"rm -rf {src}/*", check=False)
+    ssh(f"touch {src}/test")
+    ssh(f"chown -R localuser:localuser {src}")
+    ssh(f"rm -rf {dst}/*", check=False)
 
 
 def test_no_credential_provided_create(cleanup, localuser, remoteuser, src, dst):
