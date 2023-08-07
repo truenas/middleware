@@ -476,7 +476,7 @@ class ShareSchema(RegistrySchema):
         RegObj("vuid", "tn:vuid", ''),
         RegObj("comment", "comment", ""),
         RegObj("guestok", "guest ok", False),
-        RegObj("available", "enabled", True),
+        RegObj("enabled", "available", True),
         RegObj("hostsallow", "hosts allow", []),
         RegObj("hostsdeny", "hosts deny", []),
         RegObj("abe", "access based share enum", False),

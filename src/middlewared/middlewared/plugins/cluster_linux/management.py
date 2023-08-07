@@ -55,6 +55,13 @@ class ClusterPeerConnection:
         if self.conn:
             self.conn.close()
 
+    def __validate_sysdataset(self, schema_name, verrors):
+        if self.call_fn('systemdataset.is_boot_pool'):
+            verrors.add(
+                f'{schema_name}.hostname',
+                'System dataset may not reside on boot pool when configuring clustering.'
+            )
+
     def __validate_ntp(self, schema_name, ntp_peers, verrors):
         active = filter_list(ntp_peers, [['active', '=', True]])
         if not active:
@@ -200,6 +207,7 @@ class ClusterPeerConnection:
         self.__validate_brick_path(schema_name, verrors)
         self.__validate_dns(schema_name, hosts_to_check, verrors)
         self.__validate_private_address(schema_name, verrors)
+        self.__validate_sysdataset(schema_name, verrors)
 
 
 class ClusterManagement(Service):
