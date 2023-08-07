@@ -71,6 +71,27 @@ class UserService(Service):
         )
 
     @accepts(Str('username'))
+    @returns()
+    async def unset_2fa_secret(self, username):
+        """
+        Unset two-factor authentication secret for `username`.
+        """
+        user = await self.translate_username(username)
+        twofactor_auth = await self.middleware.call(
+            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']
+        )
+        if not twofactor_auth['exists']:
+            raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
+
+        await self.middleware.call(
+            'datastore.update',
+            'account.twofactor_user_auth',
+            twofactor_auth['id'], {
+                'secret': None,
+            }
+        )
+
+    @accepts(Str('username'))
     @returns(Ref('user_entry'))
     async def renew_2fa_secret(self, username):
         """
