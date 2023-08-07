@@ -59,7 +59,7 @@ async def test__interface_link_address_setup(test):
         query = ds.middleware["datastore.query"]
 
         async def mock_query(table, *args):
-            if table in ["network.bridge", "network.lagginterfacemembers", "network.vlan"]:
+            if table in ["network.bridge", "network.lagginterfacemembers", "network.vlan", "vm.device"]:
                 return []
 
             return await query(table, *args)
