@@ -81,7 +81,9 @@ class UserService(Service):
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']
         )
         if not twofactor_auth['exists']:
-            raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
+            # This will only happen for AD users and we don't have a db record for them until they configure 2fa
+            # in this case we don't do anything and the secret is already unset
+            return
 
         twofactor_config = await self.middleware.call('auth.twofactor.config')
         if twofactor_config['enabled']:
