@@ -1,9 +1,8 @@
 import pprint
-
-import pytest
+from unittest.mock import ANY
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import client, mock
+from middlewared.test.integration.utils import client
 
 
 def test_create():
@@ -19,7 +18,8 @@ def test_create():
 
             assert len(events) == 1, pprint.pformat(events, indent=2)
             assert events[0][0] == "ADDED"
-            assert events[0][1] == {"collection": "zfs.snapshot.query", "msg": "added", "id": f"{ds}@test"}
+            assert events[0][1] == {"collection": "zfs.snapshot.query", "msg": "added", "id": f"{ds}@test",
+                                    "fields": ANY}
 
 
 def test_delete():
