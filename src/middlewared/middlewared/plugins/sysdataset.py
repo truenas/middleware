@@ -220,11 +220,25 @@ class SystemDatasetService(ConfigService):
         verrors = ValidationErrors()
         if new['pool'] != config['pool']:
             system_ready = await self.middleware.call('system.ready')
-            ad_enabled = (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY'
+            try:
+                ad_enabled = (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY'
+            except Exception:
+                self.logger.error('Failed to retrieve activedirectory state', exc_info=True)
+                ad_enabled = False
+
+            clustered = await self.middleware.call('cluster.utils.is_clustered')
+
             if system_ready and ad_enabled:
                 verrors.add(
                     'sysdataset_update.pool',
                     'System dataset location may not be moved while the Active Directory service is enabled.',
+                    errno.EPERM
+                )
+
+            if system_ready and clustered:
+                verrors.add(
+                    'sysdataset_update.pool',
+                    'System dataset location may not be moved while while server is clustered.',
                     errno.EPERM
                 )
 
