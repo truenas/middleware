@@ -4,10 +4,12 @@ import contextlib
 import os
 import pytest
 
-from config import CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS, BRICK_PATH
+from config import CLIENT_AUTH, CLUSTER_INFO, CLUSTER_IPS, TIMEOUTS, BRICK_PATH
 from utils import make_request, make_ws_request, wait_on_job, ssh_test
 from exceptions import JobTimeOut
 from pytest_dependency import depends
+from middlewared.test.integration.utils import client
+from middlewared.client import ClientException
 
 
 GVOL = 'gvolumetest'
@@ -428,3 +430,13 @@ def test_11_expand_cluster(request):
 
     assert res.get('error') is None, str(res)
     assert res['result']['all_healthy'] is True, str(res['result'])
+
+
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
+def test_12_try_export_pool(ip, request):
+    with pytest.raises(ClientException) as e:
+        with client(auth=CLIENT_AUTH, host_ip=ip) as c:
+            cluster_pool = c.call('pool.query', [['name', '=', CLUSTER_INFO['ZPOOL']]], {'get': True})
+            res = c.call('pool.export', cluster_pool['id'], job=True)
+
+        assert 'System dataset location may not be moved' in str(e), str(e)
