@@ -170,6 +170,8 @@ class TruecommandService(ConfigService):
             # can happen on update
             # 1) Service enabled/disabled
             # 2) Api Key changed
+
+            self.middleware.logger.debug('Stopping TrueCommand service on config change')
             await self.middleware.call('truecommand.stop_truecommand_service')
 
             if new['enabled']:
@@ -182,6 +184,7 @@ class TruecommandService(ConfigService):
                     # User just enabled the service after disabling it - we have wireguard details and
                     # we can initiate the connection. If it is not good, health check will fail and we will
                     # poll iX Portal to see what's up. Let's just start wireguard now
+                    self.middleware.logger.debug('Starting TrueCommand service after re-enabling')
                     await self.middleware.call('truecommand.start_truecommand_service')
 
             return await self.config()
