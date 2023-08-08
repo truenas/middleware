@@ -6,6 +6,7 @@ async def _event_system(middleware, event_type, args):
         if await middleware.call('failover.licensed'):
             return
 
+        middleware.logger.debug('Starting TrueCommand service on system boot')
         await middleware.call('truecommand.start_truecommand_service')
 
 
