@@ -1,0 +1,4 @@
+pytest
+pytest-dependency
+requests
+websocket-client>=1.4.2
