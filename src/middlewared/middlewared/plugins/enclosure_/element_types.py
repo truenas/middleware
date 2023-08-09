@@ -28,8 +28,8 @@ def current(value_raw):
     values = {
         'Identify on': (value_raw >> 16) & 0x80,
         'Fail on': (value_raw >> 16) & 0x40,
-        'Warn Over': (value_raw >> 16) & 0x8,
-        'Crit Over': (value_raw >> 16) & 0x2,
+        'Warn over': (value_raw >> 16) & 0x8,
+        'Crit over': (value_raw >> 16) & 0x2,
     }
     return ', '.join([f'{(value_raw & 0xffff) / 100}A'] + [k for k, v in values.items() if v])
 
@@ -38,7 +38,7 @@ def enclosure(value_raw):
     values = {
         'Identify on': (value_raw >> 16) & 0x80,
         'Fail on': (value_raw >> 8) & 0x02,
-        'Warn On': (value_raw >> 8) & 0x01,
+        'Warn on': (value_raw >> 8) & 0x01,
     }
     result = [k for k, v in values.items() if v]
     if (pctime := (value_raw >> 10) & 0x3f):
@@ -65,13 +65,10 @@ def cooling(value_raw):
 
 
 def temp(value_raw):
-    temp = None
     if (temp := (value_raw & 0xff00) >> 8):
         # 8 bits represents -19C to +235C
         # value of 0 would imply -20C
-        temp = f'{temp -20}C'
-
-    return temp
+        return f'{temp -20}C'
 
 
 def psu(value_raw):
@@ -125,17 +122,17 @@ def sas_conn(value_raw):
         0x2f: 'SAS virtual connector [max 1 phy]',
         0x3f: 'Vendor specific internal connector',
     }
-    values.update({i: 'unknown external connector type: {hex(i)}' for i in range(0x8, 0xf)})
-    values.update({i: 'unknown internal wide connector type: {hex(i)}' for i in range(0x14, 0x20)})
-    values.update({i: 'unknown internal connector to end device type: {hex(i)}' for i in range(0x28, 0x2f)})
-    values.update({i: 'reserved for internal connector type: {hex(i)}' for i in range(0x30, 0x3f)})
-    values.update({i: 'reserved connector type: {hex(i)}' for i in range(0x40, 0x70)})
-    values.update({i: 'vendor specific connector type: {hex(i)}' for i in range(0x70, 0x80)})
+    values.update({i: f'unknown external connector type: {hex(i)}' for i in range(0x8, 0xf)})
+    values.update({i: f'unknown internal wide connector type: {hex(i)}' for i in range(0x14, 0x20)})
+    values.update({i: f'unknown internal connector to end device type: {hex(i)}' for i in range(0x28, 0x2f)})
+    values.update({i: f'reserved for internal connector type: {hex(i)}' for i in range(0x30, 0x3f)})
+    values.update({i: f'reserved connector type: {hex(i)}' for i in range(0x40, 0x70)})
+    values.update({i: f'vendor specific connector type: {hex(i)}' for i in range(0x70, 0x80)})
 
-    return ', '.join(
-        [values.get(conn_type, f'unexpected connector type: {hex(conn_type)}')] +
-        ['Fail On'] if value_raw & 0x40 else []
-    )
+    formatted = [values.get(conn_type, f'unexpected connector type: {hex(conn_type)}')]
+    if value_raw & 0x40:
+        formatted.append('Fail on')
+    return ', '.join(formatted)
 
 
 def sas_exp(value_raw):

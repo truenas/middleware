@@ -4,9 +4,8 @@ from middlewared.plugins.enclosure_ import element_types
 
 
 @pytest.mark.parametrize('data', [
-    # Test each individual flag
-    (0x100000, 'Identify on'),
-    (0x080000, 'Fail on'),
+    (0x800000, 'Identify on'),
+    (0x400000, 'Fail on'),
     (0x000080, 'RQST mute'),
     (0x000040, 'Muted'),
     (0x000010, 'Remind'),
@@ -14,10 +13,8 @@ from middlewared.plugins.enclosure_ import element_types
     (0x000004, 'NON-CRIT'),
     (0x000002, 'CRIT'),
     (0x000001, 'UNRECOV'),
-    # No flag
     (0x000000, None),
-    # All flags
-    (0x1800FF, 'Identify on, Fail on, RQST mute, Muted, Remind, INFO, NON-CRIT, CRIT, UNRECOV')
+    (0xf000ff, 'Identify on, Fail on, RQST mute, Muted, Remind, INFO, NON-CRIT, CRIT, UNRECOV')
 ])
 def test_alarm(data):
     value_raw, expected_result = data
@@ -25,18 +22,11 @@ def test_alarm(data):
 
 
 @pytest.mark.parametrize('data', [
-    # Test each individual flag
-    (0x100000, 'Identify on'),
-    (0x080000, 'Fail on'),
-    (0x000001, 'Disabled'),
-    # Test with no flags set
     (0x000000, None),
-    # Test combinations
-    (0x180000, 'Identify on, Fail on'),
-    (0x100001, 'Identify on, Disabled'),
-    (0x080001, 'Fail on, Disabled'),
-    # Test with all flags set
-    (0x180001, 'Identify on, Fail on, Disabled')
+    (0x800000, 'Identify on'),
+    (0x400000, 'Fail on'),
+    (0x000001, 'Disabled'),
+    (0xc00001, 'Identify on, Fail on, Disabled'),
 ])
 def test_comm(data):
     value_raw, expected_result = data
@@ -44,15 +34,23 @@ def test_comm(data):
 
 
 @pytest.mark.parametrize('data', [
-    # Test each individual flag
-    (0x100010, '6.56A, Identify on'),
-    (0x080020, '8.0A, Fail on'),
-    (0x000830, '12.96A, Warn Over'),
-    (0x000240, '5.76A, Crit Over'),
-    # No flag
     (0x000000, '0.0A'),
-    # Test with all flags set
-    (0x1C0A10, '4.16A, Identify on, Fail on, Warn Over, Crit Over')
+    (0x800000, '0.0A, Identify on'),
+    (0x400000, '0.0A, Fail on'),
+    (0x070000, '0.0A, Crit over'),
+    (0x080000, '0.0A, Warn over'),
+    # 2.5A
+    (0x0000fa, '2.5A'),
+    (0x08010a, '2.66A, Warn over'),
+    (0x070110, '2.72A, Crit over'),
+    # 5.0A
+    (0x0001f4, '5.0A'),
+    (0x080210, '5.28A, Warn over'),
+    (0x070220, '5.44A, Crit over'),
+    # 12.0A
+    (0x0004b0, '12.0A'),
+    (0x0804d0, '12.32A, Warn over'),
+    (0x0704f0, '12.64A, Crit over'),
 ])
 def test_current(data):
     value_raw, expected_result = data
@@ -60,20 +58,18 @@ def test_current(data):
 
 
 @pytest.mark.parametrize('data', [
-    # Test each individual flag
-    (0x100000, 'Identify on'),
+    (0x800000, 'Identify on'),
+    (0x000100, 'Warn on'),
     (0x000200, 'Fail on'),
-    (0x000100, 'Warn On'),
-    # Test power cycle and power off time flags
-    (0x000840, 'Power cycle 1min, power off for 16min'),
-    # Test with no flags set
-    (0x000000, None),
-    # Test combinations
-    (0x100200, 'Identify on, Fail on'),
-    (0x100100, 'Identify on, Warn On'),
-    (0x000300, 'Fail on, Warn On'),
-    # Test with all flags set and power cycle time
-    (0x100F4C, 'Identify on, Fail on, Warn On, Power cycle 15min, power off for 19min'),
+    (0x000300, 'Fail on, Warn on'),
+    (0x800100, 'Identify on, Warn on'),
+    (0x800200, 'Identify on, Fail on'),
+    (0x800300, 'Identify on, Fail on, Warn on'),
+    (0x000400, 'Power cycle 1min, power off for 0min'),
+    (0x000500, 'Warn on, Power cycle 1min, power off for 0min'),
+    (0x000600, 'Fail on, Power cycle 1min, power off for 0min'),
+    (0x800400, 'Identify on, Power cycle 1min, power off for 0min'),
+    (0x0004f0, 'Power cycle 1min, power off for 60min'),
 ])
 def test_enclosure(data):
     value_raw, expected_result = data
@@ -81,20 +77,27 @@ def test_enclosure(data):
 
 
 @pytest.mark.parametrize('data', [
-    # Test each individual flag
-    (0x100010, '6.56V, Identify on'),
-    (0x080020, '8.0V, Fail on'),
-    (0x000830, '12.96V, Warn over'),
-    (0x000440, '17.44V, Warn under'),
-    (0x000240, '5.76V, Crit over'),
-    (0x000141, '3.21V, Crit under'),
-    # Test with no flags set
-    (0x000080, '1.28V'),
-    # Test combinations
-    (0x180010, '6.56V, Identify on, Fail on'),
-    (0x1C0A10, '4.16V, Identify on, Fail on, Warn over, Warn under'),
-    # Test with all flags set
-    (0x1F0F1F, '7.83V, Identify on, Fail on, Warn over, Warn under, Crit over, Crit under'),
+    (0x100000, '0.0V'),
+    (0x110000, '0.0V, Crit under'),
+    (0x410000, '0.0V, Fail on, Crit under'),
+    (0x810000, '0.0V, Identify on, Crit under'),
+    (0xf10000, '0.0V, Identify on, Fail on, Crit under'),
+    (0x220000, '0.0V, Crit over'),
+    (0x520000, '0.0V, Fail on, Crit over'),
+    (0x820000, '0.0V, Identify on, Crit over'),
+    (0xf20000, '0.0V, Identify on, Fail on, Crit over'),
+    # 2.5V
+    (0x0100f0, '2.4V, Crit under'),
+    (0x0000fa, '2.5V'),
+    (0x020110, '2.72V, Crit over'),
+    # 5.0V
+    (0x0101e4, '4.84V, Crit under'),
+    (0x0001f4, '5.0V'),
+    (0x020210, '5.28V, Crit over'),
+    # 12.0V
+    (0x0104a0, '11.84V, Crit under'),
+    (0x0004b0, '12.0V'),
+    (0x0204d0, '12.32V, Crit over'),
 ])
 def test_volt(data):
     value_raw, expected_result = data
@@ -104,12 +107,10 @@ def test_volt(data):
 @pytest.mark.parametrize('data', [
     (0x000000, '0 RPM'),
     (0x001000, '160 RPM'),
-    (0x010000, '10240 RPM'),
-    (0x7ff00, '524280 RPM'),
+    (0x010000, '2560 RPM'),
+    (0x6f0000, '17920 RPM'),
     # Ensure mask works correctly
-    (0xFFFF00, '524280 RPM'),
-    # Test with bits set outside the mask
-    (0xABCDEF, '686080 RPM')
+    (0xFFFF00, '20470 RPM'),
 ])
 def test_cooling(data):
     value_raw, expected_result = data
@@ -134,7 +135,7 @@ def test_temp(data):
 
 @pytest.mark.parametrize('data', [
     # Test each individual flag
-    (0x100000, 'Identify on'),
+    (0x800000, 'Identify on'),
     (0x40, 'Fail on'),
     (0x800, 'DC overvoltage'),
     (0x400, 'DC undervoltage'),
@@ -147,14 +148,8 @@ def test_temp(data):
     # Test with no flags set
     (0x000000, None),
     # Test some combinations
-    (0x100400, 'Identify on, DC undervoltage'),
-    (0x40C, 'Fail on, DC overcurrent, Overtemp warn'),
-    # Test with all flags set
-    (
-        0x10045F, '''Identify on, Fail on, DC overvoltage,
-        DC undervoltage, DC overcurrent, Overtemp fail,
-        Overtemp warn, AC fail, DC fail, Off'''
-    )
+    (0x800400, 'Identify on, DC undervoltage'),
+    (0x40C, 'DC undervoltage, Overtemp fail, Overtemp warn'),
 ])
 def test_psu(data):
     value_raw, expected_result = data
@@ -300,11 +295,11 @@ def test_array_dev(data):
     (0x7e0000, 'vendor specific connector type: 0x7e'),
     (0x7f0000, 'vendor specific connector type: 0x7f'),
     # Test out of bounds connector type
-    (0x800000, 'unexpected connector type: 0x80'),
+    (0x800000, 'No information'),
     # Test connector type with fail on
-    (0x220040, 'SAS Drive plug (SFF-8482) [max 2 phys], Fail On'),
+    (0x220040, 'SAS Drive plug (SFF-8482) [max 2 phys], Fail on'),
     # Test out of bounds connector type with fail on
-    (0x800040, 'unexpected connector type: 0x80, Fail On')
+    (0x800040, 'No information, Fail on')
 ])
 def test_sas_conn(data):
     value_raw, expected_result = data

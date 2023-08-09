@@ -1,7 +1,7 @@
 def r20_variants_or_mini(pr, pnr, dmi):
     if dmi in ['TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B']:
         return pr, True
-    elif dmi in ['TRUENAS-MINI', 'FREENAS-MINI']:
+    elif dmi.startswith(('TRUENAS-MINI', 'FREENAS-MINI')):
         # minis do not have the TRUENAS- prefix removed
         return pnr, True
     else:
