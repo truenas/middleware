@@ -98,6 +98,11 @@ source s_src { system(); internal(); };
 ##################
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
+##################
+# audit-related configuration
+##################
+@include "/etc/syslog-ng/conf.d/tnaudit.conf"
+
 #######################
 # Log paths
 ########################

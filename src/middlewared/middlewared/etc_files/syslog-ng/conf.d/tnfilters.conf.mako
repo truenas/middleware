@@ -2,6 +2,12 @@
 # TrueNAS filters
 ##################
 
+# Filter TrueNAS audit-related messages
+filter f_tnaudit_smb { program("TNAUDIT_SMB"); };
+filter f_tnaudit_all {
+  filter(f_tnaudit_smb)
+};
+
 # These filters are used for remote syslog
 filter f_tnremote_f_emerg { level(emerg); };
 filter f_tnremote_f_alert { level(alert..emerg); };
@@ -24,6 +30,7 @@ filter f_app_mounts {
 };
 
 filter f_truenas_exclude {
+  not filter(f_tnaudit_all) and
   not filter(f_k3s) and
   not filter(f_containerd) and
   not filter(f_kube_router) and
