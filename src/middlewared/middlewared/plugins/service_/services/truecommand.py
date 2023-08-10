@@ -13,8 +13,8 @@ class TruecommandService(SimpleService):
     systemd_unit = 'wg-quick@wg0'
 
     async def _start_freebsd(self):
-        await self._freebsd_service(self.freebsd_rc, "start")
+        await self._freebsd_service(self.freebsd_rc, 'start')
 
     async def _get_state_freebsd(self):
-        status = (await self._freebsd_service(self.freebsd_rc, "status")).stdout
+        status = (await self._freebsd_service(self.freebsd_rc, 'status')).stdout
         return ServiceState("Device not configured" not in status, [])
