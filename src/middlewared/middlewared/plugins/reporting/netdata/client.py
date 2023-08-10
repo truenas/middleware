@@ -2,6 +2,7 @@ import aiohttp
 import aiohttp.client_exceptions
 import asyncio
 import contextlib
+import json
 
 from .exceptions import ApiException, ClientConnectError
 from .utils import NETDATA_URI, NETDATA_REQUEST_TIMEOUT
@@ -34,6 +35,9 @@ class ClientMixin:
     async def api_call(cls, resource: str, timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1') -> dict:
         try:
             async with cls.request(resource, timeout, version) as resp:
-                return await resp.json()
+                output = ''
+                async for line in resp.content.iter_any():
+                    output += line.decode(errors='ignore')
+                return json.loads(output)
         except aiohttp.client_exceptions.ContentTypeError as e:
             raise ApiException(f'Malformed response received from {resource!r} endpoint: {e}')
