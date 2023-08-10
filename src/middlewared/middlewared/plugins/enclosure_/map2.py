@@ -49,7 +49,7 @@ def map_enclosures(enclosures):
                     'original': {
                         'enclosure_id': enclosure['id'],
                         'enclosure_sg': enclosure['sg'],
-                        'encllsure_bsg': enclosure['bsg'],
+                        'enclosure_bsg': enclosure['bsg'],
                         'descriptor': orig_info['descriptor'],
                         'slot': orig_slot
                     }
