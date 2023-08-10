@@ -136,6 +136,9 @@ class DISPLAY(Device):
         )
         new_ports = list((self.middleware.call_sync('vm.port_wizard')).values())
         dev_attrs = device['attributes']
+        for port in filter(lambda p: p in new_ports, (dev_attrs.get('port'), dev_attrs.get('web_port'))):
+            new_ports.remove(port)
+
         for key in ('port', 'web_port'):
             if device['attributes'].get(key):
                 if dev_attrs[key] in display_devices_ports:
