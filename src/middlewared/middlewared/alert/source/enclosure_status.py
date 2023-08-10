@@ -54,10 +54,10 @@ class EnclosureStatusAlertSource(AlertSource):
                     if await self.should_report(enc, value):
                         args = [
                             enc['name'],
-                            value['descriptor'],
-                            value['slot'],
-                            hex(value['slot']),
-                            value['status']
+                            value['name'],
+                            value['status'],
+                            value['value'],
+                            value['value_raw']
                         ]
                         for i, (another_args, count) in enumerate(self.bad_elements):
                             if another_args == args:
