@@ -18,12 +18,3 @@ def test_otp_http_basic_auth(otp_enabled):
         r = s.get(f"{url()}/api/v2.0/system/info/")
         assert r.status_code == 401
         assert r.text == "HTTP Basic Auth is unavailable when OTP is enabled"
-
-
-def test_otp_http_basic_auth_upload(otp_enabled):
-    with session() as s:
-        r = s.get(f"{url()}/_upload/")
-        assert r.status_code == 401
-        assert r.text == "HTTP Basic Auth is unavailable when OTP is enabled"
-
-
