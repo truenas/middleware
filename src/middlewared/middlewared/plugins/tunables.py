@@ -1,3 +1,4 @@
+import contextlib
 import errno
 import os
 import subprocess
@@ -60,8 +61,10 @@ class TunableService(CRUDService):
 
     @private
     def set_sysctl(self, var, value):
-        with open(f'/proc/sys/{var.replace(".", "/")}', 'w') as f:
-            f.write(value)
+        path = f'/proc/sys/{var.replace(".", "/")}'
+        with contextlib.suppress(FileNotFoundError, PermissionError):
+            with open(path, 'w') as f:
+                f.write(value)
 
     @private
     def reset_sysctl(self, tunable):
@@ -70,7 +73,7 @@ class TunableService(CRUDService):
     @private
     def set_zfs_parameter(self, name, value):
         path = zfs_parameter_path(name)
-        if os.access(path, os.W_OK):
+        with contextlib.suppress(FileNotFoundError, PermissionError):
             with open(path, 'w') as f:
                 f.write(value)
 
