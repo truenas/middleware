@@ -1,3 +1,4 @@
+import contextlib
 import errno
 import subprocess
 
@@ -50,8 +51,10 @@ class TunableService(CRUDService):
 
     @private
     def set_sysctl(self, var, value):
-        with open(f'/proc/sys/{var.replace(".", "/")}', 'w') as f:
-            f.write(value)
+        path = f'/proc/sys/{var.replace(".", "/")}'
+        with contextlib.suppress(FileNotFoundError, PermissionError):
+            with open(path, 'w') as f:
+                f.write(value)
 
     @private
     def reset_sysctl(self, tunable):
