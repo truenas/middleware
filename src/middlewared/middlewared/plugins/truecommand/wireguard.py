@@ -127,12 +127,7 @@ class TruecommandService(Service):
             if Status(config['api_key_state']) == Status.CONNECTED and all(
                 config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
             ):
-                if not await self.middleware.call('service.started', 'truecommand'):
-                    self.middleware.logger.debug('Starting TrueCommand service')
-                    await self.middleware.call('service.start', 'truecommand')
-                else:
-                    self.middleware.logger.debug('TrueCommand service aleady started')
-
+                await self.middleware.call('service.start', 'truecommand')
                 await self.middleware.call('service.reload', 'http')
                 self.middleware.create_task(self.middleware.call('truecommand.health_check'))
             else:
