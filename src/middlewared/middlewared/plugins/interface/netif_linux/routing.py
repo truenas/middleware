@@ -8,6 +8,7 @@ import socket
 
 import bidict
 from pyroute2 import IPRoute
+from pyroute2.netlink.exceptions import NetlinkDumpInterrupted
 
 from .address.ipv6 import ipv6_netmask_to_prefixlen
 from .address.types import AddressFamily
@@ -208,7 +209,17 @@ class RoutingTable:
         self._op("delete", route)
 
     def _interfaces(self):
-        return bidict.bidict({i["index"]: dict(i["attrs"]).get("IFLA_IFNAME") for i in ip.get_links()})
+        return bidict.bidict({i["index"]: dict(i["attrs"]).get("IFLA_IFNAME") for i in self._ip_links()})
+
+    def _ip_links(self):
+        retries = 5
+        while True:
+            try:
+                return ip.get_links()
+            except NetlinkDumpInterrupted:
+                retries -= 1
+                if retries <= 0:
+                    raise
 
     def _op(self, op, route):
         if route.netmask.version == 4:
