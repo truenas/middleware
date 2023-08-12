@@ -318,6 +318,33 @@ class PoolDatasetService(Service):
             'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
         )).wait()
 
+        mapping = {}
+        for source_ds in task['source_datasets']:
+            mapping[source_ds] = await self.middleware.call(
+                'pool.dataset.query_encrypted_roots_keys', [
+                    ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
+                ]
+            )
+
+        # We have 3 cases to deal with
+        # 1. There are no encrypted datasets in source dataset, so let's just skip in that case
+        # 2. There is only 1 source dataset, in this case the destination dataset will be overwritten as is, so we
+        #    generate mapping accordingly. For example if source is `tank/enc` and destination is `dest/enc`, in
+        #    the destination system `dest/enc` will reflect `tank/enc` so we reflect that accordingly in the mapping
+        # 3. There are multiple source datasets, in this case they will become child of destination dataset
+
+        if not any(mapping.values()):
+            return {}
+
+        normalized_result = {}
+        target_ds = task['target_dataset']
+        if len(mapping) == 1:
+            source_ds = task['source_datasets'][0]
+            for ds_name, key in mapping[source_ds].items():
+                normalized_result[ds_name.replace(source_ds, target_ds, 1)] = key
+
+        return normalized_result
+
     @accepts(
         Str('id'),
         Bool('download', default=False),
