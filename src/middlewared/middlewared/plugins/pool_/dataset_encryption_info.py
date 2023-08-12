@@ -342,6 +342,11 @@ class PoolDatasetService(Service):
             source_ds = task['source_datasets'][0]
             for ds_name, key in mapping[source_ds].items():
                 normalized_result[ds_name.replace(source_ds, target_ds, 1)] = key
+        else:
+            for source_ds in task['source_datasets']:
+                source_ds_name = source_ds.rsplit('/', 1)[-1]
+                for ds_name, key in mapping[source_ds].items():
+                    normalized_result[ds_name.replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
 
         return normalized_result
 
