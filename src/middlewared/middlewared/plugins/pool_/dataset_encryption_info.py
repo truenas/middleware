@@ -308,6 +308,16 @@ class PoolDatasetService(Service):
         with BytesIO(json.dumps(datasets).encode()) as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
+    @private
+    async def export_keys_for_replication_internal(self, replication_task_id):
+        task = await self.middleware.call('replication.get_instance', replication_task_id)
+        if task['direction'] != 'PUSH':
+            raise CallError('Only push replication tasks are supported.', errno.EINVAL)
+
+        await (await self.middleware.call(
+            'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
+        )).wait()
+
     @accepts(
         Str('id'),
         Bool('download', default=False),
