@@ -106,10 +106,15 @@ def get_slot_info(model):
             our enclosures is quite complex and this was the best mix
             of performance/maintability.
     """
-    if model in ('R40', 'R50', 'R50B', 'R50BM'):
-        # these rseries devices share same enclosure and mapping
+    if model in ('R50', 'R50B', 'R50BM'):
+        # these platforms share same enclosure and mapping
         # but it's important to always map the eDrawer4048S1
         # enclosure device to drives 1 - 24
+
+        # FIXME: R40 does not have a predictable guaranteed unique
+        # identifier so we'll map the 1st 24 drives to the
+        # enclosure with the smaller logical id and the last
+        # 24 drives to the larger logical id
         return {
             'any_version': True,
             'mapping_info': {'versions': {
@@ -167,6 +172,23 @@ def get_slot_info(model):
                             23: {'orig_slot': 23, 'mapped_slot': 47},
                             24: {'orig_slot': 24, 'mapped_slot': 48},
                         }
+                    },
+                    'id': {
+                        'r50_nvme_enclosure': {
+                            1: {'orig_slot': 1, 'mapped_slot': 49},
+                            2: {'orig_slot': 1, 'mapped_slot': 50},
+                            3: {'orig_slot': 3, 'mapped_slot': 51},
+                        },
+                        'r50b_nvme_enclosure': {
+                            1: {'orig_slot': 1, 'mapped_slot': 49},
+                            2: {'orig_slot': 1, 'mapped_slot': 50},
+                        },
+                        'r50bm_nvme_enclosure': {
+                            1: {'orig_slot': 1, 'mapped_slot': 49},
+                            2: {'orig_slot': 1, 'mapped_slot': 50},
+                            3: {'orig_slot': 3, 'mapped_slot': 51},
+                            4: {'orig_slot': 4, 'mapped_slot': 52},
+                        },
                     }
                 }
             }}
@@ -414,8 +436,11 @@ MAPPINGS = {
     'TRUENAS-R20B': get_slot_info('R20B'),
     'TRUENAS-R40': get_slot_info('R40'),
     'TRUENAS-R50': get_slot_info('R50'),
+    'r50_nvme_enclosure': get_slot_info('R50'),
     'TRUENAS-R50B': get_slot_info('R50B'),
+    'r50b_nvme_enclosure': get_slot_info('R50B'),
     'TRUENAS-R50BM': get_slot_info('R50BM'),
+    'r50bm_nvme_enclosure': get_slot_info('R50BM'),
     'TRUENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
     'FREENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
     'TRUENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),

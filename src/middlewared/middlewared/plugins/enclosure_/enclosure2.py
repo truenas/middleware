@@ -7,6 +7,7 @@ from middlewared.service import Service, filterable
 from middlewared.utils import filter_list
 from .enclosure_class import Enclosure
 from .map2 import map_enclosures
+from .nvme2 import map_nvme
 
 
 class Enclosure2Service(Service):
@@ -15,7 +16,7 @@ class Enclosure2Service(Service):
         cli_namespace = 'storage.enclosure2'
         private = True
 
-    def get_ses_enclosures(self):
+    def get_ses_enclosures(self, dmi=None):
         """This generates the "raw" list of enclosures detected on the system. It
         serves as the "entry" point to "enclosure2.query" and is foundational in
         how all of the structuring of the final data object is returned.
@@ -35,8 +36,10 @@ class Enclosure2Service(Service):
         raw data and formatting it into a structured object that will be consumed by
         the webUI team as well as on the backend (alerts, drive identifiction, etc).
         """
+        if dmi is None:
+            dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+
         output = list()
-        dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
         for i in Context().list_devices(subsystem='enclosure'):
             bsg = f'/dev/bsg/{i.sys_name}'
             try:
@@ -71,9 +74,10 @@ class Enclosure2Service(Service):
             return enclosures
 
         labels = {
-            label["encid"]: label["label"]
-            for label in self.middleware.call_sync("datastore.query", "truenas.enclosurelabel")
+            label['encid']: label['label']
+            for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
         }
+        dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
         for i in filter(lambda x: not self.to_ignore(x), self.get_ses_enclosures()):
             # this is a user-provided string to label the enclosures so we'll add it at as a
             # top-level dictionary key "label", if the user hasn't provided a label then we'll
@@ -83,7 +87,6 @@ class Enclosure2Service(Service):
             i['label'] = labels.get(i['id']) or i['name']
             enclosures.append(i)
 
-        # TODO: fix nvme mapping
-        # enclosures.extend(self.middleware.call_sync("enclosure.map_nvme"))
+        enclosures.extend(map_nvme(dmi))
         enclosures = map_enclosures(enclosures)
         return filter_list(enclosures, filters, options)
