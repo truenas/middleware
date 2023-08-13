@@ -6,10 +6,15 @@ def map_enclosures(enclosures):
     jbods = []
     for enclosure in enclosures:
         if not enclosure['controller']:
+            # we're on a platform that has a JBOD attached so we
+            # want to place these in another list so we don't lose
+            # them during the mapping process
             jbods.append(enclosure)
             continue
 
         try:
+            # take DMI information for the platform and try to get drive
+            # slot mappings
             mapped_dict = MAPPINGS[enclosure['dmi']]['mapping_info']
         except KeyError:
             # X, M, F series don't need to be mapped so this is expected
@@ -47,6 +52,13 @@ def map_enclosures(enclosures):
                     'value_raw': orig_info['value_raw'],
                     'dev': orig_info['dev'],
                     'original': {
+                        # the main purpose of the `original` key is so that
+                        # we have quick access when a user requests to identify
+                        # or fault a drive slot led. Since platforms can have
+                        # 100's (or 1k+) disk slots, the only components we
+                        # care about when lighting up a disk is to get the
+                        # 1. enclosure scsi generice device (i.e. /dev/sg0)
+                        # 2. the original slot of the disk (if it was mapped)
                         'enclosure_id': enclosure['id'],
                         'enclosure_sg': enclosure['sg'],
                         'enclosure_bsg': enclosure['bsg'],
@@ -56,4 +68,5 @@ def map_enclosures(enclosures):
                 }
             })
 
+    # we've mapped the head-unit but we don't want to lose the JBOD information
     return mapped + jbods
