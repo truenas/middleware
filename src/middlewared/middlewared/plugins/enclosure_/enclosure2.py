@@ -66,6 +66,13 @@ class Enclosure2Service(Service):
             not enclosure['model'].startswith('R20'),
         ))
 
+    def map_nvme(self):
+        """This method serves as an endpoint to easily be able to test
+        the nvme mapping logic specifically without having to call enclosure2.query
+        which includes the head-unit and all attached JBODs.
+        """
+        return map_nvme(self.middleware.call_sync('system.dmidecode_info')['system-product-name'])
+
     @filterable
     def query(self, filters, options):
         enclosures = []
