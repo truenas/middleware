@@ -21,6 +21,7 @@ from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.utils.contextlib import asyncnullcontext
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
+from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
 
@@ -877,7 +878,7 @@ class FailoverService(ConfigService):
                     continue
                 return True
             except CallError as e:
-                if e.errno in (errno.ECONNREFUSED, errno.ECONNRESET):
+                if e.errno in NETWORK_ERRORS:
                     time.sleep(5)
                     continue
                 raise
