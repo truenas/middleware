@@ -70,13 +70,18 @@ class ShareSec(CRUDService):
         })
 
     @private
-    async def entries(self, share_name, filters, options):
+    @filterable
+    async def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
-        entries = await self.middleware.call('tdb.entries', {
-            'name': LOCAL_SHARE_INFO_FILE,
-            'key': f'SECDESC/{share_name.lower()}',
-            'query-filters': [['key', '^', 'SECDESC/']]
-        })
+        try:
+            entries = await self.middleware.call('tdb.entries', {
+                'name': LOCAL_SHARE_INFO_FILE,
+                'query-filters': [['key', '^', 'SECDESC/']]
+            })
+        except FileNotFoundError:
+            # If samba has never started or user manually deleted file
+            # it may not exist yet.
+            entries = []
 
         return filter_list(entries, filters, options)
 
