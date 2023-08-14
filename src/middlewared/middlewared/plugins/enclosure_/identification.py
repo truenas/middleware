@@ -1,4 +1,11 @@
 def r20_variants_or_mini(pr, pnr, dmi):
+    """If this is an r20 variant then we return the model
+    with the TRUENAS- suffix stripped. Otherwise, if this is
+    a MINI then we just return the entire string.
+
+    NOTE: this information is burned in by the production team
+    into the motherboard (SMBIOS) before we ship the system
+    """
     if dmi in ['TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B']:
         return pr, True
     elif dmi.startswith(('TRUENAS-MINI', 'FREENAS-MINI')):
@@ -9,6 +16,14 @@ def r20_variants_or_mini(pr, pnr, dmi):
 
 
 def get_enclosure_model_and_controller(key, dmi):
+    """This maps the enclosure to the respective platform.
+    the 'key' is the concatenated string of t10 vendor and product
+    info returned by a standard INQUIRY command to the enclosure
+    device.
+
+    NOTE: If the key doesn't exist in this dictionary then we're
+    not going to properly map the enclosure.
+    """
     pr, pnr = dmi.replace('TRUENAS-', ''), dmi
     try:
         return {

@@ -19,22 +19,29 @@ class Enclosure:
 
     def asdict(self):
         return {
-            'name': self.encname,
-            'model': self.model,
-            'controller': self.controller,
-            'dmi': self.dmi,
-            'status': self.status,
+            'name': self.encname,  # vendor, product and revision joined by whitespace
+            'model': self.model,  # M60, F100, TRUENAS-MINI-R, etc
+            'controller': self.controller,  # if True, represents the "head-unit"
+            'dmi': self.dmi,  # comes from system.dmidecode_info[system-product-name]
+            'status': self.status,  # the overall status reported by the enclosure
             'id': self.encid,
-            'vendor': self.vendor,
-            'product': self.product,
-            'revision': self.revision,
-            'bsg': self.bsg,
-            'sg': self.sg,
-            'pci': self.pci,
-            'elements': self.elements
+            'vendor': self.vendor,  # t10 vendor from INQUIRY
+            'product': self.product,  # product from INQUIRY
+            'revision': self.revision,  # revision from INQUIRY
+            'bsg': self.bsg,  # the path for which this maps to a bsg device (/dev/bsg/0:0:0:0)
+            'sg': self.sg,  # the scsi generic device (/dev/sg0)
+            'pci': self.pci,  # the pci info (0:0:0:0)
+            'elements': self.elements  # dictionary with all element types and their relevant information
         }
 
     def _get_vendor_product_revision_and_encname(self):
+        """Sends a standard INQUIRY command to the enclosure device
+        so we can parse the vendor/prodcut/revision(and /serial if we ever wanted
+        to use that information) for the enclosure device. It's important
+        that we parse this information into their own top-level keys since we
+        base some of our drive mappings (potentially) on the "revision" (aka firmware)
+        for the enclosure
+        """
         inq = inquiry(self.sg)
         data = [inq['vendor'], inq['product'], inq['revision']]
         data.append(' '.join(data))
@@ -54,6 +61,7 @@ class Enclosure:
             /sys/class/enclosure/13:0:0:0/Disk #00/
             /sys/class/enclosure/13:0:0:0/Slot 00/
             /sys/class/enclosure/13:0:0:0/slot00/
+            /sys/class/enclosure/13:0:0:0/slot00       / (yes those are spaces and really show up on a system)
 
         The safe assumption that we can make on whether or not the directory
         represents a drive slot is looking for the file named "slot" underneath
@@ -91,7 +99,19 @@ class Enclosure:
         return min_slot, mapping
 
     def _elements_to_ignore(self, element):
-        return element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots')
+        """We ignore these elements as they typically serve as a beginning
+        element for a specific group type. (i.e. ArrayDevices is the element
+        that preceeds all the actual array device elements with the disk
+        information). We ignore these types so we don't fill the data object
+        with a bunch of useless objects that eventually get sifted through
+        anyways. These are also ignored because we run a periodic alert
+        that checks enclosure element statuses and we've seen these elements
+        report "issues" when they're not used anyways.
+        """
+        return any((
+            element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots'),
+            element['status'] == 'Unsupported'
+        ))
 
     def _parse_elements(self, elements):
         final = {}
@@ -132,6 +152,11 @@ class Enclosure:
             }}
             if element_type[0] == 'Array Device Slot':
                 parsed[slot]['dev'] = None
+                # see docstring in `self._map_disks_to_enclosure_slots` for
+                # why we have to get the min_slot (i.e. at time of writing
+                # this the ES102S JBOD enumerates drives starting at 1 instead
+                # of 0 (which is literally how every other single enclosure we
+                # use enumerates them)) We should always start drive slots at 1.
                 orig_slot = slot - 1 if min_slot == 0 else slot
                 if (disk_dev := disk_map.get(orig_slot, False)):
                     parsed[slot]['dev'] = disk_dev
