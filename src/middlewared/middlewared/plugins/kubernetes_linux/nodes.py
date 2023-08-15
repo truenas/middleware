@@ -2,8 +2,10 @@ import asyncio
 import contextlib
 import yaml
 
+from middlewared.plugins.container_runtime_interface.client import ContainerdClient
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
+from middlewared.utils.socket import is_socket_available
 
 from .k8s import Node
 from .utils import KUBECONFIG_FILE, KUBERNETES_WORKER_NODE_PASSWORD, NODE_NAME
@@ -17,12 +19,16 @@ class KubernetesNodeService(ConfigService):
 
     async def config(self):
         try:
+            containerd_socket_available = await self.middleware.run_in_thread(
+                is_socket_available, ContainerdClient.CONTAINERD_SOCKET
+            )
             return {
-                'node_configured': True,
+                'node_configured': True and containerd_socket_available,
                 'events': await self.middleware.call('k8s.event.query', [], {
                     'extra': {'fieldSelector': f'involvedObject.uid={NODE_NAME}'}
                 }),
-                **(await Node.get_instance())
+                'error': None if containerd_socket_available else 'Containerd socket is not available',
+                **(await Node.get_instance()),
             }
         except Exception as e:
             return {'node_configured': False, 'error': str(e)}
