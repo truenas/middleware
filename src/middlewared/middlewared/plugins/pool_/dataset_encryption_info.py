@@ -334,11 +334,11 @@ class PoolDatasetService(Service):
 
         mapping = {}
         for source_ds in task['source_datasets']:
-            mapping[source_ds] = await self.middleware.call(
-                'pool.dataset.query_encrypted_roots_keys', [
-                    ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
-                ]
-            )
+            if task['recursive']:
+                filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
+            else:
+                filters = ['name', '=', source_ds]
+            mapping[source_ds] = await self.middleware.call('pool.dataset.query_encrypted_roots_keys', [filters])
 
         # We have 3 cases to deal with
         # 1. There are no encrypted datasets in source dataset, so let's just skip in that case
@@ -351,15 +351,15 @@ class PoolDatasetService(Service):
             return {}
 
         normalized_result = {}
-        include_encryption_root_children = not task['replicate']
+        include_encryption_root_children = not task['replicate'] and task['recursive']
         target_ds = task['target_dataset']
         if len(mapping) == 1:
             source_ds = task['source_datasets'][0]
             for ds_name, key in mapping[source_ds].items():
                 for dataset in await self.middleware.call(
-                        'pool.dataset.query', [['encryption_root', '=', ds_name]], {
-                            'extra': {'properties': ['encryptionroot']}
-                        }
+                    'pool.dataset.query', [['encryption_root', '=', ds_name]], {
+                        'extra': {'properties': ['encryptionroot']}
+                    }
                 ) if include_encryption_root_children else [{'id': ds_name}]:
                     normalized_result[dataset['id'].replace(source_ds, target_ds, 1)] = key
         else:
@@ -370,7 +370,7 @@ class PoolDatasetService(Service):
                         'pool.dataset.query', [['encryption_root', '=', ds_name]], {
                             'extra': {'properties': ['encryptionroot']}
                         }
-                    ) if include_encryption_root_children else [{{'id': ds_name}}]:
+                    ) if include_encryption_root_children else [{'id': ds_name}]:
                         normalized_result[dataset['id'].replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
 
                     normalized_result[ds_name.replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
