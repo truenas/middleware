@@ -531,7 +531,8 @@ class Client:
             'id': payload['id'],
             'name': name,
         })
-        payload['ready'].wait()
+        if not payload['ready'].wait(10):
+            raise ValueError('Did not receive a response to the subscription request')
         if payload['error']:
             raise ValueError(payload['error'])
         return payload['id']
