@@ -102,7 +102,10 @@ class ISCSIGlobalService(Service):
             return
 
         try:
-            with open(f'/sys/kernel/scst_tgt/devices/{extent[0]["name"]}/resync_size', 'w') as f:
+            # CORE ctl device names are incompatible with SCALE SCST
+            # so (similarly to scst.mako.conf) replace period with underscore
+            extent_name = extent[0]["name"].replace('.', '_')
+            with open(f'/sys/kernel/scst_tgt/devices/{extent_name}/resync_size', 'w') as f:
                 f.write('1')
         except Exception as e:
             if isinstance(e, OSError) and e.errno == 124:
