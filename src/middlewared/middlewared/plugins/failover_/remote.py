@@ -14,8 +14,10 @@ from middlewared.service import CallError, Service, private
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.validators import Range
 
-
 logger = logging.getLogger('failover.remote')
+
+NETWORK_ERRORS = (errno.ETIMEDOUT, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
+                  errno.EHOSTUNREACH)
 
 
 class RemoteClient(object):
@@ -269,9 +271,7 @@ class FailoverService(Service):
         try:
             return self.CLIENT.call(method, *args, **options)
         except (CallError, ClientException) as e:
-            ignore = (errno.ETIMEDOUT, CallError.ENOMETHOD, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET,
-                      errno.EHOSTDOWN, errno.EHOSTUNREACH)
-            if e.errno in ignore:
+            if e.errno in NETWORK_ERRORS + (CallError.ENOMETHOD,):
                 if raise_connect_error:
                     raise CallError(str(e), e.errno)
                 else:
