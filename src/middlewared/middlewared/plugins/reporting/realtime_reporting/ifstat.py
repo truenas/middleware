@@ -35,4 +35,4 @@ def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> 
                 'sent_bytes_rate': 0,
             })
 
-        return data
+    return data
