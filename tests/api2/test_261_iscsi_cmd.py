@@ -21,15 +21,15 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from auto_config import dev_test, ha, hostname, isns_ip, pool_name
-from functions import DELETE, GET, POST, PUT, SSH_TEST
-from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.utils import call
-from protocols import (initiator_name_supported, iscsi_scsi_connection,
-                       isns_connection)
-
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.utils import call
+
+from auto_config import dev_test, ha, hostname, isns_ip, pool_name
+from functions import DELETE, GET, POST, PUT, SSH_TEST
+from protocols import (initiator_name_supported, iscsi_scsi_connection,
+                       isns_connection)
 
 if ha and "virtual_ip" in os.environ:
     from auto_config import password, user
@@ -86,6 +86,7 @@ class CheckType(enum.Enum):
 # Some constants
 MB = 1024 * 1024
 MB_100 = 100 * MB
+MB_256 = 256 * MB
 MB_512 = 512 * MB
 PR_KEY1 = 0xABCDEFAABBCCDDEE
 PR_KEY2 = 0x00000000DEADBEEF
@@ -251,6 +252,15 @@ def zvol_dataset(zvol, volsize=MB_512):
         assert results.status_code == 200, results.text
 
 
+def zvol_resize(zvol, volsize):
+    payload = {
+        'volsize': volsize,
+    }
+    zvol_url = zvol.replace('/', '%2F')
+    result = PUT(f'/pool/dataset/id/{zvol_url}/', payload)
+    assert result.status_code == 200, result.text
+
+
 @contextlib.contextmanager
 def zvol_extent(zvol, extent_name='zvol_extent'):
     payload = {
@@ -323,11 +333,11 @@ def configured_target_to_file_extent(config, target_name, pool_name, dataset_nam
 
 
 @contextlib.contextmanager
-def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent'):
+def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, extent_name='zvol_extent', volsize=MB_512):
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
         target_id = target_config['id']
-        with zvol_dataset(zvol) as dataset_config:
+        with zvol_dataset(zvol, volsize) as dataset_config:
             with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id):
@@ -490,6 +500,12 @@ def _verify_luns(s, expected_luns):
     assert set(luns) == set(expected_luns), luns
 
 
+def _read_capacity16(s):
+    # READ CAPACITY (16)
+    data = s.readcapacity16().result
+    return (data['returned_lba'] + 1 - data['lowest_aligned_lba']) * data['block_length']
+
+
 def _verify_capacity(s, expected_capacity):
     """
     Verify that the supplied SCSI has the expected capacity.
@@ -498,10 +514,8 @@ def _verify_capacity(s, expected_capacity):
     :param expected_capacity: an int
     """
     TUR(s)
-    # READ CAPACITY (16)
-    data = s.readcapacity16().result
-    returned_size = (data['returned_lba'] + 1 - data['lowest_aligned_lba']) * data['block_length']
-    assert returned_size == expected_capacity, {data['returned_lba'], data['block_length']}
+    returned_size = _read_capacity16(s)
+    assert returned_size == expected_capacity
 
 
 def get_targets():
@@ -2295,6 +2309,32 @@ def test_24_iscsi_target_disk_login(request):
                 finally:
                     results = SSH_TEST(f"iscsiadm -m node -T {iqn} -p {actual_ip}:3260 --logout", user, password, ip)
                     assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+
+
+def test_25_resize_target_zvol(request):
+    """
+    Verify that an iSCSI client is notified when the size of a ZVOL underlying
+    an iSCSI extent is modified.
+    """
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    with initiator_portal() as config:
+        with configured_target_to_zvol_extent(config, target_name, zvol, volsize=MB_100) as config:
+            iqn = f'{basename}:{target_name}'
+            with iscsi_scsi_connection(ip, iqn) as s:
+                TUR(s)
+                s.blocksize = 512
+                assert MB_100 == _read_capacity16(s)
+                # Have checked using tcpdump/wireshark that a SCSI Asynchronous Event Notification
+                # gets sent 0x2A09: "CAPACITY DATA HAS CHANGED"
+                zvol_resize(zvol, MB_256)
+                assert MB_256 == _read_capacity16(s)
+                # But we can do better (in terms of test) ... turn AEN off,
+                # which means we will get a CHECK CONDITION on the next resize
+                SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
+                zvol_resize(zvol, MB_512)
+                expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
+                assert MB_512 == _read_capacity16(s)
 
 
 def test_99_teardown(request):
