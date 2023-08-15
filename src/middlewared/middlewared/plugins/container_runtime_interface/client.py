@@ -20,6 +20,7 @@ DOCKER_AUTH_SERVICE = 'registry.docker.io'
 DOCKER_MANIFEST_SCHEMA_V1 = 'application/vnd.docker.distribution.manifest.v1+json'
 DOCKER_MANIFEST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.v2+json'
 DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.list.v2+json'
+CONTAINERD_SOCKET_PATH = '/run/k3s/containerd/containerd.sock'
 
 
 def parse_digest_from_schema(response):
@@ -152,7 +153,7 @@ class ContainerdClient:
         'container': Containers,
         'image': Images,
     }
-    CONTAINERD_SOCKET: str = 'unix:///run/k3s/containerd/containerd.sock'
+    CONTAINERD_SOCKET: str = f'unix://{CONTAINERD_SOCKET_PATH}'
 
     def __init__(self, client_type: str):
         self.channel: typing.Optional[typing.Type[Channel]] = None
