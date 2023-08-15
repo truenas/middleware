@@ -860,7 +860,7 @@ class PoolDatasetService(CRUDService):
             raise verrors
 
         if data['type'] == 'VOLUME' and 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
-            # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscs)
+            # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscsi)
             # and if it is, resync it so the connected initiators can see the new size of the zvol
             await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id)
 
