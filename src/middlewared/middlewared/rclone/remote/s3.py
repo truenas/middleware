@@ -81,6 +81,7 @@ class S3RcloneRemote(BaseRcloneRemote):
             server_side_encryption=task["attributes"].get("encryption") or "",
             skip_region=undefined,
             signatures_v2=undefined,
+            provider="Other",
         )
 
         if not task["credentials"]["attributes"].get("skip_region", False):
