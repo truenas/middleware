@@ -15,8 +15,10 @@ from middlewared.utils import start_daemon_thread
 from middlewared.utils.threading import set_thread_name
 from middlewared.validators import Range
 
-
 logger = logging.getLogger('failover.remote')
+
+NETWORK_ERRORS = (errno.ETIMEDOUT, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
+                  errno.EHOSTUNREACH)
 
 
 class RemoteClient(object):
