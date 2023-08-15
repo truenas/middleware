@@ -6,7 +6,7 @@ import shutil
 
 from io import BytesIO
 
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.path import is_child_realpath
@@ -305,6 +305,20 @@ class PoolDatasetService(Service):
         sync_job.wait_sync()
 
         datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
+        with BytesIO(json.dumps(datasets).encode()) as f:
+            shutil.copyfileobj(f, job.pipes.output.w)
+
+    @accepts(Int('id'))
+    @returns()
+    @job(lock='replication_task_dataset_export_keys', pipes=['output'])
+    def export_keys_for_replication(self, job, task_id):
+        """
+        Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
+        which has a dictionary containing dataset names as keys and their keys as the value.
+
+        Please refer to websocket documentation for downloading the file.
+        """
+        datasets = self.middleware.call_sync('replication.query_encrypted_roots_keys', task_id)
         with BytesIO(json.dumps(datasets).encode()) as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
