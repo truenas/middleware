@@ -65,16 +65,16 @@ from middlewared.plugins.enclosure_ import slot_mappings
                 'id': {
                     'r50_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                         3: {'orig_slot': 3, 'mapped_slot': 51},
                     },
                     'r50b_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                     },
                     'r50bm_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                         3: {'orig_slot': 3, 'mapped_slot': 51},
                         4: {'orig_slot': 4, 'mapped_slot': 52},
                     }
@@ -143,16 +143,16 @@ from middlewared.plugins.enclosure_ import slot_mappings
                 'id': {
                     'r50_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                         3: {'orig_slot': 3, 'mapped_slot': 51},
                     },
                     'r50b_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                     },
                     'r50bm_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                         3: {'orig_slot': 3, 'mapped_slot': 51},
                         4: {'orig_slot': 4, 'mapped_slot': 52},
                     }
@@ -221,16 +221,16 @@ from middlewared.plugins.enclosure_ import slot_mappings
                 'id': {
                     'r50_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                         3: {'orig_slot': 3, 'mapped_slot': 51},
                     },
                     'r50b_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                     },
                     'r50bm_nvme_enclosure': {
                         1: {'orig_slot': 1, 'mapped_slot': 49},
-                        2: {'orig_slot': 1, 'mapped_slot': 50},
+                        2: {'orig_slot': 2, 'mapped_slot': 50},
                         3: {'orig_slot': 3, 'mapped_slot': 51},
                         4: {'orig_slot': 4, 'mapped_slot': 52},
                     }
