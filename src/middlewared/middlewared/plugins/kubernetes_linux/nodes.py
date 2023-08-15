@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import yaml
 
-from middlewared.plugins.container_runtime_interface.client import ContainerdClient
+from middlewared.plugins.container_runtime_interface.client import CONTAINERD_SOCKET_PATH
 from middlewared.schema import Dict, List, Str
 from middlewared.service import accepts, ConfigService
 from middlewared.utils.socket import is_socket_available
@@ -20,7 +20,7 @@ class KubernetesNodeService(ConfigService):
     async def config(self):
         try:
             containerd_socket_available = await self.middleware.run_in_thread(
-                is_socket_available, ContainerdClient.CONTAINERD_SOCKET
+                is_socket_available, CONTAINERD_SOCKET_PATH
             )
             return {
                 'node_configured': True and containerd_socket_available,
