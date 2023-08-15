@@ -337,15 +337,28 @@ class PoolDatasetService(Service):
             return {}
 
         normalized_result = {}
+        include_encryption_root_children = not task['replicate']
         target_ds = task['target_dataset']
         if len(mapping) == 1:
             source_ds = task['source_datasets'][0]
             for ds_name, key in mapping[source_ds].items():
-                normalized_result[ds_name.replace(source_ds, target_ds, 1)] = key
+                for dataset in await self.middleware.call(
+                        'pool.dataset.query', [['encryption_root', '=', ds_name]], {
+                            'extra': {'properties': ['encryptionroot']}
+                        }
+                ) if include_encryption_root_children else [{'id': ds_name}]:
+                    normalized_result[dataset['id'].replace(source_ds, target_ds, 1)] = key
         else:
             for source_ds in task['source_datasets']:
                 source_ds_name = source_ds.rsplit('/', 1)[-1]
                 for ds_name, key in mapping[source_ds].items():
+                    for dataset in await self.middleware.call(
+                        'pool.dataset.query', [['encryption_root', '=', ds_name]], {
+                            'extra': {'properties': ['encryptionroot']}
+                        }
+                    ) if include_encryption_root_children else [{{'id': ds_name}}]:
+                        normalized_result[dataset['id'].replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
+
                     normalized_result[ds_name.replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
 
         return normalized_result
