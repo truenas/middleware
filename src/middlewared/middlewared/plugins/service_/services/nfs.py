@@ -1,9 +1,6 @@
-# import errno
 import os
 
 from .base import SimpleService
-# from middlewared.service_exception import CallError
-poison_exports_marker = "/var/local/bad_exports_block_nfsd"
 
 
 class NFSService(SimpleService):
