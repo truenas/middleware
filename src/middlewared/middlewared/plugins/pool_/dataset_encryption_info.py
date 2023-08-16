@@ -318,9 +318,8 @@ class PoolDatasetService(Service):
 
         Please refer to websocket documentation for downloading the file.
         """
-        datasets = self.middleware.call_sync('replication.query_encrypted_roots_keys', task_id)
-        with BytesIO(json.dumps(datasets).encode()) as f:
-            shutil.copyfileobj(f, job.pipes.output.w)
+        datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task_id)
+        job.pipes.output.w.write(json.dumps(datasets).encode())
 
     @private
     async def export_keys_for_replication_internal(self, replication_task_id):
