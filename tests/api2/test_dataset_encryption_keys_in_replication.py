@@ -34,6 +34,12 @@ def test_single_source_replication():
                     'name_regex': '.+',
                     'auto': False,
                 }) as task:
-
                     call('zfs.snapshot.create', {'dataset': src, 'name': 'snap-1', 'recursive': True})
                     call('replication.run', task['id'], job=True)
+                    keys = call('pool.dataset.export_keys_for_replication_internal', task['id'])
+                    unlocked_info = call(
+                        'pool.dataset.unlock', dst, {
+                            'datasets': [{'name': name, 'key': key} for name, key in keys.items()],
+                        }, job=True
+                    )
+                    assert unlocked_info['unlocked'] == [dst], unlocked_info
