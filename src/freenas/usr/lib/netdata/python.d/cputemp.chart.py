@@ -3,7 +3,7 @@ from collections import defaultdict
 from copy import deepcopy
 from third_party import lm_sensors as sensors
 
-from middlewared.utils.cpu import amd_cpu_temperatures, generic_cpu_temperatures
+from middlewared.utils.cpu import amd_cpu_temperatures, generic_cpu_temperatures, cpu_info
 
 
 CPU_TEMPERATURE_FEAT_TYPE = 2
@@ -74,7 +74,7 @@ class Service(SimpleService):
         for core, temp in cpu_temperatures(cpu_data).items():
             data[str(core)] = temp
 
-        return data or None
+        return data or {str(i): 0 for i in range(cpu_info()['core_count'])}
 
     def check(self):
         try:
