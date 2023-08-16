@@ -252,13 +252,21 @@ def zvol_dataset(zvol, volsize=MB_512):
         assert results.status_code == 200, results.text
 
 
-def zvol_resize(zvol, volsize):
+def file_extent_resize(ident, filesize, expected_status_code=200):
+    payload = {
+        'filesize': filesize,
+    }
+    results = PUT(f"/iscsi/extent/id/{ident}/", payload)
+    assert results.status_code == expected_status_code, results.text
+
+
+def zvol_resize(zvol, volsize, expected_status_code=200):
     payload = {
         'volsize': volsize,
     }
     zvol_url = zvol.replace('/', '%2F')
     result = PUT(f'/pool/dataset/id/{zvol_url}/', payload)
-    assert result.status_code == 200, result.text
+    assert result.status_code == expected_status_code, result.text
 
 
 @contextlib.contextmanager
@@ -2334,6 +2342,41 @@ def test_25_resize_target_zvol(request):
                 SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
                 zvol_resize(zvol, MB_512)
                 expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
+                assert MB_512 == _read_capacity16(s)
+                # Try to shrink the ZVOL again.  Expect an error (422)
+                zvol_resize(zvol, MB_256, 422)
+                assert MB_512 == _read_capacity16(s)
+
+
+def test_26_resize_target_file(request):
+    """
+    Verify that an iSCSI client is notified when the size of a file-based
+    iSCSI extent is modified.
+    """
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    with initiator_portal() as config:
+        with configured_target_to_file_extent(config,
+                                              target_name,
+                                              pool_name,
+                                              dataset_name,
+                                              file_name,
+                                              filesize=MB_100) as config:
+            iqn = f'{basename}:{target_name}'
+            with iscsi_scsi_connection(ip, iqn) as s:
+                extent_id = config['extent']['id']
+                TUR(s)
+                s.blocksize = 512
+                assert MB_100 == _read_capacity16(s)
+                file_extent_resize(extent_id, MB_256)
+                assert MB_256 == _read_capacity16(s)
+                # Turn AEN off so that we will get a CHECK CONDITION on the next resize
+                SSH_TEST(f"echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{iqn}/aen_disabled", user, password, ip)
+                file_extent_resize(extent_id, MB_512)
+                expect_check_condition(s, sense_ascq_dict[0x2A09])  # "CAPACITY DATA HAS CHANGED"
+                assert MB_512 == _read_capacity16(s)
+                # Try to shrink the file again.  Expect an error (422)
+                file_extent_resize(extent_id, MB_256, 422)
                 assert MB_512 == _read_capacity16(s)
 
 
