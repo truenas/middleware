@@ -22,6 +22,20 @@ def encryption_props():
     }
 
 
+def make_assertions(source_datasets, task_id, target_dataset, unlocked_datasets):
+    for source_ds in source_datasets:
+        call('zfs.snapshot.create', {'dataset': source_ds, 'name': 'snaptest-1', 'recursive': True})
+
+    call('replication.run', task_id, job=True)
+    keys = call('pool.dataset.export_keys_for_replication_internal', task_id)
+    unlocked_info = call(
+        'pool.dataset.unlock', target_dataset, {
+            'datasets': [{'name': name, 'key': key} for name, key in keys.items()],
+        }, job=True
+    )
+    assert set(unlocked_info['unlocked']) == set(unlocked_datasets), unlocked_info
+
+
 def test_single_source_replication():
     with dataset('source_test', encryption_props(), pool='tank') as src:
         with dataset('parent_destination', encryption_props(), pool='tank') as parent_ds:
@@ -34,12 +48,4 @@ def test_single_source_replication():
                     'name_regex': '.+',
                     'auto': False,
                 }) as task:
-                    call('zfs.snapshot.create', {'dataset': src, 'name': 'snap-1', 'recursive': True})
-                    call('replication.run', task['id'], job=True)
-                    keys = call('pool.dataset.export_keys_for_replication_internal', task['id'])
-                    unlocked_info = call(
-                        'pool.dataset.unlock', dst, {
-                            'datasets': [{'name': name, 'key': key} for name, key in keys.items()],
-                        }, job=True
-                    )
-                    assert unlocked_info['unlocked'] == [dst], unlocked_info
+                    make_assertions([src], task['id'], dst, [dst])
