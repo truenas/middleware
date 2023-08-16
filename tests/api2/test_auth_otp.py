@@ -18,7 +18,7 @@ def otp_enabled():
 
 def test_otp_http_basic_auth(otp_enabled):
     with session() as s:
-        r = s.get(f"{url()}/api/v2.0/system/info/")
+        r = s.put(f"{url()}/api/v2.0/auth/twofactor/", data=json.dumps({"enabled": False}))
         assert r.status_code == 401
         assert r.text == "HTTP Basic Auth is unavailable when OTP is enabled"
 
