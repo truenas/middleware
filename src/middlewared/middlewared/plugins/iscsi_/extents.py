@@ -140,7 +140,7 @@ class iSCSITargetExtentService(SharingService):
         )
         verrors.check()
 
-        await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors)
+        await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors, old)
         new.pop(self.locked_field)
 
         await self.middleware.call(
@@ -398,7 +398,7 @@ class iSCSITargetExtentService(SharingService):
         return diskchoices
 
     @private
-    def save(self, data, schema_name, verrors):
+    def save(self, data, schema_name, verrors, old=None):
         if data['type'] == 'FILE':
             path = data['path']
             dirs = '/'.join(path.split('/')[:-1])
@@ -411,9 +411,20 @@ class iSCSITargetExtentService(SharingService):
                     f'Failed to create {dirs} with error: {e}'
                 )
 
-            # create the extent
+            # create the extent, or perhaps extend it
             if not os.path.exists(path):
+                # create the extent
                 subprocess.run(['truncate', '-s', str(data['filesize']), path])
+            else:
+                if old:
+                    old_size = int(old['filesize'])
+                    new_size = int(data['filesize'])
+                    # For now only allow expansion, we might remove this
+                    # restriction later if the webui adds a check.
+                    if new_size > old_size:
+                        subprocess.run(['truncate', '-s', str(data['filesize']), path])
+                        # resync so connected initiators can see the new size
+                        self.middleware.call_sync('iscsi.global.resync_lun_size_for_file', path)
 
             data.pop('disk', None)
         else:
