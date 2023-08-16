@@ -310,7 +310,7 @@ class PoolDatasetService(Service):
 
     @accepts(Int('id'))
     @returns()
-    @job(lock='replication_task_dataset_export_keys', pipes=['output'])
+    @job(pipes=['output'])
     def export_keys_for_replication(self, job, task_id):
         """
         Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
