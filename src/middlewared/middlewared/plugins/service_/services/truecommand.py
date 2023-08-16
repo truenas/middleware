@@ -1,4 +1,4 @@
-from .base import SimpleService
+from .base import SimpleService, ServiceState
 
 
 class TruecommandService(SimpleService):
@@ -11,3 +11,7 @@ class TruecommandService(SimpleService):
     freebsd_proc_arguments_match = True
 
     systemd_unit = 'wg-quick@wg0'
+
+    async def _get_state_freebsd(self):
+        status = (await self._freebsd_service(self.freebsd_rc, 'status')).stdout
+        return ServiceState("Device not configured" not in status, [])
