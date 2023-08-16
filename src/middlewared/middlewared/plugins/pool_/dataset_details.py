@@ -402,21 +402,19 @@ class PoolDatasetService(Service):
 
     @private
     def get_cloudsync_tasks_count(self, ds, cldtasks):
-        count = 0
-        for i in filter(lambda x: x['direction'] == 'PUSH', cldtasks):
-            # we only care about cloud sync tasks that are configured to push
-            if pathlib.Path(ds['mountpoint']).is_relative_to(i['path']):
-                count += 1
-
-        return count
+        return self._get_push_tasks_count(ds, cldtasks)
 
     @private
     def get_rsync_tasks_count(self, ds, rsynctasks):
+        return self._get_push_tasks_count(ds, rsynctasks)
+
+    def _get_push_tasks_count(self, ds, tasks):
         count = 0
-        for i in filter(lambda x: x['direction'] == 'PUSH', rsynctasks):
-            # we only care about rsync tasks that are configured to push
-            if pathlib.Path(ds['mountpoint']).is_relative_to(i['path']):
-                count += 1
+        if ds['mountpoint']:
+            for i in filter(lambda x: x['direction'] == 'PUSH', tasks):
+                # we only care about cloud sync tasks that are configured to push
+                if pathlib.Path(ds['mountpoint']).is_relative_to(i['path']):
+                    count += 1
 
         return count
 
