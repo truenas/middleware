@@ -141,6 +141,7 @@ class iSCSITargetExtentService(SharingService):
         verrors.check()
 
         await self.middleware.call('iscsi.extent.save', new, 'iscsi_extent_create', verrors, old)
+        verrors.check()
         new.pop(self.locked_field)
 
         await self.middleware.call(
@@ -419,12 +420,14 @@ class iSCSITargetExtentService(SharingService):
                 if old:
                     old_size = int(old['filesize'])
                     new_size = int(data['filesize'])
-                    # For now only allow expansion, we might remove this
-                    # restriction later if the webui adds a check.
+                    # Only allow expansion
                     if new_size > old_size:
                         subprocess.run(['truncate', '-s', str(data['filesize']), path])
                         # resync so connected initiators can see the new size
                         self.middleware.call_sync('iscsi.global.resync_lun_size_for_file', path)
+                    elif old_size > new_size:
+                        verrors.add(f'{schema_name}.filesize',
+                                    'Shrinking an extent is not allowed. This can lead to data loss.')
 
             data.pop('disk', None)
         else:
