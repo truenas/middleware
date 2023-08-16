@@ -313,8 +313,8 @@ class PoolDatasetService(Service):
     @job(pipes=['output'])
     def export_keys_for_replication(self, job, task_id):
         """
-        Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
-        which has a dictionary containing dataset names as keys and their keys as the value.
+        Export keys for replication task `id` for source dataset(s) which are stored in the system. The exported file
+        is a JSON file which has a dictionary containing dataset names as keys and their keys as the value.
 
         Please refer to websocket documentation for downloading the file.
         """
