@@ -85,3 +85,28 @@ def test_multiple_source_replication():
                         make_assertions(
                             [src1, src2], task['id'], dst, [f'{dst}/{k.rsplit("/", 1)[-1]}' for k in [src1, src2]]
                         )
+
+
+def test_multiple_source_recursive_replication():
+    with dataset('source_test1', encryption_props(), pool='tank') as src1:
+        with dataset(f'{src1.rsplit("/", 1)[-1]}/child_source_test1', encryption_props(), pool='tank') as child_src1:
+            with dataset('source_test2', encryption_props(), pool='tank') as src2:
+                with dataset(f'{src2.rsplit("/", 1)[-1]}/child_source_test2', encryption_props(), pool='tank') as child_src2:
+                    with dataset('parent_destination', encryption_props(), pool='tank') as parent_ds:
+                        with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test', pool='tank') as dst:
+                            with replication_task({
+                                **BASE_REPLICATION,
+                                'name': 'encryption_replication_test',
+                                'source_datasets': [src1, src2],
+                                'target_dataset': dst,
+                                'name_regex': '.+',
+                                'auto': False,
+                                'recursive': True,
+                            }) as task:
+                                make_assertions(
+                                    [src1, src2], task['id'], dst, [
+                                        f'{dst}/{"/".join(k.rsplit("/")[-abs(n):])}' for k, n in [
+                                            (src1, 1), (src2, 1), (child_src1, 2), (child_src2, 2),
+                                        ]
+                                    ]
+                                )
