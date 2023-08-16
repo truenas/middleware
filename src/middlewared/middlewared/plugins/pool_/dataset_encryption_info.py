@@ -351,8 +351,22 @@ class PoolDatasetService(Service):
             return {}
 
         normalized_result = {}
+        result = {}
         include_encryption_root_children = not task['replicate'] and task['recursive']
         target_ds = task['target_dataset']
+
+        source_mapping = await self.middleware.call(
+            'zettarepl.get_source_target_datasets_mapping', task['source_datasets'], target_ds
+        )
+        for source_ds in task['source_datasets']:
+            for ds_name, key in mapping[source_ds].items():
+                for dataset in await self.middleware.call(
+                    'pool.dataset.query', [['encryption_root', '=', ds_name]], {
+                        'extra': {'properties': ['encryptionroot']}
+                    }
+                ) if include_encryption_root_children else [{'id': ds_name}]:
+                    result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
+
         if len(mapping) == 1:
             source_ds = task['source_datasets'][0]
             for ds_name, key in mapping[source_ds].items():
@@ -375,7 +389,10 @@ class PoolDatasetService(Service):
 
                     normalized_result[ds_name.replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
 
-        return normalized_result
+        return {
+            'old': normalized_result,
+            'new': result,
+        }
 
     @accepts(
         Str('id'),
