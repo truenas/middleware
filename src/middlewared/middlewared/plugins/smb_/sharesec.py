@@ -77,6 +77,7 @@ class ShareSec(CRUDService):
             entries = await self.middleware.call('tdb.entries', {
                 'name': LOCAL_SHARE_INFO_FILE,
                 'query-filters': [['key', '^', 'SECDESC/']]
+                'tdb-options': self.tdb_options
             })
         except FileNotFoundError:
             # If samba has never started or user manually deleted file
