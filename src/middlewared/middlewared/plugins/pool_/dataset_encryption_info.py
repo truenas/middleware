@@ -350,7 +350,6 @@ class PoolDatasetService(Service):
         if not any(mapping.values()):
             return {}
 
-        normalized_result = {}
         result = {}
         include_encryption_root_children = not task['replicate'] and task['recursive']
         target_ds = task['target_dataset']
@@ -367,32 +366,7 @@ class PoolDatasetService(Service):
                 ) if include_encryption_root_children else [{'id': ds_name}]:
                     result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
 
-        if len(mapping) == 1:
-            source_ds = task['source_datasets'][0]
-            for ds_name, key in mapping[source_ds].items():
-                for dataset in await self.middleware.call(
-                    'pool.dataset.query', [['encryption_root', '=', ds_name]], {
-                        'extra': {'properties': ['encryptionroot']}
-                    }
-                ) if include_encryption_root_children else [{'id': ds_name}]:
-                    normalized_result[dataset['id'].replace(source_ds, target_ds, 1)] = key
-        else:
-            for source_ds in task['source_datasets']:
-                source_ds_name = source_ds.rsplit('/', 1)[-1]
-                for ds_name, key in mapping[source_ds].items():
-                    for dataset in await self.middleware.call(
-                        'pool.dataset.query', [['encryption_root', '=', ds_name]], {
-                            'extra': {'properties': ['encryptionroot']}
-                        }
-                    ) if include_encryption_root_children else [{'id': ds_name}]:
-                        normalized_result[dataset['id'].replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
-
-                    normalized_result[ds_name.replace(source_ds, f'{target_ds}/{source_ds_name}', 1)] = key
-
-        return {
-            'old': normalized_result,
-            'new': result,
-        }
+        return result
 
     @accepts(
         Str('id'),
