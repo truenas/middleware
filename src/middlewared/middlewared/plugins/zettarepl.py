@@ -540,12 +540,17 @@ class ZettareplService(Service):
             "eligible": len(parsed),
         }
 
-    async def target_unmatched_snapshots(self, direction, source_datasets, target_dataset, transport, ssh_credentials):
+    async def get_source_target_datasets_mapping(self, source_datasets, target_dataset):
         fake_replication_task = types.SimpleNamespace()
         fake_replication_task.source_datasets = source_datasets
         fake_replication_task.target_dataset = target_dataset
-        datasets = {source_dataset: get_target_dataset(fake_replication_task, source_dataset)
-                    for source_dataset in source_datasets}
+        return {
+            source_dataset: get_target_dataset(fake_replication_task, source_dataset)
+            for source_dataset in source_datasets
+        }
+
+    async def target_unmatched_snapshots(self, direction, source_datasets, target_dataset, transport, ssh_credentials):
+        datasets = await self.get_source_target_datasets_mapping(source_datasets, target_dataset)
 
         try:
             local_shell = LocalShell()

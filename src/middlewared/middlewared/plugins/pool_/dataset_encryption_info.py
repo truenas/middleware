@@ -6,7 +6,7 @@ import shutil
 
 from io import BytesIO
 
-from middlewared.schema import accepts, Bool, Dict, List, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import CallError, job, periodic, private, Service, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.path import is_child_realpath
@@ -307,6 +307,65 @@ class PoolDatasetService(Service):
         datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
         with BytesIO(json.dumps(datasets).encode()) as f:
             shutil.copyfileobj(f, job.pipes.output.w)
+
+    @accepts(Int('id'))
+    @returns()
+    @job(pipes=['output'])
+    def export_keys_for_replication(self, job, task_id):
+        """
+        Export keys for replication task `id` for source dataset(s) which are stored in the system. The exported file
+        is a JSON file which has a dictionary containing dataset names as keys and their keys as the value.
+
+        Please refer to websocket documentation for downloading the file.
+        """
+        datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task_id)
+        job.pipes.output.w.write(json.dumps(datasets).encode())
+
+    @private
+    async def export_keys_for_replication_internal(self, replication_task_id):
+        task = await self.middleware.call('replication.get_instance', replication_task_id)
+        if task['direction'] != 'PUSH':
+            raise CallError('Only push replication tasks are supported.', errno.EINVAL)
+
+        await (await self.middleware.call(
+            'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
+        )).wait()
+
+        mapping = {}
+        for source_ds in task['source_datasets']:
+            if task['recursive']:
+                filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
+            else:
+                filters = ['name', '=', source_ds]
+            mapping[source_ds] = await self.middleware.call('pool.dataset.query_encrypted_roots_keys', [filters])
+
+        # We have 3 cases to deal with
+        # 1. There are no encrypted datasets in source dataset, so let's just skip in that case
+        # 2. There is only 1 source dataset, in this case the destination dataset will be overwritten as is, so we
+        #    generate mapping accordingly. For example if source is `tank/enc` and destination is `dest/enc`, in
+        #    the destination system `dest/enc` will reflect `tank/enc` so we reflect that accordingly in the mapping
+        # 3. There are multiple source datasets, in this case they will become child of destination dataset
+
+        if not any(mapping.values()):
+            return {}
+
+        result = {}
+        include_encryption_root_children = not task['replicate'] and task['recursive']
+        target_ds = task['target_dataset']
+
+        source_mapping = await self.middleware.call(
+            'zettarepl.get_source_target_datasets_mapping', task['source_datasets'], target_ds
+        )
+        for source_ds in task['source_datasets']:
+            for ds_name, key in mapping[source_ds].items():
+                for dataset in await self.middleware.call(
+                    'pool.dataset.query', [['encryption_root', '=', ds_name]], {
+                        'extra': {'properties': ['encryptionroot']}
+                    }
+                ) if include_encryption_root_children else [{'id': ds_name}]:
+                    result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
+
+        return result
 
     @accepts(
         Str('id'),
