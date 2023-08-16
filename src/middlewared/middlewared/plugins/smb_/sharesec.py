@@ -76,7 +76,7 @@ class ShareSec(CRUDService):
         try:
             entries = await self.middleware.call('tdb.entries', {
                 'name': LOCAL_SHARE_INFO_FILE,
-                'query-filters': [['key', '^', 'SECDESC/']]
+                'query-filters': [['key', '^', 'SECDESC/']],
                 'tdb-options': self.tdb_options
             })
         except FileNotFoundError:
