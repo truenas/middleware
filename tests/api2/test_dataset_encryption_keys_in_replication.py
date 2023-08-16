@@ -38,9 +38,9 @@ def make_assertions(source_datasets, task_id, target_dataset, unlocked_datasets)
 
 
 def test_single_source_replication():
-    with dataset('source_test', encryption_props(), pool='tank') as src:
-        with dataset('parent_destination', encryption_props(), pool='tank') as parent_ds:
-            with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test', pool='tank') as dst:
+    with dataset('source_test', encryption_props()) as src:
+        with dataset('parent_destination', encryption_props()) as parent_ds:
+            with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test') as dst:
                 with replication_task({
                     **BASE_REPLICATION,
                     'name': 'encryption_replication_test',
@@ -53,10 +53,10 @@ def test_single_source_replication():
 
 
 def test_single_source_recursive_replication():
-    with dataset('source_test', encryption_props(), pool='tank') as src:
-        with dataset(f'{src.rsplit("/", 1)[-1]}/child_source_test', encryption_props(), pool='tank') as child_src:
-            with dataset('parent_destination', encryption_props(), pool='tank') as parent_ds:
-                with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test', pool='tank') as dst:
+    with dataset('source_test', encryption_props()) as src:
+        with dataset(f'{src.rsplit("/", 1)[-1]}/child_source_test', encryption_props()) as child_src:
+            with dataset('parent_destination', encryption_props()) as parent_ds:
+                with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test') as dst:
                     with replication_task({
                         **BASE_REPLICATION,
                         'name': 'encryption_replication_test',
@@ -70,10 +70,10 @@ def test_single_source_recursive_replication():
 
 
 def test_multiple_source_replication():
-    with dataset('source_test1', encryption_props(), pool='tank') as src1:
-        with dataset('source_test2', encryption_props(), pool='tank') as src2:
-            with dataset('parent_destination', encryption_props(), pool='tank') as parent_ds:
-                with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test', pool='tank') as dst:
+    with dataset('source_test1', encryption_props()) as src1:
+        with dataset('source_test2', encryption_props()) as src2:
+            with dataset('parent_destination', encryption_props()) as parent_ds:
+                with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test') as dst:
                     with replication_task({
                         **BASE_REPLICATION,
                         'name': 'encryption_replication_test',
@@ -88,12 +88,12 @@ def test_multiple_source_replication():
 
 
 def test_multiple_source_recursive_replication():
-    with dataset('source_test1', encryption_props(), pool='tank') as src1:
-        with dataset(f'{src1.rsplit("/", 1)[-1]}/child_source_test1', encryption_props(), pool='tank') as child_src1:
-            with dataset('source_test2', encryption_props(), pool='tank') as src2:
-                with dataset(f'{src2.rsplit("/", 1)[-1]}/child_source_test2', encryption_props(), pool='tank') as child_src2:
-                    with dataset('parent_destination', encryption_props(), pool='tank') as parent_ds:
-                        with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test', pool='tank') as dst:
+    with dataset('source_test1', encryption_props()) as src1:
+        with dataset(f'{src1.rsplit("/", 1)[-1]}/child_source_test1', encryption_props()) as child_src1:
+            with dataset('source_test2', encryption_props()) as src2:
+                with dataset(f'{src2.rsplit("/", 1)[-1]}/child_source_test2', encryption_props()) as child_src2:
+                    with dataset('parent_destination', encryption_props()) as parent_ds:
+                        with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test') as dst:
                             with replication_task({
                                 **BASE_REPLICATION,
                                 'name': 'encryption_replication_test',
