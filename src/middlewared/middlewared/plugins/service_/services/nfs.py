@@ -1,8 +1,9 @@
-import errno
+# import errno
 import os
 
 from .base import SimpleService
-from middlewared.service_exception import CallError
+# from middlewared.service_exception import CallError
+poison_exports_marker = "/var/local/bad_exports_block_nfsd"
 
 
 class NFSService(SimpleService):
@@ -14,13 +15,17 @@ class NFSService(SimpleService):
     systemd_unit = "nfs-server"
 
     async def check_configuration(self):
-        if not await self.middleware.run_in_thread(os.path.exists, '/etc/exports'):
-            raise CallError(
-                'At least one configured and available NFS export is required '
-                'in order to start the NFS service. Check the NFS share configuration '
-                'and availability of any paths currently being exported.',
-                errno.EINVAL
-            )
+        # NAS-123498: Eliminate requirement to have shares configured to start NFS
+        # But, raise an alarm if there are entries in /etc/exports.d
+        exportsd = '/etc/exports.d'
+        if os.path.exists(exportsd) and not os.path.isfile(exportsd):
+            exportsdList = os.listdir(exportsd)
+            if len(exportsdList) > 0:
+                await self.middleware.call('alert.oneshot_create', 'NFSblockedByExportsDir', {
+                    'entries': exportsdList
+                })
+            else:
+                await self.middleware.call('alert.oneshot_delete', 'NFSblockedByExportsDir', None)
 
     async def after_start(self):
         await self._systemd_unit("rpc-statd", "start")

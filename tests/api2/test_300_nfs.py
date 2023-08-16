@@ -1161,3 +1161,30 @@ def test_55_checking_nfs_disable_at_boot(request):
 def test_56_destroying_smb_dataset(request):
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
+
+
+def test_60_start_nfs_service_with_empty_exports():
+    '''
+    NAS-123498: Eliminate conditions on exports for service start
+    The goal is to make the NFS server behavior similar to the other protocols
+    '''
+    # Generate an empty exports file
+    results = SSH_TEST("echo '' > /etc/exports", user, password, ip)
+    assert results['result'] is True
+
+    # Start NFS
+    payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
+    res = make_ws_request(ip, payload)
+    assert res['result'] is True, f"Expected start success: {res}"
+    sleep(1)
+    confirm_nfsd_processes(16)
+
+    # Return NFS to stopped condition
+    payload = {"service": "nfs"}
+    results = POST("/service/stop/", payload)
+    assert results.status_code == 200, results.text
+    sleep(1)
+
+    # Confirm stopped
+    results = GET("/service?service=nfs")
+    assert results.json()[0]["state"] == "STOPPED", results.text

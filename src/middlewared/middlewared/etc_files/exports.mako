@@ -173,9 +173,6 @@
     shares = render_ctx["sharing.nfs.query"]
     poison_exports = not disable_exportsd()
 
-    if not poison_exports and not shares:
-        raise FileShouldNotExist()
-
     has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
     global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
 
@@ -220,8 +217,6 @@
     else:
         middleware.call_sync('alert.oneshot_delete', 'NFSHostnameLookupFail', None)
 
-    if not entries:
-        raise FileShouldNotExist()
 %>
 % if poison_exports:
 WARNING:
