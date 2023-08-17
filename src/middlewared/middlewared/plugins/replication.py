@@ -98,7 +98,6 @@ class ReplicationService(CRUDService):
     @private
     async def extend_context(self, rows, extra):
         if extra.get("check_dataset_encryption_keys", False) and any(row["direction"] == "PUSH" for row in rows):
-            (await self.middleware.call("pool.dataset.sync_db_keys")).wait()
             dataset_mapping = await self.middleware.call("pool.dataset.dataset_encryption_root_mapping")
         else:
             dataset_mapping = {}
