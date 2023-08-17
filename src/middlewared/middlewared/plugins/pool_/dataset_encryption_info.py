@@ -1,3 +1,4 @@
+import collections
 import contextlib
 import errno
 import json
@@ -356,13 +357,15 @@ class PoolDatasetService(Service):
         source_mapping = await self.middleware.call(
             'zettarepl.get_source_target_datasets_mapping', task['source_datasets'], target_ds
         )
+        dataset_mapping = collections.defaultdict(list)
+        for dataset in (
+            await self.middleware.call('pool.dataset.query', [], {'extra': {'properties': ['encryptionroot']}})
+        ) if include_encryption_root_children else []:
+            dataset_mapping[dataset['encryption_root']].append(dataset)
+
         for source_ds in task['source_datasets']:
             for ds_name, key in mapping[source_ds].items():
-                for dataset in await self.middleware.call(
-                    'pool.dataset.query', [['encryption_root', '=', ds_name]], {
-                        'extra': {'properties': ['encryptionroot']}
-                    }
-                ) if include_encryption_root_children else [{'id': ds_name}]:
+                for dataset in dataset_mapping[ds_name] if include_encryption_root_children else [{'id': ds_name}]:
                     result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
 
         return result
