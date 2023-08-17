@@ -1163,13 +1163,16 @@ def test_56_destroying_smb_dataset(request):
     assert results.status_code == 200, results.text
 
 
-def test_60_start_nfs_service_with_empty_exports():
+@pytest.mark.parametrize('exports', ['missing', 'empty'])
+def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
     '''
     NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
     '''
-    # Generate an empty exports file
-    results = SSH_TEST("echo '' > /etc/exports", user, password, ip)
+    if exports == 'empty':
+        results = SSH_TEST("echo '' > /etc/exports", user, password, ip)
+    else:  # 'missing'
+        results = SSH_TEST("rm -f /etc/exports", user, password, ip)
     assert results['result'] is True
 
     # Start NFS
