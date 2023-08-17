@@ -79,4 +79,5 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         return {
             "chunk_size": "64M",
             "upload_cutoff": "64M",
+            "provider": "Other",
         }
