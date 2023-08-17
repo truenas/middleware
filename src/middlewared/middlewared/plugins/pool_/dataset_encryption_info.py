@@ -334,7 +334,7 @@ class PoolDatasetService(Service):
         if task['direction'] != 'PUSH':
             raise CallError('Only push replication tasks are supported.', errno.EINVAL)
 
-        if skip_syncing_db_keys:
+        if not skip_syncing_db_keys:
             await (await self.middleware.call(
                 'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
             )).wait()
