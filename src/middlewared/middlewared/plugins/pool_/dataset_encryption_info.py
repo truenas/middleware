@@ -323,14 +323,17 @@ class PoolDatasetService(Service):
         job.pipes.output.w.write(json.dumps(datasets).encode())
 
     @private
-    async def export_keys_for_replication_internal(self, replication_task_id, dataset_encryption_root_mapping=None):
+    async def export_keys_for_replication_internal(
+        self, replication_task_id, dataset_encryption_root_mapping=None, skip_syncing_db_keys=False,
+    ):
         task = await self.middleware.call('replication.get_instance', replication_task_id)
         if task['direction'] != 'PUSH':
             raise CallError('Only push replication tasks are supported.', errno.EINVAL)
 
-        await (await self.middleware.call(
-            'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
-        )).wait()
+        if skip_syncing_db_keys:
+            await (await self.middleware.call(
+                'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
+            )).wait()
 
         mapping = {}
         for source_ds in task['source_datasets']:
