@@ -323,7 +323,7 @@ class PoolDatasetService(Service):
         job.pipes.output.w.write(json.dumps(datasets).encode())
 
     @private
-    async def export_keys_for_replication_internal(self, replication_task_id):
+    async def export_keys_for_replication_internal(self, replication_task_id, dataset_encryption_root_mapping=None):
         task = await self.middleware.call('replication.get_instance', replication_task_id)
         if task['direction'] != 'PUSH':
             raise CallError('Only push replication tasks are supported.', errno.EINVAL)
@@ -357,11 +357,10 @@ class PoolDatasetService(Service):
         source_mapping = await self.middleware.call(
             'zettarepl.get_source_target_datasets_mapping', task['source_datasets'], target_ds
         )
-        dataset_mapping = collections.defaultdict(list)
-        for dataset in (
-            await self.middleware.call('pool.dataset.query', [], {'extra': {'properties': ['encryptionroot']}})
-        ) if include_encryption_root_children else []:
-            dataset_mapping[dataset['encryption_root']].append(dataset)
+        if include_encryption_root_children:
+            dataset_mapping = dataset_encryption_root_mapping or await self.dataset_encryption_root_mapping()
+        else:
+            dataset_mapping = {}
 
         for source_ds in task['source_datasets']:
             for ds_name, key in mapping[source_ds].items():
@@ -369,6 +368,14 @@ class PoolDatasetService(Service):
                     result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
 
         return result
+
+    @private
+    async def dataset_encryption_root_mapping(self):
+        dataset_encryption_root_mapping = collections.defaultdict(list)
+        for dataset in await self.middleware.call(
+            'pool.dataset.query', [], {'extra': {'properties': ['encryptionroot']}}
+        ):
+            dataset_encryption_root_mapping[dataset['encryption_root']].append(dataset)
 
     @accepts(
         Str('id'),
