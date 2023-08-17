@@ -1,4 +1,4 @@
-from .slot_mappings import MAPPINGS
+from .slot_mappings import get_mapping_info
 
 
 def map_enclosures(enclosures):
@@ -12,27 +12,24 @@ def map_enclosures(enclosures):
             jbods.append(enclosure)
             continue
 
-        try:
-            # take DMI information for the platform and try to get drive
-            # slot mappings
-            mapped_dict = MAPPINGS[enclosure['dmi']]['mapping_info']
-        except KeyError:
-            # X, M, F series don't need to be mapped so this is expected
+        mapped_info = get_mapping_info(enclosure['dmi'], enclosures)
+        if mapped_info is None:
+            # X/M/F series don't need to be mapped
             return enclosures
 
         vers_key = 'DEFAULT'
-        if not MAPPINGS[enclosure['dmi']]['any_version']:
+        if not mapped_info['any_version']:
             # platforms can have different "versions" which
             # means that they can be ever so slightly cabled
             # differently which leads to us having to map the
             # drives based on how they're cabled
             # (hence the "version")
-            for key, vers in mapped_dict['versions'].items():
+            for key, vers in mapped_info['versions'].items():
                 if enclosure['revision'] == key:
                     vers_key = vers
                     break
 
-        for key, _dsm in MAPPINGS[enclosure['dmi']]['mapping_info']['versions'][vers_key].items():
+        for key, _dsm in mapped_info['versions'][vers_key].items():
             # now that we know what product "version" we're on, we need to be
             # sure and pull the drive mappings based on the enclosures unique
             # (non-changing) id. The non-changing id that uniquely identifies

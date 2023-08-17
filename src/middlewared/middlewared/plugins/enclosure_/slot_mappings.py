@@ -1,4 +1,4 @@
-def get_slot_info(model):
+def get_slot_info(model, enclosures=None):
     """This function returns a dictionary that maps
     drives from their original slots to their mapped slots. This
     is done solely for the purpose of displaying the enclosure
@@ -106,71 +106,47 @@ def get_slot_info(model):
             our enclosures is quite complex and this was the best mix
             of performance/maintability.
     """
-    if model in ('R50', 'R50B', 'R50BM'):
+    if model == 'R40':
+        # We need a bit more logic because the R40 doesn't have a
+        # predictable guaranteed unique identifier. This means that
+        # we need to find one. The best that we can do is to use the
+        # enclosures logical id and map the 1st set of 24 drives to
+        # the smaller id while mapping the 2nd set of 24 drives to the larger id.
+        ses_logical_ids = {int(f'0x{i["id"]}', 16): i['id'] for i in enclosures if i['controller']}
+        min_id, max_id = min(ses_logical_ids), max(ses_logical_ids)
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'id': {
+                        ses_logical_ids[min_id]: {
+                            # 1 - 24
+                            i: {'orig_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                        },
+                        ses_logical_ids[max_id]: {
+                            # 25 - 48
+                            i: {'orig_slot': i, 'mapped_slot': j} for i, j in zip(range(1, 25), range(25, 49))
+                        }
+                    }
+                }
+            }
+        }
+    elif model in ('R50', 'R50B', 'R50BM'):
         # these platforms share same enclosure and mapping
         # but it's important to always map the eDrawer4048S1
         # enclosure device to drives 1 - 24
-
-        # FIXME: R40 does not have a predictable guaranteed unique
-        # identifier so we'll map the 1st 24 drives to the
-        # enclosure with the smaller logical id and the last
-        # 24 drives to the larger logical id
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'product': {
                         'eDrawer4048S1': {
-                            1: {'orig_slot': 1, 'mapped_slot': 1},
-                            2: {'orig_slot': 2, 'mapped_slot': 2},
-                            3: {'orig_slot': 3, 'mapped_slot': 3},
-                            4: {'orig_slot': 4, 'mapped_slot': 4},
-                            5: {'orig_slot': 5, 'mapped_slot': 5},
-                            6: {'orig_slot': 6, 'mapped_slot': 6},
-                            7: {'orig_slot': 7, 'mapped_slot': 7},
-                            8: {'orig_slot': 8, 'mapped_slot': 8},
-                            9: {'orig_slot': 9, 'mapped_slot': 9},
-                            10: {'orig_slot': 10, 'mapped_slot': 10},
-                            11: {'orig_slot': 11, 'mapped_slot': 11},
-                            12: {'orig_slot': 12, 'mapped_slot': 12},
-                            13: {'orig_slot': 13, 'mapped_slot': 13},
-                            14: {'orig_slot': 14, 'mapped_slot': 14},
-                            15: {'orig_slot': 15, 'mapped_slot': 15},
-                            16: {'orig_slot': 16, 'mapped_slot': 16},
-                            17: {'orig_slot': 17, 'mapped_slot': 17},
-                            18: {'orig_slot': 18, 'mapped_slot': 18},
-                            19: {'orig_slot': 19, 'mapped_slot': 19},
-                            20: {'orig_slot': 20, 'mapped_slot': 20},
-                            21: {'orig_slot': 21, 'mapped_slot': 21},
-                            22: {'orig_slot': 22, 'mapped_slot': 22},
-                            23: {'orig_slot': 23, 'mapped_slot': 23},
-                            24: {'orig_slot': 24, 'mapped_slot': 24},
+                            # 1 - 24
+                            i: {'orig_slot': i, 'mapped_slot': i} for i in range(1, 25)
                         },
                         'eDrawer4048S2': {
-                            1: {'orig_slot': 1, 'mapped_slot': 25},
-                            2: {'orig_slot': 2, 'mapped_slot': 26},
-                            3: {'orig_slot': 3, 'mapped_slot': 27},
-                            4: {'orig_slot': 4, 'mapped_slot': 28},
-                            5: {'orig_slot': 5, 'mapped_slot': 29},
-                            6: {'orig_slot': 6, 'mapped_slot': 30},
-                            7: {'orig_slot': 7, 'mapped_slot': 31},
-                            8: {'orig_slot': 8, 'mapped_slot': 32},
-                            9: {'orig_slot': 9, 'mapped_slot': 33},
-                            10: {'orig_slot': 10, 'mapped_slot': 34},
-                            11: {'orig_slot': 11, 'mapped_slot': 35},
-                            12: {'orig_slot': 12, 'mapped_slot': 36},
-                            13: {'orig_slot': 13, 'mapped_slot': 37},
-                            14: {'orig_slot': 14, 'mapped_slot': 38},
-                            15: {'orig_slot': 15, 'mapped_slot': 39},
-                            16: {'orig_slot': 16, 'mapped_slot': 40},
-                            17: {'orig_slot': 17, 'mapped_slot': 41},
-                            18: {'orig_slot': 18, 'mapped_slot': 42},
-                            19: {'orig_slot': 19, 'mapped_slot': 43},
-                            20: {'orig_slot': 20, 'mapped_slot': 44},
-                            21: {'orig_slot': 21, 'mapped_slot': 45},
-                            22: {'orig_slot': 22, 'mapped_slot': 46},
-                            23: {'orig_slot': 23, 'mapped_slot': 47},
-                            24: {'orig_slot': 24, 'mapped_slot': 48},
+                            # 25 - 48
+                            i: {'orig_slot': i, 'mapped_slot': j} for i, j in zip(range(1, 25), range(25, 49))
                         }
                     },
                     'id': {
@@ -191,12 +167,12 @@ def get_slot_info(model):
                         },
                     }
                 }
-            }}
+            }
         }
     elif model == 'R10':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'model': {
                         model: {
@@ -219,12 +195,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model in ('R20', 'R20B'):
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'model': {
                         model: {
@@ -249,12 +225,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'R20A':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'model': {
                         model: {
@@ -279,12 +255,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'MINI-3.0-E':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
@@ -297,12 +273,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'MINI-3.0-E+':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
@@ -318,13 +294,13 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'MINI-3.0-X':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
-                # TODO: 1.0 "version" has same mapping?? (CORE is the same)
+            'versions': {
+                # NOTE: 1.0 "version" has same mapping?? (CORE is the same)
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
@@ -341,12 +317,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'MINI-3.0-X+':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
@@ -360,12 +336,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'MINI-3.0-XL+':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'id': {
                         '3000000000000002': {
@@ -383,12 +359,12 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     elif model == 'MINI-R':
         return {
             'any_version': True,
-            'mapping_info': {'versions': {
+            'versions': {
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
@@ -408,49 +384,47 @@ def get_slot_info(model):
                         }
                     }
                 }
-            }}
+            }
         }
     else:
-        return {}
+        return
 
 
-MAPPINGS = {
+def get_mapping_info(dmi, enclosures=None):
     """
-    The keys represent what was burned
-    into SMBIOS from production team
-    before the system is shipped to the
-    user.
-
-    The only exception to this is the
-    keys that have underscores in them
-    which are platforms that have nvme
-    drives that represent usable disks
-    but are not physically present where
-    all the other disks are. We still
-    need to map them to slots on then
-    enclosure.
+    `dmi` is a string representing what was burned
+    into SMBIOS from production team before the
+    system is shipped to the user. There are exceptions
+    to this, of course, one of them being the platforms
+    have nvme drives that represent usable disks but
+    are not physically present where all the other disks
+    are. We still need to map them to slots on the enclosure.
     """
-    'TRUENAS-R10': get_slot_info('R10'),
-    'TRUENAS-R20': get_slot_info('R20'),
-    'TRUENAS-R20A': get_slot_info('R20A'),
-    'TRUENAS-R20B': get_slot_info('R20B'),
-    'TRUENAS-R40': get_slot_info('R40'),
-    'TRUENAS-R50': get_slot_info('R50'),
-    'r50_nvme_enclosure': get_slot_info('R50'),
-    'TRUENAS-R50B': get_slot_info('R50B'),
-    'r50b_nvme_enclosure': get_slot_info('R50B'),
-    'TRUENAS-R50BM': get_slot_info('R50BM'),
-    'r50bm_nvme_enclosure': get_slot_info('R50BM'),
-    'TRUENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
-    'FREENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
-    'TRUENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),
-    'FREENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),
-    'TRUENAS-MINI-3.0-X': get_slot_info('MINI-3.0-X'),
-    'FREENAS-MINI-3.0-X': get_slot_info('MINI-3.0-X'),
-    'TRUENAS-MINI-3.0-X+': get_slot_info('MINI-3.0-X+'),
-    'FREENAS-MINI-3.0-X+': get_slot_info('MINI-3.0-X+'),
-    'TRUENAS-MINI-3.0-XL+': get_slot_info('MINI-3.0-XL+'),
-    'FREENAS-MINI-3.0-XL+': get_slot_info('MINI-3.0-XL+'),
-    'TRUENAS-MINI-R': get_slot_info('MINI-R'),
-    'FREENAS-MINI-R': get_slot_info('MINI-R')
-}
+    try:
+        return {
+            'TRUENAS-R10': get_slot_info('R10'),
+            'TRUENAS-R20': get_slot_info('R20'),
+            'TRUENAS-R20A': get_slot_info('R20A'),
+            'TRUENAS-R20B': get_slot_info('R20B'),
+            'TRUENAS-R40': get_slot_info('R40', enclosures),
+            'TRUENAS-R50': get_slot_info('R50'),
+            'r50_nvme_enclosure': get_slot_info('R50'),
+            'TRUENAS-R50B': get_slot_info('R50B'),
+            'r50b_nvme_enclosure': get_slot_info('R50B'),
+            'TRUENAS-R50BM': get_slot_info('R50BM'),
+            'r50bm_nvme_enclosure': get_slot_info('R50BM'),
+            'TRUENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
+            'FREENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
+            'TRUENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),
+            'FREENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),
+            'TRUENAS-MINI-3.0-X': get_slot_info('MINI-3.0-X'),
+            'FREENAS-MINI-3.0-X': get_slot_info('MINI-3.0-X'),
+            'TRUENAS-MINI-3.0-X+': get_slot_info('MINI-3.0-X+'),
+            'FREENAS-MINI-3.0-X+': get_slot_info('MINI-3.0-X+'),
+            'TRUENAS-MINI-3.0-XL+': get_slot_info('MINI-3.0-XL+'),
+            'FREENAS-MINI-3.0-XL+': get_slot_info('MINI-3.0-XL+'),
+            'TRUENAS-MINI-R': get_slot_info('MINI-R'),
+            'FREENAS-MINI-R': get_slot_info('MINI-R')
+        }[dmi]
+    except KeyError:
+        pass
