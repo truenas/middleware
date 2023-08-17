@@ -7,6 +7,8 @@ import subprocess
 import tempfile
 import urllib.parse
 
+import ssl
+
 from middlewared.client import Client, ClientException
 from middlewared.service_exception import CallError
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
@@ -545,6 +547,7 @@ class KeychainCredentialService(CRUDService):
             "keychain_remote_ssh_semiautomatic_setup",
             Str("name", required=True),
             Str("url", required=True, validators=[URL()]),
+            Bool("verify_ssl", default=True),
             Str("token", private=True),
             Str("admin_username", default="root"),
             Str("password", private=True),
@@ -587,7 +590,10 @@ class KeychainCredentialService(CRUDService):
                                                     data["private_key"])
 
         try:
-            client = Client(os.path.join(re.sub("^http", "ws", data["url"]), "websocket"))
+            client = Client(os.path.join(re.sub("^http", "ws", data["url"]), "websocket"),
+                            verify_ssl=data["verify_ssl"])
+        except ssl.SSLCertVerificationError as e:
+            raise CallError(str(e), CallError.ESSLCERTVERIFICATIONERROR)
         except Exception as e:
             raise CallError(f"Unable to connect to remote system: {e}")
 

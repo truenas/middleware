@@ -14,6 +14,7 @@ from base64 import b64decode
 from collections import defaultdict, namedtuple
 from threading import Event, Lock, Thread
 
+import ssl
 from websocket import WebSocketApp
 from websocket._abnf import STATUS_NORMAL
 from websocket._http import connect, proxy_info
@@ -41,10 +42,11 @@ class ReserveFDException(Exception):
 
 
 class WSClient:
-    def __init__(self, url, *, client, reserved_ports=False):
+    def __init__(self, url, *, client, reserved_ports=False, verify_ssl=True):
         self.url = url
         self.client = client
         self.reserved_ports = reserved_ports
+        self.verify_ssl = verify_ssl
 
         self.socket = None
         self.app = None
@@ -67,7 +69,7 @@ class WSClient:
                 raise
             app_url = "ws://localhost/websocket"  # Adviced by official docs to use dummy hostname
         else:
-            sockopt = sock_opt(None, None)
+            sockopt = sock_opt(None, None if self.verify_ssl else {"cert_reqs": ssl.CERT_NONE})
             sockopt.timeout = 10
             self.socket = connect(self.url, sockopt, proxy_info(), None)[0]
             app_url = self.url
@@ -210,6 +212,7 @@ class ErrnoMixin:
     EDATASETISLOCKED = 205
     EINVALIDRRDTIMESTAMP = 206
     ENOTAUTHENTICATED = 207
+    ESSLCERTVERIFICATIONERROR = 208
 
     @classmethod
     def _get_errname(cls, code):
@@ -257,7 +260,7 @@ class CallTimeout(ClientException):
 
 class Client:
     def __init__(self, uri=None, reserved_ports=False, py_exceptions=False, log_py_exceptions=False,
-                 call_timeout=undefined):
+                 call_timeout=undefined, verify_ssl=True):
         """
         Arguments:
            :reserved_ports(bool): should the local socket used a reserved port
@@ -284,6 +287,7 @@ class Client:
             uri,
             client=self,
             reserved_ports=reserved_ports,
+            verify_ssl=verify_ssl,
         )
         self._ws.connect()
         self._connected.wait(10)
