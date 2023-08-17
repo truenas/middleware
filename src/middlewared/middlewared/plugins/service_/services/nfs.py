@@ -11,18 +11,22 @@ class NFSService(SimpleService):
 
     systemd_unit = "nfs-server"
 
+    def check_exportsd_dir(self):
+        exports = list()
+        try:
+            with os.scandir('/etc/exports.d') as scan:
+                for i in filter(lambda x: x.is_file() and not x.name.startswith('.'), scan):
+                    exports.append(i.name)
+        except (FileNotFoundError, NotADirectoryError):
+            pass
+        return exports
+
     async def check_configuration(self):
-        # NAS-123498: Eliminate requirement to have shares configured to start NFS
-        # But, raise an alarm if there are entries in /etc/exports.d
-        exportsd = '/etc/exports.d'
-        if os.path.exists(exportsd) and not os.path.isfile(exportsd):
-            exportsdList = os.listdir(exportsd)
-            if len(exportsdList) > 0:
-                await self.middleware.call('alert.oneshot_create', 'NFSblockedByExportsDir', {
-                    'entries': exportsdList
-                })
-            else:
-                await self.middleware.call('alert.oneshot_delete', 'NFSblockedByExportsDir', None)
+        # Raise alert if there are entries in /etc/exports.d
+        if (exportsdList := await self.middleware.run_in_thread(self.check_exportsd_dir)):
+            await self.middleware.call('alert.oneshot_create', 'NFSblockedByExportsDir', {'entries': exportsdList})
+        else:
+            await self.middleware.call('alert.oneshot_delete', 'NFSblockedByExportsDir')
 
     async def after_start(self):
         await self._systemd_unit("rpc-statd", "start")
