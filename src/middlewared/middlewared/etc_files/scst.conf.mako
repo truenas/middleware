@@ -237,6 +237,7 @@ TARGET_DRIVER iscsi {
     # target level which we are moving forward with right now. Also for mutual-chap, we can only set
     # one user which the initiator can authenticate on it's end. So if any group in the target
     # desires mutual chap, we take the first one and use it's peer credentials
+    alias = target.get('alias')
     mutual_chap = None
     chap_users = set()
     initiator_portal_access = set()
@@ -307,6 +308,12 @@ TARGET_DRIVER iscsi {
 ## If no associated targets then disable
         enabled 0
 %   endif
+##
+## alias
+##
+%       if alias:
+        alias "${alias}"
+%       endif
 %   for chap_auth in chap_users:
         IncomingUser "${chap_auth}"
 %   endfor
