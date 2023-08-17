@@ -57,7 +57,7 @@ class ReportingService(Service):
         # TODO: Optimize this so when retrieving stats for multiple plugins we do not get all charts
         #  again and again
         await graph_plugin.build_context()
-        for identifier in (await graph_plugin.get_identifiers() or [None]):
+        for identifier in (await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]):
             # TODO: Handle 404 gracefully which can happen if no metrics have been collected
             # so far for the identifier/chart in question
             results.append(await graph_plugin.export(query_params, identifier, aggregate=query['aggregate']))
@@ -149,10 +149,7 @@ class ReportingService(Service):
         rv = []
         for graph_plugin in self.__graphs.values():
             await graph_plugin.build_context()
-            idents = await graph_plugin.get_identifiers()
-            if idents is None:
-                idents = [None]
-            for ident in idents:
+            for ident in (await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]):
                 rv.append(await graph_plugin.export(query_params, ident, aggregate=query['aggregate']))
         return rv
 

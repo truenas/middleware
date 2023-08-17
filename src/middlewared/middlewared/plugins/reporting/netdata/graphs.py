@@ -8,6 +8,7 @@ from .graph_base import GraphBase
 class CPUPlugin(GraphBase):
 
     title = 'CPU Usage'
+    uses_identifiers = False
     vertical_label = '%CPU'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
@@ -22,6 +23,7 @@ class CPUPlugin(GraphBase):
 class CPUTempPlugin(GraphBase):
 
     title = 'CPU Temperature'
+    uses_identifiers = False
     vertical_label = 'Celsius'
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
@@ -97,6 +99,7 @@ class InterfacePlugin(GraphBase):
 class LoadPlugin(GraphBase):
 
     title = 'System Load Average'
+    uses_identifiers = False
     vertical_label = 'Processes'
 
     LOAD_MAPPING = {
@@ -117,6 +120,7 @@ class LoadPlugin(GraphBase):
 class MemoryPlugin(GraphBase):
 
     title = 'Physical memory utilization'
+    uses_identifiers = False
     vertical_label = 'Mebibytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
@@ -126,6 +130,7 @@ class MemoryPlugin(GraphBase):
 class SwapPlugin(GraphBase):
 
     title = 'Swap Utilization'
+    uses_identifiers = False
     vertical_label = 'Mebibytes'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
@@ -140,6 +145,7 @@ class SwapPlugin(GraphBase):
 class UptimePlugin(GraphBase):
 
     title = 'System Uptime'
+    uses_identifiers = False
     vertical_label = 'Seconds'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
@@ -152,6 +158,7 @@ class UptimePlugin(GraphBase):
 class ARCActualRatePlugin(GraphBase):
 
     title = 'ZFS Actual Cache Hits Rate'
+    uses_identifiers = False
     vertical_label = 'Events/s'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
@@ -161,6 +168,7 @@ class ARCActualRatePlugin(GraphBase):
 class ARCRatePlugin(GraphBase):
 
     title = 'ZFS ARC Hits Rate'
+    uses_identifiers = False
     vertical_label = 'Events/s'
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
@@ -170,6 +178,7 @@ class ARCRatePlugin(GraphBase):
 class ARCSizePlugin(GraphBase):
 
     title = 'ZFS ARC Size'
+    uses_identifiers = False
     vertical_label = 'Mebibytes'
 
     LABEL_MAPPING = {
