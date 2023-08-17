@@ -139,7 +139,7 @@ class ReplicationService(CRUDService):
         if context["dataset_encryption_root_mapping"] and data["direction"] == "PUSH":
             data["has_encrypted_dataset_keys"] = bool(
                 await self.middleware.call(
-                    "pool.dataset.export_keys_for_replication_internal", data["id"],
+                    "pool.dataset.export_keys_for_replication_internal", data,
                     context["dataset_encryption_root_mapping"], True,
                 )
             )
