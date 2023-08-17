@@ -319,14 +319,18 @@ class PoolDatasetService(Service):
 
         Please refer to websocket documentation for downloading the file.
         """
-        datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task_id)
+        task = self.middleware.call_sync('replication.get_instance', task_id)
+        datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task)
         job.pipes.output.w.write(json.dumps(datasets).encode())
 
     @private
     async def export_keys_for_replication_internal(
-        self, replication_task_id, dataset_encryption_root_mapping=None, skip_syncing_db_keys=False,
+        self, replication_task_or_id, dataset_encryption_root_mapping=None, skip_syncing_db_keys=False,
     ):
-        task = await self.middleware.call('replication.get_instance', replication_task_id)
+        if isinstance(replication_task_or_id, int):
+            task = await self.middleware.call('replication.get_instance', replication_task_or_id)
+        else:
+            task = replication_task_or_id
         if task['direction'] != 'PUSH':
             raise CallError('Only push replication tasks are supported.', errno.EINVAL)
 
