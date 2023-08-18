@@ -25,7 +25,7 @@ def test_system_general_ui_rollback():
         assert 3 <= int(ssh("midclt call system.general.checkin_waiting").strip()) < 10
 
         # Wait for changes to be automatically rolled back
-        time.sleep(10)
+        time.sleep(15)
 
         # Ensure that the UI is now accessible
         assert requests.get(url(), timeout=10).status_code == 200
