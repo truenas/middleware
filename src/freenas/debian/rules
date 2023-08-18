@@ -7,21 +7,9 @@
 override_dh_auto_install:
 	sh -c "\
 		mkdir -p debian/truenas-files/etc; \
+		cp -a etc debian/truenas-files/; \
 		cp -a lib debian/truenas-files/; \
 		cp -a usr debian/truenas-files/; \
-		mkdir -p debian/truenas-files/etc; \
-		cp -a etc/default debian/truenas-files/etc/; \
-		cp -a etc/sysctl.d debian/truenas-files/etc/; \
-		cp etc/find* debian/truenas-files/etc/; \
-		cp -a etc/grub.d debian/truenas-files/etc/; \
-		cp -a etc/initramfs-tools debian/truenas-files/etc/; \
-		cp etc/iso_3166_2_countries.csv debian/truenas-files/etc/; \
-		cp -a etc/logrotate.d debian/truenas-files/etc/; \
-		cp etc/nsswitch.conf debian/truenas-files/etc/; \
-		cp -a etc/pam.d debian/truenas-files/etc/; \
-		cp -a etc/ssl debian/truenas-files/etc/; \
-		cp -a etc/syslog-ng debian/truenas-files/etc/; \
-		cp -a etc/systemd debian/truenas-files/etc/; \
 		mkdir debian/truenas-files/home; \
 		cp -a root debian/truenas-files/home/admin; \
 		chmod 700 debian/truenas-files/home/admin; \
