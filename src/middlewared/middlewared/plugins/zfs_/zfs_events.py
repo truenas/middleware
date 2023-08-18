@@ -118,6 +118,14 @@ async def retrieve_pool_from_db(middleware, pool_name):
     return pool[0]
 
 
+POOL_ALERTS = ('PoolUSBDisks', 'PoolUpgraded')
+
+
+async def pool_alerts_args(middleware, pool_name):
+    disks = await middleware.call('device.get_disks')
+    return {'pool_name': pool_name, 'disks': disks}
+
+
 async def zfs_events(middleware, data):
     event_id = data['class']
     if event_id in ('sysevent.fs.zfs.resilver_start', 'sysevent.fs.zfs.scrub_start'):
@@ -166,15 +174,14 @@ async def zfs_events(middleware, data):
             # middleware will remove swap disks as all pools might not have imported
             middleware.create_task(middleware.call('disk.swaps_configure'))
 
-        alerts = ('PoolUSBDisks', 'PoolUpgraded')
         if pool_name:
-            disks = await middleware.call('device.get_disks')
-            args = {'pool_name': pool_name, 'disks': disks}
+            args = await pool_alerts_args(middleware, pool_name)
             if event_id.endswith('pool_import'):
-                for i in alerts:
+                for i in POOL_ALERTS:
+                    await middleware.call('alert.oneshot_delete', i, pool_name)
                     await middleware.call('alert.oneshot_create', i, args)
             elif event_id.endswith('pool_destroy'):
-                for i in alerts:
+                for i in POOL_ALERTS:
                     await middleware.call('alert.oneshot_delete', i, pool_name)
             elif event_id.endswith('config_sync'):
                 if pool_guid and (pool := await retrieve_pool_from_db(middleware, pool_name)):
@@ -185,7 +192,7 @@ async def zfs_events(middleware, data):
                     # which when done, we consider the create/delete operation as complete
                     middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
 
-                for i in alerts:
+                for i in POOL_ALERTS:
                     await middleware.call('alert.oneshot_delete', i, pool_name)
                     await middleware.call('alert.oneshot_create', i, args)
     elif (
@@ -226,6 +233,14 @@ async def zfs_events(middleware, data):
             await middleware.call_hook('dataset.post_delete', data['history_dsname'])
 
 
-def setup(middleware):
+async def setup(middleware):
     middleware.event_register('zfs.pool.scan', 'Progress of pool resilver/scrub.')
     middleware.register_hook('zfs.pool.events', zfs_events, sync=False)
+
+    # middleware does not receive `sysevent.fs.zfs.pool_import` or `sysevent.fs.zfs.config_sync` events on the boot pool
+    # import because it happens before middleware is started. We have to manually process these alerts for the boot pool
+    pool_name = await middleware.call('boot.pool_name')
+    args = await pool_alerts_args(middleware, pool_name)
+    for i in POOL_ALERTS:
+        await middleware.call('alert.oneshot_delete', i, pool_name)
+        await middleware.call('alert.oneshot_create', i, args)
