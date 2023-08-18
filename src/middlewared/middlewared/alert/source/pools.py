@@ -45,6 +45,9 @@ class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
 
     async def create(self, args):
         pool = args['pool_name']
+        if pool == await self.middleware.call('boot.pool_name'):
+            # We don't want this alert for the boot pool as it has certain features disabled by design
+            return
         if await self.is_upgraded(pool) is False:
             # only alert if it's False explicitly since None means
             # the pool couldn't be found
