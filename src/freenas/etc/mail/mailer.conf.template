@@ -1,2 +1,0 @@
-sendmail        /usr/local/bin/sudo /etc/find_alias_for_smtplib.sh
-send-mail       /usr/local/bin/sudo /etc/find_alias_for_smtplib.sh
