@@ -80,6 +80,39 @@ def parse_server_config(fname="local.conf"):
     return rv
 
 
+def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
+    '''
+    Start or Stop NFS service
+    expect_to_pass parameter is optional
+    fail_check parameter is optional
+    '''
+    assert do_what in ['start', 'stop'], f"Requested invalid service state: {do_what}"
+    test_res = {'start': True, 'stop': False}
+
+    payload = {
+        'msg': 'method', 'method': f'service.{do_what}',
+        'params': ['nfs', {'silent': False}]
+    }
+    res = make_ws_request(ip, payload)
+    if expect_to_pass:
+        assert res.get('error') is None, res
+        sleep(1)
+    else:
+        assert res.get('error') is not None, res
+        if fail_check:
+            assert fail_check in res.get('error')['reason']
+
+    # Confirm requested state
+    if expect_to_pass:
+        payload = {
+            'msg': 'method', 'method': 'service.started',
+            'params': ['nfs']
+        }
+        res = make_ws_request(ip, payload)
+        assert res.get('error') is None, res
+        assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
+
+
 def confirm_nfsd_processes(expected=16):
     '''
     Confirm the expected number of nfsd processes are running
@@ -308,13 +341,7 @@ def test_07_checking_to_see_if_nfs_service_is_enabled_at_boot(request):
 
 
 def test_08_starting_nfs_service(request):
-    payload = {"service": "nfs"}
-    results = POST("/service/start/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
-    confirm_nfsd_processes(10)
-    confirm_mountd_processes(10)
-    confirm_rpc_processes()
+    set_nfs_service_state('start')
 
 
 def test_09_checking_to_see_if_nfs_service_is_running(request):
@@ -1161,3 +1188,95 @@ def test_55_checking_nfs_disable_at_boot(request):
 def test_56_destroying_smb_dataset(request):
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
+
+
+@pytest.mark.parametrize('exports', ['missing', 'empty'])
+def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
+    '''
+    NAS-123498: Eliminate conditions on exports for service start
+    The goal is to make the NFS server behavior similar to the other protocols
+    '''
+    if exports == 'empty':
+        results = SSH_TEST("echo '' > /etc/exports", user, password, ip)
+    else:  # 'missing'
+        results = SSH_TEST("rm -f /etc/exports", user, password, ip)
+    assert results['result'] is True
+
+    # Start NFS
+    payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
+    res = make_ws_request(ip, payload)
+    assert res['result'] is True, f"Expected start success: {res}"
+    sleep(1)
+    confirm_nfsd_processes(16)
+
+    # Return NFS to stopped condition
+    payload = {"service": "nfs"}
+    results = POST("/service/stop/", payload)
+    assert results.status_code == 200, results.text
+    sleep(1)
+
+    # Confirm stopped
+    results = GET("/service?service=nfs")
+    assert results.json()[0]["state"] == "STOPPED", results.text
+
+
+@pytest.mark.parametrize('expect_NFS_start', [False, True])
+def test_62_files_in_exportsd(request, expect_NFS_start):
+    '''
+    Any files in /etc/exports.d are potentially dangerous, especially zfs.exports.
+    We implemented protections against rogue exports files.
+    - We block starting NFS if there are any files in /etc/exports.d
+    - We generate an alert when we detect this condition
+    - We clear the alert when /etc/exports.d is empty
+    '''
+    fail_check = {False: 'ConditionDirectoryNotEmpty=!/etc/exports.d', True: None}
+
+    # Simple helper function for this test
+    def set_immutable_state(want_immutable=True):
+        payload = {
+            'msg': 'method', 'method': 'filesystem.set_immutable',
+            'params': [want_immutable, '/etc/exports.d']
+        }
+        res = make_ws_request(ip, payload)
+        assert res.get('error') is None, res
+        payload = {
+            'msg': 'method', 'method': 'filesystem.is_immutable',
+            'params': ['/etc/exports.d']
+        }
+        res = make_ws_request(ip, payload)
+        assert res['result'] is want_immutable, f"Expected mutable filesystem: {res}"
+
+    try:
+        # Setup the test
+        set_immutable_state(want_immutable=False)  # Disable immutable
+
+        # Do the 'failing' case first to end with a clean condition
+        if not expect_NFS_start:
+            results = SSH_TEST("echo 'bogus data' > /etc/exports.d/persistent.file", user, password, ip)
+            assert results['result'] is True
+            results = SSH_TEST("chattr +i /etc/exports.d/persistent.file", user, password, ip)
+            assert results['result'] is True
+        else:
+            # Restore /etc/exports.d directory to a clean state
+            results = SSH_TEST("chattr -i /etc/exports.d/persistent.file", user, password, ip)
+            assert results['result'] is True
+            results = SSH_TEST("rm -rf /etc/exports.d/*", user, password, ip)
+            assert results['result'] is True
+
+        set_immutable_state(want_immutable=True)  # Enable immutable
+
+        set_nfs_service_state('start', expect_NFS_start, fail_check[expect_NFS_start])
+
+    finally:
+        # In all cases we want to end with NFS stopped
+        set_nfs_service_state('stop')
+
+        # If NFS start is blocked, then an alert should have been raised
+        payload = {'msg': 'method', 'method': 'alert.list', 'params': []}
+        res = make_ws_request(ip, payload)
+        alerts = res['result']
+        if not expect_NFS_start:
+            # Find alert
+            assert any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
+        else:  # Alert should have been cleared
+            assert any(alert["klass"] != "NFSblockedByExportsDir" for alert in alerts), alerts
