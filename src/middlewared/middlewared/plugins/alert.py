@@ -250,6 +250,8 @@ class AlertService(Service):
 
                 if not any(a.uuid == alert.uuid for a in self.alerts):
                     self.alerts.append(alert)
+        else:
+            await self.flush_alerts()
 
         self.alert_source_last_run = defaultdict(lambda: datetime.min)
 
