@@ -42,7 +42,6 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         state = unit.Unit.ActiveState
         if state == b"active" or (self.systemd_async_start and state == b"activating"):
             return ServiceState(True, list(filter(None, [unit.MainPID])))
-
         else:
             return ServiceState(False, [])
 
@@ -152,7 +151,7 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
 
         return "\n".join([
             f"{record['__REALTIME_TIMESTAMP'].strftime('%b %d %H:%M:%S')} "
-            f"{record.get('_COMM')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
+            f"{record.get('SYSLOG_IDENTIFIER')}[{record.get('_PID', 0)}]: {record['MESSAGE']}"
             for record in j
         ])
 
