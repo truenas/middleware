@@ -287,14 +287,6 @@ zfsArcC OBJECT-TYPE
         ""
     ::= { arc 6 }
 
-zfsArcP OBJECT-TYPE
-    SYNTAX     Gauge32
-    MAX-ACCESS read-only
-    STATUS     current
-    DESCRIPTION
-        ""
-    ::= { arc 7 }
-
 zfsArcMissPercent OBJECT-TYPE
     SYNTAX     DisplayString
     MAX-ACCESS read-only
