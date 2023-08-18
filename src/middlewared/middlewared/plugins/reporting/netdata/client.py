@@ -28,7 +28,7 @@ class ClientMixin:
                     yield resp
         except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
             raise ApiException(f'Failed {resource!r} call: {e!r}')
-        except aiohttp.client_exceptions.ClientConnectorError as e:
+        except (aiohttp.client_exceptions.ClientConnectorError, aiohttp.client_exceptions.ClientOSError) as e:
             raise ClientConnectError(f'Failed to connect to {uri!r}: {e!r}')
 
     @classmethod
