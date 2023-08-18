@@ -34,6 +34,7 @@ class GraphBase(metaclass=GraphMeta):
 
     aggregations = ('min', 'mean', 'max')
     title = None
+    uses_identifiers = True
     vertical_label = None
 
     AGG_MAP = {
@@ -70,11 +71,11 @@ class GraphBase(metaclass=GraphMeta):
             'name': self.name,
             'title': self.get_title(),
             'vertical_label': self.vertical_label,
-            'identifiers': await self.get_identifiers(),
+            'identifiers': await self.get_identifiers() if self.uses_identifiers else None,
         }
 
-    async def get_identifiers(self) -> typing.Optional[list]:
-        return None
+    async def get_identifiers(self) -> list:
+        return []
 
     def normalize_metrics(self, metrics) -> dict:
         metrics['legend'] = metrics.pop('labels')
