@@ -12,7 +12,7 @@ def outdated_pool():
     with another_pool() as pool:
         device = pool["topology"]["data"][0]["path"]
         ssh(f"zpool export {pool['name']}")
-        ssh(f"zpool create test -o altroot=/mnt -o feature@sha512=disabled -f {device}")
+        ssh(f"zpool create {pool['name']} -o altroot=/mnt -o feature@sha512=disabled -f {device}")
         yield pool
 
 
