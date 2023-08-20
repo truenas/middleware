@@ -143,15 +143,15 @@ class EnclosureService(CRUDService):
             update=True,
         ),
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         if "label" in data:
-            await self.middleware.call("datastore.delete", "truenas.enclosurelabel", [["encid", "=", id]])
+            await self.middleware.call("datastore.delete", "truenas.enclosurelabel", [["encid", "=", id_]])
             await self.middleware.call("datastore.insert", "truenas.enclosurelabel", {
-                "encid": id,
+                "encid": id_,
                 "label": data["label"]
             })
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     def _get_slot(self, slot_filter, enclosure_query=None, enclosure_info=None):
         if enclosure_info is None:
@@ -251,7 +251,7 @@ class EnclosureService(CRUDService):
             raise CallError(msg)
 
     @private
-    def sync_disk(self, id, enclosure_info=None, retry=False):
+    def sync_disk(self, id_, enclosure_info=None, retry=False):
         """
         :param id:
         :param enclosure_info:
@@ -259,7 +259,7 @@ class EnclosureService(CRUDService):
         """
         disk = self.middleware.call_sync(
             'disk.query',
-            [['identifier', '=', id]],
+            [['identifier', '=', id_]],
             {'get': True, "extra": {'include_expired': True}}
         )
 
@@ -269,7 +269,7 @@ class EnclosureService(CRUDService):
             if retry:
                 async def delayed():
                     await asyncio.sleep(60)
-                    await self.middleware.call('enclosure.sync_disk', id, enclosure_info)
+                    await self.middleware.call('enclosure.sync_disk', id_, enclosure_info)
 
                 self.middleware.run_coroutine(delayed(), wait=False)
 
@@ -283,7 +283,7 @@ class EnclosureService(CRUDService):
             }
 
         if disk_enclosure != disk['enclosure']:
-            self.middleware.call_sync('disk.update', id, {'enclosure': disk_enclosure})
+            self.middleware.call_sync('disk.update', id_, {'enclosure': disk_enclosure})
 
     @private
     @accepts(Str("pool", null=True, default=None))
@@ -1206,7 +1206,7 @@ async def udev_block_devices_hook(middleware, data):
         await middleware.call('enclosure.sync_zpool')
 
 
-async def pool_post_delete(middleware, id):
+async def pool_post_delete(middleware, id_):
     await middleware.call('enclosure.sync_zpool')
 
 

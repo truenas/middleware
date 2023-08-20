@@ -19,13 +19,13 @@ class PeriodicSnapshotTaskService(Service):
         ),
     )
     @returns(Dict("snapshots", additional_attrs=True))
-    async def update_will_change_retention_for(self, id, data):
+    async def update_will_change_retention_for(self, id_, data):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is updated
         with `data`.
         """
 
-        old = await self.middleware.call("pool.snapshottask.get_instance", id)
+        old = await self.middleware.call("pool.snapshottask.get_instance", id_)
         new = dict(old, **data)
 
         result = defaultdict(list)
@@ -44,12 +44,12 @@ class PeriodicSnapshotTaskService(Service):
         Int("id"),
     )
     @returns(Dict("snapshots", additional_attrs=True))
-    async def delete_will_change_retention_for(self, id):
+    async def delete_will_change_retention_for(self, id_):
         """
         Returns a list of snapshots which will change the retention if periodic snapshot task `id` is deleted.
         """
 
-        task = await self.middleware.call("pool.snapshottask.get_instance", id)
+        task = await self.middleware.call("pool.snapshottask.get_instance", id_)
 
         result = defaultdict(list)
         snapshots = await self.middleware.call("zettarepl.periodic_snapshot_task_snapshots", task)

@@ -29,9 +29,9 @@ class ReplicationModel(sa.Model):
     repl_netcat_active_side = sa.Column(sa.String(120), nullable=True, default=None)
     repl_netcat_active_side_port_min = sa.Column(sa.Integer(), nullable=True)
     repl_netcat_active_side_port_max = sa.Column(sa.Integer(), nullable=True)
-    repl_source_datasets = sa.Column(sa.JSON(type=list))
-    repl_exclude = sa.Column(sa.JSON(type=list))
-    repl_naming_schema = sa.Column(sa.JSON(type=list))
+    repl_source_datasets = sa.Column(sa.JSON(list))
+    repl_exclude = sa.Column(sa.JSON(list))
+    repl_naming_schema = sa.Column(sa.JSON(list))
     repl_name_regex = sa.Column(sa.String(120), nullable=True)
     repl_auto = sa.Column(sa.Boolean(), default=True)
     repl_schedule_minute = sa.Column(sa.String(100), nullable=True, default="00")
@@ -46,7 +46,7 @@ class ReplicationModel(sa.Model):
     repl_retention_policy = sa.Column(sa.String(120), default="NONE")
     repl_lifetime_unit = sa.Column(sa.String(120), nullable=True, default='WEEK')
     repl_lifetime_value = sa.Column(sa.Integer(), nullable=True, default=2)
-    repl_lifetimes = sa.Column(sa.JSON(type=list))
+    repl_lifetimes = sa.Column(sa.JSON(list))
     repl_large_block = sa.Column(sa.Boolean(), default=True)
     repl_embed = sa.Column(sa.Boolean(), default=False)
     repl_compressed = sa.Column(sa.Boolean(), default=True)
@@ -64,7 +64,7 @@ class ReplicationModel(sa.Model):
     repl_name = sa.Column(sa.String(120))
     repl_state = sa.Column(sa.Text(), default="{}")
     repl_properties = sa.Column(sa.Boolean(), default=True)
-    repl_properties_exclude = sa.Column(sa.JSON(type=list))
+    repl_properties_exclude = sa.Column(sa.JSON(list))
     repl_properties_override = sa.Column(sa.JSON())
     repl_replicate = sa.Column(sa.Boolean())
     repl_encryption = sa.Column(sa.Boolean())
@@ -215,23 +215,23 @@ class ReplicationService(CRUDService):
             Str("readonly", enum=["SET", "REQUIRE", "IGNORE"], default="SET"),
             Bool("hold_pending_snapshots", default=False),
             Str("retention_policy", enum=["SOURCE", "CUSTOM", "NONE"], required=True),
-            Int("lifetime_value", null=True, default=None, validators=[Range(min=1)]),
+            Int("lifetime_value", null=True, default=None, validators=[Range(min_=1)]),
             Str("lifetime_unit", null=True, default=None, enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"]),
             List("lifetimes", items=[
                 Dict(
                     "lifetime",
                     Cron("schedule"),
-                    Int("lifetime_value", validators=[Range(min=1)], required=True),
+                    Int("lifetime_value", validators=[Range(min_=1)], required=True),
                     Str("lifetime_unit", enum=["HOUR", "DAY", "WEEK", "MONTH", "YEAR"], required=True),
                     strict=True,
                 ),
             ]),
             Str("compression", enum=["LZ4", "PIGZ", "PLZIP"], null=True, default=None),
-            Int("speed_limit", null=True, default=None, validators=[Range(min=1)]),
+            Int("speed_limit", null=True, default=None, validators=[Range(min_=1)]),
             Bool("large_block", default=True),
             Bool("embed", default=False),
             Bool("compressed", default=True),
-            Int("retries", default=5, validators=[Range(min=1)]),
+            Int("retries", default=5, validators=[Range(min_=1)]),
             Str("logging_level", enum=["DEBUG", "INFO", "WARNING", "ERROR"], null=True, default=None),
             Bool("enabled", default=True),
             register=True,
@@ -333,18 +333,18 @@ class ReplicationService(CRUDService):
         periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
         await self.compress(data)
 
-        id = await self.middleware.call(
+        id_ = await self.middleware.call(
             "datastore.insert",
             self._config.datastore,
             data,
             {"prefix": self._config.datastore_prefix}
         )
 
-        await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
+        await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
 
         await self.middleware.call("zettarepl.update_tasks")
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int("id"), Patch(
         "replication_create",
@@ -352,7 +352,7 @@ class ReplicationService(CRUDService):
         ("attr", {"update": True}),
     ))
     @pass_app(require=True)
-    async def do_update(self, app, id, data):
+    async def do_update(self, app, id_, data):
         """
         Update a Replication Task with specific `id`
 
@@ -395,7 +395,7 @@ class ReplicationService(CRUDService):
             }
         """
 
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         if new["ssh_credentials"]:
@@ -404,7 +404,7 @@ class ReplicationService(CRUDService):
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_update", await self._validate(app, new, id))
+        verrors.add_child("replication_update", await self._validate(app, new, id_))
 
         verrors.check()
 
@@ -417,21 +417,21 @@ class ReplicationService(CRUDService):
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self._set_periodic_snapshot_tasks(id, periodic_snapshot_tasks)
+        await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
 
         await self.middleware.call("zettarepl.update_tasks")
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int("id")
     )
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete a Replication Task with specific `id`
 
@@ -451,7 +451,7 @@ class ReplicationService(CRUDService):
         response = await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
-            id
+            id_
         )
 
         await self.middleware.call("zettarepl.update_tasks")
@@ -465,12 +465,12 @@ class ReplicationService(CRUDService):
         roles=["REPLICATION_TASK_WRITE"],
     )
     @job(logs=True)
-    async def run(self, job, id, really_run):
+    async def run(self, job, id_, really_run):
         """
         Run Replication Task of `id`.
         """
         if really_run:
-            task = await self.get_instance(id)
+            task = await self.get_instance(id_)
 
             if not task["enabled"]:
                 raise CallError("Task is not enabled")
@@ -481,7 +481,7 @@ class ReplicationService(CRUDService):
             if task["state"]["state"] == "HOLD":
                 raise CallError("Task is on hold")
 
-        await self.middleware.call("zettarepl.run_replication_task", id, really_run, job)
+        await self.middleware.call("zettarepl.run_replication_task", id_, really_run, job)
 
     @accepts(
         Patch(
@@ -521,10 +521,10 @@ class ReplicationService(CRUDService):
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
-    async def _validate(self, app, data, id=None):
+    async def _validate(self, app, data, id_=None):
         verrors = ValidationErrors()
 
-        await self._ensure_unique(verrors, "", "name", data["name"], id)
+        await self._ensure_unique(verrors, "", "name", data["name"], id_)
 
         # Direction
 
@@ -960,9 +960,9 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call('zettarepl.update_tasks')
 
 
-async def on_zettarepl_state_changed(middleware, id, fields):
-    if id.startswith('replication_task_'):
-        task_id = int(id.split('_')[-1])
+async def on_zettarepl_state_changed(middleware, id_, fields):
+    if id_.startswith('replication_task_'):
+        task_id = int(id_.split('_')[-1])
         middleware.send_event('replication.query', 'CHANGED', id=task_id, fields={'state': fields})
 
 

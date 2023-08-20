@@ -35,7 +35,7 @@ class PoolDatasetService(Service):
     @returns(Ref('pool_dataset_permission'))
     @item_method
     @job(lock="dataset_permission_change")
-    async def permission(self, job, id, data):
+    async def permission(self, job, id_, data):
         """
         Set permissions for a dataset `id`. Permissions may be specified as
         either a posix `mode` or an `acl`. This method is a wrapper around
@@ -84,7 +84,7 @@ class PoolDatasetService(Service):
             }
 
         """
-        dataset_info = await self.middleware.call('pool.dataset.get_instance', id)
+        dataset_info = await self.middleware.call('pool.dataset.get_instance', id_)
         path = dataset_info['mountpoint']
         acltype = dataset_info['acltype']['value']
         user = data.get('user', None)

@@ -15,7 +15,7 @@ class RealtimeEventSource(EventSource):
     virtual memory and zfs arc.
     """
     ACCEPTS = Dict(
-        Int('interval', default=2, validators=[Range(min=2)]),
+        Int('interval', default=2, validators=[Range(min_=2)]),
     )
     RETURNS = Dict(
         Dict('cpu', additional_attrs=True),

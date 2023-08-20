@@ -28,7 +28,7 @@ class ReportingService(Service):
         return list(self.__graphs.keys())
 
     def _set_page_attr(attr):
-        attr.validators = [Range(min=1)]
+        attr.validators = [Range(min_=1)]
         attr.default = 1
 
     @accepts(

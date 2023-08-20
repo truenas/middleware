@@ -88,8 +88,8 @@ class FakeMiddleware(LoadPluginsMixin, ServiceCallMixin):
 
 class FakeJob(object):
 
-    def __init__(self, id, client):
-        self.id = id
+    def __init__(self, id_, client):
+        self.id = id_
         self.client = client
         self.progress = {
             'percent': None,

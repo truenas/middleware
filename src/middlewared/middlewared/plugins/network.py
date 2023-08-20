@@ -32,7 +32,7 @@ class NetworkBridgeModel(sa.Model):
     __tablename__ = 'network_bridge'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    members = sa.Column(sa.JSON(type=list), default=[])
+    members = sa.Column(sa.JSON(list), default=[])
     interface_id = sa.Column(sa.ForeignKey('network_interfaces.id', ondelete='CASCADE'))
     stp = sa.Column(sa.Boolean())
 
@@ -673,7 +673,7 @@ class InterfaceService(CRUDService):
         ]),
         Bool('failover_critical', default=False),
         Int('failover_group', null=True),
-        Int('failover_vhid', null=True, validators=[Range(min=1, max=255)]),
+        Int('failover_vhid', null=True, validators=[Range(min_=1, max_=255)]),
         List('failover_aliases', items=[
             Dict(
                 'interface_failover_alias',
@@ -695,9 +695,9 @@ class InterfaceService(CRUDService):
         Str('lacpdu_rate', enum=[i.value for i in LacpduRateChoices], default=None, null=True),
         List('lag_ports', items=[Str('interface')]),
         Str('vlan_parent_interface'),
-        Int('vlan_tag', validators=[Range(min=1, max=4094)]),
-        Int('vlan_pcp', validators=[Range(min=0, max=7)], null=True),
-        Int('mtu', validators=[Range(min=68, max=9216)], default=None, null=True),
+        Int('vlan_tag', validators=[Range(min_=1, max_=4094)]),
+        Int('vlan_pcp', validators=[Range(min_=0, max_=7)], null=True),
+        Int('mtu', validators=[Range(min_=68, max_=9216)], default=None, null=True),
         register=True
     ))
     async def do_create(self, data):
@@ -1460,7 +1460,7 @@ class InterfaceService(CRUDService):
         Bool('lag_ports', default=False),
         Bool('vlan_parent', default=True),
         List('exclude', default=['epair', 'tap', 'vnet']),
-        List('exclude_types', items=[Str('type', enum=[type.name for type in InterfaceType])]),
+        List('exclude_types', items=[Str('type', enum=[type_.name for type_ in InterfaceType])]),
         List('include'),
     ))
     @returns(Dict('available_interfaces', additional_attrs=True))
@@ -1501,7 +1501,7 @@ class InterfaceService(CRUDService):
 
     @accepts(Str('id', null=True, default=None))
     @returns(Dict(additional_attrs=True))
-    async def bridge_members_choices(self, id):
+    async def bridge_members_choices(self, id_):
         """
         Return available interface choices that can be added to a `br` (bridge) interface.
 
@@ -1512,7 +1512,7 @@ class InterfaceService(CRUDService):
         include = {}
         for interface in await self.middleware.call('interface.query'):
             if interface['type'] == 'BRIDGE':
-                if id and id == interface['id']:
+                if id_ and id_ == interface['id']:
                     # means this is an existing br interface that is being updated so we need to
                     # make sure and return the interfaces members
                     include.update({i: i for i in interface['bridge_members']})
@@ -1534,7 +1534,7 @@ class InterfaceService(CRUDService):
 
     @accepts(Str('id', null=True, default=None))
     @returns(Dict(additional_attrs=True))
-    async def lag_ports_choices(self, id):
+    async def lag_ports_choices(self, id_):
         """
         Return available interface choices that can be added to a `bond` (lag) interface.
 
@@ -1545,7 +1545,7 @@ class InterfaceService(CRUDService):
         include = {}
         for interface in await self.middleware.call('interface.query'):
             if interface['type'] == 'LINK_AGGREGATION':
-                if id and id == interface['id']:
+                if id_ and id_ == interface['id']:
                     # means this is an existing bond interface that is being updated so we need to
                     # make sure and return the interfaces members
                     include.update({i: i for i in interface['lag_ports']})

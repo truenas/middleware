@@ -30,15 +30,15 @@ class InterfaceService(Service):
             return InterfaceType.UNKNOWN
 
     @private
-    async def validate_name(self, type, name):
-        if type == InterfaceType.BRIDGE:
+    async def validate_name(self, type_, name):
+        if type_ == InterfaceType.BRIDGE:
             if not (name.startswith('br') and name[2:].isdigit()):
                 raise ValueError('Bridge interface must start with "br" followed by an unique number.')
 
-        if type == InterfaceType.LINK_AGGREGATION:
+        if type_ == InterfaceType.LINK_AGGREGATION:
             if not (name.startswith('bond') and name[4:].isdigit()):
                 raise ValueError('Link aggregation interface must start with "bond" followed by an unique number.')
 
-        if type == InterfaceType.VLAN:
+        if type_ == InterfaceType.VLAN:
             if not (name.startswith('vlan') and name[4:].isdigit()):
                 raise ValueError('VLAN interface must start with "vlan" followed by an unique number.')

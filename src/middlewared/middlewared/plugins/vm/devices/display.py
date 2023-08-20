@@ -21,8 +21,8 @@ class DISPLAY(Device):
     schema = Dict(
         'attributes',
         Str('resolution', enum=RESOLUTION_ENUM, default='1024x768'),
-        Int('port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
-        Int('web_port', default=None, null=True, validators=[Range(min=5900, max=65535)]),
+        Int('port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
+        Int('web_port', default=None, null=True, validators=[Range(min_=5900, max_=65535)]),
         Str('bind', default='127.0.0.1'),
         Bool('wait', default=False),
         Str('password', private=True, required=True, null=False, empty=False),

@@ -29,7 +29,7 @@ class PoolDatasetService(Service):
     )
     @returns(Bool('locked'))
     @job(lock=lambda args: 'dataset_lock')
-    async def lock(self, job, id, options):
+    async def lock(self, job, id_, options):
         """
         Locks `id` dataset. It will unmount the dataset and its children before locking.
 
@@ -37,17 +37,17 @@ class PoolDatasetService(Service):
         the dataset was mounted before it was locked making sure that the path cannot be modified. Once the dataset
         is unlocked, it will not be affected by this change and consumers can continue consuming it.
         """
-        ds = await self.middleware.call('pool.dataset.get_instance_quick', id, {
+        ds = await self.middleware.call('pool.dataset.get_instance_quick', id_, {
             'encryption': True,
         })
 
         if not ds['encrypted']:
-            raise CallError(f'{id} is not encrypted')
+            raise CallError(f'{id_} is not encrypted')
         elif ds['locked']:
-            raise CallError(f'Dataset {id} is already locked')
+            raise CallError(f'Dataset {id_} is already locked')
         elif ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
             raise CallError('Only datasets which are encrypted with passphrase can be locked')
-        elif id != ds['encryption_root']:
+        elif id_ != ds['encryption_root']:
             raise CallError(f'Please lock {ds["encryption_root"]}. Only encryption roots can be locked.')
 
         mountpoint = dataset_mountpoint(ds)
@@ -57,13 +57,13 @@ class PoolDatasetService(Service):
                 await delegate.stop(await delegate.query(mountpoint, True))
 
         try:
-            await self.middleware.call('cache.put', 'about_to_lock_dataset', id)
+            await self.middleware.call('cache.put', 'about_to_lock_dataset', id_)
 
             coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
             await asyncio.gather(*coroutines)
 
             await self.middleware.call(
-                'zfs.dataset.unload_key', id, {
+                'zfs.dataset.unload_key', id_, {
                     'umount': True, 'force_umount': options['force_umount'], 'recursive': True
                 }
             )
@@ -73,7 +73,7 @@ class PoolDatasetService(Service):
         if ds['mountpoint']:
             await self.middleware.call('filesystem.set_immutable', True, ds['mountpoint'])
 
-        await self.middleware.call_hook('dataset.post_lock', id)
+        await self.middleware.call_hook('dataset.post_lock', id_)
 
         return True
 
@@ -91,7 +91,7 @@ class PoolDatasetService(Service):
                         'dataset',
                         Bool('force', required=True, default=False),
                         Str('name', required=True, empty=False),
-                        Str('key', validators=[Range(min=64, max=64)], private=True),
+                        Str('key', validators=[Range(min_=64, max_=64)], private=True),
                         Str('passphrase', empty=False, private=True),
                         Bool('recursive', default=False),
                     )
@@ -109,7 +109,7 @@ class PoolDatasetService(Service):
         ),
     ))
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
-    def unlock(self, job, id, options):
+    def unlock(self, job, id_, options):
         """
         Unlock dataset `id` (and its children if `unlock_options.recursive` is `true`).
 
@@ -141,7 +141,7 @@ class PoolDatasetService(Service):
         directory/file path where the dataset should be mounted resulting in successful unlock of the dataset.
         """
         verrors = ValidationErrors()
-        dataset = self.middleware.call_sync('pool.dataset.get_instance', id)
+        dataset = self.middleware.call_sync('pool.dataset.get_instance', id_)
         keys_supplied = {}
 
         if options['key_file']:
@@ -165,27 +165,27 @@ class PoolDatasetService(Service):
 
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
-        if '/' in id or not options['recursive']:
+        if '/' in id_ or not options['recursive']:
             if not dataset['locked']:
-                verrors.add('id', f'{id} dataset is not locked')
-            elif dataset['encryption_root'] != id:
+                verrors.add('id', f'{id_} dataset is not locked')
+            elif dataset['encryption_root'] != id_:
                 verrors.add('id', 'Only encryption roots can be unlocked')
             else:
                 if not bool(
-                    self.middleware.call_sync('pool.dataset.query_encrypted_roots_keys', [['name', '=', id]])
-                ) and id not in keys_supplied:
-                    verrors.add('unlock_options.datasets', f'Please specify key for {id}')
+                    self.middleware.call_sync('pool.dataset.query_encrypted_roots_keys', [['name', '=', id_]])
+                ) and id_ not in keys_supplied:
+                    verrors.add('unlock_options.datasets', f'Please specify key for {id_}')
 
         verrors.check()
 
         locked_datasets = []
         datasets = self.middleware.call_sync(
-            'pool.dataset.query_encrypted_datasets', id.split('/', 1)[0], {'key_loaded': False}
+            'pool.dataset.query_encrypted_datasets', id_.split('/', 1)[0], {'key_loaded': False}
         )
         self._assign_supplied_recursive_keys(options['datasets'], keys_supplied, list(datasets.keys()))
         for name, ds in datasets.items():
             ds_key = keys_supplied.get(name) or ds['encryption_key']
-            if ds['locked'] and id.startswith(f'{name}/'):
+            if ds['locked'] and id_.startswith(f'{name}/'):
                 # This ensures that `id` has locked parents and they should be unlocked first
                 locked_datasets.append(name)
             elif ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and ds_key:
@@ -198,14 +198,14 @@ class PoolDatasetService(Service):
             datasets[name] = {'key': ds_key, **ds}
 
         if locked_datasets:
-            raise CallError(f'{id} has locked parents {",".join(locked_datasets)} which must be unlocked first')
+            raise CallError(f'{id_} has locked parents {",".join(locked_datasets)} which must be unlocked first')
 
         failed = defaultdict(lambda: dict({'error': None, 'skipped': []}))
         unlocked = []
         names = sorted(
             filter(
-                lambda n: n and f'{n}/'.startswith(f'{id}/') and datasets[n]['locked'],
-                (datasets if options['recursive'] else [id])
+                lambda n: n and f'{n}/'.startswith(f'{id_}/') and datasets[n]['locked'],
+                (datasets if options['recursive'] else [id_])
             ),
             key=lambda v: v.count('/')
         )
@@ -308,7 +308,7 @@ class PoolDatasetService(Service):
                 )
 
             job.set_progress(93, 'Restarting services')
-            self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id, services_to_restart)
+            self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id_, services_to_restart)
 
             job.set_progress(94, 'Running post-unlock tasks')
             self.middleware.call_hook_sync(

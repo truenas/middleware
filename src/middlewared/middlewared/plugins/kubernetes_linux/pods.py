@@ -50,8 +50,8 @@ class KubernetesPodLogsFollowTailEventSource(EventSource):
     is applied first and the required number of lines are retrieved and then `limit_bytes` is applied.
     """
     ACCEPTS = Dict(
-        Int('tail_lines', default=500, validators=[Range(min=1)]),
-        Int('limit_bytes', default=None, null=True, validators=[Range(min=1)]),
+        Int('tail_lines', default=500, validators=[Range(min_=1)]),
+        Int('limit_bytes', default=None, null=True, validators=[Range(min_=1)]),
         Str('release_name', required=True),
         Str('pod_name', required=True),
         Str('container_name', required=True),

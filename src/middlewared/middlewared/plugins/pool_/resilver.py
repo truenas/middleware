@@ -31,7 +31,7 @@ class PoolResilverService(ConfigService):
         Time('begin', required=True),
         Time('end', required=True),
         Bool('enabled', required=True),
-        List('weekday', required=True, items=[Int('weekday', validators=[Range(min=1, max=7)])])
+        List('weekday', required=True, items=[Int('weekday', validators=[Range(min_=1, max_=7)])])
     )
 
     @private

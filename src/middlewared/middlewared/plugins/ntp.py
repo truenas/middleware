@@ -151,11 +151,11 @@ class NTPServerService(CRUDService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update NTP server of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
@@ -163,18 +163,18 @@ class NTPServerService(CRUDService):
         await self.clean(new, 'ntpserver_update')
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.restart', 'ntpd')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete NTP server of `id`.
         """
-        response = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         await self.middleware.call('service.restart', 'ntpd')
 

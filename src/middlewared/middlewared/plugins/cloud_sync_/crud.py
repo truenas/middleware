@@ -14,11 +14,11 @@ class CloudSyncService(Service):
             Str("path", required=True),
         )
     )
-    async def restore(self, id, data):
+    async def restore(self, id_, data):
         """
         Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).
         """
-        cloud_sync = await self.middleware.call("cloudsync.query", [["id", "=", id]], {"get": True})
+        cloud_sync = await self.middleware.call("cloudsync.query", [["id", "=", id_]], {"get": True})
         credentials = cloud_sync["credentials"]
 
         if cloud_sync["direction"] == "PUSH":

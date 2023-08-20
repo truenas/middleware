@@ -48,11 +48,11 @@ class CoreService(Service):
         cli_namespace = 'system.core'
 
     @accepts(Str('id'), Int('cols'), Int('rows'))
-    async def resize_shell(self, id, cols, rows):
+    async def resize_shell(self, id_, cols, rows):
         """
         Resize terminal session (/websocket/shell) to cols x rows
         """
-        shell = middlewared.main.ShellApplication.shells.get(id)
+        shell = middlewared.main.ShellApplication.shells.get(id_)
         if shell is None:
             raise CallError('Shell does not exist', errno.ENOENT)
 
@@ -189,15 +189,15 @@ class CoreService(Service):
 
     @accepts(Int('id'))
     @job()
-    async def job_wait(self, job, id):
-        return await job.wrap(self.middleware.jobs[id])
+    async def job_wait(self, job, id_):
+        return await job.wrap(self.middleware.jobs[id_])
 
     @accepts(Int('id'), Dict(
         'job-update',
         Dict('progress', additional_attrs=True),
     ))
-    def job_update(self, id, data):
-        job = self.middleware.jobs[id]
+    def job_update(self, id_, data):
+        job = self.middleware.jobs[id_]
         progress = data.get('progress')
         if progress:
             job.set_progress(
@@ -226,8 +226,8 @@ class CoreService(Service):
         self.middleware._setup_periodic_tasks()
 
     @accepts(Int('id'))
-    def job_abort(self, id):
-        job = self.middleware.jobs[id]
+    def job_abort(self, id_):
+        job = self.middleware.jobs[id_]
         return job.abort()
 
     def _should_list_service(self, name, service, target):
@@ -522,7 +522,7 @@ class CoreService(Service):
             'options',
             Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
             Str('hostname', required=True),
-            Int('timeout', validators=[Range(min=1, max=60)], default=4),
+            Int('timeout', validators=[Range(min_=1, max_=60)], default=4),
         ),
     )
     def ping_remote(self, options):

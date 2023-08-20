@@ -173,19 +173,19 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         )
 
     @pass_app(rest=True)
-    async def update(self, app, id, data):
+    async def update(self, app, id_, data):
         return await self.middleware._call(
             f'{self._config.namespace}.update', self, await self._get_crud_wrapper_func(
-                self.do_update, 'update', 'CHANGED', id,
-            ), [id, data], app=app,
+                self.do_update, 'update', 'CHANGED', id_,
+            ), [id_, data], app=app,
         )
 
     @pass_app(rest=True)
-    async def delete(self, app, id, *args):
+    async def delete(self, app, id_, *args):
         return await self.middleware._call(
             f'{self._config.namespace}.delete', self, await self._get_crud_wrapper_func(
-                self.do_delete, 'delete', 'REMOVED', id,
-            ), [id] + list(args), app=app,
+                self.do_delete, 'delete', 'REMOVED', id_,
+            ), [id_] + list(args), app=app,
         )
 
     async def _get_crud_wrapper_func(self, func, action, event_type, oid=None):
@@ -218,7 +218,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             register=True,
         ),
     )
-    async def get_instance(self, id, options):
+    async def get_instance(self, id_, options):
         """
         Returns instance matching `id`. If `id` is not found, Validation error is raised.
 
@@ -226,32 +226,32 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
         """
         instance = await self.middleware.call(
             f'{self._config.namespace}.query',
-            [[self._config.datastore_primary_key, '=', id]],
+            [[self._config.datastore_primary_key, '=', id_]],
             options
         )
         if not instance:
-            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
+            raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
         return instance[0]
 
     @private
     @accepts(Any('id'), Ref('query-options-get_instance'))
-    def get_instance__sync(self, id, options):
+    def get_instance__sync(self, id_, options):
         """
         Synchronous implementation of `get_instance`.
         """
         instance = self.middleware.call_sync(
             f'{self._config.namespace}.query',
-            [[self._config.datastore_primary_key, '=', id]],
+            [[self._config.datastore_primary_key, '=', id_]],
             options,
         )
         if not instance:
-            raise InstanceNotFound(f'{self._config.verbose_name} {id} does not exist')
+            raise InstanceNotFound(f'{self._config.verbose_name} {id_} does not exist')
         return instance[0]
 
-    async def _ensure_unique(self, verrors, schema_name, field_name, value, id=None):
+    async def _ensure_unique(self, verrors, schema_name, field_name, value, id_=None):
         f = [(field_name, '=', value)]
-        if id is not None:
-            f.append(('id', '!=', id))
+        if id_ is not None:
+            f.append(('id', '!=', id_))
         instance = await self.middleware.call(f'{self._config.namespace}.query', f)
         if instance:
             verrors.add(
@@ -260,11 +260,11 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             )
 
     @private
-    async def check_dependencies(self, id, ignored=None):
+    async def check_dependencies(self, id_, ignored=None):
         """
         Raises EBUSY CallError if some datastores/services (except for `ignored`) reference object specified by id.
         """
-        dependencies = await self.get_dependencies(id, ignored)
+        dependencies = await self.get_dependencies(id_, ignored)
         if dependencies:
             dep_err = 'This object is being used by following service(s):\n'
             for index, dependency in enumerate(dependencies.values()):
@@ -274,7 +274,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             raise CallError(dep_err, errno.EBUSY, {'dependencies': list(dependencies.values())})
 
     @private
-    async def get_dependencies(self, id, ignored=None):
+    async def get_dependencies(self, id_, ignored=None):
         ignored = ignored or set()
 
         services = {
@@ -299,7 +299,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             else:
                 service = None
 
-            objects = await self.middleware.call('datastore.query', datastore, [(fk, '=', id)])
+            objects = await self.middleware.call('datastore.query', datastore, [(fk, '=', id_)])
             if objects:
                 data = {
                     'objects': objects,
@@ -319,7 +319,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
                     if service['type'] == 'crud':
                         data = {
                             'objects': await self.middleware.call(
-                                f'{service["name"]}.query', [('id', 'in', [object['id'] for object in objects])],
+                                f'{service["name"]}.query', [('id', 'in', [object_['id'] for object_ in objects])],
                             ),
                         }
 

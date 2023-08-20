@@ -33,15 +33,15 @@ def upgrade():
             ("system_certificateauthority", ["cert_privatekey"]),
         ]:
             for row in conn.execute(f"SELECT * FROM {table}").fetchall():
-                set = []
+                set_ = []
                 params = []
                 for k in fields:
                     if row[k] is not None:
-                        set.append(f"{k} = ?")
+                        set_.append(f"{k} = ?")
                         params.append(encrypt(row[k]))
 
-                if set:
-                    conn.execute(f"UPDATE {table} SET {', '.join(set)} WHERE id = {row['id']}", params)
+                if set_:
+                    conn.execute(f"UPDATE {table} SET {', '.join(set_)} WHERE id = {row['id']}", params)
 
     conn.execute("DELETE FROM system_keyvalue WHERE key = 'has_0039_auto_20200429_0631'")
 

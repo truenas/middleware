@@ -102,9 +102,9 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             if len(rows) != 1:
                 raise RuntimeError(f'{len(rows)} found, expecting one')
 
-            id = rows[0][self._get_pk(table).name]
+            id_ = rows[0][self._get_pk(table).name]
         else:
-            id = id_or_filters
+            id_ = id_or_filters
 
         for column in table.c:
             if column.foreign_keys:
@@ -116,7 +116,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if update:
             result = await self.middleware.call(
                 'datastore.execute_write',
-                table.update().values(**update).where(self._where_clause(table, id, {'prefix': options['prefix']})),
+                table.update().values(**update).where(self._where_clause(table, id_, {'prefix': options['prefix']})),
                 {
                     'ha_sync': options['ha_sync'],
                 },
@@ -125,11 +125,11 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 raise RuntimeError('No rows were updated')
 
             if options['send_events']:
-                await self.middleware.call('datastore.send_update_events', name, id)
+                await self.middleware.call('datastore.send_update_events', name, id_)
 
-        await self._handle_relationships(id, relationships)
+        await self._handle_relationships(id_, relationships)
 
-        return id
+        return id_
 
     def _extract_relationships(self, table, prefix, data):
         relationships = self._get_relationships(table)

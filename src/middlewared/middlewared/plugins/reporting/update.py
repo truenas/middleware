@@ -31,8 +31,8 @@ class ReportingService(ConfigService):
         'reporting_entry',
         Str('graphite', required=True),
         Bool('graphite_separateinstances', required=True),
-        Int('graph_age', validators=[Range(min=1, max=60)], required=True),
-        Int('graph_points', validators=[Range(min=1, max=4096)], required=True),
+        Int('graph_age', validators=[Range(min_=1, max_=60)], required=True),
+        Int('graph_points', validators=[Range(min_=1, max_=4096)], required=True),
         Int('id', required=True),
     )
 

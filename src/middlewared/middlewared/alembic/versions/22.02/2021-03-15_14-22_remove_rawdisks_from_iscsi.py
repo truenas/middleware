@@ -24,11 +24,11 @@ def upgrade():
     # query db for entries that point to raw disks
     for disk_id, in conn.execute(f'SELECT id FROM {main_table} WHERE {main_col} = "Disk"').fetchall():
         # delete the target to extent associations first
-        for id, tar_id in conn.execute(
+        for id_, tar_id in conn.execute(
             f'SELECT id, iscsi_target_id FROM {tartoext_table} WHERE iscsi_extent_id = {disk_id}'
         ).fetchall():
             tar_ids.add(tar_id)
-            conn.execute(f'DELETE FROM {tartoext_table} WHERE id = {id}')
+            conn.execute(f'DELETE FROM {tartoext_table} WHERE id = {id_}')
 
         # delete extent next
         conn.execute(f'DELETE FROM {main_table} WHERE id = {disk_id}')

@@ -91,13 +91,13 @@ class CloudBackupService(Service):
     @item_method
     @accepts(Int("id"))
     @job()
-    def init(self, job_id, id):
+    def init(self, job_id, id_):
         """
         Initializes the repository for the cloud backup job `id`.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id)
+        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
 
         remote = REMOTES[cloud_backup["credentials"]["provider"]]
 
@@ -125,14 +125,14 @@ class CloudBackupService(Service):
         )
     )
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
-    async def sync(self, job, id, options):
+    async def sync(self, job, id_, options):
         """
         Run the cloud backup job `id`.
         """
 
-        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id)
+        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
         if cloud_backup["locked"]:
-            await self.middleware.call("cloud_backup.generate_locked_alert", id)
+            await self.middleware.call("cloud_backup.generate_locked_alert", id_)
             raise CallError("Dataset is locked")
 
         await self._sync(cloud_backup, options, job)
@@ -154,11 +154,11 @@ class CloudBackupService(Service):
 
     @item_method
     @accepts(Int("id"))
-    async def abort(self, id):
+    async def abort(self, id_):
         """
         Aborts cloud backup task.
         """
-        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id)
+        cloud_backup = await self.middleware.call("cloud_backup.get_instance", id_)
 
         if cloud_backup["job"] is None:
             return False

@@ -22,8 +22,8 @@ class SchemaMixin:
         if v is None:
             return None
 
-        maj, min = v.split(".")
-        return {"major": int(maj), "minor": int(min)}
+        major, minor = v.split(".")
+        return {"major": int(major), "minor": int(minor)}
 
     def _version_check(self, tdb_handle, new):
         self.assert_tdb_type(tdb_handle.options['tdb_type'], ['CRUD', 'CONFIG'])
@@ -138,29 +138,29 @@ class SchemaMixin:
         self._version_check(tdb_handle, vers)
         state = self._tdb_entries(tdb_handle)
 
-        id = state["hwm"] + 1
-        tdb_key = f'{tdb_handle.name}_{id}'
+        id_ = state["hwm"] + 1
+        tdb_key = f'{tdb_handle.name}_{id_}'
 
         ops = [
             {"action": "SET", "key": tdb_key, "val": data},
-            {"action": "SET", "key": "hwm", "val": id}
+            {"action": "SET", "key": "hwm", "val": id_}
         ]
         tdb_handle.batch_op(ops)
         tdb_handle.last_read = 0
 
-        return id
+        return id_
 
-    def _update(self, tdb_handle, id, payload):
+    def _update(self, tdb_handle, id_, payload):
         self.assert_tdb_type(tdb_handle.options['tdb_type'], ['CRUD'])
 
-        tdb_key = f'{tdb_handle.name}_{id}'
+        tdb_key = f'{tdb_handle.name}_{id_}'
         vers = payload['version']
         new = payload['data']
 
         self._version_check(tdb_handle, vers)
         state = self._tdb_entries(tdb_handle)
 
-        old = state['by_id'].get(id)
+        old = state['by_id'].get(id_)
         if not old:
             raise MatchNotFound()
 
@@ -171,13 +171,13 @@ class SchemaMixin:
         tdb_handle.last_read = 0
         return old_id
 
-    def _delete(self, tdb_handle, id):
+    def _delete(self, tdb_handle, id_):
         self.assert_tdb_type(tdb_handle.options['tdb_type'], ['CRUD'])
 
-        tdb_key = f'{tdb_handle.name}_{id}'
+        tdb_key = f'{tdb_handle.name}_{id_}'
 
         state = self._tdb_entries(tdb_handle)
-        if not state['by_id'].get(id):
+        if not state['by_id'].get(id_):
             raise MatchNotFound()
 
         tdb_handle.delete(tdb_key)

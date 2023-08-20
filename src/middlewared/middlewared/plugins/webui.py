@@ -48,31 +48,31 @@ class ImageService(CRUDService):
         self.__ensure_dir()
 
         try:
-            id = await self.middleware.call('datastore.insert',
+            id_ = await self.middleware.call('datastore.insert',
                                             'system.filesystem',
                                             {'identifier': identifier.lower()})
         except IntegrityError as e:
             # Likely a duplicate entry
             raise CallError(e)
 
-        final_location = f"/var/db/system/webui/images/{id}.png"
+        final_location = f"/var/db/system/webui/images/{id_}.png"
         put_job = await self.middleware.call('filesystem.put', final_location,
-                                             {"mode": 0o755}, pipes=Pipes(input=job.pipes.input))
+                                             {"mode": 0o755}, pipes=Pipes(input_=job.pipes.input))
         await put_job.wait()
 
-        return id
+        return id_
 
     @accepts(
         Int("id")
     )
-    def do_delete(self, id):
+    def do_delete(self, id_):
         """
         Remove the database entry, and then the item if it exists
         """
         self.__ensure_dir()
-        item = f"/var/db/system/webui/images/{id}.png"
+        item = f"/var/db/system/webui/images/{id_}.png"
 
-        self.middleware.call_sync('datastore.delete', 'system.filesystem', id)
+        self.middleware.call_sync('datastore.delete', 'system.filesystem', id_)
 
         if os.path.exists(item):
             os.remove(item)

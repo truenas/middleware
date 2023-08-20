@@ -76,7 +76,7 @@ class iSCSITargetExtentService(SharingService):
         Int('filesize', default=0),
         Int('blocksize', enum=[512, 1024, 2048, 4096], default=512),
         Bool('pblocksize'),
-        Int('avail_threshold', validators=[Range(min=1, max=99)], null=True),
+        Int('avail_threshold', validators=[Range(min_=1, max_=99)], null=True),
         Str('comment'),
         Bool('insecure_tpc', default=True),
         Bool('xen'),
@@ -124,12 +124,12 @@ class iSCSITargetExtentService(SharingService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update iSCSI Extent of `id`.
         """
         verrors = ValidationErrors()
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
@@ -147,28 +147,28 @@ class iSCSITargetExtentService(SharingService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id'),
         Bool('remove', default=False),
         Bool('force', default=False),
     )
-    async def do_delete(self, id, remove, force):
+    async def do_delete(self, id_, remove, force):
         """
         Delete iSCSI Extent of `id`.
 
         If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
         """
-        data = await self.get_instance(id)
-        target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id]])
+        data = await self.get_instance(id_)
+        target_to_extents = await self.middleware.call('iscsi.targetextent.query', [['extent', '=', id_]])
         active_sessions = await self.middleware.call(
             'iscsi.target.active_sessions_for_targets', [t['target'] for t in target_to_extents]
         )
@@ -191,7 +191,7 @@ class iSCSITargetExtentService(SharingService):
 
         try:
             return await self.middleware.call(
-                'datastore.delete', self._config.datastore, id
+                'datastore.delete', self._config.datastore, id_
             )
         finally:
             await self._service_change('iscsitarget', 'reload')

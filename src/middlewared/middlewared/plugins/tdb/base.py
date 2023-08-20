@@ -222,9 +222,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     ))
     def create(self, data):
         with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            id = self._create(tdb_handle, data['payload'])
+            id_ = self._create(tdb_handle, data['payload'])
 
-        return id
+        return id_
 
     @accepts(Dict(
         'tdb-crud-query',
@@ -248,9 +248,9 @@ class TDBService(Service, TDBMixin, SchemaMixin):
     ))
     def update(self, data):
         with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            id = self._update(tdb_handle, data['id'], data['payload'])
+            id_ = self._update(tdb_handle, data['id'], data['payload'])
 
-        return id
+        return id_
 
     @accepts(Dict(
         'tdb-crud-delete',

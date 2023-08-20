@@ -18,11 +18,11 @@ class RestTestService(Service):
     @job(pipes=["input"], check_pipes=False)
     def test_input_unchecked_pipe(self, job, arg):
         if job.pipes.input:
-            input = job.pipes.input.r.read().decode("utf-8")
+            input_ = job.pipes.input.r.read().decode("utf-8")
         else:
-            input = "NONE"
+            input_ = "NONE"
 
-        return json.dumps(arg) + input
+        return json.dumps(arg) + input_
 
     @accepts(Any("arg"))
     @job(pipes=["output"])

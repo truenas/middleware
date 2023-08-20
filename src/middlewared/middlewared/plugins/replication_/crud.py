@@ -16,11 +16,11 @@ class ReplicationService(Service):
         roles=["REPLICATION_TASK_WRITE"],
     )
     @pass_app(require=True, rest=True)
-    async def restore(self, app, id, data):
+    async def restore(self, app, id_, data):
         """
         Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).
         """
-        replication_task = await self.middleware.call("replication.query", [["id", "=", id]], {"get": True})
+        replication_task = await self.middleware.call("replication.query", [["id", "=", id_]], {"get": True})
 
         if replication_task["direction"] == "PUSH":
             data["direction"] = "PULL"

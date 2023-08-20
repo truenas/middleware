@@ -265,16 +265,16 @@ class FilesystemService(Service):
             raise CallError('Ix-applications is a system managed dataset and its contents cannot be listed')
 
         stat_opts = {"file_only": False, "dir_only": False}
-        for filter in filters:
-            if filter[0] not in ['type']:
+        for filter_ in filters:
+            if filter_[0] not in ['type']:
                 continue
 
-            if filter[1] != '=':
+            if filter_[1] != '=':
                 continue
 
-            if filter[2] == 'DIRECTORY':
+            if filter_[2] == 'DIRECTORY':
                 stat_opts["dir_only"] = True
-            elif filter[2] == 'FILE':
+            elif filter_[2] == 'FILE':
                 stat_opts["file_only"] = True
             else:
                 continue

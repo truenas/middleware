@@ -73,8 +73,8 @@ class LDAPClient(Service):
         ),
         Dict(
             'options',
-            Int('timeout', default=30, validators=[Range(min=1, max=45)]),
-            Int('dns_timeout', default=5, validators=[Range(min=1, max=45)]),
+            Int('timeout', default=30, validators=[Range(min_=1, max_=45)]),
+            Int('dns_timeout', default=5, validators=[Range(min_=1, max_=45)]),
         ),
         register=True,
     ))

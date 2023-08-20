@@ -47,7 +47,7 @@ class InitShutdownScriptService(CRUDService):
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         Int('timeout', default=10),
-        Str('comment', default='', validators=[Range(max=255)]),
+        Str('comment', default='', validators=[Range(max_=255)]),
         register=True,
     ))
     async def do_create(self, data):
@@ -81,11 +81,11 @@ class InitShutdownScriptService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update initshutdown script task of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -96,21 +96,21 @@ class InitShutdownScriptService(CRUDService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
 
         return await self.get_instance(new['id'])
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete init/shutdown task of `id`.
         """
         return await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
     @private

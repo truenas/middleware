@@ -69,8 +69,8 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'options',
-            Int('limit_bytes', default=None, null=True, validators=[Range(min=1)]),
-            Int('tail_lines', default=500, validators=[Range(min=1)], null=True),
+            Int('limit_bytes', default=None, null=True, validators=[Range(min_=1)]),
+            Int('tail_lines', default=500, validators=[Range(min_=1)], null=True),
             Str('pod_name', required=True, empty=False),
             Str('container_name', required=True, empty=False),
         )

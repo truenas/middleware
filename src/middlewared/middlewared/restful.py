@@ -157,7 +157,7 @@ class RESTfulAPI(object):
                     kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
                 subresource = Resource(
-                    self, self.middleware, 'id/{id}', service['config'], openapi,
+                    self, self.middleware, 'id/{id_}', service['config'], openapi,
                     parent=service_resource, **kwargs,
                 )
 
@@ -284,7 +284,7 @@ class OpenAPIResource(object):
                         'required': False,
                         'schema': {'type': 'string'},
                     },
-                ] if '{id}' not in path else []
+                ] if '{id_}' not in path else []
                 desc = f'{desc}\n\n' if desc else ''
                 opobject['description'] = desc + '`query-options.extra` can be specified as query parameters with ' \
                                                  'prefixing them with `extra.` prefix. For example, ' \
@@ -295,10 +295,10 @@ class OpenAPIResource(object):
             ):
                 opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
-            # For now we only accept `id` as an url parameters
-            if '{id}' in path:
+            # For now we only accept `id_` as an url parameters
+            if '{id_}' in path:
                 opobject['parameters'].append({
-                    'name': 'id',
+                    'name': 'id_',
                     'in': 'path',
                     'required': True,
                     'schema': {'type': service_config['datastore_primary_key_type']},
@@ -698,16 +698,16 @@ class Resource(object):
                     return resp
 
         if upload_pipe and download_pipe:
-            method_kwargs['pipes'] = Pipes(input=upload_pipe, output=download_pipe)
+            method_kwargs['pipes'] = Pipes(input_=upload_pipe, output=download_pipe)
         elif upload_pipe:
-            method_kwargs['pipes'] = Pipes(input=upload_pipe)
+            method_kwargs['pipes'] = Pipes(input_=upload_pipe)
         elif download_pipe:
             method_kwargs['pipes'] = Pipes(output=download_pipe)
 
         method_args = []
         if http_method == 'get' and method['filterable']:
-            if self.parent and 'id' in kwargs:
-                primary_key = kwargs['id']
+            if self.parent and 'id_' in kwargs:
+                primary_key = kwargs['id_']
                 if primary_key.isdigit():
                     primary_key = int(primary_key)
                 extra = {}
@@ -777,7 +777,7 @@ class Resource(object):
         must be the item id (from url param)
         """
         if method.get('item_method') is True:
-            method_args.insert(0, kwargs['id'])
+            method_args.insert(0, kwargs['id_'])
 
         try:
             result = await self.middleware.call(methodname, *method_args, **method_kwargs)

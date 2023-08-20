@@ -360,8 +360,8 @@ class GlusterFilesystemService(Service):
         """
         with glfs.get_volume_handle(data['volume_name'], data['gluster-volume-options']) as vol:
             fd = self.get_object_handle(vol, data['uuid']).open(os.O_RDONLY)
-            bytes = fd.pread(data['options']['offset'], data['options']['cnt'])
-            return b64encode(bytes).decode()
+            bytes_ = fd.pread(data['options']['offset'], data['options']['cnt'])
+            return b64encode(bytes_).decode()
 
     @accepts(Dict(
         'glfs-pwrite',

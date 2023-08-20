@@ -237,18 +237,18 @@ class ISCSIPortalService(CRUDService):
         return await self.get_instance(pk)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete iSCSI Portal `id`.
         """
-        await self.get_instance(id)
+        await self.get_instance(id_)
         await self.middleware.call(
-            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target_portalgroup', '=', id]]
+            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target_portalgroup', '=', id_]]
         )
         await self.middleware.call(
-            'datastore.delete', 'services.iscsitargetportalip', [['iscsi_target_portalip_portal', '=', id]]
+            'datastore.delete', 'services.iscsitargetportalip', [['iscsi_target_portalip_portal', '=', id_]]
         )
-        result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        result = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         for i, portal in enumerate(await self.middleware.call('iscsi.portal.query', [], {'order_by': ['tag']})):
             await self.middleware.call(

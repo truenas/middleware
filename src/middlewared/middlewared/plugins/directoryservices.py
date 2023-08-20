@@ -310,7 +310,7 @@ class DirectoryServices(Service):
 
         netbios_name = self.middleware.call_sync('smb.config')['netbiosname']
         db_secrets = self.get_db_secrets()
-        id = db_secrets.pop('id')
+        id_ = db_secrets.pop('id')
 
         with DirectorySecrets(logger=self.logger, ha_mode=ha_mode) as s:
             secrets = s.dump()
@@ -321,7 +321,7 @@ class DirectoryServices(Service):
 
         db_secrets.update({f"{netbios_name.upper()}$": secrets})
         self.middleware.call_sync('datastore.update',
-                                  'services.cifs', id,
+                                  'services.cifs', id_,
                                   {'secrets': json.dumps(db_secrets)},
                                   {'prefix': 'cifs_srv_'})
 

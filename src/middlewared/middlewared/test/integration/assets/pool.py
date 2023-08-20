@@ -74,11 +74,11 @@ def dataset(name, data=None, pool=pool):
 def snapshot(dataset, name, **kwargs):
     call("zfs.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
 
-    id = f"{dataset}@{name}"
+    id_ = f"{dataset}@{name}"
     try:
-        yield id
+        yield id_
     finally:
         try:
-            call("zfs.snapshot.delete", id, {"recursive": True})
+            call("zfs.snapshot.delete", id_, {"recursive": True})
         except InstanceNotFound:
             pass

@@ -72,12 +72,12 @@ class iSCSITargetToExtentService(CRUDService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update Associated Target of `id`.
         """
         verrors = ValidationErrors()
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
@@ -87,19 +87,19 @@ class iSCSITargetToExtentService(CRUDService):
         verrors.check()
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'), Bool('force', default=False))
-    async def do_delete(self, id, force):
+    async def do_delete(self, id_, force):
         """
         Delete Associated Target of `id`.
         """
-        associated_target = await self.get_instance(id)
+        associated_target = await self.get_instance(id_)
         active_sessions = await self.middleware.call(
             'iscsi.target.active_sessions_for_targets', [associated_target['target']]
         )
@@ -110,7 +110,7 @@ class iSCSITargetToExtentService(CRUDService):
                 raise CallError(f'Associated target {active_sessions[0]} is in use.')
 
         result = await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
+            'datastore.delete', self._config.datastore, id_
         )
 
         await self._service_change('iscsitarget', 'reload')

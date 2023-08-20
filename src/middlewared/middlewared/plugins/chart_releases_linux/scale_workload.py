@@ -29,7 +29,7 @@ class ChartReleaseService(Service):
         Str('release_name'),
         Dict(
             'scale_options',
-            Int('replica_count', required=True, validators=[Range(min=0)]),
+            Int('replica_count', required=True, validators=[Range(min_=0)]),
         )
     )
     @returns(Dict(

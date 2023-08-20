@@ -159,11 +159,11 @@ class CronJobService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update cronjob of `id`.
         """
-        task_data = await self.query(filters=[('id', '=', id)], options={'get': True})
+        task_data = await self.query(filters=[('id', '=', id_)], options={'get': True})
         original_data = task_data.copy()
         task_data.update(data)
         verrors, task_data = await self.validate_data(task_data, 'cron_job_update')
@@ -178,23 +178,23 @@ class CronJobService(CRUDService):
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
-                id,
+                id_,
                 task_data,
                 {'prefix': self._config.datastore_prefix}
             )
 
             await self.middleware.call('service.restart', 'cron')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete cronjob of `id`.
         """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         await self.middleware.call('service.restart', 'cron')
@@ -207,7 +207,7 @@ class CronJobService(CRUDService):
     )
     @returns()
     @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
-    def run(self, job, id, skip_disabled):
+    def run(self, job, id_, skip_disabled):
         """
         Job to run cronjob task of `id`.
         """
@@ -215,7 +215,7 @@ class CronJobService(CRUDService):
             job.logs_fd.write(line)
             syslog.syslog(syslog.LOG_INFO, line.decode())
 
-        cron_task = self.middleware.call_sync('cronjob.get_instance', id)
+        cron_task = self.middleware.call_sync('cronjob.get_instance', id_)
         if skip_disabled and not cron_task['enabled']:
             raise CallError('Cron job is disabled', errno.EINVAL)
 

@@ -17,7 +17,7 @@ class ACLTempateModel(sa.Model):
     acltemplate_name = sa.Column(sa.String(120), unique=True)
     acltemplate_comment = sa.Column(sa.Text())
     acltemplate_acltype = sa.Column(sa.String(255))
-    acltemplate_acl = sa.Column(sa.JSON(type=list))
+    acltemplate_acl = sa.Column(sa.JSON(list))
     acltemplate_builtin = sa.Column(sa.Boolean())
 
 
@@ -96,11 +96,11 @@ class ACLTemplateService(CRUDService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         update filesystem ACL template with `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
         verrors = ValidationErrors()
@@ -125,21 +125,21 @@ class ACLTemplateService(CRUDService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
-        entry = await self.get_instance(id)
+    async def do_delete(self, id_):
+        entry = await self.get_instance(id_)
         if entry['builtin']:
             raise CallError("Deletion of builtin templates is not permitted",
                             errno.EPERM)
 
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
+            'datastore.delete', self._config.datastore, id_
         )
 
     @private

@@ -50,13 +50,13 @@ class VMService(Service):
 
     @accepts(Int('id'))
     @returns(List(items=[Ref('vm_device_entry')]))
-    async def get_display_devices(self, id):
+    async def get_display_devices(self, id_):
         """
         Get the display devices from a given guest. If a display device has password configured,
         `attributes.password_configured` will be set to `true`.
         """
         devices = []
-        for device in await self.middleware.call('vm.device.query', [['vm', '=', id], ['dtype', '=', 'DISPLAY']]):
+        for device in await self.middleware.call('vm.device.query', [['vm', '=', id_], ['dtype', '=', 'DISPLAY']]):
             device['attributes']['password_configured'] = bool(device['attributes'].get('password'))
             devices.append(device)
         return devices
@@ -76,7 +76,7 @@ class VMService(Service):
     )
     @returns(Dict('display_devices_uri', additional_attrs=True))
     @pass_app()
-    async def get_display_web_uri(self, app, id, host, options):
+    async def get_display_web_uri(self, app, id_, host, options):
         """
         Retrieve Display URI's for a given VM.
 
@@ -95,7 +95,7 @@ class VMService(Service):
             host = f'[{host}]'
 
         creds = {d['device_id']: d['password'] for d in options['devices_passwords']}
-        for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id)):
+        for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id_)):
             uri_data = {'error': None, 'uri': None}
             if device.data['attributes'].get('web'):
                 if device.password_configured():

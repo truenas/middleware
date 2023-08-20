@@ -9,8 +9,8 @@ class ACLType(enum.Enum):
     POSIX1E = (['default', 'tag', 'id', 'perms'], ["USER_OBJ", "GROUP_OBJ", "OTHER", "MASK"])
     DISABLED = ([], [])
 
-    def _validate_id(self, id, special):
-        if id is None or id < 0:
+    def _validate_id(self, id_, special):
+        if id_ is None or id_ < 0:
             return True if special else False
 
         return False if special else True
@@ -107,15 +107,15 @@ class ACLBase(ServicePartBase):
         Dict(
             'filesystem_acl',
             Str('path', required=True),
-            Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
-            Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
+            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
             OROperator(
                 List(
                     'nfs4_acl',
                     items=[Dict(
                         'nfs4_ace',
                         Str('tag', enum=['owner@', 'group@', 'everyone@', 'USER', 'GROUP']),
-                        Int('id', null=True, validators=[Range(min=-1, max=2147483647)]),
+                        Int('id', null=True, validators=[Range(min_=-1, max_=2147483647)]),
                         Str('type', enum=['ALLOW', 'DENY']),
                         Dict(
                             'perms',
@@ -154,7 +154,7 @@ class ACLBase(ServicePartBase):
                         'posix1e_ace',
                         Bool('default', default=False),
                         Str('tag', enum=['USER_OBJ', 'GROUP_OBJ', 'USER', 'GROUP', 'OTHER', 'MASK']),
-                        Int('id', default=-1, validators=[Range(min=-1, max=2147483647)]),
+                        Int('id', default=-1, validators=[Range(min_=-1, max_=2147483647)]),
                         Dict(
                             'perms',
                             Bool('READ', default=False),
@@ -274,8 +274,8 @@ class ACLBase(ServicePartBase):
         Dict(
             'filesystem_ownership',
             Str('path', required=True),
-            Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
-            Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
+            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
             Dict(
                 'options',
                 Bool('recursive', default=False),
@@ -305,8 +305,8 @@ class ACLBase(ServicePartBase):
             'filesystem_permission',
             Str('path', required=True),
             UnixPerm('mode', null=True),
-            Int('uid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
-            Int('gid', null=True, default=None, validators=[Range(min=-1, max=2147483647)]),
+            Int('uid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
+            Int('gid', null=True, default=None, validators=[Range(min_=-1, max_=2147483647)]),
             Dict(
                 'options',
                 Bool('stripacl', default=False),

@@ -111,7 +111,7 @@ class RsyncTaskModel(sa.Model):
     rsync_remotepath = sa.Column(sa.String(255))
     rsync_direction = sa.Column(sa.String(10), default='PUSH')
     rsync_delayupdates = sa.Column(sa.Boolean(), default=True)
-    rsync_job = sa.Column(sa.JSON(type=None))
+    rsync_job = sa.Column(sa.JSON(None))
 
 
 class RsyncTaskService(TaskPathService, TaskStateMixin):
@@ -433,16 +433,16 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         return await self.get_instance(data['id'])
 
     @accepts(
-        Int('id', validators=[Range(min=1)]),
+        Int('id', validators=[Range(min_=1)]),
         Patch('rsync_task_create', 'rsync_task_update', ('attr', {'update': True}))
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update Rsync Task of `id`.
         """
         data.setdefault('validate_rpath', True)
 
-        old = await self.query(filters=[('id', '=', id)], options={'get': True})
+        old = await self.query(filters=[('id', '=', id_)], options={'get': True})
         old.pop(self.locked_field)
         old.pop('job')
 
@@ -459,29 +459,29 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
         await self.middleware.call('service.restart', 'cron')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete Rsync Task of `id`.
         """
-        res = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        res = await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.middleware.call('service.restart', 'cron')
         return res
 
     @private
     @contextlib.contextmanager
-    def commandline(self, id):
+    def commandline(self, id_):
         """
         Helper method to generate the rsync command avoiding code duplication.
         """
-        rsync = self.middleware.call_sync('rsynctask.get_instance', id)
+        rsync = self.middleware.call_sync('rsynctask.get_instance', id_)
         path = shlex.quote(rsync['path'])
 
         with contextlib.ExitStack() as exit_stack:
@@ -570,7 +570,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
     @accepts(Int('id'))
     @returns()
     @job(lock=lambda args: args[-1], lock_queue_size=1, logs=True)
-    def run(self, job, id):
+    def run(self, job, id_):
         """
         Job to run rsync task of `id`.
 
@@ -578,12 +578,12 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         """
         self.middleware.call_sync('network.general.will_perform_activity', 'rsync')
 
-        rsync = self.middleware.call_sync('rsynctask.get_instance', id)
+        rsync = self.middleware.call_sync('rsynctask.get_instance', id_)
         if rsync['locked']:
-            self.middleware.call_sync('rsynctask.generate_locked_alert', id)
+            self.middleware.call_sync('rsynctask.generate_locked_alert', id_)
             return
 
-        with self.commandline(id) as commandline:
+        with self.commandline(id_) as commandline:
             cp = run_command_with_user_context(
                 commandline, rsync['user'], output=False, callback=lambda v: job.logs_fd.write(v),
             )

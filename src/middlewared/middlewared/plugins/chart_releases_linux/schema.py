@@ -104,7 +104,7 @@ def get_schema(variable_details, update, existing=NOT_PROVIDED):
 
     if schema_class in (Str, Int):
         range_vars = ['min', 'max'] if schema_class == Int else ['min_length', 'max_length']
-        range_args = {k: schema_details[v] for k, v in zip(['min', 'max'], range_vars) if schema_details.get(v)}
+        range_args = {f'{k}_': schema_details[v] for k, v in zip(['min', 'max'], range_vars) if schema_details.get(v)}
         if range_args:
             obj.validators.append(Range(**range_args))
 

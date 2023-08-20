@@ -19,27 +19,27 @@ class iSCSIHostService(Service, ServiceChangeMixin):
         namespace = "iscsi.host"
 
     @accepts(Int("id"))
-    async def get_targets(self, id):
+    async def get_targets(self, id_):
         """
         Returns targets associated with host `id`.
         """
         return await self.middleware.call("iscsi.target.query", [["id", "in", [
             row["target_id"]
             for row in await self.middleware.call("datastore.query", "services.iscsihosttarget", [
-                ["host_id", "=", id],
+                ["host_id", "=", id_],
             ], {"relationships": False})
         ]]])
 
     @accepts(Int("id"), List("ids", items=[Int("id")]))
-    async def set_targets(self, id, ids):
+    async def set_targets(self, id_, ids):
         """
         Associates targets `ids` with host `id`.
         """
-        await self.middleware.call("datastore.delete", "services.iscsihosttarget", [["host_id", "=", id]])
+        await self.middleware.call("datastore.delete", "services.iscsihosttarget", [["host_id", "=", id_]])
 
         for target_id in ids:
             await self.middleware.call("datastore.insert", "services.iscsihosttarget", {
-                "host_id": id,
+                "host_id": id_,
                 "target_id": target_id,
             })
 

@@ -524,7 +524,7 @@ class FileApplication(object):
 
         try:
             job = await self.middleware.call(data['method'], *(data.get('params') or []),
-                                             pipes=Pipes(input=self.middleware.pipe()))
+                                             pipes=Pipes(input_=self.middleware.pipe()))
             await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, job.pipes.input)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:

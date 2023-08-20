@@ -238,7 +238,7 @@ class FailoverService(Service):
             Bool('job', default=False),
             Bool('job_return', default=None, null=True),
             Any('callback', default=None, null=True),
-            Float('connect_timeout', default=2.0, validators=[Range(min=2.0, max=1800.0)]),
+            Float('connect_timeout', default=2.0, validators=[Range(min_=2.0, max_=1800.0)]),
             Bool('raise_connect_error', default=True),
         ),
     )

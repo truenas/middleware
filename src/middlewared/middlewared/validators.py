@@ -125,9 +125,9 @@ class Or:
 
 
 class Range:
-    def __init__(self, min=None, max=None):
-        self.min = min
-        self.max = max
+    def __init__(self, min_=None, max_=None):
+        self.min = min_
+        self.max = max_
 
     def __call__(self, value):
         if value is None:
@@ -151,7 +151,7 @@ class Range:
 
 class Port(Range):
     def __init__(self):
-        super().__init__(min=1, max=65535)
+        super().__init__(min_=1, max_=65535)
 
 
 class QueryFilters:

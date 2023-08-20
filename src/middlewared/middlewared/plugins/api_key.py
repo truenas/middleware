@@ -17,7 +17,7 @@ class APIKeyModel(sa.Model):
     name = sa.Column(sa.String(200))
     key = sa.Column(sa.Text())
     created_at = sa.Column(sa.DateTime())
-    allowlist = sa.Column(sa.JSON(type=list))
+    allowlist = sa.Column(sa.JSON(list))
 
 
 class ApiKey:
@@ -91,7 +91,7 @@ class ApiKeyService(CRUDService):
             ("attr", {"update": True}),
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update API Key `id`.
 
@@ -99,12 +99,12 @@ class ApiKeyService(CRUDService):
         """
         reset = data.pop("reset", False)
 
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
 
         new.update(data)
 
-        await self._validate("api_key_update", new, id)
+        await self._validate("api_key_update", new, id_)
 
         key = None
         if reset:
@@ -114,28 +114,28 @@ class ApiKeyService(CRUDService):
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,
-            id,
+            id_,
             new,
         )
 
-        await self.load_key(id)
+        await self.load_key(id_)
 
-        return self._serve(await self.get_instance(id), key)
+        return self._serve(await self.get_instance(id_), key)
 
     @accepts(
         Int("id")
     )
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete API Key `id`.
         """
         response = await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
-            id
+            id_
         )
 
-        self.keys.pop(id)
+        self.keys.pop(id_)
 
         return response
 
@@ -147,11 +147,11 @@ class ApiKeyService(CRUDService):
         }
 
     @private
-    async def load_key(self, id):
-        self.keys[id] = await self.middleware.call(
+    async def load_key(self, id_):
+        self.keys[id_] = await self.middleware.call(
             "datastore.query",
             "account.api_key",
-            [["id", "=", id]],
+            [["id", "=", id_]],
             {"get": True},
         )
 
@@ -173,10 +173,10 @@ class ApiKeyService(CRUDService):
 
         return ApiKey(db_key)
 
-    async def _validate(self, schema_name, data, id=None):
+    async def _validate(self, schema_name, data, id_=None):
         verrors = ValidationErrors()
 
-        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
+        await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
 
         verrors.check()
 

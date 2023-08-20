@@ -96,7 +96,7 @@ class IPMILanService(CRUDService):
             register=True
         )
     )
-    def do_update(self, id, data):
+    def do_update(self, id_, data):
         """
         Update IPMI configuration on channel number `id`.
 
@@ -110,8 +110,8 @@ class IPMILanService(CRUDService):
         verrors = ValidationErrors()
         if not self.middleware.call_sync('ipmi.is_loaded'):
             verrors.add('ipmi.update', '/dev/ipmi0 could not be found')
-        elif id not in self.channels():
-            verrors.add('ipmi.update', f'IPMI channel number {id!r} not found')
+        elif id_ not in self.channels():
+            verrors.add('ipmi.update', f'IPMI channel number {id_!r} not found')
         elif not data.get('dhcp'):
             for k in ['ipaddress', 'netmask', 'gateway']:
                 if not data.get(k):
@@ -119,8 +119,8 @@ class IPMILanService(CRUDService):
         verrors.check()
 
         def get_cmd(cmds):
-            nonlocal id
-            return ['ipmitool', 'lan', 'set', f'{id}'] + cmds
+            nonlocal id_
+            return ['ipmitool', 'lan', 'set', f'{id_}'] + cmds
 
         rc = 0
         options = {'stdout': DEVNULL, 'stderr': DEVNULL}

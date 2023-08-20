@@ -306,7 +306,7 @@ class StringModel(Model):
     string = sa.Column(sa.String(100), nullable=True)
 
 
-@pytest.mark.parametrize("filter,ids", [
+@pytest.mark.parametrize("filter_,ids", [
     ([("string", "~", "(e|u)m")], [1, 2]),
     ([("string", "~", "L?rem")], [1]),
 
@@ -322,13 +322,13 @@ class StringModel(Model):
     ([("string", "$", "um")], [2]),
 ])
 @pytest.mark.asyncio
-async def test__string_filters(filter, ids):
+async def test__string_filters(filter_, ids):
     async with datastore_test() as ds:
         ds.execute("INSERT INTO test_string VALUES (1, 'Lorem')")
         ds.execute("INSERT INTO test_string VALUES (2, 'Ipsum')")
         ds.execute("INSERT INTO test_string VALUES (3, NULL)")
 
-        assert [row["id"] for row in await ds.query("test.string", filter)] == ids
+        assert [row["id"] for row in await ds.query("test.string", filter_)] == ids
 
 
 @pytest.mark.asyncio
@@ -352,12 +352,12 @@ class IntegerModel(Model):
     integer = sa.Column(sa.Integer())
 
 
-@pytest.mark.parametrize("filter,ids", [
+@pytest.mark.parametrize("filter_,ids", [
     ([("integer", ">", 1), ("integer", "<", 5)], [2, 3, 4]),
     ([("OR", [("integer", ">=", 4), ("integer", "<=", 2)])], [1, 2, 4, 5]),
 ])
 @pytest.mark.asyncio
-async def test__logic(filter, ids):
+async def test__logic(filter_, ids):
     async with datastore_test() as ds:
         ds.execute("INSERT INTO test_integer VALUES (1, 1)")
         ds.execute("INSERT INTO test_integer VALUES (2, 2)")
@@ -365,7 +365,7 @@ async def test__logic(filter, ids):
         ds.execute("INSERT INTO test_integer VALUES (4, 4)")
         ds.execute("INSERT INTO test_integer VALUES (5, 5)")
 
-        assert [row["id"] for row in await ds.query("test.integer", filter)] == ids
+        assert [row["id"] for row in await ds.query("test.integer", filter_)] == ids
 
 
 @pytest.mark.parametrize("order_by,ids", [
@@ -390,16 +390,16 @@ class JSONModel(Model):
     object = sa.Column(JSON())
 
 
-@pytest.mark.parametrize("string,object", [
+@pytest.mark.parametrize("string,object_", [
     ('{"key": "value"}', {"key": "value"}),
     ('{"key": "value"', {}),
 ])
 @pytest.mark.asyncio
-async def test__json_load(string, object):
+async def test__json_load(string, object_):
     async with datastore_test() as ds:
         ds.execute("INSERT INTO test_json VALUES (1, ?)", string)
 
-        assert (await ds.query("test.json", [], {"get": True}))["object"] == object
+        assert (await ds.query("test.json", [], {"get": True}))["object"] == object_
 
 
 @pytest.mark.asyncio
@@ -443,18 +443,18 @@ def encrypt(s):
     return f"!{s}"
 
 
-@pytest.mark.parametrize("string,object", [
+@pytest.mark.parametrize("string,object_", [
     ('!{"key":"value"}', {"key": "value"}),
     ('!{"key":"value"', {}),
     ('{"key":"value"}', {}),
 ])
 @pytest.mark.asyncio
-async def test__encrypted_json_load(string, object):
+async def test__encrypted_json_load(string, object_):
     async with datastore_test() as ds:
         ds.execute("INSERT INTO test_encryptedjson VALUES (1, ?)", string)
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt):
-            assert (await ds.query("test.encryptedjson", [], {"get": True}))["object"] == object
+            assert (await ds.query("test.encryptedjson", [], {"get": True}))["object"] == object_
 
 
 @pytest.mark.asyncio
@@ -473,17 +473,17 @@ async def test__encrypted_json_save():
         )
 
 
-@pytest.mark.parametrize("string,object", [
+@pytest.mark.parametrize("string,object_", [
     ('!Text', 'Text'),
     ('Text', ''),
 ])
 @pytest.mark.asyncio
-async def test__encrypted_text_load(string, object):
+async def test__encrypted_text_load(string, object_):
     async with datastore_test() as ds:
         ds.execute("INSERT INTO test_encryptedtext VALUES (1, ?)", string)
 
         with patch("middlewared.sqlalchemy.decrypt", decrypt_safe):
-            assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] == object
+            assert (await ds.query("test.encryptedtext", [], {"get": True}))["object"] == object_
 
 
 @pytest.mark.asyncio

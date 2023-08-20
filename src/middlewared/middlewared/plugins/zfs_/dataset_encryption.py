@@ -91,14 +91,14 @@ class ZFSDatasetService(Service):
             for dataset in filter_list(result, post_filters)
         ]
 
-    def common_load_dataset_checks(self, ds):
-        self.common_encryption_checks(ds)
+    def common_load_dataset_checks(self, id_, ds):
+        self.common_encryption_checks(id_, ds)
         if ds.key_loaded:
-            raise CallError(f'{id} key is already loaded')
+            raise CallError(f'{id_} key is already loaded')
 
-    def common_encryption_checks(self, ds):
+    def common_encryption_checks(self, id_, ds):
         if not ds.encrypted:
-            raise CallError(f'{id} is not encrypted')
+            raise CallError(f'{id_} is not encrypted')
 
     @accepts(
         Str('id'),
@@ -110,20 +110,20 @@ class ZFSDatasetService(Service):
             Str('key_location', default=None, null=True),
         ),
     )
-    def load_key(self, id, options):
+    def load_key(self, id_, options):
         mount_ds = options.pop('mount')
         recursive = options.pop('recursive')
         try:
             with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-                self.common_load_dataset_checks(ds)
+                ds = zfs.get_dataset(id_)
+                self.common_load_dataset_checks(id_, ds)
                 ds.load_key(**options)
         except libzfs.ZFSException as e:
-            self.logger.error(f'Failed to load key for {id}', exc_info=True)
-            raise CallError(f'Failed to load key for {id}: {e}')
+            self.logger.error(f'Failed to load key for {id_}', exc_info=True)
+            raise CallError(f'Failed to load key for {id_}: {e}')
         else:
             if mount_ds:
-                self.middleware.call_sync('zfs.dataset.mount', id, {'recursive': recursive})
+                self.middleware.call_sync('zfs.dataset.mount', id_, {'recursive': recursive})
 
     @accepts(
         Str('id'),
@@ -133,18 +133,18 @@ class ZFSDatasetService(Service):
             Str('key_location', default=None, null=True),
         )
     )
-    def check_key(self, id, options):
+    def check_key(self, id_, options):
         """
         Returns `true` if the `key` is valid, `false` otherwise.
         """
         try:
             with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-                self.common_encryption_checks(ds)
+                ds = zfs.get_dataset(id_)
+                self.common_encryption_checks(id_, ds)
                 return ds.check_key(**options)
         except libzfs.ZFSException as e:
-            self.logger.error(f'Failed to check key for {id}', exc_info=True)
-            raise CallError(f'Failed to check key for {id}: {e}')
+            self.logger.error(f'Failed to check key for {id_}', exc_info=True)
+            raise CallError(f'Failed to check key for {id_}: {e}')
 
     @accepts(
         Str('id'),
@@ -155,22 +155,22 @@ class ZFSDatasetService(Service):
             Bool('umount', default=False),
         )
     )
-    def unload_key(self, id, options):
+    def unload_key(self, id_, options):
         force = options.pop('force_umount')
         if options.pop('umount') and self.middleware.call_sync(
-                'zfs.dataset.query', [['id', '=', id]], {'extra': {'retrieve_children': False}, 'get': True}
+                'zfs.dataset.query', [['id', '=', id_]], {'extra': {'retrieve_children': False}, 'get': True}
         )['properties'].get('mountpoint', {}).get('value', 'none') != 'none':
-            self.middleware.call_sync('zfs.dataset.umount', id, {'force': force})
+            self.middleware.call_sync('zfs.dataset.umount', id_, {'force': force})
         try:
             with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-                self.common_encryption_checks(ds)
+                ds = zfs.get_dataset(id_)
+                self.common_encryption_checks(id_, ds)
                 if not ds.key_loaded:
-                    raise CallError(f'{id}\'s key is not loaded')
+                    raise CallError(f'{id_}\'s key is not loaded')
                 ds.unload_key(**options)
         except libzfs.ZFSException as e:
-            self.logger.error(f'Failed to unload key for {id}', exc_info=True)
-            raise CallError(f'Failed to unload key for {id}: {e}')
+            self.logger.error(f'Failed to unload key for {id_}', exc_info=True)
+            raise CallError(f'Failed to unload key for {id_}: {e}')
 
     @accepts(
         Str('id'),
@@ -186,15 +186,15 @@ class ZFSDatasetService(Service):
             Any('key', default=None, null=True),
         ),
     )
-    def change_key(self, id, options):
+    def change_key(self, id_, options):
         try:
             with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
-                self.common_encryption_checks(ds)
+                ds = zfs.get_dataset(id_)
+                self.common_encryption_checks(id_, ds)
                 ds.change_key(props=options['encryption_properties'], load_key=options['load_key'], key=options['key'])
         except libzfs.ZFSException as e:
-            self.logger.error(f'Failed to change key for {id}', exc_info=True)
-            raise CallError(f'Failed to change key for {id}: {e}')
+            self.logger.error(f'Failed to change key for {id_}', exc_info=True)
+            raise CallError(f'Failed to change key for {id_}: {e}')
 
     @accepts(
         Str('id'),
@@ -203,13 +203,13 @@ class ZFSDatasetService(Service):
             Bool('load_key', default=True),
         )
     )
-    def change_encryption_root(self, id, options):
+    def change_encryption_root(self, id_, options):
         try:
             with libzfs.ZFS() as zfs:
-                ds = zfs.get_dataset(id)
+                ds = zfs.get_dataset(id_)
                 ds.change_key(load_key=options['load_key'], inherit=True)
         except libzfs.ZFSException as e:
-            raise CallError(f'Failed to change encryption root for {id}: {e}')
+            raise CallError(f'Failed to change encryption root for {id_}: {e}')
 
     @accepts(Str('name'), List('params', private=True))
     @job()

@@ -77,17 +77,17 @@ class iSCSIHostService(CRUDService):
     async def create_unlocked(self, data):
         iqns = data.pop("iqns")
         try:
-            id = await self.middleware.call("datastore.insert", self._config.datastore, data)
+            id_ = await self.middleware.call("datastore.insert", self._config.datastore, data)
         except IntegrityError:
             verrors = ValidationErrors()
             verrors.add("iscsi_host_create.ip", "This IP address already exists", errno.EEXIST)
             raise verrors
-        await self._set_datastore_iqns(id, iqns)
+        await self._set_datastore_iqns(id_, iqns)
 
-        host = await self.get_instance(id)
+        host = await self.get_instance(id_)
 
         self.hosts[host["ip"]] = host
-        self._set_cache_iqns(id, iqns)
+        self._set_cache_iqns(id_, iqns)
 
         return host
 
@@ -100,66 +100,66 @@ class iSCSIHostService(CRUDService):
             register=True,
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update iSCSI host `id`.
         """
         async with LOCK:
-            return await self.update_unlocked(id, data)
+            return await self.update_unlocked(id_, data)
 
     @accepts(Int("id"), Ref("iscsi_host_update"))
     @private
-    async def update_unlocked(self, id, data):
-        old = await self.get_instance(id)
+    async def update_unlocked(self, id_, data):
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
         iqns = new.pop("iqns")
         try:
-            await self.middleware.call("datastore.update", self._config.datastore, id, new)
+            await self.middleware.call("datastore.update", self._config.datastore, id_, new)
         except IntegrityError:
             verrors = ValidationErrors()
             verrors.add("iscsi_host_update.ip", "This IP address already exists", errno.EEXIST)
             raise verrors
-        await self._set_datastore_iqns(id, iqns)
+        await self._set_datastore_iqns(id_, iqns)
 
-        host = await self.get_instance(id)
+        host = await self.get_instance(id_)
 
         self.hosts.pop(old["ip"], None)
         self.hosts[host["ip"]] = host
-        self._set_cache_iqns(id, iqns)
+        self._set_cache_iqns(id_, iqns)
 
         return host
 
     @accepts(Int("id"))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Update iSCSI host `id`.
         """
         async with LOCK:
-            return await self.delete_unlocked(id)
+            return await self.delete_unlocked(id_)
 
     @private
-    async def delete_unlocked(self, id):
-        host = await self.get_instance(id)
+    async def delete_unlocked(self, id_):
+        host = await self.get_instance(id_)
 
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
+        await self.middleware.call("datastore.delete", self._config.datastore, id_)
 
         self.hosts.pop(host["ip"], None)
 
         return host
 
-    async def _set_datastore_iqns(self, id, iqns):
+    async def _set_datastore_iqns(self, id_, iqns):
         await self.middleware.call("datastore.delete", "services.iscsihostiqn", [["iqn", "in", iqns]])
         for iqn in iqns:
             await self.middleware.call("datastore.insert", "services.iscsihostiqn", {
                 "iqn": iqn,
-                "host_id": id,
+                "host_id": id_,
             })
 
-    def _set_cache_iqns(self, id, iqns):
+    def _set_cache_iqns(self, id_, iqns):
         for host in self.hosts.values():
-            if host["id"] != id:
+            if host["id"] != id_:
                 for iqn in iqns:
                     try:
                         host["iqns"].remove(iqn)

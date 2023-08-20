@@ -78,11 +78,11 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         return await self.get_instance(cloud_backup["id"])
 
     @accepts(Int("id"), Patch("cloud_backup_create", "cloud_backup_update", ("attr", {"update": True})))
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Updates the cloud backup entry `id` with `data`.
         """
-        cloud_backup = await self.get_instance(id)
+        cloud_backup = await self.get_instance(id_)
 
         # credentials is a foreign key for now
         if cloud_backup["credentials"]:
@@ -98,19 +98,19 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         cloud_backup = await self._compress(cloud_backup)
 
-        await self.middleware.call("datastore.update", "tasks.cloud_backup", id, cloud_backup)
+        await self.middleware.call("datastore.update", "tasks.cloud_backup", id_, cloud_backup)
         await self.middleware.call("service.restart", "cron")
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int("id"))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Deletes cloud backup entry `id`.
         """
-        await self.middleware.call("cloud_backup.abort", id)
-        await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", id)
-        rv = await self.middleware.call("datastore.delete", "tasks.cloud_backup", id)
+        await self.middleware.call("cloud_backup.abort", id_)
+        await self.middleware.call("alert.oneshot_delete", "CloudBackupTaskFailed", id_)
+        rv = await self.middleware.call("datastore.delete", "tasks.cloud_backup", id_)
         await self.middleware.call("service.restart", "cron")
         return rv
 

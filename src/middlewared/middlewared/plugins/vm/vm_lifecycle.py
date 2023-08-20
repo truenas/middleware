@@ -14,7 +14,7 @@ class VMService(Service, VMSupervisorMixin):
     @item_method
     @accepts(Int('id'), Dict('options', Bool('overcommit', default=False)))
     @returns()
-    async def start(self, id, options):
+    async def start(self, id_, options):
         """
         Start a VM.
 
@@ -29,7 +29,7 @@ class VMService(Service, VMSupervisorMixin):
         await self.lifecycle_action_check()
         await self.middleware.run_in_thread(self._check_setup_connection)
 
-        vm = await self.middleware.call('vm.get_instance', id)
+        vm = await self.middleware.call('vm.get_instance', id_)
         vm_state = vm['status']['state']
         if vm_state == 'RUNNING':
             raise CallError(f'{vm["name"]!r} is already running')
@@ -45,8 +45,8 @@ class VMService(Service, VMSupervisorMixin):
         try:
             await self.middleware.run_in_thread(self._start, vm['name'])
         except Exception:
-            if (await self.middleware.call('vm.get_instance', id))['status']['state'] != 'RUNNING':
-                await self.middleware.call('vm.teardown_guest_vmemory', id)
+            if (await self.middleware.call('vm.get_instance', id_))['status']['state'] != 'RUNNING':
+                await self.middleware.call('vm.teardown_guest_vmemory', id_)
             raise
 
         await self.middleware.call('service.reload', 'haproxy')
@@ -62,7 +62,7 @@ class VMService(Service, VMSupervisorMixin):
     )
     @returns()
     @job(lock=lambda args: f'stop_vm_{args[0]}')
-    def stop(self, job, id, options):
+    def stop(self, job, id_, options):
         """
         Stops a VM.
 
@@ -74,67 +74,67 @@ class VMService(Service, VMSupervisorMixin):
         not already stopped within the specified `shutdown_timeout`.
         """
         self._check_setup_connection()
-        vm_data = self.middleware.call_sync('vm.get_instance', id)
+        vm_data = self.middleware.call_sync('vm.get_instance', id_)
 
         if options['force']:
             self._poweroff(vm_data['name'])
         else:
             self._stop(vm_data['name'], vm_data['shutdown_timeout'])
 
-        if options['force_after_timeout'] and self.middleware.call_sync('vm.status', id)['state'] == 'RUNNING':
+        if options['force_after_timeout'] and self.middleware.call_sync('vm.status', id_)['state'] == 'RUNNING':
             self._poweroff(vm_data['name'])
 
     @item_method
     @accepts(Int('id'))
     @returns()
-    def poweroff(self, id):
+    def poweroff(self, id_):
         """
         Poweroff a VM.
         """
         self._check_setup_connection()
 
-        vm_data = self.middleware.call_sync('vm.get_instance', id)
+        vm_data = self.middleware.call_sync('vm.get_instance', id_)
         self._poweroff(vm_data['name'])
 
     @item_method
     @accepts(Int('id'))
     @returns()
     @job(lock=lambda args: f'restart_vm_{args[0]}')
-    def restart(self, job, id):
+    def restart(self, job, id_):
         """
         Restart a VM.
         """
         self._check_setup_connection()
-        vm = self.middleware.call_sync('vm.get_instance', id)
-        stop_job = self.middleware.call_sync('vm.stop', id, {'force_after_timeout': True})
+        vm = self.middleware.call_sync('vm.get_instance', id_)
+        stop_job = self.middleware.call_sync('vm.stop', id_, {'force_after_timeout': True})
         stop_job.wait_sync()
         if stop_job.error:
             raise CallError(f'Failed to stop {vm["name"]!r} vm: {stop_job.error}')
 
-        self.middleware.call_sync('vm.start', id, {'overcommit': True})
+        self.middleware.call_sync('vm.start', id_, {'overcommit': True})
 
     @item_method
     @accepts(Int('id'))
     @returns()
-    def suspend(self, id):
+    def suspend(self, id_):
         """
         Suspend `id` VM.
         """
         self._check_setup_connection()
 
-        vm = self.middleware.call_sync('vm.get_instance', id)
+        vm = self.middleware.call_sync('vm.get_instance', id_)
         self._suspend(vm['name'])
 
     @item_method
     @accepts(Int('id'))
     @returns()
-    def resume(self, id):
+    def resume(self, id_):
         """
         Resume suspended `id` VM.
         """
         self._check_setup_connection()
 
-        vm = self.middleware.call_sync('vm.get_instance', id)
+        vm = self.middleware.call_sync('vm.get_instance', id_)
         self._resume(vm['name'])
 
     @private

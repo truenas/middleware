@@ -21,10 +21,10 @@ SMARTD_SCHEDULE_PIECES = [
 ]
 
 
-def smartd_schedule_piece(value, min, max, enum=None):
-    width = len(str(max))
+def smartd_schedule_piece(value, min_, max_, enum=None):
+    width = len(str(max_))
 
-    values = smartd_schedule_piece_values_template(value, min, max, enum)
+    values = smartd_schedule_piece_values_template(value, min_, max_, enum)
 
     if values == ALL_VALUES:
         return "." * width
@@ -32,7 +32,7 @@ def smartd_schedule_piece(value, min, max, enum=None):
         return "(" + "|".join([f"%0{width}d" % v for v in values]) + ")"
 
 
-def smartd_schedule_piece_values_template(value, min, max, enum=None):
+def smartd_schedule_piece_values_template(value, min_, max_, enum=None):
     enum = enum or {}
 
     if value == "*":
@@ -43,9 +43,9 @@ def smartd_schedule_piece_values_template(value, min, max, enum=None):
             if d == 1:
                 return ALL_VALUES
         else:
-            min = int(m.group("min"))
-            max = int(m.group("max"))
-        values = [v for v in range(min, max + 1) if v % d == 0]
+            min_ = int(m.group("min"))
+            max_ = int(m.group("max"))
+        values = [v for v in range(min_, max_ + 1) if v % d == 0]
     elif m := RE_RANGE.match(value):
         start = int(m.group("min"))
         end = int(m.group("max"))
@@ -57,16 +57,16 @@ def smartd_schedule_piece_values_template(value, min, max, enum=None):
         values = list(filter(lambda v: v is not None,
                              map(lambda s: enum.get(s.lower(), int(s) if s.isdigit() else None),
                                  value.split(","))))
-        if values == list(range(min, max + 1)):
+        if values == list(range(min_, max_ + 1)):
             return ALL_VALUES
 
     return values
 
 
-def smartd_schedule_piece_values(value, min, max, enum=None):
-    values = smartd_schedule_piece_values_template(value, min, max, enum)
+def smartd_schedule_piece_values(value, min_, max_, enum=None):
+    values = smartd_schedule_piece_values_template(value, min_, max_, enum)
 
     if values == ALL_VALUES:
-        return list(range(min, max + 1))
+        return list(range(min_, max_ + 1))
     else:
         return values

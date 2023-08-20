@@ -76,9 +76,9 @@ class CertificateService(CRUDService):
         return cert
 
     @private
-    async def cert_services_validation(self, id, schema_name, raise_verrors=True):
+    async def cert_services_validation(self, id_, schema_name, raise_verrors=True):
         # General method to check certificate health wrt usage in services
-        cert = await self.middleware.call('certificate.query', [['id', '=', id]])
+        cert = await self.middleware.call('certificate.query', [['id', '=', id_]])
         verrors = ValidationErrors()
         if cert:
             cert = cert[0]
@@ -92,7 +92,7 @@ class CertificateService(CRUDService):
         else:
             verrors.add(
                 schema_name,
-                f'No Certificate found with the provided id: {id}'
+                f'No Certificate found with the provided id: {id_}'
             )
 
         if raise_verrors:
@@ -172,10 +172,10 @@ class CertificateService(CRUDService):
             Int('csr_id'),
             Int('signedby'),
             Int('key_length', enum=[2048, 4096]),
-            Int('renew_days', validators=[Range(min=1, max=30)]),
+            Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Int('type'),
             Int('lifetime'),
-            Int('serial', validators=[Range(min=1)]),
+            Int('serial', validators=[Range(min_=1)]),
             Str('acme_directory_uri'),
             Str('certificate', max_length=None),
             Str('city'),
@@ -348,7 +348,7 @@ class CertificateService(CRUDService):
             'acme_create',
             Bool('tos', default=False),
             Int('csr_id', required=True),
-            Int('renew_days', default=10, validators=[Range(min=1)]),
+            Int('renew_days', default=10, validators=[Range(min_=1)]),
             Str('acme_directory_uri', required=True),
             Str('name', required=True),
             Dict('dns_mapping', additional_attrs=True, required=True)
@@ -552,12 +552,12 @@ class CertificateService(CRUDService):
         Dict(
             'certificate_update',
             Bool('revoked'),
-            Int('renew_days', validators=[Range(min=1, max=30)]),
+            Int('renew_days', validators=[Range(min_=1, max_=30)]),
             Str('name'),
         )
     )
     @job(lock='cert_update')
-    async def do_update(self, job, id, data):
+    async def do_update(self, job, id_, data):
         """
         Update certificate of `id`
 
@@ -583,7 +583,7 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
         if old.get('acme'):
@@ -634,7 +634,7 @@ class CertificateService(CRUDService):
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
-                id,
+                id_,
                 {'name': new['name'], **to_update},
                 {'prefix': self._config.datastore_prefix}
             )
@@ -643,7 +643,7 @@ class CertificateService(CRUDService):
 
         job.set_progress(90, 'Finalizing changes')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @private
     async def delete_domains_authenticator(self, auth_id):
@@ -668,7 +668,7 @@ class CertificateService(CRUDService):
         Bool('force', default=False)
     )
     @job(lock='cert_delete')
-    def do_delete(self, job, id, force):
+    def do_delete(self, job, id_, force):
         """
         Delete certificate of `id`.
 
@@ -692,8 +692,8 @@ class CertificateService(CRUDService):
                 ]
             }
         """
-        certificate = self.middleware.call_sync('certificate.get_instance', id)
-        self.middleware.call_sync('certificate.check_cert_deps', id)
+        certificate = self.middleware.call_sync('certificate.get_instance', id_)
+        self.middleware.call_sync('certificate.check_cert_deps', id_)
 
         if certificate.get('acme') and not certificate['expired']:
             # We won't try revoking a certificate which has expired already
@@ -712,7 +712,7 @@ class CertificateService(CRUDService):
         response = self.middleware.call_sync(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         self.middleware.call_sync('service.start', 'ssl')

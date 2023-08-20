@@ -433,12 +433,12 @@ class ShareSec(CRUDService):
             )
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update the ACL on the share specified by the numerical index `id`. Will write changes
         to both /var/db/system/samba4/share_info.tdb and the configuration file.
         """
-        old_acl = await self.get_instance(id)
+        old_acl = await self.get_instance(id_)
         await self.setacl({"share_name": old_acl["share_name"], "share_acl": data["share_acl"]})
         return await self.getacl(old_acl["share_name"])
 

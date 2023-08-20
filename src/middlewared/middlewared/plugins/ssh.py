@@ -19,7 +19,7 @@ class SSHModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     ssh_bindiface = sa.Column(sa.MultiSelectField(), default=[])
     ssh_tcpport = sa.Column(sa.Integer(), default=22)
-    ssh_password_login_groups = sa.Column(sa.JSON(type=list))
+    ssh_password_login_groups = sa.Column(sa.JSON(list))
     ssh_passwordauth = sa.Column(sa.Boolean(), default=False)
     ssh_kerberosauth = sa.Column(sa.Boolean(), default=False)
     ssh_tcpfwd = sa.Column(sa.Boolean(), default=False)
@@ -41,7 +41,7 @@ class SSHModel(sa.Model):
     ssh_host_rsa_key = sa.Column(sa.EncryptedText(), nullable=True)
     ssh_host_rsa_key_pub = sa.Column(sa.Text(), nullable=True)
     ssh_host_rsa_key_cert_pub = sa.Column(sa.Text(), nullable=True)
-    ssh_weak_ciphers = sa.Column(sa.JSON(type=list))
+    ssh_weak_ciphers = sa.Column(sa.JSON(list))
     ssh_options = sa.Column(sa.Text())
 
 
@@ -56,7 +56,7 @@ class SSHService(SystemServiceService):
     ENTRY = Dict(
         'ssh_entry',
         List('bindiface', items=[Str('iface')], required=True),
-        Int('tcpport', validators=[Range(min=1, max=65535)], required=True),
+        Int('tcpport', validators=[Range(min_=1, max_=65535)], required=True),
         List('password_login_groups', items=[Str('group')], required=True),
         Bool('passwordauth', required=True),
         Bool('kerberosauth', required=True),

@@ -373,7 +373,7 @@ class ChartReleaseService(CRUDService):
                         e.g abc123, abc, abcd-1232
                         '''
                     )
-                ), Range(min=1, max=40)]
+                ), Range(min_=1, max_=40)]
             ),
             Str('train', default='charts'),
             Str('version', default='latest'),

@@ -26,7 +26,7 @@ class KubernetesModel(sa.Model):
     route_v6_interface = sa.Column(sa.String(128), nullable=True)
     route_v6_gateway = sa.Column(sa.String(128), nullable=True)
     node_ip = sa.Column(sa.String(128), default='0.0.0.0')
-    cni_config = sa.Column(sa.JSON(type=dict), default={})
+    cni_config = sa.Column(sa.JSON(dict), default={})
     configure_gpus = sa.Column(sa.Boolean(), default=True, nullable=False)
     servicelb = sa.Column(sa.Boolean(), default=True, nullable=False)
     passthrough_mode = sa.Column(sa.Boolean(), default=False)
@@ -80,8 +80,8 @@ class KubernetesService(ConfigService):
     async def license_active(self):
         can_run_apps = True
         if await self.middleware.call('system.is_ha_capable'):
-            license = await self.middleware.call('system.license')
-            can_run_apps = license is not None and 'JAILS' in license['features']
+            license_ = await self.middleware.call('system.license')
+            can_run_apps = license_ is not None and 'JAILS' in license_['features']
 
         return can_run_apps
 

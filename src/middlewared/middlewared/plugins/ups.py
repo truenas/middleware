@@ -59,7 +59,7 @@ class UPSService(SystemServiceService):
         Int('nocommwarntime', null=True, required=True),
         Int('remoteport', validators=[Port()], required=True),
         Int('shutdowntimer', required=True),
-        Int('hostsync', validators=[Range(min=0)], required=True),
+        Int('hostsync', validators=[Range(min_=0)], required=True),
         Str('description', required=True),
         Str('driver', required=True),
         Str('extrausers', max_length=None, required=True),

@@ -209,22 +209,22 @@ class DeviceService(Service):
             if self.HOST_TYPE == 'QEMU':
                 # qemu/kvm guests do not support necessary ioctl for
                 # retrieving rotational rate
-                type = 'HDD'
+                type_ = 'HDD'
                 rotation_rate = None
             else:
                 rotation_rate = self._get_rotation_rate(device_path)
                 if rotation_rate:
-                    type = 'HDD'
+                    type_ = 'HDD'
                 else:
                     # Treat rotational devices without rotation rate as SSDs
                     # (some USB bridges report SSDs as rotational devices, see
                     # https://jira.ixsystems.com/browse/NAS-112230)
-                    type = 'SSD'
+                    type_ = 'SSD'
         else:
-            type = 'SSD'
+            type_ = 'SSD'
             rotation_rate = None
 
-        return type, rotation_rate
+        return type_, rotation_rate
 
     def _get_rotation_rate(self, device_path):
         try:

@@ -23,13 +23,13 @@ class CloudTaskModelMixin:
     pre_script = sa.Column(sa.Text())
     post_script = sa.Column(sa.Text())
     snapshot = sa.Column(sa.Boolean())
-    bwlimit = sa.Column(sa.JSON(type=list))
-    include = sa.Column(sa.JSON(type=list))
-    exclude = sa.Column(sa.JSON(type=list))
+    bwlimit = sa.Column(sa.JSON(list))
+    include = sa.Column(sa.JSON(list))
+    exclude = sa.Column(sa.JSON(list))
     transfers = sa.Column(sa.Integer(), nullable=True)
     args = sa.Column(sa.Text())
     enabled = sa.Column(sa.Boolean(), default=True)
-    job = sa.Column(sa.JSON(type=None))
+    job = sa.Column(sa.JSON(None))
 
 
 cloud_task_schema = [
@@ -47,10 +47,10 @@ cloud_task_schema = [
     Bool("snapshot", default=False),
     List("bwlimit", items=[Dict("cloud_sync_bwlimit",
                                 Str("time", validators=[Time()]),
-                                Int("bandwidth", validators=[Range(min=1)], null=True))]),
+                                Int("bandwidth", validators=[Range(min_=1)], null=True))]),
     List("include", items=[Str("path", empty=False)]),
     List("exclude", items=[Str("path", empty=False)]),
-    Int("transfers", null=True, default=None, validators=[Range(min=1)]),
+    Int("transfers", null=True, default=None, validators=[Range(min_=1)]),
     Str("args", default="", max_length=None),
     Bool("enabled", default=True),
 ]

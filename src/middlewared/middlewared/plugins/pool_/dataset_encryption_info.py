@@ -33,7 +33,7 @@ class PoolDatasetService(Service):
                         'dataset',
                         Bool('force', required=True, default=False),
                         Str('name', required=True, empty=False),
-                        Str('key', validators=[Range(min=64, max=64)], private=True),
+                        Str('key', validators=[Range(min_=64, max_=64)], private=True),
                         Str('passphrase', empty=False, private=True),
                     )
                 ],
@@ -51,7 +51,7 @@ class PoolDatasetService(Service):
         Bool('unlock_successful', required=True),
     )]))
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
-    def encryption_summary(self, job, id, options):
+    def encryption_summary(self, job, id_, options):
         """
         Retrieve summary of all encrypted roots under `id`.
 
@@ -133,7 +133,7 @@ class PoolDatasetService(Service):
             }
 
         verrors.check()
-        datasets = self.query_encrypted_datasets(id, {'all': True})
+        datasets = self.query_encrypted_datasets(id_, {'all': True})
 
         to_check = []
         for name, ds in datasets.items():
@@ -146,7 +146,7 @@ class PoolDatasetService(Service):
         check_job = self.middleware.call_sync('zfs.dataset.bulk_process', 'check_key', to_check)
         check_job.wait_sync()
         if check_job.error:
-            raise CallError(f'Failed to retrieve encryption summary for {id}: {check_job.error}')
+            raise CallError(f'Failed to retrieve encryption summary for {id_}: {check_job.error}')
 
         results = []
         for ds_data, status in zip(to_check, check_job.result):
@@ -294,18 +294,18 @@ class PoolDatasetService(Service):
     @accepts(Str('id'))
     @returns()
     @job(lock='dataset_export_keys', pipes=['output'])
-    def export_keys(self, job, id):
+    def export_keys(self, job, id_):
         """
         Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
         which has a dictionary containing dataset names as keys and their keys as the value.
 
         Please refer to websocket documentation for downloading the file.
         """
-        self.middleware.call_sync('pool.dataset.get_instance_quick', id)
-        sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id)
+        self.middleware.call_sync('pool.dataset.get_instance_quick', id_)
+        sync_job = self.middleware.call_sync('pool.dataset.sync_db_keys', id_)
         sync_job.wait_sync()
 
-        datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id], ['name', '^', f'{id}/']]]])
+        datasets = self.query_encrypted_roots_keys([['OR', [['name', '=', id_], ['name', '^', f'{id_}/']]]])
         with BytesIO(json.dumps(datasets).encode()) as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
@@ -392,7 +392,7 @@ class PoolDatasetService(Service):
     )
     @returns(Str('key', null=True, private=True))
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
-    def export_key(self, job, id, download):
+    def export_key(self, job, id_, download):
         """
         Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file
         where the same file can be used to unlock the dataset, otherwise it will be returned as string.
@@ -402,15 +402,15 @@ class PoolDatasetService(Service):
         if download:
             job.check_pipe('output')
 
-        self.middleware.call_sync('pool.dataset.get_instance_quick', id)
+        self.middleware.call_sync('pool.dataset.get_instance_quick', id_)
 
-        keys = self.query_encrypted_roots_keys([['name', '=', id]])
-        if id not in keys:
+        keys = self.query_encrypted_roots_keys([['name', '=', id_]])
+        if id_ not in keys:
             raise CallError('Specified dataset does not have it\'s own encryption key.', errno.EINVAL)
 
-        key = keys[id]
+        key = keys[id_]
 
         if download:
-            job.pipes.output.w.write(json.dumps({id: key}).encode())
+            job.pipes.output.w.write(json.dumps({id_: key}).encode())
         else:
             return key

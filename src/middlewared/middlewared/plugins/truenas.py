@@ -175,16 +175,16 @@ class TrueNASService(Service):
         return result
 
     async def __fetch_customer_information_immutable_data(self):
-        license = await self.middleware.call('system.license')
-        if license is None:
+        license_ = await self.middleware.call('system.license')
+        if license_ is None:
             return None
 
         return {
-            "serial_number": license['system_serial'],
-            "serial_number_ha": license['system_serial_ha'],
-            "support_level": license['contract_type'].title(),
-            "support_start_date": license['contract_start'].isoformat(),
-            "support_end_date": license['contract_end'].isoformat(),
+            "serial_number": license_['system_serial'],
+            "serial_number_ha": license_['system_serial_ha'],
+            "support_level": license_['contract_type'].title(),
+            "support_start_date": license_['contract_start'].isoformat(),
+            "support_end_date": license_['contract_end'].isoformat(),
         }
 
     @accepts()

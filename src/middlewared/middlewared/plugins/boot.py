@@ -183,7 +183,7 @@ class BootService(Service):
         return await job.wrap(subjob)
 
     @accepts(
-        Int('interval', validators=[Range(min=1)])
+        Int('interval', validators=[Range(min_=1)])
     )
     @returns(Int('interval'))
     async def set_scrub_interval(self, interval):

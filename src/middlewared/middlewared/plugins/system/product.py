@@ -47,8 +47,8 @@ class SystemService(Service):
                 # HA capable hardware
                 SystemService.PRODUCT_TYPE = 'SCALE_ENTERPRISE'
             else:
-                if license := await self.middleware.call('system.license'):
-                    if license['model'].lower().startswith('freenas'):
+                if license_ := await self.middleware.call('system.license'):
+                    if license_['model'].lower().startswith('freenas'):
                         # legacy freenas certified
                         SystemService.PRODUCT_TYPE = 'SCALE'
                     else:
@@ -151,7 +151,7 @@ class SystemService(Service):
         except Exception:
             return
 
-        license = {
+        license_ = {
             'model': licenseobj.model,
             'system_serial': licenseobj.system_serial,
             'system_serial_ha': licenseobj.system_serial_ha,
@@ -177,17 +177,17 @@ class SystemService(Service):
 
         for quantity, code in licenseobj.addhw:
             try:
-                license['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]} Expansion shelf')
+                license_['addhw_detail'].append(f'{quantity} x {LICENSE_ADDHW_MAPPING[code]} Expansion shelf')
             except KeyError:
-                license['addhw_detail'].append(f'<Unknown hardware {code}>')
+                license_['addhw_detail'].append(f'<Unknown hardware {code}>')
 
         if Features.fibrechannel not in licenseobj.features and licenseobj.contract_start < date(2017, 4, 14):
             # Licenses issued before 2017-04-14 had a bug in the feature bit for fibrechannel, which
             # means they were issued having dedup+jails instead.
             if Features.dedup in licenseobj.features and Features.jails in licenseobj.features:
-                license['features'].append(Features.fibrechannel.name.upper())
+                license_['features'].append(Features.fibrechannel.name.upper())
 
-        return license
+        return license_
 
     @private
     def license_path(self):
@@ -195,17 +195,17 @@ class SystemService(Service):
 
     @accepts(Str('license'))
     @returns()
-    def license_update(self, license):
+    def license_update(self, license_):
         """Update license file"""
         try:
-            dser_license = License.load(license)
+            dser_license = License.load(license_)
         except Exception:
             raise CallError('This is not a valid license.')
 
         prev_product_type = self.middleware.call_sync('system.product_type')
 
         with open(LICENSE_FILE, 'w+') as f:
-            f.write(license)
+            f.write(license_)
 
         self.middleware.call_sync('etc.generate', 'rc')
 
@@ -229,8 +229,8 @@ class SystemService(Service):
             return False
         elif is_core:
             return True
-        license = await self.middleware.call('system.license')
-        if license and name in license['features']:
+        license_ = await self.middleware.call('system.license')
+        if license_ and name in license_['features']:
             return True
         return False
 

@@ -22,8 +22,8 @@ class SystemService(Service):
         return result
 
     @private
-    def gather_update_failed_from_be(self, id):
-        dataset = f"{self.middleware.call_sync('boot.pool_name')}/ROOT/{id}"
+    def gather_update_failed_from_be(self, id_):
+        dataset = f"{self.middleware.call_sync('boot.pool_name')}/ROOT/{id_}"
 
         snapshot_name = f"{dataset}@for-debug"
         try:

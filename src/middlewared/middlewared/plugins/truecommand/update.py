@@ -81,7 +81,7 @@ class TruecommandService(ConfigService):
         Dict(
             'truecommand_update',
             Bool('enabled'),
-            Str('api_key', null=True, validators=[Range(min=16, max=16)]),
+            Str('api_key', null=True, validators=[Range(min_=16, max_=16)]),
         )
     )
     async def do_update(self, data):

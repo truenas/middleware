@@ -276,13 +276,13 @@ class DNSAuthenticatorService(CRUDService):
         """
         await self.common_validation(data, 'dns_authenticator_create')
 
-        id = await self.middleware.call(
+        id_ = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
             data,
         )
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id'),
@@ -294,7 +294,7 @@ class DNSAuthenticatorService(CRUDService):
             ('attr', {'update': True}),
         ),
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update DNS Authenticator of `id`
 
@@ -319,7 +319,7 @@ class DNSAuthenticatorService(CRUDService):
                 ]
             }
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -328,13 +328,13 @@ class DNSAuthenticatorService(CRUDService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new
         )
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete DNS Authenticator of `id`
 
@@ -352,12 +352,12 @@ class DNSAuthenticatorService(CRUDService):
                 ]
             }
         """
-        await self.middleware.call('certificate.delete_domains_authenticator', id)
+        await self.middleware.call('certificate.delete_domains_authenticator', id_)
 
         return await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
 

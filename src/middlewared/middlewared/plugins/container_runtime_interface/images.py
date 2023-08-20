@@ -116,18 +116,18 @@ class ContainerImagesService(CRUDService):
 
     @accepts(Str('id'))
     @returns()
-    def do_delete(self, id):
+    def do_delete(self, id_):
         """
         `options.force` should be used to force delete an image even if it's in use by a stopped container.
         """
         self.middleware.call_sync('kubernetes.validate_k8s_setup')
-        image = self.middleware.call_sync('container.image.get_instance', id)
+        image = self.middleware.call_sync('container.image.get_instance', id_)
         if image['system_image']:
-            raise CallError(f'{id} is being used by system and cannot be deleted.')
+            raise CallError(f'{id_} is being used by system and cannot be deleted.')
 
         with ContainerdClient('image') as client:
             # TODO: See force alternatives
-            client.remove_image(id)
+            client.remove_image(id_)
 
         self.middleware.call_sync('container.image.remove_image_from_cache', image)
 

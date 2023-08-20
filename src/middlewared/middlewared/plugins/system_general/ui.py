@@ -65,7 +65,7 @@ class SystemGeneralService(Service):
         }
 
     @rest_api_metadata(extra_methods=['GET'])
-    @accepts(Int('delay', default=3, validators=[Range(min=0)]))
+    @accepts(Int('delay', default=3, validators=[Range(min_=0)]))
     async def ui_restart(self, delay):
         """
         Restart HTTP server to use latest UI settings.

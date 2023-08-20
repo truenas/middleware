@@ -41,19 +41,19 @@ class NFSService(Service):
         return filter_list(rmtab, filters, options)
 
     @private
-    def get_nfs4_client_info(self, id):
+    def get_nfs4_client_info(self, id_):
         info = {}
         with suppress(FileNotFoundError):
-            with open(f"/proc/fs/nfsd/clients/{id}/info", "r") as f:
+            with open(f"/proc/fs/nfsd/clients/{id_}/info", "r") as f:
                 info = yaml.safe_load(f.read())
 
         return info
 
     @private
-    def get_nfs4_client_states(self, id):
+    def get_nfs4_client_states(self, id_):
         states = []
         with suppress(FileNotFoundError):
-            with open(f"/proc/fs/nfsd/clients/{id}/states", "r") as f:
+            with open(f"/proc/fs/nfsd/clients/{id_}/states", "r") as f:
                 states = yaml.safe_load(f.read())
 
         # states file may be empty, which changes it to None type

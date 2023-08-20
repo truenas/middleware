@@ -16,13 +16,13 @@ class SystemGeneralModel(sa.Model):
     __tablename__ = 'system_settings'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    stg_guiaddress = sa.Column(sa.JSON(type=list), default=['0.0.0.0'])
-    stg_guiv6address = sa.Column(sa.JSON(type=list), default=['::'])
-    stg_guiallowlist = sa.Column(sa.JSON(type=list), default=[])
+    stg_guiaddress = sa.Column(sa.JSON(list), default=['0.0.0.0'])
+    stg_guiv6address = sa.Column(sa.JSON(list), default=['::'])
+    stg_guiallowlist = sa.Column(sa.JSON(list), default=[])
     stg_guiport = sa.Column(sa.Integer(), default=80)
     stg_guihttpsport = sa.Column(sa.Integer(), default=443)
     stg_guihttpsredirect = sa.Column(sa.Boolean(), default=False)
-    stg_guihttpsprotocols = sa.Column(sa.JSON(type=list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
+    stg_guihttpsprotocols = sa.Column(sa.JSON(list), default=['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'])
     stg_guix_frame_options = sa.Column(sa.String(120), default='SAMEORIGIN')
     stg_guiconsolemsg = sa.Column(sa.Boolean(), default=True)
     stg_language = sa.Column(sa.String(120), default='en')
@@ -51,13 +51,13 @@ class SystemGeneralService(ConfigService):
             'certificate_entry', 'ui_certificate',
             ('attr', {'null': True, 'required': True}),
         ),
-        Int('ui_httpsport', validators=[Range(min=1, max=65535)], required=True),
+        Int('ui_httpsport', validators=[Range(min_=1, max_=65535)], required=True),
         Bool('ui_httpsredirect', required=True),
         List(
             'ui_httpsprotocols', items=[Str('protocol', enum=HTTPS_PROTOCOLS)],
             empty=False, unique=True, required=True
         ),
-        Int('ui_port', validators=[Range(min=1, max=65535)], required=True),
+        Int('ui_port', validators=[Range(min_=1, max_=65535)], required=True),
         List('ui_address', items=[IPAddr('addr')], empty=False, required=True),
         List('ui_v6address', items=[IPAddr('addr')], empty=False, required=True),
         List('ui_allowlist', items=[IPAddr('addr', network=True, network_strict=True)], required=True),

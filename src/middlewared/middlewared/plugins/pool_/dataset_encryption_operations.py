@@ -120,14 +120,14 @@ class PoolDatasetService(Service):
             'change_key_options',
             Bool('generate_key', default=False),
             Bool('key_file', default=False),
-            Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
+            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
             Str('passphrase', empty=False, default=None, null=True, private=True),
-            Str('key', validators=[Range(min=64, max=64)], default=None, null=True, private=True),
+            Str('key', validators=[Range(min_=64, max_=64)], default=None, null=True, private=True),
         )
     )
     @returns()
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
-    async def change_key(self, job, id, options):
+    async def change_key(self, job, id_, options):
         """
         Change encryption properties for `id` encrypted dataset.
 
@@ -136,7 +136,7 @@ class PoolDatasetService(Service):
         1) It has encrypted roots as children which are encrypted with a key
         2) If it is a root dataset where the system dataset is located
         """
-        ds = await self.middleware.call('pool.dataset.get_instance_quick', id, {
+        ds = await self.middleware.call('pool.dataset.get_instance_quick', id_, {
             'encryption': True,
         })
         verrors = ValidationErrors()
@@ -150,26 +150,26 @@ class PoolDatasetService(Service):
                 if options['generate_key'] or options['key']:
                     verrors.add(
                         'change_key_options.key',
-                        f'Must not be specified when passphrase for {id} is supplied.'
+                        f'Must not be specified when passphrase for {id_} is supplied.'
                     )
                 elif any(
                     d['name'] == d['encryption_root']
                     for d in await self.middleware.call(
                         'pool.dataset.query', [
-                            ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                            ['id', '^', f'{id_}/'], ['encrypted', '=', True],
                             ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
                         ]
                     )
                 ):
                     verrors.add(
                         'change_key_options.passphrase',
-                        f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                        f'{id_} has children which are encrypted with a key. It is not allowed to have encrypted '
                         'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                     )
-                elif id == (await self.middleware.call('systemdataset.config'))['pool']:
+                elif id_ == (await self.middleware.call('systemdataset.config'))['pool']:
                     verrors.add(
                         'id',
-                        f'{id} contains the system dataset. Please move the system dataset to a '
+                        f'{id_} contains the system dataset. Please move the system dataset to a '
                         'different pool before changing key_format.'
                     )
             else:
@@ -179,15 +179,15 @@ class PoolDatasetService(Service):
                             f'change_key_options.{k}',
                             'Either Key or passphrase must be provided.'
                         )
-                elif id.count('/') and await self.middleware.call(
+                elif id_.count('/') and await self.middleware.call(
                         'pool.dataset.query', [
-                            ['id', 'in', [id.rsplit('/', i)[0] for i in range(1, id.count('/') + 1)]],
+                            ['id', 'in', [id_.rsplit('/', i)[0] for i in range(1, id_.count('/') + 1)]],
                             ['key_format.value', '=', ZFSKeyFormat.PASSPHRASE.value], ['encrypted', '=', True]
                         ]
                 ):
                     verrors.add(
                         'change_key_options.key',
-                        f'{id} has parent(s) which are encrypted with a passphrase. It is not allowed to have '
+                        f'{id_} has parent(s) which are encrypted with a passphrase. It is not allowed to have '
                         'encrypted roots which are encrypted with a key as children for passphrase encrypted datasets.'
                     )
 
@@ -207,7 +207,7 @@ class PoolDatasetService(Service):
         key = encryption_dict.pop('key')
 
         await self.middleware.call(
-            'zfs.dataset.change_key', id, {
+            'zfs.dataset.change_key', id_, {
                 'encryption_properties': encryption_dict,
                 'key': key, 'load_key': False,
             }
@@ -215,35 +215,35 @@ class PoolDatasetService(Service):
 
         # TODO: Handle renames of datasets appropriately wrt encryption roots and db - this will be done when
         #  devd changes are in from the OS end
-        data = {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id}
+        data = {'encryption_key': key, 'key_format': 'PASSPHRASE' if options['passphrase'] else 'HEX', 'name': id_}
         await self.insert_or_update_encrypted_record(data)
         if options['passphrase'] and ZFSKeyFormat(ds['key_format']['value']) != ZFSKeyFormat.PASSPHRASE:
-            await self.middleware.call('pool.dataset.sync_db_keys', id)
+            await self.middleware.call('pool.dataset.sync_db_keys', id_)
 
         data['old_key_format'] = ds['key_format']['value']
         await self.middleware.call_hook('dataset.change_key', data)
 
     @accepts(Str('id'))
     @returns()
-    async def inherit_parent_encryption_properties(self, id):
+    async def inherit_parent_encryption_properties(self, id_):
         """
         Allows inheriting parent's encryption root discarding its current encryption settings. This
         can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
         """
-        ds = await self.middleware.call('pool.dataset.get_instance_quick', id, {
+        ds = await self.middleware.call('pool.dataset.get_instance_quick', id_, {
             'encryption': True,
         })
         if not ds['encrypted']:
-            raise CallError(f'Dataset {id} is not encrypted')
-        elif ds['encryption_root'] != id:
-            raise CallError(f'Dataset {id} is not an encryption root')
+            raise CallError(f'Dataset {id_} is not encrypted')
+        elif ds['encryption_root'] != id_:
+            raise CallError(f'Dataset {id_} is not an encryption root')
         elif ds['locked']:
             raise CallError('Dataset must be unlocked to perform this operation')
-        elif '/' not in id:
+        elif '/' not in id_:
             raise CallError('Root datasets do not have a parent and cannot inherit encryption settings')
         else:
             parent = await self.middleware.call(
-                'pool.dataset.get_instance_quick', id.rsplit('/', 1)[0], {
+                'pool.dataset.get_instance_quick', id_.rsplit('/', 1)[0], {
                     'encryption': True,
                 }
             )
@@ -260,16 +260,16 @@ class PoolDatasetService(Service):
                         d['name'] == d['encryption_root']
                         for d in await self.middleware.call(
                             'pool.dataset.query', [
-                                ['id', '^', f'{id}/'], ['encrypted', '=', True],
+                                ['id', '^', f'{id_}/'], ['encrypted', '=', True],
                                 ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
                             ]
                         )
                     ):
                         raise CallError(
-                            f'{id} has children which are encrypted with a key. It is not allowed to have encrypted '
+                            f'{id_} has children which are encrypted with a key. It is not allowed to have encrypted '
                             'roots which are encrypted with a key as children for passphrase encrypted datasets.'
                         )
 
-        await self.middleware.call('zfs.dataset.change_encryption_root', id, {'load_key': False})
-        await self.middleware.call('pool.dataset.sync_db_keys', id)
-        await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id)
+        await self.middleware.call('zfs.dataset.change_encryption_root', id_, {'load_key': False})
+        await self.middleware.call('pool.dataset.sync_db_keys', id_)
+        await self.middleware.call_hook('dataset.inherit_parent_encryption_root', id_)

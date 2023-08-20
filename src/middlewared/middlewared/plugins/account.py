@@ -127,8 +127,8 @@ class UserModel(sa.Model):
     bsdusr_password_disabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_ssh_password_enabled = sa.Column(sa.Boolean(), default=False)
     bsdusr_locked = sa.Column(sa.Boolean(), default=False)
-    bsdusr_sudo_commands = sa.Column(sa.JSON(type=list))
-    bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
+    bsdusr_sudo_commands = sa.Column(sa.JSON(list))
+    bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
 
@@ -1413,8 +1413,8 @@ class GroupModel(sa.Model):
     bsdgrp_gid = sa.Column(sa.Integer())
     bsdgrp_group = sa.Column(sa.String(120), unique=True)
     bsdgrp_builtin = sa.Column(sa.Boolean(), default=False)
-    bsdgrp_sudo_commands = sa.Column(sa.JSON(type=list))
-    bsdgrp_sudo_commands_nopasswd = sa.Column(sa.JSON(type=list))
+    bsdgrp_sudo_commands = sa.Column(sa.JSON(list))
+    bsdgrp_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
     bsdgrp_smb = sa.Column(sa.Boolean(), default=True)
 
 

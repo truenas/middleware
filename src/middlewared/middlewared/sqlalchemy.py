@@ -63,8 +63,8 @@ class EncryptedText(UserDefinedType):
 class JSON(UserDefinedType):
     cache_ok = True
 
-    def __init__(self, type=dict, encrypted=False):
-        self.type = type
+    def __init__(self, type_=dict, encrypted=False):
+        self.type = type_
         self.encrypted = encrypted
 
     def get_col_spec(self, **kw):

@@ -360,7 +360,7 @@ class FilesystemService(Service, ACLBase):
                 }
             }
 
-            tag, id, perms = entry.rsplit(":", 2)
+            tag, id_, perms = entry.rsplit(":", 2)
             ace['perms'].update({
                 "READ": perms[0].casefold() == "r",
                 "WRITE": perms[1].casefold() == "w",
@@ -371,8 +371,8 @@ class FilesystemService(Service, ACLBase):
                 tag = tag[8:]
 
             ace['tag'] = tag.upper()
-            if id.isdigit():
-                ace['id'] = int(id)
+            if id_.isdigit():
+                ace['id'] = int(id_)
                 if resolve_ids:
                     ace['who'] = self.middleware.call_sync(
                         'idmap.id_to_name', ace['id'], ace['tag']
