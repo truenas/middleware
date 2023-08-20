@@ -406,10 +406,10 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('atime', enum=['ON', 'OFF']), has_default=False),
         Inheritable(Str('exec', enum=['ON', 'OFF'])),
         Inheritable(Str('managedby', empty=False)),
-        Int('quota', null=True, validators=[Or(Range(min=1024 ** 3), Exact(0))]),
+        Int('quota', null=True, validators=[Or(Range(min_=1024 ** 3), Exact(0))]),
         Inheritable(Int('quota_warning', validators=[Range(0, 100)])),
         Inheritable(Int('quota_critical', validators=[Range(0, 100)])),
-        Int('refquota', null=True, validators=[Or(Range(min=1024 ** 3), Exact(0))]),
+        Int('refquota', null=True, validators=[Or(Range(min_=1024 ** 3), Exact(0))]),
         Inheritable(Int('refquota_warning', validators=[Range(0, 100)])),
         Inheritable(Int('refquota_critical', validators=[Range(0, 100)])),
         Int('reservation'),
@@ -742,7 +742,7 @@ class PoolDatasetService(CRUDService):
         )),
         ('attr', {'update': True}),
     ))
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Updates a dataset/zvol `id`.
 
@@ -763,10 +763,10 @@ class PoolDatasetService(CRUDService):
         verrors = ValidationErrors()
 
         dataset = await self.middleware.call(
-            'pool.dataset.query', [('id', '=', id)], {'extra': {'retrieve_children': False}}
+            'pool.dataset.query', [('id', '=', id_)], {'extra': {'retrieve_children': False}}
         )
         if not dataset:
-            verrors.add('id', f'{id} does not exist', errno.ENOENT)
+            verrors.add('id', f'{id_} does not exist', errno.ENOENT)
         else:
             data['type'] = dataset[0]['type']
             data['name'] = dataset[0]['name']
@@ -783,12 +783,12 @@ class PoolDatasetService(CRUDService):
                 if existing_snapdev_prop != snapdev_prop and snapdev_prop in ('INHERIT', 'HIDDEN'):
                     if await self.middleware.call(
                         'zfs.dataset.unlocked_zvols_fast',
-                        [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id}@']],
+                        [['attachment', '!=', None], ['ro', '=', True], ['name', '^', f'{id_}@']],
                         {}, ['RO', 'ATTACHMENT']
                     ):
                         verrors.add(
                             'pool_dataset_update.snapdev',
-                            f'{id!r} has snapshots which have attachments being used. Before marking it '
+                            f'{id_!r} has snapshots which have attachments being used. Before marking it '
                             'as HIDDEN, remove attachment usages.'
                         )
 
@@ -853,7 +853,7 @@ class PoolDatasetService(CRUDService):
                 })
 
         try:
-            await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+            await self.middleware.call('zfs.dataset.update', id_, {'properties': props})
         except ZFSSetPropertyError as e:
             verrors = ValidationErrors()
             verrors.add_child('pool_dataset_update', self.__handle_zfs_set_property_error(e, properties_definitions))
@@ -862,16 +862,16 @@ class PoolDatasetService(CRUDService):
         if data['type'] == 'VOLUME' and 'volsize' in data and data['volsize'] > dataset[0]['volsize']['parsed']:
             # means the zvol size has increased so we need to check if this zvol is shared via SCST (iscsi)
             # and if it is, resync it so the connected initiators can see the new size of the zvol
-            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id)
+            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id_)
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Str('id'), Dict(
         'dataset_delete',
         Bool('recursive', default=False),
         Bool('force', default=False),
     ))
-    async def do_delete(self, id, options):
+    async def do_delete(self, id_, options):
         """
         Delete dataset/zvol `id`.
 
@@ -891,12 +891,12 @@ class PoolDatasetService(CRUDService):
             }
         """
 
-        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id}/']]):
+        if not options['recursive'] and await self.middleware.call('zfs.dataset.query', [['id', '^', f'{id_}/']]):
             raise CallError(
-                f'Failed to delete dataset: cannot destroy {id!r}: filesystem has children', errno.ENOTEMPTY
+                f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
             )
 
-        dataset = await self.get_instance(id)
+        dataset = await self.get_instance(id_)
         if mountpoint := dataset_mountpoint(dataset):
             for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
                 attachments = await delegate.query(mountpoint, True)
@@ -908,7 +908,7 @@ class PoolDatasetService(CRUDService):
             # cleaned automatically when we delete the dataset
             await self.middleware.call('filesystem.set_immutable', False, mountpoint)
 
-        result = await self.middleware.call('zfs.dataset.delete', id, {
+        result = await self.middleware.call('zfs.dataset.delete', id_, {
             'force': options['force'],
             'recursive': options['recursive'],
         })
@@ -967,13 +967,13 @@ class PoolDatasetService(CRUDService):
     @item_method
     @accepts(Str('id'))
     @returns()
-    async def promote(self, id):
+    async def promote(self, id_):
         """
         Promote the cloned dataset `id`.
         """
-        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id)])
+        dataset = await self.middleware.call('zfs.dataset.query', [('id', '=', id_)])
         if not dataset:
-            raise CallError(f'Dataset "{id}" does not exist.', errno.ENOENT)
+            raise CallError(f'Dataset "{id_}" does not exist.', errno.ENOENT)
         if not dataset[0]['properties']['origin']['value']:
             raise CallError('Only cloned datasets can be promoted.', errno.EBADMSG)
-        return await self.middleware.call('zfs.dataset.promote', id)
+        return await self.middleware.call('zfs.dataset.promote', id_)

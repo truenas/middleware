@@ -27,7 +27,7 @@ class SnapshotCountAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self):
-        max = await self.middleware.call("pool.snapshottask.max_count")
+        max_ = await self.middleware.call("pool.snapshottask.max_count")
         max_total = await self.middleware.call("pool.snapshottask.max_total_count")
 
         total = 0
@@ -45,9 +45,9 @@ class SnapshotCountAlertSource(AlertSource):
 
         for dataset in sorted(datasets.keys()):
             count = datasets[dataset]
-            if count > max:
+            if count > max_:
                 return Alert(
                     SnapshotCountAlertClass,
-                    {"dataset": dataset, "count": count, "max": max},
+                    {"dataset": dataset, "count": count, "max": max_},
                     key=None,
                 )

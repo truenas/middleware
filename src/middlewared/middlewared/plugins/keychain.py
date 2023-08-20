@@ -36,7 +36,7 @@ class KeychainCredentialUsedByDelegate:
     def __init__(self, middleware):
         self.middleware = middleware
 
-    async def query(self, id):
+    async def query(self, id_):
         raise NotImplementedError
 
     async def get_title(self, row):
@@ -56,10 +56,10 @@ class OtherKeychainCredentialKeychainCredentialUsedByDelegate(KeychainCredential
 
     type = NotImplemented
 
-    async def query(self, id):
+    async def query(self, id_):
         result = []
         for row in await self.middleware.call("keychaincredential.query", [["type", "=", self.type]]):
-            if await self._is_related(row, id):
+            if await self._is_related(row, id_):
                 result.append(row)
 
         return result
@@ -70,24 +70,24 @@ class OtherKeychainCredentialKeychainCredentialUsedByDelegate(KeychainCredential
     async def unbind(self, row):
         await self.middleware.call("keychaincredential.delete", row["id"], {"cascade": True})
 
-    async def _is_related(self, row, id):
+    async def _is_related(self, row, id_):
         raise NotImplementedError
 
 
 class SSHCredentialsSSHKeyPairUsedByDelegate(OtherKeychainCredentialKeychainCredentialUsedByDelegate):
     type = "SSH_CREDENTIALS"
 
-    async def _is_related(self, row, id):
-        return row["attributes"]["private_key"] == id
+    async def _is_related(self, row, id_):
+        return row["attributes"]["private_key"] == id_
 
 
 class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByDelegate):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
-    async def query(self, id):
+    async def query(self, id_):
         result = []
         for cloud_credentials in await self.middleware.call("cloudsync.credentials.query", [["provider", "=", "SFTP"]]):
-            if cloud_credentials["attributes"].get("private_key") == id:
+            if cloud_credentials["attributes"].get("private_key") == id_:
                 result.append(cloud_credentials)
 
         return result
@@ -170,8 +170,8 @@ class SSHKeyPair(KeychainCredentialType):
 class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
-    async def query(self, id):
-        return await self.middleware.call("replication.query", [["ssh_credentials.id", "=", id]])
+    async def query(self, id_):
+        return await self.middleware.call("replication.query", [["ssh_credentials.id", "=", id_]])
 
     async def get_title(self, row):
         return f"Replication task {row['name']}"
@@ -187,8 +187,8 @@ class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelega
 class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
-    async def query(self, id):
-        return await self.middleware.call("rsynctask.query", [["ssh_credentials.id", "=", id]])
+    async def query(self, id_):
+        return await self.middleware.call("rsynctask.query", [["ssh_credentials.id", "=", id_]])
 
     async def get_title(self, row):
         return f"Rsync task for {row['path']!r}"
@@ -220,8 +220,8 @@ class SSHCredentials(KeychainCredentialType):
 
 
 TYPES = {
-    type.name: type()
-    for type in [SSHKeyPair, SSHCredentials]
+    type_.name: type_()
+    for type_ in [SSHKeyPair, SSHCredentials]
 }
 
 
@@ -316,7 +316,7 @@ class KeychainCredentialService(CRUDService):
             ("rm", {"name": "type"}),
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update a Keychain Credential with specific `id`
 
@@ -347,17 +347,17 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
 
-        await self._validate("keychain_credentials_update", new, id)
+        await self._validate("keychain_credentials_update", new, id_)
 
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,
-            id,
+            id_,
             new,
         )
 
@@ -368,7 +368,7 @@ class KeychainCredentialService(CRUDService):
 
     @accepts(Int("id"), Dict("options", Bool("cascade", default=False)))
     @returns()
-    async def do_delete(self, id, options):
+    async def do_delete(self, id_, options):
         """
         Delete Keychain Credential with specific `id`
 
@@ -385,7 +385,7 @@ class KeychainCredentialService(CRUDService):
             }
         """
 
-        instance = await self.get_instance(id)
+        instance = await self.get_instance(id_)
 
         for delegate in TYPES[instance["type"]].used_by_delegates:
             delegate = delegate(self.middleware)
@@ -398,7 +398,7 @@ class KeychainCredentialService(CRUDService):
         await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
-            id,
+            id_,
         )
 
     @accepts(Int("id"))
@@ -407,11 +407,11 @@ class KeychainCredentialService(CRUDService):
         Str("title"),
         Str("unbind_method"),
     )]))
-    async def used_by(self, id):
+    async def used_by(self, id_):
         """
         Returns list of objects that use this credential.
         """
-        instance = await self.get_instance(id)
+        instance = await self.get_instance(id_)
 
         result = []
         for delegate in TYPES[instance["type"]].used_by_delegates:
@@ -425,37 +425,37 @@ class KeychainCredentialService(CRUDService):
                     result.extend(await self.middleware.call("keychaincredential.used_by", row["id"]))
         return result
 
-    async def _validate(self, schema_name, data, id=None):
+    async def _validate(self, schema_name, data, id_=None):
         verrors = ValidationErrors()
 
-        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
+        await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
 
         if data["type"] not in TYPES:
             verrors.add(f"{schema_name}.type", "Invalid type")
             raise verrors
         else:
-            type = TYPES[data["type"]]
+            type_ = TYPES[data["type"]]
 
-            attributes_verrors = validate_schema(type.credentials_schema, data["attributes"])
+            attributes_verrors = validate_schema(type_.credentials_schema, data["attributes"])
             verrors.add_child(f"{schema_name}.attributes", attributes_verrors)
 
         verrors.check()
 
-        await type.validate_and_pre_save(self.middleware, verrors, f"{schema_name}.attributes", data["attributes"])
+        await type_.validate_and_pre_save(self.middleware, verrors, f"{schema_name}.attributes", data["attributes"])
 
         verrors.check()
 
     @private
     @accepts(Int("id"), Str("type"))
     @returns(Ref("keychain_credential_entry"))
-    async def get_of_type(self, id, type):
+    async def get_of_type(self, id_, type_):
         try:
-            credential = await self.middleware.call("keychaincredential.query", [["id", "=", id]], {"get": True})
+            credential = await self.middleware.call("keychaincredential.query", [["id", "=", id_]], {"get": True})
         except IndexError:
             raise CallError("Credential does not exist", errno.ENOENT)
         else:
-            if credential["type"] != type:
-                raise CallError(f"Credential is not of type {type}", errno.EINVAL)
+            if credential["type"] != type_:
+                raise CallError(f"Credential is not of type {type_}", errno.EINVAL)
 
             if not credential["attributes"]:
                 raise CallError(f"Decrypting credential {credential['name']} failed", errno.EFAULT)
@@ -711,9 +711,9 @@ class KeychainCredentialService(CRUDService):
         }
 
     @private
-    async def get_ssh_key_pair_with_private_key(self, id):
+    async def get_ssh_key_pair_with_private_key(self, id_):
         try:
-            credential = await self.middleware.call("keychaincredential.query", [["id", "=", id]], {"get": True})
+            credential = await self.middleware.call("keychaincredential.query", [["id", "=", id_]], {"get": True})
         except IndexError:
             return None
 

@@ -24,7 +24,7 @@ class CatalogModel(sa.Model):
     repository = sa.Column(sa.Text(), nullable=False)
     branch = sa.Column(sa.String(255), nullable=False)
     builtin = sa.Column(sa.Boolean(), nullable=False, default=False)
-    preferred_trains = sa.Column(sa.JSON(type=list))
+    preferred_trains = sa.Column(sa.JSON(list))
 
 
 class CatalogService(CRUDService):
@@ -284,31 +284,31 @@ class CatalogService(CRUDService):
             update=True
         )
     )
-    async def do_update(self, id, data):
-        catalog = await self.query([['id', '=', id]], {'extra': {'item_details': True}, 'get': True})
+    async def do_update(self, id_, data):
+        catalog = await self.query([['id', '=', id_]], {'extra': {'item_details': True}, 'get': True})
         await self.common_validation(catalog, 'catalog_update', data)
 
-        await self.middleware.call('datastore.update', self._config.datastore, id, data)
+        await self.middleware.call('datastore.update', self._config.datastore, id_, data)
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    def do_delete(self, id):
-        catalog = self.middleware.call_sync('catalog.get_instance', id)
+    def do_delete(self, id_):
+        catalog = self.middleware.call_sync('catalog.get_instance', id_)
         if catalog['builtin']:
             raise CallError('Builtin catalogs cannot be deleted')
 
-        ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
+        ret = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
 
         if os.path.exists(catalog['location']):
             shutil.rmtree(catalog['location'], ignore_errors=True)
 
         # Let's delete any unhealthy alert if we had one
-        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', id)
-        self.middleware.call_sync('alert.oneshot_delete', 'CatalogSyncFailed', id)
+        self.middleware.call_sync('alert.oneshot_delete', 'CatalogNotHealthy', id_)
+        self.middleware.call_sync('alert.oneshot_delete', 'CatalogSyncFailed', id_)
 
         # Remove cached content of the catalog in question so that if a catalog is created again
         # with same label but different repo/branch, we don't reuse old cache
-        self.middleware.call_sync('cache.pop', get_cache_key(id))
+        self.middleware.call_sync('cache.pop', get_cache_key(id_))
 
         return ret
 

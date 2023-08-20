@@ -10,8 +10,8 @@ class Pipes:
 
     :ivar output: Output pipe
     """
-    def __init__(self, input=None, output=None):
-        self.input = input
+    def __init__(self, input_=None, output=None):
+        self.input = input_
         self.output = output
 
     def __iter__(self):

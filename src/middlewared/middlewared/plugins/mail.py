@@ -65,7 +65,7 @@ class MailModel(sa.Model):
     em_user = sa.Column(sa.String(120), nullable=True)
     em_pass = sa.Column(sa.EncryptedText(), nullable=True)
     em_fromname = sa.Column(sa.String(120), default='')
-    em_oauth = sa.Column(sa.JSON(type=dict, encrypted=True), nullable=True)
+    em_oauth = sa.Column(sa.JSON(dict, encrypted=True), nullable=True)
 
 
 class MailService(ConfigService):

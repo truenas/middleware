@@ -157,10 +157,9 @@ class LDAPClient:
             self.ldap_parameters = None
 
     @ldap_client_lock
-    def search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filter='', sizelimit=0):
+    def search(self, ldap_config, basedn='', scope=pyldap.SCOPE_SUBTREE, filterstr='', sizelimit=0):
         self.open(ldap_config)
         result = []
-        serverctrls = None
         clientctrls = None
         paged = SimplePagedResultsControl(
             criticality=False,
@@ -175,10 +174,10 @@ class LDAPClient:
             serverctrls = [paged]
 
             try:
-                id = self._handle.search_ext(
+                id_ = self._handle.search_ext(
                     basedn,
                     scope,
-                    filterstr=filter,
+                    filterstr=filterstr,
                     attrlist=None,
                     attrsonly=0,
                     serverctrls=serverctrls,
@@ -188,7 +187,7 @@ class LDAPClient:
                 )
 
                 (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
-                    id, resp_ctrl_classes=paged_ctrls
+                    id_, resp_ctrl_classes=paged_ctrls
                 )
             except Exception:
                 # our session may have died, try to re-open one time before failing.

@@ -288,7 +288,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         Int('kerberos_realm', null=True),
         Str('kerberos_principal', null=True),
         Int('timeout', default=60),
-        Int('dns_timeout', default=10, validators=[Range(min=5, max=40)]),
+        Int('dns_timeout', default=10, validators=[Range(min_=5, max_=40)]),
         Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
         Str('createcomputer'),
         Str('netbiosname'),

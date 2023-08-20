@@ -286,7 +286,7 @@ class ZFSSnapshot(CRUDService):
             Bool('recursive', default=False),
         ),
     )
-    def do_delete(self, id, options):
+    def do_delete(self, id_, options):
         """
         Delete snapshot of name `id`.
 
@@ -294,7 +294,7 @@ class ZFSSnapshot(CRUDService):
         """
         try:
             with libzfs.ZFS() as zfs:
-                snap = zfs.get_snapshot(id)
+                snap = zfs.get_snapshot(id_)
                 snap.delete(defer=options['defer'], recursive=options['recursive'])
         except libzfs.ZFSException as e:
             if e.code == libzfs.Error.NOENT:
@@ -304,6 +304,6 @@ class ZFSSnapshot(CRUDService):
         else:
             # TODO: Events won't be sent for child snapshots in recursive delete
             self.middleware.send_event(
-                f'{self._config.namespace}.query', 'REMOVED', id=id, recursive=options['recursive'],
+                f'{self._config.namespace}.query', 'REMOVED', id=id_, recursive=options['recursive'],
             )
             return True

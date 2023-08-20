@@ -110,11 +110,11 @@ class SupportService(ConfigService):
         if not await self.middleware.call('system.is_enterprise'):
             return False
 
-        license = await self.middleware.call('system.license')
-        if license is None:
+        license_ = await self.middleware.call('system.license')
+        if license_ is None:
             return False
 
-        return license['contract_type'] in ['SILVER', 'GOLD']
+        return license_['contract_type'] in ['SILVER', 'GOLD']
 
     @accepts()
     @returns(Bool('proactive_support_is_available_and_enabled'))
@@ -212,9 +212,9 @@ class SupportService(ConfigService):
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
-            license = await self.middleware.call('system.license')
-            if license:
-                data['company'] = license['customer_name']
+            license_ = await self.middleware.call('system.license')
+            if license_:
+                data['company'] = license_['customer_name']
             else:
                 data['company'] = 'Unknown'
 
@@ -294,7 +294,7 @@ class SupportService(ConfigService):
                     if 'token' in data:
                         t['token'] = data['token']
                     tjob = await self.middleware.call(
-                        'support.attach_ticket', t, pipes=Pipes(input=self.middleware.pipe()),
+                        'support.attach_ticket', t, pipes=Pipes(input_=self.middleware.pipe()),
                     )
 
                     def copy2():

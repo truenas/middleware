@@ -65,65 +65,65 @@ class iSCSITargetAuthCredentialService(CRUDService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update iSCSI Authorized Access of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
 
         verrors = ValidationErrors()
         await self.validate(new, 'iscsi_auth_update', verrors)
-        if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag']], ['id', '!=', id]]):
-            usages = await self.is_in_use_by_portals_targets(id)
+        if new['tag'] != old['tag'] and not await self.query([['tag', '=', old['tag']], ['id', '!=', id_]]):
+            usages = await self.is_in_use_by_portals_targets(id_)
             if usages['in_use']:
                 verrors.add('iscsi_auth_update.tag', usages['usages'])
 
         verrors.check()
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix}
         )
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete iSCSI Authorized Access of `id`.
         """
-        config = await self.get_instance(id)
-        if not await self.query([['tag', '=', config['tag']], ['id', '!=', id]]):
-            usages = await self.is_in_use_by_portals_targets(id)
+        config = await self.get_instance(id_)
+        if not await self.query([['tag', '=', config['tag']], ['id', '!=', id_]]):
+            usages = await self.is_in_use_by_portals_targets(id_)
             if usages['in_use']:
                 raise CallError(usages['usages'])
 
         return await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
+            'datastore.delete', self._config.datastore, id_
         )
 
     @private
-    async def is_in_use_by_portals_targets(self, id):
-        config = await self.get_instance(id)
+    async def is_in_use_by_portals_targets(self, id_):
+        config = await self.get_instance(id_)
         usages = []
         portals = await self.middleware.call(
             'iscsi.portal.query', [['discovery_authgroup', '=', config['tag']]], {'select': ['id']}
         )
         if portals:
             usages.append(
-                f'Authorized access of {id} is being used by portal(s): {", ".join(p["id"] for p in portals)}'
+                f'Authorized access of {id_} is being used by portal(s): {", ".join(p["id"] for p in portals)}'
             )
         groups = await self.middleware.call(
             'datastore.query', 'services.iscsitargetgroups', [['iscsi_target_authgroup', '=', config['tag']]]
         )
         if groups:
             usages.append(
-                f'Authorized access of {id} is being used by following target(s): '
+                f'Authorized access of {id_} is being used by following target(s): '
                 f'{", ".join(str(g["iscsi_target"]["id"]) for g in groups)}'
             )
 

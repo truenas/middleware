@@ -52,32 +52,32 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update iSCSI initiator of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
 
         await self.compress(new)
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
         await self._service_change('iscsitarget', 'reload')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete iSCSI initiator of `id`.
         """
-        await self.get_instance(id)
+        await self.get_instance(id_)
         result = await self.middleware.call(
-            'datastore.delete', self._config.datastore, id
+            'datastore.delete', self._config.datastore, id_
         )
 
         await self._service_change('iscsitarget', 'reload')

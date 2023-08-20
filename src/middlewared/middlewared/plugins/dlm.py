@@ -141,7 +141,7 @@ class DistributedLockManagerService(Service):
                 self.logger.warning('Lockspace %s not stopped', lockspace_name)
                 return
 
-            # If joining set global id
+            # If joining set global id_
             if dest_nodeid == joining_nodeid:
                 await self.middleware.call('dlm.kernel.lockspace_set_global_id', lockspace_name)
                 for nodeid in nodeIDs:

@@ -159,12 +159,12 @@ class TDBWrapCRUDService(CRUDService):
     async def direct_create(self, data):
         is_clustered = await self.is_clustered()
         if not is_clustered:
-            id = await self.middleware.call(
+            id_ = await self.middleware.call(
                 "datastore.insert",
                 self._config.datastore, data,
                 {"prefix": self._config.datastore_prefix},
             )
-            return id
+            return id_
 
         if not await self.cluster_healthy():
             raise CallError("Clustered configuration may not be altered while cluster is unhealthy.")
@@ -188,12 +188,12 @@ class TDBWrapCRUDService(CRUDService):
         return res
 
     @private
-    async def direct_update(self, id, data):
+    async def direct_update(self, id_, data):
         is_clustered = await self.is_clustered()
         if not is_clustered:
             res = await self.middleware.call(
                 'datastore.update',
-                self._config.datastore, id, data,
+                self._config.datastore, id_, data,
                 {'prefix': self._config.datastore_prefix},
             )
             return res
@@ -204,7 +204,7 @@ class TDBWrapCRUDService(CRUDService):
         try:
             res = await self.middleware.call('tdb.update', {
                 'name': self._config.namespace,
-                'id': id,
+                'id': id_,
                 'payload': {'version': self.service_version, 'data': data},
                 'tdb-options': self.tdb_options.copy(),
             })
@@ -216,27 +216,27 @@ class TDBWrapCRUDService(CRUDService):
 
         return res
 
-    async def do_update(self, id, data):
-        res = await self.direct_update(id, data)
+    async def do_update(self, id_, data):
+        res = await self.direct_update(id_, data)
         return res
 
     @private
-    async def direct_delete(self, id):
+    async def direct_delete(self, id_):
         is_clustered = await self.is_clustered()
         if not is_clustered:
-            return await self.middleware.call('datastore.delete', self._config.datastore, id)
+            return await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         if not await self.cluster_healthy():
             raise CallError('Clustered configuration may not be altered while cluster is unhealthy.')
 
         res = await self.middleware.call('tdb.delete', {
             'name': self._config.namespace,
-            'id': id,
+            'id': id_,
             'tdb-options': self.tdb_options.copy(),
         })
 
         return res
 
-    async def do_delete(self, id):
-        res = await self.direct_delete(id)
+    async def do_delete(self, id_):
+        res = await self.direct_delete(id_)
         return res

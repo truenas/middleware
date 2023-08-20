@@ -22,7 +22,7 @@ class ReplicationConfigService(ConfigService):
     @accepts(
         Dict(
             "replication_config_update",
-            Int("max_parallel_replication_tasks", validators=[Range(min=1)], null=True),
+            Int("max_parallel_replication_tasks", validators=[Range(min_=1)], null=True),
             update=True,
         )
     )

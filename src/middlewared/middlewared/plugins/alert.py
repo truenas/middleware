@@ -58,7 +58,7 @@ class AlertModel(sa.Model):
     datetime = sa.Column(sa.DateTime())
     last_occurrence = sa.Column(sa.DateTime())
     text = sa.Column(sa.Text())
-    args = sa.Column(sa.JSON(type=None))
+    args = sa.Column(sa.JSON(None))
     dismissed = sa.Column(sa.Boolean())
     uuid = sa.Column(sa.Text())
     klass = sa.Column(sa.Text())
@@ -1070,11 +1070,11 @@ class AlertServiceService(CRUDService):
         "alert_service_update",
         ("attr", {"update": True}),
     ))
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update Alert Service of `id`.
         """
-        old = await self.middleware.call("datastore.query", self._config.datastore, [("id", "=", id)],
+        old = await self.middleware.call("datastore.query", self._config.datastore, [("id", "=", id_)],
                                          {"extend": self._config.datastore_extend,
                                           "get": True})
 
@@ -1085,16 +1085,16 @@ class AlertServiceService(CRUDService):
 
         await self._compress(new)
 
-        await self.middleware.call("datastore.update", self._config.datastore, id, new)
+        await self.middleware.call("datastore.update", self._config.datastore, id_, new)
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int("id"))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete Alert Service of `id`.
         """
-        return await self.middleware.call("datastore.delete", self._config.datastore, id)
+        return await self.middleware.call("datastore.delete", self._config.datastore, id_)
 
     @accepts(
         Ref('alert_service_create')

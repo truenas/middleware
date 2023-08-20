@@ -26,9 +26,9 @@ class NetworkConfigurationModel(sa.Model):
     gc_httpproxy = sa.Column(sa.String(255))
     gc_hosts = sa.Column(sa.Text(), default='')
     gc_domains = sa.Column(sa.Text(), default='')
-    gc_service_announcement = sa.Column(sa.JSON(type=dict), default={'mdns': True, 'wsdd': True, "netbios": False})
+    gc_service_announcement = sa.Column(sa.JSON(dict), default={'mdns': True, 'wsdd': True, "netbios": False})
     gc_hostname_virtual = sa.Column(sa.String(120), nullable=True)
-    gc_activity = sa.Column(sa.JSON(type=dict))
+    gc_activity = sa.Column(sa.JSON(dict))
 
 
 class NetworkConfigurationService(ConfigService):

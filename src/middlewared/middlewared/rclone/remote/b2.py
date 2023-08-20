@@ -28,7 +28,7 @@ class B2RcloneRemote(BaseRcloneRemote):
             Upload chunk size. Must fit in memory. Note that these chunks are buffered in memory and there might be a
             maximum of «--transfers» chunks in progress at once. Also, your largest file must be split in no more
             than 10 000 chunks.
-        """), default=96, validators=[Range(min=5)]),
+        """), default=96, validators=[Range(min_=5)]),
     ]
 
     async def get_task_extra(self, task):

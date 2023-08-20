@@ -36,9 +36,9 @@ class DatastoreService(Service):
                 fields=await self._fields(options, row),
             )
 
-    async def send_update_events(self, datastore, id):
+    async def send_update_events(self, datastore, id_):
         for options in self.events[datastore]:
-            fields = await self._fields(options, {options["prefix"] + options["id"]: id}, False)
+            fields = await self._fields(options, {options["prefix"] + options["id"]: id_}, False)
             if not fields:
                 # It is possible the row in question got deleted with the update
                 # event still pending, in this case we skip sending update event
@@ -47,13 +47,13 @@ class DatastoreService(Service):
             await self._send_event(
                 options,
                 "CHANGED",
-                id=id,
+                id=id_,
                 fields=fields[0],
             )
 
-    async def send_delete_events(self, datastore, id):
+    async def send_delete_events(self, datastore, id_):
         for options in self.events[datastore]:
-            await self._send_event(options, "REMOVED", id=id)
+            await self._send_event(options, "REMOVED", id=id_)
 
     async def _fields(self, options, row, get=True):
         query_options = {"get": get}
@@ -66,16 +66,16 @@ class DatastoreService(Service):
             query_options,
         )
 
-    async def _send_event(self, options, type, **kwargs):
+    async def _send_event(self, options, type_, **kwargs):
         if options["process_event"]:
-            processed = await self.middleware.call(options["process_event"], type, kwargs)
+            processed = await self.middleware.call(options["process_event"], type_, kwargs)
             if processed is None:
                 return
 
-            type, kwargs = processed
+            type_, kwargs = processed
 
         self.middleware.send_event(
             f"{options['plugin']}.query",
-            type,
+            type_,
             **kwargs,
         )

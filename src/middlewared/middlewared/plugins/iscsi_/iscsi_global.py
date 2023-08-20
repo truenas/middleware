@@ -101,8 +101,8 @@ class ISCSIGlobalService(SystemServiceService):
         'iscsiglobal_update',
         Str('basename'),
         List('isns_servers', items=[Str('server')]),
-        Int('listen_port', validators=[Range(min=1025, max=65535)], default=3260),
-        Int('pool_avail_threshold', validators=[Range(min=1, max=99)], null=True),
+        Int('listen_port', validators=[Range(min_=1025, max_=65535)], default=3260),
+        Int('pool_avail_threshold', validators=[Range(min_=1, max_=99)], null=True),
         Bool('alua'),
         update=True
     ))
@@ -192,8 +192,8 @@ class ISCSIGlobalService(SystemServiceService):
         if not await self.middleware.call('failover.licensed'):
             return False
 
-        license = await self.middleware.call('system.license')
-        if license is not None and 'FIBRECHANNEL' in license['features']:
+        license_ = await self.middleware.call('system.license')
+        if license_ is not None and 'FIBRECHANNEL' in license_['features']:
             return True
 
         return (await self.middleware.call('iscsi.global.config'))['alua']

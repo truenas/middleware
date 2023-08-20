@@ -8,11 +8,11 @@ class iSCSIHostService(Service, ServiceChangeMixin):
         namespace = "iscsi.host"
 
     @accepts(Int("id"))
-    async def get_initiators(self, id):
+    async def get_initiators(self, id_):
         """
         Returns initiator groups associated with host `id`.
         """
-        host = await self.middleware.call("iscsi.host.get_instance", id)
+        host = await self.middleware.call("iscsi.host.get_instance", id_)
 
         return [
             initiator
@@ -21,12 +21,12 @@ class iSCSIHostService(Service, ServiceChangeMixin):
         ]
 
     @accepts(Int("id"), List("ids", items=[Int("id")]), Bool("force", default=False))
-    async def set_initiators(self, id, ids, force):
+    async def set_initiators(self, id_, ids, force):
         """
         Associates initiator groups `ids` with host `id`.
         Use `force` if you want to allow adding first or removing last initiator from initiator groups.
         """
-        host = await self.middleware.call("iscsi.host.get_instance", id)
+        host = await self.middleware.call("iscsi.host.get_instance", id_)
 
         update = []
         for initiator in await self.middleware.call("iscsi.initiator.query"):
@@ -50,7 +50,7 @@ class iSCSIHostService(Service, ServiceChangeMixin):
 
             update.append((initiator["id"], list(initiators)))
 
-        for id, initiators in update:
-            await self.middleware.call("iscsi.initiator.update", id, {"initiators": initiators})
+        for id_, initiators in update:
+            await self.middleware.call("iscsi.initiator.update", id_, {"initiators": initiators})
 
         await self._service_change("iscsitarget", "reload")

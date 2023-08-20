@@ -58,7 +58,7 @@ class ACLFlags(enum.Enum):
     DI = ("DIRECTORY_INHERIT", "CONTAINER_INHERIT")
     NI = ("NO_PROPAGATE_INHERIT", "NO_PROPAGATE_INHERIT")
     IO = ("INHERIT_ONLY", "INHERIT_ONLY")
-    ID = ("INHERITED", "INHERITED")
+    id_ = ("INHERITED", "INHERITED")
 
     def convert(aclt, in_flags):
         acl = ACLType[aclt]

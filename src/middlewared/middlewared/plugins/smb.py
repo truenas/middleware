@@ -436,9 +436,9 @@ class SMBService(TDBWrapConfigService):
         return self.LP_CTX.get(parm)
 
     @private
-    async def get_next_rid(self, objtype, id):
+    async def get_next_rid(self, objtype, id_):
         base_rid = 20000 if objtype == 'USER' else 200000
-        return base_rid + id
+        return base_rid + id_
 
     @private
     async def setup_directories(self):
@@ -1061,7 +1061,7 @@ class SharingSMBService(SharingService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update SMB Share of `id`.
         """
@@ -1069,7 +1069,7 @@ class SharingSMBService(SharingService):
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
 
         verrors = ValidationErrors()
-        old = await self.query([('id', '=', id)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
+        old = await self.query([('id', '=', id_)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
         new = old.copy()
         new.update(data)
@@ -1078,7 +1078,7 @@ class SharingSMBService(SharingService):
         newname = 'homes' if new['home'] else new['name']
 
         new['vuid'] = await self.generate_vuid(new['timemachine'], new['vuid'])
-        await self.clean(new, 'sharingsmb_update', verrors, id=id)
+        await self.clean(new, 'sharingsmb_update', verrors, id_=id_)
         if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
 
@@ -1108,7 +1108,7 @@ class SharingSMBService(SharingService):
             return await self.query([('name', '=', share_name)],
                                     {'get': True, 'extra': {'ha_mode': ha_mode.name}})
 
-        old_is_locked = (await self.get_instance(id))['locked']
+        old_is_locked = (await self.get_instance(id_))['locked']
         if old['path'] != new['path']:
             new_is_locked = await self.middleware.call('pool.dataset.path_in_locked_datasets', new['path'])
         else:
@@ -1116,7 +1116,7 @@ class SharingSMBService(SharingService):
 
         await self.compress(new)
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
         await self.strip_comments(new)
@@ -1143,7 +1143,7 @@ class SharingSMBService(SharingService):
             Configuration change only impacts a locked SMB share. From standpoint of
             running config, this is a no-op. No need to restart or reload service.
             """
-            return await self.get_instance(id)
+            return await self.get_instance(id_)
 
         elif not old_is_locked and not new_is_locked:
             """
@@ -1208,10 +1208,10 @@ class SharingSMBService(SharingService):
         if check_mdns or old['timemachine'] != new['timemachine']:
             await self.middleware.call('service.restart', 'mdns')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete SMB Share of `id`. This will forcibly disconnect SMB clients
         that are accessing the share.
@@ -1219,11 +1219,11 @@ class SharingSMBService(SharingService):
         await self.middleware.call("smb.cluster_check")
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         if ha_mode != SMBHAMODE.CLUSTERED:
-            share = await self.get_instance(id)
-            result = await self.middleware.call('datastore.delete', self._config.datastore, id)
+            share = await self.get_instance(id_)
+            result = await self.middleware.call('datastore.delete', self._config.datastore, id_)
         else:
-            share = await self.query([('id', '=', id)], {'get': True})
-            result = id
+            share = await self.query([('id', '=', id_)], {'get': True})
+            result = id_
 
         share_name = 'homes' if share['home'] else share['name']
         share_list = await self.middleware.call('sharing.smb.reg_listshares')
@@ -1346,8 +1346,8 @@ class SharingSMBService(SharingService):
         })
 
     @private
-    async def clean(self, data, schema_name, verrors, id=None):
-        data['name'] = await self.name_exists(data, schema_name, verrors, id)
+    async def clean(self, data, schema_name, verrors, id_=None):
+        data['name'] = await self.name_exists(data, schema_name, verrors, id_)
         await self.add_path_local(data)
 
     @private
@@ -1648,10 +1648,10 @@ class SharingSMBService(SharingService):
 
         if home:
             if old and old['id'] is not None:
-                id = old['id']
+                id_ = old['id']
 
                 if not old['home']:
-                    home_filters.append(('id', '!=', id))
+                    home_filters.append(('id', '!=', id_))
                     # The user already had this set as the home share
                     home_result = await self.middleware.call(
                         'datastore.query', self._config.datastore,
@@ -1682,7 +1682,7 @@ class SharingSMBService(SharingService):
             return '\n'.join([f'{k}={v}' if v is not None else k for k, v in aux.items()])
 
     @private
-    async def name_exists(self, data, schema_name, verrors, id=None):
+    async def name_exists(self, data, schema_name, verrors, id_=None):
         name = data['name']
         path = data['path']
 
@@ -1691,8 +1691,8 @@ class SharingSMBService(SharingService):
 
         name_filters = [('name', '=', name)]
 
-        if id is not None:
-            name_filters.append(('id', '!=', id))
+        if id_ is not None:
+            name_filters.append(('id', '!=', id_))
 
         name_result = await self.middleware.call(
             'datastore.query', self._config.datastore,

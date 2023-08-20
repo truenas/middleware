@@ -17,10 +17,10 @@ class PrivilegeModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     builtin_name = sa.Column(sa.String(200), nullable=True)
     name = sa.Column(sa.String(200))
-    local_groups = sa.Column(sa.JSON(type=list))
-    ds_groups = sa.Column(sa.JSON(type=list))
-    allowlist = sa.Column(sa.JSON(type=list))
-    roles = sa.Column(sa.JSON(type=list))
+    local_groups = sa.Column(sa.JSON(list))
+    ds_groups = sa.Column(sa.JSON(list))
+    allowlist = sa.Column(sa.JSON(list))
+    roles = sa.Column(sa.JSON(list))
     web_shell = sa.Column(sa.Boolean())
 
 
@@ -80,13 +80,13 @@ class PrivilegeService(CRUDService):
         """
         await self._validate("privilege_create", data)
 
-        id = await self.middleware.call(
+        id_ = await self.middleware.call(
             "datastore.insert",
             self._config.datastore,
             data
         )
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int("id", required=True),
@@ -97,11 +97,11 @@ class PrivilegeService(CRUDService):
             ("attr", {"update": True}),
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update the privilege `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new["local_groups"] = [g["gid"] for g in new["local_groups"]]
 
@@ -133,40 +133,40 @@ class PrivilegeService(CRUDService):
 
         new.update(data)
 
-        await self._validate("privilege_update", new, id)
+        await self._validate("privilege_update", new, id_)
 
         await self.middleware.call(
             "datastore.update",
             self._config.datastore,
-            id,
+            id_,
             new,
         )
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int("id")
     )
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete the privilege `id`.
         """
-        privilege = await self.get_instance(id)
+        privilege = await self.get_instance(id_)
         if privilege["builtin_name"]:
             raise CallError("Unable to delete built-in privilege", errno.EPERM)
 
         response = await self.middleware.call(
             "datastore.delete",
             self._config.datastore,
-            id
+            id_
         )
 
         return response
 
-    async def _validate(self, schema_name, data, id=None):
+    async def _validate(self, schema_name, data, id_=None):
         verrors = ValidationErrors()
 
-        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
+        await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
 
         groups = await self._groups()
         for i, local_group_id in enumerate(data["local_groups"]):

@@ -10,7 +10,7 @@ from middlewared.validators import validate_schema, Range
     ([Str("text", required=True)], {}, {"text"}),
     ([Int("number")], {"number": "1"}, {"number": 1}),
     ([Int("number")], {"number": "XXX"}, {"number"}),
-    ([Int("number", validators=[Range(min=2)])], {"number": 1}, {"number"}),
+    ([Int("number", validators=[Range(min_=2)])], {"number": 1}, {"number"}),
     ([Dict("image", Str("repository", required=True))], {}, {"image.repository"}),
 ])
 def test__validate_schema(schema, data, result):

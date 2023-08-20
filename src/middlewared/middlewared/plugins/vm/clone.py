@@ -70,14 +70,14 @@ class VMService(Service):
     @item_method
     @accepts(Int('id'), Str('name', default=None))
     @returns(Bool())
-    async def clone(self, id, name):
+    async def clone(self, id_, name):
         """
         Clone the VM `id`.
 
         `name` is an optional parameter for the cloned VM.
         If not provided it will append the next number available to the VM name.
         """
-        vm = await self.middleware.call('vm.get_instance', id)
+        vm = await self.middleware.call('vm.get_instance', id_)
 
         origin_name = vm['name']
         del vm['id']

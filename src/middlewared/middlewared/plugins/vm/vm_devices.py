@@ -168,30 +168,30 @@ class VMDeviceService(CRUDService):
         data = await self.validate_device(data, update=False)
         data = await self.update_device(data)
 
-        id = await self.middleware.call(
+        id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data
         )
-        await self.__reorder_devices(id, data['vm'], data['order'])
+        await self.__reorder_devices(id_, data['vm'], data['order'])
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update a VM device of `id`.
 
         Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
         """
-        device = await self.get_instance(id)
+        device = await self.get_instance(id_)
         new = device.copy()
         new.update(data)
 
         new = await self.validate_device(new, device)
         new = await self.update_device(new, device)
 
-        await self.middleware.call('datastore.update', self._config.datastore, id, new)
-        await self.__reorder_devices(id, device['vm'], new['order'])
+        await self.middleware.call('datastore.update', self._config.datastore, id_, new)
+        await self.__reorder_devices(id_, device['vm'], new['order'])
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @private
     async def delete_resource(self, options, device):
@@ -223,11 +223,11 @@ class VMDeviceService(CRUDService):
             Bool('force', default=False),
         )
     )
-    async def do_delete(self, id, options):
+    async def do_delete(self, id_, options):
         """
         Delete a VM device of `id`.
         """
-        device = await self.get_instance(id)
+        device = await self.get_instance(id_)
         status = await self.middleware.call('vm.status', device['vm'])
         if status['state'] in ACTIVE_STATES:
             raise CallError('Please stop/resume associated VM before deleting VM device.')
@@ -238,12 +238,12 @@ class VMDeviceService(CRUDService):
             if not options['force']:
                 raise
 
-        return await self.middleware.call('datastore.delete', self._config.datastore, id)
+        return await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
-    async def __reorder_devices(self, id, vm_id, order):
+    async def __reorder_devices(self, id_, vm_id, order):
         if order is None:
             return
-        filters = [('vm', '=', vm_id), ('id', '!=', id)]
+        filters = [('vm', '=', vm_id), ('id', '!=', id_)]
         if await self.middleware.call('vm.device.query', filters + [('order', '=', order)]):
             used_order = [order]
             for device in await self.middleware.call('vm.device.query', filters, {'order_by': ['order']}):

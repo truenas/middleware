@@ -42,19 +42,19 @@ class StaticRouteService(CRUDService):
 
         await self.lower(data)
 
-        id = await self.middleware.call(
+        id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.restart', 'routing')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update Static Route of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -62,19 +62,19 @@ class StaticRouteService(CRUDService):
 
         await self.lower(new)
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix})
 
         await self.middleware.call('service.restart', 'routing')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    def do_delete(self, id):
+    def do_delete(self, id_):
         """
         Delete Static Route of `id`.
         """
-        staticroute = self.middleware.call_sync('staticroute.get_instance', id)
-        rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id)
+        staticroute = self.middleware.call_sync('staticroute.get_instance', id_)
+        rv = self.middleware.call_sync('datastore.delete', self._config.datastore, id_)
         try:
             rt = netif.RoutingTable()
             rt.delete(self._netif_route(staticroute))

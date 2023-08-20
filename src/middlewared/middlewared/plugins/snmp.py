@@ -45,7 +45,7 @@ class SNMPService(SystemServiceService):
         Str('v3_password', required=True),
         Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True, required=True),
         Str('v3_privpassphrase', required=True, null=True),
-        Int('loglevel', validators=[Range(min=0, max=7)], required=True),
+        Int('loglevel', validators=[Range(min_=0, max_=7)], required=True),
         Str('options', max_length=None, required=True),
         Bool('zilstat', required=True),
         Int('id', required=True),

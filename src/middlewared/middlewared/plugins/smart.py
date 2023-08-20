@@ -231,11 +231,11 @@ class SMARTTestService(CRUDService):
         Cron.convert_db_format_to_schedule(data)
         return data
 
-    async def _validate(self, data, id=None):
+    async def _validate(self, data, id_=None):
         verrors = ValidationErrors()
 
         disk_choices = await self.disk_choices()
-        other_tests = await self.query([('id', '!=', id)] if id is not None else [])
+        other_tests = await self.query([('id', '!=', id_)] if id_ is not None else [])
 
         if not data['disks'] and not data['all_disks']:
             verrors.add('disks', 'This field is required')
@@ -352,16 +352,16 @@ class SMARTTestService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update SMART Test Task of `id`.
         """
-        old = await self.query(filters=[('id', '=', id)], options={'get': True})
+        old = await self.query(filters=[('id', '=', id_)], options={'get': True})
         new = old.copy()
         new.update(data)
 
         verrors = ValidationErrors()
-        verrors.add_child('smart_test_update', await self._validate(new, id))
+        verrors.add_child('smart_test_update', await self._validate(new, id_))
         verrors.check()
 
         new['type'] = new.pop('type')[0]
@@ -371,23 +371,23 @@ class SMARTTestService(CRUDService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
 
         self.middleware.create_task(self._service_change('smartd', 'restart'))
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete SMART Test Task of `id`.
         """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         self.middleware.create_task(self._service_change('smartd', 'restart'))

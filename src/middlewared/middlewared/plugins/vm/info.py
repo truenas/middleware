@@ -36,8 +36,8 @@ class VMService(Service, LibvirtConnectionMixin):
         """
         can_run_vms = True
         if await self.middleware.call('system.is_ha_capable'):
-            license = await self.middleware.call('system.license')
-            can_run_vms = license is not None and 'VM' in license['features']
+            license_ = await self.middleware.call('system.license')
+            can_run_vms = license_ is not None and 'VM' in license_['features']
 
         return can_run_vms
 
@@ -108,11 +108,11 @@ class VMService(Service, LibvirtConnectionMixin):
 
     @accepts(Int('id'))
     @returns(Str('console_device'))
-    async def get_console(self, id):
+    async def get_console(self, id_):
         """
         Get the console device from a given guest.
         """
-        vm = await self.middleware.call('vm.get_instance', id)
+        vm = await self.middleware.call('vm.get_instance', id_)
         return f'{vm["id"]}_{vm["name"]}'
 
     @accepts()

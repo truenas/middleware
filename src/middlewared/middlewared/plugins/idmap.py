@@ -213,7 +213,7 @@ class IdmapDomainModel(sa.Model):
     idmap_domain_range_low = sa.Column(sa.Integer())
     idmap_domain_range_high = sa.Column(sa.Integer())
     idmap_domain_idmap_backend = sa.Column(sa.String(120), default='rid')
-    idmap_domain_options = sa.Column(sa.JSON(type=dict))
+    idmap_domain_options = sa.Column(sa.JSON(dict))
     idmap_domain_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
 
 
@@ -372,7 +372,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         data = bytearray(sid.encode())
         datalen = len(data)
-        hash = seed
+        hash_ = seed
         data_bytes = data
 
         c1 = 0xcc9e2d51
@@ -388,9 +388,9 @@ class IdmapDomainService(TDBWrapCRUDService):
             k = (k * c1) & 0xFFFFFFFF
             k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
             k = (k * c2) & 0xFFFFFFFF
-            hash ^= k
-            hash = (hash << r2 | hash >> 32 - r2) & 0xFFFFFFFF
-            hash = (hash * 5 + n) & 0xFFFFFFFF
+            hash_ ^= k
+            hash_ = (hash_ << r2 | hash_ >> 32 - r2) & 0xFFFFFFFF
+            hash_ = (hash_ * 5 + n) & 0xFFFFFFFF
 
         if datalen > 0:
             k = 0
@@ -403,16 +403,16 @@ class IdmapDomainService(TDBWrapCRUDService):
                 k = (k * c1) & 0xFFFFFFFF
                 k = (k << r1 | k >> 32 - r1) & 0xFFFFFFFF
                 k = (k * c2) & 0xFFFFFFFF
-                hash ^= k
+                hash_ ^= k
 
-        hash = (hash ^ len(data)) & 0xFFFFFFFF
-        hash ^= hash >> 16
-        hash = (hash * 0x85ebca6b) & 0xFFFFFFFF
-        hash ^= hash >> 13
-        hash = (hash * 0xc2b2ae35) & 0xFFFFFFFF
-        hash ^= hash >> 16
+        hash_ = (hash_ ^ len(data)) & 0xFFFFFFFF
+        hash_ ^= hash_ >> 16
+        hash_ = (hash_ * 0x85ebca6b) & 0xFFFFFFFF
+        hash_ ^= hash_ >> 13
+        hash_ = (hash_ * 0xc2b2ae35) & 0xFFFFFFFF
+        hash_ ^= hash_ >> 16
 
-        return (hash % max_slices) * range_size + range_size
+        return (hash_ % max_slices) * range_size + range_size
 
     @private
     async def flush_gencache(self):
@@ -636,8 +636,8 @@ class IdmapDomainService(TDBWrapCRUDService):
         'idmap_domain_create',
         Str('name', required=True),
         Str('dns_domain_name'),
-        Int('range_low', required=True, validators=[Range(min=1000, max=TRUENAS_IDMAP_MAX)]),
-        Int('range_high', required=True, validators=[Range(min=1000, max=TRUENAS_IDMAP_MAX)]),
+        Int('range_low', required=True, validators=[Range(min_=1000, max_=TRUENAS_IDMAP_MAX)]),
+        Int('range_high', required=True, validators=[Range(min_=1000, max_=TRUENAS_IDMAP_MAX)]),
         Str('idmap_backend', required=True, enum=[x.name for x in IdmapBackend]),
         Int('certificate', null=True),
         OROperator(
@@ -649,7 +649,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             ),
             Dict(
                 'idmap_autorid_options',
-                Int('rangesize', default=100000, validators=[Range(min=10000, max=1000000000)]),
+                Int('rangesize', default=100000, validators=[Range(min_=10000, max_=1000000000)]),
                 Bool('readonly', default=False),
                 Bool('ignore_builtin', default=False),
             ),
@@ -835,17 +835,17 @@ class IdmapDomainService(TDBWrapCRUDService):
         final_options.update(data['options'])
         data['options'] = final_options
 
-        id = await super().do_create(data)
-        out = await self.query([('id', '=', id)], {'get': True})
+        id_ = await super().do_create(data)
+        out = await self.query([('id', '=', id_)], {'get': True})
         await self.synchronize()
         return out
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update a domain by id.
         """
 
-        old = await self.query([('id', '=', id)], {'get': True})
+        old = await self.query([('id', '=', id_)], {'get': True})
         new = old.copy()
         new.update(data)
         if data.get('idmap_backend') and data['idmap_backend'] != old['idmap_backend']:
@@ -911,25 +911,25 @@ class IdmapDomainService(TDBWrapCRUDService):
                                        domain, secret)
             await self.middleware.call("directoryservices.backup_secrets")
 
-        await super().do_update(id, new)
+        await super().do_update(id_, new)
 
-        out = await self.query([('id', '=', id)], {'get': True})
+        out = await self.query([('id', '=', id_)], {'get': True})
         await self.synchronize(False)
         cache_job = await self.middleware.call('idmap.clear_idmap_cache')
         await cache_job.wait()
         return out
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete a domain by id. Deletion of default system domains is not permitted.
         In case of registry config for clustered server, this will remove all smb4.conf
         entries for the domain associated with the id.
         """
-        if id <= 5:
-            entry = await self.get_instance(id)
+        if id_ <= 5:
+            entry = await self.get_instance(id_)
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
-        ret = await self.direct_delete(id)
+        ret = await self.direct_delete(id_)
         await self.synchronize()
         return ret
 
@@ -998,9 +998,9 @@ class IdmapDomainService(TDBWrapCRUDService):
         payload = []
         for entry in id_list:
             unixid = entry.get("id")
-            id = IDType[entry.get("id_type", "GROUP")]
+            id_ = IDType[entry.get("id_type", "GROUP")]
             payload.append({
-                'id_type': id.wbc_str(),
+                'id_type': id_.wbc_str(),
                 'id': unixid
             })
 
@@ -1077,17 +1077,17 @@ class IdmapDomainService(TDBWrapCRUDService):
         return filter_list(out, filters, options)
 
     @private
-    async def id_to_name(self, id, id_type):
+    async def id_to_name(self, id_, id_type):
         idtype = IDType[id_type]
         idmap_timeout = 5.0
 
         if idtype == IDType.GROUP or idtype == IDType.BOTH:
             method = "group.get_group_obj"
-            to_check = {"gid": id}
+            to_check = {"gid": id_}
             key = 'gr_name'
         elif idtype == IDType.USER:
             method = "user.get_user_obj"
-            to_check = {"uid": id}
+            to_check = {"uid": id_}
             key = 'pw_name'
         else:
             raise CallError(f"Unsupported id_type: [{idtype.name}]")
@@ -1102,7 +1102,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             self.logger.debug(
                 "timeout encountered while trying to convert %s id %s "
                 "to name. This may indicate significant networking issue.",
-                id_type.lower(), id
+                id_type.lower(), id_
             )
             name = None
         except KeyError:
@@ -1119,21 +1119,21 @@ class IdmapDomainService(TDBWrapCRUDService):
         with what appears when viewed over SMB protocol we'll do the same here.
         """
         unixid = data.get("id")
-        id = IDType[data.get("id_type", "GROUP")]
+        id_ = IDType[data.get("id_type", "GROUP")]
         payload = {
-            'id_type': id.wbc_str(),
+            'id_type': id_.wbc_str(),
             'id': unixid
         }
         try:
             entry = WBClient().uidgid_to_sid(payload)
         except MatchNotFound:
             is_local = self.middleware.call_sync(
-                f'{"user" if id == IDType.USER else "group"}.query',
-                [("uid" if id == IDType.USER else "gid", '=', unixid)],
+                f'{"user" if id_ == IDType.USER else "group"}.query',
+                [("uid" if id_ == IDType.USER else "gid", '=', unixid)],
                 {"count": True}
             )
             if is_local:
-                return f'S-1-22-{1 if id == IDType.USER else 2}-{unixid}'
+                return f'S-1-22-{1 if id_ == IDType.USER else 2}-{unixid}'
 
             return None
         except wbclient.WBCError as e:
@@ -1142,7 +1142,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         return self._pyuidgid_to_dict(entry)['sid']
 
     @private
-    async def get_idmap_info(self, ds, id):
+    async def get_idmap_info(self, ds, id_):
         low_range = None
         id_type_both = False
         domains = await self.query()
@@ -1154,7 +1154,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             if ds == 'ldap' and d['name'] != 'DS_TYPE_LDAP':
                 continue
 
-            if id in range(d['range_low'], d['range_high']):
+            if id_ in range(d['range_low'], d['range_high']):
                 low_range = d['range_low']
                 id_type_both = d['idmap_backend'] in ['AUTORID', 'RID']
                 break

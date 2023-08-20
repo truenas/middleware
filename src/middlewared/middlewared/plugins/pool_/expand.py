@@ -17,11 +17,11 @@ class PoolService(Service):
     )
     @returns()
     @job(lock='pool_expand')
-    async def expand(self, job, id):
+    async def expand(self, job, id_):
         """
         Expand pool to fit all available disk space.
         """
-        pool = await self.middleware.call('pool.get_instance', id)
+        pool = await self.middleware.call('pool.get_instance', id_)
         all_partitions = {p['name']: p for p in await self.middleware.call('disk.list_all_partitions')}
         vdevs = []
         for vdev in sum(pool['topology'].values(), []):

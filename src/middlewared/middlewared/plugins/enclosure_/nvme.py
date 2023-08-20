@@ -10,7 +10,7 @@ class EnclosureService(Service):
     RE_SLOT = re.compile(r"^0-([0-9]+)$")
 
     @private
-    def fake_nvme_enclosure(self, id, name, model, count, slot_to_nvme):
+    def fake_nvme_enclosure(self, id_, name, model, count, slot_to_nvme):
         elements = []
         for slot in range(1, 1 + count):
             device = slot_to_nvme.get(slot, None)
@@ -39,7 +39,7 @@ class EnclosureService(Service):
 
         return [
             {
-                "id": id,
+                "id": id_,
                 "name": name,
                 "model": model,
                 "controller": True,

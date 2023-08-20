@@ -342,11 +342,11 @@ class ServiceService(CRUDService):
     SERVICES = {}
 
     @private
-    async def register_object(self, object):
-        if object.name in self.SERVICES:
-            raise CallError(f"Service object {object.name} is already registered")
+    async def register_object(self, object_):
+        if object_.name in self.SERVICES:
+            raise CallError(f"Service object {object_.name} is already registered")
 
-        self.SERVICES[object.name] = object
+        self.SERVICES[object_.name] = object_
 
     @private
     async def object(self, name):
@@ -356,8 +356,8 @@ class ServiceService(CRUDService):
             raise MatchNotFound(name) from None
 
     @private
-    async def generate_etc(self, object):
-        for etc in object.etc:
+    async def generate_etc(self, object_):
+        for etc in object_.etc:
             await self.middleware.call("etc.generate", etc)
 
     @private

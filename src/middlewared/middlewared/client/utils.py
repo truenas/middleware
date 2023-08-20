@@ -60,7 +60,7 @@ class ProgressBar(object):
     def finish(self):
         self.percentage = 1
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, typ, value, traceback):
         if self.used_flag:
             self.draw()
             self.write_stream.write('\n')

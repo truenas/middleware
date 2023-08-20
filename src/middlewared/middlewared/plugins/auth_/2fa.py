@@ -40,9 +40,9 @@ class TwoFactorAuthService(ConfigService):
     ENTRY = Dict(
         'auth_twofactor_entry',
         Bool('enabled', required=True),
-        Int('otp_digits', validators=[Range(min=6, max=8)], required=True),
-        Int('window', validators=[Range(min=0)], required=True),
-        Int('interval', validators=[Range(min=5)], required=True),
+        Int('otp_digits', validators=[Range(min_=6, max_=8)], required=True),
+        Int('window', validators=[Range(min_=0)], required=True),
+        Int('interval', validators=[Range(min_=5)], required=True),
         Dict(
             'services',
             Bool('ssh', default=False),

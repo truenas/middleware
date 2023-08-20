@@ -75,9 +75,9 @@ class RegistrySchema():
         This is used in both clusterd and non-clustered
         configurations to write the SMB configuration.
         """
-        map = self.schema_map()
+        map_ = self.schema_map()
         for entry, val in data_in.items():
-            regobj = map.get(entry)
+            regobj = map_.get(entry)
             if regobj is None:
                 continue
 
@@ -94,8 +94,7 @@ class RegistrySchema():
         return
 
     def schema_map(self):
-        map = {x.name: x for x in self.schema}
-        return map
+        return {x.name: x for x in self.schema}
 
     def schema_items(self):
         return [x.name for x in self.schema]

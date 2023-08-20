@@ -222,7 +222,7 @@ class DiskService(CRUDService):
             ('attr', {'update': True}),
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update disk of `id`.
 
@@ -241,7 +241,7 @@ class DiskService(CRUDService):
         """
 
         old = await self.middleware.call(
-            'datastore.query', 'storage.disk', [['identifier', '=', id]], {
+            'datastore.query', 'storage.disk', [['identifier', '=', id_]], {
                 'get': True, 'prefix': self._config.datastore_prefix
             }
         )
@@ -260,7 +260,7 @@ class DiskService(CRUDService):
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
             if new['kmip_uid']:
-                self.middleware.create_task(self.middleware.call('kmip.reset_sed_disk_password', id, new['kmip_uid']))
+                self.middleware.create_task(self.middleware.call('kmip.reset_sed_disk_password', id_, new['kmip_uid']))
             new['kmip_uid'] = None
 
         for key in ['advpowermgmt', 'hddstandby']:
@@ -271,7 +271,7 @@ class DiskService(CRUDService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
@@ -293,9 +293,9 @@ class DiskService(CRUDService):
             await self._service_change('snmp', 'restart')
 
         if new['passwd'] and old['passwd'] != new['passwd']:
-            await self.middleware.call('kmip.sync_sed_keys', [id])
+            await self.middleware.call('kmip.sync_sed_keys', [id_])
 
-        return await self.query([['identifier', '=', id]], {'get': True})
+        return await self.query([['identifier', '=', id_]], {'get': True})
 
     @private
     async def copy_settings(self, old, new):

@@ -24,7 +24,7 @@ class DropboxRcloneRemote(BaseRcloneRemote):
             maximum of «--transfers» chunks in progress at once. Dropbox Business accounts can have monthly data
             transfer limits per team per month. By using larger chnuk sizes you will decrease the number of data
             transfer calls used and you'll be able to transfer more data to your Dropbox Business account.
-        """), default=48, validators=[Range(min=5, max=149)]),
+        """), default=48, validators=[Range(min_=5, max_=149)]),
     ]
 
     async def get_task_extra(self, task):

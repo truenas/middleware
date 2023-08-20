@@ -278,11 +278,11 @@ class AuthService(Service):
 
     @accepts(Str('id'))
     @returns(Bool(description='Is `true` if session was terminated successfully'))
-    async def terminate_session(self, id):
+    async def terminate_session(self, id_):
         """
         Terminates session `id`.
         """
-        session = self.session_manager.sessions.get(id)
+        session = self.session_manager.sessions.get(id_)
         if session is None:
             return False
 

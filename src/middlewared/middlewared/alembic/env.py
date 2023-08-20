@@ -96,7 +96,7 @@ BatchOperationsImpl.drop_references = lambda self, column: self.batch.append(("d
 ApplyBatchImpl.drop_references = drop_references_impl
 
 
-def include_object(object, name, type_, reflected, compare_to):
+def include_object(object_, name, type_, reflected, compare_to):
     if type_ == "table" and name in {"sqlite_sequence"}:
         return False
     else:

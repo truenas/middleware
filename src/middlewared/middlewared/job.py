@@ -237,7 +237,7 @@ class Job:
         self.method = method
         self.args = args
         self.options = options
-        self.pipes = pipes or Pipes(input=None, output=None)
+        self.pipes = pipes or Pipes(input_=None, output=None)
         self.on_progress_cb = on_progress_cb
 
         self.id = None
@@ -290,8 +290,8 @@ class Job:
             lock_name = lock_name(self.args)
         return lock_name
 
-    def set_id(self, id):
-        self.id = id
+    def set_id(self, id_):
+        self.id = id_
 
     def set_result(self, result):
         self.result = result

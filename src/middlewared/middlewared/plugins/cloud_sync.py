@@ -626,47 +626,47 @@ class CredentialsService(CRUDService):
             ("attr", {"update": True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update Cloud Sync Credentials of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
 
-        await self._validate("cloud_sync_credentials_update", new, id)
+        await self._validate("cloud_sync_credentials_update", new, id_)
 
         await self.middleware.call(
             "datastore.update",
             "system.cloudcredentials",
-            id,
+            id_,
             new,
         )
 
-        data["id"] = id
+        data["id"] = id_
 
         return data
 
     @accepts(Int("id"))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete Cloud Sync Credentials of `id`.
         """
-        tasks = await self.middleware.call("cloudsync.query", [["credentials.id", "=", id]])
+        tasks = await self.middleware.call("cloudsync.query", [["credentials.id", "=", id_]])
         if tasks:
             raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
 
         return await self.middleware.call(
             "datastore.delete",
             "system.cloudcredentials",
-            id,
+            id_,
         )
 
-    async def _validate(self, schema_name, data, id=None):
+    async def _validate(self, schema_name, data, id_=None):
         verrors = ValidationErrors()
 
-        await self._ensure_unique(verrors, schema_name, "name", data["name"], id)
+        await self._ensure_unique(verrors, schema_name, "name", data["name"], id_)
 
         if data["provider"] not in REMOTES:
             verrors.add(f"{schema_name}.provider", "Invalid provider")
@@ -851,11 +851,11 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         return await self.get_instance(cloud_sync["id"])
 
     @accepts(Int("id"), Patch("cloud_sync_create", "cloud_sync_update", ("attr", {"update": True})))
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Updates the cloud_sync entry `id` with `data`.
         """
-        cloud_sync = await self.get_instance(id)
+        cloud_sync = await self.get_instance(id_)
 
         # credentials is a foreign key for now
         if cloud_sync["credentials"]:
@@ -875,19 +875,19 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         cloud_sync = await self._compress(cloud_sync)
 
-        await self.middleware.call("datastore.update", "tasks.cloudsync", id, cloud_sync)
+        await self.middleware.call("datastore.update", "tasks.cloudsync", id_, cloud_sync)
         await self.middleware.call("service.restart", "cron")
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int("id"))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Deletes cloud_sync entry `id`.
         """
-        await self.middleware.call("cloudsync.abort", id)
-        await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id)
-        rv = await self.middleware.call("datastore.delete", "tasks.cloudsync", id)
+        await self.middleware.call("cloudsync.abort", id_)
+        await self.middleware.call("alert.oneshot_delete", "CloudSyncTaskFailed", id_)
+        rv = await self.middleware.call("datastore.delete", "tasks.cloudsync", id_)
         await self.middleware.call("service.restart", "cron")
         return rv
 
@@ -1022,14 +1022,14 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         )
     )
     @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
-    async def sync(self, job, id, options):
+    async def sync(self, job, id_, options):
         """
         Run the cloud_sync job `id`, syncing the local data to remote.
         """
 
-        cloud_sync = await self.get_instance(id)
+        cloud_sync = await self.get_instance(id_)
         if cloud_sync["locked"]:
-            await self.middleware.call("cloudsync.generate_locked_alert", id)
+            await self.middleware.call("cloudsync.generate_locked_alert", id_)
             raise CallError("Dataset is locked")
 
         await self._sync(cloud_sync, options, job)
@@ -1090,12 +1090,12 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     @item_method
     @accepts(Int("id"))
-    async def abort(self, id):
+    async def abort(self, id_):
         """
         Aborts cloud sync task.
         """
 
-        cloud_sync = await self.get_instance(id)
+        cloud_sync = await self.get_instance(id_)
 
         if cloud_sync["job"] is None:
             return False

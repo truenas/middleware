@@ -138,8 +138,8 @@ class VMService(CRUDService, VMSupervisorMixin):
         Bool('pin_vcpus', default=False),
         Bool('suspend_on_snapshot', default=False),
         Bool('trusted_platform_module', default=False),
-        Int('memory', required=True, validators=[Range(min=20)]),
-        Int('min_memory', null=True, validators=[Range(min=20)], default=None),
+        Int('memory', required=True, validators=[Range(min_=20)]),
+        Int('min_memory', null=True, validators=[Range(min_=20)], default=None),
         Bool('hyperv_enlightenments', default=False),
         Str('bootloader', enum=list(BOOT_LOADER_OPTIONS.keys()), default='UEFI'),
         Str('bootloader_ovmf', default='OVMF_CODE.fd'),
@@ -148,7 +148,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Bool('ensure_display_device', default=True),
         Str('time', enum=['LOCAL', 'UTC'], default='LOCAL'),
         Int('shutdown_timeout', default=90,
-            validators=[Range(min=5, max=300)]),
+            validators=[Range(min_=5, max_=300)]),
         Str('arch_type', null=True, default=None),
         Str('machine_type', null=True, default=None),
         Str('uuid', null=True, default=None, validators=[UUID()]),
@@ -324,7 +324,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             ('attr', {'update': True}),
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update all information of a specific VM.
 
@@ -339,7 +339,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         3) Devices that do not have an `id` attribute are created and attached to `id` VM.
         """
 
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -357,16 +357,16 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         new.pop('devices')
         new.pop('status', None)
-        await self.middleware.call('datastore.update', 'vm.vm', id, new)
+        await self.middleware.call('datastore.update', 'vm.vm', id_, new)
 
-        vm_data = await self.get_instance(id)
+        vm_data = await self.get_instance(id_)
         if new['name'] != old['name']:
             await self.middleware.run_in_thread(self._rename_domain, old, vm_data)
 
         if old['shutdown_timeout'] != new['shutdown_timeout']:
             await self.middleware.call('etc.generate', 'libvirt_guests')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id'),
@@ -376,19 +376,19 @@ class VMService(CRUDService, VMSupervisorMixin):
             Bool('force', default=False),
         ),
     )
-    async def do_delete(self, id, data):
+    async def do_delete(self, id_, data):
         """
         Delete a VM.
         """
         async with LIBVIRT_LOCK:
-            vm = await self.get_instance(id)
+            vm = await self.get_instance(id_)
             # Deletion should be allowed even if host does not support virtualization
             if self._is_kvm_supported():
                 await self.middleware.run_in_thread(self._check_setup_connection)
-            status = await self.middleware.call('vm.status', id)
+            status = await self.middleware.call('vm.status', id_)
             force_delete = data.get('force')
             if status['state'] in ACTIVE_STATES:
-                await self.middleware.call('vm.poweroff', id)
+                await self.middleware.call('vm.poweroff', id_)
                 # We would like to wait at least 7 seconds to have the vm
                 # complete it's post vm actions which might require interaction with it's domain
                 await asyncio.sleep(7)
@@ -397,7 +397,7 @@ class VMService(CRUDService, VMSupervisorMixin):
 
             if data['zvols']:
                 devices = await self.middleware.call('vm.device.query', [
-                    ('vm', '=', id), ('dtype', '=', 'DISK')
+                    ('vm', '=', id_), ('dtype', '=', 'DISK')
                 ])
 
                 for zvol in devices:
@@ -427,7 +427,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             # We remove vm devices first
             for device in vm['devices']:
                 await self.middleware.call('vm.device.delete', device['id'], {'force': data['force']})
-            result = await self.middleware.call('datastore.delete', 'vm.vm', id)
+            result = await self.middleware.call('datastore.delete', 'vm.vm', id_)
             if not await self.middleware.call('vm.query'):
                 await self.middleware.call('vm.deinitialize_vms')
                 self._clear()
@@ -443,7 +443,7 @@ class VMService(CRUDService, VMSupervisorMixin):
         Int('pid', null=True, required=True),
         Str('domain_state', required=True),
     ))
-    def status(self, id):
+    def status(self, id_):
         """
         Get the status of `id` VM.
 
@@ -451,7 +451,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             - state, RUNNING / STOPPED / SUSPENDED
             - pid, process id if RUNNING
         """
-        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id]], {'get': True})
+        vm = self.middleware.call_sync('datastore.query', 'vm.vm', [['id', '=', id_]], {'get': True})
         self._check_setup_connection()
         return self.status_impl(vm)
 

@@ -394,7 +394,7 @@ class CertificateAuthorityService(CRUDService):
             Str('name'),
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update Certificate Authority of `id`
 
@@ -422,7 +422,7 @@ class CertificateAuthorityService(CRUDService):
         """
         if data.pop('create_type', '') == 'CA_SIGN_CSR':
             # BEING USED BY OLD LEGACY FOR SIGNING CSR'S. THIS CAN BE REMOVED WHEN LEGACY UI IS REMOVED
-            data['ca_id'] = id
+            data['ca_id'] = id_
             return await self.middleware.call(
                 'certificateauthority.ca_sign_csr_impl', data, 'certificate_authority_update'
             )
@@ -430,7 +430,7 @@ class CertificateAuthorityService(CRUDService):
             for key in ['ca_id', 'csr_cert_id']:
                 data.pop(key, None)
 
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         # signedby is changed back to integer from a dict
         old['signedby'] = old['signedby']['id'] if old.get('signedby') else None
 
@@ -468,19 +468,19 @@ class CertificateAuthorityService(CRUDService):
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
-                id,
+                id_,
                 {'name': new['name'], 'add_to_trusted_store': new['add_to_trusted_store']},
                 {'prefix': self._config.datastore_prefix}
             )
 
             if old['revoked'] != new['revoked'] and new['revoked']:
-                await self.middleware.call('certificateauthority.revoke_ca_chain', id)
+                await self.middleware.call('certificateauthority.revoke_ca_chain', id_)
 
             await self.middleware.call('service.start', 'ssl')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete a Certificate Authority of `id`
 
@@ -498,13 +498,13 @@ class CertificateAuthorityService(CRUDService):
                 ]
             }
         """
-        await self.get_instance(id)
-        await self.middleware.call('certificateauthority.check_ca_dependencies', id)
+        await self.get_instance(id_)
+        await self.middleware.call('certificateauthority.check_ca_dependencies', id_)
 
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         await self.middleware.call('service.start', 'ssl')

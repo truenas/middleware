@@ -93,11 +93,11 @@ class ISCSIGlobalService(Service):
         return filter_list(sessions, filters, options)
 
     @private
-    def resync_lun_size_for_zvol(self, id):
+    def resync_lun_size_for_zvol(self, id_):
         if not self.middleware.call_sync('service.started', 'iscsitarget'):
             return
 
-        extent = self.middleware.call_sync('iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id}']])
+        extent = self.middleware.call_sync('iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id_}']])
         if not extent:
             return
 

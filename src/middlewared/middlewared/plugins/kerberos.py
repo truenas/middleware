@@ -801,10 +801,10 @@ class KerberosRealmService(TDBWrapCRUDService):
         verrors.check()
 
         data = await self.kerberos_compress(data)
-        id = await super().do_create(data)
+        id_ = await super().do_create(data)
         await self.middleware.call('etc.generate', 'kerberos')
         await self.middleware.call('service.restart', 'cron')
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id', required=True),
@@ -814,28 +814,28 @@ class KerberosRealmService(TDBWrapCRUDService):
             ("attr", {"update": True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update a kerberos realm by id. This will be automatically populated during the
         domain join process in an Active Directory environment. Kerberos realm names
         are case-sensitive, but convention is to only use upper-case.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
         data = await self.kerberos_compress(new)
-        await super().do_update(id, new)
+        await super().do_update(id_, new)
 
         await self.middleware.call('etc.generate', 'kerberos')
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete a kerberos realm by ID.
         """
-        await super().do_delete(id)
+        await super().do_delete(id_)
         await self.middleware.call('etc.generate', 'kerberos')
 
     @private
@@ -890,10 +890,10 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
         verrors.check()
 
-        id = await super().do_create(data)
+        id_ = await super().do_create(data)
         await self.middleware.call('etc.generate', 'kerberos')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id', required=True),
@@ -902,11 +902,11 @@ class KerberosKeytabService(TDBWrapCRUDService):
             'kerberos_keytab_update',
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update kerberos keytab by id.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -916,18 +916,18 @@ class KerberosKeytabService(TDBWrapCRUDService):
 
         verrors.check()
 
-        await super().do_update(id, new)
+        await super().do_update(id_, new)
         await self.middleware.call('etc.generate', 'kerberos')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete kerberos keytab by id, and force regeneration of
         system keytab.
         """
-        kt = await self.get_instance(id)
+        kt = await self.get_instance(id_)
         if kt['name'] == 'AD_MACHINE_ACCOUNT':
             if (await self.middleware.call('activedirectory.get_state')) != 'DISABLED':
                 raise CallError(
@@ -935,7 +935,7 @@ class KerberosKeytabService(TDBWrapCRUDService):
                     'the Active Directory service is enabled.'
                 )
 
-        await super().do_delete(id)
+        await super().do_delete(id_)
         if os.path.exists(keytab['SYSTEM'].value):
             os.remove(keytab['SYSTEM'].value)
         await self.middleware.call('etc.generate', 'kerberos')
@@ -1197,9 +1197,9 @@ class KerberosKeytabService(TDBWrapCRUDService):
                 {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file}
             )
         else:
-            id = entry[0]['id']
+            id_ = entry[0]['id']
             updated_entry = {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file}
-            await self.middleware.call('kerberos.keytab.direct_update', id, updated_entry)
+            await self.middleware.call('kerberos.keytab.direct_update', id_, updated_entry)
 
         sambakt = await self.query([('name', '=', 'AD_MACHINE_ACCOUNT')])
         if sambakt:

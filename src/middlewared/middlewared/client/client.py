@@ -541,13 +541,13 @@ class Client:
             raise ValueError(payload['error'])
         return payload['id']
 
-    def unsubscribe(self, id):
+    def unsubscribe(self, id_):
         self._send({
             'msg': 'unsub',
-            'id': id,
+            'id': id_,
         })
         for k, events in list(self._event_callbacks.items()):
-            events = [v for v in events if v['id'] != id]
+            events = [v for v in events if v['id'] != id_]
             if events:
                 self._event_callbacks[k] = events
             else:

@@ -125,11 +125,11 @@ class TDBWrapConfigService(ConfigService):
     async def direct_update(self, data):
         is_clustered = await self.is_clustered()
         if not is_clustered:
-            id = data.pop("id", 1)
+            id_ = data.pop("id", 1)
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
-                id,
+                id_,
                 data,
                 {"prefix": self._config.datastore_prefix}
             )

@@ -21,7 +21,7 @@ class PeriodicSnapshotTaskModel(sa.Model):
     task_begin = sa.Column(sa.Time(), default=time(hour=9))
     task_end = sa.Column(sa.Time(), default=time(hour=18))
     task_enabled = sa.Column(sa.Boolean(), default=True)
-    task_exclude = sa.Column(sa.JSON(type=list))
+    task_exclude = sa.Column(sa.JSON(list))
     task_naming_schema = sa.Column(sa.String(150), default='auto-%Y-%m-%d_%H-%M')
     task_minute = sa.Column(sa.String(100), default="00")
     task_hour = sa.Column(sa.String(100), default="*")
@@ -165,7 +165,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             ('attr', {'update': True})
         ),
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update a Periodic Snapshot Task with specific `id`
 
@@ -203,7 +203,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         fixate_removal_date = data.pop('fixate_removal_date', False)
 
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -213,7 +213,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         if not new['enabled']:
             for replication_task in await self.middleware.call('replication.query', [['enabled', '=', True]]):
-                if any(periodic_snapshot_task['id'] == id
+                if any(periodic_snapshot_task['id'] == id_
                        for periodic_snapshot_task in replication_task['periodic_snapshot_tasks']):
                     verrors.add(
                         'periodic_snapshot_update.enabled',
@@ -232,13 +232,13 @@ class PeriodicSnapshotTaskService(CRUDService):
         will_change_retention_for = None
         if fixate_removal_date:
             will_change_retention_for = await self.middleware.call(
-                'pool.snapshottask.update_will_change_retention_for', id, data,
+                'pool.snapshottask.update_will_change_retention_for', id_, data,
             )
 
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             new,
             {'prefix': self._config.datastore_prefix}
         )
@@ -248,7 +248,7 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         await self.middleware.call('zettarepl.update_tasks')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id'),
@@ -257,7 +257,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             Bool('fixate_removal_date', default=False),
         ),
     )
-    async def do_delete(self, id, options):
+    async def do_delete(self, id_, options):
         """
         Delete a Periodic Snapshot Task with specific `id`
 
@@ -280,7 +280,7 @@ class PeriodicSnapshotTaskService(CRUDService):
             ['enabled', '=', True],
         ]):
             if len(replication_task['periodic_snapshot_tasks']) == 1:
-                if replication_task['periodic_snapshot_tasks'][0]['id'] == id:
+                if replication_task['periodic_snapshot_tasks'][0]['id'] == id_:
                     raise CallError(
                         f'You are deleting the last periodic snapshot task bound to enabled replication task '
                         f'{replication_task["name"]!r} which will break it. Please, disable that replication task '
@@ -289,17 +289,17 @@ class PeriodicSnapshotTaskService(CRUDService):
 
         if options['fixate_removal_date']:
             will_change_retention_for = await self.middleware.call(
-                'pool.snapshottask.delete_will_change_retention_for', id
+                'pool.snapshottask.delete_will_change_retention_for', id_
             )
 
             if will_change_retention_for:
-                task = await self.get_instance(id)
+                task = await self.get_instance(id_)
                 await self.middleware.call('pool.snapshottask.fixate_removal_date', will_change_retention_for, task)
 
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         await self.middleware.call('zettarepl.update_tasks')
@@ -352,10 +352,10 @@ class PeriodicSnapshotTaskService(CRUDService):
             'YEAR': 3600 * 24 * 365,
         }[lifetime_unit])
 
-        iter = croniter_for_schedule(data['schedule'], base, datetime)
+        iter_ = croniter_for_schedule(data['schedule'], base, datetime)
         count = 0
         while True:
-            d = iter.get_next()
+            d = iter_.get_next()
             if d > until:
                 break
 
@@ -388,11 +388,11 @@ class PeriodicSnapshotTaskService(CRUDService):
 
     @item_method
     @accepts(Int("id"))
-    async def run(self, id):
+    async def run(self, id_):
         """
         Execute a Periodic Snapshot Task of `id`.
         """
-        task = await self.get_instance(id)
+        task = await self.get_instance(id_)
 
         if not task["enabled"]:
             raise CallError("Task is not enabled")
@@ -450,9 +450,9 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
         await self.middleware.call('zettarepl.update_tasks')
 
 
-async def on_zettarepl_state_changed(middleware, id, fields):
-    if id.startswith('periodic_snapshot_task_'):
-        task_id = int(id.split('_')[-1])
+async def on_zettarepl_state_changed(middleware, id_, fields):
+    if id_.startswith('periodic_snapshot_task_'):
+        task_id = int(id_.split('_')[-1])
         middleware.send_event('pool.snapshottask.query', 'CHANGED', id=task_id, fields={'state': fields})
 
 

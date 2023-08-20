@@ -156,7 +156,7 @@ class TunableService(CRUDService):
         if data['type'] == 'ZFS':
             data['orig_value'] = await self.middleware.run_in_thread(zfs_parameter_value, data['var'])
 
-        id = await self.middleware.call(
+        id_ = await self.middleware.call(
             'datastore.insert', self._config.datastore, data, {'prefix': self._config.datastore_prefix}
         )
 
@@ -172,7 +172,7 @@ class TunableService(CRUDService):
         else:
             await self.handle_tunable_change(data)
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id', required=True),
@@ -185,11 +185,11 @@ class TunableService(CRUDService):
         )
     )
     @job(lock='tunable_crud')
-    async def do_update(self, job, id, data):
+    async def do_update(self, job, id_, data):
         """
         Update Tunable of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         update_initramfs = data.pop('update_initramfs', True)
 
@@ -200,7 +200,7 @@ class TunableService(CRUDService):
             return old
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new, {'prefix': self._config.datastore_prefix}
+            'datastore.update', self._config.datastore, id_, new, {'prefix': self._config.datastore_prefix}
         )
 
         if new['type'] == 'SYSCTL':
@@ -221,14 +221,14 @@ class TunableService(CRUDService):
         else:
             await self.handle_tunable_change(new)
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @job(lock='tunable_crud')
-    async def do_delete(self, job, id):
+    async def do_delete(self, job, id_):
         """
         Delete Tunable of `id`.
         """
-        entry = await self.get_instance(id)
+        entry = await self.get_instance(id_)
 
         await self.middleware.call('datastore.delete', self._config.datastore, entry['id'])
 

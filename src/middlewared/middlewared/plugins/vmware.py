@@ -106,11 +106,11 @@ class VMWareService(CRUDService):
         Int('id', required=True),
         Patch('vmware_create', 'vmware_update', ('attr', {'update': True}))
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update VMWare snapshot of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         old.pop('state')
         new = old.copy()
 
@@ -121,16 +121,16 @@ class VMWareService(CRUDService):
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
-            id,
+            id_,
             {**new, 'state': {'state': 'PENDING'}},
         )
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(
         Int('id')
     )
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete VMWare snapshot of `id`.
         """
@@ -138,7 +138,7 @@ class VMWareService(CRUDService):
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         return response
@@ -683,8 +683,8 @@ class VMWareService(CRUDService):
                 self.set_vmsnapobj_state_by_id(vmware["id"], state)
 
     @private
-    def set_vmsnapobj_state_by_id(self, id, state):
-        self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id, {
+    def set_vmsnapobj_state_by_id(self, id_, state):
+        self.middleware.call_sync("datastore.update", "storage.vmwareplugin", id_, {
             "state": {
                 **state,
                 "datetime": datetime.utcnow(),

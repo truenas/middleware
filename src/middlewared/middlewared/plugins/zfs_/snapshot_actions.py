@@ -55,7 +55,7 @@ class ZFSSnapshot(Service):
             Bool('recursive_rollback', default=False),
         ),
     )
-    def rollback(self, id, options):
+    def rollback(self, id_, options):
         """
         Rollback to a given snapshot `id`.
 
@@ -78,7 +78,7 @@ class ZFSSnapshot(Service):
             args += ['-R']
 
         if options['recursive_rollback']:
-            dataset, snap_name = id.rsplit('@', 1)
+            dataset, snap_name = id_.rsplit('@', 1)
             datasets = set({
                 f'{ds["id"]}@{snap_name}' for ds in self.middleware.call_sync(
                     'zfs.dataset.query', [['OR', [['id', '^', f'{dataset}/'], ['id', '=', dataset]]]]
@@ -89,13 +89,13 @@ class ZFSSnapshot(Service):
                 self.rollback_impl(args, snap)
 
         else:
-            self.rollback_impl(args, id)
+            self.rollback_impl(args, id_)
 
     @private
-    def rollback_impl(self, args, id):
+    def rollback_impl(self, args, id_):
         try:
             subprocess.run(
-                ['zfs', 'rollback'] + args + [id], text=True, capture_output=True, check=True,
+                ['zfs', 'rollback'] + args + [id_], text=True, capture_output=True, check=True,
             )
         except subprocess.CalledProcessError as e:
             raise CallError(f'Failed to rollback snapshot: {e.stderr.strip()}')
@@ -108,7 +108,7 @@ class ZFSSnapshot(Service):
         ),
     )
     @returns()
-    def hold(self, id, options):
+    def hold(self, id_, options):
         """
         Holds snapshot `id`.
 
@@ -118,7 +118,7 @@ class ZFSSnapshot(Service):
         """
         try:
             with libzfs.ZFS() as zfs:
-                snapshot = zfs.get_snapshot(id)
+                snapshot = zfs.get_snapshot(id_)
                 snapshot.hold('truenas', options['recursive'])
         except libzfs.ZFSException as err:
             raise CallError(f'Failed to hold snapshot: {err}')
@@ -131,7 +131,7 @@ class ZFSSnapshot(Service):
         ),
     )
     @returns()
-    def release(self, id, options):
+    def release(self, id_, options):
         """
         Release held snapshot `id`.
 
@@ -142,7 +142,7 @@ class ZFSSnapshot(Service):
         """
         try:
             with libzfs.ZFS() as zfs:
-                snapshot = zfs.get_snapshot(id)
+                snapshot = zfs.get_snapshot(id_)
                 for tag in snapshot.holds:
                     snapshot.release(tag, options['recursive'])
         except libzfs.ZFSException as err:

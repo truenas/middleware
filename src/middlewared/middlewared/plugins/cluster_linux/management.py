@@ -664,17 +664,17 @@ class ClusterManagement(Service):
             OROperator(
                 Dict(
                     'replicated_brick_layout',
-                    Int('replica_distribute', validators=[Range(min=1)], default=1)
+                    Int('replica_distribute', validators=[Range(min_=1)], default=1)
                 ),
                 Dict(
                     'dispersed_brick_layout',
-                    Int('disperse_data', validators=[Range(min=2)], required=True),
-                    Int('disperse_redundancy', validators=[Range(min=1)], default=1),
-                    Int('disperse_distribute', validators=[Range(min=1)], default=1)
+                    Int('disperse_data', validators=[Range(min_=2)], required=True),
+                    Int('disperse_redundancy', validators=[Range(min_=1)], default=1),
+                    Int('disperse_distribute', validators=[Range(min_=1)], default=1)
                 ),
                 Dict(
                     'distributed_brick_layout',
-                    Int('distribute_bricks', validators=[Range(min=3)], required=True)
+                    Int('distribute_bricks', validators=[Range(min_=3)], required=True)
                 ),
                 name='brick_layout',
                 required=True

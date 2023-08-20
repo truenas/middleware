@@ -109,9 +109,9 @@ class SystemService(Service):
         """
         if self.HOST_ID is None:
             with open('/etc/hostid', 'rb') as f:
-                id = f.read().strip()
-                if id:
-                    self.HOST_ID = hashlib.sha256(id).hexdigest()
+                id_ = f.read().strip()
+                if id_:
+                    self.HOST_ID = hashlib.sha256(id_).hexdigest()
 
         return self.HOST_ID
 

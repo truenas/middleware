@@ -26,14 +26,14 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         self._rxq = dev.get_attr('IFLA_NUM_RX_QUEUES') or 1
         self._txq = dev.get_attr('IFLA_NUM_TX_QUEUES') or 1
 
-    def _read(self, name, type=str):
-        return self._sysfs_read(f"/sys/class/net/{self.name}/{name}", type)
+    def _read(self, name, type_=str):
+        return self._sysfs_read(f"/sys/class/net/{self.name}/{name}", type_)
 
-    def _sysfs_read(self, path, type=str):
+    def _sysfs_read(self, path, type_=str):
         with open(path, "r") as f:
             value = f.read().strip()
 
-        return type(value)
+        return type_(value)
 
     @property
     def orig_name(self):

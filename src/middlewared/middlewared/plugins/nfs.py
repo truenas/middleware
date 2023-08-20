@@ -29,7 +29,7 @@ class NFSModel(sa.Model):
     nfs_srv_servers = sa.Column(sa.Integer(), default=4)
     nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_protocols = sa.Column(sa.JSON(type=list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
+    nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
     nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
     nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
     nfs_srv_bindip = sa.Column(sa.MultiSelectField())
@@ -56,7 +56,7 @@ class NFSService(SystemServiceService):
     ENTRY = Dict(
         'nfs_entry',
         Int('id', required=True),
-        Int('servers', validators=[Range(min=1, max=256)], required=True),
+        Int('servers', validators=[Range(min_=1, max_=256)], required=True),
         Bool('udp', required=True),
         Bool('allow_nonroot', required=True),
         List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
@@ -64,9 +64,9 @@ class NFSService(SystemServiceService):
         Bool('v4_krb', required=True),
         Str('v4_domain', required=True),
         List('bindip', items=[IPAddr('ip')], required=True),
-        Int('mountd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
-        Int('rpcstatd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
-        Int('rpclockd_port', null=True, validators=[Range(min=1, max=65535)], required=True),
+        Int('mountd_port', null=True, validators=[Range(min_=1, max_=65535)], required=True),
+        Int('rpcstatd_port', null=True, validators=[Range(min_=1, max_=65535)], required=True),
+        Int('rpclockd_port', null=True, validators=[Range(min_=1, max_=65535)], required=True),
         Bool('mountd_log', required=True),
         Bool('statd_lockd_log', required=True),
         Bool('v4_krb_enabled', required=True),
@@ -248,7 +248,7 @@ class NFSShareModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_path = sa.Column(sa.Text())
-    nfs_aliases = sa.Column(sa.JSON(type=list))
+    nfs_aliases = sa.Column(sa.JSON(list))
     nfs_comment = sa.Column(sa.String(120))
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
@@ -343,12 +343,12 @@ class SharingNFSService(SharingService):
             ("attr", {"update": True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update NFS Share of `id`.
         """
         verrors = ValidationErrors()
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
 
         new = old.copy()
         new.update(data)
@@ -359,7 +359,7 @@ class SharingNFSService(SharingService):
 
         await self.compress(new)
         await self.middleware.call(
-            "datastore.update", self._config.datastore, id, new,
+            "datastore.update", self._config.datastore, id_, new,
             {
                 "prefix": self._config.datastore_prefix
             }
@@ -367,14 +367,14 @@ class SharingNFSService(SharingService):
 
         await self._service_change("nfs", "reload")
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @returns()
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete NFS Share of `id`.
         """
-        await self.middleware.call("datastore.delete", self._config.datastore, id)
+        await self.middleware.call("datastore.delete", self._config.datastore, id_)
         await self._service_change("nfs", "reload")
 
     @private

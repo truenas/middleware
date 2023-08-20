@@ -394,10 +394,10 @@ class PoolService(CRUDService):
         Dict(
             'encryption_options',
             Bool('generate_key', default=False),
-            Int('pbkdf2iters', default=350000, validators=[Range(min=100000)]),
+            Int('pbkdf2iters', default=350000, validators=[Range(min_=100000)]),
             Str('algorithm', default='AES-256-GCM', enum=ZFS_ENCRYPTION_ALGORITHM_CHOICES),
-            Str('passphrase', default=None, null=True, validators=[Range(min=8)], empty=False, private=True),
-            Str('key', default=None, null=True, validators=[Range(min=64, max=64)], private=True),
+            Str('passphrase', default=None, null=True, validators=[Range(min_=8)], empty=False, private=True),
+            Str('key', default=None, null=True, validators=[Range(min_=64, max_=64)], private=True),
             register=True
         ),
         Dict(
@@ -674,7 +674,7 @@ class PoolService(CRUDService):
         ('edit', {'name': 'topology', 'method': lambda x: setattr(x, 'update', True)}),
     ))
     @job(lock='pool_createupdate')
-    async def do_update(self, job, id, data):
+    async def do_update(self, job, id_, data):
         """
         Update pool of `id`, adding the new topology.
 
@@ -698,7 +698,7 @@ class PoolService(CRUDService):
                 }]
             }
         """
-        pool = await self.get_instance(id)
+        pool = await self.get_instance(id_)
 
         disks = vdevs = None
         if 'topology' in data:
@@ -727,7 +727,7 @@ class PoolService(CRUDService):
         if properties:
             await self.middleware.call('zfs.pool.update', pool['name'], {'properties': properties})
 
-        pool = await self.get_instance(id)
+        pool = await self.get_instance(id_)
         await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
         return pool
 

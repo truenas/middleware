@@ -44,8 +44,8 @@ class PoolScrubService(CRUDService):
 
     ENTRY = Dict(
         'pool_scrub_entry',
-        Int('pool', validators=[Range(min=1)], required=True),
-        Int('threshold', validators=[Range(min=0)], required=True),
+        Int('pool', validators=[Range(min_=1)], required=True),
+        Int('threshold', validators=[Range(min_=0)], required=True),
         Str('description', required=True),
         Cron(
             'schedule',
@@ -158,11 +158,11 @@ class PoolScrubService(CRUDService):
 
         return await self.get_instance(data['id'])
 
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update scrub task of `id`.
         """
-        task_data = await self.get_instance(id)
+        task_data = await self.get_instance(id_)
         original_data = task_data.copy()
         task_data['original_pool_id'] = original_data['pool']
         task_data.update(data)
@@ -181,24 +181,24 @@ class PoolScrubService(CRUDService):
             await self.middleware.call(
                 'datastore.update',
                 self._config.datastore,
-                id,
+                id_,
                 task_data,
                 {'prefix': self._config.datastore_prefix}
             )
 
             await self.middleware.call('service.restart', 'cron')
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def do_delete(self, id_):
         """
         Delete scrub task of `id`.
         """
         response = await self.middleware.call(
             'datastore.delete',
             self._config.datastore,
-            id
+            id_
         )
 
         await self.middleware.call('service.restart', 'cron')

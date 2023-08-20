@@ -385,20 +385,20 @@ class ZettareplService(Service):
 
         self.middleware.call_sync("zettarepl.notify_definition", definition, hold_tasks)
 
-    async def run_periodic_snapshot_task(self, id):
+    async def run_periodic_snapshot_task(self, id_):
         try:
-            self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id}")))
+            self.queue.put(("run_task", ("PeriodicSnapshotTask", f"task_{id_}")))
         except Exception:
             raise CallError("Replication service is not running")
 
-    def run_replication_task(self, id, really_run, job):
+    def run_replication_task(self, id_, really_run, job):
         if really_run:
             try:
-                self.queue.put(("run_task", ("ReplicationTask", f"task_{id}")))
+                self.queue.put(("run_task", ("ReplicationTask", f"task_{id_}")))
             except Exception:
                 raise CallError("Replication service is not running")
 
-        self._run_replication_task_job(f"task_{id}", job)
+        self._run_replication_task_job(f"task_{id_}", job)
 
     def run_onetime_replication_task(self, job, task):
         self.onetime_replication_tasks[job.id] = task
@@ -424,8 +424,8 @@ class ZettareplService(Service):
             self.onetime_replication_tasks.pop(job.id)
             self.update_tasks()
 
-    def _run_replication_task_job(self, id, job):
-        channels = self.replication_jobs_channels[id]
+    def _run_replication_task_job(self, id_, job):
+        channels = self.replication_jobs_channels[id_]
         channel = queue.Queue()
         channels.append(channel)
         snapshot_start_message = None
@@ -712,13 +712,13 @@ class ZettareplService(Service):
 
         properties_exclude = replication_task["properties_exclude"].copy()
         properties_override = replication_task["properties_override"].copy()
-        for property in ["mountpoint", "sharenfs", "sharesmb"]:
-            if property == "mountpoint" and not replication_task.get("exclude_mountpoint_property", True):
+        for property_ in ["mountpoint", "sharenfs", "sharesmb"]:
+            if property_ == "mountpoint" and not replication_task.get("exclude_mountpoint_property", True):
                 continue
 
-            if property not in properties_override:
-                if property not in properties_exclude:
-                    properties_exclude.append(property)
+            if property_ not in properties_override:
+                if property_ not in properties_exclude:
+                    properties_exclude.append(property_)
 
         definition = {
             "direction": replication_task["direction"].lower(),

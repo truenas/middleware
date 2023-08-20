@@ -11,7 +11,7 @@ from middlewared.schema import (
 def test__nonhidden_after_hidden():
     with pytest.raises(ValueError):
         @accepts(Int('id'), Bool('fake', hidden=True), List('flags'))
-        def f(self, id, fake, flags):
+        def f(self, id_, fake, flags):
             pass
 
 

@@ -24,7 +24,7 @@ class iSCSITargetModel(sa.Model):
     iscsi_target_name = sa.Column(sa.String(120), unique=True)
     iscsi_target_alias = sa.Column(sa.String(120), nullable=True, unique=True)
     iscsi_target_mode = sa.Column(sa.String(20), default='iscsi')
-    iscsi_target_auth_networks = sa.Column(sa.JSON(type=list))
+    iscsi_target_auth_networks = sa.Column(sa.JSON(list))
 
 
 class iSCSITargetGroupModel(sa.Model):
@@ -283,11 +283,11 @@ class iSCSITargetService(CRUDService):
             ('attr', {'update': True})
         )
     )
-    async def do_update(self, id, data):
+    async def do_update(self, id_, data):
         """
         Update iSCSI Target of `id`.
         """
-        old = await self.get_instance(id)
+        old = await self.get_instance(id_)
         new = old.copy()
         new.update(data)
 
@@ -303,11 +303,11 @@ class iSCSITargetService(CRUDService):
         oldgroups = oldgroups['groups']
 
         await self.middleware.call(
-            'datastore.update', self._config.datastore, id, new,
+            'datastore.update', self._config.datastore, id_, new,
             {'prefix': self._config.datastore_prefix}
         )
 
-        await self.__save_groups(id, groups, oldgroups)
+        await self.__save_groups(id_, groups, oldgroups)
 
         # First process the local (MASTER) config
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
@@ -316,28 +316,28 @@ class iSCSITargetService(CRUDService):
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):
             await self.middleware.call('failover.call_remote', 'service.reload', ['iscsitarget'])
 
-        return await self.get_instance(id)
+        return await self.get_instance(id_)
 
     @accepts(Int('id'), Bool('force', default=False))
-    async def do_delete(self, id, force):
+    async def do_delete(self, id_, force):
         """
         Delete iSCSI Target of `id`.
 
         Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
         """
-        target = await self.get_instance(id)
+        target = await self.get_instance(id_)
         if await self.active_sessions_for_targets([target['id']]):
             if force:
                 self.middleware.logger.warning('Target %s is in use.', target['name'])
             else:
                 raise CallError(f'Target {target["name"]} is in use.')
-        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id]]):
+        for target_to_extent in await self.middleware.call('iscsi.targetextent.query', [['target', '=', id_]]):
             await self.middleware.call('iscsi.targetextent.delete', target_to_extent['id'], force)
 
         await self.middleware.call(
-            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id]]
+            'datastore.delete', 'services.iscsitargetgroups', [['iscsi_target', '=', id_]]
         )
-        rv = await self.middleware.call('datastore.delete', self._config.datastore, id)
+        rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
         # If HA and ALUA handle BACKUP first
         if await self.middleware.call("iscsi.global.alua_enabled") and await self.middleware.call('failover.remote_connected'):

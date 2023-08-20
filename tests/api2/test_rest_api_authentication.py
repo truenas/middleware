@@ -70,7 +70,7 @@ def test_allowed_api_key_rest_plain(auth):
 
 def test_allowed_api_key_rest_dynamic(auth):
     """We should be able to request a dynamic endpoint with a credential that allows that request using REST API."""
-    with auth([{"method": "GET", "resource": "/user/id/{id}/"}]) as kwargs:
+    with auth([{"method": "GET", "resource": "/user/id/{id_}/"}]) as kwargs:
         results = GET('/user/id/1/', **kwargs)
         assert results.status_code == 200, results.text
 
