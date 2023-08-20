@@ -448,12 +448,13 @@ def ftp_get_users():
     Return a list of active users
     NB: ftp service should be running when called
     '''
-    ssh_out = SSH_TEST("ftpwho", user, password, ip)
+    ssh_out = SSH_TEST("ftpwho -o json", user, password, ip)
     assert ssh_out['result'], str(ssh_out)
-    outstr = ssh_out['output']
-    # Remove the first and last lines
-    whodata = outstr[outstr.find('\n') + 1:outstr.strip().rfind('\n')]
-    return list(map(lambda x: x.split()[1], whodata.splitlines()))
+    output = ssh_out['output']
+    # Strip off trailing bogus data
+    joutput = output[:output.rindex('}')+1]
+    whodata = json.loads(joutput)
+    return whodata['connections']
 
 
 def ftp_get_ftp_group():
@@ -923,7 +924,7 @@ def test_030_root_login(request, setting):
             # local users should get the welcome message
             assert ftpdata.motd.splitlines()[0] in res
             ftpusers = ftp_get_users()
-            assert user in ftpusers
+            assert user == ftpusers[0]['user']
         except all_errors as e:
             # The 'False' setting is expected to fail
             assert setting is False, f"Unexpected failure, rootlogin={setting}, but got {e}"
@@ -952,7 +953,7 @@ def test_031_anon_login(request, setting, ftpConfig):
             # The following assumes the login was successfull
             assert res.startswith('230')
             ftpusers = ftp_get_users()
-            assert 'ftp' in ftpusers
+            assert 'ftp' == ftpusers[0]['user']
         except all_errors as e:
             assert setting is False, f"Unexpected failure, rootlogin={setting}, but got {e}"
 
@@ -1383,7 +1384,7 @@ class TestLocalUser(UserTests):
                 # local users should get the welcome message
                 assert localftp.motd.splitlines()[0] in res
                 ftpusers = ftp_get_users()
-                assert "FTPlocaluser" in ftpusers
+                assert "FTPlocaluser" == ftpusers[0]['user']
 
                 # Run the user tests with updated data
                 yield init_test_data('Local', localftp)
@@ -1414,7 +1415,7 @@ class TestFTPSUser(UserTests):
                 # local users should get the welcome message
                 assert tlsftp.motd.splitlines()[0] in res
                 ftpusers = ftp_get_users()
-                assert "FTPSlocaluser" in ftpusers
+                assert "FTPSlocaluser" == ftpusers[0]['user']
 
                 # Run the user tests with updated data
                 yield init_test_data('FTPS', tlsftp)
