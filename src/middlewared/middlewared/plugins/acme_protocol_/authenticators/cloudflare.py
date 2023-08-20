@@ -57,10 +57,9 @@ class CloudFlareAuthenticator(Authenticator):
 
     def get_cloudflare_object(self):
         if self.api_token:
-            params = (None, self.api_token)
+            return _CloudflareClient(api_token=self.api_token)
         else:
-            params = (self.cloudflare_email, self.api_key)
-        return _CloudflareClient(*params)
+            return _CloudflareClient(email=self.cloudflare_email, api_key=self.api_key)
 
     def _cleanup(self, domain, validation_name, validation_content):
         self.get_cloudflare_object().del_txt_record(domain, validation_name, validation_content)
