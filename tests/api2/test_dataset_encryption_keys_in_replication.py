@@ -1,3 +1,5 @@
+import pytest
+
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.utils import call
@@ -110,3 +112,23 @@ def test_multiple_source_recursive_replication():
                                         ]
                                     ]
                                 )
+
+
+@pytest.mark.parametrize('keys_available_for_download', [False, True])
+def test_replication_task_reports_keys_available_for_download(keys_available_for_download):
+    with dataset('source_test', encryption_props() if keys_available_for_download else {}) as src:
+        with dataset('parent_destination', encryption_props() if keys_available_for_download else {}) as parent_ds:
+            with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test') as dst:
+                with replication_task({
+                    **BASE_REPLICATION,
+                    'name': 'encryption_replication_test',
+                    'source_datasets': [src],
+                    'target_dataset': dst,
+                    'name_regex': '.+',
+                    'auto': False,
+                }) as task:
+                    task = call(
+                        'replication.get_instance', task['id'], {'extra': {'check_dataset_encryption_keys': True}}
+                    )
+                    assert task['has_encrypted_dataset_keys'] is keys_available_for_download, task
+
