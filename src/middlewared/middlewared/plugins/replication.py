@@ -97,8 +97,15 @@ class ReplicationService(CRUDService):
 
     @private
     async def extend_context(self, rows, extra):
+        if extra.get("check_dataset_encryption_keys", False) and any(row["direction"] == "PUSH" for row in rows):
+            dataset_mapping = await self.middleware.call("pool.dataset.dataset_encryption_root_mapping")
+        else:
+            dataset_mapping = {}
+
         return {
             "state": await self.middleware.call("zettarepl.get_state"),
+            "dataset_encryption_root_mapping": dataset_mapping,
+            "check_dataset_encryption_keys": extra.get("check_dataset_encryption_keys", False),
         }
 
     @private
@@ -128,6 +135,17 @@ class ReplicationService(CRUDService):
             })
 
         data["job"] = data["state"].pop("job", None)
+
+        if context["check_dataset_encryption_keys"]:
+            if context["dataset_encryption_root_mapping"] and data["direction"] == "PUSH":
+                data["has_encrypted_dataset_keys"] = bool(
+                    await self.middleware.call(
+                        "pool.dataset.export_keys_for_replication_internal", data,
+                        context["dataset_encryption_root_mapping"], True,
+                    )
+                )
+            else:
+                data["has_encrypted_dataset_keys"] = False
 
         return data
 

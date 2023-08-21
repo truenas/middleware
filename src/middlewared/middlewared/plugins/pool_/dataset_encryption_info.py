@@ -1,3 +1,4 @@
+import collections
 import contextlib
 import errno
 import json
@@ -318,18 +319,25 @@ class PoolDatasetService(Service):
 
         Please refer to websocket documentation for downloading the file.
         """
-        datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task_id)
+        task = self.middleware.call_sync('replication.get_instance', task_id)
+        datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task)
         job.pipes.output.w.write(json.dumps(datasets).encode())
 
     @private
-    async def export_keys_for_replication_internal(self, replication_task_id):
-        task = await self.middleware.call('replication.get_instance', replication_task_id)
+    async def export_keys_for_replication_internal(
+        self, replication_task_or_id, dataset_encryption_root_mapping=None, skip_syncing_db_keys=False,
+    ):
+        if isinstance(replication_task_or_id, int):
+            task = await self.middleware.call('replication.get_instance', replication_task_or_id)
+        else:
+            task = replication_task_or_id
         if task['direction'] != 'PUSH':
             raise CallError('Only push replication tasks are supported.', errno.EINVAL)
 
-        await (await self.middleware.call(
-            'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
-        )).wait()
+        if not skip_syncing_db_keys:
+            await (await self.middleware.call(
+                'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
+            )).wait()
 
         mapping = {}
         for source_ds in task['source_datasets']:
@@ -356,16 +364,27 @@ class PoolDatasetService(Service):
         source_mapping = await self.middleware.call(
             'zettarepl.get_source_target_datasets_mapping', task['source_datasets'], target_ds
         )
+        if include_encryption_root_children:
+            dataset_mapping = dataset_encryption_root_mapping or await self.dataset_encryption_root_mapping()
+        else:
+            dataset_mapping = {}
+
         for source_ds in task['source_datasets']:
             for ds_name, key in mapping[source_ds].items():
-                for dataset in await self.middleware.call(
-                    'pool.dataset.query', [['encryption_root', '=', ds_name]], {
-                        'extra': {'properties': ['encryptionroot']}
-                    }
-                ) if include_encryption_root_children else [{'id': ds_name}]:
+                for dataset in (dataset_mapping[ds_name] if include_encryption_root_children else [{'id': ds_name}]):
                     result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
 
         return result
+
+    @private
+    async def dataset_encryption_root_mapping(self):
+        dataset_encryption_root_mapping = collections.defaultdict(list)
+        for dataset in await self.middleware.call(
+            'pool.dataset.query', [], {'extra': {'properties': ['encryptionroot']}}
+        ):
+            dataset_encryption_root_mapping[dataset['encryption_root']].append(dataset)
+
+        return dataset_encryption_root_mapping
 
     @accepts(
         Str('id'),
