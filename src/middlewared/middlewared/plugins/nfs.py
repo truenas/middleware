@@ -253,7 +253,6 @@ class NFSShareModel(sa.Model):
     nfs_network = sa.Column(sa.Text())
     nfs_hosts = sa.Column(sa.Text())
     nfs_ro = sa.Column(sa.Boolean(), default=False)
-    nfs_quiet = sa.Column(sa.Boolean(), default=False)
     nfs_maproot_user = sa.Column(sa.String(120), nullable=True, default='')
     nfs_maproot_group = sa.Column(sa.String(120), nullable=True, default='')
     nfs_mapall_user = sa.Column(sa.String(120), nullable=True, default='')
@@ -288,7 +287,6 @@ class SharingNFSService(SharingService):
         List("networks", items=[IPAddr("network", network=True)]),
         List("hosts", items=[Str("host")]),
         Bool("ro", default=False),
-        Bool("quiet", default=False),
         Str("maproot_user", required=False, default=None, null=True),
         Str("maproot_group", required=False, default=None, null=True),
         Str("mapall_user", required=False, default=None, null=True),
