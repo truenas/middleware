@@ -57,11 +57,13 @@ class IPMILanService(CRUDService):
                 # TODO: fix this in dragonfish (dependent on webUI changes to be made see NAS-123225)
                 # raise CallError(f'Failed to get details from channel {channel}: {stderr}')
                 self.logger.error('Failed to get details from channel %r with error %r', channel, stderr)
-            elif not (stdout := cp.stdout.decode()):
+
+            stdout = cp.stdout.decode().split('\n')
+            if not stdout:
                 continue
 
             data = {'channel': channel, 'id': channel}
-            for i in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), stdout.split('\n')):
+            for i in filter(lambda x: x.startswith('\t') and not x.startswith('\t#'), stdout):
                 try:
                     name, value = i.strip().split()
                     name, value = name.lower(), value.lower()
