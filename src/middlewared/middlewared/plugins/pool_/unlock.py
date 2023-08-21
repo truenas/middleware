@@ -101,5 +101,6 @@ class PoolDatasetService(Service):
                     )
         except Exception:
             self.logger.error(
-                'Failed to restart %r services after %r unlock', ', '.join(services_to_restart), id, exc_info=True,
+                'Failed to restart %r services after %r unlock', ', '.join(services_to_restart), dataset_name,
+                exc_info=True,
             )

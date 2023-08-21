@@ -91,14 +91,14 @@ class ZFSDatasetService(Service):
             for dataset in filter_list(result, post_filters)
         ]
 
-    def common_load_dataset_checks(self, ds):
-        self.common_encryption_checks(ds)
+    def common_load_dataset_checks(self, id_, ds):
+        self.common_encryption_checks(id_, ds)
         if ds.key_loaded:
-            raise CallError(f'{id} key is already loaded')
+            raise CallError(f'{id_} key is already loaded')
 
-    def common_encryption_checks(self, ds):
+    def common_encryption_checks(self, id_, ds):
         if not ds.encrypted:
-            raise CallError(f'{id} is not encrypted')
+            raise CallError(f'{id_} is not encrypted')
 
     @accepts(
         Str('id'),
@@ -116,7 +116,7 @@ class ZFSDatasetService(Service):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
-                self.common_load_dataset_checks(ds)
+                self.common_load_dataset_checks(id, ds)
                 ds.load_key(**options)
         except libzfs.ZFSException as e:
             self.logger.error(f'Failed to load key for {id}', exc_info=True)
@@ -140,7 +140,7 @@ class ZFSDatasetService(Service):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
-                self.common_encryption_checks(ds)
+                self.common_encryption_checks(id, ds)
                 return ds.check_key(**options)
         except libzfs.ZFSException as e:
             self.logger.error(f'Failed to check key for {id}', exc_info=True)
@@ -164,7 +164,7 @@ class ZFSDatasetService(Service):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
-                self.common_encryption_checks(ds)
+                self.common_encryption_checks(id, ds)
                 if not ds.key_loaded:
                     raise CallError(f'{id}\'s key is not loaded')
                 ds.unload_key(**options)
@@ -190,7 +190,7 @@ class ZFSDatasetService(Service):
         try:
             with libzfs.ZFS() as zfs:
                 ds = zfs.get_dataset(id)
-                self.common_encryption_checks(ds)
+                self.common_encryption_checks(id, ds)
                 ds.change_key(props=options['encryption_properties'], load_key=options['load_key'], key=options['key'])
         except libzfs.ZFSException as e:
             self.logger.error(f'Failed to change key for {id}', exc_info=True)
