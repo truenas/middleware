@@ -1,23 +1,18 @@
 from middlewared.utils.cpu import cpu_info
 
-from .realtime_reporting.utils import normalize_value, safely_retrieve_dimension
-
 
 def get_kubernetes_pods_stats(pod_names: list, netdata_metrics: dict) -> dict:
+    k3s_stats_dimensions = {
+        netdata_metrics['labels'][i]: netdata_metrics['data'][-1][i]
+        for i in range(len(netdata_metrics['labels']))
+    }
+
     stats = {'memory': 0, 'cpu': 0, 'network': {'incoming': 0, 'outgoing': 0}}
     for pod_name in pod_names:
-        stats['cpu'] += int(safely_retrieve_dimension(
-            netdata_metrics, f'k3s_stats.{pod_name}.cpu', f'{pod_name}.cpu', default=0
-        ))
-        stats['memory'] += normalize_value(int(safely_retrieve_dimension(
-            netdata_metrics, f'k3s_stats.{pod_name}.mem', f'{pod_name}.mem', default=0
-        )), divisor=1024 * 1024)  # Convert bytes to megabytes.
-        stats['network']['incoming'] += safely_retrieve_dimension(
-            netdata_metrics, f'k3s_stats.{pod_name}.net', f'{pod_name}.net.incoming', default=0
-        )
-        stats['network']['outgoing'] += safely_retrieve_dimension(
-            netdata_metrics, f'k3s_stats.{pod_name}.net', f'{pod_name}.net.outgoing', default=0
-        )
+        stats['cpu'] += int(k3s_stats_dimensions.get(f'{pod_name}.cpu', 0))
+        stats['memory'] += int(k3s_stats_dimensions.get(f'{pod_name}.mem', 0))
+        stats['network']['incoming'] += int(k3s_stats_dimensions.get(f'{pod_name}.net.incoming', 0))
+        stats['network']['outgoing'] += int(k3s_stats_dimensions.get(f'{pod_name}.net.outgoing', 0))
 
     # Convert CPU usage from nanocores to percentage of total available CPU power across all cores.
     stats['cpu'] = ((stats['cpu'] / 1000000000) / cpu_info()['core_count']) * 100

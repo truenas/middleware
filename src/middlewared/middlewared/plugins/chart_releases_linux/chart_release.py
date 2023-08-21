@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import copy
 import errno
 import itertools
@@ -16,7 +17,7 @@ from middlewared.validators import Match, Range
 
 from .utils import (
     add_context_to_configuration, CHART_NAMESPACE_PREFIX, CONTEXT_KEY_NAME, get_action_context,
-    get_namespace, get_storage_class_name, normalize_image_tag, Resources, run,
+    get_namespace, get_storage_class_name, normalize_image_tag, Resources, run, default_stats_values,
 )
 
 
@@ -136,7 +137,7 @@ class ChartReleaseService(CRUDService):
         extra = copy.deepcopy(options.get('extra', {}))
         retrieve_schema = extra.get('include_chart_schema')
         retrieve_stats = extra.get('stats', False)
-        netdata_metrics = await self.middleware.call('netdata.get_all_metrics') if retrieve_stats else None
+        netdata_metrics = None
         get_resources = extra.get('retrieve_resources')
         get_locked_paths = extra.get('retrieve_locked_paths')
         locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets') if get_locked_paths else []
@@ -145,6 +146,11 @@ class ChartReleaseService(CRUDService):
             questions_context = await self.middleware.call('catalog.get_normalised_questions_context')
         else:
             questions_context = None
+
+        if retrieve_stats:
+            with contextlib.suppress(Exception):
+                # We don't want to fail this call regardless of some bug in reporting plugin
+                netdata_metrics = await self.middleware.call('netdata.get_chart_metrics', 'k3s_stats.k3s_stats')
 
         if filters and len(filters) == 1 and filters[0][:2] == ['id', '=']:
             extra['namespace_filter'] = ['metadata.namespace', '=', f'{CHART_NAMESPACE_PREFIX}{filters[0][-1]}']
@@ -219,9 +225,13 @@ class ChartReleaseService(CRUDService):
             })
 
             if retrieve_stats:
-                release_data['stats'] = await self.middleware.call(
-                    'chart.release.stats_internal', resources[Resources.POD.value][name], netdata_metrics,
-                )
+                if netdata_metrics:
+                    release_data['stats'] = await self.middleware.call(
+                        'chart.release.stats_internal', resources[Resources.POD.value][name], netdata_metrics,
+                    )
+                else:
+                    # We add defaults in case reporting plugin failed to get us relevant metrics for what ever reason
+                    release_data['stats'] = default_stats_values()
 
             container_images_normalized = {
                 normalize_image_tag(i_name): {

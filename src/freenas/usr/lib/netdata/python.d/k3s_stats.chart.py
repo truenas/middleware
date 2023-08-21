@@ -25,50 +25,37 @@ class Service(SimpleService):
     def check(self):
         return True
 
-    def get_chart_name(self, pod_name, stat_type):
+    def get_dimension_name(self, pod_name, stat_type):
         return f'{pod_name}.{stat_type}'
 
     def get_chart_options_base(self, chart_name):
         return [chart_name, 'k3s_pod_stats', 'Pods Resource usage']
 
     def add_cpu_chart(self, pod_name, state_type=StatsTypes.CPU.value):
-        chart_name = self.get_chart_name(pod_name, state_type)
-        self.charts.add_chart(
-            self.get_chart_options_base(chart_name) + [
-                'Nano Cores', 'k3s_status', 'Pods cpu usage', 'k3s stats', 'line'
-            ]
-        )
-        self.charts[chart_name].add_dimension([self.get_chart_name(pod_name, state_type)])
+        self.charts[self.name].add_dimension([self.get_dimension_name(pod_name, state_type)])
 
     def add_net_chart(self, pod_name, state_type=StatsTypes.NETWORK.value):
-        chart_name = self.get_chart_name(pod_name, state_type)
-        self.charts.add_chart(
-            self.get_chart_options_base(chart_name) + [
-                'bytes', 'k3s_status', 'Pods network usage', 'k3s stats', 'line'
-            ]
-        )
-        self.charts[chart_name].add_dimension([f'{self.get_chart_name(pod_name, state_type)}.incoming'])
-        self.charts[chart_name].add_dimension([f'{self.get_chart_name(pod_name, state_type)}.outgoing'])
+        self.charts[self.name].add_dimension([f'{self.get_dimension_name(pod_name, state_type)}.incoming'])
+        self.charts[self.name].add_dimension([f'{self.get_dimension_name(pod_name, state_type)}.outgoing'])
 
     def add_mem_chart(self, pod_name, state_type=StatsTypes.MEMORY.value):
-        chart_name = self.get_chart_name(pod_name, state_type)
-        self.charts.add_chart(
-            self.get_chart_options_base(chart_name) + [
-                'bytes', 'k3s_status', 'Pods memory usage', 'k3s stats', 'line'
-            ]
-        )
-        self.charts[chart_name].add_dimension([self.get_chart_name(pod_name, state_type)])
+        self.charts[self.name].add_dimension([self.get_dimension_name(pod_name, state_type)])
 
     def gather_pod_stat(self, pod_stats, data):
         pod_name = pod_stats['podRef']['name']
-        data[self.get_chart_name(pod_name, StatsTypes.CPU.value)] = int(pod_stats['cpu']['usageNanoCores'])
-        data[self.get_chart_name(pod_name, StatsTypes.MEMORY.value)] = int(pod_stats['memory']['rssBytes'])
+        data[self.get_dimension_name(pod_name, StatsTypes.CPU.value)] = int(pod_stats['cpu']['usageNanoCores'])
+        data[self.get_dimension_name(pod_name, StatsTypes.MEMORY.value)] = int(pod_stats['memory']['rssBytes'])
         for interface in pod_stats['network']['interfaces']:
-            data[f'{self.get_chart_name(pod_name, StatsTypes.NETWORK.value)}.incoming'] += int(interface['rxBytes'])
-            data[f'{self.get_chart_name(pod_name, StatsTypes.NETWORK.value)}.outgoing'] += int(interface['txBytes'])
+            data[f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.incoming'] += int(interface['rxBytes'])
+            data[f'{self.get_dimension_name(pod_name, StatsTypes.NETWORK.value)}.outgoing'] += int(interface['txBytes'])
 
     def prepare_pods_charts(self, pod_stats):
         self.charts.charts.clear()
+        self.charts.add_chart(
+            self.get_chart_options_base(self.name) + [
+                'K3s Pods stats', 'k3s_status', 'Pods resource usage', 'k3s stats', 'line'
+            ]
+        )
         for pod_stat in pod_stats:
             self.add_cpu_chart(pod_stat)
             self.add_mem_chart(pod_stat)

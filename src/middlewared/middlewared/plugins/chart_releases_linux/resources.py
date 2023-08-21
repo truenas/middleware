@@ -316,5 +316,5 @@ class ChartReleaseService(Service):
     async def stats_internal(self, pods, netdata_metrics=None):
         return get_kubernetes_pods_stats(
             [p['metadata']['name'] for p in pods],
-            netdata_metrics or await self.middleware.call('netdata.get_all_metrics')
+            netdata_metrics or await self.middleware.call('netdata.get_chart_metrics', 'k3s_stats.k3s_stats')
         )
