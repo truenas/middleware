@@ -936,7 +936,7 @@ class FailoverService(ConfigService):
             return False
 
         if not self.middleware.call_sync('failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]]):
-            raise CallError('Remote system will reboot to a boot environment than the one that is currently active')
+            raise CallError('Remote controller must reboot to activate pending boot environment')
 
         return can_update(remote_version, local_version)
 
