@@ -52,14 +52,16 @@ class AddressMixin:
                     ipaddress.IPv4Interface(f'{ip4.get_attr("IFA_ADDRESS")}/{ip4["prefixlen"]}'),
                 ))
 
-            for ip6 in ipr.addr('dump', label=self.name, family=AddressFamily.INET6.value):
-                addresses.append(InterfaceAddress(
-                    AddressFamily.INET6,
-                    ipaddress.IPv6Interface(f'{ip6.get_attr("IFA_ADDRESS")}/{ip6["prefixlen"]}'),
-                ))
+            # The kernel doesn't return IFA_LABEL for IPv6 addresses, we have to do the lookup ourselves
+            if index := (ipr.link_lookup(ifname=self.name) or [None])[0]:
+                for ip6 in ipr.addr('dump', index=index, family=AddressFamily.INET6.value):
+                    addresses.append(InterfaceAddress(
+                        AddressFamily.INET6,
+                        ipaddress.IPv6Interface(f'{ip6.get_attr("IFA_ADDRESS")}/{ip6["prefixlen"]}'),
+                    ))
 
             for mac in ipr.link('dump', ifname=self.name):
-                if (mac_addr := mac.get_attr('IFLA_ADDRESS')):
+                if mac_addr := mac.get_attr('IFLA_ADDRESS'):
                     addresses.append(InterfaceAddress(AddressFamily.LINK, LinkAddress(self.name, mac_addr)))
 
         return addresses
