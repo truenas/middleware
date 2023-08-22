@@ -5,7 +5,6 @@ import json
 import itertools
 import logging
 import os
-import re
 import shutil
 import socket
 import textwrap
@@ -25,7 +24,7 @@ from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOO
 from middlewared.plugins.failover_.configure import HA_LICENSE_CACHE_KEY
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.update_.install import STARTING_INSTALLER
-from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
+from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE, can_update
 from middlewared.plugins.update_.utils_linux import mount_update
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
@@ -936,26 +935,10 @@ class FailoverService(ConfigService):
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
             return False
 
-        local_bootenv = self.middleware.call_sync(
-            'bootenv.query', [('active', 'rin', 'N')])
+        if not self.middleware.call_sync('failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]]):
+            raise CallError('Remote system will reboot to a boot environment than the one that is currently active')
 
-        remote_bootenv = self.middleware.call_sync(
-            'failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]])
-
-        if not local_bootenv or not remote_bootenv:
-            raise CallError('Unable to determine installed version of software')
-
-        tn_version = re.compile(r'\d*\.?\d+')
-        loc_findall = tn_version.findall(local_bootenv[0]['id'])
-        rem_findall = tn_version.findall(remote_bootenv[0]['id'])
-
-        loc_vers = tuple(float(i) for i in loc_findall)
-        rem_vers = tuple(float(i) for i in rem_findall)
-
-        if loc_vers > rem_vers:
-            return True
-
-        return False
+        return can_update(remote_version, local_version)
 
     @accepts()
     @returns(Bool())
