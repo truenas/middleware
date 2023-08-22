@@ -7,7 +7,10 @@ class UPSService(SimpleService):
     systemd_unit = "nut-monitor"
 
     async def systemd_extra_units(self):
-        return ["nut-server"] if (await self.middleware.call("ups.config"))["mode"] == "MASTER" else []
+        if (await self.middleware.call("ups.config"))["mode"] == "MASTER":
+            return ["nut-driver-enumerator", "nut-server"]
+        else:
+            return []
 
     async def before_start(self):
         await self.middleware.call("ups.dismiss_alerts")
@@ -22,4 +25,5 @@ class UPSService(SimpleService):
 
     async def stop(self):
         await self._unit_action("Stop")
+        await self._systemd_unit("nut-driver-enumerator", "stop")
         await self._systemd_unit("nut-server", "stop")
