@@ -206,18 +206,18 @@ class EnclosureService(CRUDService):
 
         return self._get_ses_slot(enclosure, element)
 
-    def _get_original_disk_slot(self, enclosure_id, slot, info):
+    def _get_orig_enclosure_and_disk(self, enclosure_id, slot, info):
         for i in filter(lambda x: x.get('name') == 'Array Device Slot', info['elements']):
             for j in filter(lambda x: x['slot'] == slot, i['elements']):
                 if enclosure_id == 'mapped_enclosure_0':
                     # we've mapped the drive slots in a convenient way for the administrator
                     # to easily be able to identify drive slot 1 (when in reality, it's probably
                     # physically cabled to slot 5 (or whatever))
-                    return j['original']['slot']
+                    return j['original']['enclosure_bsg'], j['original']['slot']
                 else:
                     # a platform that doesn't require mapping the drives so we can just return
                     # the slot passed to us
-                    return slot
+                    return info['bsg'], slot
 
     @accepts(Str("enclosure_id"), Int("slot"), Str("status", enum=["CLEAR", "FAULT", "IDENTIFY"]))
     def set_slot_status(self, enclosure_id, slot, status):
@@ -230,21 +230,21 @@ class EnclosureService(CRUDService):
         except IndexError:
             raise CallError(f'Enclosure with id: {enclosure_id!r} not found', errno.ENOENT)
 
-        # we cast the slot to a string because set_control() requires the first
-        # argument to be a string
-        mapped_slot = str(self._get_original_disk_slot(enclosure_id, slot, info))
-        if mapped_slot == 'None':
+        original = self._get_orig_enclosure_and_disk(enclosure_id, slot, info)
+        if original is None:
             raise CallError(f'Slot: {slot!r} not found', errno.ENOENT)
+
+        original_bsg, original_slot = original
 
         if status == 'CLEAR':
             actions = ('clear=ident', 'clear=fault')
         else:
             actions = (f'set={status[:5].lower()}',)
 
-        enc = EnclosureDevice(f'/dev/{info["bsg"]}')
+        enc = EnclosureDevice(f'/dev/{original_bsg}')
         try:
             for action in actions:
-                enc.set_control(mapped_slot, action)
+                enc.set_control(str(original_slot - 1), action)
         except OSError:
             msg = f'Failed to {status} slot {slot!r} on enclosure {info["id"]!r}'
             self.logger.warning(msg, exc_info=True)
