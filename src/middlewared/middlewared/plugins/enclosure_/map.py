@@ -420,6 +420,7 @@ class EnclosureService(Service):
                 "value_raw": original_slot["value_raw"],
                 "original": {
                     "enclosure_id": original_enclosure["id"],
+                    "enclosure_bsg": original_enclosure["bsg"],
                     "slot": original_slot["slot"],
                 },
             }
