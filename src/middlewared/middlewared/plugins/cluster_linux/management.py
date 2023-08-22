@@ -865,3 +865,24 @@ class ClusterManagement(Service):
             'gluster_peers': gluster_peers,
             'ctdb_configuration': ctdb_config,
         }
+
+
+async def pool_pre_export_cluster(middleware, pool, options, job):
+    if not await middleware.call('cluster.utils.is_clustered'):
+        return
+
+    node = await middleware.call('ctdb.private.ips.query', [['this_node', '=', True]], {'get': True})
+    peer = await middleware.call('gluster.peer.query', [['uuid', '=', node['uuid']]], {'get': True})
+    host = peer['hostname']
+
+    for vol in await middleware.call('gluster.volume.query'):
+        for brick in vol['bricks']:
+            if not brick['name'].startswith(host):
+                continue
+
+            if brick['device'].split('/')[0] == pool:
+                raise CallError(f'This pool hosts brick for gluster volume {vol["name"]}')
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.pre_export', pool_pre_export_cluster, order=100, raise_error=True)
