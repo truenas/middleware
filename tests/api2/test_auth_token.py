@@ -98,3 +98,18 @@ def test_token_is_for_one_time_use():
 
     with client(auth=None) as c:
         assert not c.call("auth.login_with_token", token)
+
+
+def test_kill_all_tokens_on_session_termination():
+    token = call("auth.generate_token", 300)
+
+    with client(auth=None) as c:
+        assert c.call("auth.login_with_token", token)
+
+        token = c.call("auth.generate_token")
+
+        session = c.call("auth.sessions", [["current", "=", True]], {"get": True})
+        call("auth.terminate_session", session["id"])
+
+        with client(auth=None) as c:
+            assert not c.call("auth.login_with_token", token)
