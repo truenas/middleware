@@ -85,6 +85,7 @@ class Application:
         self.rest = True
         self.authenticated = authenticated_credentials is not None
         self.authenticated_credentials = authenticated_credentials
+        self.session_id = None
 
 
 class RESTfulAPI(object):
