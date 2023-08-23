@@ -35,6 +35,6 @@ class Netdata(ClientMixin):
     async def get_chart_metrics(cls, chart, query_params=None):
         """Get metrics for `chart`"""
         return await cls.api_call(
-            f'data?chart={chart}{get_query_parameters(query_params)}',
+            f'data?chart={chart}&options=null2zero{get_query_parameters(query_params)}',
             version='v1',
         )
