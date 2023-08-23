@@ -211,5 +211,5 @@ class TruecommandService(ConfigService):
         # we update TC service or the health is okay now with the service running or when service is not running
         for klass in [
             'TruecommandConnectionDisabled', 'TruecommandConnectionPending'
-        ] + (['TruecommandConnectionHealth'] if dismiss_health else []):
+        ] + (['TruecommandConnectionHealth', 'TruecommandContainerHealth'] if dismiss_health else []):
             await self.middleware.call('alert.oneshot_delete', klass, None)
