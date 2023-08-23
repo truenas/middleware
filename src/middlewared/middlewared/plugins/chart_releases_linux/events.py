@@ -19,7 +19,7 @@ class ChartReleaseStatsEventSource(EventSource):
     Retrieve real time statistics for chart releases
     """
     ACCEPTS = Dict(
-        Int('interval', default=2, validators=[Range(min_=2)]),
+        Int('interval', default=2, validators=[Range(min=2)]),
     )
     RETURNS = List(
         items=[Dict(
