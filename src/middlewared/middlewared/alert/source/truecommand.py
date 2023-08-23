@@ -45,3 +45,18 @@ class TruecommandConnectionHealthAlertClass(AlertClass, OneShotAlertClass):
 
     async def delete(self, alerts, query):
         return []
+
+
+class TruecommandContainerHealthAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.CRITICAL
+    title = 'TrueCommand Container Failed Scheduled Health Check'
+    text = 'TrueCommand container failed scheduled health check, please contact Truecommand support.'
+
+    async def create(self, args):
+        return Alert(TruecommandContainerHealthAlertClass, args)
+
+    async def delete(self, alerts, query):
+        return []
