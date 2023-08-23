@@ -8,4 +8,5 @@ def render(service, middleware):
         default_run: no
         cputemp: yes
         smart_log: yes
+        k3s_stats: yes
         '''))

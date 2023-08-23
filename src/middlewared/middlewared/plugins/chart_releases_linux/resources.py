@@ -2,6 +2,7 @@ import collections
 import errno
 import os
 
+from middlewared.plugins.reporting.stats_utils import get_kubernetes_pods_stats
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
@@ -303,3 +304,17 @@ class ChartReleaseService(Service):
             apps[app_name] = await self.middleware.call('chart.release.host_path_volumes', app_resources[app_name])
 
         return apps
+
+    @private
+    async def stats(self, release_name):
+        chart_release = await self.middleware.call('chart.release.get_instance', release_name, {
+            'extra': {'retrieve_resources': True, 'stats': False}
+        })
+        return await self.stats_internal(chart_release['resources']['pods'])
+
+    @private
+    async def stats_internal(self, pods, netdata_metrics=None):
+        return get_kubernetes_pods_stats(
+            [p['metadata']['name'] for p in pods],
+            netdata_metrics or await self.middleware.call('netdata.get_chart_metrics', 'k3s_stats.k3s_stats')
+        )

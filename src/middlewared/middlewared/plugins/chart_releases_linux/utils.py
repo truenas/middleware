@@ -98,6 +98,17 @@ def normalize_image_tag(tag: str) -> str:
             return complete_tag
 
 
+def default_stats_values() -> dict:
+    return {
+        'cpu': 0,
+        'memory': 0,
+        'network': {
+            'incoming': 0,
+            'outgoing': 0,
+        }
+    }
+
+
 def is_ix_namespace(namespace):
     return namespace.startswith(CHART_NAMESPACE_PREFIX)
 

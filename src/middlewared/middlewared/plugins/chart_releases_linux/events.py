@@ -1,15 +1,52 @@
 import asyncio
 import collections
 
-from middlewared.schema import Dict, List, Str, returns
+from middlewared.event import EventSource
+from middlewared.schema import Dict, Float, Int, List, Str, returns
 from middlewared.service import accepts, private, Service
 from middlewared.utils.itertools import infinite_multiplier_generator
+from middlewared.validators import Range
 
 from .utils import get_chart_release_from_namespace, get_namespace, is_ix_namespace
 
 
 EVENT_LOCKS = collections.defaultdict(asyncio.Lock)
 LOCKS = collections.defaultdict(asyncio.Lock)
+
+
+class ChartReleaseStatsEventSource(EventSource):
+    """
+    Retrieve real time statistics for chart releases
+    """
+    ACCEPTS = Dict(
+        Int('interval', default=2, validators=[Range(min_=2)]),
+    )
+    RETURNS = List(
+        items=[Dict(
+            'chart_release_stats',
+            Str('id'),
+            Dict(
+                'stats',
+                Int('memory', description='Memory usage of app in MB'),
+                Float('cpu', description='Percentage of total core utilization'),
+                Dict(
+                    'network',
+                    Int('incoming', description='All Incoming network traffic in bytes'),
+                    Int('outgoing', description='All Outgoing network traffic in bytes'),
+                )
+            )
+        )]
+    )
+
+    async def run(self):
+        interval = self.arg['interval']
+
+        while not self._cancel.is_set():
+            self.send_event('ADDED', fields=await self.middleware.call(
+                'chart.release.query', [], {'extra': {'stats': True}, 'select': ['id', 'stats']},
+            ))
+
+            await asyncio.sleep(interval)
 
 
 class ChartReleaseService(Service):
@@ -137,5 +174,6 @@ async def chart_release_event(middleware, event_type, args):
 async def setup(middleware):
     middleware.event_subscribe('kubernetes.events', chart_release_event)
     middleware.event_register('chart.release.events', 'Application deployment events')
+    middleware.register_event_source('chart.release.statistics', ChartReleaseStatsEventSource)
     if await middleware.call('kubernetes.validate_k8s_setup', False):
         middleware.create_task(middleware.call('chart.release.refresh_events_state'))
