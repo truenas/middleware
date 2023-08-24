@@ -46,23 +46,24 @@ class AddressMixin:
         addresses = []
         with IPRoute(strict_check=True) as ipr:
             # strict_check forces kernel to do the filtering increasing performance
-            for ip4 in ipr.addr('dump', label=self.name, family=AddressFamily.INET.value):
-                addresses.append(InterfaceAddress(
-                    AddressFamily.INET,
-                    ipaddress.IPv4Interface(f'{ip4.get_attr("IFA_ADDRESS")}/{ip4["prefixlen"]}'),
-                ))
-
-            # The kernel doesn't return IFA_LABEL for IPv6 addresses, we have to do the lookup ourselves
             if index := (ipr.link_lookup(ifname=self.name) or [None])[0]:
-                for ip6 in ipr.addr('dump', index=index, family=AddressFamily.INET6.value):
-                    addresses.append(InterfaceAddress(
-                        AddressFamily.INET6,
-                        ipaddress.IPv6Interface(f'{ip6.get_attr("IFA_ADDRESS")}/{ip6["prefixlen"]}'),
-                    ))
+                # The kernel doesn't return IFA_LABEL for IPv6 addresses so we have
+                # to lookup the index for a given interface
+                for addr in ipr.addr('dump', index=index):
+                    if addr['family'] == AddressFamily.INET.value:
+                        addresses.append(InterfaceAddress(
+                            AddressFamily.INET,
+                            ipaddress.IPv4Interface(f'{addr.get_attr("IFA_ADDRESS")}/{addr["prefixlen"]}'),
+                        ))
+                    elif addr['family'] == AddressFamily.INET6.value:
+                        addresses.append(InterfaceAddress(
+                            AddressFamily.INET6,
+                            ipaddress.IPv6Interface(f'{addr.get_attr("IFA_ADDRESS")}/{addr["prefixlen"]}'),
+                        ))
 
-            for mac in ipr.link('dump', ifname=self.name):
-                if mac_addr := mac.get_attr('IFLA_ADDRESS'):
-                    addresses.append(InterfaceAddress(AddressFamily.LINK, LinkAddress(self.name, mac_addr)))
+                for mac in ipr.link('dump', index=index):
+                    if mac_addr := mac.get_attr('IFLA_ADDRESS'):
+                        addresses.append(InterfaceAddress(AddressFamily.LINK, LinkAddress(self.name, mac_addr)))
 
         return addresses
 
