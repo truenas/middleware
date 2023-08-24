@@ -27,14 +27,14 @@ class TokenManager:
     def __init__(self):
         self.tokens = {}
 
-    def create(self, ttl, attributes, match_origin, parent_credentials):
+    def create(self, ttl, attributes, match_origin, parent_credentials, session_id):
         credentials = parent_credentials
         if isinstance(credentials, TokenSessionManagerCredentials):
             if root_credentials := credentials.token.root_credentials():
                 credentials = root_credentials
 
         token = generate_token(48, url_safe=True)
-        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials)
+        self.tokens[token] = Token(self, token, ttl, attributes, match_origin, credentials, session_id)
         return self.tokens[token]
 
     def get(self, token, origin):
@@ -57,15 +57,19 @@ class TokenManager:
     def destroy(self, token):
         self.tokens.pop(token.token, None)
 
+    def destroy_by_session_id(self, session_id):
+        self.tokens = {k: v for k, v in self.tokens.items() if session_id not in v.session_ids}
+
 
 class Token:
-    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials):
+    def __init__(self, manager, token, ttl, attributes, match_origin, parent_credentials, session_id):
         self.manager = manager
         self.token = token
         self.ttl = ttl
         self.attributes = attributes
         self.match_origin = match_origin
         self.parent_credentials = parent_credentials
+        self.session_ids = {session_id}
 
         self.last_used_at = time.monotonic()
 
@@ -286,6 +290,8 @@ class AuthService(Service):
         if session is None:
             return False
 
+        self.token_manager.destroy_by_session_id(id)
+
         await session.app.response.close()
 
     @accepts()
@@ -359,6 +365,7 @@ class AuthService(Service):
             attrs,
             app.origin if match_origin else None,
             app.authenticated_credentials,
+            app.session_id,
         )
 
         return token.token
@@ -488,6 +495,7 @@ class AuthService(Service):
             return None
 
         self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
+        token.session_ids.add(app.session_id)
         return True
 
     @private
