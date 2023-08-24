@@ -63,7 +63,7 @@ class TruecommandService(Service):
             # truecommand.config and is in WAITING state right now assuming that an event will be
             # raised when TC finally connects
             await self.middleware.call('truecommand.set_status', Status.CONNECTED.value)
-            await self.middleware.call('alert.oneshot_delete', 'TruecommandConnectionHealth', None)
+            await self.middleware.call('truecommand.dismiss_alerts', False, True)
 
     @private
     async def wireguard_connection_health(self):
