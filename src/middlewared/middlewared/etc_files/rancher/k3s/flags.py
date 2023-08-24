@@ -7,6 +7,7 @@ import yaml
 
 
 FLAGS_PATH = '/etc/rancher/k3s/config.yaml'
+KUBELET_CONFIG_PATH = '/etc/rancher/k3s/kubelet_config.yaml'
 
 
 def render(service, middleware):
@@ -32,11 +33,20 @@ def render(service, middleware):
         'feature-gates=MixedProtocolLBService=true',
     ]
     kubelet_args = [
-        'max-pods=250',
+        f'config={KUBELET_CONFIG_PATH}',
     ]
     os.makedirs('/etc/rancher/k3s', exist_ok=True)
 
     features_mapping = {'servicelb': 'servicelb', 'metrics_server': 'metrics-server'}
+
+    with open(KUBELET_CONFIG_PATH, 'w') as f:
+        f.write(yaml.dump({
+            'apiVersion': 'kubelet.config.k8s.io/v1beta1',
+            'kind': 'KubeletConfiguration',
+            'maxPods': 250,
+            'shutdownGracePeriod': '15s',
+            'shutdownGracePeriodCriticalPods': '10s',
+        }))
 
     with open(FLAGS_PATH, 'w') as f:
         f.write(yaml.dump({
