@@ -216,6 +216,24 @@ class ACLTemplateService(CRUDService):
             du = {'id': -1}
 
         da = await self.middleware.call('idmap.sid_to_unixid', domain_info['sid'] + '-512')
+        if du is None:
+            self.logger.warning(
+                "Failed to resolve the Domain Users group to a Unix ID. This most likely "
+                "indicates a misconfiguration of idmap for the active directory domain. If "
+                "The idmap backend is AD, further configuration may be required to manually "
+                "assign a GID to the domain users group."
+            )
+            du = {'id': -1}
+
+        if da is None:
+            self.logger.warning(
+                "Failed to resolve the Domain Users group to a Unix ID. This most likely "
+                "indicates a misconfiguration of idmap for the active directory domain. If "
+                "The idmap backend is AD, further configuration may be required to manually "
+                "assign a GID to the domain users group."
+            )
+            da = {'id': -1}
+
         await self.append_builtins_internal((du['id'], da['id']), data)
 
     @private
