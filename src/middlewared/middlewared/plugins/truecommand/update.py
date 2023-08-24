@@ -205,11 +205,15 @@ class TruecommandService(ConfigService):
         self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.config()))
 
     @private
-    async def dismiss_alerts(self, dismiss_health=False):
+    async def dismiss_alerts(self, dismiss_health=False, dismiss_health_only=False):
         # We do not dismiss health by default because it's possible that the key has not been revoked
         # and it's just that TC has not connected to TN in 30 minutes, so we only should dismiss it when
         # we update TC service or the health is okay now with the service running or when service is not running
-        for klass in [
-            'TruecommandConnectionDisabled', 'TruecommandConnectionPending'
-        ] + (['TruecommandConnectionHealth', 'TruecommandContainerHealth'] if dismiss_health else []):
+        health_alerts = {'TruecommandConnectionHealth', 'TruecommandContainerHealth'}
+        non_health_alerts = {'TruecommandConnectionDisabled', 'TruecommandConnectionPending'}
+        if dismiss_health_only:
+            to_dismiss_alerts = health_alerts
+        else:
+            to_dismiss_alerts = health_alerts | non_health_alerts if dismiss_health else non_health_alerts
+        for klass in to_dismiss_alerts:
             await self.middleware.call('alert.oneshot_delete', klass, None)
