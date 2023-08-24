@@ -123,7 +123,7 @@ class ZettareplService(Service, TaskStateMixin):
 
     def _notify_state_change(self, task_id):
         state = self._get_task_state(task_id, self._get_state_context())
-        self.middleware.call_hook_sync("zettarepl.state_change", id=task_id, fields=state)
+        self.middleware.call_hook_sync("zettarepl.state_change", id_=task_id, fields=state)
 
     async def load_state(self):
         for replication in await self.middleware.call("datastore.query", "storage.replication"):
