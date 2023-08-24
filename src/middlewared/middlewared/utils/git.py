@@ -42,5 +42,5 @@ def update_repo(destination: str, branch: str) -> None:
 
 
 def validate_git_repo(destination: str) -> bool:
-    cp = subprocess.run(['git', '-C', destination, 'status'], capture_output=False)
+    cp = subprocess.run(['git', '-C', destination, 'status'], capture_output=True)
     return cp.returncode == 0
