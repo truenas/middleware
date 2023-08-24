@@ -596,6 +596,8 @@ class VMWareService(CRUDService):
                 if device.backing is None:
                     continue
                 if hasattr(device.backing, 'fileName'):
+                    if device.backing.datastore is None:
+                        continue
                     if device.backing.datastore.info.name == dataStore:
                         return True
         except Exception:
