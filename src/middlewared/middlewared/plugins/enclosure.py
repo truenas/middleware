@@ -13,6 +13,7 @@ from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list
 from middlewared.plugins.enclosure_.r30_drive_identify import set_slot_status as r30_set_slot_status
+from middlewared.plugins.enclosure_.fseries_drive_identify import set_slot_status as fseries_set_slot_status
 
 
 logger = logging.getLogger(__name__)
@@ -223,6 +224,9 @@ class EnclosureService(CRUDService):
     def set_slot_status(self, enclosure_id, slot, status):
         if enclosure_id == 'r30_nvme_enclosure':
             r30_set_slot_status(slot, status)
+            return
+        elif enclosure_id in ('f60_nvme_enclosure', 'f100_nvme_enclosure', 'f130_nvme_enclosure'):
+            fseries_set_slot_status(slot, status)
             return
 
         try:
