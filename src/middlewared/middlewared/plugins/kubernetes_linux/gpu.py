@@ -132,7 +132,11 @@ class KubernetesGPUService(Service):
         found_gpus = await self.get_system_gpus() if (
             await self.middleware.call('kubernetes.config')
         )['configure_gpus'] else set()
-        available_gpus = {}
+        available_gpus = {
+            'amd.com/gpu': '0',
+            'gpu.intel.com/i915': '0',
+            'nvidia.com/gpu': '0',
+        }
         for k, v in filter(
             lambda i: (i[0].endswith('/gpu') or i[0].startswith('gpu.intel')) and i[1] != '0',
             node_config['status']['allocatable'].items()
