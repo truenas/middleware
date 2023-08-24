@@ -50,7 +50,17 @@ class AddressMixin:
     def addresses(self):
         addresses = []
 
-        for family, family_addresses in netifaces.ifaddresses(self.name).items():
+        try:
+            iface = netifaces.ifaddresses(self.name)
+        except Exception:
+            # a ValueError will be raised when this function is given an interface
+            # that doesn't exist on the host OS. How might we get to this point for
+            # an interface that doesn't exist on the OS you might wonder? PCI passthrough
+            # is how. By the time this method is called the NIC existed on the host
+            # OS but was gobbled up by the VM which removes it from the host OS entirely.
+            return addresses
+
+        for family, family_addresses in iface.items():
             try:
                 af = AddressFamily(family)
             except ValueError:
