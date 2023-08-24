@@ -1,6 +1,7 @@
 from collections import deque
 
 from middlewared.service import private, Service
+from .utils import RE_DRAID_SPARE_DISKS, RE_DRAID_DATA_DISKS, RE_DRAID_NAME
 
 
 class PoolService(Service):
@@ -52,6 +53,12 @@ class PoolService(Service):
             for key in x:
                 if key == 'type' and isinstance(x[key], str):
                     x[key] = x[key].upper()
+                elif key == 'name' and RE_DRAID_NAME.match(x[key]) and isinstance(x.get('stats'), dict):
+                    x['stats'].update({
+                        'draid_spare_disks': int(RE_DRAID_SPARE_DISKS.findall(x['name'])[0][1:-1]),
+                        'draid_data_disks': int(RE_DRAID_DATA_DISKS.findall(x['name'])[0][1:-1]),
+                        'draid_parity': int(x['name'][len('draid'):len('draid') + 1]),
+                    })
                 else:
                     x[key] = self.transform_topology(x[key], dict(options, geom_scan=False))
         elif isinstance(x, list):

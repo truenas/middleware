@@ -1,6 +1,5 @@
 import errno
 import os
-import re
 
 import middlewared.sqlalchemy as sa
 
@@ -14,11 +13,9 @@ from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.size import format_size
 from middlewared.validators import Range
 
-from .utils import ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE
-
-
-RE_DATA = re.compile(r':\d*d')
-RE_SPARE = re.compile(r':\d*s')
+from .utils import (
+    ZFS_CHECKSUM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES, ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
+)
 
 
 class PoolModel(sa.Model):
@@ -315,8 +312,8 @@ class PoolService(CRUDService):
                         # normalize it so that it reflects the parity as well i.e DRAID1, DRAID2, etc.
                         # sample value of name here is: draid1:1d:2c:0s-0
                         entry['type'] = f'{i["type"]}{i["name"][len("draid"):len("draid") + 1]}'
-                        entry['draid_spare_disks'] = int(RE_SPARE.findall(i['name'])[0][1:-1])
-                        entry['draid_data_disks'] = int(RE_DATA.findall(i['name'])[0][1:-1])
+                        entry['draid_spare_disks'] = int(RE_DRAID_SPARE_DISKS.findall(i['name'])[0][1:-1])
+                        entry['draid_data_disks'] = int(RE_DRAID_DATA_DISKS.findall(i['name'])[0][1:-1])
                     rv.append(entry)
             return rv
 
