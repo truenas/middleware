@@ -80,7 +80,7 @@ class UpdateService(Service):
             result = stderr
 
         if p.returncode != 0:
-            raise CallError(result)
+            raise CallError(result or f"Abnormal installer process termination with code {p.returncode}")
         else:
             return result
 
