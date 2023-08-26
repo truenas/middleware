@@ -21,7 +21,11 @@ class InterfaceService(Service):
         self.logger.info('Configuring interface %r', name)
         iface = netif.get_interface(name)
         addrs_configured = set([a for a in iface.addresses if a.af != netif.AddressFamily.LINK])
-        has_ipv6 = data['int_version'] == 6 or data['int_ipv6auto']
+        has_ipv6 = (
+            data['int_version'] == 6
+            or data['int_ipv6auto'] or
+            any(alias['alias_version'] == 6 for alias in aliases)
+        )
         if self.middleware.call_sync('failover.node') == 'B':
             addr_key = 'int_address_b'
             alias_key = 'alias_address_b'
