@@ -42,7 +42,7 @@ class TruecommandService(Service, TruecommandAPIMixin):
                 self.middleware.send_event(
                     'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.config'))
                 )
-                if status['tc_state'] == 'running':
+                if status.get('tc_state') == 'running':
                     await self.middleware.call('truecommand.dismiss_alerts')
                 else:
                     await self.middleware.call('truecommand.dismiss_alerts', True)
