@@ -42,8 +42,14 @@ class TruecommandService(Service, TruecommandAPIMixin):
                 self.middleware.send_event(
                     'truecommand.config', 'CHANGED', fields=(await self.middleware.call('truecommand.config'))
                 )
-                await self.middleware.call('truecommand.dismiss_alerts')
+                if status.get('tc_state') == 'running':
+                    await self.middleware.call('truecommand.dismiss_alerts')
+                else:
+                    await self.middleware.call('truecommand.dismiss_alerts', True)
+                    await self.middleware.call('alert.oneshot_create', 'TruecommandContainerHealth', None)
+
                 await self.middleware.call('truecommand.start_truecommand_service')
+
                 break
 
             elif status['state'] == PortalResponseState.UNKNOWN:
