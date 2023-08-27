@@ -1,3 +1,10 @@
+import asyncio
+import contextlib
+import typing
+
+from .netdata.graph_base import GraphBase
+
+
 K8S_PODS_COUNT = 20  # A default value has been assumed for now
 
 
@@ -24,6 +31,19 @@ def convert_unit(unit: str, page: int) -> int:
         'MONTH': 60 * 24 * 30,
         'YEAR': 60 * 24 * 365,
     }[unit] * page
+
+
+async def fetch_data_from_graph_plugin(
+    graph_plugin: GraphBase, query_params: dict, identifier: typing.Optional[str], aggregate: bool,
+    semaphore: asyncio.Semaphore, graph_plugins: set,
+) -> typing.Optional[dict]:
+    if graph_plugin.name not in graph_plugins:
+        await graph_plugin.build_context()
+        graph_plugins.add(graph_plugin.name)
+
+    async with semaphore:
+        with contextlib.suppress(Exception):
+            return await graph_plugin.export(query_params, identifier, aggregate=aggregate)
 
 
 def get_metrics_approximation(disk_count: int, core_count: int, interface_count: int, pool_count: int) -> dict:

@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import time
 import typing
@@ -9,7 +10,10 @@ from middlewared.validators import Range
 
 from .netdata import GRAPH_PLUGINS
 from .netdata.graph_base import GraphBase
-from .utils import convert_unit
+from .utils import convert_unit, fetch_data_from_graph_plugin
+
+
+CONCURRENT_TASKS = 400
 
 
 class ReportingService(Service):
@@ -53,16 +57,16 @@ class ReportingService(Service):
             raise CallError(f'{name!r} is not a valid graph plugin.', errno.ENOENT)
 
         query_params = await self.middleware.call('reporting.translate_query_params', query)
-        results = []
-        # TODO: Optimize this so when retrieving stats for multiple plugins we do not get all charts
-        #  again and again
-        await graph_plugin.build_context()
-        for identifier in (await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]):
-            # TODO: Handle 404 gracefully which can happen if no metrics have been collected
-            # so far for the identifier/chart in question
-            results.append(await graph_plugin.export(query_params, identifier, aggregate=query['aggregate']))
+        identifiers = await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]
 
-        return results
+        semaphore = asyncio.Semaphore(CONCURRENT_TASKS)
+        graph_plugins = set()
+        return [
+            result for result in await asyncio.gather(*[fetch_data_from_graph_plugin(
+                graph_plugin, query_params, identifier, query['aggregate'], semaphore, graph_plugins,
+            ) for identifier in identifiers])
+            if result is not None
+        ]
 
     @filterable
     @filterable_returns(Dict(
@@ -82,7 +86,7 @@ class ReportingService(Service):
         List('graphs', items=[
             Dict(
                 'graph',
-                Str('name', required=True),
+                Str('name', required=True, enum=[i for i in GRAPH_PLUGINS]),
                 Str('identifier', default=None, null=True),
             ),
         ], empty=False),
@@ -130,17 +134,16 @@ class ReportingService(Service):
 
         """
         query_params = await self.middleware.call('reporting.translate_query_params', query)
-        results = []
-        for i in graphs:
-            try:
-                graph_plugin = self.__graphs[i['name']]
-            except KeyError:
-                raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
-            # Some plugin might need to build context
-            await graph_plugin.build_context()
-            results.append(await graph_plugin.export(query_params, i['identifier'], aggregate=query['aggregate']))
+        graph_plugins = set()
+        semaphore = asyncio.Semaphore(CONCURRENT_TASKS)
 
-        return results
+        return [
+            result for result in await asyncio.gather(*[fetch_data_from_graph_plugin(
+                self.__graphs[graph['name']], query_params, graph['identifier'], query['aggregate'],
+                semaphore, graph_plugins,
+            ) for graph in graphs])
+            if result is not None
+        ]
 
     @private
     @accepts(Ref('reporting_query'))
