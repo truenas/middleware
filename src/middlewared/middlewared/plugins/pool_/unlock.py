@@ -83,24 +83,3 @@ class PoolDatasetService(Service):
                 await self.middleware.call('vm.start', vm['id'])
             except Exception:
                 self.logger.error('Failed to start %r VM after %r unlock', vm['name'], dataset['name'], exc_info=True)
-
-    @private
-    async def restart_services_after_unlock(self, dataset_name, services_to_restart):
-        try:
-            to_restart = [[i] for i in set(services_to_restart)]
-            if not to_restart:
-                return
-
-            restart_job = await self.middleware.call('core.bulk', 'service.restart', to_restart)
-            statuses = await restart_job.wait()
-            for idx, srv_status in enumerate(statuses):
-                if srv_status['error']:
-                    self.logger.error(
-                        'Failed to restart %r service after %r unlock: %s',
-                        to_restart[idx], dataset_name, srv_status['error']
-                    )
-        except Exception:
-            self.logger.error(
-                'Failed to restart %r services after %r unlock', ', '.join(services_to_restart), dataset_name,
-                exc_info=True,
-            )
