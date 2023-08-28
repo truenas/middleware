@@ -25,7 +25,7 @@ def test_account_create_update_ssh_key_in_existing_dir():
                 "sshpubkey": "new",
             }) as u:
                 u = call("user.get_instance", u["id"])
-                assert u["sshpubkey"] == "new\n"
+                assert u["sshpubkey"] == "new"
 
 
 def test_account_update_ssh_key_and_set_homedir():
@@ -44,7 +44,7 @@ def test_account_update_ssh_key_and_set_homedir():
             })
 
             u = call("user.get_instance", u["id"])
-            assert u["sshpubkey"] == "new\n"
+            assert u["sshpubkey"] == "new"
 
 
 def test_account_sets_ssh_key_on_user_create():
