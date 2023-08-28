@@ -99,6 +99,9 @@ class PCI(Device):
                 'and cannot be used for PCI passthrough'
             )
 
+        if self.middleware.call_sync('system.is_ha_capable'):
+            verrors.add('attribute.pptdev', 'HA capable systems do not support PCI passthrough')
+
         if not self.middleware.call_sync('vm.device.iommu_enabled'):
             verrors.add('attribute.pptdev', 'IOMMU support is required.')
 
