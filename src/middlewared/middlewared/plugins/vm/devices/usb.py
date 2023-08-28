@@ -100,6 +100,9 @@ class USB(Device):
                 'Either device or attributes.usb must be specified'
             )
 
+        if self.middleware.call_sync('system.is_ha_capable'):
+            verrors.add('attributes.usb', 'HA capable systems do not support USB passthrough.')
+
         if verrors:
             return
 
