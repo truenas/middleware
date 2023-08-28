@@ -1394,12 +1394,15 @@ class UserService(CRUDService):
             'uid': user['uid'],
             'gid': gid,
             'options': {'recursive': True, 'stripacl': True}
-        })
+        }).wait_sync(raise_error=True)
 
         with open(keysfile, 'w') as f:
             f.write(pubkey)
             f.write('\n')
-        self.middleware.call_sync('filesystem.setperm', {'path': keysfile, 'mode': str(600)})
+        self.middleware.call_sync('filesystem.setperm', {
+            'path': keysfile,
+            'mode': str(600)
+        }).wait_sync(raise_error=True)
 
 
 class GroupModel(sa.Model):
