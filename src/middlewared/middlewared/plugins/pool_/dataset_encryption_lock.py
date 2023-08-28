@@ -286,8 +286,6 @@ class PoolDatasetService(Service):
                 )
 
         services_to_restart = set()
-        if self.middleware.call_sync('system.ready'):
-            services_to_restart.add('disk')
 
         if unlocked:
             if options['toggle_attachments']:
