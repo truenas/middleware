@@ -3,7 +3,6 @@ import enum
 import ipaddress
 import itertools
 import os
-import re
 import shlex
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
