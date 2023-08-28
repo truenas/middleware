@@ -463,23 +463,12 @@ class SharingNFSService(SharingService):
     def validate_and_clean_share_hosts_intput(self, hosts, schema_name, verrors):
         """
         The host field can contain multiple 'host' entries that are space delimited
-        At this time the following are now allowed: ',' '/'
         The validation is limited to detecting repeated 'host' names
 
         This will return a list of hosts
         """
-        # We do not allow the hosts field to contain ',' or '/'
-        ILLEGAL_CHARS = re.compile(r'[\/]')
         new_host_list = []
         for host_str in hosts:
-            # Trap illegal characters
-            if res := ILLEGAL_CHARS.findall(host_str):
-                verrors.add(
-                    f"{schema_name}.hosts",
-                    f"Host field contains {res} and cannot include ',' or '/':  {host_str}"
-                )
-                continue
-
             # Trap space delimited hosts
             if ' ' in host_str:
                 new_host_list.extend(shlex.split(host_str))
