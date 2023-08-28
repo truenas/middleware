@@ -285,8 +285,6 @@ class PoolDatasetService(Service):
                     f'{i + 1}) {ds!r}: {failed_datasets[ds]}' for i, ds in enumerate(failed_datasets)
                 )
 
-        services_to_restart = set()
-
         if unlocked:
             if options['toggle_attachments']:
                 job.set_progress(91, 'Handling attachments')
@@ -304,9 +302,6 @@ class PoolDatasetService(Service):
                 self.middleware.call_sync(
                     'pool.dataset.insert_or_update_encrypted_record', dataset_data(unlocked_dataset)
                 )
-
-            job.set_progress(93, 'Restarting services')
-            self.middleware.call_sync('pool.dataset.restart_services_after_unlock', id_, services_to_restart)
 
             job.set_progress(94, 'Running post-unlock tasks')
             self.middleware.call_hook_sync(
