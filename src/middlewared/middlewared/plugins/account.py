@@ -629,7 +629,7 @@ class UserService(CRUDService):
 
             data['sshpubkey'] = sshpubkey
             try:
-                await self.update_sshpubkey(data['home'], data, group['group'])
+                await self.middleware.run_in_thread(self.update_sshpubkey, data['home'], data, group['group'])
             except PermissionError as e:
                 self.logger.warn('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
@@ -788,7 +788,7 @@ class UserService(CRUDService):
             update_sshpubkey_args = [
                 home_old if home_copy else user['home'], user, group['bsdgrp_group'],
             ]
-            await self.update_sshpubkey(*update_sshpubkey_args)
+            await self.middleware.run_in_thread(self.update_sshpubkey, *update_sshpubkey_args)
         except PermissionError as e:
             self.logger.warn('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
@@ -1345,7 +1345,7 @@ class UserService(CRUDService):
             )
 
     @private
-    async def update_sshpubkey(self, homedir, user, group):
+    def update_sshpubkey(self, homedir, user, group):
         if 'sshpubkey' not in user:
             return
         if not os.path.isdir(homedir):
@@ -1383,12 +1383,12 @@ class UserService(CRUDService):
         # stripping the ACL will allow subsequent chmod calls to succeed even if
         # dataset aclmode is restricted.
         try:
-            gid = (await self.middleware.call('group.get_group_obj', {'groupname': group}))['gr_gid']
+            gid = self.middleware.call_sync('group.get_group_obj', {'groupname': group})['gr_gid']
         except Exception:
             # leaving gid at -1 avoids altering the GID value.
             self.logger.debug("Failed to convert %s to gid", group, exc_info=True)
 
-        await self.middleware.call('filesystem.setperm', {
+        self.middleware.call_sync('filesystem.setperm', {
             'path': sshpath,
             'mode': str(700),
             'uid': user['uid'],
@@ -1399,7 +1399,7 @@ class UserService(CRUDService):
         with open(keysfile, 'w') as f:
             f.write(pubkey)
             f.write('\n')
-        await self.middleware.call('filesystem.setperm', {'path': keysfile, 'mode': str(600)})
+        self.middleware.call_sync('filesystem.setperm', {'path': keysfile, 'mode': str(600)})
 
 
 class GroupModel(sa.Model):
