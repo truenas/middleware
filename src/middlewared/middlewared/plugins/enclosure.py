@@ -530,6 +530,8 @@ class Enclosure(object):
             self.model = "ES102S"
         elif self.encname.startswith("CELESTIC R0904"):
             self.model = "ES60"
+        elif self.encname.startswith("HGST H4060-J 3010"):
+            self.model = "ES60G2"
         elif ES24_REGEX.match(self.encname):
             self.model = "ES24"
         elif ES24F_REGEX.match(self.encname):
