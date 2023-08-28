@@ -191,13 +191,9 @@ class UserService(CRUDService):
 
     @private
     def _read_authorized_keys(self, homedir):
-        keysfile = f'{homedir}/.ssh/authorized_keys'
-        rv = None
         with suppress(FileNotFoundError):
-            with open(keysfile, 'r') as f:
-                rv = f.read()
-
-        return rv
+            with open(f'{homedir}/.ssh/authorized_keys') as f:
+                return f.read().strip()
 
     @private
     async def user_extend(self, user, ctx):
