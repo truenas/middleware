@@ -18,6 +18,12 @@ class SystemAdvancedService(Service):
         if isolated_gpu_pci_ids:
             verrors = await self.validate_gpu_pci_ids(isolated_gpu_pci_ids, verrors, 'gpu_settings')
 
+        if await self.middleware.call('system.is_ha_capable') and isolated_gpu_pci_ids:
+            verrors.add(
+                'gpu_settings.isolated_gpu_pci_ids',
+                'HA capable systems do not support PCI passthrough'
+            )
+
         verrors.check()
 
         await self.middleware.call(
