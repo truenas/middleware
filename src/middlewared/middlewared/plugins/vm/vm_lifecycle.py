@@ -39,6 +39,14 @@ class VMService(Service, VMSupervisorMixin):
         if vm['bootloader'] not in await self.middleware.call('vm.bootloader_options'):
             raise CallError(f'"{vm["bootloader"]}" is not supported on this platform.')
 
+        if await self.middleware.call('system.is_ha_capable'):
+            for device in vm['devices']:
+                if device['dtype'] in ('PCI', 'USB'):
+                    raise CallError(
+                        'Please remove PCI/USB devices from VM before starting it in HA capable machines as '
+                        'they are not supported.'
+                    )
+
         # Perhaps we should have a default config option for VMs?
         await self.middleware.call('vm.init_guest_vmemory', vm, options['overcommit'])
 
