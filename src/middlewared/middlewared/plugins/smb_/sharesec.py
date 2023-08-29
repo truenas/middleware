@@ -66,7 +66,7 @@ class ShareSec(CRUDService):
             return
 
         if not (await self.middleware.call('idmap.name_to_sid', f'{domain}\\{name}'))['sid']:
-            verrors.add(f'{schema}.ae_who_name.name', f'{domain}\{name}: unknown user or group.')
+            verrors.add(f'{schema}.ae_who_name.name', f'{domain}\\{name}: unknown user or group.')
 
     @private
     async def validate_share_acl(self, schema, acl):
