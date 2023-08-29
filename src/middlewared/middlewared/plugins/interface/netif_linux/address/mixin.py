@@ -1,9 +1,10 @@
 import ipaddress
+import time
 
 from pyroute2 import IPRoute
+from pyroute2.netlink.exceptions import NetlinkDumpInterrupted
 
 from middlewared.plugins.interface.netif_linux.utils import run
-
 from .ipv6 import ipv6_netmask_to_prefixlen
 from .types import AddressFamily, InterfaceAddress, LinkAddress
 
@@ -69,4 +70,16 @@ class AddressMixin:
 
     @property
     def addresses(self):
-        return self._get_addresses()
+        retries = 5
+        while True:
+            try:
+                return self._get_addresses()
+            except NetlinkDumpInterrupted:
+                # low-grade hardware can produce this which
+                # isn't necessarily fatal and the request
+                # should be retried
+                retries -= 1
+                if retries == 0:
+                    raise
+
+                time.sleep(0.2)
