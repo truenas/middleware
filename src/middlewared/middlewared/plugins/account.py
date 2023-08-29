@@ -1399,8 +1399,7 @@ class UserService(CRUDService):
         with open(keysfile, 'w') as f:
             os.fchmod(f.fileno(), 0o600)
             os.fchown(f.fileno(), user['uid'], gid)
-            f.write(pubkey)
-            f.write('\n')
+            f.write(f'{pubkey}\n')
 
 
 class GroupModel(sa.Model):
