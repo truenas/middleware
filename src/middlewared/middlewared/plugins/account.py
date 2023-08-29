@@ -1397,12 +1397,10 @@ class UserService(CRUDService):
         }).wait_sync(raise_error=True)
 
         with open(keysfile, 'w') as f:
+            os.fchmod(f.fileno(), 0o600)
+            os.fchown(f.fileno(), user['uid'], gid)
             f.write(pubkey)
             f.write('\n')
-        self.middleware.call_sync('filesystem.setperm', {
-            'path': keysfile,
-            'mode': str(600)
-        }).wait_sync(raise_error=True)
 
 
 class GroupModel(sa.Model):
