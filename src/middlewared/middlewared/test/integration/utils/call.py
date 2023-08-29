@@ -5,5 +5,5 @@ __all__ = ["call"]
 
 
 def call(*args, **kwargs):
-    with client() as c:
+    with client(**kwargs.pop("client_kwargs", {})) as c:
         return c.call(*args, **kwargs)
