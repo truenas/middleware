@@ -3,7 +3,6 @@ import enum
 import ipaddress
 import itertools
 import os
-import shlex
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -287,7 +286,7 @@ class SharingNFSService(SharingService):
         List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
         Str("comment", default=""),
         List("networks", items=[IPAddr("network", network=True)]),
-        List("hosts", items=[Str("host")]),
+        List("hosts", items=[Str("host", validators=[Match(r'^\S+$')])]),
         Bool("ro", default=False),
         Str("maproot_user", required=False, default=None, null=True),
         Str("maproot_group", required=False, default=None, null=True),
@@ -403,28 +402,27 @@ class SharingNFSService(SharingService):
             filters.append(["id", "!=", old["id"]])
         other_shares = await self.middleware.call("sharing.nfs.query", filters)
 
-        # Host names might be space delimited on a single entry, a single host per entry
-        # or a combination of both.  This returns all as a normalized list of hosts.
-        data_hosts = self.validate_and_clean_share_hosts_intput(data['hosts'], schema_name, verrors)
+        self.validate_share_hosts_input(data['hosts'], schema_name, verrors)
+        # Stop here if the input generated errors for the user to fix
+        verrors.check()
 
         dns_cache = await self.resolve_hostnames(
-            sum([share["hosts"] for share in other_shares], []) + data_hosts
+            sum([share["hosts"] for share in other_shares], []) + data['hosts']
         )
 
         self.validate_share_networks_input(data['networks'], dns_cache, schema_name, verrors)
-
         # Stop here if the input generated errors for the user to fix
-        if verrors:
-            return
+        verrors.check()
 
-        data['hosts'] = data_hosts
         await self.middleware.run_in_thread(
             self.validate_hosts_and_networks, other_shares,
             data, schema_name, verrors, dns_cache
         )
 
         # Confirm the share will not collide with an existing share
-        await self.validate_share_path(other_shares, data, schema_name, verrors)
+        await self.middleware.run_in_thread(
+            self.validate_share_path, other_shares, data, schema_name, verrors
+        )
 
         for k in ["maproot", "mapall"]:
             if not data[f"{k}_user"] and not data[f"{k}_group"]:
@@ -459,41 +457,26 @@ class SharingNFSService(SharingService):
                 )
 
     @private
-    def validate_and_clean_share_hosts_intput(self, hosts, schema_name, verrors):
+    def validate_share_hosts_input(self, hosts, schema_name, verrors):
         """
-        The host field can contain multiple 'host' entries that are space delimited
-        The validation is limited to detecting repeated 'host' names
-
-        This will return a list of hosts
+        Validate:
+        * List of hosts cannot contain repeated 'host' names
+        * The host '*' cannot be used in combination of other hosts
         """
-        new_host_list = []
-        for host_str in hosts:
-            # Trap space delimited hosts
-            if ' ' in host_str:
-                new_host_list.extend(shlex.split(host_str))
-                continue
-
-            # This should be a 'single' entry
-            new_host_list.append(host_str)
-
         # Check for the 'everybody' (*) host entry.
-        if '*' in new_host_list:
-            if len(set(new_host_list)) > 1:
-                verrors.add(
-                    f"{schema_name}.hosts",
-                    "ERROR - '*', i.e. 'everybody', cannot be included with other entries"
-                )
+        if '*' in hosts and len(set(hosts)) > 1:
+            verrors.add(
+                f"{schema_name}.hosts",
+                "ERROR - '*', i.e. 'everybody', cannot be included with other entries on same share path"
+            )
 
         # Check for duplicates
-        dups = list(set([x for x in new_host_list if new_host_list.count(x) >= 2]))
-        dup_hosts = ', '.join(dups)
+        dups = list(set([x for x in hosts if hosts.count(x) >= 2]))
         if len(dups) > 0:
             verrors.add(
                 f"{schema_name}.hosts",
-                f"ERROR - Duplicate host entries are not allowed: {dup_hosts}"
+                f"ERROR - Duplicate host entries are not allowed: {', '.join(dups)}"
             )
-
-        return new_host_list
 
     @private
     def validate_share_networks_input(self, networks, dns_cache, schema_name, verrors):
@@ -507,24 +490,23 @@ class SharingNFSService(SharingService):
             dups = list(set([x for x in networks if networks.count(x) >= 2]))
             verrors.add(
                 f"{schema_name}.networks",
-                f"ERROR - Duplicate network entries are not allowed: {dups}"
+                f"ERROR - Duplicate network entries are not allowed: {', '.join(dups)}"
             )
         # Check for duplicates via hostname (which should be in dns_cache)
+        dns_cache_values = list(dns_cache.values())
         for IPaddr in networks:
             IPinterface = ipaddress.ip_interface(IPaddr)
 
-            if str(IPinterface.ip) in list(dns_cache.values()):
+            if str(IPinterface.ip) in dns_cache_values:
                 key = next(key for key, value in dns_cache.items() if value == str(IPinterface.ip))
                 verrors.add(
                     f"{schema_name}.networks",
-                    f"ERROR - Duplicate network entries are not allowed: {key} {IPaddr}"
+                    f"ERROR - Resolved hostname to duplicate address: host '{key}' resolves to '{IPaddr}'"
                 )
 
-        # Check for overlapped networks
         overlaps = []
         for n1, n2 in itertools.combinations(networks, 2):
-            # Check both directions
-
+            # Check for overlapped networks
             ipn1 = ipaddress.ip_network(n1)
             ipn2 = ipaddress.ip_network(n2)
             if ipn1.overlaps(ipn2):
@@ -587,7 +569,6 @@ class SharingNFSService(SharingService):
         used_hosts = set()  # host names without an entry in the cache
         for share in other_shares:
             try:
-                # share_dev = os.stat(share["path"]).st_dev
                 share_stat = os.stat(share["path"])
                 share_dev = share_stat.st_dev
                 share_ino = share_stat.st_ino
@@ -595,10 +576,9 @@ class SharingNFSService(SharingService):
                 self.logger.warning("Failed to stat path for %r", share, exc_info=True)
                 continue
 
-            # if share_dev == dev:
             if (tgt_dev, tgt_ino) == (share_dev, share_ino):
                 for host in share["hosts"]:
-                    host_ip = dns_cache[host]
+                    host_ip = dns_cache.get(host)
                     if host_ip is None:
                         used_hosts.add(host)
                         continue
@@ -687,7 +667,7 @@ class SharingNFSService(SharingService):
             used_networks.add(network)
 
     @private
-    async def validate_share_path(self, other_shares, data, schema_name, verrors):
+    def validate_share_path(self, other_shares, data, schema_name, verrors):
         """
         A share path centric test. Checks new share path against existing.
         There are multiple ways to get duplicate entries for a given share path

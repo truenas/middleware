@@ -305,6 +305,7 @@ def test_02_creating_dataset_nfs(request):
 
 
 def test_03_changing_dataset_permissions_of_nfs_dataset(request):
+    depends(request, ["NFS_DATASET_CREATED"], scope="session")
     payload = {
         "acl": [],
         "mode": "777",
@@ -324,6 +325,7 @@ def test_04_verify_the_job_id_is_successfull(request):
 
 @pytest.mark.dependency(name='NFSID_SHARE_CREATED')
 def test_05_creating_a_nfs_share_on_nfs_PATH(request):
+    depends(request, ["NFS_DATASET_CREATED"], scope="session")
     global nfsid
     paylaod = {"comment": "My Test Share",
                "path": NFS_PATH,
@@ -343,6 +345,7 @@ def test_07_checking_to_see_if_nfs_service_is_enabled_at_boot(request):
     assert results.json()[0]["enable"] is True, results.text
 
 
+@pytest.mark.dependency(name='NFS_SERVICE_STARTED')
 def test_08_starting_nfs_service(request):
     set_nfs_service_state('start')
 
@@ -414,7 +417,7 @@ def test_31_check_nfs_share_network(request):
         192.168.0.0/24(sec=sys,rw,subtree_check)\
         192.168.1.0/24(sec=sys,rw,subtree_check)
     """
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+    depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
     networks_to_test = ["192.168.0.0/24", "192.168.1.0/24"]
 
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'networks': networks_to_test})
@@ -456,8 +459,9 @@ hostnames_to_test = [
       "devteam-*.ixsystems.com", "*.asdffail.com"], False),
     # Duplicate names (not allowed)
     (["192.168.1.0", "192.168.1.0"], False),
-    # Invalid IP address
+    # Invalid IP address, hostname with spaces
     (["192.168.1.o"], False),
+    (["bad host"], False)
 ]
 
 
@@ -481,7 +485,7 @@ def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
     - Dashes are allowed, but a level cannot start or end with a dash, '-'
     - Only the left most level may contain special characters: '*','?' and '[]'
     """
-    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+    depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hostlist})
     if ExpectedToPass:
         assert results.status_code == 200, results.text
