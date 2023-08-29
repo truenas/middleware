@@ -25,7 +25,7 @@ def test_01_default_kubernetes_cluster(request):
 
 @pytest.mark.dependency(name='install_chart_release')
 def test_02_install_chart_release(request):
-    depends(request, ['default_kubernetes_cluster'])
+    depends(request, ['setup_kubernetes', 'default_kubernetes_cluster'], scope='session')
     payload = {'catalog': 'TRUENAS', 'item': 'syncthing', 'release_name': APP_NAME, 'train': 'charts'}
     call('chart.release.create', payload, job=True)
     assert call('chart.release.get_instance', APP_NAME)['name'] == APP_NAME
