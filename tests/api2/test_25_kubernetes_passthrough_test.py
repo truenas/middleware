@@ -19,13 +19,14 @@ APP_NAME = 'syncthing'
 
 @pytest.mark.dependency(name='default_kubernetes_cluster')
 def test_01_default_kubernetes_cluster(request):
-    config = call('kubernetes.update', {'passthrough_mode': False, 'pool': pool_name}, job=True)
+    depends(request, ['setup_kubernetes'], scope='session')
+    config = call('kubernetes.config')
     assert config['passthrough_mode'] is False
 
 
 @pytest.mark.dependency(name='install_chart_release')
 def test_02_install_chart_release(request):
-    depends(request, ['setup_kubernetes', 'default_kubernetes_cluster'], scope='session')
+    depends(request, ['default_kubernetes_cluster'])
     payload = {'catalog': 'TRUENAS', 'item': 'syncthing', 'release_name': APP_NAME, 'train': 'charts'}
     call('chart.release.create', payload, job=True)
     assert call('chart.release.get_instance', APP_NAME)['name'] == APP_NAME
