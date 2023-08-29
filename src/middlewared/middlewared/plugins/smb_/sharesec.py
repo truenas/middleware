@@ -1,7 +1,7 @@
 from middlewared.plugins.sysdataset import SYSDATASET_PATH
 from middlewared.schema import Bool, Dict, List, SID, Str, Int
 from middlewared.service import (accepts, filterable, private, periodic, CRUDService)
-from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils import run, filter_list
 from middlewared.plugins.smb import SMBCmd
 
@@ -41,6 +41,40 @@ class ShareSec(CRUDService):
         'backend': 'CUSTOM',
         'data_type': 'BYTES'
     }
+
+    @private
+    async def validate_share_ace(self, schema, ace, verrors):
+        if sid := ace.get('ae_who_sid'):
+            if not await self.middleware.call('idmap.sid_to_unixid', sid):
+                verrors.add(f'{schema}.sid', f'{sid}: SID is unknown')
+
+            return
+
+        if not (domain := ace['ae_who_name']['domain']):
+            verrors.add(f'{schema}.ae_who_name.domain', 'Domain is required for name-based entries')
+            return
+
+        if not (name := ace['ae_who_name']['name']):
+            verrors.add(f'{schema}.ae_who_name.name', 'Name is required for name-based entries')
+            return
+
+        if not await self.middleware.call(
+            'idmap.known_domains',
+            [['netbios_domain', 'C=', domain]]
+        ):
+            verrors.add(f'{schema}.ae_who_name.domain', f'{domain}: domain is unknown')
+            return
+
+        if not (await self.middleware.call('idmap.name_to_sid', f'{domain}\\{name}'))['sid']:
+            verrors.add(f'{schema}.ae_who_name.name', f'{domain}\\{name}: unknown user or group.')
+
+    @private
+    async def validate_share_acl(self, schema, acl):
+        verrors = ValidationErrors()
+        for idx, ace in enumerate(acl):
+            await self.validate_share_ace(f'{schema}.{idx}', ace, verrors)
+
+        verrors.check()
 
     @private
     async def dup_share_acl(self, src, dst):
@@ -231,7 +265,7 @@ class ShareSec(CRUDService):
         return (RE_SHAREACLENTRY.match(f'ACL:{perm_str}')).groupdict()
 
     @private
-    async def setacl(self, data, db_commit=True):
+    async def setacl(self, data, schema, db_commit=True):
         """
         Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
         This only impacts SMB sessions. Either ae_who_sid or ae_who_name must be specified
@@ -266,6 +300,7 @@ class ShareSec(CRUDService):
         except MatchNotFound:
             raise CallError(f'{data["share_name"]}: share does not exist')
 
+        await self.validate_share_acl(schema, data['share_acl'])
         ae_list = []
         for entry in data['share_acl']:
             ae_list.append(await self._ae_to_string(entry))
@@ -418,7 +453,7 @@ class ShareSec(CRUDService):
 
         `ae_type` can be ALLOWED or DENIED.
         """
-        await self.setacl(data)
+        await self.setacl(data, 'smb.sharesec.create')
 
     @accepts(
         Int('id', required=True),
@@ -449,7 +484,10 @@ class ShareSec(CRUDService):
         to both /var/db/system/samba4/share_info.tdb and the configuration file.
         """
         old_acl = await self.get_instance(id)
-        await self.setacl({"share_name": old_acl["share_name"], "share_acl": data["share_acl"]})
+        await self.setacl(
+            {"share_name": old_acl["share_name"], "share_acl": data["share_acl"]},
+            'smb.sharesec.update'
+        )
         return await self.getacl(old_acl["share_name"])
 
     @accepts(Str('id_or_name', required=True))
@@ -471,7 +509,7 @@ class ShareSec(CRUDService):
             old_acl = await self.get_instance(int(id_or_name))
             new_acl.update({'share_name': old_acl['share_name']})
 
-        await self.setacl(new_acl)
+        await self.setacl(new_acl, 'smb.sharesec.delete')
 
         try:
             # remove in-tdb backup of this ACL
