@@ -1,15 +1,16 @@
 import contextlib
 import enum
+import errno
 import ipaddress
 import itertools
-import os
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.validators import Match, Range, IpAddress
-from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
+from middlewared.service import private, SharingService, SystemServiceService
+from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
@@ -414,9 +415,8 @@ class SharingNFSService(SharingService):
         # Stop here if the input generated errors for the user to fix
         verrors.check()
 
-        await self.middleware.run_in_thread(
-            self.validate_hosts_and_networks, other_shares,
-            data, schema_name, verrors, dns_cache
+        await self.validate_hosts_and_networks(
+            other_shares, data, schema_name, verrors, dns_cache
         )
 
         # Confirm the share will not collide with an existing share
@@ -538,27 +538,25 @@ class SharingNFSService(SharingService):
         return dict(zip(hostnames, resolved_hostnames))
 
     @private
-    def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
+    async def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
         """
         We attempt to prevent share situation where the same host is provided access to a
         share but with potentially different permissions.
         """
-        tgt_path_stat = os.stat(data["path"])
-        tgt_dev = tgt_path_stat.st_dev
-        tgt_ino = tgt_path_stat.st_ino
+        tgt_realpath = (await self.middleware.call('filesystem.stat', data['path']))['realpath']
 
         used_networks = set()
         used_hosts = set()  # host names without an entry in the cache
         for share in other_shares:
             try:
-                share_stat = os.stat(share["path"])
-                share_dev = share_stat.st_dev
-                share_ino = share_stat.st_ino
-            except Exception:
-                self.logger.warning("Failed to stat path for %r", share, exc_info=True)
-                continue
+                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+            except CallError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                # Allow for locked filesystems
+                shr_realpath = share['path']
 
-            if (tgt_dev, tgt_ino) == (share_dev, share_ino):
+            if tgt_realpath == shr_realpath:
                 for host in share["hosts"]:
                     host_ip = dns_cache.get(host)
                     if host_ip is None:
@@ -663,20 +661,26 @@ class SharingNFSService(SharingService):
         This function checks for common conditions.
         """
         # We test other shares that are sharing the same path
-        tgt_path_stat = await self.middleware.call('filesystem.stat', data["path"])
-        tgt_dev = tgt_path_stat['dev']
-        tgt_ino = tgt_path_stat['inode']
+        tgt_stat = await self.middleware.call('filesystem.stat', data["path"])
 
+        # Sanity check: no symlinks
+        if tgt_stat['type'] == "SYMLINK":
+            verrors.add(
+                f"{schema_name}.path",
+                f"Symbolic links are not allowed: {data['path']}."
+            )
+
+        tgt_realpath = tgt_stat['realpath']
         for share in other_shares:
             try:
-                share_stat = await self.middleware.call('filesystem.stat', share["path"])
-                share_dev = share_stat['dev']
-                share_ino = share_stat['inode']
-            except Exception:
-                self.logger.warning("Failed to stat path for %r", share, exc_info=True)
-                continue
+                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+            except CallError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                # Allow for locked filesystems
+                shr_realpath = share['path']
 
-            if (tgt_dev, tgt_ino) == (share_dev, share_ino):
+            if tgt_realpath == shr_realpath:
                 # Test hosts
                 # An empty 'hosts' list == '*' == 'everybody.  Workaround: remove '*' as a host entry
                 datahosts = [host for host in data["hosts"] if host != "*"]

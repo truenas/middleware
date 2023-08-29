@@ -16,7 +16,6 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname
-# from auto_config import interface
 from auto_config import dev_test, password, user
 from protocols import SSH_NFS
 # comment pytestmark for development testing with --dev-test
@@ -459,8 +458,9 @@ hostnames_to_test = [
       "devteam-*.ixsystems.com", "*.asdffail.com"], False),
     # Duplicate names (not allowed)
     (["192.168.1.0", "192.168.1.0"], False),
-    # Invalid IP address, hostname with spaces
+    # Invalid IP address
     (["192.168.1.o"], False),
+    # Hostname with spaces
     (["bad host"], False)
 ]
 
@@ -746,6 +746,12 @@ class Test37WithFixture:
                         for subdir in subdirs:
                             results = SSH_TEST(f"mkdir -p {vol0}/{dir}/{subdir}", user, password, ip)
                             assert results['result'] is True
+                            # And symlinks
+                            results = SSH_TEST(
+                                f"ln -sf {vol0}/{dir}/{subdir} {vol0}/{dir}/symlink2{subdir}",
+                                user, password, ip
+                            )
+                            assert results['result'] is True
 
                     yield vol0
                 finally:
@@ -779,8 +785,9 @@ class Test37WithFixture:
         ("limited_1/subdir2", True, ["*"], True),             # 10: Test NAS-123042, everybody
         ("dir_2/subdir2", False, ["192.168.1.0/24"], True),   # 11: Setup for test 13
         ("dir_2/subdir2", False, ["192.168.1.0/32"], False),  # 12: Test NAS-123042 - export collision, overlaping networks
-        ("everybody_1/subdir1", True, ["*", "*.ixsystems.com"], False),        # 13: Test NAS-123042, export collision, same path and entry
-        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True)  # 14: Test NAS-123042
+        ("everybody_1/subdir1", True, ["*", "*.ixsystems.com"], False),         # 13: Test NAS-123042, export collision, same path and entry
+        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True),  # 14: Test NAS-123042
+        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False),                # 15: Block exporting symlinks
     ]
 
     @pytest.mark.parametrize("dirname,isHost,HostOrNet,ExpectedToPass", dirs_to_export)
