@@ -838,6 +838,7 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
+        password = data.get('password')
         if not pk and not password and not data.get('password_disabled'):
             verrors.add(f'{schema}.password', 'Password is required')
         elif data.get('password_disabled') and password:
