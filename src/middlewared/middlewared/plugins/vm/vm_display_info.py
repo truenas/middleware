@@ -69,7 +69,11 @@ class VMService(Service):
             Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
         )
     )
-    @returns(Dict('display_devices_uri', additional_attrs=True))
+    @returns(Dict(
+        'display_devices_uri',
+        Str('error', null=True),
+        Str('uri', null=True),
+    ))
     @pass_app()
     async def get_display_web_uri(self, app, id_, host, options):
         """
