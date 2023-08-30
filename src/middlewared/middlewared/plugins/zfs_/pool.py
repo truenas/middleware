@@ -1,11 +1,10 @@
 import errno
 import libzfs
-import os
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, job, ValidationErrors
 from middlewared.utils import filter_list
-
+from middlewared.utils.zfs import guid_fast_impl, state_fast_impl, query_imported_fast_impl
 from .pool_utils import convert_topology, find_vdev
 
 
@@ -142,18 +141,7 @@ class ZFSPoolService(CRUDService):
     def query_imported_fast(self, name_filters=None):
         # the equivalent of running `zpool list -H -o guid,name` from cli
         # name_filters will be a list of pool names
-        out = {}
-        name_filters = name_filters or []
-        with os.scandir('/proc/spl/kstat/zfs') as it:
-            for entry in filter(lambda entry: not name_filters or entry.name in name_filters, it):
-                if not entry.is_dir() or entry.name == '$import':
-                    continue
-
-                guid = self.guid_fast(entry.name)
-                state = self.state_fast(entry.name)
-                out.update({guid: {'name': entry.name, 'state': state}})
-
-        return out
+        return query_imported_fast_impl(name_filters)
 
     @accepts(Str('pool'))
     def guid_fast(self, pool):
@@ -161,10 +149,7 @@ class ZFSPoolService(CRUDService):
         Lockless read of zpool guid. Raises FileNotFoundError
         if pool not imported.
         """
-        with open(f'/proc/spl/kstat/zfs/{pool}/guid') as f:
-            guid_out = f.read()
-
-        return guid_out.strip()
+        return guid_fast_impl(pool)
 
     @accepts(Str('pool'))
     def state_fast(self, pool):
@@ -172,10 +157,7 @@ class ZFSPoolService(CRUDService):
         Lockless read of zpool state. Raises FileNotFoundError
         if pool not imported.
         """
-        with open(f'/proc/spl/kstat/zfs/{pool}/state') as f:
-            state = f.read()
-
-        return state.strip()
+        return state_fast_impl(pool)
 
     def validate_draid_configuration(self, topology_type, numdisks, nparity, vdev):
         verrors = ValidationErrors()
