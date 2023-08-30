@@ -19,7 +19,8 @@ APP_NAME = 'syncthing'
 
 @pytest.mark.dependency(name='default_kubernetes_cluster')
 def test_01_default_kubernetes_cluster(request):
-    config = call('kubernetes.update', {'passthrough_mode': False, 'pool': pool_name}, job=True)
+    depends(request, ['setup_kubernetes'], scope='session')
+    config = call('kubernetes.config')
     assert config['passthrough_mode'] is False
 
 
