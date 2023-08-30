@@ -1,4 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.schedule import CrontabSchedule
 
 
 class VolumeStatusAlertClass(AlertClass):
@@ -11,6 +12,9 @@ class VolumeStatusAlertClass(AlertClass):
 
 
 class VolumeStatusAlertSource(AlertSource):
+
+    schedule = CrontabSchedule(hour=1)
+
     async def check(self):
         if not await self.enabled():
             return
