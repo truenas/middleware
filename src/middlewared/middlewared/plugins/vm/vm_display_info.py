@@ -66,11 +66,6 @@ class VMService(Service):
         Str('host', default=''),
         Dict(
             'options',
-            List('devices_passwords', items=[Dict(
-                'device_password',
-                Int('device_id', required=True),
-                Str('password', required=True, empty=False))
-            ]),
             Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
         )
     )
