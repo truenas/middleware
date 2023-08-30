@@ -22,16 +22,16 @@ class VolumeStatusAlertSource(ThreadedAlertSource):
     def check_sync(self):
         alerts = []
         boot_name = self.middleware.call_sync('boot.pool_name')
-        pools = alerts = None
+        pools = gen_alerts = None
         for guid, info in query_imported_fast_impl().items():
-            if info['status'] == 'ONLINE':
+            if info['state'] == 'ONLINE':
                 continue
 
-            if alerts is None:
-                alerts = self.middleware.call_sync('alert.list')
+            if gen_alerts is None:
+                gen_alerts = self.middleware.call_sync('alert.list')
 
             alert_already_generated = False
-            for i in filter(lambda x: x['klass'] in ('VolumeStatus', 'BootPoolStatus'), alerts):
+            for i in filter(lambda x: x['klass'] in ('VolumeStatus', 'BootPoolStatus'), gen_alerts):
                 # before we do anything expensive, let's make sure that we don't
                 # already have an alert generated for this zpool
                 if i['klass'] == 'BootPoolStatus' and info['name'] == boot_name:
@@ -47,16 +47,10 @@ class VolumeStatusAlertSource(ThreadedAlertSource):
                 continue
 
             if pools is None:
-                try:
-                    pools = self.middleware.call_sync('pool.query')
-                except Exception:
-                    # edge-case but could be that by the time we checked sysfs and then queried
-                    # the pool using libzfs, the pool could have vanished
-                    continue
+                pools = {i['name']: i for i in self.middleware.call_sync('pool.query')}
 
-            try:
-                pool = [i for i in pools if i['name'] == info['name']][0]
-            except IndexError:
+            pool = pools.get(info['name'])
+            if pool is None:
                 # shouldn't happen but our alert system has ugly behavior if we crash here
                 continue
 
