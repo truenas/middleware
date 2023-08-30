@@ -1,0 +1,92 @@
+import pytest
+from auto_config import dev_test, ip, password, user
+from middlewared.test.integration.utils import ssh
+from pytest_dependency import depends
+from time import sleep
+
+pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+
+
+def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_INFO'):
+    """
+    This generates a syslog message on the TrueNAS server we're currently testing.
+    We don't need to override IP addr or creds because we are not a syslog target.
+    """
+    cmd = 'python3 -c "import syslog;'
+    cmd += f'syslog.openlog(ident=\\\"{ident}\\\", facility={facility});'
+    cmd += f'syslog.syslog({priority},\\\"{message}\\\");syslog.closelog()"'
+    ssh(cmd)
+
+
+def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passwd=password):
+    """
+    Common function to check whether a particular message exists in a log file.
+    This will be used to check local and remote syslog servers.
+
+    Current implementation performs simple grep through the log file, and so
+    onus is on test developer to not under-specify `message` in order to avoid
+    false positives.
+    """
+    cmd = f'grep -R "{message}" {log_path}'
+    ssh(cmd, user=target_user, password=target_passwd, ip=target_ip)
+
+
+@pytest.mark.parametrize('params', [
+    {
+        'ident': 'k3s',
+        'msg': 'ZZZZ: k3s syslog filter test',
+        'path': '/var/log/k3s_daemon.log',
+    },
+    {
+        'ident': 'containerd',
+        'msg': 'ZZZZ: containerd syslog filter test',
+        'path': '/var/log/containerd.log',
+    },
+    {
+        'ident': 'dockerd',
+        'msg': 'ZZZZ: docker filter test',
+        'path': '/var/log/containerd.log',
+    },
+    {
+        'ident': 'kube-router',
+        'msg': 'ZZZZ: kube-router filter test',
+        'path': '/var/log/kube_router.log',
+    },
+    {
+        'ident': 'systemd',
+        'msg': 'ZZZZ: docker filter mount: test',
+        'path': '/var/log/app_mounts.log',
+    },
+    {
+        'ident': 'systemd',
+        'msg': 'ZZZZ: kubelet filter mount: test',
+        'path': '/var/log/app_mounts.log',
+    },
+])
+def test_local_syslog_filter(request, params):
+    """
+    This test validates that our syslog-ng filters are correctly placing
+    messages into their respective paths in /var/log
+    """
+    do_syslog(
+        params['ident'],
+        params['msg'],
+        params.get('facility', 'syslog.LOG_USER'),
+        params.get('priority', 'syslog.LOG_INFO')
+    )
+    sleep(1)
+    check_syslog(params['path'], params['msg'])
+
+
+@pytest.mark.parametrize('log_path', [
+    '/var/log/messages',
+    '/var/log/syslog',
+    '/var/log/daemon.log'
+])
+def test_filter_leak(request, log_path):
+    """
+    This test validates that our exclude filter works properly and that
+    particularly spammy applications aren't polluting useful logs.
+    """
+    results = ssh(f'grep -R "ZZZZ:" {log_path}', complete_response=True, check=False)
+    assert results['result'] is False, str(results['result'])

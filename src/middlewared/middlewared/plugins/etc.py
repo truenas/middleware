@@ -241,9 +241,16 @@ class EtcService(Service):
         'snmpd': [
             {'type': 'mako', 'path': 'snmp/snmpd.conf', 'local_path': 'local/snmpd.conf'},
         ],
-        'syslogd': [
-            {'type': 'py', 'path': 'syslogd', 'checkpoint': 'pool_import'},
-        ],
+        'syslogd': {
+            'ctx': [
+                {'method': 'system.advanced.config'},
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'syslog-ng/syslog-ng.conf'},
+                {'type': 'mako', 'path': 'syslog-ng/conf.d/tndestinations.conf'},
+                {'type': 'mako', 'path': 'syslog-ng/conf.d/tnfilters.conf'},
+            ]
+        },
         'hosts': [{'type': 'mako', 'path': 'hosts', 'mode': 0o644, 'checkpoint': 'pre_interface_sync'}],
         'hostname': [{'type': 'py', 'path': 'hostname', 'checkpoint': 'pre_interface_sync'}],
         'ssh': {
