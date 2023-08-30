@@ -296,6 +296,7 @@ def test_01_creating_the_nfs_server():
     # The service is not yet enabled, so we cannot yet confirm the settings
 
 
+@pytest.mark.dependency(name='NFS_DATASET_CREATED')
 def test_02_creating_dataset_nfs(request):
     payload = {"name": dataset}
     results = POST("/pool/dataset/", payload)
@@ -303,6 +304,7 @@ def test_02_creating_dataset_nfs(request):
 
 
 def test_03_changing_dataset_permissions_of_nfs_dataset(request):
+    depends(request, ["NFS_DATASET_CREATED"], scope="session")
     payload = {
         "acl": [],
         "mode": "777",
@@ -320,7 +322,9 @@ def test_04_verify_the_job_id_is_successfull(request):
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
 
+@pytest.mark.dependency(name='NFSID_SHARE_CREATED')
 def test_05_creating_a_nfs_share_on_nfs_PATH(request):
+    depends(request, ["NFS_DATASET_CREATED"], scope="session")
     global nfsid
     paylaod = {"comment": "My Test Share",
                "path": NFS_PATH,
@@ -340,6 +344,7 @@ def test_07_checking_to_see_if_nfs_service_is_enabled_at_boot(request):
     assert results.json()[0]["enable"] is True, results.text
 
 
+@pytest.mark.dependency(name='NFS_SERVICE_STARTED')
 def test_08_starting_nfs_service(request):
     set_nfs_service_state('start')
 
@@ -390,6 +395,7 @@ def test_19_updating_the_nfs_service(request):
 
 
 def test_20_update_nfs_share(request):
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     nfsid = GET('/sharing/nfs?comment=My Test Share').json()[0]['id']
     payload = {"security": []}
     results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
@@ -410,6 +416,7 @@ def test_31_check_nfs_share_network(request):
         192.168.0.0/24(sec=sys,rw,subtree_check)\
         192.168.1.0/24(sec=sys,rw,subtree_check)
     """
+    depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
     networks_to_test = ["192.168.0.0/24", "192.168.1.0/24"]
 
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'networks': networks_to_test})
@@ -444,9 +451,17 @@ hostnames_to_test = [
       "asdfdm[0-9].example.com", "dmix?-*dev[0-9].ixsystems.com"], True),
     # Invalid hostnames
     (["-asdffail", "*.asdffail.com", "*.*.com", "bozofail.?.*"], False),
+    (["bogus/name"], False),
+    (["192.168.1.0/24"], False),
     # Mix of valid and invalid hostnames
     (["asdfdm[0-9].example.com", "-asdffail",
-      "devteam-*.ixsystems.com", "*.asdffail.com"], False)
+      "devteam-*.ixsystems.com", "*.asdffail.com"], False),
+    # Duplicate names (not allowed)
+    (["192.168.1.0", "192.168.1.0"], False),
+    # Invalid IP address
+    (["192.168.1.o"], False),
+    # Hostname with spaces
+    (["bad host"], False)
 ]
 
 
@@ -470,6 +485,7 @@ def test_32_check_nfs_share_hosts(request, hostlist, ExpectedToPass):
     - Dashes are allowed, but a level cannot start or end with a dash, '-'
     - Only the left most level may contain special characters: '*','?' and '[]'
     """
+    depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'hosts': hostlist})
     if ExpectedToPass:
         assert results.status_code == 200, results.text
@@ -504,6 +520,7 @@ def test_33_check_nfs_share_ro(request):
     exports file. We also verify with write tests on a local mount.
     """
 
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     # Make sure we end up in the original state with 'rw'
     try:
         # Confirm 'rw' initial state and create a file and dir
@@ -560,6 +577,7 @@ def test_34_check_nfs_share_maproot(request):
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,anonuid=65534,anongid=65534,subtree_check)
     """
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     payload = {
         'maproot_user': 'nobody',
         'maproot_group': 'nogroup'
@@ -630,6 +648,7 @@ def test_35_check_nfs_share_mapall(request):
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,all_squash,anonuid=65534,anongid=65534,subtree_check)
     """
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     payload = {
         'mapall_user': 'nobody',
         'mapall_group': 'nogroup'
@@ -672,6 +691,7 @@ def test_36_check_nfsdir_subtree_behavior(request):
     "/mnt/dozer/NFSV4/foobar"\
         *(sec=sys,rw,subtree_check)
     """
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     tmp_path = f'{NFS_PATH}/sub1'
     results = POST('/filesystem/mkdir', tmp_path)
     assert results.status_code == 200, results.text
@@ -693,6 +713,11 @@ class Test37WithFixture:
     in the parametrized test
     """
 
+    # TODO: Work up a valid IPv6 test
+    # res = SSH_TEST(f"ip address show {interface} | grep inet6", user, password, ip)
+    # ipv6_network = str(res['output'].split()[1])
+    # ipv6_host = ipv6_network.split('/')[0]
+
     @pytest.fixture(scope='class')
     def dataset_and_dirs(self):
         """
@@ -710,7 +735,9 @@ class Test37WithFixture:
                 startIdList = [item.get('id') for item in contents]
 
                 # Create the dirs
-                dirs = ["dir1", "dir2", "dir3", "dir4", "dir5", "dir6"]
+                dirs = ["everybody_1", "everybody_2",
+                        "limited_1", "limited_2",
+                        "dir_1", "dir_2"]
                 subdirs = ["subdir1", "subdir2", "subdir3"]
                 try:
                     for dir in dirs:
@@ -718,6 +745,12 @@ class Test37WithFixture:
                         assert results['result'] is True
                         for subdir in subdirs:
                             results = SSH_TEST(f"mkdir -p {vol0}/{dir}/{subdir}", user, password, ip)
+                            assert results['result'] is True
+                            # And symlinks
+                            results = SSH_TEST(
+                                f"ln -sf {vol0}/{dir}/{subdir} {vol0}/{dir}/symlink2{subdir}",
+                                user, password, ip
+                            )
                             assert results['result'] is True
 
                     yield vol0
@@ -738,37 +771,54 @@ class Test37WithFixture:
     # Parameters for test_37
     # Directory (dataset share VOL0), hostname, ExpectedToPass
     dirs_to_export = [
-        ("dir1", ["*"], True),  # Test NAS-120957
-        ("dir2", ["*"], True),  # Test NAS-120957, allow non-related paths to same hosts
-        ("dir3", ["*.example.com"], True),
-        ("dir3", ["*.example.com"], False),  # Already exported
-        ("dir1/subdir1", ["192.168.0.0"], True),
-        ("dir1/subdir2", ["127.0.0.1"], False),  # Already exported at share root, VOL0
-        ("dir4/subdir1", ["192.168.1.0"], True),
-        ("dir4", ["192.168.1.0"], False),  # Already shared by dir4/subdir1
-        ("dir4", ["*.ixsystems.com"], True),
-        ("dir4/subdir2", ["192.168.1.0", "*.ixsystems.com"], False)  # ixsystems already shared
+        ("everybody_1", True, ["*"], True),                   # 0: Test NAS-120957
+        ("everybody_2", True, ["*"], True),                   # 1: Test NAS-120957, allow non-related paths to same hosts
+        ("limited_1", True, ["127.0.0.1"], True),             # 2: Test NAS-123042, allow export of subdirs
+        ("limited_2", True, ["127.0.0.1"], True),             # 3: Test NAS-120957, NAS-123042
+        ("limited_2", True, ["*"], False),                    # 4: Test NAS-123042, export collision, same path, different entry
+        ("dir_1", True, ["*.example.com"], True),             # 5: Setup for test 6
+        ("dir_1", True, ["*.example.com"], False),            # 6: Already exported
+        # ("dir_1", True, [ipv6_host], True),                   # -: ipv6
+        ("dir_1/subdir1", True, ["192.168.0.0"], True),       # 7: Setup for test 9
+        ("dir_1/subdir1", True, ["192.168.0.0"], False),      # 8: Alread exported, non-wildcard
+        ("limited_2/subdir2", True, ["127.0.0.1"], True),     # 9: Test NAS-123042, allow export of subdirs
+        ("limited_1/subdir2", True, ["*"], True),             # 10: Test NAS-123042, everybody
+        ("dir_2/subdir2", False, ["192.168.1.0/24"], True),   # 11: Setup for test 13
+        ("dir_2/subdir2", False, ["192.168.1.0/32"], False),  # 12: Test NAS-123042 - export collision, overlaping networks
+        ("everybody_1/subdir1", True, ["*", "*.ixsystems.com"], False),         # 13: Test NAS-123042, export collision, same path and entry
+        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True),  # 14: Test NAS-123042
+        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False),                # 15: Block exporting symlinks
     ]
 
-    @pytest.mark.parametrize("dirname,host,ExpectedToPass", dirs_to_export)
-    def test_37_check_nfsdir_subtree_share(self, request, dataset_and_dirs, dirname, host, ExpectedToPass):
+    @pytest.mark.parametrize("dirname,isHost,HostOrNet,ExpectedToPass", dirs_to_export)
+    def test_37_check_nfsdir_subtree_share(self, request, dataset_and_dirs, dirname, isHost, HostOrNet, ExpectedToPass):
         """
         Sharing subtrees to the same host can cause problems for
         NFSv3.  This check makes sure a share creation follows
         the rules.
             * First match is applied
-            * A new path that is related to an existing path cannot be shared to same 'host'
+            * A new path that is _the same_ as existing path cannot be shared to same 'host'
 
         For example, the following is not allowed:
         "/mnt/dozer/NFS"\
             fred(rw)
-        "/mnt/dozer/NFS/foo"\
-            fred(rw)
+        "/mnt/dozer/NFS"\
+            fred(ro)
+
+        Also not allowed are collisions that may result in unexpected share permissions.
+        For example, the following is not allowed:
+        "/mnt/dozer/NFS"\
+            *(rw)
+        "/mnt/dozer/NFS"\
+            marketing(ro)
         """
 
         vol = dataset_and_dirs
         dirpath = f'{vol}/{dirname}'
-        payload = {"path": dirpath, "hosts": host}
+        if isHost:
+            payload = {"path": dirpath, "hosts": HostOrNet}
+        else:
+            payload = {"path": dirpath, "networks": HostOrNet}
         results = POST("/sharing/nfs/", payload)
         if ExpectedToPass:
             assert results.status_code == 200, results.text
@@ -965,6 +1015,7 @@ def test_42_check_nfs_client_status(request):
     sessions) we only verify that count is non-zero for NFSv3.
     """
 
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with SSH_NFS(ip, NFS_PATH, vers=3, user=user, password=password, ip=ip):
         results = GET('/nfs/get_nfs3_clients/', payload={
             'query-filters': [],

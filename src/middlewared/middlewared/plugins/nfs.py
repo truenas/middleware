@@ -1,14 +1,16 @@
 import contextlib
 import enum
+import errno
 import ipaddress
-import os
+import itertools
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.validators import Match, Range, IpAddress
-from middlewared.service import private, SharingService, SystemServiceService, ValidationError, ValidationErrors
+from middlewared.service import private, SharingService, SystemServiceService
+from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
@@ -284,8 +286,8 @@ class SharingNFSService(SharingService):
         Dir("path", required=True),
         List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
         Str("comment", default=""),
-        List("networks", items=[IPAddr("network", network=True)]),
-        List("hosts", items=[Str("host")]),
+        List("networks", items=[IPAddr("network", network=True)], unique=True),
+        List("hosts", items=[Str("host", validators=[Match(r'^\S+$')])], unique=True),
         Bool("ro", default=False),
         Str("maproot_user", required=False, default=None, null=True),
         Str("maproot_group", required=False, default=None, null=True),
@@ -400,14 +402,24 @@ class SharingNFSService(SharingService):
         if old:
             filters.append(["id", "!=", old["id"]])
         other_shares = await self.middleware.call("sharing.nfs.query", filters)
+
+        self.validate_share_hosts_input(data['hosts'], schema_name, verrors)
+        # Stop here if the input generated errors for the user to fix
+        verrors.check()
+
         dns_cache = await self.resolve_hostnames(
-            sum([share["hosts"] for share in other_shares], []) + data["hosts"]
+            sum([share["hosts"] for share in other_shares], []) + data['hosts']
         )
-        await self.middleware.run_in_thread(
-            self.validate_hosts_and_networks, other_shares,
-            data, schema_name, verrors, dns_cache
+
+        self.validate_share_networks_input(data['networks'], dns_cache, schema_name, verrors)
+        # Stop here if the input generated errors for the user to fix
+        verrors.check()
+
+        await self.validate_hosts_and_networks(
+            other_shares, data, schema_name, verrors, dns_cache
         )
-        # Confirm the requested path is not relative to an existing share for the same hosts
+
+        # Confirm the share will not collide with an existing share
         await self.validate_share_path(other_shares, data, schema_name, verrors)
 
         for k in ["maproot", "mapall"]:
@@ -441,6 +453,52 @@ class SharingNFSService(SharingService):
                     f"{schema_name}.security",
                     f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
                 )
+
+    @private
+    def validate_share_hosts_input(self, hosts, schema_name, verrors):
+        """
+        Validate:
+        * List of hosts cannot contain repeated 'host' names
+        * The host '*' cannot be used in combination of other hosts
+        """
+        # Check for the 'everybody' (*) host entry.
+        if '*' in hosts and len(set(hosts)) > 1:
+            verrors.add(
+                f"{schema_name}.hosts",
+                "ERROR - '*', i.e. 'everybody', cannot be included with other entries on same share path"
+            )
+
+    @private
+    def validate_share_networks_input(self, networks, dns_cache, schema_name, verrors):
+        """
+        The network field is strictly limited to CIDR formats:
+        The input validator should enforce the CIDR format and a single address per entry.
+        This validation is limited to detecting repeats and overlapping subnets.
+        """
+        dns_cache_values = list(dns_cache.values())
+        for IPaddr in networks:
+            IPinterface = ipaddress.ip_interface(IPaddr)
+
+            if str(IPinterface.ip) in dns_cache_values:
+                key = next(key for key, value in dns_cache.items() if value == str(IPinterface.ip))
+                verrors.add(
+                    f"{schema_name}.networks",
+                    f"ERROR - Resolved hostname to duplicate address: host '{key}' resolves to '{IPaddr}'"
+                )
+
+        overlaps = []
+        for n1, n2 in itertools.combinations(networks, 2):
+            # Check for overlapped networks
+            ipn1 = ipaddress.ip_network(n1)
+            ipn2 = ipaddress.ip_network(n2)
+            if ipn1.overlaps(ipn2):
+                overlaps.append((n1, n2))
+
+        if overlaps:
+            verrors.add(
+                f"{schema_name}.networks",
+                f"ERROR - Overlapped subnets: {overlaps}"
+            )
 
     @private
     async def resolve_hostnames(self, hostnames):
@@ -480,25 +538,36 @@ class SharingNFSService(SharingService):
         return dict(zip(hostnames, resolved_hostnames))
 
     @private
-    def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
-        dev = os.stat(data["path"]).st_dev
+    async def validate_hosts_and_networks(self, other_shares, data, schema_name, verrors, dns_cache):
+        """
+        We attempt to prevent share situation where the same host is provided access to a
+        share but with potentially different permissions.
+        """
+        tgt_realpath = (await self.middleware.call('filesystem.stat', data['path']))['realpath']
 
         used_networks = set()
+        used_hosts = set()  # host names without an entry in the cache
         for share in other_shares:
             try:
-                share_dev = os.stat(share["path"]).st_dev
-            except Exception:
-                self.logger.warning("Failed to stat path for %r", share, exc_info=True)
-                continue
+                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+            except CallError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                # Allow for locked filesystems
+                shr_realpath = share['path']
 
-            if share_dev == dev:
+            if tgt_realpath == shr_realpath:
                 for host in share["hosts"]:
-                    host = dns_cache[host]
-                    if host is None or host.startswith('@'):
+                    host_ip = dns_cache.get(host)
+                    if host_ip is None:
+                        used_hosts.add(host)
+                        continue
+
+                    if host.startswith('@'):
                         continue
 
                     try:
-                        network = ipaddress.ip_network(host)
+                        network = ipaddress.ip_network(host_ip)
                     except Exception:
                         self.logger.warning("Got invalid host %r", host)
                         continue
@@ -519,7 +588,15 @@ class SharingNFSService(SharingService):
                     used_networks.add(ipaddress.ip_network("::/0"))
 
         for host in set(data["hosts"]):
-            # netgroups are valid
+            # check for duplicate 'hosts' in other shares
+            # netgroups are valid, but limited to same duplicate restrictions
+            if host in used_hosts:
+                verrors.add(
+                    f"{schema_name}.hosts",
+                    f"Another NFS share already exports {data['path']} for {host}"
+                )
+                continue
+
             if host.startswith('@'):
                 continue
 
@@ -528,23 +605,23 @@ class SharingNFSService(SharingService):
                 continue
 
             # Everything else should be resolvable
-            cached_host = dns_cache[host]
-            if cached_host is None:
+            host_ip = dns_cache[host]
+            if host_ip is None:
                 verrors.add(
                     f"{schema_name}.hosts",
                     f"Unable to resolve host {host}"
                 )
                 continue
 
-            # If wildcarded hostname, then continue
+            # Nothing more to check with wildcard names
             if leftmost_has_wildcards(host):
                 continue
 
-            network = ipaddress.ip_network(cached_host)
+            network = ipaddress.ip_network(host_ip)
             if network in used_networks:
                 verrors.add(
                     f"{schema_name}.hosts",
-                    f"Another NFS share already exports this dataset for {cached_host}"
+                    f"Another NFS share already exports {data['path']} for {host_ip} ({host})"
                 )
 
             used_networks.add(network)
@@ -552,32 +629,58 @@ class SharingNFSService(SharingService):
         for network in set(data["networks"]):
             network = ipaddress.ip_network(network, strict=False)
 
+            # Look for exact match
             if network in used_networks:
                 verrors.add(
                     f"{schema_name}.networks",
-                    f"Another NFS share already exports this dataset for {network}"
+                    f"Another NFS share already exports {data['path']} for {network}"
                 )
+            # Look for subnet or supernet (NOTE: support for IPv4 only)
+            if network.version == 4:
+                for other_net in used_networks:
+                    if network.overlaps(other_net):
+                        verrors.add(
+                            f"{schema_name}.networks",
+                            f"Another NFS share exports {data['path']} as {other_net} which overlaps {network}"
+                        )
 
             used_networks.add(network)
 
     @private
     async def validate_share_path(self, other_shares, data, schema_name, verrors):
         """
-        Checks new share path against existing
+        A share path centric test. Checks new share path against existing.
+        There are multiple ways to get duplicate entries for a given share path
+        1) A share path could be set for everyone and another host entries only, e.g.
+            /mnt/tank/dataset 192.168.1.1(rw)
+            /mnt/tank/dataset *(ro)
+        2) A host could be part of a network subnet, e.g.
+            /mnt/tank/dataset 192.168.1.1(rw)
+            /mnt/tank/dataset 192.168.1.0/24(ro)
+            Note: The 192.168.1.0/24 is a 'networks' specification
+        This function checks for common conditions.
         """
+        # We test other shares that are sharing the same path
+        tgt_stat = await self.middleware.call('filesystem.stat', data["path"])
+
+        # Sanity check: no symlinks
+        if tgt_stat['type'] == "SYMLINK":
+            verrors.add(
+                f"{schema_name}.path",
+                f"Symbolic links are not allowed: {data['path']}."
+            )
+
+        tgt_realpath = tgt_stat['realpath']
         for share in other_shares:
-            found_match = False
-            if await self.middleware.call('filesystem.is_child', data['path'], share['path']):
-                lowerpath = data['path']
-                upperpath = share['path']
-                found_match = True
+            try:
+                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+            except CallError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                # Allow for locked filesystems
+                shr_realpath = share['path']
 
-            if await self.middleware.call('filesystem.is_child', share['path'], data['path']):
-                lowerpath = share['path']
-                upperpath = data['path']
-                found_match = True
-
-            if found_match:
+            if tgt_realpath == shr_realpath:
                 # Test hosts
                 # An empty 'hosts' list == '*' == 'everybody.  Workaround: remove '*' as a host entry
                 datahosts = [host for host in data["hosts"] if host != "*"]
@@ -585,17 +688,28 @@ class SharingNFSService(SharingService):
 
                 commonHosts = set(datahosts) & set(sharehosts)
                 commonNetworks = set(data["networks"]) & set(share["networks"])
-                everybody = not bool(set(datahosts) | set(sharehosts) | set(data["networks"]) | set(share["networks"]))
+                other_share_everybody = not bool(set(sharehosts) | set(share['networks']))
+                this_share_everybody = not bool(datahosts) and not bool(data['networks'])
+                everybody = other_share_everybody or this_share_everybody
 
                 if bool(commonHosts) | bool(commonNetworks) | everybody:
                     reason = "'everybody', i.e. '*'"
+                    other_share_desc = "Another share with the same path"
+                    this_share_desc = "This share is exported to everybody and another share"
                     if commonHosts:
+                        desc = other_share_desc
                         reason = str(commonHosts)
                     elif commonNetworks:
+                        desc = other_share_desc
                         reason = str(commonNetworks)
+                    elif this_share_everybody:
+                        desc = this_share_desc
+                        reason = f"{', '.join(sharehosts)}"
+                    else:
+                        desc = other_share_desc
                     verrors.add(
                         f"{schema_name}.path",
-                        f"{lowerpath} is a subtree of {upperpath} and already exports this dataset for {reason}"
+                        f"ERROR - Export conflict. {desc} exports {share['path']} for {reason}"
                     )
                     # Found an export of the same path to the same 'hosts'. Report it.
                     break
