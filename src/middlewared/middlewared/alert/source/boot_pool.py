@@ -1,4 +1,5 @@
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
+from middlewared.alert.schedule import CrontabSchedule
 
 
 class BootPoolStatusAlertClass(AlertClass):
@@ -11,6 +12,9 @@ class BootPoolStatusAlertClass(AlertClass):
 
 
 class BootPoolStatusAlertSource(AlertSource):
+
+    schedule = CrontabSchedule(hour=1)
+
     async def check(self):
         boot_pool = await self.middleware.call("boot.pool_name")
         pool = await self.middleware.call("zfs.pool.query", [["id", "=", boot_pool]])
