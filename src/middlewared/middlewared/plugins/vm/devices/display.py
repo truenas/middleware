@@ -41,18 +41,9 @@ class DISPLAY(Device):
     def is_spice_type(self):
         return self.data['attributes']['type'] == 'SPICE'
 
-    def password_configured(self):
-        return bool(self.data['attributes'].get('password'))
-
-    def web_uri(self, host, password=None, protocol='http'):
+    def web_uri(self, host, protocol='http'):
         path = self.get_webui_info()['path'][1:]
         params = {'path': path, 'autoconnect': 1}
-        if self.password_configured():
-            if password != self.data['attributes'].get('password'):
-                return
-
-            params['password'] = password
-
         get_params = f'?{urlencode(params, quote_via=quote_plus)}'
         return f'{protocol}://{host}/{path}spice_auto.html{get_params}'
 

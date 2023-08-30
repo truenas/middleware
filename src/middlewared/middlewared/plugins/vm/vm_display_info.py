@@ -66,25 +66,21 @@ class VMService(Service):
         Str('host', default=''),
         Dict(
             'options',
-            List('devices_passwords', items=[Dict(
-                'device_password',
-                Int('device_id', required=True),
-                Str('password', required=True, empty=False))
-            ]),
             Str('protocol', default='HTTP', enum=['HTTP', 'HTTPS']),
         )
     )
-    @returns(Dict('display_devices_uri', additional_attrs=True))
+    @returns(Dict(
+        'display_devices_uri',
+        Str('error', null=True),
+        Str('uri', null=True),
+    ))
     @pass_app()
-    async def get_display_web_uri(self, app, id, host, options):
+    async def get_display_web_uri(self, app, id_, host, options):
         """
-        Retrieve Display URI's for a given VM.
-
-        Display devices which have a password configured must specify the password explicitly to retrieve display
-        device web uri. In case a password is not specified, the uri for display device in question will not be
-        retrieved because of missing password information.
+        Retrieve Display URI for a given VM or appropriate error if there is no display device available
+        or if it is not configured to use web interface
         """
-        web_uris = {}
+        uri_data = {'error': None, 'uri': None}
         protocol = options['protocol'].lower()
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
         try:
@@ -94,23 +90,16 @@ class VMService(Service):
         else:
             host = f'[{host}]'
 
-        creds = {d['device_id']: d['password'] for d in options['devices_passwords']}
-        for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id)):
-            uri_data = {'error': None, 'uri': None}
-            if device.data['attributes'].get('web'):
-                if device.password_configured():
-                    if creds.get(
-                        device.data['id']
-                    ) and creds[device.data['id']] != device.data['attributes']['password']:
-                        uri_data['error'] = 'Incorrect password specified'
-                    elif not creds.get(device.data['id']):
-                        uri_data['error'] = 'Password not specified'
+        if display_devices := await self.get_display_devices(id_):
+            for device in map(lambda d: DISPLAY(d, middleware=self.middleware), display_devices):
+                if device.data['attributes'].get('web'):
+                    uri_data['uri'] = device.web_uri(host, protocol=protocol)
+                else:
+                    uri_data['error'] = 'Web display is not configured'
+        else:
+            uri_data['error'] = 'Display device is not configured for this VM'
 
-                uri_data['uri'] = device.web_uri(host, creds.get(device.data['id']), protocol)
-            else:
-                uri_data['error'] = 'Web display is not configured'
-            web_uris[device.data['id']] = uri_data
-        return web_uris
+        return uri_data
 
     @private
     async def get_display_devices_ui_info(self):
