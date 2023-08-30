@@ -8,7 +8,7 @@ from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, IPAddr, List, Patch, returns, Str
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
-from middlewared.validators import Match, Range, IpAddress
+from middlewared.validators import Match, NotMatch, Range, IpAddress
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -287,7 +287,12 @@ class SharingNFSService(SharingService):
         List("aliases", items=[Str("path", validators=[Match(r"^/.*")])]),
         Str("comment", default=""),
         List("networks", items=[IPAddr("network", network=True)], unique=True),
-        List("hosts", items=[Str("host", validators=[Match(r'^\S+$')])], unique=True),
+        List(
+            "hosts", items=[Str("host", validators=[NotMatch(
+                r'.*[\s"]', explanation='Name cannot contain spaces or quotes')]
+            )],
+            unique=True
+        ),
         Bool("ro", default=False),
         Str("maproot_user", required=False, default=None, null=True),
         Str("maproot_group", required=False, default=None, null=True),
@@ -609,7 +614,7 @@ class SharingNFSService(SharingService):
             if host_ip is None:
                 verrors.add(
                     f"{schema_name}.hosts",
-                    f"Unable to resolve host {host}"
+                    f"Unable to resolve host '{host}'"
                 )
                 continue
 
