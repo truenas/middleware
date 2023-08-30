@@ -27,7 +27,7 @@ def guid_fast_impl(pool):
         return f.read().strip()
 
 
-def state_fast_impl(self, pool):
+def state_fast_impl(pool):
     """
     Lockless read of zpool state. Raises FileNotFoundError
     if pool not imported.
