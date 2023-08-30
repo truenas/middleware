@@ -84,7 +84,7 @@ class VMService(Service):
         device web uri. In case a password is not specified, the uri for display device in question will not be
         retrieved because of missing password information.
         """
-        web_uris = {}
+        uri_data = {'error': None, 'uri': None}
         protocol = options['protocol'].lower()
         host = host or await self.middleware.call('interface.websocket_local_ip', app=app)
         try:
@@ -94,23 +94,16 @@ class VMService(Service):
         else:
             host = f'[{host}]'
 
-        creds = {d['device_id']: d['password'] for d in options['devices_passwords']}
-        for device in map(lambda d: DISPLAY(d, middleware=self.middleware), await self.get_display_devices(id_)):
-            uri_data = {'error': None, 'uri': None}
-            if device.data['attributes'].get('web'):
-                if device.password_configured():
-                    if creds.get(
-                        device.data['id']
-                    ) and creds[device.data['id']] != device.data['attributes']['password']:
-                        uri_data['error'] = 'Incorrect password specified'
-                    elif not creds.get(device.data['id']):
-                        uri_data['error'] = 'Password not specified'
+        if display_devices := await self.get_display_devices(id_):
+            for device in map(lambda d: DISPLAY(d, middleware=self.middleware), display_devices):
+                if device.data['attributes'].get('web'):
+                    uri_data['uri'] = device.web_uri(host, protocol=protocol)
+                else:
+                    uri_data['error'] = 'Web display is not configured'
+        else:
+            uri_data['error'] = 'Display device is not configured for this VM'
 
-                uri_data['uri'] = device.web_uri(host, creds.get(device.data['id']), protocol)
-            else:
-                uri_data['error'] = 'Web display is not configured'
-            web_uris[device.data['id']] = uri_data
-        return web_uris
+        return uri_data
 
     @private
     async def get_display_devices_ui_info(self):
