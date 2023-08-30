@@ -127,8 +127,8 @@ def generate_syslog_conf(middleware):
         syslog_conf = RE_DESTINATION.sub(fr"{generate_svc_filters()}\n\1", f.read())
 
     for line in (
-        "filter f_daemon { facility(daemon) and not filter(f_debug); };",
-        "filter f_syslog3 { not facility(auth, authpriv, mail) and not filter(f_debug); };",
+        "filter f_daemon { facility(daemon) and not filter(f_dbg); };",
+        "filter f_syslog3 { not facility(auth, authpriv, mail) and not filter(f_dbg); };",
         "filter f_messages { level(info,notice,warn) and"
     ):
         syslog_conf = syslog_conf.replace(
