@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, returns, List, Str
 from middlewared.service import Service, pass_app, no_auth_required, private
 from middlewared.plugins.interface.netif import netif
+from middlewared.utils.zfs import query_imported_fast_impl
 
 
 class FailoverDisabledReasonsService(Service):
@@ -97,7 +98,7 @@ class FailoverDisabledReasonsService(Service):
             reasons.add('NO_VIP')
         elif master:
             fenced_running = self.middleware.call_sync('failover.fenced.run_info')['running']
-            num_of_zpools_imported = len(self.middleware.call_sync('zfs.pool.query_imported_fast'))
+            num_of_zpools_imported = len(query_imported_fast_impl())
             if num_of_zpools_imported > 1:
                 # boot pool is returned by default which is why we check > 1
                 if not fenced_running:
