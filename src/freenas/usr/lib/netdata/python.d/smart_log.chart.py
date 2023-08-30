@@ -258,6 +258,9 @@ class Service(SimpleService):
         self.disks = list()
         self.runs = 0
         self.do_force_rescan = False
+        # smartd daemon only queries drive temps every 30mins so the files won't be updated
+        # but once every 30ish minutes - we should change this if at any point we change smartd interval
+        self.update_every = 30 * 60
 
     def check(self):
         return self.scan() > 0
