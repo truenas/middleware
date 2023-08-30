@@ -160,8 +160,8 @@ class UserService(CRUDService):
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
         ('add', Bool('twofactor_auth_configured')),
-        ('add', Str('unixhash')),
-        ('add', Str('smbhash')),
+        ('add', Str('unixhash', private=True)),
+        ('add', Str('smbhash', private=True)),
         ('add', Str('nt_name', null=True)),
         ('add', Str('sid', null=True)),
     )
