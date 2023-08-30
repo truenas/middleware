@@ -63,7 +63,18 @@ class RealtimeEventSource(EventSource):
 
         while not self._cancel_sync.is_set():
             # this gathers the most recent metric recorded via netdata (for all charts)
-            netdata_metrics = self.middleware.call_sync('netdata.get_all_metrics')
+            retries = 2
+            while retries > 0:
+                try:
+                    netdata_metrics = self.middleware.call_sync('netdata.get_all_metrics')
+                except Exception:
+                    retries -= 1
+                    if retries <= 0:
+                        raise
+
+                    time.sleep(0.5)
+                else:
+                    break
 
             data = {
                 'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
