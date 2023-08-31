@@ -122,6 +122,13 @@ async def rename_interface(middleware, db_interface, name):
             await middleware.call("datastore.update", "network.vlan", vlan["id"],
                                   {"vlan_pint": name})
 
+    for vm_device in await middleware.call("datastore.query", "vm.device", [["dtype", "=", "NIC"]]):
+        if vm_device["attributes"].get("nic_attach") == db_interface["interface"]:
+            middleware.logger.info("Updating VM NIC device for %r", vm_device["attributes"]["nic_attach"])
+            await middleware.call("datastore.update", "vm.device", vm_device["id"], {
+                "attributes": {**vm_device["attributes"], "nic_attach": name},
+            })
+
 
 async def setup(middleware):
     try:
