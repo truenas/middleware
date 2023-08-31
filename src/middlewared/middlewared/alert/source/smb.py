@@ -1,6 +1,7 @@
 import time
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
+from middlewared.service_exception import ValidationErrors
 
 
 def generate_alert_text(auth_log):
@@ -35,6 +36,13 @@ class NTLMv1AuthenticationAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "NTLMv1 authentication has been attempted in the last 24 hours"
     text = "The following clients have attempted NTLMv1 authentication: %(err)s"
+
+
+class SMBPathAlertClass(AlertClass):
+    category = AlertCategory.SHARING
+    level = AlertLevel.CRITICAL
+    title = "SMB share path has unresolvable issues"
+    text = "SMB shares have path-related configuration issues that may impact service stability: %(err)s"
 
 
 class SMBLegacyProtocolAlertSource(AlertSource):
@@ -85,3 +93,37 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
             {'err': ', '.join(generate_alert_text(auth_log))},
             key=None
         )
+
+class SMPathAlertSource(AlertSource):
+    schedule = CrontabSchedule(hour=1)  # every 24 hours
+    run_on_backup_node = False
+
+    async def smb_path_alert_format(verrors):
+        errors = []
+        for e in verrors:
+            errors.append(f'{e[0].split(":")[0]}: {e[1]}')
+
+        return ', '.join(errors)
+
+    async def check(self):
+        verrors = ValidationErrors()
+
+        for share in await self.middleware.call('sharing.smb.query'):
+            try:
+                await self.middleware.call(
+                    'sharing.smb.validate_path_field',
+                    data, f'{share["name"]}:', verrors
+                )
+            except Exception:
+                self.middleware.logger.error('Failed to validate path field', exc_info=True)
+
+        if not verrors:
+            return
+
+        try:
+            msg = await self.smb_path_alert_format(verrors)
+        except Exception:
+            self.middleware.logger.error('Failed to format error message', exc_info=True)
+            return
+
+        return Alert(SMBPathAlertClass, {'err': msg)}, key=None)
