@@ -1,6 +1,7 @@
 import base64
 import contextlib
 import errno
+from unittest.mock import ANY
 
 import pytest
 
@@ -109,7 +110,6 @@ def test_no_credential_provided_create(cleanup, localuser, remoteuser, src, dst)
 
 def test_home_directory_key_invalid_permissions(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
     ssh(f"mkdir {localuser['home']}/.ssh")
-    ssh(f"ssh-keyscan localhost >> {localuser['home']}/.ssh/known_hosts")
     call(
         "filesystem.file_receive",
         f"{localuser['home']}/.ssh/id_rsa",
@@ -138,9 +138,68 @@ def test_home_directory_key_invalid_permissions(cleanup, localuser, remoteuser, 
     ]
 
 
-def test_home_directory_key(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+@pytest.mark.parametrize("validate_rpath", [True, False])
+def test_home_directory_key_not_in_known_hosts(cleanup, localuser, remoteuser, src, dst, ssh_credentials,
+                                               validate_rpath):
+    ssh(f"mkdir {localuser['home']}/.ssh")
+    call(
+        "filesystem.file_receive",
+        f"{localuser['home']}/.ssh/id_rsa",
+        base64.b64encode(ssh_credentials["keypair"]["attributes"]["private_key"].encode("ascii")).decode("ascii"),
+        {"mode": 0o600},
+    )
+    ssh(f"chown -R localuser:localuser {localuser['home']}/.ssh")
+
+    with pytest.raises(ValidationErrors) as e:
+        with task({
+            "path": f"{src}/",
+            "user": "localuser",
+            "remotehost": "remoteuser@localhost",
+            "remoteport": 22,
+            "mode": "SSH",
+            "remotepath": dst,
+            "validate_rpath": validate_rpath,
+        }):
+            pass
+
+    assert e.value.errors == [
+        ValidationError(
+            "rsync_task_create.remotehost",
+            ANY,
+            ValidationError.ESSLCERTVERIFICATIONERROR,
+        )
+    ]
+
+
+def test_ssh_keyscan_does_not_duplicate_host_keys(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
     ssh(f"mkdir {localuser['home']}/.ssh")
     ssh(f"ssh-keyscan localhost >> {localuser['home']}/.ssh/known_hosts")
+    call(
+        "filesystem.file_receive",
+        f"{localuser['home']}/.ssh/id_rsa",
+        base64.b64encode(ssh_credentials["keypair"]["attributes"]["private_key"].encode("ascii")).decode("ascii"),
+        {"mode": 0o600},
+    )
+    ssh(f"chown -R localuser:localuser {localuser['home']}/.ssh")
+
+    known_hosts = ssh(f"cat {localuser['home']}/.ssh/known_hosts")
+
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "remotehost": "remoteuser@localhost",
+        "remoteport": 22,
+        "mode": "SSH",
+        "remotepath": dst,
+        "ssh_keyscan": True,
+    }) as t:
+        pass
+
+    assert ssh(f"cat {localuser['home']}/.ssh/known_hosts") == known_hosts
+
+
+def test_home_directory_key(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    ssh(f"mkdir {localuser['home']}/.ssh")
     call(
         "filesystem.file_receive",
         f"{localuser['home']}/.ssh/id_rsa",
@@ -156,6 +215,7 @@ def test_home_directory_key(cleanup, localuser, remoteuser, src, dst, ssh_creden
         "remoteport": 22,
         "mode": "SSH",
         "remotepath": dst,
+        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 

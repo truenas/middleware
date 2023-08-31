@@ -30,6 +30,7 @@ import contextlib
 import enum
 import glob
 import os
+import pathlib
 import shlex
 import tempfile
 
@@ -40,6 +41,7 @@ from middlewared.service import (
     CallError, ValidationErrors, job, item_method, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
+from middlewared.utils import run
 from middlewared.utils.osc import run_command_with_user_context
 from middlewared.utils.service.task_state import TaskStateMixin
 
@@ -130,6 +132,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         'rsync_task_create', 'rsync_task_entry',
         ('rm', {'name': 'ssh_credentials'}),
         ('rm', {'name': 'validate_rpath'}),
+        ('rm', {'name': 'ssh_keyscan'}),
         ('add', Int('id')),
         ('add', Dict('ssh_credentials', null=True, additional_attrs=True)),
         ('add', Bool('locked')),
@@ -215,7 +218,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                         "port": ssh_credentials['attributes']['port'],
                         'username': ssh_credentials['attributes']['username'],
                         'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
-                        'known_hosts': None,
                     }
             else:
                 if not data['remotehost']:
@@ -239,8 +241,8 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                         if os.stat(file).st_mode & 0o077 != 0:
                             verrors.add(
                                 f'{schema}.user',
-                                f'Permissions {str(oct(os.stat(file).st_mode & 0o777))[2:]} for {file} are too open. Please '
-                                f'correct them by running chmod 600 {file}'
+                                f'Permissions {str(oct(os.stat(file).st_mode & 0o777))[2:]} for {file} are too open. '
+                                f'Please correct them by running chmod 600 {file}'
                             )
                             key_files.discard(file)
 
@@ -256,68 +258,116 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                             'port': data['remoteport'],
                             'username': remote_username,
                             'client_keys': key_files,
-                            'known_hosts': None,
                         }
 
             remote_path = data.get('remotepath')
             if not remote_path:
                 verrors.add(f'{schema}.remotepath', 'This field is required')
 
-            if data['enabled'] and data['validate_rpath'] and connect_kwargs:
+            if data['enabled'] and connect_kwargs:
+                known_hosts_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh', 'known_hosts'))
+
                 try:
-                    async with await asyncssh.connect(
-                        **connect_kwargs,
-                        options=asyncssh.SSHClientConnectionOptions(connect_timeout=5)
-                    ) as conn:
-                        await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
-                except asyncio.TimeoutError:
+                    try:
+                        known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
+                    except FileNotFoundError:
+                        known_hosts_text = ''
+
+                    known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+                except Exception as e:
                     verrors.add(
                         f'{schema}.remotehost',
-                        'SSH timeout occurred. Remote path cannot be validated.'
+                        f'Failed to load {known_hosts_path}: {e}',
                     )
-                except OSError as e:
-                    if e.errno == 113:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            f'Connection to the remote host {connect_kwargs["host"]} on port {connect_kwargs["port"]} '
-                            'failed.'
-                        )
+                else:
+                    if data['ssh_keyscan']:
+                        if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                            if known_hosts_text and not known_hosts_text.endswith("\n"):
+                                known_hosts_text += '\n'
+
+                            known_hosts_text += (await run(
+                                ['ssh-keyscan', '-p', str(connect_kwargs['port']), connect_kwargs['host']],
+                                encoding='utf-8',
+                                errors='ignore',
+                            )).stdout
+
+                            await self.middleware.run_in_thread(known_hosts_path.write_text, known_hosts_text)
+                            await self.middleware.run_in_thread(os.chown, known_hosts_path, user['pw_uid'],
+                                                                user['pw_gid'])
+
+                            known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+
+                    if data['validate_rpath']:
+                        try:
+                            async with await asyncssh.connect(
+                                **connect_kwargs,
+                                known_hosts=known_hosts,
+                                options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
+                            ) as conn:
+                                await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
+                        except asyncio.TimeoutError:
+                            verrors.add(
+                                f'{schema}.remotehost',
+                                'SSH timeout occurred. Remote path cannot be validated.'
+                            )
+                        except OSError as e:
+                            if e.errno == 113:
+                                verrors.add(
+                                    f'{schema}.remotehost',
+                                    f'Connection to the remote host {connect_kwargs["host"]} on port '
+                                    f'{connect_kwargs["port"]} failed.'
+                                )
+                            else:
+                                verrors.add(
+                                    f'{schema}.remotehost',
+                                    e.__str__()
+                                )
+                        except asyncssh.HostKeyNotVerifiable as e:
+                            verrors.add(
+                                f'{schema}.remotehost',
+                                f'Failed to verify remote host key: {e.reason}',
+                                CallError.ESSLCERTVERIFICATIONERROR,
+                            )
+                        except asyncssh.DisconnectError as e:
+                            verrors.add(
+                                f'{schema}.remotehost',
+                                f'Disconnect Error [error code {e.code}: {e.reason}] was generated when trying to '
+                                f'communicate with remote host {connect_kwargs["host"]} and remote user '
+                                f'{connect_kwargs["username"]}.'
+                            )
+                        except asyncssh.ProcessError as e:
+                            if e.code == '1':
+                                verrors.add(
+                                    f'{schema}.remotepath',
+                                    'The Remote Path you specified does not exist or is not a directory.'
+                                    'Either create one yourself on the remote machine or uncheck the '
+                                    'validate_rpath field'
+                                )
+                            else:
+                                verrors.add(
+                                    f'{schema}.remotepath',
+                                    f'Connection to Remote Host was successful but failed to verify '
+                                    f'Remote Path. {e.__str__()}'
+                                )
+                        except asyncssh.Error as e:
+                            if e.__class__.__name__ in e.__str__():
+                                exception_reason = e.__str__()
+                            else:
+                                exception_reason = e.__class__.__name__ + ' ' + e.__str__()
+                            verrors.add(
+                                f'{schema}.remotepath',
+                                f'Remote Path could not be validated. An exception was raised. {exception_reason}'
+                            )
                     else:
-                        verrors.add(
-                            f'{schema}.remotehost',
-                            e.__str__()
-                        )
-                except asyncssh.DisconnectError as e:
-                    verrors.add(
-                        f'{schema}.remotehost',
-                        f'Disconnect Error[ error code {e.code} ] was generated when trying to communicate with remote '
-                        f'host {connect_kwargs["host"]} and remote user {connect_kwargs["username"]}.'
-                    )
-                except asyncssh.ProcessError as e:
-                    if e.code == '1':
-                        verrors.add(
-                            f'{schema}.remotepath',
-                            'The Remote Path you specified does not exist or is not a directory.'
-                            'Either create one yourself on the remote machine or uncheck the '
-                            'validate_rpath field'
-                        )
-                    else:
-                        verrors.add(
-                            f'{schema}.remotepath',
-                            f'Connection to Remote Host was successful but failed to verify '
-                            f'Remote Path. {e.__str__()}'
-                        )
-                except asyncssh.Error as e:
-                    if e.__class__.__name__ in e.__str__():
-                        exception_reason = e.__str__()
-                    else:
-                        exception_reason = e.__class__.__name__ + ' ' + e.__str__()
-                    verrors.add(
-                        f'{schema}.remotepath',
-                        f'Remote Path could not be validated. An exception was raised. {exception_reason}'
-                    )
+                        if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                            verrors.add(
+                                f'{schema}.remotehost',
+                                f'Host key not found in {known_hosts_path}',
+                                CallError.ESSLCERTVERIFICATIONERROR,
+                            )
 
         data.pop('validate_rpath', None)
+        data.pop('ssh_keyscan', None)
 
         # Keeping compatibility with legacy UI
         for field in ('mode', 'direction'):
@@ -336,6 +386,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         Int('ssh_credentials', null=True, default=None),
         Str('remotepath'),
         Bool('validate_rpath', default=True),
+        Bool('ssh_keyscan', default=False),
         Str('direction', enum=['PULL', 'PUSH'], default='PUSH'),
         Str('desc'),
         Cron(
@@ -375,6 +426,8 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         `remotepath` specifies the path on the remote system.
 
         `validate_rpath` is a boolean which when sets validates the existence of the remote path.
+
+        `ssh_keyscan` will automatically add remote host key to user's known_hosts file.
 
         `direction` specifies if data should be PULLED or PUSHED from the remote system.
 
@@ -441,6 +494,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         Update Rsync Task of `id`.
         """
         data.setdefault('validate_rpath', True)
+        data.setdefault('ssh_keyscan', False)
 
         old = await self.query(filters=[('id', '=', id)], options={'get': True})
         old.pop(self.locked_field)
