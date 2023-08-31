@@ -29,8 +29,6 @@ Group 0: Start middleware daemon
 Middleware daemon is a key component to TrueNAS system management so it (and its prerequisites) should be started
 first.
 
-* `ix-conf.service`: Extracts `Extract /conf/base` over root filesystem, overwriting all the filesystem modifications
-  that could be made during previous boots.
 * `ix-update.service`: Performs :doc:`database migrations <../database/migrations>` and other update (or config upload)
   tasks.
 * `middlewared.service`: Starts middleware daemon making TrueNAS API available for internal use.
