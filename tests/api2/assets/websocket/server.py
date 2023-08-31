@@ -35,13 +35,14 @@ def reboot(ip, service_name=None):
         TotalWait = 60  # 1 min
         payload = {
             'msg': 'method', 'method': 'service.query',
-            'params': [['service', '=', service_name]]
+            'params': [[["service", "=", service_name]], {'get': True}]
         }
         while TotalWait > 0:
             try:
                 res = make_ws_request(ip, payload)
                 if res.get('error') is None:
-                    print(res)
+                    if res['result']['state'] == 'RUNNING':
+                        return
             except Exception:
                 pass
             sleep(1)
