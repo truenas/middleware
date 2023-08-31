@@ -65,6 +65,7 @@ def get_enclosure_model_and_controller(key, dmi):
             'iX_2024Jp': ('ES24F', False),
             'iX_2024Js': ('ES24F', False),
             'CELESTIC_R0904': ('ES60', False),
+            'HGST_H4060-J': ('ES60G2', False),
             'HGST_H4102-J': ('ES102', False),
             'VikingES_NDS-41022-BB': ('ES102S', False),
         }[key]
