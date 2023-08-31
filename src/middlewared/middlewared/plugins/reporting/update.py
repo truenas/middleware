@@ -1,70 +1,15 @@
-import copy
-
-import middlewared.sqlalchemy as sa
-
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str, Timestamp
-from middlewared.service import ConfigService, filterable, filterable_returns, private
+from middlewared.service import filterable, filterable_returns, Service, private
 from middlewared.validators import Range
 
 from .netdata import GRAPH_PLUGINS
 
 
-class ReportingModel(sa.Model):
-    __tablename__ = 'system_reporting'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    graphite = sa.Column(sa.String(120), default="")
-    graphite_separateinstances = sa.Column(sa.Boolean(), default=False)
-
-
-class ReportingService(ConfigService):
+class ReportingService(Service):
 
     class Config:
         datastore = 'system.reporting'
         cli_namespace = 'system.reporting'
-
-    ENTRY = Dict(
-        'reporting_entry',
-        Str('graphite', required=True),
-        Bool('graphite_separateinstances', required=True),
-        Int('id', required=True),
-    )
-
-    async def do_update(self, data):
-        """
-        Configure Reporting Database settings.
-
-        `graphite` specifies a destination hostname or IP for collectd data sent by the Graphite plugin..
-
-        `graphite_separateinstances` corresponds to collectd SeparateInstances option.
-
-        .. examples(websocket)::
-
-          Update reporting settings
-
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "reporting.update",
-                "params": [{
-                    "graphite": "",
-                }]
-            }
-        """
-        old = await self.config()
-        new = copy.deepcopy(old)
-        new.update(data)
-
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            old['id'],
-            new,
-            {'prefix': self._config.datastore_prefix}
-        )
-
-        return await self.config()
 
     @filterable
     @filterable_returns(Ref('reporting_graph'))
