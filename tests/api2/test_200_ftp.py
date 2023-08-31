@@ -4,29 +4,29 @@
 # License: BSD
 # Location for tests into REST API 2.0 of FreeNAS
 
-import pytest
-import sys
-import os
-import json
 import contextlib
 import copy
+import json
+import os
 import subprocess
+import sys
+from ftplib import all_errors
 from time import sleep
 from timeit import default_timer as timer
-from pytest_dependency import depends
-from ftplib import all_errors
 from types import SimpleNamespace
+
+import pytest
+from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from assets.REST.pool import dataset as ftp_dataset
-from functions import SSH_TEST
-from functions import make_ws_request, send_file, ping_host
-from auto_config import pool_name, ha, password, user
-from protocols import ftp_connect, ftp_connection
-from protocols import ftps_connection
+from assets.websocket.server import reboot
 from middlewared.test.integration.assets.account import user as ftp_user
 
+from auto_config import ha, password, pool_name, user
+from functions import SSH_TEST, make_ws_request, send_file
+from protocols import ftp_connect, ftp_connection, ftps_connection
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -449,7 +449,7 @@ def ftp_get_users():
     assert ssh_out['result'], str(ssh_out)
     output = ssh_out['output']
     # Strip off trailing bogus data
-    joutput = output[:output.rindex('}')+1]
+    joutput = output[:output.rindex('}') + 1]
     whodata = json.loads(joutput)
     return whodata['connections']
 
@@ -1444,32 +1444,7 @@ def test_085_ftp_service_starts_after_reboot():
         assert result["state"] == "RUNNING"
         assert result["enable"] is True
 
-        # Reboot
-        payload = {
-            'msg': 'method', 'method': 'system.reboot',
-            'params': []
-        }
-        res = make_ws_request(ip, payload)
-        assert res.get('error') is None, res
-
-        # Wait for server to disappear
-        sleep(5)
-        TotalWait = 120  # 3 min
-        while TotalWait > 0 and ping_host(ip, 1) is True:
-            sleep(1)
-            TotalWait -= 1
-        assert ping_host(ip, 1) is not True
-
-        # Wait for server to return
-        sleep(10)
-        TotalWait = 120  # 3 min
-        while TotalWait > 0 and ping_host(ip, 1) is not True:
-            sleep(1)
-            TotalWait -= 1
-        assert ping_host(ip, 1) is True
-        # ip returns before websocket connection is ready
-        # Wait a few more seconds
-        sleep(10)
+        reboot(ip)
 
         # Confirm FTP is running
         TotalWait = 60
