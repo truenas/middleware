@@ -27,6 +27,7 @@ class CIFSService(SimpleService):
         if announce["netbios"]:
             await self._freebsd_service("nmbd", "start", force=True)
         if announce["wsd"]:
+            await self.middleware.call('etc.generate', 'wsd')
             await self._freebsd_service("wsdd", "start", force=True)
 
     async def after_start(self):
