@@ -24,6 +24,18 @@ ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
     'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
 ]
 ZFS_MAX_DATASET_NAME_LEN = 200  # It's really 256, but we should leave some space for snapshot names
+ZFS_VOLUME_BLOCK_SIZE_CHOICES = {
+    '512': 512,
+    '512B': 512,
+    '1K': 1024,
+    '2K': 2048,
+    '4K': 4096,
+    '8K': 8192,
+    '16K': 16384,
+    '32K': 32768,
+    '64K': 65536,
+    '128K': 131072,
+}
 ZPOOL_CACHE_FILE = '/data/zfs/zpool.cache'
 ZPOOL_KILLCACHE = '/data/zfs/killcache'
 
