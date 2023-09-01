@@ -18,6 +18,7 @@ from middlewared.validators import Exact, Match, Or, Range
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize,
     ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
+    ZFS_VOLUME_BLOCK_SIZE_CHOICES,
 )
 
 
@@ -292,6 +293,7 @@ class PoolDatasetService(CRUDService):
         # We raise validation errors here as parent could be used down to validate other aspects of the dataset
         verrors.check()
 
+        dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
         if data['type'] == 'FILESYSTEM':
             if data.get('acltype', 'INHERIT') != 'INHERIT' or data.get('aclmode', 'INHERIT') != 'INHERIT':
                 to_check = data.copy()
@@ -320,16 +322,31 @@ class PoolDatasetService(CRUDService):
                     )
 
             if rs := data.get('recordsize'):
-                if rs != 'INHERIT' and rs not in await self.middleware.call('pool.dataset.recordsize_choices'):
+                if rs != 'INHERIT' and rs not in await self.middleware.call(
+                    'pool.dataset.recordsize_choices', parent['pool']
+                ):
                     verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
+            elif mode == 'CREATE' and dataset_pool_is_draid:
+                # We set recordsize to 1M by default on dataset creation if not explicitly specified
+                data['recordsize'] = '1M'
 
         elif data['type'] == 'VOLUME':
             if mode == 'CREATE':
                 if 'volsize' not in data:
                     verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
                 if 'volblocksize' not in data:
-                    # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
-                    data['volblocksize'] = '16K'
+                    if dataset_pool_is_draid:
+                        data['volblocksize'] = '128K'
+                    else:
+                        # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
+                        data['volblocksize'] = '16K'
+
+            if dataset_pool_is_draid and 'volblocksize' in data:
+                if ZFS_VOLUME_BLOCK_SIZE_CHOICES[data['volblocksize']] < 32 * 1024:
+                    verrors.add(
+                        f'{schema}.volblocksize',
+                        'Volume block size must be greater than or equal to 32K for dRAID pools'
+                    )
 
             for i in (
                 'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
@@ -394,9 +411,7 @@ class PoolDatasetService(CRUDService):
         Str('name', required=True),
         Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
         Int('volsize'),  # IN BYTES
-        Str('volblocksize', enum=[
-            '512', '512B', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
-        ]),
+        Str('volblocksize', enum=list(ZFS_VOLUME_BLOCK_SIZE_CHOICES)),
         Bool('sparse'),
         Bool('force_size'),
         Inheritable(Str('comments')),
