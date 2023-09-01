@@ -1,5 +1,6 @@
 import asyncio
 import os
+import stat
 import subprocess
 import tempfile
 
@@ -146,6 +147,7 @@ class InitShutdownScriptService(CRUDService):
     def write_script_text(self, script_text):
         with tempfile.NamedTemporaryFile(delete=False, mode='w') as f:
             f.write(script_text)
+            os.fchmod(f.fileno(), stat.S_IRWXU)
             return f.name
 
     @private
