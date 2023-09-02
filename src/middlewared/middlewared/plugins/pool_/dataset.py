@@ -718,7 +718,7 @@ class PoolDatasetService(CRUDService):
             })
             await acl_job.wait(raise_error=True)
 
-        self.middleware.send_event('pool.query', 'ADDED', id=data['id'], fields=created_ds)
+        self.middleware.send_event('pool.dataset.query', 'ADDED', id=data['id'], fields=created_ds)
         return created_ds
 
     @accepts(Str('id', required=True), Patch(
@@ -866,7 +866,7 @@ class PoolDatasetService(CRUDService):
             await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', id)
 
         updated_ds = await self.get_instance(id)
-        self.middleware.send_event('pool.query', 'CHANGED', id=id, fields=updated_ds)
+        self.middleware.send_event('pool.dataset.query', 'CHANGED', id=id, fields=updated_ds)
         return updated_ds
 
     @accepts(Str('id'), Dict(
