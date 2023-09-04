@@ -199,7 +199,6 @@ def test_ssh_keyscan_does_not_duplicate_host_keys(cleanup, localuser, remoteuser
 
 
 def test_home_directory_key(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
-    ssh(f"mkdir {localuser['home']}/.ssh")
     call(
         "filesystem.file_receive",
         f"{localuser['home']}/.ssh/id_rsa",
@@ -229,6 +228,7 @@ def test_ssh_credentials_key(cleanup, localuser, remoteuser, src, dst, ssh_crede
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
+        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
@@ -244,6 +244,7 @@ def test_ssh_credentials_delete(cleanup, localuser, remoteuser, src, dst):
             "ssh_credentials": c["credentials"]["id"],
             "mode": "SSH",
             "remotepath": dst,
+            "ssh_keyscan": True,
         }) as t:
             assert call("keychaincredential.used_by", c["credentials"]["id"]) == [
                 {"title": f"Rsync task for {path!r}", "unbind_method": "disable"},
@@ -262,6 +263,7 @@ def test_state_persist(cleanup, localuser, remoteuser, src, dst, ssh_credentials
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
+        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
@@ -280,6 +282,7 @@ def test_local_path_with_whitespace(cleanup, localuser, remoteuser, src, dst, ss
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
+        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
@@ -296,6 +299,7 @@ def test_remotepath_with_whitespace(cleanup, localuser, remoteuser, src, dst, ss
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
+        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
