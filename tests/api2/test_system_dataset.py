@@ -7,9 +7,12 @@ from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, pool
 
 
+PASSPHRASE = 'passphrase'
+
+
 @pytest.fixture(scope="session")
 def passphrase_encrypted_pool_session():
-    with another_pool({"encryption": True, "encryption_options": {"passphrase": "passphrase"}}) as p:
+    with another_pool({"encryption": True, "encryption_options": {"passphrase": PASSPHRASE}}) as p:
         yield p["name"]
 
 
@@ -23,6 +26,14 @@ def passphrase_encrypted_pool(passphrase_encrypted_pool_session):
     except CallError as e:
         if e.errno != errno.ENOENT:
             raise
+
+    # If root dataset is locked, let's unlock it here
+    # It can be locked if some test locks it but does not unlock it later on and we should have
+    # a clean slate whenever we are trying to test using this pool/root dataset
+    if call("pool.dataset.get_instance", passphrase_encrypted_pool_session)["locked"]:
+        call("pool.dataset.unlock", passphrase_encrypted_pool_session, {
+            "datasets": [{"name": passphrase_encrypted_pool_session, "passphrase": PASSPHRASE}],
+        })
 
     yield passphrase_encrypted_pool_session
 
