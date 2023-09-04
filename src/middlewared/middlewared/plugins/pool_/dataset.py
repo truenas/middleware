@@ -881,6 +881,9 @@ class PoolDatasetService(CRUDService):
         `recursive` will also delete/destroy all children datasets.
         `force` will force delete busy datasets.
 
+        When root dataset is specified as `id` with `recursive`, it will destroy all the children of the
+        root dataset present leaving root dataset intact.
+
         .. examples(websocket)::
 
           Delete "tank/myuser" dataset.
