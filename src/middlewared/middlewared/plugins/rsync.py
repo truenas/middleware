@@ -265,7 +265,8 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 verrors.add(f'{schema}.remotepath', 'This field is required')
 
             if data['enabled'] and connect_kwargs:
-                known_hosts_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh', 'known_hosts'))
+                ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
+                known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
 
                 try:
                     try:
@@ -291,6 +292,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                                 errors='ignore',
                             )).stdout
 
+                            # If for whatever reason the dir does not exist, let's create it
+                            # An example of this is when we run rsync tests we nuke the directory
+                            await self.middleware.run_in_thread(ssh_dir_path.mkdir, 0o700, False, True)
                             await self.middleware.run_in_thread(known_hosts_path.write_text, known_hosts_text)
                             await self.middleware.run_in_thread(os.chown, known_hosts_path, user['pw_uid'],
                                                                 user['pw_gid'])
