@@ -31,7 +31,8 @@ def test_04_Creating_rsync_task(rsynctask_dict):
         'path': '/mnt/tank/share',
         "remotepath": "/share",
         "remoteport": 22,
-        "validate_rpath": False
+        "validate_rpath": False,
+        "ssh_keyscan": True,
     }
     results = POST('/rsynctask/', payload)
     assert results.status_code == 200, results.text
