@@ -1,8 +1,6 @@
 import asyncio
 import os
-import stat
 import subprocess
-import tempfile
 
 from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
@@ -22,7 +20,6 @@ class InitShutdownScriptModel(sa.Model):
     ini_enabled = sa.Column(sa.Boolean(), default=True)
     ini_timeout = sa.Column(sa.Integer(), default=10)
     ini_comment = sa.Column(sa.String(255))
-    ini_script_text = sa.Column(sa.Text())
 
 
 class InitShutdownScriptService(CRUDService):
@@ -41,9 +38,8 @@ class InitShutdownScriptService(CRUDService):
     @accepts(Dict(
         'init_shutdown_script_create',
         Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
-        Str('command', null=True),
-        Str('script_text', null=True),
-        File('script', null=True),
+        Str('command', null=True, default=''),
+        File('script', null=True, default=''),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         Int('timeout', default=10),
@@ -58,8 +54,8 @@ class InitShutdownScriptService(CRUDService):
 
         There are three choices for `when`:
 
-        1) PREINIT - This is early in the boot process before all the services / rc scripts have started
-        2) POSTINIT - This is late in the boot process when most of the services / rc scripts have started
+        1) PREINIT - This is early in the boot process before all the services have started
+        2) POSTINIT - This is late in the boot process when most of the services have started
         3) SHUTDOWN - This is on shutdown
 
         `timeout` is an integer value which indicates time in seconds which the system should wait for the execution
@@ -69,16 +65,13 @@ class InitShutdownScriptService(CRUDService):
         by the base OS's limit.
         """
         await self.validate(data, 'init_shutdown_script_create')
-
         await self.init_shutdown_script_compress(data)
-
         data['id'] = await self.middleware.call(
             'datastore.insert',
             self._config.datastore,
             data,
             {'prefix': self._config.datastore_prefix}
         )
-
         return await self.get_instance(data['id'])
 
     async def do_update(self, id, data):
@@ -88,11 +81,8 @@ class InitShutdownScriptService(CRUDService):
         old = await self.get_instance(id)
         new = old.copy()
         new.update(data)
-
         await self.validate(new, 'init_shutdown_script_update')
-
         await self.init_shutdown_script_compress(new)
-
         await self.middleware.call(
             'datastore.update',
             self._config.datastore,
@@ -100,141 +90,79 @@ class InitShutdownScriptService(CRUDService):
             new,
             {'prefix': self._config.datastore_prefix}
         )
-
         return await self.get_instance(new['id'])
 
     async def do_delete(self, id):
         """
         Delete init/shutdown task of `id`.
         """
-        return await self.middleware.call(
-            'datastore.delete',
-            self._config.datastore,
-            id
-        )
+        return await self.middleware.call('datastore.delete', self._config.datastore, id)
 
     @private
     async def init_shutdown_script_extend(self, data):
         data['type'] = data['type'].upper()
         data['when'] = data['when'].upper()
-
         return data
 
     @private
     async def init_shutdown_script_compress(self, data):
         data['type'] = data['type'].lower()
         data['when'] = data['when'].lower()
-
         return data
 
     @private
     async def validate(self, data, schema_name):
         verrors = ValidationErrors()
-
-        if data['type'] == 'COMMAND':
-            if not data.get('command'):
-                verrors.add(f'{schema_name}.command', 'This field is required')
-            else:
-                data['script_text'] = ''
-                data['script'] = ''
-
-        if data['type'] == 'SCRIPT':
-            if data.get('script') and data.get('script_text'):
-                verrors.add(f'{schema_name}.script', 'Only one of two fields should be provided')
-            elif not data.get('script') and not data.get('script_text'):
-                # IDEA may be it's worth putting both fields validations errors to verrors
-                # e.g.
-                # verrors.add(f'{schema_name}.script', 'This field is required')
-                # verrors.add(f'{schema_name}.script_text', 'This field is required')
-                verrors.add(f'{schema_name}.script', "Either 'script' or 'script_text' field is required")
-            elif data.get('script') and not data.get('script_text'):
-                data['command'] = ''
-                data['script_text'] = ''
-            else:
-                data['command'] = ''
-                data['script'] = ''
-
+        if data['type'] == 'COMMAND' and not data.get('command'):
+            verrors.add(f'{schema_name}.command', 'This field is required')
+        elif data['type'] == 'SCRIPT' and not data.get('script'):
+            verrors.add(f'{schema_name}.script', 'This field is required')
         verrors.check()
 
     @private
-    async def execute_task(self, task):
-        task_type = task['type']
-        cmd = None
-        tmp_script = None
-
-        if task_type == 'COMMAND':
-            cmd = task['command']
-        elif task_type == 'SCRIPT' and task['script_text']:
-            fd, tmp_script = tempfile.mkstemp(text=True)
-            os.close(fd)
-            os.chmod(tmp_script, stat.S_IRWXU)
-            with open(tmp_script, 'w') as f:
-                f.write(task['script_text'])
-            cmd = f'exec {tmp_script}'
-        elif os.path.exists(task['script'] or '') and os.access(task['script'], os.X_OK):
-            cmd = f'exec {task["script"]}'
-
-        try:
-            if cmd:
-                proc = await Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    shell=True,
-                    close_fds=True
-                )
-                stdout, stderr = await proc.communicate()
-
-                if proc.returncode:
-                    if task_type == 'COMMAND':
-                        cmd = task['command']
-                    elif task_type == 'SCRIPT' and task['script_text']:
-                        cmd = task['comment']
-                    elif task_type == 'SCRIPT' and task['script']:
-                        cmd = task['script']
-                    else:
-                        cmd = ''
-                    self.middleware.logger.debug(
-                        'Execution failed for '
-                        f'{task_type} {cmd}: {stdout.decode()}'
-                    )
-        except Exception as error:
-            if task_type == 'SCRIPT' and task['script_text']:
-                cmd = task['comment']
-            self.middleware.logger.debug(
-                f'{task["type"]} {cmd}: {error!r}'
-            )
-        finally:
-            if tmp_script and os.path.exists(tmp_script):
-                os.unlink(tmp_script)
+    def get_cmd(self, task):
+        if task['type'] == 'COMMAND':
+            return task['command']
+        elif task['type'] == 'SCRIPT' and os.path.exists(task['script']):
+            return f'exec {task["script"]}'
 
     @private
-    @accepts(
-        Str('when')
-    )
+    async def execute_task(self, task):
+        cmd = await self.middleware.run_in_thread(self.get_cmd, task)
+        if not cmd:
+            return
+
+        try:
+            proc = await Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                shell=True,
+                close_fds=True
+            )
+            stdout, stderr = await proc.communicate()
+            if proc.returncode:
+                self.logger.debug('Failed to execute %r with error %r', cmd, stdout.decode())
+        except Exception:
+            self.logger.debug('Unexpected failure executing %r', cmd, exc_info=True)
+
+    @private
+    @accepts(Str('when'))
     @job()
     async def execute_init_tasks(self, job, when):
-
-        tasks = await self.middleware.call(
-            'initshutdownscript.query', [
+        tasks = await self.middleware.call('initshutdownscript.query', [
                 ['enabled', '=', True],
                 ['when', '=', when]
-            ])
+        ])
+        tasks_len = len(tasks)
 
-        for i, task in enumerate(tasks):
+        for idx, task in enumerate(tasks):
+            cmd = task['command'] if task['type'] == 'COMMAND' else task['script']
             try:
                 await asyncio.wait_for(self.middleware.create_task(self.execute_task(task)), timeout=task['timeout'])
             except asyncio.TimeoutError:
-                if task['type'] == 'COMMAND':
-                    cmd = task['command']
-                elif task['type'] == 'SCRIPT' and task['script_text']:
-                    cmd = task['comment']
-                elif task['type'] == 'SCRIPT' and task['script']:
-                    cmd = task['script']
-                else:
-                    cmd = ''
-                self.middleware.logger.debug(f'{task["type"]} {cmd} timed out')
+                self.logger.debug('Timed out running %s: %r', task['type'], cmd)
             finally:
-                job.set_progress((100 / len(tasks)) * (i + 1))
+                job.set_progress((100 / tasks_len) * (idx + 1))
 
         job.set_progress(100, f'Completed tasks for {when}')
