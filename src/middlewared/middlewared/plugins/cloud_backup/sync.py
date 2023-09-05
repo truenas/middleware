@@ -108,7 +108,7 @@ async def restic(middleware, job, cloud_backup, dry_run):
         if proc.returncode != 0:
             message = "".join(job.internal_data.get("messages", []))
             if message and proc.returncode != 1:
-                if message and not message.endswith("\n"):
+                if not message.endswith("\n"):
                     message += "\n"
                 message += f"restic failed with exit code {proc.returncode}"
             raise CallError(message)
