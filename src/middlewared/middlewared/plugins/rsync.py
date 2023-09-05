@@ -310,7 +310,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                         try:
                             async with await asyncssh.connect(
                                 **connect_kwargs,
-                                known_hosts=known_hosts,
+                                known_hosts=known_hosts if not data['ssh_credentials'] else None,
                                 options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
                             ) as conn:
                                 await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
