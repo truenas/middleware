@@ -5,13 +5,13 @@ from middlewared.plugins.enclosure_ import identification
 
 @pytest.mark.parametrize('data', [
     # M series
-    ('ECStream_4024Sp', 'TRUENAS-M40', ('M Series', True)),
-    ('ECStream_4024Ss', 'TRUENAS-M40', ('M Series', True)),
-    ('iX_4024Sp', 'TRUENAS-M40', ('M Series', True)),
-    ('iX_4024Ss', 'TRUENAS-M40', ('M Series', True)),
+    ('ECStream_4024Sp', 'TRUENAS-M40', ('M40', True)),
+    ('ECStream_4024Ss', 'TRUENAS-M40', ('M40', True)),
+    ('iX_4024Sp', 'TRUENAS-M40', ('M40', True)),
+    ('iX_4024Ss', 'TRUENAS-M40', ('M40', True)),
     # X series
-    ('CELESTIC_P3215-O', 'TRUENAS-X20', ('X Series', True)),
-    ('CELESTIC_P3217-B', 'TRUENAS-X20', ('X Series', True)),
+    ('CELESTIC_P3215-O', 'TRUENAS-X20', ('X20', True)),
+    ('CELESTIC_P3217-B', 'TRUENAS-X20', ('X20', True)),
     # R series (just uses dmi info for model)
     ('ECStream_FS1', 'TRUENAS-R10', ('R10', True)),
     ('ECStream_FS2', 'TRUENAS-R20', ('R20', True)),
