@@ -400,31 +400,32 @@ def get_mapping_info(dmi, enclosures=None):
     are not physically present where all the other disks
     are. We still need to map them to slots on the enclosure.
     """
+    mapping = {
+        'TRUENAS-R10': 'R10',
+        'TRUENAS-R20': 'R20',
+        'TRUENAS-R20A': 'R20A',
+        'TRUENAS-R20B': 'R20B',
+        'TRUENAS-R40': 'R40',
+        'TRUENAS-R50': 'R50',
+        'r50_nvme_enclosure': 'R50',
+        'TRUENAS-R50B': 'R50B',
+        'r50b_nvme_enclosure': 'R50B',
+        'TRUENAS-R50BM': 'R50BM',
+        'r50bm_nvme_enclosure': 'R50BM',
+        'TRUENAS-MINI-3.0-E': 'MINI-3.0-E',
+        'FREENAS-MINI-3.0-E': 'MINI-3.0-E',
+        'TRUENAS-MINI-3.0-E+': 'MINI-3.0-E+',
+        'FREENAS-MINI-3.0-E+': 'MINI-3.0-E+',
+        'TRUENAS-MINI-3.0-X': 'MINI-3.0-X',
+        'FREENAS-MINI-3.0-X': 'MINI-3.0-X',
+        'TRUENAS-MINI-3.0-X+': 'MINI-3.0-X+',
+        'FREENAS-MINI-3.0-X+': 'MINI-3.0-X+',
+        'TRUENAS-MINI-3.0-XL+': 'MINI-3.0-XL+',
+        'FREENAS-MINI-3.0-XL+': 'MINI-3.0-XL+',
+        'TRUENAS-MINI-R': 'MINI-R',
+        'FREENAS-MINI-R': 'MINI-R'
+    }
     try:
-        return {
-            'TRUENAS-R10': get_slot_info('R10'),
-            'TRUENAS-R20': get_slot_info('R20'),
-            'TRUENAS-R20A': get_slot_info('R20A'),
-            'TRUENAS-R20B': get_slot_info('R20B'),
-            'TRUENAS-R40': get_slot_info('R40', enclosures),
-            'TRUENAS-R50': get_slot_info('R50'),
-            'r50_nvme_enclosure': get_slot_info('R50'),
-            'TRUENAS-R50B': get_slot_info('R50B'),
-            'r50b_nvme_enclosure': get_slot_info('R50B'),
-            'TRUENAS-R50BM': get_slot_info('R50BM'),
-            'r50bm_nvme_enclosure': get_slot_info('R50BM'),
-            'TRUENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
-            'FREENAS-MINI-3.0-E': get_slot_info('MINI-3.0-E'),
-            'TRUENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),
-            'FREENAS-MINI-3.0-E+': get_slot_info('MINI-3.0-E+'),
-            'TRUENAS-MINI-3.0-X': get_slot_info('MINI-3.0-X'),
-            'FREENAS-MINI-3.0-X': get_slot_info('MINI-3.0-X'),
-            'TRUENAS-MINI-3.0-X+': get_slot_info('MINI-3.0-X+'),
-            'FREENAS-MINI-3.0-X+': get_slot_info('MINI-3.0-X+'),
-            'TRUENAS-MINI-3.0-XL+': get_slot_info('MINI-3.0-XL+'),
-            'FREENAS-MINI-3.0-XL+': get_slot_info('MINI-3.0-XL+'),
-            'TRUENAS-MINI-R': get_slot_info('MINI-R'),
-            'FREENAS-MINI-R': get_slot_info('MINI-R')
-        }[dmi]
+        get_slot_info(mapping[dmi], enclosures)
     except KeyError:
         pass
