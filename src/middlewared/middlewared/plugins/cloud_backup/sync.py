@@ -7,7 +7,7 @@ from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Dict, Int
-from middlewared.service import CallError, Service, item_method, job
+from middlewared.service import CallError, Service, item_method, job, private
 from middlewared.utils import Popen
 
 
@@ -32,6 +32,8 @@ async def restic(middleware, job, cloud_backup, dry_run):
         else:
             local_path = cloud_backup["path"]
             if local_path.startswith("/dev/zvol"):
+                await middleware.call("cloud_backup.validate_zvol", local_path)
+
                 name = f"cloud_backup-{cloud_backup.get('id', 'onetime')}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
                 snapshot = (await middleware.call("zfs.snapshot.create", {
                     "dataset": zvol_path_to_name(local_path),
@@ -231,3 +233,12 @@ class CloudBackupService(Service):
 
         await self.middleware.call("core.job_abort", cloud_backup["job"]["id"])
         return True
+
+    @private
+    async def validate_zvol(self, path):
+        dataset = zvol_path_to_name(path)
+        if not (
+            await self.middleware.call("vm.query_snapshot_begin", dataset, False) or
+            await self.middleware.call("vmware.dataset_has_vms", dataset, False)
+        ):
+            raise CallError("Backed up zvol must be used by a local or VMware VM")

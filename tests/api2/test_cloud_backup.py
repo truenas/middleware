@@ -2,10 +2,12 @@ import boto3
 import pytest
 
 from middlewared.client import ClientException
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.cloud_backup import task, run_task
 from middlewared.test.integration.assets.cloud_sync import credential
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils.call import call
+from middlewared.test.integration.utils.mock import mock
 from middlewared.test.integration.utils.ssh import ssh
 
 try:
@@ -90,15 +92,21 @@ def test_double_init_error(s3_credential):
             assert ve.value.error.rstrip().endswith("already initialized")
 
 
-def test_zvol_cloud_backup(s3_credential):
-    clean()
-
+@pytest.fixture(scope="session")
+def zvol():
     with dataset("cloud_backup", {"type": "VOLUME", "volsize": 1024 * 1024}) as zvol:
         path = f"/dev/zvol/{zvol}"
         ssh(f"dd if=/dev/urandom of={path} bs=1M count=1")
 
+        yield path
+
+
+def test_zvol_cloud_backup(s3_credential, zvol):
+    clean()
+
+    with mock("cloud_backup.validate_zvol", return_value=None):
         with task({
-            "path": path,
+            "path": zvol,
             "credentials": s3_credential["id"],
             "attributes": {
                 "bucket": AWS_BUCKET,
@@ -109,3 +117,47 @@ def test_zvol_cloud_backup(s3_credential):
             call("cloud_backup.init", t["id"], job=True)
 
             run_task(t)
+
+
+def test_zvol_cloud_backup_create_time_validation(s3_credential, zvol):
+    clean()
+
+    with pytest.raises(ValidationErrors) as ve:
+        with task({
+            "path": zvol,
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+        }):
+            pass
+
+    assert "cloud_backup_create.path" in ve.value
+
+
+def test_zvol_cloud_backup_runtime_validation(s3_credential, zvol):
+    clean()
+
+    m = mock("cloud_backup.validate_zvol", return_value=None)
+    m.__enter__()
+    exited = False
+    try:
+        with task({
+            "path": zvol,
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+        }) as t:
+            m.__exit__(None, None, None)
+            exited = True
+
+            with pytest.raises(ClientException):
+                run_task(t)
+    finally:
+        if not exited:
+            m.__exit__(None, None, None)
