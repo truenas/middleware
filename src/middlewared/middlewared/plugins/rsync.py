@@ -297,8 +297,8 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                             def handle_ssh_dir():
                                 with contextlib.suppress(FileExistsError):
                                     ssh_dir_path.mkdir(0o700)
-                                    os.chown(ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid'])
 
+                                os.chown(ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid'])
                                 known_hosts_path.write_text(known_hosts_text)
                                 os.chown(known_hosts_path.absolute(), user['pw_uid'], user['pw_gid'])
 
