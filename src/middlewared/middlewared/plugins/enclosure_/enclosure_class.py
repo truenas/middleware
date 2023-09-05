@@ -84,10 +84,10 @@ class Enclosure:
             else:
                 try:
                     dev = next((i / 'device/block').iterdir(), None)
-                    mapping[slot] = dev.name if dev is not None else ''
+                    mapping[slot] = dev.name if dev is not None else None
                 except FileNotFoundError:
                     # no disk in this slot
-                    mapping[slot] = ''
+                    mapping[slot] = None
         try:
             # we have a single enclosure (at time of writing this) that enumerates
             # sysfs drive slots starting at number 1 while every other JBOD
@@ -151,15 +151,17 @@ class Enclosure:
                 'value_raw': value_raw,
             }}
             if element_type[0] == 'Array Device Slot':
-                parsed[slot]['dev'] = None
                 # see docstring in `self._map_disks_to_enclosure_slots` for
-                # why we have to get the min_slot (i.e. at time of writing
-                # this the ES102S JBOD enumerates drives starting at 1 instead
-                # of 0 (which is literally how every other single enclosure we
-                # use enumerates them)) We should always start drive slots at 1.
+                # why we have to get the min_slot
                 orig_slot = slot - 1 if min_slot == 0 else slot
-                if (disk_dev := disk_map.get(orig_slot, False)):
-                    parsed[slot]['dev'] = disk_dev
+                parsed[slot]['dev'] = disk_map.get(orig_slot, None)
+                parsed[slot]['original'] = {
+                    'enclosure_id': self.encid,
+                    'enclosure_sg': self.sg,
+                    'enclosure_bsg': self.bsg,
+                    'descriptor': f'slot{orig_slot}',
+                    'slot': orig_slot,
+                }
 
             final[element_type[0]].update(parsed)
 
