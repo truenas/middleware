@@ -6,13 +6,13 @@ def r20_variants_or_mini(model, dmi):
     NOTE: this information is burned in by the production team
     into the motherboard (SMBIOS) before we ship the system
     """
-    if dmi in ['TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B']:
-        return model
+    if dmi in ('TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B'):
+        return model, True
     elif dmi.startswith(('TRUENAS-MINI', 'FREENAS-MINI')):
         # minis do not have the TRUENAS- prefix removed
-        return dmi
+        return dmi, True
     else:
-        return ''
+        return '', False
 
 
 def get_enclosure_model_and_controller(key, dmi):
@@ -35,12 +35,12 @@ def get_enclosure_model_and_controller(key, dmi):
         case 'iX_FS1' | 'iX_FS2' | 'iX_DSS212Sp' | 'iX_DSS212Ss':
             # more R series
             return model, True
-        case 'iX_TrueNAS R20p' | 'iX_TrueNAS 20212Sp' | 'iX_TrueNAS SMC SC826-P':
+        case 'iX_TrueNAS R20p' | 'iX_TrueNAS 2012Sp' | 'iX_TrueNAS SMC SC826-P':
             # R20
             return model, True
         case 'AHCI_SGPIOEnclosure':
             # R20 variants or MINIs
-            return r20_variants_or_mini(model, dmi), True
+            return r20_variants_or_mini(model, dmi)
         case 'iX_eDrawer4048S1' | 'iX_eDrawer4048S2':
             # R50
             return model, True
@@ -56,7 +56,7 @@ def get_enclosure_model_and_controller(key, dmi):
             return 'ES12', False
         case 'ECStream_4024J' | 'iX_4024J':
             return 'ES24', False
-        case 'ECStream_2024Jp' | 'ECStream_2024Js':
+        case 'ECStream_2024Jp' | 'ECStream_2024Js' | 'iX_2024Jp' | 'iX_2024Js':
             return 'ES24F', False
         case 'CELESTIC_R0904':
             return 'ES60', False
