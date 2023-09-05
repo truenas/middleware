@@ -228,7 +228,6 @@ def test_ssh_credentials_key(cleanup, localuser, remoteuser, src, dst, ssh_crede
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
-        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
