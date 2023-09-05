@@ -294,7 +294,13 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
                             # If for whatever reason the dir does not exist, let's create it
                             # An example of this is when we run rsync tests we nuke the directory
-                            await self.middleware.run_in_thread(ssh_dir_path.mkdir, 0o700, False, True)
+                            if not await self.middleware.run_in_thread(ssh_dir_path.exists):
+                                # We still do a safe mkdir to avoid any race conditions
+                                await self.middleware.run_in_thread(ssh_dir_path.mkdir, 0o700, False, True)
+                                await self.middleware.run_in_thread(
+                                    os.chown, ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid']
+                                )
+
                             await self.middleware.run_in_thread(known_hosts_path.write_text, known_hosts_text)
                             await self.middleware.run_in_thread(os.chown, known_hosts_path, user['pw_uid'],
                                                                 user['pw_gid'])
