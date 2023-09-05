@@ -26,7 +26,6 @@ class SystemDatasetModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     sys_pool = sa.Column(sa.String(1024))
-    sys_syslog_usedataset = sa.Column(sa.Boolean(), default=False)
     sys_uuid = sa.Column(sa.String(32))
     sys_uuid_b = sa.Column(sa.String(32), nullable=True)
 
@@ -48,7 +47,6 @@ class SystemDatasetService(ConfigService):
         Str('uuid_b', required=True, null=True),
         Str('basename', required=True),
         Str('uuid_a', required=True),
-        Bool('syslog', required=True),
         Str('path', required=True, null=True),
     )
 
@@ -151,7 +149,6 @@ class SystemDatasetService(ConfigService):
                 'datastore.update', 'system.systemdataset', config['id'], {f'sys_{attr}': config['uuid']}
             )
 
-        config['syslog'] = config.pop('syslog_usedataset')
         config['path'] = await self.middleware.run_in_thread(self.sysdataset_path, config['basename'])
         return config
 
@@ -186,8 +183,6 @@ class SystemDatasetService(ConfigService):
     @private
     async def _post_setup_service_restart(self):
         await self.middleware.call('smb.setup_directories')
-        # There is no need to wait this to finish
-        self.middleware.create_task(self.middleware.call('service.restart', 'syslogd'))
 
         # The following should be backgrounded since they may be quite
         # long-running.
@@ -197,7 +192,6 @@ class SystemDatasetService(ConfigService):
         'sysdataset_update',
         Str('pool', null=True),
         Str('pool_exclude', null=True),
-        Bool('syslog'),
         update=True
     ))
     @job(lock='sysdataset_update')
@@ -266,10 +260,8 @@ class SystemDatasetService(ConfigService):
 
         verrors.check()
 
-        new['syslog_usedataset'] = new['syslog']
-
         update_dict = new.copy()
-        for key in ('basename', 'uuid_a', 'syslog', 'path', 'pool_exclude', 'pool_set'):
+        for key in ('basename', 'uuid_a', 'path', 'pool_exclude', 'pool_set'):
             update_dict.pop(key, None)
 
         await self.middleware.call(
@@ -286,9 +278,6 @@ class SystemDatasetService(ConfigService):
             await self.middleware.call('systemdataset.migrate', config['pool'], new['pool'])
 
         await self.middleware.call('systemdataset.setup', data['pool_exclude'])
-
-        if config['syslog'] != new['syslog']:
-            await self.middleware.call('service.restart', 'syslogd')
 
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'MASTER':
