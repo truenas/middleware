@@ -243,7 +243,6 @@ def test_ssh_credentials_delete(cleanup, localuser, remoteuser, src, dst):
             "ssh_credentials": c["credentials"]["id"],
             "mode": "SSH",
             "remotepath": dst,
-            "ssh_keyscan": True,
         }) as t:
             assert call("keychaincredential.used_by", c["credentials"]["id"]) == [
                 {"title": f"Rsync task for {path!r}", "unbind_method": "disable"},
@@ -262,7 +261,6 @@ def test_state_persist(cleanup, localuser, remoteuser, src, dst, ssh_credentials
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
-        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
@@ -281,7 +279,6 @@ def test_local_path_with_whitespace(cleanup, localuser, remoteuser, src, dst, ss
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
-        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
@@ -298,7 +295,6 @@ def test_remotepath_with_whitespace(cleanup, localuser, remoteuser, src, dst, ss
         "ssh_credentials": ssh_credentials["credentials"]["id"],
         "mode": "SSH",
         "remotepath": dst,
-        "ssh_keyscan": True,
     }) as t:
         run_task(t)
 
