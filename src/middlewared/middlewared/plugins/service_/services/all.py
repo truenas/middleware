@@ -1,6 +1,5 @@
 from .cifs import CIFSService
 from .ftp import FTPService
-from .haproxy import HAProxyService
 from .iscsitarget import ISCSITargetService
 from .kuberouter import KubeRouterService
 from .kubernetes import KubernetesService
@@ -79,7 +78,6 @@ all_services = [
     LibvirtGuestService,
     CronService,
     KmipService,
-    HAProxyService,
     LoaderService,
     HostnameService,
     HttpService,
