@@ -72,6 +72,7 @@
     else:
         disabled_ciphers = ''
     display_device_path = middleware.call_sync('vm.get_vm_display_nginx_route')
+    display_devices = middleware.call_sync('vm.device.query', [['dtype', '=', 'DISPLAY']])
 %>
 #
 #    TrueNAS nginx configuration file
@@ -178,9 +179,9 @@ http {
             rewrite ^.* $scheme://$http_host/ui/ redirect;
         }
 
-        location ${display_device_path} {
-            rewrite ${display_device_path}/(.*) /$1  break;
-            proxy_pass http://${middleware.call_sync('vm.get_haproxy_uri')}/;
+% for device in display_devices:
+        location ${display_device_path}/${device['id']} {
+            proxy_pass http://${device['attributes']['bind']}:${device['attributes']['web_port']}/;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -189,6 +190,7 @@ http {
             proxy_set_header Connection "Upgrade";
         }
 
+% endfor
         location /progress {
             # report uploads tracked in the 'proxied' zone
             report_uploads proxied;
