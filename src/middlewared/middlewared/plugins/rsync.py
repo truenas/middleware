@@ -35,6 +35,7 @@ import shlex
 import tempfile
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
 from middlewared.validators import Range
 from middlewared.service import (
@@ -608,6 +609,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                         for host_key in credentials['remote_host_key'].split("\n")
                         if host_key.strip() and not host_key.strip().startswith("#")
                     ]))
+                    host_key_file.write(get_host_key_file_contents_from_ssh_credentials(credentials))
                     host_key_file.flush()
 
                     extra_args = f'-i {private_key_file.name} -o UserKnownHostsFile={host_key_file.name}'
