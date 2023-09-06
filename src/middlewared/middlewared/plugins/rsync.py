@@ -607,14 +607,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     host_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile('w'))
                     os.fchmod(host_key_file.fileno(), 0o600)
                     os.fchown(host_key_file.fileno(), user['pw_uid'], user['pw_gid'])
-                    host_key_file.write('\n'.join([
-                        (
-                            f'{credentials["host"]} {host_key}' if credentials['port'] == 22
-                            else f'[{credentials["host"]}]:{credentials["port"]} {host_key}'
-                        )
-                        for host_key in credentials['remote_host_key'].split("\n")
-                        if host_key.strip() and not host_key.strip().startswith("#")
-                    ]))
                     host_key_file.write(get_host_key_file_contents_from_ssh_credentials(credentials))
                     host_key_file.flush()
 
