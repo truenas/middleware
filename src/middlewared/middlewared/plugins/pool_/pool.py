@@ -578,6 +578,9 @@ class PoolService(CRUDService):
             **encryption_dict
         }
 
+        if any(topology['type'].startswith('DRAID') for topology in data['topology']['data']):
+            fsoptions['recordsize'] = '1M'
+
         dedup = data.get('deduplication')
         if dedup:
             fsoptions['dedup'] = dedup.lower()
@@ -745,3 +748,11 @@ class PoolService(CRUDService):
         verrors.check()
 
         return True
+
+    @private
+    async def is_draid_pool(self, pool_name):
+        if pool := await self.middleware.call('zfs.pool.query', [['name', '=', pool_name]]):
+            if any(group['type'] == 'draid' for group in pool[0]['groups']['data']):
+                return True
+
+        return False
