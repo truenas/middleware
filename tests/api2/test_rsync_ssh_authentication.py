@@ -199,7 +199,7 @@ def test_ssh_keyscan_does_not_duplicate_host_keys(cleanup, localuser, remoteuser
 
 
 def test_home_directory_key(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
-    ssh(f"mkdir -p {localuser['home']}/.ssh")
+    ssh(f"mkdir {localuser['home']}/.ssh")
     call(
         "filesystem.file_receive",
         f"{localuser['home']}/.ssh/id_rsa",
