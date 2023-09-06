@@ -30,6 +30,9 @@ def test_02_install_chart_release(request):
     payload = {'catalog': 'TRUENAS', 'item': 'syncthing', 'release_name': APP_NAME, 'train': 'charts'}
     call('chart.release.create', payload, job=True)
     assert call('chart.release.get_instance', APP_NAME)['name'] == APP_NAME
+    # We should delete syncthing app now as on non HA machines when subsequent tests will run
+    # they won't expect syncthing is installed already
+    call('chart.release.delete', 'syncthing', job=True)
 
 
 def test_03_ip_rules_in_default_mode(request):
