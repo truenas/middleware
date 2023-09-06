@@ -219,6 +219,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                         "port": ssh_credentials['attributes']['port'],
                         'username': ssh_credentials['attributes']['username'],
                         'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
+                        'known_hosts': asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(
+                            ssh_credentials['attributes'],
+                        ))
                     }
             else:
                 if not data['remotehost']:
@@ -269,49 +272,52 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
                 known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
 
-                try:
+                if 'known_hosts' not in connect_kwargs:
                     try:
-                        known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
-                    except FileNotFoundError:
-                        known_hosts_text = ''
+                        try:
+                            known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
+                        except FileNotFoundError:
+                            known_hosts_text = ''
 
-                    known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
-                except Exception as e:
-                    verrors.add(
-                        f'{schema}.remotehost',
-                        f'Failed to load {known_hosts_path}: {e}',
-                    )
-                else:
-                    if data['ssh_keyscan']:
-                        if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
-                            if known_hosts_text and not known_hosts_text.endswith("\n"):
-                                known_hosts_text += '\n'
+                        known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+                    except Exception as e:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            f'Failed to load {known_hosts_path}: {e}',
+                        )
+                    else:
+                        if data['ssh_keyscan']:
+                            if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                                if known_hosts_text and not known_hosts_text.endswith("\n"):
+                                    known_hosts_text += '\n'
 
-                            known_hosts_text += (await run(
-                                ['ssh-keyscan', '-p', str(connect_kwargs['port']), connect_kwargs['host']],
-                                encoding='utf-8',
-                                errors='ignore',
-                            )).stdout
+                                known_hosts_text += (await run(
+                                    ['ssh-keyscan', '-p', str(connect_kwargs['port']), connect_kwargs['host']],
+                                    encoding='utf-8',
+                                    errors='ignore',
+                                )).stdout
 
-                            # If for whatever reason the dir does not exist, let's create it
-                            # An example of this is when we run rsync tests we nuke the directory
-                            def handle_ssh_dir():
-                                with contextlib.suppress(FileExistsError):
-                                    ssh_dir_path.mkdir(0o700)
+                                # If for whatever reason the dir does not exist, let's create it
+                                # An example of this is when we run rsync tests we nuke the directory
+                                def handle_ssh_dir():
+                                    with contextlib.suppress(FileExistsError):
+                                        ssh_dir_path.mkdir(0o700)
 
-                                os.chown(ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid'])
-                                known_hosts_path.write_text(known_hosts_text)
-                                os.chown(known_hosts_path.absolute(), user['pw_uid'], user['pw_gid'])
+                                    os.chown(ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid'])
+                                    known_hosts_path.write_text(known_hosts_text)
+                                    os.chown(known_hosts_path.absolute(), user['pw_uid'], user['pw_gid'])
 
-                            await self.middleware.run_in_thread(handle_ssh_dir)
+                                await self.middleware.run_in_thread(handle_ssh_dir)
 
-                            known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+                                known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+
+                    if not verrors:
+                        connect_kwargs['known_hosts'] = known_hosts
 
                     if data['validate_rpath']:
                         try:
                             async with await asyncssh.connect(
                                 **connect_kwargs,
-                                known_hosts=known_hosts if not data['ssh_credentials'] else None,
                                 options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
                             ) as conn:
                                 await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
