@@ -57,7 +57,7 @@ class VMService(Service, VMSupervisorMixin):
                 await self.middleware.call('vm.teardown_guest_vmemory', id_)
             raise
 
-        await self.middleware.call('service.reload', 'haproxy')
+        await self.middleware.call('service.reload', 'http')
 
     @item_method
     @accepts(
