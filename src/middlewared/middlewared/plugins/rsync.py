@@ -35,6 +35,7 @@ import shlex
 import tempfile
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
 from middlewared.schema import accepts, Bool, Cron, Dict, Str, Int, List, Patch, returns
 from middlewared.validators import Range
 from middlewared.service import (
@@ -218,6 +219,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                         "port": ssh_credentials['attributes']['port'],
                         'username': ssh_credentials['attributes']['username'],
                         'client_keys': [asyncssh.import_private_key(ssh_keypair['attributes']['private_key'])],
+                        'known_hosts': asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(
+                            ssh_credentials['attributes'],
+                        ))
                     }
             else:
                 if not data['remotehost']:
@@ -265,43 +269,55 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 verrors.add(f'{schema}.remotepath', 'This field is required')
 
             if data['enabled'] and connect_kwargs:
-                known_hosts_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh', 'known_hosts'))
+                ssh_dir_path = pathlib.Path(os.path.join(user['pw_dir'], '.ssh'))
+                known_hosts_path = pathlib.Path(os.path.join(ssh_dir_path, 'known_hosts'))
 
-                try:
+                if 'known_hosts' not in connect_kwargs:
                     try:
-                        known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
-                    except FileNotFoundError:
-                        known_hosts_text = ''
+                        try:
+                            known_hosts_text = await self.middleware.run_in_thread(known_hosts_path.read_text)
+                        except FileNotFoundError:
+                            known_hosts_text = ''
 
-                    known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
-                except Exception as e:
-                    verrors.add(
-                        f'{schema}.remotehost',
-                        f'Failed to load {known_hosts_path}: {e}',
-                    )
-                else:
-                    if data['ssh_keyscan']:
-                        if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
-                            if known_hosts_text and not known_hosts_text.endswith("\n"):
-                                known_hosts_text += '\n'
+                        known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+                    except Exception as e:
+                        verrors.add(
+                            f'{schema}.remotehost',
+                            f'Failed to load {known_hosts_path}: {e}',
+                        )
+                    else:
+                        if data['ssh_keyscan']:
+                            if not known_hosts.match(connect_kwargs['host'], '', None)[0]:
+                                if known_hosts_text and not known_hosts_text.endswith("\n"):
+                                    known_hosts_text += '\n'
 
-                            known_hosts_text += (await run(
-                                ['ssh-keyscan', '-p', str(connect_kwargs['port']), connect_kwargs['host']],
-                                encoding='utf-8',
-                                errors='ignore',
-                            )).stdout
+                                known_hosts_text += (await run(
+                                    ['ssh-keyscan', '-p', str(connect_kwargs['port']), connect_kwargs['host']],
+                                    encoding='utf-8',
+                                    errors='ignore',
+                                )).stdout
 
-                            await self.middleware.run_in_thread(known_hosts_path.write_text, known_hosts_text)
-                            await self.middleware.run_in_thread(os.chown, known_hosts_path, user['pw_uid'],
-                                                                user['pw_gid'])
+                                # If for whatever reason the dir does not exist, let's create it
+                                # An example of this is when we run rsync tests we nuke the directory
+                                def handle_ssh_dir():
+                                    with contextlib.suppress(FileExistsError):
+                                        ssh_dir_path.mkdir(0o700)
 
-                            known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+                                    os.chown(ssh_dir_path.absolute(), user['pw_uid'], user['pw_gid'])
+                                    known_hosts_path.write_text(known_hosts_text)
+                                    os.chown(known_hosts_path.absolute(), user['pw_uid'], user['pw_gid'])
+
+                                await self.middleware.run_in_thread(handle_ssh_dir)
+
+                                known_hosts = asyncssh.SSHKnownHosts(known_hosts_text)
+
+                    if not verrors:
+                        connect_kwargs['known_hosts'] = known_hosts
 
                     if data['validate_rpath']:
                         try:
                             async with await asyncssh.connect(
                                 **connect_kwargs,
-                                known_hosts=known_hosts,
                                 options=asyncssh.SSHClientConnectionOptions(connect_timeout=5),
                             ) as conn:
                                 await conn.run(f'test -d {shlex.quote(remote_path)}', check=True)
@@ -591,14 +607,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     host_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile('w'))
                     os.fchmod(host_key_file.fileno(), 0o600)
                     os.fchown(host_key_file.fileno(), user['pw_uid'], user['pw_gid'])
-                    host_key_file.write('\n'.join([
-                        (
-                            f'{credentials["host"]} {host_key}' if credentials['port'] == 22
-                            else f'[{credentials["host"]}]:{credentials["port"]} {host_key}'
-                        )
-                        for host_key in credentials['remote_host_key'].split("\n")
-                        if host_key.strip() and not host_key.strip().startswith("#")
-                    ]))
+                    host_key_file.write(get_host_key_file_contents_from_ssh_credentials(credentials))
                     host_key_file.flush()
 
                     extra_args = f'-i {private_key_file.name} -o UserKnownHostsFile={host_key_file.name}'
