@@ -111,14 +111,6 @@ def generate_svc_filters():
         };
         destination d_app_mounts { file("/var/log/app_mounts.log"); };
         log { source(s_src); filter(f_app_mounts); destination(d_app_mounts); };
-
-
-        #####################
-        # filter haproxy messages
-        #####################
-        filter f_haproxy { program("haproxy");; };
-        destination d_haproxy { file("/var/log/haproxy.log"); };
-        log { source(s_src); filter(f_haproxy); filter(f_crit); destination(d_haproxy); };
     """)
 
 
@@ -133,7 +125,7 @@ def generate_syslog_conf(middleware):
     ):
         syslog_conf = syslog_conf.replace(
             line, RE_K3S_FILTER.sub(
-                r'\1not filter(f_k3s) and not filter(f_containerd) and not filter(f_haproxy)'
+                r'\1not filter(f_k3s) and not filter(f_containerd)'
                 r' and not filter(f_kube_router) and not filter(f_app_mounts) and ',
                 line
             )
