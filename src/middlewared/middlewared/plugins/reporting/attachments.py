@@ -1,5 +1,7 @@
 from middlewared.common.ports import ServicePortDelegate
 
+from .netdata.utils import NETDATA_PORT
+
 
 class ReportingServicePortDelegate(ServicePortDelegate):
 
@@ -8,7 +10,7 @@ class ReportingServicePortDelegate(ServicePortDelegate):
     title = 'Reporting Service'
 
     async def get_ports_bound_on_wildcards(self):
-        return [2003]
+        return [NETDATA_PORT]
 
 
 async def setup(middleware):
