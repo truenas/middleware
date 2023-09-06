@@ -394,7 +394,7 @@ class UsageService(Service):
                         'streams': s['streams'],
                     })
                 elif service == 'nfs':
-                    sharing_list.append({'type': service_upper, 'readonly': s['ro'], 'quiet': s['quiet']})
+                    sharing_list.append({'type': service_upper, 'readonly': s['ro']})
                 elif service == 'iscsi':
                     tar = await self.middleware.call('iscsi.target.query', [('id', '=', s['target'])], {'get': True})
                     ext = await self.middleware.call('iscsi.extent.query', [('id', '=', s['extent'])], {'get': True})
