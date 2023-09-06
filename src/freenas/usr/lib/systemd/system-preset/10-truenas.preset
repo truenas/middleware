@@ -37,7 +37,6 @@ disable cni*
 disable kube-router*
 disable walinuxagent*
 disable serial-getty@*
-disable haproxy*
 
 # We want middlewared to import pools
 disable zfs-mount.service
