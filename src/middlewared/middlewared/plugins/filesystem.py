@@ -439,7 +439,7 @@ class FilesystemService(Service):
     @accepts(Str('path'))
     @returns()
     @job(pipes=["output"])
-    async def get(self, job, path):
+    def get(self, job, path):
         """
         Job to get contents of `path`.
         """
@@ -448,7 +448,7 @@ class FilesystemService(Service):
             raise CallError(f'{path} is not a file')
 
         with open(path, 'rb') as f:
-            await self.middleware.run_in_thread(shutil.copyfileobj, f, job.pipes.output.w)
+            shutil.copyfileobj(f, job.pipes.output.w)
 
     @accepts(
         Str('path'),
@@ -460,7 +460,7 @@ class FilesystemService(Service):
     )
     @returns(Bool('successful_put'))
     @job(pipes=["input"])
-    async def put(self, job, path, options):
+    def put(self, job, path, options):
         """
         Job to put contents to `path`.
         """
@@ -474,7 +474,7 @@ class FilesystemService(Service):
 
         try:
             with open(path, openmode) as f:
-                await self.middleware.run_in_thread(shutil.copyfileobj, job.pipes.input.r, f)
+                shutil.copyfileobj(job.pipes.input.r, f)
         except PermissionError:
             raise CallError(f'Unable to put contents at {path!r} as the path exists on a locked dataset', errno.EINVAL)
 
