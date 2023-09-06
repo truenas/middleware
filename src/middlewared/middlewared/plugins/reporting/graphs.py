@@ -3,10 +3,9 @@ import errno
 import time
 import typing
 
-from middlewared.schema import accepts, Dict, List, Patch, Ref, returns, Str, Timestamp
+from middlewared.schema import accepts, Dict, List, Ref, returns, Str
 from middlewared.service import CallError, filterable, filterable_returns, private, Service, ValidationErrors
 from middlewared.utils import filter_list
-from middlewared.validators import Range
 
 from .netdata import GRAPH_PLUGINS
 from .netdata.graph_base import GraphBase
@@ -31,21 +30,9 @@ class ReportingService(Service):
     async def graph_names(self):
         return list(self.__graphs.keys())
 
-    def _set_page_attr(attr):
-        attr.validators = [Range(min_=1)]
-        attr.default = 1
-
     @accepts(
         Str('name', required=True),
-        Patch(
-            'reporting_query', 'reporting_query_netdata',
-            ('edit', {'name': 'page', 'method': _set_page_attr}),
-            ('rm', {'name': 'start'}),
-            ('rm', {'name': 'end'}),
-            ('add', Timestamp('start')),
-            ('add', Timestamp('end')),
-            register=True,
-        ),
+        Ref('reporting_query'),
     )
     @returns(Ref('netdata_graph_reporting_data'))
     async def netdata_graph(self, name, query):
@@ -70,11 +57,12 @@ class ReportingService(Service):
 
     @filterable
     @filterable_returns(Dict(
-        'graph',
+        'reporting_graph',
         Str('name'),
         Str('title'),
         Str('vertical_label'),
         List('identifiers', items=[Str('identifier')], null=True),
+        register=True
     ))
     async def netdata_graphs(self, filters, options):
         """
@@ -90,7 +78,7 @@ class ReportingService(Service):
                 Str('identifier', default=None, null=True),
             ),
         ], empty=False),
-        Ref('reporting_query_netdata'),
+        Ref('reporting_query'),
     )
     @returns(List('reporting_data', items=[Dict(
         'netdata_graph_reporting_data',
