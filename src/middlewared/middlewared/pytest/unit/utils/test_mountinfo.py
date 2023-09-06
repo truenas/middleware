@@ -1,4 +1,4 @@
-from middlewared.utils.osc.linux.mount import __parse_mntent
+from middlewared.utils.osc.linux.mount import __parse_to_dev, __parse_to_mnt_id, __create_tree
 
 
 fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
@@ -62,16 +62,17 @@ fake_mntinfo = r"""21 26 0:19 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - 
 271 26 0:39 / /var/lib/systemd/coredump rw,relatime shared:52 - zfs dozer/.system/cores rw,xattr,noacl
 467 26 0:76 / /mnt/tank\040space\040 rw,noatime shared:261 - zfs tank\040space\040 rw,xattr,posixacl
 474 467 0:77 / /mnt/tank\040space\040/Dataset\040With\040a\040space rw,noatime shared:265 - zfs tank\040space\040/Dataset\040With\040a\040space rw,xattr,posixacl
+572 26 0:1005 / /mnt/zz rw,noatime shared:4257 - zfs zz rw,xattr,posixacl,casesensitive
 7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive
-8069 306 0:1214 / /mnt/tank/mixy rw,noatime shared:4507 - zfs tank/mixy rw,xattr,posixacl,casemixed
-537 327 0:75 / /mnt/tank/perf/mp29-nfs0016K ro shared:301 - zfs tank/perf/mp29-nfs0016K ro,xattr,posixacl,casesensitive
+8069 572 0:1214 / /mnt/zz/mixy rw,noatime shared:4507 - zfs zz/mixy rw,xattr,posixacl,casemixed
+537 327 0:75 / /mnt/dozer/TESTFUN/mp29-nfs0016K ro shared:301 - zfs dozer/TESTFUN/mp29-nfs0016K ro,xattr,posixacl,casesensitive
 """
 
 
 def test__mntinfo_spaces():
     line = r'474 467 0:77 / /mnt/tank\040space\040/Dataset\040With\040a\040space rw,noatime shared:265 - zfs tank\040space\040/Dataset\040With\040a\040space rw,xattr,posixacl'
     data = {}
-    __parse_mntent(line, data)
+    __parse_to_dev(line, data)
     assert 77 in data
     mntent = data[77]
     assert mntent['mount_id'] == 474
@@ -96,7 +97,7 @@ def test__getmntinfo():
 
     for line in fake_mntinfo.splitlines():
         data = {}
-        __parse_mntent(line, data)
+        __parse_to_dev(line, data)
 
         mnt_data = list(data.values())[0]
         assert __rebuild_device_info(mnt_data) in line
@@ -111,23 +112,56 @@ def test__getmntinfo():
 def test__atime_and_casesentivity_in_mntinfo():
     line = r'7460 572 0:1005 / /mnt/zz/ds920 rw,noatime shared:4257 - zfs zz/ds920 rw,xattr,posixacl,casesensitive'
     data = {}
-    __parse_mntent(line, data)
+    __parse_to_dev(line, data)
     assert 3145965 in data
     mntent = data[3145965]
     assert 'NOATIME' in mntent['mount_opts']
     assert 'CASESENSITIVE' in mntent['super_opts']
 
-    line = r'8069 306 0:1214 / /mnt/tank/mixy rw,noatime shared:4507 - zfs tank/mixy rw,xattr,posixacl,casemixed'
+    line = r'8069 306 0:1214 / /mnt/zz/mixy rw,noatime shared:4507 - zfs zz/mixy rw,xattr,posixacl,casemixed'
     data = {}
-    __parse_mntent(line, data)
+    __parse_to_dev(line, data)
     assert 4194494 in data
     mntent = data[4194494]
     assert 'CASEMIXED' in mntent['super_opts']
 
 
 def test__readonly_in_mntinfo():
-    line = r'537 327 0:75 / /mnt/tank/perf/mp29-nfs0016K ro shared:301 - zfs tank/perf/mp29-nfs0016K ro,xattr,posixacl,casesensitive'
+    line = r'537 327 0:75 / /mnt/dozer/TESTFUN/mp29-nfs0016K ro shared:301 - zfs dozer/TESTFUN/mp29-nfs0016K ro,xattr,posixacl,casesensitive'
     data = {}
-    __parse_mntent(line, data)
+    __parse_to_dev(line, data)
     assert 75 in data
     assert 'RO' in data[75]['mount_opts']
+
+
+def test__mount_id_key():
+    line = r'537 327 0:75 / /mnt/tank/perf/mp29-nfs0016K ro shared:301 - zfs tank/perf/mp29-nfs0016K ro,xattr,posixacl,casesensitive'
+    data = {}
+    __parse_to_mnt_id(line, data)
+    assert 537 in data
+
+
+def test__mountinfo_tree():
+    data = {}
+    for line in fake_mntinfo.splitlines():
+        __parse_to_mnt_id(line, data)
+
+    root = __create_tree(data, 61)
+    assert root['mount_source'] == 'dozer/administrative_share', str(root)
+    assert len(root['children']) == 1, str(root)
+
+    root = root['children'][0]
+    assert root['mount_source'] == 'dozer/administrative_share/backups_dataset'
+    assert len(root['children']) == 1, str(root)
+
+    root = root['children'][0]
+    assert root['mount_source'] == 'dozer/administrative_share/backups_dataset/userdata'
+    assert len(root['children']) == 1, str(root)
+
+    root = root['children'][0]
+    assert root['mount_source'] == 'dozer/administrative_share/backups_dataset/userdata/DOMAIN_GOAT'
+    assert len(root['children']) == 1, str(root)
+
+    root = root['children'][0]
+    assert root['mount_source'] == 'dozer/administrative_share/backups_dataset/userdata/DOMAIN_GOAT/bob'
+    assert len(root['children']) == 0, str(root)
