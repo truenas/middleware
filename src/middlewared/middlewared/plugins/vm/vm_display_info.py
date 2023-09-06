@@ -111,7 +111,3 @@ class VMService(Service):
     @private
     async def get_vm_display_nginx_route(self):
         return NGINX_PREFIX
-
-    @private
-    async def get_haproxy_uri(self):
-        return '127.0.0.1:700'
