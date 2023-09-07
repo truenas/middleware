@@ -21,7 +21,7 @@ from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
-from middlewared.utils.osc import getmntinfo
+from middlewared.utils.osc import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
