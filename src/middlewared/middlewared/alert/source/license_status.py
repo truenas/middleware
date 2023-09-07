@@ -3,6 +3,7 @@ from datetime import date, timedelta
 import textwrap
 
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 
@@ -33,6 +34,7 @@ class LicenseHasExpiredAlertClass(AlertClass):
 class LicenseStatusAlertSource(ThreadedAlertSource):
     products = ("SCALE_ENTERPRISE",)
     run_on_backup_node = False
+    schedule = IntervalSchedule(timedelta(hours=24))
 
     def check_sync(self):
         alerts = []
@@ -77,15 +79,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             ))
 
         enc_nums = defaultdict(lambda: 0)
-        seen_ids = []
-        for enc in self.middleware.call_sync('enclosure.query'):
-            if enc['id'] in seen_ids:
-                continue
-            seen_ids.append(enc['id'])
-
-            if enc['controller']:
-                continue
-
+        for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure2.query')):
             enc_nums[enc['model']] += 1
 
         if local_license['addhw']:
@@ -95,7 +89,6 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                     continue
 
                 name = LICENSE_ADDHW_MAPPING[code]
-
                 if name == 'ES60':
                     continue
 
@@ -115,9 +108,6 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 LicenseAlertClass,
                 'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
             ))
-
-        if self.middleware.call_sync("failover.status") == "BACKUP":
-            return alerts
 
         for days in [0, 14, 30, 90, 180]:
             if local_license['contract_end'] <= date.today() + timedelta(days=days):
