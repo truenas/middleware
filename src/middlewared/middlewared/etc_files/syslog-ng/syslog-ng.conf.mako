@@ -74,7 +74,7 @@ options {
   chain_hostnames(off);
   flush_lines(0);
   use_dns(no);
-  use_fqdn(no);
+  use_fqdn(${'yes' if render_ctx['system.advanced.config']['fqdn_syslog'] else 'no'});
   dns_cache(no);
   owner("root");
   group("adm");
