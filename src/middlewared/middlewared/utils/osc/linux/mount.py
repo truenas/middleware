@@ -62,6 +62,9 @@ def __create_tree(info, dev_id):
         else:
             parent['children'].append(entry)
 
+    if dev_id and not mount_id:
+        raise KeyError(f'{dev_id}: device not in mountinfo')
+
     return info[mount_id or root_id]
 
 
@@ -89,11 +92,9 @@ def getmntinfo(dev_id=None):
     User can optionally specify dev_t for faster lookup of single
     device.
     """
-    out = {}
-
-    __iter_mountinfo(dev_id, __parse_to_dev, out)
-
-    return out
+    info = {}
+    __iter_mountinfo(dev_id, __parse_to_dev, info)
+    return info
 
 
 def getmnttree(dev_id=None):
