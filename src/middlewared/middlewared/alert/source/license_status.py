@@ -79,7 +79,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
             ))
 
         enc_nums = defaultdict(lambda: 0)
-        for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure.query')):
+        for enc in filter(lambda x: not x['controller'], self.middleware.call_sync('enclosure2.query')):
             enc_nums[enc['model']] += 1
 
         if local_license['addhw']:
