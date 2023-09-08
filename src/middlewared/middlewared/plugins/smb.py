@@ -21,7 +21,7 @@ from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, osc, Popen, run
-from middlewared.utils.osc import getmntinfo
+from middlewared.utils.osc import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
@@ -1468,6 +1468,31 @@ class SharingSMBService(SharingService):
 
     @private
     def validate_mount_info(self, verrors, schema, path):
+        def validate_child(mnt):
+            if '@' in mnt['mount_source']:
+                return
+
+            child_acltype = get_acl_type(mnt['super_opts'])
+            if child_acltype != current_acltype:
+                verrors.add(
+                    schema,
+                    f'ACL type mismatch with child mountpoint at {mnt["mountpoint"]}: '
+                    f'{this_mnt["mount_source"]} - {current_acltype}, {mnt["mount_source"]} - {child_acltype}'
+                )
+
+            if mnt['fs_type'] != 'zfs':
+                verrors.add(
+                    schema, f'{mnt["mountpoint"]}: child mount is not a ZFS dataset.'
+                )
+
+            if 'XATTR' not in mnt['super_opts']:
+                verrors.add(
+                    schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
+                )
+
+            for c in mnt['children']:
+                validate_child(c)
+
         def get_acl_type(sb_info):
             if 'NFS4ACL' in sb_info:
                 return 'NFSV4'
@@ -1482,8 +1507,7 @@ class SharingSMBService(SharingService):
             verrors.add(schema, f'{path}: is symbolic link.')
             return
 
-        mntinfo = getmntinfo()
-        this_mnt = mntinfo[st.st_dev]
+        this_mnt = getmnttree(st.st_dev)
         if this_mnt['fs_type'] != 'zfs':
             verrors.add(schema, f'{this_mnt["fstype"]}: path is not a ZFS dataset')
 
@@ -1504,28 +1528,8 @@ class SharingSMBService(SharingService):
             return
 
         current_acltype = get_acl_type(this_mnt['super_opts'])
-        child_mounts = filter_list(list(mntinfo.values()), [['mountpoint', '^', f'{path}/']])
-        for mnt in child_mounts:
-            if '@' in mnt['mount_source']:
-                continue
-
-            child_acltype = get_acl_type(mnt['super_opts'])
-            if child_acltype != current_acltype:
-                verrors.add(
-                    schema,
-                    f'ACL type mismatch with child mountpoint at {mnt["mountpoint"]}: '
-                    f'{this_mnt["mount_source"]} - {current_acltype}, {mnt["mount_source"]} - {child_acltype}'
-                )
-
-            if mnt['fs_type'] != 'zfs':
-                verrors.add(
-                    schema, f'{mnt["mountpoint"]}: child mount is not a ZFS dataset.'
-                )
-
-            if 'XATTR' not in mnt['super_opts']:
-                verrors.add(
-                    schema, f'{mnt["mountpoint"]}: extended attribute support is disabled on child mount.'
-                )
+        for child in this_mnt['children']:
+            validate_child(child)
 
     @private
     async def get_path_field(self, data):
