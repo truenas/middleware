@@ -45,6 +45,12 @@ class DiskService(Service):
         for i in await self.middleware.call(
             'datastore.query', 'storage.disk', [['disk_expiretime', '=', None]], {'prefix': 'disk_'}
         ):
+            if not i['size']:
+                # seen on an internal system during QA. The disk had actually been spun down
+                # by OS because it had so many errors so the size was an empty string in our db
+                # SMART data reported the following for the disk: "device is NOT READY (e.g. spun down, busy)"
+                continue
+
             serial_to_disk[(i['serial'], i['lunid'])].append(i)
 
             if i['name'] in in_use_disks_imported:
