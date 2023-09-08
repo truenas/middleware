@@ -251,6 +251,9 @@ def get_snapshot_count_cached(middleware, lz, datasets, prefetch=False, update_d
 
     iter_datasets(out, datasets, tdb_entries, batch_ops, get_entry_fn)
     if batch_ops:
-        middleware.call_sync('tdb.batch_ops', {'name': 'snapshot_count', 'ops': batch_ops})
+        try:
+            middleware.call_sync('tdb.batch_ops', {'name': 'snapshot_count', 'ops': batch_ops})
+        except Exception:
+            pass
 
     return out
