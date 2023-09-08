@@ -26,11 +26,15 @@ class TDBWrap(object):
     def close(self):
         self.hdl.close()
         os.close(self.opath_fd)
+        self.opath_fd = -1
 
     def is_clustered(self):
         return False
 
     def validate_handle(self):
+        if self.opath_fd == -1:
+            return False
+
         if not os.path.exists(f'/proc/self/fd/{self.opath_fd}'):
             return False
         # if file has been renamed or deleted from under us, readlink will show different path
@@ -87,7 +91,12 @@ class TDBWrap(object):
 
     def batch_op(self, ops):
         output = []
-        self.hdl.transaction_start()
+        try:
+            self.hdl.transaction_start()
+        except RuntimeError:
+            self.close()
+            raise
+
         try:
             for op in ops:
                 if op["action"] == "SET":

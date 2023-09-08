@@ -177,8 +177,14 @@ class TDBService(Service, TDBMixin, SchemaMixin):
         Ref('tdb-options'),
     ))
     def batch_ops(self, data):
-        with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
-            data = self._batch_ops(tdb_handle, data['ops'])
+        try:
+            with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
+                data = self._batch_ops(tdb_handle, data['ops'])
+        except RuntimeError:
+            self.logger.error('%s: failed batch operations, retrying: %s',
+                              data['name'], data['ops'], exc_info=True)
+            with self.get_connection(data['name'], data['tdb-options']) as tdb_handle:
+                data = self._batch_ops(tdb_handle, data['ops'])
 
         return data
 
