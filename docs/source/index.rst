@@ -13,6 +13,7 @@ Welcome to TrueNAS developer documentation!
    build/index.rst
    simulating/index.rst
    dev-workspace/index.rst
+   external-services/index.rst
 
 
 
