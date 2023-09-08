@@ -21,7 +21,7 @@ class SystemService(Service):
                         'gid': core['COREDUMP_GID'],
                         'unit': core.get('COREDUMP_UNIT'),
                         'sig': core['COREDUMP_SIGNAL'],
-                        'exe': core['COREDUMP_EXE'],
+                        'exe': core.get('COREDUMP_EXE'),
                     }
                     if 'COREDUMP_FILENAME' not in core or not isinstance(core['COREDUMP_FILENAME'], str):
                         coredump['corefile'] = 'none'
