@@ -1420,17 +1420,17 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             app=app, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None, background=False):
+    def call_sync(self, name, *params, job_on_progress_cb=None, app=None, background=False):
         if background:
-            return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params)))
+            return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params, app=app)))
 
         serviceobj, methodobj = self._method_lookup(name)
 
         if mock := self._mock_method(name, params):
             methodobj = mock
 
-        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, job_on_progress_cb=job_on_progress_cb,
-                                           in_event_loop=False)
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, app=app,
+                                           job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
 
         if prepared_call.job:
             return prepared_call.job

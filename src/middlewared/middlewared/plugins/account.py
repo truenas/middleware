@@ -21,6 +21,7 @@ import shlex
 import shutil
 import string
 import stat
+import subprocess
 import time
 import warnings
 from pathlib import Path
@@ -212,7 +213,7 @@ class UserService(CRUDService):
         return user
 
     @private
-    async def user_compress(self, user):
+    def user_compress(self, user):
         to_remove = [
             'local',
             'id_type_both',
@@ -481,7 +482,7 @@ class UserService(CRUDService):
         register=True,
     ))
     @returns(Int('primary_key'))
-    async def do_create(self, data):
+    def do_create(self, data):
         """
         Create a new user.
 
@@ -516,7 +517,7 @@ class UserService(CRUDService):
         if data.get('groups'):
             group_ids.extend(data['groups'])
 
-        await self.__common_validation(verrors, data, 'user_create', group_ids)
+        self.middleware.call_sync('user.common_validation', verrors, data, 'user_create', group_ids)
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
             verrors.add(
@@ -531,41 +532,40 @@ class UserService(CRUDService):
         group_created = False
 
         if create:
-            group = await self.middleware.call('group.query', [('group', '=', data['username'])])
+            group = self.middleware.call_sync('group.query', [('group', '=', data['username'])])
             if group:
                 group = group[0]
             else:
-                group = await self.middleware.call('group.create_internal', {
+                group = self.middleware.call_sync('group.create_internal', {
                     'name': data['username'],
                     'smb': False,
                     'sudo_commands': [],
                     'sudo_commands_nopasswd': [],
                     'allow_duplicate_gid': False
                 }, False)
-                group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
+                group = self.middleware.call_sync('group.query', [('id', '=', group)])[0]
                 group_created = True
 
             data['group'] = group['id']
         else:
-            group = await self.middleware.call('group.query', [('id', '=', data['group'])])
+            group = self.middleware.call_sync('group.query', [('id', '=', data['group'])])
             if not group:
                 raise CallError(f'Group {data["group"]} not found')
             group = group[0]
 
         if data['smb']:
-            groups.append((await self.middleware.call('group.query',
-                                                      [('group', '=', 'builtin_users')],
-                                                      {'get': True}))['id'])
+            groups.append((self.middleware.call_sync(
+                'group.query', [('group', '=', 'builtin_users')], {'get': True},
+            ))['id'])
 
         if data.get('uid') is None:
-            data['uid'] = await self.get_next_uid()
+            data['uid'] = self.middleware.call_sync('user.get_next_uid')
 
         new_homedir = False
         home_mode = data.pop('home_mode')
         if data['home'] and data['home'] != DEFAULT_HOME_PATH:
             try:
-                data['home'] = await self.middleware.run_in_thread(
-                    self.setup_homedir,
+                data['home'] = self.setup_homedir(
                     data['home'],
                     data['username'],
                     home_mode,
@@ -576,41 +576,41 @@ class UserService(CRUDService):
             except Exception:
                 # Homedir setup failed, we should remove any auto-generated group
                 if group_created:
-                    await self.middleware.call('group.delete', data['group'])
+                    self.middleware.call_sync('group.delete', data['group'])
 
                 raise
 
         pk = None  # Make sure pk exists to rollback in case of an error
-        data = await self.user_compress(data)
+        data = self.user_compress(data)
         try:
-            await self.__set_password(data)
+            self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
 
-            pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
-            await self.middleware.call(
+            pk = self.middleware.call_sync('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
+            self.middleware.call_sync(
                 'datastore.insert', 'account.twofactor_user_auth', {
                     'secret': None,
                     'user': pk,
                 }
             )
 
-            await self.__set_groups(pk, groups)
+            self.__set_groups(pk, groups)
 
         except Exception:
             if pk is not None:
-                await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
+                self.middleware.call_sync('datastore.delete', 'account.bsdusers', pk)
             if new_homedir:
                 # Be as atomic as possible when creating the user if
                 # commands failed to execute cleanly.
                 shutil.rmtree(data['home'])
             raise
 
-        await self.middleware.call('service.reload', 'ssh')
-        await self.middleware.call('service.reload', 'user')
+        self.middleware.call_sync('service.reload', 'ssh')
+        self.middleware.call_sync('service.reload', 'user')
 
         if data['smb']:
-            gm_job = await self.middleware.call('smb.synchronize_passdb')
-            await gm_job.wait()
+            gm_job = self.middleware.call_sync('smb.synchronize_passdb')
+            gm_job.wait_sync()
 
         if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']):
             for f in os.listdir(SKEL_PATH):
@@ -620,16 +620,16 @@ class UserService(CRUDService):
                     dest_file = os.path.join(data['home'], f)
                 if not os.path.exists(dest_file):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
-                    chown_job = await self.middleware.call('filesystem.chown', {
+                    chown_job = self.middleware.call_sync('filesystem.chown', {
                         'path': dest_file,
                         'uid': data['uid'],
                         'gid': group['gid'],
                     })
-                    await chown_job.wait()
+                    chown_job.wait_sync()
 
             data['sshpubkey'] = sshpubkey
             try:
-                await self.middleware.run_in_thread(self.update_sshpubkey, data['home'], data, group['group'])
+                self.update_sshpubkey(data['home'], data, group['group'])
             except PermissionError as e:
                 self.logger.warn('Failed to update authorized keys', exc_info=True)
                 raise CallError(f'Failed to update authorized keys: {e}')
@@ -647,14 +647,14 @@ class UserService(CRUDService):
     )
     @returns(Int('primary_key'))
     @pass_app()
-    async def do_update(self, app, pk, data):
+    def do_update(self, app, pk, data):
         """
         Update attributes of an existing user.
         """
 
-        user = await self.get_instance(pk)
+        user = self.middleware.call_sync('user.get_instance', pk)
         if app:
-            same_user_logged_in = user['username'] == (await self.middleware.call('auth.me', app=app))['pw_name']
+            same_user_logged_in = user['username'] == (self.middleware.call_sync('auth.me', app=app))['pw_name']
         else:
             same_user_logged_in = False
 
@@ -662,12 +662,12 @@ class UserService(CRUDService):
 
         if data.get('password_disabled'):
             try:
-                await self.middleware.call('privilege.before_user_password_disable', user)
+                self.middleware.call_sync('privilege.before_user_password_disable', user)
             except CallError as e:
                 verrors.add('user_update.password_disabled', e.errmsg)
 
         if 'group' in data:
-            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [
+            group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
                 ('id', '=', data['group'])
             ])
             if not group:
@@ -678,7 +678,7 @@ class UserService(CRUDService):
             user['group'] = group['id']
 
         if same_user_logged_in and (
-            await self.middleware.call('auth.twofactor.config')
+            self.middleware.call_sync('auth.twofactor.config')
         )['enabled'] and not user['twofactor_auth_configured'] and not data.get('renew_twofactor_secret'):
             verrors.add(
                 'user_update.renew_twofactor_secret',
@@ -694,10 +694,10 @@ class UserService(CRUDService):
         else:
             group_ids.extend(user['groups'])
 
-        await self.__common_validation(verrors, data, 'user_update', group_ids, pk=pk)
+        self.middleware.call_sync('user.common_validation', verrors, data, 'user_update', group_ids, pk)
 
         try:
-            st = (await self.middleware.run_in_thread(os.stat, user.get("home", DEFAULT_HOME_PATH))).st_mode
+            st = os.stat(user.get("home", DEFAULT_HOME_PATH)).st_mode
             old_mode = f'{stat.S_IMODE(st):03o}'
         except FileNotFoundError:
             old_mode = None
@@ -709,7 +709,7 @@ class UserService(CRUDService):
         if data.get('sshpubkey'):
             if not (
                 home in ['/home/admin', '/root'] or
-                await self.middleware.call('filesystem.is_dataset_path', home)
+                self.middleware.call_sync('filesystem.is_dataset_path', home)
             ):
                 verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
 
@@ -736,7 +736,7 @@ class UserService(CRUDService):
             if new_val is not None and old_val != new_val:
                 if k == 'username':
                     try:
-                        await self.middleware.call("smb.remove_passdb_user", old_val)
+                        self.middleware.call_sync("smb.remove_passdb_user", old_val)
                     except Exception:
                         self.logger.debug("Failed to remove passdb entry for user [%s]",
                                           old_val, exc_info=True)
@@ -746,7 +746,7 @@ class UserService(CRUDService):
         if user['smb'] is True and data.get('smb') is False:
             try:
                 must_change_pdb_entry = False
-                await self.middleware.call("smb.remove_passdb_user", user['username'])
+                self.middleware.call_sync("smb.remove_passdb_user", user['username'])
             except Exception:
                 self.logger.debug("Failed to remove passdb entry for user [%s]",
                                   user['username'], exc_info=True)
@@ -778,7 +778,7 @@ class UserService(CRUDService):
 
         # squelch any potential problems when this occurs
         if has_home:
-            await self.middleware.call('user.recreate_homedir_if_not_exists', user, group, mode_to_set)
+            self.middleware.call_sync('user.recreate_homedir_if_not_exists', user, group, mode_to_set)
 
         home_mode = user.pop('home_mode', None)
         if user['immutable']:
@@ -788,15 +788,15 @@ class UserService(CRUDService):
             update_sshpubkey_args = [
                 home_old if home_copy else user['home'], user, group['bsdgrp_group'],
             ]
-            await self.middleware.run_in_thread(self.update_sshpubkey, *update_sshpubkey_args)
+            self.update_sshpubkey(*update_sshpubkey_args)
         except PermissionError as e:
             self.logger.warn('Failed to update authorized keys', exc_info=True)
             raise CallError(f'Failed to update authorized keys: {e}')
         else:
             if user['uid'] == 0:
-                if await self.middleware.call('failover.licensed'):
+                if self.middleware.call_sync('failover.licensed'):
                     try:
-                        await self.middleware.call(
+                        self.middleware.call_sync(
                             'failover.call_remote', 'user.update_sshpubkey', update_sshpubkey_args
                         )
                     except Exception:
@@ -806,7 +806,7 @@ class UserService(CRUDService):
             """
             Background copy of user home directory to new path as the user in question.
             """
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'user.do_home_copy', home_old, user['home'], user['username'], home_mode, user['uid']
             )
 
@@ -814,28 +814,28 @@ class UserService(CRUDService):
             """
             A non-recursive call to set permissions should return almost immediately.
             """
-            perm_job = await self.middleware.call('filesystem.setperm', {
+            perm_job = self.middleware.call_sync('filesystem.setperm', {
                 'path': user['home'],
                 'mode': home_mode,
                 'options': {'stripacl': True},
             })
-            await perm_job.wait()
+            perm_job.wait_sync()
 
         user.pop('sshpubkey', None)
-        await self.__set_password(user)
+        self.__set_password(user)
 
         if 'groups' in user:
             groups = user.pop('groups')
-            await self.__set_groups(pk, groups)
+            self.__set_groups(pk, groups)
 
-        user = await self.user_compress(user)
-        await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+        user = self.user_compress(user)
+        self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
-        await self.middleware.call('service.reload', 'ssh')
-        await self.middleware.call('service.reload', 'user')
+        self.middleware.call_sync('service.reload', 'ssh')
+        self.middleware.call_sync('service.reload', 'user')
         if user['smb'] and must_change_pdb_entry:
-            gm_job = await self.middleware.call('smb.synchronize_passdb')
-            await gm_job.wait()
+            gm_job = self.middleware.call_sync('smb.synchronize_passdb')
+            gm_job.wait_sync()
 
         return pk
 
@@ -869,7 +869,7 @@ class UserService(CRUDService):
         ),
     )
     @returns(Int('primary_key'))
-    async def do_delete(self, pk, options):
+    def do_delete(self, pk, options):
         """
         Delete user `id`.
 
@@ -877,54 +877,54 @@ class UserService(CRUDService):
         any other user.
         """
 
-        user = await self.get_instance(pk)
+        user = self.middleware.call_sync('user.get_instance', pk)
 
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
-        await self.middleware.call('privilege.before_user_delete', user)
+        self.middleware.call_sync('privilege.before_user_delete', user)
 
         if options['delete_group'] and not user['group']['bsdgrp_builtin']:
-            count = await self.middleware.call(
+            count = self.middleware.call_sync(
                 'datastore.query', 'account.bsdgroupmembership',
                 [('group', '=', user['group']['id'])], {'prefix': 'bsdgrpmember_', 'count': True}
             )
-            count2 = await self.middleware.call(
+            count2 = self.middleware.call_sync(
                 'datastore.query', 'account.bsdusers',
                 [('group', '=', user['group']['id']), ('id', '!=', pk)], {'prefix': 'bsdusr_', 'count': True}
             )
             if count == 0 and count2 == 0:
                 try:
-                    await self.middleware.call('group.delete', user['group']['id'])
+                    self.middleware.call_sync('group.delete', user['group']['id'])
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
         if user['home'] and user['home'] != DEFAULT_HOME_PATH:
             try:
-                await self.middleware.run_in_thread(shutil.rmtree, os.path.join(user['home'], '.ssh'))
+                shutil.rmtree(os.path.join(user['home'], '.ssh'))
             except Exception:
                 pass
 
         if user['smb']:
-            await run('smbpasswd', '-x', user['username'], check=False)
+            subprocess.run(['smbpasswd', '-x', user['username']], capture_output=True)
 
         # TODO: add a hook in CIFS service
-        cifs = await self.middleware.call('datastore.query', 'services.cifs', [], {'prefix': 'cifs_srv_'})
+        cifs = self.middleware.call_sync('datastore.query', 'services.cifs', [], {'prefix': 'cifs_srv_'})
         if cifs:
             cifs = cifs[0]
             if cifs['guest'] == user['username']:
-                await self.middleware.call(
+                self.middleware.call_sync(
                     'datastore.update', 'services.cifs', cifs['id'], {'guest': 'nobody'}, {'prefix': 'cifs_srv_'}
                 )
 
-        if attributes := await self.middleware.call('datastore.query', 'account.bsdusers_webui_attribute',
-                                                    [['uid', '=', user['uid']]]):
-            await self.middleware.call('datastore.delete', 'account.bsdusers_webui_attribute', attributes[0]['id'])
+        if attributes := self.middleware.call_sync('datastore.query', 'account.bsdusers_webui_attribute',
+                                                   [['uid', '=', user['uid']]]):
+            self.middleware.call_sync('datastore.delete', 'account.bsdusers_webui_attribute', attributes[0]['id'])
 
-        await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
-        await self.middleware.call('service.reload', 'ssh')
-        await self.middleware.call('service.reload', 'user')
-        await self.middleware.call('idmap.flush_gencache')
+        self.middleware.call_sync('datastore.delete', 'account.bsdusers', pk)
+        self.middleware.call_sync('service.reload', 'ssh')
+        self.middleware.call_sync('service.reload', 'user')
+        self.middleware.call_sync('idmap.flush_gencache')
 
         return pk
 
@@ -1168,8 +1168,8 @@ class UserService(CRUDService):
         if do_copy.returncode != 0:
             raise CallError(f"Failed to copy homedir [{home_old}] to [{home_new}]: {do_copy.stderr.decode()}")
 
-    async def __common_validation(self, verrors, data, schema, group_ids, pk=None):
-
+    @private
+    async def common_validation(self, verrors, data, schema, group_ids, pk=None):
         exclude_filter = [('id', '!=', pk)] if pk else []
 
         users = await self.middleware.call(
@@ -1303,7 +1303,7 @@ class UserService(CRUDService):
                 await self.middleware.run_in_thread(validate_sudo_commands, data['sudo_commands_nopasswd']),
             )
 
-    async def __set_password(self, data):
+    def __set_password(self, data):
         if 'password' not in data:
             return
         password = data.pop('password')
@@ -1317,27 +1317,27 @@ class UserService(CRUDService):
             data['smbhash'] = '*'
         return password
 
-    async def __set_groups(self, pk, groups):
+    def __set_groups(self, pk, groups):
 
         groups = set(groups)
         existing_ids = set()
-        gms = await self.middleware.call(
+        gms = self.middleware.call_sync(
             'datastore.query', 'account.bsdgroupmembership',
             [('user', '=', pk)], {'prefix': 'bsdgrpmember_'}
         )
         for gm in gms:
             if gm['id'] not in groups:
-                await self.middleware.call('datastore.delete', 'account.bsdgroupmembership', gm['id'])
+                self.middleware.call_sync('datastore.delete', 'account.bsdgroupmembership', gm['id'])
             else:
                 existing_ids.add(gm['id'])
 
         for _id in groups - existing_ids:
-            group = await self.middleware.call(
+            group = self.middleware.call_sync(
                 'datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'}
             )
             if not group:
                 raise CallError(f'Group {_id} not found', errno.ENOENT)
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'datastore.insert',
                 'account.bsdgroupmembership',
                 {'group': _id, 'user': pk},
