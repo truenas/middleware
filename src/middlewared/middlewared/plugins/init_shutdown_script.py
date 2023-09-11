@@ -1,8 +1,9 @@
 import asyncio
 import os
+import stat
 import subprocess
 
-from middlewared.schema import Bool, Dict, File, Int, Patch, Str, ValidationErrors, accepts
+from middlewared.schema import Bool, Dict, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
@@ -39,7 +40,7 @@ class InitShutdownScriptService(CRUDService):
         'init_shutdown_script_create',
         Str('type', enum=['COMMAND', 'SCRIPT'], required=True),
         Str('command', null=True, default=''),
-        File('script', null=True, default=''),
+        Str('script', null=True, default=''),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN'], required=True),
         Bool('enabled', default=True),
         Int('timeout', default=10),
@@ -115,8 +116,20 @@ class InitShutdownScriptService(CRUDService):
         verrors = ValidationErrors()
         if data['type'] == 'COMMAND' and not data.get('command'):
             verrors.add(f'{schema_name}.command', 'This field is required')
-        elif data['type'] == 'SCRIPT' and not data.get('script'):
-            verrors.add(f'{schema_name}.script', 'This field is required')
+        elif data['type'] == 'SCRIPT':
+            if not data.get('script'):
+                verrors.add(f'{schema_name}.script', 'This field is required')
+            else:
+                try:
+                    obj = await self.middleware.call('filesystem.stat', data['script'])
+                except Exception as e:
+                    verrors.add(f'{schema_name}.script', e)
+                else:
+                    if obj['type'] != 'FILE':
+                        verrors.add(f'{schema_name}.script', 'Script must be a regular file not {obj["type"]!r}')
+                    elif not bool(obj['mode'] & stat.S_IXUSR):
+                        verrors.add(f'{schema_name}.script', 'Script must have execute bit set for the user')
+
         verrors.check()
 
     @private
