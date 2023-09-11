@@ -160,8 +160,12 @@ class PoolDatasetService(Service):
                 )
 
             if not options['force'] and not ds['force']:
-                if err := dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name'])):
-                    verrors.add(f'unlock_options.datasets.{i}.force', err)
+                if self.middleware.call_sync(
+                    'pool.dataset.get_instance_quick', ds['name'], {'encryption': True}
+                )['locked']:
+                    # We are only concerned to do validation here if the dataset is locked
+                    if err := dataset_can_be_mounted(ds['name'], os.path.join('/mnt', ds['name'])):
+                        verrors.add(f'unlock_options.datasets.{i}.force', err)
 
             keys_supplied[ds['name']] = ds.get('key') or ds.get('passphrase')
 
