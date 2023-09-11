@@ -18,12 +18,19 @@ Roles are defined explicltly in `ROLES` dictionary in `src/middlewared/middlewar
 Allowing roles to execute methods
 *********************************
 
+Implicitly populated roles
+==========================
+
+`READONLY` role will have access to calling `service.config`, `service.get_instance`, `service.query` and all
+`service.*_choices` methods of all services.
+
 Basic ConfigService/CRUDService methods
 =======================================
 
 If you set `role_prefix` attribute of the service's `Config` class to `"SERVICE"`, then the following roles must exist:
 
-* `SERVICE_READ` (and it will have access to calling `service.config` and `service.query` methods)
+* `SERVICE_READ` (and it will have access to calling `service.config`, `service.get_instance`, `service.query` and all
+  `service.*_choices` methods)
 * `SERVICE_WRITE` (and it will have access to calling `service.create`, `service.update` and `service.delete` methods)
 
 Additionally, if `role_separate_delete` attribute is set to `True`, then `SERVICE_DELETE` role must exist, and it will
