@@ -94,6 +94,8 @@ class PoolDatasetService(CRUDService):
         datastore_primary_key_type = 'string'
         event_send = False
         namespace = 'pool.dataset'
+        role_prefix = 'DATASET'
+        role_separate_delete = True
 
     @private
     async def get_instance_quick(self, name, options=None):

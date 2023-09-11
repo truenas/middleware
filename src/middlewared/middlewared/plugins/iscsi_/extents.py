@@ -49,6 +49,7 @@ class iSCSITargetExtentService(SharingService):
         datastore_prefix = 'iscsi_target_extent_'
         datastore_extend = 'iscsi.extent.extend'
         cli_namespace = 'sharing.iscsi.extent'
+        role_prefix = 'SHARING_ISCSI_EXTENT'
 
     @private
     async def sharing_task_determine_locked(self, data, locked_datasets):

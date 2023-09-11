@@ -939,8 +939,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             for method_name in dir(service):
                 roles = getattr(getattr(service, method_name), 'roles', None) or []
 
-                if method_name.endswith("_choices"):
-                    roles.append("READONLY")
+                if method_name.endswith('_choices'):
+                    roles.append('READONLY')
+
+                    if service._config.role_prefix:
+                        roles.append(f'{service._config.role_prefix}_READ')
 
                 if roles:
                     self.role_manager.register_method(f'{service._config.namespace}.{method_name}', roles)
