@@ -56,6 +56,14 @@ def test_can_not_delete_with_write_role_with_separate_delete():
                 assert ve.value.errno == errno.EACCES
 
 
+@pytest.mark.parametrize("role,method,params", [
+    ("DATASET_READ", "pool.dataset.checksum_choices", []),
+])
+def test_read_role_can_call_method(role, method, params):
+    with unprivileged_user_client([role]) as c:
+        c.call(method, *params)
+
+
 @pytest.mark.parametrize("method,params", [
     ("system.general.config", []),
     ("user.get_instance", [1]),

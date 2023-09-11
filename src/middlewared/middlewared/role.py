@@ -17,6 +17,19 @@ class Role:
 ROLES = {
     'READONLY': Role(),
 
+    'SHARING_ISCSI_EXTENT_READ': Role(),
+    'SHARING_ISCSI_EXTENT_WRITE': Role(includes=['SHARING_ISCSI_EXTENT_READ']),
+    'SHARING_NFS_READ': Role(),
+    'SHARING_NFS_WRITE': Role(includes=['SHARING_NFS_READ']),
+    'SHARING_SMB_READ': Role(),
+    'SHARING_SMB_WRITE': Role(includes=['SHARING_SMB_READ']),
+    'SHARING_READ': Role(includes=['SHARING_ISCSI_EXTENT_READ',
+                                   'SHARING_NFS_READ',
+                                   'SHARING_SMB_READ']),
+    'SHARING_WRITE': Role(includes=['SHARING_ISCSI_EXTENT_WRITE',
+                                    'SHARING_NFS_WRITE',
+                                    'SHARING_SMB_WRITE']),
+
     'KEYCHAIN_CREDENTIAL_READ': Role(),
     'KEYCHAIN_CREDENTIAL_WRITE': Role(includes=['KEYCHAIN_CREDENTIAL_READ']),
     'REPLICATION_TASK_CONFIG_READ': Role(),
@@ -27,6 +40,9 @@ ROLES = {
     'SNAPSHOT_TASK_READ': Role(),
     'SNAPSHOT_TASK_WRITE': Role(includes=['SNAPSHOT_TASK_READ']),
 
+    'DATASET_READ': Role(),
+    'DATASET_WRITE': Role(includes=['DATASET_READ']),
+    'DATASET_DELETE': Role(),
     'SNAPSHOT_READ': Role(),
     'SNAPSHOT_WRITE': Role(includes=['SNAPSHOT_READ']),
     'SNAPSHOT_DELETE': Role(),
@@ -36,6 +52,8 @@ ROLES = {
                                           'REPLICATION_TASK_WRITE',
                                           'SNAPSHOT_TASK_WRITE',
                                           'SNAPSHOT_WRITE']),
+    'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
+                                      'SHARING_WRITE'])
 }
 
 

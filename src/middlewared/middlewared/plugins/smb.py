@@ -982,6 +982,7 @@ class SharingSMBService(SharingService):
         datastore_prefix = 'cifs_'
         datastore_extend = 'sharing.smb.extend'
         cli_namespace = 'sharing.smb'
+        role_prefix = 'SHARING_SMB'
 
     LP_CTX = param.LoadParm(SMBPath.STUBCONF.platform())
 

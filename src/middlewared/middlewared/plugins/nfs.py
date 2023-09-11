@@ -273,6 +273,7 @@ class SharingNFSService(SharingService):
         datastore_prefix = "nfs_"
         datastore_extend = "sharing.nfs.extend"
         cli_namespace = "sharing.nfs"
+        role_prefix = "SHARING_NFS"
 
     ENTRY = Patch(
         'sharingnfs_create', 'sharing_nfs_entry',
