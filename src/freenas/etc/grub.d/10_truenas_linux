@@ -298,7 +298,7 @@ fi
 OS_BASE="$OS"
 boot_pool=`echo "$roots_dataset" | cut -d '/' -f1`
 activated_be=`zpool get -H -o value bootfs "$boot_pool"`
-datasets="$activated_be\n`zfs list -H -o name -r $roots_dataset | grep -vx $activated_be | sort -r`\nCORE"
+datasets="$activated_be\n`zfs list -H -o name -d 1 -r $roots_dataset | grep -vx $activated_be | sort -r`\nCORE"
 truenas_db="/data/freenas-v1.db"
 dk_query="SELECT adv_debugkernel FROM system_advanced;"
 for dataset in `echo $datasets`; do

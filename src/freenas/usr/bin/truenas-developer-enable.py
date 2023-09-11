@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+
+import json
+import os
+import stat
+import sys
+from subprocess import run
+
+
+TO_CHMOD = ['apt', 'dpkg']
+EXECUTE_BITS = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+
+def set_readwrite(entry):
+    if 'RO' not in entry['fhs_entry']['options']:
+        return
+
+    # There shouldn't be a legitimate reason to edit files in /conf
+    if entry['fhs_entry']['name'] == 'conf':
+        return
+
+    print(f'Setting readonly=off on dataset {entry["ds"]}')
+    run(['zfs', 'set', 'readonly=off', entry['ds']])
+
+
+def chmod_files():
+    with os.scandir('/usr/bin') as it:
+        for entry in it:
+            do_chmod = False
+            if not entry.is_file():
+                continue
+
+            for prefix in TO_CHMOD:
+                if not entry.name.startswith(prefix):
+                    continue
+
+                if (stat.S_IMODE(entry.stat().st_mode) & EXECUTE_BITS) != EXECUTE_BITS:
+                    do_chmod = True
+                    break
+
+            if do_chmod:
+                new_mode = stat.S_IMODE(entry.stat().st_mode | EXECUTE_BITS)
+                print(f'{entry.path}: setting {oct(new_mode)} on file.')
+                os.chmod(entry.path, new_mode)
+
+
+if __name__ == '__main__':
+    datasets = []
+    try:
+        # The following file is created during TrueNAS installation
+        # and contains dataset configuration and guid details
+        with open('/conf/truenas_root_ds.json', 'r') as f:
+           datasets = json.load(f)
+    except FileNotFoundError:
+        pass
+
+    print('Flagging root dataset as developer mode')
+    rv  = run(['zfs', 'get', '-o', 'name', '-H', 'name', '/'], capture_output=True)
+    root = rv.stdout.decode().strip()
+    run(['zfs', 'set', 'truenas:developer=on', root])
+
+    for entry in datasets:
+        set_readwrite(entry)
+
+    chmod_files()
+
+    sys.exit(0)
