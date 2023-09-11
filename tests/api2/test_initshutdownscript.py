@@ -25,7 +25,7 @@ def ws_client(ip_to_use):
         yield c
 
 
-def test_initshtudown_script(ws_client):
+def test_initshutudown_script(ws_client):
     # create the test script file first
     ws_client.call(
         'filesystem.file_receive',
