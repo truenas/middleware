@@ -21,6 +21,8 @@ Allowing roles to execute methods
 Implicitly populated roles
 ==========================
 
+`FULL_ADMIN` role will have access to calling all methods.
+
 `READONLY` role will have access to calling `service.config`, `service.get_instance`, `service.query` and all
 `service.*_choices` methods of all services.
 

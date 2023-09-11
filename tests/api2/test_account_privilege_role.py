@@ -56,6 +56,11 @@ def test_can_not_delete_with_write_role_with_separate_delete():
                 assert ve.value.errno == errno.EACCES
 
 
+def test_full_admin_role():
+    with unprivileged_user_client(["FULL_ADMIN"]) as c:
+        c.call("system.general.config")
+
+
 @pytest.mark.parametrize("role,method,params", [
     ("DATASET_READ", "pool.dataset.checksum_choices", []),
 ])

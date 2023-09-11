@@ -9,12 +9,15 @@ class Role:
 
     :ivar includes: a list of other roles that this role includes. When user is granted this role, they will also
         receive permissions granted by all of the included roles.
+    :ivar full_admin: if `True` then this role will allow calling all methods.
     """
 
     includes: [str] = field(default_factory=list)
+    full_admin: bool = False
 
 
 ROLES = {
+    'FULL_ADMIN': Role(full_admin=True),
     'READONLY': Role(),
 
     'SHARING_ISCSI_EXTENT_READ': Role(),
@@ -90,6 +93,9 @@ class RoleManager:
         return set.union({role}, *[self.roles_for_role(included_role) for included_role in self.roles[role].includes])
 
     def allowlist_for_role(self, role):
+        if role in self.roles and self.roles[role].full_admin:
+            return [{"method": "CALL", "resource": "*"}]
+
         return sum([
             self.allowlists_for_roles[role]
             for role in self.roles_for_role(role)
