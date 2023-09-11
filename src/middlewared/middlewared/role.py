@@ -15,6 +15,8 @@ class Role:
 
 
 ROLES = {
+    'READONLY': Role(),
+
     'KEYCHAIN_CREDENTIAL_READ': Role(),
     'KEYCHAIN_CREDENTIAL_WRITE': Role(includes=['KEYCHAIN_CREDENTIAL_READ']),
     'REPLICATION_TASK_CONFIG_READ': Role(),
@@ -47,11 +49,18 @@ class RoleManager:
         if method_name in self.methods:
             raise ValueError(f"Method {method_name!r} is already registered in this role manager")
 
+        self.methods[method_name] = []
+        self.add_roles(method_name, roles)
+
+    def add_roles(self, method_name, roles):
+        if method_name not in self.methods:
+            raise ValueError(f"Method {method_name!r} is not registered in this role manager")
+
         for role in roles:
             if role not in self.roles:
                 raise ValueError(f"Invalid role {role!r}")
 
-        self.methods[method_name] = roles
+        self.methods[method_name] += roles
 
         for role in roles:
             self.allowlists_for_roles[role].append({"method": "CALL", "resource": method_name})

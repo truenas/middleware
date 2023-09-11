@@ -54,3 +54,22 @@ def test_can_not_delete_with_write_role_with_separate_delete():
                     c.call("zfs.snapshot.delete", id)
 
                 assert ve.value.errno == errno.EACCES
+
+
+@pytest.mark.parametrize("method,params", [
+    ("system.general.config", []),
+    ("user.get_instance", [1]),
+    ("user.query", []),
+    ("user.shell_choices", []),
+])
+def test_readonly_can_call_method(method, params):
+    with unprivileged_user_client(["READONLY"]) as c:
+        c.call(method, *params)
+
+
+def test_readonly_can_not_call_method():
+    with unprivileged_user_client(["READONLY"]) as c:
+        with pytest.raises(ClientException) as ve:
+            c.call("user.create")
+
+        assert ve.value.errno == errno.EACCES
