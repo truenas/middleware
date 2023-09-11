@@ -1,12 +1,10 @@
 import base64
 import errno
-import os
 import stat
 import uuid
 
 import pytest
 
-from auto_config import ip, ha
 from middlewared.test.integration.utils.client import client
 from middlewared.service_exception import ValidationErrors, ValidationError
 
@@ -15,13 +13,8 @@ _775 = stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH
 
 
 @pytest.fixture(scope='module')
-def ip_to_use():
-    return ip if not ha else os.environ['controller1_ip']
-
-
-@pytest.fixture(scope='module')
-def ws_client(ip_to_use):
-    with client(host_ip=ip_to_use) as c:
+def ws_client():
+    with client() as c:
         yield c
 
 
