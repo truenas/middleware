@@ -5,6 +5,7 @@ import subprocess
 
 from middlewared.schema import Bool, Dict, Int, Patch, Str, ValidationErrors, accepts
 from middlewared.service import CRUDService, job, private
+from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
 from middlewared.utils import Popen
 from middlewared.validators import Range
@@ -122,8 +123,10 @@ class InitShutdownScriptService(CRUDService):
             else:
                 try:
                     obj = await self.middleware.call('filesystem.stat', data['script'])
+                except CallError as e:
+                    verrors.add(f'{schema_name}.script', e.errmsg, e.errno)
                 except Exception as e:
-                    verrors.add(f'{schema_name}.script', e)
+                    verrors.add(f'{schema_name}.script', str(e))
                 else:
                     if obj['type'] != 'FILE':
                         verrors.add(f'{schema_name}.script', 'Script must be a regular file not {obj["type"]!r}')
