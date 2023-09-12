@@ -8,7 +8,7 @@ import pytest
 from middlewared.test.integration.utils.client import client
 from middlewared.service_exception import ValidationErrors, ValidationError
 
-TEST_SCRIPT_FILE = '/tmp/.TEST_SCRIPT_FILE'
+TEST_SCRIPT_FILE = '/root/.TEST_SCRIPT_FILE'
 _775 = stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH
 
 
@@ -54,7 +54,7 @@ def test_initshutudown_script(ws_client):
 
 
 def test_initshutdown_script_bad(ws_client):
-    bad_script = f'/tmp/{uuid.uuid4()}'
+    bad_script = f'/root/{uuid.uuid4()}'
     with pytest.raises(ValidationErrors) as e:
         ws_client.call(
             'initshutdownscript.create',
