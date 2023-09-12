@@ -33,7 +33,6 @@ class InternalInterfaceService(Service):
             return []
 
     async def pre_sync(self):
-
         if not await self.middleware.call('system.is_enterprise'):
             return
 
@@ -56,10 +55,27 @@ class InternalInterfaceService(Service):
         await self.middleware.run_in_thread(self.sync, iface, internal_ip)
 
     def sync(self, iface, internal_ip):
+        default_table, rtn_blackhole = 254, 6
         with NDB(log='off') as ndb:
             try:
                 with ndb.interfaces[iface] as dev:
-                    if not any(i.address == internal_ip for i in dev.ipaddr.summary()):
-                        dev.add_ip(f'{internal_ip}/24').set(state='up')
+                    dev.add_ip(f'{internal_ip}/24').set(state='up')
             except KeyError:
-                return
+                # ip address already exists on this interface
+                pass
+
+            # add a blackhole route of 169.254.10.0/23 which is 1 bit larger than
+            # ip address we put on the internal interface. We do this because the
+            # f-series platform uses AMD ntb driver and the behavior for when the
+            # B controller is active and the A controller reboots, is that the ntb0
+            # interface is removed from the B controller. This means any src/dst
+            # traffic on the 169.254.10/24 subnet will be forwarded out of the gateway
+            # of last resort (default route). Since this is internal traffic, we
+            # obviously don't want to forward this traffic to the default gateway.
+            # This just routes the data into oblivion (drops it).
+            dst_network = ipaddress.ip_interface(f'{internal_ip}/23').network.exploded
+            try:
+                ndb.routes.create(dst=dst_network, table=default_table, type=rtn_blackhole).commit()
+            except KeyError:
+                # blackhole route already exists
+                pass
