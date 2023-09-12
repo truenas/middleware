@@ -73,8 +73,9 @@ class InternalInterfaceService(Service):
             # of last resort (default route). Since this is internal traffic, we
             # obviously don't want to forward this traffic to the default gateway.
             # This just routes the data into oblivion (drops it).
+            dst_network = ipaddress.ip_interface(f'{internal_ip}/23').network.exploded
             try:
-                ndb.routes.create(dst='169.254.10.0/23', table=default_table, type=rtn_blackhole).commit()
+                ndb.routes.create(dst=dst_network, table=default_table, type=rtn_blackhole).commit()
             except KeyError:
                 # blackhole route already exists
                 pass
