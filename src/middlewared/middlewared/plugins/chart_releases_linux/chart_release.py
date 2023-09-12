@@ -375,7 +375,7 @@ class ChartReleaseService(CRUDService):
     @accepts(
         Dict(
             'chart_release_create',
-            Dict('values', additional_attrs=True),
+            Dict('values', additional_attrs=True, private=True),
             Str('catalog', required=True),
             Str('item', required=True),
             Str(
@@ -526,7 +526,7 @@ class ChartReleaseService(CRUDService):
         Str('chart_release'),
         Dict(
             'chart_release_update',
-            Dict('values', additional_attrs=True),
+            Dict('values', additional_attrs=True, private=True),
         )
     )
     @job(lock=lambda args: f'chart_release_update_{args[0]}')
