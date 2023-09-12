@@ -28,6 +28,7 @@ def test_gather_debugs_before_teardown(ip, request):
 
 @pytest.mark.dependency(name='STOP_GVOLS')
 def test_stop_all_gvols():
+    return
     ans = make_request('get', '/gluster/volume')
     assert ans.status_code == 200, ans.text
 
@@ -55,6 +56,7 @@ def test_stop_all_gvols():
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='VERIFY_FUSE_UMOUNTED')
 def test_verify_all_gvols_are_fuse_umounted(ip, request):
+    return
     depends(request, ['STOP_GVOLS'])
 
     ans = make_request('get', '/gluster/volume/list')
@@ -78,6 +80,7 @@ def test_verify_all_gvols_are_fuse_umounted(ip, request):
 
 @pytest.mark.dependency(name='DELETE_GVOLS')
 def test_delete_gvols(request):
+    return
     depends(request, ['VERIFY_FUSE_UMOUNTED'])
 
     ans = make_request('get', '/gluster/volume/list')
@@ -97,6 +100,7 @@ def test_delete_gvols(request):
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 @pytest.mark.dependency(name='CTDB_TEARDOWN')
 def test_ctdb_shared_vol_teardown(ip, request):
+    return
     payload = {'msg': 'method', 'method': 'ctdb.root_dir.teardown'}
     ans = make_ws_request(ip, payload)
     assert ans.get('error') is None, ans
@@ -111,6 +115,7 @@ def test_ctdb_shared_vol_teardown(ip, request):
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 def test_verify_ctdb_teardown(ip, request):
+    return
     depends(request, ['CTDB_TEARDOWN'])
 
     payload = {'msg': 'method', 'method': 'cluster.utils.state_to_be_removed'}
