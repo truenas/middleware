@@ -496,6 +496,19 @@ def test__schema_list_multiple_items(value, expected):
         assert listnotnull(self, value) == expected
 
 
+def test__schema_list_null_items():
+
+    @accepts(List('data', null=True, items=[Str('item')]))
+    def listnull(self, data):
+        return data
+
+    self = Mock()
+
+    # FIXME: Why does this return `[]`? It should return `None`
+    # We are only checking that there is no crash here
+    listnull(self, None)
+
+
 def test__schema_unixperm_null():
 
     @accepts(UnixPerm('data', null=True))
