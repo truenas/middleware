@@ -27,8 +27,7 @@ PACKAGES=(
 )
 PIP_PACKAGES=()
 
-chmod +x /usr/bin/apt*
-chmod +x /usr/bin/dpkg
+/usr/bin/truenas-developer-enable.py
 apt update
 apt install -y "${PACKAGES[@]}"
 if [ "${#PIP_PACKAGES[@]}" -gt 0 ]; then

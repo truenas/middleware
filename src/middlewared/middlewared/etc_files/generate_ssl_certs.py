@@ -26,9 +26,11 @@ def write_certificates(certs: list, cacerts: list) -> set:
             with open(cert['csr_path'], 'w') as f:
                 f.write(cert['CSR'])
 
-    trusted_cas_path = '/usr/local/share/ca-certificates'
+    # trusted_cas_path is a ZFS dataset mountpoint and so it does
+    # not need to be recreated after the rmtree. This call is simply
+    # to forcibly remove all locally-added CAs.
+    trusted_cas_path = '/var/local/ca-certificates'
     shutil.rmtree(trusted_cas_path, ignore_errors=True)
-    os.makedirs(trusted_cas_path)
     for ca in filter(lambda c: c['chain_list'] and c['add_to_trusted_store'], cacerts):
         with open(os.path.join(trusted_cas_path, f'{ca["name"]}.crt'), 'w') as f:
             f.write('\n'.join(ca['chain_list']))

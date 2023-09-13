@@ -456,13 +456,10 @@ class SMBService(TDBWrapConfigService):
         await self.middleware.call('etc.generate', 'smb')
 
         for p in SMBPath:
-            if p == SMBPath.STATEDIR:
-                path = await self.middleware.call("smb.getparm", "state directory", "global")
-            elif p == SMBPath.PRIVATEDIR:
-                path = await self.middleware.call("smb.getparm", "privatedir", "global")
-            else:
-                path = p.platform()
+            if p == SMBPath.STUBCONF:
+                continue
 
+            path = p.platform()
             try:
                 if not await self.middleware.call('filesystem.acl_is_trivial', path):
                     self.logger.warning("Inappropriate ACL detected on path [%s] stripping ACL", path)

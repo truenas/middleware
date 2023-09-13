@@ -218,7 +218,7 @@ class BootEnvService(CRUDService):
         source = data.get('source')
         if source:
             args += [
-                '-e', os.path.join(
+                '-r', '-e', os.path.join(
                     await self.middleware.call('boot.pool_name'), 'ROOT', source
                 ) if osc.IS_LINUX else source
             ]
