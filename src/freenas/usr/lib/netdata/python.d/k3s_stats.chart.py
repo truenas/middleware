@@ -64,7 +64,7 @@ class Service(SimpleService):
     def _get_data(self):
         try:
             pods_stats = asyncio.run(Node.get_stats())['pods']
-        except (ClientConnectorError, ApiException):
+        except (ClientConnectorError, ApiException, FileNotFoundError):
             return {}
         data = defaultdict(int)
         self.prepare_pods_charts([pod['podRef']['name'] for pod in pods_stats])
