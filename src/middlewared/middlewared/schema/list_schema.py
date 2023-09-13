@@ -49,7 +49,7 @@ class List(EnumMixin, Attribute):
         # No schema is specified for list items or a schema is specified but
         # does not contain any private values. In this situation it's safe to
         # simply dump the raw value
-        if not self.items or not self.has_private():
+        if not value or not self.items or not self.has_private():
             return value
 
         # In most cases we'll only have a single item and so avoid validation loop
