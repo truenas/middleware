@@ -764,4 +764,4 @@ async def retaste_disks_on_standby_hook(middleware, *args, **kwargs):
 
 
 async def setup(middleware):
-    await self.middleware.register_hook('pool.post_create_or_update', retaste_disks_on_standby_hook)
+    middleware.register_hook('pool.post_create_or_update', retaste_disks_on_standby_hook)
