@@ -32,6 +32,7 @@ class BinaryMock:
 
 @contextlib.contextmanager
 def mock_binary(path, code="", exitcode=1):
+    ssh("/usr/bin/truenas-developer-enable.py")
     ssh(f"rm -f {RESULT_PATH}")
     ssh(f"mv {path} {path}.bak")
     try:
