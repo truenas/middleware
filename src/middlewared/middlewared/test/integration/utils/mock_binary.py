@@ -34,7 +34,7 @@ def set_usr_readonly(value):
     cmd = 'python3 -c "import libzfs;'
     cmd += 'hdl = libzfs.ZFS().get_dataset_by_path(\\\"/usr\\\");'
     cmd += 'hdl.update_properties({\\\"readonly\\\": {\\\"value\\\": '
-    cmd += f'\\\"{value}\\\"' + '});"'
+    cmd += f'\\\"{value}\\\"' + '}});"'
     ssh(cmd)
 
 @contextlib.contextmanager
