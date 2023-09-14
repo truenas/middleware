@@ -4,9 +4,18 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 
+from auto_config import ha
 
-if len(call('disk.get_unused')) < 2:
-    pytest.skip('Insufficient number of disk to perform these test')
+
+pytestmark = [
+    pytest.mark.skipif(ha, reason='Skipping for HA testing due to less disks'),
+]
+
+
+@pytest.fixture(scope='module')
+def check_unused_disks():
+    if len(call('disk.get_unused')) < 4:
+        pytest.skip('Insufficient number of disks to perform these tests')
 
 
 @pytest.fixture(scope='module')
@@ -42,6 +51,7 @@ def mirror_pool():
         yield pool_name
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'record_size', ['1M']
 )
@@ -49,6 +59,7 @@ def test_draid_pool_default_record_size(draid_pool, record_size):
     assert call('pool.dataset.get_instance', draid_pool['name'])['recordsize']['value'] == record_size
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'record_size', ['128K']
 )
@@ -56,6 +67,7 @@ def test_non_draid_pool_default_record_size(mirror_pool, record_size):
     assert call('pool.dataset.get_instance', mirror_pool['name'])['recordsize']['value'] == record_size
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'update_recordsize, validation_error', [
         ('512K', False),
@@ -80,6 +92,7 @@ def test_draid_root_dataset_valid_recordsize(draid_pool, update_recordsize, vali
         assert ve.value.errors[0].errmsg == f"'{update_recordsize}' is an invalid recordsize."
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'update_recordsize', ['512K', '256K', '128K', '2M', '512', '4K', '64K']
 )
@@ -89,6 +102,7 @@ def test_non_draid_root_dataset_valid_recordsize(mirror_pool, update_recordsize)
     )['recordsize']['value'] == update_recordsize
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'recordsize, validation_error', [
         ('512K', False),
@@ -114,6 +128,7 @@ def test_draid_dataset_valid_recordsize(draid_pool, recordsize, validation_error
         assert ve.value.errors[0].errmsg == f"'{recordsize}' is an invalid recordsize."
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'recordsize', ['512K', '256K', '128K', '2M', '512', '4K', '64K']
 )
@@ -123,6 +138,7 @@ def test_non_draid_dataset_valid_recordsize(mirror_pool, recordsize):
     )['recordsize']['value'] == recordsize
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'blocksize,validation_error', [
         ('16K', True),
@@ -150,6 +166,7 @@ def test_draid_zvol_valid_blocksize(draid_pool, blocksize, validation_error):
         assert ve.value.errors[0].errmsg == 'Volume block size must be greater than or equal to 32K for dRAID pools'
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'blocksize', ['16K', '32K']
 )
@@ -162,6 +179,7 @@ def test_non_draid_zvol_valid_blocksize(mirror_pool, blocksize):
     )['volblocksize']['value'] == blocksize
 
 
+@pytest.mark.usefixtures('check_unused_disks')
 @pytest.mark.parametrize(
     'update_recordsize, default_record_size', [
         ('512K', '1M'),
