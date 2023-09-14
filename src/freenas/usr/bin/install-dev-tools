@@ -27,7 +27,7 @@ PACKAGES=(
 )
 PIP_PACKAGES=()
 
-/usr/bin/truenas-developer-enable.py
+/usr/local/libexec/disable-rootfs-protection
 apt update
 apt install -y "${PACKAGES[@]}"
 if [ "${#PIP_PACKAGES[@]}" -gt 0 ]; then
