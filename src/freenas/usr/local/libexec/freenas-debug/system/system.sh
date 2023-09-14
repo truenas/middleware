@@ -112,10 +112,6 @@ system_func()
 	midclt call core.get_jobs '[["state", "!=", "SUCCESS"]]' '{"extra": {"raw_result": false}}' | jq .
 	section_footer
 
-	section_header "Middleware Websocket Incoming/Outgoing Message(s) - 'midclt call core.get_websocket_messages'"
-	midclt call core.get_websocket_messages | jq .
-	section_footer
-
 	section_header "Middleware Asyncio Loop Tasks - 'midclt call core.get_tasks'"
 	midclt call core.get_tasks | jq .
 	section_footer
