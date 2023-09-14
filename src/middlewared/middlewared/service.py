@@ -1677,19 +1677,6 @@ class CoreService(Service):
         ], filters, options)
         return jobs
 
-    @accepts()
-    @returns(List('websocket_messages', items=[Dict(
-        'websocket_message',
-        Str('type', required=True, enum=['incoming', 'outgoing']),
-        Str('session_id', required=True),
-        Any('message', required=True),
-    )]))
-    def get_websocket_messages(self):
-        """
-        Retrieve last 1000 incoming/outgoing message(s) logged over websocket.
-        """
-        return list(self.middleware.socket_messages_queue)
-
     @private
     def jobs_stop_logging(self):
         for job in self.middleware.jobs.all().values():
