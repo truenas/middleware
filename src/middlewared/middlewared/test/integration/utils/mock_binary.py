@@ -30,9 +30,16 @@ class BinaryMock:
         return result
 
 
+def set_usr_readonly(value):
+    cmd = 'python3 -c "import libzfs;'
+    cmd += 'hdl = libzfs.ZFS().get_dataset_by_path(\\\"/usr\\\");'
+    cmd += 'hdl.update_properties({\\\"readonly\\\": {\\\"value\\\": '
+    cmd += f'\\\"{value}\\\"' + '});"'
+    ssh(cmd)
+
 @contextlib.contextmanager
 def mock_binary(path, code="", exitcode=1):
-    ssh("/usr/bin/truenas-developer-enable.py")
+    set_usr_readonly("off")
     ssh(f"rm -f {RESULT_PATH}")
     ssh(f"mv {path} {path}.bak")
     try:
@@ -58,3 +65,4 @@ def mock_binary(path, code="", exitcode=1):
         yield BinaryMock()
     finally:
         ssh(f"mv {path}.bak {path}")
+        set_usr_readonly("on")
