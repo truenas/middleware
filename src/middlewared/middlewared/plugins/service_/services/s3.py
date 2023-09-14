@@ -5,6 +5,7 @@ from .base import SimpleService
 
 class S3Service(SimpleService):
     name = "s3"
+    deprecated = True
 
     etc = ["s3"]
 
