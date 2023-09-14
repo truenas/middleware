@@ -1,7 +1,9 @@
+import pathlib
 import re
 
-import libsgio
 import pyudev
+
+import libsgio
 from middlewared.plugins.disk_.enums import DISKS_TO_IGNORE
 from middlewared.schema import Dict, returns
 from middlewared.service import Service, accepts, private
@@ -9,6 +11,7 @@ from middlewared.utils.functools import cache
 from middlewared.utils.gpu import get_gpus
 from middlewared.utils.serial import serial_port_choices
 
+RE_IS_PART = re.compile(r'p\d{1,3}$')
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
 ISCSI_DEV_PATH = re.compile(r'/devices/platform/host[0-9]+/session[0-9]+/'
                             'target[0-9]+:[0-9]+:[0-9]+/[0-9]+:[0-9]+:[0-9]+:[0-9]+/block/.*')
@@ -40,6 +43,34 @@ class DeviceService(Service):
             self.safe_retrieval(dev.properties, 'ID_SERIAL_SHORT', '') or
             self.safe_retrieval(dev.properties, 'ID_SERIAL', '')
         )
+
+    @private
+    def get_disk_names(self):
+        """This endpoint serves almost exclusively to be called in our
+        reporting plugin. It just needs the block device names
+        (sda/nvme0n1/pmem0/etc) and so this will very quickly enumerate
+        that information.
+
+        NOTE: The return of this method should match the keys retrieved
+        when running `self.get_disks`.
+        """
+        disks = []
+        try:
+            for disk in pathlib.Path('/sys/class/block').iterdir():
+                if not disk.name.startswith(('sd', 'nvme', 'pmem')):
+                    continue
+                elif RE_IS_PART.search(disk.name):
+                    # sdap1/nvme0n1p12/pmem0p1/etc
+                    continue
+                elif disk.name[:2] == 'sd' and disk.name[-1].isdigit():
+                    # sda1/sda2/etc
+                    continue
+                else:
+                    disks.append(disk.name)
+        except FileNotFoundError:
+            pass
+
+        return disks
 
     @private
     def get_disks(self, get_partitions=False, serial_only=False):
