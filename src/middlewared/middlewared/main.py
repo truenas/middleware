@@ -96,7 +96,6 @@ class Application:
         self.session_id = str(uuid.uuid4())
         self.rest = False
         self.websocket = True
-        self.should_log_websocket_messages = False
 
         # Allow at most 10 concurrent calls and only queue up until 20
         self._softhardsemaphore = SoftHardSemaphore(10, 20)
@@ -129,10 +128,6 @@ class Application:
         remote_addr, remote_port = get_remote_addr_port(self.request)
         return TCPIPOrigin(remote_addr, remote_port)
 
-    def log_websocket_message(self, message):
-        if self.should_log_websocket_messages:
-            self.middleware.socket_messages_queue.append(message)
-
     def register_callback(self, name, method):
         assert name in ('on_message', 'on_close')
         self.__callbacks[name].append(method)
@@ -154,13 +149,6 @@ class Application:
             message = serialized[:_1KB]
         else:
             message = data
-
-        if data.get('msg') not in ['pong']:
-            self.log_websocket_message({
-                'type': 'outgoing',
-                'session_id': self.session_id,
-                'message': message,
-            })
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -381,13 +369,6 @@ class Application:
             )
         else:
             log_message = message
-
-        if message['msg'] in ['method', 'sub', 'unsub']:
-            self.log_websocket_message({
-                'type': 'incoming',
-                'session_id': self.session_id,
-                'message': log_message,
-            })
 
     def __getstate__(self):
         return {}
@@ -892,7 +873,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         self.__terminate_task = None
         self.jobs = JobsQueue(self)
         self.mocks = defaultdict(list)
-        self.socket_messages_queue = deque(maxlen=200)
         self.tasks = set()
         self.role_manager = RoleManager(ROLES)
 
