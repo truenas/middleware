@@ -553,11 +553,6 @@ class PoolService(CRUDService):
                 await (await self.middleware.call('disk.resize', log_disks, True)).wait()
 
         await self.middleware.call('pool.format_disks', job, disks)
-        if is_ha:
-            try:
-                await self.middleware.call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
-            except Exception:
-                self.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -756,3 +751,17 @@ class PoolService(CRUDService):
                 return True
 
         return False
+
+
+async def retaste_disks_on_standby_hook(middleware, *args, **kwargs):
+    if not await middleware.call('failover.licensed'):
+        return
+
+    try:
+        await middleware.call('failover.call_remote', 'disk.retaste', [], {'raise_connect_error': False})
+    except Exception:
+        middleware.logger.warning('Failed to retaste disks on standby controller', exc_info=True)
+
+
+async def setup(middleware):
+    await self.middleware.register_hook('pool.post_create_or_update', retaste_disks_on_standby_hook)
