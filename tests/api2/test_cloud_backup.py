@@ -92,7 +92,7 @@ def test_double_init_error(s3_credential):
             assert ve.value.error.rstrip().endswith("already initialized")
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def zvol():
     with dataset("cloud_backup", {"type": "VOLUME", "volsize": 1024 * 1024}) as zvol:
         path = f"/dev/zvol/{zvol}"
