@@ -384,11 +384,16 @@ class UserService(CRUDService):
                 errno.EEXIST
             )
 
-        if not data['home'].startswith('/mnt/'):
+        if not data['home'].startswith('/mnt'):
             verrors.add(
                 f'{schema}.home',
-                '"Home Directory" must begin with /mnt/ or set to '
+                '"Home Directory" must begin with /mnt or set to '
                 f'{DEFAULT_HOME_PATH}.'
+            )
+        elif data['home'] in ('/mnt', '/mnt/'):
+            verrors.add(
+                f'{schema}.home',
+                '"Home Directory" cannot be at root of "/mnt"'
             )
 
         if verrors:
