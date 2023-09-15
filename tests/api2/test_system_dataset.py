@@ -10,7 +10,7 @@ from middlewared.test.integration.utils import call, pool
 PASSPHRASE = 'passphrase'
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def passphrase_encrypted_pool_session():
     with another_pool({"encryption": True, "encryption_options": {"passphrase": PASSPHRASE}}) as p:
         yield p["name"]
