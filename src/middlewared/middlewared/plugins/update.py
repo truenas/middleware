@@ -472,7 +472,7 @@ class UpdateService(Service):
             self.logger.warning('Unable to list dataset %s snapshots: %s', dataset, proc.stderr)
             return
 
-        snapshots = [s.split('@')[1] for s in proc.stdout.strip().split()]
+        snapshots = [s.split('@')[1] for s in proc.stdout.strip().splitlines()]
         for snapshot in [s for s in snapshots if s.startswith('update--')][:-4]:
             self.logger.info('Deleting dataset %s snapshot %s', dataset, snapshot)
             subprocess.run(['zfs', 'destroy', f'{dataset}@{snapshot}'])
