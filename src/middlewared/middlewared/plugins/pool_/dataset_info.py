@@ -1,7 +1,5 @@
-import errno
-
 from middlewared.schema import accepts, Dict, returns, Str
-from middlewared.service import CallError, Service
+from middlewared.service import Service
 
 from .utils import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES
 
@@ -59,9 +57,7 @@ class PoolDatasetService(Service):
                 "params": ["tank"]
             }
         """
-        pool = await self.middleware.call('pool.query', [['name', '=', pool]])
-        if not pool:
-            raise CallError(f'"{pool}" not found.', errno.ENOENT)
+        pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
 
         """
         Cheatsheat for blocksizes is as follows:
