@@ -73,6 +73,15 @@ class UpdateService(Service):
             raise CallError('Uploaded file is not a manual update file')
 
     def _install_scale(self, job, path):
+        if self.middleware.call_sync('system.product_type') == 'ENTERPRISE':
+            minio = self.middleware.call_sync('service.query', [('service', '=', 's3')], {'get': True})
+            if minio['enable'] or minio['state'] == 'RUNNING':
+                raise CallError(
+                    "There are active configured services on this system that are not present in the new version. To "
+                    "avoid any loss of system services, please contact iXsystems Support to schedule a guided upgrade. "
+                    "Additional details are available from https://www.truenas.com/docs/core/13.0/gettingstarted/deprecations."
+                )
+
         location = os.path.dirname(path)
 
         mounted = os.path.join(location, 'squashfs-root')
