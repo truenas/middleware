@@ -59,9 +59,7 @@ class PoolDatasetService(Service):
                 "params": ["tank"]
             }
         """
-        pool = await self.middleware.call('pool.query', [['name', '=', pool]])
-        if not pool:
-            raise CallError(f'"{pool}" not found.', errno.ENOENT)
+        pool = await self.middleware.call('pool.query', [['name', '=', pool]], {'get': True})
 
         """
         Cheatsheat for blocksizes is as follows:
