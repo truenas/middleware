@@ -79,7 +79,7 @@ class UpdateService(Service):
                 raise CallError(
                     "There are active configured services on this system that are not present in the new version. To "
                     "avoid any loss of system services, please contact iXsystems Support to schedule a guided upgrade. "
-                    "Additional details are available from https://www.truenas.com/docs/scale/scaledeprecatedfeatures/."
+                    "Additional details are available from https://www.truenas.com/docs/core/13.0/gettingstarted/deprecations."
                 )
 
         location = os.path.dirname(path)
