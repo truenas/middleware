@@ -1,8 +1,9 @@
+from time import sleep
+
 import pytest
+
 from auto_config import dev_test, ip, password, user
 from middlewared.test.integration.utils import ssh
-from pytest_dependency import depends
-from time import sleep
 
 pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
@@ -18,7 +19,7 @@ def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_I
     ssh(cmd)
 
 
-def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passwd=password):
+def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passwd=password, timeout=30):
     """
     Common function to check whether a particular message exists in a log file.
     This will be used to check local and remote syslog servers.
@@ -27,8 +28,20 @@ def check_syslog(log_path, message, target_ip=ip, target_user=user, target_passw
     onus is on test developer to not under-specify `message` in order to avoid
     false positives.
     """
-    cmd = f'grep -R "{message}" {log_path}'
-    ssh(cmd, user=target_user, password=target_passwd, ip=target_ip)
+    sleep_time = 1
+    while timeout > 0:
+        found = ssh(
+            f'grep -R "{message}" {log_path}',
+            check=False,
+            user=target_user,
+            password=target_passwd,
+            ip=target_ip
+        )
+        if not found:
+            sleep(sleep_time)
+            timeout -= sleep_time
+        else:
+            return found
 
 
 @pytest.mark.parametrize('params', [
@@ -74,8 +87,7 @@ def test_local_syslog_filter(request, params):
         params.get('facility', 'syslog.LOG_USER'),
         params.get('priority', 'syslog.LOG_INFO')
     )
-    sleep(1)
-    check_syslog(params['path'], params['msg'])
+    assert check_syslog(params['path'], params['msg'], timeout=10)
 
 
 @pytest.mark.parametrize('log_path', [
