@@ -1,7 +1,5 @@
-import errno
-
 from middlewared.schema import accepts, Dict, returns, Str
-from middlewared.service import CallError, Service
+from middlewared.service import Service
 
 from .utils import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES
 
