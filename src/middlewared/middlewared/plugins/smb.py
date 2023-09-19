@@ -769,6 +769,14 @@ class SMBService(TDBWrapConfigService):
                     'This option must be enabled when AFP or time machine shares are present'
                 )
 
+        if new['enable_smb1']:
+            audited_shares = await self.middleware.call('sharing.smb.query', [['audit.enable', '=', True]])
+            if audited_shares:
+                verrors.add(
+                    'smb_update.enable_smb1',
+                    f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
+                )
+
     @accepts(Dict(
         'smb_update',
         Str('netbiosname', max_length=15),
@@ -916,6 +924,11 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
     cifs_cluster_volname = sa.Column(sa.String(255))
     cifs_afp = sa.Column(sa.Boolean())
+    cifs_audit = sa.Column(sa.JSON(dict), default={
+        'enable': False,
+        'watch_list': [],
+        'ignore_list': []
+    })
 
 
 class SharingSMBService(SharingService):
@@ -970,6 +983,7 @@ class SharingSMBService(SharingService):
         Bool('enabled', default=True),
         Str('cluster_volname', default=''),
         Bool('afp', default=False),
+        Dict('audit', Bool('enable'), List('watch_list'), List('ignore_list')),
         register=True
     ))
     async def do_create(self, data):
@@ -1001,6 +1015,14 @@ class SharingSMBService(SharingService):
         ZFS snapshots through RPC.
 
         `shadowcopy` enables support for the volume shadow copy service.
+
+        `audit` object contains configuration parameters related to SMB share auditing. It contains the
+        following keys: `enable`, `watch_list` and `ignore_list`. Enable is boolean and controls whether
+        audit messages will be generated for the share. `watch_list` is a list of groups for which to
+        generate audit messages (defaults to all groups). `ignore_list` is a list of groups to ignore
+        when auditing. If conflict arises between watch_list and ignore_list (based on user group
+        membershipt), then watch_list will take precedence and ops will be audited.
+        NOTE: auditing may not be enabled if SMB1 support is enabled for the server.
 
         `auxsmbconf` is a string of additional smb4.conf parameters not covered by the system's API.
         """
@@ -1067,9 +1089,11 @@ class SharingSMBService(SharingService):
 
         verrors = ValidationErrors()
         old = await self.query([('id', '=', id_)], {'get': True, 'extra': {'ha_mode': ha_mode.name}})
+        old_audit = old['audit']
 
         new = old.copy()
         new.update(data)
+        new['audit'] = old_audit | data['audit']
 
         oldname = 'homes' if old['home'] else old['name']
         newname = 'homes' if new['home'] else new['name']
@@ -1427,6 +1451,11 @@ class SharingSMBService(SharingService):
         if ha_mode != SMBHAMODE.CLUSTERED:
             return
 
+        if data['audit']['enable']:
+            verrors.add(
+                f'{schema_name}.audit.enable',
+                'Auditing support is not implemented for clustered shares.'
+            )
         if data['shadowcopy']:
             verrors.add(
                 f'{schema_name}.shadowcopy',
@@ -1627,6 +1656,23 @@ class SharingSMBService(SharingService):
                     'mDNS must be enabled in order to use an SMB share as a time machine target.'
                 )
 
+        if data['audit']['enable']:
+            if not smb_config:
+                smb_config = await self.middleware.call('smb.config')
+
+            if smb_config['enable_smb1']:
+                verrors.add(
+                    f'{schema_name}.audit.enable',
+                    'SMB auditing is not supported if SMB1 protocol is enabled'
+                )
+            for key in ['watch_list', 'ignore_list']:
+                for idx, group in enumerate(data['audit'][key]):
+                    try:
+                        await self.middleware.call('group.get_group_obj', {'groupname': group})
+                    except KeyError:
+                        verrors.add(f'{schema_name}.audit.{key}.{idx}',
+                                    f'{group}: group does not exist.')
+
         for entry in ['afp', 'timemachine']:
             if not data[entry]:
                 continue
@@ -1724,6 +1770,10 @@ class SharingSMBService(SharingService):
 
         if 'share_acl' in data:
             data.pop('share_acl')
+
+        for key, val in [('enable', False), ('watch_list', []), ('ignore_list', [])]:
+            if key not in data['audit']:
+                data['audit'][key] = val
 
         return await self.add_path_local(data)
 
