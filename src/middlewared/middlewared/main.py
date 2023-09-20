@@ -47,6 +47,7 @@ import fcntl
 import functools
 import inspect
 import itertools
+import logging
 import multiprocessing
 import os
 import pickle
@@ -72,6 +73,7 @@ from systemd.daemon import notify as systemd_notify
 
 from . import logger
 
+audit_logger = logging.getLogger('audit')
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
@@ -80,6 +82,13 @@ class LoopMonitorIgnoreFrame:
     regex: Pattern
     substitute: str = None
     cut_below: bool = False
+
+
+def real_crud_method(method):
+    if method.__name__ in ['create', 'update', 'delete'] and hasattr(method, '__self__'):
+        child_method = getattr(method.__self__, f'do_{method.__name__}', None)
+        if child_method is not None:
+            return child_method
 
 
 class Application:
@@ -135,20 +144,6 @@ class Application:
     def _send(self, data):
         serialized = json.dumps(data)
         asyncio.run_coroutine_threadsafe(self.response.send_str(serialized), loop=self.loop)
-        _1KB = 1000
-        if len(serialized) > _1KB:
-            # no reason to store data in the deque that
-            # is larger than ~1KB after being serialized.
-            # This gets _really_ painful on systems with
-            # many (100's) of snapshots because running a
-            # simple `zfs.snapshot.query` via midclt from
-            # the cli produces ridiculously large output.
-            # Caching that in the main middleware process
-            # is excessive and only hurts us. Instead we'll
-            # truncate to ~1KB.
-            message = serialized[:_1KB]
-        else:
-            message = data
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -198,7 +193,15 @@ class Application:
 
         try:
             async with self._softhardsemaphore:
-                result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self)
+                try:
+                    try:
+                        result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self)
+                        success = True
+                    except Exception:
+                        success = False
+                        raise
+                finally:
+                    self.__log_audit_message_for_method(message, methodobj, f'[{"SUCCESS" if success else "ERROR"}]')
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -292,6 +295,38 @@ class Application:
             event['extra'] = kwargs
         self._send(event)
 
+    def log_audit_message(self, message):
+        credentials = (
+            self.authenticated_credentials.repr()
+            if self.authenticated_credentials
+            else '$guest'
+        )
+        origin = self.origin.repr() if self.origin else 'UNKNOWN'
+
+        if len(message) > 128:
+            # Prevent malicious attempts to overflow audit log
+            message = message[:128] + f"... [{len(message) - 128} more characters]"
+
+        audit_logger.info(f'[{credentials}@{origin}] {message}')
+
+    def __log_audit_message_for_method(self, message, methodobj, prefix):
+        params = message.get('params') or []
+
+        audit = getattr(methodobj, 'audit', None)
+        audit_extended = getattr(methodobj, 'audit_extended', None)
+        if audit is None:
+            if crud_method := real_crud_method(methodobj):
+                audit = getattr(crud_method, 'audit', None)
+                audit_extended = getattr(crud_method, 'audit_extended', None)
+        if audit:
+            if audit_extended:
+                try:
+                    audit = f'{audit} {audit_extended(*params)}'
+                except Exception:
+                    pass
+
+            self.log_audit_message(f'{prefix} {audit}')
+
     def on_open(self):
         self.middleware.register_wsclient(self)
 
@@ -343,11 +378,13 @@ class Application:
                     error = True
             if not error and not hasattr(methodobj, '_no_auth_required'):
                 if not self.authenticated:
+                    self.__log_audit_message_for_method(message, methodobj, '[NOT AUTHENTICATED]')
                     self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
                     error = True
                 elif hasattr(methodobj, '_no_authz_required'):
                     pass
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
+                    self.__log_audit_message_for_method(message, methodobj, '[NOT AUTHORIZED]')
                     self.send_error(message, errno.EACCES, 'Not authorized')
                     error = True
             if not error:
@@ -1382,12 +1419,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 if mock := self._mock_method(method_name, args):
                     method = mock
 
-        if (not hasattr(method, 'accepts') and
-                method.__name__ in ['create', 'update', 'delete'] and
-                hasattr(method, '__self__')):
-            child_method = getattr(method.__self__, f'do_{method.__name__}', None)
-            if child_method is not None:
-                method = child_method
+        if not hasattr(method, 'accepts'):
+            if crud_method := real_crud_method(method):
+                method = crud_method
 
         if not hasattr(method, 'accepts'):
             return args

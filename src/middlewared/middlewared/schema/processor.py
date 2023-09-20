@@ -64,8 +64,13 @@ def returns(*schema):
     return returns_internal
 
 
-def accepts(*schema, deprecated=None, roles=None):
+def accepts(*schema, audit=None, audit_extended=None, deprecated=None, roles=None):
     """
+    `audit` is the message that will be logged to the audit log when the decorated function is called
+
+    `audit_extended` is the function that takes the same arguments as the decorated function and returns the string
+    that will be appended to the audit message to be logged.
+
     `deprecated` is a list of pairs of functions that will adapt legacy method call signatures.
 
     `roles` is a list of user roles that will gain access to this method.
@@ -185,6 +190,8 @@ def accepts(*schema, deprecated=None, roles=None):
         nf.accepts = list(schema)
         if hasattr(func, 'returns'):
             nf.returns = func.returns
+        nf.audit = audit
+        nf.audit_extended = audit_extended
         nf.roles = roles or []
         nf.wraps = f
         nf.wrap = wrap

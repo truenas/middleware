@@ -36,6 +36,7 @@ logging.getLogger('charset_normalizer').setLevel(logging.INFO)
 
 
 LOGFILE = '/var/log/middlewared.log'
+AUDIT_LOGFILE = '/var/log/truenas_audit.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 logging.TRACE = 6
@@ -75,34 +76,38 @@ class Logger:
             console_handler.setFormatter(ConsoleLogFormatter(self.log_format, datefmt=time_format))
             logging.root.addHandler(console_handler)
         else:
-            # Use `QueueHandler` to avoid blocking IO in asyncio main loop
             for name, filename, log_format in [
                 (None, LOGFILE, self.log_format),
                 ('failover', FAILOVER_LOGFILE, self.log_format),
                 ('zettarepl', ZETTAREPL_LOGFILE,
                  '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'),
             ]:
-                log_queue = queue.Queue()
-                queue_handler = logging.handlers.QueueHandler(log_queue)
-                file_handler = logging.handlers.RotatingFileHandler(filename, 'a', 10485760, 5, 'utf-8')
-                file_handler.setLevel(logging.DEBUG)
-                file_handler.setFormatter(logging.Formatter(log_format, '%Y/%m/%d %H:%M:%S'))
-                queue_listener = logging.handlers.QueueListener(log_queue, file_handler)
-                queue_listener.start()
-                logging.getLogger(name).addHandler(queue_handler)
-                if name is not None:
-                    logging.getLogger(name).propagate = False
+                self.setup_file_logger(name, filename, log_format)
 
-            # Make sure various log files are not readable by everybody.
-            # umask could be another approach but chmod was chosen so
-            # it affects existing installs.
-            for i in (LOGFILE, ZETTAREPL_LOGFILE, FAILOVER_LOGFILE):
-                try:
-                    os.chmod(i, 0o640)
-                except OSError:
-                    pass
+        self.setup_file_logger('audit', AUDIT_LOGFILE, '[%(asctime)s] %(message)s')
 
         logging.root.setLevel(getattr(logging, self.debug_level))
+
+    def setup_file_logger(self, name, filename, log_format):
+        # Use `QueueHandler` to avoid blocking IO in asyncio main loop
+        log_queue = queue.Queue()
+        queue_handler = logging.handlers.QueueHandler(log_queue)
+        file_handler = logging.handlers.RotatingFileHandler(filename, 'a', 10485760, 5, 'utf-8')
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(logging.Formatter(log_format, '%Y/%m/%d %H:%M:%S'))
+        queue_listener = logging.handlers.QueueListener(log_queue, file_handler)
+        queue_listener.start()
+        logging.getLogger(name).addHandler(queue_handler)
+        if name is not None:
+            logging.getLogger(name).propagate = False
+
+        # Make sure various log files are not readable by everybody.
+        # umask could be another approach but chmod was chosen so
+        # it affects existing installs.
+        try:
+            os.chmod(filename, 0o640)
+        except OSError:
+            pass
 
 
 def setup_logging(name, debug_level, log_handler):

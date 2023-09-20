@@ -113,6 +113,7 @@ class SessionManager:
 
         if not is_internal_session(session):
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
+            app.log_audit_message("[SUCCESS] Logged in")
 
     def logout(self, app):
         session = self.sessions.pop(app.session_id, None)
@@ -185,6 +186,9 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         return {
             "parent": dump_credentials(self.token.parent_credentials),
         }
+
+    def repr(self):
+        return f"$token:{self.token.parent_credentials.repr()}"
 
 
 def is_internal_session(session):
@@ -440,6 +444,7 @@ class AuthService(Service):
         """
         user = await self.get_login_user(username, password, otp_token)
         if user is None:
+            app.log_audit_message(f"[ERROR] Login failed (username={username!r})")
             await asyncio.sleep(random.randint(1, 5))
         else:
             self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
@@ -475,6 +480,7 @@ class AuthService(Service):
             self.session_manager.login(app, ApiKeySessionManagerCredentials(api_key_object))
             return True
 
+        app.log_audit_message("[ERROR] Login failed (invalid API key)")
         return False
 
     @cli_private
@@ -488,9 +494,11 @@ class AuthService(Service):
         """
         token = self.token_manager.get(token, app.origin)
         if token is None:
+            app.log_audit_message("[ERROR] Login failed (invalid token)")
             return False
 
         if token.attributes:
+            app.log_audit_message("[ERROR] Login failed (token had attributes)")
             return None
 
         self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))

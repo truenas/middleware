@@ -2,6 +2,9 @@ class Origin:
     def match(self, origin):
         raise NotImplementedError
 
+    def repr(self):
+        raise NotImplementedError
+
     def __str__(self):
         raise NotImplementedError
 
@@ -15,6 +18,9 @@ class UnixSocketOrigin(Origin):
     def match(self, origin):
         return self.uid == origin.uid and self.gid == origin.gid
 
+    def repr(self):
+        return f"pid:{self.pid}"
+
     def __str__(self):
         return f"UNIX socket (pid={self.pid} uid={self.uid} gid={self.gid})"
 
@@ -26,6 +32,9 @@ class TCPIPOrigin(Origin):
 
     def match(self, origin):
         return self.addr == origin.addr
+
+    def repr(self):
+        return self.addr
 
     def __str__(self):
         if ":" in self.addr:

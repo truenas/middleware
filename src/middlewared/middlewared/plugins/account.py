@@ -501,7 +501,7 @@ class UserService(CRUDService):
         Str('sshpubkey', null=True, max_length=None),
         List('groups', items=[Int('group')]),
         register=True,
-    ))
+    ), audit='Create user', audit_extended=lambda data: data["username"])
     @returns(Int('primary_key'))
     def do_create(self, data):
         """
