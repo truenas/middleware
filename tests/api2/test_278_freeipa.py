@@ -97,14 +97,13 @@ def test_07_verify_that_the_freeipa_user_id_exist_on_the_nas(request):
     assert len(pwd_obj['grouplist']) >= 1, pwd_obj['grouplist']
 
 
-@pytest.mark.skip(reason="Update and enable this when FreeIPA test infrastructure is ready")
 def test_10_verify_support_for_netgroups(request):
     """
     'getent netgroup' should be able to retrieve netgroup
     TODO: Add an ixgroup to the FreeIPA server with some known users or hosts
     """
     depends(request, ["FREEIPA_NSS_WORKING"], scope="session")
-    res = SSH_TEST("getent netgroup ixgroup", user, password, ip)
+    res = SSH_TEST("getent netgroup ixtestusers", user, password, ip)
     assert res['result'] is True, f"Failed to find netgroup 'ixgroup', returncode={res['returncode']}"
 
     # Confirm expected set of users or hosts
