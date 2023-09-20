@@ -25,6 +25,7 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         self._cloned = any((self.name.startswith(i) for i in CLONED_PREFIXES))
         self._rxq = dev.get_attr('IFLA_NUM_RX_QUEUES') or 1
         self._txq = dev.get_attr('IFLA_NUM_TX_QUEUES') or 1
+        self._bus = dev.get_attr('IFLA_PARENT_DEV_BUS_NAME')
 
     def _read(self, name, type_=str):
         return self._sysfs_read(f"/sys/class/net/{self.name}/{name}", type_)
@@ -34,6 +35,10 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
             value = f.read().strip()
 
         return type_(value)
+
+    @property
+    def bus(self):
+        return self._bus
 
     @property
     def orig_name(self):
