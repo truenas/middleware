@@ -21,6 +21,7 @@ from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
 
 
+AUDIT_WAIT = 10
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
 dataset_url = dataset.replace('/', '%2F')
@@ -316,41 +317,6 @@ AUDIT_FIELDS = [
 ]
 
 
-def get_audit_entries(svc):
-    cmd = "sqlite3 /audit/SMB.db '.mode line' "
-    cmd += "\"SELECT * FROM audit_SMB_0_1, json_tree(audit_SMB_0_1.svc_data, '$.service') "
-    cmd += f"where json_tree.value == '{svc}';\""
-    entries = ssh(cmd).splitlines()
-    output = []
-    new_entry = None
-
-    for entry in entries:
-        if not entry:
-            continue
-        try:
-            key, value = entry.strip().split("=", 1)
-        except Exception:
-            continue
-
-        key = key.strip()
-        value = value.strip()
-        if key not in AUDIT_FIELDS:
-            continue
-
-        if key == 'aid':
-            if new_entry:
-                output.append(new_entry)
-
-            new_entry = {}
-
-        new_entry[key] = value
-
-    if new_entry:
-        output.append(new_entry)
-
-    return output
-
-
 def validate_vers(vers, expected_major, expected_minor):
     assert 'major' in vers, str(vers)
     assert 'minor' in vers, str(vers)
@@ -360,11 +326,7 @@ def validate_vers(vers, expected_major, expected_minor):
 
 def validate_svc_data(msg, svc):
     assert 'svc_data' in msg, str(msg)
-    try:
-        svc_data = json.loads(msg['svc_data'])
-    except json.decoder.JSONDecodeError as e:
-        raise AssertionError(f'svc_data contains invalid JSON: {msg["svc_data"]}: {e}')
-
+    svc_data = msg['svc_data']
     for key in ['vers', 'service', 'session_id', 'tcon_id']:
         assert key in svc_data, str(svc_data)
 
@@ -410,8 +372,8 @@ def do_audit_ops(svc):
             c.read(fd, 0, 3)
         c.close(fd, True)
 
-    sleep(10)
-    return get_audit_entries(svc)
+    sleep(AUDIT_WAIT)
+    return call('auditbackend.query', 'SMB')
 
 
 def test_060_audit_log(request):

@@ -2,12 +2,11 @@
     import os
     import textwrap
 
-    AUDITABLE_SERVICES = ['SMB']
-    AUDIT_DIR = '/audit'
+    from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_DATASET_PATH
 
     COLUMNS = textwrap.dedent('''
         "aid varchar",
-        "vers FLOAT",
+        "msg_ts INT",
         "time DATETIME",
         "addr varchar",
         "user varchar",
@@ -21,7 +20,7 @@
 
     VALUES = textwrap.dedent('''
         "${TNAUDIT.aid}",
-        "${TNAUDIT.vers.major}.${TNAUDIT.vers.minor}",
+        "${UNIXTIME}",
         "${TNAUDIT.time}",
         "${TNAUDIT.addr}",
         "${TNAUDIT.user}",
@@ -43,7 +42,7 @@
 
     def get_db(svc):
         sql = 'sql(type(sqlite3)'
-        db = f'database("{os.path.join(AUDIT_DIR, svc)}.db")'
+        db = f'database("{audit_file_path(svc)}")'
         table = 'table("audit_${TNAUDIT.svc}_${TNAUDIT.vers.major}_${TNAUDIT.vers.minor}")'
         cols = to_text("columns", COLUMNS)
         vals = to_text("values", VALUES)
@@ -64,13 +63,13 @@ rewrite r_rewrite_success {
 # managed by separate thread in syslog-ng. Indexes are disabled
 # because there is no support for multi-column indexes in syslog-ng.
 
-% for svc in AUDITABLE_SERVICES:
+% for svc, vers in AUDITED_SERVICES:
 destination d_tnaudit_${svc.lower()} {
 ${textwrap.indent(get_db(svc), '  ')}
   disk-buffer(
     disk-buf-size(536870912)
     reliable(yes)
-    dir(${AUDIT_DIR})
+    dir(${AUDIT_DATASET_PATH})
   )
   flags(explicit-commits)
   batch-lines(1000)
