@@ -210,6 +210,7 @@ class ErrnoMixin:
     EDATASETISLOCKED = 205
     EINVALIDRRDTIMESTAMP = 206
     ENOTAUTHENTICATED = 207
+    ESSLCERTVERIFICATIONERROR = 208
 
     @classmethod
     def _get_errname(cls, code):
