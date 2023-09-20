@@ -322,8 +322,8 @@ def test_061_create_and_write_stream_smb2(request):
 
     c.rmdir("streamstestdir")
     c.disconnect()
-    assert(contents.decode() == "test1")
-    assert(contents2.decode() == "test2")
+    assert (contents.decode() == "test1")
+    assert (contents2.decode() == "test2")
 
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB2")
@@ -343,7 +343,7 @@ def test_062_write_stream_large_offset_smb2(request):
     contents = c.read(fd2, 131072, 5)
     c.close(fd2)
     c.disconnect()
-    assert(contents.decode() == "test2")
+    assert (contents.decode() == "test2")
 
 
 def test_063_stream_delete_on_close_smb2(request):
@@ -380,7 +380,7 @@ def test_065_create_and_write_stream_smb1(request):
     contents = c.read(fd2, 0, 5)
     c.close(fd2)
     c.disconnect()
-    assert(contents.decode() == "test1")
+    assert (contents.decode() == "test1")
 
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB1")
@@ -400,7 +400,7 @@ def test_066_write_stream_large_offset_smb1(request):
     contents = c.read(fd2, 131072, 5)
     c.close(fd2)
     c.disconnect()
-    assert(contents.decode() == "test2")
+    assert (contents.decode() == "test2")
 
 
 def test_067_stream_delete_on_close_smb1(request):
@@ -438,7 +438,7 @@ def test_068_case_insensitive_rename(request):
     c.rename("to_rename", "To_rename")
     files = [x['name'] for x in c.ls('\\')]
     c.disconnect()
-    assert("To_rename" in files)
+    assert ("To_rename" in files)
 
 
 def test_069_normal_rename(request):
@@ -453,7 +453,7 @@ def test_069_normal_rename(request):
     c.rename("old_file_to_rename", "renamed_new_file")
     files = [x['name'] for x in c.ls('\\')]
     c.disconnect()
-    assert("renamed_new_file" in files)
+    assert ("renamed_new_file" in files)
 
 
 """
@@ -709,7 +709,7 @@ def test_155_ssh_read_afp_xattr(request, xat):
 
 
 def test_175_check_external_path(request):
-    with smb_share(f'EXTERNAL:{ip}\{SMB_NAME}', {'name': 'EXTERNAL'}):
+    with smb_share(f'EXTERNAL:{ip}\\{SMB_NAME}', {'name': 'EXTERNAL'}):
         with smb_connection(
             host=ip,
             share=SMB_NAME,
@@ -758,7 +758,8 @@ def test_180_create_share_multiple_dirs_deep(request):
     depends(request, ["SMB_USER_CREATED"])
     with create_dataset(pool_name, 'nested_dirs', options={'share_type': 'SMB'}) as ds:
         dirs_path = f'{ds["mountpoint"]}/d1/d2/d3'
-        results = SSH_TEST(f'mkdir -p {dirs_path}', user, password, ip)
+        cmd = f'mkdir -p {dirs_path}'
+        results = SSH_TEST(cmd, user, password, ip)
         assert results['result'] is True, {"cmd": cmd, "res": results['output']}
 
         with smb_share(dirs_path, {'name': 'DIRS'}):
@@ -776,6 +777,7 @@ def test_180_create_share_multiple_dirs_deep(request):
         results = POST('/filesystem/stat/', os.path.join(dirs_path, 'nested_dirs_file'))
         assert results.status_code == 200, results.text
 
+
 def test_181_create_and_disable_share(request):
     depends(request, ["SMB_USER_CREATED"])
     with create_dataset(pool_name, 'smb_disabled', options={'share_type': 'SMB'}) as ds:
@@ -791,7 +793,7 @@ def test_181_create_and_disable_share(request):
                 assert results.status_code == 200, results.text
 
                 try:
-                    fd = c.create_file('canary', "w")
+                    c.create_file('canary', "w")
                 except NTSTATUSError as status:
                     assert status.args[0] == ntstatus.NT_STATUS_NETWORK_NAME_DELETED, str(status)
                 else:
