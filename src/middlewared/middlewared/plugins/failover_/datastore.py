@@ -37,7 +37,14 @@ class FailoverDatastoreService(Service):
     def set_failure(self):
         self.failure = True
         try:
-            self.send()
+            # This is executed in `hook_datastore_execute_write` so we can't query local failover status here and we'll
+            # have to rely on remote.
+            if (fs := self.middleware.call_sync('failover.call_remote', 'failover.status')) == 'BACKUP':
+                self.send()
+            else:
+                # Avoid sending database if we are not MASTER.
+                self.logger.warning('Remote node failover status is %s while retrying database send', fs)
+                self.failure = False
         except Exception as e:
             self.logger.warning('Error sending database to remote node on first replication failure: %r', e)
 
@@ -56,7 +63,7 @@ class FailoverDatastoreService(Service):
                         return
 
                     if (fs := self.middleware.call_sync('failover.status')) != 'MASTER':
-                        self.logger.warning('Failover status changed to %s while retrying database send', fs)
+                        self.logger.warning('Failover status is %s while retrying database send', fs)
                         self.failure = False
                         break
 
@@ -128,7 +135,8 @@ class FailoverDatastoreService(Service):
 def hook_datastore_execute_write(middleware, sql, params, options):
     # This code is executed in SQLite thread and blocks it (in order to avoid replication query race conditions)
     # No switching to the async context that will yield to database queries is allowed here as it will result in
-    # a deadlock.
+    # a deadlock. That's why we can't query failover status and will always try to replicate all queries to the other
+    # node. The other node will check its own failover status upon receiving them.
 
     if not options['ha_sync']:
         return
