@@ -7,6 +7,7 @@ import pytest
 
 from functions import if_key_listed, SSH_TEST
 from auto_config import ip, sshKey, user, password
+from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client
 
 
@@ -34,7 +35,7 @@ def test_001_is_system_ready(ws_client):
     # internally expect that the system is ready before
     # propertly responding to REST/WS requests.
     if not ws_client.call('system.ready'):
-        pytest.exit(f'System is not ready. Currently: {ws_client.call("system.state")}. Aborting tests.')
+        fail(f'System is not ready. Currently: {ws_client.call("system.state")}. Aborting tests.')
 
 
 def test_002_firstboot_checks(ws_client):
@@ -94,7 +95,7 @@ def test_004_enable_and_start_ssh(ws_client):
 def test_005_ssh_using_root_password(ip_to_use):
     results = SSH_TEST('ls -la', user, password, ip_to_use)
     if not results['result']:
-        pytest.exit(f"SSH is not usable: {results['output']}. Aborting tests.")
+        fail(f"SSH is not usable: {results['output']}. Aborting tests.")
 
 
 def test_006_setup_and_login_using_root_ssh_key(ip_to_use):
