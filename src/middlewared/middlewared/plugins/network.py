@@ -180,7 +180,8 @@ class InterfaceService(CRUDService):
         }
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('failover.internal_interfaces')
-        if self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F'):
+        fseries = self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F')
+        if fseries:
             # The eno1 interface needs to be masked on the f-series platform because
             # this interface is shared with the BMC. Details for why this is done
             # can be obtained from platform team.
@@ -188,6 +189,11 @@ class InterfaceService(CRUDService):
 
         for name, iface in netif.list_interfaces().items():
             if (name in ignore) or (iface.cloned and name not in configs):
+                continue
+            elif fseries and iface.bus == 'usb':
+                # The f-series platform will add a usb ethernet device to the system
+                # when someone opens up the ikvm html5 console. We need to hide this
+                # interface so users can't configure it
                 continue
 
             iface_extend_kwargs = {}
@@ -1734,7 +1740,6 @@ class InterfaceService(CRUDService):
                 [('int_interface', '=', name)], {'get': True}
             )
         except IndexError:
-            self.logger.info('%s is not in interfaces database', name)
             return
 
         aliases = await self.middleware.call(
