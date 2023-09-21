@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "Package management tools are disabled on TrueNAS appliances."
+echo
+echo "Attempting to update SCALE with apt or methods other than the SCALE web"
+echo "interface can result in a nonfunctional system."
+exit 1
