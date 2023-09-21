@@ -8,6 +8,7 @@ import asyncio
 import sysctl
 import time
 import struct
+import shlex
 
 from middlewared.utils import filter_list
 from middlewared.service import Service, private, accepts
@@ -270,7 +271,7 @@ class FailoverService(Service):
                         masterret = False
                         for vol in fobj['volumes'] + fobj['phrasedvolumes']:
                             # TODO run, or zfs lib
-                            ret = os.system(f'zpool status {vol["name"]} > /dev/null')
+                            ret = os.system(f'zpool status {shlex.quote(vol["name"])} > /dev/null')
                             if ret:
                                 masterret = True
                                 for group in fobj['groups']:
@@ -551,13 +552,14 @@ class FailoverService(Service):
                 for volume in fobj['volumes']:
                     logger.info('Importing %r', volume["name"])
                     set_cachefile = False
-                    cmd = f'zpool import -o cachefile=none -m -R /mnt -f {volume["name"]} -c /data/zfs/zpool.cache'
+                    cmd = (f'zpool import -o cachefile=none -m -R /mnt -f {shlex.quote(volume["name"])} '
+                           '-c /data/zfs/zpool.cache')
                     error, output = run(cmd, stderr=True)
                     if error:
                         set_cachefile = True
                         logger.error('Failed to import %r using cachefile so retrying without it', volume["name"])
                         error, output = run(
-                            f'zpool import -o cachefile=none -m -R /mnt -f {volume["name"]}', stderr=True
+                            f'zpool import -o cachefile=none -m -R /mnt -f {shlex.quote(volume["name"])}', stderr=True
                         )
                         if error:
                             open(FAILED_FILE, 'w').close()
@@ -574,7 +576,7 @@ class FailoverService(Service):
                         )
 
                     if set_cachefile:
-                        run(f'zpool set cachefile=/data/zfs/zpool.cache {volume["name"]}')
+                        run(f'zpool set cachefile=/data/zfs/zpool.cache {shlex.quote(volume["name"])}')
 
                 p.terminate()
                 os.system("pkill -9 -f 'dtrace -qn'")
@@ -831,11 +833,11 @@ class FailoverService(Service):
                 # Note this wouldn't be needed with a proper state engine.
                 volumes = False
                 for volume in fobj['volumes'] + fobj['phrasedvolumes']:
-                    error, output = run(f'zpool list {volume["name"]}')
+                    error, output = run(f'zpool list {shlex.quote(volume["name"])}')
                     if not error:
                         volumes = True
                         logger.warning('Exporting %s', volume["name"])
-                        error, output = run(f'zpool export -f {volume["name"]}')
+                        error, output = run(f'zpool export -f {shlex.quote(volume["name"])}')
                         if error:
                             time.sleep(5)
                         logger.warning('Exported %s', volume["name"])
