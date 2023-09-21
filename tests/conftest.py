@@ -4,9 +4,16 @@ import os
 import pytest
 
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.pytest import failed
 
 
-@pytest.fixture(autouse=True, scope="function")
+@pytest.fixture(autouse=True)
+def fail_fixture():
+    if failed[0] is not None:
+        pytest.exit(failed[0], 1)
+
+
+@pytest.fixture(autouse=True)
 def log_test_name_to_middlewared_log(request):
     client_kwargs_list = [dict(host_ip=os.environ.get('controller1_ip', None))]
     if 'controller2_ip' in os.environ:

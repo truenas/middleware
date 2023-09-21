@@ -7,6 +7,7 @@ import pytest
 from pytest_dependency import depends
 
 from auto_config import ha, ip, pool_name
+from middlewared.test.integration.utils import fail
 from middlewared.test.integration.utils.client import client
 
 
@@ -62,7 +63,7 @@ def test_002_create_permanent_zpool(request, ws_client):
             job=True
         )
     except Exception as e:
-        pytest.exit(f"Unable to create test pool: {e!r}. Aborting tests.")
+        fail(f"Unable to create test pool: {e!r}. Aborting tests.")
     else:
         results = ws_client.call('systemdataset.config')
         assert results['pool'] == pool_name
