@@ -249,6 +249,7 @@ class EtcService(Service):
                 {'type': 'mako', 'path': 'syslog-ng/syslog-ng.conf'},
                 {'type': 'mako', 'path': 'syslog-ng/conf.d/tndestinations.conf'},
                 {'type': 'mako', 'path': 'syslog-ng/conf.d/tnfilters.conf'},
+                {'type': 'mako', 'path': 'syslog-ng/conf.d/tnaudit.conf', 'mode': 0o600},
             ]
         },
         'hosts': [{'type': 'mako', 'path': 'hosts', 'mode': 0o644, 'checkpoint': 'pre_interface_sync'}],
