@@ -8,6 +8,7 @@ import sys
 import os
 from pytest_dependency import depends
 import json
+import uuid
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -17,6 +18,8 @@ from utils import create_dataset
 from auto_config import ip, pool_name, password, user, hostname
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
+from middlewared.test.integration.utils import ssh
+
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
@@ -426,6 +429,166 @@ def test_059_delete_smb_group(request):
     depends(request, ["SID_TEST_GROUP"])
     results = DELETE(f"/group/id/{group_id}/")
     assert results.status_code == 200, results.text
+
+
+AUDIT_FIELDS = [
+    'aid', 'vers', 'time', 'addr', 'user', 'sess', 'svc',
+    'svc_data', 'event', 'event_data', 'success'
+]
+def get_audit_entries(svc):
+    cmd = "sqlite3 /audit/SMB.db '.mode line' "
+    cmd += "\"SELECT * FROM audit_SMB_0_1, json_tree(audit_SMB_0_1.svc_data, '$.service') "
+    cmd += f"where json_tree.value == '{svc}';\""
+    entries = ssh(cmd).splitlines()
+    output = []
+    new_entry = None
+
+    for entry in entries:
+        if not entry:
+            continue
+        try:
+            key, value = entry.strip().split("=", 1)
+        except Exception:
+            continue
+
+        key = key.strip()
+        value = value.strip()
+        if key not in AUDIT_FIELDS:
+            continue
+
+        if key == 'aid':
+            if new_entry:
+                output.append(new_entry)
+
+            new_entry = {}
+
+        new_entry[key] = value
+
+    if new_entry:
+        output.append(new_entry)
+
+    return output
+
+
+def validate_vers(vers, expected_major, expected_minor):
+    assert 'major' in vers, str(vers)
+    assert 'minor' in vers, str(vers)
+    assert vers['major'] == expected_major
+    assert vers['minor'] == expected_minor
+
+
+def validate_svc_data(msg, svc):
+    assert 'svc_data' in msg, str(msg)
+    try:
+        svc_data = json.loads(msg['svc_data'])
+    except json.decoder.JSONDecodeError as e:
+        raise AssertionError(f'svc_data contains invalid JSON: {msg["svc_data"]}: {e}')
+
+    for key in ['vers', 'service', 'session_id', 'tcon_id']:
+        assert key in svc_data, str(svc_data)
+
+    assert svc_data['service'] == svc
+
+    assert isinstance(svc_data['session_id'], str)
+    assert svc_data['session_id'].isdigit()
+
+    assert isinstance(svc_data['tcon_id'], str)
+    assert svc_data['tcon_id'].isdigit()
+
+
+def validate_audit_op(msg, svc):
+    for key in AUDIT_FIELDS:
+        assert key in msg, str(msg)
+
+    validate_svc_data(msg, svc)
+    try:
+        aid_guid = uuid.UUID(msg['aid'])
+    except ValueError:
+        raise AssertionError(f'{msg["aid"]}: malformed UUID')
+
+    assert str(aid_guid) == msg['aid']
+
+    try:
+        sess_guid = uuid.UUID(msg['sess'])
+    except ValueError:
+        raise AssertionError(f'{msg["sess"]}: malformed UUID')
+
+    assert str(sess_guid) == msg['sess']
+
+
+def do_audit_ops(svc):
+    with smb_connection(
+        host=ip,
+        share=svc,
+        username='shareuser',
+        password='testing',
+    ) as c:
+        fd = c.create_file('testfile.txt', 'w')
+        for i in range(0, 3):
+            c.write(fd, b'foo')
+            c.read(fd, 0, 3)
+        c.close(fd, True)
+
+    sleep(10)
+    return get_audit_entries(svc)
+
+
+def test_060_audit_log(request):
+    def get_event(event_list, ev_type):
+        for e in event_list:
+            if e['event'] == ev_type:
+                return e
+
+        return None
+
+    depends(request, ["smb_initialized"], scope="session")
+    with make_dataset('smb-audit', data={'share_type': 'SMB'}) as ds:
+        with smb_share(os.path.join('/mnt', ds), 'SMB_AUDIT', {
+            'purpose': 'NO_PRESET',
+            'guestok': True,
+            'audit': {'enable': True}
+        }) as s:
+            events = do_audit_ops(s['name'])
+            assert len(events) > 0
+
+            for ev_type in ['CONNECT', 'DISCONNECT', 'CREATE', 'CLOSE', 'READ', 'WRITE']:
+                assert get_event(events, ev_type) is not None, str(events)
+
+            for event in events:
+                validate_audit_op(event, s['name'])
+
+            results = PUT(f"/sharing/smb/id/{s['id']}/", {'audit': {'ignore_list': ['builtin_users']}})
+            assert results.status_code == 200, results.text
+            new_data = results.json()
+
+            assert new_data['audit']['enable'], str(new_data['audit'])
+            assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
+
+            # Verify that being member of group in ignore list is sufficient to avoid new messages
+            assert len(do_audit_ops(s['name'])) == len(events)
+
+            results = PUT(f"/sharing/smb/id/{s['id']}/", {'audit': {'watch_list': ['builtin_users']}})
+            assert results.status_code == 200, results.text
+            new_data = results.json()
+
+            assert new_data['audit']['enable'], str(new_data['audit'])
+            assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
+            assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
+
+            # Verify that watch_list takes precedence
+            new_events = do_audit_ops(s['name'])
+            assert len(new_events) > len(events)
+
+            results = PUT(f"/sharing/smb/id/{s['id']}/", {'audit': {'enable': False}})
+            assert results.status_code == 200, results.text
+            new_data = results.json()
+
+            assert new_data['audit']['enable'] is False, str(new_data['audit'])
+            assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
+            assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
+
+            # Verify that disabling audit prevents new messages from being written
+            assert len(do_audit_ops(s['name'])) == len(new_events)
 
 
 @pytest.mark.parametrize('torture_test', [
