@@ -4,7 +4,9 @@ import time
 import typing
 
 from middlewared.schema import accepts, Dict, List, Ref, returns, Str
-from middlewared.service import CallError, filterable, filterable_returns, private, Service, ValidationErrors
+from middlewared.service import (
+    CallError, cli_private, filterable, filterable_returns, private, Service, ValidationErrors
+)
 from middlewared.utils import filter_list
 
 from .netdata import GRAPH_PLUGINS
@@ -30,6 +32,7 @@ class ReportingService(Service):
     async def graph_names(self):
         return list(self.__graphs.keys())
 
+    @cli_private
     @accepts(
         Str('name', required=True),
         Ref('reporting_query'),
@@ -55,6 +58,7 @@ class ReportingService(Service):
             if result is not None
         ]
 
+    @cli_private
     @filterable
     @filterable_returns(Dict(
         'reporting_graph',
@@ -70,6 +74,7 @@ class ReportingService(Service):
         """
         return filter_list([await i.as_dict() for i in self.__graphs.values()], filters, options)
 
+    @cli_private
     @accepts(
         List('graphs', items=[
             Dict(
