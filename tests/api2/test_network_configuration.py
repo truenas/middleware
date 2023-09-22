@@ -6,10 +6,7 @@ sys.path.append(apifolder)
 import pytest
 
 from middlewared.test.integration.utils import call, ssh
-from auto_config import dev_test
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 NEW_HOSTNAME = 'dummy123'
 
 

@@ -41,8 +41,6 @@ Optional option
     --tests <test1>[,test2,...] - List of tests to be supplied to pytest
     --vm-name <VM_NAME>         - Name the the Bhyve VM
     --ha                        - Run test for HA
-    --dev-test                  - Run only the test that are not mark with
-                                  pytestmark skipif dev_test is true.
     --debug-mode                - Start API tests with middleware debug mode
     --isns_ip <###.###.###.###> - IP of the iSNS server (default: {isns_ip})
     --pool <POOL_NAME>          - Name of the ZFS pool (default: {pool_name})
@@ -83,7 +81,6 @@ testName = ''
 testexpr = None
 ha = False
 update = False
-dev_test = False
 debug_mode = False
 verbose = 0
 exitfirst = ''
@@ -107,8 +104,6 @@ for output, arg in myopts:
         ha = True
     elif output == '--update':
         update = True
-    elif output == '--dev-test':
-        dev_test = True
     elif output == '--debug-mode':
         debug_mode = True
     elif output == '-v':
@@ -159,7 +154,6 @@ pool_name = "{pool_name}"
 ha_pool_name = "ha"
 ha = {ha}
 update = {update}
-dev_test = {dev_test}
 debug_mode = {debug_mode}
 artifacts = "{artifacts}"
 isns_ip = "{isns_ip}"

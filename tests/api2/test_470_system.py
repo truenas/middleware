@@ -4,15 +4,11 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import pytest
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import GET, make_ws_request # , POST
-from auto_config import dev_test, ip
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from functions import GET, make_ws_request
 
 
 def test_01_check_if_system_is_ready_to_use():

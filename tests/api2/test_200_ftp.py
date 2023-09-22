@@ -22,14 +22,11 @@ sys.path.append(apifolder)
 from assets.REST.pool import dataset as ftp_dataset
 from functions import SSH_TEST
 from functions import make_ws_request, send_file, ping_host
-from auto_config import pool_name, ha
-from auto_config import dev_test, password, user
+from auto_config import pool_name, ha, password, user
 from protocols import ftp_connect, ftp_connection
 from protocols import ftps_connection
 from middlewared.test.integration.assets.account import user as ftp_user
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]

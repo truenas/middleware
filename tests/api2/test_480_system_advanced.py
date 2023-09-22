@@ -8,9 +8,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, GET, SSH_TEST
-from auto_config import user, password, ip, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import user, password, ip
 MOTD = 'FREENAS_MOTD'
 SYSLOGLEVEL = "F_CRIT"
 

@@ -5,8 +5,6 @@ import requests
 
 from middlewared.test.integration.utils import client, session, url
 
-from auto_config import dev_test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 @pytest.mark.parametrize("method", ["test_download_pipe", "test_download_unchecked_pipe"])

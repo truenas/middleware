@@ -10,9 +10,7 @@ from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import client
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from functions import make_ws_request, wait_on_job
-from auto_config import pool_name, user, password, ip, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import pool_name, user, password, ip
 
 Guests = {
     "domain": "BUILTIN",
