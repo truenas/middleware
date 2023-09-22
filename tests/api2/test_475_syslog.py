@@ -1,11 +1,9 @@
 from time import sleep
 
 import pytest
-
-from auto_config import dev_test, ip, password, user
+from auto_config import ip, password, user
 from middlewared.test.integration.utils import ssh
 
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def do_syslog(ident, message, facility='syslog.LOG_USER', priority='syslog.LOG_INFO'):

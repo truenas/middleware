@@ -7,9 +7,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT
-from auto_config import dev_test, ha
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import ha
 
 all_services = {i['service']: i for i in GET('/service', controller_a=ha).json()}
 service_names = list(all_services.keys())

@@ -6,12 +6,8 @@ sys.path.append(apifolder)
 
 import pytest
 
-from auto_config import dev_test
 from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, ssh
-
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 
 @pytest.mark.flaky(reruns=5, reruns_delay=5)  # Sometimes systemd unit state is erroneously reported as active

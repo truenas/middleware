@@ -10,9 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, wait_on_job, SSH_TEST
-from auto_config import ha, ip, password, user, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
+from auto_config import ha, ip, password, user
 
 # genrated token_hex 32bit for
 pool_token_hex = secrets.token_hex(32)

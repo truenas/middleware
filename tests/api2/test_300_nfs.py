@@ -15,11 +15,8 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
-from auto_config import pool_name, ha, hostname
-from auto_config import dev_test, password, user
+from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]

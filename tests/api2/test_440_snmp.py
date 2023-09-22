@@ -11,7 +11,7 @@ from pysnmp.hlapi import (CommunityData, ContextData, ObjectIdentity,
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test, ha, interface, password, user
+from auto_config import ha, interface, password, user
 from functions import GET, POST, PUT, SSH_TEST, async_SSH_done, async_SSH_start
 
 if ha and "virtual_ip" in os.environ:
@@ -21,8 +21,6 @@ if ha and "virtual_ip" in os.environ:
 else:
     from auto_config import ip
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 COMMUNITY = 'public'
 TRAPS = False

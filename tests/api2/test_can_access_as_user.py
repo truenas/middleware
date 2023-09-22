@@ -3,18 +3,11 @@ import pytest
 
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for testing')
 
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test
-reason = 'Skip for testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 @contextlib.contextmanager

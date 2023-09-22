@@ -11,17 +11,12 @@ from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import (
     ip,
     pool_name,
-    dev_test,
     user,
     password,
 )
 from pytest_dependency import depends
 from protocols import SMB
 from samba import ntstatus
-
-reason = 'Skipping for test development testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 dataset = f"{pool_name}/smb-vss"

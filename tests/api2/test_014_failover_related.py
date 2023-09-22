@@ -7,11 +7,9 @@ sys.path.append(apifolder)
 
 import pytest
 from functions import GET, SSH_TEST, make_ws_request
-from auto_config import ha, user, password, dev_test
+from auto_config import ha, user, password
 from pytest_dependency import depends
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
 else:

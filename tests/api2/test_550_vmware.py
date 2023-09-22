@@ -10,9 +10,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
-from auto_config import ip, user, password, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import ip, user, password
 
 try:
     Reason = 'VMWARE credentials credential is missing'
