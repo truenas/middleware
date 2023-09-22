@@ -11,9 +11,6 @@ sys.path.append(apifolder)
 from assets.REST.pool import dataset as create_dataset
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job, make_ws_request
 from auto_config import ip, pool_name, user, password
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')

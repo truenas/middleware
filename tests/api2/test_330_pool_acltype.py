@@ -7,11 +7,8 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import POST, GET, PUT, DELETE, SSH_TEST, make_ws_request
-from auto_config import ip, user, password, pool_name, dev_test
+from auto_config import ip, user, password, pool_name
 
-reason = 'Skipping for test development testing' if dev_test else 'Skipping test for Core and Enterprise'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 test1_dataset = f'{pool_name}/test1'
 dataset_url = test1_dataset.replace("/", "%2F")
 

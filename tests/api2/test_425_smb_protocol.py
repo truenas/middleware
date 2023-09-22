@@ -13,7 +13,6 @@ from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import (
     ip,
     pool_name,
-    dev_test,
     user,
     password,
 )
@@ -22,9 +21,6 @@ from protocols import SMB, smb_connection, smb_share
 from samba import ntstatus
 from samba import NTSTATUSError
 
-reason = 'Skipping for test development testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 
 dataset = f"{pool_name}/smb-proto"

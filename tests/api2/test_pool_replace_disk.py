@@ -3,10 +3,8 @@ import pytest
 from time import sleep
 from middlewared.test.integration.assets.pool import mirror_topology, another_pool_topologies, another_pool
 from middlewared.test.integration.utils import call
-
-from auto_config import dev_test, ha
+from auto_config import ha
 pytestmark = [
-    pytest.mark.skipif(dev_test, reason='Skipping for test development testing'),
     pytest.mark.skipif(ha, reason='Skipping for HA testing'),
 ]
 

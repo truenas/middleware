@@ -14,11 +14,9 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from protocols import smb_connection
 from utils import create_dataset
-from auto_config import ip, pool_name, password, user, hostname, dev_test
+from auto_config import ip, pool_name, password, user, hostname
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"

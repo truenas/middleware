@@ -9,9 +9,7 @@ sys.path.append(apifolder)
 from functions import GET, POST, SSH_TEST
 from assets.REST.directory_services import ldap
 from middlewared.test.integration.utils import call
-from auto_config import ha, dev_test, user, password
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import ha, user, password
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]

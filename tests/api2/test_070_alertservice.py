@@ -6,9 +6,6 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def test_01_get_alertservice():

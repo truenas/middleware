@@ -10,11 +10,9 @@ from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import badNtpServer, dev_test, ip, password, user
+from auto_config import badNtpServer, ip, password, user
 from functions import DELETE, GET, POST, PUT, SSH_TEST
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 CONFIG_FILE = '/etc/chrony/chrony.conf'
 from middlewared.test.integration.utils import call
 

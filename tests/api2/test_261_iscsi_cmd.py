@@ -25,8 +25,7 @@ from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot, snapshot_rollback
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
-
-from auto_config import dev_test, ha, hostname, isns_ip, pool_name
+from auto_config import ha, hostname, isns_ip, pool_name
 from functions import DELETE, GET, POST, PUT, SSH_TEST
 from protocols import (initiator_name_supported, iscsi_scsi_connection,
                        isns_connection)
@@ -56,8 +55,6 @@ skip_multi_initiator = pytest.mark.skipif(not initiator_name_supported(),
 
 skip_ha_tests = pytest.mark.skipif(not (ha and "virtual_ip" in os.environ), reason="Skip HA tests")
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 skip_invalid_initiatorname = pytest.mark.skipif(not initiator_name_supported(),
                                                 reason="Invalid initiatorname will be presented")
