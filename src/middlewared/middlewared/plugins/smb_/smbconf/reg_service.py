@@ -51,7 +51,7 @@ class ShareSchema(RegistrySchema):
         Convert middleware schema SMB shares to an SMB service definition
         """
         def order_vfs_objects(vfs_objects, is_clustered, fruit_enabled, purpose):
-            vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
+            vfs_objects_special = ('truenas_audit', 'catia', 'fruit', 'streams_xattr', 'shadow_copy_zfs',
                                    'acl_xattr', 'ixnas', 'winmsa', 'recycle', 'crossrename',
                                    'zfs_core', 'aio_fbsd', 'io_uring', 'glusterfs')
 
@@ -465,6 +465,29 @@ class ShareSchema(RegistrySchema):
         data_out['streams_xattr:xattr_compat'] = {"parsed": True}
         return
 
+    def audit_get(entry, conf):
+        vfs_objects = conf.get('vfs objects', [])
+        enabled = 'truenas_audit' in vfs_objects
+        watch_list = conf.pop('truenas_audit:watch_list', [])
+        ignore_list = conf.pop('trueans_audit:ignore_list', [])
+        return {'enable': enabled, 'watch_list': watch_list, 'ignore_list': ignore_list}
+
+    def audit_set(entry, val, data_in, data_out):
+        if not val:
+            return
+
+        if val['enable']:
+            data_out['vfs objects']['parsed'].append("truenas_audit")
+
+        for key in ['watch_list', 'ignore_list']:
+            if not val[key]:
+                continue
+
+            data_out[f'truenas_audit:{key}'] = {'parsed': ', '.join(val[key])}
+
+        return
+
+
     schema = [
         RegObj("purpose", "tn:purpose", ""),
         RegObj("path_local", None, "",
@@ -503,6 +526,8 @@ class ShareSchema(RegistrySchema):
                smbconf_parser=afp_get, schema_parser=afp_set),
         RegObj("cluster_volname", "glusterfs:volume", "",
                smbconf_parser=cluster_get, schema_parser=cluster_set),
+        RegObj("audit", None, None,
+               smbconf_parser=audit_get, schema_parser=audit_set),
     ]
 
     def __init__(self, middleware):
