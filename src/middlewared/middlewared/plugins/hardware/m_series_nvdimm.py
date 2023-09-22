@@ -77,6 +77,14 @@ class MseriesNvdimmService(Service):
                 'qualified_firmware': ['0.8'],
                 'recommended_firmware': '0.8',
             },
+            '0xce01_0x4e42_0x31_0xc180_0x4331_0x01': {
+                'vendor': '0xce01', 'device': '0x4e42', 'rev_id': '0x31',
+                'subvendor': '0xc180', 'subdevice': '0x4331', 'subrev_id': '0x01',
+                'part_num': 'AGIGA8811-016BCA',
+                'size': '16GB', 'clock_speed': '2933MHz',
+                'qualified_firmware': ['3.0'],
+                'recommended_firmware': '3.0',
+            },
             '0xce01_0x4e39_0x34_0xc180_0x4331_0x01': {
                 'vendor': '0xce01', 'device': '0x4e39', 'rev_id': '0x34',
                 'subvendor': '0xc180', 'subdevice': '0x4331', 'subrev_id': '0x01',
