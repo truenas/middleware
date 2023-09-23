@@ -40,6 +40,7 @@ class EnclosureService(Service):
         return [
             {
                 "id": id_,
+                "bsg": None,
                 "name": name,
                 "model": model,
                 "controller": True,
