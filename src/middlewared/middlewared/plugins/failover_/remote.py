@@ -206,6 +206,9 @@ class RemoteClient(object):
 
 class FailoverService(Service):
 
+    class Config:
+        cli_private = True
+
     CLIENT = RemoteClient()
 
     @private
