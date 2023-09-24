@@ -379,7 +379,10 @@ class PoolDatasetService(Service):
         for source_ds in task['source_datasets']:
             for ds_name, key in mapping[source_ds].items():
                 for dataset in (dataset_mapping[ds_name] if include_encryption_root_children else [{'id': ds_name}]):
-                    result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
+                    result[dataset['id'].replace(
+                        source_ds if len(source_ds) <= len(dataset['id']) else dataset['id'],
+                        source_mapping[source_ds], 1
+                    )] = key
 
         return result
 
