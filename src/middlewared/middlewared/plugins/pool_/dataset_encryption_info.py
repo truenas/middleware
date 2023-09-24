@@ -341,12 +341,12 @@ class PoolDatasetService(Service):
 
         mapping = {}
         for source_ds in task['source_datasets']:
-            source_ds_details = await self.middleware.call('pool.dataset.get_instance', source_ds, {'extra': {
+            source_ds_details = await self.middleware.call('pool.dataset.query', [['id', '=', source_ds]], {'extra': {
                 'properties': ['encryptionroot'],
                 'retrieve_children': False,
             }})
-            if source_ds_details['encryption_root'] != source_ds:
-                filters = ['name', '=', source_ds_details['encryption_root']]
+            if source_ds_details and source_ds_details[0]['encryption_root'] != source_ds:
+                filters = ['name', '=', source_ds_details[0]['encryption_root']]
             else:
                 if task['recursive']:
                     filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
