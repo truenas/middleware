@@ -26,7 +26,8 @@ class UserService(Service):
             user_twofactor_config['secret'], interval=twofactor_config['interval'],
             digits=twofactor_config['otp_digits'],
         ).provisioning_uri(
-            f'{await self.middleware.call("system.hostname")}@{await self.middleware.call("system.product_name")}',
+            f'{username}-{await self.middleware.call("system.hostname")}'
+            f'@{await self.middleware.call("system.product_name")}',
             'iXsystems'
         )
 
