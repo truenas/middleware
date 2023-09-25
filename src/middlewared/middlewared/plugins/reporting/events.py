@@ -88,8 +88,7 @@ class RealtimeEventSource(EventSource):
             }
 
             # CPU temperature
-            data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures')
-            data['cpu']['temperature'] = {k: 2732 + int(v * 10) for k, v in data['cpu']['temperature_celsius'].items()}
+            data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures') or None
 
             self.send_event('ADDED', fields=data)
             time.sleep(interval)
