@@ -51,7 +51,7 @@ class GlusterVolumeService(CRUDService):
         if await self.middleware.call('service.started', 'glusterd'):
             method = volume.status_detail
             options = {'kwargs': {'group_subvols': True}}
-            vols = await self.middleware.call('gluster.method.run', method, options['kwargs'])
+            vols = await self.middleware.call('gluster.method.run', method, options)
             vols = list(map(lambda i: dict(i, id=i['name']), vols))
 
         return filter_list(vols, filters, filter_options)
