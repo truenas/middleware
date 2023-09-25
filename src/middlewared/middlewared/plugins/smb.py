@@ -9,12 +9,16 @@ import stat
 import subprocess
 import uuid
 
+from copy import deepcopy
 from samba import param
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.schema import Bool, Dict, IPAddr, List, Ref, returns, SID, Str, Int, Patch
 from middlewared.schema import Path as SchemaPath
+# List schema defaults to [], supplying NOT_PROVIDED avoids having audit update that
+# defaults for ignore_list or watch_list from overrwriting previous value
+from middlewared.schema.utils import NOT_PROVIDED
 from middlewared.service import accepts, job, private, SharingService
 from middlewared.service import TDBWrapConfigService, ValidationErrors, filterable
 from middlewared.service_exception import CallError, MatchNotFound
@@ -26,6 +30,7 @@ from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
 RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
+SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -924,11 +929,7 @@ class SharingSMBModel(sa.Model):
     cifs_share_acl = sa.Column(sa.Text())
     cifs_cluster_volname = sa.Column(sa.String(255))
     cifs_afp = sa.Column(sa.Boolean())
-    cifs_audit = sa.Column(sa.JSON(dict), default={
-        'enable': False,
-        'watch_list': [],
-        'ignore_list': []
-    })
+    cifs_audit = sa.Column(sa.JSON(dict), default=SMB_AUDIT_DEFAULTS)
 
 
 class SharingSMBService(SharingService):
@@ -983,7 +984,11 @@ class SharingSMBService(SharingService):
         Bool('enabled', default=True),
         Str('cluster_volname', default=''),
         Bool('afp', default=False),
-        Dict('audit', Bool('enable'), List('watch_list'), List('ignore_list')),
+        Dict('audit',
+            Bool('enable'),
+            List('watch_list', default=NOT_PROVIDED),
+            List('ignore_list', default=NOT_PROVIDED)
+        ),
         register=True
     ))
     async def do_create(self, data):
@@ -1028,6 +1033,8 @@ class SharingSMBService(SharingService):
         """
         ha_mode = SMBHAMODE[(await self.middleware.call('smb.get_smb_ha_mode'))]
         await self.middleware.call("smb.cluster_check")
+        audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get('audit')
+        data['audit'] = audit_info
 
         verrors = ValidationErrors()
 
@@ -1093,7 +1100,7 @@ class SharingSMBService(SharingService):
 
         new = old.copy()
         new.update(data)
-        new['audit'] = old_audit | data['audit']
+        new['audit'] = old_audit | data.get('audit', {})
 
         oldname = 'homes' if old['home'] else old['name']
         newname = 'homes' if new['home'] else new['name']
