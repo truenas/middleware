@@ -50,7 +50,7 @@ class FailoverService(ConfigService):
     class Config:
         datastore = 'system.failover'
         datastore_extend = 'failover.failover_extend'
-        cli_namespace = 'system.failover'
+        cli_private = True
 
     ENTRY = Dict(
         'failover_entry',
