@@ -61,7 +61,7 @@ class ClusterPeerConnection:
         cred = self.credentials
         if (auth_token := cred.get('auth_token')):
             authenticated = c.call('auth.login_with_token', auth_token)
-        elif (auth_key := cred.get('auth_key')):
+        elif (auth_key := cred.get('api_key')):
             authenticated = c.call('auth.login_with_api_key', auth_key)
         else:
             authenticated = c.call('auth.login', cred['username'], cred['password'])
@@ -82,6 +82,9 @@ class ClusterPeerConnection:
         self.local = kwargs.get('local')
         self.conn = None
         self.call_fn = None
+
+        if self.credentials is None:
+            raise CallError('No credential provided')
 
         if not self.local:
             self.__do_connect()
