@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str, Timestamp
-from middlewared.service import filterable, filterable_returns, Service, private
+from middlewared.service import cli_private, filterable, filterable_returns, Service, private
 from middlewared.validators import Range
 
 from .netdata import GRAPH_PLUGINS
@@ -11,11 +11,13 @@ class ReportingService(Service):
         datastore = 'system.reporting'
         cli_namespace = 'system.reporting'
 
+    @cli_private
     @filterable
     @filterable_returns(Ref('reporting_graph'))
     async def graphs(self, filters, options):
         return await self.middleware.call('reporting.netdata_graphs', filters, options)
 
+    @cli_private
     @accepts(
         List('graphs', items=[
             Dict(
@@ -69,6 +71,7 @@ class ReportingService(Service):
     async def get_all(self, query):
         return await self.middleware.call('reporting.netdata_get_all', query)
 
+    @cli_private
     @accepts(
         Str('name', required=True),
         Ref('reporting_query'),
