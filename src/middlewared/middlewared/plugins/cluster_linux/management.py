@@ -16,6 +16,7 @@ from middlewared.validators import Range
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
 MAX_VOLNAME_LENGTH = 64
+REPLICA_NODE_COUNT = 3
 
 
 class GlusterVolname(Str):
@@ -649,7 +650,7 @@ class ClusterManagement(Service):
             layout = {}
 
         elif volume_type.endswith('REPLICATE'):
-            total_bricks = 3 * brick_layout['replica_distribute']
+            total_bricks = REPLICA_NODE_COUNT * brick_layout['replica_distribute']
             if total_bricks != brick_cnt:
                 verrors.add(
                     f'{schema}.replica',
@@ -660,7 +661,7 @@ class ClusterManagement(Service):
                     'divisible by three.'
                 )
 
-            layout = {'replica': brick_layout['replica']}
+            layout = {'replica': REPLICA_NODE_COUNT}
 
         elif volume_type.endswith('DISPERSE'):
             bricks_per_subvol = brick_layout['disperse_data'] + brick_layout['disperse_redundancy']
