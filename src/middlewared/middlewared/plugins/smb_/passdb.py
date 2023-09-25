@@ -1,6 +1,6 @@
-from middlewared.service import Service, job, private
+from middlewared.service import filterable, Service, job, private
 from middlewared.service_exception import CallError
-from middlewared.utils import Popen, run
+from middlewared.utils import Popen, run, filter_list
 from middlewared.plugins.smb import SMBCmd
 
 import os
@@ -29,36 +29,9 @@ class SMBService(Service):
         return out
 
     @private
-    async def passdb_list(self, verbose=False):
-        """
-        passdb entries for local SAM database. This will be populated with
-        local users in an AD environment. Immediately return in ldap enviornment.
-        """
+    @filterable
+    async def passdb_list_full(self, filters, options):
         pdbentries = []
-        private_dir = await self.middleware.call('smb.getparm', 'privatedir', 'global')
-        if not os.path.exists(f'{private_dir}/passdb.tdb'):
-            return pdbentries
-
-        if await self.middleware.call('smb.getparm', 'passdb backend', 'global') != 'tdbsam':
-            return pdbentries
-
-        if not verbose:
-            pdb = await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check=False)
-            if pdb.returncode != 0:
-                raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
-            for p in (pdb.stdout.decode()).splitlines():
-                entry = p.split(':')
-                try:
-                    pdbentries.append({
-                        'username': entry[0],
-                        'full_name': entry[2],
-                        'uid': entry[1],
-                    })
-                except Exception as e:
-                    self.logger.debug('Failed to parse passdb entry [%s]: %s', p, e)
-
-            return pdbentries
-
         pdb = await run([SMBCmd.PDBEDIT.value, '-Lv', '-d', '0'], check=False)
         if pdb.returncode != 0:
             raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
@@ -74,6 +47,38 @@ class SMBService(Service):
 
             if pdbentry:
                 pdbentries.append(pdbentry)
+
+        return filter_list(pdbentries, filters, options)
+
+    @private
+    async def passdb_list(self, verbose=False):
+        """
+        passdb entries for local SAM database. This will be populated with
+        local users in an AD environment. Immediately return in ldap enviornment.
+        """
+        pdbentries = []
+
+        passdb_backend = await self.middleware.call('smb.getparm', 'passdb backend', 'global')
+        if not passdb_backend.startswith('tdbsam'):
+            return pdbentries
+
+        if verbose:
+            return await self.passdb_list_full()
+
+        pdb = await run([SMBCmd.PDBEDIT.value, '-L', '-d', '0'], check=False)
+        if pdb.returncode != 0:
+            raise CallError(f'Failed to list passdb output: {pdb.stderr.decode()}')
+
+        for p in (pdb.stdout.decode()).splitlines():
+            entry = p.split(':')
+            try:
+                pdbentries.append({
+                    'username': entry[0],
+                    'full_name': entry[2],
+                    'uid': entry[1],
+                })
+            except Exception as e:
+                self.logger.debug('Failed to parse passdb entry [%s]: %s', p, e)
 
         return pdbentries
 
@@ -155,11 +160,40 @@ class SMBService(Service):
         os.rename(old_path, new_path)
         self.logger.debug("Backing up original passdb to [%s]", new_path)
         for u in conf_users:
-            await self.middleware.call('smb.update_passdb_user', u)
+            await self.middleware.call('smb.update_passdb_user', u | {'pdb': None})
 
         net = await run([SMBCmd.NET.value, 'cache', 'flush'], check=False)
         if net.returncode != 0:
             self.logger.warning("Samba gencache flush failed with error: %s", net.stderr.decode())
+
+    @private
+    async def passdb_sync_impl(self, conf_users):
+        server_name = (await self.middleware.call('smb.config'))['netbiosname_local']
+        try:
+            invalid_entries = await self.passdb_list_full([['Domain', '!=', server_name]])
+        except Exception:
+            self.logger.warning("Failed to generate full passdb list, reinitializing", exc_info=True)
+            return await self.passdb_reinit(conf_users)
+
+        if invalid_entries:
+            self.logger.warning("Reinitializing passdb file due to invalid domain for one or more users.")
+            return await self.passdb_reinit(conf_users)
+
+        pdb_users = await self.smbpasswd_dump()
+        for u in conf_users:
+            pdb_entry = pdb_users.pop(u['username'], None)
+            u.update({"pdb": pdb_entry})
+            await self.middleware.call('smb.update_passdb_user', u, clustered)
+
+        for entry in pdb_users.keys():
+            self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry)
+            try:
+                await self.remove_passdb_user(entry)
+            except Exception:
+                if not clustered:
+                    self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
+                    await self.passdb_reinit(conf_users)
+                    break
 
     @private
     @job(lock="passdb_sync")
@@ -179,18 +213,4 @@ class SMBService(Service):
             return
 
         conf_users = await self.middleware.call('user.query', [("smb", "=", True)])
-
-        pdb_users = await self.smbpasswd_dump()
-        for u in conf_users:
-            pdb_entry = pdb_users.pop(u['username'], None)
-            u.update({"pdb": pdb_entry})
-            await self.middleware.call('smb.update_passdb_user', u)
-
-        for entry in pdb_users.keys():
-            self.logger.debug('Synchronizing passdb with config file: deleting user [%s] from passdb.tdb', entry)
-            try:
-                await self.remove_passdb_user(entry)
-            except Exception:
-                self.logger.warning("Failed to remove passdb user. This may indicate a corrupted passdb. Regenerating.", exc_info=True)
-                await self.passdb_reinit(conf_users)
-                return
+        return await self.passdb_sync_impl(conf_users)
