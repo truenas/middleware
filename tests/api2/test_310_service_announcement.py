@@ -365,7 +365,14 @@ def test_002_mdns_disabled(request):
     ac.check_present(False, False, False, False)
 
 
-@pytest.mark.timeout(720)
+# Setting a VERY long timeout as when this test is run in isolation
+# on jenkins there can be many (20+) hostname clashes which means
+# avahi can take a LONG time to settle down/start up.
+#
+# We could avoid by setting a unique hostname (as is done during a
+# full test run), but it also seems worthwhile exercise to be able
+# to test in such a unsuitable environment.
+@pytest.mark.timeout(900)
 def test_003_mdns_smb_share(request):
     """Perform some mDNS tests wrt SMB and ADISK services."""
     depends(request, ["servann_001"], scope="session")
