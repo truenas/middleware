@@ -91,7 +91,7 @@ def ensure_aapl_extensions():
             call('smb.update', {'aapl_extensions': False})
 
 
-def wait_for_avahi_startup(interval=5, timeout=180):
+def wait_for_avahi_startup(interval=5, timeout=300):
     """When tests are running in a QE environment it can take a long
     time for the service to start up completely, because many systems
     can be configured with the same hostname.
@@ -328,6 +328,7 @@ def setup_environment():
         pass
 
 
+@pytest.mark.timeout(600)
 @pytest.mark.dependency(name="servann_001")
 def test_001_initial_config(request):
     """Ensure that the service announcement configuration is as expected."""
@@ -354,6 +355,7 @@ def test_001_initial_config(request):
 # fail.
 # Since the test passes when run with zeroconf library on
 # a suitably connected test-runner, no real need to chase.
+@pytest.mark.timeout(600)
 @skip_avahi_browse_tests
 def test_002_mdns_disabled(request):
     depends(request, ["servann_001"], scope="session")
