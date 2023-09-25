@@ -43,7 +43,8 @@ class GlusterVolname(Str):
             verrors.add(self.name, f'Gluster volume name must contain no more than {MAX_VOLNAME_LENGTH} characters')
 
         if any((char not in self.valid_chars for char in value)):
-            verrors.add(self.name,
+            verrors.add(
+                self.name,
                 'Gluster volume name must consist of only alphanumeric characters, underscore (_), and dash (-)'
             )
 
