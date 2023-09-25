@@ -9,9 +9,6 @@ from pytest_dependency import depends
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.assets.pool import dataset
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 @contextlib.contextmanager

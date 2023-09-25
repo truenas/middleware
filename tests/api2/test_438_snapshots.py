@@ -1,23 +1,14 @@
 #!/usr/bin/env python3
 import os
 import sys
-import time
-from datetime import datetime
 
-import pytest
-
-# from middlewared.test.integration.assets.pool import dataset
 from assets.REST.pool import dataset
 from assets.REST.snapshot import snapshot
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from auto_config import dev_test, hostname, ip, pool_name
+from auto_config import hostname, ip, pool_name
 from functions import DELETE, GET, POST, PUT, wait_on_job
-from pytest_dependency import depends
-
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 def _verify_snapshot_keys_present(snap, expected, unexpected):

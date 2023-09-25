@@ -11,7 +11,6 @@ sys.path.append(apifolder)
 from functions import POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import (
     ip,
-    dev_test,
     pool_name,
     password,
     user,
@@ -21,9 +20,6 @@ from pytest_dependency import depends
 from time import sleep
 from utils import create_dataset
 
-reason = 'Skipping for test development testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 SMB_USER = "smbacluser"
 SMB_PWD = "smb1234"

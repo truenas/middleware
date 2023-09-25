@@ -7,7 +7,6 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST
-from auto_config import dev_test
 
 try:
     from config import (
@@ -16,8 +15,6 @@ try:
         LDAPBINDPASSWORD,
         LDAPHOSTNAME,
     )
-    # comment pytestmark for development testing with --dev-test
-    pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 except ImportError:
     Reason = 'LDAP* variable are not setup in config.py'
     # comment pytestmark for development testing with --dev-test

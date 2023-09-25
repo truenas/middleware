@@ -4,12 +4,9 @@ import contextlib
 import os
 import pytest
 import sys
-from pytest_dependency import depends
 sys.path.append(os.getcwd())
 from functions import POST, GET, DELETE, SSH_TEST
-from auto_config import password, user as user_, ip, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
+from auto_config import password, user as user_, ip
 
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client

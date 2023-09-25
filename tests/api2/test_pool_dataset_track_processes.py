@@ -9,8 +9,6 @@ from middlewared.test.integration.assets.pool import dataset, pool
 import os
 import sys
 sys.path.append(os.getcwd())
-from auto_config import dev_test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 
 @pytest.mark.parametrize("datasets,file_open_path,arg_path", [

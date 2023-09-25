@@ -9,10 +9,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import SSH_TEST
-from auto_config import ip, user, password, dev_test
-reason = 'Skipping for test development testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
+from auto_config import ip, user, password
 
 
 def test_core_get_methods(request):

@@ -11,9 +11,6 @@ from functions import (
     POST,
 )
 from assets.REST.directory_services import ldap
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 try:
     from config import (
