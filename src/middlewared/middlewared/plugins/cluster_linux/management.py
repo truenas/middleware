@@ -1,5 +1,6 @@
 import errno
 import secrets
+import string
 from time import sleep
 
 from middlewared.client import Client, ClientException
@@ -14,6 +15,41 @@ from middlewared.validators import Range
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
+MAX_VOLNAME_LENGTH = 64
+
+
+class GlusterVolname(Str):
+    invalid_volnames = [
+        'type', 'help', 'subvolumes', 'option', 'end-volume', 'all',
+        'volume_not_in_ring', 'description', 'force', 'snap-max-hard-limit',
+        'snap-max-soft-limit', 'auto-delete', 'activate-on-create',
+    ]
+
+    valid_chars = string.ascii_letters + string.digits + '_' + '-'
+
+    def validate(self, value):
+        if value is None:
+            return
+
+        verrors = ValidationErrors()
+
+        if value in self.invalid_volnames:
+            verrors.add(self.name, 'Invalid gluster volume name')
+
+        if not len(value):
+            verrors.add(self.name, 'Gluster volume name must contain at least one character')
+
+        if len(value) > MAX_VOLNAME_LENGTH:
+            verrors.add(self.name, f'Gluster volume name must contain no more than {MAX_VOLNAME_LENGTH} characters')
+
+        if any((char not in self.valid_chars for char in value)):
+            verrors.add(
+                self.name,
+                'Gluster volume name must consist of only alphanumeric characters, underscore (_), and dash (-)'
+            )
+
+        verrors.check()
+        return super().validate(value)
 
 
 class ClusterPeerConnection:
@@ -660,7 +696,7 @@ class ClusterManagement(Service):
         'cluster_configuration',
         Dict(
             'volume_configuration',
-            Str('name', required=True),
+            GlusterVolname('name', required=True),
             OROperator(
                 Dict(
                     'replicated_brick_layout',
