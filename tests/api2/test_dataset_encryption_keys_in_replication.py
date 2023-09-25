@@ -71,6 +71,23 @@ def test_single_source_recursive_replication():
                         make_assertions([src], task['id'], dst, [dst, f'{dst}/{child_src.rsplit("/", 1)[-1]}'])
 
 
+def test_single_source_child_encrypted_replication():
+    with dataset('source_test', encryption_props()) as src:
+        with dataset(f'{src.rsplit("/", 1)[-1]}/child_source_test', encryption_props()) as child_src:
+            with dataset('parent_destination', encryption_props()) as parent_ds:
+                with dataset(f'{parent_ds.rsplit("/", 1)[-1]}/destination_test') as dst:
+                    with replication_task({
+                        **BASE_REPLICATION,
+                        'name': 'encryption_replication_test',
+                        'source_datasets': [child_src],
+                        'target_dataset': dst,
+                        'name_regex': '.+',
+                        'auto': False,
+                        'recursive': True,
+                    }) as task:
+                        make_assertions([child_src], task['id'], dst, [dst])
+
+
 def test_multiple_source_replication():
     with dataset('source_test1', encryption_props()) as src1:
         with dataset('source_test2', encryption_props()) as src2:
