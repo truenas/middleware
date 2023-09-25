@@ -2,6 +2,8 @@ import errno
 import ipaddress
 import os
 import uuid
+import re
+
 try:
     import wbclient
 except ImportError:
@@ -20,6 +22,12 @@ from middlewared.service_exception import CallError, ValidationErrors
 from .attribute import Attribute
 from .enum import EnumMixin
 from .exceptions import Error
+from .utils import RESERVED_WORDS
+
+# NetBIOS domain names allow using a dot "." to define a NetBIOS scope
+# This is not true for NetBIOS computer names
+RE_NETBIOSNAME = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9\\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+RE_NETBIOSDOM = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
 
 class Str(EnumMixin, Attribute):
@@ -125,6 +133,47 @@ class SID(Str):
             )
 
         verrors.check()
+
+
+class NetbiosName(Str):
+    regex = RE_NETBIOSNAME
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        value = super().clean(value)
+
+        if value is None:
+            return value
+
+        value = value.strip()
+        return value.upper()
+
+    def validate(self, value):
+        if value is None:
+            return value
+
+        verrors = ValidationErrors()
+        if not self.regex.match(value):
+            verrors.add(
+                self.name,
+                'Invalid NetBIOS name. NetBIOS names must be between 1 and 15 characters in '
+                'length and may not contain the following characters: \\/:*?"<>|.'
+            )
+
+        if value.casefold() in RESERVED_WORDS:
+            verrors.add(
+                self.name,
+                f'NetBIOS names may not be one of following reserved names: {", ".join(RESERVED_WORDS)}'
+            )
+
+        verrors.check()
+        return super().validate(value)
+
+
+class NetbiosDomain(NetbiosName):
+    regex = RE_NETBIOSDOM
 
 
 class Dataset(Path):

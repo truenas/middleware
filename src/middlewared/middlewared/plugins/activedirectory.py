@@ -8,7 +8,9 @@ import contextlib
 
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.plugins.kerberos import krb5ccache
-from middlewared.schema import accepts, Bool, Dict, Int, IPAddr, LDAP_DN, List, Ref, returns, Str
+from middlewared.schema import (
+    accepts, Bool, Dict, Int, IPAddr, LDAP_DN, List, NetbiosName, Patch, Ref, returns, Str
+)
 from middlewared.service import job, private, TDBWrapConfigService, ValidationError, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -110,6 +112,31 @@ class ActiveDirectoryService(TDBWrapConfigService):
         datastore_extend = "activedirectory.ad_extend"
         datastore_prefix = "ad_"
         cli_namespace = "directory_service.activedirectory"
+
+    ENTRY = Dict(
+        'activedirectory_update',
+        Str('domainname', required=True),
+        Str('bindname'),
+        Str('bindpw', private=True),
+        Bool('verbose_logging'),
+        Bool('use_default_domain'),
+        Bool('allow_trusted_doms'),
+        Bool('allow_dns_updates'),
+        Bool('disable_freenas_cache'),
+        Bool('restrict_pam', default=False),
+        Str('site', null=True),
+        Int('kerberos_realm', null=True),
+        Str('kerberos_principal', null=True),
+        Int('timeout', default=60),
+        Int('dns_timeout', default=10, validators=[Range(min_=5, max_=40)]),
+        Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
+        Str('createcomputer'),
+        NetbiosName('netbiosname'),
+        NetbiosName('netbiosname_b'),
+        List('netbiosalias', items=[NetbiosName('alias')]),
+        Bool('enable'),
+        register=True
+    )
 
     @private
     async def convert_schema_to_registry(self, data_in, data_out):
@@ -273,29 +300,10 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 "AD domain name is required."
             )
 
-    @accepts(Dict(
-        'activedirectory_update',
-        Str('domainname', required=True),
-        Str('bindname'),
-        Str('bindpw', private=True),
-        Bool('verbose_logging'),
-        Bool('use_default_domain'),
-        Bool('allow_trusted_doms'),
-        Bool('allow_dns_updates'),
-        Bool('disable_freenas_cache'),
-        Bool('restrict_pam', default=False),
-        Str('site', null=True),
-        Int('kerberos_realm', null=True),
-        Str('kerberos_principal', null=True),
-        Int('timeout', default=60),
-        Int('dns_timeout', default=10, validators=[Range(min_=5, max_=40)]),
-        Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
-        Str('createcomputer'),
-        Str('netbiosname'),
-        Str('netbiosname_b'),
-        List('netbiosalias'),
-        Bool('enable'),
-        update=True
+    @accepts(Ref('activedirectory_update'))
+    @returns(Patch(
+        'activedirectory_update', 'activedirectory_returns',
+        ('add', Int('job_id'))
     ))
     async def do_update(self, data):
         """
@@ -1123,6 +1131,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         return out
 
     @accepts(Ref('kerberos_username_password'))
+    @returns()
     @job(lock="AD_start_stop")
     async def leave(self, job, data):
         """
