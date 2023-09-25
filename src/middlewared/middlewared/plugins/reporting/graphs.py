@@ -4,7 +4,9 @@ import time
 import typing
 
 from middlewared.schema import accepts, Dict, List, Patch, Ref, returns, Str, Timestamp
-from middlewared.service import CallError, filterable, filterable_returns, private, Service, ValidationErrors
+from middlewared.service import (
+    CallError, cli_private, filterable, filterable_returns, private, Service, ValidationErrors
+)
 from middlewared.utils import filter_list
 from middlewared.validators import Range
 
@@ -35,6 +37,7 @@ class ReportingService(Service):
         attr.validators = [Range(min=1)]
         attr.default = 1
 
+    @cli_private
     @accepts(
         Str('name', required=True),
         Patch(
@@ -68,6 +71,7 @@ class ReportingService(Service):
             if result is not None
         ]
 
+    @cli_private
     @filterable
     @filterable_returns(Dict(
         'graph',
@@ -82,6 +86,7 @@ class ReportingService(Service):
         """
         return filter_list([await i.as_dict() for i in self.__graphs.values()], filters, options)
 
+    @cli_private
     @accepts(
         List('graphs', items=[
             Dict(

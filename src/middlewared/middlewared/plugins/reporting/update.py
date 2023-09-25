@@ -4,8 +4,10 @@ import errno
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str
-from middlewared.service import CallError, ConfigService, filterable, filterable_returns, private, ValidationErrors
-from middlewared.utils import filter_list, run
+from middlewared.service import (
+    CallError, cli_private, ConfigService, filterable, filterable_returns, private, ValidationErrors
+)
+from middlewared.utils import filter_list
 from middlewared.validators import Range
 
 from .rrd_utils import RRD_PLUGINS
@@ -134,6 +136,7 @@ class ReportingService(ConfigService):
         Clear reporting database.
         """
 
+    @cli_private
     @filterable
     @filterable_returns(Dict(
         'graph',
@@ -177,6 +180,7 @@ class ReportingService(ConfigService):
                 endtime = f'now-{page}{unit}'
         return starttime, endtime
 
+    @cli_private
     @accepts(
         List('graphs', items=[
             Dict(
