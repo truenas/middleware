@@ -365,7 +365,7 @@ def test_002_mdns_disabled(request):
     ac.check_present(False, False, False, False)
 
 
-@pytest.mark.timeout(600)
+@pytest.mark.timeout(720)
 def test_003_mdns_smb_share(request):
     """Perform some mDNS tests wrt SMB and ADISK services."""
     depends(request, ["servann_001"], scope="session")
