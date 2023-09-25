@@ -6,6 +6,8 @@ from pyudev import Context
 from libsg3.ses import EnclosureDevice
 from middlewared.service import Service
 from middlewared.utils.functools import cache
+from middlewared.plugins.truenas import PLATFORM_PREFIXES
+
 from .ha_hardware import HA_HARDWARE
 
 ENCLOSURES_DIR = '/sys/class/enclosure/'
@@ -21,7 +23,10 @@ class EnclosureDetectionService(Service):
     def detect(self):
         HARDWARE = NODE = 'MANUAL'
         product = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        if product == 'BHYVE':
+        if not product:
+            # no reason to continue since we've got no path forward
+            return HARDWARE, NODE
+        elif product == 'BHYVE':
             # bhyve host configures a scsi_generic device that when sent an inquiry will
             # respond with a string that we use to determine the position of the node
             ctx = Context()
@@ -46,8 +51,14 @@ class EnclosureDetectionService(Service):
                 NODE = 'A' if rv.stdout.decode().strip()[-1] == '0' else 'B'
 
             return HARDWARE, NODE
+        elif not product.startswith(PLATFORM_PREFIXES):
+            # users run TrueNAS on all kinds of exotic hardware. Most of the time, the
+            # exotic hardware doesn't respond to standards conforming requests. Furthermore,
+            # the enclosure feature is specific to our HA appliances so no reason to continue
+            # down this path.
+            return HARDWARE, NODE
 
-        for enc in self.middleware.call_sync("enclosure.list_ses_enclosures"):
+        for enc in self.middleware.call_sync('enclosure.list_ses_enclosures'):
             try:
                 info = EnclosureDevice(enc).get_element_descriptor()
             except OSError:
