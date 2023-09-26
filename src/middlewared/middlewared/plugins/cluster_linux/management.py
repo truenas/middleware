@@ -572,7 +572,10 @@ class ClusterManagement(Service):
             # count being added, perhaps going so far as to allow users to
             # temporarily run without the volume spread to all servers while
             # shipping hardware
-            vol = self.middleware.call_sync('gluster.volume.get_instance', root_dir_setup['volume_name'])
+            vol = self.middleware.call_sync(
+                'gluster.volume.get_instance',
+                ctdb_config['root_dir_config']['volume_name']
+            )
         else:
             # Cluster has expanded and we're healthy now. If following fails, the cluster will still
             # continue serving data / be healthy, but manual intervention may be required to complete
