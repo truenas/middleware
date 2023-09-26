@@ -1,12 +1,12 @@
 import contextlib
 import errno
 import os
-import shutil
+import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, job, private, Service
 
-from .utils import ZPOOL_CACHE_FILE, ZPOOL_KILLCACHE
+from .utils import ZPOOL_CACHE_FILE
 
 
 class PoolService(Service):
@@ -205,116 +205,173 @@ class PoolService(Service):
         return True
 
     @private
+    def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False):
+        cmd = [
+            'zpool', 'import',
+            vol_guid,  # the GUID of the zpool
+            '-R', '/mnt',  # altroot
+            '-m',  # import pool with missing log device(s)
+            '-o', f'cachefile={ZPOOL_CACHE_FILE}' if set_cachefile else 'cachefile=none',
+        ]
+        try:
+            self.logger.debug('Importing %r with guid: %r', vol_name, vol_guid)
+            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if cp.returncode != 0:
+                self.logger.error(
+                    'Failed to import %r with guid: %r with error: %r',
+                    vol_name, vol_guid, cp.stdout.decode()
+                )
+                return False
+        except Exception:
+            self.logger.error('Unhandled exception importing %r', vol_name, exc_info=True)
+            return False
+
+        self.logger.debug('SUCCESS importing %r with guid: %r', vol_name, vol_guid)
+        return True
+
+    @private
+    def unlock_on_boot_impl(self, vol_name):
+        zpool_info = self.middleware.call_sync(
+            'pool.dataset.get_instance_quick', vol_name, {'encryption': True}
+        )
+        umount_root_short_circuit = False
+        if zpool_info['key_format']['parsed'] == 'passphrase':
+            # passphrase encrypted zpools will _always_ fail to be unlocked at
+            # boot time because we don't store the users passphrase on disk
+            # anywhere.
+            #
+            # NOTE: To have a passphrase encrypted zpool (the root dataset is passphrase encrypted)
+            # is considered an edge-case (or is someone upgrading from an old version of SCALE where
+            # we mistakenly allowed this capability). There is also possibility to update existing
+            # root dataset encryption from key based to passphrase based. Again, an edge-case but
+            # documenting it here for posterity sake.
+            self.logger.debug(
+                'Passphrase encrypted zpool detected %r, passphrase required before unlock', vol_name
+            )
+            umount_root_short_circuit = True
+
+        if not umount_root_short_circuit:
+            # the top-level dataset could be unencrypted but there could be any number
+            # of child datasets that are encrypted. This will try to recursively unlock
+            # those datasets (including the parent if necessary).
+            # If we fail to unlock the parent, then the method short-circuits and exits
+            # early.
+            opts = {'recursive': True, 'toggle_attachments': False}
+            uj = self.middleware.call_sync('pool.dataset.unlock', vol_name, opts)
+            uj.wait_sync()
+            if uj.error:
+                self.logger.error('FAILED unlocking encrypted dataset(s) for %r with error %r', vol_name, uj.error)
+            elif uj.result['failed']:
+                self.logger.error(
+                    'FAILED unlocking the following datasets: %r for pool %r',
+                    ', '.join(uj.result['failed'], vol_name)
+                )
+            else:
+                self.logger.debug('SUCCESS unlocking encrypted dataset(s) (if any) for %r', vol_name)
+
+        if any((
+            umount_root_short_circuit,
+            self.middleware.call_sync(
+                'pool.dataset.get_instance_quick', vol_name, {'encryption': True}
+            )['locked']
+        )):
+            # We umount the zpool in the following scenarios:
+            # 1. we came across a passphrase encrypted root dataset (i.e. /mnt/tank)
+            # 2. we failed to unlock the key based encrypted root dataset
+            #
+            # It's important to understand how this operates at zfs level since this
+            # can be painfully confusing.
+            # 1. when system boots, we call zpool import
+            # 2. zpool impot has no notion of encryption and will simply mount
+            #   the datasets as necessary (INCLUDING ALL CHILDREN)
+            # 3. if the root dataset is passphrase encrypted OR we fail to unlock
+            #   the root dataset that is using key based encryption, then the child
+            #   datasets ARE STILL MOUNTED DURING IMPORT PHASE (this includes
+            #   encrypted children or unencrypted children)
+            #
+            # In the above scenario, the root dataset wouldn't be mounted but any number
+            # of children would be. If the end-user is sharing one of the unencrypted children
+            # via a sharing service, then what happens is that a parent DIRECTORY is created
+            # in place of the root dataset and all files get written OUTSIDE of the zfs
+            # mountpoint. That's an unpleasant experience because it is perceived as data loss
+            # since mounting the dataset will just mount over-top of said directory.
+            # (i.e. /mnt/tank/datasetA/datasetB/childds/, The "datasetA", "datasetB", "childds"
+            # path components would be created as directories and I/O would continue without
+            # any problems but the data is not going to that zfs dataset.
+            #
+            # To account for this edge-case (we now no longer allow the creation of unencrypted child
+            # datasets where any upper path component is encrypted) (i.e. no more /mnt/zz/unencrypted/encrypted).
+            # However, we still need to take into consideration the other users that manged to get themselves
+            # into this scenario.
+            with contextlib.suppress(CallError):
+                self.logger.debug('Forcefully umounting %r', vol_name)
+                self.middleware.call_sync('zfs.dataset.umount', vol_name, {'force': True})
+                self.logger.debug('Successfully umounted %r', vol_name)
+
+            pool_mount = f'/mnt/{vol_name}'
+            if os.path.exists(pool_mount):
+                try:
+                    # setting the root path as immutable, in a perfect world, will prevent
+                    # the scenario that is describe above
+                    self.logger.debug('Setting immutable flag at %r', pool_mount)
+                    self.middleware.call_sync('filesystem.set_immutable', True, pool_mount)
+                except CallError as e:
+                    self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
+
+    @private
+    def import_on_boot_finalization_background(self):
+        # since these are called in `self.import_on_boot` and we really
+        # don't need to wait for these to complete to lessen the amount
+        # of time that ix-zfs.service takes to complete which prevents
+        # the boot process to complete
+        self.logger.debug('Configuring swap partitions')
+        self.middleware.call_sync('disk.swaps_configure')
+        self.logger.debug('Finished configuring swap partitions')
+
+        self.logger.debug('Calling pool.post_import')
+        self.middleware.call_hook_sync('pool.post_import', None)
+        self.logger.debug('Finished calling pool.post_import')
+
+    @private
     @job()
     def import_on_boot(self, job):
-        cachedir = os.path.dirname(ZPOOL_CACHE_FILE)
-        if not os.path.exists(cachedir):
-            os.mkdir(cachedir)
-
         if self.middleware.call_sync('failover.licensed'):
+            # HA systems pools are imported using the failover
+            # event logic
             return
 
-        zpool_cache_saved = f'{ZPOOL_CACHE_FILE}.saved'
-        if os.path.exists(ZPOOL_KILLCACHE):
-            with contextlib.suppress(Exception):
-                os.unlink(ZPOOL_CACHE_FILE)
-            with contextlib.suppress(Exception):
-                os.unlink(zpool_cache_saved)
-        else:
-            with open(ZPOOL_KILLCACHE, 'w') as f:
-                os.fsync(f)
-
+        set_cachefile_property = True
         try:
-            stat = os.stat(ZPOOL_CACHE_FILE)
-            if stat.st_size > 0:
-                copy = False
-                if not os.path.exists(zpool_cache_saved):
-                    copy = True
-                else:
-                    statsaved = os.stat(zpool_cache_saved)
-                    if stat.st_mtime > statsaved.st_mtime:
-                        copy = True
-                if copy:
-                    shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
-        except FileNotFoundError:
-            pass
-
-        job.set_progress(0, 'Beginning pools import')
-
-        pools = self.middleware.call_sync('pool.query', [('status', '=', 'OFFLINE')])
-        for i, pool in enumerate(pools):
-            # Importing pools is currently 80% of the job because we may still need
-            # to set ACL mode for windows
-            job.set_progress(int((i + 1) / len(pools) * 80), f'Importing {pool["name"]}')
-            imported = False
-            if pool['guid']:
-                try:
-                    self.middleware.call_sync('zfs.pool.import_pool', pool['guid'], {
-                        'altroot': '/mnt',
-                        'cachefile': 'none',
-                    }, True, zpool_cache_saved if os.path.exists(zpool_cache_saved) else None)
-                except Exception:
-                    # Importing a pool may fail because of out of date guid database entry
-                    # or because bad cachefile. Try again using the pool name and wihout
-                    # the cachefile
-                    self.logger.error('Failed to import %s', pool['name'], exc_info=True)
-                else:
-                    imported = True
-            if not imported:
-                try:
-                    self.middleware.call_sync('zfs.pool.import_pool', pool['name'], {
-                        'altroot': '/mnt',
-                        'cachefile': 'none',
-                    })
-                except Exception:
-                    self.logger.error('Failed to import %s', pool['name'], exc_info=True)
-                    continue
-
-            try:
-                self.middleware.call_sync(
-                    'zfs.pool.update', pool['name'], {'properties': {
-                        'cachefile': {'value': ZPOOL_CACHE_FILE},
-                    }}
-                )
-            except Exception:
-                self.logger.warning(
-                    'Failed to set cache file for %s', pool['name'], exc_info=True,
-                )
-
-            unlock_job = self.middleware.call_sync(
-                'pool.dataset.unlock', pool['name'], {'recursive': True, 'toggle_attachments': False}
+            self.logger.debug('Creating path components for %r', ZPOOL_CACHE_FILE)
+        except Exception:
+            self.logger.warning(
+                'FAILED unhandled exception creating path components for %r',
+                ZPOOL_CACHE_FILE, exc_info=True
             )
-            unlock_job.wait_sync()
-            if unlock_job.error or unlock_job.result['failed']:
-                failed = ', '.join(unlock_job.result['failed']) if not unlock_job.error else ''
-                self.logger.error(
-                    f'Unlocking encrypted datasets failed for {pool["name"]} pool'
-                    f'{f": {unlock_job.error}" if unlock_job.error else f" with following datasets {failed}"}'
-                )
+            set_cachefile_property = False
+        else:
+            try:
+                self.logger.debug('Creating %r (if it doesnt already exist)', ZPOOL_CACHE_FILE)
+                with open(ZPOOL_CACHE_FILE, 'x'):
+                    pass
+            except FileExistsError:
+                # cachefile already exists on disk which is fine
+                pass
+            except Exception:
+                self.logger.warning('FAILED unhandled exception creating %r', ZPOOL_CACHE_FILE, exc_info=True)
+                set_cachefile_property = False
 
-            # Child unencrypted datasets of root dataset would be mounted if root dataset is still locked,
-            # we don't want that
-            if self.middleware.call_sync(
-                'pool.dataset.get_instance_quick', pool['name'], {'encryption': True}
-            )['locked']:
-                with contextlib.suppress(CallError):
-                    self.middleware.call_sync('zfs.dataset.umount', pool['name'], {'force': True})
+        # We need to do as little zfs I/O as possible since this method
+        # is being called by a systemd service at boot-up. First step of
+        # doing this is to simply try to import all zpools that are in our
+        # database. Handle each error accordingly instead of trying to be
+        # fancy and determine which ones are "offline" since...in theory...
+        # all zpools should be offline at this point.
+        for i in self.middleware.call_sync('datastore.query', 'storage.volume'):
+            name, guid = i['vol_name'], i['vol_guid']
+            if not self.import_on_boot_impl(name, guid, set_cachefile_property):
+                continue
 
-                pool_mount = os.path.join('/mnt', pool['name'])
-                if os.path.exists(pool_mount):
-                    # We would like to ensure the path of root dataset has immutable flag set if it's not locked
-                    try:
-                        self.middleware.call_sync('filesystem.set_immutable', True, pool_mount)
-                    except CallError as e:
-                        self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
+            self.unlock_on_boot_impl(name)
 
-        with contextlib.suppress(OSError):
-            os.unlink(ZPOOL_KILLCACHE)
-
-        if os.path.exists(ZPOOL_CACHE_FILE):
-            shutil.copy(ZPOOL_CACHE_FILE, zpool_cache_saved)
-
-        # Now finally configure swap to manage any disks which might have been removed
-        self.middleware.call_sync('disk.swaps_configure')
-        self.middleware.call_hook_sync('pool.post_import', None)
-        job.set_progress(100, 'Pools import completed')
+        self.middleware.call_sync('pool.import_on_boot_finalization_background', background=True)
