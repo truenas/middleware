@@ -601,6 +601,7 @@ class LDAPService(TDBWrapConfigService):
             aux_params = [
                 f'base passwd cn=users,cn=accounts,{default_naming_context}',
                 f'base group cn=groups,cn=accounts,{default_naming_context}',
+                f'base netgroup cn=ng,cn=compat,{default_naming_context}',
             ]
             data.update({
                 'schema': 'RFC2307BIS',
