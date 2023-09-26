@@ -6,6 +6,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm, LocalUsername
 )
+from middlewared.plugins.cluster_linux.management import GlusterVolname, MAX_VOLNAME_LENGTH
 
 
 def test__nonhidden_after_hidden():
@@ -829,3 +830,27 @@ def test__localusername_schema(value, expected_to_fail):
             user(self, value)
     else:
         assert user(self, value) == value
+
+
+@pytest.mark.parametrize('value,expected_to_fail', [
+    ('', True),
+    (f'{"a" * (MAX_VOLNAME_LENGTH + 1)}', True),
+    ('bad name', True),
+    ('a$a', True),
+    ('a!', True),
+    ('a', False),
+    ('a_A', False),
+    ('A-a', False),
+    ('A1', False),
+])
+def test__glustervolname_schema(value, expected_to_fail):
+    @accepts(GlusterVolname('volume', required=True))
+    def gvol(self, data):
+        return data
+
+    self = Mock()
+    if expected_to_fail:
+        with pytest.raises(ValidationErrors):
+            gvol(self, value)
+    else:
+        assert gvol(self, value) == value

@@ -10,10 +10,8 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
-from auto_config import dev_test, ha, pool_name, ip
+from auto_config import ha, pool_name, ip
 from middlewared.test.integration.assets.pool import dataset
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skip for development testing')
 
 support_virtualization = GET('/vm/supports_virtualization/', controller_a=ha).json()
 DISK_DATASET = f'{pool_name}/disks'

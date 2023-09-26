@@ -9,9 +9,7 @@ import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST
-from auto_config import ha, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import ha
 source_list = []
 source_dict = {}
 sources = GET('/stats/get_sources/', controller_a=ha).json()

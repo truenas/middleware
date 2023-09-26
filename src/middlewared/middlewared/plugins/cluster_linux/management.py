@@ -1,5 +1,6 @@
 import errno
 import secrets
+import string
 from time import sleep
 
 from middlewared.client import Client, ClientException
@@ -14,6 +15,42 @@ from middlewared.validators import Range
 
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
+MAX_VOLNAME_LENGTH = 64
+REPLICA_NODE_COUNT = 3
+
+
+class GlusterVolname(Str):
+    invalid_volnames = [
+        'type', 'help', 'subvolumes', 'option', 'end-volume', 'all',
+        'volume_not_in_ring', 'description', 'force', 'snap-max-hard-limit',
+        'snap-max-soft-limit', 'auto-delete', 'activate-on-create',
+    ]
+
+    valid_chars = string.ascii_letters + string.digits + '_' + '-'
+
+    def validate(self, value):
+        if value is None:
+            return
+
+        verrors = ValidationErrors()
+
+        if value in self.invalid_volnames:
+            verrors.add(self.name, 'Invalid gluster volume name')
+
+        if not len(value):
+            verrors.add(self.name, 'Gluster volume name must contain at least one character')
+
+        if len(value) > MAX_VOLNAME_LENGTH:
+            verrors.add(self.name, f'Gluster volume name must contain no more than {MAX_VOLNAME_LENGTH} characters')
+
+        if any((char not in self.valid_chars for char in value)):
+            verrors.add(
+                self.name,
+                'Gluster volume name must consist of only alphanumeric characters, underscore (_), and dash (-)'
+            )
+
+        verrors.check()
+        return super().validate(value)
 
 
 class ClusterPeerConnection:
@@ -24,7 +61,7 @@ class ClusterPeerConnection:
         cred = self.credentials
         if (auth_token := cred.get('auth_token')):
             authenticated = c.call('auth.login_with_token', auth_token)
-        elif (auth_key := cred.get('auth_key')):
+        elif (auth_key := cred.get('api_key')):
             authenticated = c.call('auth.login_with_api_key', auth_key)
         else:
             authenticated = c.call('auth.login', cred['username'], cred['password'])
@@ -45,6 +82,9 @@ class ClusterPeerConnection:
         self.local = kwargs.get('local')
         self.conn = None
         self.call_fn = None
+
+        if self.credentials is None:
+            raise CallError('No credential provided')
 
         if not self.local:
             self.__do_connect()
@@ -532,7 +572,10 @@ class ClusterManagement(Service):
             # count being added, perhaps going so far as to allow users to
             # temporarily run without the volume spread to all servers while
             # shipping hardware
-            vol = self.middleware.call_sync('gluster.volume.get_instance', root_dir_setup['volume_name'])
+            vol = self.middleware.call_sync(
+                'gluster.volume.get_instance',
+                ctdb_config['root_dir_config']['volume_name']
+            )
         else:
             # Cluster has expanded and we're healthy now. If following fails, the cluster will still
             # continue serving data / be healthy, but manual intervention may be required to complete
@@ -613,7 +656,7 @@ class ClusterManagement(Service):
             layout = {}
 
         elif volume_type.endswith('REPLICATE'):
-            total_bricks = 3 * brick_layout['replica_distribute']
+            total_bricks = REPLICA_NODE_COUNT * brick_layout['replica_distribute']
             if total_bricks != brick_cnt:
                 verrors.add(
                     f'{schema}.replica',
@@ -624,7 +667,7 @@ class ClusterManagement(Service):
                     'divisible by three.'
                 )
 
-            layout = {'replica': brick_layout['replica']}
+            layout = {'replica': REPLICA_NODE_COUNT}
 
         elif volume_type.endswith('DISPERSE'):
             bricks_per_subvol = brick_layout['disperse_data'] + brick_layout['disperse_redundancy']
@@ -660,7 +703,7 @@ class ClusterManagement(Service):
         'cluster_configuration',
         Dict(
             'volume_configuration',
-            Str('name', required=True),
+            GlusterVolname('name', required=True),
             OROperator(
                 Dict(
                     'replicated_brick_layout',

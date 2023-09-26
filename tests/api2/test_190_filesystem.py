@@ -6,20 +6,17 @@
 import pytest
 import sys
 import os
-from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from copy import deepcopy
 from functions import POST, PUT, SSH_TEST, wait_on_job
-from auto_config import dev_test, pool_name, ip, user, password
+from auto_config import pool_name, ip, user, password
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from utils import create_dataset
 
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 group = 'root'
 path = '/etc'
 path_list = ['default', 'kernel', 'zfs', 'ssh']

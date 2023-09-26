@@ -7,9 +7,6 @@ import sys
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, POST
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 first_ups_list = [
     'rmonitor',

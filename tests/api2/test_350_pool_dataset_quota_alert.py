@@ -11,9 +11,6 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST
 from auto_config import ip, pool_name, user, password
-from auto_config import dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 G = 1024 * 1024 * 1024
 

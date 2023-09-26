@@ -11,10 +11,8 @@ import json
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user, dev_test
+from auto_config import ip, pool_name, password, user
 from pytest_dependency import depends
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
 
 DATASET = f"{pool_name}/smb-reg"
 DATASET_URL = DATASET.replace('/', '%2F')

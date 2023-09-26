@@ -7,7 +7,7 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, DELETE, SSH_TEST, wait_on_job
-from auto_config import ha, dev_test, artifacts, password, ip, pool_name
+from auto_config import ha, artifacts, password, ip, pool_name
 from middlewared.test.integration.utils import call, ssh
 
 from middlewared.test.integration.assets.apps import chart_release
@@ -16,9 +16,6 @@ from middlewared.test.integration.assets.kubernetes import backup
 from middlewared.test.integration.utils import file_exists_and_perms_check
 
 
-reason = 'Skipping for test development testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 backup_release_name = 'backuppostgres'
 
 # Read all the test below only on non-HA

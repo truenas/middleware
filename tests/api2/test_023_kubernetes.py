@@ -5,11 +5,8 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, PUT, wait_on_job
-from auto_config import ha, pool_name, interface, ip, dev_test
+from auto_config import ha, pool_name, interface, ip
 
-reason = 'Skipping for test development testing'
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 # Read all the test below only on non-HA
 if not ha:

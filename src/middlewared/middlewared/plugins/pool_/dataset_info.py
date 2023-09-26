@@ -72,7 +72,7 @@ class PoolDatasetService(Service):
         the blocksize based on the largest vdev of the zpool.
         """
         maxdisks = 1
-        for vdev in pool[0]['topology']['data']:
+        for vdev in pool['topology']['data']:
             if vdev['type'] == 'RAIDZ1':
                 disks = len(vdev['children']) - 1
             elif vdev['type'] == 'RAIDZ2':

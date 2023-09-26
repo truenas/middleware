@@ -17,9 +17,7 @@ from functions import (
     wait_on_job
 )
 from assets.REST.directory_services import ldap
-from auto_config import pool_name, ip, user, password, dev_test
-# comment pytestmark for development testing with --dev-test
-pytestmark = pytest.mark.skipif(dev_test, reason='Skipping for test development testing')
+from auto_config import pool_name, ip, user, password
 
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client

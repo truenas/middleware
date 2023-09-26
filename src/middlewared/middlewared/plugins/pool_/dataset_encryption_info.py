@@ -341,10 +341,17 @@ class PoolDatasetService(Service):
 
         mapping = {}
         for source_ds in task['source_datasets']:
-            if task['recursive']:
-                filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
+            source_ds_details = await self.middleware.call('pool.dataset.query', [['id', '=', source_ds]], {'extra': {
+                'properties': ['encryptionroot'],
+                'retrieve_children': False,
+            }})
+            if source_ds_details and source_ds_details[0]['encryption_root'] != source_ds:
+                filters = ['name', '=', source_ds_details[0]['encryption_root']]
             else:
-                filters = ['name', '=', source_ds]
+                if task['recursive']:
+                    filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
+                else:
+                    filters = ['name', '=', source_ds]
             mapping[source_ds] = await self.middleware.call('pool.dataset.query_encrypted_roots_keys', [filters])
 
         # We have 3 cases to deal with
@@ -372,7 +379,10 @@ class PoolDatasetService(Service):
         for source_ds in task['source_datasets']:
             for ds_name, key in mapping[source_ds].items():
                 for dataset in (dataset_mapping[ds_name] if include_encryption_root_children else [{'id': ds_name}]):
-                    result[dataset['id'].replace(source_ds, source_mapping[source_ds], 1)] = key
+                    result[dataset['id'].replace(
+                        source_ds if len(source_ds) <= len(dataset['id']) else dataset['id'],
+                        source_mapping[source_ds], 1
+                    )] = key
 
         return result
 
