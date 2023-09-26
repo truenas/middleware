@@ -208,8 +208,12 @@ class mDNSService(object):
                 self.hostname, self.regtype, port, interfaceIndex, txtrecord
             )
             root = xml.Element("service-group")
-            srv_name = xml.Element('name')
-            srv_name.text = self.hostname
+            # We want to use replace-wildcards with %h here, rather than the hostname
+            # because on hostname conflict:
+            # 1. avahi will have to iterate thru names again
+            # 2. avahi currently seems to generate a different postfix for host & service ('-23' vs ' #23')
+            srv_name = xml.Element('name', {'replace-wildcards': 'yes'})
+            srv_name.text = '%h'
             root.append(srv_name)
             for i in interfaceIndex:
                 service = xml.Element('service')

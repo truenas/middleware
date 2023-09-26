@@ -12,3 +12,4 @@ pyotp
 cython-iscsi @ git+https://github.com/truenas/cython-iscsi.git@tester
 PYSCSI @ git+https://github.com/truenas/python-scsi.git@tester
 pysnmplib
+zeroconf
