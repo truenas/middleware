@@ -320,17 +320,13 @@ class PoolService(Service):
 
     @private
     def import_on_boot_finalization_background(self):
-        # since these are called in `self.import_on_boot` and we really
-        # don't need to wait for these to complete to lessen the amount
-        # of time that ix-zfs.service takes to complete which prevents
-        # the boot process to complete
-        self.logger.debug('Configuring swap partitions')
-        self.middleware.call_sync('disk.swaps_configure')
-        self.logger.debug('Finished configuring swap partitions')
-
         self.logger.debug('Calling pool.post_import')
         self.middleware.call_hook_sync('pool.post_import', None)
         self.logger.debug('Finished calling pool.post_import')
+
+        self.logger.debug('Configuring swap partitions')
+        self.middleware.call_sync('disk.swaps_configure')
+        self.logger.debug('Finished configuring swap partitions')
 
     @private
     @job()
@@ -374,4 +370,6 @@ class PoolService(Service):
 
             self.unlock_on_boot_impl(name)
 
+        # no reason to wait on these to complete before returning so call them
+        # in a non-blocking manner
         self.middleware.call_sync('pool.import_on_boot_finalization_background', background=True)
