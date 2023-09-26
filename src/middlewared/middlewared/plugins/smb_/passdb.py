@@ -207,13 +207,16 @@ class SMBService(Service):
     async def passdb_sync_impl(self, conf_users, clustered=False):
         server_name = (await self.middleware.call('smb.config'))['netbiosname_local']
         try:
-            invalid_entries = await self.passdb_list_full([['Domain', '!=', server_name]])
+            invalid_entries = await self.passdb_list_full([['Domain', 'C!=', server_name]])
         except Exception:
             self.logger.warning("Failed to generate full passdb list, reinitializing", exc_info=True)
             return await self.passdb_reinit(conf_users)
 
         if invalid_entries:
-            self.logger.warning("Reinitializing passdb file due to invalid domain for one or more users.")
+            self.logger.warning(
+                "Reinitializing passdb file due to invalid domain for the following users: %s",
+                ", ".join([u["Unix username"] for u in invalid_entries])
+            )
             return await self.passdb_reinit(conf_users)
 
         pdb_users = await self.smbpasswd_dump()
