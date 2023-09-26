@@ -18,3 +18,6 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
         Str("key", title="Account Key", required=True),
         Str("endpoint", title="Endpoint", default=""),
     ]
+
+    async def get_task_extra(self, task):
+        return {"chunk_size": "100Mi"}
