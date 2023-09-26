@@ -4,10 +4,12 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import sys
 import os
+import sys
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
+from auto_config import ip
 from functions import GET, make_ws_request
 
 
@@ -50,7 +52,7 @@ def test_06_check_system_set_time():
     assert results.status_code == 200, results.text
 
     # Convert to seconds
-    datetime = results.json()['datetime']['$date']/1000
+    datetime = results.json()['datetime']['$date'] / 1000
 
     # hop 300 seconds into the past
     target = datetime - 300
@@ -64,7 +66,7 @@ def test_06_check_system_set_time():
 
     results = GET("/system/info/")
     assert results.status_code == 200, results.text
-    datetime2 = results.json()['datetime']['$date']/1000
+    datetime2 = results.json()['datetime']['$date'] / 1000
 
     # This is a fudge-factor because NTP will start working
     # pretty quickly to correct the slew.
