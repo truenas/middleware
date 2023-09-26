@@ -909,6 +909,24 @@ class ClusterManagement(Service):
             'ctdb_configuration': ctdb_config,
         }
 
+    @accepts(Dict(
+        'cluster_replace_node',
+        GlusterVolname('volume', required=True),
+        Ref('cluster_peer', 'source_node'),
+        Ref('cluster_peer', 'target_node')
+    ))
+    @returns(Ref('cluster_information'))
+    @job(lock='CLUSTER_REPLACE_NODE')
+    def replace_node(self, job, data):
+        """
+        WARNING: clustering APIs are not intended for 3rd-party consumption and may result
+        in a misconfigured SCALE cluster, production outage, or data loss.
+
+        Replace an existing cluster node `source_node` with a new one `target_node`. This
+        is a long-running and potentially disruptive process.
+        """
+        raise CallError('Node replacement feature has not been implemented yet', errno.EOPNOTSUPP)
+
 
 async def pool_pre_export_cluster(middleware, pool, options, job):
     if not await middleware.call('cluster.utils.is_clustered'):
