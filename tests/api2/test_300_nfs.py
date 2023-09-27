@@ -433,7 +433,6 @@ def test_31_check_nfs_share_network(request, networklist, ExpectedToPass):
         192.168.1.0/24(sec=sys,rw,subtree_check)
     """
     depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
-    # networks_to_test = ["192.168.0.0/24", "192.168.1.0/24"]
 
     results = PUT(f"/sharing/nfs/id/{nfsid}/", {'networks': networklist})
     if ExpectedToPass:
