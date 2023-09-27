@@ -2401,9 +2401,10 @@ def test_26_resize_target_file(request):
 def test_27_initiator_group(request):
     depends(request, ["iscsi_cmd_00"], scope="session")
 
-    initiator_iqn1 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:one"
-    initiator_iqn2 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:two"
-    initiator_iqn3 = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}:three"
+    initiator_base = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}"
+    initiator_iqn1 = f"{initiator_base}:one"
+    initiator_iqn2 = f"{initiator_base}:two"
+    initiator_iqn3 = f"{initiator_base}:three"
 
     # First create a target without an initiator group specified
     with initiator_portal() as config1:
