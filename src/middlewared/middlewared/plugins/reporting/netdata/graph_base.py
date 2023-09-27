@@ -150,33 +150,30 @@ class GraphBase(metaclass=GraphMeta):
             'gtime': 0,
         }
 
-    async def export(self, query_params: dict, identifier: typing.Optional[str] = None, aggregate: bool = True):
-        try:
-            chart_metrics = await Netdata.get_chart_metrics(
-                self.get_chart_name(identifier), self.query_parameters() | query_params,
-            )
-        except (ClientConnectError, ApiException):
-            self.middleware.logger.debug(
-                'Failed to connect to netdata when exporting %r data', self.get_chart_name(identifier), exc_info=True
-            )
-            chart_metrics = {
-                'labels': ['time'],
-                'data': [],
+    def process_chart_metrics(self, responses: list, query_params: dict, aggregate: bool) -> list:
+        results = []
+        for identifier, chart_metrics in responses:
+            data = {
+                'name': self.name,
+                'identifier': identifier or self.name,
+                **self.normalize_metrics(chart_metrics),
+                'start': query_params['after'],
+                'end': query_params['before'],
+                'aggregations': dict(),
             }
+            if self.aggregations and aggregate:
+                data = self.aggregate_metrics(data)
 
-        data = {
-            'name': self.name,
-            'identifier': identifier or self.name,
-            **(await self.middleware.run_in_thread(self.normalize_metrics, chart_metrics)),
-            'start': query_params['after'],
-            'end': query_params['before'],
-            'aggregations': dict(),
-            # TODO: step is missing here and netdata does not seem to have a concept of step
-            #  we can get it by dividing total entries by (end - start) but that can have a
-            #  performance penalty so leaving this for now
-            #  We do get timestamp always as the first column in data so that should suffice
-            #  as well i believe for UI team
-        }
-        if self.aggregations and aggregate:
-            data = await self.middleware.run_in_thread(self.aggregate_metrics, data)
-        return data
+            results.append(data)
+
+        return results
+
+    async def export_multiple_identifiers(
+        self, query_params: dict, identifiers: list, aggregate: bool = True
+    ) -> typing.List[dict]:
+        responses = await Netdata.get_charts_metrics({
+            identifier: self.get_chart_name(identifier) for identifier in identifiers
+        }, self.query_parameters() | query_params)
+
+        # Normalize the results
+        return await self.middleware.run_in_thread(self.process_chart_metrics, responses, query_params, aggregate)

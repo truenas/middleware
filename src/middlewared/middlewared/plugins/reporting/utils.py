@@ -1,4 +1,4 @@
-import asyncio
+import collections
 import contextlib
 import typing
 
@@ -30,17 +30,13 @@ def convert_unit(unit: str, page: int) -> int:
     }[unit] * page
 
 
-async def fetch_data_from_graph_plugin(
-    graph_plugin: GraphBase, query_params: dict, identifier: typing.Optional[str], aggregate: bool,
-    semaphore: asyncio.Semaphore, graph_plugins: set,
-) -> typing.Optional[dict]:
-    if graph_plugin.name not in graph_plugins:
+async def fetch_data_from_graph_plugins(
+    graph_plugins: typing.Dict[GraphBase, list], query_params: dict, aggregate: bool,
+) -> collections.abc.AsyncIterable:
+    for graph_plugin, identifiers in graph_plugins.items():
         await graph_plugin.build_context()
-        graph_plugins.add(graph_plugin.name)
-
-    async with semaphore:
         with contextlib.suppress(Exception):
-            return await graph_plugin.export(query_params, identifier, aggregate=aggregate)
+            yield await graph_plugin.export_multiple_identifiers(query_params, identifiers, aggregate=aggregate)
 
 
 def get_metrics_approximation(disk_count: int, core_count: int, interface_count: int, pool_count: int) -> dict:
