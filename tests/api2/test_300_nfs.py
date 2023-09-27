@@ -8,6 +8,7 @@ import pytest
 import sys
 import os
 import contextlib
+import ipaddress
 import urllib.parse
 from pytest_dependency import depends
 from time import sleep
@@ -411,22 +412,18 @@ networks_to_test = [
     (["192.168.0.0/24", "192.168.0.211/32"], False),    # Ranges overlap
     (["192.168.0.0/64"], False),    # Invalid range
     (["bogus_network"], False),     # Invalid
-    # The next test is not CIDR format, but gets converted to CIDR '/32'.
-    # The webui does not allow this type of entry.
-    (["192.168.10.20"], True),
+    (["192.168.27.211"], True),     # Non-CIDR format
     # IPv6
     (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/96"], True),            # Non overlap
     (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2f::/88"], False),           # Ranges overlap
     (["2001:0db8:85a3:0000:0000:8a2e::/96", "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128"], False),  # Ranges overlap
     (["2001:0db8:85a3:0000:0000:8a2e:0370:7334/256"], False),   # Invalid range
-    # The next test is not CIDR format, but gets converted to CIDR '/128'.
-    # The webui does not allow this type of entry.
-    (["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True),
+    (["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], True),        # Non-CIDR format
 ]
 
 
-@pytest.mark.parametrize("netlist,ExpectedToPass", networks_to_test)
-def test_31_check_nfs_share_network(request, netlist, ExpectedToPass):
+@pytest.mark.parametrize("networklist,ExpectedToPass", networks_to_test)
+def test_31_check_nfs_share_network(request, networklist, ExpectedToPass):
     """
     Verify that adding a network generates an appropriate line in exports
     file for same path. Sample:
@@ -438,7 +435,7 @@ def test_31_check_nfs_share_network(request, netlist, ExpectedToPass):
     depends(request, ["NFSID_SHARE_CREATED", "NFS_SERVICE_STARTED"], scope="session")
     # networks_to_test = ["192.168.0.0/24", "192.168.1.0/24"]
 
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'networks': netlist})
+    results = PUT(f"/sharing/nfs/id/{nfsid}/", {'networks': networklist})
     if ExpectedToPass:
         assert results.status_code == 200, results.text
     else:
@@ -449,8 +446,11 @@ def test_31_check_nfs_share_network(request, netlist, ExpectedToPass):
 
     exports_networks = [x['host'] for x in parsed[0]['opts']]
     if ExpectedToPass:
+        # The input is converted to CIDR format which often will
+        # look different from the input. e.g. 1.2.3.4/16 -> 1.2.0.0/16
+        cidr_list = [str(ipaddress.ip_network(x, strict=False)) for x in networklist]
         # The entry should be present
-        diff = set(networks_to_test) ^ set(exports_networks)
+        diff = set(cidr_list) ^ set(exports_networks)
         assert len(diff) == 0, f'diff: {diff}, exports: {parsed}'
     else:
         # The entry should not be present
@@ -487,7 +487,8 @@ hostnames_to_test = [
     (["192.168.1.0", "192.168.1.0"], False),
     (["ixsystems.com", "ixsystems.com"], False),
     # Mixing 'everybody' and named host
-    (["ixsystems.com", "*"], False),
+    (["ixsystems.com", "*"], False),    # Test NAS-123042, export collision, same path and entry
+    (["*", "*.ixsystems.com"], False),  # Test NAS-123042, export collision, same path and entry
     # Invalid IP address
     (["192.168.1.o"], False),
     # Hostname with spaces
@@ -803,24 +804,26 @@ class Test37WithFixture:
     # Parameters for test_37
     # Directory (dataset share VOL0), isHost, HostOrNet, ExpectedToPass
     dirs_to_export = [
-        ("everybody_1", True, ["*"], True),                   # 0: Host - Test NAS-120957
-        ("everybody_2", True, ["*"], True),                   # 1: Host - Test NAS-120957, allow non-related paths to same hosts
-        ("everybody_2", False, ["192.168.1.0/22"], False),    # 2: Network - Already exported to everybody in test 1
-        ("limited_1", True, ["127.0.0.1"], True),             # 3: Host - Test NAS-123042, allow export of subdirs
-        ("limited_2", True, ["127.0.0.1"], True),             # 4: Host - Test NAS-120957, NAS-123042
-        ("limited_2", True, ["*"], False),                    # 5: Host - Test NAS-123042, export collision, same path, different entry
-        ("dir_1", True, ["*.example.com"], True),             # 6: Host - Setup for test 7: Host with wildcard
-        ("dir_1", True, ["*.example.com"], False),            # 7: Host - Already exported in test 6
-        # ("dir_1", True, [ipv6_host], True),                   # -: ipv6
-        ("dir_1/subdir1", True, ["192.168.0.0"], True),       # 8: Host - Setup for test 9: Host as IP address
-        ("dir_1/subdir1", True, ["192.168.0.0"], False),      # 9: Host - Alread exported in test 8
-        ("limited_2/subdir2", True, ["127.0.0.1"], True),     # 10: Host - Test NAS-123042, allow export of subdirs
-        ("limited_1/subdir2", True, ["*"], True),             # 11: Host - Test NAS-123042, everybody
-        ("dir_2/subdir2", False, ["192.168.1.0/24"], True),   # 12: Network - Setup for test 13: Wide network range
-        ("dir_2/subdir2", False, ["192.168.1.0/32"], False),  # 13: Network - Test NAS-123042 - export collision, overlaping networks
-        ("everybody_1/subdir1", True, ["*", "*.ixsystems.com"], False),         # 14: Host - Test NAS-123042, export collision, same path and entry
-        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True),  # 15: Host - Test NAS-123042
-        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False),                # 16: Host - Block exporting symlinks
+        ("everybody_1", True, ["*"], True),                    # 0: Host - Test NAS-120957
+        ("everybody_2", True, ["*"], True),                    # 1: Host - Test NAS-120957, allow non-related paths to same hosts
+        ("everybody_2", False, ["192.168.1.0/22"], False),     # 2: Network - Already exported to everybody in test 1
+        ("limited_1", True, ["127.0.0.1"], True),              # 3: Host - Test NAS-123042, allow export of subdirs
+        ("limited_2", True, ["127.0.0.1"], True),              # 4: Host - Test NAS-120957, NAS-123042
+        ("limited_2", True, ["*"], False),                     # 5: Host - Test NAS-123042, export collision, same path, different entry
+        ("dir_1", True, ["*.example.com"], True),              # 6: Host - Setup for test 7: Host with wildcard
+        ("dir_1", True, ["*.example.com"], False),             # 7: Host - Already exported in test 6
+        ("dir_1/subdir1", True, ["192.168.0.0"], True),        # 8: Host - Setup for test 9: Host as IP address
+        ("dir_1/subdir1", True, ["192.168.0.0"], False),       # 9: Host - Alread exported in test 8
+        ("dir_1/subdir2", False, ["2001:0db8:85a3:0000:0000:8a2e::/96"], True),       # 10: Network - Setup for test 11: IPv6 network range
+        ("dir_1/subdir2", True, ["2001:0db8:85a3:0000:0000:8a2e:0370:7334"], False),  # 11: Host - IPv6 network overlap
+        ("dir_1/subdir3", True, ["192.168.27.211"], True),     # 12: Host - Test NAS-124269, setup for test 13
+        ("dir_1/subdir3", False, ["192.168.24.0/22"], False),  # 13: Network - Test NAS-124269, trap network overlap
+        ("limited_2/subdir2", True, ["127.0.0.1"], True),      # 14: Host - Test NAS-123042, allow export of subdirs
+        ("limited_1/subdir2", True, ["*"], True),              # 15: Host - Test NAS-123042, everybody
+        ("dir_2/subdir2", False, ["192.168.1.0/24"], True),    # 16: Network - Setup for test 17: Wide network range
+        ("dir_2/subdir2", False, ["192.168.1.0/32"], False),   # 17: Network - Test NAS-123042 - export collision, overlaping networks
+        ("limited_1/subdir3", True, ["192.168.1.0", "*.ixsystems.com"], True),  # 18: Host - Test NAS-123042
+        ("dir_1/symlink2subdir3", True, ["192.168.0.0"], False),                # 19: Host - Block exporting symlinks
     ]
 
     @pytest.mark.parametrize("dirname,isHost,HostOrNet,ExpectedToPass", dirs_to_export)

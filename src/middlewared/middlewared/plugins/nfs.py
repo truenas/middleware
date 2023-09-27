@@ -495,19 +495,20 @@ class SharingNFSService(SharingService):
 
         if this_network is None, then check networks list for overlaps
         else check this_network for overlaps with entries in networks
+        We set strict to False to allow entries like: 1.2.3.4/24
         """
         overlaps = []
         if this_network is not None:
-            this_network = ipaddress.ip_network(this_network)
+            this_network = ipaddress.ip_network(this_network, strict=False)
             for that_network in networks:
-                that_network = ipaddress.ip_network(that_network)
+                that_network = ipaddress.ip_network(that_network, strict=False)
                 if this_network.overlaps(that_network):
                     overlaps.append((this_network, that_network))
         else:
             for n1, n2 in itertools.combinations(networks, 2):
                 # Check for overlapped networks
-                ipn1 = ipaddress.ip_network(n1)
-                ipn2 = ipaddress.ip_network(n2)
+                ipn1 = ipaddress.ip_network(n1, strict=False)
+                ipn2 = ipaddress.ip_network(n2, strict=False)
                 if ipn1.overlaps(ipn2):
                     overlaps.append((n1, n2))
 
@@ -589,7 +590,7 @@ class SharingNFSService(SharingService):
                         continue
 
                     try:
-                        network = ipaddress.ip_network(host_ip)
+                        network = ipaddress.ip_network(host_ip, strict=False)
                     except Exception:
                         self.logger.warning("Got invalid host %r", host)
                         continue
@@ -671,7 +672,7 @@ class SharingNFSService(SharingService):
                     f"and overlaps host {host} (host IP: {host_ip})"
                 )
 
-            used_networks.add(ipaddress.ip_network(host_ip))
+            used_networks.add(ipaddress.ip_network(host_ip, strict=False))
 
     @private
     async def validate_share_path(self, other_shares, data, schema_name, verrors):
