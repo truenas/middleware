@@ -1,4 +1,5 @@
 import errno
+import typing
 
 from .client import ClientMixin
 from .exceptions import ApiException
@@ -38,3 +39,14 @@ class Netdata(ClientMixin):
             f'data?chart={chart}&options=null2zero{get_query_parameters(query_params)}',
             version='v1',
         )
+
+    @classmethod
+    async def get_charts_metrics(
+        cls, charts: dict, parameters: dict
+    ) -> typing.List[typing.Tuple[typing.Optional[str], dict]]:
+        """Get metrics for multiple charts"""
+        query_params = get_query_parameters(parameters)
+        return await cls.api_calls([
+            (identifier, f'data?chart={chart_name}&options=null2zero{query_params}')
+            for identifier, chart_name in charts.items()
+        ])
