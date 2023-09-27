@@ -1,3 +1,5 @@
+import ipaddress
+
 from pathlib import Path
 
 from pyroute2 import NDB
