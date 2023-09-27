@@ -523,6 +523,15 @@ def _verify_capacity(s, expected_capacity):
     assert returned_size == expected_capacity
 
 
+def get_target(targetid):
+    """
+    Return target JSON data.
+    """
+    result = GET(f"/iscsi/target/id/{targetid}")
+    assert result.status_code == 200, result.text
+    return result.json()
+
+
 def get_targets():
     """
     Return a dictionary of target JSON data, keyed by target name.
@@ -542,6 +551,17 @@ def modify_target(targetid, payload):
 
 def set_target_alias(targetid, newalias):
     modify_target(targetid, {'alias': newalias})
+
+
+def set_target_initiator_id(targetid, initiatorid):
+    target_data = get_target(targetid)
+
+    assert 'groups' in target_data, target_data
+    groups = target_data['groups']
+    assert len(groups) == 1, target_data
+
+    groups[0]['initiator'] = initiatorid
+    modify_target(targetid, {'groups': groups})
 
 
 @pytest.mark.dependency(name="iscsi_cmd_00")
@@ -2375,6 +2395,59 @@ def test_26_resize_target_file(request):
                 # Try to shrink the file again.  Expect an error (422)
                 file_extent_resize(extent_id, MB_256, 422)
                 assert MB_512 == _read_capacity16(s)
+
+
+@skip_multi_initiator
+def test_27_initiator_group(request):
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    initiator_base = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}"
+    initiator_iqn1 = f"{initiator_base}:one"
+    initiator_iqn2 = f"{initiator_base}:two"
+    initiator_iqn3 = f"{initiator_base}:three"
+
+    # First create a target without an initiator group specified
+    with initiator_portal() as config1:
+        with configured_target_to_zvol_extent(config1, target_name, zvol) as config:
+            iqn = f'{basename}:{target_name}'
+
+            # Ensure we can access from all initiators
+            for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
+                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                    s.blocksize = 512
+                    TUR(s)
+
+            # Now set the initiator id to the empty (Allow All Initiators) one
+            # that we created above.  Then ensure we can still read access the
+            # target from all initiators
+            set_target_initiator_id(config['target']['id'], config['initiator']['id'])
+            for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
+                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                    s.blocksize = 512
+                    TUR(s)
+
+            # Now create another initiator group, which contains the first two
+            # initiators only and modify the target to use it
+            with initiator("two initiators only", [initiator_iqn1, initiator_iqn2]) as twoinit_config:
+                set_target_initiator_id(config['target']['id'], twoinit_config['id'])
+                # First two initiators can connect to the target
+                for initiator_iqn in [initiator_iqn1, initiator_iqn2]:
+                    with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                        s.blocksize = 512
+                        TUR(s)
+                # Third initiator cannot connect to the target
+                with pytest.raises(RuntimeError) as ve:
+                    with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn3) as s:
+                        s.blocksize = 512
+                        TUR(s)
+                    assert 'Unable to connect to' in str(ve), ve
+                # Clear it again
+                set_target_initiator_id(config['target']['id'], None)
+
+            for initiator_iqn in [initiator_iqn1, initiator_iqn2, initiator_iqn3]:
+                with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
+                    s.blocksize = 512
+                    TUR(s)
 
 
 def test_99_teardown(request):
