@@ -192,8 +192,9 @@ class ISCSIGlobalService(SystemServiceService):
         if not await self.middleware.call('failover.licensed'):
             return False
 
-        license_ = await self.middleware.call('system.license')
-        if license_ is not None and 'FIBRECHANNEL' in license_['features']:
-            return True
+        # TODO: FIBRECHANNEL not currently supported in SCALE
+        # license_ = await self.middleware.call('system.license')
+        # if license_ is not None and 'FIBRECHANNEL' in license_['features']:
+        #     return True
 
         return (await self.middleware.call('iscsi.global.config'))['alua']
