@@ -507,7 +507,7 @@ def test_certificate_lifetime_validation(life_time, should_work):
         '''),
         False,
     )
-])
+], ids=['valid_cert', 'invalid_cert', 'invalid_cert'])
 def test_importing_certificate_validation(certificate, private_key, should_work):
     cert_params = {'certificate': certificate, 'privatekey': private_key}
     if should_work:
