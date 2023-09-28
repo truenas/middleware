@@ -319,16 +319,6 @@ class PoolService(Service):
                     self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
 
     @private
-    def import_on_boot_finalization_background(self):
-        self.logger.debug('Calling pool.post_import')
-        self.middleware.call_hook_sync('pool.post_import', None)
-        self.logger.debug('Finished calling pool.post_import')
-
-        self.logger.debug('Configuring swap partitions')
-        self.middleware.call_sync('disk.swaps_configure')
-        self.logger.debug('Finished configuring swap partitions')
-
-    @private
     @job()
     def import_on_boot(self, job):
         if self.middleware.call_sync('failover.licensed'):
@@ -337,13 +327,12 @@ class PoolService(Service):
             return
 
         set_cachefile_property = True
+        dir_name = os.path.dirname(ZPOOL_CACHE_FILE)
         try:
-            self.logger.debug('Creating path components for %r', ZPOOL_CACHE_FILE)
+            self.logger.debug('Creating %r (if it doesnt already exist)', dir_name)
+            os.makedirs(dir_name, exist_ok=True)
         except Exception:
-            self.logger.warning(
-                'FAILED unhandled exception creating path components for %r',
-                ZPOOL_CACHE_FILE, exc_info=True
-            )
+            self.logger.warning('FAILED unhandled exception creating %r', dir_name, exc_info=True)
             set_cachefile_property = False
         else:
             try:
@@ -370,6 +359,11 @@ class PoolService(Service):
 
             self.unlock_on_boot_impl(name)
 
-        # no reason to wait on these to complete before returning so call them
-        # in a non-blocking manner
-        self.middleware.call_sync('pool.import_on_boot_finalization_background', background=True)
+        # no reason to wait on this to complete
+        self.middleware.call_sync('disk.swaps_configure', background=True)
+
+        # TODO: we need to fix this. There is 0 reason to do all this stuff
+        # and block the entire boot-up process.
+        self.logger.debug('Calling pool.post_import')
+        self.middleware.call_hook_sync('pool.post_import', None)
+        self.logger.debug('Finished calling pool.post_import')
