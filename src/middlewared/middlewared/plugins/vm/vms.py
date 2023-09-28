@@ -100,7 +100,10 @@ class VMService(CRUDService, VMSupervisorMixin):
             self._check_setup_connection()
         for row in rows:
             status[row['id']] = self.status_impl(row)
-        return {'status': status}
+
+        return {
+            'status': status,
+        }
 
     @accepts()
     @returns(Dict(
@@ -119,6 +122,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             [('vm', '=', vm['id'])],
             {'force_sql_filters': True},
         )
+        vm['display_available'] = any(device['dtype'] == 'DISPLAY' for device in vm['devices'])
         vm['status'] = context['status'][vm['id']]
         return vm
 
