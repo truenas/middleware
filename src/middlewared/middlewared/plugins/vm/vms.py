@@ -103,7 +103,6 @@ class VMService(CRUDService, VMSupervisorMixin):
 
         return {
             'status': status,
-            'display_device_info': extra.get('retrieve_display_available_info', False)
         }
 
     @accepts()
@@ -123,9 +122,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             [('vm', '=', vm['id'])],
             {'force_sql_filters': True},
         )
-        if context['display_device_info']:
-            vm['display_available'] = any(device['dtype'] == 'DISPLAY' for device in vm['devices'])
-
+        vm['display_available'] = any(device['dtype'] == 'DISPLAY' for device in vm['devices'])
         vm['status'] = context['status'][vm['id']]
         return vm
 
