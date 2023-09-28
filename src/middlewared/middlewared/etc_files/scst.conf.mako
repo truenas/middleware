@@ -58,6 +58,14 @@
     alua_enabled = middleware.call_sync("iscsi.global.alua_enabled")
     failover_status = middleware.call_sync("failover.status")
     node = middleware.call_sync("failover.node")
+    failover_virtual_aliases = []
+    if alua_enabled:
+        listen_ip_choices = middleware.call_sync('iscsi.portal.listen_ip_choices')
+        for interface in middleware.call_sync('interface.query', [('failover_virtual_aliases', '!=', [])]):
+            for addr in interface['failover_virtual_aliases']:
+                if 'address' in addr:
+                    failover_virtual_aliases.append(addr['address'])
+
     if failover_status == "MASTER":
         middleware.call_sync("iscsi.target.logout_ha_targets")
         local_ip = middleware.call_sync("failover.local_ip")
@@ -251,7 +259,13 @@ TARGET_DRIVER iscsi {
                 # https://github.com/truenas/scst/blob/e945943861687d16ae0415207306f75a55bcfd2b/iscsi-scst/usr/target.c#L139-L138
                 address = '*'
             else:
-                address = (f'[{addr["ip"]}]' if ':' in addr['ip'] else addr['ip'])
+                # In an ALUA config, we may have selected the int_vip.  If so just use
+                # the IP pertainng to this node.
+                rawaddr = addr['ip']
+                if alua_enabled and rawaddr in failover_virtual_aliases and rawaddr in listen_ip_choices and '/' in listen_ip_choices[rawaddr]:
+                    pair = listen_ip_choices[rawaddr].split('/')
+                    rawaddr = pair[0] if node == 'A' else pair[1]
+                address = (f'[{rawaddr}]' if ':' in rawaddr else rawaddr)
 
             group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
             if not has_per_host_access:
