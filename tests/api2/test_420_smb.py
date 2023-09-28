@@ -12,13 +12,14 @@ import uuid
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST
+from functions import PUT, SSH_TEST
 from protocols import smb_connection
 from utils import create_dataset
 from auto_config import ip, pool_name, password, user, hostname
+from middlewared.test.integration.assets.account import group
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
-from middlewared.test.integration.utils import ssh
+from middlewared.test.integration.utils import client, ssh
 
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
@@ -57,8 +58,8 @@ def test_001_enable_smb1(initialize_for_smb_tests):
     smb_info = initialize_for_smb_tests
     smb_id = smb_info['share']['id']
 
-    results = PUT("/smb/", {"enable_smb1": True, 'guest': 'shareuser'})
-    assert results.status_code == 200, results.text
+    with client() as c:
+        c.call('smb.update', {"enable_smb1": True, 'guest': 'shareuser'})
 
 
 @pytest.mark.parametrize('params', [
@@ -103,118 +104,47 @@ def test_012_test_basic_smb_ops(request, params):
 
 def test_018_setting_enable_smb1_to_false(request):
     depends(request, ["smb_initialized"], scope="session")
-    payload = {
-        "enable_smb1": False
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    with client() as c:
+        c.call('smb.update', {"enable_smb1": False})
 
 
 def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
     depends(request, ["smb_initialized"], scope="session")
-    payload = {
-        'home': True,
-        "guestok": False
-    }
-    results = PUT(f"/sharing/smb/id/{smb_id}", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_021_verify_smb_getparm_path_homes(request):
-    depends(request, ["smb_initialized"], scope="session")
-    cmd = 'midclt call smb.getparm path homes'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert results['stdout'].strip() == f'{SMB_PATH}/%U'
-
-
-def test_025_disable_homes(request):
-    depends(request, ["smb_initialized"], scope="session")
-    results = PUT(f"/sharing/smb/id/{smb_id}/", {"home": False})
-    assert results.status_code == 200, results.text
+    with client() as c:
+        c.call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
+        try:
+            share_path = c.call('smb.getparm', 'path', 'homes')
+            assert share_path == f'{SMB_PATH}/%U'
+        finally:
+            c.call('smb.update', smb_id, {'home': False})
 
 
 def test_034_change_timemachine_to_true(request):
     depends(request, ["smb_initialized"], scope="session")
-    payload = {
-        "aapl_extensions": True
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    with client() as c:
+        c.call('smb.update', {'aapl_extensions': True})
+        c.call('sharing.smb.update', smb_id, {'timemachine': True})
+        try:
+            share_info = c.call('sharing.smb.query', [['id', '=', smb_id]], {'get': True})
+            assert share_info['timemachine'] is True
 
-    global vuid
-    payload = {
-        'timemachine': True,
-    }
-    results = PUT(f"/sharing/smb/id/{smb_id}/", payload)
-    assert results.status_code == 200, results.text
-    vuid = results.json()['vuid']
+            enabled = c.call('smb.getparm', 'fruit:time machine', share_info['name'])
+            assert enabled == 'True'
+
+            vfs_obj = c.call('smb.getparm', 'vfs objects', share_info['name'])
+            assert 'fruit' in vfs_obj
+        finally:
+            c.call('sharing.smb.update', smb_id, {'timemachine': False})
+            c.call('smb.update', {'aapl_extensions': False})
 
 
-def test_035_verify_that_timemachine_is_true(request):
+@pytest.mark.dependency(name="SMB_RECYCLE_CONFIGURED")
+def test_039_enable_recycle_bin(request):
     depends(request, ["smb_initialized"], scope="session")
-    results = GET(f"/sharing/smb/id/{smb_id}/")
-    assert results.status_code == 200, results.text
-    assert results.json()['timemachine'] is True, results.text
-
-
-@pytest.mark.parametrize('vfs_object', ["fruit", "streams_xattr"])
-def test_036_verify_smb_getparm_vfs_objects_share(request, vfs_object):
-    depends(request, ["smb_initialized"], scope="session")
-    cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert vfs_object in results['output'], results['output']
-
-
-def test_037_verify_smb_getparm_fruit_time_machine_is_yes(request):
-    depends(request, ["smb_initialized"], scope="session")
-    cmd = f'midclt call smb.getparm "fruit:time machine" {SMB_NAME}'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert bool(results['stdout'].strip()) is True, results['output']
-
-
-def test_038_disable_time_machine(request):
-    depends(request, ["smb_initialized"], scope="session")
-    payload = {
-        'timemachine': False,
-    }
-    results = PUT(f"/sharing/smb/id/{smb_id}/", payload)
-    assert results.status_code == 200, results.text
-
-    payload = {
-        "aapl_extensions": False
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_039_change_recyclebin_to_true(request):
-    depends(request, ["smb_initialized"], scope="session")
-    global vuid
-    payload = {
-        "recyclebin": True,
-    }
-    results = PUT(f"/sharing/smb/id/{smb_id}", payload)
-    assert results.status_code == 200, results.text
-    vuid = results.json()['vuid']
-
-
-def test_040_verify_that_recyclebin_is_true(request):
-    depends(request, ["smb_initialized"], scope="session")
-    results = GET(f"/sharing/smb/id/{smb_id}/")
-    assert results.status_code == 200, results.text
-    assert results.json()['recyclebin'] is True, results.text
-
-
-@pytest.mark.parametrize('vfs_object', ["recycle"])
-def test_041_verify_smb_getparm_vfs_objects_share(request, vfs_object):
-    depends(request, ["smb_initialized"], scope="session")
-    cmd = f'midclt call smb.getparm "vfs objects" {SMB_NAME}'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    assert vfs_object in results['output'], results['output']
+    with client() as c:
+        share_info = c.call('sharing.smb.update', smb_id, {'recyclebin': True})
+        vfs_obj = c.call('smb.getparm', 'vfs objects', share_info['name'])
+        assert 'recycle' in vfs_obj
 
 
 def do_recycle_ops(c, has_subds=False):
@@ -254,6 +184,7 @@ def do_recycle_ops(c, has_subds=False):
 
 
 def test_042_recyclebin_functional_test(request):
+    depends(request, ["SMB_RECYCLE_CONFIGURED"], scope="session")
     with create_dataset(f'{dataset}/subds', {'share_type': 'SMB'}):
         with smb_connection(
             host=ip,
@@ -270,7 +201,7 @@ def test_042_recyclebin_functional_test(request):
     {'global': {'aapl_extensions': False}, 'share': {}},
 ])
 def test_043_recyclebin_functional_test_subdir(request, smb_config):
-    depends(request, ["smb_initialized"], scope="session")
+    depends(request, ["SMB_RECYCLE_CONFIGURED"], scope="session")
     tmp_ds = f"{pool_name}/recycle_test"
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'
@@ -286,7 +217,7 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
         with smb_share(tmp_ds_path, tmp_share_name, {
             'purpose': 'NO_PRESET',
             'recyclebin': True
-        } | smb_config['share']) as s:
+        } | smb_config['share']):
             with smb_connection(
                 host=ip,
                 share=tmp_share_name,
@@ -309,7 +240,7 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
         with smb_share(tmp_ds_path, tmp_share_name, {
             'purpose': 'NO_PRESET',
             'recyclebin': True
-        } | smb_config['share']) as s:
+        } | smb_config['share']):
             with smb_connection(
                 host=ip,
                 share=tmp_share_name,
@@ -343,24 +274,13 @@ def test_056_netbios_name_change_check_sid(request):
     global new_sid
     global old_netbiosname
 
-    results = GET("/smb/")
-    assert results.status_code == 200, results.text
-    old_netbiosname = results.json()["netbiosname"]
-    old_sid = results.json()["cifs_SID"]
+    with client() as c:
+        smb_config = c.call('smb.config')
+        old_netbiosname = smb_config['netbiosname']
+        old_sid = smb_config['cifs_SID']
 
-    payload = {
-        "netbiosname": "nb_new",
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
-    new_sid_resp = results.json()["cifs_SID"]
-    assert old_sid != new_sid_resp, results.text
-    sleep(5)
-
-    results = GET("/smb/")
-    assert results.status_code == 200, results.text
-    new_sid = results.json()["cifs_SID"]
-    assert new_sid != old_sid, results.text
+        new_sid = c.call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
+        assert new_sid != old_sid
 
 
 @pytest.mark.dependency(name="SID_TEST_GROUP")
@@ -369,72 +289,45 @@ def test_057_create_new_smb_group_for_sid_test(request):
     Create testgroup and verify that groupmap entry generated
     with new SID.
     """
+    def check_groupmap_for_entry(groupmaps, nt_name):
+        for entry in groupmaps:
+            if entry['nt_name'] == nt_name:
+                return entry
+
+        return None
+
     depends(request, ["SID_CHANGED"], scope="session")
-    global group_id
-    payload = {
-        "name": "testsidgroup",
-        "smb": True,
-    }
-    results = POST("/group/", payload)
-    assert results.status_code == 200, results.text
-    group_id = results.json()
-    sleep(5)
+    with client() as c:
+        with group({'name': 'testsidgroup', 'smb': True}):
+            groupmaps = c.call('smb.groupmap_list')
 
-    cmd = "midclt call smb.groupmap_list"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    groupmaps = json.loads(results['stdout'].strip())
+            test_entry = check_groupmap_for_entry(
+                groupmaps['local'].values(),
+                'testsidgroup'
+            )
+            assert test_entry is not None, groupmaps['local'].values()
+            domain_sid = test_entry['sid'].rsplit("-", 1)[0]
+            assert domain_sid == new_sid, groupmaps['local'].values()
 
-    test_entry = None
-    for entry in groupmaps['local'].values():
-        if entry['nt_name'] == 'testsidgroup':
-            test_entry = entry
-            break
+            c.call('smb.update', {'netbiosname': old_netbiosname})
 
-    assert test_entry is not None, groupmaps['local'].values()
-    domain_sid = test_entry['sid'].rsplit("-", 1)[0]
-    assert domain_sid == new_sid, groupmaps['local'].values()
+            groupmaps = c.call('smb.groupmap_list')
+            test_entry = check_groupmap_for_entry(
+                groupmaps['local'].values(),
+                'testsidgroup'
+            )
 
-
-def test_058_change_netbios_name_and_check_groupmap(request):
-    """
-    Verify that changes to netbios name result in groupmap sid
-    changes.
-    """
-    depends(request, ["SID_CHANGED"], scope="session")
-    payload = {
-        "netbiosname": old_netbiosname,
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
-    sleep(5)
-
-    cmd = "midclt call smb.groupmap_list"
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    groupmaps = json.loads(results['stdout'].strip())
-
-    test_entry = None
-    for entry in groupmaps['local'].values():
-        if entry['nt_name'] == 'testsidgroup':
-            test_entry = entry
-            break
-
-    assert test_entry is not None, groupmaps['local'].values()
-    domain_sid = test_entry['sid'].rsplit("-", 1)[0]
-    assert domain_sid != new_sid, groupmaps['local'].values()
-
-
-def test_059_delete_smb_group(request):
-    depends(request, ["SID_TEST_GROUP"])
-    results = DELETE(f"/group/id/{group_id}/")
-    assert results.status_code == 200, results.text
+            assert test_entry is not None, groupmaps['local'].values()
+            domain_sid = test_entry['sid'].rsplit("-", 1)[0]
+            assert domain_sid != new_sid, groupmaps['local'].values()
 
 
 AUDIT_FIELDS = [
     'aid', 'vers', 'time', 'addr', 'user', 'sess', 'svc',
     'svc_data', 'event', 'event_data', 'success'
 ]
+
+
 def get_audit_entries(svc):
     cmd = "sqlite3 /audit/SMB.db '.mode line' "
     cmd += "\"SELECT * FROM audit_SMB_0_1, json_tree(audit_SMB_0_1.svc_data, '$.service') "
@@ -619,7 +512,6 @@ def test_060_audit_log(request):
     'local.charset',
     'local.convert_string',
     'local.string_case_handle',
-    'local.event',
     'local.tevent_req',
     'local.util_str_escape',
     'local.talloc',
