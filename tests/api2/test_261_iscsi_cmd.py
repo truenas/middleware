@@ -2440,7 +2440,7 @@ def test_27_initiator_group(request):
                     with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn3) as s:
                         s.blocksize = 512
                         TUR(s)
-                    assert 'Unable to connect to' in str(ve), ve
+                assert 'Unable to connect to' in str(ve), ve
                 # Clear it again
                 set_target_initiator_id(config['target']['id'], None)
 
@@ -2448,6 +2448,47 @@ def test_27_initiator_group(request):
                 with iscsi_scsi_connection(ip, iqn, initiator_name=initiator_iqn) as s:
                     s.blocksize = 512
                     TUR(s)
+
+
+def test_28_portal_access(request):
+    """
+    Verify that an iSCSI client can access a target on the specified
+    portal.
+
+    For a HA ALUA target, check the constituent interfaces.
+    """
+    iqn = f'{basename}:{target_name}'
+    with initiator() as initiator_config:
+        with portal(listen=[{'ip': get_ip_addr(ip)}]) as portal_config:
+            config1 = {'initiator': initiator_config, 'portal': portal_config}
+            with configured_target_to_zvol_extent(config1, target_name, zvol, volsize=MB_100):
+                with iscsi_scsi_connection(ip, iqn) as s:
+                    TUR(s)
+                    s.blocksize = 512
+                    assert MB_100 == _read_capacity16(s)
+                # Now, if we are in a HA config turn on ALUA and test
+                # the specific IP addresses
+                if ha:
+                    with alua_enabled():
+                        results = GET('/iscsi/global')
+                        assert results.status_code == 200, results.text
+                        assert results.json()['alua'], results.text
+
+                        with pytest.raises(RuntimeError) as ve:
+                            with iscsi_scsi_connection(ip, iqn) as s:
+                                s.blocksize = 512
+                                TUR(s)
+                        assert 'Unable to connect to' in str(ve), ve
+
+                        with iscsi_scsi_connection(controller1_ip, iqn) as s:
+                            TUR(s)
+                            s.blocksize = 512
+                            assert MB_100 == _read_capacity16(s)
+
+                        with iscsi_scsi_connection(controller2_ip, iqn) as s:
+                            TUR(s)
+                            s.blocksize = 512
+                            assert MB_100 == _read_capacity16(s)
 
 
 def test_99_teardown(request):
