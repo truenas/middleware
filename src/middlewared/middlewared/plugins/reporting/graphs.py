@@ -1,4 +1,4 @@
-import asyncio
+import collections
 import errno
 import time
 import typing
@@ -12,10 +12,7 @@ from middlewared.validators import Range
 
 from .netdata import GRAPH_PLUGINS
 from .netdata.graph_base import GraphBase
-from .utils import convert_unit, fetch_data_from_graph_plugin
-
-
-CONCURRENT_TASKS = 400
+from .utils import convert_unit, fetch_data_from_graph_plugins
 
 
 class ReportingService(Service):
@@ -60,16 +57,10 @@ class ReportingService(Service):
             raise CallError(f'{name!r} is not a valid graph plugin.', errno.ENOENT)
 
         query_params = await self.middleware.call('reporting.translate_query_params', query)
+        await graph_plugin.build_context()
         identifiers = await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]
 
-        semaphore = asyncio.Semaphore(CONCURRENT_TASKS)
-        graph_plugins = set()
-        return [
-            result for result in await asyncio.gather(*[fetch_data_from_graph_plugin(
-                graph_plugin, query_params, identifier, query['aggregate'], semaphore, graph_plugins,
-            ) for identifier in identifiers])
-            if result is not None
-        ]
+        return await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate'])
 
     @cli_private
     @filterable
@@ -139,16 +130,15 @@ class ReportingService(Service):
 
         """
         query_params = await self.middleware.call('reporting.translate_query_params', query)
-        graph_plugins = set()
-        semaphore = asyncio.Semaphore(CONCURRENT_TASKS)
+        graph_plugins = collections.defaultdict(list)
+        for graph in graphs:
+            graph_plugins[self.__graphs[graph['name']]].append(graph['identifier'])
 
-        return [
-            result for result in await asyncio.gather(*[fetch_data_from_graph_plugin(
-                self.__graphs[graph['name']], query_params, graph['identifier'], query['aggregate'],
-                semaphore, graph_plugins,
-            ) for graph in graphs])
-            if result is not None
-        ]
+        results = []
+        async for result in fetch_data_from_graph_plugins(graph_plugins, query_params, query['aggregate']):
+            results.extend(result)
+
+        return results
 
     @private
     @accepts(Ref('reporting_query'))
@@ -157,8 +147,8 @@ class ReportingService(Service):
         rv = []
         for graph_plugin in self.__graphs.values():
             await graph_plugin.build_context()
-            for ident in (await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]):
-                rv.append(await graph_plugin.export(query_params, ident, aggregate=query['aggregate']))
+            identifiers = await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]
+            rv.extend(await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate']))
         return rv
 
     @private
