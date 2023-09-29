@@ -1,5 +1,7 @@
 <%
     from middlewared.plugins.audit.utils import AUDITED_SERVICES
+
+    adv_conf = render_ctx['system.advanced.config']
 %>\
 ##################
 # TrueNAS filters
@@ -25,6 +27,13 @@ filter f_tnremote_f_notice { level(notice..emerg); };
 filter f_tnremote_f_info { level(info..emerg); };
 filter f_tnremote_f_is_info { level(info); };
 filter f_tnremote_f_debug { level(debug..emerg); };
+
+filter f_tnremote {
+    filter(f_tnremote_${adv_conf["sysloglevel"].lower()})
+% if not adv_conf['syslog_audit']:
+    and not filter(f_tnaudit_all)
+% endif
+};
 
 # These filters are used for applications that have
 # special logging behavior

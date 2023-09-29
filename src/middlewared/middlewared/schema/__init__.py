@@ -13,7 +13,8 @@ from .plugin_schema import Schemas  # noqa
 from .processor import accepts, clean_and_validate_arg, returns  # noqa
 from .resolvers import resolve_methods  # noqa
 from .string_schema import ( # noqa
-    Dataset, Datetime, Dir, File, HostPath, IPAddr, LDAP_DN, Path, Password, SID, Str, Time, UnixPerm, URI
+    Dataset, Datetime, Dir, File, HostPath, IPAddr, LDAP_DN, Path, Password,
+    SID, Str, Time, UnixPerm, URI, UUID
 )
 from .username import LocalUsername  # noqa
 from .utils import NOT_PROVIDED, REDACTED_VALUE  # noqa

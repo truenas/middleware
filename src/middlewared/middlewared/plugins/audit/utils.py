@@ -6,7 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 AUDIT_DATASET_PATH = '/audit'
 AUDITED_SERVICES = [('SMB', 0.1)]
 AUDIT_TABLE_PREFIX = 'audit_'
-AUDIT_LIFETIME = 7  # Temporary hard-coded retention until public APIs developed
+AUDIT_LIFETIME = 7
+AUDIT_DEFAULT_RESERVATION = 0
+AUDIT_DEFAULT_QUOTA = 0
+AUDIT_FILL_CRITICAL = 95
+AUDIT_FILL_WARNING = 80
+AUDIT_MIN_FREE = 1  # base minimum free size to keep availalable at all times
 
 AuditBase = declarative_base()
 
@@ -27,13 +32,17 @@ def generate_audit_table(svc, vers):
     and related documents. This will potentially entail changes to
     audit-related code in the above AUDIT_SERVICES independent of the
     middleware auditing backend.
+
+    Currently the sa.DateTime() does not give us fractional second
+    precision, but for the purpose of our query interfaces, this
+    should be sufficient to figure out when events happened.
     """
     return Table(
         audit_table_name(svc, vers),
         AuditBase.metadata,
         sa.Column('aid', sa.String(36)),
         sa.Column('msg_ts', sa.Integer()),
-        sa.Column('time', sa.String()),
+        sa.Column('time', sa.DateTime()),
         sa.Column('addr', sa.String()),
         sa.Column('user', sa.String()),
         sa.Column('sess', sa.String()),

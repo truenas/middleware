@@ -340,6 +340,20 @@ class Datetime(Str):
         return super().validate(str(value))
 
 
+class UUID(Str):
+
+    def validate(self, value):
+        if value is None:
+            return
+
+        try:
+            uuid.UUID(value)
+        except TypeError:
+            raise ValueError('Please supply a valid hex-formatted UUID string')
+
+        return super().validate(value)
+
+
 class UnixPerm(Str):
 
     def validate(self, value):

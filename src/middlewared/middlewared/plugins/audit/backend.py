@@ -12,7 +12,7 @@ from middlewared.schema import accepts, Ref, Str
 from middlewared.service import periodic, private, Service
 from middlewared.service_exception import CallError, MatchNotFound
 
-from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES, AUDIT_LIFETIME
+from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_TABLES
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
 
@@ -235,7 +235,7 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         This is a private method that should only be called as a periodic task.
         It deletes database entries that are older than the specified lifetime.
         """
-        retention_period = AUDIT_LIFETIME
+        retention_period = self.middleware.call_sync('audit.config')['retention']
         for svc, conn in self.connections.items():
             try:
                 conn.enforce_retention(retention_period)
