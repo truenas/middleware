@@ -12,14 +12,13 @@ import uuid
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, SSH_TEST
 from protocols import smb_connection
 from utils import create_dataset
-from auto_config import ip, pool_name, password, user, hostname
+from auto_config import ha, ip, pool_name, hostname
 from middlewared.test.integration.assets.account import group
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
-from middlewared.test.integration.utils import client, ssh
+from middlewared.test.integration.utils import call, ssh
 
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
@@ -58,8 +57,7 @@ def test_001_enable_smb1(initialize_for_smb_tests):
     smb_info = initialize_for_smb_tests
     smb_id = smb_info['share']['id']
 
-    with client() as c:
-        c.call('smb.update', {"enable_smb1": True, 'guest': 'shareuser'})
+    call('smb.update', {"enable_smb1": True, 'guest': 'shareuser'})
 
 
 @pytest.mark.parametrize('params', [
@@ -104,47 +102,43 @@ def test_012_test_basic_smb_ops(request, params):
 
 def test_018_setting_enable_smb1_to_false(request):
     depends(request, ["smb_initialized"], scope="session")
-    with client() as c:
-        c.call('smb.update', {"enable_smb1": False})
+    call('smb.update', {"enable_smb1": False})
 
 
 def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
     depends(request, ["smb_initialized"], scope="session")
-    with client() as c:
-        c.call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
-        try:
-            share_path = c.call('smb.getparm', 'path', 'homes')
-            assert share_path == f'{SMB_PATH}/%U'
-        finally:
-            c.call('smb.update', smb_id, {'home': False})
+    call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
+    try:
+        share_path = call('smb.getparm', 'path', 'homes')
+        assert share_path == f'{SMB_PATH}/%U'
+    finally:
+        call('sharing.smb.update', smb_id, {'home': False})
 
 
 def test_034_change_timemachine_to_true(request):
     depends(request, ["smb_initialized"], scope="session")
-    with client() as c:
-        c.call('smb.update', {'aapl_extensions': True})
-        c.call('sharing.smb.update', smb_id, {'timemachine': True})
-        try:
-            share_info = c.call('sharing.smb.query', [['id', '=', smb_id]], {'get': True})
-            assert share_info['timemachine'] is True
+    call('smb.update', {'aapl_extensions': True})
+    call('sharing.smb.update', smb_id, {'timemachine': True})
+    try:
+        share_info = call('sharing.smb.query', [['id', '=', smb_id]], {'get': True})
+        assert share_info['timemachine'] is True
 
-            enabled = c.call('smb.getparm', 'fruit:time machine', share_info['name'])
-            assert enabled == 'True'
+        enabled = call('smb.getparm', 'fruit:time machine', share_info['name'])
+        assert enabled == 'True'
 
-            vfs_obj = c.call('smb.getparm', 'vfs objects', share_info['name'])
-            assert 'fruit' in vfs_obj
-        finally:
-            c.call('sharing.smb.update', smb_id, {'timemachine': False})
-            c.call('smb.update', {'aapl_extensions': False})
+        vfs_obj = call('smb.getparm', 'vfs objects', share_info['name'])
+        assert 'fruit' in vfs_obj
+    finally:
+        call('sharing.smb.update', smb_id, {'timemachine': False})
+        call('smb.update', {'aapl_extensions': False})
 
 
 @pytest.mark.dependency(name="SMB_RECYCLE_CONFIGURED")
 def test_039_enable_recycle_bin(request):
     depends(request, ["smb_initialized"], scope="session")
-    with client() as c:
-        share_info = c.call('sharing.smb.update', smb_id, {'recyclebin': True})
-        vfs_obj = c.call('smb.getparm', 'vfs objects', share_info['name'])
-        assert 'recycle' in vfs_obj
+    share_info = call('sharing.smb.update', smb_id, {'recyclebin': True})
+    vfs_obj = call('smb.getparm', 'vfs objects', share_info['name'])
+    assert 'recycle' in vfs_obj
 
 
 def do_recycle_ops(c, has_subds=False):
@@ -206,14 +200,10 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'
 
-    results = PUT("/smb/", smb_config['global'])
-    assert results.status_code == 200, results.text
-
+    call('smb.update', smb_config['global'])
     # basic tests of recyclebin operations
     with create_dataset(tmp_ds, {'share_type': 'SMB'}):
-        results = SSH_TEST(f'mkdir {tmp_ds_path}', user, password, ip)
-        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
+        ssh(f'mkdir {tmp_ds_path}')
         with smb_share(tmp_ds_path, tmp_share_name, {
             'purpose': 'NO_PRESET',
             'recyclebin': True
@@ -234,9 +224,7 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
             f'touch {tmp_ds_path}/subdir/testfile',
             f'chown shareuser {tmp_ds_path}/subdir/testfile',
         ]
-        results = SSH_TEST(';'.join(ops), user, password, ip)
-        assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-
+        ssh(';'.join(ops))
         with smb_share(tmp_ds_path, tmp_share_name, {
             'purpose': 'NO_PRESET',
             'recyclebin': True
@@ -274,13 +262,12 @@ def test_056_netbios_name_change_check_sid(request):
     global new_sid
     global old_netbiosname
 
-    with client() as c:
-        smb_config = c.call('smb.config')
-        old_netbiosname = smb_config['netbiosname']
-        old_sid = smb_config['cifs_SID']
+    smb_config = call('smb.config')
+    old_netbiosname = smb_config['netbiosname']
+    old_sid = smb_config['cifs_SID']
 
-        new_sid = c.call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
-        assert new_sid != old_sid
+    new_sid = call('smb.update', {'netbiosname': 'nb_new'})['cifs_SID']
+    assert new_sid != old_sid
 
 
 @pytest.mark.dependency(name="SID_TEST_GROUP")
@@ -297,29 +284,30 @@ def test_057_create_new_smb_group_for_sid_test(request):
         return None
 
     depends(request, ["SID_CHANGED"], scope="session")
-    with client() as c:
-        with group({'name': 'testsidgroup', 'smb': True}):
-            groupmaps = c.call('smb.groupmap_list')
+    global smb_group_id
 
-            test_entry = check_groupmap_for_entry(
-                groupmaps['local'].values(),
-                'testsidgroup'
-            )
-            assert test_entry is not None, groupmaps['local'].values()
-            domain_sid = test_entry['sid'].rsplit("-", 1)[0]
-            assert domain_sid == new_sid, groupmaps['local'].values()
+    with group({'name': 'testsidgroup', 'smb': True}):
+        groupmaps = call('smb.groupmap_list')
 
-            c.call('smb.update', {'netbiosname': old_netbiosname})
+        test_entry = check_groupmap_for_entry(
+            groupmaps['local'].values(),
+            'testsidgroup'
+        )
+        assert test_entry is not None, groupmaps['local'].values()
+        domain_sid = test_entry['sid'].rsplit("-", 1)[0]
+        assert domain_sid == new_sid, groupmaps['local'].values()
 
-            groupmaps = c.call('smb.groupmap_list')
-            test_entry = check_groupmap_for_entry(
-                groupmaps['local'].values(),
-                'testsidgroup'
-            )
+        call('smb.update', {'netbiosname': old_netbiosname})
 
-            assert test_entry is not None, groupmaps['local'].values()
-            domain_sid = test_entry['sid'].rsplit("-", 1)[0]
-            assert domain_sid != new_sid, groupmaps['local'].values()
+        groupmaps = call('smb.groupmap_list')
+        test_entry = check_groupmap_for_entry(
+            groupmaps['local'].values(),
+            'testsidgroup'
+        )
+
+        assert test_entry is not None, groupmaps['local'].values()
+        domain_sid = test_entry['sid'].rsplit("-", 1)[0]
+        assert domain_sid != new_sid, groupmaps['local'].values()
 
 
 AUDIT_FIELDS = [
@@ -450,20 +438,14 @@ def test_060_audit_log(request):
             for event in events:
                 validate_audit_op(event, s['name'])
 
-            results = PUT(f"/sharing/smb/id/{s['id']}/", {'audit': {'ignore_list': ['builtin_users']}})
-            assert results.status_code == 200, results.text
-            new_data = results.json()
-
+            new_data = call('sharing.smb.update', s['id'], {'audit': {'ignore_list': ['builtin_users']}})
             assert new_data['audit']['enable'], str(new_data['audit'])
             assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
 
             # Verify that being member of group in ignore list is sufficient to avoid new messages
             assert len(do_audit_ops(s['name'])) == len(events)
 
-            results = PUT(f"/sharing/smb/id/{s['id']}/", {'audit': {'watch_list': ['builtin_users']}})
-            assert results.status_code == 200, results.text
-            new_data = results.json()
-
+            new_data = call('sharing.smb.update', s['id'], {'audit': {'watch_list': ['builtin_users']}})
             assert new_data['audit']['enable'], str(new_data['audit'])
             assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
             assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
@@ -472,10 +454,7 @@ def test_060_audit_log(request):
             new_events = do_audit_ops(s['name'])
             assert len(new_events) > len(events)
 
-            results = PUT(f"/sharing/smb/id/{s['id']}/", {'audit': {'enable': False}})
-            assert results.status_code == 200, results.text
-            new_data = results.json()
-
+            new_data = call('sharing.smb.update', s['id'], {'audit': {'enable': False}})
             assert new_data['audit']['enable'] is False, str(new_data['audit'])
             assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
             assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
@@ -519,5 +498,4 @@ def test_060_audit_log(request):
     'local.crypto.md4'
 ])
 def test_065_local_torture(request, torture_test):
-    results = SSH_TEST(f'smbtorture //127.0.0.1 {torture_test}', user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'smbtorture //127.0.0.1 {torture_test}')
