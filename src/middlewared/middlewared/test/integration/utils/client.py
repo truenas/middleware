@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import contextlib
+import logging
 import os
 
 import requests
@@ -8,6 +9,8 @@ from middlewared.client import Client
 from middlewared.client.utils import undefined
 
 __all__ = ["client", "host", "host_websocket_uri", "password", "session", "url", "websocket_url", "PersistentCtx"]
+
+logger = logging.getLogger(__name__)
 
 
 class ClientCtx:
@@ -47,6 +50,7 @@ class ClientCtx:
                 self.conn.ping()
                 return self.conn
             except Exception:
+                logger.warning("Persistent websocket connection died. Reconnecting.")
                 pass
 
         return self.setup(*args, **kwargs)
