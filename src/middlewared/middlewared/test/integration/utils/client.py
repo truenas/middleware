@@ -13,21 +13,32 @@ __all__ = ["client", "host", "host_websocket_uri", "password", "session", "url",
 logger = logging.getLogger(__name__)
 
 class PersistentClient(Client):
-    def call(self, method, *params, background=False, callback=None, job=False, timeout=undefined):
-        if self.method.startswith('auth.login'):
+    authenticated = False
+
+    def call(self, method, *args, **kwargs):
+        if method.startswith('auth.login') and self.authenticated:
             raise ValueError(
                 'Login related endpoint used with persistent handle. '
                 'Temporary client context should be created by setting `auth=<cred>` as '
-                'a keyword argument for the client() call'
+                'a keyword argument for the client() call. Alternatively, the test developer '
+                'may decide to import PersistentCtx from this module and call '
+                'PersistentCtx.setup method in order to replace the persistent client connection.'
             )
 
-        return super().call(method, *params, background, callback, job, timeout)
+        return super().call(method, *args, **kwargs)
 
 
 class ClientCtx:
     conn = None
 
     def setup(self, *, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None):
+        """
+        Test developer may directly call this method after importing PersistentCtx
+        in order to replcate the PersistentClient connection with one using different
+        credentials or target IP address. Note that such changes will impact subsequent
+        tests and so developers should either document this clearly or properly
+        clean up after themselves.
+        """
         if auth is None:
             raise ValueError('Authentication is required for client context wrapper')
 
@@ -48,6 +59,8 @@ class ClientCtx:
             logged_in = self.conn.call("auth.login", *auth)
             if auth_required:
                 assert logged_in
+
+            self.conn.authenticated = True
         except Exception:
             self.conn.close()
             self.conn = None
