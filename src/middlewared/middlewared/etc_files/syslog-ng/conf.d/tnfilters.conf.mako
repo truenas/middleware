@@ -1,11 +1,18 @@
+<%
+    from middlewared.plugins.audit.utils import AUDITED_SERVICES
+%>\
 ##################
 # TrueNAS filters
 ##################
 
 # Filter TrueNAS audit-related messages
-filter f_tnaudit_smb { program("TNAUDIT_SMB"); };
+% for svc, vers in AUDITED_SERVICES:
+filter f_tnaudit_${svc.lower()} { program("TNAUDIT_${svc}") };
+% endfor
 filter f_tnaudit_all {
-  filter(f_tnaudit_smb)
+% for svc, vers in AUDITED_SERVICES:
+  filter(f_tnaudit_${svc.lower()});
+% endfor
 };
 
 # These filters are used for remote syslog
