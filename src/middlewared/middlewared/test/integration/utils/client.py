@@ -12,6 +12,17 @@ __all__ = ["client", "host", "host_websocket_uri", "password", "session", "url",
 
 logger = logging.getLogger(__name__)
 
+class PersistentClient(Client):
+    def call(self, method, *params, background=False, callback=None, job=False, timeout=undefined):
+        if self.method.startswith('auth.login'):
+            raise ValueError(
+                'Login related endpoint used with persistent handle. '
+                'Temporary client context should be created by setting `auth=<cred>` as '
+                'a keyword argument for the client() call'
+            )
+
+        return super().call(method, *params, background, callback, job, timeout)
+
 
 class ClientCtx:
     conn = None
@@ -27,7 +38,7 @@ class ClientCtx:
             self.conn.close()
             self.conn = None
 
-        self.conn = Client(
+        self.conn = PersistentClient(
             host_websocket_uri(host_ip),
             py_exceptions=py_exceptions,
             log_py_exceptions=log_py_exceptions
