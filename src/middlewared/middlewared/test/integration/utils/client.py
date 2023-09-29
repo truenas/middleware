@@ -19,10 +19,8 @@ class PersistentClient(Client):
         if method.startswith('auth.login') and self.authenticated:
             raise ValueError(
                 'Login related endpoint used with persistent handle. '
-                'Temporary client context should be created by setting `auth=<cred>` as '
-                'a keyword argument for the client() call. Alternatively, the test developer '
-                'may decide to import PersistentCtx from this module and call '
-                'PersistentCtx.setup method in order to replace the persistent client connection.'
+                'Please specify `reuse_conn=False` as a keyword argument '
+                'for the client connection.'
             )
 
         return super().call(method, *args, **kwargs)
@@ -84,8 +82,8 @@ PersistentCtx = ClientCtx()
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None):
-    if auth is undefined and host_ip is None and auth_required:
+def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None, reuse_conn=True):
+    if reuse_conn and auth is undefined and host_ip is None and auth_required:
         yield PersistentCtx.get_or_setup()
         return
 

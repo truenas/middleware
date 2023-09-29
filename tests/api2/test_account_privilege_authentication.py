@@ -169,7 +169,7 @@ def test_token_auth_fails_to_call_forbidden_method(unprivileged_user_token):
 
 
 def test_drop_privileges(unprivileged_user_token):
-    with client() as c:
+    with client(reuse_conn=False) as c:
         # This should drop privileges for the current root session
         assert c.call("auth.login_with_token", unprivileged_user_token)
 
