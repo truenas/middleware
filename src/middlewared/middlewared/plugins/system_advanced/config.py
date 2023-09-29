@@ -41,6 +41,7 @@ class SystemAdvancedModel(sa.Model):
     adv_syslog_tls_certificate_authority_id = sa.Column(
         sa.ForeignKey('system_certificateauthority.id'), index=True, nullable=True
     )
+    adv_syslog_audit = sa.Column(sa.Boolean(), default=False)
     adv_kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
     adv_kdump_enabled = sa.Column(sa.Boolean(), default=False)
     adv_isolated_gpu_pci_ids = sa.Column(sa.JSON(), default=[])
@@ -85,6 +86,7 @@ class SystemAdvancedService(ConfigService):
         Str('syslog_transport', enum=['UDP', 'TCP', 'TLS'], required=True),
         Int('syslog_tls_certificate', null=True, required=True),
         Int('syslog_tls_certificate_authority', null=True, required=True),
+        Bool('syslog_audit'),
         List('isolated_gpu_pci_ids', items=[Str('pci_id')], required=True),
         Str('kernel_extra_options', required=True),
         Int('id', required=True),
@@ -202,7 +204,8 @@ class SystemAdvancedService(ConfigService):
         `autotune` when enabled executes autotune script which attempts to optimize the system based on the installed
         hardware.
 
-        When `syslogserver` is defined, logs of `sysloglevel` or above are sent.
+        When `syslogserver` is defined, logs of `sysloglevel` or above are sent. If syslog_audit is also set
+        then the remote syslog server will also receive audit messages.
 
         `consolemsg` is a deprecated attribute and will be removed in further releases. Please, use `consolemsg`
         attribute in the `system.general` plugin.
@@ -262,6 +265,7 @@ class SystemAdvancedService(ConfigService):
                 original_data['syslogserver'] != config_data['syslogserver'] or
                 original_data['syslog_transport'] != config_data['syslog_transport'] or
                 original_data['syslog_tls_certificate'] != config_data['syslog_tls_certificate'] or
+                original_data['syslog_audit'] != config_data['syslog_audit'] or
                 original_data['syslog_tls_certificate_authority'] != config_data['syslog_tls_certificate_authority']
             ):
                 await self.middleware.call('service.restart', 'syslogd')

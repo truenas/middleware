@@ -59,8 +59,7 @@ def generate_syslog_remote_destination(advanced_config):
         result += f'{transport}("{host}" port({port}) localport(514));'
 
     result += ' };\n'
-    result += f'log {{ source(s_src); filter(f_tnremote_{advanced_config["sysloglevel"].lower()}); '
-    result += 'destination(loghost); };\n'
+    result += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
 
     return result
 %>\
