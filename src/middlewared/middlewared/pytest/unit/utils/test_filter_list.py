@@ -65,6 +65,37 @@ DATA_WITH_CASE = [
     },
 ]
 
+DATA_SELECT_COMPLEX = [
+    {
+        'foo': 'foo',
+        'number': 1,
+        'foobar': {'stuff': {'more_stuff': 1}},
+        'foo.bar': 42,
+        'list': [1],
+    },
+    {
+        'foo': 'Foo',
+        'number': 2,
+        'foobar': {'stuff': {'more_stuff': 2}},
+        'foo.bar': 43,
+        'list': [2],
+    },
+    {
+        'foo': 'foO_',
+        'number': 3,
+        'foobar': {'stuff': {'more_stuff': 2}},
+        'foo.bar': 44,
+        'list': [3],
+    },
+    {
+        'foo': 'bar',
+        'number': 4,
+        'foobar': {'stuff': {'more_stuff': 4}},
+        'foo.bar': 45,
+        'list': [4],
+    },
+]
+
 COMPLEX_DATA = [
     {
         "timestamp": "2022-11-10T07:40:17.397502-0800",
@@ -282,3 +313,29 @@ def test__filter_list_option_casefold_rnin():
 
 def test__filter_list_option_casefold_complex_data():
     assert len(filter_list(COMPLEX_DATA, [['Authentication.clientAccount', 'C=', 'JOINER']])) == 1
+
+def test__filter_list_nested_select():
+    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': ['foobar.stuff.more_stuff']})
+    assert len(data) == 1
+    entry = data[0]
+    assert 'foobar' in entry
+    assert 'stuff' in entry['foobar']
+    assert 'more_stuff' in entry['foobar']['stuff']
+    assert entry['foobar']['stuff']['more_stuff'] == 4
+
+def test__filter_list_nested_select_escape():
+    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': ['foo\\.bar']})
+    assert len(data) == 1
+    entry = data[0]
+    assert 'foo.bar' in entry
+    assert entry['foo.bar'] == 45
+
+def test__filter_list_complex_data_nested_select():
+    data = filter_list(COMPLEX_DATA, [], {'select': ['Authentication.status', 'Authentication.localAddress', 'Authentication.clientAccount']})
+    assert len(data) != 0
+    assert 'Authentication' in data[0]
+    auth = data[0]['Authentication']
+    assert len(auth.keys()) == 3
+    assert 'status' in auth
+    assert 'localAddress' in auth
+    assert 'clientAccount' in auth

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import operator
 import re
 import signal
 import subprocess
@@ -114,6 +115,22 @@ def get(obj, path):
     return cur
 
 
+def select_path(obj, path):
+    keys = []
+    depth = 0
+    right = path
+    cur = obj
+    while right:
+        left, right = partition(right)
+        if isinstance(cur, dict):
+            cur = cur.get(left)
+            keys.append(left)
+        elif isinstance(cur, (list, tuple)):
+            raise ValueError('Selecting by list index is not supported')
+
+    return (keys, cur)
+
+
 def casefold(obj):
     if obj is None:
         return None
@@ -128,22 +145,70 @@ def casefold(obj):
 
 
 class filters(object):
+    def op_in(x, y):
+        return operator.contains(y, x)
+
+    def op_rin(x, y):
+        if x is None:
+            return False
+
+        return operator.contains(x, y)
+
+    def op_nin(x, y):
+        if x is None:
+            return False
+
+        return not operator.contains(y, x)
+
+    def op_rnin(x, y):
+        if x is None:
+            return False
+
+        return not operator.contains(x, y)
+
+    def op_re(x, y):
+        return re.match(y, x)
+
+    def op_startswith(x, y):
+        if x is None:
+            return False
+
+        return x.startswith(y)
+
+    def op_notstartswith(x, y):
+        if x is None:
+            return False
+
+        return not x.startswith(y)
+
+    def op_endswith(x, y):
+        if x is None:
+            return False
+
+        return x.endswith(y)
+
+    def op_notendswith(x, y):
+        if x is None:
+            return False
+
+        return not x.endswith(y)
+
     opmap = {
-        '=': lambda x, y: x == y,
-        '!=': lambda x, y: x != y,
-        '>': lambda x, y: x > y,
-        '>=': lambda x, y: x >= y,
-        '<': lambda x, y: x < y,
-        '<=': lambda x, y: x <= y,
-        '~': lambda x, y: re.match(y, x),
-        'in': lambda x, y: x in y,
-        'nin': lambda x, y: x not in y,
-        'rin': lambda x, y: x is not None and y in x,
-        'rnin': lambda x, y: x is not None and y not in x,
-        '^': lambda x, y: x is not None and x.startswith(y),
-        '!^': lambda x, y: x is not None and not x.startswith(y),
-        '$': lambda x, y: x is not None and x.endswith(y),
-        '!$': lambda x, y: x is not None and not x.endswith(y),
+        '=': operator.eq,
+        '!=': operator.ne,
+        '>': operator.gt,
+        '>=': operator.ge,
+        '<': operator.lt,
+        '<=': operator.le,
+        '~': op_re,
+        'in': op_in,
+        'nin': op_nin,
+        'rin': op_rin,
+        'rnin': op_rnin,
+        '^': op_startswith,
+        '!^': op_notstartswith,
+        '$': op_endswith,
+        '!$': op_notendswith,
     }
 
     def validate_filters(self, filters):
@@ -255,8 +320,17 @@ class filters(object):
         for i in _list:
             entry = {}
             for s in select:
-                if s in i:
-                    entry[s] = i[s]
+                keys, value = select_path(i, s)
+                if value is None:
+                    continue
+
+                last = keys.pop(-1)
+                obj = entry
+                for k in keys:
+                    obj = obj.setdefault(k, {})
+
+                obj[last] = value
+
             rv.append(entry)
 
         return rv
