@@ -57,7 +57,7 @@ def test_delete_with_dependent_clone():
             assert ve.value.errors == [
                 ValidationError(
                     "options.defer",
-                    f"Cannot destroy '{ds}@test' snapshot as it has dependent clones: {ds}/clone01",
+                    f"Please set this attribute as '{ds}@test' snapshot has dependent clones: {ds}/clone01",
                     errno.EINVAL
                 ),
             ]
