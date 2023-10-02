@@ -206,13 +206,16 @@ def target(target_name, groups, alias=None):
 
 
 @contextlib.contextmanager
-def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent'):
+def file_extent(pool_name, dataset_name, file_name, filesize=MB_512, extent_name='extent', serial=None):
     payload = {
         'type': 'FILE',
         'name': extent_name,
         'filesize': filesize,
         'path': f'/mnt/{pool_name}/{dataset_name}/{file_name}'
     }
+    # We want to allow any non-None serial to be specified (even '')
+    if serial is not None:
+        payload.update({'serial': serial})
     results = POST("/iscsi/extent/", payload)
     assert results.status_code == 200, results.text
     assert isinstance(results.json(), dict), results.text
@@ -2489,6 +2492,48 @@ def test_28_portal_access(request):
                             TUR(s)
                             s.blocksize = 512
                             assert MB_100 == _read_capacity16(s)
+
+
+def test_29_multiple_extents(request):
+    """
+    Verify that an iSCSI client can access multiple target LUNs
+    when multiple extents are configured.
+
+    Also validate that an extent serial number cannot be reused, and
+    that supplying an empty string serial number means one gets
+    generated.
+    """
+    iqn = f'{basename}:{target_name}'
+    with initiator_portal() as config:
+        portal_id = config['portal']['id']
+        with target(target_name, [{'portal': portal_id}]) as target_config:
+            target_id = target_config['id']
+            with dataset(pool_name, dataset_name):
+                with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
+                    with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
+                        with target_extent_associate(target_id, extent1_config['id'], 0):
+                            with target_extent_associate(target_id, extent2_config['id'], 1):
+                                with iscsi_scsi_connection(ip, iqn, 0) as s:
+                                    TUR(s)
+                                    s.blocksize = 512
+                                    assert MB_100 == _read_capacity16(s)
+                                with iscsi_scsi_connection(ip, iqn, 1) as s:
+                                    TUR(s)
+                                    s.blocksize = 512
+                                    assert MB_256 == _read_capacity16(s)
+
+                                # Now try to create another extent using the same serial number
+                                # We expect this to fail.
+                                with pytest.raises(AssertionError) as ve:
+                                    with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
+                                                     extent_name="extent3", serial=extent1_config['serial']):
+                                        assert False, "Should not have been able to duplicate extent serial."
+                                assert 'Serial number must be unique' in str(ve), ve
+
+                                with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
+                                                 extent_name="extent3", serial='') as extent3_config:
+                                    # We expect this to complete, but generate a serial number
+                                    assert len(extent3_config['serial']) == 15, extent3_config['serial']
 
 
 def test_99_teardown(request):
