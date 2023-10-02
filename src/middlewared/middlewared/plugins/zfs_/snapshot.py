@@ -300,7 +300,7 @@ class ZFSSnapshot(CRUDService):
                 if len(dep) and not options['defer']:
                     verrors.add(
                         'options.defer',
-                        f'Cannot destroy {snap.name!r} snapshot as it has dependent clones: '
+                        f'Please set this attribute as {snap.name!r} snapshot has dependent clones: '
                         f'{", ".join([i.name for i in dep])}'
                     )
                     verrors.check()
