@@ -21,6 +21,7 @@ BRAND_PRODUCT = f'{BRAND}-{PRODUCT}'
 NULLS_FIRST = 'nulls_first:'
 NULLS_LAST = 'nulls_last:'
 REVERSE_CHAR = '-'
+MAX_FILTERS_DEPTH = 3
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +118,6 @@ def get(obj, path):
 
 def select_path(obj, path):
     keys = []
-    depth = 0
     right = path
     cur = obj
     while right:
@@ -211,7 +211,17 @@ class filters(object):
         '!$': op_notendswith,
     }
 
-    def validate_filters(self, filters):
+    def validate_filters(self, filters, recursion_depth=0):
+        """
+        This method gets called when `query-filters` gets validated in
+        the accepts() decorator of public API endpoints. It is generally
+        a good idea to improve validation here, but not at significant
+        expense of performance as this is called every time `filter_list`
+        is called.
+        """
+        if recursion_depth > MAX_FILTERS_DEPTH:
+            raise ValueError('query-filters max recursion depth exceeded')
+
         for f in filters:
             if len(f) == 2:
                 op, value = f
@@ -221,7 +231,12 @@ class filters(object):
                 if not value:
                     raise ValueError('OR filter requires at least one branch.')
 
-                self.validate_filters(value)
+                for branch in value:
+                    if isinstance(branch[0], list):
+                        self.validate_filters(branch, recursion_depth + 1)
+                    else:
+                        self.validate_filters([branch], recursion_depth + 1)
+
                 continue
 
             elif len(f) != 3:
@@ -280,6 +295,41 @@ class filters(object):
 
         return getattr
 
+    def eval_filter(self, list_item, the_filter, getter):
+        """
+        `the_filter` in this case will be a single condition of either the form
+        [<a>, <opcode>, <b>] or ["OR", [<condition>, <condition>, ...]
+
+        This allows us to do a simple check of list length to determine whether
+        we have a conjunction or disjunction.
+        """
+        # NOTE: max recursion depth is validated prior to
+        # this.
+        if len(the_filter) == 2:
+            # OR check
+            op, value = the_filter
+            for branch in value:
+                if isinstance(branch[0], list):
+                    # This branch of OR is a conjunction of
+                    # multiple conditions. All of them must be
+                    # True in order for branch to be True.
+                    hit = True
+                    for i in branch:
+                        if not self.eval_filter(list_item, i, getter):
+                            hit = False
+                            break
+                else:
+                    hit = self.eval_filter(list_item, branch, getter)
+
+                if hit is True:
+                    return True
+
+            # None of conditions in disjunction are True.
+            return False
+
+        # Normal condition check
+        return self.filterop(list_item, the_filter, getter)
+
     def do_filters(self, _list, filters, select, shortcircuit):
         rv = []
 
@@ -287,17 +337,7 @@ class filters(object):
         for i in _list:
             valid = True
             for f in filters:
-                if len(f) == 2:
-                    # OR parsing
-                    op, value = f
-                    for f in value:
-                        if self.filterop(i, f, getter):
-                            break
-                    else:
-                        valid = False
-                        break
-
-                elif not self.filterop(i, f, getter):
+                if not self.eval_filter(i, f, getter):
                     valid = False
                     break
 

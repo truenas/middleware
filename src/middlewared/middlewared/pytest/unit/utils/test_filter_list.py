@@ -1,3 +1,4 @@
+import pytest
 from middlewared.utils import filter_list
 
 
@@ -238,6 +239,58 @@ def test__filter_list_OR_eq2():
         ['number', '=', 1],
         ['number', '=', 2],
     ]]])) == 2
+
+
+def test__filter_list_OR_eq3():
+    assert len(filter_list(DATA, [['OR', [
+        [['number', '=', 1], ['foo', '=', 'foo1']],
+        ['number', '=', 2],
+    ]]])) == 2
+
+    assert len(filter_list(DATA, [['OR', [
+        [['number', '=', 1], ['foo', '=', 'foo2']],
+        ['number', '=', 2],
+    ]]])) == 1
+
+
+def test__filter_list_OR_nesting():
+    assert len(filter_list(DATA, [['OR', [
+        ['OR', [['number', '=', 1], ['foo', '=', 'canary']]],
+        ['number', '=', 2],
+    ]]])) == 2
+
+    assert len(filter_list(DATA, [['OR', [
+        ['OR', [['number', '=', 'canary'], ['foo', '=', 'canary']]],
+        ['number', '=', 2],
+    ]]])) == 1
+
+    assert len(filter_list(DATA, [['OR', [
+        ['OR', [
+            ['OR', [
+                ['number', '=', 1],
+                ['number', '=', 'canary'],
+            ]],
+            ['foo', '=', 'canary']
+        ]],
+        ['number', '=', 2],
+    ]]])) == 2
+
+    with pytest.raises(ValueError) as ve:
+        filter_list(DATA, [['OR', [
+            ['OR', [
+                ['OR', [
+                    ['OR', [
+                        ['number', '=', 1],
+                        ['number', '=', 'canary'],
+                    ]],
+                    ['number', '=', 1],
+                    ['number', '=', 'canary'],
+                ]],
+                ['foo', '=', 'canary']
+            ]],
+            ['number', '=', 2],
+        ]]])
+        assert 'query-filters max recursion depth exceeded' in str(ve)
 
 
 def test__filter_list_nested_dict():
