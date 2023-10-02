@@ -13,5 +13,4 @@ class GooglePhotosRcloneRemote(BaseRcloneRemote):
         Str("client_secret", title="OAuth Client Secret", default=""),
         Str("token", title="Access Token", required=True, max_length=None),
     ]
-    credentials_oauth = True
     refresh_credentials = ["token"]
