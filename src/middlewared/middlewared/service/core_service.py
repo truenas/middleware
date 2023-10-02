@@ -45,7 +45,7 @@ def is_service_class(service, klass):
 class CoreService(Service):
 
     class Config:
-        cli_namespace = 'system.core'
+        cli_private = True
 
     @accepts(Str('id'), Int('cols'), Int('rows'))
     async def resize_shell(self, id, cols, rows):
