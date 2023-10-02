@@ -292,9 +292,18 @@ class ZFSSnapshot(CRUDService):
 
         `options.defer` will defer the deletion of snapshot.
         """
+        verrors = ValidationErrors()
         try:
             with libzfs.ZFS() as zfs:
                 snap = zfs.get_snapshot(id_)
+                dep = list(snap.dependents)
+                if len(dep) and not options['defer']:
+                    verrors.add(
+                        'options.defer',
+                        f'Cannot destroy {snap.name!r} snapshot as it has dependent clones: '
+                        f'{", ".join([i.name for i in dep])}'
+                    )
+                    verrors.check()
                 snap.delete(defer=options['defer'], recursive=options['recursive'])
         except libzfs.ZFSException as e:
             if e.code == libzfs.Error.NOENT:
