@@ -230,6 +230,7 @@ class iSCSITargetExtentService(SharingService):
     @private
     async def clean(self, data, schema_name, verrors, old=None):
         await self.clean_name(data, schema_name, verrors, old=old)
+        await self.clean_serial(data, schema_name, verrors, old=old)
         await self.middleware.call('iscsi.extent.clean_type_and_path', data, schema_name, verrors)
         await self.middleware.call('iscsi.extent.clean_size', data, schema_name, verrors)
 
@@ -237,21 +238,10 @@ class iSCSITargetExtentService(SharingService):
     async def clean_name(self, data, schema_name, verrors, old=None):
         name = data['name']
         old = old['name'] if old is not None else None
-        serial = data['serial']
         name_filters = [('name', '=', name)]
-        max_serial_len = 20  # SCST max length
 
         if '"' in name:
             verrors.add(f'{schema_name}.name', 'Double quotes are not allowed')
-
-        if '"' in serial:
-            verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
-
-        if len(serial) > max_serial_len:
-            verrors.add(
-                f'{schema_name}.serial',
-                f'Extent serial can not exceed {max_serial_len} characters'
-            )
 
         if name != old or old is None:
             name_result = await self.middleware.call(
@@ -262,6 +252,32 @@ class iSCSITargetExtentService(SharingService):
             )
             if name_result:
                 verrors.add(f'{schema_name}.name', 'Extent name must be unique')
+
+    @private
+    async def clean_serial(self, data, schema_name, verrors, old=None):
+        serial = data['serial']
+        old = old['serial'] if old is not None else None
+        serial_filters = [('serial', '=', serial)]
+        max_serial_len = 20  # SCST max length
+
+        if '"' in serial:
+            verrors.add(f'{schema_name}.serial', 'Double quotes are not allowed')
+
+        if len(serial) > max_serial_len:
+            verrors.add(
+                f'{schema_name}.serial',
+                f'Extent serial can not exceed {max_serial_len} characters'
+            )
+
+        if serial != old or old is None:
+            serial_result = await self.middleware.call(
+                'datastore.query',
+                self._config.datastore,
+                serial_filters,
+                {'prefix': self._config.datastore_prefix}
+            )
+            if serial_result:
+                verrors.add(f'{schema_name}.serial', 'Serial number must be unique')
 
     @private
     async def validate_path_resides_in_volume(self, verrors, schema, path):
@@ -347,7 +363,7 @@ class iSCSITargetExtentService(SharingService):
 
     @private
     def extent_serial(self, serial):
-        if serial is None:
+        if serial in [None, '']:
             used_serials = [i['serial'] for i in (
                 self.middleware.call_sync('iscsi.extent.query')
             )]
