@@ -302,9 +302,9 @@ class filters(object):
 
         This allows us to do a simple check of list length to determine whether
         we have a conjunction or disjunction.
+
+        Recursion depth is checked when validate_filters is called above.
         """
-        # NOTE: max recursion depth is validated prior to
-        # this.
         if len(the_filter) == 2:
             # OR check
             op, value = the_filter
