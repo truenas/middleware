@@ -315,11 +315,16 @@ def validate_schema(schema, data, additional_attrs=False, dict_kwargs=None):
 
 class URL:
     def __init__(self, **kwargs):
+        kwargs.setdefault("empty", False)
         kwargs.setdefault("scheme", ["http", "https"])
 
+        self.empty = kwargs["empty"]
         self.scheme = kwargs["scheme"]
 
     def __call__(self, value):
+        if self.empty and not value:
+            return
+
         try:
             result = urlparse(value)
         except Exception as e:
