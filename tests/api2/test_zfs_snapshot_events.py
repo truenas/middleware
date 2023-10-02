@@ -1,6 +1,10 @@
+import errno
 import pprint
+import pytest
+
 from unittest.mock import ANY
 
+from middlewared.service_exception import InstanceNotFound, ValidationErrors, ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import client
 
@@ -39,3 +43,32 @@ def test_delete():
             assert events[0][0] == "REMOVED"
             assert events[0][1] == {"collection": "zfs.snapshot.query", "msg": "removed", "id": f"{ds}@test",
                                     "extra": {"recursive": False}}
+
+
+def test_delete_with_dependent_clone():
+    with dataset("test") as ds:
+        with client() as c:
+            c.call("zfs.snapshot.create", {"dataset": ds, "name": "test"})
+            c.call("zfs.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
+
+            with pytest.raises(ValidationErrors) as ve:
+                c.call("zfs.snapshot.delete", f"{ds}@test")
+
+            assert ve.value.errors == [
+                ValidationError(
+                    "options.defer",
+                    f"Cannot destroy '{ds}@test' snapshot as it has dependent clones: {ds}/clone01",
+                    errno.EINVAL
+                ),
+            ]
+
+
+def test_delete_nonexistent_snapshot():
+    with dataset("test") as ds:
+        with client() as c:
+            c.call("zfs.snapshot.create", {"dataset": ds, "name": "test"})
+
+            with pytest.raises(InstanceNotFound) as e:
+                c.call("zfs.snapshot.delete", f"{ds}@testing")
+
+            assert str(e.value) == f"[ENOENT] None: Snapshot {ds}@testing not found"
