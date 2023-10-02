@@ -10,10 +10,14 @@ from sqlalchemy.sql.operators import desc_op, nullsfirst_op, nullslast_op
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils import filters
 from middlewared.validators import QueryFilters
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
+
+
+do_select = filters().do_select
 
 
 def regexp(expr, item):
@@ -235,7 +239,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if not select:
             return data
         else:
-            return {k: v for k, v in data.items() if k in select}
+            return do_select([data], select)[0]
 
     def _strip_prefix(self, k, field_prefix):
         return k[len(field_prefix):] if field_prefix and k.startswith(field_prefix) else k

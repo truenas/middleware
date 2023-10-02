@@ -56,10 +56,11 @@ Javascript:
     ]
 
 
-${'####'} Conjunctions
+${'####'} Connectives
 
-Queries with no defined conjunction assume `AND`. However, the conjunction `OR` is also supported by using the syntax illustrated below. We can use `chart.release.query` with `OR` to filter chart releases by name.
+Queries with no explicitly defined logical connectives assume conjunction `AND`. The disjunction `OR` is also supported by using the syntax illustrated below. We can use `chart.release.query` with `OR` to filter chart releases by name. Note that the operand for the disjunction contains an array of conditions.
 
+The following is a valid example.
 Javascript:
     :::javascript
     ["OR", 
@@ -68,6 +69,58 @@ Javascript:
         ["name","=", "secondchart"],
       ]
     ]
+
+The following is also a valid example that returns users that are unlocked and either have password-based authentication for SSH enabled or are SMB users.
+Javascript:
+    :::javascript
+    [
+      ["OR",
+        [
+          ["ssh_password_enabled", "=", true],
+          ["smb", "=", true]
+        ]
+      ],
+      ["locked", "=", false]
+    ]
+
+The following is an invalid example because the first array member is a conjunction of multiple conditions rather than a single condition.
+Javascript:
+    :::javascript
+    ["OR",
+      [
+        [["ssh_password_enabled", "=", true], ["twofactor_auth_configured", "=", false]],
+        ["enabled","=", true],
+      ]
+    ]
+
+Some additional examples of connective use are as follows.
+
+These filters when used with `user.query` finds unlocked users with password authentication enabled and two-factor authentication disabled.
+
+Javascript:
+    :::javascript
+    [
+      ["ssh_password_enabled", "=", true],
+      ["twofactor_auth_configured", "=", false],
+      ["locked", "=", false]
+    ]
+
+
+Sub-keys in complex JSON objects may be specified by using dot (".") to indicate the key. For example the following query-filters if passed to `user.query` endpoint will return entries with a primary group ID of 3000.
+
+Javascript:
+    :::javascript
+    [
+      ["group.bsdgrp_gid", "=", 3000],
+    ]
+
+If a key contains a literal dot (".") in its name, then it must be escaped via a double backlash.
+Javascript:
+    :::javascript
+    [
+      ["foo\\.bar", "=", 42],
+    ]
+
 
 
 ${'###'} Query Options
@@ -111,13 +164,25 @@ Javascript:
 
 ${'####'} Select
 
-Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings.
+Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings. The dot character (".") may be used to explicitly select only subkeys of the query result.
 
 Javascript:
     :::javascript
     {
       "select": ["devname","size","rotationrate"]
     }
+
+
+Javascript:
+    :::javascript
+    {
+      "select": [
+        "Authentication.status",
+        "Authentication.localAddress",
+        "Authentication.clientAccount"
+      ]
+    }
+
 
 
 ${'####'} Order By
