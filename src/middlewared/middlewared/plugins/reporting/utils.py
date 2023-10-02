@@ -22,11 +22,11 @@ def calculate_disk_space_for_netdata(metric_intervals: dict, days: int) -> int:
 
 def convert_unit(unit: str, page: int) -> int:
     return {
-        'HOUR': 60,
-        'DAY': 60 * 24,
-        'WEEK': 60 * 24 * 7,
-        'MONTH': 60 * 24 * 30,
-        'YEAR': 60 * 24 * 365,
+        'HOUR': 60 * 60,
+        'DAY': 60 * 60 * 24,
+        'WEEK': 60 * 60 * 24 * 7,
+        'MONTH': 60 * 60 * 24 * 30,
+        'YEAR': 60 * 60 * 24 * 365,
     }[unit] * page
 
 
@@ -129,7 +129,7 @@ def get_metrics_approximation(disk_count: int, core_count: int, interface_count:
             # cputemp
             'cputemp.temperatures': core_count,
         },
-        1800: {  # smartd_logs
+        60: {  # smartd_logs
             'smart_log.temperature_celsius': disk_count}
     }
     return {
