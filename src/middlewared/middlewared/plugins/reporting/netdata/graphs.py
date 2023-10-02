@@ -235,12 +235,21 @@ class DiskTempPlugin(GraphBase):
                     self.disk_mapping[disk.id] = k
                     break
 
+    def query_parameters(self) -> dict:
+        query_params = super().query_parameters()
+        query_params['options'] += '|natural-points'
+        return query_params
+
     async def get_identifiers(self) -> typing.Optional[list]:
         return list(self.disk_mapping.keys())
 
     def normalize_metrics(self, metrics) -> dict:
         metrics = super().normalize_metrics(metrics)
         metrics['legend'][1] = 'temperature_value'
+        if metrics['data'] and metrics['data'][-1] and metrics['data'][-1][-1] == 0:
+            # we will now remove last entry of data as when end if sometimes is specified as time which does not
+            # exist in netdata database, netdata adds a last entry of 0 which we don't want to show
+            metrics['data'].pop()
         return metrics
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
