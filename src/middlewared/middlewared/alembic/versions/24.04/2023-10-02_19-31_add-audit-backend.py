@@ -1,7 +1,7 @@
 """Add auditing backend tables
 
 Revision ID: 6f338216a965
-Revises: 2b9a98464a33
+Revises: 3df553b07a99
 Create Date: 2023-10-02 19:31:49.067706+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '6f338216a965'
-down_revision = '2b9a98464a33'
+down_revision = '3df553b07a99'
 branch_labels = None
 depends_on = None
 
