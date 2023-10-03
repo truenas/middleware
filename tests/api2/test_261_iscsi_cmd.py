@@ -2494,7 +2494,7 @@ def test_28_portal_access(request):
                             assert MB_100 == _read_capacity16(s)
 
 
-def test_29_multiple_extents(request):
+def test_29_multiple_extents():
     """
     Verify that an iSCSI client can access multiple target LUNs
     when multiple extents are configured.
@@ -2527,7 +2527,7 @@ def test_29_multiple_extents(request):
                                 with pytest.raises(AssertionError) as ve:
                                     with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
                                                      extent_name="extent3", serial=extent1_config['serial']):
-                                        assert False, "Should not have been able to duplicate extent serial."
+                                        pass
                                 assert 'Serial number must be unique' in str(ve), ve
 
                                 with file_extent(pool_name, dataset_name, "target.extent3", filesize=MB_512,
