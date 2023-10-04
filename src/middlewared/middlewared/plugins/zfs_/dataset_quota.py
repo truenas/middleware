@@ -1,6 +1,6 @@
 import libzfs
 
-from middlewared.plugins.zfs_.utils import ZFSAlert
+from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service import CallError, Service
 
 class ZFSDatasetService(Service):
@@ -22,10 +22,10 @@ class ZFSDatasetService(Service):
                     'usedbydataset',
                     'mounted',
                     'mountpoint',
-                    ZFSAlert.QUOTA_WARN.value,
-                    ZFSAlert.QUOTA_CRIT.value,
-                    ZFSAlert.REFQUOTA_WARN.value,
-                    ZFSAlert.REFQUOTA_CRIT.value,
+                    TNUserProp.QUOTA_WARN.value,
+                    TNUserProp.QUOTA_CRIT.value,
+                    TNUserProp.REFQUOTA_WARN.value,
+                    TNUserProp.REFQUOTA_CRIT.value,
                 ]
             }
         }
