@@ -16,7 +16,7 @@ class ZFSAlert(enum.Enum):
     QUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:quota_warning'
     QUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:quota_critical'
     REFQUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:refquota_warning'
-    REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critial'
+    REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critical'
 
     def default(self):
         match self:
