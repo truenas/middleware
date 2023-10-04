@@ -8,7 +8,6 @@ from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, ssh
 
 DATASET_NAME = 'smb-reg'
-SMB_PATH = "/mnt/" + DATASET
 SHARES = [f'REGISTRYTEST_{i}' for i in range(0, 5)]
 PRESETS = [
     "DEFAULT_SHARE",
@@ -41,6 +40,7 @@ SAMPLE_AUX = [
     'hide dot files = yes',
 ]
 
+
 @contextlib.contextmanager
 def create_smb_share(share_name, mkdir=False, options=None):
     path = os.path.join(smb_registry_mp, share_name)
@@ -60,7 +60,7 @@ def setup_smb_shares(mountpoint):
     for share in SHARES:
         share_path = os.path.join(mountpoint, share)
         call('filesystem.mkdir', share_path)
-        call('sharing.smb.create', {
+        new_share = call('sharing.smb.create', {
             'comment': 'My Test SMB Share',
             'name': share,
             'home': False,
@@ -78,9 +78,9 @@ def setup_smb_shares(mountpoint):
 def setup_for_tests(request):
     global smb_registry_mp
 
-    with make_dataset(DATASET_NAME, data={'share_type': 'SMB'}) as ds:
+    with dataset(DATASET_NAME, data={'share_type': 'SMB'}) as ds:
         smb_registry_mp = os.path.join('/mnt', ds)
-        c.call('filesystem.setperm', {
+        call('filesystem.setperm', {
             'path': smb_registry_mp,
             'mode': '777',
             'group': 'nogroup',
@@ -95,8 +95,8 @@ def setup_for_tests(request):
 @pytest.mark.dependency(name="SHARES_CREATED")
 def test_001_setup_for_tests(setup_for_tests):
     reg_shares = call('sharing.smb.reg_listshares')
-    for smb_share in SHARES:
-        assert smb_share in reg_shares
+    for share in SHARES:
+        assert share in reg_shares
 
 
 @pytest.mark.parametrize('smb_share', SHARES)
@@ -106,6 +106,7 @@ def test_006_rename_shares(request, smb_share):
         'name': f'NEW_{smb_share}'
     })
 
+
 def test_007_renamed_shares_in_registry(request):
     """
     Share renames need to be explicitly tested because
@@ -114,8 +115,8 @@ def test_007_renamed_shares_in_registry(request):
     """
     depends(request, ["SHARES_CREATED"], scope="session")
     reg_shares = call('sharing.smb.reg_listshares')
-    for smb_share in SHARES:
-        assert f'NEW_{smb_share}' in reg_shares
+    for share in SHARES:
+        assert f'NEW_{share}' in reg_shares
 
     assert len(reg_shares) == len(SHARES)
 
@@ -148,7 +149,7 @@ def test_008_test_presets(request, preset):
         DETECTED_PRESETS = call('sharing.smb.presets')
 
     if 'TIMEMACHINE' in preset:
-        call('smb.update', {'aapl_extensions': True)
+        call('smb.update', {'aapl_extensions': True})
 
     to_test = DETECTED_PRESETS[preset]['params']
     to_test_aux = to_test['auxsmbconf']
@@ -171,7 +172,7 @@ def test_009_reset_smb(request):
     a MacOS-style SMB server (fruit).
     """
     depends(request, ["SHARES_CREATED"])
-    call('sharing.smb.update',SHARE_DICT['REGISTRYTEST_0'], {
+    call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {
         "purpose": "NO_PRESET",
         "timemachine": False
     })
@@ -184,7 +185,7 @@ def test_010_test_aux_param_on_update(request):
     share = call('sharing.smb.query', [['id', '=', share_id]], {'get': True})
 
     old_aux = share['auxsmbconf']
-    new_aux = call('sharing.smb.update', share_id, {
+    results = call('sharing.smb.update', share_id, {
         'auxsmbconf': '\n'.join(SAMPLE_AUX)
     })
     new_aux = results['auxsmbconf']
@@ -240,10 +241,8 @@ def setup_tm_share(request):
 def test_011_test_aux_param_on_create(setup_tm_share):
     request, share = setup_tm_share
     depends(request, ["SHARES_CREATED"], scope="session")
-    smb_id = share['id']
-    new_aux = share['auxsmbconf']
-    new_name = share['name']
 
+    new_aux = share['aux']
     pre_aux = DETECTED_PRESETS["ENHANCED_TIMEMACHINE"]["params"]["auxsmbconf"]
     ncomments_sent = 0
     ncomments_recv = 0
@@ -283,15 +282,14 @@ def test_011_test_aux_param_on_create(setup_tm_share):
 
 def test_012_delete_shares(request, smb_share):
     depends(request, ["SHARES_CREATED"])
-    for share_id in SHARE_DICT.items():
+    for key, share_id in SHARE_DICT.items():
         call('sharing.smb.delete', share_id)
-
-    SHARE_DICT = {}
+        SHARE_DICT.pop(key)
 
     reg_shares = call('sharing.smb.reg_listshares')
     assert len(reg_shares) == 0, str(reg_shares)
 
-    share_count = call('sharing.smb.query', [], {'count':True})
+    share_count = call('sharing.smb.query', [], {'count': True})
     assert share_count == 0
 
 
@@ -315,7 +313,7 @@ def test_015_create_homes_share(request):
         "purpose": "NO_PRESET",
         "name": 'HOME_SHARE',
     })
-    SHARE_DICT = {'HOME': new_share['id']}
+    SHARE_DICT['HOME'] = new_share['id']
 
     reg_shares = call('sharing.smb.reg_listshares')
     assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
