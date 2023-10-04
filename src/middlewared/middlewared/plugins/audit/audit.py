@@ -6,8 +6,8 @@ from .utils import (
     AUDIT_LIFETIME,
     AUDIT_DEFAULT_RESERVATION,
     AUDIT_DEFAULT_QUOTA,
-    AUDIT_FILL_CRITICAL,
-    AUDIT_FILL_WARNING,
+    AUDIT_DEFAULT_FILL_CRITICAL,
+    AUDIT_DEFAULT_FILL_WARNING,
     AUDITED_SERVICES,
 )
 from middlewared.plugins.zfs_.utils import TNUserProp
@@ -35,8 +35,8 @@ class AuditModel(sa.Model):
     retention = sa.Column(sa.Integer(), default=AUDIT_LIFETIME)
     reservation = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_RESERVATION)
     quota = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_QUOTA)
-    quota_fill_warning = sa.Column(sa.Integer(), default=AUDIT_FILL_WARNING)
-    quota_fill_critical = sa.Column(sa.Integer(), default=AUDIT_FILL_CRITICAL)
+    quota_fill_warning = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_FILL_WARNING)
+    quota_fill_critical = sa.Column(sa.Integer(), default=AUDIT_DEFAULT_FILL_CRITICAL)
 
 
 class AuditService(ConfigService):
@@ -270,7 +270,7 @@ class AuditService(ConfigService):
         generate a warning alert.
 
         `quota_fill_critical` - percentage used of dataset quota at which to
-        generate a critical alert alert.
+        generate a critical alert.
 
         The following fields contain read-only data and are returned in calls
         to `audit.config` and `audit.update`:
