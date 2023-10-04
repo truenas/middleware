@@ -10,8 +10,11 @@ except ImportError:
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.size import format_size
+from middlewared.plugins.zfs_.utils import ZFSAlert
 
 logger = logging.getLogger(__name__)
+
+QUOTA_ALERTS = [(a.value, a.default()) for a in ZFSAlert]
 
 
 class QuotaWarningAlertClass(AlertClass):
@@ -43,8 +46,7 @@ class QuotaAlertSource(ThreadedAlertSource):
             if "/" not in d["name"]:
                 pool_sizes[d["name"]] = int(d["available"]["rawvalue"]) + int(d["used"]["rawvalue"])
 
-            for k, default in [("org.freenas:quota_warning", 80), ("org.freenas:quota_critical", 95),
-                               ("org.freenas:refquota_warning", 80), ("org.freenas:refquota_critical", 95)]:
+            for k, default in QUOTA_ALERTS:
                 try:
                     d[k] = int(d[k]["rawvalue"])
                 except (KeyError, ValueError):

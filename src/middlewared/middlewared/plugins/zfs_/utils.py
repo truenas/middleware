@@ -9,6 +9,27 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["zvol_name_to_path", "zvol_path_to_name", "get_snapshot_count_cached"]
 
+LEGACY_USERPROP_PREFIX = 'org.freenas'
+
+class ZFSAlert(enum.Enum):
+    QUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:quota_warning'
+    QUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:quota_critical'
+    REFQUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:refquota_warning'
+    REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critial'
+
+    def default(self):
+        match self:
+           case ZFSAlert.QUOTA_WARN:
+               return 80
+           case ZFSAlert.QUOTA_CRIT:
+               return 95
+           case ZFSAlert.REFQUOTA_WARN:
+               return 80
+           case ZFSAlert.REFQUOTA_CRIT:
+               return 95
+           case _:
+               raise ValueError(f'{type(self)}: no default alert threshold is set')
+
 
 class ZFSCTL(enum.IntEnum):
     # from include/os/linux/zfs/sys/zfs_ctldir.h in ZFS repo

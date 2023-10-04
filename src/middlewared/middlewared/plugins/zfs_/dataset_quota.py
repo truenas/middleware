@@ -1,7 +1,7 @@
 import libzfs
 
+from middlewared.plugins.zfs_.utils import ZFSAlert
 from middlewared.service import CallError, Service
-
 
 class ZFSDatasetService(Service):
 
@@ -22,13 +22,14 @@ class ZFSDatasetService(Service):
                     'usedbydataset',
                     'mounted',
                     'mountpoint',
-                    'org.freenas:quota_warning',
-                    'org.freenas:quota_critical',
-                    'org.freenas:refquota_warning',
-                    'org.freenas:refquota_critial',
+                    ZFSAlert.QUOTA_WARN.value,
+                    ZFSAlert.QUOTA_CRIT.value,
+                    ZFSAlert.REFQUOTA_WARN.value,
+                    ZFSAlert.REFQUOTA_CRIT.value,
                 ]
             }
         }
+
         return [
             {k: v for k, v in i['properties'].items() if k in options['extra']['properties']}
             for i in self.middleware.call_sync('zfs.dataset.query', [], options)

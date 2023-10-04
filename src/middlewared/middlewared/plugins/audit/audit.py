@@ -10,6 +10,7 @@ from .utils import (
     AUDIT_FILL_WARNING,
     AUDITED_SERVICES,
 )
+from middlewared.plugins.zfs_.utils import ZFSAlert
 from middlewared.schema import (
     accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
@@ -22,8 +23,13 @@ from middlewared.validators import Range
 
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
-QUOTA_WARN = 'org.freenas:refquota_warning'
-QUOTA_CRIT = 'org.freenas:refquota_critical'
+QUOTA_WARN = ZFSAlert.QUOTA_WARN.value
+QUOTA_CRIT = ZFSAlert.QUOTA_CRIT.value
+QUOTA_ALERTS = [
+    (ZFSAlert.QUOTA_WARN.value, ZFSAlert.QUOTA_WARN.default()),
+    (ZFSAlert.QUOTA_CRIT.value, ZFSAlert.QUOTA_CRIT.default()),
+]
+_GIB = 1024 ** 3
 
 
 class AuditModel(sa.Model):
@@ -71,7 +77,7 @@ class AuditService(ConfigService):
             {'extra': {'retrieve_children': False}, 'get': True}
         )
 
-        for k, default in [(QUOTA_WARN, 80), (QUOTA_CRIT, 95)]:
+        for k, default in QUOTA_ALERTS:
             try:
                 ds[k] = int(ds[k]["rawvalue"])
             except (KeyError, ValueError):
@@ -192,7 +198,7 @@ class AuditService(ConfigService):
 
     @private
     async def validate_local_storage(self, new, old, verrors):
-        new_volsize = new['quota'] * (1024 * 1024 ** 2)
+        new_volsize = new['quota'] * _GIB
         used = new['space']['used_by_dataset'] + new['space']['used_by_snapshots']
         if old['quota'] != new['quota']:
             if used / new_volsize > new['quota_fill_warning'] / 100:
@@ -219,10 +225,10 @@ class AuditService(ConfigService):
         old_crit = int(ds_props.get(QUOTA_CRIT, {}).get('rawvalue', '0'))
 
         payload = {}
-        if new['quota'] != old_quota / (1024 * 1024 ** 2):
+        if new['quota'] != old_quota / _GIB:
             payload['refquota'] = {'parsed': f'{new["quota"]}G'}
 
-        if new['reservation'] != old_reservation / (1024 * 1024 ** 2):
+        if new['reservation'] != old_reservation / _GIB:
             payload['refreservation'] = {'parsed': f'{new["reservation"]}G'}
 
         if new["quota_fill_warning"] != old_warn:
