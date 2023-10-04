@@ -322,8 +322,11 @@ class AuditService(ConfigService):
             ['properties.refreservation.parsed', '!=', None]
         ], {'select': ['id']})
 
-        self.logger.debug('Removing refreservations from the following datasets: %s',
-                          ', '.join([ds['id'] for ds in to_remove]))
+        if to_remove:
+            self.logger.debug(
+                'Removing refreservations from the following datasets: %s',
+                ', '.join([ds['id'] for ds in to_remove])
+            )
 
         payload = {'refreservation': {'parsed': None}}
         for ds in to_remove:
