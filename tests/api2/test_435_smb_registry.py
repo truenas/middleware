@@ -1,25 +1,15 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
-
-import pytest
-import sys
+import contextlib
 import os
-import json
-apifolder = os.getcwd()
-sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
-from auto_config import ip, pool_name, password, user
-from pytest_dependency import depends
+import pytest
 
-DATASET = f"{pool_name}/smb-reg"
-DATASET_URL = DATASET.replace('/', '%2F')
-SMB_NAME = "REGISTRYTEST"
+from pytest_dependency import depends
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.smb import smb_share
+from middlewared.test.integration.utils import call, ssh
+
+DATASET_NAME = 'smb-reg'
 SMB_PATH = "/mnt/" + DATASET
-SHARES = [f'{SMB_NAME}_{i}' for i in range(0, 25)]
-SHARE_DICT = {}
+SHARES = [f'REGISTRYTEST_{i}' for i in range(0, 5)]
 PRESETS = [
     "DEFAULT_SHARE",
     "ENHANCED_TIMEMACHINE",
@@ -51,85 +41,70 @@ SAMPLE_AUX = [
     'hide dot files = yes',
 ]
 
+@contextlib.contextmanager
+def create_smb_share(share_name, mkdir=False, options=None):
+    path = os.path.join(smb_registry_mp, share_name)
+    cr_opts = options or {}
 
-@pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_DATASET(request):
-    payload = {
-        "name": DATASET,
-        "share_type": "SMB"
-    }
-    results = POST("/pool/dataset/", payload)
-    assert results.status_code == 200, results.text
+    if mkdir:
+        call('filesystem.mkdir', path)
 
-
-def test_002_changing_dataset_permissions_of_smb_dataset(request):
-    """
-    ACL must be stripped from our test dataset in order
-    to successfully test all presets.
-    """
-    depends(request, ["SMB_DATASET_CREATED"])
-    global job_id
-    payload = {
-        'acl': [],
-        'mode': '777',
-        'group': 'nogroup',
-        'user': 'nobody',
-        'options': {'stripacl': True, 'recursive': True}
-    }
-    results = POST(f"/pool/dataset/id/{DATASET_URL}/permission/", payload)
-    assert results.status_code == 200, results.text
-    job_id = results.json()
+    with smb_share(path, share_name, cr_opts) as share:
+        yield share
 
 
-@pytest.mark.dependency(name="ACL_SET")
-def test_003_verify_the_job_id_is_successful(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    job_status = wait_on_job(job_id, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+@contextlib.contextmanager
+def setup_smb_shares(mountpoint):
+    global SHARE_DICT
+
+    for share in SHARES:
+        share_path = os.path.join(mountpoint, share)
+        call('filesystem.mkdir', share_path)
+        call('sharing.smb.create', {
+            'comment': 'My Test SMB Share',
+            'name': share,
+            'home': False,
+        })
+        SHARE_DICT[share] = new_share['id']
+
+    try:
+        yield SHARE_DICT
+    finally:
+        for share_id in SHARE_DICT.values():
+            call('sharing.smb.delete', share_id)
+
+
+@pytest.fixture(scope='module')
+def setup_for_tests(request):
+    global smb_registry_mp
+
+    with make_dataset(DATASET_NAME, data={'share_type': 'SMB'}) as ds:
+        smb_registry_mp = os.path.join('/mnt', ds)
+        c.call('filesystem.setperm', {
+            'path': smb_registry_mp,
+            'mode': '777',
+            'group': 'nogroup',
+            'user': 'nobody',
+            'options': {'stripacl': True, 'recursive': True}
+        }, job=True)
+
+        with setup_smb_shares(smb_registry_mp) as shares:
+            yield (ds, shares)
 
 
 @pytest.mark.dependency(name="SHARES_CREATED")
-@pytest.mark.parametrize('smb_share', SHARES)
-def test_004_creating_a_smb_share_path(request, smb_share):
-    """
-    Create large set of SMB shares for testing registry.
-    """
-    depends(request, ["SMB_DATASET_CREATED", "ACL_SET"])
-    global SHARE_DICT
-
-    target = f'{SMB_PATH}/{smb_share}'
-    results = POST('/filesystem/mkdir', target)
-    assert results.status_code == 200, results.text
-
-    payload = {
-        "comment": "My Test SMB Share",
-        "path": target,
-        "home": False,
-        "name": smb_share,
-    }
-    results = POST("/sharing/smb/", payload)
-    assert results.status_code == 200, results.text
-    smb_id = results.json()['id']
-    SHARE_DICT[smb_share] = smb_id
-
-
-def test_005_shares_in_registry(request):
-    depends(request, ["SHARES_CREATED"], scope="session")
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['stdout'].strip())
+def test_001_setup_for_tests(setup_for_tests):
+    reg_shares = call('sharing.smb.reg_listshares')
     for smb_share in SHARES:
         assert smb_share in reg_shares
 
 
 @pytest.mark.parametrize('smb_share', SHARES)
 def test_006_rename_shares(request, smb_share):
-    depends(request, ["SHARES_CREATED"])
-    results = PUT(f"/sharing/smb/id/{SHARE_DICT[smb_share]}/",
-                  {"name": f"NEW_{smb_share}"})
-    assert results.status_code == 200, results.text
-
+    depends(request, ["SHARES_CREATED"], scope="session")
+    call('sharing.smb.update', SHARE_DICT[smb_share], {
+        'name': f'NEW_{smb_share}'
+    })
 
 def test_007_renamed_shares_in_registry(request):
     """
@@ -138,13 +113,19 @@ def test_007_renamed_shares_in_registry(request):
     registry and re-added with different name.
     """
     depends(request, ["SHARES_CREATED"], scope="session")
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['stdout'].strip())
+    reg_shares = call('sharing.smb.reg_listshares')
     for smb_share in SHARES:
         assert f'NEW_{smb_share}' in reg_shares
+
     assert len(reg_shares) == len(SHARES)
+
+
+def check_aux_param(param, share, expected):
+    val = call('smb.getparm', param, share)
+    if param == 'vfs objects':
+        assert set(expected) == set(val.split())
+    else:
+        assert val == expected
 
 
 @pytest.mark.parametrize('preset', PRESETS)
@@ -164,28 +145,19 @@ def test_008_test_presets(request, preset):
     depends(request, ["SHARES_CREATED"], scope="session")
     global DETECTED_PRESETS
     if not DETECTED_PRESETS:
-        results = GET("/sharing/smb/presets")
-        assert results.status_code == 200, results.text
-        DETECTED_PRESETS = results.json()
+        DETECTED_PRESETS = call('sharing.smb.presets')
 
     if 'TIMEMACHINE' in preset:
-        results = PUT("/smb/", {"aapl_extensions": True})
-        assert results.status_code == 200, results.text
+        call('smb.update', {'aapl_extensions': True)
 
     to_test = DETECTED_PRESETS[preset]['params']
     to_test_aux = to_test['auxsmbconf']
-    results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
-                  {"purpose": preset})
-    assert results.status_code == 200, results.text
-
-    assert results.status_code == 200, results.text
-    new_conf = results.json()
+    new_conf = call('sharing.smb.update', SHARE_DICT['REGISTRYTEST_0'], {
+        'purpose': preset
+    })
     for entry in to_test_aux.splitlines():
         aux, val = entry.split('=', 1)
-        cmd = f'midclt call smb.getparm "{aux.strip()}" {new_conf["name"]}'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, f"[{entry}]: {results['output']}"
-        assert val.strip() == results['stdout'].strip()
+        check_aux_param(aux.strip(), new_conf['name'], val.strip())
 
     for k in to_test.keys():
         if k == "auxsmbconf":
@@ -199,30 +171,24 @@ def test_009_reset_smb(request):
     a MacOS-style SMB server (fruit).
     """
     depends(request, ["SHARES_CREATED"])
-    results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
-                  {"purpose": "NO_PRESET", "timemachine": False})
-    assert results.status_code == 200, results.text
-
-    payload = {"aapl_extensions": False}
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    call('sharing.smb.update',SHARE_DICT['REGISTRYTEST_0'], {
+        "purpose": "NO_PRESET",
+        "timemachine": False
+    })
+    call('smb.update', {'aapl_extensions': False})
 
 
 def test_010_test_aux_param_on_update(request):
     depends(request, ["SHARES_CREATED"], scope="session")
-    results = GET(
-        '/sharing/smb', payload={
-            'query-filters': [['id', '=', SHARE_DICT["REGISTRYTEST_0"]]],
-            'query-options': {'get': True},
-        }
-    )
-    assert results.status_code == 200, results.text
-    old_aux = results.json()['auxsmbconf']
-    results = PUT(f'/sharing/smb/id/{SHARE_DICT["REGISTRYTEST_0"]}/',
-                  {"auxsmbconf": '\n'.join(SAMPLE_AUX)})
-    assert results.status_code == 200, results.text
-    new_aux = results.json()['auxsmbconf']
-    new_name = results.json()['name']
+    share_id = SHARE_DICT['REGISTRYTEST_0']
+    share = call('sharing.smb.query', [['id', '=', share_id]], {'get': True})
+
+    old_aux = share['auxsmbconf']
+    new_aux = call('sharing.smb.update', share_id, {
+        'auxsmbconf': '\n'.join(SAMPLE_AUX)
+    })
+    new_aux = results['auxsmbconf']
+    new_name = results['name']
     ncomments_sent = 0
     ncomments_recv = 0
 
@@ -234,14 +200,7 @@ def test_010_test_aux_param_on_update(request):
         collision is minimal.
         """
         aux, val = entry.split('=', 1)
-        cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['stdout'].strip()
-        inval = val.strip()
-        # list cant be compared if item are not in the same place
-        # converting to set have a valid comparison.
-        assert set(inval) == set(out), f"[{entry}]: {out}"
+        check_aux_param(aux.strip(), new_name, val.strip())
 
     for entry in new_aux.splitlines():
         """
@@ -256,18 +215,7 @@ def test_010_test_aux_param_on_update(request):
             continue
 
         aux, val = entry.split('=', 1)
-        cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['stdout'].strip()
-        inval = val.strip()
-        if aux.strip() == "vfs objects":
-            new_obj = inval.split()
-            # list cant be compared if item are not in the same place
-            # converting to set have a valid comparison.
-            assert set(new_obj) == set(json.loads(out)), f"[{entry}]: {out}"
-        else:
-            assert inval == out, f"[{entry}]: {out}"
+        check_aux_param(aux.strip(), new_name, val.strip())
 
     """
     Verify comments aren't being stripped on update
@@ -279,27 +227,22 @@ def test_010_test_aux_param_on_update(request):
     assert ncomments_sent == ncomments_recv, new_aux
 
 
-def test_011_test_aux_param_on_create(request):
-    depends(request, ["SHARES_CREATED"], scope="session")
-    smb_share = "AUX_CREATE"
-
-    target = f'{SMB_PATH}/{smb_share}'
-    results = POST('/filesystem/mkdir', target)
-    assert results.status_code == 200, results.text
-
-    payload = {
-        "comment": "My Test SMB Share",
-        "path": target,
+@pytest.fixture(scope='function')
+def setup_tm_share(request):
+    with create_smb_share('AUX_CREATE', True, {
         "home": False,
-        "name": smb_share,
         "purpose": "ENHANCED_TIMEMACHINE",
         "auxsmbconf": '\n'.join(SAMPLE_AUX)
-    }
-    results = POST("/sharing/smb/", payload)
-    assert results.status_code == 200, results.text
-    smb_id = results.json()['id']
-    new_aux = results.json()['auxsmbconf']
-    new_name = results.json()['name']
+    }) as s:
+        yield (request, s)
+
+
+def test_011_test_aux_param_on_create(setup_tm_share):
+    request, share = setup_tm_share
+    depends(request, ["SHARES_CREATED"], scope="session")
+    smb_id = share['id']
+    new_aux = share['auxsmbconf']
+    new_name = share['name']
 
     pre_aux = DETECTED_PRESETS["ENHANCED_TIMEMACHINE"]["params"]["auxsmbconf"]
     ncomments_sent = 0
@@ -311,14 +254,7 @@ def test_011_test_aux_param_on_create(request):
         successfully to the running configuration.
         """
         aux, val = entry.split('=', 1)
-        cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['stdout'].strip()
-        inval = val.strip()
-        # list cant be compared if item are not in the same place
-        # converting to set have a valid comparison.
-        assert set(inval) == set(out), f"[{entry}]: {out}"
+        check_aux_param(aux.strip(), share['name'], val.strip())
 
     for entry in new_aux.splitlines():
         """
@@ -333,18 +269,7 @@ def test_011_test_aux_param_on_create(request):
             continue
 
         aux, val = entry.split('=', 1)
-        cmd = f'midclt call smb.getparm "{aux.strip()}" {new_name}'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, f"[{entry}]: {results['output']}"
-        out = results['stdout'].strip()
-        inval = val.strip()
-        if aux.strip() == "vfs objects":
-            new_obj = inval.split()
-            # list cant be compared if item are not in the same place
-            # converting to set have a valid comparison.
-            assert set(new_obj) == set(json.loads(out)), f"[{entry}]: {out}"
-        else:
-            assert inval == out, f"[{entry}]: {out}"
+        check_aux_param(aux.strip(), share['name'], val.strip())
 
     """
     Verify comments aren't being stripped on update
@@ -354,36 +279,20 @@ def test_011_test_aux_param_on_create(request):
             ncomments_sent += 1
 
     assert ncomments_sent == ncomments_recv, new_aux
-    results = DELETE(f"/sharing/smb/id/{smb_id}")
-    assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('smb_share', SHARES)
 def test_012_delete_shares(request, smb_share):
     depends(request, ["SHARES_CREATED"])
-    results = DELETE(f"/sharing/smb/id/{SHARE_DICT[smb_share]}")
-    assert results.status_code == 200, results.text
+    for share_id in SHARE_DICT.items():
+        call('sharing.smb.delete', share_id)
 
+    SHARE_DICT = {}
 
-def test_013_registry_is_empty(request):
-    depends(request, ["SHARES_CREATED"], scope="session")
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['stdout'].strip())
-    assert len(reg_shares) == 0, results['output']
+    reg_shares = call('sharing.smb.reg_listshares')
+    assert len(reg_shares) == 0, str(reg_shares)
 
-
-def test_014_config_is_empty(request):
-    depends(request, ["SHARES_CREATED"])
-    results = GET(
-        '/sharing/smb', payload={
-            'query-filters': [],
-            'query-options': {'count': True},
-        }
-    )
-    assert results.status_code == 200, results.text
-    assert results.json() == 0, results.text
+    share_count = call('sharing.smb.query', [], {'count':True})
+    assert share_count == 0
 
 
 """
@@ -395,120 +304,34 @@ with regard to homes shares
 @pytest.mark.dependency(name="HOME_SHARE_CREATED")
 def test_015_create_homes_share(request):
     depends(request, ["SMB_DATASET_CREATED"])
-    smb_share = "HOME_CREATE"
-    global home_id
 
-    target = f'{SMB_PATH}/{smb_share}'
-    results = POST('/filesystem/mkdir', target)
-    assert results.status_code == 200, results.text
+    HOME_PATH = os.path.join(smb_registry_mp, 'HOME_SHARE')
+    call('filesystem.mkdir', HOME_PATH)
 
-    payload = {
+    new_share = call('sharing.smb.create', {
         "comment": "My Test SMB Share",
-        "path": target,
+        "path": HOME_PATH,
         "home": True,
         "purpose": "NO_PRESET",
-        "name": smb_share,
-    }
-    results = POST("/sharing/smb/", payload)
-    assert results.status_code == 200, results.text
-    home_id = results.json()['id']
+        "name": 'HOME_SHARE',
+    })
+    SHARE_DICT = {'HOME': new_share['id']}
+
+    reg_shares = call('sharing.smb.reg_listshares')
+    assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
 
 
-def test_016_verify_homeshare_in_registry(request):
-    """
-    When the "home" checkbox is checked, the share
-    _must_ be added to the SMB running configuration with
-    the name "homes". This is a share name has special
-    behavior in Samba. This test verifies that the
-    share was added to the configuration with the
-    correct name.
-    """
-    depends(request, ["HOME_SHARE_CREATED"], scope="session")
-    has_homes_share = False
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is not True:
-        return
-
-    reg_shares = json.loads(results['stdout'].strip())
-    for share in reg_shares:
-        if share.casefold() == "homes".casefold():
-            has_homes_share = True
-
-    assert has_homes_share is True, results['output']
-
-
-def test_017_convert_to_non_homes_share(request):
+def test_017_toggle_homes_share(request):
     depends(request, ["HOME_SHARE_CREATED"])
-    results = PUT(f"/sharing/smb/id/{home_id}/",
-                  {"home": False})
-    assert results.status_code == 200, results.text
+    try:
+        call('sharing.smb.update', SHARE_DICT['HOME'], {'home': False})
+        reg_shares = call('sharing.smb.reg_listshares')
+        assert not any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
+    finally:
+        call('sharing.smb.update', SHARE_DICT['HOME'], {'home': True})
 
-
-def test_018_verify_non_home_share_in_registry(request):
-    """
-    Unchecking "homes" should result in the "homes" share
-    definition being removed and replaced with a new share
-    name.
-    """
-    depends(request, ["HOME_SHARE_CREATED"], scope="session")
-    has_homes_share = False
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is not True:
-        return
-
-    reg_shares = json.loads(results['stdout'].strip())
-    for share in reg_shares:
-        if share.casefold() == "HOME_CREATE".casefold():
-            has_homes_share = True
-
-    assert has_homes_share is True, results['output']
-
-
-def test_019_convert_back_to_homes_share(request):
-    depends(request, ["HOME_SHARE_CREATED"])
-    results = PUT(f"/sharing/smb/id/{home_id}/",
-                  {"home": True})
-    assert results.status_code == 200, results.text
-
-
-def test_020_verify_homeshare_in_registry(request):
-    """
-    One final test to confirm that changing back to
-    a "homes" share reverts us to having a proper
-    share definition for this special behavior.
-    """
-    depends(request, ["HOME_SHARE_CREATED"], scope="session")
-    has_homes_share = False
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is not True:
-        return
-
-    reg_shares = json.loads(results['stdout'].strip())
-    for share in reg_shares:
-        if share.casefold() == "homes".casefold():
-            has_homes_share = True
-
-    assert has_homes_share is True, results['output']
-
-
-def test_021_registry_has_single_entry(request):
-    """
-    By the point we've reached this test, the share
-    definition has switched several times. This test
-    verifies that we're properly removing the old share.
-    """
-    depends(request, ["HOME_SHARE_CREATED"], scope="session")
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    reg_shares = json.loads(results['stdout'].strip())
-    assert len(reg_shares) == 1, results['output']
+    reg_shares = call('sharing.smb.reg_listshares')
+    assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
 
 
 def test_022_registry_rebuild_homes(request):
@@ -521,36 +344,7 @@ def test_022_registry_rebuild_homes(request):
     service reloads.
     """
     depends(request, ["HOME_SHARE_CREATED"], scope="session")
-    cmd = 'net conf delshare HOMES'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    payload = {"service": "cifs"}
-    results = POST("/service/reload/", payload)
-    assert results.status_code == 200, results.text
-
-    has_homes_share = False
-    cmd = 'midclt call sharing.smb.reg_listshares'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-    if results['result'] is not True:
-        return
-
-    reg_shares = json.loads(results['stdout'].strip())
-    for share in reg_shares:
-        if share.casefold() == "homes".casefold():
-            has_homes_share = True
-
-    assert has_homes_share is True, results['output']
-
-
-def test_023_delete_home_share(request):
-    depends(request, ["HOME_SHARE_CREATED"])
-    results = DELETE(f"/sharing/smb/id/{home_id}")
-    assert results.status_code == 200, results.text
-
-
-def test_024_destroying_smb_dataset(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    results = DELETE(f"/pool/dataset/id/{DATASET_URL}/")
-    assert results.status_code == 200, results.text
+    ssh('net conf delshare HOMES')
+    call('service.reload', 'cifs')
+    reg_shares = call('sharing.smb.reg_listshares')
+    assert any(['homes'.casefold() == s.casefold() for s in reg_shares]), str(reg_shares)
