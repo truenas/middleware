@@ -317,7 +317,7 @@ class AuditService(ConfigService):
         # activated boot environment.
         to_remove = await self.middleware.call('zfs.dataset.query', [
             ['id', '!=', cur['id']],
-            ['id', '^', f'{parent}/'],
+            ['id', '!^', f'{parent}/'],
             ['pool', '=', boot_pool],
             ['properties.refreservation.parsed', '!=', None]
         ], {'select': ['id']})
