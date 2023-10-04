@@ -4,7 +4,8 @@ import uuid
 
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.schema import accepts, Bool, Int, returns, Str
-from middlewared.service import CallError, item_method, Service
+from middlewared.service import CallError, item_method, Service, private
+from middlewared.service_exception import ValidationErrors
 
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -78,6 +79,7 @@ class VMService(Service):
         If not provided it will append the next number available to the VM name.
         """
         vm = await self.middleware.call('vm.get_instance', id_)
+        await self.validate(vm)
 
         origin_name = vm['name']
         del vm['id']
@@ -137,3 +139,15 @@ class VMService(Service):
         self.logger.info('VM cloned from {0} to {1}'.format(origin_name, vm['name']))
 
         return True
+
+    @private
+    async def validate(self, vm):
+        verrors = ValidationErrors()
+        for index, device in enumerate(vm['devices']):
+            if device['dtype'] == 'DISPLAY' and not device['attributes'].get('password'):
+                verrors.add(
+                    f'vm.devices.{index}.attributes.password',
+                    'Password must be configured for display device in order to clone the VM.'
+                )
+
+        verrors.check()
