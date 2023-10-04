@@ -10,7 +10,7 @@ from .utils import (
     AUDIT_FILL_WARNING,
     AUDITED_SERVICES,
 )
-from middlewared.plugins.zfs_.utils import ZFSAlert
+from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
@@ -23,12 +23,8 @@ from middlewared.validators import Range
 
 
 ALL_AUDITED = [svc[0] for svc in AUDITED_SERVICES]
-QUOTA_WARN = ZFSAlert.QUOTA_WARN.value
-QUOTA_CRIT = ZFSAlert.QUOTA_CRIT.value
-QUOTA_ALERTS = [
-    (ZFSAlert.QUOTA_WARN.value, ZFSAlert.QUOTA_WARN.default()),
-    (ZFSAlert.QUOTA_CRIT.value, ZFSAlert.QUOTA_CRIT.default()),
-]
+QUOTA_WARN = TNUserProp.QUOTA_WARN.value
+QUOTA_CRIT = TNUserProp.QUOTA_CRIT.value
 _GIB = 1024 ** 3
 
 
@@ -77,7 +73,7 @@ class AuditService(ConfigService):
             {'extra': {'retrieve_children': False}, 'get': True}
         )
 
-        for k, default in QUOTA_ALERTS:
+        for k, default in TNUserProp.quotas():
             try:
                 ds[k] = int(ds[k]["rawvalue"])
             except (KeyError, ValueError):
