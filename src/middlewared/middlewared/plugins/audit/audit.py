@@ -325,7 +325,7 @@ class AuditService(ConfigService):
         self.logger.debug('Removing refreservations from the following datasets: %s',
                           ', '.join([ds['id'] for ds in to_remove]))
 
-        payload['refreservation'] = {'parsed': None}
+        payload = {'refreservation': {'parsed': None}}
         for ds in to_remove:
             try:
                 await self.middleware.call(
