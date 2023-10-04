@@ -297,3 +297,48 @@ class AuditService(ConfigService):
         await self.compress(new)
         await self.middleware.call('datastore.update', self._config.datastore, old['id'], new)
         return await self.config()
+
+    @private
+    async def setup(self):
+        """
+        This method should only be called once per upgrade to clean up any stale
+        refreservations from old boot environments and to apply the audit dataset
+        configuration to the current boot environment.
+        """
+        cur = await self.middleware.call('audit.get_audit_dataset')
+        parent = os.path.dirname(cur['id'])
+
+        # Explicitly look up pool name. If somehow audit dataset ends up being
+        # on a pool that isn't the boot-pool, we don't want to recursively
+        # remove refreservations on it.
+        boot_pool = await self.middleware.call('boot.pool_name')
+
+        # Get dataset names of any dataset on boot pool that isn't on the current
+        # activated boot environment.
+        to_remove = await self.middleware.call('zfs.dataset.query', [
+            ['id', '!=', cur['id']],
+            ['id', '^', f'{parent}/'],
+            ['pool', '=', boot_pool],
+            ['properties.refreservation.parsed', '!=', None]
+        ], {'select': ['id']})
+
+        self.logger.debug('Removing refreservations from the following datasets: %s',
+                          ', '.join([ds['id'] for ds in to_remove]))
+
+        payload['refreservation'] = {'parsed': None}
+        for ds in to_remove:
+            try:
+                await self.middleware.call(
+                    'zfs.dataset.update', ds['id'], {'properties': payload}
+                )
+            except Exception:
+                self.logger.error(
+                    '%s: failed to remove refreservation from dataset. Manual '
+                    'cleanup may be required', ds['id'], exc_info=True
+                )
+
+        audit_config = await self.middleware.call('audit.config')
+        try:
+            await self.middleware.call('audit.update_audit_dataset', audit_config)
+        except Exception:
+            self.logger.error('Failed to apply auditing dataset configuration.', exc_info=True)
