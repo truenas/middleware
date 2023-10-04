@@ -1,6 +1,7 @@
 import errno
 import ipaddress
 import os
+import uuid
 try:
     import wbclient
 except ImportError:
@@ -346,10 +347,18 @@ class UUID(Str):
         if value is None:
             return
 
+        verrors = ValidationErrors()
         try:
-            uuid.UUID(value)
+            if isinstance(value, int):
+                uuid.UUID(int=value)
+            else:
+                uuid.UUID(value)
         except TypeError:
-            raise ValueError('Please supply a valid hex-formatted UUID string')
+            verrors.add(self.name, 'Please supply a valid hex-formatted UUID string')
+        except ValueError as e:
+            verrors.add(self.name, e)
+
+        verrors.check()
 
         return super().validate(value)
 
