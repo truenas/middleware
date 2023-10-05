@@ -184,12 +184,18 @@ class DiskService(Service):
         if filename.endswith('.ata.csv'):
             if (ft := line.split('\t')) and (temp := list(filter(lambda x: x.startswith(('190;', '194;')), ft))):
                 try:
-                    temp = temp[-1].split(';')[2]
-                except IndexError:
+                    _, value, raw, _ = temp[-1].split(';')
+                except ValueError:
                     return None
-                else:
-                    if temp.isdigit():
-                        return int(temp)
+
+                if not all((value.isdigit(), raw.isdigit())):
+                    return None
+
+                # The low byte is the current temperature
+                # The third lowest is the maximum
+                # The fifth lowest is the minimum
+                value, raw = int(value), int(raw)
+                return raw & 0xFF if raw > 1e6 else min(value, raw)
 
         if filename.endswith('.scsi.csv'):
             if (ft := line.split('\t')) and (temp := list(filter(lambda x: 'temperature' in x, ft))):
