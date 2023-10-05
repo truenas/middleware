@@ -121,8 +121,16 @@ class ZFSDatasetService(Service):
                     entry['name'] = self.middleware.call_sync('user.get_user_obj', {'uid': entry['id']})['pw_name']
                 elif quota_type == 'GROUP':
                     entry['name'] = self.middleware.call_sync('group.get_group_obj', {'gid': entry['id']})['gr_name']
+            except KeyError:
+                # It is very typical on servers that have been deployed for any length of time
+                # for files to be owned by user that has been deleted
+                pass
             except Exception:
-                self.logger.debug('Unable to resolve %s id %d to name', quota_type.lower(), entry['id'])
+                self.logger.debug(
+                    '%s: Unable to resolve %s id %d to name',
+                    ds, quota_type.lower(), entry['id'], exc_info=True
+                )
+
             return entry
 
         return [add_name(entry) for entry in collected.values()]
