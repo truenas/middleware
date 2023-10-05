@@ -6,6 +6,7 @@ import re
 
 from pathlib import Path
 
+from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.size import MB
 
@@ -74,12 +75,12 @@ def dataset_can_be_mounted(ds_name, ds_mountpoint):
 
 def get_props_of_interest_mapping():
     return [
-        ('org.freenas:description', 'comments', None),
-        ('org.freenas:quota_warning', 'quota_warning', None),
-        ('org.freenas:quota_critical', 'quota_critical', None),
-        ('org.freenas:refquota_warning', 'refquota_warning', None),
-        ('org.freenas:refquota_critical', 'refquota_critical', None),
-        ('org.truenas:managedby', 'managedby', None),
+        (TNUserProp.DESCRIPTION.value, 'comments', None),
+        (TNUserProp.QUOTA_WARN.value, 'quota_warning', None),
+        (TNUserProp.QUOTA_CRIT.value, 'quota_critical', None),
+        (TNUserProp.REFQUOTA_WARN.value, 'refquota_warning', None),
+        (TNUserProp.REFQUOTA_CRIT.value, 'refquota_critical', None),
+        (TNUserProp.MANAGED_BY.value, 'managedby', None),
         ('dedup', 'deduplication', str.upper),
         ('mountpoint', None, _null),
         ('aclmode', None, str.upper),

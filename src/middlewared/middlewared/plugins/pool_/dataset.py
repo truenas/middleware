@@ -18,7 +18,7 @@ from middlewared.validators import Exact, Match, Or, Range
 from .utils import (
     dataset_mountpoint, get_dataset_parents, get_props_of_interest_mapping, none_normalize,
     ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_CHECKSUM_CHOICES, ZFSKeyFormat, ZFS_MAX_DATASET_NAME_LEN,
-    ZFS_VOLUME_BLOCK_SIZE_CHOICES,
+    ZFS_VOLUME_BLOCK_SIZE_CHOICES, TNUserProp
 )
 
 
@@ -113,14 +113,7 @@ class PoolDatasetService(CRUDService):
         )
 
     def _internal_user_props(self):
-        return [
-            'org.freenas:description',
-            'org.freenas:quota_warning',
-            'org.freenas:quota_critical',
-            'org.freenas:refquota_warning',
-            'org.freenas:refquota_critical',
-            'org.truenas:managedby',
-        ]
+        return TNUserProp.values()
 
     def __transform(self, datasets, retrieve_children, children_filters):
         """
@@ -671,20 +664,20 @@ class PoolDatasetService(CRUDService):
             ('atime', None, str.lower, True),
             ('casesensitivity', None, str.lower, True),
             ('checksum', None, str.lower, True),
-            ('comments', 'org.freenas:description', None, True),
+            ('comments', TNUserProp.DESCRIPTION.value, None, True),
             ('compression', None, str.lower, True),
             ('copies', None, str, True),
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
-            ('managedby', 'org.truenas:managedby', None, True),
+            ('managedby', TNUserProp.MANAGED_BY.value, None, True),
             ('quota', None, none_normalize, True),
-            ('quota_warning', 'org.freenas:quota_warning', str, True),
-            ('quota_critical', 'org.freenas:quota_critical', str, True),
+            ('quota_warning', TNUserProp.QUOTA_WARN.value, str, True),
+            ('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True),
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('refquota', None, none_normalize, True),
-            ('refquota_warning', 'org.freenas:refquota_warning', str, True),
-            ('refquota_critical', 'org.freenas:refquota_critical', str, True),
+            ('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True),
+            ('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True),
             ('refreservation', None, none_normalize, False),
             ('reservation', None, none_normalize, False),
             ('snapdir', None, str.lower, True),
@@ -816,18 +809,18 @@ class PoolDatasetService(CRUDService):
             ('acltype', None, str.lower, True),
             ('atime', None, str.lower, True),
             ('checksum', None, str.lower, True),
-            ('comments', 'org.freenas:description', None, False),
+            ('comments', TNUserProp.DESCRIPTION.value, None, False),
             ('sync', None, str.lower, True),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
             ('exec', None, str.lower, True),
-            ('managedby', 'org.truenas:managedby', None, True),
+            ('managedby', TNUserProp.MANAGED_BY.value, None, True),
             ('quota', None, none_normalize, False),
-            ('quota_warning', 'org.freenas:quota_warning', str, True),
-            ('quota_critical', 'org.freenas:quota_critical', str, True),
+            ('quota_warning', TNUserProp.QUOTA_WARN.value, str, True),
+            ('quota_critical', TNUserProp.QUOTA_CRIT.value, str, True),
             ('refquota', None, none_normalize, False),
-            ('refquota_warning', 'org.freenas:refquota_warning', str, True),
-            ('refquota_critical', 'org.freenas:refquota_critical', str, True),
+            ('refquota_warning', TNUserProp.REFQUOTA_WARN.value, str, True),
+            ('refquota_critical', TNUserProp.REFQUOTA_CRIT.value, str, True),
             ('reservation', None, none_normalize, False),
             ('refreservation', None, none_normalize, False),
             ('copies', None, str, True),

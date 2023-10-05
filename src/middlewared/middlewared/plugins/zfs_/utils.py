@@ -9,6 +9,42 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["zvol_name_to_path", "zvol_path_to_name", "get_snapshot_count_cached"]
 
+LEGACY_USERPROP_PREFIX = 'org.freenas'
+USERPROP_PREFIX = 'org.truenas'
+
+
+class TNUserProp(enum.Enum):
+    DESCRIPTION = f'{LEGACY_USERPROP_PREFIX}:description'
+    QUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:quota_warning'
+    QUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:quota_critical'
+    REFQUOTA_WARN = f'{LEGACY_USERPROP_PREFIX}:refquota_warning'
+    REFQUOTA_CRIT = f'{LEGACY_USERPROP_PREFIX}:refquota_critical'
+    MANAGED_BY = f'{USERPROP_PREFIX}:managedby'
+
+    def default(self):
+        match self:
+            case TNUserProp.QUOTA_WARN:
+                return 80
+            case TNUserProp.QUOTA_CRIT:
+                return 95
+            case TNUserProp.REFQUOTA_WARN:
+                return 80
+            case TNUserProp.REFQUOTA_CRIT:
+                return 95
+            case _:
+                raise ValueError(f'{self.value}: no default value is set')
+
+    def quotas():
+        return [(a.value, a.default()) for a in [
+            TNUserProp.QUOTA_WARN,
+            TNUserProp.QUOTA_CRIT,
+            TNUserProp.REFQUOTA_WARN,
+            TNUserProp.REFQUOTA_CRIT
+        ]]
+
+    def values():
+        return [a.value for a in TNUserProp]
+
 
 class ZFSCTL(enum.IntEnum):
     # from include/os/linux/zfs/sys/zfs_ctldir.h in ZFS repo

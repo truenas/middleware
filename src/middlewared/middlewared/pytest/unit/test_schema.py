@@ -4,7 +4,8 @@ from unittest.mock import Mock
 from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
-    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI, UnixPerm, LocalUsername
+    accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI,
+    UnixPerm, UUID, LocalUsername
 )
 from middlewared.plugins.cluster_linux.management import GlusterVolname, MAX_VOLNAME_LENGTH
 
@@ -854,3 +855,22 @@ def test__glustervolname_schema(value, expected_to_fail):
             gvol(self, value)
     else:
         assert gvol(self, value) == value
+
+
+@pytest.mark.parametrize('value,expected_to_fail', [
+    ('', True),
+    ('canary', True),
+    (0, True),
+    ('c254614c-932f-4a31-888c-6330f5cc77a9', False),
+])
+def test__uuid_schema(value, expected_to_fail):
+    @accepts(UUID('uuid', required=True))
+    def do_uuid(self, data):
+        return data
+
+    self = Mock()
+    if expected_to_fail:
+        with pytest.raises(ValidationErrors):
+            do_uuid(self, value)
+    else:
+        assert do_uuid(self, value) == value

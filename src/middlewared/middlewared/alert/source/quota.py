@@ -10,6 +10,7 @@ except ImportError:
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils.size import format_size
+from middlewared.plugins.zfs_.utils import TNUserProp
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +44,7 @@ class QuotaAlertSource(ThreadedAlertSource):
             if "/" not in d["name"]:
                 pool_sizes[d["name"]] = int(d["available"]["rawvalue"]) + int(d["used"]["rawvalue"])
 
-            for k, default in [("org.freenas:quota_warning", 80), ("org.freenas:quota_critical", 95),
-                               ("org.freenas:refquota_warning", 80), ("org.freenas:refquota_critical", 95)]:
+            for k, default in TNUserProp.quotas():
                 try:
                     d[k] = int(d[k]["rawvalue"])
                 except (KeyError, ValueError):
@@ -56,6 +56,8 @@ class QuotaAlertSource(ThreadedAlertSource):
         datasets = sorted(datasets, key=lambda ds: ds["name"])
         for dataset in datasets:
             for quota_property in ["quota", "refquota"]:
+                warn_prop = TNUserProp[f"{quota_property.upper()}_WARN"]
+                crit_prop = TNUserProp[f"{quota_property.upper()}_CRIT"]
                 try:
                     quota_value = int(dataset[quota_property]["rawvalue"])
                 except (AttributeError, KeyError, ValueError):
@@ -90,8 +92,8 @@ class QuotaAlertSource(ThreadedAlertSource):
 
                 used_fraction = 100 * used / quota_value
 
-                critical_threshold = dataset[f"org.freenas:{quota_property}_critical"]
-                warning_threshold = dataset[f"org.freenas:{quota_property}_warning"]
+                critical_threshold = dataset[crit_prop.value]
+                warning_threshold = dataset[warn_prop.value]
                 if critical_threshold != 0 and used_fraction >= critical_threshold:
                     klass = QuotaCriticalAlertClass
                 elif warning_threshold != 0 and used_fraction >= warning_threshold:
@@ -117,7 +119,7 @@ class QuotaAlertSource(ThreadedAlertSource):
                         )
                     except KeyError:
                         to = None
-                        logger.debug("Unable to query bsduser with uid %r", owner)
+                        logger.debug("Unable to query user with uid %r", owner)
                     else:
                         try:
                             bsduser = self.middleware.call_sync(

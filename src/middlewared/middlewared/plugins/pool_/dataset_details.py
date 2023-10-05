@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs_.utils import zvol_path_to_name, TNUserProp
 from middlewared.service import Service, private
 from middlewared.schema import accepts, List, returns
 from middlewared.utils.osc.linux.mount import getmntinfo
@@ -182,11 +182,11 @@ class PoolDatasetService(Service):
                     'usedbychildren',
                     'refquota',
                     'origin',
-                    'org.freenas:refquota_critical',
-                    'org.freenas:refquota_warning',
+                    TNUserProp.REFQUOTA_CRIT.value,
+                    TNUserProp.REFQUOTA_WARN.value,
                     'quota',
-                    'org.freenas:quota_critical',
-                    'org.freenas:quota_warning',
+                    TNUserProp.QUOTA_CRIT.value,
+                    TNUserProp.QUOTA_WARN.value,
                     'refreservation',
                     'reservation',
                     'mountpoint',

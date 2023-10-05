@@ -1,6 +1,7 @@
 import errno
 import ipaddress
 import os
+import uuid
 try:
     import wbclient
 except ImportError:
@@ -338,6 +339,28 @@ class Datetime(Str):
 
     def validate(self, value):
         return super().validate(str(value))
+
+
+class UUID(Str):
+
+    def validate(self, value):
+        if value is None:
+            return
+
+        verrors = ValidationErrors()
+        try:
+            if isinstance(value, int):
+                uuid.UUID(int=value)
+            else:
+                uuid.UUID(value)
+        except TypeError:
+            verrors.add(self.name, 'Please supply a valid hex-formatted UUID string')
+        except ValueError as e:
+            verrors.add(self.name, e)
+
+        verrors.check()
+
+        return super().validate(value)
 
 
 class UnixPerm(Str):
