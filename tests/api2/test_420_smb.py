@@ -1,71 +1,71 @@
-#!/usr/bin/env python3
-
-# License: BSD
-# Location for tests into REST API of FreeNAS
-
 import pytest
 import sys
 import os
 from pytest_dependency import depends
-import json
+import secrets
+import string
 import uuid
 from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from protocols import smb_connection
 from utils import create_dataset
-from auto_config import ha, ip, pool_name, hostname
-from middlewared.test.integration.assets.account import group
+from auto_config import ip, pool_name
+from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
 
 
 AUDIT_WAIT = 10
-MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
-dataset = f"{pool_name}/smb-cifs"
-dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "TestCifsSMB"
-SMB_PATH = "/mnt/" + dataset
-
-guest_path_verification = {
-    "user": "shareuser",
-    "group": "root",
-    "acl": True
-}
-
-root_path_verification = {
-    "user": "root",
-    "group": "root",
-    "acl": False
-}
+SHAREUSER = 'smbuser420'
+PASSWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 
 
 @pytest.fixture(scope='module')
 def initialize_for_smb_tests(request):
     with make_dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
-        with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
-            'purpose': 'NO_PRESET',
-            'guestok': True,
-        }) as s:
-            yield {'dataset': ds, 'share': s}
+        with user({
+            'username': SHAREUSER,
+            'full_name': SHAREUSER,
+            'group_create': True,
+            'password': PASSWD
+        }, get_instance=False):
+            with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
+                'purpose': 'NO_PRESET',
+                'guestok': True,
+            }) as s:
+                try:
+                    call('smb.update', {
+                        'enable_smb1': True,
+                        'guest': SHAREUSER
+                    })
+                    call('service.start', 'cifs')
+                    yield {'dataset': ds, 'share': s}
+                finally:
+                    call('smb.update', {
+                        'enable_smb1': False,
+                        'guest': ''
+                    })
+                    call('service.stop', 'cifs')
 
 
 @pytest.mark.dependency(name="smb_initialized")
 def test_001_enable_smb1(initialize_for_smb_tests):
     global smb_info
     global smb_id
+    global test_420_ds_name
     smb_info = initialize_for_smb_tests
     smb_id = smb_info['share']['id']
-
-    call('smb.update', {"enable_smb1": True, 'guest': 'shareuser'})
+    test_420_ds_name = smb_info['dataset']
 
 
 @pytest.mark.parametrize('params', [
     ('SMB1', 'GUEST'),
     ('SMB2', 'GUEST'),
-    ('SMB1', 'SHAREUSER'),
-    ('SMB2', 'SHAREUSER')
+    ('SMB1', SHAREUSER),
+    ('SMB2', SHAREUSER)
 ])
 def test_012_test_basic_smb_ops(request, params):
     depends(request, ["smb_initialized"], scope="session")
@@ -74,7 +74,7 @@ def test_012_test_basic_smb_ops(request, params):
         host=ip,
         share=SMB_NAME,
         username=runas,
-        password='testing',
+        password=PASSWD,
         smb1=(proto == 'SMB1')
     ) as c:
         filename1 = f'testfile1_{proto.lower()}_{runas}.txt'
@@ -108,10 +108,10 @@ def test_018_setting_enable_smb1_to_false(request):
 
 def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
     depends(request, ["smb_initialized"], scope="session")
-    call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
+    share = call('sharing.smb.update', smb_id, {'home': True, "guestok": False})
     try:
         share_path = call('smb.getparm', 'path', 'homes')
-        assert share_path == f'{SMB_PATH}/%U'
+        assert share_path == f'{share["path_local"]}/%U'
     finally:
         call('sharing.smb.update', smb_id, {'home': False})
 
@@ -150,15 +150,15 @@ def do_recycle_ops(c, has_subds=False):
 
     # Above close op also deleted the file and so
     # we expect file to now exist in the user's .recycle directory
-    fd = c.create_file('.recycle/shareuser/testfile.txt', 'r')
+    fd = c.create_file(f'.recycle/{SHAREUSER}/testfile.txt', 'r')
     val = c.read(fd, 0, 3)
     c.close(fd)
     assert val == b'foo'
 
     # re-open so that we can set DELETE_ON_CLOSE
     # this verifies that SMB client can purge file from recycle bin
-    c.close(c.create_file('.recycle/shareuser/testfile.txt', 'w'), True)
-    assert c.ls('.recycle/shareuser/') == []
+    c.close(c.create_file(f'.recycle/{SHAREUSER}/testfile.txt', 'w'), True)
+    assert c.ls(f'.recycle/{SHAREUSER}/') == []
 
     if not has_subds:
         return
@@ -169,23 +169,23 @@ def do_recycle_ops(c, has_subds=False):
     c.write(fd, b'boo')
     c.close(fd, True)
 
-    fd = c.create_file('subds/.recycle/shareuser/testfile2.txt', 'r')
+    fd = c.create_file(f'subds/.recycle/{SHAREUSER}/testfile2.txt', 'r')
     val = c.read(fd, 0, 3)
     c.close(fd)
     assert val == b'boo'
 
-    c.close(c.create_file('subds/.recycle/shareuser/testfile2.txt', 'w'), True)
-    assert c.ls('subds/.recycle/shareuser/') == []
+    c.close(c.create_file(f'subds/.recycle/{SHAREUSER}/testfile2.txt', 'w'), True)
+    assert c.ls(f'subds/.recycle/{SHAREUSER}/') == []
 
 
 def test_042_recyclebin_functional_test(request):
     depends(request, ["SMB_RECYCLE_CONFIGURED"], scope="session")
-    with create_dataset(f'{dataset}/subds', {'share_type': 'SMB'}):
+    with create_dataset(f'{test_420_ds_name}/subds', {'share_type': 'SMB'}):
         with smb_connection(
             host=ip,
             share=SMB_NAME,
-            username='shareuser',
-            password='testing',
+            username=SHAREUSER,
+            password=PASSWD,
         ) as c:
             do_recycle_ops(c, True)
 
@@ -212,8 +212,8 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
             with smb_connection(
                 host=ip,
                 share=tmp_share_name,
-                username='shareuser',
-                password='testing',
+                username=SHAREUSER,
+                password=PASSWD,
             ) as c:
                 do_recycle_ops(c)
 
@@ -223,7 +223,7 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
             f'mkdir {tmp_ds_path}',
             f'mkdir {tmp_ds_path}/subdir',
             f'touch {tmp_ds_path}/subdir/testfile',
-            f'chown shareuser {tmp_ds_path}/subdir/testfile',
+            f'chown {SHAREUSER} {tmp_ds_path}/subdir/testfile',
         ]
         ssh(';'.join(ops))
         with smb_share(tmp_ds_path, tmp_share_name, {
@@ -233,14 +233,14 @@ def test_043_recyclebin_functional_test_subdir(request, smb_config):
             with smb_connection(
                 host=ip,
                 share=tmp_share_name,
-                username='shareuser',
-                password='testing',
+                username=SHAREUSER,
+                password=PASSWD,
             ) as c:
                 fd = c.create_file('subdir/testfile', 'w')
                 c.write(fd, b'boo')
                 c.close(fd, True)
 
-                fd = c.create_file('.recycle/shareuser/subdir/testfile', 'r')
+                fd = c.create_file(f'.recycle/{SHAREUSER}/subdir/testfile', 'r')
                 val = c.read(fd, 0, 3)
                 c.close(fd)
                 assert val == b'boo'
@@ -363,8 +363,8 @@ def do_audit_ops(svc):
     with smb_connection(
         host=ip,
         share=svc,
-        username='shareuser',
-        password='testing',
+        username=SHAREUSER,
+        password=PASSWD,
     ) as c:
         fd = c.create_file('testfile.txt', 'w')
         for i in range(0, 3):
