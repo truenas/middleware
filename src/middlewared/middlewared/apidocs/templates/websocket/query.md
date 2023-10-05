@@ -83,7 +83,8 @@ Javascript:
       ["locked", "=", false]
     ]
 
-The following is an invalid example because the first array member is a conjunction of multiple conditions rather than a single condition.
+The following is valid example that returns users who are either enabled or have password authentication enabled with two-factor authentication disabled.
+
 Javascript:
     :::javascript
     ["OR",
@@ -114,7 +115,8 @@ Javascript:
       ["group.bsdgrp_gid", "=", 3000],
     ]
 
-If a key contains a literal dot (".") in its name, then it must be escaped via a double backlash.
+If a key contains a literal dot (".") in its name, then it must be escaped via a double backslash.
+
 Javascript:
     :::javascript
     [
