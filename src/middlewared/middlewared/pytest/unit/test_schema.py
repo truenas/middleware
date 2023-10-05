@@ -5,7 +5,7 @@ from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI,
-    UnixPerm, UUID, LocalUsername
+    UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
 )
 from middlewared.plugins.cluster_linux.management import GlusterVolname, MAX_VOLNAME_LENGTH
 
@@ -808,6 +808,18 @@ def test__uri_schema(test_value, expected_error):
         assert strv(self, test_value) == test_value
 
 
+def validate_simple(fn, value, must_fail, casefold=False):
+    self = Mock()
+    if must_fail:
+        with pytest.raises(ValidationErrors):
+            fn(self, value)
+    else:
+        if casefold:
+            assert fn(self, value).casefold() == value.casefold()
+        else:
+            assert fn(self, value) == value
+
+
 @pytest.mark.parametrize('value,expected_to_fail', [
     ('', True),
     (f'{"a" * 33}', True),
@@ -825,12 +837,7 @@ def test__localusername_schema(value, expected_to_fail):
     def user(self, data):
         return data
 
-    self = Mock()
-    if expected_to_fail:
-        with pytest.raises(ValidationErrors):
-            user(self, value)
-    else:
-        assert user(self, value) == value
+    validate_simple(user, value, expected_to_fail)
 
 
 @pytest.mark.parametrize('value,expected_to_fail', [
@@ -849,12 +856,7 @@ def test__glustervolname_schema(value, expected_to_fail):
     def gvol(self, data):
         return data
 
-    self = Mock()
-    if expected_to_fail:
-        with pytest.raises(ValidationErrors):
-            gvol(self, value)
-    else:
-        assert gvol(self, value) == value
+    validate_simple(gvol, value, expected_to_fail)
 
 
 @pytest.mark.parametrize('value,expected_to_fail', [
@@ -868,9 +870,52 @@ def test__uuid_schema(value, expected_to_fail):
     def do_uuid(self, data):
         return data
 
-    self = Mock()
-    if expected_to_fail:
-        with pytest.raises(ValidationErrors):
-            do_uuid(self, value)
-    else:
-        assert do_uuid(self, value) == value
+    validate_simple(do_uuid, value, expected_to_fail)
+
+
+@pytest.mark.parametrize('value,expected_to_fail', [
+    ('', True),
+    ('*canary', True),
+    ('aaaaaaaaaaaaaaaa', True),
+    ('canary space', True),
+    ('canary.space', True),
+    ('canary?', True),
+    ('<canary', True),
+    ('canary>', True),
+    ('canary|', True),
+    ('1234567', True),
+    ('canary', False),
+    ('CaNary', False),
+    ('can_ary', False),
+    ('LOCAL', True),
+])
+def test__netbiosname_schema(value, expected_to_fail):
+    @accepts(NetbiosName('nbname', required=True))
+    def do_netbiosname(self, data):
+        return data
+
+    validate_simple(do_netbiosname, value, expected_to_fail, True)
+
+
+@pytest.mark.parametrize('value,expected_to_fail', [
+    ('', True),
+    ('*canary', True),
+    ('aaaaaaaaaaaaaaaa', True),
+    ('canary space', True),
+    ('canary.space', False),
+    ('canary?', True),
+    ('<canary', True),
+    ('canary>', True),
+    ('canary|', True),
+    ('1234567', True),
+    ('canary', False),
+    ('CaNary', False),
+    ('can_ary', False),
+    ('LOCAL', True),
+])
+def test__netbiosdomain_schema(value, expected_to_fail):
+    @accepts(NetbiosDomain('nbname', required=True))
+    def do_netbiosdomain(self, data):
+        return data
+
+    validate_simple(do_netbiosdomain, value, expected_to_fail, True)

@@ -14,7 +14,7 @@ from samba import param
 
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.schema import Bool, Dict, IPAddr, List, Ref, returns, SID, Str, Int, Patch
+from middlewared.schema import Bool, Dict, IPAddr, List, NetbiosName, NetbiosDomain, Ref, returns, SID, Str, Int, Patch
 from middlewared.schema import Path as SchemaPath
 # List schema defaults to [], supplying NOT_PROVIDED avoids having audit update that
 # defaults for ignore_list or watch_list from overrwriting previous value
@@ -28,7 +28,6 @@ from middlewared.utils import filter_list, osc, Popen, run
 from middlewared.utils.osc import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
-RE_NETBIOSNAME = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 
@@ -258,10 +257,6 @@ class SMBService(TDBWrapConfigService):
         smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
         smb.pop('secrets', None)
         return smb
-
-    @private
-    async def validate_netbios_name(self, name):
-        return RE_NETBIOSNAME.match(name)
 
     @accepts()
     async def unixcharset_choices(self):
@@ -716,17 +711,12 @@ class SMBService(TDBWrapConfigService):
 
             if i == 'netbiosalias':
                 for idx, item in enumerate(new[i]):
-                    if not await self.validate_netbios_name(item):
-                        verrors.add(f'smb_update.{i}.{idx}', f'Invalid NetBIOS name: {item}')
                     if item.casefold() == new['workgroup'].casefold():
                         verrors.add(
                             f'smb_update.{i}.{idx}',
                             f'NetBIOS alias [{item}] conflicts with workgroup name.'
                         )
             else:
-                if not await self.validate_netbios_name(new[i]):
-                    verrors.add(f'smb_update.{i}', f'Invalid NetBIOS name: {new[i]}')
-
                 if i != 'workgroup' and new[i].casefold() == new['workgroup'].casefold():
                     verrors.add(
                         f'smb_update.{i}',
@@ -784,10 +774,10 @@ class SMBService(TDBWrapConfigService):
 
     @accepts(Dict(
         'smb_update',
-        Str('netbiosname', max_length=15),
-        Str('netbiosname_b', max_length=15),
-        List('netbiosalias', items=[Str('netbios_alias', max_length=15)]),
-        Str('workgroup'),
+        NetbiosName('netbiosname', max_length=15),
+        NetbiosName('netbiosname_b', max_length=15),
+        List('netbiosalias', items=[NetbiosName('netbios_alias')]),
+        NetbiosDomain('workgroup'),
         Str('description'),
         Bool('enable_smb1'),
         Str('unixcharset'),

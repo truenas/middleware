@@ -4,7 +4,7 @@ import wbclient
 
 from middlewared.plugins.smb import SMBCmd
 from middlewared.plugins.activedirectory_.dns import SRV
-from middlewared.schema import accepts
+from middlewared.schema import accepts, Bool, returns
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.plugins.directoryservices import DSStatus
@@ -148,6 +148,7 @@ class ActiveDirectoryService(Service):
         self.machine_account_status(dc)
 
     @accepts()
+    @returns(Bool('started'))
     async def started(self):
         """
         Issue a no-effect command to our DC. This checks if our secure channel connection to our
