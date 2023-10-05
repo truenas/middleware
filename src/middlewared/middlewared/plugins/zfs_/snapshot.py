@@ -301,15 +301,16 @@ class ZFSSnapshot(CRUDService):
             if e.code == libzfs.Error.NOENT:
                 raise InstanceNotFound(str(e))
 
-            with libzfs.ZFS() as zfs:
-                dep = list(zfs.get_snapshot(id_).dependents)
-                if len(dep) and not options['defer']:
-                    verrors.add(
-                        'options.defer',
-                        f'Please set this attribute as {snap.name!r} snapshot has dependent clones: '
-                        f'{", ".join([i.name for i in dep])}'
-                    )
-                    verrors.check()
+            if e.args and isinstance(e.args[0], str) and 'snapshot has dependent clones' in e.args[0]:
+                with libzfs.ZFS() as zfs:
+                    dep = list(zfs.get_snapshot(id_).dependents)
+                    if len(dep) and not options['defer']:
+                        verrors.add(
+                            'options.defer',
+                            f'Please set this attribute as {snap.name!r} snapshot has dependent clones: '
+                            f'{", ".join([i.name for i in dep])}'
+                        )
+                        verrors.check()
 
             raise CallError(str(e))
         else:
