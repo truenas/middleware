@@ -306,6 +306,7 @@ class ShareSec(CRUDService):
             ae_list.append(await self._ae_to_string(entry))
 
         await self._sharesec(share=data['share_name'], action='--replace', args=','.join(ae_list))
+        await self.dup_share_acl(data['share_name'].lower(), f'#{data["share_name"].lower()}')
         if not db_commit:
             return
 
