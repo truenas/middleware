@@ -59,6 +59,9 @@ class ClusterPeerConnection:
     def __do_connect(self):
         c = Client(f'ws://{self.private_address}:6000/websocket')
         cred = self.credentials
+        if cred is None:
+            raise CallError('No credential provided')
+
         if (auth_token := cred.get('auth_token')):
             authenticated = c.call('auth.login_with_token', auth_token)
         elif (auth_key := cred.get('api_key')):
@@ -82,9 +85,6 @@ class ClusterPeerConnection:
         self.local = kwargs.get('local')
         self.conn = None
         self.call_fn = None
-
-        if self.credentials is None:
-            raise CallError('No credential provided')
 
         if not self.local:
             self.__do_connect()
