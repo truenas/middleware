@@ -301,7 +301,7 @@ with regard to homes shares
 
 @pytest.mark.dependency(name="HOME_SHARE_CREATED")
 def test_015_create_homes_share(request):
-    depends(request, ["SMB_DATASET_CREATED"])
+    depends(request, ["SHARES_CREATED"])
 
     HOME_PATH = os.path.join(smb_registry_mp, 'HOME_SHARE')
     call('filesystem.mkdir', HOME_PATH)
