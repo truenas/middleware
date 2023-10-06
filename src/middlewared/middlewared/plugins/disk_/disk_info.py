@@ -125,11 +125,15 @@ class DiskService(Service):
     def get_disk_from_partition(self, part_name):
         if not os.path.exists(os.path.join('/dev', part_name)):
             return None
-        with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
-            part_num = f.read().strip()
-        if part_name.startswith(('nvme', 'pmem')):
-            # nvme/pmem partitions would be like nvmen1p1 where disk is nvmen1
-            part_num = f'p{part_num}'
+        try:
+            with open(os.path.join('/sys/class/block', part_name, 'partition'), 'r') as f:
+                part_num = f.read().strip()
+        except FileNotFoundError:
+            return part_name
+        else:
+            if part_name.startswith(('nvme', 'pmem')):
+                # nvme/pmem partitions would be like nvmen1p1 where disk is nvmen1
+                part_num = f'p{part_num}'
         return part_name.rsplit(part_num, 1)[0].strip()
 
     @private
