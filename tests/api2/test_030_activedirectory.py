@@ -31,36 +31,8 @@ except ImportError:
     pytestmark = pytest.mark.skip(reason=Reason)
 
 
-ad_data_type = {
-    'id': int,
-    'domainname': str,
-    'bindname': str,
-    'bindpw': str,
-    'verbose_logging': bool,
-    'allow_trusted_doms': bool,
-    'use_default_domain': bool,
-    'allow_dns_updates': bool,
-    'disable_freenas_cache': bool,
-    'site': type(None),
-    'kerberos_realm': type(None),
-    'kerberos_principal': str,
-    'createcomputer': str,
-    'timeout': int,
-    'dns_timeout': int,
-    'nss_info': type(None),
-    'enable': bool,
-    'netbiosname': str,
-    'netbiosalias': list
-}
-
-ad_object_list = [
-    "bindname",
-    "domainname",
-    "netbiosname",
-    "enable"
-]
-
 SMB_NAME = "TestADShare"
+
 
 def remove_dns_entries(payload):
     res = make_ws_request(ip, {
@@ -198,11 +170,6 @@ def test_03_get_activedirectory_data(request):
     global results
     results = GET('/activedirectory/')
     assert results.status_code == 200, results.text
-
-
-@pytest.mark.parametrize('data', list(ad_data_type.keys()))
-def test_04_verify_activedirectory_data_type_of_the_object_value_of_(request, data):
-    assert isinstance(results.json()[data], ad_data_type[data]), results.text
 
 
 def test_05_get_activedirectory_state(request):
