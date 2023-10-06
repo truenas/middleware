@@ -7,6 +7,8 @@ import copy
 from subprocess import run
 from middlewared.service_exception import CallError
 
+FD_CLOSED = -1
+
 
 class TDBPath(enum.Enum):
     VOLATILE = '/var/run/tdb/volatile'
@@ -21,18 +23,25 @@ class TDBWrap(object):
     cached_data = None
     last_read = 0
     full_path = None
-    opath_fd = -1
+    opath_fd = FD_CLOSED
 
     def close(self):
-        self.hdl.close()
-        os.close(self.opath_fd)
-        self.opath_fd = -1
+        if self.opath_fd == FD_CLOSED and self.hdl is None:
+            return
+
+        if self.hdl is not None:
+            self.hdl.close()
+            self.hdl = None
+
+        if self.opath_fd != FD_CLOSED:
+            os.close(self.opath_fd)
+            self.opath_fd = FD_CLOSED
 
     def is_clustered(self):
         return False
 
     def validate_handle(self):
-        if self.opath_fd == -1:
+        if self.opath_fd == FD_CLOSED:
             return False
 
         if not os.path.exists(f'/proc/self/fd/{self.opath_fd}'):
