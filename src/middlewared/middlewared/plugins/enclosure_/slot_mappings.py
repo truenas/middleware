@@ -426,6 +426,6 @@ def get_mapping_info(dmi, enclosures=None):
         'FREENAS-MINI-R': 'MINI-R'
     }
     try:
-        get_slot_info(mapping[dmi], enclosures)
+        return get_slot_info(mapping[dmi], enclosures)
     except KeyError:
         pass

@@ -29,15 +29,17 @@ def map_enclosures(enclosures):
                     vers_key = vers
                     break
 
+        disk_slots_mapping = None
         for key, _dsm in mapped_info['versions'][vers_key].items():
             # now that we know what product "version" we're on, we need to be
             # sure and pull the drive mappings based on the enclosures unique
             # (non-changing) id. The non-changing id that uniquely identifies
             # the enclosure is different between each platform
-            if (disk_slots_mapping := _dsm.get(enclosure[key])) is not None:
+            if (uniq_id := enclosure.get(key)) and (disk_slots_mapping := _dsm.get(uniq_id)):
                 break
-        else:
-            raise LookupError(f'Enclosure {enclosure["name"]!r} not found in mapping')
+
+        if disk_slots_mapping is None:
+            raise LookupError(f'Failed to find unique ID for enclosure {enclosure["name"]!r}')
 
         for orig_slot, orig_info in enclosure['elements']['Array Device Slot'].items():
             mapped_slot = disk_slots_mapping[orig_slot]['mapped_slot']
