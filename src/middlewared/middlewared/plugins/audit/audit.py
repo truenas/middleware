@@ -14,7 +14,7 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import private, ConfigService
+from middlewared.service import filterable_returns, private, ConfigService
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.functools import cache
@@ -115,22 +115,20 @@ class AuditService(ConfigService):
         Ref('query-filters'),
         Ref('query-options')
     ))
-    @returns(List('audit_entries', items=[
-        Dict(
-            'audit_entry',
-            UUID('aid'),
-            Int('msg_ts'),
-            Dict('time', Int('$date')),
-            Str('addr'),
-            Str('user'),
-            UUID('sess'),
-            Str('svc', enum=ALL_AUDITED),
-            Dict('svc_data', additional_attrs=True, null=True),
-            Str('event'),
-            Dict('event_data', additional_attrs=True, null=True),
-            Bool('success')
-        )
-    ]))
+    @filterable_returns(Dict(
+        'audit_entry',
+        UUID('aid'),
+        Int('msg_ts'),
+        Dict('time', additional_attrs=True),
+        Str('addr'),
+        Str('user'),
+        UUID('sess'),
+        Str('svc', enum=ALL_AUDITED),
+        Dict('svc_data', additional_attrs=True, null=True),
+        Str('event'),
+        Dict('event_data', additional_attrs=True, null=True),
+        Bool('success')
+    ))
     async def query(self, data):
         """
         Query contents of audit databases specified by `services`.
