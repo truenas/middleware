@@ -129,7 +129,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         Str('kerberos_principal', null=True),
         Int('timeout', default=60),
         Int('dns_timeout', default=10, validators=[Range(min_=5, max_=40)]),
-        Str('nss_info', null=True, default='', enum=['SFU', 'SFU20', 'RFC2307']),
+        Str('nss_info', null=True, enum=['TEMPLATE', 'SFU', 'SFU20', 'RFC2307']),
         Str('createcomputer'),
         NetbiosName('netbiosname'),
         NetbiosName('netbiosname_b'),
@@ -164,7 +164,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         })
 
         if data_in.get("nss_info"):
-            data_out["winbind nss info"] = {"parsed": data_in["nss_info"]}
+            data_out["winbind nss info"] = {"parsed": data_in["nss_info"].lower()}
 
         try:
             home_share = await self.middleware.call('sharing.smb.reg_showshare', 'homes')
@@ -187,6 +187,8 @@ class ActiveDirectoryService(TDBWrapConfigService):
 
         if ad.get('nss_info'):
             ad['nss_info'] = ad['nss_info'].upper()
+        else:
+            ad['nss_info'] = 'TEMPLATE'
 
         if ad.get('kerberos_realm') and type(ad['kerberos_realm']) == dict:
             ad['kerberos_realm'] = ad['kerberos_realm']['id']

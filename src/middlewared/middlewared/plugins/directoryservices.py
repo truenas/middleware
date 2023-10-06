@@ -56,6 +56,7 @@ class NSS_Info(enum.Enum):
     SFU20 = ('SFU20', [DSType.AD])
     RFC2307 = ('RFC2307', [DSType.AD, DSType.LDAP])
     RFC2307BIS = ('RFC2307BIS', [DSType.LDAP])
+    TEMPLATE = ('TEMPLATE', [DSType.AD])
 
 
 class DirectorySecrets(object):
