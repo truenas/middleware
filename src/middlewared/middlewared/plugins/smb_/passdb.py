@@ -165,9 +165,15 @@ class SMBService(Service):
         private_dir = SMBPath.PASSDB_DIR.platform()
         ts = int(time.time())
         old_path = f'{private_dir}/passdb.tdb'
-        new_path = f'{private_dir}/passdb.{ts}.corrupted'
-        os.rename(old_path, new_path)
+        new_path = f'{private_dir}/passdb.{ts}.old'
         self.logger.debug("Backing up original passdb to [%s]", new_path)
+        try:
+            os.rename(old_path, new_path)
+        except FileNotFoundError:
+            pass
+        except Exception:
+            self.logger.debug('Failed to move %s to %s', old_path, new_path, exc_info=True)
+
         for u in conf_users:
             await self.middleware.call('smb.update_passdb_user', u | {'pdb': None})
 
