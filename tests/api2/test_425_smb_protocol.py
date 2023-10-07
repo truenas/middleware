@@ -4,6 +4,8 @@ import pytest
 import sys
 import os
 import enum
+import secrets
+import string
 from time import sleep
 from base64 import b64decode, b64encode
 apifolder = os.getcwd()
@@ -16,17 +18,21 @@ from auto_config import (
     user,
     password,
 )
+from middlewared.test.integration.assets.account import user, group
+from middlewared.test.integration.assets.smb import smb_share
+from middlewared.test.integration.assets.pool import dataset as make_dataset
+from middlewared.test.integration.utils import call, ssh
 from pytest_dependency import depends
 from protocols import SMB, smb_connection, smb_share
 from samba import ntstatus
 from samba import NTSTATUSError
 
 
-
-dataset = f"{pool_name}/smb-proto"
-dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "SMBPROTO"
-smb_path = "/mnt/" + dataset
+SMB_USER = "smbuser"
+SMB_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+TEST_DATA = {}
+
 guest_path_verification = {
     "user": "shareuser",
     "group": 'root',
@@ -93,75 +99,66 @@ AFPXattr = {
 }
 
 SMB_USER = "smbuser"
-SMB_PWD = "smb1234"
+SMB_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+TEST_DATA = {}
 
 
-@pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_dataset(request):
-    payload = {
-        "name": dataset,
-        "share_type": "SMB"
-    }
-    results = POST("/pool/dataset/", payload)
-    assert results.status_code == 200, results.text
+@pytest.fixture(scope='module')
+def initialize_for_smb_tests(request):
+    with make_dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
+        with user({
+            'username': SMB_USER,
+            'full_name': SMB_USER,
+            'group_create': True,
+            'password': PASSWD
+        }) as u:
+            with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
+                'purpose': 'NO_PRESET',
+                'guestok': True,
+                'auxsmbconf': 'zfs_core:base_user_quota = 1G'
+            }) as s:
+                try:
+                    call('service.start', 'cifs')
+                    yield {'dataset': ds, 'share': s, 'user': u}
+                finally:
+                    call('smb.update', {
+                        'enable_smb1': False,
+                        'guest': 'nobody'
+                    })
+                    call('service.stop', 'cifs')
 
 
-def test_002_get_next_uid_for_smbuser():
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global next_uid
-    next_uid = results.json()
+@pytest.fixture(scope='function')
+def get_smb_connections(request):
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username=SMB_USER,
+        password=SMB_PWD,
+        smb1=False
+    ) as c:
+        yield (request, c)
+    
 
-
-@pytest.mark.dependency(name="SMB_USER_CREATED")
-def test_003_creating_shareuser_to_test_acls(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    global smbuser_id
-    payload = {
-        "username": SMB_USER,
-        "full_name": "SMB User",
-        "group_create": True,
-        "password": SMB_PWD,
-        "uid": next_uid,
-        "email": sample_email,
-    }
-    results = POST("/user/", payload)
-    assert results.status_code == 200, results.text
-    smbuser_id = results.json()
-
+@pytest.fixture(scope='function')
+def get_smb1_connection(request):
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username=SMB_USER,
+        password=SMB_PWD,
+        smb1=True
+    ) as c:
+        yield (request, c)
+    
 
 @pytest.mark.dependency(name="SMB_SHARE_CREATED")
-def test_006_creating_a_smb_share_path(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    global payload, results, smb_id
-    payload = {
-        "comment": "SMB Protocol Testing Share",
-        "path": smb_path,
-        "name": SMB_NAME,
-        "auxsmbconf": "zfs_core:base_user_quota = 1G"
-    }
-    results = POST("/sharing/smb/", payload)
-    assert results.status_code == 200, results.text
-    smb_id = results.json()['id']
-
-
-@pytest.mark.dependency(name="SMB_SERVICE_STARTED")
-def test_007_starting_cifs_service(request):
-    depends(request, ["SMB_SHARE_CREATED"])
-    payload = {"service": "cifs"}
-    results = POST("/service/start/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
-
-
-def test_008_checking_to_see_if_smb_service_is_running(request):
-    depends(request, ["SMB_SHARE_CREATED"])
-    results = GET("/service?service=cifs")
-    assert results.json()[0]["state"] == "RUNNING", results.text
+def test_001_creating_smb_dataset(initialize_for_smb_tests):
+    TEST_DATA.update(initialize_for_smb_tests)
 
 
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE")
-def test_009_share_is_writable(request):
+def test_009_share_is_writable(get_smb_connection):
     """
     This test creates creates an empty file, sets "delete on close" flag, then
     closes it. NTStatusError should be raised containing failure details
@@ -169,67 +166,60 @@ def test_009_share_is_writable(request):
 
     This test will fail if smb.conf / smb4.conf does not exist on client / server running test.
     """
+    request, c = get_smb_connection
     depends(request, ["SMB_SHARE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+
     fd = c.create_file("testfile", "w")
     c.close(fd, True)
-    c.disconnect()
 
 
 @pytest.mark.parametrize('dm', DOSmode)
-def test_010_check_dosmode_create(request, dm):
+def test_010_check_dosmode_create(get_smb_connection, dm):
     """
     This tests the setting of different DOS attributes through SMB2 Create.
     after setting
     """
+    request, c = get_smb_connection
     depends(request, ["SHARE_IS_WRITABLE"])
+
     if dm.value > DOSmode.SYSTEM.value:
         return
 
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     if dm == DOSmode.READONLY:
         c.create_file(dm.name, "w", "r")
     elif dm == DOSmode.HIDDEN:
         c.create_file(dm.name, "w", "h")
     elif dm == DOSmode.SYSTEM:
         c.create_file(dm.name, "w", "s")
-    dir_listing = c.ls("/")
-    for f in dir_listing:
+
+    for f in c.ls("/"):
         if f['name'] != dm.name:
             continue
         # Archive is automatically set by kernel
         to_check = f['attrib'] & ~DOSmode.ARCHIVE.value
-        c.disconnect()
         assert (to_check & dm.value) != 0, f
 
 
-def test_011_check_dos_ro_cred_handling(request):
+def test_011_check_dos_ro_cred_handling(get_smb_connection):
     """
     This test creates a file with readonly attribute set, then
     uses the open fd to write data to the file.
     """
+    request, c = get_smb_connection
     depends(request, ["SHARE_IS_WRITABLE"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+
     fd = c.create_file("RO_TEST", "w", "r")
     c.write(fd, b"TESTING123\n")
-    c.disconnect()
 
 
 @pytest.mark.dependency(name="SMB1_ENABLED")
 def test_050_enable_smb1(request):
     depends(request, ["SMB_SHARE_CREATED"])
-    payload = {
-        "enable_smb1": True,
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    call('smb.update', {'enable_smb1': True})
 
 
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE_SMB1")
-def test_051_share_is_writable_smb1(request):
+def test_051_share_is_writable_smb1(get_smb1_connection):
     """
     This test creates creates an empty file, sets "delete on close" flag, then
     closes it. NTStatusError should be raised containing failure details
@@ -241,65 +231,60 @@ def test_051_share_is_writable_smb1(request):
     [global]
     client min protocol = nt1
     """
+    request, c = get_smb1_connection
     depends(request, ["SMB_SHARE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+
     fd = c.create_file("testfile", "w")
     c.close(fd, True)
-    c.disconnect()
 
 
 @pytest.mark.parametrize('dm', DOSmode)
-def test_052_check_dosmode_create_smb1(request, dm):
+def test_052_check_dosmode_create_smb1(get_smb1_connection, dm):
     """
     This tests the setting of different DOS attributes through SMB1 create.
     after setting
     """
+    request, c = get_smb1_connection
     depends(request, ["SHARE_IS_WRITABLE"])
     if dm.value > DOSmode.SYSTEM.value:
         return
 
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     if dm == DOSmode.READONLY:
         c.create_file(f'{dm.name}_smb1', "w", "r")
     elif dm == DOSmode.HIDDEN:
         c.create_file(f'{dm.name}_smb1', "w", "h")
     elif dm == DOSmode.SYSTEM:
         c.create_file(f'{dm.name}_smb1', "w", "s")
-    dir_listing = c.ls("/")
-    for f in dir_listing:
+    for f in c.ls("/"):
         if f['name'] != f'{dm.name}_smb1':
             continue
         # Archive is automatically set by kernel
         to_check = f['attrib'] & ~DOSmode.ARCHIVE.value
-        c.disconnect()
         assert (to_check & dm.value) != 0, f
 
 
 @pytest.mark.dependency(name="STREAM_TESTFILE_CREATED")
-def test_060_create_base_file_for_streams_tests(request):
+def test_060_create_base_file_for_streams_tests(get_smb_connection):
     """
     Create the base file that we will use for further stream tests.
     """
+    request, c = get_smb_connection
     depends(request, ["SMB_SHARE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+
     fd = c.create_file("streamstestfile", "w")
     c.close(fd)
     c.mkdir("streamstestdir")
-    c.disconnect()
 
 
 @pytest.mark.dependency(name="STREAM_WRITTEN_SMB2")
-def test_061_create_and_write_stream_smb2(request):
+def test_061_create_and_write_stream_smb2(get_smb_connection):
     """
     Create our initial stream and write to it over SMB2/3 protocol.
     Start with offset 0.
     """
+    request, c = get_smb_connection
     depends(request, ["STREAM_TESTFILE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+
     fd = c.create_file("streamstestfile:smb2_stream", "w")
     c.write(fd, b'test1', 0)
     c.close(fd)
@@ -317,20 +302,19 @@ def test_061_create_and_write_stream_smb2(request):
     c.close(fd4)
 
     c.rmdir("streamstestdir")
-    c.disconnect()
     assert (contents.decode() == "test1")
     assert (contents2.decode() == "test2")
 
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB2")
-def test_062_write_stream_large_offset_smb2(request):
+def test_062_write_stream_large_offset_smb2(get_smb_connection):
     """
     Append to our existing stream over SMB2/3 protocol. Specify an offset that will
     cause resuling xattr to exceed 64KiB default xattr size limit in Linux.
     """
+    request, c = get_smb_connection
     depends(request, ["STREAM_TESTFILE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
+
     fd = c.create_file("streamstestfile:smb2_stream", "w")
     c.write(fd, b'test2', 131072)
     c.close(fd)
@@ -338,36 +322,33 @@ def test_062_write_stream_large_offset_smb2(request):
     fd2 = c.create_file("streamstestfile:smb2_stream", "w")
     contents = c.read(fd2, 131072, 5)
     c.close(fd2)
-    c.disconnect()
     assert (contents.decode() == "test2")
 
 
-def test_063_stream_delete_on_close_smb2(request):
+def test_063_stream_delete_on_close_smb2(get_smb_connection):
     """
     Set delete_on_close on alternate datastream over SMB2/3 protocol, close, then verify
     stream was deleted.
-
-    TODO: I have open MR to expand samba python bindings to support stream enumeration.
-    Verifcation of stream deletion will have to be added once this is merged.
     """
+    request, c = get_smb_connection
+
     depends(request, ["STREAM_WRITTEN_SMB2", "LARGE_STREAM_WRITTEN_SMB2"])
     c = SMB()
     c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=False)
     fd = c.create_file("streamstestfile:smb2_stream", "w")
     c.close(fd, True)
 
-    c.disconnect()
-
 
 @pytest.mark.dependency(name="STREAM_WRITTEN_SMB1")
-def test_065_create_and_write_stream_smb1(request):
+def test_065_create_and_write_stream_smb1(get_smb1_connection):
     """
     Create our initial stream and write to it over SMB1 protocol.
     Start with offset 0.
     """
+    request, c = get_smb1_connection
+
     depends(request, ["STREAM_TESTFILE_CREATED"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+
     fd = c.create_file("streamstestfile:smb1_stream", "w")
     c.write(fd, b'test1', 0)
     c.close(fd)
@@ -375,19 +356,18 @@ def test_065_create_and_write_stream_smb1(request):
     fd2 = c.create_file("streamstestfile:smb1_stream", "w")
     contents = c.read(fd2, 0, 5)
     c.close(fd2)
-    c.disconnect()
     assert (contents.decode() == "test1")
 
 
 @pytest.mark.dependency(name="LARGE_STREAM_WRITTEN_SMB1")
-def test_066_write_stream_large_offset_smb1(request):
+def test_066_write_stream_large_offset_smb1(get_smb1_connection):
     """
     Append to our existing stream over SMB1 protocol. Specify an offset that will
     cause resuling xattr to exceed 64KiB default xattr size limit in Linux.
     """
+    request, c = get_smb1_connection
+
     depends(request, ["STREAM_WRITTEN_SMB1"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile:smb1_stream", "w")
     c.write(fd, b'test2', 131072)
     c.close(fd)
@@ -395,28 +375,22 @@ def test_066_write_stream_large_offset_smb1(request):
     fd2 = c.create_file("streamstestfile:smb1_stream", "w")
     contents = c.read(fd2, 131072, 5)
     c.close(fd2)
-    c.disconnect()
     assert (contents.decode() == "test2")
 
 
-def test_067_stream_delete_on_close_smb1(request):
+def test_067_stream_delete_on_close_smb1(get_smb1_connection):
     """
     Set delete_on_close on alternate datastream over SMB1 protocol, close, then verify
     stream was deleted.
-
-    TODO: I have open MR to expand samba python bindings to support stream enumeration.
-    Verifcation of stream deletion will have to be added once this is merged.
     """
+    request, c = get_smb1_connection
+
     depends(request, ["STREAM_WRITTEN_SMB1", "LARGE_STREAM_WRITTEN_SMB1"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
     fd = c.create_file("streamstestfile:smb1_stream", "w")
     c.close(fd, True)
 
-    c.disconnect()
 
-
-def test_068_case_insensitive_rename(request):
+def test_068_case_insensitive_rename(get_smb_connection):
     """
     ZFS is case sensitive, but case preserving when casesensitivity == insensitive
 
@@ -426,29 +400,27 @@ def test_068_case_insensitive_rename(request):
     Will fail with NT_STATUS_OBJECT_NAME_COLLISION if we have regression and
     samba identifies files as same.
     """
+    request, c = get_smb_connection
     depends(request, ["SHARE_IS_WRITABLE"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+
     fd = c.create_file("to_rename", "w")
     c.close(fd)
     c.rename("to_rename", "To_rename")
     files = [x['name'] for x in c.ls('\\')]
-    c.disconnect()
     assert ("To_rename" in files)
 
 
-def test_069_normal_rename(request):
+def test_069_normal_rename(get_smb_connection):
     """
     This verifies that renames are successfully completed
     """
+    request, c = get_smb_connection
     depends(request, ["SHARE_IS_WRITABLE"])
-    c = SMB()
-    c.connect(host=ip, share=SMB_NAME, username=SMB_USER, password=SMB_PWD, smb1=True)
+
     fd = c.create_file("old_file_to_rename", "w")
     c.close(fd)
     c.rename("old_file_to_rename", "renamed_new_file")
     files = [x['name'] for x in c.ls('\\')]
-    c.disconnect()
     assert ("renamed_new_file" in files)
 
 
@@ -462,16 +434,15 @@ SMB quotas.
 @pytest.mark.dependency(name="BA_ADDED_TO_USER")
 def test_089_add_to_builtin_admins(request):
     depends(request, ["SHARE_IS_WRITABLE"])
-    ba = GET('/group?group=builtin_administrators').json()
-    assert len(ba) != 0
+    call('group.query', [['group', '=', 'builtin_administrators']], {'get': True})
+
+    groups = TEST_DATA['user']['groups']
 
     userinfo = GET(f'/user/id/{smbuser_id}').json()
     groups = userinfo['groups']
-    groups.append(ba[0]['id'])
+    groups.append(ba['id'])
 
-    payload = {'groups': groups}
-    results = PUT(f"/user/id/{smbuser_id}/", payload)
-    assert results.status_code == 200, f"res: {results.text}, payload: {payload}"
+    call('group.update', TEST_DATA['user']['id'], {'groups': groups})
 
 
 @pytest.mark.parametrize('proto', ["SMB2"])
@@ -511,17 +482,17 @@ def test_091_remove_auto_quota_param(request):
     assert results.status_code == 200, results.text
 
 
-@pytest.mark.parametrize('proto', ["SMB2"])
-def test_092_set_smb_quota(request, proto):
+def test_092_set_smb_quota(get_smb_connection):
     """
     This test checks our ability to set a ZFS quota
     through the SMB protocol by first setting a 2 GiB
     quota, then reading it through the SMB protocol, then
     resetting to zero.
     """
+    request, c = get_smb_connection
     depends(request, ["BA_ADDED_TO_USER"])
+
     new_quota = 2 * (2**30)
-    c = SMB()
     qt = c.set_quota(
         host=ip,
         share=SMB_NAME,
