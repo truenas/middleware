@@ -17,11 +17,8 @@ from auto_config import ha, ip, pool_name, hostname
 from middlewared.test.integration.assets.account import group
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
-<<<<<<< HEAD
-=======
 from middlewared.test.integration.utils import call, ssh
 
->>>>>>> c31c9d2c5f (NAS-124388 / 24.04 / Refactor and simplify test_420_smb (#12213))
 
 MOUNTPOINT = f"/tmp/smb-cifs-{hostname}"
 dataset = f"{pool_name}/smb-cifs"
@@ -45,11 +42,29 @@ root_path_verification = {
 @pytest.fixture(scope='module')
 def initialize_for_smb_tests(request):
     with make_dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
-        with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
-            'purpose': 'NO_PRESET',
-            'guestok': True,
-        }) as s:
-            yield {'dataset': ds, 'share': s}
+        with user({
+            'username': SHAREUSER,
+            'full_name': SHAREUSER,
+            'group_create': True,
+            'password': PASSWD
+        }, get_instance=False):
+            with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
+                'purpose': 'NO_PRESET',
+                'guestok': True,
+            }) as s:
+                try:
+                    call('smb.update', {
+                        'enable_smb1': True,
+                        'guest': SHAREUSER
+                    })
+                    call('service.start', 'cifs')
+                    yield {'dataset': ds, 'share': s}
+                finally:
+                    call('smb.update', {
+                        'enable_smb1': False,
+                        'guest': 'nobody'
+                    })
+                    call('service.stop', 'cifs')
 
 
 @pytest.mark.dependency(name="smb_initialized")
