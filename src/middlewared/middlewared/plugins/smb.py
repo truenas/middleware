@@ -723,7 +723,7 @@ class SMBService(TDBWrapConfigService):
                         f'NetBIOS name [{new[i]}] conflicts with workgroup name.'
                     )
 
-        if new['guest']:
+        if new['guest'] is not None:
             if new['guest'] == 'root':
                 verrors.add('smb_update.guest', '"root" is not a permitted guest account')
 
