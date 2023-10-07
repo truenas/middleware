@@ -46,7 +46,7 @@ def initialize_for_smb_tests(request):
                 finally:
                     call('smb.update', {
                         'enable_smb1': False,
-                        'guest': ''
+                        'guest': 'nobody'
                     })
                     call('service.stop', 'cifs')
 
