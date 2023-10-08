@@ -22,6 +22,11 @@ def upgrade():
         batch_op.add_column(sa.Column('otp_digits', sa.INTEGER(), nullable=False, server_default='6'))
         batch_op.add_column(sa.Column('window', sa.INTEGER(), nullable=False, server_default='0'))
 
+    with op.batch_alter_table('system_twofactorauthentication', schema=None) as batch_op:
+        batch_op.drop_column('interval')
+        batch_op.drop_column('otp_digits')
+        batch_op.drop_column('window')
+
 
 def downgrade():
     pass
