@@ -6,7 +6,6 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, periodic, private
-from middlewared.validators import Range
 
 
 class TwoFactoryUserAuthModel(sa.Model):
@@ -40,9 +39,6 @@ class TwoFactorAuthService(ConfigService):
     ENTRY = Dict(
         'auth_twofactor_entry',
         Bool('enabled', required=True),
-        Int('otp_digits', validators=[Range(min_=6, max_=8)], required=True),
-        Int('window', validators=[Range(min_=0)], required=True),
-        Int('interval', validators=[Range(min_=5)], required=True),
         Dict(
             'services',
             Bool('ssh', default=False),
@@ -67,11 +63,7 @@ class TwoFactorAuthService(ConfigService):
     )
     async def do_update(self, data):
         """
-        `otp_digits` represents number of allowed digits in the OTP.
-
-        `window` extends the validity to `window` many counter ticks before and after the current one.
-
-        `interval` is time duration in seconds specifying OTP expiration time from it's creation time.
+        Update Two-Factor Authentication Service Configuration.
         """
         old_config = await self.config()
         config = old_config.copy()
@@ -80,16 +72,6 @@ class TwoFactorAuthService(ConfigService):
 
         if config == old_config:
             return config
-
-        if any(config[k] != old_config[k] for k in ['otp_digits', 'interval']):
-            # Now we want to reset all the secrets for local/non-local users
-            for user in await self.middleware.call('auth.twofactor.get_users_config'):
-                if user['ad_user']:
-                    await self.middleware.call('datastore.delete', 'account.twofactor_user_auth', user['row_id'])
-                else:
-                    await self.middleware.call('datastore.update', 'account.twofactor_user_auth', user['row_id'], {
-                        'secret': None,
-                    })
 
         await self.middleware.call(
             'datastore.update',
