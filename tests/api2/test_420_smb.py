@@ -113,7 +113,12 @@ def test_019_change_sharing_smd_home_to_true_and_set_guestok_to_false(request):
         share_path = call('smb.getparm', 'path', 'homes')
         assert share_path == f'{share["path_local"]}/%U'
     finally:
-        call('sharing.smb.update', smb_id, {'home': False})
+        new_info = call('sharing.smb.update', smb_id, {'home': False})
+
+    share_path = call('smb.getparm', 'path', new_info['name'])
+    assert share_path == share['path_local']
+    obey_pam_restrictions = call('smb.getparm', 'obey pam restrictions', 'GLOBAL')
+    assert obey_pam_restrictions == False
 
 
 def test_034_change_timemachine_to_true(request):
