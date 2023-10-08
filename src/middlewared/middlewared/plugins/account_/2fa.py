@@ -8,6 +8,17 @@ from middlewared.validators import Range
 
 class UserService(Service):
 
+    @private
+    async def provisioning_uri_internal(self, username, user_twofactor_config):
+        return pyotp.totp.TOTP(
+            user_twofactor_config['secret'], interval=user_twofactor_config['interval'],
+            digits=user_twofactor_config['otp_digits'],
+        ).provisioning_uri(
+            f'{username}-{await self.middleware.call("system.hostname")}'
+            f'@{await self.middleware.call("system.product_name")}',
+            'iXsystems'
+        )
+
     @accepts(Str('username'))
     @returns(Str(title='Provisioning URI'))
     async def provisioning_uri(self, username):
@@ -16,7 +27,6 @@ class UserService(Service):
         to provision an OTP app like Google Authenticator.
         """
         user = await self.translate_username(username)
-        twofactor_config = await self.middleware.call('auth.twofactor.config')
         user_twofactor_config = await self.middleware.call(
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
         )
