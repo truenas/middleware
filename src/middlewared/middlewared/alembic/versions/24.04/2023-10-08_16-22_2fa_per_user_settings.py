@@ -23,11 +23,10 @@ def upgrade():
         batch_op.add_column(sa.Column('window', sa.INTEGER(), nullable=False, server_default='0'))
 
     conn = op.get_bind()
-    twofactor_config = list(map(
-        dict, conn.execute('SELECT * FROM system_twofactorauthentication').fetchall()
-    ))
 
-    if twofactor_config:
+    if twofactor_config := list(map(
+        dict, conn.execute('SELECT * FROM system_twofactorauthentication').fetchall()
+    )):
         twofactor_config = twofactor_config[0]
         for row in map(dict, conn.execute('SELECT id FROM account_twofactor_user_auth').fetchall()):
             conn.execute(
