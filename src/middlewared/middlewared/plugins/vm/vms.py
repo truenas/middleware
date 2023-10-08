@@ -82,6 +82,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             Int('pid', null=True, required=True),
             Str('domain_state', required=True),
         )),
+        ('add', Bool('display_available')),
         ('add', Int('id')),
     )
 
@@ -324,6 +325,7 @@ class VMService(CRUDService, VMSupervisorMixin):
             'vm_entry',
             'vm_update',
             ('rm', {'name': 'devices'}),
+            ('rm', {'name': 'display_available'}),
             ('rm', {'name': 'status'}),
             ('attr', {'update': True}),
         )
@@ -359,8 +361,9 @@ class VMService(CRUDService, VMSupervisorMixin):
         await self.common_validation(verrors, 'vm_update', new, old=old)
         verrors.check()
 
-        new.pop('devices')
-        new.pop('status', None)
+        for key in ('devices', 'status', 'display_available'):
+            new.pop(key, None)
+
         await self.middleware.call('datastore.update', 'vm.vm', id_, new)
 
         vm_data = await self.get_instance(id_)
