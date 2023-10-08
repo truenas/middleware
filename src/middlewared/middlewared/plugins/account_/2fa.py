@@ -33,14 +33,37 @@ class UserService(Service):
         if not user_twofactor_config['secret']:
             raise CallError(f'{user["username"]!r} user does not have two factor authentication configured')
 
-        return pyotp.totp.TOTP(
-            user_twofactor_config['secret'], interval=twofactor_config['interval'],
-            digits=twofactor_config['otp_digits'],
-        ).provisioning_uri(
-            f'{username}-{await self.middleware.call("system.hostname")}'
-            f'@{await self.middleware.call("system.product_name")}',
-            'iXsystems'
+        return await self.provisioning_uri_internal(username, user_twofactor_config)
+
+    @accepts(Str('username'))
+    @returns(Dict(
+        'user_twofactor_config',
+        Str('provisioning_uri', null=True),
+        Bool('secret_configured'),
+        Int('window', validators=[Range(min_=0)]),
+        Int('interval', validators=[Range(min_=5)]),
+        Int('otp_digits', validators=[Range(min_=6, max_=8)]),
+    ))
+    async def twofactor_config(self, username):
+        """
+        Returns two-factor authentication configuration settings for specified `username`.
+        """
+        user = await self.translate_username(username)
+        user_twofactor_config = await self.middleware.call(
+            'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
         )
+        if user_twofactor_config['secret']:
+            provisioning_uri = await self.provisioning_uri_internal(username, user_twofactor_config)
+        else:
+            provisioning_uri = None
+
+        return {
+            'provisioning_uri': provisioning_uri,
+            'secret_configured': bool(user_twofactor_config['secret']),
+            'window': user_twofactor_config['window'],
+            'interval': user_twofactor_config['interval'],
+            'otp_digits': user_twofactor_config['otp_digits'],
+        }
 
     @accepts(Str('username'), Str('token', null=True))
     @returns(Bool('token_verified'))
