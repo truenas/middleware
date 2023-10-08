@@ -22,6 +22,20 @@ def upgrade():
         batch_op.add_column(sa.Column('otp_digits', sa.INTEGER(), nullable=False, server_default='6'))
         batch_op.add_column(sa.Column('window', sa.INTEGER(), nullable=False, server_default='0'))
 
+    conn = op.get_bind()
+    twofactor_config = list(map(
+        dict, conn.execute('SELECT * FROM system_twofactorauthentication').fetchall()
+    ))
+
+    if twofactor_config:
+        twofactor_config = twofactor_config[0]
+        for row in map(dict, conn.execute('SELECT id FROM account_twofactor_user_auth').fetchall()):
+            conn.execute(
+                'UPDATE account_twofactor_user_auth SET interval = ?, otp_digits = ?, window = ? WHERE id = ?', [
+                    twofactor_config['interval'], twofactor_config['otp_digits'], twofactor_config['window'], row['id']
+                ]
+            )
+
     with op.batch_alter_table('system_twofactorauthentication', schema=None) as batch_op:
         batch_op.drop_column('interval')
         batch_op.drop_column('otp_digits')
