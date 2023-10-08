@@ -115,6 +115,14 @@ class UserService(Service):
     async def renew_2fa_secret(self, username, twofactor_options):
         """
         Renew `username` user's two-factor authentication secret.
+
+        `2fa_configuration_options.otp_digits` represents number of allowed digits in the OTP.
+
+        `2fa_configuration_options.window` extends the validity to `2fa_configuration_options.window` many counter
+        ticks before and after the current one.
+
+        `2fa_configuration_options.interval` is time duration in seconds specifying OTP expiration time
+        from it's creation time.
         """
         user = await self.translate_username(username)
         twofactor_auth = await self.middleware.call(
