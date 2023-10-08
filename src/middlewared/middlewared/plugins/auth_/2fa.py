@@ -99,6 +99,9 @@ class TwoFactorAuthService(ConfigService):
                 'secret': None,
                 filters[0][0]: user_id,
                 'exists': False,
+                'window': 0,
+                'interval': 30,
+                'otp_digits': 6,
             }
 
     @private
