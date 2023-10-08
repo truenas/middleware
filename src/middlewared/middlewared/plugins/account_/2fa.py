@@ -1,8 +1,9 @@
 import errno
 import pyotp
 
-from middlewared.schema import accepts, Bool, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Ref, returns, Str
 from middlewared.service import CallError, private, Service
+from middlewared.validators import Range
 
 
 class UserService(Service):
@@ -100,9 +101,18 @@ class UserService(Service):
             }
         )
 
-    @accepts(Str('username'))
+    @accepts(
+        Str('username'),
+        Dict(
+            '2fa_configuration_options',
+            Int('otp_digits', validators=[Range(min_=6, max_=8)], required=True),
+            Int('window', validators=[Range(min_=0)], required=True),
+            Int('interval', validators=[Range(min_=5)], required=True),
+            update=True,
+        )
+    )
     @returns(Ref('user_entry'))
-    async def renew_2fa_secret(self, username):
+    async def renew_2fa_secret(self, username, twofactor_options):
         """
         Renew `username` user's two-factor authentication secret.
         """
@@ -124,6 +134,7 @@ class UserService(Service):
                 'account.twofactor_user_auth',
                 twofactor_auth['id'], {
                     'secret': secret,
+                    **twofactor_options,
                 }
             )
         else:
@@ -132,6 +143,7 @@ class UserService(Service):
                     'secret': secret,
                     'user': None,
                     'user_sid': user['sid'],
+                    **twofactor_options,
                 }
             )
 
