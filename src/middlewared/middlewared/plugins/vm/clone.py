@@ -82,10 +82,10 @@ class VMService(Service):
         await self.validate(vm)
 
         origin_name = vm['name']
-        del vm['id']
-        del vm['status']
-        devices = vm.pop('devices')
+        for key in ('id', 'status', 'display_available'):
+            vm.pop(key, None)
 
+        devices = vm.pop('devices')
         vm['name'] = await self.__next_clone_name(vm['name'])
         vm['uuid'] = str(uuid.uuid4())  # We want to use a newer uuid here as it is supposed to be unique per VM
 
