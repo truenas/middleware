@@ -16,15 +16,15 @@ class TwoFactoryUserAuthModel(sa.Model):
     secret = sa.Column(sa.EncryptedText(), nullable=True, default=None)
     user_id = sa.Column(sa.ForeignKey('account_bsdusers.id', ondelete='CASCADE'), index=True, nullable=True)
     user_sid = sa.Column(sa.String(length=255), nullable=True, index=True, unique=True)
+    otp_digits = sa.Column(sa.Integer(), default=6)
+    window = sa.Column(sa.Integer(), default=0)
+    interval = sa.Column(sa.Integer(), default=30)
 
 
 class TwoFactorAuthModel(sa.Model):
     __tablename__ = 'system_twofactorauthentication'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    otp_digits = sa.Column(sa.Integer(), default=6)
-    window = sa.Column(sa.Integer(), default=0)
-    interval = sa.Column(sa.Integer(), default=30)
     services = sa.Column(sa.JSON(), default={})
     enabled = sa.Column(sa.Boolean(), default=False)
 
