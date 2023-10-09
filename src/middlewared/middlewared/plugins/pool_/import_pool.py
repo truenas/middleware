@@ -265,7 +265,7 @@ class PoolService(Service):
             elif uj.result['failed']:
                 self.logger.error(
                     'FAILED unlocking the following datasets: %r for pool %r',
-                    ', '.join(uj.result['failed'], vol_name)
+                    ', '.join(uj.result['failed']), vol_name
                 )
             else:
                 self.logger.debug('SUCCESS unlocking encrypted dataset(s) (if any) for %r', vol_name)
