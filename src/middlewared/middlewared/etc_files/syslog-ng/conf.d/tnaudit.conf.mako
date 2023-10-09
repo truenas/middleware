@@ -5,14 +5,14 @@
     from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_DATASET_PATH
 
     COLUMNS = textwrap.dedent('''
-        "aid varchar",
-        "msg_ts INT",
-        "time DATETIME",
-        "addr varchar",
-        "user varchar",
-        "sess varchar",
-        "svc varchar",
-        "svc_data JSON",
+        "audit_id varchar",
+        "message_timestamp INT",
+        "timestamp DATETIME",
+        "address varchar",
+        "username varchar",
+        "session varchar",
+        "service varchar",
+        "service_data JSON",
         "event varchar",
         "event_data JSON",
         "success BOOLEAN"

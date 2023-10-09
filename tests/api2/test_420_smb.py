@@ -312,8 +312,8 @@ def test_057_create_new_smb_group_for_sid_test(request):
 
 
 AUDIT_FIELDS = [
-    'aid', 'vers', 'time', 'addr', 'user', 'sess', 'svc',
-    'svc_data', 'event', 'event_data', 'success'
+    'audit_id', 'timestamp', 'address', 'username', 'session', 'service',
+    'service_data', 'event', 'event_data', 'success'
 ]
 
 
@@ -325,8 +325,8 @@ def validate_vers(vers, expected_major, expected_minor):
 
 
 def validate_svc_data(msg, svc):
-    assert 'svc_data' in msg, str(msg)
-    svc_data = msg['svc_data']
+    assert 'service_data' in msg, str(msg)
+    svc_data = msg['service_data']
     for key in ['vers', 'service', 'session_id', 'tcon_id']:
         assert key in svc_data, str(svc_data)
 
@@ -345,18 +345,18 @@ def validate_audit_op(msg, svc):
 
     validate_svc_data(msg, svc)
     try:
-        aid_guid = uuid.UUID(msg['aid'])
+        aid_guid = uuid.UUID(msg['audit_id'])
     except ValueError:
-        raise AssertionError(f'{msg["aid"]}: malformed UUID')
+        raise AssertionError(f'{msg["audit_id"]}: malformed UUID')
 
-    assert str(aid_guid) == msg['aid']
+    assert str(aid_guid) == msg['audit_id']
 
     try:
-        sess_guid = uuid.UUID(msg['sess'])
+        sess_guid = uuid.UUID(msg['session'])
     except ValueError:
-        raise AssertionError(f'{msg["sess"]}: malformed UUID')
+        raise AssertionError(f'{msg["session"]}: malformed UUID')
 
-    assert str(sess_guid) == msg['sess']
+    assert str(sess_guid) == msg['session']
 
 
 def do_audit_ops(svc):
