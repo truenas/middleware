@@ -117,14 +117,14 @@ class AuditService(ConfigService):
     ))
     @filterable_returns(Dict(
         'audit_entry',
-        UUID('aid'),
-        Int('msg_ts'),
-        Dict('time', additional_attrs=True),
-        Str('addr'),
-        Str('user'),
-        UUID('sess'),
-        Str('svc', enum=ALL_AUDITED),
-        Dict('svc_data', additional_attrs=True, null=True),
+        UUID('audit_id'),
+        Int('message_timestamp'),
+        Dict('timestamp', additional_attrs=True),
+        Str('address'),
+        Str('username'),
+        UUID('session'),
+        Str('service', enum=ALL_AUDITED),
+        Dict('service_data', additional_attrs=True, null=True),
         Str('event'),
         Dict('event_data', additional_attrs=True, null=True),
         Bool('success')

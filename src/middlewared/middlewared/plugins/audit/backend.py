@@ -102,7 +102,7 @@ class SQLConn:
         cutoff_ts = int(time.time()) - secs
         with self.lock:
             with Session(self.engine) as s:
-                expired = s.query(self.table).filter(self.table.c.msg_ts < cutoff_ts)
+                expired = s.query(self.table).filter(self.table.c.message_timestamp < cutoff_ts)
                 expired.delete(synchronize_session=False)
                 s.commit()
 
