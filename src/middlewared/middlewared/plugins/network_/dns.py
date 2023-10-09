@@ -116,7 +116,7 @@ class DNSService(Service):
                     Str('type', enum=['A', 'AAAA'], default='A'),
                     Int('ttl', default=3600),
                     IPAddr('address', required=True, excluded_address_types=[
-                        'MULTICAST', 'GLOBAL', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED'
+                        'MULTICAST', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED'
                     ]),
                     Bool('do_ptr', default=True)
                 )
