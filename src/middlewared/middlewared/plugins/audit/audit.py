@@ -139,25 +139,25 @@ class AuditService(ConfigService):
 
         Each audit entry contains the following keys:
 
-        `aid` - GUID for the specific audit event.
+        `audit_id` - GUID uniquely identifying this specific audit event.
 
-        `msg_ts` - Unix timestamp for when the audit event was written to the
-        auditing database.
+        `message_timestamp` - Unix timestamp for when the audit event was
+        written to the auditing database.
 
-        `time` - converted ISO-8601 timestamp from application recording when event
-        occurred.
+        `timestamp` - converted ISO-8601 timestamp from application recording
+        when event occurred.
 
-        `addr` - IP address of client performing action that generated the
+        `address` - IP address of client performing action that generated the
         audit message.
 
-        `user` - Username used by client performing action.
+        `username` - Username used by client performing action.
 
-        `sess` - GUID uniquely identifying the client session.
+        `session` - GUID uniquely identifying the client session.
 
-        `svc` - Name of the service that generated the message. This will be
-        one of the names specified in `services`.
+        `services` - Name of the service that generated the message. This will
+        be one of the names specified in `services`.
 
-        `svc_data` - JSON object containing variable data depending on the
+        `service_data` - JSON object containing variable data depending on the
         particular service. See TrueNAS auditing documentation for the service
         in question.
 
