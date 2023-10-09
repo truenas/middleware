@@ -4,7 +4,7 @@ import uuid
 
 from middlewared.utils import BOOTREADY
 
-from .utils import FIRST_INSTALL_SENTINEL, lifecycle_conf
+from .utils import FIRST_INSTALL_SENTINEL, FIRST_INSTALL_BE, lifecycle_conf
 
 
 def firstboot(middleware):
@@ -20,12 +20,11 @@ def firstboot(middleware):
             config = middleware.call_sync('datastore.config', 'system.advanced')
             middleware.call_sync('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
 
+        root_ds = middleware.call_sync('filesystem.mount_info', [['mountpoint', '=', '/']], {'get': True})
         # Creating pristine boot environment from the "default"
-        initial_install_be = 'Initial-Install'
-        middleware.logger.info('Creating %r boot environment...', initial_install_be)
-        activated_be = middleware.call_sync('bootenv.query', [['activated', '=', True]], {'get': True})
+        middleware.logger.info('Creating %r boot environment...', FIRST_INSTALL_BE)
         try:
-            middleware.call_sync('bootenv.create', {'name': initial_install_be, 'source': activated_be['realname']})
+            middleware.call_sync('bootenv.create', {'name': FIRST_INSTALL_BE, 'source': root_ds['mount_source']})
         except Exception:
             middleware.logger.error('Failed to create initial boot environment', exc_info=True)
         else:

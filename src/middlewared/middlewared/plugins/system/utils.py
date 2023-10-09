@@ -5,6 +5,7 @@ import re
 
 DEBUG_MAX_SIZE = 30
 FIRST_INSTALL_SENTINEL = '/data/first-boot'
+FIRST_INSTALL_BE = 'Initial-Install'
 RE_KDUMP_CONFIGURED = re.compile(r'current state\s*:\s*(ready to kdump)', flags=re.M)
 
 
