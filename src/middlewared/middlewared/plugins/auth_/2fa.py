@@ -6,6 +6,7 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch
 from middlewared.service import CallError, ConfigService, periodic, private
+from middlewared.validators import Range
 
 
 class TwoFactoryUserAuthModel(sa.Model):
@@ -16,7 +17,6 @@ class TwoFactoryUserAuthModel(sa.Model):
     user_id = sa.Column(sa.ForeignKey('account_bsdusers.id', ondelete='CASCADE'), index=True, nullable=True)
     user_sid = sa.Column(sa.String(length=255), nullable=True, index=True, unique=True)
     otp_digits = sa.Column(sa.Integer(), default=6)
-    window = sa.Column(sa.Integer(), default=0)
     interval = sa.Column(sa.Integer(), default=30)
 
 
@@ -26,6 +26,7 @@ class TwoFactorAuthModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     services = sa.Column(sa.JSON(), default={})
     enabled = sa.Column(sa.Boolean(), default=False)
+    window = sa.Column(sa.Integer(), default=0)
 
 
 class TwoFactorAuthService(ConfigService):
@@ -44,6 +45,7 @@ class TwoFactorAuthService(ConfigService):
             Bool('ssh', default=False),
             required=True
         ),
+        Int('window', validators=[Range(min_=0)], required=True),
         Int('id', required=True),
     )
 
@@ -63,6 +65,8 @@ class TwoFactorAuthService(ConfigService):
     )
     async def do_update(self, data):
         """
+        `window` extends the validity to `window` many counter ticks before and after the current one.
+
         Update Two-Factor Authentication Service Configuration.
         """
         old_config = await self.config()
@@ -99,7 +103,6 @@ class TwoFactorAuthService(ConfigService):
                 'secret': None,
                 filters[0][0]: user_id,
                 'exists': False,
-                'window': 0,
                 'interval': 30,
                 'otp_digits': 6,
             }
@@ -135,6 +138,8 @@ class TwoFactorAuthService(ConfigService):
                     'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode(),
                     'row_id': config['id'],
                     'ad_user': ad_user,
+                    'otp_digits': config['otp_digits'],
+                    'interval': config['interval']
                 })
 
         return users
