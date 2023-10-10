@@ -454,8 +454,6 @@ class LDAPService(TDBWrapConfigService):
                 "Bind credentials or kerberos keytab are required for an authenticated bind."
             )
         if new["bindpw"] and new["kerberos_principal"]:
-            self.logger.info("Simultaneous keytab and password authentication "
-                             "are selected. Please clear LDAP bind password.")
             new["bindpw"] = ""
 
         if not new["basedn"]:
