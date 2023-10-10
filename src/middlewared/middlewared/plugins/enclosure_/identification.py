@@ -65,6 +65,6 @@ def get_enclosure_model_and_controller(key, dmi):
         case 'HGST_H4102-J':
             return 'ES102', False
         case 'VikingES_NDS-41022-BB':
-            return 'ES102S', False
+            return 'ES102G2', False
         case _:
             return '', False
