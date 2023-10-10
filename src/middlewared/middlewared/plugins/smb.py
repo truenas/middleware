@@ -1194,6 +1194,12 @@ class SharingSMBService(SharingService):
 
             check_mdns = True
 
+        # Homes shares require pam restrictions to be enabled (global setting)
+        # so that we auto-generate the home directory via pam_mkhomedir.
+        # Hence, we need to redo the global settings after changing homedir.
+        if new.get('home') is not None and old['home'] != new['home']:
+            do_global_reload = True
+
         if do_global_reload:
             await self.middleware.call('smb.initialize_globals')
             if (await self.middleware.call('activedirectory.get_state')) == 'HEALTHY':
@@ -1244,6 +1250,9 @@ class SharingSMBService(SharingService):
 
         if share['timemachine']:
             await self.middleware.call('service.reload', 'mdns')
+
+        if share_name == 'homes':
+            await self.middleware.call('smb.initialize_globals')
 
         return result
 
