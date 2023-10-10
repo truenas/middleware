@@ -83,7 +83,7 @@ class Enclosure2Service(Service):
         is no need to map them. We always include an "original" slot key for all
         enclosures as to keep this for loop as simple as possible and it also allows
         more flexbiility when we do get an enclosure that maps drives differently.
-        (i.e. the ES102S is a prime example of this (enumerates drives at 1 instead of 0))
+        (i.e. the ES102G2 is a prime example of this (enumerates drives at 1 instead of 0))
         """
         sgdev = origslot = None
         for encslot, devinfo in filter(lambda x: x[0] == slot, enc_info['elements']['Array Device Slot'].items()):
