@@ -390,6 +390,7 @@ class EnclosureService(Service):
         controller_enclosures = list(filter(lambda x: x['controller'], enclosures))
         elements = []
         has_slot_status = False
+        model = bsg = None
         for slot, mapping in enumerate(slots, 1):
             try:
                 original_enclosure = controller_enclosures[mapping.num]
@@ -434,14 +435,17 @@ class EnclosureService(Service):
                                             "is not present on this system", mapping.slot, mapping.num, k)
                         has_slot_status = False
 
+            if model is None and not original_enclosure["id"].endswith(("plx_enclosure", "nvme_enclosure")):
+                model = original_enclosure["model"]
+
             elements.append(element)
 
         mapped = [
             {
                 "id": "mapped_enclosure_0",
-                "bsg": original_enclosure["bsg"],
+                "bsg": bsg,
                 "name": "Drive Bays",
-                "model": original_enclosure["model"],
+                "model": model,
                 "controller": True,
                 "elements": [
                     {
