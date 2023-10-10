@@ -70,7 +70,7 @@ class Enclosure(object):
         elif self.encname.startswith('HGST H4102-J'):
             model = 'ES102'
         elif self.encname.startswith('VikingES NDS-41022-BB'):
-            model = 'ES102S'
+            model = 'ES102G2'
 
         return model, controller
 
