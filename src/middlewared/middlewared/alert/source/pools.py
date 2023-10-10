@@ -29,7 +29,7 @@ class PoolUSBDisksAlertClass(AlertClass, OneShotAlertClass):
 
 class PoolUpgradedAlertClass(AlertClass, OneShotAlertClass):
     category = AlertCategory.STORAGE
-    level = AlertLevel.WARNING
+    level = AlertLevel.NOTICE
     title = "New Feature Flags Are Available for Pool"
     text = (
         "New ZFS version or feature flags are available for pool '%s'. Upgrading pools is a one-time process that can "
