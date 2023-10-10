@@ -49,7 +49,7 @@ from middlewared.plugins.enclosure_ import identification
     ('CELESTIC_R0904', 'TRUENAS-F60', ('ES60', False)),
     ('HGST_H4102-J', 'TRUENAS-F60', ('ES102', False)),
     ('HGST_H4060-J', 'TRUENAS-M60', ('ES60G2', False)),
-    ('VikingES_NDS-41022-BB', 'TRUENAS-F60', ('ES102S', False))
+    ('VikingES_NDS-41022-BB', 'TRUENAS-F60', ('ES102G2', False))
 ])
 def test_get_enclosure_model_and_controller(data):
     key, dmi, expected_result = data
