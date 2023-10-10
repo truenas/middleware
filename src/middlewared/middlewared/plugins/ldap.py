@@ -375,9 +375,6 @@ class LDAPService(TDBWrapConfigService):
         for key in ["ssl", "schema"]:
             data[key] = data[key].lower()
 
-        if not data['bindpw']:
-            data.pop('bindpw')
-
         data.pop('uri_list')
         data.pop('cert_name')
 
@@ -457,8 +454,8 @@ class LDAPService(TDBWrapConfigService):
                 "Bind credentials or kerberos keytab are required for an authenticated bind."
             )
         if new["bindpw"] and new["kerberos_principal"]:
-            self.logger.warning("Simultaneous keytab and password authentication "
-                                "are selected. Clearing LDAP bind password.")
+            self.logger.info("Simultaneous keytab and password authentication "
+                             "are selected. Please clear LDAP bind password.")
             new["bindpw"] = ""
 
         if not new["basedn"]:
