@@ -329,6 +329,8 @@ def test_050_delete_smb_user(request):
     results = DELETE(f"/user/id/{vssuser_id}/", {"delete_group": True})
     assert results.status_code == 200, results.text
 
+    results = DELETE(f"/sharing/smb/id/{smb_id}")
+    assert results.status_code == 200, results.text
 
 def test_051_disable_smb1(request):
     depends(request, ["VSS_SMB1_ENABLED"])
