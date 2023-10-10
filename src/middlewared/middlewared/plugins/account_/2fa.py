@@ -40,7 +40,6 @@ class UserService(Service):
         'user_twofactor_config',
         Str('provisioning_uri', null=True),
         Bool('secret_configured'),
-        Int('window', validators=[Range(min_=0)]),
         Int('interval', validators=[Range(min_=5)]),
         Int('otp_digits', validators=[Range(min_=6, max_=8)]),
     ))
@@ -60,7 +59,6 @@ class UserService(Service):
         return {
             'provisioning_uri': provisioning_uri,
             'secret_configured': bool(user_twofactor_config['secret']),
-            'window': user_twofactor_config['window'],
             'interval': user_twofactor_config['interval'],
             'otp_digits': user_twofactor_config['otp_digits'],
         }
@@ -83,8 +81,8 @@ class UserService(Service):
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local'],
         )
         totp = pyotp.totp.TOTP(
-            user_twofactor_config['secret'], interval=twofactor_config['interval'],
-            digits=twofactor_config['otp_digits'],
+            user_twofactor_config['secret'], interval=user_twofactor_config['interval'],
+            digits=user_twofactor_config['otp_digits'],
         )
         return totp.verify(token or '', valid_window=twofactor_config['window'])
 
@@ -139,7 +137,6 @@ class UserService(Service):
         Dict(
             '2fa_configuration_options',
             Int('otp_digits', validators=[Range(min_=6, max_=8)], required=True),
-            Int('window', validators=[Range(min_=0)], required=True),
             Int('interval', validators=[Range(min_=5)], required=True),
             update=True,
         )
@@ -150,9 +147,6 @@ class UserService(Service):
         Renew `username` user's two-factor authentication secret.
 
         `2fa_configuration_options.otp_digits` represents number of allowed digits in the OTP.
-
-        `2fa_configuration_options.window` extends the validity to `2fa_configuration_options.window` many counter
-        ticks before and after the current one.
 
         `2fa_configuration_options.interval` is time duration in seconds specifying OTP expiration time
         from it's creation time.
