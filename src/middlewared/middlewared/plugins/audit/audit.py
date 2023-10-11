@@ -1,5 +1,10 @@
+import csv
+import errno
 import middlewared.sqlalchemy as sa
 import os
+import time
+import uuid
+import yaml
 
 from .utils import (
     AUDIT_DATASET_PATH,
@@ -8,14 +13,16 @@ from .utils import (
     AUDIT_DEFAULT_QUOTA,
     AUDIT_DEFAULT_FILL_CRITICAL,
     AUDIT_DEFAULT_FILL_WARNING,
+    AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
 )
+from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import filterable_returns, private, ConfigService
-from middlewared.service_exception import ValidationErrors
+from middlewared.service import filterable_returns, pass_app, private, ConfigService
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.functools import cache
 from middlewared.utils.osc import getmntinfo
@@ -113,7 +120,8 @@ class AuditService(ConfigService):
         'audit_query',
         List('services', items=[Str('db_name', enum=ALL_AUDITED)], default=ALL_AUDITED),
         Ref('query-filters'),
-        Ref('query-options')
+        Ref('query-options'),
+        register=True
     ))
     @filterable_returns(Dict(
         'audit_entry',
@@ -189,6 +197,93 @@ class AuditService(ConfigService):
             return
 
         return filter_list(results, data['query-filters'], data['query-options'])
+
+    @accepts(Patch(
+        'audit_query', 'audit_export',
+        ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
+    ))
+    @returns(Str('audit_file_path'))
+    @pass_app()
+    def export(self, app, data):
+        """
+        Generate an audit report based on the specified `query-filters` and
+        `query-options` for the specified `services` in the specified `export_format`.
+
+        Supported export_formats are CSV, JSON, and YAML. The endpoint returns a
+        local filesystem path where the resulting audit report is located.
+        """
+        if data['query-options'].get('count') is True:
+            raise CallError('Raw row count may not be exported', errno.EINVAL)
+
+        export_format = data.pop('export_format')
+        if not (res := self.middleware.call_sync('audit.query', data)):
+            raise CallError('No entries were returned by query.', errno.ENOENT)
+
+        username = self.middleware.call_sync('auth.me', app=app)['pw_name']
+        target_dir = os.path.join(AUDIT_REPORTS_DIR, username)
+        os.makedirs(target_dir, mode=0o700, exist_ok=True)
+
+        filename = f'{uuid.uuid4()}.{export_format.lower()}'
+        with open(os.path.join(target_dir, filename), 'w') as f:
+            match export_format:
+                case 'CSV':
+                    fieldnames = res[0].keys()
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for entry in res:
+                        writer.writerow(entry)
+                case 'JSON':
+                    ejson.dump(res, f, indent=4)
+                case 'YAML':
+                    yaml.dump(res, f)
+
+        return os.path.join(target_dir, filename)
+
+    @private
+    def __process_reports_entry(self, entry, cutoff):
+        if not entry.is_file():
+            self.logger.warning(
+                '%s: unexpected item in audit reports directory',
+                entry.name
+            )
+            return
+
+        if not entry.name.endswith(('.csv', '.json', '.yaml')):
+            self.logger.warning(
+                '%s: unexpected file type in audit reports directory',
+                entry.name
+            )
+            return
+
+        if entry.stat().st_mtime > cutoff:
+            return
+
+        try:
+            os.unlink(entry.path)
+        except Exception:
+            self.logger.error(
+                '%s: failed to remove file for audit reports directory.',
+                entry.name, exc_info=True
+            )
+
+    @private
+    def cleanup_reports(self):
+        """
+        Remove old audit reports. Precision is not of high priority. In most
+        circumstances users will download the report within a few minutes.
+        """
+        cutoff = int(time.time()) - 86400
+        try:
+            with os.scandir(AUDIT_REPORTS_DIR) as it:
+                for entry in it:
+                    if not entry.is_dir():
+                        continue
+
+                    with os.scandir(entry.path) as subdir:
+                        for subentry in subdir:
+                            self.__process_reports_entry(subentry, cutoff)
+        except FileNotFoundError:
+            os.mkdir(AUDIT_REPORTS_DIR, 0o700)
 
     @private
     async def validate_local_storage(self, new, old, verrors):
@@ -305,6 +400,11 @@ class AuditService(ConfigService):
         refreservations from old boot environments and to apply the audit dataset
         configuration to the current boot environment.
         """
+        try:
+            os.mkdir(AUDIT_REPORTS_DIR, 0o700)
+        except FileExistsError:
+            os.chmod(AUDIT_REPORTS_DIR, 0o700)
+
         cur = await self.middleware.call('audit.get_audit_dataset')
         parent = os.path.dirname(cur['id'])
 

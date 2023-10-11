@@ -103,7 +103,7 @@ def test_audit_query(initialize_for_smb_tests):
     sleep(10)
     ops = call('audit.query', {
         'services': ['SMB'],
-        'query-filters': [['user', '=', SMBUSER]],
+        'query-filters': [['username', '=', SMBUSER]],
         'query-options': {'count': True}
     })
     assert ops > 0

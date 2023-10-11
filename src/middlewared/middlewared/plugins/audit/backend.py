@@ -244,3 +244,10 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                     "%s: failed to enforce retention on audit DB.",
                     svc, exc_info=True
                 )
+        try:
+            self.middleware.call_sync('audit.cleanup_reports')
+        except Exception:
+            self.logger.warning(
+                'Cleanup of auditing report directory failed',
+                exc_info=True
+            )
