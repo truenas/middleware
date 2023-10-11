@@ -1,5 +1,6 @@
 import csv
 import errno
+import json
 import middlewared.sqlalchemy as sa
 import os
 import time
@@ -237,6 +238,10 @@ class AuditService(ConfigService):
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     for entry in res:
+                        if entry.get('service_data'):
+                            entry['service_data'] = json.dumps(entry['service_data'])
+                        if entry.get('event_data'):
+                            entry['event_data'] = json.dumps(entry['event_data'])
                         writer.writerow(entry)
                 case 'JSON':
                     ejson.dump(res, f, indent=4)
