@@ -323,7 +323,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     verrors.add(
                         'activedirectory_update.allow_dns_updates',
                         f'{addr}: automatic DNS update would result in registering a reserved '
-                        'IP address. Users may disable automatic DNS updates and manually. '
+                        'IP address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
                     break
@@ -332,7 +332,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     verrors.add(
                         'activedirectory_update.allow_dns_updates',
                         f'{addr}: automatic DNS update would result in registering a global '
-                        'IP address. Users may disable automatic DNS updates and manually. '
+                        'IP address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
                     break
@@ -341,7 +341,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     verrors.add(
                         'activedirectory_update.allow_dns_updates',
                         f'{addr}: automatic DNS update would result in registering a loopback '
-                        'address. Users may disable automatic DNS updates and manually. '
+                        'address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
                     break
@@ -350,7 +350,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     verrors.add(
                         'activedirectory_update.allow_dns_updates',
                         f'{addr}: automatic DNS update would result in registering a link-local '
-                        'address. Users may disable automatic DNS updates and manually. '
+                        'address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
                     break
@@ -359,7 +359,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
                     verrors.add(
                         'activedirectory_update.allow_dns_updates',
                         f'{addr}: automatic DNS update would result in registering a multicast '
-                        'address. Users may disable automatic DNS updates and manually. '
+                        'address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
                     break
