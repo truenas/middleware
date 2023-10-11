@@ -215,6 +215,12 @@ class AuditService(ConfigService):
         if data['query-options'].get('count') is True:
             raise CallError('Raw row count may not be exported', errno.EINVAL)
 
+        if data['query-options'].get('get') is True:
+            raise CallError(
+                'Use of "get" query-option is not supported for export',
+                errno.EINVAL
+            )
+
         export_format = data.pop('export_format')
         if not (res := self.middleware.call_sync('audit.query', data)):
             raise CallError('No entries were returned by query.', errno.ENOENT)
