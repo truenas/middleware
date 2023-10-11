@@ -38,7 +38,7 @@ class NetdataService(Service):
         try:
             return await Netdata.get_all_metrics()
         except ClientConnectError:
-            self.logger.debug('Failed to connect to netdata when retrieving all metrics', exc_info=True)
+            self.logger.debug('Failed to connect to netdata when retrieving all metrics')
             return {}
 
     def calculated_metrics_count(self):
