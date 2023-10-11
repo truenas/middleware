@@ -288,7 +288,7 @@ class CertificateAuthorityService(CRUDService):
             k: v for k, v in (
                 await self.middleware.call(f'certificateauthority.{self.map_create_functions[create_type]}', data)
             ).items()
-            if k in ['name', 'certificate', 'privatekey', 'type', 'signedby']
+            if k in ['name', 'certificate', 'privatekey', 'type', 'signedby', 'add_to_trusted_store']
         }
 
         pk = await self.middleware.call(
