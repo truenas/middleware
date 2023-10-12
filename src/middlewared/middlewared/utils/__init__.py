@@ -251,6 +251,33 @@ class filters(object):
             if op not in self.opmap:
                 raise ValueError('Invalid operation: {}'.format(f[1]))
 
+    def validate_select(self, select):
+        for s in select:
+            if isinstance(s, str):
+                continue
+
+            if isinstance(s, list):
+                if len(s) != 2:
+                    raise ValueError(
+                        f'{s}: A select as list may only contain two parameters: the name '
+                        'of the parameter being selected, and the name to which to assign it '
+                        'in resulting data.'
+                    )
+
+                for selector in s:
+                    if isinstance(selector, str):
+                        continue
+
+                    raise ValueError(f'{selector}: must be a string.')
+
+                continue
+
+            raise ValueError(
+                f'{s}: selectors must be either a parameter name as a string or '
+                'a list containing two items [<parameter name>, <as name>] to emulate '
+                'SELECT <parameter name> AS <as name>.'
+            )
+
     def validate_options(self, options):
         if options is None:
             return ({}, [], [])
@@ -266,6 +293,7 @@ class filters(object):
             )
 
         select = options.get('select', [])
+        self.validate_select(select)
         order_by = options.get('order_by', [])
 
         return (options, select, order_by)
@@ -360,8 +388,18 @@ class filters(object):
         for i in _list:
             entry = {}
             for s in select:
-                keys, value = select_path(i, s)
+                if isinstance(s, list):
+                    target, new_name = s
+                else:
+                    target = s
+                    new_name = None
+
+                keys, value = select_path(i, target)
                 if value is None:
+                    continue
+
+                if new_name is not None:
+                    entry[new_name] = value
                     continue
 
                 last = keys.pop(-1)

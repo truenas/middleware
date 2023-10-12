@@ -392,3 +392,11 @@ def test__filter_list_complex_data_nested_select():
     assert 'status' in auth
     assert 'localAddress' in auth
     assert 'clientAccount' in auth
+
+def test__filter_list_select_as():
+    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': [['foobar.stuff.more_stuff', 'data']]})
+    assert len(data) == 1
+    entry = data[0]
+    assert len(entry.keys()) == 1
+    assert 'data' in entry
+    assert entry['data'] == 4

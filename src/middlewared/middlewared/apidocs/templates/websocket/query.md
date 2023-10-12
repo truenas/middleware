@@ -168,6 +168,8 @@ ${'####'} Select
 
 Use the `select` option to specify the exact fields to return. Fields must be provided in an array of strings. The dot character (".") may be used to explicitly select only subkeys of the query result.
 
+Fields returned may be renamed by specifing an array containing two strings with the first string being the field to select from results list and the second string indicating the new name to provide it.
+
 Javascript:
     :::javascript
     {
@@ -185,6 +187,16 @@ Javascript:
       ]
     }
 
+
+Javascript:
+    :::javascript
+    {
+      "select": [
+        ["Authentication.status", "status"],
+        ["Authentication.localAddress", "address"],
+        ["Authentication.clientAccount", "username"]
+      ]
+    }
 
 
 ${'####'} Order By
