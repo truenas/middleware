@@ -124,7 +124,13 @@ class EtcService(Service):
         ],
         'nfsd': {
             'ctx': [
-                {'method': 'sharing.nfs.query', 'args': [[("enabled", "=", True), ("locked", "=", False)]]},
+                {
+                    'method': 'sharing.nfs.query',
+                    'args': [
+                        [('enabled', '=', True), ('locked', '=', False)],
+                        {'extra': {'use_cached_locked_datasets': False}}
+                    ],
+                },
                 {'method': 'nfs.config'},
             ],
             'entries': [
