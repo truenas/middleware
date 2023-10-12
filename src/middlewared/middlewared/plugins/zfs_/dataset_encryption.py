@@ -54,16 +54,6 @@ class ZFSDatasetService(Service):
         zvol_list = list(unlocked_zvols_fast(additional_information, data).values())
         return filter_list(zvol_list, filters, options)
 
-    def locked_datasets_cached(self):
-        try:
-            return self.middleware.call_sync('cache.get', 'zfs_locked_datasets')
-        except KeyError:
-            locked_datasets = self.locked_datasets()
-            if self.middleware.call_sync('system.ready'):
-                # Only cache if the system is ready
-                self.middleware.call_sync('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
-            return locked_datasets
-
     def locked_datasets(self, names=None):
         query_filters = []
         if names is not None:
