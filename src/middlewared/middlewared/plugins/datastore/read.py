@@ -11,7 +11,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import filters
-from middlewared.validators import QueryFilters
+from middlewared.validators import QueryFilters, QueryOptions
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
@@ -48,6 +48,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             Int('limit', default=0),
             Bool('force_sql_filters', default=False),
             register=True,
+            validators=[QueryOptions()]
         ),
     )
     async def query(self, name, filters, options):

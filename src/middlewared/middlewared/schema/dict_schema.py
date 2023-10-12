@@ -147,6 +147,7 @@ class Dict(Attribute):
         if value is None:
             return
 
+        super().validate(value)
         verrors = ValidationErrors()
 
         for attr in self.attrs.values():

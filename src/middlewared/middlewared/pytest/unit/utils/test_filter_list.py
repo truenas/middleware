@@ -367,14 +367,20 @@ def test__filter_list_option_casefold_rnin():
 def test__filter_list_option_casefold_complex_data():
     assert len(filter_list(COMPLEX_DATA, [['Authentication.clientAccount', 'C=', 'JOINER']])) == 1
 
+
 def test__filter_list_nested_select():
-    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': ['foobar.stuff.more_stuff']})
+    data = filter_list(
+        DATA_SELECT_COMPLEX,
+        [['foobar.stuff.more_stuff', '=', 4]],
+        {'select': ['foobar.stuff.more_stuff']}
+    )
     assert len(data) == 1
     entry = data[0]
     assert 'foobar' in entry
     assert 'stuff' in entry['foobar']
     assert 'more_stuff' in entry['foobar']['stuff']
     assert entry['foobar']['stuff']['more_stuff'] == 4
+
 
 def test__filter_list_nested_select_escape():
     data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': ['foo\\.bar']})
@@ -383,8 +389,13 @@ def test__filter_list_nested_select_escape():
     assert 'foo.bar' in entry
     assert entry['foo.bar'] == 45
 
+
 def test__filter_list_complex_data_nested_select():
-    data = filter_list(COMPLEX_DATA, [], {'select': ['Authentication.status', 'Authentication.localAddress', 'Authentication.clientAccount']})
+    data = filter_list(
+        COMPLEX_DATA,
+        [],
+        {'select': ['Authentication.status', 'Authentication.localAddress', 'Authentication.clientAccount']}
+    )
     assert len(data) != 0
     assert 'Authentication' in data[0]
     auth = data[0]['Authentication']
@@ -393,10 +404,32 @@ def test__filter_list_complex_data_nested_select():
     assert 'localAddress' in auth
     assert 'clientAccount' in auth
 
+
 def test__filter_list_select_as():
-    data = filter_list(DATA_SELECT_COMPLEX, [['foobar.stuff.more_stuff', '=', 4]], {'select': [['foobar.stuff.more_stuff', 'data']]})
+    data = filter_list(
+        DATA_SELECT_COMPLEX,
+        [['foobar.stuff.more_stuff', '=', 4]],
+        {'select': [['foobar.stuff.more_stuff', 'data']]}
+    )
     assert len(data) == 1
     entry = data[0]
     assert len(entry.keys()) == 1
     assert 'data' in entry
     assert entry['data'] == 4
+
+
+def test__filter_list_select_as_validation():
+    with pytest.raises(ValueError) as ve:
+        # too few items in the select list
+        filter_list(DATA_SELECT_COMPLEX, [], {'select': [['foobar.stuff.more_stuff']]})
+        assert 'select as list may only contain two parameters' in str(ve)
+
+    with pytest.raises(ValueError) as ve:
+        # too many items in the select list
+        filter_list(DATA_SELECT_COMPLEX, [], {'select': [['foobar.stuff.more_stuff', 'cat', 'dog']]})
+        assert 'select as list may only contain two parameters' in str(ve)
+
+    with pytest.raises(ValueError) as ve:
+        # wrong type in select
+        filter_list(DATA_SELECT_COMPLEX, [], {'select': [[1, 'cat']]})
+        assert 'first item must be a string' in str(ve)

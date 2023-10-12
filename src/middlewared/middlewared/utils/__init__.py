@@ -264,11 +264,13 @@ class filters(object):
                         'in resulting data.'
                     )
 
-                for selector in s:
+                for idx, selector in enumerate(s):
                     if isinstance(selector, str):
                         continue
 
-                    raise ValueError(f'{selector}: must be a string.')
+                    raise ValueError(
+                        f'{s}: {"first" if idx == 0 else "second"} item must be a string.'
+                    )
 
                 continue
 
@@ -276,6 +278,15 @@ class filters(object):
                 f'{s}: selectors must be either a parameter name as a string or '
                 'a list containing two items [<parameter name>, <as name>] to emulate '
                 'SELECT <parameter name> AS <as name>.'
+            )
+
+    def validate_order_by(self, order_by):
+        for idx, o in enumerate(order_by):
+            if isinstance(o, str):
+                continue
+
+            raise ValueError(
+                f'{order_by}: parameter at index {idx} [{o}] is not a string.'
             )
 
     def validate_options(self, options):
@@ -295,6 +306,7 @@ class filters(object):
         select = options.get('select', [])
         self.validate_select(select)
         order_by = options.get('order_by', [])
+        self.validate_order_by(order_by)
 
         return (options, select, order_by)
 
