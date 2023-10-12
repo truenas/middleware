@@ -759,7 +759,7 @@ class SMBService(TDBWrapConfigService):
         if not new['aapl_extensions']:
             filters = [['OR', [['afp', '=', True], ['timemachine', '=', True]]]]
             if await self.middleware.call(
-                'sharing.smb.query', filters, {'count': True, 'extra': {'retrieve_locked_info': False}}
+                'sharing.smb.query', filters, {'count': True, 'select': ['afp', 'timemachine']}
             ):
                 verrors.add(
                     'smb_update.aapl_extensions',
@@ -768,7 +768,7 @@ class SMBService(TDBWrapConfigService):
 
         if new['enable_smb1']:
             if audited_shares := await self.middleware.call(
-                'sharing.smb.query', [['audit.enable', '=', True]], {'extra': {'retrieve_locked_info': False}}
+                'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit']}
             ):
                 verrors.add(
                     'smb_update.enable_smb1',
@@ -1914,7 +1914,7 @@ class SharingSMBService(SharingService):
 
         try:
             await self.middleware.call(
-                'sharing.smb.query', share_filter, {'get': True, 'extra': {'retrieve_locked_info': False}}
+                'sharing.smb.query', share_filter, {'get': True, 'select': ['home', 'name']}
             )
         except MatchNotFound:
             verrors.add(
@@ -1944,7 +1944,7 @@ class SharingSMBService(SharingService):
 
         try:
             await self.middleware.call(
-                'sharing.smb.query', share_filter, {'get': True, 'extra': {'retrieve_locked_info': False}}
+                'sharing.smb.query', share_filter, {'get': True, 'select': ['home', 'name']}
             )
         except MatchNotFound:
             verrors.add(

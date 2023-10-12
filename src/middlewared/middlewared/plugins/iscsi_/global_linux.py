@@ -99,7 +99,7 @@ class ISCSIGlobalService(Service):
 
         extent = self.middleware.call_sync(
             'iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id_}']],
-            {'extra': {'retrieve_locked_info': False}}
+            {'select': ['name', 'enabled', 'path']}
         )
         if not extent:
             return
@@ -129,7 +129,7 @@ class ISCSIGlobalService(Service):
         extent = self.middleware.call_sync(
             'iscsi.extent.query', [
                 ['enabled', '=', True], ['type', '=', 'FILE'], ['path', '=', path]
-            ], {'extra': {'retrieve_locked_info': False}}
+            ], {'select': ['enabled', 'type', 'path', 'name']}
         )
         if not extent:
             return
@@ -158,7 +158,7 @@ class ISCSIGlobalService(Service):
         targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query')}
         extents = {
             t['id']: t for t in await self.middleware.call(
-                'iscsi.extent.query', [['enabled', '=', True]], {'extra': {'retrieve_locked_info': False}}
+                'iscsi.extent.query', [['enabled', '=', True]], {'select': ['enabled', 'path']}
             )
         }
 

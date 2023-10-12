@@ -261,7 +261,7 @@ class NetworkConfigurationService(ConfigService):
 
         filters = [('timemachine', '=', True), ('enabled', '=', True)]
         if not new_config['service_announcement']['mdns'] and await self.middleware.call(
-            'sharing.smb.query', filters, {'extra': {'retrieve_locked_info': False}}
+            'sharing.smb.query', filters, {'select': ['enabled', 'timemachine']}
         ):
             verrors.add(
                 'global_configuration_update.service_announcement.mdns',
