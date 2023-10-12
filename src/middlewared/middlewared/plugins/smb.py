@@ -1589,10 +1589,7 @@ class SharingSMBService(SharingService):
         """
         smb_config = None
 
-        home_result = await self.home_exists(
-            data['home'], schema_name, verrors, old)
-
-        if home_result:
+        if await self.home_exists(data['home'], schema_name, verrors, old):
             verrors.add(f'{schema_name}.home',
                         'Only one share is allowed to be a home share.')
 
@@ -1652,21 +1649,17 @@ class SharingSMBService(SharingService):
 
     @private
     async def home_exists(self, home, schema_name, verrors, old=None):
+        if not home:
+            return
+
         home_filters = [('home', '=', True)]
-        home_result = None
+        if old:
+            home_filters.append(('id', '!=', old['id']))
 
-        if home:
-            if old and old['id'] is not None:
-                id = old['id']
-
-                if not old['home']:
-                    home_filters.append(('id', '!=', id))
-                    # The user already had this set as the home share
-                    home_result = await self.middleware.call(
-                        'datastore.query', self._config.datastore,
-                        home_filters, {'prefix': self._config.datastore_prefix})
-
-        return home_result
+        return await self.middleware.call(
+           'datastore.query', self._config.datastore,
+           home_filters, {'prefix': self._config.datastore_prefix}
+        )
 
     @private
     async def auxsmbconf_dict(self, aux, direction="TO"):
