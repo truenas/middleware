@@ -91,14 +91,6 @@ class SharingTaskService(CRUDService):
         return verrors
 
     @private
-    async def sharing_task_datasets(self, data):
-        path = await self.get_path_field(data)
-        if path_location(path) is not FSLocation.LOCAL:
-            return []
-
-        return [os.path.relpath(path, '/mnt')]
-
-    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         path = await self.get_path_field(data)
         if path_location(path) is not FSLocation.LOCAL:
