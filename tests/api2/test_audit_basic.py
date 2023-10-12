@@ -114,7 +114,7 @@ def test_audit_query(initialize_for_smb_tests):
 def test_audit_export(request):
     depends(request, ["AUDIT_OPS_PERFORMED"], scope="session")
     for backend in ['CSV', 'JSON', 'YAML']:
-        report_path = call('audit.export', {'export_format': backend})
+        report_path = call('audit.export', {'export_format': backend}, job=True)
         assert report_path.startswith('/audit/reports/root/')
         st = call('filesystem.stat', report_path)
         assert st['size'] != 0, str(st)
