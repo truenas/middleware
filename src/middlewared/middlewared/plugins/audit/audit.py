@@ -283,7 +283,8 @@ class AuditService(ConfigService):
         Remove old audit reports. Precision is not of high priority. In most
         circumstances users will download the report within a few minutes.
         """
-        cutoff = int(time.time()) - 86400
+        retention = self.middleware.call_sync('audit.config')['retention']
+        cutoff = int(time.time()) - (retention * 86400)
         try:
             with os.scandir(AUDIT_REPORTS_DIR) as it:
                 for entry in it:
