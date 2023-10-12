@@ -260,7 +260,9 @@ class NetworkConfigurationService(ConfigService):
         verrors = await self.validate_general_settings(data, 'global_configuration_update')
 
         filters = [('timemachine', '=', True), ('enabled', '=', True)]
-        if not new_config['service_announcement']['mdns'] and await self.middleware.call('sharing.smb.query', filters):
+        if not new_config['service_announcement']['mdns'] and await self.middleware.call(
+            'sharing.smb.query', filters, {'extra': {'retrieve_locked_info': False}}
+        ):
             verrors.add(
                 'global_configuration_update.service_announcement.mdns',
                 'NAS is configured as a time machine target. mDNS is required.'

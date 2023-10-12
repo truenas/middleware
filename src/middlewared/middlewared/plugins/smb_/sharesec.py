@@ -218,7 +218,9 @@ class ShareSec(CRUDService):
             share_filter = [['name', 'C=', share_name]]
 
         try:
-            await self.middleware.call('sharing.smb.query', share_filter, {'get': True})
+            await self.middleware.call(
+                'sharing.smb.query', share_filter, {'get': True, 'extra': {'retrieve_locked_info': False}}
+            )
         except MatchNotFound:
             raise CallError(f'{share_name}: share does not exist')
 
