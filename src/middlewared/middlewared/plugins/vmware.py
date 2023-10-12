@@ -239,7 +239,7 @@ class VMWareService(CRUDService):
             for interface in self.middleware.call_sync("interface.query")
         ], [])
         iscsi_extents = defaultdict(list)
-        for extent in self.middleware.call_sync("iscsi.extent.query", [], {"extra": {"retrieve_locked_info": False}}):
+        for extent in self.middleware.call_sync("iscsi.extent.query", [], {"select": ["path", "naa"]}):
             if extent["path"].startswith("zvol/"):
                 zvol = extent["path"][len("zvol/"):]
                 iscsi_extents[zvol].append(f"naa.{extent['naa'][2:]}")

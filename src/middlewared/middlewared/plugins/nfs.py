@@ -778,7 +778,7 @@ async def pool_post_import(middleware, pool):
         return
 
     path = f'/mnt/{pool["name"]}'
-    for share in await middleware.call('sharing.nfs.query', [], {'extra': {'retrieve_locked_info': False}}):
+    for share in await middleware.call('sharing.nfs.query', [], {'select': ['path']}):
         if share['path'].startswith(path):
             middleware.create_task(middleware.call('service.reload', 'nfs'))
             break
