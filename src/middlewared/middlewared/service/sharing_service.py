@@ -28,6 +28,19 @@ class SharingTaskService(CRUDService):
             locked_ds_endpoint = 'pool.dataset.locked_datasets_cached'
         else:
             locked_ds_endpoint = 'zfs.dataset.locked_datasets'
+
+        if extra.get('select'):
+            select_fields = []
+            for entry in extra['select']:
+                if isinstance(entry, list) and entry:
+                    select_fields.append(entry[0])
+                elif isinstance(entry, str):
+                    # Just being extra sure so that we don't crash
+                    select_fields.append(entry)
+
+            if self.locked_field not in select_fields:
+                extra['retrieve_locked_info'] = False
+
         return {
             'locked_datasets': await self.middleware.call(
                 locked_ds_endpoint
