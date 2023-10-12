@@ -27,11 +27,12 @@ class SharingTaskService(CRUDService):
         return {
             'locked_datasets': await self.middleware.call(
                 f'zfs.dataset.locked_datasets{"_cached" if extra.get("use_cached_locked_datasets", True) else ""}'
-            ),
+            ) if extra.get('retrieve_locked_info', True) else [],
             'service_extend': (
                 await self.middleware.call(self._config.datastore_extend_context, rows, extra)
                 if self._config.datastore_extend_context else None
             ),
+            'retrieve_locked_info': extra.get('retrieve_locked_info', True),
         }
 
     @private
@@ -109,9 +110,10 @@ class SharingTaskService(CRUDService):
         if self._config.datastore_extend:
             data = await self.middleware.call(self._config.datastore_extend, *args)
 
-        data[self.locked_field] = await self.middleware.call(
-            f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
-        )
+        if context['retrieve_locked_info']:
+            data[self.locked_field] = await self.middleware.call(
+                f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
+            )
 
         return data
 
