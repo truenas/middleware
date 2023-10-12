@@ -1644,8 +1644,6 @@ class SharingSMBService(SharingService):
             return
 
         home_filters = [('home', '=', True)]
-        home_result = None
-
         if old:
             home_filters.append(('id', '!=', old['id']))
 
