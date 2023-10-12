@@ -153,6 +153,7 @@ class CRUDService(ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase):
             datastore_options = options.copy()
             datastore_options.pop('count', None)
             datastore_options.pop('get', None)
+            datastore_options.pop('select', None)
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options
             )

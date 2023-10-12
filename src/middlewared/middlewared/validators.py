@@ -10,7 +10,9 @@ from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 RE_MAC_ADDRESS = re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$")
-validate_filters = filters().validate_filters
+filters_obj = filters()
+validate_filters = filters_obj.validate_filters
+validate_options = filters_obj.validate_options
 
 
 class Email:
@@ -172,6 +174,11 @@ class Port(Range):
 class QueryFilters:
     def __call__(self, value):
         validate_filters(value)
+
+
+class QueryOptions:
+    def __call__(self, value):
+        validate_options(value)
 
 
 class Unique:

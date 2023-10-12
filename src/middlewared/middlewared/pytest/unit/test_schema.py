@@ -8,6 +8,7 @@ from middlewared.schema import (
     UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
 )
 from middlewared.plugins.cluster_linux.management import GlusterVolname, MAX_VOLNAME_LENGTH
+from middlewared.validators import QueryFilters, QueryOptions
 
 
 def test__nonhidden_after_hidden():
@@ -919,3 +920,30 @@ def test__netbiosdomain_schema(value, expected_to_fail):
         return data
 
     validate_simple(do_netbiosdomain, value, expected_to_fail, True)
+
+
+@pytest.mark.parametrize('filters, options, expected_to_fail', [
+    ([], {'select': ["a", 1]}, True),
+    ([], {'select': ["a", ["b", 1]]}, True),
+    ([], {'select': ["a", ["b", "c", "d"]]}, True),
+    ([], {'select': ["a"]}, False),
+    ([], {'select': ["a", ["b", "c"]]}, False),
+    ([], {'order_by': [1]}, True),
+    ([], {'order_by': ["a"]}, False),
+    ([["a", "canary", "b"]], {}, True),
+    ([["a", "=", "b"]], {}, False),
+])
+def test__filterable(filters, options, expected_to_fail):
+    @accepts(
+        List('query-filters', items=[List('query-filter')], validators=[QueryFilters()]),
+        Dict('query-options', additional_attrs=True, validators=[QueryOptions()])
+    )
+    def do_filter_op(self, query_filters, query_options):
+        return
+
+    self = Mock()
+    if expected_to_fail:
+        with pytest.raises(ValidationErrors):
+            do_filter_op(self, filters, options)
+    else:
+        do_filter_op(self, filters, options)
