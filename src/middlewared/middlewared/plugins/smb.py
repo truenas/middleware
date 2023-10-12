@@ -2036,7 +2036,7 @@ async def pool_post_import(middleware, pool):
             ('path', '=', path),
             ('path', '^', f'{path}/'),
         ])
-    ]):
+    ], {'extra': {'use_cached_locked_datasets': False}}):
         await middleware.call('smb.disable_acl_if_trivial')
         middleware.create_task(middleware.call('sharing.smb.sync_registry'))
 
