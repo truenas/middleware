@@ -21,6 +21,18 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
+    @private
+    async def locked_datasets_cached(self):
+        try:
+            return await self.middleware.call('cache.get', 'zfs_locked_datasets')
+        except KeyError:
+            locked_datasets = await self.middleware.call('zfs.dataset.locked_datasets')
+            if await self.middleware.call('system.ready'):
+                # Only cache if the system is ready
+                await self.middleware.call('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
+            return locked_datasets
+
+
     @accepts(
         Str('id'),
         Dict(
