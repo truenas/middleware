@@ -290,6 +290,8 @@ class PoolDatasetService(Service):
                 )
 
         if unlocked:
+            # Invalidate locked datasets cache if something got unlocked
+            self.middleware.call_sync('cache.pop', 'zfs_locked_datasets')
             if options['toggle_attachments']:
                 job.set_progress(91, 'Handling attachments')
                 self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset)
