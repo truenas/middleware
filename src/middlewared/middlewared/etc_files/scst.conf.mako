@@ -81,7 +81,7 @@
              "B" : {"other" : "A", "group_id" : 102}}
 
     targets = middleware.call_sync('iscsi.target.query')
-    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]])}
+    extents = {d['id']: d for d in middleware.call_sync('iscsi.extent.query', [['enabled', '=', True]], {'extra': {'use_cached_locked_datasets': False}})}
     portals = {d['id']: d for d in middleware.call_sync('iscsi.portal.query')}
     initiators = {d['id']: d for d in middleware.call_sync('iscsi.initiator.query')}
     authenticators = defaultdict(list)
