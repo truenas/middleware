@@ -24,13 +24,8 @@ class SharingTaskService(CRUDService):
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
-        datasets = sum([
-            await self.middleware.call(f'{self._config.namespace}.sharing_task_datasets', row)
-            for row in rows
-        ], [])
-
         return {
-            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets', datasets) if datasets else [],
+            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets'),
             'service_extend': (
                 await self.middleware.call(self._config.datastore_extend_context, rows, extra)
                 if self._config.datastore_extend_context else None
