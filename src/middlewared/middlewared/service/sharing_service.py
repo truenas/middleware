@@ -24,9 +24,13 @@ class SharingTaskService(CRUDService):
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
+        if extra.get('use_cached_locked_datasets', True):
+            locked_ds_endpoint = 'pool.dataset.locked_datasets_cached'
+        else:
+            locked_ds_endpoint = 'zfs.dataset.locked_datasets'
         return {
             'locked_datasets': await self.middleware.call(
-                f'zfs.dataset.locked_datasets{"_cached" if extra.get("use_cached_locked_datasets", True) else ""}'
+                locked_ds_endpoint
             ) if extra.get('retrieve_locked_info', True) else [],
             'service_extend': (
                 await self.middleware.call(self._config.datastore_extend_context, rows, extra)
