@@ -214,7 +214,9 @@ class UsageService(Service):
         return {
             'cloud_services': list({
                 t['credentials']['provider']
-                for t in await self.middleware.call('cloudsync.query', [['enabled', '=', True]])
+                for t in await self.middleware.call(
+                    'cloudsync.query', [['enabled', '=', True]], {'extra': {'retrieve_locked_info': False}}
+                )
             })
         }
 

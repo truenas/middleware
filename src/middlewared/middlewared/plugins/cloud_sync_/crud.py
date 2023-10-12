@@ -18,7 +18,9 @@ class CloudSyncService(Service):
         """
         Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).
         """
-        cloud_sync = await self.middleware.call("cloudsync.query", [["id", "=", id_]], {"get": True})
+        cloud_sync = await self.middleware.call(
+            "cloudsync.query", [["id", "=", id_]], {"get": True, "extra": {"retrieve_locked_info": False}}
+        )
         credentials = cloud_sync["credentials"]
 
         if cloud_sync["direction"] == "PUSH":
