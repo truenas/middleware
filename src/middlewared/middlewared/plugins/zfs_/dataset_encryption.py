@@ -57,7 +57,9 @@ class ZFSDatasetService(Service):
             return self.middleware.call_sync('cache.get', 'zfs_locked_datasets')
         except KeyError:
             locked_datasets = self.locked_datasets()
-            self.middleware.call_sync('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
+            if self.middleware.call_sync('system.ready'):
+                # Only cache if the system is ready
+                self.middleware.call_sync('cache.put', 'zfs_locked_datasets', locked_datasets, 20)
             return locked_datasets
 
     def locked_datasets(self, names=None):
