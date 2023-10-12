@@ -22,7 +22,7 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import filterable_returns, pass_app, private, ConfigService
+from middlewared.service import filterable_returns, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.functools import cache
@@ -204,8 +204,8 @@ class AuditService(ConfigService):
         ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
     ))
     @returns(Str('audit_file_path'))
-    @pass_app()
-    def export(self, app, data):
+    @job()
+    def export(self, job, data):
         """
         Generate an audit report based on the specified `query-filters` and
         `query-options` for the specified `services` in the specified `export_format`.
@@ -223,15 +223,18 @@ class AuditService(ConfigService):
             )
 
         export_format = data.pop('export_format')
+        job.set_progress(0, f'Quering data for {export_format} audit report')
         if not (res := self.middleware.call_sync('audit.query', data)):
             raise CallError('No entries were returned by query.', errno.ENOENT)
 
-        username = self.middleware.call_sync('auth.me', app=app)['pw_name']
-        target_dir = os.path.join(AUDIT_REPORTS_DIR, username)
+        # TODO: get username for authenticated user for log
+        target_dir = os.path.join(AUDIT_REPORTS_DIR, 'root')
         os.makedirs(target_dir, mode=0o700, exist_ok=True)
 
         filename = f'{uuid.uuid4()}.{export_format.lower()}'
-        with open(os.path.join(target_dir, filename), 'w') as f:
+        destination = os.path.join(target_dir, filename)
+        with open(destination, 'w') as f:
+            job.set_progress(50, f'Writing audit report to {destination}.')
             match export_format:
                 case 'CSV':
                     fieldnames = res[0].keys()
@@ -248,7 +251,8 @@ class AuditService(ConfigService):
                 case 'YAML':
                     yaml.dump(res, f)
 
-        return os.path.join(target_dir, filename)
+        job.set_progress(100, f'Audit report completed and available at {destination}')
+        return os.path.join(target_dir, destination)
 
     @private
     def __process_reports_entry(self, entry, cutoff):
