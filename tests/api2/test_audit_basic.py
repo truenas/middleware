@@ -4,6 +4,7 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call
 from protocols import smb_connection
+from pytest_dependency import depends
 from time import sleep
 
 import os
@@ -86,6 +87,7 @@ def test_audit_config_updates(request):
     assert new_config['quota_fill_critical'] == 80
 
 
+@pytest.mark.dependency(name="AUDIT_OPS_PERFORMED")
 def test_audit_query(initialize_for_smb_tests):
     share = initialize_for_smb_tests['share']
     with smb_connection(
@@ -103,7 +105,16 @@ def test_audit_query(initialize_for_smb_tests):
     sleep(10)
     ops = call('audit.query', {
         'services': ['SMB'],
-        'query-filters': [['user', '=', SMBUSER]],
+        'query-filters': [['username', '=', SMBUSER]],
         'query-options': {'count': True}
     })
     assert ops > 0
+
+
+def test_audit_export(request):
+    depends(request, ["AUDIT_OPS_PERFORMED"], scope="session")
+    for backend in ['CSV', 'JSON', 'YAML']:
+        report_path = call('audit.export', {'export_format': backend}, job=True)
+        assert report_path.startswith('/audit/reports/root/')
+        st = call('filesystem.stat', report_path)
+        assert st['size'] != 0, str(st)

@@ -1,4 +1,5 @@
 import middlewared.sqlalchemy as sa
+import os
 
 from sqlalchemy import Table
 from sqlalchemy.ext.declarative import declarative_base
@@ -11,6 +12,7 @@ AUDIT_DEFAULT_RESERVATION = 0
 AUDIT_DEFAULT_QUOTA = 0
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 80
+AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
 
 AuditBase = declarative_base()
 
