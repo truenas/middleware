@@ -76,20 +76,26 @@ class RealtimeEventSource(EventSource):
                 else:
                     break
 
-            data = {
-                'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
-                'memory': get_memory_info(netdata_metrics),
-                'virtual_memory': psutil.virtual_memory()._asdict(),
-                'cpu': get_cpu_stats(netdata_metrics, cores),
-                'disks': get_disk_stats(netdata_metrics, self.middleware.call_sync('device.get_disk_names')),
-                'interfaces': get_interface_stats(
-                    netdata_metrics, [i['name'] for i in self.middleware.call_sync('interface.query')]
-                ),
-            }
+            if failed_to_connect := not bool(netdata_metrics):
+                data = {'failed_to_connect': failed_to_connect}
+            else:
+                data = {
+                    'zfs': get_arc_stats(netdata_metrics),  # ZFS ARC Size
+                    'memory': get_memory_info(netdata_metrics),
+                    'virtual_memory': psutil.virtual_memory()._asdict(),
+                    'cpu': get_cpu_stats(netdata_metrics, cores),
+                    'disks': get_disk_stats(netdata_metrics, self.middleware.call_sync('device.get_disk_names')),
+                    'interfaces': get_interface_stats(
+                        netdata_metrics, [i['name'] for i in self.middleware.call_sync('interface.query')]
+                    ),
+                    'failed_to_connect': False,
+                }
 
-            # CPU temperature
-            data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures')
-            data['cpu']['temperature'] = {k: 2732 + int(v * 10) for k, v in data['cpu']['temperature_celsius'].items()}
+                # CPU temperature
+                data['cpu']['temperature_celsius'] = self.middleware.call_sync('reporting.cpu_temperatures')
+                data['cpu']['temperature'] = {
+                    k: 2732 + int(v * 10) for k, v in data['cpu']['temperature_celsius'].items()
+                }
 
             self.send_event('ADDED', fields=data)
             time.sleep(interval)
