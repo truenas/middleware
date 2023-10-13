@@ -25,9 +25,9 @@ class keytab(enum.Enum):
 
 
 class krb5ccache(enum.Enum):
-    SYSTEM = '/tmp/krb5cc_0'
+    SYSTEM = f'{MIDDLEWARE_RUN_DIR}/krb5cc_0'
     TEMP = f'{MIDDLEWARE_RUN_DIR}/krb5cc_middleware_temp'
-    USER = '/tmp/krb5cc_'
+    USER = f'{MIDDLEWARE_RUN_DIR}/krb5cc_'
 
 
 class krb_tkt_flag(enum.Enum):
@@ -68,8 +68,8 @@ class KRB_LibDefaults(enum.Enum):
     ALLOW_WEAK_CRYPTO = ('allow_weak_crypto', 'boolean')
     CLOCKSKEW = ('clockskew', 'time')
     KDC_TIMEOUT = ('kdc_timeout', 'time')
-    DEFAULT_CC_TYPE = ('default_cc_type', 'cctype')
-    DEFAULT_CC_NAME = ('default_cc_name', 'ccname')
+    DEFAULT_CC_TYPE = ('ccache_type', 'cctype')
+    DEFAULT_CC_NAME = ('default_ccache_name', 'ccname')
     DEFAULT_ETYPES = ('default_etypes', 'etypes')
     DEFAULT_AS_ETYPES = ('default_as_etypes', 'etypes')
     DEFAULT_TGS_ETYPES = ('default_tgs_etypes', 'etypes')
