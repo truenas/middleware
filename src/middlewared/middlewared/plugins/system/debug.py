@@ -1,3 +1,4 @@
+import contextlib
 import io
 import os
 import requests
@@ -25,11 +26,24 @@ class SystemService(Service):
         Result value will be the absolute path of the file.
         """
         system_dataset_path = self.middleware.call_sync('systemdataset.config')['path']
-        execution_dir = get_debug_execution_dir(system_dataset_path)
-        dump = os.path.join(execution_dir, 'ixdiagnose.tgz')
 
-        # Be extra safe in case we have left over from previous run
-        shutil.rmtree(execution_dir, ignore_errors=True)
+        i = 0
+        while True:
+            execution_dir = get_debug_execution_dir(system_dataset_path, i)
+            dump = os.path.join(execution_dir, 'ixdiagnose.tgz')
+
+            # Be extra safe in case we have left over from previous run
+            try:
+                with contextlib.suppress(FileNotFoundError):
+                    shutil.rmtree(execution_dir, ignore_errors=False)
+            except Exception as e:
+                i += 1
+                if i >= 5:
+                    raise CallError(f'Failed to generate ixdiagnose debug: {e!r}')
+                else:
+                    self.logger.warning('Failed to generate ixdiagnose debug: %r', str(e))
+            else:
+                break
 
         conf.apply({
             'compress': True,
