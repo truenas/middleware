@@ -225,7 +225,7 @@ NOTE: these are examples of syntax translation, they are not intended as queries
 to perform on the TrueNAS server.
     
 
-${'#####'} "SELECT * FROM table;"*
+${'#####'} "SELECT * FROM table;"
 
 `query-filters`
 
@@ -301,8 +301,8 @@ Javascript:
     [
       ["OR",
         [
-          [["locked", "=", false], ["ssh", "=" true]],
-          ["builtin", "=", false]
+          ["builtin", "=", false],
+          [["locked", "=", false], ["ssh", "=" true]]
         ]
       ],
     ]
