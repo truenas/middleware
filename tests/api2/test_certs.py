@@ -111,6 +111,21 @@ def test_ca_imported_issuer_reported_correctly():
             call('certificateauthority.delete', imported_ca['id'])
 
 
+def test_ca_imported_add_to_trusted_store_reported_correctly():
+    with root_certificate_authority('root_ca_test') as root_ca:
+        imported_ca = call('certificateauthority.create', {
+            'certificate': root_ca['certificate'],
+            'privatekey': root_ca['privatekey'],
+            'name': 'test_tinkerbell',
+            'add_to_trusted_store': True,
+            'create_type': 'CA_CREATE_IMPORTED',
+        })
+        try:
+            assert imported_ca['add_to_trusted_store'] is True, imported_ca
+        finally:
+            call('certificateauthority.delete', imported_ca['id'])
+
+
 def test_creating_cert_from_root_ca():
     with root_certificate_authority('root_ca_test') as root_ca:
         cert = call('certificate.create', {
