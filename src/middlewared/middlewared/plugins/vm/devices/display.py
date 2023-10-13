@@ -121,7 +121,7 @@ class DISPLAY(Device):
             verrors.add('attributes.bind', 'Requested bind address is not valid')
 
     def validate_port_attrs(self, device, verrors=None):
-        verrors = verrors or ValidationErrors()
+        verrors = ValidationErrors() if verrors is None else verrors
         display_devices_ports = self.middleware.call_sync(
             'vm.all_used_display_device_ports', [['id', '!=', device.get('id')]]
         )
