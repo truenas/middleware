@@ -439,7 +439,7 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE']), has_default=False),
         Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
         Inheritable(Str('acltype', enum=['OFF', 'NFSV4', 'POSIX']), has_default=False),
-        Str('share_type', default='GENERIC', enum=['GENERIC', 'SMB', 'APPS']),
+        Str('share_type', default='GENERIC', enum=['GENERIC', 'MULTIPROTOCOL', 'SMB', 'APPS']),
         Inheritable(Str('xattr', default='SA', enum=['ON', 'SA'])),
         Ref('encryption_options'),
         Bool('encryption', default=False),
@@ -570,6 +570,11 @@ class PoolDatasetService(CRUDService):
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
             })
+        elif data['share_type'] == 'MULTIPROTOCOL':
+            data['casesensitivity'] = 'SENSITIVE'
+            data['atime'] = 'OFF'
+            data['acltype'] = 'NFSV4'
+            data['aclmode'] = 'PASSTHROUGH'
 
         if acl_to_set:
             try:
