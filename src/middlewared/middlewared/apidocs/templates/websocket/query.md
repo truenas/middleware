@@ -225,7 +225,7 @@ NOTE: these are examples of syntax translation, they are not intended as queries
 to perform on the TrueNAS server.
     
 
-"SELECT * FROM table;"
+${'#####'} "SELECT * FROM table;"*
 
 `query-filters`
 
@@ -241,7 +241,7 @@ Javascript:
     {}
 
 
-"SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;"
+${'#####'} "SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;"
 
 `query-filters`
 
@@ -266,7 +266,7 @@ Javascript:
     }
 
 
-"SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;"
+${'#####'} "SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;"
 
 `query-filters`
 
@@ -292,7 +292,7 @@ Javascript:
     }
 
 
-"SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);"
+${'#####'} "SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);"
 
 `query-filters`
 
