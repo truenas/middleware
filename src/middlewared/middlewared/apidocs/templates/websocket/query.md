@@ -220,8 +220,99 @@ Javascript:
 
 
 
+${'####'} Sample SQL statements translated into Query Filters and Query Options
+NOTE: these are examples of syntax translation, they are not intended as queries
+to perform on the TrueNAS server.
     
 
+"SELECT * FROM table;"
+
+`query-filters`
+
+Javascript:
+    :::javascript
+    []
 
 
+`query-options`
 
+Javascript:
+    :::javascript
+    {}
+
+
+"SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;"
+
+`query-filters`
+
+Javascript:
+    :::javascript
+    [
+      ["builtin", "=", false],
+    ]
+
+`query-options`
+
+Javascript:
+    :::javascript
+    {
+      "select": [
+        "username",
+        "uid"
+      ],
+      "order_by": [
+        "-uid"
+      ]
+    }
+
+
+"SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AND locked=TRUE;"
+
+`query-filters`
+
+Javascript:
+    :::javascript
+    [
+      ["builtin", "=", false],
+      ["locked", "=", true]
+    ]
+
+`query-options`
+
+Javascript:
+    :::javascript
+    {
+      "select": [
+        [
+          "username",
+          "locked_user"
+        ],
+        "uid"
+      ],
+    }
+
+
+"SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND ssh=TRUE);"
+
+`query-filters`
+
+Javascript:
+    :::javascript
+    [
+      ["OR",
+        [
+          [["locked", "=", false], ["ssh", "=" true]],
+          ["builtin", "=", false]
+        ]
+      ],
+    ]
+
+`query-options`
+
+Javascript:
+    :::javascript
+    {
+      "select": [
+        "username"
+      ],
+    }
