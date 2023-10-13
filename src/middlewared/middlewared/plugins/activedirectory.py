@@ -326,7 +326,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'IP address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
-                    break
 
                 if addr.is_global:
                     verrors.add(
@@ -335,7 +334,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'IP address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
-                    break
 
                 if addr.is_loopback:
                     verrors.add(
@@ -344,7 +342,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
-                    break
 
                 if addr.is_link_local:
                     verrors.add(
@@ -353,7 +350,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
-                    break
 
                 if addr.is_multicast:
                     verrors.add(
@@ -362,7 +358,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
                         'address. Users may disable automatic DNS updates and manually '
                         'configure DNS A and AAAA records as needed for their domain.'
                     )
-                    break
 
     @accepts(Ref('activedirectory_update'))
     @returns(Patch(
