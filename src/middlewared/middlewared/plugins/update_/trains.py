@@ -1,8 +1,8 @@
 import json
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientResponseError, ClientSession, ClientTimeout
 
-from middlewared.service import private, Service
+from middlewared.service import CallError, private, Service
 from middlewared.utils.network import INTERNET_TIMEOUT
 from middlewared.utils.functools import cache
 from .utils import can_update, scale_update_server, SCALE_MANIFEST_FILE
@@ -21,8 +21,11 @@ class UpdateService(Service):
     @private
     async def fetch(self, url):
         async with ClientSession(**self.opts) as client:
-            async with client.get(url) as resp:
-                return await resp.json()
+            try:
+                async with client.get(url) as resp:
+                    return await resp.json()
+            except ClientResponseError as e:
+                raise CallError(f'Error while fetching update manifest: {e}')
 
     @private
     async def get_scale_update(self, train, current_version):
