@@ -2,6 +2,7 @@
 import contextlib
 import os
 import sys
+import pytest
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -17,6 +18,10 @@ TEST_PASSWORD = 'testpassword'
 TEST_PASSWORD_2 = 'testpassword2'
 TEST_GID = 544
 TEST_TWOFACTOR_INTERVAL = {'interval': 60}
+USERS_2FA_CONF = {
+    TEST_USERNAME: {'interval': 30, 'otp_digits': 6},
+    TEST_USERNAME_2: {'interval': 40, 'otp_digits': 7}
+}
 
 
 @contextlib.contextmanager
@@ -35,21 +40,46 @@ def test_login_without_2fa():
         assert call('auth.get_login_user', TEST_USERNAME, TEST_PASSWORD) is not None
 
 
-def test_secret_generation_for_user():
+@pytest.mark.parametrize("user_name,password,renew_options", [
+    ('test_user1', 'test_password1', {'interval': 30, 'otp_digits': 6}),
+    ('test_user2', 'test_password2', {'interval': 60, 'otp_digits': 7}),
+    ('test_user3', 'test_password3', {'interval': 50, 'otp_digits': 8}),
+])
+def test_secret_generation_for_user(user_name, password, renew_options):
     with user({
-        'username': TEST_USERNAME_2,
-        'password': TEST_PASSWORD_2,
-        'full_name': TEST_USERNAME_2,
+        'username': user_name,
+        'password': password,
+        'full_name': user_name,
     }) as user_obj:
         assert get_user_secret(user_obj['id'], False) != []
         assert get_user_secret(user_obj['id'])['secret'] is None
 
-        call('user.renew_2fa_secret', user_obj['username'], {'interval': 70, 'otp_digits': 8})
+        call('user.renew_2fa_secret', user_obj['username'], renew_options)
 
         user_secret_obj = get_user_secret(user_obj['id'])
         assert user_secret_obj['secret'] is not None
-        for k, v in (('interval', 70), ('otp_digits', 8)):
-            assert user_secret_obj[k] == v
+        for k in ('interval', 'otp_digits'):
+            assert user_secret_obj[k] == renew_options[k]
+
+
+def test_secret_generation_for_multiple_users():
+    with user({
+        'username': TEST_USERNAME,
+        'password': TEST_PASSWORD,
+        'full_name': TEST_USERNAME,
+    }) as first_user:
+        call('user.renew_2fa_secret', first_user['username'], USERS_2FA_CONF[first_user['username']])
+        with user({
+            'username': TEST_USERNAME_2,
+            'password': TEST_PASSWORD_2,
+            'full_name': TEST_USERNAME_2,
+        }) as second_user:
+            call('user.renew_2fa_secret', second_user['username'], USERS_2FA_CONF[second_user['username']])
+            for user_obj in (first_user, second_user):
+                user_secret_obj = get_user_secret(user_obj['id'])
+                assert user_secret_obj['secret'] is not None
+                for k in ('interval', 'otp_digits'):
+                    assert user_secret_obj[k] == USERS_2FA_CONF[user_obj['username']][k]
 
 
 def test_login_without_otp_for_user_without_2fa():
