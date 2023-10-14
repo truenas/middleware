@@ -1325,6 +1325,9 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     if await middleware.call('system.ready'):
+        # We add a delay here to give the standby node middleware a chance to boot up because
+        # if we do it asap, it is highly likely that the standby node middleware is not ready
+        # to make connection to the active node middleware.
         asyncio.get_event_loop().call_later(
-            30, lambda: middleware.create_task( middleware.call('failover.sync_keys_from_remote_node'))
+            30, lambda: middleware.create_task(middleware.call('failover.sync_keys_from_remote_node'))
         )
