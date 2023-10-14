@@ -495,11 +495,15 @@ class FailoverService(ConfigService):
     async def unlock_zfs_datasets(self, job, pool_name):
         # Unnlock all (if any) zfs datasets for `pool_name`
         # that we have keys for in the cache or the database.
-        zfs_keys = (await self.encryption_keys())['zfs']
+        zfs_keys = [
+            {'name': name, 'passphrase': passphrase}
+            for name, passphrase in (await self.encryption_keys())['zfs'].items()
+            if name == pool_name or name.startswith(f'{pool_name}/')
+        ]
         unlock_job = await self.middleware.call(
             'pool.dataset.unlock', pool_name, {
                 'recursive': True,
-                'datasets': [{'name': name, 'passphrase': passphrase} for name, passphrase in zfs_keys.items()],
+                'datasets': zfs_keys,
                 # Do not waste time handling attachments, failover process will restart services and regenerate configs
                 # for us
                 'toggle_attachments': False,
