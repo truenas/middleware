@@ -1271,10 +1271,6 @@ async def service_remote(middleware, service, verb, options):
         middleware.logger.warning('Failed to run %s(%s)', verb, service, exc_info=True)
 
 
-async def ready_system_sync_keys(middleware):
-    await middleware.call('failover.sync_keys_from_remote_node')
-
-
 async def _event_system_ready(middleware, event_type, args):
     # called when system is ready to issue an event in case HA upgrade is pending.
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
