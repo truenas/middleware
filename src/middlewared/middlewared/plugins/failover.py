@@ -1321,4 +1321,6 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     if await middleware.call('system.ready'):
-        middleware.create_task(ready_system_sync_keys(middleware))
+        asyncio.get_event_loop().call_later(
+            30, lambda: middleware.create_task( middleware.call('failover.sync_keys_from_remote_node'))
+        )
