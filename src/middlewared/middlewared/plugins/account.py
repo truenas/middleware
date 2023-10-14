@@ -245,9 +245,7 @@ class UserService(CRUDService):
 
         `"extra": {"search_dscache": true}` is a legacy method of querying for directory services users.
         """
-        if not filters:
-            filters = []
-
+        ds_users = []
         options = options or {}
         options['extend'] = self._config.datastore_extend
         options['extend_context'] = self._config.datastore_extend_context
@@ -258,12 +256,13 @@ class UserService(CRUDService):
         datastore_options.pop('get', None)
         datastore_options.pop('limit', None)
         datastore_options.pop('offset', None)
+        datastore_options.pop('select', None)
 
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
-        dssearch = dssearch or 'DS' in additional_information
         if 'DS' in additional_information:
+            dssearch = True
             additional_information.remove('DS')
 
         username_sid = {}
@@ -277,15 +276,13 @@ class UserService(CRUDService):
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                dssearch_results = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
+                ds_users = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
                 # For AD users, we will not have 2FA attribute normalized so let's do that
                 ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
                 for index, user in enumerate(filter(
-                    lambda u: not u['local'] and 'twofactor_auth_configured' not in u, dssearch_results)
+                    lambda u: not u['local'] and 'twofactor_auth_configured' not in u, ds_users)
                 ):
-                    dssearch_results[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
-
-                return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
+                    ds_users[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -305,7 +302,7 @@ class UserService(CRUDService):
                 entry.update({'nt_name': None, 'sid': None})
 
         return await self.middleware.run_in_thread(
-            filter_list, result, filters, options
+            filter_list, result + ds_users, filters, options
         )
 
     @private
@@ -1511,9 +1508,7 @@ class GroupService(CRUDService):
 
         `"extra": {"search_dscache": true}` is a legacy method of querying for directory services groups.
         """
-        if not filters:
-            filters = []
-
+        ds_groups = []
         options = options or {}
         options['extend'] = self._config.datastore_extend
         options['extend_context'] = self._config.datastore_extend_context
@@ -1524,19 +1519,19 @@ class GroupService(CRUDService):
         datastore_options.pop('get', None)
         datastore_options.pop('limit', None)
         datastore_options.pop('offset', None)
+        datastore_options.pop('select', None)
 
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
-        dssearch = dssearch or 'DS' in additional_information
         if 'DS' in additional_information:
+            dssearch = True
             additional_information.remove('DS')
 
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
             if ds_state['activedirectory'] == 'HEALTHY' or ds_state['ldap'] == 'HEALTHY':
-                dssearch_results = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
-                return await self.middleware.run_in_thread(filter_list, dssearch_results, filters, options)
+                ds_groups = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         if 'SMB' in additional_information:
             smb_groupmap = await self.middleware.call("smb.groupmap_list")
@@ -1561,7 +1556,7 @@ class GroupService(CRUDService):
                 entry.update({'nt_name': None, 'sid': None})
 
         return await self.middleware.run_in_thread(
-            filter_list, result, filters, options
+            filter_list, result + ds_groups, filters, options
         )
 
     @accepts(Dict(
