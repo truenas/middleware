@@ -131,8 +131,8 @@ class TruecommandService(Service):
                 await self.middleware.call('service.start', 'truecommand')
                 await self.middleware.call('service.reload', 'http')
                 asyncio.get_event_loop().call_later(
-                    HEALTH_CHECK_SECONDS,
-                    lambda: asyncio.ensure_future(self.middleware.call('truecommand.health_check')),
+                    30,  # 30 seconds is enough time to initiate a health check to see if the connection is alive
+                    lambda: self.middleware.create_task(self.middleware.call('truecommand.health_check')),
                 )
             else:
                 # start polling iX Portal to see what's up and why we don't have these values set
