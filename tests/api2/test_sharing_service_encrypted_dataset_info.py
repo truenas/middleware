@@ -30,19 +30,19 @@ def lock_dataset(dataset_name):
         )
 
 
-@pytest.mark.parametrize('namespace,dataset_creation_params,share_create_params,path_field', [
+@pytest.mark.parametrize('namespace,dataset_creation_params,share_creation_params,path_field', [
     ('sharing.smb', {}, {'name': 'test_smb_share'}, 'path'),
     ('sharing.nfs', {}, {},  'path'),
     ('iscsi.extent', {'type': 'VOLUME', 'volsize': 268451840, 'volblocksize': '16K'}, {'name': 'test-extend'}, 'disk'),
 ])
-def test_service_encrypted_dataset_default_info(namespace, dataset_creation_params, share_create_params, path_field):
+def test_service_encrypted_dataset_default_info(namespace, dataset_creation_params, share_creation_params, path_field):
     with dataset('test_sharing_locked_ds_info', data={
         **ENCRYPTION_PARAMETERS,
         **dataset_creation_params,
     }) as ds:
         path = f'zvol/{ds}' if dataset_creation_params.get('type') == 'VOLUME' else f'/mnt/{ds}'
-        share_create_params[path_field] = path
-        share = call(f'{namespace}.create', share_create_params)
+        share_creation_params[path_field] = path
+        share = call(f'{namespace}.create', share_creation_params)
         assert share['locked'] is False
 
         with lock_dataset(ds):
