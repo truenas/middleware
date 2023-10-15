@@ -130,24 +130,29 @@ class ActiveDirectoryService(Service):
         return validated_ips
 
     @private
-    async def register_dns(self, ad, smb, smb_ha_mode):
+    async def get_ipaddresses(self, ad, smb, smb_ha_mode):
         if not ad['allow_dns_updates']:
-            return []
+            return None
 
-        await self.middleware.call('kerberos.check_ticket')
         if smb_ha_mode == 'UNIFIED' and not smb['bindip']:
             bindip = await self.middleware.call('smb.bindip_choices')
         else:
             bindip = smb['bindip']
 
         hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
-        to_register = await self.ipaddresses_to_register({
+        return await self.ipaddresses_to_register({
             'bindip': bindip,
             'hostname': hostname,
             'clustered': smb_ha_mode == 'CLUSTERED'
         })
 
-        if not to_register:
+    @private
+    async def register_dns(self, ad, smb, smb_ha_mode):
+        if not ad['allow_dns_updates']:
+            return None
+
+        await self.middleware.call('kerberos.check_ticket')
+        if not (to_register := await self.get_ipaddresses(ad, smb, smb_ha_mode)):
             raise CallError(
                 'No server IP addresses passed DNS validation. '
                 'This may indicate an improperly configured reverse zone. '
@@ -157,6 +162,7 @@ class ActiveDirectoryService(Service):
 
         payload = []
 
+        hostname = f'{smb["netbiosname_local"]}.{ad["domainname"]}.'
         for ip in to_register:
             addr = ipaddress.ip_address(ip)
             payload.append({

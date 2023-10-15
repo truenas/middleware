@@ -2,6 +2,7 @@ import datetime
 import enum
 import errno
 import json
+import ipaddress
 import os
 import time
 import contextlib
@@ -236,7 +237,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if not new["enable"]:
             return
 
-        if await self.middleware.call('smb.get_smb_ha_mode') == 'CLUSTERED':
+        if (ha_mode := await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
             if not await self.middleware.call('ctdb.general.ips'):
                 verrors.add(
                     'activedirectory_update.enable',
@@ -272,6 +273,62 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 "activedirectory_update.domainname",
                 "AD domain name is required."
             )
+
+        if new['allow_dns_updates']:
+            smb = await self.middleware.call('smb.config')
+            addresses = await self.middleware.call(
+                'activedirectory.get_ipaddresses', new, smb, ha_mode
+            )
+
+            if not addresses:
+                verrors.add(
+                    'activedirectory_update.allow_dns_updates',
+                    'No server IP addresses passed DNS validation. '
+                    'This may indicate an improperly configured reverse zone. '
+                    'Review middleware log files for details regarding errors encountered.',
+                )
+
+            for a in addresses:
+                addr = ipaddress.ip_address(a)
+                if addr.is_reserved:
+                    verrors.add(
+                        'activedirectory_update.allow_dns_updates',
+                        f'{addr}: automatic DNS update would result in registering a reserved '
+                        'IP address. Users may disable automatic DNS updates and manually '
+                        'configure DNS A and AAAA records as needed for their domain.'
+                    )
+
+                if addr.is_global:
+                    verrors.add(
+                        'activedirectory_update.allow_dns_updates',
+                        f'{addr}: automatic DNS update would result in registering a global '
+                        'IP address. Users may disable automatic DNS updates and manually '
+                        'configure DNS A and AAAA records as needed for their domain.'
+                    )
+
+                if addr.is_loopback:
+                    verrors.add(
+                        'activedirectory_update.allow_dns_updates',
+                        f'{addr}: automatic DNS update would result in registering a loopback '
+                        'address. Users may disable automatic DNS updates and manually '
+                        'configure DNS A and AAAA records as needed for their domain.'
+                    )
+
+                if addr.is_link_local:
+                    verrors.add(
+                        'activedirectory_update.allow_dns_updates',
+                        f'{addr}: automatic DNS update would result in registering a link-local '
+                        'address. Users may disable automatic DNS updates and manually '
+                        'configure DNS A and AAAA records as needed for their domain.'
+                    )
+
+                if addr.is_multicast:
+                    verrors.add(
+                        'activedirectory_update.allow_dns_updates',
+                        f'{addr}: automatic DNS update would result in registering a multicast '
+                        'address. Users may disable automatic DNS updates and manually '
+                        'configure DNS A and AAAA records as needed for their domain.'
+                    )
 
     @accepts(Dict(
         'activedirectory_update',
