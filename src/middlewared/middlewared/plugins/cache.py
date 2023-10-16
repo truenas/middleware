@@ -501,21 +501,15 @@ class DSCache(Service):
         is_name_check = bool(filters and len(filters) == 1 and filters[0][0] in ['username', 'name'])
         is_id_check = bool(filters and len(filters) == 1 and filters[0][0] in ['uid', 'gid'])
 
-        res.extend((await self.middleware.call(f'{objtype.lower()[:-1]}.query', filters, options)))
-
         for dstype, state in ds_state.items():
             if state != 'DISABLED':
                 enabled_ds = dstype
                 break
 
         if not enabled_ds:
-            return res
+            return []
 
         if (is_name_check or is_id_check) and filters[0][1] == '=':
-            # exists in local sqlite database, return results
-            if res:
-                return res
-
             key = 'who' if is_name_check else 'id'
             entry = await self.retrieve(enabled_ds.upper(), {
                 'idtype': objtype[:-1],
@@ -530,12 +524,7 @@ class DSCache(Service):
                 entry['sid'] = None
                 entry['nt_name'] = None
 
-        entries_by_id = sorted(entries, key=lambda i: i['id'])
-        res.extend(filter_list(entries_by_id, filters, options))
-
-        # FIXME: This is broken and will break with groups/users as well, filters/options should be
-        #  respected here, let's fix this please
-        return res
+        return sorted(entries, key=lambda i: i['id'])
 
     @job(lock="dscache_refresh")
     async def refresh(self, job):
