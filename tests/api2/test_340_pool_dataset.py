@@ -479,3 +479,11 @@ def test_33_simplified_charts_api(request):
         acl = results.json()['acl']
         assert check_for_entry(acl, 'USER', USER_TO_ADD, {'READ': True, 'WRITE': True, 'EXECUTE': True}, True), str(acl)
         assert check_for_entry(acl, 'GROUP', GROUP_TO_ADD, {'READ': True, 'WRITE': False, 'EXECUTE': True}, True), str(acl)
+
+
+def test_34_multiprotocol_share_type_preset(request):
+    with create_dataset(pool_name, 'MULTIPROTOCOL', options={'share_type': 'MULTIPROTOCOL'}) as ds:
+        assert ds['acltype']['value'] == 'NFSV4'
+        assert ds['aclmode']['value'] == 'PASSTHROUGH'
+        assert ds['casesensitivity']['value'] == 'SENSITIVE'
+        assert ds['atime']['value'] == 'OFF'
