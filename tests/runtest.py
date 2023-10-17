@@ -18,7 +18,7 @@ results_xml = f'{workdir}/results/'
 localHome = os.path.expanduser('~')
 dotsshPath = localHome + '/.ssh'
 keyPath = localHome + '/.ssh/test_id_rsa'
-isns_ip='10.234.24.50' # isns01.qe.ixsystems.net
+isns_ip = '10.234.24.50'  # isns01.qe.ixsystems.net
 pool_name = "tank"
 
 ixautomation_dot_conf_url = "https://raw.githubusercontent.com/iXsystems/" \
