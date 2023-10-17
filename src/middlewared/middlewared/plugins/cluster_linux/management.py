@@ -456,7 +456,9 @@ class ClusterManagement(Service):
                     name='remote_credential',
                 ),
                 Str('hostname', required=True),
-                IPAddr('private_address', required=True),
+                IPAddr('private_address', required=True, excluded_address_types=[
+                    'MULTICAST', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED', 'GLOBAL'
+                ]),
                 Str('brick_path', required=True),
                 required=True,
                 register=True
@@ -726,7 +728,9 @@ class ClusterManagement(Service):
         Dict(
             'local_node_configuration',
             Str('hostname', required=True),
-            IPAddr('private_address', required=True),
+            IPAddr('private_address', required=True, excluded_address_types=[
+                'MULTICAST', 'LOOPBACK', 'LINK_LOCAL', 'RESERVED', 'GLOBAL'
+            ]),
             Str('brick_path', required=True),
             required=True,
         ),
