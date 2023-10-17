@@ -55,7 +55,7 @@
         }}
 
         libdefaults = {'krb5_main': {
-            KRB_LibDefaults.DEFAULT_CC_NAME.parm(): krb5ccache.SYSTEM.value,
+            KRB_LibDefaults.DEFAULT_CC_NAME.parm(): 'FILE:' + krb5ccache.SYSTEM.value,
             KRB_LibDefaults.DNS_LOOKUP_REALM.parm(): 'true',
             KRB_LibDefaults.DNS_LOOKUP_KDC.parm(): 'true',
             KRB_LibDefaults.TICKET_LIFETIME.parm(): '24h',

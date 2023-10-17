@@ -204,10 +204,13 @@ class KerberosService(TDBWrapConfigService):
             return
 
         def write_libdefaults(krb_file):
+            krb5ccache_parm = KRB_LibDefaults.DEFAULT_CC_NAME.parm()
+
             krb_file.write('[libdefaults]\n')
             krb_file.write(f'\tdefault_realm = {realm}\n')
             krb_file.write('\tdns_lookup_realm = false\n')
             krb_file.write(f'\tdns_lookup_kdc = {"false" if kdc else "true"}\n')
+            krb_file.write(f'\t{krb5ccache_parm} = FILE:{krb5ccache.SYSTEM.value}\n')
 
         def write_realms(krb_file):
             krb_file.write('[realms]\n')
