@@ -6,7 +6,7 @@
         import logging
         logger = logging.getLogger(__name__)
         from middlewared.utils import filter_list
-        from middlewared.plugins.kerberos import KRB_AppDefaults, KRB_LibDefaults
+        from middlewared.plugins.kerberos import KRB_AppDefaults, KRB_LibDefaults, krb5ccache
 
         def parse_defaults(section_name, section_conf, db_def=None):
             default_section = "krb5_main"
@@ -54,6 +54,7 @@
         }}
 
         libdefaults = {'krb5_main': {
+            KRB_LibDefaults.DEFAULT_CC_NAME.parm(): 'FILE:' + krb5ccache.SYSTEM.value,
             KRB_LibDefaults.DNS_LOOKUP_REALM.parm(): 'true',
             KRB_LibDefaults.DNS_LOOKUP_KDC.parm(): 'true',
             KRB_LibDefaults.TICKET_LIFETIME.parm(): '24h',
