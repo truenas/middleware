@@ -479,3 +479,4 @@ class AuditService(ConfigService):
 
     @private
     async def json_schemas(self):
+        return AUDIT_EVENT_SMB_JSON_SCHEMAS
