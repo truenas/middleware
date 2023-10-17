@@ -3,7 +3,6 @@
 # $FreeBSD$
 #
 <%
-        import enum
         import logging
         logger = logging.getLogger(__name__)
         from middlewared.utils import filter_list
