@@ -418,6 +418,13 @@ def test__filter_list_select_as():
     assert entry['data'] == 4
 
 
+def test__filter_list_select_null():
+    data = filter_list(DATA_WITH_NULL, [['number', '=', 4]], {'select': ['foo'], 'get': True})
+    assert len(data) == 1
+    assert 'foo' in data
+    assert data['foo'] is None
+
+
 def test__filter_list_select_as_validation():
     with pytest.raises(ValueError) as ve:
         # too few items in the select list
