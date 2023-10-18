@@ -9,7 +9,6 @@ def clear_ad_info():
     results = PUT("/activedirectory/", {
         "domainname": "",
         "bindname": "",
-        "bindpw": "",
         "verbose_logging": False,
         "allow_trusted_doms": False,
         "use_default_domain": False,
@@ -76,7 +75,6 @@ def active_directory(domain, username, password, **kwargs):
     sleep(5)
     try:
         config = results.json()
-        del(config['bindpw'])
         yield {
             'config': config,
             'result': job_status['results']
