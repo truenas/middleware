@@ -80,7 +80,7 @@ def test_service_encrypted_dataset_selected_info(
 @pytest.mark.parametrize('namespace,dataset_creation_params,share_creation_params,path_field', [
     ('sharing.smb', {}, {'name': 'test_smb_share'}, 'path'),
     ('sharing.nfs', {}, {}, 'path'),
-    ('iscsi.extent', {}, {'name': 'test-extend'}, 'disk'),
+    ('iscsi.extent', {'type': 'VOLUME', 'volsize': 268451840, 'volblocksize': '16K'}, {'name': 'test-extend'}, 'disk'),
 ])
 def test_service_encrypted_dataset_retrieve_info_with_cache(
     namespace, dataset_creation_params, share_creation_params, path_field
