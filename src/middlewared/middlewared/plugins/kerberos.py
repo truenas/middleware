@@ -502,7 +502,7 @@ class KerberosService(TDBWrapConfigService):
                 'dstype': DSType.DS_TYPE_ACTIVEDIRECTORY.name,
                 'conf': {
                     'bindname': ad['bindname'],
-                    'bindpw': ad['bindpw'],
+                    'bindpw': ad.get('bindpw', ''),
                     'domainname': ad['domainname'],
                     'kerberos_principal': ad['kerberos_principal'],
                 }
