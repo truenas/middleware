@@ -75,3 +75,31 @@ def test_service_encrypted_dataset_selected_info(
             for selected_field_entry in selected_fields:
                 for share in call(f'{namespace}.query', [], {'select': selected_field_entry}):
                     assert set(share) == set(selected_field_entry)
+
+
+@pytest.mark.parametrize('namespace,dataset_creation_params,share_creation_params,path_field', [
+    ('sharing.smb', {}, {'name': 'test_smb_share'}, 'path'),
+    ('sharing.nfs', {}, {}, 'path'),
+    ('iscsi.extent', {}, {'name': 'test-extend'}, 'disk'),
+])
+def test_service_encrypted_dataset_retrieve_info_with_cache(
+    namespace, dataset_creation_params, share_creation_params, path_field
+):
+    with dataset('test_sharing_locked_ds_info', data={
+        **ENCRYPTION_PARAMETERS,
+        **dataset_creation_params,
+    }) as ds:
+        path = f'zvol/{ds}' if dataset_creation_params.get('type') == 'VOLUME' else f'/mnt/{ds}'
+        share = call(f'{namespace}.create', {**share_creation_params, path_field: path})
+        assert share['locked'] is False
+        with lock_dataset(ds):
+            assert call(
+                f'{namespace}.get_instance', share['id'], {'extra': {'retrieve_locked_info': False}}
+            ).get('locked') is None
+            cached_locked_value = call(
+                f'{namespace}.get_instance', share['id'], {'extra': {'use_cached_locked_datasets': True}}
+            )
+            locked_value = call(
+                f'{namespace}.get_instance', share['id'], {'extra': {'use_cached_locked_datasets': False}}
+            )
+            assert cached_locked_value == locked_value
