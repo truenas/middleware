@@ -4,11 +4,14 @@ import json
 import os
 import stat
 import sys
+from pathlib import Path
 from subprocess import run
 
 
 TO_CHMOD = ['apt', 'dpkg']
 EXECUTE_BITS = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+PKG_MGMT_DISABLED_PATH = '/usr/local/bin/pkg_mgmt_disabled'
+
 
 def set_readwrite(entry):
     if 'RO' not in entry['fhs_entry']['options']:
@@ -42,6 +45,14 @@ def chmod_files():
                 print(f'{entry.path}: setting {oct(new_mode)} on file.')
                 os.chmod(entry.path, new_mode)
 
+    # Also turn OFF execute bits for pkg_mgmt_disabled
+    p = Path(PKG_MGMT_DISABLED_PATH)
+    if p.exists():
+        old_mode = p.stat().st_mode
+        if old_mode & EXECUTE_BITS:
+            new_mode = old_mode & ~EXECUTE_BITS
+            p.chmod(new_mode)
+
 
 if __name__ == '__main__':
     datasets = []
@@ -49,12 +60,12 @@ if __name__ == '__main__':
         # The following file is created during TrueNAS installation
         # and contains dataset configuration and guid details
         with open('/conf/truenas_root_ds.json', 'r') as f:
-           datasets = json.load(f)
+            datasets = json.load(f)
     except FileNotFoundError:
         pass
 
     print('Flagging root dataset as developer mode')
-    rv  = run(['zfs', 'get', '-o', 'name', '-H', 'name', '/'], capture_output=True)
+    rv = run(['zfs', 'get', '-o', 'name', '-H', 'name', '/'], capture_output=True)
     root = rv.stdout.decode().strip()
     run(['zfs', 'set', 'truenas:developer=on', root])
 
