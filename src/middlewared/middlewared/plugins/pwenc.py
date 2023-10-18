@@ -34,7 +34,6 @@ class PWEncService(Service):
 
     def _reset_passwords(self):
         for table, field in (
-            ('directoryservice_activedirectory', 'ad_bindpw'),
             ('directoryservice_ldap', 'ldap_bindpw'),
             ('services_ups', 'ups_monpwd'),
             ('system_email', 'em_pass'),

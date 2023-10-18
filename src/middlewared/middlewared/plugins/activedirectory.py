@@ -64,7 +64,6 @@ class ActiveDirectoryModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     ad_domainname = sa.Column(sa.String(120))
     ad_bindname = sa.Column(sa.String(120))
-    ad_bindpw = sa.Column(sa.EncryptedText())
     ad_verbose_logging = sa.Column(sa.Boolean())
     ad_allow_trusted_doms = sa.Column(sa.Boolean())
     ad_use_default_domain = sa.Column(sa.Boolean())
