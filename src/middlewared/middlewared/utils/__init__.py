@@ -123,7 +123,7 @@ def select_path(obj, path):
     while right:
         left, right = partition(right)
         if isinstance(cur, dict):
-            cur = cur.get(left)
+            cur = cur.get(left, MatchNotFound)
             keys.append(left)
         elif isinstance(cur, (list, tuple)):
             raise ValueError('Selecting by list index is not supported')
@@ -407,7 +407,7 @@ class filters(object):
                     new_name = None
 
                 keys, value = select_path(i, target)
-                if value is None:
+                if value is MatchNotFound:
                     continue
 
                 if new_name is not None:
