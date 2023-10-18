@@ -67,7 +67,6 @@ class ActiveDirectoryModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     ad_domainname = sa.Column(sa.String(120))
     ad_bindname = sa.Column(sa.String(120))
-    ad_bindpw = sa.Column(sa.EncryptedText())
     ad_verbose_logging = sa.Column(sa.Boolean())
     ad_allow_trusted_doms = sa.Column(sa.Boolean())
     ad_use_default_domain = sa.Column(sa.Boolean())
@@ -90,7 +89,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
         "id": 1,
         "domainname": "",
         "bindname": "",
-        "bindpw": "",
         "verbose_logging": False,
         "allow_trusted_doms": False,
         "use_default_domain": False,
@@ -287,12 +285,12 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 "This is to avoid introducing possible configuration errors that may result "
                 "in a production outage."
             )
-        if not new["bindpw"] and not new["kerberos_principal"]:
+        if not new.get("bindpw") and not new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.bindname",
                 "Bind credentials or kerberos keytab are required to join an AD domain."
             )
-        if new["bindpw"] and new["kerberos_principal"]:
+        if new.get("bindpw") and new["kerberos_principal"]:
             verrors.add(
                 "activedirectory_update.kerberos_principal",
                 "Simultaneous keytab and password authentication are not permitted."
@@ -1261,7 +1259,6 @@ class ActiveDirectoryService(TDBWrapConfigService):
             'enable': False,
             'site': None,
             'bindname': '',
-            'bindpw': '',
             'kerberos_realm': None,
             'kerberos_principal': '',
             'domainname': '',
