@@ -1,7 +1,7 @@
 import json
 import time
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str, LocalUsername
+from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, Str, LocalUsername
 from middlewared.service import CRUDService, filterable, private, Service, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils import filter_list
@@ -156,7 +156,7 @@ class ClusterUserService(CRUDService):
         'ctdb_account_user',
         LocalUsername('username', required=True),
         Str('full_name', required=True),
-        Str('password', private=True, required=True),
+        Password('password', required=True),
         Bool('locked', default=False),
         register=True
     ))

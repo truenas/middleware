@@ -1,7 +1,7 @@
 import errno
 import pyotp
 
-from middlewared.schema import accepts, Bool, Dict, Int, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Password, Ref, returns, Str
 from middlewared.service import CallError, private, Service
 from middlewared.validators import Range
 
@@ -63,7 +63,7 @@ class UserService(Service):
             'otp_digits': user_twofactor_config['otp_digits'],
         }
 
-    @accepts(Str('username'), Str('token', null=True))
+    @accepts(Str('username'), Password('token', null=True))
     @returns(Bool('token_verified'))
     def verify_twofactor_token(self, username, token):
         """

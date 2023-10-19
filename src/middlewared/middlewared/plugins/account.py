@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str, LocalUsername
+from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, pass_app, private, filterable, job
 )
@@ -472,7 +472,7 @@ class UserService(CRUDService):
         Str('shell', default='/usr/bin/zsh'),
         Str('full_name', required=True),
         Str('email', validators=[Email()], null=True, default=None),
-        Str('password', private=True),
+        Password('password'),
         Bool('password_disabled', default=False),
         Bool('ssh_password_enabled', default=False),
         Bool('locked', default=False),
@@ -1070,7 +1070,7 @@ class UserService(CRUDService):
 
     @no_auth_required
     @accepts(
-        Str('password'),
+        Password('password'),
         Dict('options')
     )
     @returns()
@@ -1086,7 +1086,7 @@ class UserService(CRUDService):
     @no_auth_required
     @accepts(
         Str('username', enum=['root', 'admin']),
-        Str('password'),
+        Password('password'),
         Dict(
             'options',
             Dict(

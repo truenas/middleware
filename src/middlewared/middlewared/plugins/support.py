@@ -11,7 +11,7 @@ import requests
 
 from middlewared.pipe import Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
-from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Password, returns, Str
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.network import INTERNET_TIMEOUT
@@ -142,7 +142,7 @@ class SupportService(ConfigService):
             ['secondary_phone', 'Secondary Contact Phone'],
         ]
 
-    @accepts(Str('token', default=''))
+    @accepts(Password('token', default=''))
     @returns(Dict(additional_attrs=True, example={'API': '11008', 'WebUI': '10004'}))
     async def fetch_categories(self, token):
         """
@@ -174,7 +174,7 @@ class SupportService(ConfigService):
         Str('body', required=True, max_length=None),
         Str('category', required=True),
         Bool('attach_debug', default=False),
-        Str('token', private=True),
+        Password('token'),
         Str('type', enum=['BUG', 'FEATURE']),
         Str('criticality'),
         Str('environment', max_length=None),
@@ -318,7 +318,7 @@ class SupportService(ConfigService):
         'attach_ticket',
         Int('ticket', required=True),
         Str('filename', required=True, max_length=None),
-        Str('token', private=True),
+        Password('token'),
     ))
     @returns()
     @job(pipes=["input"])

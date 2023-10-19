@@ -8,7 +8,7 @@ import botocore
 import requests
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Str
+from middlewared.schema import Password, Str
 from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
 
@@ -27,7 +27,7 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     credentials_schema = [
         Str("access_key_id", title="Access Key ID", required=True),
-        Str("secret_access_key", title="Secret Access Key", required=True),
+        Password("secret_access_key", title="Secret Access Key", required=True),
     ]
 
     task_schema = []

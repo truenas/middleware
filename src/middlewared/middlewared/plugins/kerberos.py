@@ -9,7 +9,7 @@ import subprocess
 import contextlib
 import time
 from middlewared.plugins.idmap import DSType
-from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Ref, Datetime, Bool
+from middlewared.schema import accepts, returns, Dict, Int, List, Patch, Str, OROperator, Password, Ref, Datetime, Bool
 from middlewared.service import CallError, TDBWrapConfigService, TDBWrapCRUDService, job, periodic, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR, run, Popen
@@ -402,7 +402,7 @@ class KerberosService(TDBWrapConfigService):
             Dict(
                 'kerberos_username_password',
                 Str('username', required=True),
-                Str('password', required=True, private=True),
+                Password('password', required=True),
                 register=True
             ),
             Dict(

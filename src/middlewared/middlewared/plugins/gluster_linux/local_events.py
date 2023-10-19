@@ -8,7 +8,7 @@ import os
 import time
 
 from middlewared.service_exception import CallError, ValidationError
-from middlewared.schema import Dict, Str, Bool, returns
+from middlewared.schema import Dict, Str, Bool, Password, returns
 from middlewared.service import (accepts, Service,
                                  private, ValidationErrors)
 from .utils import GlusterConfig
@@ -97,7 +97,7 @@ class GlusterLocalEventsService(Service):
                 )
 
     @accepts()
-    @returns(Str())
+    @returns(Password())
     def get_set_jwt_secret(self):
         """
         Return the secret key used to encode/decode
@@ -123,7 +123,7 @@ class GlusterLocalEventsService(Service):
 
     @accepts(Dict(
         'add_secret',
-        Str('secret', required=True),
+        Password('secret', required=True),
         Bool('force', default=False),
     ))
     @returns()
