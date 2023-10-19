@@ -24,17 +24,32 @@ class SharingTaskService(CRUDService):
 
     @private
     async def sharing_task_extend_context(self, rows, extra):
-        datasets = sum([
-            await self.middleware.call(f'{self._config.namespace}.sharing_task_datasets', row)
-            for row in rows
-        ], [])
+        if extra.get('use_cached_locked_datasets', True):
+            locked_ds_endpoint = 'pool.dataset.locked_datasets_cached'
+        else:
+            locked_ds_endpoint = 'zfs.dataset.locked_datasets'
+
+        if extra.get('select'):
+            select_fields = []
+            for entry in extra['select']:
+                if isinstance(entry, list) and entry:
+                    select_fields.append(entry[0])
+                elif isinstance(entry, str):
+                    # Just being extra sure so that we don't crash
+                    select_fields.append(entry)
+
+            if self.locked_field not in select_fields:
+                extra['retrieve_locked_info'] = False
 
         return {
-            'locked_datasets': await self.middleware.call('zfs.dataset.locked_datasets', datasets) if datasets else [],
+            'locked_datasets': await self.middleware.call(
+                locked_ds_endpoint
+            ) if extra.get('retrieve_locked_info', True) else [],
             'service_extend': (
                 await self.middleware.call(self._config.datastore_extend_context, rows, extra)
                 if self._config.datastore_extend_context else None
             ),
+            'retrieve_locked_info': extra.get('retrieve_locked_info', True),
         }
 
     @private
@@ -96,14 +111,6 @@ class SharingTaskService(CRUDService):
         return verrors
 
     @private
-    async def sharing_task_datasets(self, data):
-        path = await self.get_path_field(data)
-        if path_location(path) is not FSLocation.LOCAL:
-            return []
-
-        return [os.path.relpath(path, '/mnt')]
-
-    @private
     async def sharing_task_determine_locked(self, data, locked_datasets):
         path = await self.get_path_field(data)
         if path_location(path) is not FSLocation.LOCAL:
@@ -120,9 +127,10 @@ class SharingTaskService(CRUDService):
         if self._config.datastore_extend:
             data = await self.middleware.call(self._config.datastore_extend, *args)
 
-        data[self.locked_field] = await self.middleware.call(
-            f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
-        )
+        if context['retrieve_locked_info']:
+            data[self.locked_field] = await self.middleware.call(
+                f'{self._config.namespace}.sharing_task_determine_locked', data, context['locked_datasets']
+            )
 
         return data
 

@@ -31,7 +31,9 @@ class ZFSDatasetService(Service):
         """
 
         def get_attachments():
-            extents = self.middleware.call_sync('iscsi.extent.query', [('type', '=', 'DISK')])
+            extents = self.middleware.call_sync(
+                'iscsi.extent.query', [('type', '=', 'DISK')], {'select': ['path', 'type']}
+            )
             iscsi_zvols = {
                 zvol_path_to_name('/dev/' + i['path']): i for i in extents
             }

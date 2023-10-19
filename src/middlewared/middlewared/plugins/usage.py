@@ -214,7 +214,9 @@ class UsageService(Service):
         return {
             'cloud_services': list({
                 t['credentials']['provider']
-                for t in await self.middleware.call('cloudsync.query', [['enabled', '=', True]])
+                for t in await self.middleware.call(
+                    'cloudsync.query', [['enabled', '=', True]], {'select': ['enabled', 'credentials']}
+                )
             })
         }
 
@@ -397,7 +399,12 @@ class UsageService(Service):
                     sharing_list.append({'type': service_upper, 'readonly': s['ro']})
                 elif service == 'iscsi':
                     tar = await self.middleware.call('iscsi.target.query', [('id', '=', s['target'])], {'get': True})
-                    ext = await self.middleware.call('iscsi.extent.query', [('id', '=', s['extent'])], {'get': True})
+                    ext = await self.middleware.call(
+                        'iscsi.extent.query', [('id', '=', s['extent'])], {
+                            'get': True,
+                            'extra': {'retrieve_locked_info': False},
+                        }
+                    )
                     sharing_list.append({
                         'type': service_upper,
                         'mode': tar['mode'],

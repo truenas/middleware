@@ -139,7 +139,9 @@ class SMBService(Service):
         data['ds_state'] = await self.middleware.call('directoryservices.get_state')
         data['shares'] = await self.middleware.call(
             'sharing.smb.query',
-            [('enabled', '=', True), ('locked', '=', False)]
+            [('enabled', '=', True), ('locked', '=', False)], {
+                'extra': {'use_cached_locked_datasets': False},
+            }
         )
         gs = GlobalSchema()
         gs.convert_schema_to_registry(data, to_set)

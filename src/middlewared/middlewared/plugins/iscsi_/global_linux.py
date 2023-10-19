@@ -97,7 +97,10 @@ class ISCSIGlobalService(Service):
         if not self.middleware.call_sync('service.started', 'iscsitarget'):
             return
 
-        extent = self.middleware.call_sync('iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id}']])
+        extent = self.middleware.call_sync(
+            'iscsi.extent.query', [['enabled', '=', True], ['path', '=', f'zvol/{id}']],
+            {'select': ['name', 'enabled', 'path']}
+        )
         if not extent:
             return
 
@@ -123,8 +126,11 @@ class ISCSIGlobalService(Service):
         if not self.middleware.call_sync('service.started', 'iscsitarget'):
             return
 
-        extent = self.middleware.call_sync('iscsi.extent.query',
-                                           [['enabled', '=', True], ['type', '=', 'FILE'], ['path', '=', path]])
+        extent = self.middleware.call_sync(
+            'iscsi.extent.query', [
+                ['enabled', '=', True], ['type', '=', 'FILE'], ['path', '=', path]
+            ], {'select': ['enabled', 'type', 'path', 'name']}
+        )
         if not extent:
             return
 
@@ -150,7 +156,11 @@ class ISCSIGlobalService(Service):
 
         g_config = await self.middleware.call('iscsi.global.config')
         targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query')}
-        extents = {t['id']: t for t in await self.middleware.call('iscsi.extent.query', [['enabled', '=', True]])}
+        extents = {
+            t['id']: t for t in await self.middleware.call(
+                'iscsi.extent.query', [['enabled', '=', True]], {'select': ['enabled', 'path']}
+            )
+        }
 
         for associated_target in filter(
             lambda a: a['extent'] in extents and extents[a['extent']]['path'].startswith(f'zvol/{pool_name}/'),
