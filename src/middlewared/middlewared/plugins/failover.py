@@ -1271,10 +1271,6 @@ async def service_remote(middleware, service, verb, options):
         middleware.logger.warning('Failed to run %s(%s)', verb, service, exc_info=True)
 
 
-async def ready_system_sync_keys(middleware):
-    await middleware.call('failover.sync_keys_from_remote_node')
-
-
 async def _event_system_ready(middleware, event_type, args):
     # called when system is ready to issue an event in case HA upgrade is pending.
     if await middleware.call('failover.status') in ('MASTER', 'SINGLE'):
@@ -1325,4 +1321,9 @@ async def setup(middleware):
     await middleware.call('failover.remote_on_disconnect', remote_status_event)
 
     if await middleware.call('system.ready'):
-        middleware.create_task(ready_system_sync_keys(middleware))
+        # We add a delay here to give the standby node middleware a chance to boot up because
+        # if we do it asap, it is highly likely that the standby node middleware is not ready
+        # to make connection to the active node middleware.
+        asyncio.get_event_loop().call_later(
+            30, lambda: middleware.create_task(middleware.call('failover.sync_keys_from_remote_node'))
+        )
