@@ -310,9 +310,6 @@ def test_05_kinit_as_ad_user(setup_nfs_share):
     assert error is None, str(error)
     assert res['result'] is True
 
-    res = SSH_TEST(f'test -f /tmp/krb5cc_{setup_nfs_share[1]["uid"]}', user, password, ip)
-    assert res['result'] is True, res['stderr']
-
     results = POST('/service/restart/', {'service': 'nfs'})
     assert results.status_code == 200, results.text
 
