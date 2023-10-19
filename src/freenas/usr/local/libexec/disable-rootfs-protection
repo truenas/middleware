@@ -50,7 +50,8 @@ def chmod_files():
     if p.exists():
         old_mode = p.stat().st_mode
         if old_mode & EXECUTE_BITS:
-            new_mode = old_mode & ~EXECUTE_BITS
+            new_mode = stat.S_IMODE(old_mode & ~EXECUTE_BITS)
+            print(f'{PKG_MGMT_DISABLED_PATH}: setting {oct(new_mode)} on file.')
             p.chmod(new_mode)
 
 
