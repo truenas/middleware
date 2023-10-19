@@ -758,15 +758,18 @@ class SMBService(TDBWrapConfigService):
 
         if not new['aapl_extensions']:
             filters = [['OR', [['afp', '=', True], ['timemachine', '=', True]]]]
-            if await self.middleware.call('sharing.smb.query', filters, {'count': True}):
+            if await self.middleware.call(
+                'sharing.smb.query', filters, {'count': True, 'select': ['afp', 'timemachine']}
+            ):
                 verrors.add(
                     'smb_update.aapl_extensions',
                     'This option must be enabled when AFP or time machine shares are present'
                 )
 
         if new['enable_smb1']:
-            audited_shares = await self.middleware.call('sharing.smb.query', [['audit.enable', '=', True]])
-            if audited_shares:
+            if audited_shares := await self.middleware.call(
+                'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit']}
+            ):
                 verrors.add(
                     'smb_update.enable_smb1',
                     f'The following SMB shares have auditing enabled: {", ".join([x["name"] for x in audited_shares])}'
@@ -1910,7 +1913,9 @@ class SharingSMBService(SharingService):
             share_filter = [['name', 'C=', data['share_name']]]
 
         try:
-            await self.middleware.call('sharing.smb.query', share_filter, {'get': True})
+            await self.middleware.call(
+                'sharing.smb.query', share_filter, {'get': True, 'select': ['home', 'name']}
+            )
         except MatchNotFound:
             verrors.add(
                 'smb_share_acl.share_name',
@@ -1938,7 +1943,9 @@ class SharingSMBService(SharingService):
             share_filter = [['name', 'C=', data['share_name']]]
 
         try:
-            await self.middleware.call('sharing.smb.query', share_filter, {'get': True})
+            await self.middleware.call(
+                'sharing.smb.query', share_filter, {'get': True, 'select': ['home', 'name']}
+            )
         except MatchNotFound:
             verrors.add(
                 'sharing_smb_getacl.share_name',
@@ -2086,7 +2093,7 @@ async def pool_post_import(middleware, pool):
             ('path', '=', path),
             ('path', '^', f'{path}/'),
         ])
-    ]):
+    ], {'extra': {'use_cached_locked_datasets': False}}):
         await middleware.call('smb.disable_acl_if_trivial')
         middleware.create_task(middleware.call('sharing.smb.sync_registry'))
 

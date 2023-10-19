@@ -406,7 +406,9 @@ class SharingNFSService(SharingService):
         filters = []
         if old:
             filters.append(["id", "!=", old["id"]])
-        other_shares = await self.middleware.call("sharing.nfs.query", filters)
+        other_shares = await self.middleware.call(
+            "sharing.nfs.query", filters, {"extra": {"retrieve_locked_info": False}}
+        )
 
         dns_cache = await self.resolve_hostnames(
             sum([share["hosts"] for share in other_shares], []) + data['hosts']
@@ -776,7 +778,7 @@ async def pool_post_import(middleware, pool):
         return
 
     path = f'/mnt/{pool["name"]}'
-    for share in await middleware.call('sharing.nfs.query'):
+    for share in await middleware.call('sharing.nfs.query', [], {'select': ['path']}):
         if share['path'].startswith(path):
             middleware.create_task(middleware.call('service.reload', 'nfs'))
             break

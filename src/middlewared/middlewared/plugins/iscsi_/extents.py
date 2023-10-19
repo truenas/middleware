@@ -365,7 +365,7 @@ class iSCSITargetExtentService(SharingService):
     def extent_serial(self, serial):
         if serial in [None, '']:
             used_serials = [i['serial'] for i in (
-                self.middleware.call_sync('iscsi.extent.query')
+                self.middleware.call_sync('iscsi.extent.query', [], {'select': ['serial']})
             )]
             tries = 5
             for i in range(tries):

@@ -59,6 +59,9 @@ class PoolDatasetService(Service):
         try:
             await self.middleware.call('cache.put', 'about_to_lock_dataset', id_)
 
+            # Invalidate locked datasets cache if something got locked
+            await self.middleware.call('cache.pop', 'zfs_locked_datasets')
+
             coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
             await asyncio.gather(*coroutines)
 
@@ -290,6 +293,8 @@ class PoolDatasetService(Service):
                 )
 
         if unlocked:
+            # Invalidate locked datasets cache if something got unlocked
+            self.middleware.call_sync('cache.pop', 'zfs_locked_datasets')
             if options['toggle_attachments']:
                 job.set_progress(91, 'Handling attachments')
                 self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset)
