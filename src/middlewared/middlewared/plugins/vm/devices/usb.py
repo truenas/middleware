@@ -1,7 +1,7 @@
 from middlewared.schema import Dict, Str
 from middlewared.validators import Match
 
-from .device import Device
+from .pci import PCIBase
 from .utils import create_element
 
 
@@ -11,7 +11,7 @@ USB_CONTROLLER_CHOICES = [
 ]
 
 
-class USB(Device):
+class USB(PCIBase):
 
     schema = Dict(
         'attributes',
@@ -47,15 +47,11 @@ class USB(Device):
     def identity(self):
         return self.usb_device or f'{self.usb_details["product_id"]}--{self.usb_details["vendor_id"]}'
 
-    def get_vms_using_device(self):
+    def vm_device_filters(self):
         if self.usb_device:
-            device_filter = ['attributes.device', '=', self.usb_device]
+            return [['attributes.device', '=', self.usb_device], ['dtype', '=', 'USB']]
         else:
-            device_filter = ['attributes.usb', '=', self.usb_details]
-        devs = self.middleware.call_sync(
-            'vm.device.query', [device_filter, ['dtype', '=', 'USB']]
-        )
-        return self.middleware.call_sync('vm.query', [['id', 'in', [dev['vm'] for dev in devs]]])
+            return [['attributes.usb', '=', self.usb_details], ['dtype', '=', 'USB']]
 
     def get_details(self):
         usb_device = self.usb_device
@@ -68,9 +64,6 @@ class USB(Device):
                 **self.middleware.call_sync('vm.device.get_basic_usb_passthrough_device_data'),
                 'error': 'Could not find matching device as no usb device has been specified',
             }
-
-    def is_available(self):
-        return self.get_details()['available']
 
     def xml(self, *args, **kwargs):
         controller_mapping = kwargs.pop('controller_mapping')
