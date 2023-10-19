@@ -3,6 +3,7 @@ import textwrap
 
 from markdown import markdown as _markdown
 from markdown.extensions.codehilite import CodeHiliteExtension
+from markdown.extensions.tables import TableExtension
 
 
 def indent(value):
@@ -16,4 +17,5 @@ def json(value):
 def markdown(value):
     if not value:
         return value
-    return _markdown(value, extensions=[CodeHiliteExtension(noclasses=True)])
+    return _markdown(value, extensions=[CodeHiliteExtension(noclasses=True),
+                                        TableExtension()])
