@@ -24,13 +24,17 @@ This event cannot be subscribed to with the wildcard `*` as the event name.
 
 % if attrs['accepts']:
 ${'####'} Accept Arguments
+
     :::javascript
     ${attrs['accepts']|n,json,indent}
+
 % endif
 % if attrs['returns']:
 ${'####'} Return Arguments
+
     :::javascript
     ${attrs['returns']|n,json,indent}
+
 % endif
 % endfor
 

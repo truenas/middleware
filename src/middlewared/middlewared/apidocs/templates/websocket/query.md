@@ -17,6 +17,7 @@ eg. Filter Syntax: `["field", "operator", value]`
 For example, to filter the data returned by `disk.query`, we provide a list of conditions:
 
 Javascript:
+
     :::javascript
     [
       ["name","=","ada1"] 
@@ -49,6 +50,7 @@ ${'####'} Multiple Filters
 We can use `disk.query` with the "type" and "rotationrate" filters to find hard drives with a rotation rate higher than 5400 RPM:
 
 Javascript:
+
     :::javascript
     [
       ["type","=","HDD"],
@@ -62,6 +64,7 @@ Queries with no explicitly defined logical connectives assume conjunction `AND`.
 
 The following is a valid example.
 Javascript:
+
     :::javascript
     ["OR", 
       [
@@ -72,6 +75,7 @@ Javascript:
 
 The following is also a valid example that returns users that are unlocked and either have password-based authentication for SSH enabled or are SMB users.
 Javascript:
+
     :::javascript
     [
       ["OR",
@@ -86,6 +90,7 @@ Javascript:
 The following is valid example that returns users who are either enabled or have password authentication enabled with two-factor authentication disabled.
 
 Javascript:
+
     :::javascript
     ["OR",
       [
@@ -99,6 +104,7 @@ Some additional examples of connective use are as follows.
 These filters when used with `user.query` finds unlocked users with password authentication enabled and two-factor authentication disabled.
 
 Javascript:
+
     :::javascript
     [
       ["ssh_password_enabled", "=", true],
@@ -110,6 +116,7 @@ Javascript:
 Sub-keys in complex JSON objects may be specified by using dot (".") to indicate the key. For example the following query-filters if passed to `user.query` endpoint will return entries with a primary group ID of 3000.
 
 Javascript:
+
     :::javascript
     [
       ["group.bsdgrp_gid", "=", 3000],
@@ -118,6 +125,7 @@ Javascript:
 If a key contains a literal dot (".") in its name, then it must be escaped via a double backslash.
 
 Javascript:
+
     :::javascript
     [
       ["foo\\.bar", "=", 42],
@@ -136,6 +144,7 @@ ${'####'} Count
 Use the `count` option to get the number of results returned.
 
 Javascript:
+
     :::javascript
     {
       "count": true
@@ -147,6 +156,7 @@ ${'####'} Limit
 Use the `limit` option to limit the number of results returned.
 
 Javascript:
+
     :::javascript
     {
       "limit": 5
@@ -158,6 +168,7 @@ ${'####'} Offset
 Use the `offset` option to remove the first items from a returned list.
 
 Javascript:
+
     :::javascript
     {
       "offset": 1 // Omits the first item from the query result
@@ -171,6 +182,7 @@ Use the `select` option to specify the exact fields to return. Fields must be pr
 Fields returned may be renamed by specifing an array containing two strings with the first string being the field to select from results list and the second string indicating the new name to provide it.
 
 Javascript:
+
     :::javascript
     {
       "select": ["devname","size","rotationrate"]
@@ -178,6 +190,7 @@ Javascript:
 
 
 Javascript:
+
     :::javascript
     {
       "select": [
@@ -213,6 +226,7 @@ The following prefixes may be applied to the field name:
 `nulls_last:` place any NULL values at tail of results list.
 
 Javascript:
+
     :::javascript
     {
       "order_by": ["size", "-devname", "nulls_first:-expiretime"]
