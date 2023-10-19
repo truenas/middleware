@@ -9,6 +9,8 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service
 from middlewared.utils.gpu import SENSITIVE_PCI_DEVICE_TYPES
 
+
+RE_DEVICE_NAME = re.compile(r'(\w+):(\w+):(\w+).(\w+)')
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
 
 
@@ -29,7 +31,7 @@ class VMDeviceService(Service):
         final = dict()
         try:
             for i in pathlib.Path('/sys/kernel/iommu_groups').glob('*/devices/*'):
-                if not i.is_dir() or not i.parent.parent.name.isdigit():
+                if not i.is_dir() or not i.parent.parent.name.isdigit() or not RE_DEVICE_NAME.fullmatch(i.name):
                     continue
 
                 iommu_group = int(i.parent.parent.name)
