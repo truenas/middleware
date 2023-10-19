@@ -245,7 +245,13 @@ class DiskTempPlugin(GraphBase):
 
     def normalize_metrics(self, metrics) -> dict:
         metrics = super().normalize_metrics(metrics)
-        metrics['legend'][1] = 'temperature_value'
+
+        if len(metrics['legend']) < 2:
+            for to_add in {'time', 'temperature_value'} - set(metrics['legend']):
+                metrics['legend'].append(to_add)
+        else:
+            metrics['legend'][1] = 'temperature_value'
+
         if metrics['data'] and metrics['data'][-1] and metrics['data'][-1][-1] == 0:
             # we will now remove last entry of data as when end if sometimes is specified as time which does not
             # exist in netdata database, netdata adds a last entry of 0 which we don't want to show

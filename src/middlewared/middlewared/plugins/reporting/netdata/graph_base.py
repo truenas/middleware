@@ -3,7 +3,7 @@ import statistics
 import typing
 
 from .connector import Netdata
-from .exceptions import ClientConnectError, ApiException
+from .exceptions import ClientConnectError
 
 
 GRAPH_PLUGINS = {}
