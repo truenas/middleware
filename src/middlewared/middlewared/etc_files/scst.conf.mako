@@ -303,6 +303,9 @@ TARGET_DRIVER iscsi {
 ## per_portal_acl always 1
 ##
         per_portal_acl 1
+%   else:
+## If no associated targets then disable
+        enabled 0
 %   endif
 %   for chap_auth in chap_users:
         IncomingUser "${chap_auth}"
