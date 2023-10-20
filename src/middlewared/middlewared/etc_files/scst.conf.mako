@@ -273,7 +273,7 @@ TARGET_DRIVER iscsi {
             for initiator in group_initiators:
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
-%   if associated_targets:
+%   if target['id'] in associated_targets:
 ##
 ## For ALUA rel_tgt_id is tied to controller, if not ALUA don't bother writing it
 ##
