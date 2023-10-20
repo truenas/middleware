@@ -3,7 +3,7 @@ import enum
 import json
 import subprocess
 
-from middlewared.schema import Bool, Dict, Str, accepts
+from middlewared.schema import Bool, Dict, Password, Str, accepts
 from middlewared.service import private, CallError, Service
 from middlewared.plugins.smb import SMBCmd
 
@@ -152,7 +152,7 @@ class SMBService(Service):
             Str('share', required=True),
             Str('path', default='\\'),
             Str('username', required=True),
-            Str('password', required=True),
+            Password('password', required=True),
             Dict(
                 'options',
                 Bool('use_kerberos', default=False),

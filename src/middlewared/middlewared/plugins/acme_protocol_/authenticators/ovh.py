@@ -3,7 +3,7 @@ import logging
 from lexicon.providers.ovh import ENDPOINTS
 from certbot_dns_ovh._internal.dns_ovh import _OVHLexiconClient
 
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, Password, Str
 from middlewared.service import skip_arg
 
 from .base import Authenticator
@@ -20,7 +20,7 @@ class OVHAuthenticator(Authenticator):
     SCHEMA = Dict(
         'OVH',
         Str('application_key', empty=False, null=False, title='OVH Application Key', required=True),
-        Str('application_secret', empty=False, null=False, title='OVH Application Secret', required=True),
+        Password('application_secret', empty=False, null=False, title='OVH Application Secret', required=True),
         Str('consumer_key', empty=False, null=False, title='OVH Consumer Key', required=True),
         Str('endpoint', empty=False, default='ovh-eu', title='OVH Endpoint', enum=OVH_ENDPOINTS, required=True),
     )

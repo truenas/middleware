@@ -4,7 +4,7 @@ import boto3
 from botocore.client import Config
 
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Bool, Int, Str
+from middlewared.schema import Bool, Int, Password, Str
 from middlewared.utils.lang import undefined
 
 
@@ -20,7 +20,7 @@ class S3RcloneRemote(BaseRcloneRemote):
 
     credentials_schema = [
         Str("access_key_id", title="Access Key ID", required=True),
-        Str("secret_access_key", title="Secret Access Key", required=True),
+        Password("secret_access_key", title="Secret Access Key", required=True),
         Str("endpoint", title="Endpoint URL", default=""),
         Str("region", title="Region", default=""),
         Bool("skip_region", title="Endpoint does not support regions", default=False),

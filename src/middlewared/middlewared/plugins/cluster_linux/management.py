@@ -5,7 +5,7 @@ from time import sleep
 
 from middlewared.client import Client, ClientException
 from middlewared.utils import filter_list
-from middlewared.schema import Bool, Dict, IPAddr, Int, List, OROperator, Ref, returns, Str
+from middlewared.schema import Bool, Dict, IPAddr, Int, List, OROperator, Password, Ref, returns, Str
 from middlewared.service import accepts, job, private, Service, ValidationErrors
 from middlewared.service_exception import CallError
 from middlewared.plugins.cluster_linux.utils import CTDBConfig
@@ -443,15 +443,15 @@ class ClusterManagement(Service):
                     Dict(
                         'plain_cred',
                         Str('username', required=True),
-                        Str('password', required=True, private=True)
+                        Password('password', required=True)
                     ),
                     Dict(
                         'authentication_token',
-                        Str('auth_token', required=True, private=True),
+                        Password('auth_token', required=True),
                     ),
                     Dict(
                         'api_key',
-                        Str('api_key', required=True, private=True),
+                        Password('api_key', required=True),
                     ),
                     name='remote_credential',
                 ),

@@ -91,8 +91,7 @@ class Path(Str):
 
 class Password(Str):
     def __init__(self, *args, **kwargs):
-        self.private = True
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **(kwargs | {'private': True}))
 
 
 class SID(Str):

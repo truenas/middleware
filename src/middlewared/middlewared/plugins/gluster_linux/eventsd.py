@@ -5,7 +5,7 @@ import pathlib
 
 from middlewared.utils import run
 from middlewared.validators import URL
-from middlewared.schema import Dict, Str
+from middlewared.schema import Dict, Password, Str
 from middlewared.service import (job, accepts, private, CallError,
                                  Service, ValidationErrors)
 from .utils import GlusterConfig
@@ -66,8 +66,8 @@ class GlusterEventsdService(Service):
     @accepts(Dict(
         'webhook_create',
         Str('url', required=True, validators=[URL()]),
-        Str('bearer_token', required=False),
-        Str('secret', required=False),
+        Password('bearer_token', required=False),
+        Password('secret', required=False),
     ))
     @job(lock=EVENTSD_CRE_OR_DEL)
     def create(self, job, data):
