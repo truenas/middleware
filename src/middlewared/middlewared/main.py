@@ -72,6 +72,8 @@ from systemd.daemon import notify as systemd_notify
 
 from . import logger
 
+
+IGNORE_PARAMS_IN_LOGS = ['support.fetch_categories']
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
@@ -234,6 +236,8 @@ class Application:
             else:
                 self.send_error(message, errno.EINVAL, str(e) or repr(e), sys.exc_info())
                 if not self._py_exceptions:
+                    if message['method'] in IGNORE_PARAMS_IN_LOGS:
+                        message.pop('params', None)
                     self.logger.warn('Exception while calling {}(*{})'.format(
                         message['method'],
                         self.middleware.dump_args(message.get('params', []), method_name=message['method'])
