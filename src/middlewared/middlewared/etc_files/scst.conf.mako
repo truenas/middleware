@@ -273,7 +273,7 @@ TARGET_DRIVER iscsi {
             for initiator in group_initiators:
                 initiator_portal_access.add(f'{initiator}\#{address}')
 %>\
-%   if associated_targets:
+%   if target['id'] in associated_targets:
 ##
 ## For ALUA rel_tgt_id is tied to controller, if not ALUA don't bother writing it
 ##
@@ -303,6 +303,9 @@ TARGET_DRIVER iscsi {
 ## per_portal_acl always 1
 ##
         per_portal_acl 1
+%   else:
+## If no associated targets then disable
+        enabled 0
 %   endif
 %   for chap_auth in chap_users:
         IncomingUser "${chap_auth}"
