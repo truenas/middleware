@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils import run
 
@@ -11,7 +11,7 @@ class BootService(Service):
             'options',
             Int('size'),
             Int('swap_size'),
-            Bool('use_legacy_schema', default=False),
+            Str('legacy_schema', enum=[None, 'BIOS_ONLY', 'EFI_ONLY'], default=None),
         )
     )
     @private
@@ -31,9 +31,13 @@ class BootService(Service):
         swap_size = options.get('swap_size')
         commands = []
         partitions = []
-        if options['use_legacy_schema']:
+        if options['legacy_schema'] == 'BIOS_ONLY':
             partitions.extend([
                 ('BIOS boot partition', 524288),
+            ])
+        elif options['legacy_schema'] == 'EFI_ONLY':
+            partitions.extend([
+                ('EFI System', 272629760),
             ])
         else:
             partitions.extend([
@@ -67,10 +71,15 @@ class BootService(Service):
             )
 
         zfs_part_size = f'+{int(options["size"]/1024)}K' if options.get('size') else 0
-        if options['use_legacy_schema']:
-            commands.extend((
-                ['sgdisk', f'-a{int(4096/disk_details["sectorsize"])}', '-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
-            ))
+        if options['legacy_schema']:
+            if options['legacy_schema'] == 'BIOS_ONLY':
+                commands.extend((
+                    ['sgdisk', f'-a{int(4096 / disk_details["sectorsize"])}', '-n1:0:+512K', '-t1:EF02', f'/dev/{dev}'],
+                ))
+            elif options['legacy_schema'] == 'EFI_ONLY':
+                commands.extend((
+                    ['sgdisk', f'-a{int(4096 / disk_details["sectorsize"])}', '-n1:0:+260M', '-t1:EF00', f'/dev/{dev}'],
+                ))
 
             if swap_size:
                 commands.append([
