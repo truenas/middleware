@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, Ref, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import osc, BRAND
@@ -89,12 +89,12 @@ class MailService(ConfigService):
         Str('security', enum=['PLAIN', 'SSL', 'TLS'], required=True),
         Bool('smtp', required=True),
         Str('user', null=True, required=True),
-        Str('pass', private=True, null=True, required=True),
+        Password('pass', null=True, required=True),
         Dict(
             'oauth',
             Str('client_id'),
             Str('client_secret'),
-            Str('refresh_token'),
+            Password('refresh_token'),
             null=True,
             private=True,
             required=True,
@@ -117,7 +117,7 @@ class MailService(ConfigService):
                     'oauth',
                     Str('client_id', required=True),
                     Str('client_secret', required=True),
-                    Str('refresh_token', required=True),
+                    Password('refresh_token', required=True),
                     null=True,
                     private=True,
                 )

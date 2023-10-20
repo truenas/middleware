@@ -1,6 +1,6 @@
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Dict, Int, Password, Patch, Str
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 
 
@@ -27,9 +27,9 @@ class iSCSITargetAuthCredentialService(CRUDService):
         'iscsi_auth_create',
         Int('tag', required=True),
         Str('user', required=True),
-        Str('secret', required=True),
+        Password('secret', required=True),
         Str('peeruser', default=''),
-        Str('peersecret', default=''),
+        Password('peersecret', default=''),
         register=True
     ))
     async def do_create(self, data):

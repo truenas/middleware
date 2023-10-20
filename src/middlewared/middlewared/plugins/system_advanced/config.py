@@ -6,7 +6,7 @@ from copy import deepcopy
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, returns, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, returns, Str
 from middlewared.service import ConfigService, private, ValidationErrors
 from middlewared.validators import Range
 
@@ -190,7 +190,7 @@ class SystemAdvancedService(ConfigService):
             'system_advanced_entry', 'system_advanced_update',
             ('rm', {'name': 'id'}),
             ('rm', {'name': 'anonstats_token'}),
-            ('add', Str('sed_passwd', private=True)),
+            ('add', Password('sed_passwd')),
             ('attr', {'update': True}),
         )
     )
@@ -293,7 +293,7 @@ class SystemAdvancedService(ConfigService):
         return await self.config()
 
     @accepts()
-    @returns(Str('sed_global_password'))
+    @returns(Password('sed_global_password'))
     async def sed_global_password(self):
         """
         Returns configured global SED password.

@@ -11,7 +11,7 @@ import ssl
 
 from middlewared.client import Client, ClientException
 from middlewared.service_exception import CallError
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, ValidationErrors
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, Ref, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -548,12 +548,12 @@ class KeychainCredentialService(CRUDService):
             Str("name", required=True),
             Str("url", required=True, validators=[URL()]),
             Bool("verify_ssl", default=True),
-            Str("token", private=True),
+            Password("token"),
             Str("admin_username", default="root"),
-            Str("password", private=True),
-            Str("otp_token", private=True),
+            Password("password"),
+            Password("otp_token"),
             Str("username", default="root"),
-            Int("private_key", required=True),
+            Int("private_key", required=True, private=True),
             Int("connect_timeout", default=10),
             Bool("sudo", default=False),
             register=True,

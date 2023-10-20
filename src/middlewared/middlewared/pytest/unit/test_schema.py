@@ -5,7 +5,7 @@ from middlewared.service import job
 from middlewared.service_exception import ValidationErrors
 from middlewared.schema import (
     accepts, Bool, Cron, Dict, Dir, File, Float, Int, IPAddr, List, Str, URI,
-    UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
+    Password, UnixPerm, UUID, LocalUsername, NetbiosName, NetbiosDomain
 )
 from middlewared.plugins.cluster_linux.management import GlusterVolname, MAX_VOLNAME_LENGTH
 from middlewared.validators import QueryFilters, QueryOptions
@@ -387,6 +387,9 @@ def test__schema_dict_error_handler():
     ([Dict('b', Str('c', private=True))], [{'c': 'secret'}], [{'c': '********'}]),
     ([Dict('b', Str('c', private=True)), Dict('d', Str('e'))], [{'c': 'secret'}], [{'c': '********'}]),
     ([Dict('b', Str('c')), Dict('d', Str('c', private=True))], [{'c': 'secret'}], ['********']),
+    ([Dict('b', Password('c'))], [{'c': 'secret'}], [{'c': '********'}]),
+    ([Dict('b', Password('c')), Dict('d', Str('e'))], [{'c': 'secret'}], [{'c': '********'}]),
+    ([Dict('b', Str('c')), Dict('d', Password('c'))], [{'c': 'secret'}], ['********']),
 ])
 def test__schema_list_private_items(items, value, expected):
     assert List('a', items=items).dump(value) == expected

@@ -4,7 +4,7 @@ from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
 from middlewared.plugins.cloud.path import get_remote_path, check_local_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
-from middlewared.schema import accepts, Bool, Cron, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Bool, Cron, Dict, Int, Password, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, item_method, job, private, TaskPathService,
 )
@@ -798,7 +798,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         Bool("encryption", default=False),
         Bool("filename_encryption", default=False),
-        Str("encryption_password", default=""),
+        Password("encryption_password", default=""),
         Str("encryption_salt", default=""),
 
         Bool("create_empty_src_dirs", default=False),
