@@ -10,15 +10,18 @@ class BootService(Service):
 
     @private
     async def install_loader(self, dev):
-        await run('grub-install', '--target=i386-pc', f'/dev/{dev}')
+        legacy_schema = await self.middleware.call('boot.legacy_schema', dev)
 
-        if (
-            (await self.middleware.call('disk.list_partitions', dev))[1]['partition_type'] !=
-            await self.middleware.call('disk.get_efi_part_type')
-        ):
+        if legacy_schema == 'EFI_ONLY':
+            efi_partition_number = 1
+        else:
+            efi_partition_number = 2
+            await run('grub-install', '--target=i386-pc', f'/dev/{dev}')
+
+        if legacy_schema == 'BIOS_ONLY':
             return
 
-        partition = await self.middleware.call('disk.get_partition_for_disk', dev, 2)
+        partition = await self.middleware.call('disk.get_partition_for_disk', dev, efi_partition_number)
         await run('mkdosfs', '-F', '32', '-s', '1', '-n', 'EFI', f'/dev/{partition}')
         with tempfile.TemporaryDirectory() as tmpdirname:
             efi_dir = os.path.join(tmpdirname, 'efi')
