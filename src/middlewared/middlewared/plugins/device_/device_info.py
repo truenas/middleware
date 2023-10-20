@@ -111,16 +111,10 @@ class DeviceService(Service):
                 'partition_uuid': i['ID_PART_ENTRY_UUID'],
                 'start_sector': int(i['ID_PART_ENTRY_OFFSET']),
                 'end_sector': int(i['ID_PART_ENTRY_OFFSET']) + int(i['ID_PART_ENTRY_SIZE']) - 1,
-                'encrypted_provider': None,
             }
             part['start'] = part['start_sector'] * 512
             part['end'] = part['end_sector'] * 512
             part['size'] = int(i['ID_PART_ENTRY_SIZE']) * 512
-
-            for attr in filter(lambda x: x.startswith('holders/md'), i.attributes.available_attributes):
-                # looks like `holders/md123`
-                part['encrypted_provider'] = f'/dev/{attr.split("/", 1)[1].strip()}'
-                break
 
             parts.append(part)
 

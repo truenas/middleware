@@ -25,8 +25,6 @@ class DiskService(Service):
     @private
     async def destroy_swap_mirror(self, name):
         mirror = await self.middleware.call('disk.get_swap_mirrors', [['name', '=', name]], {'get': True})
-        if mirror['encrypted_provider']:
-            await self.middleware.call('disk.remove_encryption', mirror['encrypted_provider'])
 
         for provider in mirror['providers']:
             await run('mdadm', mirror['real_path'], '--fail', provider['id'], check=False)
@@ -86,11 +84,8 @@ class DiskService(Service):
                 'name': array['name'].split(':')[-1],
                 'path': array['path'],
                 'real_path': real_path,
-                'encrypted_provider': None,
                 'providers': [],
             }
-            if enc_path := glob.glob(f'/sys/block/dm-*/slaves/{real_path.split("/")[-1]}'):
-                md_device['encrypted_provider'] = os.path.join('/dev', enc_path[0].split('/')[3])
 
             for provider in os.scandir(os.path.join('/sys/block', md_device['real_path'].split('/')[-1], 'slaves')):
                 provider_data = {'name': provider.name, 'id': provider.name, 'disk': provider.name}

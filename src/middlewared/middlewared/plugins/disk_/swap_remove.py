@@ -27,7 +27,7 @@ class DiskService(Service):
     async def swaps_remove_disks(self, disks, options):
         """
         Remove a given disk (e.g. ["da0", "da1"]) from swap.
-        It will offline if from swap, removing encryption and destroying the mirror ( if part of one ).
+        It will offline if from swap and destroying the mirror ( if part of one ).
         """
         return await self.swaps_remove_disks_unlocked(disks, options)
 
@@ -57,22 +57,16 @@ class DiskService(Service):
             if not set([p['disk'] for p in mirror['providers']]).intersection(set(disks)):
                 continue
 
-            devname = mirror['encrypted_provider'] or mirror['real_path']
+            devname = mirror['real_path']
             if devname in swap_devices:
                 await run('swapoff', devname)
-            if mirror['encrypted_provider']:
-                await self.middleware.call(
-                    'disk.remove_encryption', mirror['encrypted_provider']
-                )
             await self.middleware.call('disk.destroy_swap_mirror', mirror['name'])
 
         configure_swap = False
         for p in providers.values():
-            devname = p['encrypted_provider'] or p['path']
+            devname = p['path']
             if devname in swap_devices:
                 await run('swapoff', devname)
-            if p['encrypted_provider']:
-                await self.middleware.call('disk.remove_encryption', p['encrypted_provider'])
 
         # Let consumer explicitly deny swap configuration if desired
         if configure_swap and options.get('configure_swap', True):

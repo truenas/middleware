@@ -30,7 +30,6 @@ class DiskService(Service):
         disks.extend(await self.middleware.call('boot.get_disks'))
         existing_swap_devices = {'mirrors': [], 'partitions': []}
         mirrors = await self.middleware.call('disk.get_swap_mirrors')
-        encrypted_mirrors = {m['encrypted_provider']: m for m in mirrors if m['encrypted_provider']}
         all_partitions = {
             p['name']: p
             for disk in disks
@@ -39,14 +38,14 @@ class DiskService(Service):
         await self.middleware.call('disk.remove_degraded_mirrors')
 
         for device in await self.middleware.call('disk.get_swap_devices'):
-            if device in encrypted_mirrors or device.startswith(('/dev/md', '/dev/mirror/')):
-                # This is going to be complete path for linux and freebsd
+            if device.startswith('/dev/md'):
+                # This is going to be complete path
                 existing_swap_devices['mirrors'].append(device)
             else:
                 existing_swap_devices['partitions'].append(device)
 
         for mirror in mirrors:
-            mirror_name = (mirror['encrypted_provider'] or mirror['real_path'])
+            mirror_name = mirror['real_path']
 
             # If the mirror is degraded or disk is not in a pool lets remove it
             if mirror_name in existing_swap_devices['mirrors'] and (len(mirror['providers']) == 1 or any(
@@ -61,7 +60,6 @@ class DiskService(Service):
                 if mirror_name not in existing_swap_devices['mirrors']:
                     create_swap_devices[mirror_name] = {
                         'path': mirror_name,
-                        'encrypted_provider': mirror['encrypted_provider'],
                     }
                 used_partitions_in_mirror.update(p['name'] for p in mirror['providers'])
 
@@ -96,10 +94,7 @@ class DiskService(Service):
                     for p in part_list:
                         remove = False
                         part_data = all_partitions[p]
-                        if part_data['encrypted_provider'] in existing_swap_devices['partitions']:
-                            part = part_data['encrypted_provider']
-                            remove = True
-                        elif part_data['path'] in existing_swap_devices['partitions']:
+                        if part_data['path'] in existing_swap_devices['partitions']:
                             remove = True
                             part = part_data['path']
 
@@ -131,7 +126,6 @@ class DiskService(Service):
                 swap_device = os.path.realpath(os.path.join('/dev/md', swap_path))
                 create_swap_devices[swap_device] = {
                     'path': swap_device,
-                    'encrypted_provider': None,
                 }
 
             # Add remaining partitions to unused list
@@ -143,23 +137,12 @@ class DiskService(Service):
             swap_device = all_partitions[unused_partitions[0]]
             create_swap_devices[swap_device['path']] = {
                 'path': swap_device['path'],
-                'encrypted_provider': swap_device['encrypted_provider'],
             }
             await run('mdadm', '--zero-superblock', '--force', swap_device['path'], encoding='utf8', check=False)
 
         created_swap_devices = []
         for swap_path, data in create_swap_devices.items():
-            if not data['encrypted_provider']:
-                cp = await run(
-                    'cryptsetup', '-d', '/dev/urandom', 'open', '--type', 'plain',
-                    swap_path, swap_path.split('/')[-1], check=False, encoding='utf8',
-                )
-                if cp.returncode:
-                    self.logger.warning('Failed to encrypt %s device: %s', swap_path, cp.stderr)
-                    continue
-                swap_path = os.path.join('/dev/mapper', swap_path.split('/')[-1])
-            else:
-                swap_path = data['encrypted_provider']
+            swap_path = data['path']
             try:
                 await run('mkswap', swap_path)
             except subprocess.CalledProcessError as e:
@@ -181,7 +164,7 @@ class DiskService(Service):
             # In this case, we did create a mirror now and existing partitions should be removed from swap
             # as a mirror has been configured
             all_partitions_by_path = {
-                p['encrypted_provider'] or p['path']: p['disk'] for p in all_partitions.values()
+                p['path']: p['disk'] for p in all_partitions.values()
             }
             try:
                 await self.middleware.call(
