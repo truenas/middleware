@@ -6,7 +6,7 @@ import ssl
 import uuid
 
 from middlewared.async_validators import resolve_hostname
-from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Patch
+from middlewared.schema import accepts, Any, Bool, Dict, Int, Str, Password, Patch
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 
@@ -76,7 +76,7 @@ class VMWareService(CRUDService):
             Str('datastore', required=True),
             Str('filesystem', required=True),
             Str('hostname', required=True),
-            Str('password', private=True, required=True),
+            Password('password', required=True),
             Str('username', required=True),
             register=True
         )

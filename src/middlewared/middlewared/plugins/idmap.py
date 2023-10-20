@@ -4,7 +4,7 @@ import errno
 import datetime
 import wbclient
 
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str, LDAP_DN, OROperator
+from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
 from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
 from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.directoryservices import SSL
@@ -657,7 +657,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 'idmap_ldap_options',
                 LDAP_DN('ldap_base_dn'),
                 LDAP_DN('ldap_user_dn'),
-                Str('ldap_user_dn_password', private=True),
+                Password('ldap_user_dn_password'),
                 Str('ldap_url'),
                 Bool('readonly', default=False),
                 Ref('ldap_ssl_choice', 'ssl'),
@@ -678,7 +678,7 @@ class IdmapDomainService(TDBWrapCRUDService):
                 Str('ldap_domain'),
                 Str('ldap_url'),
                 LDAP_DN('ldap_user_dn'),
-                Str('ldap_user_dn_password', private=True),
+                Password('ldap_user_dn_password'),
                 Ref('ldap_ssl_choice', 'ssl'),
                 Bool('validate_certificates', default=True),
             ),

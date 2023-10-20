@@ -11,7 +11,7 @@ from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCrede
                               UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
                               LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
                               TrueNasNodeSessionManagerCredentials)
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Patch, returns, Str
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, Patch, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required,
     pass_app, private, cli_private, CallError,
@@ -317,7 +317,7 @@ class AuthService(Service):
             raise CallError("\n".join(["Unable to terminate all sessions:"] + errors))
 
     @cli_private
-    @accepts(Str('username'), Str('password'))
+    @accepts(Str('username'), Password('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_user(self, username, password):
         """
@@ -326,7 +326,7 @@ class AuthService(Service):
         return await self.check_password(username, password)
 
     @cli_private
-    @accepts(Str('username'), Str('password'))
+    @accepts(Str('username'), Password('password'))
     @returns(Bool(description='Is `true` if `username` was successfully validated with provided `password`'))
     async def check_password(self, username, password):
         """
@@ -340,7 +340,7 @@ class AuthService(Service):
         Dict('attrs', additional_attrs=True),
         Bool('match_origin', default=False),
     )
-    @returns(Str('token'))
+    @returns(Password('token'))
     @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs, match_origin):
         """
@@ -430,7 +430,7 @@ class AuthService(Service):
 
     @cli_private
     @no_auth_required
-    @accepts(Str('username'), Str('password', private=True), Str('otp_token', null=True, default=None))
+    @accepts(Str('username'), Password('password'), Password('otp_token', null=True, default=None))
     @returns(Bool('successful_login'))
     @pass_app()
     async def login(self, app, username, password, otp_token):
@@ -464,7 +464,7 @@ class AuthService(Service):
 
     @cli_private
     @no_auth_required
-    @accepts(Str('api_key'))
+    @accepts(Password('api_key'))
     @returns(Bool('successful_login'))
     @pass_app()
     async def login_with_api_key(self, app, api_key):
@@ -479,7 +479,7 @@ class AuthService(Service):
 
     @cli_private
     @no_auth_required
-    @accepts(Str('token'))
+    @accepts(Password('token'))
     @returns(Bool('successful_login'))
     @pass_app()
     async def login_with_token(self, app, token):

@@ -1,7 +1,7 @@
 import middlewared.sqlalchemy as sa
 
 from middlewared.common.ports import ServicePortDelegate
-from middlewared.schema import Bool, Dict, Int, Str
+from middlewared.schema import Bool, Dict, Int, Password, Str
 from middlewared.service import SystemServiceService, ValidationErrors
 from middlewared.validators import Email, Match, Or, Range
 
@@ -42,9 +42,9 @@ class SNMPService(SystemServiceService):
         Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')], default='public', required=True),
         Str('v3_username', max_length=20, required=True),
         Str('v3_authtype', enum=['', 'MD5', 'SHA'], required=True),
-        Str('v3_password', required=True),
+        Password('v3_password', required=True),
         Str('v3_privproto', enum=[None, 'AES', 'DES'], null=True, required=True),
-        Str('v3_privpassphrase', required=True, null=True),
+        Password('v3_privpassphrase', required=True, null=True),
         Int('loglevel', validators=[Range(min=0, max=7)], required=True),
         Str('options', max_length=None, required=True),
         Bool('zilstat', required=True),

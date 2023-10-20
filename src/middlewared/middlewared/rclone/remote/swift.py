@@ -1,5 +1,5 @@
 from middlewared.rclone.base import BaseRcloneRemote
-from middlewared.schema import Str, Int
+from middlewared.schema import Password, Str, Int
 
 
 class OpenStackSwiftRcloneRemote(BaseRcloneRemote):
@@ -16,7 +16,7 @@ class OpenStackSwiftRcloneRemote(BaseRcloneRemote):
     credentials_schema = [
         Str("user", required=True,
             title="User name (OS_USERNAME)"),
-        Str("key", required=True,
+        Password("key", required=True,
             title="API key or password (OS_PASSWORD)"),
         Str("auth", required=True,
             title="Authentication URL for server (OS_AUTH_URL)"),
@@ -38,14 +38,14 @@ class OpenStackSwiftRcloneRemote(BaseRcloneRemote):
             title="Region name (OS_REGION_NAME)"),
         Str("storage_url", default="",
             title="Storage URL (OS_STORAGE_URL)"),
-        Str("auth_token", default="",
+        Password("auth_token", default="",
             title="Auth Token from alternate authentication (OS_AUTH_TOKEN)"),
         Str("application_credential_id", default="",
             title="Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)"),
         Str("application_credential_name", default="",
             title="Application Credential Name "
                   "(OS_APPLICATION_CREDENTIAL_NAME)"),
-        Str("application_credential_secret", default="",
+        Password("application_credential_secret", default="",
             title="Application Credential Secret "
                   "(OS_APPLICATION_CREDENTIAL_SECRET)"),
         Int("auth_version", enum=[0, 1, 2, 3],

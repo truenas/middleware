@@ -2,7 +2,7 @@ import logging
 
 from certbot_dns_cloudflare._internal.dns_cloudflare import _CloudflareClient
 
-from middlewared.schema import accepts, Dict, Str, ValidationErrors
+from middlewared.schema import accepts, Dict, Password, Str, ValidationErrors
 from middlewared.service import skip_arg
 
 from .base import Authenticator
@@ -18,8 +18,8 @@ class CloudFlareAuthenticator(Authenticator):
     SCHEMA = Dict(
         'cloudflare',
         Str('cloudflare_email', empty=False, null=True, title='Cloudflare Email'),
-        Str('api_key', empty=False, null=True, title='API Key'),
-        Str('api_token', empty=False, null=True, title='API Token'),
+        Password('api_key', empty=False, null=True, title='API Key'),
+        Password('api_token', empty=False, null=True, title='API Token'),
     )
 
     def initialize_credentials(self):

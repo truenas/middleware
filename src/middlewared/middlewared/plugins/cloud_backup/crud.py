@@ -2,7 +2,7 @@ from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel,
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin, cloud_task_schema
-from middlewared.schema import accepts, Cron, Dict, Int, Patch, Str
+from middlewared.schema import accepts, Cron, Dict, Int, Password, Patch
 from middlewared.service import ValidationErrors, private, TaskPathService
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
@@ -57,7 +57,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @accepts(Dict(
         "cloud_backup_create",
         *cloud_task_schema,
-        Str("password", required=True, empty=False),
+        Password("password", required=True, empty=False),
         register=True,
     ))
     async def do_create(self, cloud_backup):

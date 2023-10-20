@@ -2,7 +2,7 @@ import asyncio
 
 import middlewared.sqlalchemy as sa
 
-from middlewared.schema import Bool, Dict, Int, IPAddr, Str
+from middlewared.schema import Bool, Dict, Int, IPAddr, Password, Str
 from middlewared.service import accepts, ConfigService, private, ValidationErrors
 from middlewared.validators import Range
 
@@ -38,7 +38,7 @@ class TruecommandService(ConfigService):
     ENTRY = Dict(
         'truecommand_entry',
         Int('id', required=True),
-        Str('api_key', required=True, null=True),
+        Password('api_key', required=True, null=True),
         Str('status', required=True, enum=[s.value for s in Status]),
         Str('status_reason', required=True, enum=[s.value for s in StatusReason]),
         Str('remote_url', required=True, null=True),
@@ -81,7 +81,7 @@ class TruecommandService(ConfigService):
         Dict(
             'truecommand_update',
             Bool('enabled'),
-            Str('api_key', null=True, validators=[Range(min=16, max=16)]),
+            Password('api_key', null=True, validators=[Range(min=16, max=16)]),
         )
     )
     async def do_update(self, data):

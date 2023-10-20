@@ -1,7 +1,7 @@
 import errno
 import pyotp
 
-from middlewared.schema import accepts, Bool, Ref, returns, Str
+from middlewared.schema import accepts, Bool, Ref, Password, returns, Str
 from middlewared.service import CallError, private, Service
 
 
@@ -31,7 +31,7 @@ class UserService(Service):
             'iXsystems'
         )
 
-    @accepts(Str('username'), Str('token', null=True))
+    @accepts(Str('username'), Password('token', null=True))
     @returns(Bool('token_verified'))
     def verify_twofactor_token(self, username, token):
         """
