@@ -252,12 +252,24 @@ def zvol_dataset(zvol, volsize=MB_512):
         assert results.status_code == 200, results.text
 
 
+def modify_extent(ident, payload, expected_status_code=200):
+    results = PUT(f"/iscsi/extent/id/{ident}/", payload)
+    assert results.status_code == expected_status_code, results.text
+
+
 def file_extent_resize(ident, filesize, expected_status_code=200):
     payload = {
         'filesize': filesize,
     }
-    results = PUT(f"/iscsi/extent/id/{ident}/", payload)
-    assert results.status_code == expected_status_code, results.text
+    modify_extent(ident, payload, expected_status_code)
+
+
+def extent_disable(ident):
+    modify_extent(ident, {'enabled': False})
+
+
+def extent_enable(ident):
+    modify_extent(ident, {'enabled': True})
 
 
 def zvol_resize(zvol, volsize, expected_status_code=200):
@@ -348,9 +360,10 @@ def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, exte
         with zvol_dataset(zvol, volsize) as dataset_config:
             with zvol_extent(zvol, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
-                with target_extent_associate(target_id, extent_id):
+                with target_extent_associate(target_id, extent_id) as associate_config:
                     newconfig = config.copy()
                     newconfig.update({
+                        'associate': associate_config,
                         'target': target_config,
                         'dataset': dataset_config,
                         'extent': extent_config,
@@ -2534,6 +2547,86 @@ def test_29_multiple_extents():
                                                  extent_name="extent3", serial='') as extent3_config:
                                     # We expect this to complete, but generate a serial number
                                     assert len(extent3_config['serial']) == 15, extent3_config['serial']
+
+
+def check_inq_enabled_state(iqn, expected):
+    """Check the current enabled state of the specified SCST IQN directly from /sys
+    is as expected."""
+    results = SSH_TEST(f"cat /sys/kernel/scst_tgt/targets/iscsi/{iqn}/enabled", user, password, ip)
+    assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
+    for line in results["output"].split('\n'):
+        if line.startswith('Warning: Permanently added'):
+            continue
+        if line:
+            actual = int(line)
+    assert actual == expected, f'IQN {iqn} has an unexpected enabled state - was {actual}, expected {expected}'
+
+
+def test_30_target_without_active_extent(request):
+    """Validate that a target will not be enabled if it does not have
+    and enabled associated extents"""
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, 'VOLUME') as target1_config:
+            with configured_target(config, name2, 'VOLUME') as target2_config:
+                # OK, we've configured two separate targets, ensure all looks good
+                check_inq_enabled_state(iqn1, 1)
+                check_inq_enabled_state(iqn2, 1)
+                with iscsi_scsi_connection(ip, iqn1) as s1:
+                    TUR(s1)
+                with iscsi_scsi_connection(ip, iqn2) as s2:
+                    TUR(s2)
+
+                # Disable an extent and ensure things are as expected
+                extent_disable(target2_config['extent']['id'])
+                check_inq_enabled_state(iqn1, 1)
+                check_inq_enabled_state(iqn2, 0)
+                with iscsi_scsi_connection(ip, iqn1) as s1:
+                    TUR(s1)
+                with pytest.raises(RuntimeError) as ve:
+                    with iscsi_scsi_connection(ip, iqn2) as s2:
+                        TUR(s2)
+                assert 'Unable to connect to' in str(ve), ve
+
+                # Reenable the extent
+                extent_enable(target2_config['extent']['id'])
+                check_inq_enabled_state(iqn1, 1)
+                check_inq_enabled_state(iqn2, 1)
+                with iscsi_scsi_connection(ip, iqn1) as s1:
+                    TUR(s1)
+                with iscsi_scsi_connection(ip, iqn2) as s2:
+                    TUR(s2)
+
+                # Move the extent from target2 to target1
+                #
+                # Doing this by updating the existing association rather
+                # than deleting the old association and creating a new one,
+                # because want to avoid breakage wrt yield ... finally cleanup
+                payload = {
+                    'target': target1_config['target']['id'],
+                    'lunid': 1,
+                    'extent': target2_config['extent']['id']
+                }
+                results = PUT(f"/iscsi/targetextent/id/{target2_config['associate']['id']}/", payload)
+                assert results.status_code == 200, results.text
+                assert results.json(), results.text
+                check_inq_enabled_state(iqn1, 1)
+                check_inq_enabled_state(iqn2, 0)
+                with iscsi_scsi_connection(ip, iqn1) as s1:
+                    TUR(s1)
+                # We should now have a LUN 1
+                with iscsi_scsi_connection(ip, iqn1, 1) as s1b:
+                    TUR(s1b)
+                with pytest.raises(RuntimeError) as ve:
+                    with iscsi_scsi_connection(ip, iqn2) as s2:
+                        TUR(s2)
+                assert 'Unable to connect to' in str(ve), ve
 
 
 def test_99_teardown(request):
