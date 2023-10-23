@@ -33,10 +33,14 @@ class ChartReleaseService(Service):
                 errno=errno.ENOENT
             )
 
+        # The key "desiredStatus" is added here to make sure we cleanup the context
+        # after a user have edited a stopped application and then started it again.
+        # See context in src/middlewared/middlewared/plugins/chart_releases_linux/chart_release.py (do_update)
         config = await add_context_to_configuration(release['config'], {
             CONTEXT_KEY_NAME: {
                 **get_action_context(release_name),
                 'operation': 'UPDATE',
+                'desiredStatus': 'ACTIVE',
                 'isUpdate': True,
             }
         }, self.middleware, release_name)

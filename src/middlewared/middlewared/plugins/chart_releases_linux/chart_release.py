@@ -560,15 +560,20 @@ class ChartReleaseService(CRUDService):
 
         await self.perform_actions(context)
 
+        # When a user edits a chart release, pods will be scaled up again.
+        # This will cause pods to spin up even for a few seconds, before we have a chance to scale it down,
+        # if the previous status was STOPPED. By adding in the context the "desiredStatus" as "STOPPED",
+        # we are letting the app developer to take extra action if wanted. Like explicitly setting the replica count to 0.
         config = await add_context_to_configuration(config, {
             CONTEXT_KEY_NAME: {
                 **get_action_context(chart_release),
                 'operation': 'UPDATE',
+                'desiredStatus': release_orig['status'],
                 'isUpdate': True,
             }
         }, self.middleware, chart_release)
 
-        await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
+        await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'upgrade')
 
         if release_orig['status'] == 'STOPPED':
             await self.middleware.call('chart.release.scale', chart_release, {'replica_count': 0})
