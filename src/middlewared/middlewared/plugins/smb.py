@@ -502,7 +502,6 @@ class SMBService(TDBWrapConfigService):
         """
         while timeout >= 0:
             if os.path.exists(NETIF_COMPLETE_SENTINEL):
-                self.logger.debug("MCGdebug - got netif complete sentinel")
                 os.remove(NETIF_COMPLETE_SENTINEL)
                 return
 
@@ -546,7 +545,6 @@ class SMBService(TDBWrapConfigService):
         We cannot continue without network.
         Wait here until we see the ix-netif completion sentinel.
         """
-        self.logger.debug("MCGdebug - wait for ix-netif completion")
         job.set_progress(20, 'Wait for ix-netif completion.')
         await self.netif_wait()
 
