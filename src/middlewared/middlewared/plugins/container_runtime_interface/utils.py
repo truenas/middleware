@@ -2,6 +2,7 @@ import re
 from collections import defaultdict
 from typing import Dict, List, Union
 
+import aiohttp
 from middlewared.service import CallError
 
 # Default values
@@ -84,3 +85,19 @@ def get_chart_releases_consuming_image(
 
 def parse_tags(references: List[str]) -> List[Dict[str, str]]:
     return [normalize_reference(reference=reference) for reference in references]
+
+
+def normalize_docker_limits_header(headers: dict) -> dict:
+    if not all(limit_key in headers for limit_key in ['ratelimit-limit', 'ratelimit-remaining']):
+        return {'error': 'Unable to retrieve rate limit information from registry'}
+
+    total_pull_limit, total_time_limit = headers['ratelimit-limit'].split(';w=')
+    remaining_pull_limit, remaining_time_limit = headers['ratelimit-remaining'].split(';w=')
+
+    return {
+        'total_pull_limit': int(total_pull_limit),
+        'total_time_limit_in_secs': int(total_time_limit),
+        'remaining_pull_limit': int(remaining_pull_limit),
+        'remaining_time_limit_in_secs': int(remaining_time_limit),
+        'error': None,
+    }
