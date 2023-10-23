@@ -473,6 +473,7 @@ class ChartReleaseService(CRUDService):
                 CONTEXT_KEY_NAME: {
                     **get_action_context(data['release_name']),
                     'operation': 'INSTALL',
+                    'desiredStatus': 'ACTIVE',
                     'isInstall': True,
                 }
             }, self.middleware, data['release_name'])
