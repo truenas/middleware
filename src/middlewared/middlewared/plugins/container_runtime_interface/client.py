@@ -20,6 +20,7 @@ DOCKER_AUTH_SERVICE = 'registry.docker.io'
 DOCKER_MANIFEST_SCHEMA_V1 = 'application/vnd.docker.distribution.manifest.v1+json'
 DOCKER_MANIFEST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.v2+json'
 DOCKER_MANIFEST_LIST_SCHEMA_V2 = 'application/vnd.docker.distribution.manifest.list.v2+json'
+DOCKER_RATELIMIT_URL = 'https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest'
 CONTAINERD_SOCKET_PATH = '/run/k3s/containerd/containerd.sock'
 
 
@@ -145,6 +146,14 @@ class CRIClientMixin:
         digests = parse_digest_from_schema(response)
         digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))
         return digests
+
+    @private
+    async def get_docker_hub_rate_limit_preview(self):
+        return await self._api_call(
+            url=DOCKER_RATELIMIT_URL,
+            headers={'Authorization': f'Bearer {await self._get_token(scope="repository:ratelimitpreview/test:pull")}'},
+            mode='head'
+        )
 
 
 class ContainerdClient:
