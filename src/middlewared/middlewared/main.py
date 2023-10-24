@@ -1301,7 +1301,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if serviceobj._config.process_pool:
                 job_options['process'] = True
             # Create a job instance with required args
-            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes, job_on_progress_cb)
+            job = Job(self, name, serviceobj, methodobj, args, job_options, pipes, job_on_progress_cb,
+                      None if app is None else app.authenticated_credentials)
             # Add the job to the queue.
             # At this point an `id` is assigned to the job.
             # Job might be replaced with an already existing job if `lock_queue_size` is used.

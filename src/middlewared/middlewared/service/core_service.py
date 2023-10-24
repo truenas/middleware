@@ -164,6 +164,12 @@ class CoreService(Service):
         Str('state'),
         Datetime('time_started', null=True),
         Datetime('time_finished', null=True),
+        Dict(
+            'credentials',
+            Str('type'),
+            Dict('data', additional_attrs=True),
+            null=True,
+        ),
         register=True,
     ))
     def get_jobs(self, filters, options):

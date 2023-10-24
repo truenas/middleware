@@ -1,9 +1,6 @@
 import pprint
 
-import pytest
-
 from middlewared.test.integration.utils import client, mock
-
 
 
 def test_successful_job_events():
