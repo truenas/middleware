@@ -17,6 +17,7 @@ class UpdateService(Service):
 
     @private
     def create_upload_location(self):
+        os.makedirs(UPLOAD_LOCATION, exist_ok=True)
         if not os.path.ismount(UPLOAD_LOCATION):
             subprocess.run(["mount", "-o", "size=2800M", "-t", "tmpfs", "none", UPLOAD_LOCATION], **run_kw)
 
