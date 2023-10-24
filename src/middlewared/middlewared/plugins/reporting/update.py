@@ -1,16 +1,12 @@
 import copy
-import errno
 
 import middlewared.sqlalchemy as sa
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str
 from middlewared.service import (
-    CallError, cli_private, ConfigService, filterable, filterable_returns, private, ValidationErrors
+    cli_private, ConfigService, filterable, filterable_returns, private, ValidationErrors,
 )
-from middlewared.utils import filter_list
 from middlewared.validators import Range
-
-from .rrd_utils import RRD_PLUGINS
 
 
 class ReportingModel(sa.Model):
@@ -37,12 +33,6 @@ class ReportingService(ConfigService):
         Int('graph_points', validators=[Range(min=1, max=4096)], required=True),
         Int('id', required=True),
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__rrds = {}
-        for name, klass in RRD_PLUGINS.items():
-            self.__rrds[name] = klass(self.middleware)
 
     @accepts(
         Patch(
@@ -144,41 +134,9 @@ class ReportingService(ConfigService):
         Str('title'),
         Str('vertical_label'),
         List('identifiers', items=[Str('identifier')], null=True),
-        Bool('stacked'),
-        Bool('stacked_show_total'),
     ))
-    def graphs(self, filters, options):
-        return filter_list([
-            i.asdict() for i in self.__rrds.values() if i.has_data()
-        ], filters, options)
-
-    def __rquery_to_start_end(self, query):
-        unit = query.get('unit')
-        if unit:
-            verrors = ValidationErrors()
-            for i in ('start', 'end'):
-                if i in query:
-                    verrors.add(
-                        f'reporting_query.{i}',
-                        f'{i!r} should only be used if "unit" attribute is not provided.',
-                    )
-            verrors.check()
-        else:
-            if 'start' not in query:
-                unit = 'HOURLY'
-            else:
-                starttime = query['start']
-                endtime = query.get('end') or 'now'
-
-        if unit:
-            unit = unit[0].lower()
-            page = query['page']
-            starttime = f'end-{page + 1}{unit}'
-            if not page:
-                endtime = 'now'
-            else:
-                endtime = f'now-{page}{unit}'
-        return starttime, endtime
+    async def graphs(self, filters, options):
+        return await self.middleware.call('reporting.netdata_graphs', filters, options)
 
     @cli_private
     @accepts(
@@ -192,7 +150,7 @@ class ReportingService(ConfigService):
         Dict(
             'reporting_query',
             Str('unit', enum=['HOUR', 'DAY', 'WEEK', 'MONTH', 'YEAR']),
-            Int('page', default=0),
+            Int('page', default=1, validators=[Range(min=1)]),
             Str('start', empty=False),
             Str('end', empty=False),
             Bool('aggregate', default=True),
@@ -212,7 +170,7 @@ class ReportingService(ConfigService):
         ),
         additional_attrs=True
     )]))
-    def get_data(self, graphs, query):
+    async def get_data(self, graphs, query):
         """
         Get reporting data for given graphs.
 
@@ -239,27 +197,9 @@ class ReportingService(ConfigService):
             }
 
         """
-        starttime, endtime = self.__rquery_to_start_end(query)
-        rv = []
-        for i in graphs:
-            try:
-                rrd = self.__rrds[i['name']]
-            except KeyError:
-                raise CallError(f'Graph {i["name"]!r} not found.', errno.ENOENT)
-            rv.append(
-                rrd.export(i['identifier'], starttime, endtime, aggregate=query['aggregate'])
-            )
-        return rv
+        return await self.middleware.call('reporting.netdata_get_data', graphs, query)
 
     @private
     @accepts(Ref('reporting_query'))
-    def get_all(self, query):
-        starttime, endtime = self.__rquery_to_start_end(query)
-        rv = []
-        for rrd in self.__rrds.values():
-            idents = rrd.get_identifiers()
-            if idents is None:
-                idents = [None]
-            for ident in idents:
-                rv.append(rrd.export(ident, starttime, endtime, aggregate=query['aggregate']))
-        return rv
+    async def get_all(self, query):
+        return await self.middleware.call('reporting.netdata_get_all', query)
