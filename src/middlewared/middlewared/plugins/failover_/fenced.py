@@ -10,7 +10,7 @@ from middlewared.utils.cgroups import move_to_root_cgroups
 from fenced.fence import ExitCode as FencedExitCodes
 
 
-PID_FILE = os.path.join(MIDDLEWARE_RUN_DIR, '.fenced-pid')
+PID_FILE = os.path.join(MIDDLEWARE_RUN_DIR, 'fenced.pid')
 IS_ALIVE_SIGNAL = 0
 
 
