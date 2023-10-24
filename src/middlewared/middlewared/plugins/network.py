@@ -179,14 +179,8 @@ class InterfaceService(CRUDService):
             for i in self.middleware.call_sync('datastore.query', 'network.interfaces')
         }
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
-        ignore = self.middleware.call_sync('failover.internal_interfaces')
+        ignore = self.middleware.call_sync('interface.internal_interfaces')
         fseries = self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F')
-        if fseries:
-            # The eno1 interface needs to be masked on the f-series platform because
-            # this interface is shared with the BMC. Details for why this is done
-            # can be obtained from platform team.
-            ignore.append('eno1')
-
         for name, iface in netif.list_interfaces().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
