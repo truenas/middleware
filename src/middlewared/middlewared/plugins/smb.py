@@ -496,19 +496,39 @@ class SMBService(TDBWrapConfigService):
             await asyncio.sleep(1)
 
     @private
-    async def netif_wait(self, timeout=20):
+    async def netif_wait(self, timeout=90):
         """
-        Wait for for the ix-netif sentinel file with timeout.
+        Wait for for the ix-netif sentinel file
+        and confirm connectivity with some targeted tests.
+        All must be completed before the timeout.
         """
-        while timeout >= 0:
+        found_sentinel = False
+        while timeout >= 0 and not found_sentinel:
             if os.path.exists(NETIF_COMPLETE_SENTINEL):
                 os.remove(NETIF_COMPLETE_SENTINEL)
-                return
+                found_sentinel = True
 
             timeout -= 1
             if timeout <= 0:
-                self.logger.warning('Failed to get netif completion sentinal.  Continuing anyway.')
-            else:
+                self.logger.warning('Failed to get netif completion sentinal.')
+            elif not found_sentinel:
+                await asyncio.sleep(1)
+
+        """
+        Confirm at least one network interface is UP
+        """
+        if_UP = False
+        while timeout >= 0 and not if_UP:
+            netif = await self.middleware.call('interface.query')
+            if len(netif) > 0:
+                upif = [intf['name'] for intf in netif if 'UP' in intf['state']['link_state']]
+                if len(upif) > 0:
+                    if_UP = True
+
+            timeout -= 1
+            if timeout <= 0:
+                self.logger.warning('Failed to detect any connected network interfaces.')
+            elif not if_UP:
                 await asyncio.sleep(1)
 
     @private
@@ -541,13 +561,6 @@ class SMBService(TDBWrapConfigService):
             job.set_progress(15, 'Waiting for ctdb to become healthy.')
             await self.ctdb_wait()
 
-        """
-        We cannot continue without network.
-        Wait here until we see the ix-netif completion sentinel.
-        """
-        job.set_progress(20, 'Wait for ix-netif completion.')
-        await self.netif_wait()
-
         job.set_progress(25, 'generating SMB, idmap, and directory service config.')
         await self.middleware.call('smb.initialize_globals')
         ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
@@ -558,6 +571,13 @@ class SMBService(TDBWrapConfigService):
             ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
             if ldap_enabled:
                 await self.middleware.call('ldap.synchronize')
+
+        """
+        We cannot continue without network.
+        Wait here until we see the ix-netif completion sentinel.
+        """
+        job.set_progress(20, 'Wait for ix-netif completion.')
+        await self.netif_wait()
 
         await self.middleware.call('idmap.synchronize')
 
