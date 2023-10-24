@@ -3,6 +3,8 @@
     import ipaddress
     import os
 
+    from middlewared.utils import MIDDLEWARE_RUN_DIR
+
     # Let's ensure that /var/log/nginx directory exists
     if not os.path.exists('/var/log/nginx'):
         os.makedirs('/var/log/nginx')
@@ -118,7 +120,7 @@ http {
 
     gzip  on;
     #upload_store /var/tmp/firmware;
-    client_body_temp_path /var/tmp/firmware;
+    client_body_temp_path ${os.path.join(MIDDLEWARE_RUN_DIR, 'nginx_firmware')};
 
     access_log off;
     error_log syslog:server=unix:/dev/log,nohostname;
