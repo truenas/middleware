@@ -496,7 +496,7 @@ class SMBService(TDBWrapConfigService):
             await asyncio.sleep(1)
 
     @private
-    async def netif_wait(self, timeout=90):
+    async def netif_wait(self, timeout=120):
         """
         Wait for for the ix-netif sentinel file
         and confirm connectivity with some targeted tests.
