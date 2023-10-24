@@ -17,67 +17,11 @@ UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
 log = logging.getLogger("update_check_alertmod")
 
 
-# FIXME: use update plugin
-def is_update_applied(update_version):
-    if Update is None:
-        return False
-    active_be_msg = 'Please reboot the system to activate this update.'
-    # TODO: The below boot env name should really be obtained from the update code
-    # for now we just duplicate that code here
-    if update_version.startswith(Update.Avatar() + "-"):
-        update_boot_env = update_version[len(Update.Avatar() + "-"):]
-    else:
-        update_boot_env = "%s-%s" % (Update.Avatar(), update_version)
-
-    found = False
-    msg = ''
-    for clone in Update.ListClones():
-        if clone['realname'] == update_boot_env:
-            if clone['active'] != 'R':
-                active_be_msg = 'Please activate {0} via'.format(update_boot_env) + \
-                                ' the Boot Environment Tab and Reboot to use this updated version.'
-            msg = 'Update: {0} has already been applied. {1}'.format(update_version, active_be_msg)
-            found = True
-            break
-
-    return (found, msg)
-
-
 class HasUpdateAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.INFO
     title = "Update Available"
     text = "A system update is available. Go to System -> Update to download and apply the update."
-
-
-class HasUpdateAlertSource(ThreadedAlertSource):
-    schedule = IntervalSchedule(timedelta(hours=1))
-
-    run_on_backup_node = False
-
-    def check_sync(self):
-        try:
-            self.middleware.call_sync("datastore.query", "system.update", [], {"get": True})
-        except IndexError:
-            self.middleware.call_sync("datastore.insert", "system.update", {
-                "upd_autocheck": True,
-                "upd_train": "",
-            })
-
-        path = self.middleware.call_sync("update.get_update_location")
-        if not path:
-            return
-
-
-        updates = None
-        try:
-            if PendingUpdates:
-                updates = PendingUpdates(path)
-        except Exception:
-            pass
-
-        if updates:
-            return Alert(HasUpdateAlertClass)
 
 
 class UpdateNotAppliedAlertClass(AlertClass):
