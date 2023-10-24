@@ -11,6 +11,8 @@ from functions import PUT, POST, GET, SSH_TEST, wait_on_job
 from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ip, hostname, password, user
 from pytest_dependency import depends
+from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.utils import call
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
@@ -283,3 +285,15 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     })
     assert results.status_code == 200, results.text
     assert len(results.json()) == 1, results.text
+
+    with user(
+        'username': 'canary',
+        'full_name': 'canary',
+        'group_create': True,
+        'password': 'canary',
+        'smb': True
+    ) as u:
+        user_data = call('user.translate_username', 'canary')
+        assert u['id'] == user_data['id'], str(user_data)
+        assert u['uid'] == user_data['uid'], str(user_data)
+        assert user_data['local'] is True, str(user_data)
