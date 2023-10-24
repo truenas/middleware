@@ -1164,6 +1164,11 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     async def synthetic_user(self, ds, passwd):
         idmap_info = await self.get_idmap_info(ds, passwd['pw_uid'])
+        if idmap_info[0] is None:
+            # ID doesn't match one of our configured idmap ranges.
+            # This means it's probably local
+            return None
+
         sid = await self.middleware.run_in_thread(self.unixid_to_sid, {"id": passwd['pw_uid'], "id_type": "USER"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
@@ -1192,6 +1197,11 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     async def synthetic_group(self, ds, grp):
         idmap_info = await self.get_idmap_info(ds, grp['gr_gid'])
+        if idmap_info[0] is None:
+            # ID doesn't match one of our configured idmap ranges.
+            # This means it's probably local
+            return None
+
         sid = await self.middleware.run_in_thread(self.unixid_to_sid, {"id": grp['gr_gid'], "id_type": "GROUP"})
         rid = int(sid.rsplit('-', 1)[1])
         return {
