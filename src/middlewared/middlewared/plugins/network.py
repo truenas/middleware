@@ -54,8 +54,15 @@ class NetworkInterfaceModel(sa.Model):
     int_critical = sa.Column(sa.Boolean(), default=False)
     int_group = sa.Column(sa.Integer(), nullable=True)
     int_mtu = sa.Column(sa.Integer(), nullable=True)
-    int_link_address = sa.Column(sa.String(17), nullable=True)
-    int_link_address_b = sa.Column(sa.String(17), nullable=True)
+
+
+class NetworkInterfaceLinkAddressModel(sa.Model):
+    __tablename__ = 'network_interface_link_address'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    interface = sa.Column(sa.String(300))
+    link_address = sa.Column(sa.String(17), nullable=True)
+    link_address_b = sa.Column(sa.String(17), nullable=True)
 
 
 class NetworkLaggInterfaceModel(sa.Model):
