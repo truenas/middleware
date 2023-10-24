@@ -5,11 +5,12 @@ import os
 import signal
 
 from middlewared.service import Service, CallError
+from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.cgroups import move_to_root_cgroups
 from fenced.fence import ExitCode as FencedExitCodes
 
 
-PID_FILE = '/tmp/.fenced-pid'
+PID_FILE = os.path.join(MIDDLEWARE_RUN_DIR, '.fenced.pid')
 IS_ALIVE_SIGNAL = 0
 
 
