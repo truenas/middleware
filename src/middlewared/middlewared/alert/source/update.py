@@ -1,11 +1,5 @@
 import logging
 
-try:
-    from freenasOS import Update
-    from freenasOS.Update import PendingUpdates
-except ImportError:
-    Update = PendingUpdates = None
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
 
 
