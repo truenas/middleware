@@ -276,19 +276,11 @@ class ChartReleaseService(Service):
 
         await self.middleware.call('chart.release.perform_actions', context)
 
-        # Let's update context options to reflect that an upgrade is taking place and from which version to which
-        # version it's happening.
-        # Helm considers simple config change as an upgrade as well, and we have no way of determining the old/new
-        # chart versions during helm upgrade in the helm template, hence the requirement for a context object.
-        # The key "desiredStatus" is added here to make sure we cleanup the context
-        # after a user have edited a stopped application and then started it again.
-        # See context in src/middlewared/middlewared/plugins/chart_releases_linux/chart_release.py (do_update)
         config = await add_context_to_configuration(config, {
             CONTEXT_KEY_NAME: {
                 **get_action_context(release_name),
                 'operation': 'UPGRADE',
                 'isUpgrade': True,
-                'desiredStatus': 'ACTIVE',
                 'upgradeMetadata': {
                     'oldChartVersion': release['chart_metadata']['version'],
                     'newChartVersion': catalog_item['version'],

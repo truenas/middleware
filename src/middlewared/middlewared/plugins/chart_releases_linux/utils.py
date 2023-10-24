@@ -37,7 +37,7 @@ def get_action_context(release_name):
         'isInstall': False,
         'isUpdate': False,
         'isUpgrade': False,
-        'desiredStatus': '',
+        'isStopped': False,
         'storageClassName': get_storage_class_name(release_name),
         'upgradeMetadata': {},
         'hasSMBCSI': True,
