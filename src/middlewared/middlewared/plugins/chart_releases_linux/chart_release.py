@@ -573,7 +573,7 @@ class ChartReleaseService(CRUDService):
             }
         }, self.middleware, chart_release)
 
-        await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'upgrade')
+        await self.middleware.call('chart.release.helm_action', chart_release, chart_path, config, 'update')
 
         if release_orig['status'] == 'STOPPED':
             await self.middleware.call('chart.release.scale', chart_release, {'replica_count': 0})
