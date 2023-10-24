@@ -19,13 +19,6 @@ class HasUpdateAlertClass(AlertClass):
     text = "A system update is available. Go to System -> Update to download and apply the update."
 
 
-class UpdateNotAppliedAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.WARNING
-    title = "Update Not Applied"
-    text = "%s"
-
-
 class UpdateFailedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
