@@ -71,13 +71,13 @@ def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_sh
 
 
 @contextlib.contextmanager
-def unprivileged_user_client(roles):
+def unprivileged_user_client(roles=None, allowlist=None):
     with unprivileged_user(
         username="unprivileged",
         group_name="unprivileged_users",
         privilege_name="Unprivileged users",
-        allowlist=[],
-        roles=roles,
+        allowlist=allowlist or [],
+        roles=roles or [],
         web_shell=False,
     ) as t:
         with client(auth=(t.username, t.password)) as c:
