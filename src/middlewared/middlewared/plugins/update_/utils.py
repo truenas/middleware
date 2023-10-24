@@ -1,14 +1,17 @@
 # -*- coding=utf-8 -*-
 import configparser
 import itertools
+import os
 import re
+
+from middlewared.utils import MIDDLEWARE_RUN_DIR
 
 DEFAULT_SCALE_UPDATE_SERVER = "https://update.ixsystems.com/scale"
 SCALE_MANIFEST_FILE = "/data/manifest.json"
 
 DOWNLOAD_UPDATE_FILE = "update.sqsh"
 
-UPLOAD_LOCATION = "/var/tmp/firmware"
+UPLOAD_LOCATION = os.path.join(MIDDLEWARE_RUN_DIR, "upload_image")
 
 SEP = re.compile(r"[-.]")
 

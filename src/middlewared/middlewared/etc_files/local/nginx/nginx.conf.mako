@@ -116,9 +116,6 @@ http {
     server_tokens off;
 
     gzip  on;
-    #upload_store /var/tmp/firmware;
-    client_body_temp_path /var/tmp/firmware;
-
     access_log off;
     error_log syslog:server=unix:/dev/log,nohostname;
 
