@@ -12,15 +12,24 @@ class ContainerImagesService(Service):
 
     @accepts()
     @returns(Dict(
-        Int('total_pull_limit', null=True),
-        Int('total_time_limit_in_secs', null=True),
-        Int('remaining_pull_limit', null=True),
-        Int('remaining_time_limit_in_secs', null=True),
+        Int('total_pull_limit', null=True, description='Total pull limit for Docker Hub registry'),
+        Int(
+            'total_time_limit_in_secs', null=True,
+            description='Total time limit in seconds for Docker Hub registry before the limit renews'
+        ),
+        Int('remaining_pull_limit', null=True, description='Remaining pull limit for Docker Hub registry'),
+        Int(
+            'remaining_time_limit_in_secs', null=True,
+            description='Remaining time limit in seconds for Docker Hub registry for the '
+                        'current pull limit to be renewed'
+        ),
         Str('error', null=True),
     ))
     async def dockerhub_rate_limit(self):
         """
         Returns the current rate limit information for Docker Hub registry.
+
+        Please refer to https://docs.docker.com/docker-hub/download-rate-limit/ for more information.
         """
         limits_header = await CRIClientMixin().get_docker_hub_rate_limit_preview()
 
