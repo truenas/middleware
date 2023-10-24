@@ -7,14 +7,14 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.schema import Any, Bool, Dict, Float, List, Patch, Str, ValidationErrors
 from middlewared.service import accepts, CallError, CRUDService, job, private
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.validators import Match
 
 from .utils import convert_repository_to_path, get_cache_key
 
 OFFICIAL_ENTERPRISE_TRAIN = 'enterprise'
 OFFICIAL_LABEL = 'TRUENAS'
-TMP_IX_APPS_DIR = '/tmp/ix-applications'
+TMP_IX_APPS_DIR = os.path.join(MIDDLEWARE_RUN_DIR, 'ix-applications')
 
 
 class CatalogModel(sa.Model):
