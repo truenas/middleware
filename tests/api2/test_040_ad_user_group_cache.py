@@ -286,13 +286,13 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     assert results.status_code == 200, results.text
     assert len(results.json()) == 1, results.text
 
-    with user(
+    with user({
         'username': 'canary',
         'full_name': 'canary',
         'group_create': True,
         'password': 'canary',
         'smb': True
-    ) as u:
+    }) as u:
         user_data = call('user.translate_username', 'canary')
         assert u['id'] == user_data['id'], str(user_data)
         assert u['uid'] == user_data['uid'], str(user_data)
