@@ -493,6 +493,6 @@ def test_34_multiprotocol_share_type_preset(request):
 def test_35_create_ancestors(request):
     with create_dataset(pool_name, 'foo/bar/tar', options={'share_type': 'SMB', 'create_ancestors': True}) as ds:
         assert ds['acltype']['value'] == 'NFSV4'
-        assert ds['aclmode']['value'] == 'PASSTHROUGH'
+        assert ds['aclmode']['value'] == 'RESTRICTED'
         st = call('filesystem.stat', ds['mountpoint'])
         assert st['acl'] is True, str(st)
