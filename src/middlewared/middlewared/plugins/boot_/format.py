@@ -11,7 +11,7 @@ class BootService(Service):
             'options',
             Int('size'),
             Int('swap_size'),
-            Str('legacy_schema', enum=[None, 'BIOS_ONLY', 'EFI_ONLY'], default=None),
+            Str('legacy_schema', enum=[None, 'BIOS_ONLY', 'EFI_ONLY'], null=True, default=None),
         )
     )
     @private
