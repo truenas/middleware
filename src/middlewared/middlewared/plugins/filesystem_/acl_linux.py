@@ -496,7 +496,7 @@ class FilesystemService(Service, ACLBase):
 
             self.middleware.call_sync(
                 'filesystem.check_acl_execute',
-                path, data['dacl'], uid_to_check, gid_to_check
+                path, data['dacl'], uid_to_check, gid_to_check, True
             )
 
             self.setacl_nfs4_internal(path, data['dacl'], do_canon, verrors)
@@ -653,7 +653,7 @@ class FilesystemService(Service, ACLBase):
 
                 self.middleware.call_sync(
                     'filesystem.check_acl_execute',
-                    path, dacl, uid_to_check, gid_to_check
+                    path, dacl, uid_to_check, gid_to_check, True
                 )
             except CallError as e:
                 if e.errno != errno.EPERM:
