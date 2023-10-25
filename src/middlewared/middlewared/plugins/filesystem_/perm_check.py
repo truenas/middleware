@@ -115,7 +115,7 @@ class FilesystemService(Service):
         return self.check_as_user_impl(user_details, path, perms)
 
     @private
-    def check_path_execute(self, path, id_type, xid):
+    def check_path_execute(self, path, id_type, xid, path_must_exist):
         user_details = self.generate_user_details(id_type, xid)
         if user_details is None:
             # User or group does not exist on server.
@@ -132,6 +132,12 @@ class FilesystemService(Service):
                 continue
 
             path_to_check = f'/{"/".join(parts[1:idx])}'
+            if not os.path.exists(path_to_check):
+                if path_must_exist:
+                    raise CallError(f'{path_to_check}: path component does not exist.', errno.ENOENT)
+
+                continue
+
             ok = self.check_as_user_impl(user_details, path_to_check, {'read': None, 'write': None, 'execute': True})
             if not ok:
                 raise CallError(
@@ -142,7 +148,7 @@ class FilesystemService(Service):
                 )
 
     @private
-    def check_acl_execute(self, path, acl, uid, gid):
+    def check_acl_execute(self, path, acl, uid, gid, path_must_exist=False):
         for entry in acl:
             if entry['tag'] in ('everyone@', 'OTHER', 'MASK'):
                 continue
@@ -166,4 +172,4 @@ class FilesystemService(Service):
                 id_info['id_type'] = 'USER'
                 id_info['xid'] = gid
 
-            self.check_path_execute(path, id_info['id_type'], id_info['xid'])
+            self.check_path_execute(path, id_info['id_type'], id_info['xid'], path_must_exist)
