@@ -167,6 +167,7 @@ class FailoverService(ConfigService):
           ECHOSTREAM (z-series)
           ECHOWARP (m-series)
           LAJOLLA2 (f-series)
+          SUBLIGHT (h-series)
           PUMA (x-series)
           BHYVE (HA VMs for CI)
           MANUAL (everything else)

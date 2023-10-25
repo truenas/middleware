@@ -51,6 +51,21 @@ class EnclosureDetectionService(Service):
                 NODE = 'A' if rv.stdout.decode().strip()[-1] == '0' else 'B'
 
             return HARDWARE, NODE
+        elif product.startswith('TRUENAS-H'):
+            HARDWARE = 'SUBLIGHT'
+            rv = subprocess.run(['ipmi-raw', '0', '6', '52', 'b', 'b2', '9', '0'], stdout=subprocess.PIPE)
+            if rv.stdout:
+                if (val := (int(rv.stdout.decode().strip()[-2:], base=16) & 1)) not in (0, 1):
+                    # h-series is a unique platform so best to have messages like these for ease of
+                    # troubleshooting if we're to hit something unexpected
+                    self.logger.error('Unexpected value returned from MCU: %d (expected 0 or 1)', val)
+                    return HARDWARE, NODE
+
+                # (platform team has documentation if needed)
+                # Bit 1 of 10th byte is 1 when "primary" controller from MCU 0xb2
+                NODE = 'A' if val == 1 else 'B'
+
+            return HARDWARE, NODE
         elif not product.startswith(PLATFORM_PREFIXES):
             # users run TrueNAS on all kinds of exotic hardware. Most of the time, the
             # exotic hardware doesn't respond to standards conforming requests. Furthermore,

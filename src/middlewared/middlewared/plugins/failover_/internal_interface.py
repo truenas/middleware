@@ -28,8 +28,8 @@ class InternalInterfaceService(Service):
                         return [i.name]
                 except FileNotFoundError:
                     continue
-        elif hardware in ('PUMA', 'ECHOWARP', 'LAJOLLA2'):
-            # {x/m/f}-series
+        elif hardware in ('PUMA', 'ECHOWARP', 'LAJOLLA2', 'SUBLIGHT'):
+            # {x/m/f/h}-series
             return ['ntb0']
         else:
             return []

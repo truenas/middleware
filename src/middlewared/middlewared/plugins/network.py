@@ -180,12 +180,20 @@ class InterfaceService(CRUDService):
         }
         ha_hardware = self.middleware.call_sync('system.is_ha_capable')
         ignore = self.middleware.call_sync('interface.internal_interfaces')
-        fseries = self.middleware.call_sync('truenas.get_chassis_hardware').startswith('TRUENAS-F')
+
+        # need to handle these platforms specially
+        fseries = hseries = False
+        platform = self.middleware.call_sync('truenas.get_chassis_hardware')
+        if platform.startswith('TRUENAS-F'):
+            fseries = True
+        elif platform.startswith('TRUENAS-H'):
+            hseries = True
+
         for name, iface in netif.list_interfaces().items():
             if (name in ignore) or (iface.cloned and name not in configs):
                 continue
-            elif fseries and iface.bus == 'usb':
-                # The f-series platform will add a usb ethernet device to the system
+            elif any((fseries, hseries)) and iface.bus == 'usb':
+                # The {f/h}-series platforms will add a usb ethernet device to the system
                 # when someone opens up the ikvm html5 console. We need to hide this
                 # interface so users can't configure it
                 continue
