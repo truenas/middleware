@@ -20,9 +20,9 @@ from pytest_dependency import depends
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.pool import dataset as ftp_dataset
 from assets.websocket.server import reboot
 from middlewared.test.integration.assets.account import user as ftp_user
+from middlewared.test.integration.assets.pool import dataset as dataset_asset
 
 from auto_config import ha, password, pool_name, user
 from functions import SSH_TEST, make_ws_request, send_file
@@ -381,8 +381,8 @@ def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, wi
     FTPconfig = FTPconfig or {}
     withConn = withConn or True
 
-    with ftp_dataset(pool_name, dsname, **kwargs) as ds_conf:
-        ds_path = f"/mnt/{ds_conf['name']}"
+    with dataset_asset(dsname, **kwargs) as ds:
+        ds_path = f"/mnt/{ds}"
 
         # Add files and dirs
         ftp_dirs_and_files = INIT_DIRS_AND_FILES.copy()
@@ -408,8 +408,8 @@ def ftp_anon_ds_and_srvr_conn(dsname='ftpdata', FTPconfig=None, useFTPS=None, wi
 def ftp_user_ds_and_srvr_conn(dsname='ftpdata', username="FTPlocal", FTPconfig=None, useFTPS=False, **kwargs):
     FTPconfig = FTPconfig or {}
 
-    with ftp_dataset(pool_name, dsname, **kwargs) as ds_conf:
-        ds_path = f"/mnt/{ds_conf['name']}"
+    with dataset_asset(dsname, **kwargs) as ds:
+        ds_path = f"/mnt/{ds}"
         with ftp_user({
             "username": username,
             "group_create": True,

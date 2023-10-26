@@ -8,9 +8,9 @@ import pytest
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.pool import dataset as create_dataset
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job, make_ws_request
 from auto_config import ip, pool_name, user, password
+from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call
 
 dataset = f'{pool_name}/dataset1'
@@ -366,7 +366,9 @@ def test_31_path_to_dataset(request):
 
 
 def test_32_test_apps_preset(request):
-    with create_dataset(pool_name, 'APPS_TEST', options={'share_type': 'APPS'}) as ds:
+    with dataset_asset('APPS_TEST', {'share_type': 'APPS'}) as ds:
+        ds = call('pool.dataset.get_instance', ds)
+
         assert ds['acltype']['value'] == 'NFSV4'
         assert ds['atime']['value'] == 'OFF'
         assert ds['aclmode']['value'] == 'PASSTHROUGH'
@@ -414,16 +416,16 @@ def test_33_simplified_charts_api(request):
     ]
 
     # TEST NFS4 ACL type
-    with create_dataset(pool_name, 'APPS_NFS4', options={'share_type': 'APPS'}) as ds:
+    with dataset_asset('APPS_NFS4', {'share_type': 'APPS'}) as ds:
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
-            'path': ds['mountpoint'],
+            'path': f'/mnt/{ds}',
             'entries': NFS4_ACL_PAYLOAD
         }]})
         assert res.get('error') is None, res['error']
         job_status = wait_on_job(res['result'], 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-        results = POST('/filesystem/getacl/', {'path': ds['mountpoint']})
+        results = POST('/filesystem/getacl/', {'path': f'/mnt/{ds}'})
         assert results.status_code == 200, results.text
 
         acl = results.json()['acl']
@@ -434,11 +436,11 @@ def test_33_simplified_charts_api(request):
         # check behavior of using force option.
         # presence of file in path should trigger failure
         # if force is not set
-        results = SSH_TEST(f'touch {ds["mountpoint"]}/canary', user, password, ip)
+        results = SSH_TEST(f'touch /mnt/{ds}/canary', user, password, ip)
         assert results['result'] is True, results
 
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
-            'path': ds['mountpoint'],
+            'path': f'/mnt/{ds}',
             'entries': NFS4_ACL_PAYLOAD
         }]})
         job_status = wait_on_job(res['result'], 180)
@@ -447,7 +449,7 @@ def test_33_simplified_charts_api(request):
         # check behavior of using force option.
         # second call with `force` specified should succeed
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
-            'path': ds['mountpoint'],
+            'path': f'/mnt/{ds}',
             'entries': NFS4_ACL_PAYLOAD,
             'options': {'force': True}
         }]})
@@ -456,7 +458,7 @@ def test_33_simplified_charts_api(request):
 
         # we already added the entry earlier.
         # this check makes sure we're not adding duplicate entries.
-        results = POST('/filesystem/getacl/', {'path': ds['mountpoint']})
+        results = POST('/filesystem/getacl/', {'path': f'/mnt/{ds}'})
         assert results.status_code == 200, results.text
 
         acl = results.json()['acl']
@@ -464,17 +466,16 @@ def test_33_simplified_charts_api(request):
         assert check_for_entry(acl, 'GROUP', GROUP_TO_ADD, {'BASIC': 'READ'}), str(acl)
         assert check_for_entry(acl, 'USER', USER2_TO_ADD, {'BASIC': 'FULL_CONTROL'}), str(acl)
 
-
-    with create_dataset(pool_name, 'APPS_POSIX') as ds:
+    with dataset_asset('APPS_POSIX') as ds:
         res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
-            'path': ds['mountpoint'],
+            'path': f'/mnt/{ds}',
             'entries': ACL_PAYLOAD
         }]})
         assert res.get('error') is None, res['error']
         job_status = wait_on_job(res['result'], 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-        results = POST('/filesystem/getacl/', {'path': ds['mountpoint']})
+        results = POST('/filesystem/getacl/', {'path': f'/mnt/{ds}'})
         assert results.status_code == 200, results.text
 
         acl = results.json()['acl']
@@ -483,7 +484,9 @@ def test_33_simplified_charts_api(request):
 
 
 def test_34_multiprotocol_share_type_preset(request):
-    with create_dataset(pool_name, 'MULTIPROTOCOL', options={'share_type': 'MULTIPROTOCOL'}) as ds:
+    with dataset_asset('MULTIPROTOCOL', {'share_type': 'MULTIPROTOCOL'}) as ds:
+        ds = call('pool.dataset.get_instance', ds)
+
         assert ds['acltype']['value'] == 'NFSV4'
         assert ds['aclmode']['value'] == 'PASSTHROUGH'
         assert ds['casesensitivity']['value'] == 'SENSITIVE'
@@ -491,7 +494,9 @@ def test_34_multiprotocol_share_type_preset(request):
 
 
 def test_35_create_ancestors(request):
-    with create_dataset(pool_name, 'foo/bar/tar', options={'share_type': 'SMB', 'create_ancestors': True}) as ds:
+    with dataset_asset('foo/bar/tar', {'share_type': 'SMB', 'create_ancestors': True}) as ds:
+        ds = call('pool.dataset.get_instance', ds)
+
         assert ds['acltype']['value'] == 'NFSV4'
         assert ds['aclmode']['value'] == 'RESTRICTED'
         st = call('filesystem.stat', ds['mountpoint'])

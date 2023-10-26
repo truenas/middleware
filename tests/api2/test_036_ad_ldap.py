@@ -1,20 +1,20 @@
-#!/usr/bin/env python3
+from contextlib import contextmanager
+import os
+import sys
 
 import pytest
-import sys
-import os
-import json
+
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
 from assets.REST.directory_services import active_directory, ldap, override_nameservers
-from assets.REST.pool import dataset
 from auto_config import ip, hostname, password, pool_name, user, ha
-from contextlib import contextmanager
 from functions import GET, POST, PUT, SSH_TEST, make_ws_request, wait_on_job
 from protocols import nfs_share, SSH_NFS
 from pytest_dependency import depends
-from middlewared.test.integration.utils import call
 
 try:
     from config import AD_DOMAIN, ADPASSWORD, ADUSERNAME, ADNameServer, AD_COMPUTER_OU
@@ -188,12 +188,11 @@ def setup_nfs_share(request):
         {'tag': 'USER', 'id': target_uid, 'perms': test_perms, 'flags': test_flags, 'type': 'ALLOW'},
     ]
     with dataset(
-        pool_name,
         'NFSKRB5',
-        options={'acltype': 'NFSV4'},
+        {'acltype': 'NFSV4'},
         acl=target_acl
     ) as ds:
-        with nfs_share(ds['mountpoint'], options={
+        with nfs_share(f'/mnt/{ds}', options={
             'comment': 'KRB Functional Test Share',
             'security': ['KRB5', 'KRB5I', 'KRB5P'],
         }) as share:
