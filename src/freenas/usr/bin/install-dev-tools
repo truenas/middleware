@@ -18,6 +18,8 @@ PACKAGES=(
     python3-pytest-dependency
     python3-pytest-rerunfailures
     python3-pytest-timeout
+    # samba / libsmb
+    python3-samba
     # `snmpwalk` to test `snmp-agent`
     snmp
     # Used by the integration test runner
@@ -27,7 +29,11 @@ PACKAGES=(
 )
 PIP_PACKAGES=()
 
-/usr/local/libexec/disable-rootfs-protection
+if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
+    # Running on SCALE
+    /usr/local/libexec/disable-rootfs-protection
+fi
+
 apt update
 apt install -y "${PACKAGES[@]}"
 if [ "${#PIP_PACKAGES[@]}" -gt 0 ]; then
