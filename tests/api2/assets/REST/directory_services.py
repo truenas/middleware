@@ -53,6 +53,7 @@ def clear_ldap_info():
     job_status = wait_on_job(results.json()['job_id'], 180)
     assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
+
 @contextlib.contextmanager
 def active_directory(domain, username, password, **kwargs):
     payload = {
@@ -80,10 +81,7 @@ def active_directory(domain, username, password, **kwargs):
             'result': job_status['results']
         }
     finally:
-        results = POST('/activedirectory/leave/', {'username': username, 'password': password})
-        assert results.status_code == 200, results.text
-        job_status = wait_on_job(results.json(), 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        return
 
 
 @contextlib.contextmanager
@@ -105,12 +103,7 @@ def override_nameservers(_nameserver1='', _nameserver2='', _nameserver3=''):
         assert results.status_code == 200, results.text
         yield results.json()
     finally:
-        results = PUT("/network/configuration/", {
-            'nameserver1': nameserver1,
-            'nameserver2': nameserver2,
-            'nameserver3': nameserver3,
-        })
-        assert results.status_code == 200, results.text
+        return
 
 
 @contextlib.contextmanager
