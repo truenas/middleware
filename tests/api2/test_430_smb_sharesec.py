@@ -5,7 +5,7 @@ import os
 from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.pool import dataset
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import client
 from functions import PUT, POST, GET, DELETE, SSH_TEST
@@ -33,11 +33,10 @@ Users = {
 def setup_smb_share(request):
     global share_info
     with dataset(
-        pool_name,
         "smb-sharesec",
-        options={'share_type': 'SMB'},
+        {'share_type': 'SMB'},
     ) as ds:
-        with smb_share(ds['mountpoint'], "my_sharesec") as share:
+        with smb_share(f'/mnt/{ds}', "my_sharesec") as share:
             share_info = share
             yield share
 

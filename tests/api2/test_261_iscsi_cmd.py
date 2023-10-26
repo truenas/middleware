@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-
-# License: BSD
-
 import contextlib
 import enum
 import ipaddress
@@ -21,9 +17,8 @@ from pytest_dependency import depends
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 
-from assets.REST.pool import dataset
-from assets.REST.snapshot import snapshot, snapshot_rollback
 from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call
 from auto_config import ha, hostname, isns_ip, pool_name
 from functions import DELETE, GET, POST, PUT, SSH_TEST
@@ -100,6 +95,15 @@ file_name = f"iscsi{digit}"
 basename = "iqn.2005-10.org.freenas.ctl"
 zvol_name = f"ds{digit}"
 zvol = f'{pool_name}/{zvol_name}'
+
+
+def snapshot_rollback(snapshot_id):
+    payload = {
+        'id': snapshot_id,
+        'options': {}
+    }
+    results = POST("/zfs/snapshot/rollback", payload)
+    assert results.status_code == 200, results.text
 
 
 def other_node(node):
@@ -339,7 +343,7 @@ def configured_target_to_file_extent(config, target_name, pool_name, dataset_nam
     portal_id = config['portal']['id']
     with target(target_name, [{'portal': portal_id}], alias) as target_config:
         target_id = target_config['id']
-        with dataset(pool_name, dataset_name) as dataset_config:
+        with dataset(dataset_name) as dataset_config:
             with file_extent(pool_name, dataset_name, file_name, filesize=filesize, extent_name=extent_name) as extent_config:
                 extent_id = extent_config['id']
                 with target_extent_associate(target_id, extent_id):
@@ -365,7 +369,7 @@ def configured_target_to_zvol_extent(config, target_name, zvol, alias=None, exte
                     newconfig.update({
                         'associate': associate_config,
                         'target': target_config,
-                        'dataset': dataset_config,
+                        'dataset': dataset_config['id'],
                         'extent': extent_config,
                     })
                     yield newconfig
@@ -611,7 +615,7 @@ def test_01_inquiry(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset(pool_name, dataset_name):
+                with dataset(dataset_name):
                     with file_extent(pool_name, dataset_name, file_name) as extent_config:
                         extent_id = extent_config['id']
                         with target_extent_associate(target_id, extent_id):
@@ -632,7 +636,7 @@ def test_02_read_capacity16(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset(pool_name, dataset_name):
+                with dataset(dataset_name):
                     # 100 MB file extent
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
@@ -774,7 +778,7 @@ def test_05_chap(request):
             with iscsi_auth(auth_tag, user, secret):
                 with target(target_name, [{'portal': portal_id, 'authmethod': 'CHAP', 'auth': auth_tag}]) as target_config:
                     target_id = target_config['id']
-                    with dataset(pool_name, dataset_name):
+                    with dataset(dataset_name):
                         with file_extent(pool_name, dataset_name, file_name) as extent_config:
                             extent_id = extent_config['id']
                             with target_extent_associate(target_id, extent_id):
@@ -816,7 +820,7 @@ def test_06_mutual_chap(request):
             with iscsi_auth(auth_tag, user, secret, peer_user, peer_secret):
                 with target(target_name, [{'portal': portal_id, 'authmethod': 'CHAP_MUTUAL', 'auth': auth_tag}]) as target_config:
                     target_id = target_config['id']
-                    with dataset(pool_name, dataset_name):
+                    with dataset(dataset_name):
                         with file_extent(pool_name, dataset_name, file_name) as extent_config:
                             extent_id = extent_config['id']
                             with target_extent_associate(target_id, extent_id):
@@ -864,7 +868,7 @@ def test_07_report_luns(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset(pool_name, dataset_name):
+                with dataset( dataset_name):
                     # LUN 0 (100 MB file extent)
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
@@ -914,7 +918,7 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
             assert r.datain == zeros, r.datain
 
         # Take snap0
-        with snapshot(dataset_id, "snap0") as snap0_config:
+        with snapshot(dataset_id, "snap0", get=True) as snap0_config:
 
             # Now let's write DEADBEEF to a few LBAs using WRITE (16)
             for lba in deadbeef_lbas:
@@ -929,7 +933,7 @@ def target_test_snapshot_single_login(ip, iqn, dataset_id):
                     assert r.datain == zeros, r.datain
 
             # Take snap1
-            with snapshot(dataset_id, "snap1") as snap1_config:
+            with snapshot(dataset_id, "snap1", get=True) as snap1_config:
 
                 # Do a WRITE for > 1 LBA
                 s.write16(10, 2, deadbeef * 2)
@@ -985,7 +989,7 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
             assert r.datain == zeros, r.datain
 
     # Take snap0
-    with snapshot(dataset_id, "snap0") as snap0_config:
+    with snapshot(dataset_id, "snap0", get=True) as snap0_config:
 
         with iscsi_scsi_connection(ip, iqn) as s:
             TUR(s)
@@ -1004,7 +1008,7 @@ def target_test_snapshot_multiple_login(ip, iqn, dataset_id):
                     assert r.datain == zeros, r.datain
 
         # Take snap1
-        with snapshot(dataset_id, "snap1") as snap1_config:
+        with snapshot(dataset_id, "snap1", get=True) as snap1_config:
 
             with iscsi_scsi_connection(ip, iqn) as s:
                 TUR(s)
@@ -1056,9 +1060,9 @@ def test_08_snapshot_zvol_extent(request):
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
-            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
+            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset'])
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
-            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset'])
 
 
 def test_09_snapshot_file_extent(request):
@@ -1069,9 +1073,9 @@ def test_09_snapshot_file_extent(request):
     iqn = f'{basename}:{target_name}'
     with initiator_portal() as config:
         with configured_target_to_file_extent(config, target_name, pool_name, dataset_name, file_name) as iscsi_config:
-            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset']['id'])
+            target_test_snapshot_single_login(ip, iqn, iscsi_config['dataset'])
         with configured_target_to_zvol_extent(config, target_name, zvol) as iscsi_config:
-            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset']['id'])
+            target_test_snapshot_multiple_login(ip, iqn, iscsi_config['dataset'])
 
 
 def test_10_target_alias(request):
@@ -2521,7 +2525,7 @@ def test_29_multiple_extents():
         portal_id = config['portal']['id']
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
-            with dataset(pool_name, dataset_name):
+            with dataset( dataset_name):
                 with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
                     with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):

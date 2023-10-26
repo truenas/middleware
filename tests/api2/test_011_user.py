@@ -4,18 +4,20 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import pytest
+from contextlib import contextmanager
 import sys
 import json
 import os
 import time
 import stat
 
-from contextlib import contextmanager
+import pytest
 from pytest_dependency import depends
+
+from middlewared.test.integration.assets.pool import dataset as dataset_asset
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.pool import dataset as tmp_dataset
 from functions import POST, GET, DELETE, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ha, password, user, ip
 SHELL = '/usr/bin/bash'
@@ -73,10 +75,10 @@ def test_01_get_next_uid(request):
 
 @contextmanager
 def create_user_with_dataset(ds_info, user_info):
-    with tmp_dataset(ds_info['pool'], ds_info['name'], ds_info.get('options', []), **ds_info.get('kwargs', {})) as ds:
+    with dataset_asset(ds_info['name'], ds_info.get('options', []), **ds_info.get('kwargs', {})) as ds:
         payload = user_info['payload']
         if 'path' in user_info:
-            payload['home'] = os.path.join(ds['mountpoint'], user_info['path'])
+            payload['home'] = os.path.join(f'/mnt/{ds}', user_info['path'])
 
         results = POST("/user/", payload)
         assert results.status_code == 200, results.text
@@ -435,8 +437,8 @@ def test_38_homedir_move_new_directory(request):
     depends(request, ["HOMEDIR_EXISTS"])
 
     # Validation of autocreation of homedir during path update
-    with tmp_dataset(pool_name, os.path.join('test_homes', 'ds2')) as ds:
-        results = PUT(f'/user/id/{user_id}', {'home': ds['mountpoint'], 'home_create': True})
+    with dataset_asset(os.path.join('test_homes', 'ds2')) as ds:
+        results = PUT(f'/user/id/{user_id}', {'home': f'/mnt/{ds}', 'home_create': True})
         assert results.status_code == 200, results.text
 
         results = GET('/core/get_jobs/?method=user.do_home_copy')
@@ -444,7 +446,7 @@ def test_38_homedir_move_new_directory(request):
         job_status = wait_on_job(results.json()[-1]['id'], 180)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-        results = POST('/filesystem/stat/', os.path.join(ds['mountpoint'], 'testuser2'))
+        results = POST('/filesystem/stat/', os.path.join(f'/mnt/{ds}', 'testuser2'))
         assert results.status_code == 200, results.text
         assert results.json()['uid'] == next_uid, results.txt
 
@@ -788,8 +790,8 @@ def test_59_create_user_ro_dataset(request):
         'home_mode': '770',
         'home_create': True,
     }
-    with tmp_dataset(pool_name, 'ro_user_ds', {'readonly': 'ON'}) as ds:
-        user_info['home'] = ds['mountpoint']
+    with dataset_asset('ro_user_ds', {'readonly': 'ON'}) as ds:
+        user_info['home'] = f'/mnt/{ds}'
         results = POST("/user/", user_info)
         assert results.status_code == 422, results.text
 

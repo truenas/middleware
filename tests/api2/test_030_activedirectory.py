@@ -1,20 +1,19 @@
-#!/usr/bin/env python3
-
-import os
 import ipaddress
-import json
+import os
 import sys
+from time import sleep
+
 import pytest
 from pytest_dependency import depends
-from time import sleep
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from assets.REST.directory_services import active_directory, override_nameservers
-from assets.REST.pool import dataset
 from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
 from protocols import smb_connection, smb_share
 
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client
 
@@ -311,9 +310,8 @@ def test_08_activedirectory_smb_ops(request):
         dns_timeout=15
     ) as ad:
         with dataset(
-            pool_name,
             "ad_smb",
-            options={'share_type': 'SMB'},
+            {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
                 'id': domain_users_id,
@@ -325,7 +323,7 @@ def test_08_activedirectory_smb_ops(request):
             results = POST("/service/restart/", {"service": "cifs"})
             assert results.status_code == 200, results.text
 
-            with smb_share(ds['mountpoint'], {'name': SMB_NAME}) as share:
+            with smb_share(f'/mnt/{ds}', {'name': SMB_NAME}) as share:
                 with smb_connection(
                     host=ip,
                     share=SMB_NAME,
@@ -348,11 +346,9 @@ def test_08_activedirectory_smb_ops(request):
 
                     c.rmdir('testdir')
 
-
         with dataset(
-            pool_name,
             "ad_datasets",
-            options={'share_type': 'SMB'},
+            {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
                 'id': domain_users_id,
@@ -361,7 +357,7 @@ def test_08_activedirectory_smb_ops(request):
                 'type': 'ALLOW'
             }]
         ) as ds:
-            with smb_share(ds['mountpoint'], {
+            with smb_share(f'/mnt/{ds}', {
                 'name': 'DATASETS',
                 'purpose': 'NO_PRESET',
                 'auxsmbconf': 'zfs_core:zfs_auto_create = true',
@@ -379,7 +375,7 @@ def test_08_activedirectory_smb_ops(request):
                     c.close(fd)
 
             results = POST('/filesystem/getacl/', {
-                'path': os.path.join(ds['mountpoint'], 'AD02', ADUSERNAME),
+                'path': os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME),
                 'simplified': True
             })
 
@@ -387,11 +383,9 @@ def test_08_activedirectory_smb_ops(request):
             acl = results.json()
             assert acl['trivial'] is False, str(acl)
 
-
         with dataset(
-            pool_name,
             "ad_home",
-            options={'share_type': 'SMB'},
+            {'share_type': 'SMB'},
             acl=[{
                 'tag': 'GROUP',
                 'id': domain_users_id,
@@ -403,7 +397,7 @@ def test_08_activedirectory_smb_ops(request):
             results = POST("/service/restart/", {"service": "cifs"})
             assert results.status_code == 200, results.text
 
-            with smb_share(ds['mountpoint'], {
+            with smb_share(f'/mnt/{ds}', {
                 'name': 'TEST_HOME',
                 'purpose': 'NO_PRESET',
                 'home': True,
@@ -424,7 +418,7 @@ def test_08_activedirectory_smb_ops(request):
                     c.write(fd, b'EXTERNAL_TEST')
                     c.close(fd)
 
-            file_local_path = os.path.join(ds['mountpoint'], 'AD02', ADUSERNAME, 'homes_test_file')
+            file_local_path = os.path.join(f'/mnt/{ds}', 'AD02', ADUSERNAME, 'homes_test_file')
             results = POST('/filesystem/getacl/', {
                 'path': file_local_path,
                 'simplified': True
