@@ -11,6 +11,7 @@ sys.path.append(apifolder)
 from assets.REST.pool import dataset as create_dataset
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job, make_ws_request
 from auto_config import ip, pool_name, user, password
+from middlewared.test.integration.utils import call
 
 dataset = f'{pool_name}/dataset1'
 dataset_url = dataset.replace('/', '%2F')
@@ -487,3 +488,11 @@ def test_34_multiprotocol_share_type_preset(request):
         assert ds['aclmode']['value'] == 'PASSTHROUGH'
         assert ds['casesensitivity']['value'] == 'SENSITIVE'
         assert ds['atime']['value'] == 'OFF'
+
+
+def test_35_create_ancestors(request):
+    with create_dataset(pool_name, 'foo/bar/tar', options={'share_type': 'SMB', 'create_ancestors': True}) as ds:
+        assert ds['acltype']['value'] == 'NFSV4'
+        assert ds['aclmode']['value'] == 'RESTRICTED'
+        st = call('filesystem.stat', ds['mountpoint'])
+        assert st['acl'] is True, str(st)
