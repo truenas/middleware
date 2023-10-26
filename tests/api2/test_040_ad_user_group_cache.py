@@ -11,7 +11,7 @@ from functions import PUT, POST, GET, SSH_TEST, wait_on_job
 from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ip, hostname, password, user
 from pytest_dependency import depends
-from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.utils import call
 
 try:
@@ -286,7 +286,7 @@ def test_11_check_lazy_initialization_of_users_and_groups_by_id(request):
     assert results.status_code == 200, results.text
     assert len(results.json()) == 1, results.text
 
-    with user({
+    with create_user({
         'username': 'canary',
         'full_name': 'canary',
         'group_create': True,
