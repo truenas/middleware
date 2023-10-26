@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-
-# Tests for mDNS/DNS-SD (zeroconf)
-
 import contextlib
 import os
 import random
@@ -19,7 +15,6 @@ from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.pool import dataset
 from assets.websocket.server import reboot
 from assets.websocket.service import (ensure_service_disabled,
                                       ensure_service_enabled,
@@ -29,6 +24,7 @@ from auto_config import ip, password, pool_name, user
 from functions import SSH_TEST
 from protocols import smb_share
 
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 
 digits = ''.join(random.choices(string.digits, k=4))
@@ -382,7 +378,7 @@ def test_003_mdns_smb_share(request):
     ac.find_items()
     ac.check_present(smb=False, time_machine=False)
 
-    with dataset(pool_name, dataset_name):
+    with dataset(dataset_name):
         with smb_share(SMB_PATH1, {'name': SMB_NAME1, 'comment': 'Test SMB Share'}):
             # SMB is still not started
             ac.find_items()
@@ -420,7 +416,7 @@ def test_003_mdns_smb_share(request):
                     assert props['adVF'] == '0x82', props
                     assert props['adVU'] == share1['vuid'], props
                     # Now make another time machine share
-                    with dataset(pool_name, dataset_name2):
+                    with dataset(dataset_name2):
                         with smb_share(SMB_PATH2, {'name': SMB_NAME2,
                                                    'comment': 'Multiuser TM SMB Share',
                                                    'purpose': 'ENHANCED_TIMEMACHINE'}) as shareID2:
@@ -469,7 +465,7 @@ if DO_MDNS_REBOOT_TEST:
         depends(request, ["servann_001"], scope="session")
 
         # First let's setup a time machine share
-        with dataset(pool_name, dataset_name):
+        with dataset(dataset_name):
             with smb_share(SMB_PATH1, {'name': SMB_NAME1,
                                        'comment': 'Basic TM SMB Share',
                                        'purpose': 'TIMEMACHINE'}):
