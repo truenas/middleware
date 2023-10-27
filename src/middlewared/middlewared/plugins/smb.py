@@ -504,9 +504,11 @@ class SMBService(TDBWrapConfigService):
         """
         found_sentinel = False
         while timeout >= 0 and not found_sentinel:
-            if os.path.exists(NETIF_COMPLETE_SENTINEL):
+            try:
                 os.remove(NETIF_COMPLETE_SENTINEL)
                 found_sentinel = True
+            except FileNotFoundError:
+                pass
 
             timeout -= 1
             if timeout <= 0:
@@ -517,19 +519,17 @@ class SMBService(TDBWrapConfigService):
         """
         Confirm at least one network interface is UP
         """
-        if_UP = False
-        while timeout >= 0 and not if_UP:
-            netif = await self.middleware.call('interface.query')
-            if len(netif) > 0:
-                upif = [intf['name'] for intf in netif if 'UP' in intf['state']['link_state']]
-                if len(upif) > 0:
-                    if_UP = True
-
-            timeout -= 1
-            if timeout <= 0:
-                self.logger.warning('Failed to detect any connected network interfaces.')
-            elif not if_UP:
-                await asyncio.sleep(1)
+        while timeout >= 0:
+            if any((
+                i['state']['link_state'] == 'LINK_STATE_UP' for i in await self.middleware.call('interface.query')
+            )):
+                break
+            else:
+                timeout -= 1
+                if timeout <= 0:
+                    self.logger.warning('Failed to detect any connected network interfaces.')
+                else:
+                    await asyncio.sleep(1)
 
     @private
     @job(lock="smb_configure")
