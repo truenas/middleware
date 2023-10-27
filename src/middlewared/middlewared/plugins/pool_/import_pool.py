@@ -232,15 +232,12 @@ class PoolService(Service):
             self.logger.error('Unhandled exception importing %r', vol_name, exc_info=True)
             return False
 
-        self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
         self.logger.debug('SUCCESS importing %r with guid: %r', vol_name, vol_guid)
         return True
 
     @private
     def unlock_on_boot_impl(self, vol_name):
-        zpool_info = self.middleware.call_sync(
-            'pool.dataset.get_instance_quick', vol_name, {'encryption': True}
-        )
+        zpool_info = self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
         umount_root_short_circuit = False
         if zpool_info['key_format']['parsed'] == 'passphrase':
             # passphrase encrypted zpools will _always_ fail to be unlocked at
@@ -386,7 +383,7 @@ class PoolService(Service):
             return
 
         if not root_ds['encrypted']:
-            return
+            return root_ds
 
         # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
         # unlocked, so if there are any children it has which were unencrypted - we force umount them
@@ -395,3 +392,5 @@ class PoolService(Service):
             self.logger.debug('Successfully umounted any unencrypted datasets under %r dataset', pool_name)
         except Exception:
             self.logger.error('Failed to umount any unencrypted datasets under %r dataset', pool_name, exc_info=True)
+
+        return root_ds
