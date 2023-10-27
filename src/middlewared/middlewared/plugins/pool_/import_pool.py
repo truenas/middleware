@@ -376,3 +376,11 @@ class PoolService(Service):
         })
         if not root_ds['encrypted']:
             return
+
+        # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
+        # unlocked, so if there are any children it has which were unencrypted - we force umount them
+        try:
+            self.middleware.call_sync('zfs.dataset.umount', pool_name, {'force': True})
+            self.logger.debug('Successfully umounted any unencrypted datasets under %r dataset', pool_name)
+        except Exception:
+            self.logger.error('Failed to umount any unencrypted datasets under %r dataset', pool_name, exc_info=True)
