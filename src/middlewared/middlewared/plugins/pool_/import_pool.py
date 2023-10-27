@@ -168,7 +168,7 @@ class PoolService(Service):
 
         # We want to set immutable flag on all of locked datasets
         for encrypted_ds in await self.middleware.call(
-                'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
+            'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
         ):
             encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
             if os.path.exists(encrypted_mountpoint):
