@@ -238,6 +238,13 @@ class PoolService(Service):
     @private
     def unlock_on_boot_impl(self, vol_name):
         zpool_info = self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
+        if not zpool_info:
+            self.logger.error(
+                'Unable to retrieve %r root dataset information required for unlocking any relevant encrypted datasets',
+                vol_name
+            )
+            return
+
         umount_root_short_circuit = False
         if zpool_info['key_format']['parsed'] == 'passphrase':
             # passphrase encrypted zpools will _always_ fail to be unlocked at
