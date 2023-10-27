@@ -14,6 +14,8 @@ RemainAfterExit=yes
 ExecStartPre=-midclt call etc.generate_checkpoint pre_interface_sync
 ExecStart=-midclt -t 120 call interface.sync true
 ExecStartPost=midclt call etc.generate_checkpoint interface_sync
+# Set netif complete sentinel
+ExecStartPost=touch /var/run/middleware/ix-netif-complete
 StandardOutput=null
 
 [Install]

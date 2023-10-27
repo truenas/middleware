@@ -24,10 +24,11 @@ from middlewared.service import TDBWrapConfigService, ValidationErrors, filterab
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.plugins.smb_.smbconf.reg_global_smb import LOGLEVEL_MAP
 import middlewared.sqlalchemy as sa
-from middlewared.utils import filter_list, osc, Popen, run
+from middlewared.utils import filter_list, osc, Popen, run, MIDDLEWARE_RUN_DIR
 from middlewared.utils.osc import getmnttree
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
+NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 
@@ -495,6 +496,42 @@ class SMBService(TDBWrapConfigService):
             await asyncio.sleep(1)
 
     @private
+    async def netif_wait(self, timeout=120):
+        """
+        Wait for for the ix-netif sentinel file
+        and confirm connectivity with some targeted tests.
+        All must be completed before the timeout.
+        """
+        found_sentinel = False
+        while timeout >= 0 and not found_sentinel:
+            try:
+                os.remove(NETIF_COMPLETE_SENTINEL)
+                found_sentinel = True
+            except FileNotFoundError:
+                pass
+
+            timeout -= 1
+            if timeout <= 0:
+                self.logger.warning('Failed to get netif completion sentinal.')
+            elif not found_sentinel:
+                await asyncio.sleep(1)
+
+        """
+        Confirm at least one network interface is UP
+        """
+        while timeout >= 0:
+            if any((
+                i['state']['link_state'] == 'LINK_STATE_UP' for i in await self.middleware.call('interface.query')
+            )):
+                break
+            else:
+                timeout -= 1
+                if timeout <= 0:
+                    self.logger.warning('Failed to detect any connected network interfaces.')
+                else:
+                    await asyncio.sleep(1)
+
+    @private
     @job(lock="smb_configure")
     async def configure(self, job, create_paths=True):
         """
@@ -534,6 +571,13 @@ class SMBService(TDBWrapConfigService):
             ldap_enabled = (await self.middleware.call('ldap.config'))['enable']
             if ldap_enabled:
                 await self.middleware.call('ldap.synchronize')
+
+        """
+        We cannot continue without network.
+        Wait here until we see the ix-netif completion sentinel.
+        """
+        job.set_progress(20, 'Wait for ix-netif completion.')
+        await self.netif_wait()
 
         await self.middleware.call('idmap.synchronize')
 
@@ -950,40 +994,43 @@ class SharingSMBService(SharingService):
 
         data['auxsmbconf'] = parsed_config
 
-    @accepts(Dict(
-        'sharingsmb_create',
-        Str('purpose', enum=[x.name for x in SMBSharePreset], default=SMBSharePreset.DEFAULT_SHARE.name),
-        SchemaPath('path', required=True),
-        Str('path_suffix', default=''),
-        Bool('home', default=False),
-        Str('name', max_length=80, required=True),
-        Str('comment', default=''),
-        Bool('ro', default=False),
-        Bool('browsable', default=True),
-        Bool('timemachine', default=False),
-        Int('timemachine_quota', default=0),
-        Bool('recyclebin', default=False),
-        Bool('guestok', default=False),
-        Bool('abe', default=False),
-        List('hostsallow'),
-        List('hostsdeny'),
-        Bool('aapl_name_mangling', default=False),
-        Bool('acl', default=True),
-        Bool('durablehandle', default=True),
-        Bool('shadowcopy', default=True),
-        Bool('streams', default=True),
-        Bool('fsrvp', default=False),
-        Str('auxsmbconf', max_length=None, default=''),
-        Bool('enabled', default=True),
-        Str('cluster_volname', default=''),
-        Bool('afp', default=False),
-        Dict('audit',
-            Bool('enable'),
-            List('watch_list', default=NOT_PROVIDED),
-            List('ignore_list', default=NOT_PROVIDED)
-        ),
-        register=True
-    ))
+    @accepts(
+        Dict(
+            'sharingsmb_create',
+            Str('purpose', enum=[x.name for x in SMBSharePreset], default=SMBSharePreset.DEFAULT_SHARE.name),
+            SchemaPath('path', required=True),
+            Str('path_suffix', default=''),
+            Bool('home', default=False),
+            Str('name', max_length=80, required=True),
+            Str('comment', default=''),
+            Bool('ro', default=False),
+            Bool('browsable', default=True),
+            Bool('timemachine', default=False),
+            Int('timemachine_quota', default=0),
+            Bool('recyclebin', default=False),
+            Bool('guestok', default=False),
+            Bool('abe', default=False),
+            List('hostsallow'),
+            List('hostsdeny'),
+            Bool('aapl_name_mangling', default=False),
+            Bool('acl', default=True),
+            Bool('durablehandle', default=True),
+            Bool('shadowcopy', default=True),
+            Bool('streams', default=True),
+            Bool('fsrvp', default=False),
+            Str('auxsmbconf', max_length=None, default=''),
+            Bool('enabled', default=True),
+            Str('cluster_volname', default=''),
+            Bool('afp', default=False),
+            Dict(
+                'audit',
+                Bool('enable'),
+                List('watch_list', default=NOT_PROVIDED),
+                List('ignore_list', default=NOT_PROVIDED)
+            ),
+            register=True
+        )
+    )
     async def do_create(self, data):
         """
         Create a SMB Share.
@@ -1700,14 +1747,13 @@ class SharingSMBService(SharingService):
             return
 
         home_filters = [('home', '=', True)]
-        home_result = None
 
         if old:
             home_filters.append(('id', '!=', old['id']))
 
         return await self.middleware.call(
-           'datastore.query', self._config.datastore,
-           home_filters, {'prefix': self._config.datastore_prefix}
+            'datastore.query', self._config.datastore,
+            home_filters, {'prefix': self._config.datastore_prefix}
         )
 
     @private
