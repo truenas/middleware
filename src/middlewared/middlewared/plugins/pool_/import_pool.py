@@ -4,7 +4,7 @@ import os
 import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, InstanceNotFound, job, private, Service
 
 from .utils import ZPOOL_CACHE_FILE
 
@@ -118,6 +118,11 @@ class PoolService(Service):
         else:
             pool_name = new_name
 
+        # Let's umount any datasets if root dataset of the new pool is locked and it has unencrypted datasets
+        # beneath it. This is to prevent the scenario where the root dataset is locked and the child datasets
+        # get mounted
+        await self.handle_unencrypted_datasets_on_import(pool_name)
+
         # set acl properties correctly for given top-level dataset's acltype
         ds = await self.middleware.call(
             'pool.dataset.query',
@@ -168,7 +173,7 @@ class PoolService(Service):
 
         # We want to set immutable flag on all of locked datasets
         for encrypted_ds in await self.middleware.call(
-                'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
+            'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
         ):
             encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
             if os.path.exists(encrypted_mountpoint):
@@ -232,9 +237,14 @@ class PoolService(Service):
 
     @private
     def unlock_on_boot_impl(self, vol_name):
-        zpool_info = self.middleware.call_sync(
-            'pool.dataset.get_instance_quick', vol_name, {'encryption': True}
-        )
+        zpool_info = self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
+        if not zpool_info:
+            self.logger.error(
+                'Unable to retrieve %r root dataset information required for unlocking any relevant encrypted datasets',
+                vol_name
+            )
+            return
+
         umount_root_short_circuit = False
         if zpool_info['key_format']['parsed'] == 'passphrase':
             # passphrase encrypted zpools will _always_ fail to be unlocked at
@@ -304,10 +314,11 @@ class PoolService(Service):
             # datasets where any upper path component is encrypted) (i.e. no more /mnt/zz/unencrypted/encrypted).
             # However, we still need to take into consideration the other users that manged to get themselves
             # into this scenario.
-            with contextlib.suppress(CallError):
-                self.logger.debug('Forcefully umounting %r', vol_name)
-                self.middleware.call_sync('zfs.dataset.umount', vol_name, {'force': True})
-                self.logger.debug('Successfully umounted %r', vol_name)
+            if not umount_root_short_circuit:
+                with contextlib.suppress(CallError):
+                    self.logger.debug('Forcefully umounting %r', vol_name)
+                    self.middleware.call_sync('zfs.dataset.umount', vol_name, {'force': True})
+                    self.logger.debug('Successfully umounted %r', vol_name)
 
             pool_mount = f'/mnt/{vol_name}'
             if os.path.exists(pool_mount):
@@ -368,3 +379,26 @@ class PoolService(Service):
         self.logger.debug('Calling pool.post_import')
         self.middleware.call_hook_sync('pool.post_import', None)
         self.logger.debug('Finished calling pool.post_import')
+
+    @private
+    async def handle_unencrypted_datasets_on_import(self, pool_name):
+        try:
+            root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
+                'encryption': True,
+            })
+        except InstanceNotFound:
+            # We don't really care about this case, it means that pool did not get imported for some reason
+            return
+
+        if not root_ds['encrypted']:
+            return root_ds
+
+        # If root ds is encrypted, at this point we know that root dataset has not been mounted yet and neither
+        # unlocked, so if there are any children it has which were unencrypted - we force umount them
+        try:
+            await self.middleware.call('zfs.dataset.umount', pool_name, {'force': True})
+            self.logger.debug('Successfully umounted any unencrypted datasets under %r dataset', pool_name)
+        except Exception:
+            self.logger.error('Failed to umount any unencrypted datasets under %r dataset', pool_name, exc_info=True)
+
+        return root_ds
