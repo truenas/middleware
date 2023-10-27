@@ -229,7 +229,7 @@ class Job:
     pipes: Pipes
     logs_fd: None
 
-    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb):
+    def __init__(self, middleware, method_name, serviceobj, method, args, options, pipes, on_progress_cb, credentials):
         self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
@@ -239,6 +239,7 @@ class Job:
         self.options = options
         self.pipes = pipes or Pipes(input=None, output=None)
         self.on_progress_cb = on_progress_cb
+        self.credentials = credentials
 
         self.id = None
         self.lock = None
@@ -550,6 +551,13 @@ class Job:
             'state': self.state.name,
             'time_started': self.time_started,
             'time_finished': self.time_finished,
+            'credentials': (
+                {
+                    'type': self.credentials.class_name(),
+                    'data': self.credentials.dump(),
+                } if self.credentials is not None
+                else None
+            )
         }
 
     @staticmethod
@@ -558,7 +566,7 @@ class Job:
         serviceobj = middleware._services[service_name]
         methodobj = getattr(serviceobj, method_name)
         job = Job(middleware, job_dict['method'], serviceobj, methodobj, job_dict['arguments'], methodobj._job, None,
-                  None)
+                  None, None)
         job.id = job_dict['id']
         job.description = job_dict['description']
         if logs is not None:
