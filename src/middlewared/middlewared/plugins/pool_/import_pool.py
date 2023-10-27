@@ -314,10 +314,11 @@ class PoolService(Service):
             # datasets where any upper path component is encrypted) (i.e. no more /mnt/zz/unencrypted/encrypted).
             # However, we still need to take into consideration the other users that manged to get themselves
             # into this scenario.
-            with contextlib.suppress(CallError):
-                self.logger.debug('Forcefully umounting %r', vol_name)
-                self.middleware.call_sync('zfs.dataset.umount', vol_name, {'force': True})
-                self.logger.debug('Successfully umounted %r', vol_name)
+            if not umount_root_short_circuit:
+                with contextlib.suppress(CallError):
+                    self.logger.debug('Forcefully umounting %r', vol_name)
+                    self.middleware.call_sync('zfs.dataset.umount', vol_name, {'force': True})
+                    self.logger.debug('Successfully umounted %r', vol_name)
 
             pool_mount = f'/mnt/{vol_name}'
             if os.path.exists(pool_mount):
