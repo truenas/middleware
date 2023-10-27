@@ -4,7 +4,7 @@ import os
 import subprocess
 
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, InstanceNotFound, job, private, Service
 
 from .utils import ZPOOL_CACHE_FILE
 
@@ -372,9 +372,14 @@ class PoolService(Service):
 
     @private
     async def handle_unencrypted_datasets_on_import(self, pool_name):
-        root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
-            'encryption': True,
-        })
+        try:
+            root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
+                'encryption': True,
+            })
+        except InstanceNotFound:
+            # We don't really care about this case, it means that pool did not get imported for some reason
+            return
+
         if not root_ds['encrypted']:
             return
 
