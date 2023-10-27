@@ -337,12 +337,18 @@ class DSCache(Service):
                                                         who_str, who_id, False, True)
                     entry = await self.middleware.call('idmap.synthetic_user',
                                                        ds.lower(), pwdobj)
+                    if entry is None:
+                        return None
+
                     entry['sid'] = pwdobj['sid_info']['sid']
                 else:
                     grpobj = await self.middleware.call('dscache.get_uncached_group',
                                                         who_str, who_id, True)
                     entry = await self.middleware.call('idmap.synthetic_group',
                                                        ds.lower(), grpobj)
+                    if entry is None:
+                        return None
+
                     entry['sid'] = grpobj['sid_info']['sid']
 
                 await self.insert(ds, data['idtype'], entry)
