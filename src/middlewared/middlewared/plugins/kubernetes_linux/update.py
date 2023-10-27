@@ -9,7 +9,6 @@ from middlewared.common.listen import ConfigServiceListenSingleDelegate
 from middlewared.schema import Bool, Dict, Int, IPAddr, Patch, returns, Str
 from middlewared.service import accepts, CallError, job, private, ConfigService, ValidationErrors
 
-from .k8s import ApiException, Node
 from .utils import applications_ds_name, Status
 
 
@@ -520,10 +519,9 @@ class KubernetesService(ConfigService):
             error = 'Kubernetes service is not running.'
 
         if not error:
-            try:
-                await Node.get_instance(request_kwargs={'timeout': 2})
-            except ApiException:
-                error = 'Unable to connect to kubernetes cluster'
+            node = await self.middleware.call('k8s.node.config')
+            if not node['node_configured']:
+                error = f'Unable to communicate with kubernetes ({node["error"]})'
 
         if error and raise_exception:
             raise CallError(error)
