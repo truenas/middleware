@@ -486,6 +486,11 @@ class FailoverEventsService(Service):
                     logger.warning('Failed to set cachefile property for %r', vol['name'], exc_info=True)
                 """
 
+            # If root dataset was encrypted, it would not be mounted at this point regardless of it being
+            # key/passphrase encrypted - so we make sure that nothing at this point in time is mounted beneath it
+            # if that pool has datasets which are unencrypted
+            self.run_call('pool.handle_unencrypted_datasets_on_import', vol['name'])
+
             logger.info('Successfully imported %r', vol['name'])
 
             # try to unlock the zfs datasets (if any)
