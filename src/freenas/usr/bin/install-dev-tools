@@ -27,7 +27,11 @@ PACKAGES=(
 )
 PIP_PACKAGES=()
 
-/usr/local/libexec/disable-rootfs-protection
+if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
+    # Running on SCALE
+    /usr/local/libexec/disable-rootfs-protection
+fi
+
 apt update
 apt install -y "${PACKAGES[@]}"
 if [ "${#PIP_PACKAGES[@]}" -gt 0 ]; then
