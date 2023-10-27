@@ -74,7 +74,7 @@ def generate_syslog_remote_destination(middleware, advanced_config):
 
         result += ' };\n'
         result += f'log {{ source({LOG_SOURCE}); filter({LOG_FILTER_PREFIX}{advanced_config["sysloglevel"].lower()});'
-        result += 'destination(loghost); }};\n'
+        result += 'destination(loghost); };\n'
 
     return result
 
