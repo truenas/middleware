@@ -227,6 +227,7 @@ class PoolService(Service):
             self.logger.error('Unhandled exception importing %r', vol_name, exc_info=True)
             return False
 
+        self.middleware.call_sync('pool.handle_unencrypted_datasets_on_import', vol_name)
         self.logger.debug('SUCCESS importing %r with guid: %r', vol_name, vol_guid)
         return True
 
