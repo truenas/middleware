@@ -368,3 +368,11 @@ class PoolService(Service):
         self.logger.debug('Calling pool.post_import')
         self.middleware.call_hook_sync('pool.post_import', None)
         self.logger.debug('Finished calling pool.post_import')
+
+    @private
+    async def handle_unencrypted_datasets_on_import(self, pool_name):
+        root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
+            'encryption': True,
+        })
+        if not root_ds['encrypted']:
+            return
