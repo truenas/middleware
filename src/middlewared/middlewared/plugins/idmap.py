@@ -271,6 +271,22 @@ class IdmapDomainService(TDBWrapCRUDService):
         datastore_extend = 'idmap.idmap_extend'
         cli_namespace = 'directory_service.idmap'
 
+
+    def __wbclient_ctx(self, retry=True):
+        """
+        Wrapper around setting up a temporary winbindd client context
+        If winbindd is stopped, then try to once to start it and if that
+        fails, present reason to caller.
+        """
+        try:
+            return WBClient()
+        except wbclient.WBCError as e:
+            if not retry or e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                raise e
+
+        self.middleware.call_sync('service.start', 'idmap', {'silent': False})
+        return self.__wbclient_ctx(False)
+
     @private
     async def idmap_extend(self, data):
         if data.get('idmap_backend'):
@@ -949,7 +965,8 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     async def name_to_sid(self, name):
         try:
-            entry = WBClient().name_to_uidgid_entry(name)
+            client = self.__wbclient_ctx()
+            entry = client.name_to_uidgid_entry(name)
 
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
@@ -974,7 +991,7 @@ class IdmapDomainService(TDBWrapCRUDService):
             raise CallError("List of SIDS to convert must contain at least one entry")
 
         try:
-            client = WBClient()
+            client = self.__wbclient_ctx()
             results = client.sids_to_users_and_groups(sidlist)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
@@ -1005,7 +1022,8 @@ class IdmapDomainService(TDBWrapCRUDService):
             })
 
         try:
-            client = WBClient()
+            client = self.__wbclient_ctx()
+            results = client.sids_to_users_and_groups(sidlist)
             results = client.users_and_groups_to_sids(payload)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
@@ -1027,7 +1045,7 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     def sid_to_name(self, sid):
         try:
-            client = WBClient()
+            client = self.__wbclient_ctx()
             entry = client.sid_to_uidgid_entry(sid)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
@@ -1046,7 +1064,8 @@ class IdmapDomainService(TDBWrapCRUDService):
             return {"id_type": "GROUP", "id": int(sid_str.strip(SID_LOCAL_GROUP_PREFIX))}
 
         try:
-            entry = WBClient().sid_to_uidgid_entry(sid_str)
+            client = self.__wbclient_ctx()
+            entry = client.sid_to_uidgid_entry(sid_str)
         except MatchNotFound:
             return None
 
@@ -1125,7 +1144,8 @@ class IdmapDomainService(TDBWrapCRUDService):
             'id': unixid
         }
         try:
-            entry = WBClient().uidgid_to_sid(payload)
+            client = self.__wbclient_ctx()
+            entry = client.uidgid_to_sid(payload)
         except MatchNotFound:
             is_local = self.middleware.call_sync(
                 f'{"user" if id_ == IDType.USER else "group"}.query',
