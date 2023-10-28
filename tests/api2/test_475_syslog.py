@@ -2,7 +2,7 @@ from time import sleep
 
 import pytest
 from auto_config import ip, password, user
-from middlewared.test.integration.utils import ssh
+from middlewared.test.integration.utils import call, ssh
 
 
 
@@ -100,3 +100,16 @@ def test_filter_leak(request, log_path):
     """
     results = ssh(f'grep -R "ZZZZ:" {log_path}', complete_response=True, check=False)
     assert results['result'] is False, str(results['result'])
+
+
+def test_07_check_can_set_remote_syslog(request):
+    """
+    Basic test to validate that setting a remote syslog target
+    doesn't break syslog-ng config
+    """
+    try:
+        data = call('system.advanced.update', {'syslogserver': '127.0.0.1'})
+        assert data['syslogserver'] == '127.0.0.1'
+        call('service.restart', 'syslogd', {'silent': False})
+    finally:
+        call('system.advanced.update', {'syslogserver': ''})
