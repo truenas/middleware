@@ -1,18 +1,14 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-# Location for tests into REST API of FreeNAS
+import os
+import sys
+import time
 
 import pytest
-import sys
-import os
-import json
-import time
+
+from middlewared.test.integration.assets.pool import dataset
+
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from assets.REST.directory_services import active_directory
-from assets.REST.pool import dataset
 from functions import make_ws_request
 from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from auto_config import pool_name, ip, hostname, password, user
@@ -405,8 +401,8 @@ def test_04_kerberos_nfs4(do_ad_connection):
     assert error is None, str(error)
     assert res['result'] is False
 
-    with dataset(pool_name, 'AD_NFS') as ds:
-        with nfs_share(ds['mountpoint'], options={'comment': 'KRB Test Share'}) as share:
+    with dataset('AD_NFS') as ds:
+        with nfs_share(f'/mnt/{ds}', options={'comment': 'KRB Test Share'}) as share:
             payload = {"protocols": ["NFSV3", "NFSV4"]}
             results = PUT("/nfs/", payload)
             assert results.status_code == 200, results.text

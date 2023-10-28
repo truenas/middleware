@@ -1,4 +1,5 @@
 import contextlib
+import time
 
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.utils import call, pool
@@ -54,7 +55,7 @@ def another_pool(data=None, topology=None):
 
 
 @contextlib.contextmanager
-def dataset(name, data=None, pool=pool):
+def dataset(name, data=None, pool=pool, **kwargs):
     data = data or {}
 
     dataset = f"{pool}/{name}"
@@ -62,8 +63,17 @@ def dataset(name, data=None, pool=pool):
     call("pool.dataset.create", {"name": dataset, **data})
 
     try:
+        if "acl" in kwargs or "mode" in kwargs:
+            if "acl" in kwargs:
+                call("filesystem.setacl", {'path': f"/mnt/{dataset}", "dacl": kwargs['acl']})
+            else:
+                call("filesystem.setperm", {'path': f"/mnt/{dataset}", "mode": kwargs['mode'] or "777"})
+
         yield dataset
     finally:
+        if 'delete_delay' in kwargs:
+            time.sleep(kwargs['delete_delay'])
+
         try:
             call("pool.dataset.delete", dataset, {"recursive": True})
         except InstanceNotFound:
@@ -72,11 +82,16 @@ def dataset(name, data=None, pool=pool):
 
 @contextlib.contextmanager
 def snapshot(dataset, name, **kwargs):
-    call("zfs.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
+    get = kwargs.pop("get", False)
+
+    result = call("zfs.snapshot.create", {"dataset": dataset, "name": name, **kwargs})
 
     id = f"{dataset}@{name}"
     try:
-        yield id
+        if get:
+            yield result
+        else:
+            yield id
     finally:
         try:
             call("zfs.snapshot.delete", id, {"recursive": True})
