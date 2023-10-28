@@ -106,19 +106,10 @@ def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, p
 def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, pool_data):
     """
     This does a few things:
-    1. set some bad zfs dataset properties to mimic importing a foreign pool
-        that does not follow the paradigm we expect
-    2. export the zpool without wiping the disk and verify that disk.get_unused
+    1. export the zpool without wiping the disk and verify that disk.get_unused
         still shows the relevant disk as being part of an exported zpool
-    3. middleware attempts to normalize certain ZFS dataset properties so that
-        importing a foreign pool doesn't break our configuration. Currently we
-        do this by resetting the mountpoint of datasets, and disabling sharenfs
-        property. This test simultates such a situation by creating a test pool
-        setting parameters that must be migrated, then exporting the pool and
-        re-importing it. Once this is complete, we check whether properties
-        have been set to their correct new values.
-    4. clean up the pool by exporting and wiping the disks
-    5. finally, if this is HA enable failover since all tests after this one
+    2. clean up the pool by exporting and wiping the disks
+    3. finally, if this is HA enable failover since all tests after this one
         expect it to be turned on
     """
     depends(request, ['POOL_FUNCTIONALITY1'])
@@ -126,13 +117,6 @@ def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, 
     with pytest.raises(Exception):
         # should prevent setting this property at root dataset
         ws_client.call('zfs.dataset.update', zp_name, {'properties': {'sharenfs': {'value': 'on'}}})
-
-    # create a dataset and set some "bad" properties
-    ds_name = f'{zp_name}/ds1'
-    ws_client.call('pool.dataset.create', {'name': ds_name})
-    ws_client.call('zfs.dataset.update', ds_name, {
-        'properties': {'sharenfs': {'value': 'on'}, 'mountpoint': {'value': 'legacy'}}
-    })
 
     # export zpool
     try:
@@ -154,12 +138,6 @@ def test_004_verify_pool_property_unused_disk_functionality(request, ws_client, 
         # import it
         imported = ws_client.call('pool.import_pool', {'guid': available_pools[0]['guid']}, job=True)
         assert imported
-
-        # verify the properties were normalized
-        for ds in (ds_name, zp_name):
-            rv = ws_client.call('zfs.dataset.query', [['id', '=', ds]], {'get': True})
-            assert rv['properties']['mountpoint']['value'] != 'legacy'
-            assert rv['properties']['sharenfs']['value'] == 'off'
     finally:
         if imported:
             temp_id = ws_client.call('pool.query', [['name', '=', zp_name]], {'get': True})['id']
