@@ -915,6 +915,7 @@ class SMBService(TDBWrapConfigService):
             new_sid = await self.middleware.call("smb.get_system_sid")
             await self.middleware.call("smb.set_database_sid", new_sid)
             new_config["cifs_SID"] = new_sid
+            await self.middleware.call('idmap.flush_gencache')
             await self.middleware.call("smb.synchronize_group_mappings")
             srv = (await self.middleware.call("network.configuration.config"))["service_announcement"]
             await self.middleware.call("network.configuration.toggle_announcement", srv)
