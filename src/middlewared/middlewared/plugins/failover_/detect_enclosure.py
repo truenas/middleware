@@ -22,10 +22,21 @@ class EnclosureDetectionService(Service):
     @cache
     def detect(self):
         HARDWARE = NODE = 'MANUAL'
-        product = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+        dmi = self.middleware.call_sync('system.dmidecode_info')
+        product = dmi['system-product-name']
         if not product:
             # no reason to continue since we've got no path forward
             return HARDWARE, NODE
+        elif dmi['system-manufacturer'] == 'QEMU':
+            serial = dmi['system-serial-number']
+            if not serial.startswith('ha') and not serial.endswith(('_c1', '_c2')):
+                # truenas is often installed in KVM so we need to check our specific
+                # strings in DMI and bail out early here
+                return HARDWARE, NODE
+            else:
+                HARDWARE = 'IXKVM'
+                NODE = 'A' if serial[-1] == '1' else 'B'
+                return HARDWARE, NODE
         elif product == 'BHYVE':
             # bhyve host configures a scsi_generic device that when sent an inquiry will
             # respond with a string that we use to determine the position of the node
