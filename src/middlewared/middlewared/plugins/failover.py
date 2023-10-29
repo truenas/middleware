@@ -169,6 +169,7 @@ class FailoverService(ConfigService):
           LAJOLLA2 (f-series)
           PUMA (x-series)
           BHYVE (HA VMs for CI)
+          IXKVM (HA VMs (on KVM) for CI)
           MANUAL (everything else)
         """
         return (await self.middleware.call('failover.ha_mode'))[0]
