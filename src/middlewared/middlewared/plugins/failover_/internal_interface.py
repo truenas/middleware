@@ -17,6 +17,8 @@ class InternalInterfaceService(Service):
         hardware = self.middleware.call_sync('failover.hardware')
         if hardware == 'BHYVE':
             return ['enp0s6f1']
+        elif hardware == 'IXKVM':
+            return ['enp1s0']
         elif hardware == 'ECHOSTREAM':
             # z-series
             for i in Path('/sys/class/net/').iterdir():
