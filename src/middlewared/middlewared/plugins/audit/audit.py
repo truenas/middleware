@@ -17,6 +17,7 @@ from .utils import (
     AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
 )
+from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
@@ -182,6 +183,20 @@ class AuditService(ConfigService):
         """
         results = []
         sql_filters = data['query-options']['force_sql_filters']
+
+        verrors = ValidationErrors()
+        if (select := data['query-options'].get('select')):
+            for idx, entry in enumerate(select):
+                if isinstance(entry, list):
+                    entry = entry[0]
+
+                if entry not in AUDIT_EVENT_SMB_PARAM_SET:
+                    verrors.add(
+                        f'audit.query.query-options.select.{idx}',
+                        f'{entry}: column does not exist'
+                    )
+
+        verrors.check()
 
         if sql_filters:
             filters = data['query-filters']
@@ -461,3 +476,7 @@ class AuditService(ConfigService):
             await self.middleware.call('audit.update_audit_dataset', audit_config)
         except Exception:
             self.logger.error('Failed to apply auditing dataset configuration.', exc_info=True)
+
+    @private
+    async def json_schemas(self):
+        return AUDIT_EVENT_SMB_JSON_SCHEMAS
