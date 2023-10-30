@@ -1,24 +1,9 @@
-import contextlib
-
-import sys
-import os
-sys.path.append(os.getcwd())
-
 import pytest
-from pytest_dependency import depends
+
 from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.pool import dataset
-
-
-@contextlib.contextmanager
-def iscsi_extent(data):
-    extent = call("iscsi.extent.create", data)
-
-    try:
-        yield extent
-    finally:
-        call("iscsi.extent.delete", extent["id"])
+from middlewared.test.integration.utils import call
 
 
 def test__iscsi_extent__disk_choices(request):

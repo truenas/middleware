@@ -2,7 +2,17 @@ import contextlib
 import json
 import time
 
-from middlewared.test.integration.utils import run_on_runner, RunOnRunnerException, IS_LINUX
+from middlewared.test.integration.utils import call, run_on_runner, RunOnRunnerException, IS_LINUX
+
+
+@contextlib.contextmanager
+def iscsi_extent(data):
+    extent = call("iscsi.extent.create", data)
+
+    try:
+        yield extent
+    finally:
+        call("iscsi.extent.delete", extent["id"])
 
 
 def target_login_test(portal_ip, target_name):
