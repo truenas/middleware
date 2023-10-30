@@ -360,6 +360,7 @@ class PrivilegeService(CRUDService):
     @private
     async def full_privilege(self):
         return {
+            'roles': {'FULL_ADMIN'},
             'allowlist': [{'method': '*', 'resource': '*'}],
             'web_shell': True,
         }
