@@ -1233,17 +1233,27 @@ class InterfaceService(CRUDService):
                         {'int_interface': new['name']},
                     )
 
-            link_address_update = {'int_link_address': iface['state']['link_address']}
+            link_address_update = {'link_address': iface['state']['link_address']}
             if await self.middleware.call('system.is_enterprise_ix_hardware'):
                 if await self.middleware.call('failover.node') == 'B':
-                    link_address_update = {'int_link_address_b': iface['state']['link_address']}
-
-            await self.middleware.call(
-                'datastore.update',
-                'network.interfaces',
-                config['id'],
-                link_address_update,
+                    link_address_update = {'link_address_b': iface['state']['link_address']}
+            link_address_row = await self.middleware.call(
+                'datastore.query', 'network.interface_link_address', [['interface', '=', new['name']]],
             )
+            if link_address_row:
+                await self.middleware.call(
+                    'datastore.update', 'network.interface_link_address', link_address_row[0]['id'],
+                    link_address_update,
+                )
+            else:
+                await self.middleware.call(
+                    'datastore.insert', 'network.interface_link_address', {
+                        'interface': new['name'],
+                        'link_address': None,
+                        'link_address_b': None,
+                        **link_address_update,
+                    },
+                )
 
             if iface['type'] == 'BRIDGE':
                 options = {}
