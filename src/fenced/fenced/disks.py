@@ -172,10 +172,14 @@ class Disk(object):
 
         if reservation and reservation['reservation'] >> 32 != self.fence.hostid:
             if self.nvme:
-                self.nvme.resvregister(
-                    nrkey=newkey,
-                    rrega=0,
-                )
+                try:
+                    # try traditional "register and ignore"
+                    self.nvme.resvregister(nrkey=newkey, rrega=0)
+                except OSError:
+                    # some drives fail with this request so use the
+                    # nvme specific defined spec for "replace and ignore"
+                    self.nvme.resvregister(nrkey=newkey, rrega=2)
+
                 self.nvme.resvacquire(
                     crkey=newkey,
                     prkey=reservation['reservation'],
