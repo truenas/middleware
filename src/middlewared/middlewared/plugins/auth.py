@@ -573,7 +573,10 @@ class AuthService(Service):
         if not isinstance(credentials, UserSessionManagerCredentials):
             raise CallError(f'You are logged in using {credentials.class_name()}')
 
-        return await self.middleware.call('user.get_user_obj', {'username': credentials.user['username']})
+        return {
+            **(await self.middleware.call('user.get_user_obj', {'username': credentials.user['username']})),
+            'privilege': credentials.user['privilege'],
+        }
 
     async def _attributes(self, user):
         try:
