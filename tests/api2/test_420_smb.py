@@ -410,7 +410,8 @@ def test_060_audit_log(request):
             assert new_data['audit']['ignore_list'] == ['builtin_users'], str(new_data['audit'])
 
             # Verify that being member of group in ignore list is sufficient to avoid new messages
-            assert len(do_audit_ops(s['name'])) == len(events)
+            # By default authentication attempts are always logged
+            assert len(do_audit_ops(s['name'])) == len(events + 1)
 
             new_data = call('sharing.smb.update', s['id'], {'audit': {'watch_list': ['builtin_users']}})
             assert new_data['audit']['enable'], str(new_data['audit'])
@@ -418,8 +419,9 @@ def test_060_audit_log(request):
             assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
 
             # Verify that watch_list takes precedence
+            # By default authentication attempts are always logged
             new_events = do_audit_ops(s['name'])
-            assert len(new_events) > len(events)
+            assert len(new_events) > len(events + 2)
 
             new_data = call('sharing.smb.update', s['id'], {'audit': {'enable': False}})
             assert new_data['audit']['enable'] is False, str(new_data['audit'])

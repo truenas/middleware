@@ -7,8 +7,8 @@ from middlewared.service_exception import ValidationErrors
 def generate_alert_text(auth_log):
     alert_text = {}
     for x in auth_log:
-        k = f'{x["Authentication"]["clientAccount"] or x["Authentication"]["becameAccount"]} - '
-        k += x["Authentication"]["workstation"] or x["Authentication"]["remoteAddress"]
+        k = f'{x["clientAccount"] or x["becameAccount"]} - '
+        k += x["workstation"] or x["address"]
 
         if k in alert_text:
             alert_text[k]['cnt'] += 1
@@ -16,7 +16,7 @@ def generate_alert_text(auth_log):
 
         entry = {
             "client": k,
-            "address": x["Authentication"]["remoteAddress"],
+            "address": x["address"],
             "cnt": 1,
         }
         alert_text[k] = entry
@@ -54,11 +54,20 @@ class SMBLegacyProtocolAlertSource(AlertSource):
             return
 
         now = time.time()
-        auth_log = await self.middleware.call('smb.status', 'AUTH_LOG', [
-            ["timestamp_tval.tv_sec", ">", now - 86400],
-            ["Authentication.serviceDescription", "=", "SMB"],
-        ])
-        if not auth_log:
+        if not (auth_log := await self.middleware.call('audit.query', {
+            'services': ['SMB'],
+            'query-filters': [
+                ['event', '=', 'AUTHENTICATION'],
+                ['message_timestamp', '>', now - 86400],
+                ['event_data.serviceDescription', '=', 'SMB']
+            ],
+            'query-options': {'select': [
+                ['event_data.clientAccount', 'clientAccount'],
+                ['event_data.becameAccount', 'becameAccount'],
+                ['event_data.workstation', 'workstation'],
+                'address'
+            ]}
+        })):
             return
 
         return Alert(
@@ -81,11 +90,21 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
             return
 
         now = time.time()
-        auth_log = await self.middleware.call('smb.status', 'AUTH_LOG', [
-            ["timestamp_tval.tv_sec", ">", now - 86400],
-            ["Authentication.passwordType", "=", "NTLMv1"]
-        ])
-        if not auth_log:
+        if not (auth_log := await self.middleware.call('audit.query', {
+            'services': ['SMB'],
+            'query-filters': [
+                ['event', '=', 'AUTHENTICATION'],
+                ['message_timestamp', '>', now - 86400],
+                ['event_data.serviceDescription', '=', 'SMB'],
+                ['event_data.passwordType', '=', 'NTLMv1']
+            ],
+            'query-options': {'select': [
+                ['event_data.clientAccount', 'clientAccount'],
+                ['event_data.becameAccount', 'becameAccount'],
+                ['event_data.workstation', 'workstation'],
+                'address'
+            ]}
+        })):
             return
 
         return Alert(

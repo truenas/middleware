@@ -812,7 +812,7 @@ class SMBService(TDBWrapConfigService):
 
         if new['enable_smb1']:
             if audited_shares := await self.middleware.call(
-                'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit']}
+                'sharing.smb.query', [['audit.enable', '=', True]], {'select': ['audit', 'name']}
             ):
                 verrors.add(
                     'smb_update.enable_smb1',
