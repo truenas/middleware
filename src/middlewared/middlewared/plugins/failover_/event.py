@@ -574,12 +574,15 @@ class FailoverEventsService(Service):
         self.run_call('service.restart', 'netdata')
 
         self.run_call('failover.events.start_apps_vms')
-        self.run_call('truecommand.start_truecommand_service')
         self.run_call('zettarepl.update_tasks')
 
         logger.info('Initializing alert system')
         self.run_call('alert.block_failover_alerts')
         self.run_call('alert.initialize', False)
+
+        self.run_call('api_key.load_keys')
+
+        self.run_call('truecommand.start_truecommand_service')
 
         kmip_config = self.run_call('kmip.config')
         if kmip_config and kmip_config['enabled']:
