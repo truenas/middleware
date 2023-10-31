@@ -581,6 +581,8 @@ class FailoverEventsService(Service):
         self.run_call('alert.block_failover_alerts')
         self.run_call('alert.initialize', False)
 
+        self.run_call('api_key.load_keys')
+
         kmip_config = self.run_call('kmip.config')
         if kmip_config and kmip_config['enabled']:
             logger.info('Syncing encryption keys with KMIP server')
