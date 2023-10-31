@@ -1,5 +1,7 @@
 import glob
 import os
+import pathlib
+
 import pyudev
 
 from middlewared.service import CallError, private, Service
@@ -104,22 +106,27 @@ class DiskService(Service):
         return devices
 
     @private
-    def label_to_dev(self, label, *args):
-        dev = os.path.realpath(os.path.join('/dev', label)).split('/')[-1]
-        if dev == label and os.path.exists(os.path.join('/sys/block', label)):
-            # This is to cater for a case where `label` is a complete disk
-            # instead of something like disk/by-partuuid/some-uuid-here
-            return dev
-        else:
-            return dev if dev != label.split('/')[-1] else None
+    def label_to_dev(self, label):
+        label_path = os.path.join('/dev', label)
+        if not os.path.exists(label_path):
+            return None
+
+        dev = os.path.basename(os.path.realpath(label_path))
+        if not pathlib.Path(os.path.join('/dev/', dev)).is_block_device():
+            return None
+
+        return dev
 
     @private
-    def label_to_disk(self, label, *args):
-        part_disk = self.label_to_dev(label)
-        if part_disk == label:
-            return label
+    def label_to_disk(self, label):
+        partition_or_disk = self.label_to_dev(label)
+        if partition_or_disk is None:
+            return None
+
+        if os.path.exists(os.path.join('/sys/class/block', partition_or_disk, 'partition')):
+            return self.get_disk_from_partition(partition_or_disk)
         else:
-            return self.get_disk_from_partition(part_disk) if part_disk else None
+            return partition_or_disk
 
     @private
     def get_disk_from_partition(self, part_name):
