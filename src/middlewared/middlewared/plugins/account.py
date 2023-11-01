@@ -7,6 +7,7 @@ from middlewared.utils import run, filter_list
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
+from middlewared.plugins.account_.privilege_utils import privileges_group_mapping
 from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_DEFAULT_LOW
 
 import binascii
@@ -175,6 +176,8 @@ class UserService(CRUDService):
             [], {'prefix': 'bsdgrpmember_'}
         )
 
+        group_roles = await self.middleware.call('group.query', [], {'select': ['id', 'roles']})
+
         for i in res:
             uid = i['user']['id']
             if uid in memberships:
@@ -189,6 +192,7 @@ class UserService(CRUDService):
                     'datastore.query', 'account.twofactor_user_auth', [['user_id', '!=', None]]
                 )
             }),
+            'roles_mapping': {i['id']: i['roles'] for i in group_roles}
         }
 
     @private
@@ -211,6 +215,20 @@ class UserService(CRUDService):
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
         user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
 
+        user_roles = set()
+        for g in user['groups']:
+            if not (entry := ctx['roles_mapping'].get(g)):
+                continue
+
+            user_roles |= set(entry)
+
+        user.update({
+            'local': True,
+            'id_type_both': False,
+            'nt_name': None,
+            'sid': None,
+            'roles': list(user_roles)
+        })
         return user
 
     @private
@@ -263,7 +281,6 @@ class UserService(CRUDService):
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
-        group_role_info = None
 
         if 'DS' in additional_information:
             dssearch = True
@@ -276,8 +293,6 @@ class UserService(CRUDService):
                     'nt_name': u['NT username'],
                     'sid': u['User SID'],
                 }})
-
-        group_role_info = {g['id']: g['roles'] for g in await self.middleware.call('group.query')}
 
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
@@ -294,25 +309,16 @@ class UserService(CRUDService):
             'datastore.query', self._config.datastore, [], datastore_options
         )
 
-        for entry in result:
-            entry.update({'local': True, 'id_type_both': False})
-            if username_sid:
+        if username_sid:
+            for entry in result:
                 smb_entry = username_sid.get(entry['username'], {
                     'nt_name': '',
                     'sid': '',
                 })
                 if smb_entry['sid']:
                     smb_entry['nt_name'] = smb_entry['nt_name'] or entry['username']
+
                 entry.update(smb_entry)
-            else:
-                entry.update({'nt_name': None, 'sid': None})
-
-            user_roles = []
-
-            for group_pk in entry['groups']:
-                user_roles.extend(group_role_info.get(group_pk, []))
-
-            entry['roles'] = list(set(user_roles))
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users, filters, options
@@ -1466,6 +1472,7 @@ class GroupService(CRUDService):
             'datastore.query', 'account.bsdgroupmembership', [], {'prefix': 'bsdgrpmember_'}
         )
         users = await self.middleware.call('datastore.query', 'account.bsdusers')
+        privileges = await self.middleware.call('datastore.query', 'account.privilege')
 
         # uid and gid variables here reference database ids rather than OS uid / gid
         for g in membership:
@@ -1484,12 +1491,26 @@ class GroupService(CRUDService):
             else:
                 mem[gid] = [uid]
 
-        return {"memberships": mem}
+        return {"memberships": mem, "privileges": privileges}
 
     @private
     async def group_extend(self, group, ctx):
         group['name'] = group['group']
         group['users'] = ctx['memberships'].get(group['id'], [])
+
+        privilege_mappings = privileges_group_mapping(ctx['privileges'], [group['gid']], 'local_groups')
+        if privilege_mappings['allowlist']:
+            privilege_mappings['roles'].append('HAS_ALLOW_LIST')
+            if {'method': '*', 'resource': '*'} in privilege_mappings['allowlist']:
+                privilege_mappings['roles'].append('FULL_ADMIN')
+
+        group.update({
+            'local': True,
+            'id_type_both': False,
+            'nt_name': None,
+            'sid': None,
+            'roles': privilege_mappings['roles']
+        })
         return group
 
     @private
@@ -1552,15 +1573,12 @@ class GroupService(CRUDService):
         if 'SMB' in additional_information:
             smb_groupmap = await self.middleware.call("smb.groupmap_list")
 
-        privileges = await self.middleware.call('datastore.query', 'account.privilege')
-
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
         )
 
-        for entry in result:
-            entry.update({'local': True, 'id_type_both': False})
-            if 'SMB' in additional_information:
+        if 'SMB' in additional_information:
+            for entry in result:
                 smb_data = smb_groupmap['local'].get(entry['gid'])
                 if not smb_data:
                     smb_data = smb_groupmap['local_builtins'].get(entry['gid'], {'nt_name': '', 'sid': ''})
@@ -1569,25 +1587,6 @@ class GroupService(CRUDService):
                     'nt_name': smb_data['nt_name'],
                     'sid': smb_data['sid'],
                 })
-
-            else:
-                entry.update({'nt_name': None, 'sid': None})
-
-            roles = []
-            for priv in privileges:
-                if entry['gid'] not in priv['local_groups']:
-                    continue
-
-                if priv['allowlist']:
-                    if {'method': '*', 'resource': '*'} in priv['allowlist']:
-                        # This is allow-list equivalent of FULL_ADMIN
-                        roles.append('FULL_ADMIN')
-
-                    roles.append('HAS_ALLOW_LIST')
-
-                roles.extend(priv['roles'])
-
-            entry['roles'] = list(set(roles))
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_groups, filters, options

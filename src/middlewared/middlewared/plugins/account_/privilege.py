@@ -4,6 +4,7 @@ import errno
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
+from .privilege_utils import privileges_group_mapping
 import middlewared.sqlalchemy as sa
 
 
@@ -332,10 +333,8 @@ class PrivilegeService(CRUDService):
         else:
             group_ids = set(group_ids)
 
-        return [
-            privilege for privilege in await self.middleware.call('datastore.query', 'account.privilege')
-            if set(privilege[groups_key]) & group_ids
-        ]
+        privileges = await self.middleware.call('datastore.query', 'account.privilege')
+        return privileges_group_mapping(privileges, group_ids, groups_key)['privileges']
 
     @private
     async def compose_privilege(self, privileges):
