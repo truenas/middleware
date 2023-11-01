@@ -17,11 +17,11 @@ def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> 
         if link_state:
             data[interface_name]['received_bytes'] = normalize_value(
                 safely_retrieve_dimension(netdata_metrics, f'net.{interface_name}', 'received', 0),
-                multiplier=1000,
+                multiplier=1000, divisor=8
             ) / NETDATA_UPDATE_EVERY
             data[interface_name]['sent_bytes'] = normalize_value(
                 safely_retrieve_dimension(netdata_metrics, f'net.{interface_name}', 'sent', 0),
-                multiplier=1000,
+                multiplier=1000, divisor=8
             ) / NETDATA_UPDATE_EVERY
             data[interface_name].update({
                 'received_bytes_rate': data[interface_name]['received_bytes'] / NETDATA_UPDATE_EVERY,
