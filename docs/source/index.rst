@@ -7,6 +7,7 @@ Welcome to TrueNAS developer documentation!
 
    os/index.rst
    database/index.rst
+   audit/index.rst
    middleware/index.rst
    services/index.rst
    testing/integration-tests/index.rst
