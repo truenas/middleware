@@ -617,10 +617,10 @@ def test_network_stats():
     for interface_name, metrics in get_interface_stats(NETDATA_ALL_METRICS, interfaces).items():
         assert metrics['received_bytes'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'received', 0),
-            multiplier=1000) / NETDATA_UPDATE_EVERY
+            multiplier=1000, divisor=8) / NETDATA_UPDATE_EVERY
         assert metrics['sent_bytes'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'sent', 0),
-            multiplier=1000) / NETDATA_UPDATE_EVERY
+            multiplier=1000, divisor=8) / NETDATA_UPDATE_EVERY
         assert metrics['received_bytes_rate'] == metrics['received_bytes'] / NETDATA_UPDATE_EVERY
         assert metrics['sent_bytes_rate'] == metrics['sent_bytes'] / NETDATA_UPDATE_EVERY
         assert metrics['speed'] == normalize_value(safely_retrieve_dimension(
