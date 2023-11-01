@@ -79,6 +79,10 @@ class GraphBase(metaclass=GraphMeta):
 
     def normalize_metrics(self, metrics) -> dict:
         metrics['legend'] = metrics.pop('labels')
+        if metrics['data'] and metrics['data'][-1] and all(m == 0 for m in metrics['data'][-1][1:]):
+            # we will now remove last entry of data as when end if sometimes is specified as time which does not
+            # exist in netdata database, netdata adds a last entry of 0 which we don't want to show
+            metrics['data'].pop()
         return metrics
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
@@ -144,7 +148,7 @@ class GraphBase(metaclass=GraphMeta):
     def query_parameters(self) -> dict:
         return {
             'format': 'json',
-            'options': 'flip|null2zero',
+            'options': 'flip|null2zero|natural-points',
             'points': 2999,  # max supported points are 3000 in UI, we keep 2999 because netdata accounts for index 0
             'group': 'average',
             'gtime': 0,
