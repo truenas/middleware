@@ -18,4 +18,4 @@ class InterfaceService(Service):
             # can be obtained from platform team.
             result.append('eno1')
 
-        return result
+        return result.copy()
