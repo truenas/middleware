@@ -275,7 +275,7 @@ class PrivilegeService(CRUDService):
         for privilege in await self.middleware.call(
             'datastore.query',
             'account.privilege',
-            [['builtin_name', '!=', None]],
+            [['builtin_name', '=', 'LOCAL_ADMINISTRATOR']],
         ):
             if not await self.middleware.call('group.has_password_enabled_user', privilege['local_groups'],
                                               [user['id']]):

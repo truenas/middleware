@@ -164,6 +164,7 @@ class UserService(CRUDService):
         ('add', Str('smbhash', private=True)),
         ('add', Str('nt_name', null=True)),
         ('add', Str('sid', null=True)),
+        ('add', List('roles', items=[Str('role')])),
     )
 
     @private
@@ -221,6 +222,7 @@ class UserService(CRUDService):
             'sid',
             'immutable',
             'home_create',
+            'roles',
             'twofactor_auth_configured',
         ]
 
@@ -261,6 +263,8 @@ class UserService(CRUDService):
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
+        group_role_info = None
+
         if 'DS' in additional_information:
             dssearch = True
             additional_information.remove('DS')
@@ -272,6 +276,8 @@ class UserService(CRUDService):
                     'nt_name': u['NT username'],
                     'sid': u['User SID'],
                 }})
+
+        group_role_info = {g['id']: g['roles'] for g in await self.middleware.call('group.query')}
 
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
@@ -300,6 +306,13 @@ class UserService(CRUDService):
                 entry.update(smb_entry)
             else:
                 entry.update({'nt_name': None, 'sid': None})
+
+            user_roles = []
+
+            for group_pk in entry['groups']:
+                user_roles.extend(group_role_info.get(group_pk, []))
+
+            entry['roles'] = list(set(user_roles))
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_users, filters, options
@@ -1443,6 +1456,7 @@ class GroupService(CRUDService):
         ('add', Bool('local')),
         ('add', Str('nt_name', null=True)),
         ('add', Str('sid', null=True)),
+        ('add', List('roles', items=[Str('role')])),
     )
 
     @private
@@ -1486,6 +1500,7 @@ class GroupService(CRUDService):
             'id_type_both',
             'nt_name',
             'sid',
+            'roles'
         ]
 
         for i in to_remove:
@@ -1524,6 +1539,7 @@ class GroupService(CRUDService):
         extra = options.get('extra', {})
         dssearch = extra.pop('search_dscache', False)
         additional_information = extra.get('additional_information', [])
+
         if 'DS' in additional_information:
             dssearch = True
             additional_information.remove('DS')
@@ -1535,6 +1551,8 @@ class GroupService(CRUDService):
 
         if 'SMB' in additional_information:
             smb_groupmap = await self.middleware.call("smb.groupmap_list")
+
+        privileges = await self.middleware.call('datastore.query', 'account.privilege')
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -1554,6 +1572,22 @@ class GroupService(CRUDService):
 
             else:
                 entry.update({'nt_name': None, 'sid': None})
+
+            roles = []
+            for priv in privileges:
+                if entry['gid'] not in priv['local_groups']:
+                    continue
+
+                if priv['allowlist']:
+                    if {'method': '*', 'resource': '*'} in priv['allowlist']:
+                        # This is allow-list equivalent of FULL_ADMIN
+                        roles.append('FULL_ADMIN')
+
+                    roles.append('HAS_ALLOW_LIST')
+
+                roles.extend(priv['roles'])
+
+            entry['roles'] = list(set(roles))
 
         return await self.middleware.run_in_thread(
             filter_list, result + ds_groups, filters, options
