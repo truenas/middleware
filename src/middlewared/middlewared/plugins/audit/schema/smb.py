@@ -333,7 +333,7 @@ AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
 
 AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
     AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_setattr',
+    'audit_entry_smb_set_attr',
     Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.SET_ATTR.name]),
     AUDIT_EVENT_DATA_SMB_SET_ATTR
 ))

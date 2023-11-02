@@ -344,8 +344,28 @@ def validate_svc_data(msg, svc):
     assert svc_data['tcon_id'].isdigit()
 
 
+def validate_event_data(event_data, schema):
+    event_data_keys = set(event_data.keys())
+    schema_keys = set(schema['_attrs_order_'])
+    assert event_data_keys == schema_keys
+
+
 def validate_audit_op(msg, svc):
-    for key in AUDIT_FIELDS:
+    schema = call(
+        'audit.json_schemas',
+        [['_name_', '=', f'audit_entry_smb_{msg["event"].lower()}']],
+        {
+            'select': [
+                ['_attrs_order_', 'attrs'],
+                ['properties.event_data', 'event_data']
+            ],
+        }
+    )
+
+    assert schema is not [], str(msg)
+    schema = schema[0]
+
+    for key in schema['attrs']:
         assert key in msg, str(msg)
 
     validate_svc_data(msg, svc)
@@ -362,6 +382,8 @@ def validate_audit_op(msg, svc):
         raise AssertionError(f'{msg["session"]}: malformed UUID')
 
     assert str(sess_guid) == msg['session']
+
+    validate_event_data(msg['event_data'], schema['event_data'])
 
 
 def do_audit_ops(svc):
@@ -429,7 +451,7 @@ def test_060_audit_log(request):
             assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
 
             # Verify that disabling audit prevents new messages from being written
-            assert do_audit_ops(s['name'])) == new_events
+            assert do_audit_ops(s['name']) == new_events
 
 
 @pytest.mark.parametrize('torture_test', [
