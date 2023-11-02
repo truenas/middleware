@@ -39,6 +39,7 @@ class AuditSmbEventType(AuditEnum):
     This enum contains all possible SMB audit events. Values correspond with
     `event` written to auditing SQLite database.
     """
+    AUTHENTICATION = 'AUTHENTICATION'
     CONNECT = 'CONNECT'
     DISCONNECT = 'DISCONNECT'
     CREATE = 'CREATE'
@@ -63,6 +64,33 @@ class AuditSetattrType(AuditEnum):
 """
 Below are schema class instances for `event_data` for SMB audit events.
 """
+
+
+AUDIT_EVENT_DATA_SMB_AUTHENTICATION = Dict(
+    str(AuditEventParam.EVENT_DATA),
+    Str('logonId'),
+    Int('logonType'),
+    Str('localAddress'),
+    Str('remoteAddress'),
+    Str('serviceDescription'),
+    Str('authDescription'),
+    Str('clientDomain'),
+    Str('clientAccount'),
+    Str('workstation'),
+    Str('becameAccount'),
+    Str('becameDomain'),
+    Str('becameSid'),
+    Str('mappedAccount'),
+    Str('mappedDomain'),
+    Str('netlogonComputer'),
+    Str('netlogonTrustAccount'),
+    Str('netlogonNegotiateFlags'),
+    Str('netlogonSecureChannelType'),
+    Str('netlogonTrustAccountSid'),
+    Str('passwordType'),
+    AUDIT_RESULT_NTSTATUS,
+    AUDIT_VERS,
+)
 
 
 AUDIT_EVENT_DATA_SMB_CONNECT = Dict(
@@ -239,6 +267,7 @@ base instance and then extend a copy of the generalized event with event-specifi
 `event_data` defined above.
 """
 
+
 AUDIT_EVENT_SMB_SCHEMAS = []
 
 
@@ -260,6 +289,14 @@ AUDIT_EVENT_SMB_BASE_SCHEMA = AuditSchema(
     ),
     Bool('success')
 )
+
+
+AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
+    AUDIT_EVENT_SMB_BASE_SCHEMA,
+    'audit_entry_smb_authentication',
+    Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.AUTHENTICATION.name]),
+    AUDIT_EVENT_DATA_SMB_AUTHENTICATION
+))
 
 
 AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
@@ -296,7 +333,7 @@ AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
 
 AUDIT_EVENT_SMB_SCHEMAS.append(audit_schema_from_base(
     AUDIT_EVENT_SMB_BASE_SCHEMA,
-    'audit_entry_smb_setattr',
+    'audit_entry_smb_set_attr',
     Str(AuditEventParam.EVENT.value, enum=[AuditSmbEventType.SET_ATTR.name]),
     AUDIT_EVENT_DATA_SMB_SET_ATTR
 ))

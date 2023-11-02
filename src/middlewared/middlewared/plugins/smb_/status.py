@@ -51,36 +51,18 @@ class SMBService(Service):
         might display stale data of processes that died without cleaning up
         properly. `restrict_user` specifies the limits results to the specified
         user.
+
+        This API endpoint also supports a legacy `info_level` AUTH_LOG that
+        provides AUTHENTICATION events from the SMB audit log. Support for
+        this information level will be removed in a future version.
         """
         lvl = InfoLevel[info_level]
         if lvl == InfoLevel.AUTH_LOG:
-            ret = []
-            try:
-                with open("/var/log/samba4/auth_audit.log", "r") as f:
-                    for e in f:
-                        try:
-                            entry = json.loads(e.strip())
-                        except json.JSONDecodeError:
-                            continue
-
-                        ts, extra = entry['timestamp'].split('.', 1)
-                        # add timezone info
-                        ts += extra[6:]
-                        usec = extra[:6]
-                        tv_sec = time.mktime(time.strptime(ts, "%Y-%m-%dT%H:%M:%S%z"))
-                        timestamp_tval = {
-                            "tv_sec": tv_sec,
-                            "tv_usec": int(usec)
-                        }
-                        entry['timestamp_tval'] = timestamp_tval
-                        ret.append(entry)
-
-            except FileNotFoundError:
-                self.logger.warning("SMB auth audit log does not exist "
-                                    "this is expected if users have never "
-                                    "authenticated to this server.")
-
-            return filter_list(ret, filters, options)
+            return self.middleware.call_sync('audit.query', {
+                'services': ['SMB'],
+                'query-filters': filters + [['event', '=', 'AUTHENTICATION']],
+                'query-options': options
+            })
 
         """
         Apply some optimizations for case where filter is only asking

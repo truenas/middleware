@@ -23,7 +23,7 @@ from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.schema import (
     accepts, Bool, Dict, Int, List, Patch, Ref, returns, Str, UUID
 )
-from middlewared.service import filterable_returns, job, private, ConfigService
+from middlewared.service import filterable, filterable_returns, job, private, ConfigService
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import filter_list
 from middlewared.utils.functools import cache
@@ -478,5 +478,6 @@ class AuditService(ConfigService):
             self.logger.error('Failed to apply auditing dataset configuration.', exc_info=True)
 
     @private
-    async def json_schemas(self):
-        return AUDIT_EVENT_SMB_JSON_SCHEMAS
+    @filterable
+    async def json_schemas(self, filters, options):
+        return filter_list(AUDIT_EVENT_SMB_JSON_SCHEMAS, filters, options)
