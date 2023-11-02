@@ -8,13 +8,13 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.account import unprivileged_user_client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def ds():
     with dataset("smb_crud_test") as ds:
         yield ds
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def share():
     with dataset("smb_crud_test2") as ds:
         with smb_share(f"/mnt/{ds}", "test2") as share:

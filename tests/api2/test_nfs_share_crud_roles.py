@@ -8,13 +8,13 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.account import unprivileged_user_client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def ds():
     with dataset("nfs_crud_test1") as ds:
         yield ds
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def share():
     with dataset("nfs_crud_test2") as ds:
         with nfs_share(ds) as share:
