@@ -22,6 +22,7 @@ from .utils.origin import UnixSocketOrigin, TCPIPOrigin
 from .utils.plugins import LoadPluginsMixin
 from .utils.profile import profile_wrap
 from .utils.service.call import ServiceCallMixin
+from .utils.syslog import syslog_message
 from .utils.threading import set_thread_name, IoThreadPoolExecutor
 from .utils.type import copy_function_metadata
 from .webui_auth import addr_in_allowlist, WebUIAuth
@@ -31,7 +32,7 @@ from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
-from collections import defaultdict, deque
+from collections import defaultdict
 
 import argparse
 import asyncio
@@ -42,6 +43,7 @@ import concurrent.futures.process
 import concurrent.futures.thread
 import contextlib
 from dataclasses import dataclass
+from datetime import datetime
 import errno
 import fcntl
 import functools
@@ -68,12 +70,12 @@ import urllib.parse
 import uuid
 import tracemalloc
 
+from anyio import create_connected_unix_datagram_socket
 import psutil
 from systemd.daemon import notify as systemd_notify
 
 from . import logger
 
-audit_logger = logging.getLogger('audit')
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
 
 
@@ -201,7 +203,7 @@ class Application:
                         success = False
                         raise
                 finally:
-                    self.__log_audit_message_for_method(message, methodobj, f'[{"SUCCESS" if success else "ERROR"}]')
+                    await self.__log_audit_message_for_method(message, methodobj, True, True, success)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -295,21 +297,40 @@ class Application:
             event['extra'] = kwargs
         self._send(event)
 
-    def log_audit_message(self, message):
-        credentials = (
-            self.authenticated_credentials.repr()
-            if self.authenticated_credentials
-            else '$guest'
-        )
-        origin = self.origin.repr() if self.origin else 'UNKNOWN'
+    async def log_audit_message(self, event, event_data, success):
+        message = "@cee:" + json.dumps({
+            "TNAUDIT": {
+                "aid": str(uuid.uuid4()),
+                "vers": {
+                    "major": 0,
+                    "minor": 1
+                },
+                "addr": "127.0.0.1",
+                "user": "root",
+                "sess": self.session_id,
+                "time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
+                "svc": "MIDDLEWARE",
+                "svc_data": json.dumps({
+                    "vers": {
+                        "major": 0,
+                        "minor": 1,
+                    },
+                    "origin": self.origin.repr() if self.origin else None,
+                    "credentials": {
+                        "credentials": self.authenticated_credentials.class_name(),
+                        "credentials_data": self.authenticated_credentials.dump(),
+                    } if self.authenticated_credentials else None,
+                }),
+                "event": event,
+                "event_data": json.dumps(event_data),
+                "success": success,
+            }
+        })
 
-        if len(message) > 128:
-            # Prevent malicious attempts to overflow audit log
-            message = message[:128] + f"... [{len(message) - 128} more characters]"
+        async with await create_connected_unix_datagram_socket("/dev/log") as s:
+            await s.send(syslog_message(message))
 
-        audit_logger.info(f'[{credentials}@{origin}] {message}')
-
-    def __log_audit_message_for_method(self, message, methodobj, prefix):
+    async def __log_audit_message_for_method(self, message, methodobj, authenticated, authorized, success):
         params = message.get('params') or []
 
         audit = getattr(methodobj, 'audit', None)
@@ -325,7 +346,12 @@ class Application:
                 except Exception:
                     pass
 
-            self.log_audit_message(f'{prefix} {audit}')
+            await self.log_audit_message('METHOD_CALL', {
+                'method': message['method'],
+                'description': audit,
+                'authenticated': authenticated,
+                'authorized': authorized,
+            }, success)
 
     def on_open(self):
         self.middleware.register_wsclient(self)
@@ -378,13 +404,13 @@ class Application:
                     error = True
             if not error and not hasattr(methodobj, '_no_auth_required'):
                 if not self.authenticated:
-                    self.__log_audit_message_for_method(message, methodobj, '[NOT AUTHENTICATED]')
+                    await self.__log_audit_message_for_method(message, methodobj, False, False, False)
                     self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
                     error = True
                 elif hasattr(methodobj, '_no_authz_required'):
                     pass
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
-                    self.__log_audit_message_for_method(message, methodobj, '[NOT AUTHORIZED]')
+                    await self.__log_audit_message_for_method(message, methodobj, True, False, False)
                     self.send_error(message, errno.EACCES, 'Not authorized')
                     error = True
             if not error:

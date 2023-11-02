@@ -36,7 +36,6 @@ logging.getLogger('charset_normalizer').setLevel(logging.INFO)
 
 
 LOGFILE = '/var/log/middlewared.log'
-AUDIT_LOGFILE = '/var/log/truenas_audit.log'
 ZETTAREPL_LOGFILE = '/var/log/zettarepl.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
 logging.TRACE = 6
@@ -83,8 +82,6 @@ class Logger:
                  '[%(asctime)s] %(levelname)-8s [%(threadName)s] [%(name)s] %(message)s'),
             ]:
                 self.setup_file_logger(name, filename, log_format)
-
-        self.setup_file_logger('audit', AUDIT_LOGFILE, '[%(asctime)s] %(message)s')
 
         logging.root.setLevel(getattr(logging, self.debug_level))
 

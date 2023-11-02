@@ -96,7 +96,7 @@ class SessionManager:
 
         self.middleware = None
 
-    def login(self, app, credentials):
+    async def login(self, app, credentials):
         if app.authenticated:
             self.sessions[app.session_id].credentials = credentials
             app.authenticated_credentials = credentials
@@ -113,7 +113,10 @@ class SessionManager:
 
         if not is_internal_session(session):
             self.middleware.send_event("auth.sessions", "ADDED", fields=dict(id=app.session_id, **session.dump()))
-            app.log_audit_message("[SUCCESS] Logged in")
+            await app.log_audit_message("AUTHENTICATION", {
+                "credentials": dump_credentials(credentials),
+                "error": None,
+            }, True)
 
     def logout(self, app):
         session = self.sessions.pop(app.session_id, None)
@@ -186,9 +189,6 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         return {
             "parent": dump_credentials(self.token.parent_credentials),
         }
-
-    def repr(self):
-        return f"$token:{self.token.parent_credentials.repr()}"
 
 
 def is_internal_session(session):
@@ -444,10 +444,16 @@ class AuthService(Service):
         """
         user = await self.get_login_user(username, password, otp_token)
         if user is None:
-            app.log_audit_message(f"[ERROR] Login failed (username={username!r})")
+            await app.log_audit_message("AUTHENTICATION", {
+                "credentials": {
+                    "credentials": "LOGIN_PASSWORD",
+                    "credentials_data": {"username": username},
+                },
+                "error": "Invalid username",
+            }, False)
             await asyncio.sleep(random.randint(1, 5))
         else:
-            self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
+            await self.session_manager.login(app, LoginPasswordSessionManagerCredentials(user))
             return True
 
         return False
@@ -477,10 +483,18 @@ class AuthService(Service):
         Authenticate session using API Key.
         """
         if api_key_object := await self.middleware.call('api_key.authenticate', api_key):
-            self.session_manager.login(app, ApiKeySessionManagerCredentials(api_key_object))
+            await self.session_manager.login(app, ApiKeySessionManagerCredentials(api_key_object))
             return True
 
-        app.log_audit_message("[ERROR] Login failed (invalid API key)")
+        await app.log_audit_message("AUTHENTICATION", {
+            "credentials": {
+                "credentials": "API_KEY",
+                "credentials_data": {
+                    "api_key": api_key,
+                }
+            },
+            "error": "Invalid API key",
+        }, False)
         return False
 
     @cli_private
@@ -488,20 +502,36 @@ class AuthService(Service):
     @accepts(Password('token'))
     @returns(Bool('successful_login'))
     @pass_app()
-    async def login_with_token(self, app, token):
+    async def login_with_token(self, app, token_str):
         """
         Authenticate session using token generated with `auth.generate_token`.
         """
-        token = self.token_manager.get(token, app.origin)
+        token = self.token_manager.get(token_str, app.origin)
         if token is None:
-            app.log_audit_message("[ERROR] Login failed (invalid token)")
+            await app.log_audit_message("AUTHENTICATION", {
+                "credentials": {
+                    "credentials": "TOKEN",
+                    "credentials_data": {
+                        "token": token_str,
+                    }
+                },
+                "error": "Invalid token",
+            }, False)
             return False
 
         if token.attributes:
-            app.log_audit_message("[ERROR] Login failed (token had attributes)")
+            await app.log_audit_message("AUTHENTICATION", {
+                "credentials": {
+                    "credentials": "TOKEN",
+                    "credentials_data": {
+                        "token": token.token,
+                    }
+                },
+                "error": "Token had attributes",
+            }, False)
             return None
 
-        self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
+        await self.session_manager.login(app, TokenSessionManagerCredentials(self.token_manager, token))
         token.session_ids.add(app.session_id)
         return True
 
@@ -596,7 +626,7 @@ class AuthService(Service):
             return None
 
 
-def check_permission(middleware, app):
+async def check_permission(middleware, app):
     """Authenticates connections coming from loopback and from root user."""
     origin = app.origin
     if origin is None:
@@ -604,11 +634,11 @@ def check_permission(middleware, app):
 
     if isinstance(origin, UnixSocketOrigin):
         if origin.uid == 0:
-            user = middleware.call_sync('auth.authenticate_root')
+            user = await middleware.call('auth.authenticate_root')
         else:
             try:
                 query = {
-                    'username': middleware.call_sync(
+                    'username': await middleware.call(
                         'datastore.query',
                         'account.bsdusers',
                         [['uid', '=', origin.uid]],
@@ -620,11 +650,11 @@ def check_permission(middleware, app):
                 query = {'uid': origin.uid}
                 local = False
 
-            user = middleware.call_sync('auth.authenticate_user', query, local)
+            user = await middleware.call('auth.authenticate_user', query, local)
             if user is None:
                 return
 
-        AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
+        await AuthService.session_manager.login(app, UnixSocketSessionManagerCredentials(user))
         return
 
     if isinstance(origin, TCPIPOrigin):
@@ -632,17 +662,17 @@ def check_permission(middleware, app):
             return
 
         # This is an expensive operation, but it is only performed for localhost TCP connections which are rare
-        if process := get_peer_process(origin.addr, origin.port):
+        if process := await middleware.run_in_thread(get_peer_process, origin.addr, origin.port):
             try:
-                euid = process.uids().effective
+                euid = (await middleware.run_in_thread(process.uids)).effective
             except psutil.NoSuchProcess:
                 pass
             else:
                 if euid == 0:
-                    AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
+                    await AuthService.session_manager.login(app, RootTcpSocketSessionManagerCredentials())
                     return
 
 
 def setup(middleware):
     middleware.event_register('auth.sessions', 'Notification of new and removed sessions.')
-    middleware.register_hook('core.on_connect', check_permission, sync=True)
+    middleware.register_hook('core.on_connect', check_permission)

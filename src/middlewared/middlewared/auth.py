@@ -33,9 +33,6 @@ class SessionManagerCredentials:
     def dump(self):
         return {}
 
-    def repr(self):
-        return "$unknown"
-
 
 class UserSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, user):
@@ -52,9 +49,6 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         return {
             "username": self.user["username"],
         }
-
-    def repr(self):
-        return self.user["username"]
 
 
 class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
@@ -84,13 +78,9 @@ class ApiKeySessionManagerCredentials(SessionManagerCredentials):
             }
         }
 
-    def repr(self):
-        return f"$api_key:{self.api_key.api_key['id']}"
-
 
 class TrueNasNodeSessionManagerCredentials(SessionManagerCredentials):
-    def repr(self):
-        return "$truenas_node"
+    pass
 
 
 def is_ha_connection(remote_addr, remote_port):
