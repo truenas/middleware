@@ -8,13 +8,13 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.account import unprivileged_user_client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def ds():
     with dataset("test", {"type": "VOLUME", "volsize": 1048576}) as ds:
         yield ds
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def share():
     with dataset("test2", {"type": "VOLUME", "volsize": 1048576}) as ds:
         with iscsi_extent({
