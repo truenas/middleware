@@ -10,7 +10,7 @@ from middlewared.test.integration.utils import client
 
 
 def test_create():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_events_create") as ds:
         with client() as c:
             events = []
 
@@ -27,7 +27,7 @@ def test_create():
 
 
 def test_delete():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_events_delete") as ds:
         with client() as c:
             c.call("zfs.snapshot.create", {"dataset": ds, "name": "test"})
 
@@ -46,7 +46,7 @@ def test_delete():
 
 
 def test_delete_with_dependent_clone():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_events_dependent_clone") as ds:
         with client() as c:
             c.call("zfs.snapshot.create", {"dataset": ds, "name": "test"})
             c.call("zfs.snapshot.clone", {"snapshot": f"{ds}@test", "dataset_dst": f"{ds}/clone01"})
@@ -64,7 +64,7 @@ def test_delete_with_dependent_clone():
 
 
 def test_delete_nonexistent_snapshot():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_events_nonexistent_snapshot") as ds:
         with client() as c:
             c.call("zfs.snapshot.create", {"dataset": ds, "name": "test"})
 

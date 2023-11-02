@@ -15,7 +15,7 @@ sys.path.append(apifolder)
 
 def test_rclone_config_writer_bool(request):
     #
-    with dataset("test") as ds:
+    with dataset("test_cloud_sync_config") as ds:
         with credential({
             "name": "Google Cloud Storage",
             "provider": "GOOGLE_CLOUD_STORAGE",

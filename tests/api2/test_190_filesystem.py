@@ -364,7 +364,7 @@ def test_10_acl_path_execute_validation():
 
 @pytest.fixture(scope="module")
 def file_and_directory():
-    with dataset("test") as ds:
+    with dataset("test_file_and_directory") as ds:
         ssh(f"mkdir /mnt/{ds}/test-directory")
         ssh(f"touch /mnt/{ds}/test-file")
         yield ds

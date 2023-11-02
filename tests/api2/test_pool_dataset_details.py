@@ -7,8 +7,8 @@ from middlewared.test.integration.utils import call, ssh
 
 @pytest.fixture(scope="module")
 def cloud_sync_fixture():
-    with dataset("test") as test_ds:
-        with dataset("other") as other_ds:
+    with dataset("test_pool_dataset_details") as test_ds:
+        with dataset("test_pool_dataset_details_other") as other_ds:
             with local_ftp_task({
                 "path": f"/mnt/{pool}",
             }) as task:

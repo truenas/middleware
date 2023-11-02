@@ -93,7 +93,7 @@ def test_ftp_subfolder(request, anonymous, defaultroot, has_leading_slash):
 
 @pytest.mark.parametrize("has_zvol_sibling", [True, False])
 def test_snapshot(request, has_zvol_sibling):
-    with dataset("test") as ds:
+    with dataset("test_cloudsync_snapshot") as ds:
         ssh(f"mkdir -p /mnt/{ds}/dir1/dir2")
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/dir1/dir2/blob bs=1M count=1")
 
@@ -139,7 +139,7 @@ def test_sync_onetime(request):
 
 
 def test_abort(request):
-    with dataset("test") as ds:
+    with dataset("test_cloudsync_abort") as ds:
         ssh(f"dd if=/dev/urandom of=/mnt/{ds}/blob bs=1M count=1")
 
         with local_ftp_task({
@@ -205,7 +205,7 @@ def test_create_empty_src_dirs(request, create_empty_src_dirs):
 
 
 def test_state_persist():
-    with dataset("test") as ds:
+    with dataset("test_cloudsync_state_persist") as ds:
         with local_ftp_task({
             "path": f"/mnt/{ds}",
         }) as task:
@@ -222,7 +222,7 @@ if ha:
     def test_state_failover():
         assert call("failover.status") == "MASTER"
 
-        with dataset("test") as ds:
+        with dataset("test_cloudsync_state_failover") as ds:
             with local_ftp_task({"path": f"/mnt/{ds}"}) as task:
                 call("cloudsync.sync", task["id"], job=True)
                 time.sleep(5)  # Job sending is not synchronous, allow it to propagate

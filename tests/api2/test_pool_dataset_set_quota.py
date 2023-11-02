@@ -17,7 +17,7 @@ sys.path.append(os.getcwd())
     (["GROUPOBJ", "groupobj quota on gid"]),
 ])
 def test_errors(request, id, quota_type, error):
-    with dataset("test") as ds:
+    with dataset("test_pool_dataset_setquota") as ds:
         with pytest.raises(ValidationErrors) as ve:
             call("pool.dataset.set_quota", ds, [{"quota_type": quota_type, "id": id, "quota_value": 5242880}])
 
