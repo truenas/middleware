@@ -1926,7 +1926,8 @@ async def udevd_ifnet_hook(middleware, data):
         return
 
     iface = data.get('INTERFACE')
-    if iface is None or iface.startswith(tuple(netif.CLONED_PREFIXES)):
+    ignore = netif.CLONED_PREFIXES + netif.INTERNAL_INTERFACES
+    if iface is None or iface.startswith(ignore):
         # if the udevd event for the interface doesn't have a name (doubt this happens on SCALE)
         # or if the interface startswith CLONED_PREFIXES, then we return since we only care about
         # physical interfaces that are hot-plugged into the system.

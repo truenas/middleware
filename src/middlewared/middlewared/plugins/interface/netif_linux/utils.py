@@ -1,16 +1,15 @@
-# -*- coding=utf-8 -*-
-import logging
 import subprocess
-
-logger = logging.getLogger(__name__)
 
 __all__ = ["bitmask_to_set", "INTERNAL_INTERFACES", "run"]
 
 
-INTERNAL_INTERFACES = [
+# Keep this as an immutable type since this
+# is used all over the place and we don't want
+# the contents to change
+INTERNAL_INTERFACES = (
     "wg", "lo", "tun", "tap", "docker", "veth", "kube-bridge", "kube-dummy-if", "vnet",
     "macvtap", "ix", "tailscale",
-]
+)
 
 
 def bitmask_to_set(n, enumeration):
