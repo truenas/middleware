@@ -865,7 +865,7 @@ class SMBService(TDBWrapConfigService):
         `guest` attribute is specified to select the account to be used for guest access. It defaults to "nobody".
 
         The group specified as the SMB `admin_group` will be automatically added as a foreign group member
-        of S-1-5-32-544 (builtin\admins). This will afford the group all privileges granted to a local admin.
+        of S-1-5-32-544 (builtin\\admins). This will afford the group all privileges granted to a local admin.
         Any SMB group may be selected (including AD groups).
 
         `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or
