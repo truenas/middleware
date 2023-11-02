@@ -9,9 +9,12 @@ from .vlan import VlanMixin
 from .vrrp import VrrpMixin
 from .ethernet_settings import EthernetHardwareSettings
 
-__all__ = ["Interface"]
+__all__ = ["Interface", "CLONED_PREFIXES"]
 
-CLONED_PREFIXES = ["br", "vlan", "bond"] + INTERNAL_INTERFACES
+# Keep this as an immutable type since this
+# is used all over the place and we don't want
+# the contents to change
+CLONED_PREFIXES = ("br", "vlan", "bond")
 
 
 class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
@@ -22,7 +25,10 @@ class Interface(AddressMixin, BridgeMixin, LaggMixin, VlanMixin, VrrpMixin):
         self._nd6_flags = dev.get_attr('IFLA_AF_SPEC').get_attr('AF_INET6').get_attr('IFLA_INET6_FLAGS') or 0
         self._link_state = f'LINK_STATE_{dev.get_attr("IFLA_OPERSTATE")}'
         self._link_address = dev.get_attr('IFLA_ADDRESS')
-        self._cloned = any((self.name.startswith(i) for i in CLONED_PREFIXES))
+        self._cloned = any((
+            (self.name.startswith(CLONED_PREFIXES)),
+            (self.name.startswith(INTERNAL_INTERFACES))
+        ))
         self._rxq = dev.get_attr('IFLA_NUM_RX_QUEUES') or 1
         self._txq = dev.get_attr('IFLA_NUM_TX_QUEUES') or 1
         self._bus = dev.get_attr('IFLA_PARENT_DEV_BUS_NAME')
