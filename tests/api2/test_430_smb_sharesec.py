@@ -7,7 +7,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import client
+from middlewared.test.integration.utils import call, client
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from functions import make_ws_request, wait_on_job
 from auto_config import pool_name, user, password, ip
@@ -72,6 +72,24 @@ def test_06_set_smb_acl_by_sid(request):
     assert payload['share_acl'][0]['ae_perm'] == acl_set['share_acl'][0]['ae_perm']
     assert payload['share_acl'][0]['ae_type'] == acl_set['share_acl'][0]['ae_type']
     assert acl_set['share_acl'][0]['ae_who_id']['id_type'] == 'GROUP'
+
+    b64acl = call(
+        'datastore.query', 'sharing.cifs.share',
+        [['cifs_name', '=', share_info['name']]],
+        {'get': True}
+    )['cifs_share_acl']
+
+    assert b64acl is not ""
+
+    call('smb.sharesec.synchronize_acls')
+
+    newb64acl = call(
+        'datastore.query', 'sharing.cifs.share',
+        [['cifs_name', '=', share_info['name']]],
+        {'get': True}
+    )['cifs_share_acl']
+
+    assert newb64acl == b64acl
 
 
 @pytest.mark.dependency(name="sharesec_acl_set")

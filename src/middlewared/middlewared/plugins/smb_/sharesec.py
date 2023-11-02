@@ -44,7 +44,6 @@ class ShareSec(CRUDService):
         'data_type': 'BYTES'
     }
 
-    @private
     async def fetch(self, share_name):
         return await self.middleware.call('tdb.fetch', {
             'name': LOCAL_SHARE_INFO_FILE,
@@ -52,7 +51,6 @@ class ShareSec(CRUDService):
             'tdb-options': self.tdb_options
         })
 
-    @private
     async def store(self, share_name, val):
         await self.middleware.call('tdb.store', {
             'name': LOCAL_SHARE_INFO_FILE,
@@ -61,7 +59,6 @@ class ShareSec(CRUDService):
             'tdb-options': self.tdb_options
         })
 
-    @private
     async def remove(self, share_name):
         return await self.middleware.call('tdb.remove', {
             'name': LOCAL_SHARE_INFO_FILE,
@@ -69,7 +66,6 @@ class ShareSec(CRUDService):
             'tdb-options': self.tdb_options
         })
 
-    @private
     @filterable
     async def entries(self, filters, options):
         # TDB file contains INFO/version key that we don't want to return
@@ -86,7 +82,6 @@ class ShareSec(CRUDService):
 
         return filter_list(entries, filters, options)
 
-    @private
     async def dup_share_acl(self, src, dst):
         if (await self.middleware.call('cluster.utils.is_clustered')):
             return
@@ -94,7 +89,6 @@ class ShareSec(CRUDService):
         val = await self.fetch(src)
         await self.store(dst, val)
 
-    @private
     async def parse_share_sd(self, sd, options=None):
         """
         Parses security descriptor text returned from 'sharesec'.
@@ -248,7 +242,6 @@ class ShareSec(CRUDService):
         """
         return (RE_SHAREACLENTRY.match(f'ACL:{perm_str}')).groupdict()
 
-    @private
     async def setacl(self, data, db_commit=True):
         """
         Set an ACL on `share_name`. Changes are written to samba's share_info.tdb file.
@@ -315,7 +308,6 @@ class ShareSec(CRUDService):
                 await self.store(share_name, share['share_acl'])
 
     @periodic(3600, run_on_start=False)
-    @private
     def check_share_info_tdb(self):
         if self.middleware.call_sync('cluster.utils.is_clustered'):
             return
@@ -328,7 +320,6 @@ class ShareSec(CRUDService):
 
         self.middleware.call_sync('smb.sharesec.synchronize_acls')
 
-    @accepts()
     async def synchronize_acls(self):
         """
         Synchronize the share ACL stored in the config database with Samba's running
@@ -349,11 +340,12 @@ class ShareSec(CRUDService):
                 continue
 
             if share_acl[0] != s['share_acl']:
+                self.logger.debug('Updating stored copy of SMB share ACL on %s', share_name)
                 await self.middleware.call(
                     'datastore.update',
                     'sharing.cifs_share',
                     s['id'],
-                    {'cifs_share_acl': share_acl[0]}
+                    {'cifs_share_acl': share_acl[0]['val']}
                 )
 
     @filterable
