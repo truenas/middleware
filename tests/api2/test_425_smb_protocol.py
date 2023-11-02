@@ -8,7 +8,6 @@ from time import sleep
 from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from assets.REST.pool import dataset as create_dataset
 from functions import PUT, POST, GET, DELETE, SSH_TEST
 from auto_config import (
     ip,
@@ -20,6 +19,8 @@ from pytest_dependency import depends
 from protocols import SMB, smb_connection, smb_share
 from samba import ntstatus
 from samba import NTSTATUSError
+
+from middlewared.test.integration.assets.pool import dataset as dataset_asset
 
 
 
@@ -728,7 +729,7 @@ def test_175_check_external_path(request):
 
 
 def test_176_check_dataset_auto_create(request):
-    with create_dataset(pool_name, 'smb_proto_nested_datasets', options={'share_type': 'SMB'}) as ds:
+    with dataset_asset('smb_proto_nested_datasets', {'share_type': 'SMB'}) as ds:
         with smb_share(ds['mountpoint'], {'name': 'DATASETS', 'purpose': 'PRIVATE_DATASETS'}):
             with smb_connection(
                 host=ip,
@@ -752,7 +753,7 @@ def test_176_check_dataset_auto_create(request):
 
 def test_180_create_share_multiple_dirs_deep(request):
     depends(request, ["SMB_USER_CREATED"])
-    with create_dataset(pool_name, 'nested_dirs', options={'share_type': 'SMB'}) as ds:
+    with dataset_asset( 'nested_dirs', {'share_type': 'SMB'}) as ds:
         dirs_path = f'{ds["mountpoint"]}/d1/d2/d3'
         results = SSH_TEST(f'mkdir -p {dirs_path}', user, password, ip)
         assert results['result'] is True, {"cmd": cmd, "res": results['output']}
@@ -774,7 +775,7 @@ def test_180_create_share_multiple_dirs_deep(request):
 
 def test_181_create_and_disable_share(request):
     depends(request, ["SMB_USER_CREATED"])
-    with create_dataset(pool_name, 'smb_disabled', options={'share_type': 'SMB'}) as ds:
+    with dataset_asset('smb_disabled', {'share_type': 'SMB'}) as ds:
         with smb_share(ds['mountpoint'], {'name': 'TO_DISABLE'}) as tmp_id:
             with smb_connection(
                 host=ip,
