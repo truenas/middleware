@@ -12,14 +12,14 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.parametrize("role", ["SNAPSHOT_READ", "SNAPSHOT_WRITE"])
 def test_can_read_with_read_or_write_role(role):
-    with dataset("test") as ds:
+    with dataset("test_snapshot_read") as ds:
         with snapshot(ds, "test"):
             with unprivileged_user_client([role]) as c:
                 assert len(c.call("zfs.snapshot.query", [["dataset", "=", ds]])) == 1
 
 
 def test_can_not_write_with_read_role():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_write1") as ds:
         with unprivileged_user_client(["SNAPSHOT_READ"]) as c:
             with pytest.raises(ClientException) as ve:
                 c.call("zfs.snapshot.create", {
@@ -31,7 +31,7 @@ def test_can_not_write_with_read_role():
 
 
 def test_write_with_write_role():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_write2") as ds:
         with unprivileged_user_client(["SNAPSHOT_WRITE"]) as c:
             c.call("zfs.snapshot.create", {
                 "dataset": ds,
@@ -40,14 +40,14 @@ def test_write_with_write_role():
 
 
 def test_can_delete_with_write_role_with_separate_delete():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_delete1") as ds:
         with snapshot(ds, "test") as id:
             with unprivileged_user_client(["SNAPSHOT_DELETE"]) as c:
                 c.call("zfs.snapshot.delete", id)
 
 
 def test_can_not_delete_with_write_role_with_separate_delete():
-    with dataset("test") as ds:
+    with dataset("test_snapshot_delete2") as ds:
         with snapshot(ds, "test") as id:
             with unprivileged_user_client(["SNAPSHOT_WRITE"]) as c:
                 with pytest.raises(ClientException) as ve:

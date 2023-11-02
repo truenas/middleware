@@ -19,7 +19,7 @@ def encryption_props():
 
 
 def test_delete_locked_dataset():
-    with dataset("test", encryption_props()) as ds:
+    with dataset("test_delete_locked_dataset", encryption_props()) as ds:
         call("pool.dataset.lock", ds, job=True)
 
     with pytest.raises(CallError) as ve:
@@ -29,7 +29,7 @@ def test_delete_locked_dataset():
 
 
 def test_unencrypted_dataset_within_encrypted_dataset():
-    with dataset("test", encryption_props()) as ds:
+    with dataset("test_pool_dataset_witin_encryted", encryption_props()) as ds:
         with pytest.raises(ValidationErrors) as ve:
             call("pool.dataset.create", {
                 "name": f"{ds}/child",

@@ -26,7 +26,7 @@ sys.path.append(apifolder)
     )
 ])
 def test_custom_s3(request, credential_attributes, result):
-    with dataset("test") as ds:
+    with dataset("test_cloudsync_custom_s3") as ds:
         with credential({
             "name": "S3",
             "provider": "S3",

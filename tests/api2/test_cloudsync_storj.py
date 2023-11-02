@@ -70,7 +70,7 @@ def test_storj_list_directory(storj_credential):
 
 def test_storj_sync(request, storj_credential):
 
-    with dataset("test") as ds:
+    with dataset("test_storj_sync") as ds:
         with task({
             "direction": "PULL",
             "transfer_mode": "COPY",

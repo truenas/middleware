@@ -5,13 +5,13 @@ from middlewared.test.integration.utils import call
 
 
 def test_normal_snapshot():
-    with dataset("test") as ds:
+    with dataset("test_normal_hold") as ds:
         with snapshot(ds, "test") as id:
             assert call("zfs.snapshot.get_instance", id, {"extra": {"holds": True}})["holds"] == {}
 
 
 def test_held_snapshot():
-    with dataset("test") as ds:
+    with dataset("test_held_snapshot") as ds:
         with snapshot(ds, "test") as id:
             call("zfs.snapshot.hold", id)
 
@@ -21,8 +21,8 @@ def test_held_snapshot():
 
 
 def test_held_snapshot_tree():
-    with dataset("test") as ds:
-        with dataset("test/child") as ds2:
+    with dataset("test_snapshot_tree") as ds:
+        with dataset("test_snapshot_tree/child") as ds2:
             with snapshot(ds, "test", recursive=True) as id:
                 id2 = f"{ds2}@test"
 
