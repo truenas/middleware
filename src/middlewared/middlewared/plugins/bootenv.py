@@ -198,7 +198,7 @@ class BootEnvService(CRUDService):
     @accepts(Dict(
         'bootenv_create',
         Str('name', required=True),
-        Str('source'),
+        Str('source', required=True),
     ))
     @returns(Str('bootenv_name'))
     async def do_create(self, data):
@@ -215,13 +215,11 @@ class BootEnvService(CRUDService):
         verrors.check()
 
         args = [self.BE_TOOL, 'create']
-        source = data.get('source')
-        if source:
-            args += [
-                '-r', '-e', os.path.join(
-                    await self.middleware.call('boot.pool_name'), 'ROOT', source
-                ) if osc.IS_LINUX else source
-            ]
+        args += [
+            '-r', '-e', os.path.join(
+                await self.middleware.call('boot.pool_name'), 'ROOT', data['source']
+            )
+        ]
         args.append(data['name'])
         try:
             await run(args, encoding='utf8', check=True)
