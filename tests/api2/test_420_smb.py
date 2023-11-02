@@ -378,7 +378,7 @@ def do_audit_ops(svc):
         c.close(fd, True)
 
     sleep(AUDIT_WAIT)
-    return call('auditbackend.query', 'SMB')
+    return call('auditbackend.query', 'SMB', [['event', '!=', 'AUTHENTICATION']])
 
 
 def test_060_audit_log(request):
@@ -411,7 +411,7 @@ def test_060_audit_log(request):
 
             # Verify that being member of group in ignore list is sufficient to avoid new messages
             # By default authentication attempts are always logged
-            assert len(do_audit_ops(s['name'])) == len(events + 1)
+            assert do_audit_ops(s['name']) == events
 
             new_data = call('sharing.smb.update', s['id'], {'audit': {'watch_list': ['builtin_users']}})
             assert new_data['audit']['enable'], str(new_data['audit'])
@@ -421,7 +421,7 @@ def test_060_audit_log(request):
             # Verify that watch_list takes precedence
             # By default authentication attempts are always logged
             new_events = do_audit_ops(s['name'])
-            assert len(new_events) > len(events + 2)
+            assert len(new_events) > len(events)
 
             new_data = call('sharing.smb.update', s['id'], {'audit': {'enable': False}})
             assert new_data['audit']['enable'] is False, str(new_data['audit'])
@@ -429,7 +429,7 @@ def test_060_audit_log(request):
             assert new_data['audit']['watch_list'] == ['builtin_users'], str(new_data['audit'])
 
             # Verify that disabling audit prevents new messages from being written
-            assert len(do_audit_ops(s['name'])) == len(new_events)
+            assert do_audit_ops(s['name'])) == new_events
 
 
 @pytest.mark.parametrize('torture_test', [
