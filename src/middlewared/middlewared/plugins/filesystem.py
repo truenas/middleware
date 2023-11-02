@@ -28,7 +28,7 @@ from middlewared.plugins.zfs_.utils import ZFSCTL
 class FilesystemService(Service):
 
     class Config:
-        cli_namespace = 'storage.filesystem'
+        cli_private = True
 
     @accepts(Str('path'))
     @returns(Bool())
