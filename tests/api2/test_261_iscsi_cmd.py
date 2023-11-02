@@ -448,7 +448,7 @@ def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
     If this version of pyscsi(/cython-iscsi) does not support CHECK CONDITION
     then just swallow the condition by issuing another TEST UNIT READY.
     """
-    assert type(check_type) == CheckType, f"Parameter '{check_type}' is not a CheckType"
+    assert check_type in CheckType, f"Parameter '{check_type}' is not a CheckType"
     if pyscsi_supports_check_condition:
         with pytest.raises(Exception) as excinfo:
             s.testunitready()
@@ -868,7 +868,7 @@ def test_07_report_luns(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset( dataset_name):
+                with dataset(dataset_name):
                     # LUN 0 (100 MB file extent)
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
@@ -2525,7 +2525,7 @@ def test_29_multiple_extents():
         portal_id = config['portal']['id']
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
-            with dataset( dataset_name):
+            with dataset(dataset_name):
                 with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
                     with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
