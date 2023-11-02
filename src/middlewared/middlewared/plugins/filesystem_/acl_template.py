@@ -24,10 +24,10 @@ class ACLTempateModel(sa.Model):
 class ACLTemplateService(CRUDService):
 
     class Config:
-        cli_namespace = 'filesystem.acltemplate'
         datastore = 'filesystem.acltemplate'
         datastore_prefix = 'acltemplate_'
         namespace = 'filesystem.acltemplate'
+        cli_private = True
 
     ENTRY = Patch(
         'acltemplate_create', 'acltemplate_entry',
