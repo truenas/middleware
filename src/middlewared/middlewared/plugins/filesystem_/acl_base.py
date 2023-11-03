@@ -248,6 +248,7 @@ class ACLBase(ServicePartBase):
                 'nfs41_flags',
                 Bool('autoinherit', default=False),
                 Bool('protected', default=False),
+                Bool('defaulted', default=False),
             ),
             Str('acltype', enum=[x.name for x in ACLType], null=True),
             Dict(

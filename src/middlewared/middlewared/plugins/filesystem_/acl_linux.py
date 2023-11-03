@@ -312,6 +312,7 @@ class FilesystemService(Service, ACLBase):
         na41flags = output.pop('nfs41_flags')
         output['nfs41_flags'] = {
             "protected": na41flags['PROTECTED'],
+            "defaulted": na41flags['DEFAULTED'],
             "autoinherit": na41flags['AUTOINHERIT']
         }
         output['acltype'] = 'NFS4'
