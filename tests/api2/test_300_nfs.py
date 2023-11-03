@@ -1088,12 +1088,14 @@ def test_42_check_nfs_client_status(request):
 def test_43_check_nfsv4_acl_support(request):
     """
     This test validates reading and setting NFSv4 ACLs through an NFSv4
-    mount in the following manner:
+    mount in the following manner for NFSv4.2, NFSv4.1 & NFSv4.0:
     1) Create and locally mount an NFSv4 share on the TrueNAS server
     2) Iterate through all possible permissions options and set them
        via an NFS client, read back through NFS client, and read resulting
        ACL through the filesystem API.
-    3) Repeate same process for each of the supported flags.
+    3) Repeat same process for each of the supported ACE flags.
+    4) For NFSv4.1 or NFSv4.2, repeat same process for each of the
+       supported acl_flags.
     """
     acl_nfs_path = f'/mnt/{pool_name}/test_nfs4_acl'
     test_perms = {
@@ -1119,57 +1121,82 @@ def test_43_check_nfsv4_acl_support(request):
         "NO_PROPAGATE_INHERIT": False,
         "INHERITED": False
     }
-    theacl = [
-        {"tag": "owner@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "group@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "everyone@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "USER", "id": 65534, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "GROUP", "id": 666, "perms": test_perms.copy(), "flags": test_flags.copy(), "type": "ALLOW"},
-    ]
-    with nfs_dataset("test_nfs4_acl", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}, theacl):
-        with nfs_share(acl_nfs_path):
-            with SSH_NFS(ip, acl_nfs_path, vers=4, user=user, password=password, ip=ip) as n:
-                nfsacl = n.getacl(".")
-                for idx, ace in enumerate(nfsacl):
-                    assert ace == theacl[idx], str(ace)
-
-                for perm in test_perms.keys():
-                    if perm == 'SYNCHRONIZE':
-                        # break in SYNCHRONIZE because Linux tool limitation
-                        break
-
-                    theacl[4]['perms'][perm] = False
-                    n.setacl(".", theacl)
+    for (version, test_acl_flag) in [(4, True), (4.1, True), (4.0, False)]:
+        theacl = [
+            {"tag": "owner@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "group@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "everyone@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "USER", "id": 65534, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "GROUP", "id": 666, "perms": test_perms.copy(), "flags": test_flags.copy(), "type": "ALLOW"},
+        ]
+        with nfs_dataset("test_nfs4_acl", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}, theacl):
+            with nfs_share(acl_nfs_path):
+                with SSH_NFS(ip, acl_nfs_path, vers=version, user=user, password=password, ip=ip) as n:
                     nfsacl = n.getacl(".")
                     for idx, ace in enumerate(nfsacl):
                         assert ace == theacl[idx], str(ace)
 
-                    payload = {
-                        'path': acl_nfs_path,
-                        'simplified': False
-                    }
-                    result = POST('/filesystem/getacl/', payload)
-                    assert result.status_code == 200, result.text
+                    for perm in test_perms.keys():
+                        if perm == 'SYNCHRONIZE':
+                            # break in SYNCHRONIZE because Linux tool limitation
+                            break
 
-                    for idx, ace in enumerate(result.json()['acl']):
-                        assert ace == nfsacl[idx], str(ace)
+                        theacl[4]['perms'][perm] = False
+                        n.setacl(".", theacl)
+                        nfsacl = n.getacl(".")
+                        for idx, ace in enumerate(nfsacl):
+                            assert ace == theacl[idx], str(ace)
 
-                for flag in ("INHERIT_ONLY", "NO_PROPAGATE_INHERIT"):
-                    theacl[4]['flags'][flag] = True
-                    n.setacl(".", theacl)
-                    nfsacl = n.getacl(".")
-                    for idx, ace in enumerate(nfsacl):
-                        assert ace == theacl[idx], str(ace)
+                        payload = {
+                            'path': acl_nfs_path,
+                            'simplified': False
+                        }
+                        result = POST('/filesystem/getacl/', payload)
+                        assert result.status_code == 200, result.text
 
-                    payload = {
-                        'path': acl_nfs_path,
-                        'simplified': False
-                    }
-                    result = POST('/filesystem/getacl/', payload)
-                    assert result.status_code == 200, result.text
+                        for idx, ace in enumerate(result.json()['acl']):
+                            assert ace == nfsacl[idx], str(ace)
 
-                    for idx, ace in enumerate(result.json()['acl']):
-                        assert ace == nfsacl[idx], str(ace)
+                    for flag in ("INHERIT_ONLY", "NO_PROPAGATE_INHERIT"):
+                        theacl[4]['flags'][flag] = True
+                        n.setacl(".", theacl)
+                        nfsacl = n.getacl(".")
+                        for idx, ace in enumerate(nfsacl):
+                            assert ace == theacl[idx], str(ace)
+
+                        payload = {
+                            'path': acl_nfs_path,
+                            'simplified': False
+                        }
+                        result = POST('/filesystem/getacl/', payload)
+                        assert result.status_code == 200, result.text
+
+                        for idx, ace in enumerate(result.json()['acl']):
+                            assert ace == nfsacl[idx], str(ace)
+                    if test_acl_flag:
+                        assert 'none' == n.getaclflag(".")
+                        for acl_flag in ['auto-inherit', 'protected', 'defaulted']:
+                            n.setaclflag(".", acl_flag)
+                            assert acl_flag == n.getaclflag(".")
+                            payload = {
+                                'path': acl_nfs_path,
+                                'simplified': False
+                            }
+                            result = POST('/filesystem/getacl/', payload)
+                            assert result.status_code == 200, result.text
+                            # Normalize the flag_is_set name for comparision to plugin equivalent
+                            # (just remove the '-' from auto-inherit)
+                            if acl_flag == 'auto-inherit':
+                                flag_is_set = 'autoinherit'
+                            else:
+                                flag_is_set = acl_flag
+                            # Now ensure that only the expected flag is set
+                            nfs41_flags = result.json()['nfs41_flags']
+                            for flag in ['autoinherit', 'protected', 'defaulted']:
+                                if flag == flag_is_set:
+                                    assert nfs41_flags[flag], nfs41_flags
+                                else:
+                                    assert not nfs41_flags[flag], nfs41_flags
 
 
 def test_44_check_nfs_xattr_support(request):
