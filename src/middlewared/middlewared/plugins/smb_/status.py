@@ -30,12 +30,13 @@ class SMBService(Service):
         Str('info_level', enum=[x.name for x in InfoLevel], default=InfoLevel.ALL.name),
         Ref('query-filters'),
         Ref('query-options'),
-        Dict('status_options',
-             Bool('verbose', default=True),
-             Bool('fast', default=False),
-             Str('restrict_user', default=''),
-             Str('restrict_session', default=''),
-             )
+        Dict(
+            'status_options',
+            Bool('verbose', default=True),
+            Bool('fast', default=False),
+            Str('restrict_user', default=''),
+            Str('restrict_session', default=''),
+        ), roles=['SHARING_SMB_WRITE']
     )
     def status(self, info_level, filters, options, status_options):
         """
@@ -127,7 +128,7 @@ class SMBService(Service):
 
         return filter_list(to_filter, filters, options)
 
-    @accepts()
+    @accepts(roles=['SHARING_SMB_READ'])
     def client_count(self):
         """
         Return currently connected clients count.

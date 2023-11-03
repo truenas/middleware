@@ -1898,7 +1898,7 @@ class SharingSMBService(SharingService):
             ),
         ], default=[{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}]),
         register=True
-    ))
+    ), roles=['SHARING_SMB_WRITE'])
     @returns(Ref('smb_share_acl'))
     async def setacl(self, data):
         """
@@ -1980,7 +1980,7 @@ class SharingSMBService(SharingService):
             })
         return await self.getacl({'share_name': data['share_name']})
 
-    @accepts(Dict('smb_getacl', Str('share_name', required=True)))
+    @accepts(Dict('smb_getacl', Str('share_name', required=True)), roles=['SHARING_SMB_READ'])
     @returns(Ref('smb_share_acl'))
     async def getacl(self, data):
         verrors = ValidationErrors()
