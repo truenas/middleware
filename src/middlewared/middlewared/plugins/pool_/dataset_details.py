@@ -12,7 +12,7 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @accepts()
+    @accepts(roles=['DATASET_READ', 'READONLY'])
     @returns(List(
         'dataset_details',
         example=[{

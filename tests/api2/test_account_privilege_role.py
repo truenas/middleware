@@ -75,6 +75,11 @@ def test_read_role_can_call_method(role, method, params):
     ("user.query", []),
     ("user.shell_choices", []),
     ("auth.me", []),
+    ("filesystem.listdir", ["/"]),
+    ("filesystem.stat", ["/"]),
+    ("filesystem.getacl", ["/"]),
+    ("filesystem.acltemplate.by_path", [{"path": "/"}]),
+    ("pool.dataset.details", []),
 ])
 def test_readonly_can_call_method(method, params):
     with unprivileged_user_client(["READONLY"]) as c:
@@ -85,5 +90,11 @@ def test_readonly_can_not_call_method():
     with unprivileged_user_client(["READONLY"]) as c:
         with pytest.raises(ClientException) as ve:
             c.call("user.create")
+
+        assert ve.value.errno == errno.EACCES
+
+        with pytest.raises(ClientException) as ve:
+            # fails with EPERM if API access granted
+            c.call("filesystem.mkdir", "/foo")
 
         assert ve.value.errno == errno.EACCES
