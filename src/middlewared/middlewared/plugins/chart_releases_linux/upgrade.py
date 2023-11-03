@@ -285,6 +285,7 @@ class ChartReleaseService(Service):
                 **get_action_context(release_name),
                 'operation': 'UPGRADE',
                 'isUpgrade': True,
+                'isStopped': release_orig['status'] == 'STOPPED',
                 'upgradeMetadata': {
                     'oldChartVersion': release['chart_metadata']['version'],
                     'newChartVersion': catalog_item['version'],
