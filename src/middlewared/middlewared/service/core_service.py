@@ -339,6 +339,7 @@ class CoreService(Service):
 
                 method_name = f'{name}.{attr}'
                 no_auth_required = hasattr(method, '_no_auth_required')
+                no_authz_required = hasattr(method, '_no_authz_required')
 
                 # Skip methods that are not allowed for the currently authenticated credentials
                 if app is not None:
@@ -346,7 +347,7 @@ class CoreService(Service):
                         if not app.authenticated_credentials:
                             continue
 
-                        if not app.authenticated_credentials.authorize('CALL', method_name):
+                        if not no_authz_required and not app.authenticated_credentials.authorize('CALL', method_name):
                             continue
 
                 examples = defaultdict(list)

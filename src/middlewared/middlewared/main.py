@@ -345,6 +345,8 @@ class Application:
                 if not self.authenticated:
                     self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
                     error = True
+                elif hasattr(methodobj, '_no_authz_required'):
+                    pass
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.send_error(message, errno.EACCES, 'Not authorized')
                     error = True

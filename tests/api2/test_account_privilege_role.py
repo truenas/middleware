@@ -74,6 +74,7 @@ def test_read_role_can_call_method(role, method, params):
     ("user.get_instance", [1]),
     ("user.query", []),
     ("user.shell_choices", []),
+    ("auth.me", []),
 ])
 def test_readonly_can_call_method(method, params):
     with unprivileged_user_client(["READONLY"]) as c:

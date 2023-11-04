@@ -170,6 +170,12 @@ def no_auth_required(fn):
     return fn
 
 
+def no_authz_required(fn):
+    """Authorization not required to use the given method."""
+    fn._no_authz_required = True
+    return fn
+
+
 def pass_app(*, require=False, rest=False):
     """Pass the application instance as parameter to the method."""
     def wrapper(fn):

@@ -13,7 +13,7 @@ from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCrede
                               TrueNasNodeSessionManagerCredentials)
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, Patch, returns, Str
 from middlewared.service import (
-    Service, filterable, filterable_returns, filter_list, no_auth_required,
+    Service, filterable, filterable_returns, filter_list, no_auth_required, no_authz_required,
     pass_app, private, cli_private, CallError,
 )
 from middlewared.service_exception import MatchNotFound
@@ -516,6 +516,7 @@ class AuthService(Service):
         self.session_manager.logout(app)
         return True
 
+    @no_authz_required
     @accepts()
     @returns(
         Patch(
