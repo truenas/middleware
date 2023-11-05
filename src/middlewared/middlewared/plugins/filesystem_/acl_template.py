@@ -65,7 +65,7 @@ class ACLTemplateService(CRUDService):
         Str("comment"),
         OROperator(Ref('nfs4_acl'), Ref('posix1e_acl'), name='acl', required=True),
         register=True
-    ))
+    ), roles=['FILESYSTEM_ATTRS_WRITE'])
     async def do_create(self, data):
         """
         Create a new filesystem ACL template.
@@ -94,7 +94,8 @@ class ACLTemplateService(CRUDService):
             'acltemplate_create',
             'acltemplate_update',
             ('attr', {'update': True})
-        )
+        ),
+        roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_update(self, id_, data):
         """
@@ -266,8 +267,8 @@ class ACLTemplateService(CRUDService):
             Bool("canonicalize", default=False),
             Bool("ensure_builtins", default=False),
             Bool("resolve_names", default=False),
-        )
-    ))
+        ),
+    ), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(List(
         'templates',
         items=[Ref('acltemplate_entry')]

@@ -30,7 +30,7 @@ class FilesystemService(Service):
     class Config:
         cli_private = True
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(Bool())
     def is_immutable(self, path):
         """
@@ -67,7 +67,7 @@ class FilesystemService(Service):
     def set_dosmode(self, data):
         return dosmode.set_dosflags(data['path'], data['dosmode'])
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(Ref('dosmode'))
     def get_dosmode(self, path):
         return dosmode.get_dosflags(path)
@@ -129,7 +129,7 @@ class FilesystemService(Service):
         mntinfo = getmntinfo()
         return filter_list(list(mntinfo.values()), filters, options)
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), roles=['FILESYSTEM_DATA_WRITE'])
     @returns(Ref('path_entry'))
     def mkdir(self, path):
         """
@@ -214,7 +214,12 @@ class FilesystemService(Service):
 
         return out
 
-    @accepts(Str('path', required=True), Ref('query-filters'), Ref('query-options'))
+    @accepts(
+        Str('path', required=True),
+        Ref('query-filters'),
+        Ref('query-options'),
+        roles=['FILESYSTEM_ATTRS_READ']
+    )
     @filterable_returns(Dict(
         'path_entry',
         Str('name', required=True),
@@ -326,7 +331,7 @@ class FilesystemService(Service):
 
         return filter_list(rv, filters=filters or [], options=options or {})
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(Dict(
         'path_stats',
         Str('realpath', required=True),
@@ -483,7 +488,7 @@ class FilesystemService(Service):
             os.chmod(path, mode)
         return True
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(Dict(
         'path_statfs',
         List('flags', required=True),
@@ -574,7 +579,7 @@ class FilesystemService(Service):
             result[f'{k}_str'] = str(result[k])
         return result
 
-    @accepts(Str('path'))
+    @accepts(Str('path'), roles=['FILESYSTEM_ATTRS_READ'])
     @returns(Bool('paths_acl_is_trivial'))
     def acl_is_trivial(self, path):
         """

@@ -17,8 +17,15 @@ class Role:
 
 
 ROLES = {
+    'FILESYSTEM_ATTRS_READ': Role(),
+    'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
+    'FILESYSTEM_DATA_READ': Role(),
+    'FILESYSTEM_DATA_WRITE': Role(includes=['FILESYSTEM_DATA_READ']),
+    'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
+                                              'FILESYSTEM_DATA_WRITE']),
+
     'FULL_ADMIN': Role(full_admin=True),
-    'READONLY': Role(),
+    'READONLY': Role(includes=['FILESYSTEM_READ_ATTRS']),
 
     'SHARING_ISCSI_EXTENT_READ': Role(),
     'SHARING_ISCSI_EXTENT_WRITE': Role(includes=['SHARING_ISCSI_EXTENT_READ']),
@@ -55,8 +62,10 @@ ROLES = {
                                           'REPLICATION_TASK_WRITE',
                                           'SNAPSHOT_TASK_WRITE',
                                           'SNAPSHOT_WRITE']),
+
     'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
-                                      'SHARING_WRITE'])
+                                      'SHARING_WRITE',
+                                      'FILESYSTEM_ATTRS_WRITE'])
 }
 
 

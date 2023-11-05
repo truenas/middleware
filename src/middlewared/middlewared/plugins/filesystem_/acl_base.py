@@ -180,7 +180,7 @@ class ACLBase(ServicePartBase):
                 Bool('traverse', default=False),
                 Bool('canonicalize', default=True)
             )
-        )
+        ), roles=['FILESYSTEM_ATTRS_WRITE']
     )
     @returns()
     @job(lock="perm_change")
@@ -224,6 +224,7 @@ class ACLBase(ServicePartBase):
         Str('path'),
         Bool('simplified', default=True),
         Bool('resolve_ids', default=False),
+        roles=['FILESYSTEM_ATTRS_READ']
     )
     @returns(Dict(
         'truenas_acl',
@@ -281,7 +282,8 @@ class ACLBase(ServicePartBase):
                 Bool('recursive', default=False),
                 Bool('traverse', default=False)
             )
-        )
+        ),
+        roles=['FILESYSTEM_ATTRS_WRITE']
     )
     @returns()
     @job(lock="perm_change")
@@ -313,7 +315,8 @@ class ACLBase(ServicePartBase):
                 Bool('recursive', default=False),
                 Bool('traverse', default=False),
             )
-        )
+        ),
+        roles=['FILESYSTEM_ATTRS_WRITE']
     )
     @returns()
     @job(lock="perm_change")
@@ -386,7 +389,7 @@ class ACLBase(ServicePartBase):
             'options',
             Bool('force', default=False),
         )
-    ))
+    ), roles=['FILESYSTEM_ATTRS_WRITE'])
     @job()
     def add_to_acl(self, job, data):
         """
