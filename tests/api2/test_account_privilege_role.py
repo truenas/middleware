@@ -98,3 +98,11 @@ def test_readonly_can_not_call_method():
             c.call("filesystem.mkdir", "/foo")
 
         assert ve.value.errno == errno.EACCES
+
+
+def test_limited_user_can_set_own_attributes():
+    with unprivileged_user_client(["READONLY"]) as c:
+        c.call("auth.set_attribute", "foo", "bar")
+        attrs = c.call("auth.me")["attributes"]
+        assert "foo" in attrs
+        assert attrs["foo"] == "bar"
