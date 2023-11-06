@@ -25,7 +25,7 @@ ROLES = {
                                               'FILESYSTEM_DATA_WRITE']),
 
     'FULL_ADMIN': Role(full_admin=True),
-    'READONLY': Role(includes=['FILESYSTEM_READ_ATTRS']),
+    'READONLY': Role(includes=['FILESYSTEM_ATTRS_READ']),
 
     'SHARING_ISCSI_EXTENT_READ': Role(),
     'SHARING_ISCSI_EXTENT_WRITE': Role(includes=['SHARING_ISCSI_EXTENT_READ']),
