@@ -33,12 +33,12 @@ import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService, SessionManagerCredentials
 from middlewared.plugins.config import FREENAS_DATABASE
 from middlewared.plugins.datastore.connection import DatastoreService
+from middlewared.plugins.update_.utils import can_update
 from middlewared.utils.contextlib import asyncnullcontext
 
 BUFSIZE = 256
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
-TRUENAS_VERS = re.compile(r'\d*\.?\d+')
 
 logger = logging.getLogger('failover')
 
@@ -1082,25 +1082,16 @@ class FailoverService(ConfigService):
             self.middleware.call_sync('keyvalue.set', 'HA_UPGRADE', False)
             return False
 
-        local_bootenv = self.middleware.call_sync(
-            'bootenv.query', [('active', 'rin', 'N')])
+        if not self.middleware.call_sync('failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]]):
+            raise CallError('Remote controller must reboot to activate pending boot environment')
 
-        remote_bootenv = self.middleware.call_sync(
-            'failover.call_remote', 'bootenv.query', [[('active', '=', 'NR')]])
-
-        if not local_bootenv or not remote_bootenv:
-            raise CallError('Unable to determine installed version of software')
-
-        loc_findall = TRUENAS_VERS.findall(local_bootenv[0]['id'])
-        rem_findall = TRUENAS_VERS.findall(remote_bootenv[0]['id'])
-
-        loc_vers = tuple(float(i) for i in loc_findall)
-        rem_vers = tuple(float(i) for i in rem_findall)
-
-        if loc_vers > rem_vers:
-            return True
-
-        return False
+        # Pay attention because this is a subtle detail that can cause confusion.
+        # We check to make sure `failover.status == 'MASTER'` up above in this method.
+        # This means that by the time we get here, we're running this on the MASTER
+        # controller. (i.e. MASTER == 'TrueNAS-13.0-U6', STANDBY == 'TrueNAS-13.0-U5.3')
+        # So the standby controller must be running an "older" verison than the master
+        # which is the only way `can_update` will return True.
+        return can_update(remote_version, local_version)
 
     @accepts()
     @job(lock='failover_upgrade_finish')
