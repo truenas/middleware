@@ -11,7 +11,7 @@ from dns.exception import DNSException
 from middlewared.plugins.gluster_linux.utils import GlusterConfig
 from middlewared.schema import Bool, returns
 from middlewared.service import (Service, ValidationErrors, accepts, job,
-                                 private)
+                                 private, no_authz_required)
 from middlewared.service_exception import CallError
 from middlewared.utils.path import CLUSTER_PATH_PREFIX
 
@@ -22,6 +22,7 @@ class ClusterUtils(Service):
         namespace = 'cluster.utils'
         cli_namespace = 'service.cluster.utils'
 
+    @no_authz_required
     @accepts()
     @returns(Bool('is_clustered'))
     async def is_clustered(self):

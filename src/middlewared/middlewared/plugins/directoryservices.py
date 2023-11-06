@@ -7,7 +7,7 @@ import errno
 
 from base64 import b64encode, b64decode
 from middlewared.schema import accepts, Dict, List, OROperator, Ref, returns, Str
-from middlewared.service import Service, private, job
+from middlewared.service import no_authz_required, Service, private, job
 from middlewared.plugins.smb import SMBCmd, SMBPath
 from middlewared.service_exception import CallError
 from middlewared.utils import run
@@ -141,6 +141,7 @@ class DirectoryServices(Service):
         service = "directoryservices"
         cli_namespace = "directory_service"
 
+    @no_authz_required
     @accepts()
     @returns(Dict(
         'directory_services_states',

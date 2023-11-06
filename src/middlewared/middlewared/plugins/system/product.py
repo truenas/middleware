@@ -5,7 +5,7 @@ from licenselib.license import ContractType, Features, License
 from pathlib import Path
 
 from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import CallError, no_auth_required, private, Service
+from middlewared.service import CallError, no_auth_required, no_authz_required, private, Service
 from middlewared.utils import sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
@@ -78,6 +78,7 @@ class SystemService(Service):
         """
         return "TrueNAS"
 
+    @no_authz_required
     @accepts()
     @returns(Str('truenas_version_shortname'))
     def version_short(self):
@@ -105,12 +106,14 @@ class SystemService(Service):
             else:
                 return f'{base_url}/#{"".join(to_format)}'
 
+    @no_authz_required
     @accepts()
     @returns(Str('truenas_version'))
     def version(self):
         """Returns the full name of the software version of the system."""
         return sw_info()['fullname']
 
+    @no_authz_required
     @accepts()
     @returns(Str('is_stable'))
     def is_stable(self):

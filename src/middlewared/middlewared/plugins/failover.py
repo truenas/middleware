@@ -14,7 +14,8 @@ from functools import partial
 from middlewared.auth import is_ha_connection, TrueNasNodeSessionManagerCredentials
 from middlewared.schema import accepts, Bool, Dict, Int, List, NOT_PROVIDED, Str, returns, Patch
 from middlewared.service import (
-    job, no_auth_required, pass_app, private, CallError, ConfigService, ValidationError, ValidationErrors
+    job, no_auth_required, no_authz_required, pass_app, private, CallError, ConfigService,
+    ValidationError, ValidationErrors
 )
 import middlewared.sqlalchemy as sa
 from middlewared.plugins.auth import AuthService
@@ -134,6 +135,7 @@ class FailoverService(ConfigService):
         else:
             raise CallError('Unable to change node state in MANUAL mode')
 
+    @no_authz_required
     @accepts()
     @returns(Bool())
     def licensed(self):
