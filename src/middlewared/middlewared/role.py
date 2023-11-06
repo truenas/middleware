@@ -8,7 +8,7 @@ class Role:
     An authenticated user role.
 
     :ivar includes: a list of other roles that this role includes. When user is granted this role, they will also
-        receive permissions granted by all of the included roles.
+        receive permissions granted by all the included roles.
     :ivar full_admin: if `True` then this role will allow calling all methods.
     """
 
