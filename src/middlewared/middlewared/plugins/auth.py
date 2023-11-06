@@ -539,6 +539,7 @@ class AuthService(Service):
 
         return {**user, 'attributes': attributes}
 
+    @no_authz_required
     @accepts(
         Str('key'),
         Any('value'),
