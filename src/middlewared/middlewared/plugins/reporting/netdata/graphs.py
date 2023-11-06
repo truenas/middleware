@@ -251,3 +251,75 @@ class DiskTempPlugin(GraphBase):
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return f'smart_log_smart.disktemp.{self.disk_mapping[identifier]}'
+
+
+class UPSChargePlugin(GraphBase):
+
+    title = 'UPS Charging'
+    vertical_label = 'Percentage'
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'nut_ups.charge'
+
+
+class UPSRuntimePlugin(GraphBase):
+
+    title = 'UPS Runtime'
+    vertical_label = 'Seconds'
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'nut_ups.runtime'
+
+
+class UPSVoltagePlugin(GraphBase):
+
+    title = 'UPS Voltage'
+    vertical_label = 'Volts'
+
+    IDENTIFIER_MAPPING = {
+        'battery': 'battery_voltage',
+        'input': 'input_voltage',
+        'output': 'output_voltage'
+    }
+
+    async def get_identifiers(self) -> typing.Optional[list]:
+        return list(self.IDENTIFIER_MAPPING.keys())
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return f'nut_ups.{self.IDENTIFIER_MAPPING[identifier]}'
+
+
+class UPSCurrentPlugin(GraphBase):
+
+    title = 'UPS Input Current'
+    vertical_label = 'Ampere'
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'nut_ups.input_current'
+
+
+class UPSFrequencyPlugin(GraphBase):
+
+    title = 'UPS Input Frequency'
+    vertical_label = 'Hz'
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'nut_ups.input_frequency'
+
+
+class UPSLoadPlugin(GraphBase):
+
+    title = 'UPS Input Load'
+    vertical_label = 'Percentage'
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'nut_ups.load'
+
+
+class UPSTemperaturePlugin(GraphBase):
+
+    title = 'UPS Temperature'
+    vertical_label = 'Temperature'
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'nut_ups.temp'
