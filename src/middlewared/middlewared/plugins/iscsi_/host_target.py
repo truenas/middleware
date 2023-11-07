@@ -18,7 +18,7 @@ class iSCSIHostService(Service, ServiceChangeMixin):
     class Config:
         namespace = "iscsi.host"
 
-    @accepts(Int("id"))
+    @accepts(Int("id"), roles=['SHARING_ISCSI_HOST_READ'])
     async def get_targets(self, id_):
         """
         Returns targets associated with host `id`.
@@ -30,7 +30,7 @@ class iSCSIHostService(Service, ServiceChangeMixin):
             ], {"relationships": False})
         ]]])
 
-    @accepts(Int("id"), List("ids", items=[Int("id")]))
+    @accepts(Int("id"), List("ids", items=[Int("id")]), roles=['SHARING_ISCSI_HOST_WRITE'])
     async def set_targets(self, id_, ids):
         """
         Associates targets `ids` with host `id`.

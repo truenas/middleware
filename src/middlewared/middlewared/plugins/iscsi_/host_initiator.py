@@ -7,7 +7,7 @@ class iSCSIHostService(Service, ServiceChangeMixin):
     class Config:
         namespace = "iscsi.host"
 
-    @accepts(Int("id"))
+    @accepts(Int("id"), roles=['SHARING_ISCSI_HOST_READ'])
     async def get_initiators(self, id_):
         """
         Returns initiator groups associated with host `id`.
@@ -20,7 +20,7 @@ class iSCSIHostService(Service, ServiceChangeMixin):
             if set(host["iqns"]) & set(initiator["initiators"])
         ]
 
-    @accepts(Int("id"), List("ids", items=[Int("id")]), Bool("force", default=False))
+    @accepts(Int("id"), List("ids", items=[Int("id")]), Bool("force", default=False), roles=['SHARING_ISCSI_HOST_WRITE'])
     async def set_initiators(self, id_, ids, force):
         """
         Associates initiator groups `ids` with host `id`.
