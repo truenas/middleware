@@ -42,6 +42,39 @@ class NFSService(Service):
 
     @private
     def get_nfs4_client_info(self, id_):
+        """
+        See the following link:
+            NFS 4.1 spec: https://www.rfc-editor.org/rfc/rfc8881.html
+
+        ---- Description of the fields (all per NFS client) ----
+        'clientid': Hash generated for this client connection
+        'address':  The client IP and port. e.g. 10.20.30.40:768
+
+        'status':   The current client status:
+            'confirmed' An active connection.
+                        The status will convert to 'courtesy' in 90 seconds if not 'confirmed' by the client.
+            'courtesy'  A stalled connection from an inactive client.
+                        The status will convert to 'expirable' in 24hr.
+            'expirable' Waiting to be cleaned up.
+
+        'seconds from last renew':  The session timeout counter.  See 'status' field.
+                                    Gets reset by confirmation update from the client
+
+        'name': Supplied by the client.
+                Linux clients might offer something like 'Linux NFS4.2 clnt_name'.
+                FreeBSD clients might supply a UUID like name
+
+        'minor version':    The NFS4.x minor version.  E.G. '2' for NFSv4.2
+
+        NOTE: The 'implementation' fields were added for NFSv4.1. See rfc8881 for more details.
+        'Implementation domain': NFSv4.1 info - e.g. 'kernel.org' or 'freebsd.org'.
+        'Implementation name':   NFSv4.1 info - e.g. equivalent to 'uname -a' on the client
+        'Implementation time':   NFSv4.1 info - Timestamp (time nfstime4) of client version (maybe unused?)
+
+        'callback state':   Current callback 'service' status for this client: 'UP', 'DOWN', 'FAULT' or 'UNKNOWN'
+                            Linux clients usually indicate 'UP'
+                            FreeBSD clients may indicate 'DOWN' but are still functional
+        """
         info = {}
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id_}/info", "r") as f:
@@ -51,6 +84,10 @@ class NFSService(Service):
 
     @private
     def get_nfs4_client_states(self, id_):
+        """
+        Detailed information regarding current open files per NFS client
+        TODO: review formatting of this field
+        """
         states = []
         with suppress(FileNotFoundError):
             with open(f"/proc/fs/nfsd/clients/{id_}/states", "r") as f:
