@@ -354,6 +354,7 @@ class Application:
                 elif self.authenticated_credentials.is_user_session() and hasattr(methodobj, '_no_authz_required'):
                     pass
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
+                    self.logger.error("%s: authz failed: %s", message['method'], self.authenticated_credentials.dump())
                     self.send_error(message, errno.EACCES, 'Not authorized')
                     error = True
             if not error:
