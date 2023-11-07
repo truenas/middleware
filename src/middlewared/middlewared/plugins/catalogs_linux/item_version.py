@@ -4,7 +4,7 @@ import os
 from middlewared.schema import accepts, Bool, Dict, List, returns, Str
 from middlewared.service import CallError, Service
 
-from .items_util import get_cached_item_version_path, get_item_details
+from .items_util import get_item_details
 from .update import OFFICIAL_LABEL
 
 
@@ -54,12 +54,6 @@ class CatalogService(Service):
             raise CallError(f'Unable to locate {item_name!r} at {item_location!r}', errno=errno.ENOENT)
         elif not os.path.isdir(item_location):
             raise CallError(f'{item_location!r} must be a directory')
-
-        cached_version_file_path = get_cached_item_version_path(item_location)
-        if not os.path.exists(cached_version_file_path):
-            raise CallError(f'Unable to locate {item_name!r} versions', errno=errno.ENOENT)
-        elif not os.path.isfile(cached_version_file_path):
-            raise CallError(f'{cached_version_file_path!r} must be a file')
 
         train_data = self.middleware.call_sync('catalog.items', options['catalog'], {
             'retrieve_all_trains': False,
