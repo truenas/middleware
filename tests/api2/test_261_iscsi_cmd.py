@@ -294,6 +294,12 @@ def get_iscsi_sessions(payload=None, check_length=None):
     return data
 
 
+def get_client_count():
+    results = GET('/iscsi/global/client_count')
+    assert results.status_code == 200, results.text
+    return results.json()
+
+
 @contextlib.contextmanager
 def zvol_extent(zvol, extent_name='zvol_extent'):
     payload = {
@@ -2661,8 +2667,12 @@ def test_31_iscsi_sessions(request):
         with configured_target(config, name1, 'VOLUME'):
             with configured_target(config, name2, 'FILE'):
                 with configured_target(config, name3, 'VOLUME'):
+                    assert get_client_count() == 0
                     with iscsi_scsi_connection(ip, iqn1, initiator_name=initiator_iqn1):
+                        assert get_client_count() == 1
                         with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn2):
+                            # Client count checks the number of different IPs attached, not sessions
+                            assert get_client_count() == 1
                             # Validate that the two sessions are reported correctly
                             data = get_iscsi_sessions(check_length=2)
                             for sess in data:
@@ -2687,6 +2697,7 @@ def test_31_iscsi_sessions(request):
                             data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn3]]}, 0)
                             # Now login to target2 with initiator1
                             with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn1):
+                                assert get_client_count() == 1
                                 get_iscsi_sessions(check_length=3)
                                 # Filter by target
                                 data = get_iscsi_sessions({'query-filters': [['target', '=', iqn1]]}, 1)
@@ -2701,6 +2712,7 @@ def test_31_iscsi_sessions(request):
                                 assert data[0]['target'] == iqn2, data
                                 data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn3]]}, 0)
                             # Logout of target, ensure sessions get updated.
+                            assert get_client_count() == 1
                             data = get_iscsi_sessions(check_length=2)
                             for sess in data:
                                 if sess['target'] == iqn1:
@@ -2710,6 +2722,11 @@ def test_31_iscsi_sessions(request):
                                 else:
                                     # Unknown target!
                                     assert False, data
+                        # Client count checks the number of different IPs attached, not sessions
+                        assert get_client_count() == 1
+                        get_iscsi_sessions(check_length=1)
+                    assert get_client_count() == 0
+                    get_iscsi_sessions(check_length=0)
 
 
 def test_99_teardown(request):
