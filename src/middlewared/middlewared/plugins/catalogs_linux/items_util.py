@@ -1,9 +1,11 @@
+import os
 import typing
 
 from catalog_validation.items.items_util import (
     get_item_details as get_catalog_item_details,
     get_item_version_details as get_catalog_item_version_details,
 )
+from catalog_validation.utils import CACHED_VERSION_FILE_NAME
 
 from middlewared.plugins.chart_releases_linux.schema import construct_schema
 from middlewared.plugins.update_.utils import can_update
@@ -57,3 +59,7 @@ def get_item_version_details(version_path: str, questions_context: dict) -> dict
     return minimum_scale_version_check_update(get_catalog_item_version_details(version_path, questions_context, {
         'default_values_callable': get_item_default_values,
     }))
+
+
+def get_cached_item_version_path(item_path: str) -> str:
+    return os.path.join(item_path, CACHED_VERSION_FILE_NAME)
