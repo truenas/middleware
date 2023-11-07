@@ -22,6 +22,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
         datastore = 'services.iscsitargetauthcredential'
         datastore_prefix = 'iscsi_target_auth_'
         cli_namespace = 'sharing.iscsi.target.auth_credential'
+        role_prefix = 'SHARING_ISCSI_AUTH'
 
     @accepts(Dict(
         'iscsi_auth_create',

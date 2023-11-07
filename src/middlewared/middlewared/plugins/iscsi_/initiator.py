@@ -20,6 +20,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
         datastore_prefix = 'iscsi_target_initiator_'
         datastore_extend = 'iscsi.initiator.extend'
         cli_namespace = 'sharing.iscsi.target.authorized_initiator'
+        role_prefix = 'SHARING_ISCSI_INITIATOR'
 
     @accepts(Dict(
         'iscsi_initiator_create',

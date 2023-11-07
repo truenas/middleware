@@ -32,6 +32,7 @@ class ISCSIGlobalService(SystemServiceService):
         service = 'iscsitarget'
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
+        role_prefix = 'SHARING_ISCSI_GLOBAL'
 
     @private
     def port_is_listening(self, host, port, timeout=5):

@@ -56,6 +56,7 @@ class iSCSITargetService(CRUDService):
         datastore_prefix = 'iscsi_target_'
         datastore_extend = 'iscsi.target.extend'
         cli_namespace = 'sharing.iscsi.target'
+        role_prefix = 'SHARING_ISCSI_TARGET'
 
     @private
     async def extend(self, data):
@@ -256,7 +257,9 @@ class iSCSITargetService(CRUDService):
                             f'Authentication group {group["auth"]} does not support CHAP Mutual'
                         )
 
-    @accepts(Str('name'), Int('existing_id', null=True, default=None))
+    @accepts(Str('name'),
+             Int('existing_id', null=True, default=None),
+             roles=['SHARING_ISCSI_TARGET_READ'])
     async def validate_name(self, name, existing_id):
         """
         Returns validation error for iSCSI target name
