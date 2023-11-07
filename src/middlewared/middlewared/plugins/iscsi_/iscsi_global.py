@@ -183,7 +183,7 @@ class ISCSIGlobalService(SystemServiceService):
         if cp.returncode:
             self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
-    @accepts()
+    @accepts(roles=['SHARING_ISCSI_GLOBAL_READ'])
     async def alua_enabled(self):
         """
         Returns whether iSCSI ALUA is enabled or not.
