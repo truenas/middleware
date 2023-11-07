@@ -5,7 +5,6 @@ import os
 import typing
 
 from catalog_validation.items.items_util import (
-    get_item_details as get_catalog_item_details,
     get_item_version_details as get_catalog_item_version_details,
     normalise_questions,
 )
@@ -50,14 +49,8 @@ def minimum_scale_version_check_update_impl(
 
 
 def get_item_details(item_location: str, item_data: dict, questions_context: dict) -> dict:
-    cached_version_file_path = get_cached_item_version_path(item_location)
     item_name = os.path.basename(item_location)
-    if not os.path.exists(cached_version_file_path):
-        raise CallError(f'Unable to locate {item_name!r} versions', errno=errno.ENOENT)
-    elif not os.path.isfile(cached_version_file_path):
-        raise CallError(f'{cached_version_file_path!r} must be a file')
-
-    item_data['versions'] = retrieve_cached_versions_data(cached_version_file_path, item_name)
+    item_data['versions'] = retrieve_cached_versions_data(get_cached_item_version_path(item_location), item_name)
 
     # At this point, we have cached versions and items data - now we want to do the following:
     # 1) Update location in each version entry
