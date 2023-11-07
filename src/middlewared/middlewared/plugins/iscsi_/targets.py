@@ -259,7 +259,7 @@ class iSCSITargetService(CRUDService):
 
     @accepts(Str('name'),
              Int('existing_id', null=True, default=None),
-             roles=['SHARING_ISCSI_TARGET_READ'])
+             roles=['SHARING_ISCSI_TARGET_WRITE'])
     async def validate_name(self, name, existing_id):
         """
         Returns validation error for iSCSI target name
