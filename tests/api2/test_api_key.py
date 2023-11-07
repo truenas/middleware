@@ -59,6 +59,34 @@ def test_denied_api_key_websocket(request):
         assert results['result'] is False
 
 
+def test_denied_api_key_noauthz(request):
+    with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
+        auth_token = None
+
+        with client(auth=None) as c:
+            assert c.call("auth.login_with_api_key", key)
+
+            # verify API key works as expected
+            c.call('system.info')
+
+            # system.product_type has no_authz_required
+            # this should fail do to lack of authorization for
+            # API key
+            with pytest.raises(Exception):
+                c.call("system.product_type")
+
+            auth_token = c.call("auth.generate_token")
+
+        with client(auth=None) as c:
+            assert c.call("auth.login_with_token", auth_token)
+
+            # verify that token has same access rights
+            c.call('system.info')
+
+            with pytest.raises(Exception):
+                c.call("system.product_type")
+
+
 def test_api_key_auth_session_list_terminate():
     with api_key([{"method": "CALL", "resource": "system.info"}]) as key:
         with client(auth=None) as c:
