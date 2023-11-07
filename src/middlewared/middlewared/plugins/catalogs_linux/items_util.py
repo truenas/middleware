@@ -1,3 +1,4 @@
+import errno
 import os
 import typing
 
@@ -9,6 +10,7 @@ from catalog_validation.utils import CACHED_VERSION_FILE_NAME
 
 from middlewared.plugins.chart_releases_linux.schema import construct_schema
 from middlewared.plugins.update_.utils import can_update
+from middlewared.service import CallError
 from middlewared.utils import sw_info
 
 
@@ -45,6 +47,13 @@ def minimum_scale_version_check_update_impl(
 
 
 def get_item_details(item_location: str, questions_context: dict, options: dict) -> dict:
+    cached_version_file_path = get_cached_item_version_path(item_location)
+    item_name = os.path.basename(item_location)
+    if not os.path.exists(cached_version_file_path):
+        raise CallError(f'Unable to locate {item_name!r} versions', errno=errno.ENOENT)
+    elif not os.path.isfile(cached_version_file_path):
+        raise CallError(f'{cached_version_file_path!r} must be a file')
+
     item_details = get_catalog_item_details(item_location, questions_context, {
         **options,
         'default_values_callable': get_item_default_values,
