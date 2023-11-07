@@ -68,7 +68,7 @@ class CatalogService(Service):
 
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
 
-        item_details = get_item_details(item_location, questions_context, {'retrieve_versions': True})
+        item_details = get_item_details(item_location, item_data, questions_context)
         if options['catalog'] == OFFICIAL_LABEL:
             recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
             if options['train'] in recommended_apps and item_name in recommended_apps[options['train']]:
