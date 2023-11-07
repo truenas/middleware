@@ -25,6 +25,19 @@ def filterable(fn):
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
+# When we want to specify roles with filterable call this
+# i.e. @filterable -> @filterable_with_roles(['role1',...])
+# MUCH simplier than the alternatives.
+# (https://stackoverflow.com/questions/3931627/how-to-build-a-decorator-with-optional-parameters)
+def filterable_with_roles(roles=None):
+    def filterable_internal(fn):
+        fn._filterable = True
+        if hasattr(fn, 'wraps'):
+            fn.wraps._filterable = True
+        return accepts(Ref('query-filters'), Ref('query-options'), roles=roles)(fn)
+    return filterable_internal
+
+
 def filterable_returns(schema):
     def filterable_internal(fn):
         operator = OROperator(
