@@ -64,11 +64,9 @@ class CatalogService(Service):
         elif item_name not in train_data[options['train']]:
             raise CallError(f'Unable to locate {item_name!r} item in {options["train"]!r} train')
 
-        item_data = train_data[options['train']][item_name]
-
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
 
-        item_details = get_item_details(item_location, item_data, questions_context)
+        item_details = get_item_details(item_location, train_data[options['train']][item_name], questions_context)
         if options['catalog'] == OFFICIAL_LABEL:
             recommended_apps = self.middleware.call_sync('catalog.retrieve_recommended_apps')
             if options['train'] in recommended_apps and item_name in recommended_apps[options['train']]:
