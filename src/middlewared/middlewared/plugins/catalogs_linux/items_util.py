@@ -7,12 +7,13 @@ import typing
 from catalog_validation.items.items_util import (
     get_item_details as get_catalog_item_details,
     get_item_version_details as get_catalog_item_version_details,
+    normalise_questions,
 )
 from catalog_validation.utils import CACHED_VERSION_FILE_NAME, VERSION_VALIDATION_SCHEMA
 
 from middlewared.plugins.chart_releases_linux.schema import construct_schema
 from middlewared.plugins.update_.utils import can_update
-from middlewared.service import CallError, ValidationErrors
+from middlewared.service import CallError
 from middlewared.utils import sw_info
 
 
@@ -56,14 +57,21 @@ def get_item_details(item_location: str, item_data: dict, questions_context: dic
     elif not os.path.isfile(cached_version_file_path):
         raise CallError(f'{cached_version_file_path!r} must be a file')
 
-    item_details = get_catalog_item_details(item_location, questions_context, {
-        **options,
-        'default_values_callable': get_item_default_values,
-    })
-    for version in item_details['versions'].values():
-        minimum_scale_version_check_update(version)
+    item_data['versions'] = retrieve_cached_versions_data(cached_version_file_path, item_name)
 
-    return item_details
+    # At this point, we have cached versions and items data - now we want to do the following:
+    # 1) Update location in each version entry
+    # 2) Make sure default values have been normalised
+    # 3) Normalise questions
+    for version_name, version_data in item_data['versions'].items():
+        minimum_scale_version_check_update(version_data)
+        version_data.update({
+            'location': os.path.join(item_location, version_name),
+            'values': get_item_default_values(version_data),
+        })
+        normalise_questions(version_data, questions_context)
+
+    return item_data
 
 
 def get_item_version_details(version_path: str, questions_context: dict) -> dict:
