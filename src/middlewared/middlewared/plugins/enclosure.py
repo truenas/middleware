@@ -98,8 +98,11 @@ class EnclosureService(CRUDService):
                         "descriptor": elem.descriptor,
                         "status": elem.status,
                         "value": elem.value,
-                        "value_raw": hex(elem.value_raw),
+                        "value_raw": 0x0,
                     }
+                    if isinstance(elem.value_raw, int):
+                        element["value_raw"] = hex(elem.value_raw)
+
                     if hasattr(elem, "device_slot_set"):
                         has_slot_status = True
                         element["fault"] = elem.fault
@@ -322,18 +325,22 @@ class EnclosureService(CRUDService):
 class Enclosures(object):
 
     def __init__(self, stat, product_name):
-        blacklist = [
-            "VirtualSES",
-        ]
-        if product_name:
-            if (
-                product_name.startswith("TRUENAS-") and
-                "-MINI-" not in product_name and
-                product_name not in R20_VARIANT
-            ):
-                blacklist.append("AHCI SGPIO Enclosure 2.00")
+        self.__enclosures = list()
 
-        self.__enclosures = []
+        if any((
+            not isinstance(product_name, str),
+            not product_name.startswith(("TRUENAS-", "FREENAS-"))
+        )):
+            return
+
+        if product_name.startswith("TRUENAS-H"):
+            blacklist = list()
+        else:
+            blacklist = ["VirtualSES"]
+
+        if "-MINI-" not in product_name and product_name not in R20_VARIANT:
+            blacklist.append("AHCI SGPIO Enclosure 2.00")
+
         for num, data in stat.items():
             enclosure = Enclosure(num, data, stat, product_name)
             if any(s in enclosure.encname for s in blacklist):
@@ -393,7 +400,8 @@ class Enclosure(object):
 
         self._set_model(cf)
         self.status = "OK"
-        self.map_disks_to_enclosure_slots()
+        is_hseries = self.product_name and self.product_name.startswith('TRUENAS-H')
+        self.map_disks_to_enclosure_slots(is_hseries)
 
         element_type = None
         element_number = None
@@ -429,7 +437,7 @@ class Enclosure(object):
             else:
                 element_number = None
 
-    def map_disks_to_enclosure_slots(self):
+    def map_disks_to_enclosure_slots(self, is_hseries=False):
         """
         The sysfs directory structure is dynamic based on the enclosure that
         is attached.
@@ -439,6 +447,7 @@ class Enclosure(object):
             /sys/class/enclosure/13:0:0:0/Disk #00/
             /sys/class/enclosure/13:0:0:0/Slot 00/
             /sys/class/enclosure/13:0:0:0/slot00/
+            /sys/class/enclosure/13:0:0:0/0/
 
         The safe assumption that we can make on whether or not the directory
         represents a drive slot is looking for the file named "slot" underneath
@@ -451,21 +460,38 @@ class Enclosure(object):
         contents of that file to get the slot number associated to the disk device.
         The "slot" file is always an integer so we don't need to convert to hexadecimal.
         """
+        ignore = tuple()
+        if is_hseries:
+            ignore = ('4', '5', '6', '7')
+
         mapping = dict()
         pci = self.devname.removeprefix('bsg/')  # why do we set this as 'bsg/13:0:0:0'...?
         for i in filter(lambda x: x.is_dir(), pathlib.Path(f'/sys/class/enclosure/{pci}').iterdir()):
+            if is_hseries and i.name in ignore:
+                # on hseries platform, the broadcom HBA enumerates sysfs
+                # with directory names as the slot number
+                # (i.e. /sys/class/enclosure/*/0, /sys/class/enclosure/*/1, etc)
+                # There are 16 ports on this card, but we only use 12
+                continue
+
             try:
                 slot = int((i / 'slot').read_text().strip())
+                slot_status = (i / 'status').read_text().strip()
+                ident = (i / 'locate').read_text().strip()
+                fault = (i / 'fault').read_text().strip()
             except (FileNotFoundError, ValueError):
                 # not a slot directory
                 continue
             else:
                 try:
-                    dev = next((i / 'device/block').iterdir(), None)
-                    mapping[slot] = dev.name if dev is not None else ''
+                    dev = next((i / 'device/block').iterdir(), '')
+                    if dev:
+                        dev = dev.name
+
+                    mapping[slot] = (dev, slot_status, ident, fault)
                 except FileNotFoundError:
                     # no disk in this slot
-                    mapping[slot] = ''
+                    mapping[slot] = ('', slot_status, ident, fault)
 
         try:
             if min(mapping) == 0:
@@ -478,19 +504,27 @@ class Enclosure(object):
             return
 
         disk_raw_values = dict()
-        for k, v in EnclosureDevice(f'/dev/{self.devname}').status()['elements'].items():
-            if v['type'] == 23 and v['descriptor'] != '<empty>':
-                disk_raw_values[k] = v['status']
+        if not is_hseries:
+            for k, v in EnclosureDevice(f'/dev/{self.devname}').status()['elements'].items():
+                if v['type'] == 23 and v['descriptor'] != '<empty>':
+                    disk_raw_values[k] = v['status']
 
         for slot in sorted(mapping):
-            self.append(self._enclosure_element(
-                slot,
-                'Array Device Slot',
-                self._parse_raw_value(disk_raw_values.get(slot, 0)),
-                None,
-                '',
-                mapping[slot],  # disk
-            ))
+            disk, slot_status, ident, fault = mapping[slot]
+            if is_hseries:
+                info = self._enclosure_element(slot, 'Array Device Slot', slot_status, None, '', disk, ident, fault)
+            else:
+                info = self._enclosure_element(
+                    slot,
+                    'Array Device Slot',
+                    self._parse_raw_value(disk_raw_values.get(slot, [5, 0, 0, 0])),
+                    None,
+                    '',
+                    disk
+                )
+
+            self.append(info)
+
         return mapping
 
     def _set_model(self, data):
@@ -511,6 +545,9 @@ class Enclosure(object):
             self.controller = True
         elif X_SERIES_REGEX.match(self.encname):
             self.model = "X Series"
+            self.controller = True
+        elif self.encname.startswith("BROADCOM VirtualSES 03"):
+            self.model = "H Series"
             self.controller = True
         elif self.encname.startswith("QUANTA JB9 SIM"):
             self.model = "E60"
@@ -559,7 +596,7 @@ class Enclosure(object):
             self.__elementsbyname[element.name].append(element)
         element.enclosure = self
 
-    def _enclosure_element(self, slot, name, value, status, desc, dev):
+    def _enclosure_element(self, slot, name, value, status, desc, dev, ident=None, fault=None):
 
         if name == "Audible alarm":
             return AlarmElm(slot=slot, value_raw=value, desc=desc)
@@ -584,7 +621,8 @@ class Enclosure(object):
                 return
             if self.model.startswith('R50, ') and slot >= 25:
                 return
-            return ArrayDevSlot(slot=slot, value_raw=value, desc=desc, dev=dev)
+            return ArrayDevSlot(slot=slot, value_raw=value, desc=desc, dev=dev, identify=ident, fault=fault)
+
         elif name == "SAS Connector":
             return SASConnector(slot=slot, value_raw=value, desc=desc)
         elif name == "SAS Expander":
@@ -637,7 +675,13 @@ class Element(object):
             self.name = kwargs.pop('name')
         self.value_raw = kwargs.pop('value_raw')
         self.slot = kwargs.pop('slot')
-        self.status_raw = (self.value_raw >> 24) & 0xf
+        if isinstance(self.value_raw, int):
+            self.status_raw = (self.value_raw >> 24) & 0xf
+        else:
+            self.status_raw = self.value_raw
+            self._identify = kwargs.pop('identify')
+            self._fault = kwargs.pop('fault')
+
         try:
             self.descriptor = kwargs.pop('desc')
         except Exception:
@@ -664,7 +708,10 @@ class Element(object):
 
     @property
     def status(self):
-        return STATUS_DESC[self.status_raw]
+        if isinstance(self.status_raw, str):
+            return self.status_raw
+        else:
+            return STATUS_DESC[self.status_raw]
 
 
 class AlarmElm(Element):
@@ -1039,15 +1086,21 @@ class ArrayDevSlot(Element):
 
     @property
     def identify(self):
-        if (self.value_raw >> 8) & 0x2:
+        if hasattr(self, '_identify'):
+            return self._identify != '0'
+        elif (self.value_raw >> 8) & 0x2:
             return True
-        return False
+        else:
+            return False
 
     @property
     def fault(self):
-        if self.value_raw & 0x20:
+        if hasattr(self, '_fault'):
+            return self._fault != '0'
+        elif self.value_raw & 0x20:
             return True
-        return False
+        else:
+            return False
 
     @property
     def value(self):
