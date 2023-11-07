@@ -61,6 +61,17 @@ class CatalogService(Service):
         elif not os.path.isfile(cached_version_file_path):
             raise CallError(f'{cached_version_file_path!r} must be a file')
 
+        train_data = self.middleware.call_sync('catalog.items', options['catalog'], {
+            'retrieve_all_trains': False,
+            'trains': [options['train']],
+        })
+        if options['train'] not in train_data:
+            raise CallError(f'Unable to locate {options["train"]!r} train')
+        elif item_name not in train_data[options['train']]:
+            raise CallError(f'Unable to locate {item_name!r} item in {options["train"]!r} train')
+
+        item_data = train_data[options['train']][item_name]
+
         questions_context = self.middleware.call_sync('catalog.get_normalised_questions_context')
 
         item_details = get_item_details(item_location, questions_context, {'retrieve_versions': True})
