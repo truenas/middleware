@@ -73,7 +73,7 @@ def test_denied_api_key_noauthz(request):
             # this should fail do to lack of authorization for
             # API key
             with pytest.raises(Exception):
-                c.call("system.product_type")
+                c.call("system.version")
 
             auth_token = c.call("auth.generate_token")
 
@@ -84,7 +84,7 @@ def test_denied_api_key_noauthz(request):
             c.call('system.info')
 
             with pytest.raises(Exception):
-                c.call("system.product_type")
+                c.call("system.version")
 
 
 def test_api_key_auth_session_list_terminate():
