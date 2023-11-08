@@ -351,7 +351,7 @@ class Application:
                 # check is bypassed as long as it is a user session. API keys
                 # explicitly whitelist particular methods and are used for targeted
                 # purposes, and so authorization is _always_ enforced.
-                elif self.authenticated_credentials.is_user_session() and hasattr(methodobj, '_no_authz_required'):
+                elif self.authenticated_credentials.is_user_session and hasattr(methodobj, '_no_authz_required'):
                     pass
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.logger.error("%s: authz failed: %s", message['method'], self.authenticated_credentials.dump())

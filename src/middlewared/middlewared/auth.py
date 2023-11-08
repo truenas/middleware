@@ -4,6 +4,8 @@ from middlewared.utils.allowlist import Allowlist
 
 
 class SessionManagerCredentials:
+    is_user_session = False
+
     @classmethod
     def class_name(cls):
         return re.sub(
@@ -33,14 +35,12 @@ class SessionManagerCredentials:
     def dump(self):
         return {}
 
-    def is_user_session(self):
-        return False
-
 
 class UserSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, user):
         self.user = user
         self.allowlist = Allowlist(user["privilege"]["allowlist"])
+        self.is_user_session = True
 
     def authorize(self, method, resource):
         return self.allowlist.authorize(method, resource)
@@ -52,9 +52,6 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         return {
             "username": self.user["username"],
         }
-
-    def is_user_session(self):
-        return True
 
 
 class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
