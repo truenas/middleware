@@ -168,6 +168,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, token_manager, token):
         self.token_manager = token_manager
         self.token = token
+        self.is_user_session = token.root_credentials().is_user_session
 
     def is_valid(self):
         return self.token.is_valid()

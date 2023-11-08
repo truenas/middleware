@@ -345,7 +345,13 @@ class Application:
                 if not self.authenticated:
                     self.send_error(message, ErrnoMixin.ENOTAUTHENTICATED, 'Not authenticated')
                     error = True
-                elif hasattr(methodobj, '_no_authz_required'):
+
+                # Some methods require authentication to the NAS (a valid account)
+                # but not explicit authorization. In this case the authorization
+                # check is bypassed as long as it is a user session. API keys
+                # explicitly whitelist particular methods and are used for targeted
+                # purposes, and so authorization is _always_ enforced.
+                elif self.authenticated_credentials.is_user_session and hasattr(methodobj, '_no_authz_required'):
                     pass
                 elif not self.authenticated_credentials.authorize('CALL', message['method']):
                     self.send_error(message, errno.EACCES, 'Not authorized')

@@ -6,6 +6,7 @@ import pytest
 from middlewared.client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
+from middlewared.test.integration.utils import client
 
 logger = logging.getLogger(__name__)
 
@@ -106,3 +107,12 @@ def test_limited_user_can_set_own_attributes():
         attrs = c.call("auth.me")["attributes"]
         assert "foo" in attrs
         assert attrs["foo"] == "bar"
+
+
+def test_limited_user_auth_token_behavior():
+    with unprivileged_user_client(["READONLY"]) as c:
+        auth_token = c.call("auth.generate_token")
+
+        with client(auth=None) as c2:
+            assert c2.call("auth.login_with_token", auth_token)
+            c2.call("auth.me")
