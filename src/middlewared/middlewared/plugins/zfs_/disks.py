@@ -17,7 +17,7 @@ class ZFSPoolService(Service):
                 continue
 
             devtype = dev.properties.get('DEVTYPE', '')
-            if not devtype or devtype not in ('disk', 'partition'):
+            if devtype not in ('disk', 'partition'):
                 continue
 
             # this is "sda/sda1/sda2/sda3" etc
