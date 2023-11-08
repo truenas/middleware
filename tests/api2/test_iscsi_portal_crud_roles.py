@@ -13,13 +13,13 @@ def portal():
         yield result
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_PORTAL_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_PORTAL_READ"])
 def test_read_role_can_read(role):
     with unprivileged_user_client(roles=[role]) as c:
         c.call("iscsi.portal.query")
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_PORTAL_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_PORTAL_READ"])
 def test_read_role_cant_write(portal, role):
     with unprivileged_user_client(roles=[role]) as c:
         with pytest.raises(ClientException) as ve:
@@ -38,7 +38,7 @@ def test_read_role_cant_write(portal, role):
         assert ve.value.errno == errno.EACCES
 
 
-@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_PORTAL_WRITE"])
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_WRITE", "SHARING_ISCSI_PORTAL_WRITE"])
 def test_write_role_can_write(role):
     with unprivileged_user_client(roles=[role]) as c:
         item = c.call("iscsi.portal.create", {

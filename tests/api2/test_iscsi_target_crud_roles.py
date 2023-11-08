@@ -13,13 +13,13 @@ def target():
         yield result
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_TARGET_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_TARGET_READ"])
 def test_read_role_can_read(role):
     with unprivileged_user_client(roles=[role]) as c:
         c.call("iscsi.target.query")
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_TARGET_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_TARGET_READ"])
 def test_read_role_cant_write(target, role):
     with unprivileged_user_client(roles=[role]) as c:
         with pytest.raises(ClientException) as ve:
@@ -41,7 +41,7 @@ def test_read_role_cant_write(target, role):
         assert ve.value.errno == errno.EACCES
 
 
-@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_TARGET_WRITE"])
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_WRITE", "SHARING_ISCSI_TARGET_WRITE"])
 def test_write_role_can_write(role):
     with unprivileged_user_client(roles=[role]) as c:
         # Just do a minimal create here (lower cost)

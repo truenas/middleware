@@ -13,7 +13,7 @@ def host():
         yield result
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_HOST_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_HOST_READ"])
 def test_read_role_can_read(host, role):
     with unprivileged_user_client(roles=[role]) as c:
         c.call("iscsi.host.query")
@@ -21,7 +21,7 @@ def test_read_role_can_read(host, role):
         c.call("iscsi.host.get_targets", host["id"])
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_HOST_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_HOST_READ"])
 def test_read_role_cant_write(host, role):
     with unprivileged_user_client(roles=[role]) as c:
         with pytest.raises(ClientException) as ve:
@@ -48,7 +48,7 @@ def test_read_role_cant_write(host, role):
         assert ve.value.errno == errno.EACCES
 
 
-@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_HOST_WRITE"])
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_WRITE", "SHARING_ISCSI_HOST_WRITE"])
 def test_write_role_can_write(role):
     with unprivileged_user_client(roles=[role]) as c:
         item = c.call("iscsi.host.create", {

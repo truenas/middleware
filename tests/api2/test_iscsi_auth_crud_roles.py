@@ -13,13 +13,13 @@ def auth():
         yield result
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_AUTH_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_AUTH_READ"])
 def test_read_role_can_read(role):
     with unprivileged_user_client(roles=[role]) as c:
         c.call("iscsi.auth.query")
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_AUTH_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_AUTH_READ"])
 def test_read_role_cant_write(auth, role):
     with unprivileged_user_client(roles=[role]) as c:
         with pytest.raises(ClientException) as ve:
@@ -39,7 +39,7 @@ def test_read_role_cant_write(auth, role):
         assert ve.value.errno == errno.EACCES
 
 
-@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_AUTH_WRITE"])
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_WRITE", "SHARING_ISCSI_AUTH_WRITE"])
 def test_write_role_can_write(role):
     with unprivileged_user_client(roles=[role]) as c:
         item = c.call("iscsi.auth.create", {
