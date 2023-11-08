@@ -89,7 +89,7 @@ class VMSupervisor(LibvirtConnectionMixin):
 
     def memory_usage(self):
         # We return this in bytes
-        return self.domain.memoryStats()['actual'] * 1024
+        return self.domain.memoryStats().get('actual', 0) * 1024
 
     def __define_domain(self):
         if self._domain:
