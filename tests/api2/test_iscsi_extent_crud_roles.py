@@ -59,7 +59,7 @@ def test_write_role_can_write(ds, role):
             "type": "DISK",
             "disk": f"zvol/{ds}",
         })
-
-        c.call("iscsi.extent.update", share["id"], {})
-
-        c.call("iscsi.extent.delete", share["id"])
+        try:
+            c.call("iscsi.extent.update", share["id"], {})
+        finally:
+            c.call("iscsi.extent.delete", share["id"])
