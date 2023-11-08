@@ -144,12 +144,10 @@ def map_r30_or_fseries(model, ctx):
     num_of_nvme_slots = 16 if model == 'R30' else 24  # r30 has 16 nvme slots, fseries has 24 (all nvme flash)
     nvmes = {}
     for i in ctx.list_devices(subsystem='nvme'):
-        try:
-            namespace_dev = Devices.from_path(ctx, f'{i.sys_path}/{i.sys_name}n1')
-        except DeviceNotFoundAtPathError:
-            # no namespace for the device
-            continue
-        else:
+        for namespace_dev in i.children:
+            if namespace_dev.device_type != 'disk':
+                continue
+
             try:
                 # i.parent.sys_name looks like 0000:80:40.0
                 # namespace_dev.sys_name looks like nvme1n1
