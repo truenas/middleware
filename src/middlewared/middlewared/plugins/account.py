@@ -655,7 +655,7 @@ class UserService(CRUDService):
         """
 
         user = self.middleware.call_sync('user.get_instance', pk)
-        if app:
+        if app and app.authenticated_credentials.is_user_session:
             same_user_logged_in = user['username'] == (self.middleware.call_sync('auth.me', app=app))['pw_name']
         else:
             same_user_logged_in = False
