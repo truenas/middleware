@@ -20,9 +20,7 @@ class SysctlService(Service):
         return cp.stdout.decode().split('=')[-1].strip()
 
     def get_default_arc_max(self):
-        # Default value of arc max on systems
-        # https://github.com/truenas/zfs/blob/f38f3a4a3ee430a15fa221ba9fc2b6b8fd17c040/module/os/linux/zfs/arc_os.c#L85
-        return psutil.virtual_memory().total // 2
+        return psutil.virtual_memory().total
 
     def get_arc_max(self):
         return self.get_arcstats()['c_max']
