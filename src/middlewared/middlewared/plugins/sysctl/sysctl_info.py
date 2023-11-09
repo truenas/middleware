@@ -20,6 +20,7 @@ class SysctlService(Service):
         return cp.stdout.decode().split('=')[-1].strip()
 
     def get_default_arc_max(self):
+        # This is the default value for arc_max on linux (https://github.com/openzfs/zfs/pull/15437)
         return psutil.virtual_memory().total
 
     def get_arc_max(self):
