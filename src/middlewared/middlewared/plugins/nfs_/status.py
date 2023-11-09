@@ -72,18 +72,8 @@ class NFSService(Service):
     @filterable_returns(Dict(
         'client',
         Str('id'),
-        Int('clientid'),
-        Str('address'),
-        Str('status', enum=['confirmed', 'courtesy', 'expirable', 'unconfirmed']),
-        Int('seconds from last renew'),
-        Str('name'),
-        Int('minor version'),
-        Str('Implementation domain'),
-        Str('Implementation name'),
-        Int('Implementation time'),  # timeval pair
-        Str('callback state', enum=['UP', 'DOWN', 'UNKNOWN', 'FAULT', 'UNDEFINED']),
-        Str('callback address'),
-        Dict('states')  # see sample output
+        Dict('info', additional_attrs=True),
+        Dict('state', additional_attrs=True)
     ))
     def get_nfs4_clients(self, filters, options):
         """
