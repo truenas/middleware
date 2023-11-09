@@ -194,7 +194,9 @@ class VMDeviceService(Service):
     @returns(List(Str('pci_ids')))
     def get_pci_ids_for_gpu_isolation(self, gpu_pci_id):
         """Get PCI IDs for GPU isolation"""
-        gpu = next((gpu for gpu in get_gpus() if gpu['pci_id'] == gpu_pci_id), None)
+        gpu = next(
+            (gpu for gpu in get_gpus() if convert_pci_id_to_vm_pci_slot(gpu['addr']['pci_slot']) == gpu_pci_id), None
+        )
         if not gpu:
             raise CallError(f'GPU {gpu_pci_id} not found', errno=errno.ENOENT)
 
