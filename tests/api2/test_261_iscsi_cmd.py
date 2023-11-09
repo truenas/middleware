@@ -285,19 +285,18 @@ def zvol_resize(zvol, volsize, expected_status_code=200):
     assert result.status_code == expected_status_code, result.text
 
 
-def get_iscsi_sessions(payload=None, check_length=None):
-    results = GET('/iscsi/global/sessions', payload=payload)
-    assert results.status_code == 200, results.text
-    data = results.json()
+def get_iscsi_sessions(filters=None, check_length=None):
+    if filters:
+        data = call('iscsi.global.sessions', filters)
+    else:
+        data = call('iscsi.global.sessions')
     if isinstance(check_length, int):
         assert len(data) == check_length, data
     return data
 
 
 def get_client_count():
-    results = GET('/iscsi/global/client_count')
-    assert results.status_code == 200, results.text
-    return results.json()
+    return call('iscsi.global.client_count')
 
 
 @contextlib.contextmanager
@@ -2684,33 +2683,33 @@ def test_31_iscsi_sessions(request):
                                     # Unknown target!
                                     assert False, data
                             # Filter by target
-                            data = get_iscsi_sessions({'query-filters': [['target', '=', iqn1]]}, 1)
+                            data = get_iscsi_sessions([['target', '=', iqn1]], 1)
                             assert data[0]['initiator'] == initiator_iqn1, data
-                            data = get_iscsi_sessions({'query-filters': [['target', '=', iqn2]]}, 1)
+                            data = get_iscsi_sessions([['target', '=', iqn2]], 1)
                             assert data[0]['initiator'] == initiator_iqn2, data
-                            data = get_iscsi_sessions({'query-filters': [['target', '=', iqn3]]}, 0)
+                            data = get_iscsi_sessions([['target', '=', iqn3]], 0)
                             # Filter by initiator
-                            data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn1]]}, 1)
+                            data = get_iscsi_sessions([['initiator', '=', initiator_iqn1]], 1)
                             assert data[0]['target'] == iqn1, data
-                            data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn2]]}, 1)
+                            data = get_iscsi_sessions([['initiator', '=', initiator_iqn2]], 1)
                             assert data[0]['target'] == iqn2, data
-                            data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn3]]}, 0)
+                            data = get_iscsi_sessions([['initiator', '=', initiator_iqn3]], 0)
                             # Now login to target2 with initiator1
                             with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn1):
                                 assert get_client_count() == 1
                                 get_iscsi_sessions(check_length=3)
                                 # Filter by target
-                                data = get_iscsi_sessions({'query-filters': [['target', '=', iqn1]]}, 1)
+                                data = get_iscsi_sessions([['target', '=', iqn1]], 1)
                                 assert data[0]['initiator'] == initiator_iqn1, data
-                                data = get_iscsi_sessions({'query-filters': [['target', '=', iqn2]]}, 2)
+                                data = get_iscsi_sessions([['target', '=', iqn2]], 2)
                                 assert set([sess['initiator'] for sess in data]) == {initiator_iqn1, initiator_iqn2}, data
-                                data = get_iscsi_sessions({'query-filters': [['target', '=', iqn3]]}, 0)
+                                data = get_iscsi_sessions([['target', '=', iqn3]], 0)
                                 # Filter by initiator
-                                data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn1]]}, 2)
+                                data = get_iscsi_sessions([['initiator', '=', initiator_iqn1]], 2)
                                 assert set([sess['target'] for sess in data]) == {iqn1, iqn2}, data
-                                data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn2]]}, 1)
+                                data = get_iscsi_sessions([['initiator', '=', initiator_iqn2]], 1)
                                 assert data[0]['target'] == iqn2, data
-                                data = get_iscsi_sessions({'query-filters': [['initiator', '=', initiator_iqn3]]}, 0)
+                                data = get_iscsi_sessions([['initiator', '=', initiator_iqn3]], 0)
                             # Logout of target, ensure sessions get updated.
                             assert get_client_count() == 1
                             data = get_iscsi_sessions(check_length=2)
