@@ -2,7 +2,7 @@ import glob
 import os
 
 from middlewared.schema import Bool, Dict, Int, Str
-from middlewared.service import filterable_with_roles, filterable_returns, private, Service
+from middlewared.service import filterable, filterable_returns, private, Service
 from middlewared.utils import filter_list, run
 
 
@@ -11,7 +11,7 @@ class ISCSIGlobalService(Service):
     class Config:
         namespace = 'iscsi.global'
 
-    @filterable_with_roles(['SHARING_ISCSI_GLOBAL_READ'])
+    @filterable(roles=['SHARING_ISCSI_GLOBAL_READ'])
     @filterable_returns(Dict(
         'session',
         Str('initiator'),
