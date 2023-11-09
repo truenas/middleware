@@ -1,4 +1,5 @@
 import collections
+import errno
 import os
 import pathlib
 import re
@@ -6,8 +7,8 @@ import re
 from pyudev import Context
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
-from middlewared.service import private, Service
-from middlewared.utils.gpu import SENSITIVE_PCI_DEVICE_TYPES
+from middlewared.service import CallError, private, Service
+from middlewared.utils.gpu import get_gpus, SENSITIVE_PCI_DEVICE_TYPES
 
 
 RE_DEVICE_NAME = re.compile(r'(\w+):(\w+):(\w+).(\w+)')
@@ -186,3 +187,11 @@ class VMDeviceService(Service):
     def pptdev_choices(self):
         """Available choices for PCI passthru device"""
         return self.get_all_pci_devices_details()
+
+    @accepts(Str('gpu_pci_id', empty=False))
+    @returns(List(Str('pci_ids')))
+    def get_pci_ids_for_gpu_isolation(self, gpu_pci_id):
+        """Get PCI IDs for GPU isolation"""
+        gpus = get_gpus()
+        if not any(gpu['pci_id'] == gpu_pci_id for gpu in gpus):
+            raise CallError(f'GPU {gpu_pci_id} not found', errno=errno.ENOENT)
