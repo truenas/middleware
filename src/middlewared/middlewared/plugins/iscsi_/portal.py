@@ -38,6 +38,7 @@ class ISCSIPortalService(CRUDService):
         datastore_prefix = 'iscsi_target_portal_'
         namespace = 'iscsi.portal'
         cli_namespace = 'sharing.iscsi.portal'
+        role_prefix = 'SHARING_ISCSI_PORTAL'
 
     @private
     async def config_extend_context(self, rows, extra):

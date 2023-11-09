@@ -27,6 +27,7 @@ class iSCSITargetToExtentService(CRUDService):
         datastore_prefix = 'iscsi_'
         datastore_extend = 'iscsi.targetextent.extend'
         cli_namespace = 'sharing.iscsi.target.extent'
+        role_prefix = 'SHARING_ISCSI_TARGETEXTENT'
 
     @accepts(Dict(
         'iscsi_targetextent_create',

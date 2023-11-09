@@ -25,13 +25,13 @@ def share():
             yield share
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_EXTENT_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_EXTENT_READ"])
 def test_read_role_can_read(role):
     with unprivileged_user_client(roles=[role]) as c:
         c.call("iscsi.extent.query")
 
 
-@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_EXTENT_READ"])
+@pytest.mark.parametrize("role", ["SHARING_READ", "SHARING_ISCSI_READ", "SHARING_ISCSI_EXTENT_READ"])
 def test_read_role_cant_write(ds, share, role):
     with unprivileged_user_client(roles=[role]) as c:
         with pytest.raises(ClientException) as ve:
@@ -51,7 +51,7 @@ def test_read_role_cant_write(ds, share, role):
         assert ve.value.errno == errno.EACCES
 
 
-@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_EXTENT_WRITE"])
+@pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_ISCSI_WRITE", "SHARING_ISCSI_EXTENT_WRITE"])
 def test_write_role_can_write(ds, role):
     with unprivileged_user_client(roles=[role]) as c:
         share = c.call("iscsi.extent.create", {
@@ -59,7 +59,7 @@ def test_write_role_can_write(ds, role):
             "type": "DISK",
             "disk": f"zvol/{ds}",
         })
-
-        c.call("iscsi.extent.update", share["id"], {})
-
-        c.call("iscsi.extent.delete", share["id"])
+        try:
+            c.call("iscsi.extent.update", share["id"], {})
+        finally:
+            c.call("iscsi.extent.delete", share["id"])

@@ -285,6 +285,20 @@ def zvol_resize(zvol, volsize, expected_status_code=200):
     assert result.status_code == expected_status_code, result.text
 
 
+def get_iscsi_sessions(filters=None, check_length=None):
+    if filters:
+        data = call('iscsi.global.sessions', filters)
+    else:
+        data = call('iscsi.global.sessions')
+    if isinstance(check_length, int):
+        assert len(data) == check_length, data
+    return data
+
+
+def get_client_count():
+    return call('iscsi.global.client_count')
+
+
 @contextlib.contextmanager
 def zvol_extent(zvol, extent_name='zvol_extent'):
     payload = {
@@ -448,7 +462,7 @@ def expect_check_condition(s, text=None, check_type=CheckType.CHECK_CONDITION):
     If this version of pyscsi(/cython-iscsi) does not support CHECK CONDITION
     then just swallow the condition by issuing another TEST UNIT READY.
     """
-    assert type(check_type) == CheckType, f"Parameter '{check_type}' is not a CheckType"
+    assert check_type in CheckType, f"Parameter '{check_type}' is not a CheckType"
     if pyscsi_supports_check_condition:
         with pytest.raises(Exception) as excinfo:
             s.testunitready()
@@ -868,7 +882,7 @@ def test_07_report_luns(request):
             portal_id = portal_config['id']
             with target(target_name, [{'portal': portal_id}]) as target_config:
                 target_id = target_config['id']
-                with dataset( dataset_name):
+                with dataset(dataset_name):
                     # LUN 0 (100 MB file extent)
                     with file_extent(pool_name, dataset_name, file_name, MB_100) as extent_config:
                         extent_id = extent_config['id']
@@ -2525,7 +2539,7 @@ def test_29_multiple_extents():
         portal_id = config['portal']['id']
         with target(target_name, [{'portal': portal_id}]) as target_config:
             target_id = target_config['id']
-            with dataset( dataset_name):
+            with dataset(dataset_name):
                 with file_extent(pool_name, dataset_name, "target.extent1", filesize=MB_100, extent_name="extent1") as extent1_config:
                     with file_extent(pool_name, dataset_name, "target.extent2", filesize=MB_256, extent_name="extent2") as extent2_config:
                         with target_extent_associate(target_id, extent1_config['id'], 0):
@@ -2631,6 +2645,87 @@ def test_30_target_without_active_extent(request):
                     with iscsi_scsi_connection(ip, iqn2) as s2:
                         TUR(s2)
                 assert 'Unable to connect to' in str(ve), ve
+
+
+def test_31_iscsi_sessions(request):
+    """Validate that we can get a list of currently running iSCSI sessions."""
+    depends(request, ["iscsi_cmd_00"], scope="session")
+
+    name1 = f"{target_name}x1"
+    name2 = f"{target_name}x2"
+    name3 = f"{target_name}x3"
+    iqn1 = f'{basename}:{name1}'
+    iqn2 = f'{basename}:{name2}'
+    iqn3 = f'{basename}:{name3}'
+    initiator_base = f"iqn.2018-01.org.pyscsi:{socket.gethostname()}"
+    initiator_iqn1 = f"{initiator_base}:one"
+    initiator_iqn2 = f"{initiator_base}:two"
+    initiator_iqn3 = f"{initiator_base}:three"
+
+    with initiator_portal() as config:
+        with configured_target(config, name1, 'VOLUME'):
+            with configured_target(config, name2, 'FILE'):
+                with configured_target(config, name3, 'VOLUME'):
+                    assert get_client_count() == 0
+                    with iscsi_scsi_connection(ip, iqn1, initiator_name=initiator_iqn1):
+                        assert get_client_count() == 1
+                        with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn2):
+                            # Client count checks the number of different IPs attached, not sessions
+                            assert get_client_count() == 1
+                            # Validate that the two sessions are reported correctly
+                            data = get_iscsi_sessions(check_length=2)
+                            for sess in data:
+                                if sess['target'] == iqn1:
+                                    assert sess['initiator'] == initiator_iqn1, data
+                                elif sess['target'] == iqn2:
+                                    assert sess['initiator'] == initiator_iqn2, data
+                                else:
+                                    # Unknown target!
+                                    assert False, data
+                            # Filter by target
+                            data = get_iscsi_sessions([['target', '=', iqn1]], 1)
+                            assert data[0]['initiator'] == initiator_iqn1, data
+                            data = get_iscsi_sessions([['target', '=', iqn2]], 1)
+                            assert data[0]['initiator'] == initiator_iqn2, data
+                            data = get_iscsi_sessions([['target', '=', iqn3]], 0)
+                            # Filter by initiator
+                            data = get_iscsi_sessions([['initiator', '=', initiator_iqn1]], 1)
+                            assert data[0]['target'] == iqn1, data
+                            data = get_iscsi_sessions([['initiator', '=', initiator_iqn2]], 1)
+                            assert data[0]['target'] == iqn2, data
+                            data = get_iscsi_sessions([['initiator', '=', initiator_iqn3]], 0)
+                            # Now login to target2 with initiator1
+                            with iscsi_scsi_connection(ip, iqn2, initiator_name=initiator_iqn1):
+                                assert get_client_count() == 1
+                                get_iscsi_sessions(check_length=3)
+                                # Filter by target
+                                data = get_iscsi_sessions([['target', '=', iqn1]], 1)
+                                assert data[0]['initiator'] == initiator_iqn1, data
+                                data = get_iscsi_sessions([['target', '=', iqn2]], 2)
+                                assert set([sess['initiator'] for sess in data]) == {initiator_iqn1, initiator_iqn2}, data
+                                data = get_iscsi_sessions([['target', '=', iqn3]], 0)
+                                # Filter by initiator
+                                data = get_iscsi_sessions([['initiator', '=', initiator_iqn1]], 2)
+                                assert set([sess['target'] for sess in data]) == {iqn1, iqn2}, data
+                                data = get_iscsi_sessions([['initiator', '=', initiator_iqn2]], 1)
+                                assert data[0]['target'] == iqn2, data
+                                data = get_iscsi_sessions([['initiator', '=', initiator_iqn3]], 0)
+                            # Logout of target, ensure sessions get updated.
+                            assert get_client_count() == 1
+                            data = get_iscsi_sessions(check_length=2)
+                            for sess in data:
+                                if sess['target'] == iqn1:
+                                    assert sess['initiator'] == initiator_iqn1, data
+                                elif sess['target'] == iqn2:
+                                    assert sess['initiator'] == initiator_iqn2, data
+                                else:
+                                    # Unknown target!
+                                    assert False, data
+                        # Client count checks the number of different IPs attached, not sessions
+                        assert get_client_count() == 1
+                        get_iscsi_sessions(check_length=1)
+                    assert get_client_count() == 0
+                    get_iscsi_sessions(check_length=0)
 
 
 def test_99_teardown(request):

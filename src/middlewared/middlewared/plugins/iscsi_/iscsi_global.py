@@ -32,6 +32,7 @@ class ISCSIGlobalService(SystemServiceService):
         service = 'iscsitarget'
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
+        role_prefix = 'SHARING_ISCSI_GLOBAL'
 
     @private
     def port_is_listening(self, host, port, timeout=5):
@@ -182,7 +183,7 @@ class ISCSIGlobalService(SystemServiceService):
         if cp.returncode:
             self.logger.warning('Failed to stop active iSNS: %s', cp.stderr.decode())
 
-    @accepts()
+    @accepts(roles=['SHARING_ISCSI_GLOBAL_READ'])
     async def alua_enabled(self):
         """
         Returns whether iSCSI ALUA is enabled or not.

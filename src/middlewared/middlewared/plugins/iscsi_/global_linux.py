@@ -11,7 +11,7 @@ class ISCSIGlobalService(Service):
     class Config:
         namespace = 'iscsi.global'
 
-    @filterable
+    @filterable(roles=['SHARING_ISCSI_GLOBAL_READ'])
     @filterable_returns(Dict(
         'session',
         Str('initiator'),

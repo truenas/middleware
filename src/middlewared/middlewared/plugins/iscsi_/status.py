@@ -7,7 +7,7 @@ class ISCSIGlobalService(Service):
         namespace = 'iscsi.global'
         cli_namespace = 'sharing.iscsi.global'
 
-    @accepts()
+    @accepts(roles=['SHARING_ISCSI_GLOBAL_READ'])
     async def client_count(self):
         """
         Return currently connected clients count.
