@@ -1058,6 +1058,22 @@ class InterfaceService(CRUDService):
                         )
                         break
 
+    async def _validate_kubernetes_node_ip(self, old, new, verrors):
+        node_ip = await self.middleware.call('kubernetes.node_ip')
+        if node_ip == '0.0.0.0':
+            return
+
+        aliases = {
+            k: [entry['address'] for entry in data.get('aliases', [])] for k, data in (('old', old), ('new', new))
+        }
+
+        if node_ip in aliases['old'] and node_ip not in aliases['new']:
+            verrors.add(
+                f'{old["id"]}.aliases',
+                f'{node_ip!r} is being consumed by Applications and before changing it, please use a different node IP'
+                ' in applications configuration.'
+            )
+
     async def __convert_interface_datastore(self, data):
         return {
             'name': data['description'],
@@ -1205,6 +1221,7 @@ class InterfaceService(CRUDService):
         if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
 
+        await self._validate_kubernetes_node_ip(iface, new, verrors)
         verrors.check()
 
         await self.__save_datastores()
