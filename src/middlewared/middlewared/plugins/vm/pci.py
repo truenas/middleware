@@ -10,6 +10,8 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import CallError, private, Service
 from middlewared.utils.gpu import get_gpus, SENSITIVE_PCI_DEVICE_TYPES
 
+from .utils import convert_pci_id_to_vm_pci_slot
+
 
 RE_DEVICE_NAME = re.compile(r'(\w+):(\w+):(\w+).(\w+)')
 RE_DEVICE_PATH = re.compile(r'pci_(\w+)_(\w+)_(\w+)_(\w+)')
@@ -192,6 +194,20 @@ class VMDeviceService(Service):
     @returns(List(Str('pci_ids')))
     def get_pci_ids_for_gpu_isolation(self, gpu_pci_id):
         """Get PCI IDs for GPU isolation"""
-        gpus = get_gpus()
-        if not any(gpu['pci_id'] == gpu_pci_id for gpu in gpus):
+        gpu = next((gpu for gpu in get_gpus() if gpu['pci_id'] == gpu_pci_id), None)
+        if not gpu:
             raise CallError(f'GPU {gpu_pci_id} not found', errno=errno.ENOENT)
+
+        iommu_groups = self.get_iommu_groups_info()
+        iommu_groups_mapping_with_group_no = collections.defaultdict(set)
+        for pci_slot, pci_details in iommu_groups.items():
+            iommu_groups_mapping_with_group_no[pci_details['number']].add(convert_pci_id_to_vm_pci_slot(pci_slot))
+
+        pci_ids = set()
+        for device in gpu['devices']:
+            if not (device_info := iommu_groups.get(device['pci_slot'])):
+                continue
+
+            pci_ids.update(iommu_groups_mapping_with_group_no[device_info['number']])
+
+        return list(pci_ids)
