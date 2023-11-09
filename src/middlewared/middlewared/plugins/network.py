@@ -1070,7 +1070,7 @@ class InterfaceService(CRUDService):
         if node_ip in aliases['old'] and node_ip not in aliases['new']:
             verrors.add(
                 f'{old["id"]}.aliases',
-                f'{node_ip!r} is being consumed by Applications and before changing it, please use a different node IP'
+                f'{node_ip!r} is being consumed by Applications, please use a different node IP'
                 ' in applications configuration.'
             )
 
