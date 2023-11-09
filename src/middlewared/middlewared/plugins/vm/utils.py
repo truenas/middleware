@@ -19,3 +19,7 @@ def create_element(*args, **kwargs):
 
 def get_virsh_command_args():
     return ['virsh', '-c', LIBVIRT_URI]
+
+
+def convert_pci_id_to_vm_pci_slot(pci_id: str) -> str:
+    return f'pci_{pci_id.replace(".", "_").replace(":", "_")}'
