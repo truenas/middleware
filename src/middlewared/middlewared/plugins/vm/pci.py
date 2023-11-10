@@ -192,7 +192,17 @@ class VMDeviceService(Service):
     @accepts(Str('gpu_pci_id', empty=False))
     @returns(List(Str('pci_ids')))
     def get_pci_ids_for_gpu_isolation(self, gpu_pci_id):
-        """Get PCI IDs for GPU isolation"""
+        """
+        Get PCI IDs of devices which are required to be isolated for `gpu_pci_id` GPU isolation.
+
+        Basically when a GPU passthrough is desired for a VM, we need to isolate all the devices which are in the same
+        IOMMU group as the GPU. This is required because if we don't do this, the VM will not be able to start because
+        the devices in the same IOMMU group as the GPU will be in use by the host and will not be available for the VM
+        to use.
+
+        This endpoints retrieves all the PCI devices which are in the same IOMMU group as the GPU and returns their PCI
+        IDs so UI can use those and create PCI devices for them and isolate them.
+        """
         gpu = next(
             (gpu for gpu in get_gpus() if convert_pci_id_to_vm_pci_slot(gpu['addr']['pci_slot']) == gpu_pci_id), None
         )
