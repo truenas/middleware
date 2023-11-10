@@ -1,5 +1,4 @@
 import collections
-import errno
 import os
 import pathlib
 import re
@@ -7,7 +6,7 @@ import re
 from pyudev import Context
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
-from middlewared.service import CallError, private, Service
+from middlewared.service import private, Service, ValidationErrors
 from middlewared.utils.gpu import get_gpus, SENSITIVE_PCI_DEVICE_TYPES
 
 from .utils import convert_pci_id_to_vm_pci_slot
@@ -197,8 +196,11 @@ class VMDeviceService(Service):
         gpu = next(
             (gpu for gpu in get_gpus() if convert_pci_id_to_vm_pci_slot(gpu['addr']['pci_slot']) == gpu_pci_id), None
         )
+        verrors = ValidationErrors()
         if not gpu:
-            raise CallError(f'GPU {gpu_pci_id} not found', errno=errno.ENOENT)
+            verrors.add('gpu_pci_id', f'GPU with {gpu_pci_id!r} PCI ID not found')
+
+        verrors.check()
 
         iommu_groups = self.get_iommu_groups_info()
         iommu_groups_mapping_with_group_no = collections.defaultdict(set)
