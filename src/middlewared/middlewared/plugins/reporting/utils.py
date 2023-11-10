@@ -136,6 +136,18 @@ def get_metrics_approximation(disk_count: int, core_count: int, interface_count:
 
             # cputemp
             'cputemp.temperatures': core_count,
+
+            # ups
+            'nut_ups.charge': 1,
+            'nut_ups.runtime': 1,
+            'nut_ups.battery_voltage': 4,
+            'nut_ups.input_voltage': 3,
+            'nut_ups.input_current': 1,
+            'nut_ups.input_frequency': 2,
+            'nut_ups.output_voltage': 1,
+            'nut_ups.load': 1,
+            'nut_ups.temp': 1,
+            'netdata.plugin_chartsd_nut': 1,
         },
         60: {  # smartd_logs
             'smart_log.temperature_celsius': disk_count}
