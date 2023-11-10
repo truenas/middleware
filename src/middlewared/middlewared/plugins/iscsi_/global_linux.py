@@ -158,7 +158,7 @@ class ISCSIGlobalService(Service):
         targets = {t['id']: t for t in await self.middleware.call('iscsi.target.query')}
         extents = {
             t['id']: t for t in await self.middleware.call(
-                'iscsi.extent.query', [['enabled', '=', True]], {'select': ['enabled', 'path']}
+                'iscsi.extent.query', [['enabled', '=', True]], {'select': ['enabled', 'path', 'id']}
             )
         }
 
