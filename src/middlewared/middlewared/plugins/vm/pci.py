@@ -203,9 +203,7 @@ class VMDeviceService(Service):
         This endpoints retrieves all the PCI devices which are in the same IOMMU group as the GPU and returns their PCI
         IDs so UI can use those and create PCI devices for them and isolate them.
         """
-        gpu = next(
-            (gpu for gpu in get_gpus() if convert_pci_id_to_vm_pci_slot(gpu['addr']['pci_slot']) == gpu_pci_id), None
-        )
+        gpu = next((gpu for gpu in get_gpus() if gpu['addr']['pci_slot'] == gpu_pci_id), None)
         verrors = ValidationErrors()
         if not gpu:
             verrors.add('gpu_pci_id', f'GPU with {gpu_pci_id!r} PCI ID not found')
