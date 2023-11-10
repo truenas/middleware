@@ -93,6 +93,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'netdata/netdata.conf', 'checkpoint': 'pool_import'},
             {'type': 'mako', 'path': 'netdata/charts.d/exclude_netdata.conf', 'checkpoint': 'pool_import'},
             {'type': 'py', 'path': 'netdata/python_conf'},
+            {'type': 'mako', 'path': 'netdata/exporting.conf'},
         ],
         'fstab': [
             {'type': 'mako', 'path': 'fstab'},
