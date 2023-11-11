@@ -86,6 +86,19 @@ class JobsQueue(object):
     def all(self):
         return self.deque.all()
 
+    def for_username(self, username):
+        out = {}
+        for jid, job in self.all().items():
+            if job.credentials is None or not job.credentials.is_user_session:
+                continue
+
+            if job.credentials.user['username'] != username:
+                continue
+
+            out[jid] = job
+
+        return out
+
     def add(self, job):
         self.handle_lock(job)
         if job.options["lock_queue_size"] is not None:
@@ -514,6 +527,11 @@ class Job:
 
     def __encode__(self, raw_result=True):
         exc_info = None
+        if self.credentials and self.credentials.is_user_session:
+            username = self.credentials.user['username']
+        else:
+            username = None
+
         if self.exc_info:
             etype = self.exc_info[0]
             evalue = self.exc_info[1]
@@ -551,6 +569,7 @@ class Job:
             'state': self.state.name,
             'time_started': self.time_started,
             'time_finished': self.time_finished,
+            'user': username,
             'credentials': (
                 {
                     'type': self.credentials.class_name(),

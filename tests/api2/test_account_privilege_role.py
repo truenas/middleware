@@ -7,6 +7,7 @@ from middlewared.client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import client
+from time import sleep
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,21 @@ def test_full_admin_role():
     with unprivileged_user_client(["FULL_ADMIN"]) as c:
         c.call("system.general.config")
 
+        # User with FULL_ADMIN role should have something in jobs list
+        assert len(c.call("core.get_jobs")) != 0
+
+        # attempt to wait / cancel job should not fail
+        jid = c.call("core.job_test", {"sleep": 1})
+
+        # TODO: job subscription is currently broken for roles
+        # Once this is fixed we can set `job=True` and remove the sleep
+        wait_job_id = c.call("core.job_wait", jid)
+        sleep(2)
+        result = c.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
+        assert result["state"] == "SUCCESS"
+
+        c.call("core.job_abort", jid)
+
 
 @pytest.mark.parametrize("role,method,params", [
     ("DATASET_READ", "pool.dataset.checksum_choices", []),
@@ -81,6 +97,7 @@ def test_read_role_can_call_method(role, method, params):
     ("filesystem.getacl", ["/"]),
     ("filesystem.acltemplate.by_path", [{"path": "/"}]),
     ("pool.dataset.details", []),
+    ("core.get_jobs", []),
 ])
 def test_readonly_can_call_method(method, params):
     with unprivileged_user_client(["READONLY"]) as c:
@@ -116,3 +133,19 @@ def test_limited_user_auth_token_behavior():
         with client(auth=None) as c2:
             assert c2.call("auth.login_with_token", auth_token)
             c2.call("auth.me")
+            c2.call("core.get_jobs")
+
+
+def test_sharing_manager_jobs():
+    with unprivileged_user_client(["SHARING_MANAGER"]) as c:
+        auth_token = c.call("auth.generate_token")
+        jid = c.call("core.job_test", {"sleep": 1})
+
+        with client(auth=None) as c2:
+            #c.call("core.job_wait", jid, job=True)
+
+            wait_job_id = c.call("core.job_wait", jid)
+            sleep(2)
+            result = c.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
+            assert result["state"] == "SUCCESS"
+            c.call("core.job_abort", wait_job_id)

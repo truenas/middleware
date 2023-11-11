@@ -18,6 +18,7 @@ import middlewared.main
 from middlewared.common.environ import environ_update
 from middlewared.job import Job
 from middlewared.pipe import Pipes
+from middlewared.plugins.account_.privilege_utils import credential_has_full_admin
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
@@ -28,7 +29,7 @@ from middlewared.validators import IpAddress, Range
 from .compound_service import CompoundService
 from .config_service import ConfigService
 from .crud_service import CRUDService
-from .decorators import filterable, filterable_returns, job, no_auth_required, pass_app, private
+from .decorators import filterable, filterable_returns, job, no_auth_required, no_authz_required, pass_app, private
 from .service import Service
 
 
@@ -134,6 +135,32 @@ class CoreService(Service):
                 'frames': frames,
             }
 
+    @private
+    def __is_limited_to_own_jobs(self, app):
+        if app is None:
+            # Internal caller.
+            return False
+
+        if not app.authenticated_credentials.is_user_session:
+            # The only way that API key is here is if it was explicitly
+            # granted access to this endpoint. This preserves existing
+            # behavior for API keys.
+            return False
+
+        return not credential_has_full_admin(app.authenticated_credentials)
+
+    @private
+    def __check_job_owned_by_session(self, job, app):
+        if not self.__is_limited_to_own_jobs(app):
+            return
+
+        username = app.authenticated_credentials.user['username']
+        if job.credentials.user['username'] == username:
+            return
+
+        raise CallError(f'{job.id}: job is not owned by current session.', errno.EPERM)
+
+    @no_authz_required
     @filterable
     @filterable_returns(Dict(
         'job',
@@ -172,25 +199,52 @@ class CoreService(Service):
         ),
         register=True,
     ))
-    def get_jobs(self, filters, options):
-        """Get the long running jobs."""
+    @pass_app()
+    def get_jobs(self, app, filters, options):
+        """
+        Get information about long-running jobs.
+        If authenticated session does not have the FULL_ADMIN role, only
+        jobs owned by the current authenticated session will be returned.
+        """
+        if self.__is_limited_to_own_jobs(app):
+            username = app.authenticated_credentials.user['username']
+            jobs = list(self.middleware.jobs.for_username(username).values())
+        else:
+            jobs = list(self.middleware.jobs.all().values())
+
         raw_result = options['extra'].get('raw_result', True)
         jobs = filter_list([
-            i.__encode__(raw_result) for i in list(self.middleware.jobs.all().values())
+            i.__encode__(raw_result) for i in jobs
         ], filters, options)
         return jobs
 
+    @no_authz_required
     @accepts(Int('id'))
     @job()
     async def job_wait(self, job, id_):
-        return await job.wrap(self.middleware.jobs[id_])
+        target_job = self.middleware.jobs[id_]
 
+        if job.credentials and job.credentials.is_user_session:
+            this_user = job.credentials.user['username']
+            if not credential_has_full_admin(job.credentials):
+                if (
+                        target_job.credentials is None or
+                        not target_job.credentials.is_user_session or
+                        target_job.credentials.user['username'] != this_user
+                   ):
+                    raise CallError(f'{id_}: job is not owned by current session')
+
+        return await job.wrap(target_job)
+
+    @no_authz_required
     @accepts(Int('id'), Dict(
         'job-update',
         Dict('progress', additional_attrs=True),
     ))
-    def job_update(self, id_, data):
+    @pass_app()
+    def job_update(self, app, id_, data):
         job = self.middleware.jobs[id_]
+        self.__check_job_owned_by_session(job, app)
         progress = data.get('progress')
         if progress:
             job.set_progress(
@@ -218,9 +272,12 @@ class CoreService(Service):
         # Let's setup periodic tasks now
         self.middleware._setup_periodic_tasks()
 
+    @no_authz_required
     @accepts(Int('id'))
-    def job_abort(self, id_):
+    @pass_app()
+    def job_abort(self, app, id_):
         job = self.middleware.jobs[id_]
+        self.__check_job_owned_by_session(job, app)
         return job.abort()
 
     def _should_list_service(self, name, service, target):
@@ -593,6 +650,7 @@ class CoreService(Service):
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private
+    @no_authz_required
     @accepts(Dict('core-job', Int('sleep')))
     @job()
     def job_test(self, job, data):
