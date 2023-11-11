@@ -54,6 +54,7 @@ class NFSService(SystemServiceService):
         datastore_prefix = "nfs_srv_"
         datastore_extend = 'nfs.nfs_extend'
         cli_namespace = "service.nfs"
+        role_prefix = "SHARING_NFS"
 
     ENTRY = Dict(
         'nfs_entry',

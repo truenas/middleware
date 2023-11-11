@@ -30,7 +30,8 @@ class NFSService(Service):
 
         return entries
 
-    @filterable
+    # NFS_WRITE because this exposes hostnames and IP addresses
+    @filterable(roles=['SHARING_NFS_WRITE'])
     def get_nfs3_clients(self, filters, options):
         """
         Read contents of rmtab. This information may not
@@ -68,7 +69,8 @@ class NFSService(Service):
         # return empty list in this case
         return states or []
 
-    @filterable
+    # NFS_WRITE because this exposes hostnames, IP addresses and other details
+    @filterable(roles=['SHARING_NFS_WRITE'])
     @filterable_returns(Dict(
         'client',
         Str('id'),
@@ -155,7 +157,7 @@ class NFSService(Service):
 
         return filter_list(clients, filters, options)
 
-    @accepts()
+    @accepts(roles=['SHARING_NFS_READ'])
     @returns(Int('number_of_clients'))
     def client_count(self):
         """
