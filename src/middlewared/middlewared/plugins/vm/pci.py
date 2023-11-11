@@ -190,7 +190,7 @@ class VMDeviceService(Service):
         return self.get_all_pci_devices_details()
 
     @accepts(Str('gpu_pci_id', empty=False))
-    @returns(List(Str('pci_ids')))
+    @returns(List(items=[Str('pci_ids')]))
     def get_pci_ids_for_gpu_isolation(self, gpu_pci_id):
         """
         Get PCI IDs of devices which are required to be isolated for `gpu_pci_id` GPU isolation.
