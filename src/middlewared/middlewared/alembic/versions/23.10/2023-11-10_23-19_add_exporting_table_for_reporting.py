@@ -1,9 +1,7 @@
 """Add exporting table for reporting
-
-Revision ID: 3e16b0a74d78
-Revises: e915a3b8fff6
-Create Date: 2023-09-07 19:50:42.678757+00:00
-
+Revision ID: 8f8942557260
+Revises: 304e43883592
+Create Date: 2023-11-10 23:19:42.678757+00:00
 """
 import json
 import sqlalchemy as sa
@@ -13,8 +11,8 @@ from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy.sql import text
 
 
-revision = '3e16b0a74d78'
-down_revision = 'e915a3b8fff6'
+revision = '8f8942557260'
+down_revision = '304e43883592'
 branch_labels = None
 depends_on = None
 
