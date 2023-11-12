@@ -27,8 +27,9 @@ class Lifecycle:
 
 
 def get_debug_execution_dir(system_dataset_path: str, iteration: typing.Optional[int] = 0) -> str:
-    return os.path.join(MIDDLEWARE_RUN_DIR, f'ixdiagnose-{iteration}') if system_dataset_path is None else os.path.join(
-        system_dataset_path, f'ixdiagnose-{iteration}'
+    debug_name = f'ixdiagnose-{iteration}' if iteration else 'ixdiagnose'
+    return os.path.join(MIDDLEWARE_RUN_DIR, debug_name) if system_dataset_path is None else os.path.join(
+        system_dataset_path, debug_name
     )
 
 
