@@ -6,11 +6,11 @@ def r20_variants_or_mini(model, dmi):
     NOTE: this information is burned in by the production team
     into the motherboard (SMBIOS) before we ship the system
     """
-    if dmi in ('TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B'):
+    if dmi.startswith((
+        'TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B',
+        'TRUENAS-MINI', 'FREENAS-MINI'
+    )):
         return model, True
-    elif dmi.startswith(('TRUENAS-MINI', 'FREENAS-MINI')):
-        # minis do not have the TRUENAS- prefix removed
-        return dmi, True
     else:
         return '', False
 
@@ -21,7 +21,8 @@ def get_enclosure_model_and_controller(key, dmi):
     info returned by a standard INQUIRY command to the enclosure
     device.
     """
-    model = dmi.removeprefix('TRUENAS-').removesuffix('-HA')
+    model = dmi.removeprefix('TRUENAS-').removeprefix('FREENAS-')
+    model = model.removesuffix('-HA').removesuffix('-S')
     match key:
         case 'ECStream_4024Sp' | 'ECStream_4024Ss' | 'iX_4024Sp' | 'iX_4024Ss':
             # M series
@@ -29,13 +30,16 @@ def get_enclosure_model_and_controller(key, dmi):
         case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
             # X series
             return model, True
+        case 'BROADCOM_VirtualSES':
+            # H series
+            return model, True
         case 'ECStream_FS1' | 'ECStream_FS2' | 'ECStream_DSS212Sp' | 'ECStream_DSS212Ss':
             # R series
             return model, True
-        case 'iX_FS1' | 'iX_FS2' | 'iX_DSS212Sp' | 'iX_DSS212Ss':
+        case 'iX_FS1L' | 'iX_FS2' | 'iX_DSS212Sp' | 'iX_DSS212Ss':
             # more R series
             return model, True
-        case 'iX_TrueNAS R20p' | 'iX_TrueNAS 2012Sp' | 'iX_TrueNAS SMC SC826-P':
+        case 'iX_TrueNASR20p' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
             # R20
             return model, True
         case 'AHCI_SGPIOEnclosure':
@@ -58,7 +62,7 @@ def get_enclosure_model_and_controller(key, dmi):
             return 'ES24', False
         case 'ECStream_2024Jp' | 'ECStream_2024Js' | 'iX_2024Jp' | 'iX_2024Js':
             return 'ES24F', False
-        case 'CELESTIC_R0904':
+        case 'CELESTIC_R0904-F0001-01':
             return 'ES60', False
         case 'HGST_H4060-J':
             return 'ES60G2', False
