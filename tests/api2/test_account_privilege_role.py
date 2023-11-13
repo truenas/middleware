@@ -143,9 +143,32 @@ def test_sharing_manager_jobs():
 
         with client(auth=None) as c2:
             #c.call("core.job_wait", jid, job=True)
-
-            wait_job_id = c.call("core.job_wait", jid)
+            assert c2.call("auth.login_with_token", auth_token)
+            wait_job_id = c2.call("core.job_wait", jid)
             sleep(2)
-            result = c.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
+            result = c2.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
             assert result["state"] == "SUCCESS"
-            c.call("core.job_abort", wait_job_id)
+            c2.call("core.job_abort", wait_job_id)
+
+
+def test_foreign_job_access():
+    with unprivileged_user_client(["READONLY"]) as unprivileged:
+        with client() as c:
+            job = c.call("core.job_test")
+
+            wait_job_id = unprivileged.call("core.job_wait", job)
+            sleep(2)
+            result = unprivileged.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
+            assert result["state"] != "SUCCESS"
+
+            jobs = unprivileged.call("core.get_jobs", [["id", "=", job]])
+            assert jobs == []
+
+    with unprivileged_user_client(["FULL_ADMIN"]) as unprivileged:
+        with client() as c:
+            job = c.call("core.job_test")
+
+            wait_job_id = unprivileged.call("core.job_wait", job)
+            sleep(2)
+            result = unprivileged.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
+            assert result["state"] == "SUCCESS"
