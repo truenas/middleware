@@ -1,10 +1,10 @@
 import logging
-import pathlib
 
 from middlewared.utils.scsi_generic import inquiry
 from .identification import get_enclosure_model_and_controller
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
-
+from .sysfs_disks import map_disks_to_enclosure_slots
+from .slot_mappings import get_slot_info
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +15,15 @@ class Enclosure:
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
         self.model, self.controller = self._get_model_and_controller()
+        self.sysfs_map = map_disks_to_enclosure_slots(self.pci)
+        self.disks_map = self._get_array_device_mapping_info()
         self.elements = self._parse_elements(enc_stat['elements'])
 
     def asdict(self):
+        """This method is what is returned in enclosure2.query"""
         return {
             'name': self.encname,  # vendor, product and revision joined by whitespace
-            'model': self.model,  # M60, F100, TRUENAS-MINI-R, etc
+            'model': self.model,  # M60, F100, MINI-R, etc
             'controller': self.controller,  # if True, represents the "head-unit"
             'dmi': self.dmi,  # comes from system.dmidecode_info[system-product-name]
             'status': self.status,  # the overall status reported by the enclosure
@@ -51,72 +54,60 @@ class Enclosure:
         key = f'{self.vendor}_{self.product}'
         return get_enclosure_model_and_controller(key, self.dmi)
 
-    def _map_disks_to_enclosure_slots(self):
-        """
-        The sysfs directory structure is dynamic based on the enclosure that
-        is attached.
-        Here are some examples of what we've seen on internal hardware:
-            /sys/class/enclosure/19:0:6:0/SLOT_001/
-            /sys/class/enclosure/13:0:0:0/Drive Slot #0_0000000000000000/
-            /sys/class/enclosure/13:0:0:0/Disk #00/
-            /sys/class/enclosure/13:0:0:0/Slot 00/
-            /sys/class/enclosure/13:0:0:0/slot00/
-            /sys/class/enclosure/13:0:0:0/slot00       / (yes those are spaces and really show up on a system)
+    def _ignore_element(self, parsed_element_status, element):
+        """We ignore certain elements reported by the enclosure, for example,
+        elements that report as unsupported. Our alert system polls enclosures
+        for elements that report "bad" statuses and these elements need to be
+        ignored. NOTE: every hardware platform is different for knowing which
+        elements are to be ignored"""
+        if parsed_element_status == 'Unsupported':
+            return True
+        elif self.model in ('X10', 'X20'):
+            return element['descriptor'] == 'ArrayDevicesInSubEnclsr0'
+        elif self.model == 'ES60':
+            return element['descriptor'] == 'Array Device Slot'
+        elif self.model not in ('H10', 'H20'):
+            # all array device descriptor value returned from HBA is empty and so
+            # the sg3_utils api fills it in with a literal "<empty>" string. For
+            # some of our other platforms, an "<empty>" string actually represents
+            # a descriptor we want to ignore so this final logic applies to all
+            # others except the hseries platform
+            return element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots')
 
-        The safe assumption that we can make on whether or not the directory
-        represents a drive slot is looking for the file named "slot" underneath
-        each directory. (i.e. /sys/class/enclosure/13:0:0:0/Disk #00/slot)
+    def _get_array_device_mapping_info(self):
+        mapped_info = get_slot_info(self.model)
+        if not mapped_info:
+            return
 
-        If this file doesn't exist, it means 1 thing
-            1. this isn't a drive slot directory
+        # we've gotten the disk mapping information based on the
+        # enclosure but we need to check if this enclosure has
+        # different revisions
+        vers_key = 'DEFAULT'
+        if not mapped_info['any_version']:
+            for key, vers in mapped_info['versions'].items():
+                if self.revision == key:
+                    vers_key = vers
+                    break
 
-        Once we've determined that there is a file named "slot", we can read the
-        contents of that file to get the slot number associated to the disk device.
-        The "slot" file is always an integer so we don't need to convert to hexadecimal.
-        """
-        mapping = dict()
-        for i in filter(lambda x: x.is_dir(), pathlib.Path(f'/sys/class/enclosure/{self.pci}').iterdir()):
-            try:
-                slot = int((i / 'slot').read_text().strip())
-            except (FileNotFoundError, ValueError):
-                # not a slot directory
-                continue
-            else:
-                try:
-                    dev = next((i / 'device/block').iterdir(), None)
-                    mapping[slot] = dev.name if dev is not None else None
-                except FileNotFoundError:
-                    # no disk in this slot
-                    mapping[slot] = None
-        try:
-            # we have a single enclosure (at time of writing this) that enumerates
-            # sysfs drive slots starting at number 1 while every other JBOD
-            # (and head-units) enumerate syfs drive slots starting at number 0
-            min_slot = min(mapping)
-        except ValueError:
-            min_slot = 0
+        # Now we need to check this specific enclosure's disk slot
+        # mapping information
+        ids = list()
+        if f'{self.vendor}_{self.product}' == 'AHCI_SGPIOEnclosure':
+            if self.model.startswith(('R20', 'MINI-')):
+                ids.append(('id', self.encid))
+        else:
+            ids.append(('model', self.model))
 
-        return min_slot, mapping
-
-    def _elements_to_ignore(self, element):
-        """We ignore these elements as they typically serve as a beginning
-        element for a specific group type. (i.e. ArrayDevices is the element
-        that preceeds all the actual array device elements with the disk
-        information). We ignore these types so we don't fill the data object
-        with a bunch of useless objects that eventually get sifted through
-        anyways. These are also ignored because we run a periodic alert
-        that checks enclosure element statuses and we've seen these elements
-        report "issues" when they're not used anyways.
-        """
-        return any((
-            element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots'),
-            element['status'] == 'Unsupported'
-        ))
+        # Now we know the specific enclosure we're on and the specific
+        # key we need to use to pull out the drive slot mapping
+        for idkey, idvalue in ids:
+            for mapkey, mapslots in mapped_info['versions'][vers_key].items():
+                if mapkey == idkey and (found := mapslots.get(idvalue)):
+                    return found
 
     def _parse_elements(self, elements):
         final = {}
-        min_slot, disk_map = self._map_disks_to_enclosure_slots()
-        for slot, element in filter(lambda x: not self._elements_to_ignore(x[1]), elements.items()):
+        for slot, element in elements.items():
             try:
                 element_type = ELEMENT_TYPES[element['type']]
             except KeyError:
@@ -133,6 +124,9 @@ class Enclosure:
                 # is not mapped so just report unknown
                 element_status = 'UNKNOWN'
 
+            if self._ignore_element(element_status, element):
+                continue
+
             if element_type[0] not in final:
                 # first time seeing this element type so add it
                 final[element_type[0]] = {}
@@ -144,25 +138,24 @@ class Enclosure:
             for val in element['status']:
                 value_raw = (value_raw << 8) + val
 
-            parsed = {slot: {
+            mapped_slot = slot
+            parsed = {
                 'descriptor': element['descriptor'].strip(),
                 'status': element_status,
                 'value': element_type[1](value_raw),
                 'value_raw': value_raw,
-            }}
-            if element_type[0] == 'Array Device Slot':
-                # see docstring in `self._map_disks_to_enclosure_slots` for
-                # why we have to get the min_slot
-                orig_slot = slot - 1 if min_slot == 0 else slot
-                parsed[slot]['dev'] = disk_map.get(orig_slot, None)
-                parsed[slot]['original'] = {
+            }
+            if element_type[0] == 'Array Device Slot' and self.disks_map:
+                parsed['dev'] = self.sysfs_map[self.disks_map[slot]['sysfs_slot']]
+                mapped_slot = self.disks_map[slot]['mapped_slot']
+                parsed['original'] = {
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
                     'enclosure_bsg': self.bsg,
-                    'descriptor': f'slot{orig_slot}',
-                    'slot': orig_slot,
+                    'descriptor': f'slot{slot}',
+                    'slot': slot,
                 }
 
-            final[element_type[0]].update(parsed)
+            final[element_type[0]].update({mapped_slot: parsed})
 
         return final
