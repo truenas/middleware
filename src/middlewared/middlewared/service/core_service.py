@@ -199,7 +199,7 @@ class CoreService(Service):
         ),
         register=True,
     ))
-    @pass_app()
+    @pass_app(rest=True)
     def get_jobs(self, app, filters, options):
         """
         Get information about long-running jobs.
@@ -274,7 +274,7 @@ class CoreService(Service):
 
     @no_authz_required
     @accepts(Int('id'))
-    @pass_app()
+    @pass_app(rest=True)
     def job_abort(self, app, id_):
         job = self.middleware.jobs[id_]
         self.__check_job_owned_by_session(job, app)
