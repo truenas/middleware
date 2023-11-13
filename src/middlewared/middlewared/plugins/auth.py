@@ -188,9 +188,14 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.token_manager.destroy(self.token)
 
     def dump(self):
-        return {
+        data = {
             "parent": dump_credentials(self.token.parent_credentials),
         }
+        if self.is_user_session:
+            data["username"] = self.user["username"]
+
+        return data
+
 
 
 def is_internal_session(session):

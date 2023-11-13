@@ -527,11 +527,6 @@ class Job:
 
     def __encode__(self, raw_result=True):
         exc_info = None
-        if self.credentials and self.credentials.is_user_session:
-            username = self.credentials.user['username']
-        else:
-            username = None
-
         if self.exc_info:
             etype = self.exc_info[0]
             evalue = self.exc_info[1]
@@ -569,7 +564,6 @@ class Job:
             'state': self.state.name,
             'time_started': self.time_started,
             'time_finished': self.time_finished,
-            'user': username,
             'credentials': (
                 {
                     'type': self.credentials.class_name(),
