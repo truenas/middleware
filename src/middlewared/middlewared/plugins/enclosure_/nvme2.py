@@ -3,6 +3,8 @@ import re
 
 from pyudev import Context, Devices, DeviceNotFoundAtPathError
 
+from .slot_mappings import get_slot_info
+
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
 
 
@@ -21,6 +23,7 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped):
     map the disks accordingly
     """
     dmi = f'{model.lower()}_nvme_enclosure'
+    disks_map = get_slot_info(dmi)
     fake_enclosure = {
         'id': dmi,
         'dmi': dmi,
@@ -35,12 +38,13 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped):
         device = mapped.get(slot, None)
         if device is not None:
             status = 'OK'
-            value_raw = '0x1000000'
+            value_raw = 16777216
         else:
-            status = 'Not Installed'
-            value_raw = '0x0500000'
+            status = 'Not installed'
+            value_raw = 83886080
 
-        fake_enclosure['elements']['Array Device Slot'][slot] = {
+        mapped_slot = disks_map['versions']['DEFAULT']['id'][dmi][slot]['mapped_slot']
+        fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
             'descriptor': f'Disk #{slot}',
             'status': status,
             'value': None,
