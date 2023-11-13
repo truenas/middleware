@@ -112,6 +112,18 @@ def test_001_initialize_smb_servce(initialize_for_smb_tests):
     TEST_DATA.update(initialize_for_smb_tests)
 
 
+def test_002_check_client_count(request):
+    depends(request, ["SMB_SHARE_CREATED"])
+    with smb_connection(
+        host=ip,
+        share=SMB_NAME,
+        username=SMB_USER,
+        password=SMB_PWD,
+        smb1=False
+    ) as c:
+        assert c.call("smb.client_count") == 1
+
+
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE")
 def test_009_share_is_writable(request):
     """

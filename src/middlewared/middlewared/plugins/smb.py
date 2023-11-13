@@ -1873,7 +1873,7 @@ class SharingSMBService(SharingService):
 
         return data
 
-    @accepts()
+    @accepts(roles=['SHARING_SMB_READ'])
     async def presets(self):
         """
         Retrieve pre-defined configuration sets for specific use-cases. These parameter
