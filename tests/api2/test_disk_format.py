@@ -66,10 +66,12 @@ def test_disk_format_with_size_with_swap():
 
     partitions = call('disk.list_partitions', disk)
     assert len(partitions) == 2
-    # Uses (almost) all the disk
-    assert data_size <= partitions[0]['size'] < data_size * 1.01
-    # Swap of the requested size
-    assert int(partitions[1]['size'] / (1024 ** 3) + 0.5) == 2
+    # Swap of almost the requested size
+    assert int(partitions[0]['size'] / (1024 ** 3) + 0.5) == 2
+    # Data of at least the requested size
+    assert data_size <= partitions[1]['size'] < data_size * 1.01
+    # Partitions are compactly allocated at the beginning of the device (so the free space is at the end of the device)
+    assert partitions[1]['end'] < (2 * 1024 * 1024 * 1024 + data_size) * 1.1
 
 
 def test_disk_format_removes_existing_partition_table():
