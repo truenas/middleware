@@ -23,37 +23,61 @@ class DiskService(Service):
         device.clobber()
         parted_disk = parted.freshDisk(device, 'gpt')
 
+        leave_free_space = parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize)
         if data_size is not None:
-            data_geometry = self._get_largest_free_space_region(parted_disk)
-            data_constraint = parted.Constraint(
-                startAlign=device.optimumAlignment,
-                endAlign=device.optimumAlignment,
-                startRange=data_geometry,
-                endRange=data_geometry,
-                minSize=parted.sizeToSectors(data_size, 'B', device.sectorSize),
-                # Can be increased within the alignment threshold
-                maxSize=parted.sizeToSectors(data_size, 'B', device.sectorSize) + device.optimumAlignment.grainSize,
-            )
-            data_filesystem = parted.FileSystem(type='zfs', geometry=data_geometry)
-            data_partition = parted.Partition(
-                disk=parted_disk,
-                type=parted.PARTITION_NORMAL,
-                fs=data_filesystem,
-                geometry=data_geometry,
-            )
-            try:
-                parted_disk.addPartition(data_partition, constraint=data_constraint)
-            except parted.PartitionException:
+            min_data_size = parted.sizeToSectors(data_size, 'B', device.sectorSize)
+            # Can be increased within the alignment threshold
+            max_data_size = parted.sizeToSectors(data_size, 'B', device.sectorSize) + device.optimumAlignment.grainSize
+        else:
+            min_data_size = parted.sizeToSectors(1, 'GiB', device.sectorSize)
+            # Try to give free space for _approximately_ the requested swap size
+            max_data_size = parted.sizeToSectors(dd['size'], 'B', device.sectorSize) - leave_free_space
+            if max_data_size <= 0:
+                raise CallError(f'Disk {disk!r} must be larger than {swap_size_gb} GiB')
+        data_geometry = self._get_largest_free_space_region(parted_disk)
+        # Place the partition at the end of the disk so the swap is created at the beginning
+        start_range = parted.Geometry(
+            device,
+            data_geometry.start + leave_free_space + device.optimumAlignment.grainSize,
+            end=data_geometry.end,
+        )
+        data_constraint = parted.Constraint(
+            startAlign=device.optimumAlignment,
+            endAlign=device.optimumAlignment,
+            startRange=start_range,
+            endRange=data_geometry,
+            minSize=min_data_size,
+            maxSize=max_data_size,
+        )
+        data_filesystem = parted.FileSystem(type='zfs', geometry=data_geometry)
+        data_partition = parted.Partition(
+            disk=parted_disk,
+            type=parted.PARTITION_NORMAL,
+            fs=data_filesystem,
+            geometry=data_geometry,
+        )
+        try:
+            parted_disk.addPartition(data_partition, constraint=data_constraint)
+        except parted.PartitionException:
+            if data_size is not None:
                 raise CallError(f'Disk {disk!r} must be larger than {data_size} bytes')
+            else:
+                raise CallError(f'Disk {disk!r} must be larger than 1 GiB')
 
         if swap_size_gb > 0:
-            swap_geometry = self._get_largest_free_space_region(parted_disk)
+            min_swap_size = parted.sizeToSectors(1, 'GiB', device.sectorSize)
+            # Select the free space region that we've left previously
+            swap_geometry = next(
+                geometry
+                for geometry in parted_disk.getFreeSpaceRegions()
+                if geometry.length >= min_swap_size
+            )
             swap_constraint = parted.Constraint(
                 startAlign=device.optimumAlignment,
                 endAlign=device.optimumAlignment,
                 startRange=swap_geometry,
                 endRange=swap_geometry,
-                minSize=parted.sizeToSectors(1, 'GiB', device.sectorSize),
+                minSize=min_swap_size,
                 maxSize=(
                     parted.sizeToSectors(swap_size_gb, 'GiB', device.sectorSize) + device.optimumAlignment.grainSize
                 ),
@@ -70,25 +94,25 @@ class DiskService(Service):
             except parted.PartitionException as e:
                 self.logger.warning('Unable to fit a swap partition on disk %r: %r', disk, e)
 
-        if data_size is None:
-            data_geometry = self._get_largest_free_space_region(parted_disk)
-            data_constraint = device.optimalAlignedConstraint
-            data_filesystem = parted.FileSystem(type='zfs', geometry=data_geometry)
-            data_partition = parted.Partition(
+        # Reorder the partitions so that they logical order matched their physical order
+        partitions = parted_disk.partitions[:]
+        # Unfortunately this can only be achieved by first removing all partitions (this happens in the RAM, no
+        # real disk changes are made yet)
+        for partition in partitions:
+            parted_disk.removePartition(partition)
+        # And then re-creating them in the correct order
+        partitions.sort(key=lambda partition: partition.geometry.start)
+        for partition in partitions:
+            partition.resetNumber()
+            constraint = parted.Constraint(exactGeom=partition.geometry)
+            geometry = self._get_largest_free_space_region(parted_disk)
+            new_partition = parted.Partition(
                 disk=parted_disk,
                 type=parted.PARTITION_NORMAL,
-                fs=data_filesystem,
-                geometry=data_geometry,
+                fs=parted.FileSystem(type=partition.fileSystem.type, geometry=geometry),
+                geometry=geometry,
             )
-            try:
-                parted_disk.addPartition(data_partition, constraint=data_constraint)
-            except parted.PartitionException:
-                if swap_size_gb > 0:
-                    # If we are unable to fit any data partition on a disk, that might mean that the swap that was
-                    # created was too large
-                    raise CallError(f'Disk {disk!r} must be larger than {swap_size_gb} GiB')
-
-                raise
+            parted_disk.addPartition(partition=new_partition, constraint=constraint)
 
         parted_disk.commit()
 
