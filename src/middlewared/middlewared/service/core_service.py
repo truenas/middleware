@@ -135,30 +135,25 @@ class CoreService(Service):
                 'frames': frames,
             }
 
-    @private
-    def __is_limited_to_own_jobs(self, app):
-        if app is None:
-            # Internal caller.
+    def __is_limited_to_own_jobs(self, credential):
+        if credential is None or not credential.is_user_session:
             return False
 
-        if not app.authenticated_credentials.is_user_session:
-            # The only way that API key is here is if it was explicitly
-            # granted access to this endpoint. This preserves existing
-            # behavior for API keys.
-            return False
+        return not credential_has_full_admin(credential)
 
-        return not credential_has_full_admin(app.authenticated_credentials)
+    def __job_by_credential_and_id(self, credential, job_id):
+        if not self.__is_limited_to_own_jobs(credential):
+            return self.middleware.jobs[job_id]
 
-    @private
-    def __check_job_owned_by_session(self, job, app):
-        if not self.__is_limited_to_own_jobs(app):
-            return
+        if not credential.is_user_session or credential_has_full_admin(credential):
+            return self.middleware.jobs[job_id]
 
-        username = app.authenticated_credentials.user['username']
-        if job.credentials.user['username'] == username:
-            return
+        job = self.middleware.jobs[job_id]
 
-        raise CallError(f'{job.id}: job is not owned by current session.', errno.EPERM)
+        if job.credentials.user['username'] == credential.user['username']:
+            return job
+
+        raise CallError(f'{job_id}: job is not owned by current session.', errno.EPERM)
 
     @no_authz_required
     @filterable
@@ -206,7 +201,7 @@ class CoreService(Service):
         If authenticated session does not have the FULL_ADMIN role, only
         jobs owned by the current authenticated session will be returned.
         """
-        if self.__is_limited_to_own_jobs(app):
+        if app and self.__is_limited_to_own_jobs(app.authenticated_credentials):
             username = app.authenticated_credentials.user['username']
             jobs = list(self.middleware.jobs.for_username(username).values())
         else:
@@ -222,29 +217,17 @@ class CoreService(Service):
     @accepts(Int('id'))
     @job()
     async def job_wait(self, job, id_):
-        target_job = self.middleware.jobs[id_]
-
-        if job.credentials and job.credentials.is_user_session:
-            this_user = job.credentials.user['username']
-            if not credential_has_full_admin(job.credentials):
-                if (
-                        target_job.credentials is None or
-                        not target_job.credentials.is_user_session or
-                        target_job.credentials.user['username'] != this_user
-                   ):
-                    raise CallError(f'{id_}: job is not owned by current session')
+        target_job = self.__job_by_credential_and_id(job.credentials, id_)
 
         return await job.wrap(target_job)
 
-    @no_authz_required
+    @private
     @accepts(Int('id'), Dict(
         'job-update',
         Dict('progress', additional_attrs=True),
     ))
-    @pass_app()
-    def job_update(self, app, id_, data):
+    def job_update(self, id_, data):
         job = self.middleware.jobs[id_]
-        self.__check_job_owned_by_session(job, app)
         progress = data.get('progress')
         if progress:
             job.set_progress(
@@ -276,8 +259,11 @@ class CoreService(Service):
     @accepts(Int('id'))
     @pass_app(rest=True)
     def job_abort(self, app, id_):
-        job = self.middleware.jobs[id_]
-        self.__check_job_owned_by_session(job, app)
+        if app is None:
+            job = self.middleware.jobs[id_]
+        else:
+            job = self.__job_by_credential_and_id(app.authenticated_credentials, id_)
+
         return job.abort()
 
     def _should_list_service(self, name, service, target):
