@@ -71,7 +71,7 @@ class NFSService(Service):
         raise CallError('This feature has not yet been implemented for '
                         'the LDAP directory service.', errno=errno.ENOSYS)
 
-    @accepts(Ref('kerberos_username_password'))
+    @accepts(Ref('kerberos_username_password'), roles=['SHARING_NFS_WRITE'])
     @returns(Bool('principal_add_status'))
     async def add_principal(self, data):
         """
