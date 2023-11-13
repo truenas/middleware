@@ -687,6 +687,14 @@ class UserService(CRUDService):
             except CallError as e:
                 verrors.add('user_update.password_disabled', e.errmsg)
 
+            if (has_smb := data.get('smb')) is None:
+                has_smb = user.get('smb')
+
+            if has_smb:
+                verrors.add(
+                    'user_update.password_disabled', 'Password authentication may not be disabled for SMB users.'
+                )
+
         if 'group' in data:
             group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
                 ('id', '=', data['group'])
@@ -1241,18 +1249,18 @@ class UserService(CRUDService):
                 )
 
             if data.get('smb'):
-                smb_users = await self.middleware.call('datastore.query',
-                                                       'account.bsdusers',
-                                                       [('smb', '=', True)] + exclude_filter,
-                                                       {'prefix': 'bsdusr_'})
-
-                if filter_list(smb_users, [['username', 'C=', data['username']]]):
+                if filter_list(users, [['username', 'C=', data['username'], ['smb', '=', True]]]):
                     verrors.add(
                         f'{schema}.smb',
                         f'Username "{data["username"]}" conflicts with existing SMB user. Note that SMB '
                         f'usernames are case-insensitive.',
                         errno.EEXIST,
                     )
+
+        if not pk and data.get('smb') and data.get('password_disabled'):
+            verrors.add(
+                f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
+            )
 
         password = data.get('password')
         if not pk and not password and not data.get('password_disabled'):
