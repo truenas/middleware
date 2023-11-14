@@ -121,7 +121,7 @@ def test_002_check_client_count(request):
         password=SMB_PWD,
         smb1=False
     ) as c:
-        assert c.call("smb.client_count") == 1
+        assert call("smb.client_count") == 1
 
 
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE")
