@@ -42,6 +42,18 @@ def test_read_role_cant_write(ds, share, role):
             c.call("sharing.smb.delete", share["id"])
         assert ve.value.errno == errno.EACCES
 
+        # READ access should allow reading ACL
+        c.call("sharing.smb.getacl", share["name"])
+
+        with pytest.raises(ClientException) as ve:
+            c.call("sharing.smb.setacl", {"share_name": share["name"]})
+        assert ve.value.errno == errno.EACCES
+
+        # Gathering session info should be more administrative-level op
+        with pytest.raises(ClientException) as ve:
+            c.call("smb.status")
+        assert ve.value.errno == errno.EACCES
+
 
 @pytest.mark.parametrize("role", ["SHARING_WRITE", "SHARING_SMB_WRITE"])
 def test_write_role_can_write(ds, role):
@@ -51,3 +63,8 @@ def test_write_role_can_write(ds, role):
         c.call("sharing.smb.update", share["id"], {})
 
         c.call("sharing.smb.delete", share["id"])
+
+        # READ access should allow reading ACL
+        c.call("sharing.smb.getacl", share["name"])
+        c.call("sharing.smb.setacl", {"share_name": share["name"]})
+        c.call("smb.status")
