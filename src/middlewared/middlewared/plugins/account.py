@@ -687,14 +687,6 @@ class UserService(CRUDService):
             except CallError as e:
                 verrors.add('user_update.password_disabled', e.errmsg)
 
-            if (has_smb := data.get('smb')) is None:
-                has_smb = user.get('smb')
-
-            if has_smb:
-                verrors.add(
-                    'user_update.password_disabled', 'Password authentication may not be disabled for SMB users.'
-                )
-
         if 'group' in data:
             group = self.middleware.call_sync('datastore.query', 'account.bsdgroups', [
                 ('id', '=', data['group'])
@@ -723,7 +715,7 @@ class UserService(CRUDService):
         else:
             group_ids.extend(user['groups'])
 
-        self.middleware.call_sync('user.common_validation', verrors, data, 'user_update', group_ids, pk)
+        self.middleware.call_sync('user.common_validation', verrors, data, 'user_update', group_ids, user)
 
         try:
             st = os.stat(user.get("home", DEFAULT_HOME_PATH)).st_mode
@@ -1198,8 +1190,9 @@ class UserService(CRUDService):
             raise CallError(f"Failed to copy homedir [{home_old}] to [{home_new}]: {do_copy.stderr.decode()}")
 
     @private
-    async def common_validation(self, verrors, data, schema, group_ids, pk=None):
-        exclude_filter = [('id', '!=', pk)] if pk else []
+    async def common_validation(self, verrors, data, schema, group_ids, old=None):
+        exclude_filter = [('id', '!=', old['id'])] if old else []
+        combined = data if not old else old | data
 
         users = await self.middleware.call(
             'datastore.query',
@@ -1249,7 +1242,7 @@ class UserService(CRUDService):
                 )
 
             if data.get('smb'):
-                if filter_list(users, [['username', 'C=', data['username'], ['smb', '=', True]]]):
+                if filter_list(users, [['username', 'C=', data['username']], ['smb', '=', True]]):
                     verrors.add(
                         f'{schema}.smb',
                         f'Username "{data["username"]}" conflicts with existing SMB user. Note that SMB '
@@ -1257,13 +1250,13 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
-        if not pk and data.get('smb') and data.get('password_disabled'):
+        if combined['smb'] and combined['password_disabled']:
             verrors.add(
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
             )
 
         password = data.get('password')
-        if not pk and not password and not data.get('password_disabled'):
+        if not old and not password and not data.get('password_disabled'):
             verrors.add(f'{schema}.password', 'Password is required')
         elif data.get('password_disabled') and password:
             verrors.add(
