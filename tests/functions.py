@@ -35,16 +35,17 @@ def GET(testpath, payload=None, controller_a=False, **optional):
     complete_uri = testpath if testpath.startswith('http') else f'{url}{testpath}'
     if optional.get('force_ssl', False):
         complete_uri = RE_HTTPS.sub(r'https\1', complete_uri)
+    timeout = optional.get('timeout', None)
 
     if testpath.startswith('http'):
-        getit = requests.get(complete_uri)
+        getit = requests.get(complete_uri, timeout=timeout)
     else:
         if optional.pop("anonymous", False):
             auth = None
         else:
             auth = optional.pop("auth", authentication)
         getit = requests.get(complete_uri, headers=dict(header, **optional.get("headers", {})),
-                             auth=auth, data=json.dumps(data), verify=False)
+                             auth=auth, data=json.dumps(data), verify=False, timeout=timeout)
     return getit
 
 

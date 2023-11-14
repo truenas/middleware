@@ -3,6 +3,7 @@ import enum
 import ipaddress
 import os
 import random
+import requests
 import socket
 import string
 import sys
@@ -1802,8 +1803,8 @@ def _verify_ha_inquiry(s, serial_number, naa, tpgs=0,
     assert naa == _device_identification(s)['naa']
 
 
-def _get_node():
-    results = GET('/failover/node')
+def _get_node(timeout=None):
+    results = GET('/failover/node', timeout=timeout)
     assert results.status_code == 200, results.text
     return results.text.replace('"', '').replace("'", "")
 
@@ -1918,6 +1919,7 @@ def _ha_reboot_master(delay=900):
     Reboot the MASTER node and wait for both the new MASTER
     and new BACKUP to become available.
     """
+    get_node_timeout = 20
     orig_master_node = _get_node()
     new_master_node = other_node(orig_master_node)
 
@@ -1928,12 +1930,15 @@ def _ha_reboot_master(delay=900):
     new_master = False
     while not new_master:
         try:
-            if _get_node() == new_master_node:
+            # There are times when we don't get a response at all (albeit
+            # in a bhyte HA-VM pair), so add a timeout to catch this situation.
+            if _get_node(timeout=get_node_timeout) == new_master_node:
                 new_master = True
                 break
+        except requests.exceptions.Timeout:
+            delay = delay - get_node_timeout
         except Exception:
-            pass
-        delay = delay - 1
+            delay = delay - 1
         if delay <= 0:
             break
         print("Waiting for MASTER")
@@ -1965,7 +1970,8 @@ def _ha_reboot_master(delay=900):
     in_progress = True
     while in_progress:
         try:
-            if in_progress := _get_ha_failover_in_progress():
+            in_progress = _get_ha_failover_in_progress()
+            if not in_progress:
                 break
         except Exception:
             pass
@@ -1980,6 +1986,7 @@ def _ha_reboot_master(delay=900):
 
 
 @pytest.mark.dependency(name="iscsi_alua_config")
+@pytest.mark.timeout(900)
 def test_19_alua_config(request):
     """
     Test various aspects of ALUA configuration.
