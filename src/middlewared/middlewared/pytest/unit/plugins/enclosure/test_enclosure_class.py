@@ -14,7 +14,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                 "OK"
             ],
             "elements": {
-                "0": {
+                0: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -24,17 +24,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "1": {
-                    "type": 23,
-                    "descriptor": "<empty>",
-                    "status": [
-                        5,
-                        0,
-                        0,
-                        0
-                    ]
-                },
-                "2": {
+                1: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -44,7 +34,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "3": {
+                2: {
+                    "type": 23,
+                    "descriptor": "<empty>",
+                    "status": [
+                        5,
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                3: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -54,7 +54,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "4": {
+                4: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -64,7 +64,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "5": {
+                5: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -74,7 +74,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "6": {
+                6: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -84,7 +84,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "7": {
+                7: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -94,7 +94,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "8": {
+                8: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -104,17 +104,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "9": {
-                    "type": 23,
-                    "descriptor": "<empty>",
-                    "status": [
-                        5,
-                        0,
-                        0,
-                        0
-                    ]
-                },
-                "10": {
+                9: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -124,7 +114,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "11": {
+                10: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -134,7 +124,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "12": {
+                11: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -144,7 +134,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "13": {
+                12: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -154,7 +144,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "14": {
+                13: {
+                    "type": 23,
+                    "descriptor": "<empty>",
+                    "status": [
+                        5,
+                        0,
+                        0,
+                        0
+                    ]
+                },
+                14: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -164,7 +164,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "15": {
+                15: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -174,7 +174,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "16": {
+                16: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -184,7 +184,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "17": {
+                17: {
                     "type": 25,
                     "descriptor": "<empty>",
                     "status": [
@@ -194,7 +194,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "18": {
+                18: {
                     "type": 25,
                     "descriptor": "C1.0",
                     "status": [
@@ -204,7 +204,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "19": {
+                19: {
                     "type": 25,
                     "descriptor": "C1.0",
                     "status": [
@@ -214,7 +214,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "20": {
+                20: {
                     "type": 25,
                     "descriptor": "C1.0",
                     "status": [
@@ -224,7 +224,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "21": {
+                21: {
                     "type": 25,
                     "descriptor": "C1.0",
                     "status": [
@@ -234,7 +234,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "22": {
+                22: {
                     "type": 25,
                     "descriptor": "<empty>",
                     "status": [
@@ -244,7 +244,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "23": {
+                23: {
                     "type": 25,
                     "descriptor": "<empty>",
                     "status": [
@@ -254,7 +254,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "24": {
+                24: {
                     "type": 25,
                     "descriptor": "<empty>",
                     "status": [
@@ -264,7 +264,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "25": {
+                25: {
                     "type": 25,
                     "descriptor": "<empty>",
                     "status": [
@@ -274,7 +274,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "26": {
+                26: {
                     "type": 25,
                     "descriptor": "C1.1",
                     "status": [
@@ -284,7 +284,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "27": {
+                27: {
                     "type": 25,
                     "descriptor": "C1.1",
                     "status": [
@@ -294,7 +294,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "28": {
+                28: {
                     "type": 25,
                     "descriptor": "C1.1",
                     "status": [
@@ -304,7 +304,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "29": {
+                29: {
                     "type": 25,
                     "descriptor": "C1.1",
                     "status": [
@@ -314,7 +314,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "30": {
+                30: {
                     "type": 25,
                     "descriptor": "C1.2",
                     "status": [
@@ -324,7 +324,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "31": {
+                31: {
                     "type": 25,
                     "descriptor": "C1.2",
                     "status": [
@@ -334,7 +334,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "32": {
+                32: {
                     "type": 25,
                     "descriptor": "C1.2",
                     "status": [
@@ -344,7 +344,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "33": {
+                33: {
                     "type": 25,
                     "descriptor": "C1.2",
                     "status": [
@@ -373,7 +373,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
             "pci": "0:0:0:0",
             "elements": {
                 "Array Device Slot": {
-                    "9": {
+                    9: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -387,7 +387,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 1
                         }
                     },
-                    "10": {
+                    10: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -401,7 +401,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 2
                         }
                     },
-                    "11": {
+                    11: {
                         "descriptor": "<empty>",
                         "status": "OK",
                         "value": None,
@@ -415,7 +415,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 3
                         }
                     },
-                    "12": {
+                    12: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -429,7 +429,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 4
                         }
                     },
-                    "1": {
+                    1: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -443,7 +443,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 9
                         }
                     },
-                    "2": {
+                    2: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -457,7 +457,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 10
                         }
                     },
-                    "3": {
+                    3: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -471,7 +471,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 11
                         }
                     },
-                    "4": {
+                    4: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -485,7 +485,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 12
                         }
                     },
-                    "5": {
+                    5: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": None,
@@ -499,7 +499,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 13
                         }
                     },
-                    "6": {
+                    6: {
                         "descriptor": "<empty>",
                         "status": "OK",
                         "value": None,
@@ -513,7 +513,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 14
                         }
                     },
-                    "7": {
+                    7: {
                         "descriptor": "<empty>",
                         "status": "OK",
                         "value": None,
@@ -527,7 +527,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 15
                         }
                     },
-                    "8": {
+                    8: {
                         "descriptor": "<empty>",
                         "status": "OK",
                         "value": None,
@@ -543,103 +543,103 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "SAS Connector": {
-                    "17": {
+                    17: {
                         "descriptor": "<empty>",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "18": {
+                    18: {
                         "descriptor": "C1.0",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "19": {
+                    19: {
                         "descriptor": "C1.0",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "20": {
+                    20: {
                         "descriptor": "C1.0",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "21": {
+                    21: {
                         "descriptor": "C1.0",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "22": {
+                    22: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": "No information",
                         "value_raw": 83886080
                     },
-                    "23": {
+                    23: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": "No information",
                         "value_raw": 83886080
                     },
-                    "24": {
+                    24: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": "No information",
                         "value_raw": 83886080
                     },
-                    "25": {
+                    25: {
                         "descriptor": "<empty>",
                         "status": "Not installed",
                         "value": "No information",
                         "value_raw": 83886080
                     },
-                    "26": {
+                    26: {
                         "descriptor": "C1.1",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "27": {
+                    27: {
                         "descriptor": "C1.1",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "28": {
+                    28: {
                         "descriptor": "C1.1",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "29": {
+                    29: {
                         "descriptor": "C1.1",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "30": {
+                    30: {
                         "descriptor": "C1.2",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "31": {
+                    31: {
                         "descriptor": "C1.2",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "32": {
+                    32: {
                         "descriptor": "C1.2",
                         "status": "OK",
                         "value": "No information",
                         "value_raw": 16777216
                     },
-                    "33": {
+                    33: {
                         "descriptor": "C1.2",
                         "status": "OK",
                         "value": "No information",
@@ -649,29 +649,29 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
             }
         },
         {  # H10 head-unit sysfs output (for mocking)
-            "7": "sda",
-            "5": None,
-            "11": None,
-            "3": None,
-            "9": None,
-            "0": None,
-            "6": None,
-            "4": None,
-            "10": None,
-            "2": None,
-            "8": None,
-            "1": None
+            7: "sda",
+            5: None,
+            11: None,
+            3: None,
+            9: None,
+            0: None,
+            6: None,
+            4: None,
+            10: None,
+            2: None,
+            8: None,
+            1: None
         }
     ),
     (
-        {  # ES102 JBOD libsg3.ses.EnclosureDevice.status() output
+        {
             "id": "5000ccab05116800",
             "name": "HGSTH4102-J3010",
             "status": [
                 "INFO"
             ],
             "elements": {
-                "0": {
+                0: {
                     "type": 23,
                     "descriptor": "<empty>",
                     "status": [
@@ -681,7 +681,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "1": {
+                1: {
                     "type": 23,
                     "descriptor": "SLOT 000,3FG1KMYV           ",
                     "status": [
@@ -691,7 +691,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "2": {
+                2: {
                     "type": 23,
                     "descriptor": "SLOT 001,3FJ3J58T           ",
                     "status": [
@@ -701,7 +701,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "3": {
+                3: {
                     "type": 23,
                     "descriptor": "SLOT 002,3FHXK2YT           ",
                     "status": [
@@ -711,7 +711,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "4": {
+                4: {
                     "type": 23,
                     "descriptor": "SLOT 003,3FJG59GT           ",
                     "status": [
@@ -721,7 +721,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "5": {
+                5: {
                     "type": 23,
                     "descriptor": "SLOT 004,3FJ1S32T           ",
                     "status": [
@@ -731,7 +731,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "6": {
+                6: {
                     "type": 23,
                     "descriptor": "SLOT 005,3FJJ76GT           ",
                     "status": [
@@ -741,7 +741,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "7": {
+                7: {
                     "type": 23,
                     "descriptor": "SLOT 006,3FHXGM8T           ",
                     "status": [
@@ -751,7 +751,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "8": {
+                8: {
                     "type": 23,
                     "descriptor": "SLOT 007,3FG1KLKV           ",
                     "status": [
@@ -761,7 +761,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "9": {
+                9: {
                     "type": 23,
                     "descriptor": "SLOT 008,3FJ2NY8T           ",
                     "status": [
@@ -771,7 +771,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "10": {
+                10: {
                     "type": 23,
                     "descriptor": "SLOT 009,3FJ2LYPT           ",
                     "status": [
@@ -781,7 +781,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "11": {
+                11: {
                     "type": 23,
                     "descriptor": "SLOT 010,3FJJZZ4T           ",
                     "status": [
@@ -791,7 +791,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "12": {
+                12: {
                     "type": 23,
                     "descriptor": "SLOT 011,3FH53S0T           ",
                     "status": [
@@ -801,7 +801,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "13": {
+                13: {
                     "type": 23,
                     "descriptor": "SLOT 012,3FJJ187T           ",
                     "status": [
@@ -811,7 +811,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "14": {
+                14: {
                     "type": 23,
                     "descriptor": "SLOT 013,3FJ0DURT           ",
                     "status": [
@@ -821,7 +821,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "15": {
+                15: {
                     "type": 23,
                     "descriptor": "SLOT 014,3FJ30KNT           ",
                     "status": [
@@ -831,7 +831,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "16": {
+                16: {
                     "type": 23,
                     "descriptor": "SLOT 015,3FJK5B3T           ",
                     "status": [
@@ -841,7 +841,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "17": {
+                17: {
                     "type": 23,
                     "descriptor": "SLOT 016,3FG3RGDV           ",
                     "status": [
@@ -851,7 +851,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "18": {
+                18: {
                     "type": 23,
                     "descriptor": "SLOT 017,3FJ28KNT           ",
                     "status": [
@@ -861,7 +861,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "19": {
+                19: {
                     "type": 23,
                     "descriptor": "SLOT 018,3FH3Z5PT           ",
                     "status": [
@@ -871,7 +871,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "20": {
+                20: {
                     "type": 23,
                     "descriptor": "SLOT 019,3FJ33PZT           ",
                     "status": [
@@ -881,7 +881,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "21": {
+                21: {
                     "type": 23,
                     "descriptor": "SLOT 020,3FJ1M3AT           ",
                     "status": [
@@ -891,7 +891,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "22": {
+                22: {
                     "type": 23,
                     "descriptor": "SLOT 021,3FJ2WG5T           ",
                     "status": [
@@ -901,7 +901,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "23": {
+                23: {
                     "type": 23,
                     "descriptor": "SLOT 022,3FJK5M6T           ",
                     "status": [
@@ -911,7 +911,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "24": {
+                24: {
                     "type": 23,
                     "descriptor": "SLOT 023,3FJ2H8YT           ",
                     "status": [
@@ -921,7 +921,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "25": {
+                25: {
                     "type": 23,
                     "descriptor": "SLOT 024,3FHZRBXT           ",
                     "status": [
@@ -931,7 +931,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "26": {
+                26: {
                     "type": 23,
                     "descriptor": "SLOT 025,3RHSMW3A           ",
                     "status": [
@@ -941,7 +941,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "27": {
+                27: {
                     "type": 23,
                     "descriptor": "SLOT 026,3FJ1U45T           ",
                     "status": [
@@ -951,7 +951,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "28": {
+                28: {
                     "type": 23,
                     "descriptor": "SLOT 027,3FHLT9RT           ",
                     "status": [
@@ -961,7 +961,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "29": {
+                29: {
                     "type": 23,
                     "descriptor": "SLOT 028,3FJ2LMDT           ",
                     "status": [
@@ -971,7 +971,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "30": {
+                30: {
                     "type": 23,
                     "descriptor": "SLOT 029,3FJ28Y8T           ",
                     "status": [
@@ -981,7 +981,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "31": {
+                31: {
                     "type": 23,
                     "descriptor": "SLOT 030,3FH4VDMT           ",
                     "status": [
@@ -991,7 +991,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "32": {
+                32: {
                     "type": 23,
                     "descriptor": "SLOT 031,3FJ2A3TT           ",
                     "status": [
@@ -1001,7 +1001,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "33": {
+                33: {
                     "type": 23,
                     "descriptor": "SLOT 032,3FHR3PJT           ",
                     "status": [
@@ -1011,7 +1011,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "34": {
+                34: {
                     "type": 23,
                     "descriptor": "SLOT 033,3FHP4AVT           ",
                     "status": [
@@ -1021,7 +1021,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "35": {
+                35: {
                     "type": 23,
                     "descriptor": "SLOT 034,3FJ2G3YT           ",
                     "status": [
@@ -1031,7 +1031,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "36": {
+                36: {
                     "type": 23,
                     "descriptor": "SLOT 035,3FHLKBRT           ",
                     "status": [
@@ -1041,7 +1041,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "37": {
+                37: {
                     "type": 23,
                     "descriptor": "SLOT 036,3FHY7VST           ",
                     "status": [
@@ -1051,7 +1051,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "38": {
+                38: {
                     "type": 23,
                     "descriptor": "SLOT 037,3FHYE9YT           ",
                     "status": [
@@ -1061,7 +1061,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "39": {
+                39: {
                     "type": 23,
                     "descriptor": "SLOT 038,3FH4UY6T           ",
                     "status": [
@@ -1071,7 +1071,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "40": {
+                40: {
                     "type": 23,
                     "descriptor": "SLOT 039,3FHMJ0DT           ",
                     "status": [
@@ -1081,7 +1081,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "41": {
+                41: {
                     "type": 23,
                     "descriptor": "SLOT 040,3FJ2P79T           ",
                     "status": [
@@ -1091,7 +1091,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "42": {
+                42: {
                     "type": 23,
                     "descriptor": "SLOT 041,3FHZRBZT           ",
                     "status": [
@@ -1101,7 +1101,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "43": {
+                43: {
                     "type": 23,
                     "descriptor": "SLOT 042,3FHYGT9T           ",
                     "status": [
@@ -1111,7 +1111,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "44": {
+                44: {
                     "type": 23,
                     "descriptor": "SLOT 043,3FJJZZ7T           ",
                     "status": [
@@ -1121,7 +1121,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "45": {
+                45: {
                     "type": 23,
                     "descriptor": "SLOT 044,3FJ2MSXT           ",
                     "status": [
@@ -1131,7 +1131,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "46": {
+                46: {
                     "type": 23,
                     "descriptor": "SLOT 045,3FG1KKPV           ",
                     "status": [
@@ -1141,7 +1141,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "47": {
+                47: {
                     "type": 23,
                     "descriptor": "SLOT 046,3FHYYKGT           ",
                     "status": [
@@ -1151,7 +1151,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "48": {
+                48: {
                     "type": 23,
                     "descriptor": "SLOT 047,3FHXGWZT           ",
                     "status": [
@@ -1161,7 +1161,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "49": {
+                49: {
                     "type": 23,
                     "descriptor": "SLOT 048,3FJ2Z5LT           ",
                     "status": [
@@ -1171,7 +1171,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "50": {
+                50: {
                     "type": 23,
                     "descriptor": "SLOT 049,3FJ1781T           ",
                     "status": [
@@ -1181,7 +1181,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "51": {
+                51: {
                     "type": 23,
                     "descriptor": "SLOT 050,3FH83XZT           ",
                     "status": [
@@ -1191,7 +1191,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "52": {
+                52: {
                     "type": 23,
                     "descriptor": "SLOT 051,3RHLZ4RA           ",
                     "status": [
@@ -1201,7 +1201,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "53": {
+                53: {
                     "type": 23,
                     "descriptor": "SLOT 052,3FJ2WPAT           ",
                     "status": [
@@ -1211,7 +1211,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "54": {
+                54: {
                     "type": 23,
                     "descriptor": "SLOT 053,3FJ1411T           ",
                     "status": [
@@ -1221,7 +1221,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "55": {
+                55: {
                     "type": 23,
                     "descriptor": "SLOT 054,3FG3RB8V           ",
                     "status": [
@@ -1231,7 +1231,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "56": {
+                56: {
                     "type": 23,
                     "descriptor": "SLOT 055,3FJ2KNDT           ",
                     "status": [
@@ -1241,7 +1241,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "57": {
+                57: {
                     "type": 23,
                     "descriptor": "SLOT 056,3FHP6BPT           ",
                     "status": [
@@ -1251,7 +1251,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "58": {
+                58: {
                     "type": 23,
                     "descriptor": "SLOT 057,3FHDKGTT           ",
                     "status": [
@@ -1261,7 +1261,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "59": {
+                59: {
                     "type": 23,
                     "descriptor": "SLOT 058,3FJ2W4UT           ",
                     "status": [
@@ -1271,7 +1271,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "60": {
+                60: {
                     "type": 23,
                     "descriptor": "SLOT 059,3FJ1441T           ",
                     "status": [
@@ -1281,7 +1281,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "61": {
+                61: {
                     "type": 23,
                     "descriptor": "SLOT 060,3FJ2S29T           ",
                     "status": [
@@ -1291,7 +1291,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "62": {
+                62: {
                     "type": 23,
                     "descriptor": "SLOT 061,3FHY77PT           ",
                     "status": [
@@ -1301,7 +1301,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "63": {
+                63: {
                     "type": 23,
                     "descriptor": "SLOT 062,3FHPWTJT           ",
                     "status": [
@@ -1311,7 +1311,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "64": {
+                64: {
                     "type": 23,
                     "descriptor": "SLOT 063,3FJ2S2VT           ",
                     "status": [
@@ -1321,7 +1321,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "65": {
+                65: {
                     "type": 23,
                     "descriptor": "SLOT 064,3FH260RT           ",
                     "status": [
@@ -1331,7 +1331,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "66": {
+                66: {
                     "type": 23,
                     "descriptor": "SLOT 065,3FHP66DT           ",
                     "status": [
@@ -1341,7 +1341,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "67": {
+                67: {
                     "type": 23,
                     "descriptor": "SLOT 066,3FHPYD1T           ",
                     "status": [
@@ -1351,7 +1351,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "68": {
+                68: {
                     "type": 23,
                     "descriptor": "SLOT 067,3FJ2MW6T           ",
                     "status": [
@@ -1361,7 +1361,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "69": {
+                69: {
                     "type": 23,
                     "descriptor": "SLOT 068,3FJ29WNT           ",
                     "status": [
@@ -1371,7 +1371,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "70": {
+                70: {
                     "type": 23,
                     "descriptor": "SLOT 069,3FJ2S30T           ",
                     "status": [
@@ -1381,7 +1381,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "71": {
+                71: {
                     "type": 23,
                     "descriptor": "SLOT 070,3FJ1V6PT           ",
                     "status": [
@@ -1391,7 +1391,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "72": {
+                72: {
                     "type": 23,
                     "descriptor": "SLOT 071,3FJ1WEWT           ",
                     "status": [
@@ -1401,7 +1401,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "73": {
+                73: {
                     "type": 23,
                     "descriptor": "SLOT 072,3FJ15PGT           ",
                     "status": [
@@ -1411,7 +1411,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "74": {
+                74: {
                     "type": 23,
                     "descriptor": "SLOT 073,3FJJX6DT           ",
                     "status": [
@@ -1421,7 +1421,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "75": {
+                75: {
                     "type": 23,
                     "descriptor": "SLOT 074,3FJ309HT           ",
                     "status": [
@@ -1431,7 +1431,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "76": {
+                76: {
                     "type": 23,
                     "descriptor": "SLOT 075,3FJ2H29T           ",
                     "status": [
@@ -1441,7 +1441,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "77": {
+                77: {
                     "type": 23,
                     "descriptor": "SLOT 076,3FJ1433T           ",
                     "status": [
@@ -1451,7 +1451,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "78": {
+                78: {
                     "type": 23,
                     "descriptor": "SLOT 077,3FJ2KL9T           ",
                     "status": [
@@ -1461,7 +1461,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "79": {
+                79: {
                     "type": 23,
                     "descriptor": "SLOT 078,3FJ19DTT           ",
                     "status": [
@@ -1471,7 +1471,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "80": {
+                80: {
                     "type": 23,
                     "descriptor": "SLOT 079,3FJ2P37T           ",
                     "status": [
@@ -1481,7 +1481,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "81": {
+                81: {
                     "type": 23,
                     "descriptor": "SLOT 080,3FHYY0ZT           ",
                     "status": [
@@ -1491,7 +1491,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "82": {
+                82: {
                     "type": 23,
                     "descriptor": "SLOT 081,3FHN8LKT           ",
                     "status": [
@@ -1501,7 +1501,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "83": {
+                83: {
                     "type": 23,
                     "descriptor": "SLOT 082,3FJ1J3GT           ",
                     "status": [
@@ -1511,7 +1511,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "84": {
+                84: {
                     "type": 23,
                     "descriptor": "SLOT 083,3FHYLP7T           ",
                     "status": [
@@ -1521,7 +1521,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "85": {
+                85: {
                     "type": 23,
                     "descriptor": "SLOT 084,3FJ15SRT           ",
                     "status": [
@@ -1531,7 +1531,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "86": {
+                86: {
                     "type": 23,
                     "descriptor": "SLOT 085,3FHKW9GT           ",
                     "status": [
@@ -1541,7 +1541,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "87": {
+                87: {
                     "type": 23,
                     "descriptor": "SLOT 086,3FHYEVJT           ",
                     "status": [
@@ -1551,7 +1551,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "88": {
+                88: {
                     "type": 23,
                     "descriptor": "SLOT 087,3FJ2A5VT           ",
                     "status": [
@@ -1561,7 +1561,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "89": {
+                89: {
                     "type": 23,
                     "descriptor": "SLOT 088,3FJ2MU9T           ",
                     "status": [
@@ -1571,7 +1571,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "90": {
+                90: {
                     "type": 23,
                     "descriptor": "SLOT 089,3FJ197HT           ",
                     "status": [
@@ -1581,7 +1581,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "91": {
+                91: {
                     "type": 23,
                     "descriptor": "SLOT 090,3FJ29S7T           ",
                     "status": [
@@ -1591,7 +1591,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "92": {
+                92: {
                     "type": 23,
                     "descriptor": "SLOT 091,3FJ2P7DT           ",
                     "status": [
@@ -1601,7 +1601,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "93": {
+                93: {
                     "type": 23,
                     "descriptor": "SLOT 092,3FHY8KTT           ",
                     "status": [
@@ -1611,7 +1611,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "94": {
+                94: {
                     "type": 23,
                     "descriptor": "SLOT 093,3FHY81RT           ",
                     "status": [
@@ -1621,7 +1621,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "95": {
+                95: {
                     "type": 23,
                     "descriptor": "SLOT 094,3FJ153KT           ",
                     "status": [
@@ -1631,7 +1631,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "96": {
+                96: {
                     "type": 23,
                     "descriptor": "SLOT 095,3FJ17XBT           ",
                     "status": [
@@ -1641,7 +1641,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "97": {
+                97: {
                     "type": 23,
                     "descriptor": "SLOT 096,3FJ3J3ST           ",
                     "status": [
@@ -1651,7 +1651,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "98": {
+                98: {
                     "type": 23,
                     "descriptor": "SLOT 097,3FJ2MU0T           ",
                     "status": [
@@ -1661,7 +1661,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "99": {
+                99: {
                     "type": 23,
                     "descriptor": "SLOT 098,3FJ2A7LT           ",
                     "status": [
@@ -1671,7 +1671,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "100": {
+                100: {
                     "type": 23,
                     "descriptor": "SLOT 099,3FJ29V3T           ",
                     "status": [
@@ -1681,7 +1681,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "101": {
+                101: {
                     "type": 23,
                     "descriptor": "SLOT 100,3FHYW3ST           ",
                     "status": [
@@ -1691,7 +1691,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "102": {
+                102: {
                     "type": 23,
                     "descriptor": "SLOT 101,3FJ2S36T           ",
                     "status": [
@@ -1701,7 +1701,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "103": {
+                103: {
                     "type": 14,
                     "descriptor": "<empty>",
                     "status": [
@@ -1711,7 +1711,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "104": {
+                104: {
                     "type": 14,
                     "descriptor": "ENCLOSURE,1ES1846-A3,THCCT03921EA0015,1EB1173-A1,THCCT03721EJ1945                                                           ",
                     "status": [
@@ -1721,7 +1721,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "105": {
+                105: {
                     "type": 2,
                     "descriptor": "<empty>",
                     "status": [
@@ -1731,7 +1731,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         160
                     ]
                 },
-                "106": {
+                106: {
                     "type": 2,
                     "descriptor": "POWER SUPPLY A,CSU1800AP-3-10,N86821000WAKZ,,Artesyn,1800W                                  ",
                     "status": [
@@ -1741,7 +1741,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         160
                     ]
                 },
-                "107": {
+                107: {
                     "type": 2,
                     "descriptor": "POWER SUPPLY B,CSU1800AP-3-10,N86821000CAKZ,,Artesyn,1800W                                  ",
                     "status": [
@@ -1751,7 +1751,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         160
                     ]
                 },
-                "108": {
+                108: {
                     "type": 3,
                     "descriptor": "<empty>",
                     "status": [
@@ -1761,87 +1761,87 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         160
                     ]
                 },
-                "109": {
+                109: {
                     "type": 3,
                     "descriptor": "FAN ENCL 1      ",
                     "status": [
                         1,
                         2,
-                        141,
+                        71,
                         163
                     ]
                 },
-                "110": {
+                110: {
                     "type": 3,
                     "descriptor": "FAN ENCL 2      ",
                     "status": [
                         1,
                         2,
-                        143,
+                        70,
                         163
                     ]
                 },
-                "111": {
+                111: {
                     "type": 3,
                     "descriptor": "FAN ENCL 3      ",
                     "status": [
                         1,
                         2,
-                        144,
+                        68,
                         163
                     ]
                 },
-                "112": {
+                112: {
                     "type": 3,
                     "descriptor": "FAN ENCL 4      ",
                     "status": [
                         1,
                         2,
-                        135,
+                        63,
                         163
                     ]
                 },
-                "113": {
+                113: {
                     "type": 3,
                     "descriptor": "FAN IOM 1       ",
                     "status": [
                         1,
-                        5,
-                        248,
+                        6,
+                        39,
                         165
                     ]
                 },
-                "114": {
+                114: {
                     "type": 3,
                     "descriptor": "FAN IOM 2       ",
                     "status": [
                         1,
                         5,
-                        57,
+                        102,
                         165
                     ]
                 },
-                "115": {
+                115: {
                     "type": 3,
                     "descriptor": "FAN PSU A       ",
                     "status": [
                         1,
-                        4,
-                        192,
+                        6,
+                        221,
                         165
                     ]
                 },
-                "116": {
+                116: {
                     "type": 3,
                     "descriptor": "FAN PSU B       ",
                     "status": [
                         1,
-                        4,
-                        170,
+                        6,
+                        214,
                         165
                     ]
                 },
-                "117": {
+                117: {
                     "type": 4,
                     "descriptor": "<empty>",
                     "status": [
@@ -1851,7 +1851,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "118": {
+                118: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 000   ",
                     "status": [
@@ -1861,17 +1861,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "119": {
+                119: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 001   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "120": {
+                120: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 002   ",
                     "status": [
@@ -1881,107 +1881,107 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "121": {
+                121: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 003   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "122": {
+                122: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 004   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "123": {
+                123: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 005   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "124": {
+                124: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 006   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "125": {
+                125: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 007   ",
                     "status": [
                         17,
                         0,
-                        42,
+                        43,
                         0
                     ]
                 },
-                "126": {
+                126: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 008   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "127": {
+                127: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 009   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "128": {
+                128: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 010   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "129": {
+                129: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 011   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "130": {
+                130: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 012   ",
                     "status": [
                         17,
                         0,
-                        43,
+                        44,
                         0
                     ]
                 },
-                "131": {
+                131: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 013   ",
                     "status": [
@@ -1991,17 +1991,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "132": {
+                132: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 014   ",
                     "status": [
                         17,
                         0,
-                        50,
+                        49,
                         0
                     ]
                 },
-                "133": {
+                133: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 015   ",
                     "status": [
@@ -2011,7 +2011,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "134": {
+                134: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 016   ",
                     "status": [
@@ -2021,27 +2021,27 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "135": {
+                135: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 017   ",
                     "status": [
                         17,
                         0,
-                        51,
+                        50,
                         0
                     ]
                 },
-                "136": {
+                136: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 018   ",
                     "status": [
                         17,
                         0,
-                        51,
+                        50,
                         0
                     ]
                 },
-                "137": {
+                137: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 019   ",
                     "status": [
@@ -2051,7 +2051,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "138": {
+                138: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 020   ",
                     "status": [
@@ -2061,7 +2061,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "139": {
+                139: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 021   ",
                     "status": [
@@ -2071,7 +2071,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "140": {
+                140: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 022   ",
                     "status": [
@@ -2081,7 +2081,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "141": {
+                141: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 023   ",
                     "status": [
@@ -2091,7 +2091,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "142": {
+                142: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 024   ",
                     "status": [
@@ -2101,7 +2101,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "143": {
+                143: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 025   ",
                     "status": [
@@ -2111,7 +2111,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "144": {
+                144: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 026   ",
                     "status": [
@@ -2121,37 +2121,37 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "145": {
+                145: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 027   ",
                     "status": [
                         17,
                         0,
-                        50,
+                        49,
                         0
                     ]
                 },
-                "146": {
+                146: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 028   ",
                     "status": [
                         17,
                         0,
-                        54,
+                        53,
                         0
                     ]
                 },
-                "147": {
+                147: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 029   ",
                     "status": [
                         17,
                         0,
-                        56,
+                        55,
                         0
                     ]
                 },
-                "148": {
+                148: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 030   ",
                     "status": [
@@ -2161,7 +2161,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "149": {
+                149: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 031   ",
                     "status": [
@@ -2171,17 +2171,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "150": {
+                150: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 032   ",
                     "status": [
                         17,
                         0,
-                        57,
+                        56,
                         0
                     ]
                 },
-                "151": {
+                151: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 033   ",
                     "status": [
@@ -2191,7 +2191,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "152": {
+                152: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 034   ",
                     "status": [
@@ -2201,7 +2201,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "153": {
+                153: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 035   ",
                     "status": [
@@ -2211,7 +2211,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "154": {
+                154: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 036   ",
                     "status": [
@@ -2221,7 +2221,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "155": {
+                155: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 037   ",
                     "status": [
@@ -2231,37 +2231,37 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "156": {
+                156: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 038   ",
                     "status": [
                         17,
                         0,
-                        56,
+                        55,
                         0
                     ]
                 },
-                "157": {
+                157: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 039   ",
                     "status": [
                         17,
                         0,
-                        56,
+                        55,
                         0
                     ]
                 },
-                "158": {
+                158: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 040   ",
                     "status": [
                         17,
                         0,
-                        56,
+                        55,
                         0
                     ]
                 },
-                "159": {
+                159: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 041   ",
                     "status": [
@@ -2271,17 +2271,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "160": {
+                160: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 042   ",
                     "status": [
                         17,
                         0,
-                        56,
+                        55,
                         0
                     ]
                 },
-                "161": {
+                161: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 043   ",
                     "status": [
@@ -2291,77 +2291,77 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "162": {
+                162: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 044   ",
                     "status": [
                         17,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "163": {
+                163: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 045   ",
                     "status": [
                         17,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "164": {
+                164: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 046   ",
                     "status": [
                         17,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "165": {
+                165: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 047   ",
                     "status": [
                         17,
                         0,
-                        59,
+                        58,
                         0
                     ]
                 },
-                "166": {
+                166: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 048   ",
                     "status": [
                         17,
                         0,
-                        59,
+                        58,
                         0
                     ]
                 },
-                "167": {
+                167: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 049   ",
                     "status": [
                         17,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "168": {
+                168: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 050   ",
                     "status": [
                         17,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "169": {
+                169: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 051   ",
                     "status": [
@@ -2371,57 +2371,57 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "170": {
+                170: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 052   ",
                     "status": [
                         17,
                         0,
-                        60,
+                        59,
                         0
                     ]
                 },
-                "171": {
+                171: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 053   ",
                     "status": [
                         17,
                         0,
-                        55,
+                        54,
                         0
                     ]
                 },
-                "172": {
+                172: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 054   ",
                     "status": [
                         17,
                         0,
-                        57,
+                        56,
                         0
                     ]
                 },
-                "173": {
+                173: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 055   ",
                     "status": [
                         17,
                         0,
-                        57,
+                        56,
                         0
                     ]
                 },
-                "174": {
+                174: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 056   ",
                     "status": [
                         17,
                         0,
-                        57,
+                        56,
                         0
                     ]
                 },
-                "175": {
+                175: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 057   ",
                     "status": [
@@ -2431,7 +2431,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "176": {
+                176: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 058   ",
                     "status": [
@@ -2441,7 +2441,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "177": {
+                177: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 059   ",
                     "status": [
@@ -2451,7 +2451,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "178": {
+                178: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 060   ",
                     "status": [
@@ -2461,7 +2461,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "179": {
+                179: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 061   ",
                     "status": [
@@ -2471,17 +2471,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "180": {
+                180: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 062   ",
                     "status": [
                         17,
                         0,
-                        56,
+                        55,
                         0
                     ]
                 },
-                "181": {
+                181: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 063   ",
                     "status": [
@@ -2491,17 +2491,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "182": {
+                182: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 064   ",
                     "status": [
                         17,
                         0,
-                        57,
+                        56,
                         0
                     ]
                 },
-                "183": {
+                183: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 065   ",
                     "status": [
@@ -2511,27 +2511,27 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "184": {
+                184: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 066   ",
                     "status": [
                         1,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "185": {
+                185: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 067   ",
                     "status": [
                         17,
                         0,
-                        64,
+                        62,
                         0
                     ]
                 },
-                "186": {
+                186: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 068   ",
                     "status": [
@@ -2541,7 +2541,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "187": {
+                187: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 069   ",
                     "status": [
@@ -2551,39 +2551,9 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "188": {
+                188: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 070   ",
-                    "status": [
-                        17,
-                        0,
-                        63,
-                        0
-                    ]
-                },
-                "189": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 071   ",
-                    "status": [
-                        17,
-                        0,
-                        60,
-                        0
-                    ]
-                },
-                "190": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 072   ",
-                    "status": [
-                        17,
-                        0,
-                        58,
-                        0
-                    ]
-                },
-                "191": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 073   ",
                     "status": [
                         17,
                         0,
@@ -2591,39 +2561,29 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "192": {
+                189: {
                     "type": 4,
-                    "descriptor": "TEMP SLOT 074   ",
+                    "descriptor": "TEMP SLOT 071   ",
                     "status": [
                         17,
                         0,
-                        63,
+                        59,
                         0
                     ]
                 },
-                "193": {
+                190: {
                     "type": 4,
-                    "descriptor": "TEMP SLOT 075   ",
+                    "descriptor": "TEMP SLOT 072   ",
                     "status": [
                         17,
                         0,
-                        63,
+                        57,
                         0
                     ]
                 },
-                "194": {
+                191: {
                     "type": 4,
-                    "descriptor": "TEMP SLOT 076   ",
-                    "status": [
-                        17,
-                        0,
-                        63,
-                        0
-                    ]
-                },
-                "195": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 077   ",
+                    "descriptor": "TEMP SLOT 073   ",
                     "status": [
                         17,
                         0,
@@ -2631,19 +2591,69 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "196": {
+                192: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 074   ",
+                    "status": [
+                        17,
+                        0,
+                        62,
+                        0
+                    ]
+                },
+                193: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 075   ",
+                    "status": [
+                        17,
+                        0,
+                        62,
+                        0
+                    ]
+                },
+                194: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 076   ",
+                    "status": [
+                        17,
+                        0,
+                        62,
+                        0
+                    ]
+                },
+                195: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 077   ",
+                    "status": [
+                        17,
+                        0,
+                        60,
+                        0
+                    ]
+                },
+                196: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 078   ",
                     "status": [
                         17,
                         0,
-                        63,
+                        62,
                         0
                     ]
                 },
-                "197": {
+                197: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 079   ",
+                    "status": [
+                        17,
+                        0,
+                        65,
+                        0
+                    ]
+                },
+                198: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 080   ",
                     "status": [
                         17,
                         0,
@@ -2651,17 +2661,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "198": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 080   ",
-                    "status": [
-                        17,
-                        0,
-                        68,
-                        0
-                    ]
-                },
-                "199": {
+                199: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 081   ",
                     "status": [
@@ -2671,7 +2671,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "200": {
+                200: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 082   ",
                     "status": [
@@ -2681,17 +2681,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "201": {
+                201: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 083   ",
                     "status": [
                         17,
                         0,
-                        65,
+                        64,
                         0
                     ]
                 },
-                "202": {
+                202: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 084   ",
                     "status": [
@@ -2701,39 +2701,19 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "203": {
+                203: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 085   ",
                     "status": [
                         17,
                         0,
-                        65,
+                        64,
                         0
                     ]
                 },
-                "204": {
+                204: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 086   ",
-                    "status": [
-                        17,
-                        0,
-                        67,
-                        0
-                    ]
-                },
-                "205": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 087   ",
-                    "status": [
-                        17,
-                        0,
-                        67,
-                        0
-                    ]
-                },
-                "206": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 088   ",
                     "status": [
                         17,
                         0,
@@ -2741,29 +2721,19 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "207": {
+                205: {
                     "type": 4,
-                    "descriptor": "TEMP SLOT 089   ",
+                    "descriptor": "TEMP SLOT 087   ",
                     "status": [
                         17,
                         0,
-                        63,
+                        66,
                         0
                     ]
                 },
-                "208": {
+                206: {
                     "type": 4,
-                    "descriptor": "TEMP SLOT 090   ",
-                    "status": [
-                        17,
-                        0,
-                        61,
-                        0
-                    ]
-                },
-                "209": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 091   ",
+                    "descriptor": "TEMP SLOT 088   ",
                     "status": [
                         17,
                         0,
@@ -2771,27 +2741,57 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "210": {
+                207: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 089   ",
+                    "status": [
+                        17,
+                        0,
+                        62,
+                        0
+                    ]
+                },
+                208: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 090   ",
+                    "status": [
+                        17,
+                        0,
+                        60,
+                        0
+                    ]
+                },
+                209: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 091   ",
+                    "status": [
+                        17,
+                        0,
+                        64,
+                        0
+                    ]
+                },
+                210: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 092   ",
                     "status": [
                         17,
                         0,
-                        68,
+                        66,
                         0
                     ]
                 },
-                "211": {
+                211: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 093   ",
                     "status": [
                         17,
                         0,
-                        68,
+                        67,
                         0
                     ]
                 },
-                "212": {
+                212: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 094   ",
                     "status": [
@@ -2801,17 +2801,17 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "213": {
+                213: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 095   ",
                     "status": [
                         17,
                         0,
-                        66,
+                        65,
                         0
                     ]
                 },
-                "214": {
+                214: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 096   ",
                     "status": [
@@ -2821,39 +2821,9 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "215": {
+                215: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 097   ",
-                    "status": [
-                        17,
-                        0,
-                        65,
-                        0
-                    ]
-                },
-                "216": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 098   ",
-                    "status": [
-                        17,
-                        0,
-                        66,
-                        0
-                    ]
-                },
-                "217": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 099   ",
-                    "status": [
-                        17,
-                        0,
-                        65,
-                        0
-                    ]
-                },
-                "218": {
-                    "type": 4,
-                    "descriptor": "TEMP SLOT 100   ",
                     "status": [
                         17,
                         0,
@@ -2861,37 +2831,67 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "219": {
+                216: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 098   ",
+                    "status": [
+                        17,
+                        0,
+                        65,
+                        0
+                    ]
+                },
+                217: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 099   ",
+                    "status": [
+                        17,
+                        0,
+                        64,
+                        0
+                    ]
+                },
+                218: {
+                    "type": 4,
+                    "descriptor": "TEMP SLOT 100   ",
+                    "status": [
+                        17,
+                        0,
+                        63,
+                        0
+                    ]
+                },
+                219: {
                     "type": 4,
                     "descriptor": "TEMP SLOT 101   ",
                     "status": [
                         17,
                         0,
-                        62,
+                        61,
                         0
                     ]
                 },
-                "220": {
+                220: {
                     "type": 4,
                     "descriptor": "TEMP IOM A      ",
                     "status": [
                         1,
                         0,
-                        70,
+                        69,
                         0
                     ]
                 },
-                "221": {
+                221: {
                     "type": 4,
                     "descriptor": "TEMP IOM B      ",
                     "status": [
                         1,
                         0,
-                        73,
+                        71,
                         0
                     ]
                 },
-                "222": {
+                222: {
                     "type": 4,
                     "descriptor": "TEMP BB 60 1    ",
                     "status": [
@@ -2901,87 +2901,87 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "223": {
+                223: {
                     "type": 4,
                     "descriptor": "TEMP BB 60 2    ",
                     "status": [
                         1,
                         0,
-                        47,
+                        46,
                         0
                     ]
                 },
-                "224": {
+                224: {
                     "type": 4,
                     "descriptor": "TEMP BB 42 1    ",
                     "status": [
                         1,
                         0,
-                        37,
+                        38,
                         0
                     ]
                 },
-                "225": {
+                225: {
                     "type": 4,
                     "descriptor": "TEMP BB 42 2    ",
                     "status": [
                         1,
                         0,
-                        37,
+                        38,
                         0
                     ]
                 },
-                "226": {
+                226: {
                     "type": 4,
                     "descriptor": "TEMP PRI A DIE  ",
                     "status": [
                         1,
                         0,
-                        83,
+                        77,
                         0
                     ]
                 },
-                "227": {
+                227: {
                     "type": 4,
                     "descriptor": "TEMP SEC1 A DIE ",
                     "status": [
                         1,
                         0,
-                        105,
+                        98,
                         0
                     ]
                 },
-                "228": {
+                228: {
                     "type": 4,
                     "descriptor": "TEMP SEC2 A DIE ",
                     "status": [
                         1,
                         0,
-                        83,
+                        80,
                         0
                     ]
                 },
-                "229": {
+                229: {
                     "type": 4,
                     "descriptor": "TEMP PRI A MEM  ",
                     "status": [
                         1,
                         0,
-                        68,
+                        66,
                         0
                     ]
                 },
-                "230": {
+                230: {
                     "type": 4,
                     "descriptor": "TEMP SEC1 A MEM ",
                     "status": [
                         1,
                         0,
-                        68,
+                        65,
                         0
                     ]
                 },
-                "231": {
+                231: {
                     "type": 4,
                     "descriptor": "TEMP SEC2 A MEM ",
                     "status": [
@@ -2991,57 +2991,57 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "232": {
+                232: {
                     "type": 4,
                     "descriptor": "TEMP PRI B DIE  ",
                     "status": [
                         1,
                         0,
-                        86,
+                        80,
                         0
                     ]
                 },
-                "233": {
+                233: {
                     "type": 4,
                     "descriptor": "TEMP SEC1 B DIE ",
                     "status": [
                         1,
                         0,
-                        106,
+                        99,
                         0
                     ]
                 },
-                "234": {
+                234: {
                     "type": 4,
                     "descriptor": "TEMP SEC2 B DIE ",
                     "status": [
                         1,
                         0,
-                        91,
+                        88,
                         0
                     ]
                 },
-                "235": {
+                235: {
                     "type": 4,
                     "descriptor": "TEMP PRI B MEM  ",
                     "status": [
                         1,
                         0,
-                        70,
+                        68,
                         0
                     ]
                 },
-                "236": {
+                236: {
                     "type": 4,
                     "descriptor": "TEMP SEC1 B MEM ",
                     "status": [
                         1,
                         0,
-                        71,
+                        69,
                         0
                     ]
                 },
-                "237": {
+                237: {
                     "type": 4,
                     "descriptor": "TEMP SEC2 B MEM ",
                     "status": [
@@ -3051,7 +3051,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "238": {
+                238: {
                     "type": 4,
                     "descriptor": "TEMP IOM A 5V   ",
                     "status": [
@@ -3061,39 +3061,9 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "239": {
+                239: {
                     "type": 4,
                     "descriptor": "TEMP IOM B 5V   ",
-                    "status": [
-                        1,
-                        0,
-                        72,
-                        0
-                    ]
-                },
-                "240": {
-                    "type": 4,
-                    "descriptor": "TEMP PSU A AMB  ",
-                    "status": [
-                        1,
-                        0,
-                        62,
-                        0
-                    ]
-                },
-                "241": {
-                    "type": 4,
-                    "descriptor": "TEMP PSU A HOT  ",
-                    "status": [
-                        1,
-                        0,
-                        81,
-                        0
-                    ]
-                },
-                "242": {
-                    "type": 4,
-                    "descriptor": "TEMP PSU A PRI  ",
                     "status": [
                         1,
                         0,
@@ -3101,37 +3071,67 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "243": {
+                240: {
+                    "type": 4,
+                    "descriptor": "TEMP PSU A AMB  ",
+                    "status": [
+                        1,
+                        0,
+                        56,
+                        0
+                    ]
+                },
+                241: {
+                    "type": 4,
+                    "descriptor": "TEMP PSU A HOT  ",
+                    "status": [
+                        1,
+                        0,
+                        70,
+                        0
+                    ]
+                },
+                242: {
+                    "type": 4,
+                    "descriptor": "TEMP PSU A PRI  ",
+                    "status": [
+                        1,
+                        0,
+                        63,
+                        0
+                    ]
+                },
+                243: {
                     "type": 4,
                     "descriptor": "TEMP PSU B AMB  ",
                     "status": [
                         1,
                         0,
-                        52,
+                        53,
                         0
                     ]
                 },
-                "244": {
+                244: {
                     "type": 4,
                     "descriptor": "TEMP PSU B HOT  ",
                     "status": [
                         1,
                         0,
-                        84,
+                        69,
                         0
                     ]
                 },
-                "245": {
+                245: {
                     "type": 4,
                     "descriptor": "TEMP PSU B PRI  ",
                     "status": [
                         1,
                         0,
-                        72,
+                        62,
                         0
                     ]
                 },
-                "246": {
+                246: {
                     "type": 7,
                     "descriptor": "<empty>",
                     "status": [
@@ -3141,7 +3141,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         128
                     ]
                 },
-                "247": {
+                247: {
                     "type": 7,
                     "descriptor": "ESCE IOMA,1EA0484-C1          ,THCCT03821EG014F    ,5000CCAB0511683C,,00:0C:CA:07:45:77,3.1.11                                                              ",
                     "status": [
@@ -3151,7 +3151,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         128
                     ]
                 },
-                "248": {
+                248: {
                     "type": 7,
                     "descriptor": "ESCE IOMB,1EA0484-C1          ,THCCT03821EG0150    ,5000CCAB0511687C,,00:0C:CA:07:45:6F,3.1.11                                                              ",
                     "status": [
@@ -3161,7 +3161,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         128
                     ]
                 },
-                "249": {
+                249: {
                     "type": 24,
                     "descriptor": "<empty>",
                     "status": [
@@ -3171,7 +3171,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "250": {
+                250: {
                     "type": 24,
                     "descriptor": "EXP IOMA 0,3010-007,5000CCAB0511683D",
                     "status": [
@@ -3181,7 +3181,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "251": {
+                251: {
                     "type": 24,
                     "descriptor": "EXP IOMA 1,3010-007,5000CCAB0511683F",
                     "status": [
@@ -3191,7 +3191,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "252": {
+                252: {
                     "type": 24,
                     "descriptor": "EXP IOMA 2,3010-007,5000CCAB0511687F",
                     "status": [
@@ -3201,7 +3201,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "253": {
+                253: {
                     "type": 24,
                     "descriptor": "EXP IOMB 0,3010-007,5000CCAB0511687D",
                     "status": [
@@ -3211,7 +3211,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "254": {
+                254: {
                     "type": 24,
                     "descriptor": "EXP IOMB 1,3010-007,5000CCAB05116879",
                     "status": [
@@ -3221,7 +3221,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "255": {
+                255: {
                     "type": 24,
                     "descriptor": "EXP IOMB 2,3010-007,5000CCAB0511687B",
                     "status": [
@@ -3231,7 +3231,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "256": {
+                256: {
                     "type": 25,
                     "descriptor": "<empty>",
                     "status": [
@@ -3241,7 +3241,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "257": {
+                257: {
                     "type": 25,
                     "descriptor": "CONN HOST 00    ",
                     "status": [
@@ -3251,7 +3251,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         128
                     ]
                 },
-                "258": {
+                258: {
                     "type": 25,
                     "descriptor": "CONN HOST 01    ",
                     "status": [
@@ -3261,7 +3261,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "259": {
+                259: {
                     "type": 25,
                     "descriptor": "CONN HOST 02    ",
                     "status": [
@@ -3271,7 +3271,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "260": {
+                260: {
                     "type": 25,
                     "descriptor": "CONN HOST 03    ",
                     "status": [
@@ -3281,7 +3281,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "261": {
+                261: {
                     "type": 25,
                     "descriptor": "CONN HOST 04    ",
                     "status": [
@@ -3291,7 +3291,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "262": {
+                262: {
                     "type": 25,
                     "descriptor": "CONN HOST 05    ",
                     "status": [
@@ -3301,7 +3301,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "263": {
+                263: {
                     "type": 25,
                     "descriptor": "CONN HOST 06    ",
                     "status": [
@@ -3311,7 +3311,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         128
                     ]
                 },
-                "264": {
+                264: {
                     "type": 25,
                     "descriptor": "CONN HOST 07    ",
                     "status": [
@@ -3321,7 +3321,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "265": {
+                265: {
                     "type": 25,
                     "descriptor": "CONN HOST 08    ",
                     "status": [
@@ -3331,7 +3331,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "266": {
+                266: {
                     "type": 25,
                     "descriptor": "CONN HOST 09    ",
                     "status": [
@@ -3341,7 +3341,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "267": {
+                267: {
                     "type": 25,
                     "descriptor": "CONN HOST 10    ",
                     "status": [
@@ -3351,7 +3351,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "268": {
+                268: {
                     "type": 25,
                     "descriptor": "CONN HOST 11    ",
                     "status": [
@@ -3361,7 +3361,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "269": {
+                269: {
                     "type": 18,
                     "descriptor": "<empty>",
                     "status": [
@@ -3371,7 +3371,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "270": {
+                270: {
                     "type": 18,
                     "descriptor": "VOLT PSU A AC   ",
                     "status": [
@@ -3381,27 +3381,27 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         32
                     ]
                 },
-                "271": {
+                271: {
                     "type": 18,
                     "descriptor": "VOLT PSU A 12V  ",
                     "status": [
                         1,
                         0,
                         4,
-                        201
+                        200
                     ]
                 },
-                "272": {
+                272: {
                     "type": 18,
                     "descriptor": "VOLT PSU B AC   ",
                     "status": [
                         1,
                         0,
                         78,
-                        132
+                        32
                     ]
                 },
-                "273": {
+                273: {
                     "type": 18,
                     "descriptor": "VOLT PSU B 12V  ",
                     "status": [
@@ -3411,7 +3411,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         204
                     ]
                 },
-                "274": {
+                274: {
                     "type": 18,
                     "descriptor": "VOLT IOM A 5V   ",
                     "status": [
@@ -3421,7 +3421,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         247
                     ]
                 },
-                "275": {
+                275: {
                     "type": 18,
                     "descriptor": "VOLT IOM A 12V  ",
                     "status": [
@@ -3431,7 +3431,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         176
                     ]
                 },
-                "276": {
+                276: {
                     "type": 18,
                     "descriptor": "VOLT IOM B 5V   ",
                     "status": [
@@ -3441,7 +3441,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         247
                     ]
                 },
-                "277": {
+                277: {
                     "type": 18,
                     "descriptor": "VOLT IOM B 12V  ",
                     "status": [
@@ -3451,7 +3451,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         176
                     ]
                 },
-                "278": {
+                278: {
                     "type": 19,
                     "descriptor": "<empty>",
                     "status": [
@@ -3461,27 +3461,27 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "279": {
+                279: {
                     "type": 19,
                     "descriptor": "CURR PSU A IN   ",
                     "status": [
                         1,
                         0,
                         0,
-                        216
+                        215
                     ]
                 },
-                "280": {
+                280: {
                     "type": 19,
                     "descriptor": "CURR PSU A OUT  ",
                     "status": [
                         1,
                         0,
                         12,
-                        184
+                        141
                     ]
                 },
-                "281": {
+                281: {
                     "type": 19,
                     "descriptor": "CURR PSU B IN   ",
                     "status": [
@@ -3491,27 +3491,27 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         219
                     ]
                 },
-                "282": {
+                282: {
                     "type": 19,
                     "descriptor": "CURR PSU B OUT  ",
                     "status": [
                         1,
                         0,
                         12,
-                        247
+                        203
                     ]
                 },
-                "283": {
+                283: {
                     "type": 19,
                     "descriptor": "CURR IOM A 12V  ",
                     "status": [
                         1,
                         0,
                         5,
-                        78
+                        92
                     ]
                 },
-                "284": {
+                284: {
                     "type": 19,
                     "descriptor": "CURR IOM A 5V   ",
                     "status": [
@@ -3521,7 +3521,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         208
                     ]
                 },
-                "285": {
+                285: {
                     "type": 19,
                     "descriptor": "CURR IOM B 12V  ",
                     "status": [
@@ -3531,7 +3531,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         183
                     ]
                 },
-                "286": {
+                286: {
                     "type": 19,
                     "descriptor": "CURR IOM B 5V   ",
                     "status": [
@@ -3541,7 +3541,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         2
                     ]
                 },
-                "287": {
+                287: {
                     "type": 5,
                     "descriptor": "<empty>",
                     "status": [
@@ -3551,7 +3551,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                         0
                     ]
                 },
-                "288": {
+                288: {
                     "type": 5,
                     "descriptor": "ENCLOSURE COVER ",
                     "status": [
@@ -3563,7 +3563,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                 }
             }
         },
-        {  # ES102 JBOD enclosure_class.py::Enclosure.asdict() output
+        {
             "name": "HGST H4102-J 3010",
             "model": "ES102",
             "controller": False,
@@ -3580,7 +3580,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
             "pci": "19:0:309:0",
             "elements": {
                 "Array Device Slot": {
-                    "1": {
+                    1: {
                         "descriptor": "SLOT 000,3FG1KMYV",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3594,7 +3594,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 1
                         }
                     },
-                    "2": {
+                    2: {
                         "descriptor": "SLOT 001,3FJ3J58T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3608,7 +3608,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 2
                         }
                     },
-                    "3": {
+                    3: {
                         "descriptor": "SLOT 002,3FHXK2YT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3622,7 +3622,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 3
                         }
                     },
-                    "4": {
+                    4: {
                         "descriptor": "SLOT 003,3FJG59GT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3636,7 +3636,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 4
                         }
                     },
-                    "5": {
+                    5: {
                         "descriptor": "SLOT 004,3FJ1S32T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3650,7 +3650,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 5
                         }
                     },
-                    "6": {
+                    6: {
                         "descriptor": "SLOT 005,3FJJ76GT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3664,7 +3664,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 6
                         }
                     },
-                    "7": {
+                    7: {
                         "descriptor": "SLOT 006,3FHXGM8T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3678,7 +3678,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 7
                         }
                     },
-                    "8": {
+                    8: {
                         "descriptor": "SLOT 007,3FG1KLKV",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3692,7 +3692,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 8
                         }
                     },
-                    "9": {
+                    9: {
                         "descriptor": "SLOT 008,3FJ2NY8T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3706,7 +3706,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 9
                         }
                     },
-                    "10": {
+                    10: {
                         "descriptor": "SLOT 009,3FJ2LYPT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3720,7 +3720,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 10
                         }
                     },
-                    "11": {
+                    11: {
                         "descriptor": "SLOT 010,3FJJZZ4T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3734,7 +3734,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 11
                         }
                     },
-                    "12": {
+                    12: {
                         "descriptor": "SLOT 011,3FH53S0T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3748,7 +3748,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 12
                         }
                     },
-                    "13": {
+                    13: {
                         "descriptor": "SLOT 012,3FJJ187T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3762,7 +3762,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 13
                         }
                     },
-                    "14": {
+                    14: {
                         "descriptor": "SLOT 013,3FJ0DURT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3776,7 +3776,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 14
                         }
                     },
-                    "15": {
+                    15: {
                         "descriptor": "SLOT 014,3FJ30KNT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3790,7 +3790,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 15
                         }
                     },
-                    "16": {
+                    16: {
                         "descriptor": "SLOT 015,3FJK5B3T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3804,7 +3804,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 16
                         }
                     },
-                    "17": {
+                    17: {
                         "descriptor": "SLOT 016,3FG3RGDV",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3818,7 +3818,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 17
                         }
                     },
-                    "18": {
+                    18: {
                         "descriptor": "SLOT 017,3FJ28KNT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3832,7 +3832,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 18
                         }
                     },
-                    "19": {
+                    19: {
                         "descriptor": "SLOT 018,3FH3Z5PT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3846,7 +3846,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 19
                         }
                     },
-                    "20": {
+                    20: {
                         "descriptor": "SLOT 019,3FJ33PZT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3860,7 +3860,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 20
                         }
                     },
-                    "21": {
+                    21: {
                         "descriptor": "SLOT 020,3FJ1M3AT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3874,7 +3874,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 21
                         }
                     },
-                    "22": {
+                    22: {
                         "descriptor": "SLOT 021,3FJ2WG5T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3888,7 +3888,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 22
                         }
                     },
-                    "23": {
+                    23: {
                         "descriptor": "SLOT 022,3FJK5M6T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3902,7 +3902,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 23
                         }
                     },
-                    "24": {
+                    24: {
                         "descriptor": "SLOT 023,3FJ2H8YT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3916,7 +3916,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 24
                         }
                     },
-                    "25": {
+                    25: {
                         "descriptor": "SLOT 024,3FHZRBXT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3930,7 +3930,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 25
                         }
                     },
-                    "26": {
+                    26: {
                         "descriptor": "SLOT 025,3RHSMW3A",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3944,7 +3944,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 26
                         }
                     },
-                    "27": {
+                    27: {
                         "descriptor": "SLOT 026,3FJ1U45T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3958,7 +3958,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 27
                         }
                     },
-                    "28": {
+                    28: {
                         "descriptor": "SLOT 027,3FHLT9RT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3972,7 +3972,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 28
                         }
                     },
-                    "29": {
+                    29: {
                         "descriptor": "SLOT 028,3FJ2LMDT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -3986,7 +3986,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 29
                         }
                     },
-                    "30": {
+                    30: {
                         "descriptor": "SLOT 029,3FJ28Y8T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4000,7 +4000,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 30
                         }
                     },
-                    "31": {
+                    31: {
                         "descriptor": "SLOT 030,3FH4VDMT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4014,7 +4014,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 31
                         }
                     },
-                    "32": {
+                    32: {
                         "descriptor": "SLOT 031,3FJ2A3TT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4028,7 +4028,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 32
                         }
                     },
-                    "33": {
+                    33: {
                         "descriptor": "SLOT 032,3FHR3PJT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4042,7 +4042,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 33
                         }
                     },
-                    "34": {
+                    34: {
                         "descriptor": "SLOT 033,3FHP4AVT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4056,7 +4056,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 34
                         }
                     },
-                    "35": {
+                    35: {
                         "descriptor": "SLOT 034,3FJ2G3YT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4070,7 +4070,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 35
                         }
                     },
-                    "36": {
+                    36: {
                         "descriptor": "SLOT 035,3FHLKBRT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4084,7 +4084,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 36
                         }
                     },
-                    "37": {
+                    37: {
                         "descriptor": "SLOT 036,3FHY7VST",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4098,7 +4098,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 37
                         }
                     },
-                    "38": {
+                    38: {
                         "descriptor": "SLOT 037,3FHYE9YT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4112,7 +4112,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 38
                         }
                     },
-                    "39": {
+                    39: {
                         "descriptor": "SLOT 038,3FH4UY6T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4126,7 +4126,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 39
                         }
                     },
-                    "40": {
+                    40: {
                         "descriptor": "SLOT 039,3FHMJ0DT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4140,7 +4140,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 40
                         }
                     },
-                    "41": {
+                    41: {
                         "descriptor": "SLOT 040,3FJ2P79T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4154,7 +4154,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 41
                         }
                     },
-                    "42": {
+                    42: {
                         "descriptor": "SLOT 041,3FHZRBZT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4168,7 +4168,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 42
                         }
                     },
-                    "43": {
+                    43: {
                         "descriptor": "SLOT 042,3FHYGT9T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4182,7 +4182,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 43
                         }
                     },
-                    "44": {
+                    44: {
                         "descriptor": "SLOT 043,3FJJZZ7T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4196,7 +4196,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 44
                         }
                     },
-                    "45": {
+                    45: {
                         "descriptor": "SLOT 044,3FJ2MSXT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4210,7 +4210,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 45
                         }
                     },
-                    "46": {
+                    46: {
                         "descriptor": "SLOT 045,3FG1KKPV",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4224,7 +4224,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 46
                         }
                     },
-                    "47": {
+                    47: {
                         "descriptor": "SLOT 046,3FHYYKGT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4238,7 +4238,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 47
                         }
                     },
-                    "48": {
+                    48: {
                         "descriptor": "SLOT 047,3FHXGWZT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4252,7 +4252,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 48
                         }
                     },
-                    "49": {
+                    49: {
                         "descriptor": "SLOT 048,3FJ2Z5LT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4266,7 +4266,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 49
                         }
                     },
-                    "50": {
+                    50: {
                         "descriptor": "SLOT 049,3FJ1781T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4280,7 +4280,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 50
                         }
                     },
-                    "51": {
+                    51: {
                         "descriptor": "SLOT 050,3FH83XZT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4294,7 +4294,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 51
                         }
                     },
-                    "52": {
+                    52: {
                         "descriptor": "SLOT 051,3RHLZ4RA",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4308,7 +4308,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 52
                         }
                     },
-                    "53": {
+                    53: {
                         "descriptor": "SLOT 052,3FJ2WPAT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4322,7 +4322,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 53
                         }
                     },
-                    "54": {
+                    54: {
                         "descriptor": "SLOT 053,3FJ1411T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4336,7 +4336,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 54
                         }
                     },
-                    "55": {
+                    55: {
                         "descriptor": "SLOT 054,3FG3RB8V",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4350,7 +4350,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 55
                         }
                     },
-                    "56": {
+                    56: {
                         "descriptor": "SLOT 055,3FJ2KNDT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4364,7 +4364,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 56
                         }
                     },
-                    "57": {
+                    57: {
                         "descriptor": "SLOT 056,3FHP6BPT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4378,7 +4378,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 57
                         }
                     },
-                    "58": {
+                    58: {
                         "descriptor": "SLOT 057,3FHDKGTT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4392,7 +4392,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 58
                         }
                     },
-                    "59": {
+                    59: {
                         "descriptor": "SLOT 058,3FJ2W4UT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4406,7 +4406,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 59
                         }
                     },
-                    "60": {
+                    60: {
                         "descriptor": "SLOT 059,3FJ1441T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4420,7 +4420,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 60
                         }
                     },
-                    "61": {
+                    61: {
                         "descriptor": "SLOT 060,3FJ2S29T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4434,7 +4434,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 61
                         }
                     },
-                    "62": {
+                    62: {
                         "descriptor": "SLOT 061,3FHY77PT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4448,7 +4448,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 62
                         }
                     },
-                    "63": {
+                    63: {
                         "descriptor": "SLOT 062,3FHPWTJT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4462,7 +4462,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 63
                         }
                     },
-                    "64": {
+                    64: {
                         "descriptor": "SLOT 063,3FJ2S2VT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4476,7 +4476,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 64
                         }
                     },
-                    "65": {
+                    65: {
                         "descriptor": "SLOT 064,3FH260RT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4490,7 +4490,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 65
                         }
                     },
-                    "66": {
+                    66: {
                         "descriptor": "SLOT 065,3FHP66DT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4504,7 +4504,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 66
                         }
                     },
-                    "67": {
+                    67: {
                         "descriptor": "SLOT 066,3FHPYD1T",
                         "status": "OK",
                         "value": None,
@@ -4518,7 +4518,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 67
                         }
                     },
-                    "68": {
+                    68: {
                         "descriptor": "SLOT 067,3FJ2MW6T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4532,7 +4532,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 68
                         }
                     },
-                    "69": {
+                    69: {
                         "descriptor": "SLOT 068,3FJ29WNT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4546,7 +4546,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 69
                         }
                     },
-                    "70": {
+                    70: {
                         "descriptor": "SLOT 069,3FJ2S30T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4560,7 +4560,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 70
                         }
                     },
-                    "71": {
+                    71: {
                         "descriptor": "SLOT 070,3FJ1V6PT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4574,7 +4574,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 71
                         }
                     },
-                    "72": {
+                    72: {
                         "descriptor": "SLOT 071,3FJ1WEWT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4588,7 +4588,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 72
                         }
                     },
-                    "73": {
+                    73: {
                         "descriptor": "SLOT 072,3FJ15PGT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4602,7 +4602,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 73
                         }
                     },
-                    "74": {
+                    74: {
                         "descriptor": "SLOT 073,3FJJX6DT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4616,7 +4616,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 74
                         }
                     },
-                    "75": {
+                    75: {
                         "descriptor": "SLOT 074,3FJ309HT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4630,7 +4630,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 75
                         }
                     },
-                    "76": {
+                    76: {
                         "descriptor": "SLOT 075,3FJ2H29T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4644,7 +4644,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 76
                         }
                     },
-                    "77": {
+                    77: {
                         "descriptor": "SLOT 076,3FJ1433T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4658,7 +4658,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 77
                         }
                     },
-                    "78": {
+                    78: {
                         "descriptor": "SLOT 077,3FJ2KL9T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4672,7 +4672,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 78
                         }
                     },
-                    "79": {
+                    79: {
                         "descriptor": "SLOT 078,3FJ19DTT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4686,7 +4686,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 79
                         }
                     },
-                    "80": {
+                    80: {
                         "descriptor": "SLOT 079,3FJ2P37T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4700,7 +4700,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 80
                         }
                     },
-                    "81": {
+                    81: {
                         "descriptor": "SLOT 080,3FHYY0ZT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4714,7 +4714,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 81
                         }
                     },
-                    "82": {
+                    82: {
                         "descriptor": "SLOT 081,3FHN8LKT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4728,7 +4728,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 82
                         }
                     },
-                    "83": {
+                    83: {
                         "descriptor": "SLOT 082,3FJ1J3GT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4742,7 +4742,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 83
                         }
                     },
-                    "84": {
+                    84: {
                         "descriptor": "SLOT 083,3FHYLP7T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4756,7 +4756,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 84
                         }
                     },
-                    "85": {
+                    85: {
                         "descriptor": "SLOT 084,3FJ15SRT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4770,7 +4770,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 85
                         }
                     },
-                    "86": {
+                    86: {
                         "descriptor": "SLOT 085,3FHKW9GT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4784,7 +4784,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 86
                         }
                     },
-                    "87": {
+                    87: {
                         "descriptor": "SLOT 086,3FHYEVJT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4798,7 +4798,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 87
                         }
                     },
-                    "88": {
+                    88: {
                         "descriptor": "SLOT 087,3FJ2A5VT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4812,7 +4812,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 88
                         }
                     },
-                    "89": {
+                    89: {
                         "descriptor": "SLOT 088,3FJ2MU9T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4826,7 +4826,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 89
                         }
                     },
-                    "90": {
+                    90: {
                         "descriptor": "SLOT 089,3FJ197HT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4840,7 +4840,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 90
                         }
                     },
-                    "91": {
+                    91: {
                         "descriptor": "SLOT 090,3FJ29S7T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4854,7 +4854,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 91
                         }
                     },
-                    "92": {
+                    92: {
                         "descriptor": "SLOT 091,3FJ2P7DT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4868,7 +4868,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 92
                         }
                     },
-                    "93": {
+                    93: {
                         "descriptor": "SLOT 092,3FHY8KTT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4882,7 +4882,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 93
                         }
                     },
-                    "94": {
+                    94: {
                         "descriptor": "SLOT 093,3FHY81RT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4896,7 +4896,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 94
                         }
                     },
-                    "95": {
+                    95: {
                         "descriptor": "SLOT 094,3FJ153KT",
                         "status": "OK",
                         "value": None,
@@ -4910,7 +4910,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 95
                         }
                     },
-                    "96": {
+                    96: {
                         "descriptor": "SLOT 095,3FJ17XBT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4924,7 +4924,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 96
                         }
                     },
-                    "97": {
+                    97: {
                         "descriptor": "SLOT 096,3FJ3J3ST",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4938,7 +4938,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 97
                         }
                     },
-                    "98": {
+                    98: {
                         "descriptor": "SLOT 097,3FJ2MU0T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4952,7 +4952,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 98
                         }
                     },
-                    "99": {
+                    99: {
                         "descriptor": "SLOT 098,3FJ2A7LT",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4966,7 +4966,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 99
                         }
                     },
-                    "100": {
+                    100: {
                         "descriptor": "SLOT 099,3FJ29V3T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4980,7 +4980,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 100
                         }
                     },
-                    "101": {
+                    101: {
                         "descriptor": "SLOT 100,3FHYW3ST",
                         "status": "OK, Swapped",
                         "value": None,
@@ -4994,7 +4994,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                             "slot": 101
                         }
                     },
-                    "102": {
+                    102: {
                         "descriptor": "SLOT 101,3FJ2S36T",
                         "status": "OK, Swapped",
                         "value": None,
@@ -5010,7 +5010,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "Enclosure": {
-                    "104": {
+                    104: {
                         "descriptor": "ENCLOSURE,1ES1846-A3,THCCT03921EA0015,1EB1173-A1,THCCT03721EJ1945",
                         "status": "OK",
                         "value": None,
@@ -5018,13 +5018,13 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "Power Supply": {
-                    "106": {
+                    106: {
                         "descriptor": "POWER SUPPLY A,CSU1800AP-3-10,N86821000WAKZ,,Artesyn,1800W",
                         "status": "OK",
                         "value": "Hot swap, RQST on",
                         "value_raw": 16777376
                     },
-                    "107": {
+                    107: {
                         "descriptor": "POWER SUPPLY B,CSU1800AP-3-10,N86821000CAKZ,,Artesyn,1800W",
                         "status": "OK",
                         "value": "Hot swap, RQST on",
@@ -5032,833 +5032,833 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "Cooling": {
-                    "109": {
+                    109: {
                         "descriptor": "FAN ENCL 1",
                         "status": "OK",
-                        "value": "4240 RPM",
-                        "value_raw": 16885922
+                        "value": "5830 RPM",
+                        "value_raw": 16926627
                     },
-                    "110": {
+                    110: {
                         "descriptor": "FAN ENCL 2",
                         "status": "OK",
-                        "value": "4230 RPM",
-                        "value_raw": 16885666
+                        "value": "5820 RPM",
+                        "value_raw": 16926371
                     },
-                    "111": {
+                    111: {
                         "descriptor": "FAN ENCL 3",
                         "status": "OK",
-                        "value": "4210 RPM",
-                        "value_raw": 16885154
+                        "value": "5800 RPM",
+                        "value_raw": 16925859
                     },
-                    "112": {
+                    112: {
                         "descriptor": "FAN ENCL 4",
                         "status": "OK",
-                        "value": "4200 RPM",
-                        "value_raw": 16884898
+                        "value": "5750 RPM",
+                        "value_raw": 16924579
                     },
-                    "113": {
+                    113: {
                         "descriptor": "FAN IOM 1",
                         "status": "OK",
-                        "value": "18730 RPM",
-                        "value_raw": 17256870
+                        "value": "15750 RPM",
+                        "value_raw": 17180581
                     },
-                    "114": {
+                    114: {
                         "descriptor": "FAN IOM 2",
                         "status": "OK",
-                        "value": "16300 RPM",
-                        "value_raw": 17194662
+                        "value": "13820 RPM",
+                        "value_raw": 17131173
                     },
-                    "115": {
+                    115: {
                         "descriptor": "FAN PSU A",
                         "status": "OK",
-                        "value": "20470 RPM",
-                        "value_raw": 17301414
+                        "value": "17570 RPM",
+                        "value_raw": 17227173
                     },
-                    "116": {
+                    116: {
                         "descriptor": "FAN PSU B",
                         "status": "OK",
-                        "value": "20470 RPM",
-                        "value_raw": 17301414
+                        "value": "17500 RPM",
+                        "value_raw": 17225381
                     }
                 },
                 "Temperature Sensors": {
-                    "118": {
+                    118: {
                         "descriptor": "TEMP SLOT 000",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "119": {
+                    119: {
                         "descriptor": "TEMP SLOT 001",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "120": {
+                    120: {
                         "descriptor": "TEMP SLOT 002",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "121": {
+                    121: {
                         "descriptor": "TEMP SLOT 003",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "122": {
+                    122: {
                         "descriptor": "TEMP SLOT 004",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "123": {
+                    123: {
                         "descriptor": "TEMP SLOT 005",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "124": {
+                    124: {
                         "descriptor": "TEMP SLOT 006",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "125": {
+                    125: {
                         "descriptor": "TEMP SLOT 007",
                         "status": "OK, Swapped",
-                        "value": "25C",
-                        "value_raw": 285224192
+                        "value": "23C",
+                        "value_raw": 285223680
                     },
-                    "126": {
+                    126: {
                         "descriptor": "TEMP SLOT 008",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "127": {
+                    127: {
                         "descriptor": "TEMP SLOT 009",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "128": {
+                    128: {
                         "descriptor": "TEMP SLOT 010",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "129": {
+                    129: {
                         "descriptor": "TEMP SLOT 011",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "130": {
+                    130: {
                         "descriptor": "TEMP SLOT 012",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "131": {
+                    131: {
                         "descriptor": "TEMP SLOT 013",
                         "status": "OK, Swapped",
-                        "value": "26C",
-                        "value_raw": 285224448
+                        "value": "24C",
+                        "value_raw": 285223936
                     },
-                    "132": {
+                    132: {
                         "descriptor": "TEMP SLOT 014",
                         "status": "OK, Swapped",
-                        "value": "31C",
-                        "value_raw": 285225728
+                        "value": "29C",
+                        "value_raw": 285225216
                     },
-                    "133": {
+                    133: {
                         "descriptor": "TEMP SLOT 015",
                         "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
+                        "value": "30C",
+                        "value_raw": 285225472
                     },
-                    "134": {
+                    134: {
                         "descriptor": "TEMP SLOT 016",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "135": {
-                        "descriptor": "TEMP SLOT 017",
-                        "status": "OK, Swapped",
-                        "value": "33C",
-                        "value_raw": 285226240
-                    },
-                    "136": {
-                        "descriptor": "TEMP SLOT 018",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "137": {
-                        "descriptor": "TEMP SLOT 019",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "138": {
-                        "descriptor": "TEMP SLOT 020",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "139": {
-                        "descriptor": "TEMP SLOT 021",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "140": {
-                        "descriptor": "TEMP SLOT 022",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "141": {
-                        "descriptor": "TEMP SLOT 023",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "142": {
-                        "descriptor": "TEMP SLOT 024",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "143": {
-                        "descriptor": "TEMP SLOT 025",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "144": {
-                        "descriptor": "TEMP SLOT 026",
-                        "status": "OK, Swapped",
-                        "value": "32C",
-                        "value_raw": 285225984
-                    },
-                    "145": {
-                        "descriptor": "TEMP SLOT 027",
                         "status": "OK, Swapped",
                         "value": "31C",
                         "value_raw": 285225728
                     },
-                    "146": {
+                    135: {
+                        "descriptor": "TEMP SLOT 017",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    136: {
+                        "descriptor": "TEMP SLOT 018",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    137: {
+                        "descriptor": "TEMP SLOT 019",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    138: {
+                        "descriptor": "TEMP SLOT 020",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    139: {
+                        "descriptor": "TEMP SLOT 021",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    140: {
+                        "descriptor": "TEMP SLOT 022",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    141: {
+                        "descriptor": "TEMP SLOT 023",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    142: {
+                        "descriptor": "TEMP SLOT 024",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    143: {
+                        "descriptor": "TEMP SLOT 025",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    144: {
+                        "descriptor": "TEMP SLOT 026",
+                        "status": "OK, Swapped",
+                        "value": "30C",
+                        "value_raw": 285225472
+                    },
+                    145: {
+                        "descriptor": "TEMP SLOT 027",
+                        "status": "OK, Swapped",
+                        "value": "29C",
+                        "value_raw": 285225216
+                    },
+                    146: {
                         "descriptor": "TEMP SLOT 028",
-                        "status": "OK, Swapped",
-                        "value": "35C",
-                        "value_raw": 285226752
-                    },
-                    "147": {
-                        "descriptor": "TEMP SLOT 029",
-                        "status": "OK, Swapped",
-                        "value": "37C",
-                        "value_raw": 285227264
-                    },
-                    "148": {
-                        "descriptor": "TEMP SLOT 030",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "149": {
-                        "descriptor": "TEMP SLOT 031",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "150": {
-                        "descriptor": "TEMP SLOT 032",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "151": {
-                        "descriptor": "TEMP SLOT 033",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "152": {
-                        "descriptor": "TEMP SLOT 034",
-                        "status": "OK, Swapped",
-                        "value": "36C",
-                        "value_raw": 285227008
-                    },
-                    "153": {
-                        "descriptor": "TEMP SLOT 035",
-                        "status": "OK, Swapped",
-                        "value": "36C",
-                        "value_raw": 285227008
-                    },
-                    "154": {
-                        "descriptor": "TEMP SLOT 036",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "155": {
-                        "descriptor": "TEMP SLOT 037",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "156": {
-                        "descriptor": "TEMP SLOT 038",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "157": {
-                        "descriptor": "TEMP SLOT 039",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "158": {
-                        "descriptor": "TEMP SLOT 040",
-                        "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
-                    },
-                    "159": {
-                        "descriptor": "TEMP SLOT 041",
-                        "status": "OK, Swapped",
-                        "value": "36C",
-                        "value_raw": 285227008
-                    },
-                    "160": {
-                        "descriptor": "TEMP SLOT 042",
-                        "status": "OK, Swapped",
-                        "value": "37C",
-                        "value_raw": 285227264
-                    },
-                    "161": {
-                        "descriptor": "TEMP SLOT 043",
-                        "status": "OK, Swapped",
-                        "value": "42C",
-                        "value_raw": 285228544
-                    },
-                    "162": {
-                        "descriptor": "TEMP SLOT 044",
-                        "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
-                    },
-                    "163": {
-                        "descriptor": "TEMP SLOT 045",
-                        "status": "OK, Swapped",
-                        "value": "44C",
-                        "value_raw": 285229056
-                    },
-                    "164": {
-                        "descriptor": "TEMP SLOT 046",
-                        "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
-                    },
-                    "165": {
-                        "descriptor": "TEMP SLOT 047",
-                        "status": "OK, Swapped",
-                        "value": "40C",
-                        "value_raw": 285228032
-                    },
-                    "166": {
-                        "descriptor": "TEMP SLOT 048",
-                        "status": "OK, Swapped",
-                        "value": "41C",
-                        "value_raw": 285228288
-                    },
-                    "167": {
-                        "descriptor": "TEMP SLOT 049",
-                        "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
-                    },
-                    "168": {
-                        "descriptor": "TEMP SLOT 050",
-                        "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
-                    },
-                    "169": {
-                        "descriptor": "TEMP SLOT 051",
-                        "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
-                    },
-                    "170": {
-                        "descriptor": "TEMP SLOT 052",
-                        "status": "OK, Swapped",
-                        "value": "41C",
-                        "value_raw": 285228288
-                    },
-                    "171": {
-                        "descriptor": "TEMP SLOT 053",
-                        "status": "OK, Swapped",
-                        "value": "37C",
-                        "value_raw": 285227264
-                    },
-                    "172": {
-                        "descriptor": "TEMP SLOT 054",
-                        "status": "OK, Swapped",
-                        "value": "39C",
-                        "value_raw": 285227776
-                    },
-                    "173": {
-                        "descriptor": "TEMP SLOT 055",
-                        "status": "OK, Swapped",
-                        "value": "40C",
-                        "value_raw": 285228032
-                    },
-                    "174": {
-                        "descriptor": "TEMP SLOT 056",
-                        "status": "OK, Swapped",
-                        "value": "39C",
-                        "value_raw": 285227776
-                    },
-                    "175": {
-                        "descriptor": "TEMP SLOT 057",
-                        "status": "OK, Swapped",
-                        "value": "39C",
-                        "value_raw": 285227776
-                    },
-                    "176": {
-                        "descriptor": "TEMP SLOT 058",
-                        "status": "OK, Swapped",
-                        "value": "37C",
-                        "value_raw": 285227264
-                    },
-                    "177": {
-                        "descriptor": "TEMP SLOT 059",
-                        "status": "OK, Swapped",
-                        "value": "35C",
-                        "value_raw": 285226752
-                    },
-                    "178": {
-                        "descriptor": "TEMP SLOT 060",
                         "status": "OK, Swapped",
                         "value": "33C",
                         "value_raw": 285226240
                     },
-                    "179": {
-                        "descriptor": "TEMP SLOT 061",
+                    147: {
+                        "descriptor": "TEMP SLOT 029",
+                        "status": "OK, Swapped",
+                        "value": "35C",
+                        "value_raw": 285226752
+                    },
+                    148: {
+                        "descriptor": "TEMP SLOT 030",
                         "status": "OK, Swapped",
                         "value": "36C",
                         "value_raw": 285227008
                     },
-                    "180": {
-                        "descriptor": "TEMP SLOT 062",
+                    149: {
+                        "descriptor": "TEMP SLOT 031",
                         "status": "OK, Swapped",
-                        "value": "38C",
-                        "value_raw": 285227520
+                        "value": "36C",
+                        "value_raw": 285227008
                     },
-                    "181": {
-                        "descriptor": "TEMP SLOT 063",
+                    150: {
+                        "descriptor": "TEMP SLOT 032",
                         "status": "OK, Swapped",
-                        "value": "39C",
-                        "value_raw": 285227776
+                        "value": "36C",
+                        "value_raw": 285227008
                     },
-                    "182": {
-                        "descriptor": "TEMP SLOT 064",
+                    151: {
+                        "descriptor": "TEMP SLOT 033",
                         "status": "OK, Swapped",
-                        "value": "39C",
-                        "value_raw": 285227776
+                        "value": "36C",
+                        "value_raw": 285227008
                     },
-                    "183": {
-                        "descriptor": "TEMP SLOT 065",
+                    152: {
+                        "descriptor": "TEMP SLOT 034",
                         "status": "OK, Swapped",
-                        "value": "39C",
-                        "value_raw": 285227776
+                        "value": "34C",
+                        "value_raw": 285226496
                     },
-                    "184": {
-                        "descriptor": "TEMP SLOT 066",
-                        "status": "OK",
-                        "value": "43C",
-                        "value_raw": 16793344
-                    },
-                    "185": {
-                        "descriptor": "TEMP SLOT 067",
+                    153: {
+                        "descriptor": "TEMP SLOT 035",
                         "status": "OK, Swapped",
-                        "value": "45C",
-                        "value_raw": 285229312
+                        "value": "34C",
+                        "value_raw": 285226496
                     },
-                    "186": {
-                        "descriptor": "TEMP SLOT 068",
+                    154: {
+                        "descriptor": "TEMP SLOT 036",
                         "status": "OK, Swapped",
-                        "value": "46C",
-                        "value_raw": 285229568
+                        "value": "36C",
+                        "value_raw": 285227008
                     },
-                    "187": {
-                        "descriptor": "TEMP SLOT 069",
+                    155: {
+                        "descriptor": "TEMP SLOT 037",
                         "status": "OK, Swapped",
-                        "value": "46C",
-                        "value_raw": 285229568
+                        "value": "36C",
+                        "value_raw": 285227008
                     },
-                    "188": {
-                        "descriptor": "TEMP SLOT 070",
+                    156: {
+                        "descriptor": "TEMP SLOT 038",
                         "status": "OK, Swapped",
-                        "value": "45C",
-                        "value_raw": 285229312
+                        "value": "35C",
+                        "value_raw": 285226752
                     },
-                    "189": {
-                        "descriptor": "TEMP SLOT 071",
+                    157: {
+                        "descriptor": "TEMP SLOT 039",
                         "status": "OK, Swapped",
-                        "value": "42C",
-                        "value_raw": 285228544
+                        "value": "35C",
+                        "value_raw": 285226752
                     },
-                    "190": {
-                        "descriptor": "TEMP SLOT 072",
+                    158: {
+                        "descriptor": "TEMP SLOT 040",
+                        "status": "OK, Swapped",
+                        "value": "35C",
+                        "value_raw": 285226752
+                    },
+                    159: {
+                        "descriptor": "TEMP SLOT 041",
+                        "status": "OK, Swapped",
+                        "value": "34C",
+                        "value_raw": 285226496
+                    },
+                    160: {
+                        "descriptor": "TEMP SLOT 042",
+                        "status": "OK, Swapped",
+                        "value": "35C",
+                        "value_raw": 285226752
+                    },
+                    161: {
+                        "descriptor": "TEMP SLOT 043",
                         "status": "OK, Swapped",
                         "value": "40C",
                         "value_raw": 285228032
                     },
-                    "191": {
-                        "descriptor": "TEMP SLOT 073",
+                    162: {
+                        "descriptor": "TEMP SLOT 044",
                         "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
+                        "value": "41C",
+                        "value_raw": 285228288
                     },
-                    "192": {
-                        "descriptor": "TEMP SLOT 074",
+                    163: {
+                        "descriptor": "TEMP SLOT 045",
                         "status": "OK, Swapped",
-                        "value": "44C",
-                        "value_raw": 285229056
+                        "value": "41C",
+                        "value_raw": 285228288
                     },
-                    "193": {
-                        "descriptor": "TEMP SLOT 075",
+                    164: {
+                        "descriptor": "TEMP SLOT 046",
                         "status": "OK, Swapped",
-                        "value": "45C",
-                        "value_raw": 285229312
+                        "value": "41C",
+                        "value_raw": 285228288
                     },
-                    "194": {
-                        "descriptor": "TEMP SLOT 076",
+                    165: {
+                        "descriptor": "TEMP SLOT 047",
                         "status": "OK, Swapped",
-                        "value": "44C",
-                        "value_raw": 285229056
+                        "value": "38C",
+                        "value_raw": 285227520
                     },
-                    "195": {
-                        "descriptor": "TEMP SLOT 077",
+                    166: {
+                        "descriptor": "TEMP SLOT 048",
+                        "status": "OK, Swapped",
+                        "value": "38C",
+                        "value_raw": 285227520
+                    },
+                    167: {
+                        "descriptor": "TEMP SLOT 049",
+                        "status": "OK, Swapped",
+                        "value": "41C",
+                        "value_raw": 285228288
+                    },
+                    168: {
+                        "descriptor": "TEMP SLOT 050",
+                        "status": "OK, Swapped",
+                        "value": "41C",
+                        "value_raw": 285228288
+                    },
+                    169: {
+                        "descriptor": "TEMP SLOT 051",
+                        "status": "OK, Swapped",
+                        "value": "41C",
+                        "value_raw": 285228288
+                    },
+                    170: {
+                        "descriptor": "TEMP SLOT 052",
+                        "status": "OK, Swapped",
+                        "value": "39C",
+                        "value_raw": 285227776
+                    },
+                    171: {
+                        "descriptor": "TEMP SLOT 053",
+                        "status": "OK, Swapped",
+                        "value": "34C",
+                        "value_raw": 285226496
+                    },
+                    172: {
+                        "descriptor": "TEMP SLOT 054",
+                        "status": "OK, Swapped",
+                        "value": "36C",
+                        "value_raw": 285227008
+                    },
+                    173: {
+                        "descriptor": "TEMP SLOT 055",
+                        "status": "OK, Swapped",
+                        "value": "36C",
+                        "value_raw": 285227008
+                    },
+                    174: {
+                        "descriptor": "TEMP SLOT 056",
+                        "status": "OK, Swapped",
+                        "value": "36C",
+                        "value_raw": 285227008
+                    },
+                    175: {
+                        "descriptor": "TEMP SLOT 057",
+                        "status": "OK, Swapped",
+                        "value": "36C",
+                        "value_raw": 285227008
+                    },
+                    176: {
+                        "descriptor": "TEMP SLOT 058",
+                        "status": "OK, Swapped",
+                        "value": "35C",
+                        "value_raw": 285226752
+                    },
+                    177: {
+                        "descriptor": "TEMP SLOT 059",
+                        "status": "OK, Swapped",
+                        "value": "32C",
+                        "value_raw": 285225984
+                    },
+                    178: {
+                        "descriptor": "TEMP SLOT 060",
+                        "status": "OK, Swapped",
+                        "value": "31C",
+                        "value_raw": 285225728
+                    },
+                    179: {
+                        "descriptor": "TEMP SLOT 061",
+                        "status": "OK, Swapped",
+                        "value": "34C",
+                        "value_raw": 285226496
+                    },
+                    180: {
+                        "descriptor": "TEMP SLOT 062",
+                        "status": "OK, Swapped",
+                        "value": "35C",
+                        "value_raw": 285226752
+                    },
+                    181: {
+                        "descriptor": "TEMP SLOT 063",
+                        "status": "OK, Swapped",
+                        "value": "36C",
+                        "value_raw": 285227008
+                    },
+                    182: {
+                        "descriptor": "TEMP SLOT 064",
+                        "status": "OK, Swapped",
+                        "value": "36C",
+                        "value_raw": 285227008
+                    },
+                    183: {
+                        "descriptor": "TEMP SLOT 065",
+                        "status": "OK, Swapped",
+                        "value": "37C",
+                        "value_raw": 285227264
+                    },
+                    184: {
+                        "descriptor": "TEMP SLOT 066",
+                        "status": "OK",
+                        "value": "41C",
+                        "value_raw": 16792832
+                    },
+                    185: {
+                        "descriptor": "TEMP SLOT 067",
                         "status": "OK, Swapped",
                         "value": "42C",
                         "value_raw": 285228544
                     },
-                    "196": {
-                        "descriptor": "TEMP SLOT 078",
-                        "status": "OK, Swapped",
-                        "value": "45C",
-                        "value_raw": 285229312
-                    },
-                    "197": {
-                        "descriptor": "TEMP SLOT 079",
-                        "status": "OK, Swapped",
-                        "value": "49C",
-                        "value_raw": 285230336
-                    },
-                    "198": {
-                        "descriptor": "TEMP SLOT 080",
-                        "status": "OK, Swapped",
-                        "value": "50C",
-                        "value_raw": 285230592
-                    },
-                    "199": {
-                        "descriptor": "TEMP SLOT 081",
-                        "status": "OK, Swapped",
-                        "value": "51C",
-                        "value_raw": 285230848
-                    },
-                    "200": {
-                        "descriptor": "TEMP SLOT 082",
-                        "status": "OK, Swapped",
-                        "value": "50C",
-                        "value_raw": 285230592
-                    },
-                    "201": {
-                        "descriptor": "TEMP SLOT 083",
-                        "status": "OK, Swapped",
-                        "value": "47C",
-                        "value_raw": 285229824
-                    },
-                    "202": {
-                        "descriptor": "TEMP SLOT 084",
-                        "status": "OK, Swapped",
-                        "value": "45C",
-                        "value_raw": 285229312
-                    },
-                    "203": {
-                        "descriptor": "TEMP SLOT 085",
-                        "status": "OK, Swapped",
-                        "value": "48C",
-                        "value_raw": 285230080
-                    },
-                    "204": {
-                        "descriptor": "TEMP SLOT 086",
-                        "status": "OK, Swapped",
-                        "value": "49C",
-                        "value_raw": 285230336
-                    },
-                    "205": {
-                        "descriptor": "TEMP SLOT 087",
-                        "status": "OK, Swapped",
-                        "value": "49C",
-                        "value_raw": 285230336
-                    },
-                    "206": {
-                        "descriptor": "TEMP SLOT 088",
-                        "status": "OK, Swapped",
-                        "value": "47C",
-                        "value_raw": 285229824
-                    },
-                    "207": {
-                        "descriptor": "TEMP SLOT 089",
+                    186: {
+                        "descriptor": "TEMP SLOT 068",
                         "status": "OK, Swapped",
                         "value": "44C",
                         "value_raw": 285229056
                     },
-                    "208": {
-                        "descriptor": "TEMP SLOT 090",
+                    187: {
+                        "descriptor": "TEMP SLOT 069",
                         "status": "OK, Swapped",
-                        "value": "43C",
-                        "value_raw": 285228800
+                        "value": "44C",
+                        "value_raw": 285229056
                     },
-                    "209": {
-                        "descriptor": "TEMP SLOT 091",
+                    188: {
+                        "descriptor": "TEMP SLOT 070",
                         "status": "OK, Swapped",
-                        "value": "47C",
-                        "value_raw": 285229824
+                        "value": "42C",
+                        "value_raw": 285228544
                     },
-                    "210": {
-                        "descriptor": "TEMP SLOT 092",
+                    189: {
+                        "descriptor": "TEMP SLOT 071",
                         "status": "OK, Swapped",
-                        "value": "49C",
-                        "value_raw": 285230336
+                        "value": "39C",
+                        "value_raw": 285227776
                     },
-                    "211": {
-                        "descriptor": "TEMP SLOT 093",
+                    190: {
+                        "descriptor": "TEMP SLOT 072",
                         "status": "OK, Swapped",
-                        "value": "50C",
-                        "value_raw": 285230592
+                        "value": "37C",
+                        "value_raw": 285227264
                     },
-                    "212": {
-                        "descriptor": "TEMP SLOT 094",
-                        "status": "OK",
-                        "value": "50C",
-                        "value_raw": 16795136
-                    },
-                    "213": {
-                        "descriptor": "TEMP SLOT 095",
+                    191: {
+                        "descriptor": "TEMP SLOT 073",
                         "status": "OK, Swapped",
-                        "value": "48C",
-                        "value_raw": 285230080
+                        "value": "41C",
+                        "value_raw": 285228288
                     },
-                    "214": {
-                        "descriptor": "TEMP SLOT 096",
+                    192: {
+                        "descriptor": "TEMP SLOT 074",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    193: {
+                        "descriptor": "TEMP SLOT 075",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    194: {
+                        "descriptor": "TEMP SLOT 076",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    195: {
+                        "descriptor": "TEMP SLOT 077",
+                        "status": "OK, Swapped",
+                        "value": "40C",
+                        "value_raw": 285228032
+                    },
+                    196: {
+                        "descriptor": "TEMP SLOT 078",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    197: {
+                        "descriptor": "TEMP SLOT 079",
                         "status": "OK, Swapped",
                         "value": "45C",
                         "value_raw": 285229312
                     },
-                    "215": {
-                        "descriptor": "TEMP SLOT 097",
-                        "status": "OK, Swapped",
-                        "value": "48C",
-                        "value_raw": 285230080
-                    },
-                    "216": {
-                        "descriptor": "TEMP SLOT 098",
-                        "status": "OK, Swapped",
-                        "value": "49C",
-                        "value_raw": 285230336
-                    },
-                    "217": {
-                        "descriptor": "TEMP SLOT 099",
+                    198: {
+                        "descriptor": "TEMP SLOT 080",
                         "status": "OK, Swapped",
                         "value": "47C",
                         "value_raw": 285229824
                     },
-                    "218": {
-                        "descriptor": "TEMP SLOT 100",
+                    199: {
+                        "descriptor": "TEMP SLOT 081",
+                        "status": "OK, Swapped",
+                        "value": "48C",
+                        "value_raw": 285230080
+                    },
+                    200: {
+                        "descriptor": "TEMP SLOT 082",
+                        "status": "OK, Swapped",
+                        "value": "47C",
+                        "value_raw": 285229824
+                    },
+                    201: {
+                        "descriptor": "TEMP SLOT 083",
+                        "status": "OK, Swapped",
+                        "value": "44C",
+                        "value_raw": 285229056
+                    },
+                    202: {
+                        "descriptor": "TEMP SLOT 084",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    203: {
+                        "descriptor": "TEMP SLOT 085",
+                        "status": "OK, Swapped",
+                        "value": "44C",
+                        "value_raw": 285229056
+                    },
+                    204: {
+                        "descriptor": "TEMP SLOT 086",
                         "status": "OK, Swapped",
                         "value": "46C",
                         "value_raw": 285229568
                     },
-                    "219": {
-                        "descriptor": "TEMP SLOT 101",
+                    205: {
+                        "descriptor": "TEMP SLOT 087",
+                        "status": "OK, Swapped",
+                        "value": "46C",
+                        "value_raw": 285229568
+                    },
+                    206: {
+                        "descriptor": "TEMP SLOT 088",
+                        "status": "OK, Swapped",
+                        "value": "45C",
+                        "value_raw": 285229312
+                    },
+                    207: {
+                        "descriptor": "TEMP SLOT 089",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    208: {
+                        "descriptor": "TEMP SLOT 090",
+                        "status": "OK, Swapped",
+                        "value": "40C",
+                        "value_raw": 285228032
+                    },
+                    209: {
+                        "descriptor": "TEMP SLOT 091",
+                        "status": "OK, Swapped",
+                        "value": "44C",
+                        "value_raw": 285229056
+                    },
+                    210: {
+                        "descriptor": "TEMP SLOT 092",
+                        "status": "OK, Swapped",
+                        "value": "46C",
+                        "value_raw": 285229568
+                    },
+                    211: {
+                        "descriptor": "TEMP SLOT 093",
+                        "status": "OK, Swapped",
+                        "value": "47C",
+                        "value_raw": 285229824
+                    },
+                    212: {
+                        "descriptor": "TEMP SLOT 094",
+                        "status": "OK",
+                        "value": "47C",
+                        "value_raw": 16794368
+                    },
+                    213: {
+                        "descriptor": "TEMP SLOT 095",
+                        "status": "OK, Swapped",
+                        "value": "45C",
+                        "value_raw": 285229312
+                    },
+                    214: {
+                        "descriptor": "TEMP SLOT 096",
+                        "status": "OK, Swapped",
+                        "value": "42C",
+                        "value_raw": 285228544
+                    },
+                    215: {
+                        "descriptor": "TEMP SLOT 097",
+                        "status": "OK, Swapped",
+                        "value": "44C",
+                        "value_raw": 285229056
+                    },
+                    216: {
+                        "descriptor": "TEMP SLOT 098",
+                        "status": "OK, Swapped",
+                        "value": "45C",
+                        "value_raw": 285229312
+                    },
+                    217: {
+                        "descriptor": "TEMP SLOT 099",
+                        "status": "OK, Swapped",
+                        "value": "44C",
+                        "value_raw": 285229056
+                    },
+                    218: {
+                        "descriptor": "TEMP SLOT 100",
                         "status": "OK, Swapped",
                         "value": "43C",
                         "value_raw": 285228800
                     },
-                    "220": {
+                    219: {
+                        "descriptor": "TEMP SLOT 101",
+                        "status": "OK, Swapped",
+                        "value": "41C",
+                        "value_raw": 285228288
+                    },
+                    220: {
                         "descriptor": "TEMP IOM A",
                         "status": "OK",
-                        "value": "50C",
-                        "value_raw": 16795136
+                        "value": "49C",
+                        "value_raw": 16794880
                     },
-                    "221": {
+                    221: {
                         "descriptor": "TEMP IOM B",
                         "status": "OK",
-                        "value": "53C",
-                        "value_raw": 16795904
+                        "value": "51C",
+                        "value_raw": 16795392
                     },
-                    "222": {
+                    222: {
                         "descriptor": "TEMP BB 60 1",
                         "status": "OK",
-                        "value": "28C",
-                        "value_raw": 16789504
+                        "value": "27C",
+                        "value_raw": 16789248
                     },
-                    "223": {
+                    223: {
                         "descriptor": "TEMP BB 60 2",
                         "status": "OK",
-                        "value": "28C",
-                        "value_raw": 16789504
+                        "value": "26C",
+                        "value_raw": 16788992
                     },
-                    "224": {
+                    224: {
                         "descriptor": "TEMP BB 42 1",
                         "status": "OK",
                         "value": "18C",
                         "value_raw": 16786944
                     },
-                    "225": {
+                    225: {
                         "descriptor": "TEMP BB 42 2",
                         "status": "OK",
                         "value": "18C",
                         "value_raw": 16786944
                     },
-                    "226": {
+                    226: {
                         "descriptor": "TEMP PRI A DIE",
                         "status": "OK",
                         "value": "57C",
                         "value_raw": 16796928
                     },
-                    "227": {
+                    227: {
                         "descriptor": "TEMP SEC1 A DIE",
                         "status": "OK",
-                        "value": "80C",
-                        "value_raw": 16802816
+                        "value": "78C",
+                        "value_raw": 16802304
                     },
-                    "228": {
+                    228: {
                         "descriptor": "TEMP SEC2 A DIE",
                         "status": "OK",
-                        "value": "62C",
-                        "value_raw": 16798208
+                        "value": "60C",
+                        "value_raw": 16797696
                     },
-                    "229": {
+                    229: {
                         "descriptor": "TEMP PRI A MEM",
                         "status": "OK",
-                        "value": "47C",
-                        "value_raw": 16794368
+                        "value": "46C",
+                        "value_raw": 16794112
                     },
-                    "230": {
+                    230: {
                         "descriptor": "TEMP SEC1 A MEM",
                         "status": "OK",
-                        "value": "47C",
-                        "value_raw": 16794368
+                        "value": "45C",
+                        "value_raw": 16793856
                     },
-                    "231": {
+                    231: {
                         "descriptor": "TEMP SEC2 A MEM",
                         "status": "OK",
-                        "value": "41C",
-                        "value_raw": 16792832
+                        "value": "39C",
+                        "value_raw": 16792320
                     },
-                    "232": {
+                    232: {
                         "descriptor": "TEMP PRI B DIE",
                         "status": "OK",
                         "value": "60C",
                         "value_raw": 16797696
                     },
-                    "233": {
+                    233: {
                         "descriptor": "TEMP SEC1 B DIE",
                         "status": "OK",
-                        "value": "82C",
-                        "value_raw": 16803328
+                        "value": "79C",
+                        "value_raw": 16802560
                     },
-                    "234": {
+                    234: {
                         "descriptor": "TEMP SEC2 B DIE",
                         "status": "OK",
-                        "value": "71C",
-                        "value_raw": 16800512
+                        "value": "68C",
+                        "value_raw": 16799744
                     },
-                    "235": {
+                    235: {
                         "descriptor": "TEMP PRI B MEM",
+                        "status": "OK",
+                        "value": "48C",
+                        "value_raw": 16794624
+                    },
+                    236: {
+                        "descriptor": "TEMP SEC1 B MEM",
                         "status": "OK",
                         "value": "49C",
                         "value_raw": 16794880
                     },
-                    "236": {
-                        "descriptor": "TEMP SEC1 B MEM",
-                        "status": "OK",
-                        "value": "52C",
-                        "value_raw": 16795648
-                    },
-                    "237": {
+                    237: {
                         "descriptor": "TEMP SEC2 B MEM",
                         "status": "OK",
-                        "value": "42C",
-                        "value_raw": 16793088
+                        "value": "39C",
+                        "value_raw": 16792320
                     },
-                    "238": {
+                    238: {
                         "descriptor": "TEMP IOM A 5V",
                         "status": "OK",
-                        "value": "48C",
-                        "value_raw": 16794624
+                        "value": "46C",
+                        "value_raw": 16794112
                     },
-                    "239": {
+                    239: {
                         "descriptor": "TEMP IOM B 5V",
                         "status": "OK",
-                        "value": "54C",
-                        "value_raw": 16796160
+                        "value": "51C",
+                        "value_raw": 16795392
                     },
-                    "240": {
+                    240: {
                         "descriptor": "TEMP PSU A AMB",
                         "status": "OK",
-                        "value": "37C",
-                        "value_raw": 16791808
+                        "value": "36C",
+                        "value_raw": 16791552
                     },
-                    "241": {
+                    241: {
                         "descriptor": "TEMP PSU A HOT",
                         "status": "OK",
-                        "value": "48C",
-                        "value_raw": 16794624
+                        "value": "50C",
+                        "value_raw": 16795136
                     },
-                    "242": {
+                    242: {
                         "descriptor": "TEMP PSU A PRI",
                         "status": "OK",
                         "value": "43C",
                         "value_raw": 16793344
                     },
-                    "243": {
+                    243: {
                         "descriptor": "TEMP PSU B AMB",
                         "status": "OK",
-                        "value": "35C",
-                        "value_raw": 16791296
+                        "value": "33C",
+                        "value_raw": 16790784
                     },
-                    "244": {
+                    244: {
                         "descriptor": "TEMP PSU B HOT",
                         "status": "OK",
                         "value": "49C",
                         "value_raw": 16794880
                     },
-                    "245": {
+                    245: {
                         "descriptor": "TEMP PSU B PRI",
                         "status": "OK",
-                        "value": "43C",
-                        "value_raw": 16793344
+                        "value": "42C",
+                        "value_raw": 16793088
                     }
                 },
                 "Enclosure Services Controller Electronics": {
-                    "247": {
+                    247: {
                         "descriptor": "ESCE IOMA,1EA0484-C1          ,THCCT03821EG014F    ,5000CCAB0511683C,,00:0C:CA:07:45:77,3.1.11",
                         "status": "OK",
                         "value": None,
                         "value_raw": 17826176
                     },
-                    "248": {
+                    248: {
                         "descriptor": "ESCE IOMB,1EA0484-C1          ,THCCT03821EG0150    ,5000CCAB0511687C,,00:0C:CA:07:45:6F,3.1.11",
                         "status": "OK",
                         "value": None,
@@ -5866,37 +5866,37 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "SAS Expander": {
-                    "250": {
+                    250: {
                         "descriptor": "EXP IOMA 0,3010-007,5000CCAB0511683D",
                         "status": "OK",
                         "value": None,
                         "value_raw": 16777216
                     },
-                    "251": {
+                    251: {
                         "descriptor": "EXP IOMA 1,3010-007,5000CCAB0511683F",
                         "status": "OK",
                         "value": None,
                         "value_raw": 16777216
                     },
-                    "252": {
+                    252: {
                         "descriptor": "EXP IOMA 2,3010-007,5000CCAB0511687F",
                         "status": "OK",
                         "value": None,
                         "value_raw": 16777216
                     },
-                    "253": {
+                    253: {
                         "descriptor": "EXP IOMB 0,3010-007,5000CCAB0511687D",
                         "status": "OK",
                         "value": None,
                         "value_raw": 16777216
                     },
-                    "254": {
+                    254: {
                         "descriptor": "EXP IOMB 1,3010-007,5000CCAB05116879",
                         "status": "OK",
                         "value": None,
                         "value_raw": 16777216
                     },
-                    "255": {
+                    255: {
                         "descriptor": "EXP IOMB 2,3010-007,5000CCAB0511687B",
                         "status": "OK",
                         "value": None,
@@ -5904,73 +5904,73 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "SAS Connector": {
-                    "257": {
+                    257: {
                         "descriptor": "CONN HOST 00",
                         "status": "OK",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 17170304
                     },
-                    "258": {
+                    258: {
                         "descriptor": "CONN HOST 01",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "259": {
+                    259: {
                         "descriptor": "CONN HOST 02",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "260": {
+                    260: {
                         "descriptor": "CONN HOST 03",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "261": {
+                    261: {
                         "descriptor": "CONN HOST 04",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "262": {
+                    262: {
                         "descriptor": "CONN HOST 05",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "263": {
+                    263: {
                         "descriptor": "CONN HOST 06",
                         "status": "OK",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 17170304
                     },
-                    "264": {
+                    264: {
                         "descriptor": "CONN HOST 07",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "265": {
+                    265: {
                         "descriptor": "CONN HOST 08",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "266": {
+                    266: {
                         "descriptor": "CONN HOST 09",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "267": {
+                    267: {
                         "descriptor": "CONN HOST 10",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
                         "value_raw": 84279040
                     },
-                    "268": {
+                    268: {
                         "descriptor": "CONN HOST 11",
                         "status": "Not installed",
                         "value": "Mini SAS HD 4x receptacle (SFF-8644) [max 4 phys]",
@@ -5978,49 +5978,49 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "Voltage Sensor": {
-                    "270": {
+                    270: {
                         "descriptor": "VOLT PSU A AC",
                         "status": "OK",
                         "value": "200.0V",
                         "value_raw": 16797216
                     },
-                    "271": {
+                    271: {
                         "descriptor": "VOLT PSU A 12V",
                         "status": "OK",
                         "value": "12.24V",
                         "value_raw": 16778440
                     },
-                    "272": {
+                    272: {
                         "descriptor": "VOLT PSU B AC",
                         "status": "OK",
-                        "value": "201.0V",
-                        "value_raw": 16797316
+                        "value": "200.0V",
+                        "value_raw": 16797216
                     },
-                    "273": {
+                    273: {
                         "descriptor": "VOLT PSU B 12V",
                         "status": "OK",
                         "value": "12.28V",
                         "value_raw": 16778444
                     },
-                    "274": {
+                    274: {
                         "descriptor": "VOLT IOM A 5V",
                         "status": "OK",
                         "value": "5.03V",
                         "value_raw": 16777719
                     },
-                    "275": {
+                    275: {
                         "descriptor": "VOLT IOM A 12V",
                         "status": "OK",
                         "value": "12.0V",
                         "value_raw": 16778416
                     },
-                    "276": {
+                    276: {
                         "descriptor": "VOLT IOM B 5V",
                         "status": "OK",
                         "value": "5.03V",
                         "value_raw": 16777719
                     },
-                    "277": {
+                    277: {
                         "descriptor": "VOLT IOM B 12V",
                         "status": "OK",
                         "value": "12.0V",
@@ -6028,57 +6028,57 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                     }
                 },
                 "Current Sensor": {
-                    "279": {
+                    279: {
                         "descriptor": "CURR PSU A IN",
                         "status": "OK",
-                        "value": "2.18A",
-                        "value_raw": 16777434
+                        "value": "2.15A",
+                        "value_raw": 16777431
                     },
-                    "280": {
+                    280: {
                         "descriptor": "CURR PSU A OUT",
                         "status": "OK",
                         "value": "32.13A",
                         "value_raw": 16780429
                     },
-                    "281": {
+                    281: {
                         "descriptor": "CURR PSU B IN",
                         "status": "OK",
-                        "value": "2.21A",
-                        "value_raw": 16777437
+                        "value": "2.19A",
+                        "value_raw": 16777435
                     },
-                    "282": {
+                    282: {
                         "descriptor": "CURR PSU B OUT",
                         "status": "OK",
-                        "value": "32.5A",
-                        "value_raw": 16780466
+                        "value": "32.75A",
+                        "value_raw": 16780491
                     },
-                    "283": {
+                    283: {
                         "descriptor": "CURR IOM A 12V",
                         "status": "OK",
-                        "value": "14.07A",
-                        "value_raw": 16778623
+                        "value": "13.72A",
+                        "value_raw": 16778588
                     },
-                    "284": {
+                    284: {
                         "descriptor": "CURR IOM A 5V",
                         "status": "OK",
-                        "value": "20.25A",
-                        "value_raw": 16779241
+                        "value": "20.0A",
+                        "value_raw": 16779216
                     },
-                    "285": {
+                    285: {
                         "descriptor": "CURR IOM B 12V",
                         "status": "OK",
-                        "value": "14.95A",
-                        "value_raw": 16778711
+                        "value": "14.63A",
+                        "value_raw": 16778679
                     },
-                    "286": {
+                    286: {
                         "descriptor": "CURR IOM B 5V",
                         "status": "OK",
-                        "value": "20.75A",
-                        "value_raw": 16779291
+                        "value": "20.5A",
+                        "value_raw": 16779266
                     }
                 },
                 "Door Lock": {
-                    "288": {
+                    288: {
                         "descriptor": "ENCLOSURE COVER",
                         "status": "OK",
                         "value": None,
@@ -6087,109 +6087,109 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
                 }
             }
         },
-        {  # ES102 JBOD sysfs output (for mocking)
-            "91": "sdasl",
-            "13": "sdatj",
-            "65": "sdarl",
-            "17": "sdatn",
-            "101": "sdasv",
-            "37": "sdauh",
-            "64": "sdark",
-            "46": "sdauo",
-            "10": "sdatg",
-            "97": "sdasr",
-            "38": "sdaui",
-            "79": "sdarz",
-            "72": "sdars",
-            "48": "sdauq",
-            "61": "sdarh",
-            "33": "sdaud",
-            "84": "sdase",
-            "93": "sdasn",
-            "59": "sdarf",
-            "54": "sdara",
-            "68": "sdaro",
-            "52": "sdaut",
-            "42": "sdaqx",
-            "63": "sdarj",
-            "26": "sdatw",
-            "98": "sdass",
-            "22": "sdats",
-            "92": "sdasm",
-            "82": "sdasc",
-            "36": "sdaug",
-            "12": "sdati",
-            "24": "sdatu",
-            "7": "sdatd",
-            "3": "sdasz",
-            "69": "sdarp",
-            "88": "sdasi",
-            "100": "sdasu",
-            "23": "sdatt",
-            "78": "sdary",
-            "28": "sdaty",
-            "67": "sdarn",
-            "21": "sdatr",
-            "9": "sdatf",
-            "80": "sdasa",
-            "2": "sdasy",
-            "30": "sdaua",
-            "57": "sdard",
-            "25": "sdatv",
-            "90": "sdask",
-            "32": "sdauc",
-            "58": "sdare",
-            "75": "sdarv",
-            "86": "sdash",
-            "15": "sdatl",
-            "89": "sdasj",
-            "95": "sdasp",
-            "8": "sdate",
-            "76": "sdarw",
-            "14": "sdatk",
-            "16": "sdatm",
-            "40": "sdauk",
-            "53": "sdaqz",
-            "35": "sdauf",
-            "29": "sdatz",
-            "6": "sdatc",
-            "94": "sdaso",
-            "19": "sdatp",
-            "55": "sdarb",
-            "43": "sdaum",
-            "39": "sdauj",
-            "96": "sdasq",
-            "51": "sdaus",
-            "77": "sdarx",
-            "34": "sdaue",
-            "11": "sdath",
-            "71": "sdarr",
-            "18": "sdato",
-            "73": "sdart",
-            "85": "sdasf",
-            "44": "sdaqy",
-            "66": "sdarm",
-            "81": "sdasb",
-            "31": "sdaub",
-            "60": "sdarg",
-            "56": "sdarc",
-            "1": "sdasx",
-            "83": "sdasd",
-            "0": "sdasw",
-            "87": "sdasg",
-            "62": "sdari",
-            "4": "sdata",
-            "5": "sdatb",
-            "41": "sdaul",
-            "50": "sdaur",
-            "20": "sdatq",
-            "47": "sdaup",
-            "74": "sdaru",
-            "99": "sdast",
-            "45": "sdaun",
-            "70": "sdarq",
-            "27": "sdatx",
-            "49": "sdauu"
+        {
+            91: "sdasl",
+            13: "sdatj",
+            65: "sdarl",
+            17: "sdatn",
+            101: "sdasv",
+            37: "sdauh",
+            64: "sdark",
+            46: "sdauo",
+            10: "sdatg",
+            97: "sdasr",
+            38: "sdaui",
+            79: "sdarz",
+            72: "sdars",
+            48: "sdauq",
+            61: "sdarh",
+            33: "sdaud",
+            84: "sdase",
+            93: "sdasn",
+            59: "sdarf",
+            54: "sdara",
+            68: "sdaro",
+            52: "sdaut",
+            42: "sdaqx",
+            63: "sdarj",
+            26: "sdatw",
+            98: "sdass",
+            22: "sdats",
+            92: "sdasm",
+            82: "sdasc",
+            36: "sdaug",
+            12: "sdati",
+            24: "sdatu",
+            7: "sdatd",
+            3: "sdasz",
+            69: "sdarp",
+            88: "sdasi",
+            100: "sdasu",
+            23: "sdatt",
+            78: "sdary",
+            28: "sdaty",
+            67: "sdarn",
+            21: "sdatr",
+            9: "sdatf",
+            80: "sdasa",
+            2: "sdasy",
+            30: "sdaua",
+            57: "sdard",
+            25: "sdatv",
+            90: "sdask",
+            32: "sdauc",
+            58: "sdare",
+            75: "sdarv",
+            86: "sdash",
+            15: "sdatl",
+            89: "sdasj",
+            95: "sdasp",
+            8: "sdate",
+            76: "sdarw",
+            14: "sdatk",
+            16: "sdatm",
+            40: "sdauk",
+            53: "sdaqz",
+            35: "sdauf",
+            29: "sdatz",
+            6: "sdatc",
+            94: "sdaso",
+            19: "sdatp",
+            55: "sdarb",
+            43: "sdaum",
+            39: "sdauj",
+            96: "sdasq",
+            51: "sdaus",
+            77: "sdarx",
+            34: "sdaue",
+            11: "sdath",
+            71: "sdarr",
+            18: "sdato",
+            73: "sdart",
+            85: "sdasf",
+            44: "sdaqy",
+            66: "sdarm",
+            81: "sdasb",
+            31: "sdaub",
+            60: "sdarg",
+            56: "sdarc",
+            1: "sdasx",
+            83: "sdasd",
+            0: "sdasw",
+            87: "sdasg",
+            62: "sdari",
+            4: "sdata",
+            5: "sdatb",
+            41: "sdaul",
+            50: "sdaur",
+            20: "sdatq",
+            47: "sdaup",
+            74: "sdaru",
+            99: "sdast",
+            45: "sdaun",
+            70: "sdarq",
+            27: "sdatx",
+            49: "sdauu"
         }
     )
 ])
