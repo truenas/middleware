@@ -43,7 +43,7 @@ def test_read_role_cant_write(ds, share, role):
         assert ve.value.errno == errno.EACCES
 
         # READ access should allow reading ACL
-        c.call("sharing.smb.getacl", share["name"])
+        c.call("sharing.smb.getacl", {"share_name": share["name"]})
 
         with pytest.raises(ClientException) as ve:
             c.call("sharing.smb.setacl", {"share_name": share["name"]})
@@ -65,6 +65,6 @@ def test_write_role_can_write(ds, role):
         c.call("sharing.smb.delete", share["id"])
 
         # READ access should allow reading ACL
-        c.call("sharing.smb.getacl", share["name"])
+        c.call("sharing.smb.getacl", {"share_name": share["name"]})
         c.call("sharing.smb.setacl", {"share_name": share["name"]})
         c.call("smb.status")
