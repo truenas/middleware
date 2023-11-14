@@ -149,3 +149,16 @@ def test_zfs_lifecycle():
         call("tunable.delete", tunable["id"], job=True)
 
         assert_default_value()
+
+
+def test_arc_max_set():
+    tunable = call("tunable.create", {"type": "ZFS", "var": "zfs_arc_max", "value": 8675309}, job=True)
+    try:
+        val = ssh("cat /sys/module/zfs/parameters/zfs_arc_max")
+    finally:
+        call("tunable.delete", tunable["id"], job=True)
+
+    assert int(val.strip()) == 8675309
+
+    mount_info = call("filesystem.mount_info", [["mountpoint", "=", "/"]], {"get": True})
+    assert "RO" in mount_info["super_opts"]
