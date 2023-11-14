@@ -504,7 +504,7 @@ class SMBService(TDBWrapConfigService):
         """
         found_sentinel = False
         while timeout >= 0 and not found_sentinel:
-            if os.path.exists(NETIF_COMPLETE_SENTINEL):
+            if await self.middleware.run_in_thread(os.path.exists, NETIF_COMPLETE_SENTINEL):
                 found_sentinel = True
 
             timeout -= 1
