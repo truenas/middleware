@@ -18,6 +18,7 @@ import middlewared.main
 from middlewared.common.environ import environ_update
 from middlewared.job import Job
 from middlewared.pipe import Pipes
+from middlewared.plugins.account_.privilege_utils import credential_has_full_admin
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, returns, Str
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
@@ -28,7 +29,7 @@ from middlewared.validators import IpAddress, Range
 from .compound_service import CompoundService
 from .config_service import ConfigService
 from .crud_service import CRUDService
-from .decorators import filterable, filterable_returns, job, no_auth_required, pass_app, private
+from .decorators import filterable, filterable_returns, job, no_auth_required, no_authz_required, pass_app, private
 from .service import Service
 
 
@@ -134,6 +135,27 @@ class CoreService(Service):
                 'frames': frames,
             }
 
+    def __is_limited_to_own_jobs(self, credential):
+        if credential is None or not credential.is_user_session:
+            return False
+
+        return not credential_has_full_admin(credential)
+
+    def __job_by_credential_and_id(self, credential, job_id):
+        if not self.__is_limited_to_own_jobs(credential):
+            return self.middleware.jobs[job_id]
+
+        if not credential.is_user_session or credential_has_full_admin(credential):
+            return self.middleware.jobs[job_id]
+
+        job = self.middleware.jobs[job_id]
+
+        if job.credentials.user['username'] == credential.user['username']:
+            return job
+
+        raise CallError(f'{job_id}: job is not owned by current session.', errno.EPERM)
+
+    @no_authz_required
     @filterable
     @filterable_returns(Dict(
         'job',
@@ -172,19 +194,34 @@ class CoreService(Service):
         ),
         register=True,
     ))
-    def get_jobs(self, filters, options):
-        """Get the long running jobs."""
+    @pass_app(rest=True)
+    def get_jobs(self, app, filters, options):
+        """
+        Get information about long-running jobs.
+        If authenticated session does not have the FULL_ADMIN role, only
+        jobs owned by the current authenticated session will be returned.
+        """
+        if app and self.__is_limited_to_own_jobs(app.authenticated_credentials):
+            username = app.authenticated_credentials.user['username']
+            jobs = list(self.middleware.jobs.for_username(username).values())
+        else:
+            jobs = list(self.middleware.jobs.all().values())
+
         raw_result = options['extra'].get('raw_result', True)
         jobs = filter_list([
-            i.__encode__(raw_result) for i in list(self.middleware.jobs.all().values())
+            i.__encode__(raw_result) for i in jobs
         ], filters, options)
         return jobs
 
+    @no_authz_required
     @accepts(Int('id'))
     @job()
     async def job_wait(self, job, id_):
-        return await job.wrap(self.middleware.jobs[id_])
+        target_job = self.__job_by_credential_and_id(job.credentials, id_)
 
+        return await job.wrap(target_job)
+
+    @private
     @accepts(Int('id'), Dict(
         'job-update',
         Dict('progress', additional_attrs=True),
@@ -218,9 +255,15 @@ class CoreService(Service):
         # Let's setup periodic tasks now
         self.middleware._setup_periodic_tasks()
 
+    @no_authz_required
     @accepts(Int('id'))
-    def job_abort(self, id_):
-        job = self.middleware.jobs[id_]
+    @pass_app(rest=True)
+    def job_abort(self, app, id_):
+        if app is None:
+            job = self.middleware.jobs[id_]
+        else:
+            job = self.__job_by_credential_and_id(app.authenticated_credentials, id_)
+
         return job.abort()
 
     def _should_list_service(self, name, service, target):
@@ -593,6 +636,7 @@ class CoreService(Service):
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private
+    @no_authz_required
     @accepts(Dict('core-job', Int('sleep')))
     @job()
     def job_test(self, job, data):

@@ -166,9 +166,14 @@ class Session:
 
 class TokenSessionManagerCredentials(SessionManagerCredentials):
     def __init__(self, token_manager, token):
+        root_credentials = token.root_credentials()
+
         self.token_manager = token_manager
         self.token = token
-        self.is_user_session = token.root_credentials().is_user_session
+        self.is_user_session = root_credentials.is_user_session
+        if self.is_user_session:
+            self.user = root_credentials.user
+            self.allowlist = root_credentials.allowlist
 
     def is_valid(self):
         return self.token.is_valid()
@@ -183,9 +188,14 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.token_manager.destroy(self.token)
 
     def dump(self):
-        return {
+        data = {
             "parent": dump_credentials(self.token.parent_credentials),
         }
+        if self.is_user_session:
+            data["username"] = self.user["username"]
+
+        return data
+
 
 
 def is_internal_session(session):

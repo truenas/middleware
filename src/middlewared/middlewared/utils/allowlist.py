@@ -1,10 +1,13 @@
 import fnmatch
 import re
 
+ALLOW_LIST_FULL_ADMIN = {'method': '*', 'resource': '*'}
+
 
 class Allowlist:
     def __init__(self, allowlist):
         self.exact = {}
+        self.full_admin = ALLOW_LIST_FULL_ADMIN in allowlist
         self.patterns = {}
         for entry in allowlist:
             method = entry["method"]

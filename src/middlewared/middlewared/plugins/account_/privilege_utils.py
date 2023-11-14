@@ -1,3 +1,10 @@
+def credential_has_full_admin(credential):
+    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
+       return True
+
+    return credential.allowlist.full_admin
+
+
 def privileges_group_mapping(
     privileges: list,
     group_ids: list,
