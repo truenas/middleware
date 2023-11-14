@@ -1,20 +1,3 @@
-def r20_variants_or_mini(model, dmi):
-    """If this is an r20 variant then we return the model
-    with the TRUENAS- suffix stripped. Otherwise, if this is
-    a MINI then we just return the entire string.
-
-    NOTE: this information is burned in by the production team
-    into the motherboard (SMBIOS) before we ship the system
-    """
-    if dmi.startswith((
-        'TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B',
-        'TRUENAS-MINI', 'FREENAS-MINI'
-    )):
-        return model, True
-    else:
-        return '', False
-
-
 def get_enclosure_model_and_controller(key, dmi):
     """This maps the enclosure to the respective platform.
     the 'key' is the concatenated string of t10 vendor and product
@@ -32,7 +15,10 @@ def get_enclosure_model_and_controller(key, dmi):
             return model, True
         case 'BROADCOM_VirtualSES':
             # H series
-            return model, True
+            if dmi.startswith('TRUENAS-H'):
+                return model, True
+            else:
+                return '', False
         case 'ECStream_FS1' | 'ECStream_FS2' | 'ECStream_DSS212Sp' | 'ECStream_DSS212Ss':
             # R series
             return model, True
@@ -43,8 +29,14 @@ def get_enclosure_model_and_controller(key, dmi):
             # R20
             return model, True
         case 'AHCI_SGPIOEnclosure':
-            # R20 variants or MINIs
-            return r20_variants_or_mini(model, dmi)
+            if dmi.startswith((
+                'TRUENAS-R20', 'TRUENAS-R20A', 'TRUENAS-R20B',
+                'TRUENAS-MINI', 'FREENAS-MINI'
+            )):
+                # R20 variants or MINIs
+                return model, True
+            else:
+                return '', False
         case 'iX_eDrawer4048S1' | 'iX_eDrawer4048S2':
             # R50
             return model, True
@@ -54,7 +46,7 @@ def get_enclosure_model_and_controller(key, dmi):
             return 'E16', False
         case 'Storage_1729':
             return 'E24', False
-        case 'QUANTA _JB9 SIM':
+        case 'QUANTA_JB9SIM':
             return 'E60', False
         case 'CELESTIC_X2012':
             return 'ES12', False
