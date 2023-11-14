@@ -67,11 +67,11 @@ class Enclosure:
         elif self.model == 'ES60':
             return element['descriptor'] == 'Array Device Slot'
         elif self.model not in ('H10', 'H20'):
-            # all array device descriptor value returned from HBA is empty and so
-            # the sg3_utils api fills it in with a literal "<empty>" string. For
-            # some of our other platforms, an "<empty>" string actually represents
-            # a descriptor we want to ignore so this final logic applies to all
-            # others except the hseries platform
+            # On the H10/20 platforms, the onboard HBA reports null descriptors
+            # for every single array device. The sg3_utils API returns a literal
+            # "<empty>" string. On the H10/20, these are legit elements but we
+            # have other platforms that return null descriptor values but they
+            # are invalid
             return element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots')
 
     def _get_array_device_mapping_info(self):
