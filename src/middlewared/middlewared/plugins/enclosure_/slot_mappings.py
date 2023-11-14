@@ -455,6 +455,46 @@ def get_slot_info(model):
                 }
             }
         }
+    # JBODs
+    elif model == 'ES12':
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'model': {
+                        model: {
+                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 12)
+                        },
+                    }
+                }
+            }
+        }
+    elif model in ('ES24', 'ES24F'):
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'model': {
+                        model: {
+                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 24)
+                        },
+                    }
+                }
+            }
+        }
+    elif model in ('ES60', 'ES60S', 'ES60G2'):
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'model': {
+                        model: {
+                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 60)
+                        },
+                    }
+                }
+            }
+        }
     elif model == 'ES102':
         return {
             'any_version': True,
@@ -468,14 +508,15 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'ES60':
+    elif model == 'ES102G2':
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 60)
+                            # drives actually start at index 1 (not 0)
+                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(0, 103)
                         },
                     }
                 }
