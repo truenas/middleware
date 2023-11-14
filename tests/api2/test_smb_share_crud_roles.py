@@ -62,9 +62,8 @@ def test_write_role_can_write(ds, role):
 
         c.call("sharing.smb.update", share["id"], {})
 
-        c.call("sharing.smb.delete", share["id"])
-
         # READ access should allow reading ACL
         c.call("sharing.smb.getacl", {"share_name": share["name"]})
         c.call("sharing.smb.setacl", {"share_name": share["name"]})
+        c.call("sharing.smb.delete", share["id"])
         c.call("smb.status")
