@@ -504,11 +504,8 @@ class SMBService(TDBWrapConfigService):
         """
         found_sentinel = False
         while timeout >= 0 and not found_sentinel:
-            try:
-                os.remove(NETIF_COMPLETE_SENTINEL)
+            if os.path.exists(NETIF_COMPLETE_SENTINEL):
                 found_sentinel = True
-            except FileNotFoundError:
-                pass
 
             timeout -= 1
             if timeout <= 0:
