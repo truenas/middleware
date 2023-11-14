@@ -158,12 +158,13 @@ def test_05_verify_user_exists(request):
     assert pw['pw_uid'] == next_uid, results.text
     assert pw['pw_shell'] == SHELL, results.text
     assert pw['pw_gecos'] == 'Test User', results.text
-    assert pw['pw_dir'] == '/nonexistent', results.text
+    assert pw['pw_dir'] == '/var/empty', results.text
 
     # At this point, we're not an SMB user
     assert pw['sid_info'] is not None, results.text
     assert pw['sid_info']['domain_information']['online'], results.text
     assert pw['sid_info']['domain_information']['activedirectory'] is False, results.text
+
 
 def test_06_get_user_info(request):
     depends(request, ["user_02", "user_01"])
