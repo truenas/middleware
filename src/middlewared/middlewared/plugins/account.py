@@ -641,7 +641,7 @@ class UserService(CRUDService):
             gm_job = self.middleware.call_sync('smb.synchronize_passdb')
             gm_job.wait_sync()
 
-        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']):
+        if os.path.isdir(SKEL_PATH) and os.path.exists(data['home']) and data['home'] not in DEFAULT_HOME_PATHS:
             for f in os.listdir(SKEL_PATH):
                 if f.startswith('dot'):
                     dest_file = os.path.join(data['home'], f[3:])
