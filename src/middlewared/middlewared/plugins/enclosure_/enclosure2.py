@@ -8,7 +8,7 @@ from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 from .enclosure_class import Enclosure
-from .map2 import map_enclosures
+from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
 from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
@@ -56,19 +56,6 @@ class Enclosure2Service(Service):
             output.append(Enclosure(bsg, f'/dev/{sg.name}', dmi, enc_status).asdict())
 
         return output
-
-    def to_ignore(self, enclosure):
-        """On our MINI and R20 platforms, we actually use the Virtual AHCI
-        enclosure devices since those platforms don't have another enclosure
-        wired up interally for which the drives are attached. This function
-        checks to make sure that we skip the Virtual AHCI enclosures on all
-        platforms with the exception of MINIs and R20 variants.
-        """
-        return all((
-            enclosure['product'] == 'SGPIOEnclosure',
-            '-MINI-' not in enclosure['model'],
-            not enclosure['model'].startswith('R20'),
-        ))
 
     def map_nvme(self):
         """This method serves as an endpoint to easily be able to test
@@ -153,7 +140,16 @@ class Enclosure2Service(Service):
             for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
         }
         dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        for i in filter(lambda x: not self.to_ignore(x), self.get_ses_enclosures()):
+        for i in self.get_ses_enclosures(dmi) + map_nvme(dmi):
+            model = i.get('model', '')
+            if not model.startswith(('R20', 'MINI')) and i['name'].startswith('AHCI SGPIOEnclosure'):
+                # If this isn't an R20 or a MINI, we can safely ignore the virtual AHCI enclosure
+                continue
+            elif model in ('R20', 'R20A', 'R20B', 'MINI-3.0-X+', 'MINI-3.0-E') and i['id'] == '3000000000000002':
+                # These platforms have 2x virtual AHCI enclosures but we only map the drives
+                # on 1 of them
+                continue
+
             # this is a user-provided string to label the enclosures so we'll add it at as a
             # top-level dictionary key "label", if the user hasn't provided a label then we'll
             # fill in the info with whatever is in the "name" key. The "name" key is the
@@ -162,6 +158,5 @@ class Enclosure2Service(Service):
             i['label'] = labels.get(i['id']) or i['name']
             enclosures.append(i)
 
-        enclosures.extend(map_nvme(dmi))
-        enclosures = map_enclosures(enclosures)
+        combine_enclosures(enclosures)
         return filter_list(enclosures, filters, options)
