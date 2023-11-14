@@ -31,7 +31,15 @@ from contextlib import suppress
 ADMIN_UID = 950  # When googled, does not conflict with anything
 ADMIN_GID = 950
 SKEL_PATH = '/etc/skel/'
-DEFAULT_HOME_PATH = '/nonexistent'
+# TrueNAS historically used /nonexistent as the default home directory for new
+# users. The nonexistent directory has caused problems when
+# 1) an admin chooses to create it from shell
+# 2) PAM checks for home directory existence
+# And so this default has been deprecated in favor of using /var/empty
+# which is an empty and immutable directory.
+LEGACY_DEFAULT_HOME_PATH = '/nonexistent'
+DEFAULT_HOME_PATH = '/var/empty'
+DEFAULT_HOME_PATHS = (DEFAULT_HOME_PATH, LEGACY_DEFAULT_HOME_PATH)
 
 
 def pw_checkname(verrors, attribute, name):
@@ -358,7 +366,7 @@ class UserService(CRUDService):
             verrors.add(f'{schema}.home', '"Home Directory" cannot contain colons (:).')
             return False
 
-        if data['home'] == DEFAULT_HOME_PATH:
+        if data['home'] in DEFAULT_HOME_PATHS:
             return False
 
         if not p.exists():
@@ -584,7 +592,7 @@ class UserService(CRUDService):
 
         new_homedir = False
         home_mode = data.pop('home_mode')
-        if data['home'] and data['home'] != DEFAULT_HOME_PATH:
+        if data['home'] and data['home'] not in DEFAULT_HOME_PATHS:
             try:
                 data['home'] = self.setup_homedir(
                     data['home'],
@@ -724,8 +732,8 @@ class UserService(CRUDService):
             old_mode = None
 
         home = data.get('home') or user['home']
-        had_home = user['home'] != DEFAULT_HOME_PATH
-        has_home = home != DEFAULT_HOME_PATH
+        had_home = user['home'] not in DEFAULT_HOME_PATHS
+        has_home = home not in DEFAULT_HOME_PATHS
         # root user and admin users are an exception to the rule
         if data.get('sshpubkey'):
             if not (
@@ -920,7 +928,7 @@ class UserService(CRUDService):
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
-        if user['home'] and user['home'] != DEFAULT_HOME_PATH:
+        if user['home'] and user['home'] not in DEFAULT_HOME_PATHS:
             try:
                 shutil.rmtree(os.path.join(user['home'], '.ssh'))
             except Exception:
@@ -1163,7 +1171,7 @@ class UserService(CRUDService):
     @private
     @job(lock=lambda args: f'copy_home_to_{args[1]}')
     async def do_home_copy(self, job, home_old, home_new, username, new_mode, uid):
-        if home_old == DEFAULT_HOME_PATH:
+        if home_old in DEFAULT_HOME_PATHS:
             return
 
         if new_mode is not None:

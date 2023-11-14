@@ -28,7 +28,7 @@ def setup_smb_user(request):
         "username": SMB_USER,
         "full_name": SMB_USER,
         "group_create": True,
-        "home": "/nonexistent",
+        "home": "/var/empty",
         "password": SMB_PWD,
     }) as u:
         yield u
