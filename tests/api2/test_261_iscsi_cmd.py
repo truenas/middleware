@@ -1970,7 +1970,8 @@ def _ha_reboot_master(delay=900):
     in_progress = True
     while in_progress:
         try:
-            if in_progress := _get_ha_failover_in_progress():
+            in_progress = _get_ha_failover_in_progress()
+            if not in_progress:
                 break
         except Exception:
             pass
