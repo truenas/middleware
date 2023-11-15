@@ -146,7 +146,16 @@ class Enclosure:
                 'value_raw': value_raw,
             }
             if element_type[0] == 'Array Device Slot' and self.disks_map:
-                parsed['dev'] = self.sysfs_map[self.disks_map[slot]['sysfs_slot']]
+                try:
+                    parsed['dev'] = self.sysfs_map[self.disks_map[slot]['sysfs_slot']]
+                except KeyError:
+                    # this happens on some of the MINI platforms, for example,
+                    # the MINI-3.0-XL+ because we map the 1st drive and only
+                    # the 1st drive from the Virtual AHCI controller with id
+                    # that ends with 002. However, we send a standard enclosure
+                    # diagnostics command so all the other elements will return
+                    continue
+
                 mapped_slot = self.disks_map[slot]['mapped_slot']
                 parsed['original'] = {
                     'enclosure_id': self.encid,

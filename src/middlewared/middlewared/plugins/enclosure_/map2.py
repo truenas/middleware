@@ -33,7 +33,7 @@ def combine_enclosures(enclosures):
     human-readable slot numbers. That logic is in the `Enclosure`
     class in "enclosure_/enclosure_class.py"
     """
-    head_unit_idx, to_combine = None, dict()
+    head_unit_idx, to_combine, to_remove = None, dict(), list()
     for idx, enclosure in enumerate(enclosures):
         model = enclosure.get('model', '')
         if to_ignore(enclosure, model):
@@ -44,9 +44,16 @@ def combine_enclosures(enclosures):
             head_unit_idx = idx
         else:
             to_combine.update(enclosure['elements'].pop('Array Device Slot', dict()))
+            to_remove.append(idx)
 
     if head_unit_idx is not None:
         enclosures[head_unit_idx]['elements']['Array Device Slot'].update(to_combine)
         enclosures[head_unit_idx]['elements']['Array Device Slot'] = {
             k: v for k, v in sorted(enclosures[head_unit_idx]['elements']['Array Device Slot'].items())
         }
+
+    for idx in to_remove:
+        # we've combined the enclosures into the
+        # main "head-unit" enclosure object so let's
+        # remove the objects we combined from
+        enclosures.pop(idx)
