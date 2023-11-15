@@ -897,8 +897,8 @@ def test_29_owner_restrictions(request):
         {
             "tag": "owner@",
             "type": "ALLOW",
-            "perms": {"BASIC": {"READ"}},
-            "flags": {"BASIC": {"INHERIT"}}
+            "perms": {"BASIC": "READ"},
+            "flags": {"BASIC": "INHERIT"}
         },
     ]
     call('filesystem.setacl', {
