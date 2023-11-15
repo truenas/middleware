@@ -18,6 +18,7 @@ def delete_group_delete_users(delete_users):
         "username": "test",
         "group_create": True,
         "full_name": "Test",
+        "smb": False,
         "password_disabled": True,
     })
     assert results.status_code == 200, results.text
