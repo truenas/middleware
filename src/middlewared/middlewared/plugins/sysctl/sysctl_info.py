@@ -1,11 +1,10 @@
 import os
-import psutil
 
 from middlewared.service import CallError, Service
-from middlewared.utils import run
-
+from middlewared.utils import run, MIDDLEWARE_RUN_DIR
 
 ZFS_MODULE_PARAMS_PATH = '/sys/module/zfs/parameters'
+DEFAULT_ARC_MAX_FILE = f'{MIDDLEWARE_RUN_DIR}/default_arc_max'
 
 
 class SysctlService(Service):
@@ -19,10 +18,26 @@ class SysctlService(Service):
             raise CallError(f'Unable to retrieve value of "{sysctl_name}" sysctl : {cp.stderr.decode()}')
         return cp.stdout.decode().split('=')[-1].strip()
 
+    def store_default_arc_max(self):
+        """This method should be called _BEFORE_ we initialize any VMs
+        so that we can capture what the ARC max value was before we start
+        changing the various ARC sysctls based on VM memory configurations"""
+        val = self.get_arcstats()['c_max']
+        try:
+            with open(DEFAULT_ARC_MAX_FILE, 'x') as f:
+                f.write(str(val))
+                f.flush()
+        except FileExistsError:
+            return self.get_default_arc_max()
+        else:
+            return val
+
     def get_default_arc_max(self):
-        # Default value of arc max on systems
-        # https://github.com/truenas/zfs/blob/f38f3a4a3ee430a15fa221ba9fc2b6b8fd17c040/module/os/linux/zfs/arc_os.c#L85
-        return psutil.virtual_memory().total // 2
+        try:
+            with open(DEFAULT_ARC_MAX_FILE) as f:
+                return int(f.read())
+        except FileNotFoundError:
+            return self.store_default_arc_max()
 
     def get_arc_max(self):
         return self.get_arcstats()['c_max']
@@ -37,17 +52,17 @@ class SysctlService(Service):
         return int(cp.stdout.decode().strip())
 
     def get_arcstats(self):
-        path = '/proc/spl/kstat/zfs/arcstats'
-        if not os.path.exists(path):
-            raise CallError(f'Unable to locate {path}')
-
-        with open(path, 'r') as f:
-            data = f.read()
-
         stats = {}
-        for line in filter(lambda l: l and len(l.split()) == 3, map(str.strip, data.split('\n'))):
-            key, _type, data = line.split()
-            stats[key.strip()] = int(data.strip()) if data.strip().isdigit() else data
+        with open('/proc/spl/kstat/zfs/arcstats') as f:
+            for lineno, line in enumerate(f, start=1):
+                if lineno > 2:  # skip first 2 lines
+                    try:
+                        key, _, value = line.strip().split()
+                        key, value = key.strip(), value.strip()
+                    except ValueError:
+                        continue
+                    else:
+                        stats[key] = int(value) if value.isdigit() else value
 
         return stats
 
