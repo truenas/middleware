@@ -450,8 +450,7 @@ def test_23_test_acl_function_deny(perm, request):
     call('filesystem.setacl', {
         'path': TEST_INFO['dataset_path'],
         'dacl': payload_acl,
-        'group': group0,
-        'user': 'root',
+        'gid': 0, 'uid': 0,
         'options': {'recursive': True},
     }, job=True)
 
@@ -544,20 +543,13 @@ def test_24_test_acl_function_allow(perm, request):
         "flags": {"BASIC": "INHERIT"}
     }]
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 65534, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if perm == "EXECUTE":
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -595,13 +587,7 @@ def test_24_test_acl_function_allow(perm, request):
     assert results['result'] is True, errstr
     if perm in ["DELETE", "DELETE_CHILD"]:
         # unfortunately, we now need to recreate our testfile.
-        cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-
-        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        ssh(f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt')
 
 
 @pytest.mark.parametrize('perm', IMPLEMENTED_ALLOW)
@@ -640,20 +626,13 @@ def test_25_test_acl_function_omit(perm, request):
     }]
 
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 65534, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if perm == "EXECUTE":
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -729,20 +708,12 @@ def test_25_test_acl_function_allow_restrict(perm, request):
         "flags": {"BASIC": "INHERIT"}
     }]
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 65534, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if "EXECUTE" not in tests_to_skip:
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -758,13 +729,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
         if results['result'] is True:
             # File must be re-created. Kernel ACL inheritance routine
             # will ensure that new file has right ACL.
-            cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
-            results = SSH_TEST(cmd, user, password, ip)
-            assert results['result'] is True, results['output']
-
-            cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-            results = SSH_TEST(cmd, user, password, ip)
-            assert results['result'] is True, results['output']
+            ssh(f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     if "READ_DATA" not in tests_to_skip:
         cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
