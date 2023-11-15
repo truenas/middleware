@@ -692,7 +692,7 @@ def test_53_add_user_to_sudoers(request):
 
 def test_54_disable_password_auth(request):
     depends(request, ["NON_SMB_USER_CREATED"], scope="session")
-    results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True})
+    results = PUT(f"/user/id/{testuser_id}", {"password_disabled": True, "smb": False})
     assert results.status_code == 200, results.text
 
     check_config_file("/etc/shadow", "testuser3:*:18397:0:99999:7:::")
