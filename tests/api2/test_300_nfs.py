@@ -1291,11 +1291,11 @@ def test_53_set_bind_ip():
         # Set bindip
         call("nfs.update", {"bindip": [ip]})
 
-        # Confirm we see it in the nfs conf file
+        # Confirm we see it in the nfs and rpc conf files
         nfs_conf = parse_server_config()
         rpc_conf = parse_rpcbind_config()
-        assert nfs_conf['nfsd'].get('host') in ip
-        assert rpc_conf.get('-h') in ip
+        assert ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
+        assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
 def test_54_disable_nfs_service_at_boot(request):
