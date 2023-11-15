@@ -2,6 +2,8 @@
 
 # License: BSD
 
+import secrets
+import string
 import sys
 import os
 import pytest
@@ -10,11 +12,15 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
+from middlewared.test.integration.assets.account import user as create_user
+from middlewared.test.integration.assets.pool import dataset as make_dataset
+from middlewared.test.integration.utils import call, ssh
 
 
 shell = '/usr/bin/bash'
 group = 'nogroup'
-ACLTEST_DATASET = f'{pool_name}/acltest'
+ACLTEST_DATASET_NAME = 'acltest'
+ACLTEST_DATASET = f'{pool_name}/{ACLTEST_DATASET_NAME}'
 dataset_url = ACLTEST_DATASET.replace('/', '%2F')
 
 ACLTEST_SUBDATASET = f'{pool_name}/acltest/sub1'
@@ -22,6 +28,9 @@ subdataset_url = ACLTEST_SUBDATASET.replace('/', '%2F')
 getfaclcmd = "nfs4xdr_getfacl"
 setfaclcmd = "nfs4xdr_setfacl"
 group0 = "root"
+
+ACL_USER = 'acluser'
+ACL_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 
 base_permset = {
     "READ_DATA": False,
@@ -131,9 +140,6 @@ function_testing_acl_allow = [
     }
 ]
 
-ACL_USER = "acluser"
-ACL_PWD = "acl1234"
-
 # base64-encoded samba DOSATTRIB xattr
 DOSATTRIB_XATTR = "CTB4MTAAAAMAAwAAABEAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABimX3sSqfTAQAAAAAAAAAACg=="
 
@@ -161,75 +167,47 @@ IMPLEMENTED_ALLOW = [
     "WRITE_ACL",
 ]
 
-JOB_ID = None
+TEST_INFO = {}
 
 
-def test_01_check_dataset_endpoint():
-    assert isinstance(GET('/pool/dataset/').json(), list)
+@pytest.fixture(scope='module')
+def initialize_for_acl_tests(request):
+    with make_dataset(ACLTEST_DATASET_NAME, data={'acltype': 'NFSV4'}) as ds:
+        with create_user({
+            'username': ACL_USER,
+            'full_name': ACL_USER,
+            'group_create': True,
+            'ssh_password_enabled': True,
+            'password': ACL_PWD
+        }) as u:
+            TEST_INFO.update({
+                'dataset': ds,
+                'dataset_path': os.path.join('/mnt', ds),
+                'user': u
+            })
+            yield request
 
 
-@pytest.mark.dependency(name="DATASET_CREATED")
-def test_02_create_dataset(request):
-    result = POST(
-        '/pool/dataset/', {
-            'name': ACLTEST_DATASET,
-            'acltype': 'NFSV4'
-        }
-    )
-    assert result.status_code == 200, result.text
-
-
-@pytest.mark.dependency(name="HAS_NFS4_ACLS")
-def test_03_get_acltype(request):
-    depends(request, ["DATASET_CREATED"])
-    global results
-    payload = {
-        'path': f'/mnt/{ACLTEST_DATASET}',
-        'simplified': True
-    }
-    result = POST('/filesystem/getacl/', payload)
-    assert result.status_code == 200, results.text
-    if result.json()['acltype'] != "NFS4":
-        pytest.skip("Incorrect ACL type")
+@pytest.mark.dependency(name='HAS_NFS4_ACLS')
+def test_02_create_dataset(initialize_for_acl_tests):
+    acl = call('filesystem.getacl', TEST_INFO['dataset_path'])
+    assert acl['acltype'] == 'NFS4'
 
 
 def test_04_basic_set_acl_for_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody'
-        }
-    )
+    call('pool.dataset.permission', TEST_INFO['dataset'], {
+        'acl': default_acl,
+        'group': group,
+        'user': 'nobody'
+    }, job=True)
 
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'],  True)
+    for key in ['tag', 'type', 'perms', 'flags']:
+        assert acl_result['acl'][0][key] == default_acl[0][key], str(acl_result)
+        assert acl_result['acl'][1][key] == default_acl[1][key], str(acl_result)
 
-
-def test_05_get_filesystem_getacl(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    global results
-    payload = {
-        'path': f'/mnt/{ACLTEST_DATASET}',
-        'simplified': True
-    }
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
-
-
-@pytest.mark.parametrize('key', ['tag', 'type', 'perms', 'flags'])
-def test_06_verify_filesystem_getacl(request, key):
-    depends(request, ["HAS_NFS4_ACLS"])
-    assert results.json()['acl'][0][key] == default_acl[0][key], results.text
-    assert results.json()['acl'][1][key] == default_acl[1][key], results.text
-
-
-def test_07_verify_setacl_chown(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    assert results.json()['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, str(acl_result)
 
 
 """
@@ -244,62 +222,30 @@ variation (BASIC/ADVANCED permissions, BASIC/ADVANCED flags).
 @pytest.mark.parametrize('permset', BASIC_PERMS)
 def test_08_set_basic_permsets(request, permset):
     depends(request, ["HAS_NFS4_ACLS"])
-    payload = {
-        'path': f'/mnt/{ACLTEST_DATASET}',
-        'simplified': True
-    }
     default_acl[0]['perms']['BASIC'] = permset
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
+
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
+    acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_perms = default_acl[0]['perms']
-    received_perms = results.json()['acl'][0]['perms']
-    assert requested_perms == received_perms, results.text
+    received_perms = acl_result['acl'][0]['perms']
+    assert requested_perms == received_perms, str(acl_result)
 
 
 @pytest.mark.parametrize('flagset', BASIC_FLAGS)
 def test_09_set_basic_flagsets(request, flagset):
     depends(request, ["HAS_NFS4_ACLS"])
-    payload = {
-        'path': f'/mnt/{ACLTEST_DATASET}',
-        'simplified': True
-    }
     default_acl[0]['flags']['BASIC'] = flagset
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
+
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
+    acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_flags = default_acl[0]['flags']
-    received_flags = results.json()['acl'][0]['flags']
-    assert received_flags == requested_flags, results.text
+    received_flags = acl_result['acl'][0]['flags']
+    assert requested_flags == received_flags, str(acl_result)
 
 
 @pytest.mark.parametrize('perm', base_permset.keys())
 def test_10_set_advanced_permset(request, perm):
     depends(request, ["HAS_NFS4_ACLS"])
-    payload = {
-        'path': f'/mnt/{ACLTEST_DATASET}',
-        'simplified': False
-    }
     for key in ['perms', 'flags']:
         if default_acl[0][key].get('BASIC'):
             default_acl[0][key].pop('BASIC')
@@ -307,52 +253,27 @@ def test_10_set_advanced_permset(request, perm):
     default_acl[0]['flags'] = base_flagset.copy()
     default_acl[0]['perms'] = base_permset.copy()
     default_acl[0]['perms'][perm] = True
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
+
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
+    acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_perms = default_acl[0]['perms']
-    received_perms = results.json()['acl'][0]['perms']
-    assert requested_perms == received_perms, results.text
+    received_perms = acl_result['acl'][0]['perms']
+    assert requested_perms == received_perms, str(acl_result)
 
 
 @pytest.mark.parametrize('flag', TEST_FLAGS)
 def test_11_set_advanced_flagset(request, flag):
     depends(request, ["HAS_NFS4_ACLS"])
-    payload = {
-        'path': f'/mnt/{ACLTEST_DATASET}',
-        'simplified': False
-    }
     default_acl[0]['flags'] = base_flagset.copy()
     default_acl[0]['flags'][flag] = True
     if flag in ['INHERIT_ONLY', 'NO_PROPAGATE_INHERIT']:
         default_acl[0]['flags']['DIRECTORY_INHERIT'] = True
 
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody'
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
+    acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_flags = default_acl[0]['flags']
-    received_flags = results.json()['acl'][0]['flags']
-    assert received_flags == requested_flags, results.text
+    received_flags = acl_result['acl'][0]['flags']
+    assert requested_flags == received_flags, str(acl_result)
 
 
 """
@@ -364,25 +285,13 @@ We first create a child dataset to verify that ACLs do not change unless
 
 def test_12_prepare_recursive_tests(request):
     depends(request, ["HAS_NFS4_ACLS"], scope="session")
-    result = POST(
-        '/pool/dataset/', {
-            'name': ACLTEST_SUBDATASET,
-            'acltype': 'NFSV4',
-        }
-    )
-    assert result.status_code == 200, result.text
+    call('pool.dataset.create', {'name': ACLTEST_SUBDATASET, 'acltype': 'NFSV4'})
 
-    cmd = f'mkdir -p /mnt/{ACLTEST_DATASET}/dir1/dir2'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    cmd = f'touch /mnt/{ACLTEST_DATASET}/dir1/testfile'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    cmd = f'touch /mnt/{ACLTEST_DATASET}/dir1/dir2/testfile'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(';'.join([
+        f'mkdir -p /mnt/{ACLTEST_DATASET}/dir1/dir2',
+        f'touch /mnt/{ACLTEST_DATASET}/dir1/testfile',
+        f'touch /mnt/{ACLTEST_DATASET}/dir1/dir2/testfile'
+    ]))
 
 
 def test_13_recursive_no_traverse(request):
@@ -398,62 +307,40 @@ def test_13_recursive_no_traverse(request):
     expected_flags_1['INHERITED'] = True
 
     # get acl of child dataset. This should not  change in this test
-    results = POST('/filesystem/getacl/',
-                   {'path': f'/mnt/{ACLTEST_SUBDATASET}', 'simplified': True})
-    assert results.status_code == 200, results.text
-    init_acl = results.json()['acl'][0]['perms']
+    acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_SUBDATASET}', True)
+    init_acl = acl_result['acl'][0]['perms']
 
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody',
-            'options': {'recursive': True}
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': default_acl,
+        'uid': 65534,
+        'options': {'recursive': True}
+    }, job=True)
 
     # Verify that it hasn't changed
-    results = POST('/filesystem/getacl/',
-                   {'path': f'/mnt/{ACLTEST_SUBDATASET}', 'simplified': True})
-    assert results.status_code == 200, results.text
-    fin_acl = results.json()['acl'][0]['perms']
-    assert init_acl == fin_acl, results.text
+    acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_SUBDATASET}', True)
+    fin_acl = acl_result['acl'][0]['perms']
+    assert init_acl == fin_acl, str(acl_result)
 
     # check on dir 1. Entry 1 should have INHERIT flag added, and
     # INHERIT_ONLY should be set to False at this depth.
-    results = POST(
-        '/filesystem/getacl/', {
-            'path': f'/mnt/{ACLTEST_DATASET}/dir1',
-            'simplified': False
-        }
-    )
-    assert results.status_code == 200, results.text
-    theacl = results.json()['acl']
+    acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_DATASET}/dir1', False)
+    theacl = acl_result['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
     assert theacl[1]['flags'] == expected_flags_1, results.text
 
     # Verify that user was changed on subdirectory
-    assert results.json()['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, results.text
 
     # check on dir 2 - the no propogate inherit flag should have taken
     # effect and ACL length should be 1
-    results = POST(
-        '/filesystem/getacl/', {
-            'path': f'/mnt/{ACLTEST_DATASET}/dir1/dir2',
-            'simplified': False
-        }
-    )
-    assert results.status_code == 200, results.text
-    theacl = results.json()['acl']
+    acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_DATASET}/dir1/dir2', False)
+    theacl = acl_result['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
     assert len(theacl) == 1, results.text
 
     # Verify that user was changed two deep
-    assert results.json()['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, results.text
 
 
 def test_14_recursive_with_traverse(request):
@@ -462,88 +349,45 @@ def test_14_recursive_with_traverse(request):
     expected_flags_0['INHERITED'] = True
     expected_flags_1 = base_flagset.copy()
     expected_flags_1['INHERITED'] = True
-    payload = {
-        'path': f'/mnt/{ACLTEST_SUBDATASET}',
-        'simplified': False
-    }
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': default_acl,
-            'group': group,
-            'user': 'nobody',
-            'options': {'recursive': True, 'traverse': True}
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
 
-    results = POST('/filesystem/getacl/', payload)
-    assert results.status_code == 200, results.text
-    theacl = results.json()['acl']
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': default_acl,
+        'uid': 65534,
+        'options': {'recursive': True, 'traverse': True}
+    }, job=True)
+
+    acl_result = call('filesystem.getacl', f'/mnt/{ACLTEST_SUBDATASET}', True)
+    theacl = acl_result['acl']
     assert theacl[0]['flags'] == expected_flags_0, results.text
     assert theacl[1]['flags'] == expected_flags_1, results.text
 
     # Verify that user was changed
-    assert results.json()['uid'] == 65534, results.text
+    assert acl_result['uid'] == 65534, results.text
 
 
 def test_15_strip_acl_from_dataset(request):
     depends(request, ["HAS_NFS4_ACLS"])
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': [],
-            'mode': '777',
-            'group': group,
-            'user': 'nobody',
-            'options': {'stripacl': True, 'recursive': True}
-        }
-    )
+    call('filesystem.setperm', {
+        'path': TEST_INFO['dataset_path'],
+        'mode': '777',
+        'uid': 65534,
+        'options': {'stripacl': True, 'recursive': True}
+    }, job=True)
 
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+    assert call('filesystem.stat', f'/mnt/{ACLTEST_SUBDATASET}')['acl'] is True
 
+    st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}')
+    assert st['acl'] is False, str(st)
+    assert oct(st['mode']) == '0o40777', str(st)
 
-"""
-The next four tests check that we've remotved the ACL from the
-mountpoint, a subdirectory, and a file. These are all potentially
-different cases for where we can fail to strip an ACL.
-"""
+    st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1')
+    assert st['acl'] is False, str(st)
+    assert oct(st['mode']) == '0o40777', str(st)
 
-
-def test_16_filesystem_acl_is_not_removed_child_dataset(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_SUBDATASET}')
-    assert results.status_code == 200, results.text
-    assert results.json()['acl'] is True, results.text
-
-
-def test_17_filesystem_acl_is_removed_mountpoint(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_DATASET}')
-    assert results.status_code == 200, results.text
-    assert results.json()['acl'] is False, results.text
-    assert oct(results.json()['mode']) == '0o40777', results.text
-
-
-def test_18_filesystem_acl_is_removed_subdir(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    results = POST('/filesystem/stat/', f'/mnt/{ACLTEST_DATASET}/dir1')
-    assert results.status_code == 200, results.text
-    assert results.json()['acl'] is False, results.text
-    assert oct(results.json()['mode']) == '0o40777', results.text
-
-
-def test_19_filesystem_acl_is_removed_file(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    results = POST('/filesystem/stat/',
-                   f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
-    assert results.status_code == 200, results.text
-    assert results.json()['acl'] is False, results.text
-    assert oct(results.json()['mode']) == '0o100777', results.text
+    st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
+    assert st['acl'] is False, str(st)
+    assert oct(st['mode']) == '0o100777', str(st)
 
 
 def test_20_delete_child_dataset(request):
@@ -554,41 +398,10 @@ def test_20_delete_child_dataset(request):
     assert result.status_code == 200, result.text
 
 
-def test_20_get_next_uid_for_acluser(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global next_uid
-    next_uid = results.json()
-
-
-@pytest.mark.dependency(name="ACL_USER_CREATED")
-def test_21_creating_shareuser_to_test_acls(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    global acluser_id
-    payload = {
-        "username": ACL_USER,
-        "full_name": "ACL User",
-        "group_create": True,
-        "password": ACL_PWD,
-        "uid": next_uid,
-        "ssh_password_enabled": True,
-    }
-    results = POST("/user/", payload)
-    assert results.status_code == 200, results.text
-    acluser_id = results.json()
-
-
 @pytest.mark.dependency(name="HAS_TESTFILE")
 def test_22_prep_testfile(request):
-    depends(request, ["ACL_USER_CREATED"], scope="session")
-    cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
-
-    cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    depends(request, ["HAS_NFS4_ACLS"], scope="session")
+    ssh(f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt')
 
 
 """
@@ -618,7 +431,7 @@ def test_23_test_acl_function_deny(perm, request):
     acltest user, then attempt to perform an action that
     should result in failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -627,26 +440,19 @@ def test_23_test_acl_function_deny(perm, request):
 
     payload_acl = [{
         "tag": "USER",
-        "id": next_uid,
+        "id": TEST_INFO['user']['uid'],
         "type": "DENY",
         "perms": to_deny,
         "flags": {"BASIC": "INHERIT"}
     }]
+
     payload_acl.extend(function_testing_acl_deny)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if perm == "EXECUTE":
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -696,12 +502,7 @@ def test_23_test_acl_function_deny(perm, request):
         assert results['result'] is True, errstr
 
         # unfortunately, we now need to recreate our testfile.
-        cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        ssh(f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt')
     elif perm == "READ_ATTRIBUTES":
         assert results['result'] is True, errstr
     else:
@@ -716,7 +517,7 @@ def test_24_test_acl_function_allow(perm, request):
     acltest user, then attempt to perform an action that
     should result in success.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -736,26 +537,19 @@ def test_24_test_acl_function_allow(perm, request):
 
     payload_acl = [{
         "tag": "USER",
-        "id": next_uid,
+        "id": TEST_INFO['user']['uid'],
         "type": "ALLOW",
         "perms": to_allow,
         "flags": {"BASIC": "INHERIT"}
     }]
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 65534, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if perm == "EXECUTE":
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -793,13 +587,7 @@ def test_24_test_acl_function_allow(perm, request):
     assert results['result'] is True, errstr
     if perm in ["DELETE", "DELETE_CHILD"]:
         # unfortunately, we now need to recreate our testfile.
-        cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
-
-        cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        ssh(f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt')
 
 
 @pytest.mark.parametrize('perm', IMPLEMENTED_ALLOW)
@@ -811,7 +599,7 @@ def test_25_test_acl_function_omit(perm, request):
     on presence of the particular permissions bit. Then we omit
     it. This should result in a failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -831,27 +619,20 @@ def test_25_test_acl_function_omit(perm, request):
 
     payload_acl = [{
         "tag": "USER",
-        "id": next_uid,
+        "id": TEST_INFO['user']['uid'],
         "type": "ALLOW",
         "perms": to_allow,
         "flags": {"BASIC": "INHERIT"}
     }]
 
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 65534, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if perm == "EXECUTE":
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -896,7 +677,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     they grant no more permissions than intended. Some bits cannot
     be tested in isolation effectively using built in utilities.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -921,26 +702,18 @@ def test_25_test_acl_function_allow_restrict(perm, request):
 
     payload_acl = [{
         "tag": "USER",
-        "id": next_uid,
+        "id": TEST_INFO['user']['uid'],
         "type": "ALLOW",
         "perms": to_allow,
         "flags": {"BASIC": "INHERIT"}
     }]
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 65534, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
     if "EXECUTE" not in tests_to_skip:
         cmd = f'cd /mnt/{ACLTEST_DATASET}'
@@ -956,13 +729,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
         if results['result'] is True:
             # File must be re-created. Kernel ACL inheritance routine
             # will ensure that new file has right ACL.
-            cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
-            results = SSH_TEST(cmd, user, password, ip)
-            assert results['result'] is True, results['output']
-
-            cmd = f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt'
-            results = SSH_TEST(cmd, user, password, ip)
-            assert results['result'] is True, results['output']
+            ssh(f'echo -n "CAT" >> /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     if "READ_DATA" not in tests_to_skip:
         cmd = f'cat /mnt/{ACLTEST_DATASET}/acltest.txt'
@@ -1006,42 +773,32 @@ def test_26_file_execute_deny(request):
     Base permset with everyone@ FULL_CONTROL, but ace added on
     top explictly denying EXECUTE. Attempt to execute file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
-            "id": next_uid,
+            "id": TEST_INFO['user']['uid'],
             "type": "DENY",
             "perms": {"EXECUTE": True},
             "flags": {"FILE_INHERIT": True}
         },
         {
             "tag": "USER",
-            "id": next_uid,
+            "id": TEST_INFO['user']['uid'],
             "type": "ALLOW",
             "perms": {"EXECUTE": True},
             "flags": {"BASIC": "NOINHERIT"}
         },
     ]
     payload_acl.extend(function_testing_acl_deny)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
-    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -1055,11 +812,11 @@ def test_27_file_execute_allow(request):
     READ_ATTRIBUTES are also granted beecause we need to be able to
     stat and read our test script.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
-            "id": next_uid,
+            "id": TEST_INFO['user']['uid'],
             "type": "ALLOW",
             "perms": {
                 "EXECUTE": True,
@@ -1070,31 +827,21 @@ def test_27_file_execute_allow(request):
         },
         {
             "tag": "USER",
-            "id": next_uid,
+            "id": TEST_INFO['user']['uid'],
             "type": "ALLOW",
             "perms": {"EXECUTE": True},
             "flags": {"BASIC": "NOINHERIT"}
         },
     ]
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
-    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -1107,18 +854,18 @@ def test_28_file_execute_omit(request):
     Grant user all permissions except EXECUTE. Attempt to execute
     file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
-            "id": next_uid,
+            "id": TEST_INFO['user']['uid'],
             "type": "ALLOW",
             "perms": base_permset.copy(),
             "flags": {"FILE_INHERIT": True}
         },
         {
             "tag": "USER",
-            "id": next_uid,
+            "id": TEST_INFO['user']['uid'],
             "type": "ALLOW",
             "perms": {"EXECUTE": True},
             "flags": {"BASIC": "NOINHERIT"}
@@ -1128,24 +875,14 @@ def test_28_file_execute_omit(request):
     # at this point the user's ACE has all perms set
     # remove execute.
     payload_acl[0]['perms']['EXECUTE'] = False
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
-    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -1153,14 +890,35 @@ def test_28_file_execute_omit(request):
     assert results['result'] is False, errstr
 
 
-def test_29_deleting_homedir_user(request):
-    depends(request, ["ACL_USER_CREATED"])
-    results = DELETE(f"/user/id/{acluser_id}/", {"delete_group": True})
-    assert results.status_code == 200, results.text
+def test_29_owner_restrictions(request):
+    depends(request, ["HAS_NFS4_ACLS"], scope="session")
 
+    payload_acl = [{
+        "tag": "owner@",
+        "id": -1,
+        "type": "ALLOW",
+        "perms": {"BASIC": "READ"},
+        "flags": {"BASIC": "INHERIT"}
+    }]
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': TEST_INFO['user']['uid'],
+        'options': {'recursive': True},
+    }, job=True)
 
-def test_30_delete_dataset(request):
-    result = DELETE(
-        f'/pool/dataset/id/{dataset_url}/'
+    results = ssh(
+        f'mkdir /mnt/{ACLTEST_DATASET}/dir1/dir_should_not_exist',
+        complete_response=True, check=False,
+        user=ACL_USER, password=ACL_PWD
     )
-    assert result.status_code == 200, result.text
+
+    assert results['result'] is False, str(results)
+
+    results = ssh(
+        f'touch /mnt/{ACLTEST_DATASET}/dir1/file_should_not_exist',
+        complete_response=True, check=False,
+        user=ACL_USER, password=ACL_PWD
+    )
+
+    assert results['result'] is False, str(results)
