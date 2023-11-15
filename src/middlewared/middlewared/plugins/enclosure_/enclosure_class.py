@@ -4,7 +4,7 @@ from middlewared.utils.scsi_generic import inquiry
 from .identification import get_enclosure_model_and_controller
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
 from .sysfs_disks import map_disks_to_enclosure_slots
-from .slot_mappings import get_slot_info
+from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ class Enclosure:
             }
             if element_type[0] == 'Array Device Slot' and self.disks_map:
                 try:
-                    parsed['dev'] = self.sysfs_map[self.disks_map[slot]['sysfs_slot']]
+                    parsed['dev'] = self.sysfs_map[self.disks_map[slot][SYSFS_SLOT_KEY]]
                 except KeyError:
                     # this happens on some of the MINI platforms, for example,
                     # the MINI-3.0-XL+ because we map the 1st drive and only
@@ -156,7 +156,7 @@ class Enclosure:
                     # diagnostics command so all the other elements will return
                     continue
 
-                mapped_slot = self.disks_map[slot]['mapped_slot']
+                mapped_slot = self.disks_map[slot][MAPPED_SLOT_KEY]
                 parsed['original'] = {
                     'enclosure_id': self.encid,
                     'enclosure_sg': self.sg,
