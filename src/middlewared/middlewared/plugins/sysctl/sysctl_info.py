@@ -25,6 +25,7 @@ class SysctlService(Service):
         val = self.get_arcstats()['c_max']
         with open(DEFAULT_ARC_MAX_FILE, 'w') as f:
             f.write(str(val))
+            f.flush()
         return val
 
     def get_default_arc_max(self):
