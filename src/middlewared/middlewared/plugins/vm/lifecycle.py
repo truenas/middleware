@@ -150,6 +150,12 @@ async def __event_system_shutdown(middleware, event_type, args):
 
 
 async def setup(middleware):
+    # it's _very_ important that we run this before we do
+    # any type of VM initialization. We have to capture the
+    # zfs c_max value before we start manipulating these
+    # sysctls during vm start/stop
+    await middleware.call('sysctl.store_default_arc_max')
+
     if await middleware.call('system.ready'):
         middleware.create_task(middleware.call('vm.initialize_vms', 5))  # We use a short timeout here deliberately
     middleware.event_subscribe('system.ready', __event_system_ready)
