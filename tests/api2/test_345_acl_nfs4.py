@@ -791,24 +791,14 @@ def test_26_file_execute_deny(request):
         },
     ]
     payload_acl.extend(function_testing_acl_deny)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
-    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -844,24 +834,14 @@ def test_27_file_execute_allow(request):
         },
     ]
     payload_acl.extend(function_testing_acl_allow)
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
-    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
@@ -895,26 +875,51 @@ def test_28_file_execute_omit(request):
     # at this point the user's ACE has all perms set
     # remove execute.
     payload_acl[0]['perms']['EXECUTE'] = False
-    result = POST(
-        f'/pool/dataset/id/{dataset_url}/permission/', {
-            'acl': payload_acl,
-            'group': group0,
-            'user': 'root',
-            'options': {'recursive': True},
-        }
-    )
-    assert result.status_code == 200, result.text
-    JOB_ID = result.json()
-    job_status = wait_on_job(JOB_ID, 180)
-    assert job_status['state'] == 'SUCCESS', str(job_status['results'])
-    if job_status['state'] != 'SUCCESS':
-        return
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': 0,
+        'options': {'recursive': True},
+    }, job=True)
 
-    cmd = f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt'
-    results = SSH_TEST(cmd, user, password, ip)
-    assert results['result'] is True, results['output']
+    ssh(f'echo "echo CANARY" > /mnt/{ACLTEST_DATASET}/acltest.txt')
 
     cmd = f'/mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, ACL_USER, ACL_PWD, ip)
     errstr = f'cmd: {cmd}, res: {results["output"]}, to_allow {payload_acl}'
     assert results['result'] is False, errstr
+
+
+def test_29_owner_restrictions(request):
+    depends(request, ["HAS_NFS4_ACLS"], scope="session")
+
+    payload_acl = [
+        {
+            "tag": "owner@",
+            "type": "ALLOW",
+            "perms": {"BASIC": {"READ"}},
+            "flags": {"BASIC": {"INHERIT"}}
+        },
+    ]
+    call('filesystem.setacl', {
+        'path': TEST_INFO['dataset_path'],
+        'dacl': payload_acl,
+        'gid': 0, 'uid': TEST_INFO['user']['uid'],
+        'options': {'recursive': True},
+    }, job=True)
+
+    results = ssh(
+        f'mkdir /mnt/{ACLTEST_DATASET}/dir1/dir_should_not_exist',
+        complete_response=True, check=False,
+        user=ACL_USER, password=ACL_PWD
+    )
+
+    assert results['result'] is False, str(results)
+
+    results = ssh(
+        f'touch /mnt/{ACLTEST_DATASET}/dir1/file_should_not_exist',
+        complete_response=True, check=False,
+        user=ACL_USER, password=ACL_PWD
+    )
+
+    assert results['result'] is False, str(results)
