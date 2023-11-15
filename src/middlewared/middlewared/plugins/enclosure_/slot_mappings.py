@@ -166,7 +166,30 @@ def get_slot_info(model):
             }
         }
         """
-    elif model in ('R50', 'r50_nvme_enclosure', 'R50B', 'r50b_nvme_enclosure', 'R50BM', 'r50bm_nvme_enclosure'):
+    elif model in ('F60', 'F100', 'F130', 'R30'):
+        # these are all nvme flash systems
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'id': {
+                        'f60_nvme_enclosure': {
+                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                        },
+                        'f100_nvme_enclosure': {
+                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                        },
+                        'f130_nvme_enclosure': {
+                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                        },
+                        'r30_nvme_enclosure': {
+                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 17)
+                        }
+                    }
+                }
+            }
+        }
+    elif model in ('R50', 'R50B', 'R50BM'):
         # these platforms share same enclosure and mapping
         # but it's important to always map the eDrawer4048S1
         # enclosure device to drives 1 - 24
@@ -177,11 +200,11 @@ def get_slot_info(model):
                     'product': {
                         'eDrawer4048S1': {
                             # 1 - 24
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 25)
                         },
                         'eDrawer4048S2': {
                             # 25 - 48
-                            i: {'sysfs_slot': i, 'mapped_slot': j} for i, j in zip(range(1, 25), range(25, 49))
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': j} for i, j in zip(range(1, 25), range(25, 49))
                         }
                     },
                     'id': {
@@ -362,6 +385,7 @@ def get_slot_info(model):
                     'id': {
                         '3000000000000002': {
                             6: {'sysfs_slot': 5, 'mapped_slot': 1},
+                            5: {'sysfs_slot': 4, 'mapped_slot': 10},
                         },
                         '3000000000000001': {
                             i: {'sysfs_slot': i - 1, 'mapped_slot': i + 1} for i in range(1, 9)
@@ -414,7 +438,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model in ('M60', 'm60_nvme_enclosure', 'M50', 'm50_nvme_enclosure', 'M40', 'M30'):
+    elif model in ('M60', 'M50', 'M40', 'M30'):
         return {
             'any_version': True,
             'versions': {
@@ -422,7 +446,7 @@ def get_slot_info(model):
                     'model': {
                         model: {
                             # 1 - 24
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 24)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 25)
                         },
                     },
                     'id': {
@@ -449,7 +473,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 12)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 13)
                         },
                     }
                 }
@@ -463,7 +487,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 12)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 13)
                         },
                     }
                 }
@@ -476,7 +500,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 24)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 25)
                         },
                     }
                 }
@@ -489,7 +513,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 60)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 61)
                         },
                     }
                 }
@@ -502,7 +526,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i + 1: {'sysfs_slot': i, 'mapped_slot': i + 1} for i in range(0, 102)
+                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 103)
                         },
                     }
                 }
@@ -516,7 +540,7 @@ def get_slot_info(model):
                     'model': {
                         model: {
                             # drives actually start at index 1 (not 0)
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(0, 103)
+                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 103)
                         },
                     }
                 }
