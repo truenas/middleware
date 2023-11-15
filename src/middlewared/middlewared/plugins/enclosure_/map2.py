@@ -1,6 +1,7 @@
 import logging
 
 logger = logging.getLogger(__name__)
+HEAD_UNIT_DISK_SLOT_START_NUMBER = 1
 
 
 def to_ignore(enclosure, model):
@@ -38,7 +39,7 @@ def combine_enclosures(enclosures):
         model = enclosure.get('model', '')
         if to_ignore(enclosure, model):
             continue
-        elif enclosure['elements']['Array Device Slot'].get(1):
+        elif enclosure['elements']['Array Device Slot'].get(HEAD_UNIT_DISK_SLOT_START_NUMBER):
             # the enclosure object whose disk slot has number 1
             # will always be the head-unit
             head_unit_idx = idx
