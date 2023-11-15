@@ -23,10 +23,11 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped):
     map the disks accordingly
     """
     dmi = f'{model.lower()}_nvme_enclosure'
-    disks_map = get_slot_info(dmi)
+    disks_map = get_slot_info(model)
     fake_enclosure = {
         'id': dmi,
         'dmi': dmi,
+        'model': model,
         'sg': None,
         'bsg': None,
         'name': f'{model} NVMe Enclosure',
