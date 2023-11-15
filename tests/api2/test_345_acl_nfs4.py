@@ -893,14 +893,13 @@ def test_28_file_execute_omit(request):
 def test_29_owner_restrictions(request):
     depends(request, ["HAS_NFS4_ACLS"], scope="session")
 
-    payload_acl = [
-        {
-            "tag": "owner@",
-            "type": "ALLOW",
-            "perms": {"BASIC": "READ"},
-            "flags": {"BASIC": "INHERIT"}
-        },
-    ]
+    payload_acl = [{
+        "tag": "owner@",
+        "id": -1,
+        "type": "ALLOW",
+        "perms": {"BASIC": "READ"},
+        "flags": {"BASIC": "INHERIT"}
+    }]
     call('filesystem.setacl', {
         'path': TEST_INFO['dataset_path'],
         'dacl': payload_acl,
