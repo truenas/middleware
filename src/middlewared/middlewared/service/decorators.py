@@ -4,7 +4,7 @@ import threading
 from collections import defaultdict, namedtuple
 from functools import wraps
 
-from middlewared.schema import accepts, Int, List, OROperator, Ref, returns
+from middlewared.schema import accepts, Dict, Int, List, OROperator, Ref, returns
 
 
 LOCKS = defaultdict(asyncio.Lock)
@@ -23,7 +23,21 @@ def filterable(fn=None, /, *, roles=None):
         fn._filterable = True
         if hasattr(fn, 'wraps'):
             fn.wraps._filterable = True
-        return accepts(Ref('query-filters'), Ref('query-options'), roles=roles)(fn)
+        return accepts(
+            Dict(
+                'filters_and_options',
+                Ref('query-filters'),
+                Ref('query-options'),
+            ),
+            deprecated=[(
+                lambda args: len(args) == 2,
+                lambda filters, options: [{
+                    'query-filters', filters,
+                    'query-options', options
+                }]
+            )],
+            roles=roles
+        )(fn)
     # See if we're being called as @filterable or @filterable().
     if fn is None:
         # We're called with parens.
