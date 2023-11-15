@@ -1,3 +1,7 @@
+SYSFS_SLOT_KEY = 'sysfs_slot'
+MAPPED_SLOT_KEY = 'mapped_slot'
+
+
 def get_slot_info(model):
     """This function returns a dictionary that maps
     drives from their original slots to their mapped slots. This
@@ -87,8 +91,8 @@ def get_slot_info(model):
             {'versions': {
                 'DEFAULT': {
                     'product': {'eDrawer4048S1' : {
-                        1: {'sysfs_slot': 1, 'mapped_slot': 1},
-                        5: {'sysfs_slot': 5, 'mapped_slot': 2},
+                        1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 1},
+                        5: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2},
                     }}
                 }
             }}
@@ -155,11 +159,11 @@ def get_slot_info(model):
                     'id': {
                         ses_logical_ids[min_id]: {
                             # 1 - 24
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                         ses_logical_ids[max_id]: {
                             # 25 - 48
-                            i: {'sysfs_slot': i, 'mapped_slot': j} for i, j in zip(range(1, 25), range(25, 49))
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 25), range(25, 49))
                         }
                     }
                 }
@@ -174,16 +178,16 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         'f60_nvme_enclosure': {
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                         'f100_nvme_enclosure': {
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                         'f130_nvme_enclosure': {
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                         'r30_nvme_enclosure': {
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 17)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 17)
                         }
                     }
                 }
@@ -200,28 +204,28 @@ def get_slot_info(model):
                     'product': {
                         'eDrawer4048S1': {
                             # 1 - 24
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                         'eDrawer4048S2': {
                             # 25 - 48
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': j} for i, j in zip(range(1, 25), range(25, 49))
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 25), range(25, 49))
                         }
                     },
                     'id': {
                         'r50_nvme_enclosure': {
-                            1: {'sysfs_slot': 1, 'mapped_slot': 49},
-                            2: {'sysfs_slot': 2, 'mapped_slot': 50},
-                            3: {'sysfs_slot': 3, 'mapped_slot': 51},
+                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 49},
+                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 50},
+                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 51},
                         },
                         'r50b_nvme_enclosure': {
-                            1: {'sysfs_slot': 1, 'mapped_slot': 49},
-                            2: {'sysfs_slot': 2, 'mapped_slot': 50},
+                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 49},
+                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 50},
                         },
                         'r50bm_nvme_enclosure': {
-                            1: {'sysfs_slot': 1, 'mapped_slot': 49},
-                            2: {'sysfs_slot': 2, 'mapped_slot': 50},
-                            3: {'sysfs_slot': 3, 'mapped_slot': 51},
-                            4: {'sysfs_slot': 4, 'mapped_slot': 52},
+                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 49},
+                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 50},
+                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 51},
+                            4: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 52},
                         },
                     }
                 }
@@ -234,22 +238,22 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            1: {'sysfs_slot': 0, 'mapped_slot': 1},
-                            5: {'sysfs_slot': 4, 'mapped_slot': 2},
-                            9: {'sysfs_slot': 5, 'mapped_slot': 3},
-                            13: {'sysfs_slot': 12, 'mapped_slot': 4},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 5},
-                            6: {'sysfs_slot': 5, 'mapped_slot': 6},
-                            10: {'sysfs_slot': 9, 'mapped_slot': 7},
-                            14: {'sysfs_slot': 13, 'mapped_slot': 8},
-                            3: {'sysfs_slot': 2, 'mapped_slot': 9},
-                            7: {'sysfs_slot': 6, 'mapped_slot': 10},
-                            11: {'sysfs_slot': 10, 'mapped_slot': 11},
-                            15: {'sysfs_slot': 14, 'mapped_slot': 12},
-                            4: {'sysfs_slot': 3, 'mapped_slot': 13},
-                            8: {'sysfs_slot': 7, 'mapped_slot': 14},
-                            12: {'sysfs_slot': 11, 'mapped_slot': 15},
-                            16: {'sysfs_slot': 15, 'mapped_slot': 16}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 2},
+                            9: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 3},
+                            13: {SYSFS_SLOT_KEY: 12, MAPPED_SLOT_KEY: 4},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 5},
+                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 6},
+                            10: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 7},
+                            14: {SYSFS_SLOT_KEY: 13, MAPPED_SLOT_KEY: 8},
+                            3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 9},
+                            7: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 10},
+                            11: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 11},
+                            15: {SYSFS_SLOT_KEY: 14, MAPPED_SLOT_KEY: 12},
+                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 13},
+                            8: {SYSFS_SLOT_KEY: 7, MAPPED_SLOT_KEY: 14},
+                            12: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 15},
+                            16: {SYSFS_SLOT_KEY: 15, MAPPED_SLOT_KEY: 16}
                         }
                     }
                 }
@@ -262,24 +266,24 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            3: {'sysfs_slot': 2, 'mapped_slot': 1},
-                            6: {'sysfs_slot': 5, 'mapped_slot': 2},
-                            9: {'sysfs_slot': 8, 'mapped_slot': 3},
-                            12: {'sysfs_slot': 11, 'mapped_slot': 4},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 5},
-                            5: {'sysfs_slot': 4, 'mapped_slot': 6},
-                            8: {'sysfs_slot': 7, 'mapped_slot': 7},
-                            11: {'sysfs_slot': 10, 'mapped_slot': 8},
-                            1: {'sysfs_slot': 0, 'mapped_slot': 9},
-                            4: {'sysfs_slot': 3, 'mapped_slot': 10},
-                            7: {'sysfs_slot': 6, 'mapped_slot': 11},
-                            10: {'sysfs_slot': 9, 'mapped_slot': 12}
+                            3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 1},
+                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2},
+                            9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 3},
+                            12: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 4},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 5},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 6},
+                            8: {SYSFS_SLOT_KEY: 7, MAPPED_SLOT_KEY: 7},
+                            11: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 8},
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 9},
+                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 10},
+                            7: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 11},
+                            10: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 12}
                         }
                     },
                     'id': {
                         '3000000000000001': {
-                            1: {'sysfs_slot': 0, 'mapped_slot': 13},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 14}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14}
                         }
                     }
                 }
@@ -292,24 +296,24 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            3: {'sysfs_slot': 2, 'mapped_slot': 1},
-                            6: {'sysfs_slot': 5, 'mapped_slot': 2},
-                            9: {'sysfs_slot': 8, 'mapped_slot': 3},
-                            12: {'sysfs_slot': 11, 'mapped_slot': 4},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 5},
-                            5: {'sysfs_slot': 4, 'mapped_slot': 6},
-                            8: {'sysfs_slot': 7, 'mapped_slot': 7},
-                            11: {'sysfs_slot': 10, 'mapped_slot': 8},
-                            1: {'sysfs_slot': 0, 'mapped_slot': 9},
-                            4: {'sysfs_slot': 3, 'mapped_slot': 10},
-                            7: {'sysfs_slot': 6, 'mapped_slot': 11},
-                            10: {'sysfs_slot': 9, 'mapped_slot': 12}
+                            3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 1},
+                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2},
+                            9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 3},
+                            12: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 4},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 5},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 6},
+                            8: {SYSFS_SLOT_KEY: 7, MAPPED_SLOT_KEY: 7},
+                            11: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 8},
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 9},
+                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 10},
+                            7: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 11},
+                            10: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 12}
                         }
                     },
                     'id': {
                         '3000000000000001': {
-                            1: {'sysfs_slot': 0, 'mapped_slot': 13},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 14}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 13},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 14}
                         }
                     }
                 }
@@ -322,7 +326,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 7)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 7)
                         }
                     }
                 }
@@ -335,11 +339,11 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 5)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 5)
                         },
                         '3000000000000002': {
-                            1: {'sysfs_slot': 0, 'mapped_slot': 5},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 6}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6}
                         }
                     }
                 }
@@ -353,12 +357,12 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 5)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 5)
                         },
                         '3000000000000002': {
-                            1: {'sysfs_slot': 0, 'mapped_slot': 5},
-                            2: {'sysfs_slot': 1, 'mapped_slot': 6},
-                            4: {'sysfs_slot': 5, 'mapped_slot': 7}
+                            1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 5},
+                            2: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 6},
+                            4: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 7}
                         }
                     }
                 }
@@ -371,7 +375,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 9)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 9)
                         }
                     }
                 }
@@ -384,11 +388,11 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         '3000000000000002': {
-                            6: {'sysfs_slot': 5, 'mapped_slot': 1},
-                            5: {'sysfs_slot': 4, 'mapped_slot': 10},
+                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 1},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 10},
                         },
                         '3000000000000001': {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i + 1} for i in range(1, 9)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i + 1} for i in range(1, 9)
                         }
                     }
                 }
@@ -401,13 +405,13 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'id': {
                         '3000000000000001': {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 9)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 9)
                         },
                         '3000000000000002': {
-                            4: {'sysfs_slot': 3, 'mapped_slot': 9},
-                            5: {'sysfs_slot': 4, 'mapped_slot': 10},
-                            6: {'sysfs_slot': 5, 'mapped_slot': 11},
-                            7: {'sysfs_slot': 6, 'mapped_slot': 12}
+                            4: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 9},
+                            5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 10},
+                            6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 11},
+                            7: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 12}
                         }
                     }
                 }
@@ -420,19 +424,19 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            1: {'sysfs_slot': 8, 'mapped_slot': 9},
-                            2: {'sysfs_slot': 9, 'mapped_slot': 10},
-                            3: {'sysfs_slot': 10, 'mapped_slot': 11},
-                            4: {'sysfs_slot': 11, 'mapped_slot': 12},
+                            1: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 9},
+                            2: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 10},
+                            3: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 11},
+                            4: {SYSFS_SLOT_KEY: 11, MAPPED_SLOT_KEY: 12},
                             # 5, 6, 7, 8 unused/unsupported
-                            9: {'sysfs_slot': 0, 'mapped_slot': 1},
-                            10: {'sysfs_slot': 1, 'mapped_slot': 2},
-                            11: {'sysfs_slot': 2, 'mapped_slot': 3},
-                            12: {'sysfs_slot': 3, 'mapped_slot': 4},
-                            13: {'sysfs_slot': 4, 'mapped_slot': 5},
-                            14: {'sysfs_slot': 5, 'mapped_slot': 6},
-                            15: {'sysfs_slot': 6, 'mapped_slot': 7},
-                            16: {'sysfs_slot': 7, 'mapped_slot': 8},
+                            9: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1},
+                            10: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 2},
+                            11: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 3},
+                            12: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 4},
+                            13: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 5},
+                            14: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 6},
+                            15: {SYSFS_SLOT_KEY: 6, MAPPED_SLOT_KEY: 7},
+                            16: {SYSFS_SLOT_KEY: 7, MAPPED_SLOT_KEY: 8},
                         },
                     }
                 }
@@ -446,21 +450,21 @@ def get_slot_info(model):
                     'model': {
                         model: {
                             # 1 - 24
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                     },
                     'id': {
                         'm60_nvme_enclosure': {
-                            1: {'sysfs_slot': 1, 'mapped_slot': 25},
-                            2: {'sysfs_slot': 2, 'mapped_slot': 26},
-                            3: {'sysfs_slot': 3, 'mapped_slot': 27},
-                            4: {'sysfs_slot': 4, 'mapped_slot': 28},
+                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 25},
+                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 26},
+                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 27},
+                            4: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 28},
                         },
                         'm50_nvme_enclosure': {
-                            1: {'sysfs_slot': 1, 'mapped_slot': 25},
-                            2: {'sysfs_slot': 2, 'mapped_slot': 26},
-                            3: {'sysfs_slot': 3, 'mapped_slot': 27},
-                            4: {'sysfs_slot': 4, 'mapped_slot': 28},
+                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 25},
+                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 26},
+                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 27},
+                            4: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 28},
                         }
                     }
                 }
@@ -473,7 +477,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 13)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 13)
                         },
                     }
                 }
@@ -487,7 +491,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 13)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 13)
                         },
                     }
                 }
@@ -500,7 +504,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 25)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                     }
                 }
@@ -513,7 +517,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 61)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 61)
                         },
                     }
                 }
@@ -526,7 +530,7 @@ def get_slot_info(model):
                 'DEFAULT': {
                     'model': {
                         model: {
-                            i: {'sysfs_slot': i - 1, 'mapped_slot': i} for i in range(1, 103)
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 103)
                         },
                     }
                 }
@@ -540,7 +544,7 @@ def get_slot_info(model):
                     'model': {
                         model: {
                             # drives actually start at index 1 (not 0)
-                            i: {'sysfs_slot': i, 'mapped_slot': i} for i in range(1, 103)
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 103)
                         },
                     }
                 }
