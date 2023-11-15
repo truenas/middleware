@@ -48,6 +48,7 @@ def test_remote_ssh_semiautomatic_setup_sets_user_attributes(credential):
             "group_create": True,
             "home": f"/mnt/{homedir}",
             "password_disabled": True,
+            "smb": False,
             "shell": "/usr/sbin/nologin",
         }):
             token = call("auth.generate_token")
