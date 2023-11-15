@@ -8,13 +8,13 @@ def to_ignore(enclosure, model):
         # this is a JBOD and doesn't need to
         # be "combined" into any other object
         return True
-
-    all_nvme_flash = ('F60', 'F100', 'F130', 'R30')
-    if model.startswith(all_nvme_flash):
+    elif model.startswith(('F60', 'F100', 'F130', 'R30')):
         # the head-unit is all nvme flash so
         # these are treated as-is and don't
         # need to be combined
         return True
+    else:
+        return False
 
 
 def combine_enclosures(enclosures):
