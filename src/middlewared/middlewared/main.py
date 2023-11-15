@@ -348,6 +348,7 @@ class Application:
 
             await self.log_audit_message('METHOD_CALL', {
                 'method': message['method'],
+                'params': self.middleware.dump_args(params, methodobj),
                 'description': audit,
                 'authenticated': authenticated,
                 'authorized': authorized,

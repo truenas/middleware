@@ -3,6 +3,7 @@ from middlewared.schema import (
     Dict,
     Int,
     IPAddr,
+    List,
     Str,
     UUID,
 )
@@ -35,6 +36,7 @@ AUDIT_EVENT_DATA_MIDDLEWARE_AUTHENTICATION = Dict(
 AUDIT_EVENT_DATA_MIDDLEWARE_METHOD_CALL = Dict(
     str(AuditEventParam.EVENT_DATA),
     Str('method'),
+    List('params'),
     Str('description', null=True),
     Bool('authenticated'),
     Bool('authorized'),
