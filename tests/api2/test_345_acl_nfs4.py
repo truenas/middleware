@@ -387,7 +387,7 @@ def test_15_strip_acl_from_dataset(request):
 
     st =  call('filesystem.stat', f'/mnt/{ACLTEST_DATASET}/dir1/testfile')
     assert st['acl'] is False, str(st)
-    assert oct(st['mode']) == '0o10777', str(st)
+    assert oct(st['mode']) == '0o100777', str(st)
 
 
 def test_20_delete_child_dataset(request):
