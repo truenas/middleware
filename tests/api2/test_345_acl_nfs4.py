@@ -12,7 +12,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
-from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
 
@@ -172,12 +172,13 @@ TEST_INFO = {}
 
 @pytest.fixture(scope='module')
 def initialize_for_acl_tests(request):
-    with make_dataset(ACL_DATASET_NAME, data={'acl_type': 'NFSV4'}) as ds:
-        with user({
-            'username': ACLUSER,
-            'full_name': ACLUSER,
+    with make_dataset(ACLTEST_DATASET_NAME, data={'acltype': 'NFSV4'}) as ds:
+        with create_user({
+            'username': ACL_USER,
+            'full_name': ACL_USER,
             'group_create': True,
-            'password': PASSWD
+            'ssh_password_enabled': True,
+            'password': ACL_PWD 
         }) as u:
             TEST_INFO.update({
                 'dataset': ds,
@@ -188,8 +189,7 @@ def initialize_for_acl_tests(request):
 
 
 @pytest.mark.dependency(name='HAS_NFS4_ACLS')
-@pytest.mark.dependency(name="ACL_USER_CREATED")
-def test_02_create_dataset(initialze_for_acl_tests):
+def test_02_create_dataset(initialize_for_acl_tests):
     acl = call('filesystem.getacl', TEST_INFO['dataset_path'])
     assert acl['acltype'] == 'NFS4'
 
@@ -222,9 +222,9 @@ variation (BASIC/ADVANCED permissions, BASIC/ADVANCED flags).
 @pytest.mark.parametrize('permset', BASIC_PERMS)
 def test_08_set_basic_permsets(request, permset):
     depends(request, ["HAS_NFS4_ACLS"])
-    default_acl[0]['perms'] = permset
+    default_acl[0]['perms']['BASIC'] = permset
 
-    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'acl': default_acl}, job=True)
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
     acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_perms = default_acl[0]['perms']
     received_perms = acl_result['acl'][0]['perms']
@@ -236,7 +236,7 @@ def test_09_set_basic_flagsets(request, flagset):
     depends(request, ["HAS_NFS4_ACLS"])
     default_acl[0]['flags']['BASIC'] = flagset
 
-    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'acl': default_acl}, job=True)
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
     acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_flags = default_acl[0]['flags']
     received_flags = acl_result['acl'][0]['flags']
@@ -246,7 +246,6 @@ def test_09_set_basic_flagsets(request, flagset):
 @pytest.mark.parametrize('perm', base_permset.keys())
 def test_10_set_advanced_permset(request, perm):
     depends(request, ["HAS_NFS4_ACLS"])
-    }
     for key in ['perms', 'flags']:
         if default_acl[0][key].get('BASIC'):
             default_acl[0][key].pop('BASIC')
@@ -255,7 +254,7 @@ def test_10_set_advanced_permset(request, perm):
     default_acl[0]['perms'] = base_permset.copy()
     default_acl[0]['perms'][perm] = True
 
-    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'acl': default_acl}, job=True)
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
     acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_perms = default_acl[0]['perms']
     received_perms = acl_result['acl'][0]['perms']
@@ -270,7 +269,7 @@ def test_11_set_advanced_flagset(request, flag):
     if flag in ['INHERIT_ONLY', 'NO_PROPAGATE_INHERIT']:
         default_acl[0]['flags']['DIRECTORY_INHERIT'] = True
 
-    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'acl': default_acl}, job=True)
+    call('filesystem.setacl', {'path': TEST_INFO['dataset_path'], 'dacl': default_acl}, job=True)
     acl_result = call('filesystem.getacl', TEST_INFO['dataset_path'], True)
     requested_flags = default_acl[0]['flags']
     received_flags = acl_result['acl'][0]['flags']
@@ -476,17 +475,9 @@ def test_20_delete_child_dataset(request):
     assert result.status_code == 200, result.text
 
 
-def test_20_get_TEST_INFO['user']['uid']_for_acluser(request):
-    depends(request, ["HAS_NFS4_ACLS"])
-    results = GET('/user/get_TEST_INFO['user']['uid']/')
-    assert results.status_code == 200, results.text
-    global TEST_INFO['user']['uid']
-    TEST_INFO['user']['uid'] = results.json()
-
-
 @pytest.mark.dependency(name="HAS_TESTFILE")
 def test_22_prep_testfile(request):
-    depends(request, ["ACL_USER_CREATED"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS"], scope="session")
     cmd = f'touch /mnt/{ACLTEST_DATASET}/acltest.txt'
     results = SSH_TEST(cmd, user, password, ip)
     assert results['result'] is True, results['output']
@@ -523,7 +514,7 @@ def test_23_test_acl_function_deny(perm, request):
     acltest user, then attempt to perform an action that
     should result in failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     if perm == "FULL_DELETE":
         to_deny = {"DELETE_CHILD": True, "DELETE": True}
@@ -621,7 +612,7 @@ def test_24_test_acl_function_allow(perm, request):
     acltest user, then attempt to perform an action that
     should result in success.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -716,7 +707,7 @@ def test_25_test_acl_function_omit(perm, request):
     on presence of the particular permissions bit. Then we omit
     it. This should result in a failure.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -801,7 +792,7 @@ def test_25_test_acl_function_allow_restrict(perm, request):
     they grant no more permissions than intended. Some bits cannot
     be tested in isolation effectively using built in utilities.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
 
     """
     Some extra permissions bits must be set for these tests
@@ -911,7 +902,7 @@ def test_26_file_execute_deny(request):
     Base permset with everyone@ FULL_CONTROL, but ace added on
     top explictly denying EXECUTE. Attempt to execute file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -960,7 +951,7 @@ def test_27_file_execute_allow(request):
     READ_ATTRIBUTES are also granted beecause we need to be able to
     stat and read our test script.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
@@ -1012,7 +1003,7 @@ def test_28_file_execute_omit(request):
     Grant user all permissions except EXECUTE. Attempt to execute
     file should fail.
     """
-    depends(request, ["ACL_USER_CREATED", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
+    depends(request, ["HAS_NFS4_ACLS", "HAS_TESTFILE", "acl_pool_perm_09"], scope="session")
     payload_acl = [
         {
             "tag": "USER",
