@@ -23,7 +23,7 @@ vers4 = y
 vers4 = n
 % endif
 % if config['bindip']:
-host = ','.join(config['bindip'])
+host = ${','.join(config['bindip'])}
 % endif
 
 [mountd]

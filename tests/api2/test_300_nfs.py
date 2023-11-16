@@ -10,6 +10,7 @@ import os
 import contextlib
 import ipaddress
 import urllib.parse
+from copy import copy
 from pytest_dependency import depends
 from time import sleep
 apifolder = os.getcwd()
@@ -18,6 +19,7 @@ from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
+from middlewared.test.integration.utils import call
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -74,6 +76,29 @@ def parse_server_config(fname="local.conf"):
 
         k, v = line.split(" = ", 1)
         rv[section].update({k: v})
+
+    return rv
+
+
+def parse_rpcbind_config():
+    results = SSH_TEST("cat /etc/default/rpcbind", user, password, ip)
+    assert results['result'] is True, f"rc={results['returncode']}, {results['output']}, {results['stderr']}"
+    conf = results['stdout'].splitlines()
+    rv = {}
+
+    # With bindip the line of intrest looks like: OPTIONS=-w -h 192.168.40.156
+    for line in conf:
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("OPTIONS"):
+            opts = line.split('=')[1].split()
+            # '-w' is hard-wired, lets confirm that
+            assert len(opts) > 0
+            assert '-w' == opts[0]
+            rv['-w'] = ''
+            # If there are more opts they must the bindip settings
+            if len(opts) == 3:
+                rv[opts[1]] = opts[2]
 
     return rv
 
@@ -259,20 +284,13 @@ def nfs_config(options=None):
     with nfs_config():
         <code that modifies NFS config>
     '''
-    get_conf = {'msg': 'method', 'method': 'nfs.config', 'params': []}
-    restore_conf = {'msg': 'method', 'method': 'nfs.update', 'params': []}
-
     try:
-        res = make_ws_request(ip, get_conf)
-        assert res.get('error') is None, res
+        nfs_db_conf = call("nfs.config")
         excl = ['id', 'v4_krb_enabled', 'v4_owner_major']
-        nfsconf = res['result']
-        [nfsconf.pop(key) for key in excl]
-        restore_conf.update({'params': [nfsconf]})
-        yield
+        [nfs_db_conf.pop(key) for key in excl]
+        yield copy(nfs_db_conf)
     finally:
-        res = make_ws_request(ip, restore_conf)
-        assert res.get('error') is None, res
+        call("nfs.update", nfs_db_conf)
 
 
 # Enable NFS server
@@ -1211,6 +1229,41 @@ def test_45_check_setting_runtime_debug(request):
         assert res['result'] == disabled, res
 
 
+def test_46_set_bind_ip():
+    '''
+    This test requires a static IP address
+    * Test the private nfs.bindip call
+    * Test the actual bindip config setting
+      - Confirm setting in conf files
+      - Confirm service on IP address
+    '''
+    choices = call("nfs.bindip_choices")
+    assert ip in choices
+
+    call("nfs.bindip", {"bindip": [ip]})
+    call("nfs.bindip", {"bindip": []})
+
+    # Test config with bindip.  Use choices from above
+    # TODO: check with 'nmap -sT <IP>' from the runner.
+    with nfs_config() as db_conf:
+
+        # Should have no bindip setting
+        nfs_conf = parse_server_config()
+        rpc_conf = parse_rpcbind_config()
+        assert db_conf['bindip'] == []
+        assert nfs_conf['nfsd'].get('host') is None
+        assert rpc_conf.get('-h') is None
+
+        # Set bindip
+        call("nfs.update", {"bindip": [ip]})
+
+        # Confirm we see it in the nfs and rpc conf files
+        nfs_conf = parse_server_config()
+        rpc_conf = parse_rpcbind_config()
+        assert ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
+        assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
+
+
 def test_50_stoping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
@@ -1243,22 +1296,6 @@ def test_52_check_adjusting_threadpool_mode(request):
         payload.update({'method': 'nfs.get_threadpool_mode', 'params': []})
         res = make_ws_request(ip, payload)
         assert res['result'] == m, res
-
-
-def test_53_set_bind_ip():
-    '''
-    This test requires a static IP address
-    '''
-    res = GET("/nfs/bindip_choices")
-    assert res.status_code == 200, res.text
-    assert ip in res.json(), res.text
-
-    res = PUT("/nfs/", {"bindip": [ip]})
-    assert res.status_code == 200, res.text
-
-    # reset to default
-    res = PUT("/nfs/", {"bindip": []})
-    assert res.status_code == 200, res.text
 
 
 def test_54_disable_nfs_service_at_boot(request):
