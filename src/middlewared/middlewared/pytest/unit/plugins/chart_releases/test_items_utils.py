@@ -57,7 +57,7 @@ from middlewared.plugins.catalogs_linux.items_util import min_max_scale_version_
     (
         {'chart_metadata': {'annotations': {'min_scale_version': '24.05', 'max_scale_version': '25.10'}}},
         False, '24.04',
-        (False, False), 'min_scale_version not compatible. '
+        'Your system version is less then specified minimum scale version for the app version'
     ),
 
     (
@@ -94,4 +94,4 @@ def test_scale_version_compatibility_check(version_details, supported, system_sc
     with patch('middlewared.plugins.catalogs_linux.items_util.sw_info', Mock(
         return_value={'version': system_scale_version}
     )):
-        assert min_max_scale_version_check_update_impl(version_details, supported)== result
+        assert min_max_scale_version_check_update_impl(version_details, supported) == result
