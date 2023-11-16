@@ -1229,41 +1229,7 @@ def test_45_check_setting_runtime_debug(request):
         assert res['result'] == disabled, res
 
 
-def test_50_stoping_nfs_service(request):
-    # Restore original settings before we stop
-    restore_nfs_config()
-    payload = {"service": "nfs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
-
-
-def test_51_checking_to_see_if_nfs_service_is_stop(request):
-    results = GET("/service?service=nfs")
-    assert results.json()[0]["state"] == "STOPPED", results.text
-
-
-def test_52_check_adjusting_threadpool_mode(request):
-    """
-    Verify that NFS thread pool configuration can be adjusted
-    through private API endpoints.
-
-    This request will fail if NFS server (or NFS client) is
-    still running.
-    """
-    supported_modes = ["AUTO", "PERCPU", "PERNODE", "GLOBAL"]
-    payload = {'msg': 'method', 'method': None, 'params': []}
-
-    for m in supported_modes:
-        payload.update({'method': 'nfs.set_threadpool_mode', 'params': [m]})
-        make_ws_request(ip, payload)
-
-        payload.update({'method': 'nfs.get_threadpool_mode', 'params': []})
-        res = make_ws_request(ip, payload)
-        assert res['result'] == m, res
-
-
-def test_53_set_bind_ip():
+def test_46_set_bind_ip():
     '''
     This test requires a static IP address
     * Test the private nfs.bindip call
@@ -1296,6 +1262,40 @@ def test_53_set_bind_ip():
         rpc_conf = parse_rpcbind_config()
         assert ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
         assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
+
+
+def test_50_stoping_nfs_service(request):
+    # Restore original settings before we stop
+    restore_nfs_config()
+    payload = {"service": "nfs"}
+    results = POST("/service/stop/", payload)
+    assert results.status_code == 200, results.text
+    sleep(1)
+
+
+def test_51_checking_to_see_if_nfs_service_is_stop(request):
+    results = GET("/service?service=nfs")
+    assert results.json()[0]["state"] == "STOPPED", results.text
+
+
+def test_52_check_adjusting_threadpool_mode(request):
+    """
+    Verify that NFS thread pool configuration can be adjusted
+    through private API endpoints.
+
+    This request will fail if NFS server (or NFS client) is
+    still running.
+    """
+    supported_modes = ["AUTO", "PERCPU", "PERNODE", "GLOBAL"]
+    payload = {'msg': 'method', 'method': None, 'params': []}
+
+    for m in supported_modes:
+        payload.update({'method': 'nfs.set_threadpool_mode', 'params': [m]})
+        make_ws_request(ip, payload)
+
+        payload.update({'method': 'nfs.get_threadpool_mode', 'params': []})
+        res = make_ws_request(ip, payload)
+        assert res['result'] == m, res
 
 
 def test_54_disable_nfs_service_at_boot(request):
