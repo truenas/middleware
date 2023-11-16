@@ -24,30 +24,26 @@ def minimum_scale_version_check_update(version_details: dict) -> dict:
     return version_details
 
 
-def custom_scale_version_checks(
-    min_scale_version: str, max_scale_version: str, system_scale_version: str
-) -> typing.Tuple[bool, bool, str]:
+def custom_scale_version_checks(min_scale_version: str, max_scale_version: str, system_scale_version: str) -> str:
     if not (normalized_system_version := RE_VERSION_PATTERN.findall(system_scale_version)):
-        return False, False, 'Unable to determine system scale version'
+        return 'Unable to determine system scale version'
 
     normalized_system_version = normalized_system_version[0]
 
     if min_scale_version and min_scale_version != normalized_system_version and not can_update(
         min_scale_version, normalized_system_version
     ):
-        return False, False, 'Your system version is less then specified minimum scale version for the app version'
+        return 'Your system version is less then specified minimum scale version for the app version'
 
     if max_scale_version and max_scale_version != normalized_system_version and not can_update(
         normalized_system_version, max_scale_version
     ):
-        return False, False, 'Your system version is greater then specified maximum scale version for the app version'
+        return 'Your system version is greater then specified maximum scale version for the app version'
 
-    return True, False, ''
+    return ''
 
 
-def min_max_scale_version_check_update_impl(
-    version_details: dict, check_supported_key: bool = True
-) -> typing.Tuple[bool, bool, str]:
+def min_max_scale_version_check_update_impl(version_details: dict, check_supported_key: bool = True) -> str:
     # `check_supported_key` is used because when catalog validation returns the data it only checks the
     # missing features and based on that makes the decision. So if something is not already supported
     # we do not want to validate minimum scale version in that case. However, when we want to report to
@@ -67,21 +63,19 @@ def min_max_scale_version_check_update_impl(
                     min_scale_version and min_scale_version != system_scale_version and
                     not can_update(min_scale_version, system_scale_version)
                 ):
-                    return False, False, ('Your system version is less then specified minimum scale '
-                                          'version for the app version. ')
+                    return 'Your system version is less then specified minimum scale version for the app version.'
 
                 if (
                     max_scale_version and system_scale_version != max_scale_version and
                     not can_update(system_scale_version, max_scale_version)
                 ):
-                    return False, False, ('Your system version is greater then specified maximum '
-                                          'scale version for the app version. ')
+                    return 'Your system version is greater then specified maximum scale version for the app version.'
         except Exception:
             # In case invalid version string is specified we don't want a traceback here
             # let's just explicitly not support the app version in question
-            return False, True, 'Unable to complete scale version compatibility checks'
+            return 'Unable to complete scale version compatibility checks'
 
-    return True, False, ''
+    return ''
 
 
 def get_item_details(item_location: str, item_data: dict, questions_context: dict) -> dict:
