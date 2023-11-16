@@ -175,6 +175,10 @@ class InterfaceService(CRUDService):
         additional_attrs=True,
     )
 
+    @private
+    async def query_names_only(self):
+        return [i['int_interface'] for i in await self.middleware.call('datastore.query', 'network.interfaces')]
+
     @filterable
     def query(self, filters, options):
         """
