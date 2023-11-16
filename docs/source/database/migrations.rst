@@ -122,7 +122,15 @@ you have to do the following:
 
 * Switch to the stable branch, cherry-pick the code, remove master migration file and generate the same migration (it
   will be the same `upgrade` code, but different file name, `revision` and `down_revision` values).
-* Change the code to be idempotent so it won't fail if the corresponding DB changes were already made.
+* Changes to the code are to be idempotent so it won't fail if the corresponding DB changes were already made.
+  This can be done like the example given below from `src/middlewared/middlewared/alembic/versions/23.10/2023-11-10_23-19_add_exporting_table_for_reporting.py`
+  where we check if the table already exists and return early if it does, not doing anything else:
+
+.. code-block:: python
+
+    if 'reporting_exporters' in inspector.get_table_names():
+        return
+
 * Merge newly created stable branch migration to the master branch.
 * Also make the original master migration code idempotent (highly likely, it'll just be the same code as in stable
   branch).
