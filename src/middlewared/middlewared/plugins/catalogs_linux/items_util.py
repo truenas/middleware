@@ -20,7 +20,7 @@ def get_item_default_values(version_details: dict) -> dict:
 
 
 def minimum_scale_version_check_update(version_details: dict) -> dict:
-    version_details['supported'] = min_max_scale_version_check_update_impl(version_details)[0]
+    version_details['supported'] = not bool(min_max_scale_version_check_update_impl(version_details))
     return version_details
 
 
