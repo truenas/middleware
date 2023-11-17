@@ -57,9 +57,8 @@ def combine_enclosures(enclosures):
         enclosures[head_unit_idx]['elements']['Array Device Slot'] = {
             k: v for k, v in sorted(enclosures[head_unit_idx]['elements']['Array Device Slot'].items())
         }
-
-    for idx in reversed(to_remove):
-        # we've combined the enclosures into the
-        # main "head-unit" enclosure object so let's
-        # remove the objects we combined from
-        enclosures.pop(idx)
+        for idx in reversed(to_remove):
+            # we've combined the enclosures into the
+            # main "head-unit" enclosure object so let's
+            # remove the objects we combined from
+            enclosures.pop(idx)
