@@ -294,7 +294,7 @@ class Enclosure:
         Args:
         Returns: bool
         """
-        return all((self.is_rseries(), self.model.startswith('R50')))
+        return all((self.is_rseries, self.model.startswith('R50')))
 
     @property
     def is_fseries(self):
@@ -322,7 +322,7 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.controller, not self.is_mini(), self.model[0] == 'M'
+            self.controller, not self.is_mini, self.model[0] == 'M'
         ))
 
     @property
