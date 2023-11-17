@@ -1,18 +1,24 @@
 import logging
 
+from .constants import HEAD_UNIT_DISK_SLOT_START_NUMBER
+from .enums import ControllerModels
+
 logger = logging.getLogger(__name__)
-HEAD_UNIT_DISK_SLOT_START_NUMBER = 1
 
 
-def to_ignore(enclosure, model):
+def to_ignore(enclosure):
     if not enclosure['controller']:
         # this is a JBOD and doesn't need to
         # be "combined" into any other object
         return True
-    elif model.startswith(('F60', 'F100', 'F130', 'R30')):
-        # the head-unit is all nvme flash so
-        # these are treated as-is and don't
-        # need to be combined
+    elif enclosure['model'].startswith((
+        ControllerModels.F60.value,
+        ControllerModels.F100.value,
+        ControllerModels.F130.value,
+        ControllerModels.R30.value,
+    )):
+        # these are all nvme flash systems and
+        # are treated as-is
         return True
     else:
         return False
@@ -36,8 +42,7 @@ def combine_enclosures(enclosures):
     """
     head_unit_idx, to_combine, to_remove = None, dict(), list()
     for idx, enclosure in enumerate(enclosures):
-        model = enclosure.get('model', '')
-        if to_ignore(enclosure, model):
+        if to_ignore(enclosure):
             continue
         elif enclosure['elements']['Array Device Slot'].get(HEAD_UNIT_DISK_SLOT_START_NUMBER):
             # the enclosure object whose disk slot has number 1

@@ -4,7 +4,7 @@ from middlewared.utils.scsi_generic import inquiry
 
 from .constants import MINI_MODEL_BASE
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
-from .enums import ControllerModels, JbodModels
+from .enums import ControllerModels, ElementDescriptorsToIgnore, ElementStatusesToIgnore, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
 from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
 
@@ -55,12 +55,12 @@ class Enclosure:
             # if this isn't an R20 or MINI platform and this is the Virtual AHCI
             # enclosure, then we can ignore them
             self.should_ignore = True
-        elif self.model in all((
+        elif all((
             self.is_r20_series,
-            self.model in (
+            (self.model in (
                 ControllerModels.MINI3XP.value,
                 ControllerModels.MINI3E.value,
-            ),
+            )),
             self.encid == '3000000000000002'
         )):
             # These platforms have 2x virtual AHCI enclosures but we only map the
@@ -173,19 +173,17 @@ class Enclosure:
         for elements that report "bad" statuses and these elements need to be
         ignored. NOTE: every hardware platform is different for knowing which
         elements are to be ignored"""
-        if parsed_element_status == 'Unsupported':
-            return True
-        elif self.model in ('X10', 'X20'):
-            return element['descriptor'] == 'ArrayDevicesInSubEnclsr0'
-        elif self.model == 'ES60':
-            return element['descriptor'] == 'Array Device Slot'
-        elif self.model not in ('H10', 'H20'):
-            # On the H10/20 platforms, the onboard HBA reports null descriptors
-            # for every single array device. The sg3_utils API returns a literal
-            # "<empty>" string. On the H10/20, these are legit elements but we
-            # have other platforms that return null descriptor values but they
-            # are invalid
-            return element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots')
+        desc = element['descriptor'].lower()
+        return any((
+            (parsed_element_status.lower() == ElementStatusesToIgnore.UNSUPPORTED.value),
+            (self.is_xseries and desc == ElementDescriptorsToIgnore.ADISE0.value),
+            (self.model == JbodModels.ES60.value and desc == ElementDescriptorsToIgnore.ADS.value),
+            (not self.is_hseries and desc in (
+                ElementDescriptorsToIgnore.EMPTY.value,
+                ElementDescriptorsToIgnore.AD.value,
+                ElementDescriptorsToIgnore.DS.value,
+            )),
+        ))
 
     def _get_array_device_mapping_info(self):
         mapped_info = get_slot_info(self)
@@ -332,13 +330,36 @@ class Enclosure:
         return all((self.controller, self.model[0] == 'R'))
 
     @property
+    def is_r20_series(self):
+        """Determine if the enclosure device is a r20-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_rseries,
+            self.model.startswith((
+                ControllerModels.R20.value,
+                ControllerModels.R20A.value,
+                ControllerModels.R20B.value,
+            ))
+        ))
+
+    @property
     def is_r50_series(self):
         """Determine if the enclosure device is a r50-series controller.
 
         Args:
         Returns: bool
         """
-        return all((self.is_rseries, self.model.startswith('R50')))
+        return all((
+            self.is_rseries,
+            self.model.startswith((
+                ControllerModels.R50.value,
+                ControllerModels.R50B.value,
+                ControllerModels.R50BM.value,
+            ))
+        ))
 
     @property
     def is_fseries(self):
@@ -399,7 +420,7 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.is_jbod(),
+            self.is_jbod,
             self.model in (
                 JbodModels.ES24.value,
                 JbodModels.ES24F.value,
@@ -414,7 +435,7 @@ class Enclosure:
         Returns: bool
         """
         return all((
-            self.is_jbod(),
+            self.is_jbod,
             self.model in (
                 JbodModels.ES60.value,
                 JbodModels.ES60G2.value,
