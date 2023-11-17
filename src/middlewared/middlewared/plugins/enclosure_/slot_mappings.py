@@ -9,7 +9,13 @@ def get_nvme_slot_info(model):
     as well as systems with nvme drive bays, we need
     to map them just like we do with traditional SES
     enclosures. We handle these separately because,
-    well, it's NVMe"""
+    well, it's NVMe
+
+    NOTE: SYSFS_SLOT_KEY is always == 1 for the slot
+    simply for readability. NVMe devices don't get
+    their slot information the same way that we do in
+    SES since it's nvme.
+    """
     if model in (
         ControllerModels.F60.value,
         ControllerModels.F100.value,
@@ -198,6 +204,10 @@ def get_slot_info(enc):
         3. necessity because the logic that is required to map all of
             our enclosures is quite complex and this was the best mix
             of performance/maintability.
+
+    NOTE: 99% of all HBAs for the platforms we sell report their drive slot numbers
+    starting at 0 which is what sysfs uses for the `slot` file in sysfs.
+
     """
     if enc.model == ControllerModels.R40.value:
         # FIXME: it's impossible to map 0-23 drives to an enclosure
