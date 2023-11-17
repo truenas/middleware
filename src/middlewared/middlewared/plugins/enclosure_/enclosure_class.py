@@ -1,8 +1,10 @@
 import logging
 
 from middlewared.utils.scsi_generic import inquiry
-from .identification import get_enclosure_model_and_controller
+
+from .constants import MINI_MODEL_BASE
 from .element_types import ELEMENT_TYPES, ELEMENT_DESC
+from .enums import ControllerModels, JbodModels
 from .sysfs_disks import map_disks_to_enclosure_slots
 from .slot_mappings import get_slot_info, SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
 
@@ -14,7 +16,7 @@ class Enclosure:
         self.bsg, self.sg, self.pci, self.dmi = bsg, sg, bsg.removeprefix('/dev/bsg/'), dmi
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
-        self.model, self.controller = self._get_model_and_controller()
+        self._get_model_and_controller()
         self.sysfs_map = map_disks_to_enclosure_slots(self.pci)
         self.disks_map = self._get_array_device_mapping_info()
         self.elements = self._parse_elements(enc_stat['elements'])
@@ -51,8 +53,89 @@ class Enclosure:
         return data
 
     def _get_model_and_controller(self):
-        key = f'{self.vendor}_{self.product}'
-        return get_enclosure_model_and_controller(key, self.dmi)
+        """This determines the model and whether or not this a controller enclosure.
+        The term "controller" refers to the enclosure device where the TrueNAS OS
+        is installed (sometimes referred to as the head-unit). We check 2 different
+        values to determine the model/controller.
+
+        1. We check SMBIOS DMI type "system" buffer, specifically the product name
+        2. We check the t10 vendor and product strings returned from the enclosure
+            using a standard inquiry command
+        """
+        model = self.dmi.removeprefix('TRUENAS-').removeprefix('FREENAS-')
+        model = model.removesuffix('-HA').removesuffix('-S')
+        try:
+            dmi_model = ControllerModels[model]
+        except KeyError:
+            # this shouldn't ever happen because the instantiator of this class
+            # checks DMI before we even get here but better safe than sorry
+            logger.warning('Unexpected model: %r from dmi: %r', model, self.dmi)
+            self.model = '',
+            self.controller = False
+            return
+
+        t10vendor_product = f'{self.vendor}_{self.product}'
+        match t10vendor_product:
+            case 'ECStream_4024Sp' | 'ECStream_4024Ss' | 'iX_4024Sp' | 'iX_4024Ss':
+                # M series
+                self.model = dmi_model.value
+                self.controller = True
+            case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
+                # X series
+                self.model = dmi_model.value
+                self.controller = True
+            case 'BROADCOM_VirtualSES':
+                # H series
+                self.model = dmi_model.value
+                self.controller = True
+            case 'ECStream_FS1' | 'ECStream_FS2' | 'ECStream_DSS212Sp' | 'ECStream_DSS212Ss':
+                # R series
+                self.model = dmi_model.value
+                self.controller = True
+            case 'iX_FS1L' | 'iX_FS2' | 'iX_DSS212Sp' | 'iX_DSS212Ss':
+                # more R series
+                self.model = dmi_model.value
+                self.controller = True
+            case 'iX_TrueNASR20p' | 'iX_2012Sp' | 'iX_TrueNASSMCSC826-P':
+                # R20
+                self.model = dmi_model.value
+                self.controller = True
+            case 'AHCI_SGPIOEnclosure':
+                # R20 variants or MINIs
+                self.model = dmi_model.value
+                self.controller = True
+            case 'iX_eDrawer4048S1' | 'iX_eDrawer4048S2':
+                # R50
+                self.model = dmi_model.value
+                self.controller = True
+            case 'CELESTIC_X2012':
+                self.model = JbodModels.ES12.value
+                self.controller = False
+            case 'ECStream_4024J' | 'iX_4024J':
+                self.model = JbodModels.ES24.value
+                self.controller = False
+            case 'ECStream_2024Jp' | 'ECStream_2024Js' | 'iX_2024Jp' | 'iX_2024Js':
+                self.model = JbodModels.ES24F.value
+                self.controller = False
+            case 'CELESTIC_R0904-F0001-01':
+                self.model = JbodModels.ES60.value
+                self.controller = False
+            case 'HGST_H4060-J':
+                self.model = JbodModels.ES60G2.value
+                self.controller = False
+            case 'HGST_H4102-J':
+                self.model = JbodModels.ES102.value
+                self.controller = False
+            case 'VikingES_NDS-41022-BB':
+                self.model = JbodModels.ES102G2.value
+                self.controller = False
+            case _:
+                logger.warning(
+                    'Unexpected t10 vendor: %r and product: %r combination',
+                    self.vendor, self.product
+                )
+                self.model = ''
+                self.controller = False
 
     def _ignore_element(self, parsed_element_status, element):
         """We ignore certain elements reported by the enclosure, for example,
@@ -168,3 +251,118 @@ class Enclosure:
             final[element_type[0]].update({mapped_slot: parsed})
 
         return final
+
+    @property
+    def model(self):
+        return self.__model
+
+    @model.setter
+    def model(self, val):
+        self.__model = val
+
+    @property
+    def controller(self):
+        return self.__controller
+
+    @controller.setter
+    def model(self, val):
+        self.__controller = val
+
+    @property
+    def is_jbod(self):
+        """Determine if the enclosure device is a JBOD
+        (just a bunch of disks) unit.
+
+        Args:
+        Returns: bool
+        """
+        return self.model in (i.value for i in JbodModels)
+
+    @property
+    def is_rseries(self):
+        """Determine if the enclosure device is a r-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((self.controller, self.model[0] == 'R'))
+
+    @property
+    def is_r50_series(self):
+        """Determine if the enclosure device is a r50-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((self.is_rseries(), self.model.startswith('R50')))
+
+    @property
+    def is_fseries(self):
+        """Determine if the enclosure device is a f-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((self.controller, self.model[0] == 'F'))
+
+    @property
+    def is_hseries(self):
+        """Determine if the enclosure device is a h-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((self.controller, self.model[0] == 'H'))
+
+    @property
+    def is_mseries(self):
+        """Determine if the enclosure device is a m-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.controller, not self.is_mini(), self.model[0] == 'M'
+        ))
+
+    @property
+    def is_mini(self):
+        """Determine if the enclosure device is a mini-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.controller, self.model.startswith(MINI_MODEL_BASE)
+        ))
+
+    @property
+    def is_24_bay_jbod(self):
+        """Determine if the enclosure device is a 24 bay JBOD.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_jbod(),
+            self.model in (
+                self.enum.ES24.value,
+                self.enum.ES24F.value,
+            )
+        ))
+
+    @property
+    def is_60_bay_jbod(self):
+        """Determine if the enclosure device is a 60 bay JBOD.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.is_jbod(),
+            self.model in (
+                self.enum.E60.value,
+                self.enum.ES60.value,
+                self.enum.ES60G2.value,
+            )
+        ))

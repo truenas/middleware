@@ -1,5 +1,4 @@
-SYSFS_SLOT_KEY = 'sysfs_slot'
-MAPPED_SLOT_KEY = 'mapped_slot'
+from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
 
 
 def get_slot_info(model):
@@ -91,8 +90,8 @@ def get_slot_info(model):
             {'versions': {
                 'DEFAULT': {
                     'product': {'eDrawer4048S1' : {
-                        1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 1},
-                        5: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2},
+                        1: {'sysfs_slot': 1, 'mapped_slot': 1},
+                        5: {'sysfs_slot': 5, 'mapped_slot': 2},
                     }}
                 }
             }}
