@@ -27,7 +27,16 @@ def map_disks_to_enclosure_slots(pci):
     slot and we move on. Once we've determined that there is a file named
     "slot", we can read the contents of that file to get the slot number
     associated to the disk device. The "slot" file is always an integer
-    so we don't need to convert to hexadecimal"""
+    so we don't need to convert to hexadecimal
+
+    Args:
+        pci: string (i.e. 0:0:0:0)
+
+    Returns:
+        dictionary whose key is an integer (disk slot) and value is a device name (i.e. sda)
+        If no device is found at the given slot, None is set as the value
+        (i.e. {1: sda, 2: None})
+    """
     mapping = dict()
     for i in Path(f'/sys/class/enclosure/{pci}').iterdir():
         try:

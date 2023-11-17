@@ -37,12 +37,19 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped):
     }
     for slot in range(1, num_of_nvme_slots + 1):
         device = mapped.get(slot, None)
+        # the `value_raw` variables represent the
+        # value they would have if a device was
+        # inserted into a proper SES device (or not).
+        # Since this is NVMe (which deals with PCIe)
+        # that paradigm doesn't exist per se but we're
+        # "faking" a SES device, hence the hex values.
+        # The `status` variables use same logic.
         if device is not None:
             status = 'OK'
-            value_raw = 16777216
+            value_raw = 0x1000000
         else:
             status = 'Not installed'
-            value_raw = 83886080
+            value_raw = 0x5000000
 
         mapped_slot = disks_map['versions']['DEFAULT']['id'][dmi][slot]['mapped_slot']
         fake_enclosure['elements']['Array Device Slot'][mapped_slot] = {
