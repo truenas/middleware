@@ -2,6 +2,63 @@ from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
 from .enums import ControllerModels, JbodModels
 
 
+def get_nvme_slot_info(model):
+    """This functions returns a dictionary that maps
+    nvme drives from their original slots to their
+    mapped slots. Since we sell all nvme flash systems
+    as well as systems with nvme drive bays, we need
+    to map them just like we do with traditional SES
+    enclosures. We handle these separately because,
+    well, it's NVMe"""
+    if model in (
+        ControllerModels.F60.value,
+        ControllerModels.F100.value,
+        ControllerModels.F130.value,
+        ControllerModels.M50.value,
+        ControllerModels.M60.value,
+        ControllerModels.R30.value,
+        ControllerModels.R50.value,
+        ControllerModels.R50B.value,
+        ControllerModels.R50BM.value,
+    ):
+        return {
+            'any_version': True,
+            'versions': {
+                'DEFAULT': {
+                    'id': {
+                        'f60_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                        },
+                        'f100_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                        },
+                        'f130_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                        },
+                        'm50_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 5), range(25, 29))
+                        },
+                        'm60_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 5), range(25, 29))
+                        },
+                        'r30_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 17)
+                        },
+                        'r50_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 4), range(25, 28))
+                        },
+                        'r50b_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 3), range(25, 27))
+                        },
+                        'r50bm_nvme_enclosure': {
+                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 5), range(25, 29))
+                        },
+                    }
+                }
+            }
+        }
+
+
 def get_slot_info(enc):
     """This function returns a dictionary that maps
     drives from their original slots to their mapped slots. This
@@ -170,29 +227,6 @@ def get_slot_info(enc):
             }
         }
         """
-    elif any((enc.is_fseries, enc.model == ControllerModels.R30.value)):
-        # these are all nvme flash systems
-        return {
-            'any_version': True,
-            'versions': {
-                'DEFAULT': {
-                    'id': {
-                        'f60_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
-                        },
-                        'f100_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
-                        },
-                        'f130_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
-                        },
-                        'r30_nvme_enclosure': {
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 17)
-                        }
-                    }
-                }
-            }
-        }
     elif enc.is_r50_series:
         # these platforms share same enclosure and mapping
         # but it's important to always map the eDrawer4048S1
@@ -211,23 +245,6 @@ def get_slot_info(enc):
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 25), range(25, 49))
                         }
                     },
-                    'id': {
-                        'r50_nvme_enclosure': {
-                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 49},
-                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 50},
-                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 51},
-                        },
-                        'r50b_nvme_enclosure': {
-                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 49},
-                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 50},
-                        },
-                        'r50bm_nvme_enclosure': {
-                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 49},
-                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 50},
-                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 51},
-                            4: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 52},
-                        },
-                    }
                 }
             }
         }
@@ -453,20 +470,6 @@ def get_slot_info(enc):
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                     },
-                    'id': {
-                        'm60_nvme_enclosure': {
-                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 25},
-                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 26},
-                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 27},
-                            4: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 28},
-                        },
-                        'm50_nvme_enclosure': {
-                            1: {SYSFS_SLOT_KEY: 1, MAPPED_SLOT_KEY: 25},
-                            2: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 26},
-                            3: {SYSFS_SLOT_KEY: 3, MAPPED_SLOT_KEY: 27},
-                            4: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 28},
-                        }
-                    }
                 }
             }
         }

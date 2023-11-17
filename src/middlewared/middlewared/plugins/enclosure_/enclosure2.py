@@ -142,7 +142,7 @@ class Enclosure2Service(Service):
         }
         dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
         for i in self.get_ses_enclosures(dmi) + map_nvme(dmi):
-            if i.pop('should_ignore', False):
+            if i.pop('should_ignore'):
                 continue
 
             # this is a user-provided string to label the enclosures so we'll add it at as a
