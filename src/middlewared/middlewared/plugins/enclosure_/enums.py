@@ -32,10 +32,9 @@ class ControllerModels(Enum):
 
 
 @unique
-class JbodModelsEnum(Enum):
-    ES12 = 'CELESTIC_X2012'
-    ES24 = 'ECStream_4024J'
-    ES24 = 'iX_4024J'
+class JbodModels(Enum):
+    ES12 = 'ES12'
+    ES24 = 'ES24'
     ES24F = 'ES24F'
     ES60 = 'ES60'
     ES60G2 = 'ES60G2'
