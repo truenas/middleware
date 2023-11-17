@@ -925,8 +925,8 @@ class IdmapDomainService(TDBWrapCRUDService):
         In case of registry config for clustered server, this will remove all smb4.conf
         entries for the domain associated with the id.
         """
-        if id <= 5:
-            entry = await self.get_instance(id)
+        entry = await self.get_instance(id)
+        if entry['name'] in DSType.choices():
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
         ret = await self.direct_delete(id)

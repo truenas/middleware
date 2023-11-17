@@ -32,7 +32,7 @@ def upgrade():
     default_range = (90000001, 100000000)
 
     for row in conn.execute("SELECT * FROM directoryservice_idmap_domain").fetchall():
-        if row['id'] == 5:
+        if row['idmap_domain_name'] == 'DS_TYPE_DEFAULT_DOMAIN':
             # The default domain entry wasn't dropped and so we can skip the rest of this
             return
 
@@ -48,7 +48,7 @@ def upgrade():
         'id': 5,
         'idmap_domain_name': 'DS_TYPE_DEFAULT_DOMAIN',
         'idmap_domain_idmap_backend': 'tdb',
-        'idmap_domain_options': {},
+        'idmap_domain_options': '{}',
         'idmap_domain_range_low': default_range[0],
         'idmap_domain_range_high': default_range[1],
     }
