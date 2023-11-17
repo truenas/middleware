@@ -2,6 +2,20 @@ from enum import Enum, unique
 
 
 @unique
+class ElementStatusesToIgnore(Enum):
+    UNSUPPORTED = 'unsupported'
+
+
+@unique
+class ElementDescriptorsToIgnore(Enum):
+    ADISE0 = 'arraydevicesinsubenclsr0'
+    ADS = 'array device slot'
+    EMPTY = '<empty>'
+    AD = 'arraydevices'
+    DS = 'drive slots'
+
+
+@unique
 class ControllerModels(Enum):
     F60 = 'F60'  # all nvme flash
     F100 = 'F100'  # all nvme flash

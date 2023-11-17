@@ -370,6 +370,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
             "revision": "03",
             "bsg": "/dev/bsg/0:0:0:0",
             "sg": "/dev/sg1",
+            "should_ignore": False,
             "pci": "0:0:0:0",
             "elements": {
                 "Array Device Slot": {
@@ -3577,6 +3578,7 @@ from middlewared.plugins.enclosure_.enclosure_class import Enclosure
             "revision": "3010",
             "bsg": "/dev/bsg/19:0:309:0",
             "sg": "/dev/sg1155",
+            "should_ignore": False,
             "pci": "19:0:309:0",
             "elements": {
                 "Array Device Slot": {
