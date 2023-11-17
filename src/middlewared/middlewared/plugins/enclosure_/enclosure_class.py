@@ -97,12 +97,21 @@ class Enclosure:
         try:
             dmi_model = ControllerModels[model]
         except KeyError:
-            # this shouldn't ever happen because the instantiator of this class
-            # checks DMI before we even get here but better safe than sorry
-            logger.warning('Unexpected model: %r from dmi: %r', model, self.dmi)
-            self.model = '',
-            self.controller = False
-            return
+            try:
+                # the member names of this enum just so happen to line
+                # up with the string we get from DMI, however, the MINIs
+                # get flashed with strings that have invalid characters
+                # for members of an enum. If we get here, then we change
+                # to using the parenthesis approach because that matches
+                # an entry in the enum by value
+                dmi_model = ControllerModels(model)
+            except KeyError:
+                # this shouldn't ever happen because the instantiator of this class
+                # checks DMI before we even get here but better safe than sorry
+                logger.warning('Unexpected model: %r from dmi: %r', model, self.dmi)
+                self.model = ''
+                self.controller = False
+                return
 
         t10vendor_product = f'{self.vendor}_{self.product}'
         match t10vendor_product:
