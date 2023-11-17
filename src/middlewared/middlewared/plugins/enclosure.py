@@ -563,7 +563,10 @@ class Enclosure(object):
             self.model = "E16"
         elif self.encname.startswith("HGST H4102-J"):
             self.model = "ES102"
-        elif self.encname.startswith("VikingES NDS-41022-BB"):
+        elif self.encname.startswith((
+            "VikingES NDS-41022-BB",
+            "VikingES VDS-41022-BB",
+        )):
             self.model = "ES102G2"
         elif self.encname.startswith("CELESTIC R0904"):
             self.model = "ES60"
