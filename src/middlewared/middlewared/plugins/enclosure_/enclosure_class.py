@@ -158,7 +158,7 @@ class Enclosure:
             return element['descriptor'] in ('<empty>', 'ArrayDevices', 'Drive Slots')
 
     def _get_array_device_mapping_info(self):
-        mapped_info = get_slot_info(self.model)
+        mapped_info = get_slot_info(self)
         if not mapped_info:
             return
 
@@ -174,19 +174,19 @@ class Enclosure:
 
         # Now we need to check this specific enclosure's disk slot
         # mapping information
-        ids = list()
-        if f'{self.vendor}_{self.product}' == 'AHCI_SGPIOEnclosure':
-            if self.model.startswith(('R20', 'MINI-')):
-                ids.append(('id', self.encid))
-        else:
-            ids.append(('model', self.model))
+        idkey, idvalue = 'model', self.model
+        if all((
+            self.vendor == 'AHCI',
+            self.product == 'SGPIOEnclosure',
+            any((self.is_mini, self.is_r20_series))
+        )):
+            idkey, idvalue = 'id', self.encid
 
         # Now we know the specific enclosure we're on and the specific
         # key we need to use to pull out the drive slot mapping
-        for idkey, idvalue in ids:
-            for mapkey, mapslots in mapped_info['versions'][vers_key].items():
-                if mapkey == idkey and (found := mapslots.get(idvalue)):
-                    return found
+        for mapkey, mapslots in mapped_info['versions'][vers_key].items():
+            if mapkey == idkey and (found := mapslots.get(idvalue)):
+                return found
 
     def _parse_elements(self, elements):
         final = {}
@@ -265,7 +265,7 @@ class Enclosure:
         return self.__controller
 
     @controller.setter
-    def model(self, val):
+    def controller(self, val):
         self.__controller = val
 
     @property
@@ -346,8 +346,8 @@ class Enclosure:
         return all((
             self.is_jbod(),
             self.model in (
-                self.enum.ES24.value,
-                self.enum.ES24F.value,
+                JbodModels.ES24.value,
+                JbodModels.ES24F.value,
             )
         ))
 
@@ -361,8 +361,7 @@ class Enclosure:
         return all((
             self.is_jbod(),
             self.model in (
-                self.enum.E60.value,
-                self.enum.ES60.value,
-                self.enum.ES60G2.value,
+                JbodModels.ES60.value,
+                JbodModels.ES60G2.value,
             )
         ))
