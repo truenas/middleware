@@ -1,7 +1,8 @@
 from .constants import SYSFS_SLOT_KEY, MAPPED_SLOT_KEY
+from .enums import ControllerModels, JbodModels
 
 
-def get_slot_info(model):
+def get_slot_info(enc):
     """This function returns a dictionary that maps
     drives from their original slots to their mapped slots. This
     is done solely for the purpose of displaying the enclosure
@@ -141,7 +142,7 @@ def get_slot_info(model):
             our enclosures is quite complex and this was the best mix
             of performance/maintability.
     """
-    if model == 'R40':
+    if enc.model == ControllerModels.R40.value:
         # FIXME: it's impossible to map 0-23 drives to an enclosure
         # while mapping 24-48 drives to an enclosure on this platform.
         # Both expanders in the OS are flashed the same way so we can't
@@ -169,7 +170,7 @@ def get_slot_info(model):
             }
         }
         """
-    elif model in ('F60', 'F100', 'F130', 'R30'):
+    elif any((enc.is_fseries, enc.model == ControllerModels.R30.value)):
         # these are all nvme flash systems
         return {
             'any_version': True,
@@ -192,7 +193,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model in ('R50', 'R50B', 'R50BM'):
+    elif enc.is_r50_series:
         # these platforms share same enclosure and mapping
         # but it's important to always map the eDrawer4048S1
         # enclosure device to drives 1 - 24
@@ -230,13 +231,13 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'R10':
+    elif enc.model == ControllerModels.R10.value:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             1: {SYSFS_SLOT_KEY: 0, MAPPED_SLOT_KEY: 1},
                             5: {SYSFS_SLOT_KEY: 4, MAPPED_SLOT_KEY: 2},
                             9: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 3},
@@ -258,13 +259,13 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model in ('R20', 'R20B', '3000000000000001'):
+    elif enc.model in (ControllerModels.R20.value, ControllerModels.R20B.value):
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 1},
                             6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2},
                             9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 3},
@@ -288,13 +289,13 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'R20A':
+    elif enc.model == ControllerModels.R20A.value:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             3: {SYSFS_SLOT_KEY: 2, MAPPED_SLOT_KEY: 1},
                             6: {SYSFS_SLOT_KEY: 5, MAPPED_SLOT_KEY: 2},
                             9: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 3},
@@ -318,7 +319,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'MINI-3.0-E':
+    elif enc.model == ControllerModels.MINI3E.value:
         return {
             'any_version': True,
             'versions': {
@@ -331,7 +332,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'MINI-3.0-E+':
+    elif enc.model == ControllerModels.MINI3EP.value:
         return {
             'any_version': True,
             'versions': {
@@ -348,7 +349,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'MINI-3.0-X':
+    elif enc.model == ControllerModels.MINI3X.value:
         return {
             'any_version': True,
             'versions': {
@@ -367,7 +368,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'MINI-3.0-X+':
+    elif enc.model == ControllerModels.MINI3XP.value:
         return {
             'any_version': True,
             'versions': {
@@ -380,7 +381,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'MINI-3.0-XL+':
+    elif enc.model == ControllerModels.MINI3XLP.value:
         return {
             'any_version': True,
             'versions': {
@@ -397,7 +398,7 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model == 'MINI-R':
+    elif enc.model == ControllerModels.MINIR.value:
         return {
             'any_version': True,
             'versions': {
@@ -416,13 +417,13 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model in ('H10', 'H20'):
+    elif enc.is_hseries:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             1: {SYSFS_SLOT_KEY: 8, MAPPED_SLOT_KEY: 9},
                             2: {SYSFS_SLOT_KEY: 9, MAPPED_SLOT_KEY: 10},
                             3: {SYSFS_SLOT_KEY: 10, MAPPED_SLOT_KEY: 11},
@@ -441,13 +442,13 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model in ('M60', 'M50', 'M40', 'M30'):
+    elif enc.is_mseries:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             # 1 - 24
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
@@ -469,13 +470,13 @@ def get_slot_info(model):
                 }
             }
         }
-    elif model in ('X10', 'X20'):
+    elif enc.is_xseries:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 13)
                         },
                     }
@@ -483,65 +484,65 @@ def get_slot_info(model):
             }
         }
     # JBODs
-    elif model == 'ES12':
+    elif enc.model == JbodModels.ES12.value:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 13)
                         },
                     }
                 }
             }
         }
-    elif model in ('ES24', 'ES24F'):
+    elif enc.is_24_bay_jbod:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
                     }
                 }
             }
         }
-    elif model in ('ES60', 'ES60S', 'ES60G2'):
+    elif enc.is_60_bay_jbod:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 61)
                         },
                     }
                 }
             }
         }
-    elif model == 'ES102':
+    elif enc.model == JbodModels.ES102.value:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 103)
                         },
                     }
                 }
             }
         }
-    elif model == 'ES102G2':
+    elif enc.model == JbodModels.ES102G2.value:
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'model': {
-                        model: {
+                        enc.model: {
                             # drives actually start at index 1 (not 0)
                             i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 103)
                         },
