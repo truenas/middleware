@@ -17,13 +17,17 @@ class Enclosure:
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
         self._get_model_and_controller()
-        self.sysfs_map = map_disks_to_enclosure_slots(self.pci)
-        self.disks_map = self._get_array_device_mapping_info()
-        self.elements = self._parse_elements(enc_stat['elements'])
+        self._should_ignore_enclosure()
+        self.sysfs_map, self.disks_map, self.elements = dict(), dict(), dict()
+        if not self.should_ignore:
+            self.sysfs_map = map_disks_to_enclosure_slots(self.pci)
+            self.disks_map = self._get_array_device_mapping_info()
+            self.elements = self._parse_elements(enc_stat['elements'])
 
     def asdict(self):
         """This method is what is returned in enclosure2.query"""
         return {
+            'should_ignore': self.should_ignore,  # enclosure device we dont need or expect
             'name': self.encname,  # vendor, product and revision joined by whitespace
             'model': self.model,  # M60, F100, MINI-R, etc
             'controller': self.controller,  # if True, represents the "head-unit"
@@ -38,6 +42,32 @@ class Enclosure:
             'pci': self.pci,  # the pci info (0:0:0:0)
             'elements': self.elements  # dictionary with all element types and their relevant information
         }
+
+    def _should_ignore_enclosure(self):
+        if not self.model:
+            # being unable to determine the model means many other things will not work
+            self.should_ignore = True
+        elif all((
+            (not any((self.is_rseries, self.is_mini))),
+            self.vendor == 'AHCI',
+            self.product == 'SGPIOEnclosure',
+        )):
+            # if this isn't an R20 or MINI platform and this is the Virtual AHCI
+            # enclosure, then we can ignore them
+            self.should_ignore = True
+        elif self.model in all((
+            self.is_r20_series,
+            self.model in (
+                ControllerModels.MINI3XP.value,
+                ControllerModels.MINI3E.value,
+            ),
+            self.encid == '3000000000000002'
+        )):
+            # These platforms have 2x virtual AHCI enclosures but we only map the
+            # drives on 1 of them
+            self.should_ignore = True
+        else:
+            self.should_ignore = False
 
     def _get_vendor_product_revision_and_encname(self):
         """Sends a standard INQUIRY command to the enclosure device
@@ -269,6 +299,20 @@ class Enclosure:
         self.__controller = val
 
     @property
+    def should_ignore(self):
+        """This property serves as an easy way to determine if the enclosure
+        that we're parsing meets a certain set of criteria. If the criteria
+        is not met, then we set this value to False so that we can short-circuit
+        some of the parsing logic as well as provide a value to any caller of
+        this class to more easily apply filters as necessary.
+        """
+        return self.__ignore
+
+    @should_ignore.setter
+    def should_ignore(self, val):
+        self.__ignore = val
+
+    @property
     def is_jbod(self):
         """Determine if the enclosure device is a JBOD
         (just a bunch of disks) unit.
@@ -323,6 +367,17 @@ class Enclosure:
         """
         return all((
             self.controller, not self.is_mini, self.model[0] == 'M'
+        ))
+
+    @property
+    def is_xseries(self):
+        """Determine if the enclosure device is a x-series controller.
+
+        Args:
+        Returns: bool
+        """
+        return all((
+            self.controller, self.model[0] == 'X'
         ))
 
     @property
