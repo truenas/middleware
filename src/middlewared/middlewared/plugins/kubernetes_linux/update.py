@@ -366,7 +366,7 @@ class KubernetesService(ConfigService):
         for k in filter(lambda k: data[k], ('route_v4_interface', 'route_v6_interface')):
             err_str = ''
             if data[k] not in interfaces:
-                err_str = 'Please specify a valid interface'
+                err_str = f'Please specify a valid interface (i.e {", ".join(interfaces)!r}).'
             elif not interface_states.get(data[k]):
                 err_str = 'Specified interface is not active'
             if err_str:
