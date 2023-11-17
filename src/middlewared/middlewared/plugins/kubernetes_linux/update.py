@@ -329,9 +329,8 @@ class KubernetesService(ConfigService):
                 'update Kubernetes settings. Currently, k3s cannot be used without a default route.'
             )
 
-        valid_choices = await self.route_interface_choices()
-        for k, _ in await self.validate_interfaces(data):
-            verrors.add(f'{schema}.{k}', f'Please specify a valid interface (i.e {", ".join(valid_choices)!r}).')
+        for k, _, err_s in await self.validate_interfaces(data):
+            verrors.add(f'{schema}.{k}', err_s)
 
         for k in ('route_v4', 'route_v6'):
             gateway = data[f'{k}_gateway']
