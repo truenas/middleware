@@ -7,6 +7,7 @@ from middlewared.schema import accepts, Dict, Str, Int
 from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
+
 from .enclosure_class import Enclosure
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
@@ -141,13 +142,7 @@ class Enclosure2Service(Service):
         }
         dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
         for i in self.get_ses_enclosures(dmi) + map_nvme(dmi):
-            model = i.get('model', '')
-            if not model.startswith(('R20', 'MINI')) and i['name'].startswith('AHCI SGPIOEnclosure'):
-                # If this isn't an R20 or a MINI, we can safely ignore the virtual AHCI enclosure
-                continue
-            elif model in ('R20', 'R20A', 'R20B', 'MINI-3.0-X+', 'MINI-3.0-E') and i['id'] == '3000000000000002':
-                # These platforms have 2x virtual AHCI enclosures but we only map the drives
-                # on 1 of them
+            if i.pop('should_ignore', False):
                 continue
 
             # this is a user-provided string to label the enclosures so we'll add it at as a
