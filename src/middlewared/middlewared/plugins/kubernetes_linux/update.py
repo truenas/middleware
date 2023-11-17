@@ -362,12 +362,13 @@ class KubernetesService(ConfigService):
             i['id']: i.get('state', {}).get('link_state') == 'LINK_STATE_UP'
             for i in await self.middleware.call('interface.query')
         }
+        valid_choices = [i for i in filter(lambda k: interface_states.get(k), interfaces)]
         for k in filter(lambda k: data[k], ('route_v4_interface', 'route_v6_interface')):
             err_str = ''
             if data[k] not in interfaces:
-                err_str = f'Please specify a valid interface (i.e {", ".join(interfaces)!r}).'
+                err_str = f'Please specify a valid interface (i.e {", ".join(valid_choices)!r}).'
             elif not interface_states.get(data[k]):
-                err_str = 'Specified interface is not active'
+                err_str = f'Please specify a valid interface which is active (i.e {", ".join(valid_choices)!r}).'
             if err_str:
                 errors.append((k, data[k], err_str))
         return errors
