@@ -359,10 +359,18 @@ class KubernetesService(ConfigService):
     async def validate_interfaces(self, data):
         errors = []
         interfaces = await self.route_interface_choices()
-        for k in filter(
-            lambda k: data[k] and data[k] not in interfaces, ('route_v4_interface', 'route_v6_interface')
-        ):
-            errors.append((k, data[k]))
+        interface_states = {
+            i['id']: i.get('state', {}).get('link_state') == 'LINK_STATE_UP'
+            for i in await self.middleware.call('interface.query')
+        }
+        for k in filter(lambda k: data[k], ('route_v4_interface', 'route_v6_interface')):
+            err_str = ''
+            if data[k] not in interfaces:
+                err_str = 'Please specify a valid interface'
+            elif not interface_states.get(data[k]):
+                err_str = 'Specified interface is not active'
+            if err_str:
+                errors.append((k, data[k], err_str))
         return errors
 
     @private
