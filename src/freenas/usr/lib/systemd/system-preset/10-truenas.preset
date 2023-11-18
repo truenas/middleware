@@ -25,6 +25,7 @@ disable snmp-agent.service
 disable ssh*
 disable wg-quick*
 disable nut-*
+disable nut.target
 disable wsdd.service
 disable libvirtd.service
 disable winbind.service
