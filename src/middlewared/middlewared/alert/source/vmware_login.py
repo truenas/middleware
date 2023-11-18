@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, OneShotAlertClass, AlertCategory, AlertLevel, Alert
 
 
 class VMWareLoginFailedAlertClass(AlertClass, OneShotAlertClass):

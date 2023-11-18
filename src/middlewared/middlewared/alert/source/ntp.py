@@ -43,7 +43,5 @@ class NTPHealthCheckAlertSource(AlertSource):
         if peer.offset_in_secs < 300:
             return
 
-        return Alert(
-            NTPHealthCheckAlertClass,
-            {'reason': f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'}
-        )
+        msg = f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'
+        return Alert(NTPHealthCheckAlertClass, {'reason': msg})

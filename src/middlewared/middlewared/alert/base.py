@@ -468,8 +468,8 @@ def format_alert(alert, node_map):
     return (f"{node_map[alert.node]} - " if node_map else "") + alert.formatted
 
 
-def ellipsis(s, l):
-    if len(s) <= l:
-        return s
+def ellipsis(a, b):
+    if len(a) <= b:
+        return a
 
-    return s[:(l - 1)] + "…"
+    return a[:(b - 1)] + "…"
