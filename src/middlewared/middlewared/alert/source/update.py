@@ -6,7 +6,7 @@ class UpdateFailedAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
     title = "Update Failed"
-    text = "Update failed. See /data/update.failed for details."
+    text = f"Update failed. See {UPDATE_FAILED_SENTINEL} for details."
 
 
 class UpdateFailedAlertSource(FilePresenceAlertSource):
