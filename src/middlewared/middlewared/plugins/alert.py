@@ -207,7 +207,7 @@ class AlertService(Service):
         })
 
     @private
-    async def load(self):
+    def load_impl(self):
         for module in load_modules(os.path.join(get_middlewared_dir(), "alert", "source")):
             for cls in load_classes(module, AlertSource, (FilePresenceAlertSource, ThreadedAlertSource)):
                 source = cls(self.middleware)
@@ -220,6 +220,10 @@ class AlertService(Service):
         ):
             for cls in load_classes(module, _AlertService, (ThreadedAlertService, ProThreadedAlertService)):
                 ALERT_SERVICES_FACTORIES[cls.name()] = cls
+
+    @private
+    async def load(self):
+        await self.middleware.run_in_thread(self.load_impl)
 
     @private
     async def initialize(self, load=True):
