@@ -326,7 +326,7 @@ class FilePresenceAlertSource(AlertSource):
     klass = NotImplemented
 
     async def check(self):
-        if os.path.exists(self.path):
+        if await self.middleware.run_in_thread(os.path.exists, self.path):
             return Alert(self.klass)
 
 

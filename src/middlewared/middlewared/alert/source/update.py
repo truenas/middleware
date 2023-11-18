@@ -1,16 +1,5 @@
-import logging
-
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, FilePresenceAlertSource
-
-
-log = logging.getLogger("update_check_alertmod")
-
-
-class HasUpdateAlertClass(AlertClass):
-    category = AlertCategory.SYSTEM
-    level = AlertLevel.INFO
-    title = "Update Available"
-    text = "A system update is available. Go to System -> Update to download and apply the update."
+from middlewared.plugins.update_.utils import UPDATE_FAILED_SENTINEL
 
 
 class UpdateFailedAlertClass(AlertClass):
@@ -21,5 +10,5 @@ class UpdateFailedAlertClass(AlertClass):
 
 
 class UpdateFailedAlertSource(FilePresenceAlertSource):
-    path = "/data/update.failed"
+    path = UPDATE_FAILED_SENTINEL
     klass = UpdateFailedAlertClass
