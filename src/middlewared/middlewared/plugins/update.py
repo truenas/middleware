@@ -306,9 +306,7 @@ class UpdateService(Service):
     @private
     async def download_update(self, *args):
         await self.middleware.call('network.general.will_perform_activity', 'update')
-        success = await self.middleware.call('update.download_impl', *args)
-        await self.middleware.call('alert.alert_source_clear_run', 'HasUpdate')
-        return success
+        return await self.middleware.call('update.download_impl', *args)
 
     @accepts(
         Str('path'),

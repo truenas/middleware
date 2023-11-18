@@ -2,6 +2,7 @@ import pathlib
 import tempfile
 
 from middlewared.service import private, Service
+from middlewared.plugins.update_.utils import UPDATE_FAILED_SENTINEL
 
 
 class SystemService(Service):
@@ -9,14 +10,14 @@ class SystemService(Service):
     def gather_update_failed(self):
         result = ""
         if (text := self.gather_update_failed_from_mountpoint("/")) is not None:
-            result += f"=== /data/update.failed ===\n\n{text}\n\n"
+            result += f"=== {UPDATE_FAILED_SENTINEL} ===\n\n{text}\n\n"
         for be in self.middleware.call_sync("bootenv.query", [["activated", "!=", True]]):
             try:
                 if (text := self.gather_update_failed_from_be(be["id"])) is not None:
-                    result += f"=== {be['id']}/data/update.failed ===\n\n{text}\n\n"
+                    result += f"=== {be['id']}{UPDATE_FAILED_SENTINEL} ===\n\n{text}\n\n"
             except Exception:
                 self.logger.warning(
-                    "Unable to gather /data/update.failed from boot environment %r", be["id"], exc_info=True,
+                    "Unable to gather {UPDATE_FAILED_SENTINEL} from boot environment %r", be["id"], exc_info=True,
                 )
 
         return result
@@ -60,6 +61,8 @@ class SystemService(Service):
 
     @private
     def gather_update_failed_from_mountpoint(self, path):
-        path = pathlib.Path(path) / "data/update.failed"
-        if path.exists():
+        path = pathlib.Path(path) / UPDATE_FAILED_SENTINEL[1:]  # remove the preceeding `/`
+        try:
             return path.read_text("utf-8", "ignore").rstrip()
+        except FileNotFoundError:
+            pass
