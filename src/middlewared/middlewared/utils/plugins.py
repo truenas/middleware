@@ -7,7 +7,6 @@ import os
 import sys
 
 from middlewared.schema import Schemas
-from middlewared.utils import osc
 
 logger = logging.getLogger(__name__)
 
@@ -33,28 +32,11 @@ def load_modules(directory, base=None, depth=0):
             base = '.'.join(os.path.relpath(directory, new_module_path).split('/'))
 
     _, dirs, files = next(os.walk(directory))
+    for f in filter(lambda x: x[-3:] == '.py' and x.find('_freebsd') == -1, files):
+        yield importlib.import_module(base if f == '__init__.py' else f'{base}.{f[:-3]}')
 
-    for f in files:
-        if not f.endswith('.py'):
-            continue
-        name = f[:-3]
-
-        if any(name.endswith(f'_{suffix}') for suffix in ('base', 'freebsd', 'linux')):
-            if name.rsplit('_', 1)[-1].upper() != osc.SYSTEM:
-                continue
-
-        if name == '__init__':
-            mod_name = base
-        else:
-            mod_name = f'{base}.{name}'
-
-        yield importlib.import_module(mod_name)
-
-    for f in dirs:
+    for f in filter(lambda x: x.find('_freebsd') == -1, dirs):
         if depth > 0:
-            if f.endswith(('_freebsd', '_linux')):
-                if f.rsplit('_', 1)[-1].upper() != osc.SYSTEM:
-                    continue
             path = os.path.join(directory, f)
             yield from load_modules(path, f'{base}.{f}', depth - 1)
 
