@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import enum
 import errno
@@ -24,7 +25,12 @@ class KeychainCredentialType:
 
     used_by_delegates = []
 
+    def validate_and_pre_save_impl(self, middleware, verrors, schema_name, attributes):
+        pass
+
     async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
+        """If blocking I/O must be called in here, then put the logic in the *_impl method
+        and call it using asyncio.to_thread"""
         pass
 
 
@@ -114,7 +120,8 @@ class SSHKeyPair(KeychainCredentialType):
         SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate,
     ]
 
-    async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
+    def validate_and_pre_save_impl(self, middleware, verrors, schema_name, attributes):
+        opts = {"capture_output": True, "check": False, "encoding": "utf8"}
         if attributes["private_key"]:
             # TODO: It would be best if we use crypto plugin for this but as of right now we don't have support
             #  for openssh keys -
@@ -128,7 +135,7 @@ class SSHKeyPair(KeychainCredentialType):
                 f.write(attributes["private_key"])
                 f.flush()
 
-                proc = await run(["ssh-keygen", "-y", "-f", f.name], check=False, encoding="utf8")
+                proc = subprocess.run(["ssh-keygen", "-y", "-f", f.name], **opts)
                 if proc.returncode == 0:
                     public_key = proc.stdout
                 else:
@@ -156,10 +163,15 @@ class SSHKeyPair(KeychainCredentialType):
             f.write(attributes["public_key"])
             f.flush()
 
-            proc = await run(["ssh-keygen", "-l", "-f", f.name], check=False, encoding="utf8")
+            proc = subprocess.run(["ssh-keygen", "-l", "-f", f.name], **opts)
             if proc.returncode != 0:
                 verrors.add(f"{schema_name}.public_key", "Invalid public key")
                 return
+
+    async def validate_and_pre_save(self, middleware, verrors, schema_name, attributes):
+        return await asyncio.to_thread(
+            self.validate_and_pre_save_impl, middleware, verrors, schema_name, attributes
+        )
 
     def _normalize_public_key(self, public_key):
         return " ".join(public_key.split()[:2]).strip()
