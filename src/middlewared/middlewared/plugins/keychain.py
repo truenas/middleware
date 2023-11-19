@@ -11,7 +11,7 @@ import urllib.parse
 import ssl
 
 from middlewared.client import Client, ClientException
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Password, Ref, returns, Str, ValidationErrors
 from middlewared.service import CRUDService, private
 import middlewared.sqlalchemy as sa
@@ -463,7 +463,7 @@ class KeychainCredentialService(CRUDService):
     async def get_of_type(self, id_, type_):
         try:
             credential = await self.middleware.call("keychaincredential.query", [["id", "=", id_]], {"get": True})
-        except IndexError:
+        except MatchNotFound:
             raise CallError("Credential does not exist", errno.ENOENT)
         else:
             if credential["type"] != type_:
@@ -680,7 +680,7 @@ class KeychainCredentialService(CRUDService):
         ssh = self.middleware.call_sync("ssh.config")
         try:
             user = self.middleware.call_sync("user.query", [("username", "=", data["username"])], {"get": True})
-        except IndexError:
+        except MatchNotFound:
             raise CallError(f"User {data['username']} does not exist")
 
         if user["home"].startswith("/nonexistent") or not os.path.exists(user["home"]):
@@ -724,7 +724,7 @@ class KeychainCredentialService(CRUDService):
     async def get_ssh_key_pair_with_private_key(self, id_):
         try:
             credential = await self.middleware.call("keychaincredential.query", [["id", "=", id_]], {"get": True})
-        except IndexError:
+        except MatchNotFound:
             return None
 
         if credential["type"] != "SSH_KEY_PAIR":
