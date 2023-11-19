@@ -18,6 +18,11 @@ def main():
         return
 
     with Client() as c:
+        dev_name = device.removeprefix("/dev/")
+        info = c.call("device.get_disk", dev_name, False, True)
+        if info is not None and (serial := info.get(dev_name)):
+            " ".join([device, f"({serial!r})"])
+
         c.call("alert.oneshot_create", "SMART", {"device": device, "message": message})
 
 
