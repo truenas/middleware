@@ -226,14 +226,18 @@ class DeviceService(Service):
         return default
 
     @private
-    def get_disk(self, name):
+    def get_disk(self, name, get_partitions=False, serial_only=False):
         context = pyudev.Context()
         try:
             block_device = pyudev.Devices.from_name(context, 'block', name)
+            if serial_only:
+                return {name: self.get_disk_serial(block_device)}
+            else:
+                return self.get_disk_details(context, block_device, get_partitions)
         except pyudev.DeviceNotFoundByNameError:
-            return None
-
-        return self.get_disk_details(context, block_device)
+            return
+        except Exception:
+            self.logger.debug('Failed to retrieve disk details for %s', name, exc_info=True)
 
     def _get_type_and_rotation_rate(self, disk_data, device_path):
         if disk_data['rota']:
