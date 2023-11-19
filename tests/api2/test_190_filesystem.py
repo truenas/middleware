@@ -4,6 +4,7 @@
 # License: BSD
 
 import pytest
+import stat
 import sys
 import os
 apifolder = os.getcwd()
@@ -380,3 +381,11 @@ def file_and_directory():
 def test_type_filter(file_and_directory, query, result):
     listdir = call("filesystem.listdir", f"/mnt/{file_and_directory}", query)
     assert {item["name"] for item in listdir} == result, listdir
+
+
+def test_mkdir_mode():
+    with dataset("test_mkdir_mode") as ds:
+        testdir = os.path.join("/mnt", ds, "testdir")
+        call("filesystem.mkdir", testdir, {'mode': '777'})
+        st = call("filesystem.stat", testdir)
+        assert stat.S_IMODE(st["mode"]) == 0o777
