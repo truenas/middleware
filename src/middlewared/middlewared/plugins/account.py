@@ -426,7 +426,7 @@ class UserService(CRUDService):
         if create:
             target = os.path.join(path, username)
             try:
-                os.mkdir(target, mode=int(mode, 8))
+                self.middleware.call_sync('filesystem.mkdir', path, {'mode': mode})
             except FileExistsError:
                 if not os.path.isdir(target):
                     raise CallError(
@@ -1378,7 +1378,7 @@ class UserService(CRUDService):
             return
 
         if not os.path.isdir(sshpath):
-            os.mkdir(sshpath, mode=0o700)
+            self.middleware.call_sync('filesystem.mkdir', sshpath, {'mode': '700'})
         if not os.path.isdir(sshpath):
             raise CallError(f'{sshpath} is not a directory')
 

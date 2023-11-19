@@ -16,7 +16,7 @@ from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
-from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str
+from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
 from middlewared.utils import filter_list
 from middlewared.utils.osc import getmntinfo
@@ -129,14 +129,21 @@ class FilesystemService(Service):
         mntinfo = getmntinfo()
         return filter_list(list(mntinfo.values()), filters, options)
 
-    @accepts(Str('path'))
+    @accepts(
+        Str('path'),
+        Dict(
+            'options',
+            UnixPerm('mode', default='755'),
+        ),
+    )
     @returns(Ref('path_entry'))
-    def mkdir(self, path):
+    def mkdir(self, path, options):
         """
         Create a directory at the specified path.
         """
         path = self.resolve_cluster_path(path)
         is_clustered = path.startswith("/cluster")
+        mode = int(options['mode'], 8)
 
         p = pathlib.Path(path)
         if not p.is_absolute():
@@ -149,9 +156,13 @@ class FilesystemService(Service):
         if not is_clustered and not realpath.startswith('/mnt/'):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
-        os.mkdir(path)
+        os.mkdir(path, mode=mode)
         stat = p.stat()
-        data = {
+        if statlib.S_IMODE(stat.st_mode) != mode:
+            # This may happen if requested mode is greater than umask
+            os.chmod(path, mode)
+
+        return {
             'name': p.parts[-1],
             'path': path,
             'realpath': realpath,
@@ -161,9 +172,9 @@ class FilesystemService(Service):
             'acl': False if self.acl_is_trivial(path) else True,
             'uid': stat.st_uid,
             'gid': stat.st_gid,
+            'is_mountpoint': False,
+            'is_ctldir': False,
         }
-
-        return data
 
     @private
     def statx_entry_impl(self, entry, options=None):
