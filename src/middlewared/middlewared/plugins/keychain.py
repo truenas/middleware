@@ -671,15 +671,15 @@ class KeychainCredentialService(CRUDService):
         Str("username", default="root"),
         Str("public_key", required=True),
     ))
-    async def ssh_pair(self, data):
+    def ssh_pair(self, data):
         """
         Receives public key, storing it to accept SSH connection and return
         pertinent SSH data of this machine.
         """
-        service = await self.middleware.call("service.query", [("service", "=", "ssh")], {"get": True})
-        ssh = await self.middleware.call("ssh.config")
+        service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
+        ssh = self.middleware.call_sync("ssh.config")
         try:
-            user = await self.middleware.call("user.query", [("username", "=", data["username"])], {"get": True})
+            user = self.middleware.call_sync("user.query", [("username", "=", data["username"])], {"get": True})
         except IndexError:
             raise CallError(f"User {data['username']} does not exist")
 
@@ -688,24 +688,22 @@ class KeychainCredentialService(CRUDService):
 
         # Make sure SSH is enabled
         if not service["enable"]:
-            await self.middleware.call("service.update", "ssh", {"enable": True})
+            self.middleware.call_sync("service.update", "ssh", {"enable": True})
 
         if service["state"] != "RUNNING":
-            await self.middleware.call("service.start", "ssh")
+            self.middleware.call_sync("service.start", "ssh")
 
             # This might be the first time of the service being enabled
             # which will then result in new host keys we need to grab
-            ssh = await self.middleware.call("ssh.config")
+            ssh = self.middleware.call_sync("ssh.config")
 
         # If .ssh dir does not exist, create it
         dotsshdir = os.path.join(user["home"], ".ssh")
-        if not os.path.exists(dotsshdir):
-            os.mkdir(dotsshdir)
-            os.chown(dotsshdir, user["uid"], user["group"]["bsdgrp_gid"])
+        os.makedirs(dotsshdir, exist_ok=True)
+        os.chown(dotsshdir, user["uid"], user["group"]["bsdgrp_gid"])
 
         # Write public key in user authorized_keys for SSH
-        authorized_keys_file = f"{dotsshdir}/authorized_keys"
-        with open(authorized_keys_file, "a+") as f:
+        with open(f"{dotsshdir}/authorized_keys", "a+") as f:
             f.seek(0)
             if data["public_key"] not in f.read():
                 f.write("\n" + data["public_key"] + "\n")
