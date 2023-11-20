@@ -25,6 +25,7 @@ class CPUTempPlugin(GraphBase):
     title = 'CPU Temperature'
     uses_identifiers = False
     vertical_label = 'Celsius'
+    skip_zero_values_in_aggregation = True
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
         return 'cputemp.temperatures'
@@ -221,6 +222,7 @@ class DiskTempPlugin(GraphBase):
     title = 'Disks Temperature'
     vertical_label = 'Celsius'
     disk_mapping = {}
+    skip_zero_values_in_aggregation = True
 
     def get_title(self):
         return 'Disk Temperature {identifier}'
