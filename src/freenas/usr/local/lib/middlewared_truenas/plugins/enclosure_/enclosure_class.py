@@ -65,7 +65,7 @@ class Enclosure(object):
             model = 'ES24F'
         elif self.encname.startswith('CELESTIC R0904'):
             model = 'ES60'
-        elif self.encname.startswith('HGST H4060-J 3010'):
+        elif self.encname.startswith('HGST H4060-J'):
             model = 'ES60G2'
         elif self.encname.startswith('HGST H4102-J'):
             model = 'ES102'
