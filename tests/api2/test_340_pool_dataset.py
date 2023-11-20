@@ -2,6 +2,7 @@
 
 # License: BSD
 
+import errno
 import sys
 import os
 import pytest
@@ -10,6 +11,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST, PUT, SSH_TEST, wait_on_job, make_ws_request
 from auto_config import ip, pool_name, user, password
+from middlewared.client import ClientException
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call
 
@@ -412,18 +414,16 @@ def test_33_simplified_charts_api(request):
     ]
     ACL_PAYLOAD = [
        {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'MODIFY'},
-       {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'}
+       {'id_type': 'GROUP', 'id': GROUP_TO_ADD, 'access': 'READ'},
+       {'id_type': 'USER', 'id': USER_TO_ADD, 'access': 'FULL_CONTROL'},
     ]
 
     # TEST NFS4 ACL type
     with dataset_asset('APPS_NFS4', {'share_type': 'APPS'}) as ds:
-        res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
+        call('filesystem.add_to_acl', {
             'path': f'/mnt/{ds}',
             'entries': NFS4_ACL_PAYLOAD
-        }]})
-        assert res.get('error') is None, res['error']
-        job_status = wait_on_job(res['result'], 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        }, job=True)
 
         results = POST('/filesystem/getacl/', {'path': f'/mnt/{ds}'})
         assert results.status_code == 200, results.text
@@ -439,22 +439,20 @@ def test_33_simplified_charts_api(request):
         results = SSH_TEST(f'touch /mnt/{ds}/canary', user, password, ip)
         assert results['result'] is True, results
 
-        res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
-            'path': f'/mnt/{ds}',
-            'entries': NFS4_ACL_PAYLOAD
-        }]})
-        job_status = wait_on_job(res['result'], 180)
-        assert job_status['state'] != 'SUCCESS', str(job_status['results'])
+        with pytest.raises(ClientException) as ve:
+            call('filesystem.add_to_acl', {
+                'path': f'/mnt/{ds}',
+                'entries': NFS4_ACL_PAYLOAD
+            }, job=True)
+            assert ve.value.errno == errno.EPERM
 
         # check behavior of using force option.
         # second call with `force` specified should succeed
-        res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
+        call('filesystem.add_to_acl', {
             'path': f'/mnt/{ds}',
             'entries': NFS4_ACL_PAYLOAD,
             'options': {'force': True}
-        }]})
-        job_status = wait_on_job(res['result'], 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        }, job=True)
 
         # we already added the entry earlier.
         # this check makes sure we're not adding duplicate entries.
@@ -467,13 +465,10 @@ def test_33_simplified_charts_api(request):
         assert check_for_entry(acl, 'USER', USER2_TO_ADD, {'BASIC': 'FULL_CONTROL'}), str(acl)
 
     with dataset_asset('APPS_POSIX') as ds:
-        res = make_ws_request(ip, {'msg': 'method', 'method': 'filesystem.add_to_acl', 'params': [{
+        call('filesystem.add_to_acl', {
             'path': f'/mnt/{ds}',
             'entries': ACL_PAYLOAD
-        }]})
-        assert res.get('error') is None, res['error']
-        job_status = wait_on_job(res['result'], 180)
-        assert job_status['state'] == 'SUCCESS', str(job_status['results'])
+        }, job=True)
 
         results = POST('/filesystem/getacl/', {'path': f'/mnt/{ds}'})
         assert results.status_code == 200, results.text

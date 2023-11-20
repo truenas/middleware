@@ -728,7 +728,7 @@ class FilesystemService(Service, ACLBase):
     @private
     def add_to_acl_posix(self, acl, entries):
         def convert_perm(perm):
-            if perm == 'MODIFY':
+            if perm == 'MODIFY' or perm == 'FULL_CONTROL':
                 return {'READ': True, 'WRITE': True, 'EXECUTE': True}
 
             if perm == 'READ':
