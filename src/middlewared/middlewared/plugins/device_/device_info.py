@@ -231,7 +231,7 @@ class DeviceService(Service):
         try:
             block_device = pyudev.Devices.from_name(context, 'block', name)
             if serial_only:
-                return {name: self.get_disk_serial(block_device)}
+                return {'serial': self.get_disk_serial(block_device)}
             else:
                 return self.get_disk_details(context, block_device, get_partitions)
         except pyudev.DeviceNotFoundByNameError:
