@@ -36,6 +36,7 @@ class GraphBase(metaclass=GraphMeta):
     title = None
     uses_identifiers = True
     vertical_label = None
+    skip_zero_values_in_aggregation = False
 
     AGG_MAP = {
         'min': min,
@@ -111,7 +112,7 @@ class GraphBase(metaclass=GraphMeta):
                 value = row[idx]
 
                 # Skip None values
-                if value is None:
+                if value is None or (self.skip_zero_values_in_aggregation and value == 0):
                     continue
 
                 # Update the aggregation values
