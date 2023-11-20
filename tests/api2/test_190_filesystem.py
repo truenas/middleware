@@ -110,18 +110,14 @@ def test_05_set_immutable_flag_on_path(request):
 
     with directory(t_path) as d:
         for flag_set in (True, False):
-            POST('/filesystem/set_immutable/', {'set_flag': flag_set, 'path': d})
+            call('filesystem.set_immutable',  flag_set, d)
             # We test 2 things
             # 1) Writing content to the parent path fails/succeeds based on "set"
             # 2) "is_immutable_set" returns sane response
-            results = POST('/filesystem/mkdir', f'{t_child_path}_{flag_set}')
-            assert results.status_code == (500 if flag_set else 200), results.text
+            call('filesystem.mkdir', f'{t_child_path}_{flag_set}')
 
-            results = POST('/filesystem/is_immutable/', t_path)
-            assert results.status_code == 200, results.text
-            result = results.json()
-            assert isinstance(result, bool) is True, results.text
-            assert result == flag_set, 'Immutable flag is still not set' if flag_set else 'Immutable flag is still set'
+            is_immutable = call('filesystem.is_immutable', t_path)
+            assert is_immutable == flag_set, 'Immutable flag is still not set' if flag_set else 'Immutable flag is still set'
 
 
 def test_06_test_filesystem_listdir_exclude_non_mounts():
@@ -386,6 +382,6 @@ def test_type_filter(file_and_directory, query, result):
 def test_mkdir_mode():
     with dataset("test_mkdir_mode") as ds:
         testdir = os.path.join("/mnt", ds, "testdir")
-        call("filesystem.mkdir", testdir, {'mode': '777'})
+        call("filesystem.mkdir", {'path': testdir, 'mode': '777'})
         st = call("filesystem.stat", testdir)
         assert stat.S_IMODE(st["mode"]) == 0o777
