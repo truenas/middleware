@@ -615,14 +615,16 @@ def test_disk_stats():
 def test_network_stats():
     interfaces = ['enp1s0']
     for interface_name, metrics in get_interface_stats(NETDATA_ALL_METRICS, interfaces).items():
-        assert metrics['received_bytes'] == normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'received', 0),
-            multiplier=1000, divisor=8) / NETDATA_UPDATE_EVERY
-        assert metrics['sent_bytes'] == normalize_value(
+        send_bytes_rate = normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'sent', 0),
-            multiplier=1000, divisor=8) / NETDATA_UPDATE_EVERY
-        assert metrics['received_bytes_rate'] == metrics['received_bytes'] / NETDATA_UPDATE_EVERY
-        assert metrics['sent_bytes_rate'] == metrics['sent_bytes'] / NETDATA_UPDATE_EVERY
+            multiplier=1000, divisor=8
+        )
+        received_bytes_rate = normalize_value(
+            safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'received', 0),
+            multiplier=1000, divisor=8
+        )
+        assert metrics['received_bytes_rate'] == received_bytes_rate
+        assert metrics['sent_bytes_rate'] == send_bytes_rate
         assert metrics['speed'] == normalize_value(safely_retrieve_dimension(
             NETDATA_ALL_METRICS, f'net_speed.{interface_name}', 'speed', 0), divisor=1000
         )
