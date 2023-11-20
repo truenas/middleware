@@ -134,6 +134,7 @@ class FilesystemService(Service):
         Dict(
             'options',
             UnixPerm('mode', default='755'),
+            Bool('raise_chmod_error', default=True)
         ),
         roles=['FILESYSTEM_DATA_WRITE']
     )
@@ -141,6 +142,17 @@ class FilesystemService(Service):
     def mkdir(self, path, options):
         """
         Create a directory at the specified path.
+
+        The following options are supported:
+
+        `mode` - specify the permissions to set on the new directory (0o755 is default).
+        `raise_chmod_error` - choose whether to raise an exception if the attempt to set
+        mode fails. In this case, the newly created directory will be removed to prevent
+        use with unintended permissions.
+
+        NOTE: if chmod error is skipped, the resulting `mode` key in mkdir response will
+        indicate the current permissions on the directory and not the permissions specified
+        in the mkdir payload
         """
         path = self.resolve_cluster_path(path)
         is_clustered = path.startswith("/cluster")
@@ -161,7 +173,18 @@ class FilesystemService(Service):
         stat = p.stat()
         if statlib.S_IMODE(stat.st_mode) != mode:
             # This may happen if requested mode is greater than umask
-            os.chmod(path, mode)
+            # or if underlying dataset has restricted aclmode and ACL is present
+            try:
+                os.chmod(path, mode)
+            except Exception:
+                if options['raise_chmod_error']:
+                    os.rmdir(path)
+                    raise
+
+                self.logger.debug(
+                    '%s: failed to set mode %s on path after mkdir call',
+                    path, options['mode'], exc_info=True
+                )
 
         return {
             'name': p.parts[-1],
