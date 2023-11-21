@@ -101,6 +101,7 @@ class InterfaceService(CRUDService):
         datastore_primary_key_type = 'string'
         namespace_alias = 'interfaces'
         cli_namespace = 'network.interface'
+        role_prefix = 'NETWORK_INTERFACE'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -566,7 +567,7 @@ class InterfaceService(CRUDService):
     async def get_original_datastores(self):
         return self._original_datastores
 
-    @accepts()
+    @accepts(roles=['NETWORK_INTERFACE_WRITE'])
     @returns(Bool())
     async def has_pending_changes(self):
         """
@@ -574,7 +575,7 @@ class InterfaceService(CRUDService):
         """
         return bool(self._original_datastores)
 
-    @accepts()
+    @accepts(roles=['NETWORK_INTERFACE_WRITE'])
     @returns()
     async def rollback(self):
         """
@@ -604,7 +605,7 @@ class InterfaceService(CRUDService):
         if clear_cache:
             self._original_datastores = {}
 
-    @accepts()
+    @accepts(roles=['NETWORK_INTERFACE_WRITE'])
     @returns()
     async def checkin(self):
         """
@@ -615,7 +616,7 @@ class InterfaceService(CRUDService):
         """
         return await self.checkin_impl(clear_cache=True)
 
-    @accepts()
+    @accepts(roles=['NETWORK_INTERFACE_WRITE'])
     @returns()
     async def cancel_rollback(self):
         """
@@ -625,7 +626,7 @@ class InterfaceService(CRUDService):
         """
         return await self.checkin_impl(clear_cache=False)
 
-    @accepts()
+    @accepts(roles=['NETWORK_INTERFACE_WRITE'])
     @returns(Int('remaining_seconds', null=True))
     async def checkin_waiting(self):
         """
@@ -642,7 +643,7 @@ class InterfaceService(CRUDService):
         'options',
         Bool('rollback', default=True),
         Int('checkin_timeout', default=60),
-    ))
+    ), roles=['NETWORK_INTERFACE_WRITE'])
     @returns()
     async def commit(self, options):
         """

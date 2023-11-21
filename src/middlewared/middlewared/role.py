@@ -25,10 +25,15 @@ ROLES = {
                                               'FILESYSTEM_DATA_WRITE']),
 
     'FULL_ADMIN': Role(full_admin=True),
-    'READONLY': Role(includes=['ALERT_LIST_READ', 'FILESYSTEM_ATTRS_READ']),
+    'READONLY': Role(includes=['ALERT_LIST_READ', 'FILESYSTEM_ATTRS_READ', 'NETWORK_GENERAL_READ']),
 
     # Alert roles
     'ALERT_LIST_READ': Role(),
+
+    # Network roles
+    'NETWORK_GENERAL_READ': Role(),
+    'NETWORK_INTERFACE_READ': Role(),
+    'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
 
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
