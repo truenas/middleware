@@ -166,6 +166,14 @@ class GlusterPeerService(CRUDService):
                 'enable': False, 'node_uuid': peer_uuid
             })
 
+    @private
+    @job(lock=GLUSTER_JOB_LOCK)
+    async def detach_all(self, job):
+        if await self.middleware.call('cluster.utils.is_clustered'):
+            raise CallError('Detaching all peers from cluster may not be performed while clustering enabled')
+
+        await self.middleware.call('gluster.method.run', peer.detach_all)
+
     @accepts(Dict(
         'peer_status',
         Bool('localhost', default=True),
