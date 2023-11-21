@@ -165,7 +165,7 @@ class Enclosure:
             case 'HGST_H4102-J':
                 self.model = JbodModels.ES102.value
                 self.controller = False
-            case 'VikingES_NDS-41022-BB':
+            case 'VikingES_NDS-41022-BB' | 'VikingES_VDS-41022-BB':
                 self.model = JbodModels.ES102G2.value
                 self.controller = False
             case _:
