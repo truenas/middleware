@@ -141,3 +141,18 @@ class RoleManager:
             self.allowlists_for_roles[role]
             for role in self.roles_for_role(role)
         ], [])
+
+    def roles_for_method(self, method_name):
+        roles = set(self.methods.get(method_name, []))
+
+        changed = True
+        while changed:
+            changed = False
+            for role_name, role in self.roles.items():
+                if role_name not in roles:
+                    for child_role_name in role.includes:
+                        if child_role_name in roles:
+                            roles.add(role_name)
+                            changed = True
+
+        return sorted(roles)

@@ -270,6 +270,12 @@
                      </div>
                    </th></tr>
                    % endif
+                   % if method['roles']:
+                   <tr><th>
+                     This method is accessible to the users granted with the following roles:
+                       <span style="font-weight: normal;">${', '.join(method['roles'])}</span>
+                   </th></tr>
+                   % endif
                  </thead>
                  <tbody>
                    <tr><td>

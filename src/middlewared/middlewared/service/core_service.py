@@ -477,6 +477,7 @@ class CoreService(Service):
                     'downloadable': hasattr(method, '_job') and 'output' in method._job['pipes'],
                     'uploadable': hasattr(method, '_job') and 'input' in method._job['pipes'],
                     'check_pipes': hasattr(method, '_job') and method._job['pipes'] and method._job['check_pipes'],
+                    'roles': self.middleware.role_manager.roles_for_method(method_name),
                     **method_schemas,
                 }
 
