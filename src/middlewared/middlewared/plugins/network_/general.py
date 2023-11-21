@@ -10,7 +10,7 @@ class NetworkGeneralService(Service):
         namespace = 'network.general'
         cli_namespace = 'network.general'
 
-    @accepts()
+    @accepts(roles=['NETWORK_GENERAL_READ'])
     @returns(
         Dict(
             'network_summary',
