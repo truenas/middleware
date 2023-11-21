@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from middlewared.schema import accepts, Bool, Datetime, Dict, Float, Int, List, returns, Str
-from middlewared.service import no_auth_required, pass_app, private, Service, throttle
+from middlewared.service import no_auth_required, no_authz_required, pass_app, private, Service, throttle
 from middlewared.utils import sw_buildtime
 
 
@@ -93,7 +93,9 @@ class SystemService(Service):
             'datetime': datetime.fromtimestamp(current_time, timezone.utc),
         }
 
-    @private
+    @no_authz_required
+    @accepts()
+    @returns(Str('hostname'))
     async def hostname(self):
         return socket.gethostname()
 
