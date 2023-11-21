@@ -35,6 +35,10 @@ def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> 
                     multiplier=1000, divisor=8
                 ),
             })
+            data[interface_name].update({
+                'received_bytes': data[interface_name]['received_bytes_rate'],
+                'sent_bytes': data[interface_name]['sent_bytes_rate'],
+            })
         else:
             data[interface_name].update({
                 'received_bytes': 0,
