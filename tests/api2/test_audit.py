@@ -237,7 +237,7 @@ def test_password_login_failed():
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "invalid"},
                 },
-                "error": "Invalid username",
+                "error": "Bad username or password",
             },
             "success": False,
         }
@@ -305,7 +305,7 @@ def test_token_attributes_login_failed():
                             "token": token,
                         },
                     },
-                    "error": "Token had attributes",
+                    "error": "Bad token",
                 },
                 "success": False,
             }

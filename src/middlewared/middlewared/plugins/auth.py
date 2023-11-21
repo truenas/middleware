@@ -449,7 +449,7 @@ class AuthService(Service):
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": username},
                 },
-                "error": "Invalid username",
+                "error": "Bad username or password",
             }, False)
             await asyncio.sleep(random.randint(1, 5))
         else:
@@ -527,7 +527,7 @@ class AuthService(Service):
                         "token": token.token,
                     }
                 },
-                "error": "Token had attributes",
+                "error": "Bad token",
             }, False)
             return None
 

@@ -17,6 +17,7 @@ from .utils import (
     AUDIT_REPORTS_DIR,
     AUDITED_SERVICES,
 )
+from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from middlewared.client import ejson
 from middlewared.plugins.zfs_.utils import TNUserProp
@@ -190,7 +191,7 @@ class AuditService(ConfigService):
                 if isinstance(entry, list):
                     entry = entry[0]
 
-                if entry not in AUDIT_EVENT_SMB_PARAM_SET:
+                if entry not in (AUDIT_EVENT_MIDDLEWARE_PARAM_SET | AUDIT_EVENT_SMB_PARAM_SET):
                     verrors.add(
                         f'audit.query.query-options.select.{idx}',
                         f'{entry}: column does not exist'
@@ -480,4 +481,4 @@ class AuditService(ConfigService):
     @private
     @filterable
     async def json_schemas(self, filters, options):
-        return filter_list(AUDIT_EVENT_SMB_JSON_SCHEMAS, filters, options)
+        return filter_list(AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS + AUDIT_EVENT_SMB_JSON_SCHEMAS, filters, options)
