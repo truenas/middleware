@@ -430,12 +430,12 @@ class UserService(CRUDService):
                 # target path may have RESTRICTED aclmode. Correct permissions
                 # get set in below `filesystem.setperm` call which strips ACL
                 # if present to strictly enforce `mode`.
-                self.middleware.call_sync('filesystem.mkdir', target, {
-                    'mode': mode,
-                    'raise_chmod_error': False
+                self.middleware.call_sync('filesystem.mkdir', {
+                    'path': target,
+                    'options': {'mode': mode, 'raise_chmod_error': False}
                 })
-            except FileExistsError:
-                if not os.path.isdir(target):
+            except CallError as e:
+                if e.errno == errno.EEXIST and not os.path.isdir(target):
                     raise CallError(
                         'Path for home directory already '
                         'exists and is not a directory',
@@ -1387,7 +1387,7 @@ class UserService(CRUDService):
         if not os.path.isdir(sshpath):
             # Since this is security sensitive, we allow raising exception here
             # if mode fails to be set to 0o700
-            self.middleware.call_sync('filesystem.mkdir', sshpath, {'mode': '700'})
+            self.middleware.call_sync('filesystem.mkdir', {'path': sshpath, 'options': {'mode': '700'}})
         if not os.path.isdir(sshpath):
             raise CallError(f'{sshpath} is not a directory')
 
