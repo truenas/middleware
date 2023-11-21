@@ -1,5 +1,6 @@
 import errno
 import subprocess
+import pyglfs
 import xml.etree.ElementTree as ET
 from glustercli.cli import peer
 
@@ -87,6 +88,12 @@ class GlusterPeerService(CRUDService):
         if schema == 'gluster.peer.create' and len(await self.query()) == MAX_PEERS:
             verrors.add(schema, 'Maximum number of peers met ({MAX_PEERS})')
 
+        if schema == 'gluster.peer.delete' and vol:
+            vol_status = await self.middleware.call('gluster.volume.status', {'name': vol, 'verbose': False})
+            bricks_uuid = [x['uuid'] for x in vol_status[0]['bricks']]
+            if data.get('uuid') and data['uuid'] in bricks_uuid:
+                verrors.add(schema, f'Peer currently providing gluster brick for gluster volume {vol}')
+
         verrors.check()
 
     @accepts(Dict(
@@ -137,13 +144,21 @@ class GlusterPeerService(CRUDService):
         WARNING: clustering APIs are not intended for 3rd-party consumption and may result
         in a misconfigured SCALE cluster, production outage, or data loss.
         """
-        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.delete', None)
+        await self.middleware.call('gluster.peer.common_validation', 'gluster.peer.delete', {'uuid': peer_uuid})
 
         this_peer = await self.get_instance(peer_uuid)
-        private_entry = await self.middleware.call('ctdb.private.ips.query', [['node_uuid', '=', peer_uuid]])
+        try:
+            private_entry = await self.middleware.call('ctdb.private.ips.query', [['node_uuid', '=', peer_uuid]])
+        except pyglfs.GLFSError as e:
+            # This will fail with ENOTCONN if gluster volume already torn down
+            if e.errno != errno.ENOTCONN:
+                raise
+
+            private_entry = None
 
         await self.middleware.call(
-            'gluster.method.run', peer.detach, {'args': this_peer['hostname']})
+            'gluster.method.run', peer.detach, {'args': [this_peer['hostname']]}
+        )
 
         # We cannot actually remove a nodes file entry without cluster-wide downtime
         if private_entry:

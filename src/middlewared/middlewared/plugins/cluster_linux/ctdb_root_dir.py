@@ -612,8 +612,11 @@ class CtdbRootDirService(Service):
         wipe_config_job = await self.middleware.call('cluster.utils.wipe_config')
         await wipe_config_job.wait()
 
-        job.set_progress(99, 'Disabling cluster service')
+        job.set_progress(90, 'Disabling cluster service')
         await self.middleware.call('service.update', 'glusterd', {'enable': False})
         await self.middleware.call('smb.reset_smb_ha_mode')
 
+        job.set_progress(95, 'Deleting node from trusted storage pool')
+        peer_delete_job = await self.middleware.call('gluster.peer.delete', config['uuid']) 
+        await peer_delete_job.wait()
         job.set_progress(100, 'CTDB root directory teardown complete.')
