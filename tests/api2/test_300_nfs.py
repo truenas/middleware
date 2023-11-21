@@ -19,6 +19,7 @@ from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
+from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.utils import call
 
 if ha and "virtual_ip" in os.environ:
@@ -742,19 +743,17 @@ def test_36_check_nfsdir_subtree_behavior(request):
         *(sec=sys,rw,subtree_check)
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    tmp_path = f'{NFS_PATH}/sub1'
-    results = POST('/filesystem/mkdir', tmp_path)
-    assert results.status_code == 200, results.text
 
-    with nfs_share(tmp_path, {'hosts': ['127.0.0.1']}):
-        parsed = parse_exports()
-        assert len(parsed) == 2, str(parsed)
+    with directory(f'{NFS_PATH}/sub1') as tmp_path:
+        with nfs_share(tmp_path, {'hosts': ['127.0.0.1']}):
+            parsed = parse_exports()
+            assert len(parsed) == 2, str(parsed)
 
-        assert parsed[0]['path'] == NFS_PATH, str(parsed)
-        assert 'no_subtree_check' in parsed[0]['opts'][0]['parameters'], str(parsed)
+            assert parsed[0]['path'] == NFS_PATH, str(parsed)
+            assert 'no_subtree_check' in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-        assert parsed[1]['path'] == tmp_path, str(parsed)
-        assert 'subtree_check' in parsed[1]['opts'][0]['parameters'], str(parsed)
+            assert parsed[1]['path'] == tmp_path, str(parsed)
+            assert 'subtree_check' in parsed[1]['opts'][0]['parameters'], str(parsed)
 
 
 class Test37WithFixture:

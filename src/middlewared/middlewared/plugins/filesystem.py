@@ -129,17 +129,22 @@ class FilesystemService(Service):
         mntinfo = getmntinfo()
         return filter_list(list(mntinfo.values()), filters, options)
 
-    @accepts(
+    @accepts(Dict(
+        'filesystem_mkdir',
         Str('path'),
         Dict(
             'options',
             UnixPerm('mode', default='755'),
             Bool('raise_chmod_error', default=True)
         ),
-        roles=['FILESYSTEM_DATA_WRITE']
-    )
+    ), deprecated=[(
+        lambda args: len(args) == 1 and isinstance(args[0], str),
+        lambda mkdir_path: [{
+            'path': mkdir_path
+        }]
+    )])
     @returns(Ref('path_entry'))
-    def mkdir(self, path, options):
+    def mkdir(self, data):
         """
         Create a directory at the specified path.
 
@@ -154,7 +159,8 @@ class FilesystemService(Service):
         indicate the current permissions on the directory and not the permissions specified
         in the mkdir payload
         """
-        path = self.resolve_cluster_path(path)
+        path = self.resolve_cluster_path(data['path'])
+        options = data['options']
         is_clustered = path.startswith("/cluster")
         mode = int(options['mode'], 8)
 
@@ -166,7 +172,7 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path already exists.', errno.EEXIST)
 
         realpath = os.path.realpath(path)
-        if not is_clustered and not realpath.startswith('/mnt/'):
+        if not is_clustered and not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh')):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)
