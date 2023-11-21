@@ -616,7 +616,9 @@ class CtdbRootDirService(Service):
         await self.middleware.call('service.update', 'glusterd', {'enable': False})
         await self.middleware.call('smb.reset_smb_ha_mode')
 
-        job.set_progress(95, 'Deleting node from trusted storage pool')
-        peer_delete_job = await self.middleware.call('gluster.peer.delete', config['uuid']) 
-        await peer_delete_job.wait()
+        job.set_progress(95, 'Detaching trusted storage pool')
+        if await self.middleware.call('gluster.peer.query'):
+            detach_all_job = await self.middleware.call('gluster.peer.detach_all')
+            await detach_all_job.wait()
+
         job.set_progress(100, 'CTDB root directory teardown complete.')
