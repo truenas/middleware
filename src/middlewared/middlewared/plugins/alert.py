@@ -325,7 +325,7 @@ class AlertService(Service):
             if any(alert_class.category == alert_category for alert_class in classes)
         ]
 
-    @accepts()
+    @accepts(roles=['ALERT_LIST_READ'])
     @returns(List('alerts', items=[Dict(
         'alert',
         Str('uuid'),
