@@ -4,9 +4,10 @@
 #
 
 # PROVIDE: ix-nfsbind
-# REQUIRE: middlewared
+# REQUIRE: middlewared NETWORKING
 # BEFORE: mountd gssd nfsuserd nfsd
 
+source /etc/rc.subr
 
 nfs_bindip() {
 	# We need to make sure the NFS bind IP exists
