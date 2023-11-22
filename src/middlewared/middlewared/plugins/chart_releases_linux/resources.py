@@ -128,7 +128,7 @@ class ChartReleaseService(Service):
         """
         return await self.middleware.call(
             'certificate.query', [['revoked', '=', False], ['cert_type_CSR', '=', False], ['parsed', '=', True]],
-            {'select': ['name', 'id']}
+            {'select': ['name', 'id', 'revoked', 'cert_type_CSR', 'parsed']}
         )
 
     @accepts()
@@ -138,7 +138,8 @@ class ChartReleaseService(Service):
         Returns certificate authorities which can be used by applications.
         """
         return await self.middleware.call(
-            'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
+            'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]],
+            {'select': ['name', 'id', 'revoked', 'parsed']}
         )
 
     @private
