@@ -132,3 +132,11 @@ def test_verify_ctdb_teardown(ip, request):
         ans = make_ws_request(ip, payload)
         assert ans.get('error') is None, ans
         assert len(ans['result']) == 0, ans['result']
+
+    ans = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'gluster.peer.query'
+    })
+
+    assert ans.get('error') is None, ans
+    assert len(ans['result']) == 0, ans['result']
