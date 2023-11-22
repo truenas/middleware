@@ -48,7 +48,7 @@ class Enclosure:
             # being unable to determine the model means many other things will not work
             self.should_ignore = True
         elif all((
-            (not any((self.is_rseries, self.is_mini))),
+            (not any((self.is_r20_series, self.is_mini))),
             self.vendor == 'AHCI',
             self.product == 'SGPIOEnclosure',
         )):
@@ -218,6 +218,8 @@ class Enclosure:
             any((self.is_mini, self.is_r20_series))
         )):
             idkey, idvalue = 'id', self.encid
+        elif self.is_r50_series:
+            idkey, idvalue = 'product', self.product
 
         # Now we know the specific enclosure we're on and the specific
         # key we need to use to pull out the drive slot mapping
