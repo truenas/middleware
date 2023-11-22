@@ -210,33 +210,21 @@ def get_slot_info(enc):
 
     """
     if enc.model == ControllerModels.R40.value:
-        # FIXME: it's impossible to map 0-23 drives to an enclosure
-        # while mapping 24-48 drives to an enclosure on this platform.
-        # Both expanders in the OS are flashed the same way so we can't
-        # determine which is which. Platform team is investigating how
-        # they can get this fixed. (ticket: PLAT-172)
-        return
-        """
-        ses_logical_ids = {int(f'0x{i["id"]}', 16): i['id'] for i in enclosures if i['controller']}
-        min_id, max_id = min(ses_logical_ids), max(ses_logical_ids)
+        # The astute reader might notice that the R40 has 48 drives while
+        # this is only mapping 1-24. Please see `combine_enclosures()`
+        # for why this is.
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
-                    'id': {
-                        ses_logical_ids[min_id]: {
-                            # 1 - 24
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: i} for i in range(1, 25)
+                    'model': {
+                        enc.model: {
+                            i: {SYSFS_SLOT_KEY: i - 1, MAPPED_SLOT_KEY: i} for i in range(1, 25)
                         },
-                        ses_logical_ids[max_id]: {
-                            # 25 - 48
-                            i: {SYSFS_SLOT_KEY: i, MAPPED_SLOT_KEY: j} for i, j in zip(range(1, 25), range(25, 49))
-                        }
                     }
                 }
             }
         }
-        """
     elif enc.is_r50_series:
         # these platforms share same enclosure and mapping
         # but it's important to always map the eDrawer4048S1
