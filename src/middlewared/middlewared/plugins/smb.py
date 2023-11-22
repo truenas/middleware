@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 import stat
 import subprocess
+import unicodedata
 import uuid
 
 from copy import deepcopy
@@ -31,7 +32,7 @@ from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
-INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '>', '|', '/', '\\', '+', '=', ';', ':', '"', ','}
+INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -1692,6 +1693,10 @@ class SharingSMBService(SharingService):
             )
 
         if data.get('name'):
+            # Standards for SMB share name are defined in MS-FSCC 2.1.6
+            # We are slighly more strict in that blacklist all unicode control characters
+
+            has_control_characters = False
             if data['name'].lower() in ['global', 'homes', 'printers']:
                 verrors.add(
                     f'{schema_name}.name',
@@ -1703,6 +1708,16 @@ class SharingSMBService(SharingService):
                 verrors.add(
                     f'{schema_name}.name',
                     f'Share name contains the following invalid characters: {", ".join(invalid_characters)}'
+                )
+
+            for char in data['name']:
+                if unicodedata.category(char) == 'Cc':
+                    has_control_characters = True
+                    break
+
+            if has_control_characters:
+                verrors.add(
+                    f'{schema_name}.name', 'Share name contains unicode control characters.'
                 )
 
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
