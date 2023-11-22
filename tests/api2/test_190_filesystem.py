@@ -382,6 +382,6 @@ def test_type_filter(file_and_directory, query, result):
 def test_mkdir_mode():
     with dataset("test_mkdir_mode") as ds:
         testdir = os.path.join("/mnt", ds, "testdir")
-        call("filesystem.mkdir", {'path': testdir, 'mode': '777'})
+        call("filesystem.mkdir", {'path': testdir, {'options': 'mode': '777'}})
         st = call("filesystem.stat", testdir)
         assert stat.S_IMODE(st["mode"]) == 0o777
