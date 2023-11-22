@@ -41,9 +41,39 @@ def combine_enclosures(enclosures):
     class in "enclosure_/enclosure_class.py"
     """
     head_unit_idx, to_combine, to_remove = None, dict(), list()
+    r40_sas_ids = list()
     for idx, enclosure in enumerate(enclosures):
         if to_ignore(enclosure):
             continue
+        elif enclosure['model'] == ControllerModels.R40.value:
+            r40_sas_ids.append((int(f'0x{enclosure["id"]}', 16), idx))
+            if len(r40_sas_ids) == 2:
+                # we've got no choice but to do this hack. The R40 has 2x HBAs
+                # in the head. One of those HBAs is disks 1-24, the other for 25-48.
+                # Unfortunately, however, this platform was shipped with both of
+                # those expanders flashed with the same firmware so there is no way
+                # to uniquely identify which expander gets mapped to 1-24 and the
+                # other to get mapped for 25-48. (Like we do with the R50)
+                #
+                # Instead, we take the sas address of the ses devices and check which
+                # enclosure device has the smaller value. The one with the smaller
+                # gets mapped as the "head-unit" (1-24) while the larger one gets
+                # mapped to drive slots 25-48.
+                if r40_sas_ids[0][0] < r40_sas_ids[1][0]:
+                    head_unit_idx = r40_sas_ids[0][1]
+                    _update_idx = r40_sas_ids[1][1]
+                else:
+                    head_unit_idx = r40_sas_ids[1][0]
+                    _update_idx = r40_sas_ids[0][1]
+
+                # we know which enclosure has the larger sas address so we'll update
+                # the array device slots so that they're 25-48.
+                for origslot, newslot in zip(range(1, 25), range(25, 49)):
+                    orig_info = enclosures[_update_idx]['elements']['Array Device Slot'].pop(origslot)
+                    enclosures[_update_idx]['elements']['Array Device Slot'][newslot] = orig_info
+
+                to_combine.update(enclosures[_update_idx]['elements'].pop('Array Device Slot'))
+                to_remove.append(_update_idx)
         elif enclosure['elements']['Array Device Slot'].get(HEAD_UNIT_DISK_SLOT_START_NUMBER):
             # the enclosure object whose disk slot has number 1
             # will always be the head-unit
