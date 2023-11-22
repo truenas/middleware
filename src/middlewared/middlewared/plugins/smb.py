@@ -31,6 +31,7 @@ from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
+INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '>', '|', '/', '\\', '+', '=', ';', ':', '"', ','}
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -1690,11 +1691,19 @@ class SharingSMBService(SharingService):
                 'of SMB share.'
             )
 
-        if data.get('name') and data['name'].lower() in ['global', 'homes', 'printers']:
-            verrors.add(
-                f'{schema_name}.name',
-                f'{data["name"]} is a reserved section name, please select another one'
-            )
+        if data.get('name'):
+            if data['name'].lower() in ['global', 'homes', 'printers']:
+                verrors.add(
+                    f'{schema_name}.name',
+                    f'{data["name"]} is a reserved section name, please select another one'
+                )
+
+            invalid_characters = INVALID_SHARE_NAME_CHARACTERS & set(data['name'])
+            if invalid_characters:
+                verrors.add(
+                    f'{schema_name}.name',
+                    f'Share name contains the following invalid characters: {", ".join(invalid_characters)}'
+                )
 
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
             verrors.add(f'{schema_name}.name',
