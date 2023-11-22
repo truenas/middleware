@@ -403,3 +403,12 @@ def test_mkdir_chmod_failure():
             call("filesystem.stat", testdir)
 
         assert ce.value.errno == errno.ENOENT
+
+        mkdir_st = call("filesystem.mkdir", {'path': testdir, 'options': {'mode': '777', 'raise_chmod_error': False}})
+
+        st = call("filesystem.stat", testdir)
+        # Verify that mode output returned from mkdir matches what was actually set
+        assert st['mode'] == mkdir_st['mode']
+
+        # mkdir succeeded, but chmod failed so we get mode based on umask
+        assert stat.S_IMODE(st["mode"]) == 0o755
