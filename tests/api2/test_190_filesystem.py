@@ -3,6 +3,7 @@
 # Author: Eric Turgeon
 # License: BSD
 
+import errno
 import pytest
 import stat
 import sys
@@ -13,6 +14,7 @@ sys.path.append(apifolder)
 from copy import deepcopy
 from functions import POST, PUT, SSH_TEST, wait_on_job
 from auto_config import pool_name, ip, user, password
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
@@ -114,7 +116,11 @@ def test_05_set_immutable_flag_on_path(request):
             # We test 2 things
             # 1) Writing content to the parent path fails/succeeds based on "set"
             # 2) "is_immutable_set" returns sane response
-            call('filesystem.mkdir', f'{t_child_path}_{flag_set}')
+            if flag_set:
+                with pytest.raises(PermissionError):
+                    call('filesystem.mkdir', f'{t_child_path}_{flag_set}')
+            else:
+                call('filesystem.mkdir', f'{t_child_path}_{flag_set}')
 
             is_immutable = call('filesystem.is_immutable', t_path)
             assert is_immutable == flag_set, 'Immutable flag is still not set' if flag_set else 'Immutable flag is still set'
@@ -382,7 +388,7 @@ def test_type_filter(file_and_directory, query, result):
 def test_mkdir_mode():
     with dataset("test_mkdir_mode") as ds:
         testdir = os.path.join("/mnt", ds, "testdir")
-        call("filesystem.mkdir", {'path': testdir, {'options': {'mode': '777'}}})
+        call("filesystem.mkdir", {'path': testdir, 'options': {'mode': '777'}})
         st = call("filesystem.stat", testdir)
         assert stat.S_IMODE(st["mode"]) == 0o777
 
@@ -390,7 +396,10 @@ def test_mkdir_mode():
 def test_mkdir_chmod_failure():
     with dataset("test_mkdir_chmod", {"share_type": "SMB"}) as ds:
         testdir = os.path.join("/mnt", ds, "testdir")
-        call("filesystem.mkdir", {'path': testdir, {'options': {'mode': '777'}}})
+        with pytest.raises(PermissionError):
+            call("filesystem.mkdir", {'path': testdir, 'options': {'mode': '777'}})
 
-        st = call("filesystem.stat", testdir)
-        assert stat.S_IMODE(st["mode"]) != 0o777
+        with pytest.raises(CallError) as ce:
+            call("filesystem.stat", testdir)
+
+        assert ce.value.errno == errno.ENOENT
