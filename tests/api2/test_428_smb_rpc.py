@@ -7,14 +7,17 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import (ip, pool_name)
 from functions import GET, POST
+from middlewared.system_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call
 from protocols import MS_RPC
 
 
 SMB_USER = "smbrpcuser"
 SMB_PWD = "smb1234#!@"
+INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
 
 @pytest.fixture(scope="module")
 def setup_smb_share(request):
@@ -94,3 +97,32 @@ def test_003_access_based_share_enum(setup_smb_user, setup_smb_share):
     with MS_RPC(username=SMB_USER, password=SMB_PWD, host=ip) as hdl:
         shares = hdl.shares()
         assert len(shares) == 1, str({"enum": shares, "shares": results.json()})
+
+
+def test_share_name_restricutions(setup_smb_share):
+    first_share = setup_smb_share['share']
+    ds_name = setup_smb_share['dataset']
+
+    for char in INVALID_SHARE_NAME_CHARACTERS:
+        # First try updating existing share's name
+        with pytest.raises(ValidationErrors) as ve:
+            call('sharing.smb.update', first_share['id'], {'name': f'CANARY{char}'})
+
+        assert 'Share name contains the following invalid characters' in ve.value.errors[0].errmsg
+
+        # Now try creating new share
+        with pytest.raises(ValidationErrors) as ve:
+            call('sharing.smb.create', {'path': os.path.join('/mnt', ds_name), 'name': f'CANARY{char}'})
+
+        assert 'Share name contains the following invalid characters' in ve.value.errors[0].errmsg
+
+
+    with pytest.raises(ValidationErrors) as ve:
+        call('sharing.smb.update', first_share['id'], {'name': 'CANARY\x85'})
+
+    assert 'Share name contains the unicode control characters' in ve.value.errors[0].errmsg
+
+    with pytest.raises(ValidationErrors) as ve:
+        call('sharing.smb.create', {'path': os.path.join('/mnt', ds_name), 'name': 'CANARY\x85'})
+
+    assert 'Share name contains the unicode control characters' in ve.value.errors[0].errmsg
