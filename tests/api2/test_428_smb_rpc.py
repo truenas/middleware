@@ -7,7 +7,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from auto_config import (ip, pool_name)
 from functions import GET, POST
-from middlewared.system_exception import ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
@@ -120,9 +120,9 @@ def test_share_name_restricutions(setup_smb_share):
     with pytest.raises(ValidationErrors) as ve:
         call('sharing.smb.update', first_share['id'], {'name': 'CANARY\x85'})
 
-    assert 'Share name contains the unicode control characters' in ve.value.errors[0].errmsg
+    assert 'Share name contains unicode control characters' in ve.value.errors[0].errmsg
 
     with pytest.raises(ValidationErrors) as ve:
         call('sharing.smb.create', {'path': os.path.join('/mnt', ds_name), 'name': 'CANARY\x85'})
 
-    assert 'Share name contains the unicode control characters' in ve.value.errors[0].errmsg
+    assert 'Share name contains unicode control characters' in ve.value.errors[0].errmsg
