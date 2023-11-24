@@ -202,6 +202,7 @@ Javascript:
 
 
 Javascript:
+
     :::javascript
     {
       "select": [
@@ -244,6 +245,7 @@ ${'#####'} "SELECT * FROM table;"
 `query-filters`
 
 Javascript:
+
     :::javascript
     []
 
@@ -251,6 +253,7 @@ Javascript:
 `query-options`
 
 Javascript:
+
     :::javascript
     {}
 
@@ -260,6 +263,7 @@ ${'#####'} "SELECT username,uid FROM table WHERE builtin=FALSE ORDER BY -uid;"
 `query-filters`
 
 Javascript:
+
     :::javascript
     [
       ["builtin", "=", false],
@@ -268,6 +272,7 @@ Javascript:
 `query-options`
 
 Javascript:
+
     :::javascript
     {
       "select": [
@@ -285,6 +290,7 @@ ${'#####'} "SELECT username AS locked_user,uid FROM table WHERE builtin=FALSE AN
 `query-filters`
 
 Javascript:
+
     :::javascript
     [
       ["builtin", "=", false],
@@ -294,6 +300,7 @@ Javascript:
 `query-options`
 
 Javascript:
+
     :::javascript
     {
       "select": [
@@ -311,6 +318,7 @@ ${'#####'} "SELECT username FROM table WHERE builtin=False OR (locked=FALSE AND 
 `query-filters`
 
 Javascript:
+
     :::javascript
     [
       ["OR",
@@ -324,6 +332,7 @@ Javascript:
 `query-options`
 
 Javascript:
+
     :::javascript
     {
       "select": [
