@@ -34,7 +34,7 @@ class VMDeviceService(Service):
             return capability
         required_keys = set(self.get_capability_keys())
         capability_info = {}
-        for element in filter(lambda e: e.tag in required_keys and e.text, capability):
+        for element in filter(lambda e: e.tag in required_keys, capability):
             capability_info[element.tag] = element.text
             if element.tag in ('product', 'vendor') and element.get('id'):
                 capability_info[f'{element.tag}_id'] = element.get('id')
