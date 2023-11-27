@@ -1,4 +1,5 @@
 import enum
+
 from middlewared.service import accepts, private, returns, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
 from middlewared.validators import Range
@@ -99,6 +100,66 @@ class ACLType(enum.Enum):
             "system.posix_acl_default",
             "system.nfs4_acl_xdr"
         ])
+
+    def calculate_inherited(self, theacl, isdir=True):
+        inherited = []
+        if self.name != theacl['acltype']:
+            raise ValueError('ACLType does not match')
+
+        if self not in (ACLType.POSIX1E, ACLType.NFS4):
+            raise ValueError('ACLType does not support inheritance')
+
+        if self == ACLType.POSIX1E:
+            for entry in theacl['acl']:
+                 if entry['default'] is False
+                     continue
+
+                 inherited.append(entry)
+
+            return inherited
+
+        for entry in theacl['acl']:
+            if not (flags := entry.get('flags', {}).copy()):
+                continue
+
+            if (basic := flags.get('BASIC')) == 'NOINHERIT':
+                continue
+            elif basic == 'INHERIT':
+                iherited.append(entry)
+                continue
+            elif not flags.get('FILE_INHERIT', False) and not flags.get('DIRECTORY_INHERIT', False):
+                # Entry has no inherit flags
+                continue
+            elif not isdir and not flags.get('FILE_INHERIT'):
+                # File and this entry doesn't inherit on files
+                continue
+
+
+            flags['INHERITED'] = True
+            if isdir and not flags.get('DIRECTORY_INHERIT', False):
+                if flags['NO_PROPAGAGE_INHERIT']:
+                    # doesn't apply to this dir and shouldn't apply to contents.
+                    continue
+
+                # This is a directoy ACL and we have entry that only applies to files.
+                flags['INHERIT_ONLY'] = True
+            elif flags.get('INHERIT_ONLY', False):
+                flags.pop('INHERIT_ONLY')
+            elif flags.get('NO_PROPAGATE_INHERIT'):
+                flags.pop('DIRECTORY_INHERIT')
+                flags.pop('FILE_INHERIT')
+
+            flags['INHERITED'] = True
+
+            inherited.append({
+                'tag': entry['tag'],
+                'id': entry['id'],
+                'type': entry['type'],
+                'perms': entry['perms'],
+                'flags': falgs
+            })
+
+            return inherited
 
 
 class ACLBase(ServicePartBase):
