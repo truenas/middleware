@@ -883,7 +883,7 @@ class FilesystemService(Service, ACLBase):
         self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
         verrors.check()
 
-        if os.listdir(data['path']) and not data['options']['force']:
+        if next(Path(data['path']).iterdir(), None) and not data['options']['force']:
             raise CallError(
                 f'{data["path"]}: path contains existing data '
                 'and `force` was not specified', errno.EPERM
