@@ -434,7 +434,7 @@ class PoolDatasetService(CRUDService):
         Inheritable(Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE']), has_default=False),
         Inheritable(Str('aclmode', enum=['PASSTHROUGH', 'RESTRICTED', 'DISCARD']), has_default=False),
         Inheritable(Str('acltype', enum=['OFF', 'NFSV4', 'POSIX']), has_default=False),
-        Str('share_type', default='GENERIC', enum=['GENERIC', 'MULTIPROTOCOL', 'SMB', 'APPS']),
+        Str('share_type', default='GENERIC', enum=['GENERIC', 'MULTIPROTOCOL', 'NFS', 'SMB', 'APPS']),
         Inheritable(Str('xattr', default='SA', enum=['ON', 'SA'])),
         Ref('encryption_options'),
         Bool('encryption', default=False),
@@ -531,6 +531,12 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         parent_ds = parent_ds[0]
+        parent_mp = parent_ds['mountpoint']
+        if parent_ds['locked']:
+            parent_st = {'acl': False}
+        else:
+            parent_st = await self.middleware.call('filesystem.stat', parent_mp)
+            parent_st['acltype'] = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
 
         mountpoint = os.path.join('/mnt', data['name'])
         if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') == 'INHERIT' and len(
@@ -538,26 +544,41 @@ class PoolDatasetService(CRUDService):
         ) == 2:
             data['acltype'] = 'POSIX'
 
-        if os.path.exists(mountpoint):
+        try:
+            await self.middleware.call('filesystem.stat', mountpoint)
             verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
+        except CallError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
         if data['share_type'] == 'SMB':
             data['casesensitivity'] = 'INSENSITIVE'
             data['acltype'] = 'NFSV4'
             data['aclmode'] = 'RESTRICTED'
-            acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
-                'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
-                'format-options': {'canonicalize': True, 'ensure_builtins': True},
-            }))[0]['acl']
+            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+                acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
+                    'path': os.path.join('/mnt', parent_name),
+                })
+            else:
+                acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
+                    'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
+                    'format-options': {'canonicalize': True, 'ensure_builtins': True},
+                }))[0]['acl']
         elif data['share_type'] == 'APPS':
             data['casesensitivity'] = 'SENSITIVE'
             data['atime'] = 'OFF'
             data['acltype'] = 'NFSV4'
             data['aclmode'] = 'PASSTHROUGH'
-            acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
-                'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
-                'format-options': {'canonicalize': True, 'ensure_builtins': True},
-            }))[0]['acl']
+            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+                acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
+                    'path': os.path.join('/mnt', parent_name),
+                })
+            else:
+                acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
+                    'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
+                    'format-options': {'canonicalize': True, 'ensure_builtins': True},
+                }))[0]['acl']
+
             acl_to_set.append({
                 'tag': 'USER',
                 'id': 568,
@@ -565,11 +586,15 @@ class PoolDatasetService(CRUDService):
                 'flags': {'BASIC': 'INHERIT'},
                 'type': 'ALLOW'
             })
-        elif data['share_type'] == 'MULTIPROTOCOL':
+        elif data['share_type'] in ('MULTIPROTOCOL', 'NFS'):
             data['casesensitivity'] = 'SENSITIVE'
             data['atime'] = 'OFF'
             data['acltype'] = 'NFSV4'
             data['aclmode'] = 'PASSTHROUGH'
+            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+                acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
+                    'path': os.path.join('/mnt', parent_name),
+                })
 
         if acl_to_set:
             try:
