@@ -1,5 +1,4 @@
 <%
-    import os
     import textwrap
 
     from middlewared.plugins.audit.utils import AUDITED_SERVICES, audit_file_path, AUDIT_DATASET_PATH

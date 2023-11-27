@@ -9,4 +9,5 @@ Middleware Daemon
     process_pool.rst
     jobs.rst
     roles.rst
+    audit.rst
     plugins/index.rst
