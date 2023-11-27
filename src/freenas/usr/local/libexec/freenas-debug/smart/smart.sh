@@ -82,20 +82,7 @@ smart_func()
 	section_footer
 
 	section_header "smartctl output"
-	rm -f /tmp/smart.out 2>/dev/null
-
-	if is_linux; then
-		# from /proc/devices
-		# only care about sd/vd/nvme major numbers
-		# sd* = 8 - 135
-		# vd* (virtio) = 254
-		# nvmeXnY* = 259
-		include="8,65,66,67,68,69,70,71,128,129,130,131,132,133,134,135,254,259"
-		disks=$(lsblk -ndo name -I $include)
-	else
-		disks=$(sysctl -n kern.disks)
-	fi
-
+	disks=$(sysctl -n kern.disks)
 	# SAS to SATA interposers could be involed. Unfortunately,
 	# there is no "easy" way of identifying that there is
 	# one involved without doing some extravagant reading of
@@ -162,7 +149,5 @@ smart_func()
 		    ;;
 		esac
 	done
-	cat /tmp/smart.out
-	${FREENAS_DEBUG_MODULEDIR}/smart/smart.nawk < /tmp/smart.out
 	section_footer
 }
