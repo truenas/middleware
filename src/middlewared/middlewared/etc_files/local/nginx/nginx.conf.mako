@@ -160,6 +160,7 @@ http {
         deny all;
 % endif
 
+<%def name="security_headers()">
         # Security Headers
         add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
         add_header X-Content-Type-Options "nosniff" always;
@@ -169,6 +170,9 @@ http {
 % if x_frame_options:
         add_header X-Frame-Options "${x_frame_options}" always;
 % endif
+</%def>
+
+        ${security_headers()}
 
         location / {
             allow all;
@@ -199,6 +203,24 @@ http {
             alias /usr/local/share/swagger-ui-dist;
         }
 
+        location @index {
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
+            add_header Expires 0;
+            ${security_headers()}
+
+            root /usr/share/truenas/webui;
+            try_files /index.html =404;
+        }
+
+        location = /ui/ {
+            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
+            add_header Expires 0;
+            ${security_headers()}
+
+            root /usr/share/truenas/webui;
+            try_files /index.html =404;
+        }
+
         location /ui {
             allow all;
             if ( $request_method ~ ^POST$ ) {
@@ -207,18 +229,12 @@ http {
             # `allow`/`deny` are not allowed in `if` blocks so we'll have to make that check in the middleware itself.
             proxy_set_header X-Real-Remote-Addr $remote_addr;
 
-            try_files $uri $uri/ /index.html =404;
-            alias /usr/share/truenas/webui;
             add_header Cache-Control "must-revalidate";
             add_header Etag "${system_version}";
-            add_header Strict-Transport-Security "max-age=${63072000 if general_settings['ui_httpsredirect'] else 0}; includeSubDomains; preload" always;
-            add_header X-Content-Type-Options "nosniff" always;
-            add_header X-XSS-Protection "1; mode=block" always;
-            add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
-            add_header Referrer-Policy "strict-origin" always;
-% if x_frame_options:
-            add_header X-Frame-Options "${x_frame_options}" always;
-% endif
+            ${security_headers()}
+
+            alias /usr/share/truenas/webui;
+            try_files $uri $uri/ @index;
         }
 
         location /websocket {
