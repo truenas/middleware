@@ -7,12 +7,6 @@ from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 from middlewared.validators import Range
 
-try:
-    from bsd import geom
-except ImportError:
-    geom = None
-
-
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
 BOOT_POOL_NAME = None
 BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
@@ -309,12 +303,22 @@ class BootService(Service):
 async def setup(middleware):
     global BOOT_POOL_NAME
 
-    pools = (
-        await run('zpool', 'list', '-H', '-o', 'name', encoding='utf8')
-    ).stdout.strip().split()
+    pools = dict([line.split() for line in (
+        await run('zpool', 'list', '-H', '-o', 'name,compatibility', encoding='utf8')
+    ).stdout.strip().splitlines()])
     for i in BOOT_POOL_NAME_VALID:
         if i in pools:
             BOOT_POOL_NAME = i
+
+            compatibility = pools[i]
+            if compatibility != 'grub2':
+                middleware.logger.info(f'Boot pool {BOOT_POOL_NAME!r} has {compatibility=!r}, upgrading it')
+                try:
+                    await run('zpool', 'set', 'compatibility=grub2', BOOT_POOL_NAME)
+                    await run('zpool', 'upgrade', BOOT_POOL_NAME)
+                except Exception as e:
+                    middleware.logger.error(f'Error setting boot pool compatibility: {e!r}')
+
             break
     else:
         middleware.logger.error('Failed to detect boot pool name.')
