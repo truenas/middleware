@@ -1,4 +1,5 @@
 import enum
+
 from middlewared.service import accepts, private, returns, job, ServicePartBase
 from middlewared.schema import Bool, Dict, Int, List, Str, Ref, UnixPerm, OROperator
 from middlewared.validators import Range
@@ -99,6 +100,81 @@ class ACLType(enum.Enum):
             "system.posix_acl_default",
             "system.nfs4_acl_xdr"
         ])
+
+    def __calculate_inherited_posix1e(self, theacl, isdir):
+        inherited = []
+        for entry in theacl['acl']:
+            if entry['default'] is False:
+                continue
+
+            # add access entry
+            inherited.append(entry.copy() | {'default': False})
+
+            if isdir:
+                # add default entry
+                inherited.append(entry)
+
+        return inherited
+
+    def __calculate_inherited_nfs4(self, theacl, isdir):
+        inherited = []
+        for entry in theacl['acl']:
+            if not (flags := entry.get('flags', {}).copy()):
+                continue
+
+            if (basic := flags.get('BASIC')) == 'NOINHERIT':
+                continue
+            elif basic == 'INHERIT':
+                flags['INHERITED'] = True
+                inherited.append(entry)
+                continue
+            elif not flags.get('FILE_INHERIT', False) and not flags.get('DIRECTORY_INHERIT', False):
+                # Entry has no inherit flags
+                continue
+            elif not isdir and not flags.get('FILE_INHERIT'):
+                # File and this entry doesn't inherit on files
+                continue
+
+            if isdir and not flags.get('DIRECTORY_INHERIT', False):
+                if flags['NO_PROPAGATE_INHERIT']:
+                    # doesn't apply to this dir and shouldn't apply to contents.
+                    continue
+
+                # This is a directoy ACL and we have entry that only applies to files.
+                flags['INHERIT_ONLY'] = True
+            elif flags.get('INHERIT_ONLY', False):
+                flags['INHERIT_ONLY'] = False
+            elif flags.get('NO_PROPAGATE_INHERIT'):
+                flags['DIRECTORY_INHERIT'] = False
+                flags['FILE_INHERIT'] = False
+                flags['NO_PROPAGATE_INHERIT'] = False
+
+            if not isdir:
+                flags['DIRECTORY_INHERIT'] = False
+                flags['FILE_INHERIT'] = False
+                flags['NO_PROPAGATE_INHERIT'] = False
+
+            inherited.append({
+                'tag': entry['tag'],
+                'id': entry['id'],
+                'type': entry['type'],
+                'perms': entry['perms'],
+                'flags': flags | {'INHERITED': True}
+            })
+
+        return inherited
+
+    def calculate_inherited(self, theacl, isdir=True):
+        if self.name != theacl['acltype']:
+            raise ValueError('ACLType does not match')
+
+        if self == ACLType.POSIX1E:
+            return self.__calculate_inherited_posix1e(theacl, isdir)
+
+        elif self == ACLType.NFS4:
+            return self.__calculate_inherited_nfs4(theacl, isdir)
+
+        raise ValueError('ACLType does not support inheritance')
 
 
 class ACLBase(ServicePartBase):
@@ -404,4 +480,20 @@ class ACLBase(ServicePartBase):
         For NFSv4 ACLs `READ` means the READ set, and `MODIFY` means the MODIFY
         set. For POSIX1E `READ` means read and execute, `MODIFY` means read, write,
         execute.
+        """
+
+    @private
+    @accepts(Dict(
+        'calculate_inherited_acl',
+        Str('path', required=True),
+        Dict(
+            'options',
+            Bool('directory', default=True)
+        )
+    ))
+    def get_inherited_acl(self, data):
+        """
+        Generate an inherited ACL based on given `path`
+        Supports `directory` `option` that allows specifying whether the generated
+        ACL is for a file or a directory.
         """
