@@ -649,12 +649,12 @@ async def check_permission(middleware, app):
         else:
             try:
                 query = {
-                    'username': await middleware.call(
+                    'username': (await middleware.call(
                         'datastore.query',
                         'account.bsdusers',
                         [['uid', '=', origin.uid]],
                         {'get': True, 'prefix': 'bsdusr_'},
-                    )['username'],
+                    ))['username'],
                 }
                 local = True
             except MatchNotFound:
