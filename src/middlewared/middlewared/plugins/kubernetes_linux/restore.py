@@ -7,7 +7,7 @@ import shutil
 import time
 import yaml
 
-from middlewared.schema import Dict, Bool, returns, Str
+from middlewared.schema import returns, Str
 from middlewared.service import accepts, CallError, job, Service
 from middlewared.plugins.kubernetes_linux.yaml import SerializedDatesFullLoader
 
@@ -19,14 +19,10 @@ class KubernetesService(Service):
 
     @accepts(
         Str('backup_name'),
-        Dict(
-            'options',
-            Bool('wait_for_csi', default=True),
-        )
     )
     @returns()
     @job(lock='kubernetes_restore_backup')
-    def restore_backup(self, job, backup_name, options):
+    def restore_backup(self, job, backup_name):
         """
         Restore `backup_name` chart releases backup.
 
@@ -105,11 +101,7 @@ class KubernetesService(Service):
 
         while True:
             config = self.middleware.call_sync('k8s.node.config')
-            if (
-                config['node_configured'] and not config['spec'].get('taints') and (
-                    not options['wait_for_csi'] or self.middleware.call_sync('k8s.csi.config')['csi_ready']
-                )
-            ):
+            if config['node_configured'] and not config['spec'].get('taints'):
                 break
 
             time.sleep(5)
