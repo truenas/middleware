@@ -28,7 +28,7 @@ class ZFSVolume(OPENEBSBase):
     VERSION = 'v1'
 
 
-class ZFSVolumeSnapshotClass(OPENEBSBase):
+class g(OPENEBSBase):
 
     GROUP = 'snapshot.storage.k8s.io'
     OBJECT_HUMAN_NAME = 'Openebs ZFS Volume Snapshotclass'
