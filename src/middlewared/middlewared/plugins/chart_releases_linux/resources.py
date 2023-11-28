@@ -143,45 +143,6 @@ class ChartReleaseService(Service):
         )
 
     @private
-    async def retrieve_pv_pvc_mapping(self, release_name):
-        chart_release = await self.middleware.call(
-            'chart.release.query', [['id', '=', release_name]], {'get': True, 'extra': {'retrieve_resources': True}}
-        )
-        return await self.retrieve_pv_pvc_mapping_internal(chart_release)
-
-    @private
-    async def retrieve_pv_pvc_mapping_internal(self, chart_release):
-        mapping = {}
-        release_vol_ds = os.path.join(chart_release['dataset'], 'volumes')
-        zfs_volumes = {
-            zv['metadata']['name']: zv for zv in await self.middleware.call(
-                'k8s.zv.query', [['spec.poolName', '=', release_vol_ds]]
-            )
-        }
-
-        for pv in chart_release['resources']['persistent_volumes']:
-            claim_name = pv['spec'].get('claimRef', {}).get('name')
-            if claim_name:
-                csi_spec = pv['spec']['csi']
-                volumes_ds = csi_spec['volumeAttributes']['openebs.io/poolname']
-                if (
-                    os.path.join(chart_release['dataset'], 'volumes') != volumes_ds or
-                    csi_spec['volumeHandle'] not in zfs_volumes
-                ):
-                    # We are only going to backup/restore pvc's which were consuming
-                    # their respective storage class and we have related zfs volume present
-                    continue
-
-                pv_name = pv['metadata']['name']
-                mapping[claim_name] = {
-                    'name': pv_name,
-                    'pv_details': pv,
-                    'dataset': os.path.join(volumes_ds, csi_spec['volumeHandle']),
-                    'zv_details': zfs_volumes[csi_spec['volumeHandle']],
-                }
-        return mapping
-
-    @private
     async def create_update_storage_class_for_chart_release(self, release_name, volumes_path):
         storage_class_name = get_storage_class_name(release_name)
         storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
