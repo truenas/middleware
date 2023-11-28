@@ -34,7 +34,6 @@ ad_data_type = {
     'id': int,
     'domainname': str,
     'bindname': str,
-    'bindpw': str,
     'verbose_logging': bool,
     'allow_trusted_doms': bool,
     'use_default_domain': bool,
