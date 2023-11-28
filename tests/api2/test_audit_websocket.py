@@ -1,6 +1,4 @@
 # -*- coding=utf-8 -*-
-import contextlib
-import time
 from unittest.mock import ANY
 
 import pytest
@@ -10,32 +8,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.utils import call, client, ssh
-
-
-@contextlib.contextmanager
-def expect_audit_log(entries, *, include_logins=False):
-    with client() as c:
-        time.sleep(5)  # FIXME: proper audit log flush
-
-        existing = c.call("audit.query", {"services": ["MIDDLEWARE"]})
-
-        yield
-
-        time.sleep(5)
-
-        new = c.call("audit.query", {"services": ["MIDDLEWARE"]})
-
-    assert new[:len(existing)] == existing
-
-    new = new[len(existing):]
-
-    if not include_logins:
-        new = [entry for entry in new if entry["event"] != "AUTHENTICATION"]
-
-    assert len(new) == len(entries)
-
-    for new_entry, expected_entry in zip(new, entries):
-        assert expected_entry.items() < new_entry.items()
+from middlewared.test.integration.utils.audit import expect_audit_log
 
 
 def test_unauthenticated_call():
@@ -48,6 +21,7 @@ def test_unauthenticated_call():
                         "minor": 1,
                     },
                     "origin": ANY,
+                    "protocol": "WEBSOCKET",
                     "credentials": None,
                 },
                 "event": "METHOD_CALL",
@@ -75,6 +49,7 @@ def test_unauthorized_call():
                         "minor": 1,
                     },
                     "origin": ANY,
+                    "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
                         "credentials_data": {"username": ANY},
@@ -105,6 +80,7 @@ def test_bogus_call():
                         "minor": 1,
                     },
                     "origin": ANY,
+                    "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
                         "credentials_data": {"username": "root"},
@@ -135,6 +111,7 @@ def test_invalid_call():
                         "minor": 1,
                     },
                     "origin": ANY,
+                    "protocol": "WEBSOCKET",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
                         "credentials_data": {"username": "root"},
@@ -164,6 +141,7 @@ def test_valid_call():
                     "minor": 1,
                 },
                 "origin": ANY,
+                    "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "root"},
@@ -208,6 +186,7 @@ def test_password_login():
                     "minor": 1,
                 },
                 "origin": ANY,
+                "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "root"},

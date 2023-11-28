@@ -3,6 +3,8 @@ import os
 
 import pytest
 
+pytest.register_assert_rewrite("middlewared.test")
+
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.pytest import failed
 

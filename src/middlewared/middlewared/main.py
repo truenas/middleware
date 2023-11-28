@@ -5,7 +5,7 @@ from .common.event_source.manager import EventSourceManager
 from .event import Events
 from .job import Job, JobsQueue
 from .pipe import Pipes, Pipe
-from .restful import authenticate, copy_multipart_to_pipe, RESTfulAPI
+from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
 from .role import ROLES, RoleManager
 from .settings import conf
 from .schema import clean_and_validate_arg, Error as SchemaError
@@ -195,15 +195,7 @@ class Application:
 
         try:
             async with self._softhardsemaphore:
-                try:
-                    try:
-                        result = await self.middleware._call(message['method'], serviceobj, methodobj, params, app=self)
-                        success = True
-                    except Exception:
-                        success = False
-                        raise
-                finally:
-                    await self.__log_audit_message_for_method(message, methodobj, True, True, success)
+                result = await self.middleware.call_with_audit(message['method'], serviceobj, methodobj, params, self)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -298,61 +290,12 @@ class Application:
         self._send(event)
 
     async def log_audit_message(self, event, event_data, success):
-        message = "@cee:" + json.dumps({
-            "TNAUDIT": {
-                "aid": str(uuid.uuid4()),
-                "vers": {
-                    "major": 0,
-                    "minor": 1
-                },
-                "addr": "127.0.0.1",
-                "user": "root",
-                "sess": self.session_id,
-                "time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-                "svc": "MIDDLEWARE",
-                "svc_data": json.dumps({
-                    "vers": {
-                        "major": 0,
-                        "minor": 1,
-                    },
-                    "origin": self.origin.repr() if self.origin else None,
-                    "credentials": {
-                        "credentials": self.authenticated_credentials.class_name(),
-                        "credentials_data": self.authenticated_credentials.dump(),
-                    } if self.authenticated_credentials else None,
-                }),
-                "event": event,
-                "event_data": json.dumps(event_data),
-                "success": success,
-            }
-        })
-
-        async with await create_connected_unix_datagram_socket("/dev/log") as s:
-            await s.send(syslog_message(message))
+        return await self.middleware.log_audit_message(self, event, event_data, success)
 
     async def __log_audit_message_for_method(self, message, methodobj, authenticated, authorized, success):
-        params = message.get('params') or []
-
-        audit = getattr(methodobj, 'audit', None)
-        audit_extended = getattr(methodobj, 'audit_extended', None)
-        if audit is None:
-            if crud_method := real_crud_method(methodobj):
-                audit = getattr(crud_method, 'audit', None)
-                audit_extended = getattr(crud_method, 'audit_extended', None)
-        if audit:
-            if audit_extended:
-                try:
-                    audit = f'{audit} {audit_extended(*params)}'
-                except Exception:
-                    pass
-
-            await self.log_audit_message('METHOD_CALL', {
-                'method': message['method'],
-                'params': self.middleware.dump_args(params, methodobj),
-                'description': audit,
-                'authenticated': authenticated,
-                'authorized': authorized,
-            }, success)
+        return await self.middleware.log_audit_message_for_method(
+            message['method'], methodobj, message.get('params') or [], self, authenticated, authorized, success,
+        )
 
     def on_open(self):
         self.middleware.register_wsclient(self)
@@ -562,11 +505,28 @@ class FileApplication(object):
         if 'method' not in data:
             return web.Response(status=422)
 
-        authenticated_credentials = await authenticate(self.middleware, request, 'CALL', data['method'])
-        if authenticated_credentials is None:
+        credentials = parse_credentials(request)
+        if credentials is None:
             raise web.HTTPUnauthorized()
-        if not authenticated_credentials.authorize('CALL', data['method']):
-            raise web.HTTPForbidden()
+        app = create_application(request)
+        try:
+            authenticated_credentials = await authenticate(self.middleware, request, credentials, 'CALL',
+                                                           data['method'])
+            if authenticated_credentials is None:
+                raise web.HTTPUnauthorized()
+        except web.HTTPException as e:
+            credentials['credentials_data'].pop('password', None)
+            await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+                'credentials': credentials,
+                'error': e.text,
+            }, False)
+            raise
+        app = create_application(request, authenticated_credentials)
+        credentials['credentials_data'].pop('password', None)
+        await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
+            'credentials': credentials,
+            'error': None,
+        }, True)
 
         filepart = await reader.next()
 
@@ -576,8 +536,15 @@ class FileApplication(object):
             return resp
 
         try:
-            job = await self.middleware.call(data['method'], *(data.get('params') or []),
-                                             pipes=Pipes(input_=self.middleware.pipe()))
+            serviceobj, methodobj = self.middleware._method_lookup(data['method'])
+            if authenticated_credentials.authorize('CALL', data['method']):
+                job = await self.middleware.call_with_audit(data['method'], serviceobj, methodobj,
+                                                            data.get('params') or [], app,
+                                                            pipes=Pipes(input_=self.middleware.pipe()))
+            else:
+                await self.middleware.log_audit_message_for_method(data['method'], methodobj, data.get('params') or [],
+                                                                   app, True, False, False)
+                raise web.HTTPForbidden()
             await self.middleware.run_in_thread(copy_multipart_to_pipe, self.loop, filepart, job.pipes.input)
         except CallError as e:
             if e.errno == CallError.ENOMETHOD:
@@ -1364,7 +1331,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         return Pipe(self, buffered)
 
     def _call_prepare(
-        self, name, serviceobj, methodobj, params, app=None, job_on_progress_cb=None, pipes=None, in_event_loop=True,
+        self, name, serviceobj, methodobj, params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
+        in_event_loop=True,
     ):
         """
         :param in_event_loop: Whether we are in the event loop thread.
@@ -1376,6 +1344,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
                 raise CallError('`app` is required')
 
             args.append(app)
+
+        if getattr(methodobj, 'audit_callback', None):
+            args.append(audit_callback or (lambda message: None))
 
         if params:
             args.extend(params)
@@ -1470,7 +1441,85 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             method.returns[i].dump(r) if i < len(method.returns) else r for i, r in enumerate([result])
         ]
 
-    async def call(self, name, *params, pipes=None, job_on_progress_cb=None, app=None, profile=False):
+    async def call_with_audit(self, method, serviceobj, methodobj, params, app, **kwargs):
+        audit_callback_messages = []
+        success = False
+        try:
+            result = await self._call(method, serviceobj, methodobj, params, app=app,
+                                      audit_callback=audit_callback_messages.append, **kwargs)
+            success = True
+        finally:
+            await self.log_audit_message_for_method(method, methodobj, params, app, True, True, success,
+                                                    audit_callback_messages)
+
+        return result
+
+    async def log_audit_message_for_method(self, method, methodobj, params, app, authenticated, authorized, success,
+                                           callback_messages=None):
+        callback_messages = callback_messages or []
+
+        audit = getattr(methodobj, 'audit', None)
+        audit_extended = getattr(methodobj, 'audit_extended', None)
+        if audit is None:
+            if crud_method := real_crud_method(methodobj):
+                audit = getattr(crud_method, 'audit', None)
+                audit_extended = getattr(crud_method, 'audit_extended', None)
+        if audit:
+            audits = [audit]
+
+            if callback_messages:
+                audits = [f'{audit} {callback_message}' for callback_message in callback_messages]
+            elif audit_extended:
+                try:
+                    audits[0] = f'{audit} {audit_extended(*params)}'
+                except Exception:
+                    pass
+
+            for description in audits:
+                await self.log_audit_message(app, 'METHOD_CALL', {
+                    'method': method,
+                    'params': self.dump_args(params, methodobj),
+                    'description': description,
+                    'authenticated': authenticated,
+                    'authorized': authorized,
+                }, success)
+
+    async def log_audit_message(self, app, event, event_data, success):
+        message = "@cee:" + json.dumps({
+            "TNAUDIT": {
+                "aid": str(uuid.uuid4()),
+                "vers": {
+                    "major": 0,
+                    "minor": 1
+                },
+                "addr": "127.0.0.1",
+                "user": "root",
+                "sess": app.session_id,
+                "time": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
+                "svc": "MIDDLEWARE",
+                "svc_data": json.dumps({
+                    "vers": {
+                        "major": 0,
+                        "minor": 1,
+                    },
+                    "origin": app.origin.repr() if app.origin else None,
+                    "protocol": "WEBSOCKET" if app.websocket else "REST",
+                    "credentials": {
+                        "credentials": app.authenticated_credentials.class_name(),
+                        "credentials_data": app.authenticated_credentials.dump(),
+                    } if app.authenticated_credentials else None,
+                }),
+                "event": event,
+                "event_data": json.dumps(event_data),
+                "success": success,
+            }
+        })
+
+        async with await create_connected_unix_datagram_socket("/dev/log") as s:
+            await s.send(syslog_message(message))
+
+    async def call(self, name, *params, app=None, audit_callback=None, job_on_progress_cb=None, pipes=None,
+                   profile=False):
         serviceobj, methodobj = self._method_lookup(name)
 
         if mock := self._mock_method(name, params):
@@ -1481,10 +1530,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         return await self._call(
             name, serviceobj, methodobj, params,
-            app=app, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
+            app=app, audit_callback=audit_callback, job_on_progress_cb=job_on_progress_cb, pipes=pipes,
         )
 
-    def call_sync(self, name, *params, job_on_progress_cb=None, app=None, background=False):
+    def call_sync(self, name, *params, job_on_progress_cb=None, app=None, audit_callback=None, background=False):
         if background:
             return self.loop.call_soon_threadsafe(lambda: self.create_task(self.call(name, *params, app=app)))
 
@@ -1493,7 +1542,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         if mock := self._mock_method(name, params):
             methodobj = mock
 
-        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, app=app,
+        prepared_call = self._call_prepare(name, serviceobj, methodobj, params, app=app, audit_callback=audit_callback,
                                            job_on_progress_cb=job_on_progress_cb, in_event_loop=False)
 
         if prepared_call.job:

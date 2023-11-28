@@ -60,6 +60,7 @@ AUDIT_EVENT_MIDDLEWARE_BASE_SCHEMA = AuditSchema(
         AuditEventParam.SERVICE_DATA.value,
         AUDIT_VERS,
         Str('origin', null=True),
+        Str('protocol', enum=['REST', 'WEBSOCKET']),
         Dict('credentials', null=True, additional_attrs=True),
     ),
     Bool('success'),

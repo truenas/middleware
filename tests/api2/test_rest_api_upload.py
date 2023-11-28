@@ -6,7 +6,6 @@ import pytest
 from middlewared.test.integration.utils import client, session, url
 
 
-
 @pytest.mark.parametrize("method", ["test_input_pipe", "test_input_unchecked_pipe"])
 def test_upload(method):
     with session() as s:
