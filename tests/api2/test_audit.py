@@ -356,5 +356,5 @@ def test_api_key_login_failed():
 
 @pytest.mark.parametrize('logfile', ('/var/log/messages', '/var/log/syslog'))
 def test_check_syslog_leak(logfile):
-    entries = ssh(f'grep @cee {logfile}')
+    entries = ssh(f'grep @cee {logfile}', check=False)
     assert '@cee' not in entries
