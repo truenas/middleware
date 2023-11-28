@@ -2,6 +2,8 @@
     from middlewared.plugins.audit.utils import AUDITED_SERVICES
 
     adv_conf = render_ctx['system.advanced.config']
+
+    audit_filters = [f'filter(f_tnaudit{svc.lower()});' for svc, vers in AUDITED_SERVICES]
 %>\
 ##################
 # TrueNAS filters
@@ -12,9 +14,7 @@
 filter f_tnaudit_${svc.lower()} { program("TNAUDIT_${svc}") };
 % endfor
 filter f_tnaudit_all {
-% for svc, vers in AUDITED_SERVICES:
-  filter(f_tnaudit_${svc.lower()});
-% endfor
+  ${' or\n  '.join(audit_filters)}
 };
 
 # These filters are used for remote syslog
