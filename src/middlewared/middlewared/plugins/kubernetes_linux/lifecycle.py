@@ -129,11 +129,7 @@ class KubernetesService(Service):
         await self.middleware.call('k8s.node.add_taints', [{'key': 'ix-svc-start', 'effect': 'NoExecute'}])
         await self.middleware.call('k8s.cni.setup_cni')
         await self.middleware.call('k8s.gpu.setup')
-        try:
-            await self.ensure_k8s_crd_are_available()
-            await self.middleware.call('k8s.storage_class.setup_default_storage_class')
-        except Exception as e:
-            raise CallError(f'Failed to configure PV/PVCs support: {e}')
+        await self.ensure_k8s_crd_are_available()
 
         # Now that k8s is configured, we would want to scale down any deployment/statefulset which might
         # be consuming a locked host path volume
