@@ -116,13 +116,6 @@ class KubernetesService(Service):
     async def ensure_k8s_crd_are_available(self):
         retries = 5
         required_crds = [
-            'volumesnapshots.snapshot.storage.k8s.io',
-            'volumesnapshotcontents.snapshot.storage.k8s.io',
-            'volumesnapshotclasses.snapshot.storage.k8s.io',
-            'zfsrestores.zfs.openebs.io',
-            'zfsbackups.zfs.openebs.io',
-            'zfssnapshots.zfs.openebs.io',
-            'zfsvolumes.zfs.openebs.io',
             'network-attachment-definitions.k8s.cni.cncf.io',
         ]
         while len(
