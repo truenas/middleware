@@ -43,7 +43,6 @@ class KubernetesService(Service):
         self.middleware.call_sync('datastore.update', 'services.kubernetes', db_config['id'], {'cni_config': {}})
 
         k8s_config = self.middleware.call_sync('kubernetes.config')
-        k8s_pool = k8s_config['pool']
         catalog_sync_jobs = self.middleware.call_sync('core.get_jobs', [
             ['OR', [
                 ['method', '=', 'catalog.sync'], ['method', '=', 'catalog.sync_all'],
@@ -167,13 +166,6 @@ class KubernetesService(Service):
         # k8s resources don't exist and will create them for us
         job.set_progress(92, 'Creating kubernetes resources')
         update_jobs = []
-        datasets = set(
-            d['id'] for d in self.middleware.call_sync(
-                'zfs.dataset.query', [['id', '^', f'{os.path.join(k8s_config["dataset"], "releases")}/']], {
-                    'extra': {'retrieve_properties': False}
-                }
-            )
-        )
         chart_releases_mapping = {c['name']: c for c in self.middleware.call_sync('chart.release.query')}
         for chart_release in restored_chart_releases:
             release = chart_releases_mapping[chart_release]
