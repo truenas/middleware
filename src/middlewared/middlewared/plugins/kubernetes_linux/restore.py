@@ -117,7 +117,7 @@ class KubernetesService(Service):
 
         releases = os.listdir(backup_dir)
         len_releases = len(releases)
-        restored_chart_releases = collections.defaultdict(lambda: {'pv_info': {}})
+        restored_chart_releases = collections.defaultdict(lambda: {'replica_counts': {}})
 
         for index, release_name in enumerate(releases):
             job.set_progress(
@@ -162,11 +162,6 @@ class KubernetesService(Service):
             with open(os.path.join(r_backup_dir, 'workloads_replica_counts.json'), 'r') as f:
                 restored_chart_releases[release_name]['replica_counts'] = json.loads(f.read())
 
-            pv_info_path = os.path.join(r_backup_dir, 'pv_info.json')
-            if os.path.exists(pv_info_path):
-                with open(pv_info_path, 'r') as f:
-                    restored_chart_releases[release_name]['pv_info'] = json.loads(f.read())
-
         # Now helm will recognise the releases as valid, however we don't have any actual k8s deployed resource
         # That will be adjusted with updating chart releases with their existing values and helm will see that
         # k8s resources don't exist and will create them for us
@@ -181,14 +176,6 @@ class KubernetesService(Service):
         )
         chart_releases_mapping = {c['name']: c for c in self.middleware.call_sync('chart.release.query')}
         for chart_release in restored_chart_releases:
-            # Before we have resources created for the chart releases, we will restore PVs if possible and then
-            # restore the chart release, so if there is any PVC expecting a PV, it will be able to claim it as soon
-            # as it is created. If this is not done in this order, PVC will request a new dataset and we will lose
-            # the mapping with the old dataset.
-            self.middleware.call_sync(
-                'chart.release.recreate_storage_class',
-                chart_release, os.path.join(k8s_config['dataset'], 'releases', chart_release, 'volumes')
-            )
             failed_pv_restores = []
             for pvc, pv in restored_chart_releases[chart_release]['pv_info'].items():
                 pv['dataset'] = RE_POOL.sub(f'{k8s_pool}\\1', pv['dataset'])
