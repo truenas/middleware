@@ -67,8 +67,6 @@ class KubernetesZFSVolumesService(CRUDService):
 
 class KubernetesZFSSnapshotClassService(CRUDService):
 
-    DEFAULT_SNAPSHOT_CLASS_NAME = 'zfspv-default-snapshot-class'
-
     class Config:
         namespace = 'k8s.zfs.snapshotclass'
         private = True
@@ -76,32 +74,6 @@ class KubernetesZFSSnapshotClassService(CRUDService):
     @filterable
     async def query(self, filters, options):
         return filter_list((await ZFSVolumeSnapshotClass.query())['items'], filters, options)
-
-    async def do_create(self, data):
-        data.update({
-            'kind': 'VolumeSnapshotClass',
-            'apiVersion': f'snapshot.storage.k8s.io/{ZFSVolumeSnapshotClass.VERSION}',
-        })
-        await ZFSVolumeSnapshotClass.create(data)
-        return data
-
-    async def default_snapshot_class_name(self):
-        return self.DEFAULT_SNAPSHOT_CLASS_NAME
-
-    async def setup_default_snapshot_class(self):
-        if await self.query([['metadata.name', '=', 'zfspv-default-snapshot-class']]):
-            return
-
-        await self.middleware.call('k8s.zfs.snapshotclass.create', {
-            'metadata': {
-                'name': self.DEFAULT_SNAPSHOT_CLASS_NAME,
-                'annotations': {
-                    'snapshot.storage.kubernetes.io/is-default-class': 'true'
-                },
-            },
-            'driver': 'zfs.csi.openebs.io',
-            'deletionPolicy': 'Delete',
-        })
 
 
 class KubernetesSnapshotService(CRUDService):
