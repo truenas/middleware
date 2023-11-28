@@ -2,7 +2,7 @@ from middlewared.schema import accepts, Str
 from middlewared.service import CRUDService, filterable
 from middlewared.utils import filter_list
 
-from .k8s import ZFSSnapshot, ZFSVolume, ZFSVolumeSnapshotClass
+from .k8s import ZFSVolume, ZFSVolumeSnapshotClass
 
 
 class KubernetesZFSVolumesService(CRUDService):
@@ -31,18 +31,3 @@ class KubernetesZFSSnapshotClassService(CRUDService):
     @filterable
     async def query(self, filters, options):
         return filter_list((await ZFSVolumeSnapshotClass.query())['items'], filters, options)
-
-
-class KubernetesZFSSnapshotService(CRUDService):
-
-    GROUP = 'zfs.openebs.io'
-    PLURAL = 'zfssnapshots'
-    VERSION = 'v1'
-
-    class Config:
-        namespace = 'k8s.zfs.snapshot'
-        private = True
-
-    @filterable
-    async def query(self, filters, options):
-        return filter_list((await ZFSSnapshot.query(namespace='openebs')), filters, options)
