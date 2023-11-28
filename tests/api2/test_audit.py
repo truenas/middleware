@@ -39,6 +39,7 @@ def expect_audit_log(entries, *, include_logins=False):
 
 
 def test_unauthenticated_call():
+    call('service.restart', 'syslogd')
     with client(auth=None) as c:
         with expect_audit_log([
             {
