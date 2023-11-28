@@ -1401,4 +1401,4 @@ def test_62_files_in_exportsd(request, expect_NFS_start):
             # Find alert
             assert any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
         else:  # Alert should have been cleared
-            assert any(alert["klass"] != "NFSblockedByExportsDir" for alert in alerts), alerts
+            assert not any(alert["klass"] == "NFSblockedByExportsDir" for alert in alerts), alerts
