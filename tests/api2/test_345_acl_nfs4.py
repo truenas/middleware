@@ -940,7 +940,7 @@ def test_30_acl_inherit_nested_dataset():
             with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'APPS'}):
                 pass
 
-        with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'NFS'}):
+        with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'NFS'}) as ds2:
             acl2 = call('filesystem.getacl', os.path.join('/mnt', ds2))
             assert acl1['acltype'] == acl2['acltype']
             assert any(x['id'] == 666 for x in acl2['acl'])
