@@ -43,6 +43,7 @@ def test_remote_ssh_semiautomatic_setup_sets_user_attributes():
             "group_create": True,
             "home": f"/mnt/{homedir}",
             "password_disabled": True,
+            "smb": False,
             "shell": "/usr/sbin/nologin",
         }):
             credential = call("keychaincredential.create", {

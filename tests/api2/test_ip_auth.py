@@ -18,7 +18,6 @@ def test_tcp_connection_from_localhost(url, root):
             "username": "unprivileged",
             "full_name": "Unprivileged User",
             "group_create": True,
-            "home": f"/nonexistent",
             "password": "test1234",
         }):
             result = ssh(f"sudo -u unprivileged {cmd}", check=False, complete_response=True)
