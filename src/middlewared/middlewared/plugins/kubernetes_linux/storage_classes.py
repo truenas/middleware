@@ -13,7 +13,11 @@ class KubernetesStorageClassService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        return filter_list((await StorageClass.query())['items'], filters, options)
+        try:
+            return filter_list((await StorageClass.query())['items'], filters, options)
+        except ApiException:
+            # We make this safe as it is possible that the cluster does not has csi drivers installed
+            return []
 
     async def do_delete(self, name):
         try:
