@@ -354,7 +354,7 @@ def test_api_key_login_failed():
             c.call("auth.login_with_api_key", "invalid_api_key")
 
 
-@pytest.parametrize(logfile, ('/var/log/messages', '/var/log/syslog'))
+@pytest.mark.parametrize('logfile', ('/var/log/messages', '/var/log/syslog'))
 def test_check_syslog_leak(logfile):
     entries = ssh(f'grep @cee {logfile}')
     assert not entries
