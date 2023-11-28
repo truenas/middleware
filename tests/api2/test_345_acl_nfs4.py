@@ -12,6 +12,7 @@ sys.path.append(apifolder)
 from functions import DELETE, GET, POST, SSH_TEST, wait_on_job
 from auto_config import ip, pool_name, user, password
 from pytest_dependency import depends
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
@@ -934,8 +935,12 @@ def test_30_acl_inherit_nested_dataset():
         acl1 = call('filesystem.getacl', os.path.join('/mnt', ds1))
         assert any(x['id'] == 666 for x in acl1['acl'])
 
-        with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'APPS'}) as ds2:
+        with pytest.raises(ValidationErrors):
+            # ACL on parent dataset prevents adding APPS group to ACL. Fail.
+            with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'APPS'}):
+                pass
+
+        with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'NFS'}):
             acl2 = call('filesystem.getacl', os.path.join('/mnt', ds2))
             assert acl1['acltype'] == acl2['acltype']
             assert any(x['id'] == 666 for x in acl2['acl'])
-            assert any(x['id'] == 568 for x in acl2['acl'])
