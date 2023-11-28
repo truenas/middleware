@@ -662,6 +662,9 @@ class ChartReleaseService(CRUDService):
 
     @private
     async def remove_storage_class_and_dataset(self, release_name, job=None):
+        # TODO: We will remove storage class / pv usages here in next major release after dragonfish
+        #  until then for users who already had openebs CSI shipped by us will keep on getting
+        #  their storage class removed
         storage_class_name = get_storage_class_name(release_name)
         if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
             if job:
