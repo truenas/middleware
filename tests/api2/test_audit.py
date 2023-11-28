@@ -261,6 +261,7 @@ def test_token_login():
                                 "credentials": "LOGIN_PASSWORD",
                                 "credentials_data": {"username": "root"},
                             },
+                            "username": "root",
                         },
                     },
                     "error": None,
