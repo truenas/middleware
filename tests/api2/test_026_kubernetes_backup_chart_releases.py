@@ -91,9 +91,6 @@ if not ha:
         depends(request, ['ix_app_backup'])
         payload = {
             "backup_name": backup_name,
-            "options": {
-                "wait_for_csi": True
-            }
         }
         results = POST('/kubernetes/restore_backup/', payload)
         assert results.status_code == 200, results.text
@@ -189,9 +186,6 @@ if not ha:
         depends(request, ['my_second_backup'])
         payload = {
             "backup_name": 'mysecondbackup',
-            "options": {
-                "wait_for_csi": False
-            }
         }
         results = POST('/kubernetes/restore_backup/', payload)
         assert results.status_code == 200, results.text
@@ -297,10 +291,6 @@ if not ha:
 
                     assert read_file_content(os.path.join(backup_path, 'namespace.yaml')) == call(
                         'k8s.namespace.export_to_yaml', app_info['namespace']
-                    )
-
-                    assert json.loads(read_file_content(os.path.join(backup_path, 'pv_info.json'))) == call(
-                        'chart.release.retrieve_pv_pvc_mapping', app_info['name']
                     )
 
                     assert json.loads(read_file_content(
