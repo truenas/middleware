@@ -9,7 +9,7 @@ from middlewared.client import ClientException
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.api_key import api_key
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 
 
 @contextlib.contextmanager
@@ -353,3 +353,9 @@ def test_api_key_login_failed():
             }
         ], include_logins=True):
             c.call("auth.login_with_api_key", "invalid_api_key")
+
+
+@pytest.mark.parametrize('logfile', ('/var/log/messages', '/var/log/syslog'))
+def test_check_syslog_leak(logfile):
+    entries = ssh(f'grep @cee {logfile}', check=False)
+    assert '@cee' not in entries
