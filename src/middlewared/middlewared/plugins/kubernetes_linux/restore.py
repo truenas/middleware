@@ -176,65 +176,6 @@ class KubernetesService(Service):
         )
         chart_releases_mapping = {c['name']: c for c in self.middleware.call_sync('chart.release.query')}
         for chart_release in restored_chart_releases:
-            failed_pv_restores = []
-            for pvc, pv in restored_chart_releases[chart_release]['pv_info'].items():
-                pv['dataset'] = RE_POOL.sub(f'{k8s_pool}\\1', pv['dataset'])
-                if pv['dataset'] not in datasets:
-                    failed_pv_restores.append(f'Unable to locate PV dataset {pv["dataset"]!r} for {pvc!r} PVC.')
-                    continue
-
-                zv_details = pv['zv_details']
-                try:
-                    self.middleware.call_sync('k8s.zv.create', {
-                        'metadata': {
-                            'name': zv_details['metadata']['name'],
-                        },
-                        'spec': {
-                            'capacity': zv_details['spec']['capacity'],
-                            'poolName': RE_POOL.sub(f'{k8s_pool}\\1', zv_details['spec']['poolName']),
-                        },
-                    })
-                except Exception as e:
-                    failed_pv_restores.append(f'Unable to create ZFS Volume for {pvc!r} PVC: {e}')
-                    continue
-
-                # We need to safely access claim_ref volume attribute keys as with k8s client api re-write
-                # camel casing which was done by kubernetes asyncio package is not happening anymore
-                pv_spec = pv['pv_details']['spec']
-                claim_ref = pv_spec.get('claim_ref') or pv_spec['claimRef']
-                pv_volume_attrs = pv_spec['csi'].get('volume_attributes') or pv_spec['csi']['volumeAttributes']
-                try:
-                    self.middleware.call_sync('k8s.pv.create', {
-                        'metadata': {
-                            'name': pv['name'],
-                        },
-                        'spec': {
-                            'capacity': {
-                                'storage': pv_spec['capacity']['storage'],
-                            },
-                            'claimRef': {
-                                'name': claim_ref['name'],
-                                'namespace': claim_ref['namespace'],
-                            },
-                            'csi': {
-                                'volumeAttributes': {
-                                    'openebs.io/poolname': RE_POOL.sub(
-                                        f'{k8s_pool}\\1', pv_volume_attrs['openebs.io/poolname']
-                                    )
-                                },
-                                'volumeHandle': pv_spec['csi'].get('volume_handle') or pv_spec['csi']['volumeHandle'],
-                            },
-                            'storageClassName': pv_spec.get('storage_class_name') or pv_spec['storageClassName'],
-                        },
-                    })
-                except Exception as e:
-                    failed_pv_restores.append(f'Unable to create PV for {pvc!r} PVC: {e}')
-
-            if failed_pv_restores:
-                self.logger.error(
-                    'Failed to restore PVC(s) for %r chart release:\n%s', chart_release, '\n'.join(failed_pv_restores)
-                )
-
             release = chart_releases_mapping[chart_release]
             chart_path = os.path.join(release['path'], 'charts', release['chart_metadata']['version'])
             # We will create any relevant crds now if applicable
