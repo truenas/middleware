@@ -34,11 +34,3 @@ class ZFSVolumeSnapshotClass(OPENEBSBase):
     OBJECT_HUMAN_NAME = 'Openebs ZFS Volume Snapshotclass'
     PLURAL = 'volumesnapshotclasses'
     VERSION = 'v1'
-
-
-class ZFSSnapshot(OPENEBSBase):
-
-    GROUP = 'zfs.openebs.io'
-    OBJECT_HUMAN_NAME = 'Openebs ZFS Snapshot'
-    PLURAL = 'zfssnapshots'
-    VERSION = 'v1'
