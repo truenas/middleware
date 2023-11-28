@@ -132,7 +132,6 @@ class KubernetesService(Service):
         try:
             await self.ensure_k8s_crd_are_available()
             await self.middleware.call('k8s.storage_class.setup_default_storage_class')
-            await self.middleware.call('k8s.zfs.snapshotclass.setup_default_snapshot_class')
         except Exception as e:
             raise CallError(f'Failed to configure PV/PVCs support: {e}')
 
