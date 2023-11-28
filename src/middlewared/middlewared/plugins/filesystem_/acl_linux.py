@@ -912,3 +912,14 @@ class FilesystemService(Service, ACLBase):
         })
 
         return job.wrap_sync(setacl_job)
+
+    def get_inherited_acl(self, data):
+        init_path = data['path']
+        verrors = ValidationErrors()
+        self._common_perm_path_validate('filesystem.add_to_acl', data, verrors)
+        verrors.check()
+
+        current_acl = self.getacl(data['path'], False)
+        acltype = ACLType[current_acl['acltype']]
+
+        return acltype.calculate_inherited(current_acl, data['options']['directory'])
