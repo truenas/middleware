@@ -4,41 +4,33 @@ import pytest
 import sys
 import os
 import enum
-from time import sleep
+import secrets
+import string
 from base64 import b64decode, b64encode
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import PUT, POST, GET, DELETE, SSH_TEST
+from functions import PUT, GET, SSH_TEST
 from auto_config import (
     ip,
-    pool_name,
     user,
     password,
 )
+from middlewared.test.integration.assets.account import user as create_user
+from middlewared.test.integration.assets.smb import smb_share
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call, ssh
 from pytest_dependency import depends
-from protocols import SMB, smb_connection, smb_share
+from protocols import SMB, smb_connection
 from samba import ntstatus
 from samba import NTSTATUSError
 
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 
 
-
-dataset = f"{pool_name}/smb-proto"
-dataset_url = dataset.replace('/', '%2F')
 SMB_NAME = "SMBPROTO"
-smb_path = "/mnt/" + dataset
-guest_path_verification = {
-    "user": "shareuser",
-    "group": 'root',
-    "acl": True
-}
-root_path_verification = {
-    "user": "root",
-    "group": 'root',
-    "acl": False
-}
-sample_email = "yoloblazeit@ixsystems.com"
+SMB_USER = "smbuser"
+SMB_PWD = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
+TEST_DATA = {}
 
 
 class DOSmode(enum.Enum):
@@ -93,72 +85,33 @@ AFPXattr = {
     },
 }
 
-SMB_USER = "smbuser"
-SMB_PWD = "smb1234"
 
-
-@pytest.mark.dependency(name="SMB_DATASET_CREATED")
-def test_001_creating_smb_dataset(request):
-    payload = {
-        "name": dataset,
-        "share_type": "SMB"
-    }
-    results = POST("/pool/dataset/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_002_get_next_uid_for_smbuser():
-    results = GET('/user/get_next_uid/')
-    assert results.status_code == 200, results.text
-    global next_uid
-    next_uid = results.json()
-
-
-@pytest.mark.dependency(name="SMB_USER_CREATED")
-def test_003_creating_shareuser_to_test_acls(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    global smbuser_id
-    payload = {
-        "username": SMB_USER,
-        "full_name": "SMB User",
-        "group_create": True,
-        "password": SMB_PWD,
-        "uid": next_uid,
-        "email": sample_email,
-    }
-    results = POST("/user/", payload)
-    assert results.status_code == 200, results.text
-    smbuser_id = results.json()
+@pytest.fixture(scope='module')
+def initialize_for_smb_tests(request):
+    with dataset('smb-proto', data={'share_type': 'SMB'}) as ds:
+        with create_user({
+            'username': SMB_USER,
+            'full_name': SMB_USER,
+            'group_create': True,
+            'password': SMB_PWD
+        }) as u:
+            with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
+                'auxsmbconf': 'zfs_core:base_user_quota = 1G'
+            }) as s:
+                try:
+                    call('service.start', 'cifs')
+                    yield {'dataset': ds, 'share': s, 'user': u}
+                finally:
+                    call('smb.update', {
+                        'enable_smb1': False,
+                        'aapl_extensions': False
+                    })
+                    call('service.stop', 'cifs')
 
 
 @pytest.mark.dependency(name="SMB_SHARE_CREATED")
-def test_006_creating_a_smb_share_path(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    global payload, results, smb_id
-    payload = {
-        "comment": "SMB Protocol Testing Share",
-        "path": smb_path,
-        "name": SMB_NAME,
-        "auxsmbconf": "zfs_core:base_user_quota = 1G"
-    }
-    results = POST("/sharing/smb/", payload)
-    assert results.status_code == 200, results.text
-    smb_id = results.json()['id']
-
-
-@pytest.mark.dependency(name="SMB_SERVICE_STARTED")
-def test_007_starting_cifs_service(request):
-    depends(request, ["SMB_SHARE_CREATED"])
-    payload = {"service": "cifs"}
-    results = POST("/service/start/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
-
-
-def test_008_checking_to_see_if_smb_service_is_running(request):
-    depends(request, ["SMB_SHARE_CREATED"])
-    results = GET("/service?service=cifs")
-    assert results.json()[0]["state"] == "RUNNING", results.text
+def test_001_initialize_smb_servce(initialize_for_smb_tests):
+    TEST_DATA.update(initialize_for_smb_tests)
 
 
 @pytest.mark.dependency(name="SHARE_IS_WRITABLE")
@@ -463,6 +416,7 @@ SMB quotas.
 @pytest.mark.dependency(name="BA_ADDED_TO_USER")
 def test_089_add_to_builtin_admins(request):
     depends(request, ["SHARE_IS_WRITABLE"])
+    smbuser_id = TEST_DATA['user']['id']
     ba = GET('/group?group=builtin_administrators').json()
     assert len(ba) != 0
 
@@ -508,8 +462,9 @@ def test_090_test_auto_smb_quota(request, proto):
 
 def test_091_remove_auto_quota_param(request):
     depends(request, ["SMB_SHARE_CREATED"])
-    results = PUT(f"/sharing/smb/id/{smb_id}/", {"auxsmbconf": ""})
-    assert results.status_code == 200, results.text
+    call('sharing.smb.update', TEST_DATA['share']['id'], {
+        'auxsmbconf': ''
+    })
 
 
 @pytest.mark.parametrize('proto', ["SMB2"])
@@ -581,28 +536,20 @@ def test_95_strip_quota(request):
     This test removes any quota set for the test smb user
     """
     depends(request, ["BA_ADDED_TO_USER"])
-    payload = [
-        {'quota_type': 'USER', 'id': SMB_USER, 'quota_value': 0},
-    ]
-    results = POST(f'/pool/dataset/id/{dataset_url}/set_quota', payload)
-    assert results.status_code == 200, results.text
-
-
-@pytest.mark.dependency(name="AAPL_ENABLED")
-def test_140_enable_aapl(request):
-    depends(request, ["SMB_SHARE_CREATED"])
-    payload = {
-        "aapl_extensions": True,
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
+    call('pool.dataset.set_quota', TEST_DATA['dataset'], [{
+        'quota_type': 'USER',
+        'id': SMB_USER,
+        'quota_value': 0
+    }])
 
 
 @pytest.mark.dependency(name="AFP_ENABLED")
-def test_150_change_share_to_afp(request):
-    depends(request, ["SMB_SHARE_CREATED", "AAPL_ENABLED"])
-    results = PUT(f"/sharing/smb/id/{smb_id}/", {"afp": True})
-    assert results.status_code == 200, results.text
+def test_140_enable_aapl(request):
+    depends(request, ["SMB_SHARE_CREATED"])
+    call('smb.update', {'aapl_extensions': True})
+    call('sharing.smb.update', TEST_DATA['share']['id'], {
+        'afp': True,
+    })
 
 
 @pytest.mark.dependency(name="SSH_XATTR_SET")
@@ -613,6 +560,7 @@ def test_151_set_xattr_via_ssh(request, xat):
     via SSH.
     """
     depends(request, ["AFP_ENABLED"], scope="session")
+    smb_path = TEST_DATA['share']['path']
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
     cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
@@ -693,20 +641,17 @@ def test_155_ssh_read_afp_xattr(request, xat):
     if xat == "org.netatalk.Metadata":
         return
 
+    smb_path = TEST_DATA['share']['path']
     afptestfile = f'{smb_path}/afp_xattr_testfile'
     cmd = f'attr -q -g {xat} {afptestfile} | base64'
     results = SSH_TEST(cmd, user, password, ip)
-    if xat == "org.netatalk.Metadata":
-        with open("/tmp/stuff", "w") as f:
-            f.write(f"NETATALK: {results['output']}")
-
     assert results['result'] is True, results['output']
     xat_data = b64decode(results['stdout'])
     assert AFPXattr[xat]['bytes'] == xat_data, results['output']
 
 
 def test_175_check_external_path(request):
-    with smb_share(f'EXTERNAL:{ip}\{SMB_NAME}', {'name': 'EXTERNAL'}):
+    with smb_share(f'EXTERNAL:{ip}\\{SMB_NAME}', 'EXTERNAL'):
         with smb_connection(
             host=ip,
             share=SMB_NAME,
@@ -720,8 +665,7 @@ def test_175_check_external_path(request):
 
         cmd = f'smbclient //127.0.0.1/EXTERNAL -U {SMB_USER}%{SMB_PWD} '
         cmd += '-c "get external_test_file"'
-        results = SSH_TEST(cmd, user, password, ip)
-        assert results['result'] is True, results['output']
+        ssh(cmd)
 
         results = SSH_TEST('cat external_test_file', user, password, ip)
         assert results['result'] is True, results['output']
@@ -729,8 +673,9 @@ def test_175_check_external_path(request):
 
 
 def test_176_check_dataset_auto_create(request):
-    with dataset_asset('smb_proto_nested_datasets', {'share_type': 'SMB'}) as ds:
-        with smb_share(ds['mountpoint'], {'name': 'DATASETS', 'purpose': 'PRIVATE_DATASETS'}):
+    with dataset('smb_proto_nested_datasets', data={'share_type': 'SMB'}) as ds:
+        ds_mp = os.path.join('/mnt', ds)
+        with smb_share(ds_mp, 'DATASETS', {'purpose': 'PRIVATE_DATASETS'}):
             with smb_connection(
                 host=ip,
                 share='DATASETS',
@@ -742,23 +687,17 @@ def test_176_check_dataset_auto_create(request):
                 c.write(fd, b'EXTERNAL_TEST')
                 c.close(fd)
 
-        results = POST('/filesystem/getacl/', {
-            'path': os.path.join(ds['mountpoint'], SMB_USER),
-            'simplified': True
-        })
-        assert results.status_code == 200, results.text
-        acl = results.json()
+        acl = call('filesystem.getacl', os.path.join(ds_mp, SMB_USER), True)
         assert acl['trivial'] is False, str(acl)
 
 
 def test_180_create_share_multiple_dirs_deep(request):
     depends(request, ["SMB_USER_CREATED"])
-    with dataset_asset( 'nested_dirs', {'share_type': 'SMB'}) as ds:
+    with dataset('nested_dirs', data={'share_type': 'SMB'}) as ds:
         dirs_path = f'{ds["mountpoint"]}/d1/d2/d3'
-        results = SSH_TEST(f'mkdir -p {dirs_path}', user, password, ip)
-        assert results['result'] is True, {"cmd": cmd, "res": results['output']}
+        ssh(f'mkdir -p {dirs_path}')
 
-        with smb_share(dirs_path, {'name': 'DIRS'}):
+        with smb_share(dirs_path, 'DIRS'):
             with smb_connection(
                 host=ip,
                 share='DIRS',
@@ -770,13 +709,12 @@ def test_180_create_share_multiple_dirs_deep(request):
                 c.write(fd, b'DIRS_TEST')
                 c.close(fd)
 
-        results = POST('/filesystem/stat/', os.path.join(dirs_path, 'nested_dirs_file'))
-        assert results.status_code == 200, results.text
+        call('filesystem.stat', os.path.join(dirs_path, 'nested_dirs_file'))
 
 def test_181_create_and_disable_share(request):
     depends(request, ["SMB_USER_CREATED"])
-    with dataset_asset('smb_disabled', {'share_type': 'SMB'}) as ds:
-        with smb_share(ds['mountpoint'], {'name': 'TO_DISABLE'}) as tmp_id:
+    with dataset('smb_disabled', data={'share_type': 'SMB'}) as ds:
+        with smb_share(os.path.join('/mnt', ds), 'TO_DISABLE') as tmp_share:
             with smb_connection(
                 host=ip,
                 share='TO_DISABLE',
@@ -784,55 +722,10 @@ def test_181_create_and_disable_share(request):
                 password=SMB_PWD,
                 smb1=False
             ) as c:
-                results = PUT(f"/sharing/smb/id/{tmp_id}/", {"enabled": False})
-                assert results.status_code == 200, results.text
-
+                call('sharing.smb.update', tmp_share['id'], {'enabled': False})
                 try:
                     fd = c.create_file('canary', "w")
                 except NTSTATUSError as status:
                     assert status.args[0] == ntstatus.NT_STATUS_NETWORK_NAME_DELETED, str(status)
                 else:
                     assert c.connected is True
-
-
-@pytest.mark.dependency(name="XATTR_CHECK_SMB_READ")
-def test_200_delete_smb_user(request):
-    depends(request, ["SMB_USER_CREATED"])
-    results = DELETE(f"/user/id/{smbuser_id}/", {"delete_group": True})
-    assert results.status_code == 200, results.text
-
-
-def test_201_delete_smb_share(request):
-    depends(request, ["SMB_SHARE_CREATED"])
-    results = DELETE(f"/sharing/smb/id/{smb_id}")
-    assert results.status_code == 200, results.text
-
-
-def test_202_disable_smb1(request):
-    depends(request, ["SMB1_ENABLED"])
-    payload = {
-        "enable_smb1": False,
-        "aapl_extensions": False,
-    }
-    results = PUT("/smb/", payload)
-    assert results.status_code == 200, results.text
-
-
-def test_203_stopping_smb_service(request):
-    depends(request, ["SMB_SERVICE_STARTED"])
-    payload = {"service": "cifs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
-
-
-def test_204_checking_if_smb_is_stoped(request):
-    depends(request, ["SMB_SERVICE_STARTED"])
-    results = GET("/service?service=cifs")
-    assert results.json()[0]['state'] == "STOPPED", results.text
-
-
-def test_205_destroying_smb_dataset(request):
-    depends(request, ["SMB_DATASET_CREATED"])
-    results = DELETE(f"/pool/dataset/id/{dataset_url}/")
-    assert results.status_code == 200, results.text
