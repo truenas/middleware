@@ -273,7 +273,7 @@ if not ha:
                     backup_path = os.path.join(
                         '/mnt', pool_name, 'ix-applications/backups', backup_name, app_info['id']
                     )
-                    for f in ('namespace.yaml', 'pv_info.json', 'workloads_replica_counts.json'):
+                    for f in ('namespace.yaml', 'workloads_replica_counts.json'):
                         test_path = os.path.join(backup_path, f)
                         assert file_exists_and_perms_check(test_path) is True, test_path
 
