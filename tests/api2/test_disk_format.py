@@ -74,6 +74,40 @@ def test_disk_format_with_size_with_swap():
     assert partitions[1]['end'] < (2 * 1024 * 1024 * 1024 + data_size) * 1.1
 
 
+def test_disk_format_with_size_with_swap_overflow():
+    disk = call('disk.get_unused')[0]
+    disk_size = disk['size']
+    disk = disk['name']
+
+    swap_size = 1536 * 1024 * 1024
+
+    data_size = disk_size - swap_size
+    call('disk.format', disk, data_size, 2)
+
+    partitions = call('disk.list_partitions', disk)
+    assert len(partitions) == 2
+    # As much swap as we could afford
+    assert swap_size * 0.9 < partitions[0]['size'] <= swap_size
+    # Data of at least the requested size
+    assert data_size <= partitions[1]['size'] < data_size * 1.01
+
+
+def test_disk_format_with_size_with_swap_overflow_no_swap():
+    disk = call('disk.get_unused')[0]
+    disk_size = disk['size']
+    disk = disk['name']
+
+    swap_size = 512 * 1024 * 1024  # Swaps of less than 1 GiB are not accepted
+
+    data_size = disk_size - swap_size
+    call('disk.format', disk, data_size, 2)
+
+    partitions = call('disk.list_partitions', disk)
+    assert len(partitions) == 1
+    # Data of at least the requested size but not more
+    assert data_size <= partitions[0]['size'] < data_size * 1.01
+
+
 def test_disk_format_removes_existing_partition_table():
     disk = call('disk.get_unused')[0]['name']
 
