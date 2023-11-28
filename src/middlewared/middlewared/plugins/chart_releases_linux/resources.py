@@ -1,13 +1,12 @@
 import collections
 import errno
-import os
 
 from middlewared.plugins.reporting.stats_utils import get_kubernetes_pods_stats
 from middlewared.schema import Bool, Dict, Int, List, Ref, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
-from .utils import CHART_NAMESPACE_PREFIX, get_namespace, get_storage_class_name, Resources
+from .utils import CHART_NAMESPACE_PREFIX, get_namespace, Resources
 
 
 class ChartReleaseService(Service):
@@ -141,24 +140,6 @@ class ChartReleaseService(Service):
         return await self.middleware.call(
             'certificateauthority.query', [['revoked', '=', False], ['parsed', '=', True]], {'select': ['name', 'id']}
         )
-
-    @private
-    async def create_update_storage_class_for_chart_release(self, release_name, volumes_path):
-        storage_class_name = get_storage_class_name(release_name)
-        storage_class = await self.middleware.call('k8s.storage_class.retrieve_storage_class_manifest')
-        storage_class['metadata']['name'] = storage_class_name
-        storage_class['parameters']['poolname'] = volumes_path
-        if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
-            await self.middleware.call('k8s.storage_class.update', storage_class_name, storage_class)
-        else:
-            await self.middleware.call('k8s.storage_class.create', storage_class)
-
-    @private
-    async def recreate_storage_class(self, release_name, volumes_path):
-        storage_class_name = get_storage_class_name(release_name)
-        if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
-            await self.middleware.call('k8s.storage_class.delete', storage_class_name)
-        await self.create_update_storage_class_for_chart_release(release_name, volumes_path)
 
     @accepts(Str('release_name'))
     @returns(Dict(
