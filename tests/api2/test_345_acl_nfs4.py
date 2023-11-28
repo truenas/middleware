@@ -922,3 +922,20 @@ def test_29_owner_restrictions(request):
     )
 
     assert results['result'] is False, str(results)
+
+
+def test_30_acl_inherit_nested_dataset():
+    with make_dataset("acl_test_inherit1", data={'share_type': 'SMB'}) as ds1:
+        call('filesystem.add_to_acl', {
+            'path': os.path.join('/mnt', ds1),
+            'entries': [{'id_type': 'GROUP', 'id': 666, 'access': 'READ'}]
+        }, job=True)
+
+        acl1 = call('filesystem.getacl', os.path.join('/mnt', ds1))
+        assert any(x['id'] == 666 for x in acl1['acl'])
+
+        with make_dataset("acl_test_inherit1/acl_test_inherit2", data={'share_type': 'APPS'}) as ds2:
+            acl2 = call('filesystem.getacl', os.path.join('/mnt', ds2))
+            assert acl1['acltype'] == acl2['acltype']
+            assert any(x['id'] == 666 for x in acl2['acl'])
+            assert any(x['id'] == 568 for x in acl2['acl'])
