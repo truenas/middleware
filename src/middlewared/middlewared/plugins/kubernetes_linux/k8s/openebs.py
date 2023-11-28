@@ -26,11 +26,3 @@ class ZFSVolume(OPENEBSBase):
     OBJECT_HUMAN_NAME = 'Openebs ZFS Volume'
     PLURAL = 'zfsvolumes'
     VERSION = 'v1'
-
-
-class g(OPENEBSBase):
-
-    GROUP = 'snapshot.storage.k8s.io'
-    OBJECT_HUMAN_NAME = 'Openebs ZFS Volume Snapshotclass'
-    PLURAL = 'volumesnapshotclasses'
-    VERSION = 'v1'
