@@ -172,9 +172,6 @@ class ChartReleaseService(CRUDService):
                 for p in k8s_svc['spec'].get('ports') or []
             ])
 
-        if get_resources:
-            storage_mapping = await self.middleware.call('chart.release.get_workload_storage_details')
-
         resources_mapping = await self.middleware.call('chart.release.get_resources_with_workload_mapping', {
             'resource_events': extra.get('resource_events', False),
             'resource_filters': resources_filters,
@@ -249,8 +246,6 @@ class ChartReleaseService(CRUDService):
             }
             if get_resources:
                 release_resources = {
-                    'storage_class': storage_mapping['storage_classes'][get_storage_class_name(name)],
-                    'persistent_volumes': storage_mapping['persistent_volumes'][name],
                     'host_path_volumes': await self.host_path_volumes(itertools.chain(
                         *[resources[getattr(Resources, k).value][name] for k in ('DEPLOYMENT', 'STATEFULSET')]
                     )),
