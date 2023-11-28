@@ -3,7 +3,7 @@
 
     adv_conf = render_ctx['system.advanced.config']
 
-    audit_filters = [f'filter(f_tnaudit{svc.lower()});' for svc, vers in AUDITED_SERVICES]
+    audit_filters = [f'filter(f_tnaudit_{svc.lower()});' for svc, vers in AUDITED_SERVICES]
 %>\
 ##################
 # TrueNAS filters
