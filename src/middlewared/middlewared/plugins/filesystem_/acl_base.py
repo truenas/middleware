@@ -135,24 +135,25 @@ class ACLType(enum.Enum):
                 # File and this entry doesn't inherit on files
                 continue
 
-            if isdir and not flags.get('DIRECTORY_INHERIT', False):
-                if flags['NO_PROPAGATE_INHERIT']:
-                    # doesn't apply to this dir and shouldn't apply to contents.
-                    continue
+            if isdir:
+                if not flags.get('DIRECTORY_INHERIT', False):
+                    if flags['NO_PROPAGATE_INHERIT']:
+                        # doesn't apply to this dir and shouldn't apply to contents.
+                        continue
 
-                # This is a directoy ACL and we have entry that only applies to files.
-                flags['INHERIT_ONLY'] = True
-            elif flags.get('INHERIT_ONLY', False):
+                    # This is a directoy ACL and we have entry that only applies to files.
+                    flags['INHERIT_ONLY'] = True
+                elif flags.get('INHERIT_ONLY', False):
+                    flags['INHERIT_ONLY'] = False
+                elif flags.get('NO_PROPAGATE_INHERIT'):
+                    flags['DIRECTORY_INHERIT'] = False
+                    flags['FILE_INHERIT'] = False
+                    flags['NO_PROPAGATE_INHERIT'] = False
+            else:
+                flags['DIRECTORY_INHERIT'] = False
+                flags['FILE_INHERIT'] = False
+                flags['NO_PROPAGATE_INHERIT'] = False
                 flags['INHERIT_ONLY'] = False
-            elif flags.get('NO_PROPAGATE_INHERIT'):
-                flags['DIRECTORY_INHERIT'] = False
-                flags['FILE_INHERIT'] = False
-                flags['NO_PROPAGATE_INHERIT'] = False
-
-            if not isdir:
-                flags['DIRECTORY_INHERIT'] = False
-                flags['FILE_INHERIT'] = False
-                flags['NO_PROPAGATE_INHERIT'] = False
 
             inherited.append({
                 'tag': entry['tag'],
