@@ -1023,7 +1023,6 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         try:
             client = self.__wbclient_ctx()
-            results = client.sids_to_users_and_groups(sidlist)
             results = client.users_and_groups_to_sids(payload)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)
