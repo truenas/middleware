@@ -12,6 +12,7 @@ apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE, SSH_TEST
 from auto_config import user, password, ip
+from middlewared.test.integration.utils import call
 from pytest_dependency import depends
 GroupIdFile = "/tmp/.ixbuild_test_groupid"
 
@@ -335,3 +336,13 @@ def test_31_verify_group_deleted(request):
     }
     results = POST("/group/get_group_obj/", payload)
     assert results.status_code == 500, results.text
+
+
+@pytest.mark.parametrize('group', [{"nogroup": 65534}, {"nobody": 65534}])
+def test_35_check_builtin_groups(group):
+    """
+    This check verifies the existence of targeted built-in groups
+    """
+    g_name, g_id = list(group.items())[0]
+    gr = call("group.get_group_obj", {"groupname": g_name})
+    assert gr['gr_gid'] == g_id, f"{g_name}:  expected gid {g_id}, but got {gr['gr_gid']}"
