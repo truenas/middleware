@@ -22,6 +22,9 @@ except ImportError:
     Reason = 'ADNameServer AD_DOMAIN, ADPASSWORD, or/and ADUSERNAME are missing in config.py"'
     pytestmark = pytest.mark.skip(reason=Reason)
 
+pytestmark = pytest.mark.skip("LDAP KRB5 NFS tests disabled pending CI framework changes")
+
+
 test_perms = {
     "READ_DATA": True,
     "WRITE_DATA": True,
