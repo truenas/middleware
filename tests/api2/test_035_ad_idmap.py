@@ -14,6 +14,7 @@ from functions import PUT, POST, GET, DELETE, SSH_TEST, wait_on_job
 from assets.REST.directory_services import active_directory, override_nameservers
 from auto_config import ip, hostname, password, user
 from base64 import b64decode
+from middlewared.test.integration.utils import call
 from pytest_dependency import depends
 from time import sleep
 
@@ -74,6 +75,23 @@ def test_01_set_nameserver_for_ad(set_ad_nameserver):
 def test_03_enabling_activedirectory(do_ad_connection):
     results = GET('/activedirectory/started/')
     assert results.status_code == 200, results.text
+
+
+def test_04_name_sid_resolution(request):
+    depends(request, ["AD_IS_HEALTHY"])
+
+    # get list of AD group gids for user from NSS
+    ad_acct = call('user.get_user_obj', {'username': f'{ADUSERNAME}@{AD_DOMAIN}', 'get_groups': True})
+    groups = set(ad_acct['grouplist'])
+
+    # convert list of gids into sids
+    sids = call('idmap.convert_unixids', [{'id_type': 'GROUP', 'id': x} for x in groups])
+    sidlist = set([x['sid'] for x in sids['mapped'].values()])
+    assert len(groups) == len(sidlist)
+
+    # convert sids back into unixids
+    unixids = call('idmap.convert_sids', list(sidlist))
+    assert set([x['id'] for x in unixids['mapped'].values()]) == groups
 
 
 @pytest.mark.dependency(name="GATHERED_BACKEND_OPTIONS")
