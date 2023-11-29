@@ -239,6 +239,10 @@ class AlertService(Service):
             for alert in await self.middleware.call("datastore.query", "system.alert"):
                 del alert["id"]
 
+                if alert["source"] and alert["source"] not in ALERT_SOURCES:
+                    self.logger.info("Alert source %r is no longer present", alert["source"])
+                    continue
+
                 try:
                     alert["klass"] = AlertClass.class_by_name[alert["klass"]]
                 except KeyError:
