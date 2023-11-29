@@ -33,6 +33,7 @@ NETIF_COMPLETE_SENTINEL = f"{MIDDLEWARE_RUN_DIR}/ix-netif-complete"
 CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 INVALID_SHARE_NAME_CHARACTERS = {'%', '<', '>', '*', '?', '|', '/', '\\', '+', '=', ';', ':', '"', ',', '[', ']'}
+RESERVED_SHARE_NAMES = ('global', 'printers', 'homes')
 
 
 class SMBHAMODE(enum.IntEnum):
@@ -1079,7 +1080,7 @@ class SharingSMBService(SharingService):
 
         verrors = ValidationErrors()
 
-        await self.clean(data, 'sharingsmb_create', verrors)
+        await self.add_path_local(data)
         await self.validate(data, 'sharingsmb_create', verrors)
         await self.apply_presets(data)
         await self.legacy_afp_check(data, 'sharingsmb_create', verrors)
@@ -1088,8 +1089,6 @@ class SharingSMBService(SharingService):
 
         await self.compress(data)
         if ha_mode != SMBHAMODE.CLUSTERED:
-            vuid = await self.generate_vuid(data['timemachine'])
-            data.update({'vuid': vuid})
             data['id'] = await self.middleware.call(
                 'datastore.insert', self._config.datastore, data,
                 {'prefix': self._config.datastore_prefix})
@@ -1146,8 +1145,7 @@ class SharingSMBService(SharingService):
         oldname = 'homes' if old['home'] else old['name']
         newname = 'homes' if new['home'] else new['name']
 
-        new['vuid'] = await self.generate_vuid(new['timemachine'], new['vuid'])
-        await self.clean(new, 'sharingsmb_update', verrors, id_=id_)
+        await self.add_path_local(new)
         if old['purpose'] != new['purpose']:
             await self.apply_presets(new)
 
@@ -1424,11 +1422,6 @@ class SharingSMBService(SharingService):
         })
 
     @private
-    async def clean(self, data, schema_name, verrors, id_=None):
-        data['name'] = await self.name_exists(data, schema_name, verrors, id_)
-        await self.add_path_local(data)
-
-    @private
     async def validate_aux_params(self, data, schema_name):
         """
         libsmbconf expects to be provided with key-value pairs.
@@ -1658,6 +1651,29 @@ class SharingSMBService(SharingService):
             verrors.add(name, 'Sharing root of gluster volume is not permitted.')
 
     @private
+    async def validate_share_name(self, name, schema_name, verrors):
+        # Standards for SMB share name are defined in MS-FSCC 2.1.6
+        # We are slighly more strict in that blacklist all unicode control characters
+        has_control_characters = False
+        if name.lower() in RESERVED_SHARE_NAMES:
+            verrors.add(
+                f'{schema_name}.name',
+                f'{name} is a reserved section name, please select another one'
+            )
+
+        invalid_characters = INVALID_SHARE_NAME_CHARACTERS & set(name)
+        if invalid_characters:
+            verrors.add(
+                f'{schema_name}.name',
+                f'Share name contains the following invalid characters: {", ".join(invalid_characters)}'
+            )
+
+        if any(unicodedata.category(char) == 'Cc' for char in name):
+            verrors.add(
+                f'{schema_name}.name', 'Share name contains unicode control characters.'
+            )
+
+    @private
     async def validate(self, data, schema_name, verrors, old=None):
         """
         Path is a required key in almost all cases. There is a special edge case for LDAP
@@ -1693,32 +1709,7 @@ class SharingSMBService(SharingService):
             )
 
         if data.get('name'):
-            # Standards for SMB share name are defined in MS-FSCC 2.1.6
-            # We are slighly more strict in that blacklist all unicode control characters
-
-            has_control_characters = False
-            if data['name'].lower() in ['global', 'homes', 'printers']:
-                verrors.add(
-                    f'{schema_name}.name',
-                    f'{data["name"]} is a reserved section name, please select another one'
-                )
-
-            invalid_characters = INVALID_SHARE_NAME_CHARACTERS & set(data['name'])
-            if invalid_characters:
-                verrors.add(
-                    f'{schema_name}.name',
-                    f'Share name contains the following invalid characters: {", ".join(invalid_characters)}'
-                )
-
-            for char in data['name']:
-                if unicodedata.category(char) == 'Cc':
-                    has_control_characters = True
-                    break
-
-            if has_control_characters:
-                verrors.add(
-                    f'{schema_name}.name', 'Share name contains unicode control characters.'
-                )
+            await self.validate_share_name(data['name'], schema_name, verrors)
 
         if data.get('path_suffix') and len(data['path_suffix'].split('/')) > 2:
             verrors.add(f'{schema_name}.name',
@@ -1765,6 +1756,29 @@ class SharingSMBService(SharingService):
             )
 
     @private
+    @accepts(Dict('share_validate_payload', Str('name')))
+    async def share_precheck(self, data):
+        verrors = ValidationErrors()
+        ad_enabled = (await self.middleware.call('activedirectory.config'))['enable']
+        if not ad_enabled:
+            local_smb_user_cnt = await self.middleware.call(
+                'user.query',
+                [['smb', '=', True]],
+                {'count': True}
+            )
+            if local_smb_user_cnt == 0:
+                verrors.add(
+                    'sharing.smb.share_precheck',
+                    'TrueNAS server must be joined to Active Directory or have '
+                    'at least one local SMB user before creating an SMB share.'
+                )
+
+        if data.get('name'):
+            await self.validate_share_name(data['name'], 'sharing.smb.share_precheck', verrors)
+
+        verrors.check()
+
+    @private
     async def home_exists(self, home, schema_name, verrors, old=None):
         if not home:
             return
@@ -1802,30 +1816,6 @@ class SharingSMBService(SharingService):
             return '\n'.join([f'{k}={v}' if v is not None else k for k, v in aux.items()])
 
     @private
-    async def name_exists(self, data, schema_name, verrors, id_=None):
-        name = data['name']
-        path = data['path']
-
-        if path and not name:
-            name = path.rsplit('/', 1)[-1]
-
-        name_filters = [('name', '=', name)]
-
-        if id_ is not None:
-            name_filters.append(('id', '!=', id_))
-
-        name_result = await self.middleware.call(
-            'datastore.query', self._config.datastore,
-            name_filters,
-            {'prefix': self._config.datastore_prefix})
-
-        if name_result:
-            verrors.add(f'{schema_name}.name',
-                        'A share with this name already exists.')
-
-        return name
-
-    @private
     async def add_path_local(self, data):
         if data['cluster_volname']:
             data['path_local'] = f'CLUSTER:{data["cluster_volname"]}/{data["path"]}'
@@ -1858,20 +1848,6 @@ class SharingSMBService(SharingService):
         data.pop('path_local', None)
 
         return data
-
-    @private
-    async def generate_vuid(self, timemachine, vuid=""):
-        try:
-            if timemachine and vuid:
-                uuid.UUID(vuid, version=4)
-        except ValueError:
-            self.logger.debug(f"Time machine VUID string ({vuid}) is invalid. Regenerating.")
-            vuid = ""
-
-        if timemachine and not vuid:
-            vuid = str(uuid.uuid4())
-
-        return vuid
 
     @private
     async def apply_presets(self, data):
