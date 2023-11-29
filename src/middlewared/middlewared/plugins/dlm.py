@@ -305,4 +305,4 @@ async def setup(middleware):
     middleware.register_hook('udev.dlm', udev_dlm_hook)
     # Comment out placeholder call for possible future enhancement.
     # await middleware.call('failover.remote_on_connect', remote_status_event)
-    await middleware.call('failover.remote_on_disconnect', remote_down_event)
+    # await middleware.call('failover.remote_on_disconnect', remote_down_event)
