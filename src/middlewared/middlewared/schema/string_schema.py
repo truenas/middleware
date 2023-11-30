@@ -157,7 +157,7 @@ class NetbiosName(Str):
         if not self.regex.match(value):
             verrors.add(
                 self.name,
-                'Invalid NetBIOS name. NetBIOS names must be between 1 and 15 characters in '
+                f'{value}: Invalid NetBIOS name. NetBIOS names must be between 1 and 15 characters in '
                 'length and may not contain the following characters: \\/:*?"<>|.'
             )
 
