@@ -338,7 +338,12 @@ def test_31_verify_group_deleted(request):
     assert results.status_code == 500, results.text
 
 
-@pytest.mark.parametrize('group', [{"nogroup": 65534}, {"nobody": 65534}])
+@pytest.mark.parametrize('group', [
+    {"root": 0},
+    {"wheel": 0},
+    {"nogroup": 65534},
+    {"nobody": 65534}
+])
 def test_35_check_builtin_groups(group):
     """
     This check verifies the existence of targeted built-in groups
@@ -346,3 +351,23 @@ def test_35_check_builtin_groups(group):
     g_name, g_id = list(group.items())[0]
     gr = call("group.get_group_obj", {"groupname": g_name})
     assert gr['gr_gid'] == g_id, f"{g_name}:  expected gid {g_id}, but got {gr['gr_gid']}"
+
+
+@pytest.mark.parametrize('nss_obj', [
+    ('group', 'root', 0),
+    ('group', 'nogroup', 65534)
+])
+def test_36_check_builtin_duplicate_id_order(nss_obj):
+    # For compatibility with FreeBSD-based SCALE versions we
+    # map "wheel" to gid 0 and "nogroup" to gid 65534. This validate
+    # lookups by gid to return expected Linux names.
+    nss_type, name, xid = nss_obj
+    if nss_type == "group":
+        xid_key = "gid"
+        name_key = "gr_name"
+    else:
+        xid_key = "uid"
+        name_key = "pw_name"
+
+    obj = call(f"{nss_type}.get_{nss_type}_obj", {xid_key: xid})
+    assert obj[name_key] == name

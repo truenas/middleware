@@ -94,8 +94,46 @@
 
         return []
 
+    def order_groups():
+        groups = []
+        filtered = filter_list(render_ctx['group.query'], [], {'order_by': ['-builtin', 'group', 'gid']})
+        idx = 0
+        while idx < len(filtered):
+            this_entry = filtered[idx]
+            idx += 1
+            if idx == len(filtered):
+                groups.append(this_entry)
+                break
+
+            next_entry = filtered[idx]
+            if next_entry['gid'] != this_entry['gid']:
+                groups.append(this_entry)
+                continue
+
+            match this_entry['gid']:
+                case 0:
+                    # root, wheel
+                    groups.append(this_entry)
+                    groups.append(next_entry)
+                case 65534:
+                    # nobody, nogroup
+                    groups.append(next_entry)
+                    groups.append(this_entry)
+                case _:
+                    # default
+                    if this_entry['builtin'] and next_entry['builtin']:
+                        middleware.logger.error(
+                            'Unhandled duplicate builtin gids for %s and %s',
+                            this_entry['group'], next_entry['group']
+                        )
+                    groups.append(this_entry)
+                    groups.append(next_entry)
+
+            idx += 1
+
+        return groups
 %>\
-% for group in filter_list(render_ctx['group.query'], [], {'order_by': ['-builtin', 'gid', 'group']}):
+% for group in order_groups():
 ${group['group']}:x:${group['gid']}:${get_usernames(group)}
 % endfor
 % if render_ctx['cluster.utils.is_clustered']:
