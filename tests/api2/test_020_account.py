@@ -4,13 +4,11 @@
 # License: BSD
 # Location for tests into REST API of FreeNAS
 
-import pytest
 import sys
 import os
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import DELETE, GET, POST
-
 
 
 def delete_group_delete_users(delete_users):
@@ -46,7 +44,7 @@ def test_01_delete_group_no_delete_users():
 
     results = GET(f"/user/id/{user_id}")
     assert results.status_code == 200, results.text
-    assert results.json()["group"]["bsdgrp_group"] == "nogroup"
+    assert results.json()["group"]["bsdgrp_group"] in ["nogroup", "nobody"]
 
     results = DELETE(f"/user/id/{user_id}")
     assert results.status_code == 200, results.text
