@@ -70,14 +70,6 @@ class ChartReleaseService(Service):
         force_rollback = options['force_rollback']
         helm_force_flag = options['recreate_resources']
 
-        # If helm force flag is specified, we should see if the chart release is consuming any PVC's and if it is,
-        # let's not initiate a rollback as it's destined to fail by helm
-        if helm_force_flag and release['resources']['persistent_volume_claims']:
-            raise CallError(
-                f'Unable to rollback {release_name!r} as chart release is consuming PVC. '
-                'Please unset recreate_resources to proceed with rollback.'
-            )
-
         # TODO: Remove the logic for ix_volumes as moving on we would be only snapshotting volumes and only rolling
         #  it back
         snap_data = {'volumes': False, 'volumes/ix_volumes': False}
