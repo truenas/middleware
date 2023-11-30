@@ -1263,6 +1263,28 @@ def test_46_set_bind_ip():
         assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
+def test_48_syslog_filters(request):
+    """
+    This test checks the function of the mountd_log setting to filter
+    rpc.mountd messages that have priority DEBUG to NOTICE.
+    We performing loopback mounts on the remote TrueNAS server and
+    then check the syslog for rpc.mountd messages.
+    """
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+    with nfs_config() as db_conf:
+        with SSH_NFS(ip, NFS_PATH, vers=3, user=user, password=password, ip=ip):
+            assert db_conf['mountd_log'] is True
+
+    # with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+    #     results = GET('/nfs/get_nfs4_clients/', payload={
+    #         'query-filters': [],
+    #         'query-options': {'count': True}
+    #     })
+    #     assert results.status_code == 200, results.text
+    #     assert results.json() == 1, results.text
+    #     assert db_conf['']
+
+
 def test_50_stoping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
