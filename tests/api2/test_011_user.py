@@ -14,7 +14,11 @@ import stat
 import pytest
 from pytest_dependency import depends
 
+from middlewared.client import ClientException
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
+from middlewared.test.integration.utils import call, ssh
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
@@ -26,6 +30,7 @@ DEFAULT_HOMEDIR_OCTAL = 0o40700
 group_id = GET(f'/group/?group={GROUP}', controller_a=ha).json()[0]['id']
 dataset = f"{pool_name}/test_homes"
 dataset_url = dataset.replace('/', '%2F')
+SMB_CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 
 home_files = {
     "~/": oct(DEFAULT_HOMEDIR_OCTAL),
@@ -812,3 +817,34 @@ def test_60_immutable_user_validation(payload, request):
 
     results = PUT(f"/user/id/{user_id}", payload)
     assert results.status_code == 422, results.text
+
+
+@contextmanager
+def toggle_smb_configured():
+    ssh(f'rm {SMB_CONFIGURED_SENTINEL}')
+    assert call('smb.is_configured') is False
+    try:
+        yield
+    finally:
+        call('smb.set_configured')
+
+
+def test_061_check_smb_configured_sentinel():
+    assert call('smb.is_configured')
+    with toggle_smb_configured():
+        # Check that ValidationError is properly raised
+        with pytest.raises(ValidationErrors):
+            with user_asset({
+                'username': 'doug',
+                'full_name': 'doug',
+                'group_create': True,
+                'password': 'squirrel',
+                'smb': True
+            }, get_instance=False):
+                pass
+
+        with pytest.raises(ClientException):
+            call('smb.synchronize_passdb', job=True)
+
+    assert call('smb.is_configured')
+    call('smb.synchronize_passdb', job=True)

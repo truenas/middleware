@@ -243,7 +243,7 @@ class SMBService(Service):
 
     @private
     @job(lock="passdb_sync")
-    async def synchronize_passdb(self, job):
+    async def synchronize_passdb(self, job, bypass_sentinel_check=False):
         """
         Create any missing entries in the passdb.tdb.
         Replace NT hashes of users if they do not match what is the the config file.
@@ -259,6 +259,12 @@ class SMBService(Service):
 
         if not passdb_backend.startswith('tdbsam'):
             return
+
+        if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
+            raise CallError(
+                "SMB server configuration is not complete. "
+                "This may indicate system dataset setup failure."
+            )
 
         if ha_mode == 'CLUSTERED':
             await self.set_cluster_lock_wait()
