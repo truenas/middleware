@@ -14,7 +14,8 @@ import stat
 import pytest
 from pytest_dependency import depends
 
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.client import ClientException
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
@@ -842,7 +843,8 @@ def test_061_check_smb_configured_sentinel():
             }, get_instance=False):
                 pass
 
-        with pytest.raises(CallError):
+        with pytest.raises(ClientException):
             call('smb.synchronize_passdb', job=True)
 
     assert call('smb.is_configured')
+    call('smb.synchronize_passdb', job=True)

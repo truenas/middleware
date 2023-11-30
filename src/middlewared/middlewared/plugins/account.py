@@ -1851,6 +1851,11 @@ class GroupService(CRUDService):
                     'Name is already in use by a clustered group.'
                 )
 
+        if data.get('smb') and not await self.middleware.call('smb.is_configured'):
+            verrors.add(
+                f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
+            )
+
         if 'name' in data:
             if data.get('smb'):
                 if data['name'].upper() in [x.name for x in SMBBuiltin]:
