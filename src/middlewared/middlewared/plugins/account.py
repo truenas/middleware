@@ -1238,6 +1238,11 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
+        if combined['smb'] and not await self.middleware.call('smb.is_configured'):
+            verrors.add(
+                f'{schema}.smb', 'SMB users may not be configured while SMB service backend is unitialized.'
+            )
+
         if combined['smb'] and combined['password_disabled']:
             verrors.add(
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
@@ -1804,6 +1809,11 @@ class GroupService(CRUDService):
                     f'{schema}.name',
                     'Name is already in use by a clustered group.'
                 )
+
+        if data.get('smb') and not await self.middleware.call('smb.is_configured'):
+            verrors.add(
+                f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
+            )
 
         if 'name' in data:
             if data.get('smb'):

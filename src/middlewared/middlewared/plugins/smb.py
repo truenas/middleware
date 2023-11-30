@@ -571,8 +571,8 @@ class SMBService(TDBWrapConfigService):
         if ha_mode != SMBHAMODE.CLUSTERED and passdb_backend.startswith("tdbsam"):
             job.set_progress(40, 'Synchronizing passdb and groupmap.')
             await self.middleware.call('etc.generate', 'user')
-            pdb_job = await self.middleware.call("smb.synchronize_passdb")
-            grp_job = await self.middleware.call("smb.synchronize_group_mappings")
+            pdb_job = await self.middleware.call("smb.synchronize_passdb", True)
+            grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
             await pdb_job.wait()
             await grp_job.wait()
 
