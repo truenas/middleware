@@ -10,6 +10,7 @@
             "id": "f60_nvme_enclosure",
             "dmi": "f60_nvme_enclosure",
             "model": "F60",
+            "should_ignore": false,
             "sg": null,
             "bsg": null,
             "name": "F60 NVMe Enclosure",
@@ -356,8 +357,7 @@
                         }
                     }
                 }
-            },
-            "label": "F60 NVMe Enclosure"
+            }
         }
     ]
 }
