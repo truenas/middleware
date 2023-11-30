@@ -891,6 +891,7 @@ def test__uuid_schema(value, expected_to_fail):
     ('canary', False),
     ('CaNary', False),
     ('can_ary', False),
+    ('can-ary', False),
     ('LOCAL', True),
 ])
 def test__netbiosname_schema(value, expected_to_fail):
@@ -915,6 +916,7 @@ def test__netbiosname_schema(value, expected_to_fail):
     ('canary', False),
     ('CaNary', False),
     ('can_ary', False),
+    ('can-ary', False),
     ('LOCAL', True),
 ])
 def test__netbiosdomain_schema(value, expected_to_fail):
