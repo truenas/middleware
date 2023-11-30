@@ -111,12 +111,17 @@
                 continue
 
             match this_entry['gid']:
+                # This catches entries with duplicate gids and puts them in
+                # Linux order where appropriate. It's unlikely that more
+                # entries will be needed, but if the situation arises, this
+                # should be expanded for the relevant GIDs (otherwise an error
+                # message will be logged)
                 case 0:
-                    # root, wheel
+                    # root (Linux), wheel (FreeBSD)
                     groups.append(this_entry)
                     groups.append(next_entry)
                 case 65534:
-                    # nobody, nogroup
+                    # nobody (FreeBSD), nogroup (Linux)
                     groups.append(next_entry)
                     groups.append(this_entry)
                 case _:
