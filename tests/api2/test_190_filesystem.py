@@ -112,7 +112,7 @@ def test_05_set_immutable_flag_on_path(request):
 
     with directory(t_path) as d:
         for flag_set in (True, False):
-            call('filesystem.set_immutable',  flag_set, d)
+            call('filesystem.set_immutable', flag_set, d)
             # We test 2 things
             # 1) Writing content to the parent path fails/succeeds based on "set"
             # 2) "is_immutable_set" returns sane response
@@ -307,7 +307,8 @@ def test_10_acl_path_execute_validation():
         # Start with testing denials
         with create_dataset(sub_target, {'acltype': 'NFSV4', 'aclmode': 'PASSTHROUGH'}):
             acl = deepcopy(NFSV4_DACL)
-            names = ['daemon', 'apps', 'nobody', 'nogroup']
+            # NAS-125469: 'nobody' group is equivalent to 'nogroup', both are gid 65534
+            names = ['daemon', 'apps', 'nobody', 'nobody']
             for idx, entry in enumerate(NFSV4_DACL):
                 perm_job = POST('/filesystem/setacl/',
                                 {'path': sub_path, "dacl": acl, 'uid': 1, 'gid': 568})
@@ -410,5 +411,5 @@ def test_mkdir_chmod_failure():
         # Verify that mode output returned from mkdir matches what was actually set
         assert st['mode'] == mkdir_st['mode']
 
-        # mkdir succeeded, but chmod failed so we get mode based on inherited ACL (SMB preset) 
+        # mkdir succeeded, but chmod failed so we get mode based on inherited ACL (SMB preset)
         assert stat.S_IMODE(st["mode"]) == 0o770
