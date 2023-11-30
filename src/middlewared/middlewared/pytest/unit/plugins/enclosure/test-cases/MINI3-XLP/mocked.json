@@ -6,6 +6,7 @@
     },
     "ses": [
         {
+            "should_ignore": false,
             "name": "AHCI SGPIOEnclosure 2.00",
             "model": "MINI-3.0-XL+",
             "controller": true,
@@ -135,10 +136,10 @@
                         }
                     }
                 }
-            },
-            "label": "AHCI SGPIOEnclosure 2.00"
+            }
         },
         {
+            "should_ignore": false,
             "name": "AHCI SGPIOEnclosure 2.00",
             "model": "MINI-3.0-XL+",
             "controller": true,
@@ -184,8 +185,7 @@
                         }
                     }
                 }
-            },
-            "label": "AHCI SGPIOEnclosure 2.00"
+            }
         }
     ],
     "nvme": []
