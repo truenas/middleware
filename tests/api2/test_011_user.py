@@ -14,7 +14,6 @@ import stat
 import pytest
 from pytest_dependency import depends
 
-from middlewared.plugins.smb import CONFIGURED_SENTINEL
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import user as user_asset
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
@@ -30,6 +29,7 @@ DEFAULT_HOMEDIR_OCTAL = 0o40700
 group_id = GET(f'/group/?group={GROUP}', controller_a=ha).json()[0]['id']
 dataset = f"{pool_name}/test_homes"
 dataset_url = dataset.replace('/', '%2F')
+SMB_CONFIGURED_SENTINEL = '/var/run/samba/.configured'
 
 home_files = {
     "~/": oct(DEFAULT_HOMEDIR_OCTAL),
@@ -820,7 +820,7 @@ def test_60_immutable_user_validation(payload, request):
 
 @contextmanager
 def toggle_smb_configured():
-    ssh(f'rm {CONFIGURED_SENTINEL}')
+    ssh(f'rm {SMB_CONFIGURED_SENTINEL}')
     assert call('smb.is_configured') is False
     try:
         yield
