@@ -1,18 +1,14 @@
-import pathlib
-
-from pyudev import Context
-
 from libsg3.ses import EnclosureDevice
 from middlewared.schema import accepts, Dict, Str, Int
 from middlewared.service import Service, filterable
 from middlewared.service_exception import MatchNotFound, ValidationError
 from middlewared.utils import filter_list
 
-from .enclosure_class import Enclosure
 from .map2 import combine_enclosures
 from .nvme2 import map_nvme
 from .r30_drive_identify import set_slot_status as r30_set_slot_status
 from .fseries_drive_identify import set_slot_status as fseries_set_slot_status
+from .ses_enclosures2 import get_ses_enclosures
 
 
 class Enclosure2Service(Service):
@@ -43,27 +39,16 @@ class Enclosure2Service(Service):
         """
         if dmi is None:
             dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+        return get_ses_enclosures(dmi)
 
-        output = list()
-        for i in Context().list_devices(subsystem='enclosure'):
-            bsg = f'/dev/bsg/{i.sys_name}'
-            try:
-                enc_status = EnclosureDevice(bsg).status()
-            except OSError:
-                self.logger.error('Error querying enclosure status for %r', bsg)
-                continue
-
-            sg = next(pathlib.Path(f'/sys/class/enclosure/{i.sys_name}/device/scsi_generic').iterdir())
-            output.append(Enclosure(bsg, f'/dev/{sg.name}', dmi, enc_status).asdict())
-
-        return output
-
-    def map_nvme(self):
+    def map_nvme(self, dmi=None):
         """This method serves as an endpoint to easily be able to test
         the nvme mapping logic specifically without having to call enclosure2.query
         which includes the head-unit and all attached JBODs.
         """
-        return map_nvme(self.middleware.call_sync('system.dmidecode_info')['system-product-name'])
+        if dmi is None:
+            dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
+        return map_nvme(dmi)
 
     def get_original_disk_slot(self, slot, enc_info):
         """Get the original slot based on the `slot` passed to us via the end-user.
@@ -122,7 +107,7 @@ class Enclosure2Service(Service):
         else:
             actions = (f'set={data["status"].lower()}')
 
-        encdev = Enclosure(sgdev)
+        encdev = EnclosureDevice(sgdev)
         try:
             for action in actions:
                 encdev.set_control(str(origslot), action)
@@ -141,7 +126,7 @@ class Enclosure2Service(Service):
             for label in self.middleware.call_sync('datastore.query', 'truenas.enclosurelabel')
         }
         dmi = self.middleware.call_sync('system.dmidecode_info')['system-product-name']
-        for i in self.get_ses_enclosures(dmi) + map_nvme(dmi):
+        for i in self.get_ses_enclosures(dmi) + self.map_nvme(dmi):
             if i.pop('should_ignore'):
                 continue
 

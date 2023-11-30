@@ -1,0 +1,822 @@
+{
+    "chassis": "TRUENAS-R40",
+    "labels": {},
+    "dmi": {"system-product-name": "TRUENAS-R40"},
+    "ses": [
+        {
+            "should_ignore": true,
+            "name": "AHCI SGPIOEnclosure 2.00",
+            "model": "R40",
+            "controller": true,
+            "dmi": "TRUENAS-R40",
+            "status": [
+                "OK"
+            ],
+            "id": "3000000000000001",
+            "vendor": "AHCI",
+            "product": "SGPIOEnclosure",
+            "revision": "2.00",
+            "bsg": "/dev/bsg/3:0:0:0",
+            "sg": "/dev/sg0",
+            "pci": "3:0:0:0",
+            "elements": {}
+        },
+        {
+            "should_ignore": true,
+            "name": "AHCI SGPIOEnclosure 2.00",
+            "model": "R40",
+            "controller": true,
+            "dmi": "TRUENAS-R40",
+            "status": [
+                "OK"
+            ],
+            "id": "3000000000000002",
+            "vendor": "AHCI",
+            "product": "SGPIOEnclosure",
+            "revision": "2.00",
+            "bsg": "/dev/bsg/12:0:0:0",
+            "sg": "/dev/sg1",
+            "pci": "12:0:0:0",
+            "elements": {}
+        },
+        {
+            "should_ignore": false,
+            "name": "iX FS2 1006",
+            "model": "R40",
+            "controller": true,
+            "dmi": "TRUENAS-R40",
+            "status": [
+                "OK"
+            ],
+            "id": "5b0bd6d1a3083c3f",
+            "vendor": "iX",
+            "product": "FS2",
+            "revision": "1006",
+            "bsg": "/dev/bsg/0:0:1:0",
+            "sg": "/dev/sg3",
+            "pci": "0:0:1:0",
+            "elements": {
+                "Array Device Slot": {
+                    "1": {
+                        "descriptor": "slot00",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sda",
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot1",
+                            "slot": 1
+                        }
+                    },
+                    "2": {
+                        "descriptor": "slot01",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot2",
+                            "slot": 2
+                        }
+                    },
+                    "3": {
+                        "descriptor": "slot02",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot3",
+                            "slot": 3
+                        }
+                    },
+                    "4": {
+                        "descriptor": "slot03",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot4",
+                            "slot": 4
+                        }
+                    },
+                    "5": {
+                        "descriptor": "slot04",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot5",
+                            "slot": 5
+                        }
+                    },
+                    "6": {
+                        "descriptor": "slot05",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot6",
+                            "slot": 6
+                        }
+                    },
+                    "7": {
+                        "descriptor": "slot06",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot7",
+                            "slot": 7
+                        }
+                    },
+                    "8": {
+                        "descriptor": "slot07",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot8",
+                            "slot": 8
+                        }
+                    },
+                    "9": {
+                        "descriptor": "slot08",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot9",
+                            "slot": 9
+                        }
+                    },
+                    "10": {
+                        "descriptor": "slot09",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot10",
+                            "slot": 10
+                        }
+                    },
+                    "11": {
+                        "descriptor": "slot10",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot11",
+                            "slot": 11
+                        }
+                    },
+                    "12": {
+                        "descriptor": "slot11",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot12",
+                            "slot": 12
+                        }
+                    },
+                    "13": {
+                        "descriptor": "slot12",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot13",
+                            "slot": 13
+                        }
+                    },
+                    "14": {
+                        "descriptor": "slot13",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot14",
+                            "slot": 14
+                        }
+                    },
+                    "15": {
+                        "descriptor": "slot14",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot15",
+                            "slot": 15
+                        }
+                    },
+                    "16": {
+                        "descriptor": "slot15",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot16",
+                            "slot": 16
+                        }
+                    },
+                    "17": {
+                        "descriptor": "slot16",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot17",
+                            "slot": 17
+                        }
+                    },
+                    "18": {
+                        "descriptor": "slot17",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot18",
+                            "slot": 18
+                        }
+                    },
+                    "19": {
+                        "descriptor": "slot18",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot19",
+                            "slot": 19
+                        }
+                    },
+                    "20": {
+                        "descriptor": "slot19",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot20",
+                            "slot": 20
+                        }
+                    },
+                    "21": {
+                        "descriptor": "slot20",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot21",
+                            "slot": 21
+                        }
+                    },
+                    "22": {
+                        "descriptor": "slot21",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot22",
+                            "slot": 22
+                        }
+                    },
+                    "23": {
+                        "descriptor": "slot22",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot23",
+                            "slot": 23
+                        }
+                    },
+                    "24": {
+                        "descriptor": "slot23",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083c3f",
+                            "enclosure_sg": "/dev/sg3",
+                            "enclosure_bsg": "/dev/bsg/0:0:1:0",
+                            "descriptor": "slot24",
+                            "slot": 24
+                        }
+                    }
+                },
+                "SAS Expander": {
+                    "26": {
+                        "descriptor": "SAS3 Expander",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216
+                    }
+                },
+                "Enclosure": {
+                    "28": {
+                        "descriptor": "EnclosureElement01",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216
+                    }
+                },
+                "Temperature Sensors": {
+                    "30": {
+                        "descriptor": "ExpanderDie",
+                        "status": "OK",
+                        "value": "41C",
+                        "value_raw": 16792832
+                    }
+                },
+                "Voltage Sensor": {
+                    "32": {
+                        "descriptor": "12V Sensor",
+                        "status": "OK",
+                        "value": "12.03V",
+                        "value_raw": 16778419
+                    }
+                }
+            }
+        },
+        {
+            "should_ignore": false,
+            "name": "iX FS2 1006",
+            "model": "R40",
+            "controller": true,
+            "dmi": "TRUENAS-R40",
+            "status": [
+                "OK"
+            ],
+            "id": "5b0bd6d1a3083d3f",
+            "vendor": "iX",
+            "product": "FS2",
+            "revision": "1006",
+            "bsg": "/dev/bsg/0:0:3:0",
+            "sg": "/dev/sg5",
+            "pci": "0:0:3:0",
+            "elements": {
+                "Array Device Slot": {
+                    "1": {
+                        "descriptor": "slot00",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot1",
+                            "slot": 1
+                        }
+                    },
+                    "2": {
+                        "descriptor": "slot01",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot2",
+                            "slot": 2
+                        }
+                    },
+                    "3": {
+                        "descriptor": "slot02",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot3",
+                            "slot": 3
+                        }
+                    },
+                    "4": {
+                        "descriptor": "slot03",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot4",
+                            "slot": 4
+                        }
+                    },
+                    "5": {
+                        "descriptor": "slot04",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot5",
+                            "slot": 5
+                        }
+                    },
+                    "6": {
+                        "descriptor": "slot05",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot6",
+                            "slot": 6
+                        }
+                    },
+                    "7": {
+                        "descriptor": "slot06",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot7",
+                            "slot": 7
+                        }
+                    },
+                    "8": {
+                        "descriptor": "slot07",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot8",
+                            "slot": 8
+                        }
+                    },
+                    "9": {
+                        "descriptor": "slot08",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot9",
+                            "slot": 9
+                        }
+                    },
+                    "10": {
+                        "descriptor": "slot09",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot10",
+                            "slot": 10
+                        }
+                    },
+                    "11": {
+                        "descriptor": "slot10",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot11",
+                            "slot": 11
+                        }
+                    },
+                    "12": {
+                        "descriptor": "slot11",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot12",
+                            "slot": 12
+                        }
+                    },
+                    "13": {
+                        "descriptor": "slot12",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot13",
+                            "slot": 13
+                        }
+                    },
+                    "14": {
+                        "descriptor": "slot13",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot14",
+                            "slot": 14
+                        }
+                    },
+                    "15": {
+                        "descriptor": "slot14",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot15",
+                            "slot": 15
+                        }
+                    },
+                    "16": {
+                        "descriptor": "slot15",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot16",
+                            "slot": 16
+                        }
+                    },
+                    "17": {
+                        "descriptor": "slot16",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot17",
+                            "slot": 17
+                        }
+                    },
+                    "18": {
+                        "descriptor": "slot17",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot18",
+                            "slot": 18
+                        }
+                    },
+                    "19": {
+                        "descriptor": "slot18",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot19",
+                            "slot": 19
+                        }
+                    },
+                    "20": {
+                        "descriptor": "slot19",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot20",
+                            "slot": 20
+                        }
+                    },
+                    "21": {
+                        "descriptor": "slot20",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot21",
+                            "slot": 21
+                        }
+                    },
+                    "22": {
+                        "descriptor": "slot21",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot22",
+                            "slot": 22
+                        }
+                    },
+                    "23": {
+                        "descriptor": "slot22",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot23",
+                            "slot": 23
+                        }
+                    },
+                    "24": {
+                        "descriptor": "slot23",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdb",
+                        "original": {
+                            "enclosure_id": "5b0bd6d1a3083d3f",
+                            "enclosure_sg": "/dev/sg5",
+                            "enclosure_bsg": "/dev/bsg/0:0:3:0",
+                            "descriptor": "slot24",
+                            "slot": 24
+                        }
+                    }
+                },
+                "SAS Expander": {
+                    "26": {
+                        "descriptor": "SAS3 Expander",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216
+                    }
+                },
+                "Enclosure": {
+                    "28": {
+                        "descriptor": "EnclosureElement01",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216
+                    }
+                },
+                "Temperature Sensors": {
+                    "30": {
+                        "descriptor": "ExpanderDie",
+                        "status": "OK",
+                        "value": "36C",
+                        "value_raw": 16791552
+                    }
+                },
+                "Voltage Sensor": {
+                    "32": {
+                        "descriptor": "12V Sensor",
+                        "status": "OK",
+                        "value": "12.09V",
+                        "value_raw": 16778425
+                    }
+                }
+            }
+        }
+    ],
+    "nvme": []
+}
