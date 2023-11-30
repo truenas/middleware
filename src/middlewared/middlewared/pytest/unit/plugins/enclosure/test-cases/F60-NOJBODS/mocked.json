@@ -1,0 +1,363 @@
+{
+    "chassis": "TRUENAS-F60-HA",
+    "labels": {},
+    "dmi": {
+        "system-product-name": "TRUENAS-F60-HA"
+    },
+    "ses": [],
+    "nvme": [
+        {
+            "id": "f60_nvme_enclosure",
+            "dmi": "f60_nvme_enclosure",
+            "model": "F60",
+            "sg": null,
+            "bsg": null,
+            "name": "F60 NVMe Enclosure",
+            "controller": true,
+            "status": [
+                "OK"
+            ],
+            "elements": {
+                "Array Device Slot": {
+                    "1": {
+                        "descriptor": "Disk #1",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "nvme3n1",
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot1",
+                            "slot": 1
+                        }
+                    },
+                    "2": {
+                        "descriptor": "Disk #2",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "nvme5n1",
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot2",
+                            "slot": 2
+                        }
+                    },
+                    "3": {
+                        "descriptor": "Disk #3",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "nvme4n1",
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot3",
+                            "slot": 3
+                        }
+                    },
+                    "4": {
+                        "descriptor": "Disk #4",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot4",
+                            "slot": 4
+                        }
+                    },
+                    "5": {
+                        "descriptor": "Disk #5",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot5",
+                            "slot": 5
+                        }
+                    },
+                    "6": {
+                        "descriptor": "Disk #6",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot6",
+                            "slot": 6
+                        }
+                    },
+                    "7": {
+                        "descriptor": "Disk #7",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot7",
+                            "slot": 7
+                        }
+                    },
+                    "8": {
+                        "descriptor": "Disk #8",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot8",
+                            "slot": 8
+                        }
+                    },
+                    "9": {
+                        "descriptor": "Disk #9",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot9",
+                            "slot": 9
+                        }
+                    },
+                    "10": {
+                        "descriptor": "Disk #10",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot10",
+                            "slot": 10
+                        }
+                    },
+                    "11": {
+                        "descriptor": "Disk #11",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot11",
+                            "slot": 11
+                        }
+                    },
+                    "12": {
+                        "descriptor": "Disk #12",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot12",
+                            "slot": 12
+                        }
+                    },
+                    "13": {
+                        "descriptor": "Disk #13",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot13",
+                            "slot": 13
+                        }
+                    },
+                    "14": {
+                        "descriptor": "Disk #14",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot14",
+                            "slot": 14
+                        }
+                    },
+                    "15": {
+                        "descriptor": "Disk #15",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot15",
+                            "slot": 15
+                        }
+                    },
+                    "16": {
+                        "descriptor": "Disk #16",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot16",
+                            "slot": 16
+                        }
+                    },
+                    "17": {
+                        "descriptor": "Disk #17",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot17",
+                            "slot": 17
+                        }
+                    },
+                    "18": {
+                        "descriptor": "Disk #18",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot18",
+                            "slot": 18
+                        }
+                    },
+                    "19": {
+                        "descriptor": "Disk #19",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot19",
+                            "slot": 19
+                        }
+                    },
+                    "20": {
+                        "descriptor": "Disk #20",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "nvme0n1",
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot20",
+                            "slot": 20
+                        }
+                    },
+                    "21": {
+                        "descriptor": "Disk #21",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "nvme1n1",
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot21",
+                            "slot": 21
+                        }
+                    },
+                    "22": {
+                        "descriptor": "Disk #22",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot22",
+                            "slot": 22
+                        }
+                    },
+                    "23": {
+                        "descriptor": "Disk #23",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot23",
+                            "slot": 23
+                        }
+                    },
+                    "24": {
+                        "descriptor": "Disk #24",
+                        "status": "Not installed",
+                        "value": null,
+                        "value_raw": 83886080,
+                        "dev": null,
+                        "original": {
+                            "enclosure_id": "f60_nvme_enclosure",
+                            "enclosure_sg": null,
+                            "enclosure_bsg": null,
+                            "descriptor": "slot24",
+                            "slot": 24
+                        }
+                    }
+                }
+            },
+            "label": "F60 NVMe Enclosure"
+        }
+    ]
+}
