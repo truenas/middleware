@@ -261,7 +261,7 @@ class SMBService(Service):
             return
 
         if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
-            raise CallError
+            raise CallError(
                 "SMB server configuration is not complete. "
                 "This may indicate system dataset setup failure."
             )

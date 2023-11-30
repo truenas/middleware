@@ -1265,6 +1265,11 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
+        if combined['smb'] and not await self.middleare.call('smb.is_configured'):
+            verrors.add(
+                f'{schema}.smb', 'SMB users may not be configured while SMB service backend is unitialized.'
+            )
+
         if combined['smb'] and combined['password_disabled']:
             verrors.add(
                 f'{schema}.password_disabled', 'Password authentication may not be disabled for SMB users.'
