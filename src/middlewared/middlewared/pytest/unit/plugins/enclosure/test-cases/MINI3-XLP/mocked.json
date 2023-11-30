@@ -1,0 +1,192 @@
+{
+    "chassis": "TRUENAS-MINI-3.0-XL+",
+    "labels": {},
+    "dmi": {
+        "system-product-name": "TRUENAS-MINI-3.0-XL+"
+    },
+    "ses": [
+        {
+            "name": "AHCI SGPIOEnclosure 2.00",
+            "model": "MINI-3.0-XL+",
+            "controller": true,
+            "dmi": "TRUENAS-MINI-3.0-XL+",
+            "status": [
+                "OK"
+            ],
+            "id": "3000000000000001",
+            "vendor": "AHCI",
+            "product": "SGPIOEnclosure",
+            "revision": "2.00",
+            "bsg": "/dev/bsg/8:0:0:0",
+            "sg": "/dev/sg0",
+            "pci": "8:0:0:0",
+            "elements": {
+                "Array Device Slot": {
+                    "2": {
+                        "descriptor": "Slot 00",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sda",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot1",
+                            "slot": 1
+                        }
+                    },
+                    "3": {
+                        "descriptor": "Slot 01",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdb",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot2",
+                            "slot": 2
+                        }
+                    },
+                    "4": {
+                        "descriptor": "Slot 02",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdd",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot3",
+                            "slot": 3
+                        }
+                    },
+                    "5": {
+                        "descriptor": "Slot 03",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdc",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot4",
+                            "slot": 4
+                        }
+                    },
+                    "6": {
+                        "descriptor": "Slot 04",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdf",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot5",
+                            "slot": 5
+                        }
+                    },
+                    "7": {
+                        "descriptor": "Slot 05",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdi",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot6",
+                            "slot": 6
+                        }
+                    },
+                    "8": {
+                        "descriptor": "Slot 06",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sde",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot7",
+                            "slot": 7
+                        }
+                    },
+                    "9": {
+                        "descriptor": "Slot 07",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdj",
+                        "original": {
+                            "enclosure_id": "3000000000000001",
+                            "enclosure_sg": "/dev/sg0",
+                            "enclosure_bsg": "/dev/bsg/8:0:0:0",
+                            "descriptor": "slot8",
+                            "slot": 8
+                        }
+                    }
+                }
+            },
+            "label": "AHCI SGPIOEnclosure 2.00"
+        },
+        {
+            "name": "AHCI SGPIOEnclosure 2.00",
+            "model": "MINI-3.0-XL+",
+            "controller": true,
+            "dmi": "TRUENAS-MINI-3.0-XL+",
+            "status": [
+                "OK"
+            ],
+            "id": "3000000000000002",
+            "vendor": "AHCI",
+            "product": "SGPIOEnclosure",
+            "revision": "2.00",
+            "bsg": "/dev/bsg/16:0:0:0",
+            "sg": "/dev/sg1",
+            "pci": "16:0:0:0",
+            "elements": {
+                "Array Device Slot": {
+                    "10": {
+                        "descriptor": "Slot 04",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdg",
+                        "original": {
+                            "enclosure_id": "3000000000000002",
+                            "enclosure_sg": "/dev/sg1",
+                            "enclosure_bsg": "/dev/bsg/16:0:0:0",
+                            "descriptor": "slot5",
+                            "slot": 5
+                        }
+                    },
+                    "1": {
+                        "descriptor": "Slot 05",
+                        "status": "OK",
+                        "value": null,
+                        "value_raw": 16777216,
+                        "dev": "sdh",
+                        "original": {
+                            "enclosure_id": "3000000000000002",
+                            "enclosure_sg": "/dev/sg1",
+                            "enclosure_bsg": "/dev/bsg/16:0:0:0",
+                            "descriptor": "slot6",
+                            "slot": 6
+                        }
+                    }
+                }
+            },
+            "label": "AHCI SGPIOEnclosure 2.00"
+        }
+    ],
+    "nvme": []
+}
