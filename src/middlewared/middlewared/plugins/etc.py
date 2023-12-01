@@ -250,6 +250,7 @@ class EtcService(Service):
         'syslogd': {
             'ctx': [
                 {'method': 'system.advanced.config'},
+                {'method': 'nfs.query'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'syslog-ng/syslog-ng.conf'},

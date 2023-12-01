@@ -243,6 +243,9 @@ class NFSService(SystemServiceService):
 
         await self._update_service(old, new, "restart")
 
+        if old['mountd_log'] != new['mountd_log']:
+            await self._service_change("syslogd", "reload")
+
         return await self.config()
 
 

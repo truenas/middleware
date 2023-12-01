@@ -20,7 +20,7 @@ from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -1261,6 +1261,36 @@ def test_46_set_bind_ip():
         rpc_conf = parse_rpcbind_config()
         assert ip in nfs_conf['nfsd'].get('host'), f"nfs_conf = {nfs_conf}"
         assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
+
+
+def test_48_syslog_filters(request):
+    """
+    This test checks the function of the mountd_log setting to filter
+    rpc.mountd messages that have priority DEBUG to NOTICE.
+    We performing loopback mounts on the remote TrueNAS server and
+    then check the syslog for rpc.mountd messages.  Outside of SSH_NFS
+    we test the umount case.
+    """
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+    with nfs_config():
+
+        # Confirm default setting: mountd logging enabled
+        call("nfs.update", {"mountd_log": True})
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            res = ssh("tail -5 /var/log/syslog")
+            assert "rpc.mountd" in res, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
+
+        res = ssh("tail -5 /var/log/syslog")
+        assert "rpc.mountd" in res, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
+
+        # Disable mountd logging
+        call("nfs.update", {"mountd_log": False})
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            res = ssh("tail -5 /var/log/syslog")
+            assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
+
+        res = ssh("tail -5 /var/log/syslog")
+        assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
 
 def test_50_stoping_nfs_service(request):
