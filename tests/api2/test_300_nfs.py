@@ -1272,10 +1272,10 @@ def test_48_syslog_filters(request):
     we test the umount case.
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    with nfs_config() as db_conf:
+    with nfs_config():
 
         # Confirm default setting: mountd logging enabled
-        assert db_conf['mountd_log'] is True
+        call("nfs.update", {"mountd_log": True})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
             res = ssh("tail -5 /var/log/syslog")
             assert "rpc.mountd" in res, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
