@@ -25,7 +25,14 @@ ROLES = {
                                               'FILESYSTEM_DATA_WRITE']),
 
     'FULL_ADMIN': Role(full_admin=True),
-    'READONLY': Role(includes=['ALERT_LIST_READ', 'FILESYSTEM_ATTRS_READ', 'NETWORK_GENERAL_READ']),
+    'READONLY': Role(includes=['ALERT_LIST_READ',
+                               'FILESYSTEM_ATTRS_READ',
+                               'NETWORK_GENERAL_READ',
+                               'SHARING_READ',
+                               'KEYCHAIN_CREDENTIAL_READ',
+                               'REPLICATION_TASK_CONFIG_READ',
+                               'REPLICATION_TASK_READ',
+                               'SNAPSHOT_TASK_READ']),
 
     # Alert roles
     'ALERT_LIST_READ': Role(),
