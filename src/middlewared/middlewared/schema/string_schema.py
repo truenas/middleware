@@ -26,7 +26,7 @@ from .utils import RESERVED_WORDS
 
 # NetBIOS domain names allow using a dot "." to define a NetBIOS scope
 # This is not true for NetBIOS computer names
-RE_NETBIOSNAME = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9\\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
+RE_NETBIOSNAME = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 RE_NETBIOSDOM = re.compile(r"^(?![0-9]*$)[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
 
