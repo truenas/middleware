@@ -224,7 +224,7 @@ class UserService(CRUDService):
         user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
 
         user_roles = set()
-        for g in user['groups']:
+        for g in user['groups'] + [user['group']['id']]:
             if not (entry := ctx['roles_mapping'].get(g)):
                 continue
 
