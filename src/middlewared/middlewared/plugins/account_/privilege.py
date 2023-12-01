@@ -351,6 +351,9 @@ class PrivilegeService(CRUDService):
                 compose['allowlist'].extend(self.middleware.role_manager.allowlist_for_role(role))
 
             for item in privilege['allowlist']:
+                if item == {'method': '*', 'resource': '*'} and 'FULL_ADMIN' not in compose['roles']:
+                    compose['roles'] |= self.middleware.role_manager.roles_for_role('FULL_ADMIN')
+
                 compose['allowlist'].append(item)
 
             compose['web_shell'] |= privilege['web_shell']
