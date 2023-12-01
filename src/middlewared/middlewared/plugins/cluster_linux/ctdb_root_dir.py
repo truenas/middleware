@@ -594,8 +594,8 @@ class CtdbRootDirService(Service):
 
         NOTE: THERE IS NO COMING BACK FROM THIS.
         """
-        config = await self.middleware.call('ctdb.root_dir.config')
         if not force:
+            config = await self.middleware.call('ctdb.root_dir.config')
             for vol in await self.middleware.call('gluster.volume.query'):
                 if vol['name'] != config['volume_name']:
                     # If someone calls this method, we expect that all other gluster volumes
