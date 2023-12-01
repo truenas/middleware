@@ -624,9 +624,17 @@ class AuthService(Service):
         if not isinstance(credentials, UserSessionManagerCredentials):
             raise CallError(f'You are logged in using {credentials.class_name()}')
 
+        username = credentials.user['username']
+        try:
+            twofactor_config = await self.middleware.call('user.twofactor_config', username)
+        except Exception:
+            self.logger.error('%s: failed to look up 2fa details', exc_info=True)
+            twofactor_config = None
+
         return {
-            **(await self.middleware.call('user.get_user_obj', {'username': credentials.user['username']})),
+            **(await self.middleware.call('user.get_user_obj', {'username': username})),
             'privilege': credentials.user['privilege'],
+            'two_factor_config': twofactor_config
         }
 
     async def _attributes(self, user):

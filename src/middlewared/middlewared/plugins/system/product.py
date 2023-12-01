@@ -238,6 +238,7 @@ class SystemService(Service):
         return False
 
     @private
+    @no_authz_required
     async def is_ix_hardware(self):
         product = (await self.middleware.call('system.dmidecode_info'))['system-product-name']
         return product is not None and product.startswith(('FREENAS-', 'TRUENAS-'))
