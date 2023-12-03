@@ -17,7 +17,6 @@ class KubernetesPersistentVolumesService(CRUDService):
             return filter_list((await PersistentVolume.query())['items'], filters, options)
         except ApiException:
             # We make this safe as it is possible that the cluster does not has csi drivers installed
-            # TODO: Makes ure api exception actually handles this case
             return []
 
     async def do_delete(self, pv_name):
