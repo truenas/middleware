@@ -129,7 +129,7 @@ class SystemService(Service):
         buildtime = sw_buildtime()
         return datetime.fromtimestamp(int(buildtime)) if buildtime else buildtime
 
-    @accepts()
+    @accepts(roles=['SHARING_MANAGER', 'READONLY'])
     @returns(Dict(
         'system_info',
         Str('version', required=True, title='TrueNAS Version'),
