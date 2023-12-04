@@ -243,11 +243,9 @@ class LDAPModel(sa.Model):
     ldap_shadow_inactive = sa.Column(sa.String(256), nullable=True)
     ldap_shadow_expire = sa.Column(sa.String(256), nullable=True)
     ldap_group_object_class = sa.Column(sa.String(256), nullable=True)
-    ldap_group_name = sa.Column(sa.String(256), nullable=True)
     ldap_group_gid = sa.Column(sa.String(256), nullable=True)
     ldap_group_member = sa.Column(sa.String(256), nullable=True)
     ldap_netgroup_object_class = sa.Column(sa.String(256), nullable=True)
-    ldap_netgroup_name = sa.Column(sa.String(256), nullable=True)
     ldap_netgroup_member = sa.Column(sa.String(256), nullable=True)
     ldap_netgroup_triple = sa.Column(sa.String(256), nullable=True)
 
@@ -391,6 +389,22 @@ class LDAPService(TDBWrapConfigService):
             data["kerberos_realm"] = data["kerberos_realm"]["id"]
 
         data['uri_list'] = await self.hostnames_to_uris(data)
+        data['advanced'] = {
+            constants.LDAP_SEARCH_BASES_SCHEMA_NAME: {},
+            constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME: {
+                key: {} for key in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES
+            }
+        }
+
+        for key in constants.LDAP_SEARCH_BASE_KEYS:
+            data['advanced'][constants.LDAP_SEARCH_BASES_SCHEMA_NAME][key] = data.pop(key, None)
+
+        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
+            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
+            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
+        )):
+            for key in keys:
+                data['advanced'][constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map][key] = data.pop(key, None)
 
         return data
 
@@ -402,6 +416,20 @@ class LDAPService(TDBWrapConfigService):
 
         data.pop('uri_list')
         data.pop('cert_name')
+        advanced = data.pop('advanced', {})
+
+        search_bases = advanced.get(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
+        attribute_maps = advanced.get(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
+
+        for key in constants.LDAP_SEARCH_BASE_KEYS:
+            data[key] = search_bases.get(key)
+
+        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
+            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
+            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
+        )):
+            for key in keys:
+                data[key] = attribute_maps[map].get(key)
 
         return data
 
@@ -618,15 +646,14 @@ class LDAPService(TDBWrapConfigService):
                 return
 
             default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
-            aux_params = [
-                f'base passwd cn=users,cn=accounts,{default_naming_context}',
-                f'base group cn=groups,cn=accounts,{default_naming_context}',
-                f'base netgroup cn=ng,cn=compat,{default_naming_context}',
-            ]
             data.update({
                 'schema': 'RFC2307BIS',
-                'auxiliary_parameters': '\n'.join(aux_params)
+                'auxiliary_parameters': '# FreeIPA autodetected'
             })
+            bases = data['advanced'][constants.LDAP_SEARCH_BASES_SCHEMA_NAME]
+            bases[constants.SEARCH_BASE_USER] = f'cn=users,cn=accounts,{default_naming_context}'
+            bases[constants.SEARCH_BASE_GROUP] = f'cn=groups,cn=accounts,{default_naming_context}'
+            bases[constants.SEARCH_BASE_NETGROUP] = f'netgroup cn=ng,cn=compat,{default_naming_context}'
             return
 
         elif 'domainControllerFunctionality' in rootdse[0]['data']:
@@ -641,17 +668,21 @@ class LDAPService(TDBWrapConfigService):
             naming_ctx = await self.get_dn(naming_ctx_dn, 'BASE', data)
             dom_sid_bytes = eval(naming_ctx[0]['data']['objectSid'][0])
             dom_sid = await self.object_sid_to_string(dom_sid_bytes)
+            maps = data['advanced'][constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME]
+            passwd = maps[constants.LDAP_PASSWD_MAP_SCHEMA_NAME]
+            group = maps[constants.LDAP_GROUP_MAP_SCHEMA_NAME]
             aux_params = [
-                'map passwd uid sAMAccountName',
-                'map passwd gidNumber primaryGroupID',
-                'map passwd gecos displayName',
                 'nss_uid_offset 20000',
                 'nss_gid_offset 20000',
-                f'map passwd uidNumber objectSid:{dom_sid}',
-                f'map group gidNumber objectSid:{dom_sid}',
-                f'filter passwd (sAMAccountType={SAMAccountType.SAM_USER_OBJECT.value})',
-                f'filter group (sAMAccountType={SAMAccountType.SAM_GROUP_OBJECT.value})',
+                '# Active Directory autodetected'
             ]
+            passwd[constants.ATTR_USER_OBJ] = f'(sAMAccountType={SAMAccountType.SAM_USER_OBJECT.value})'
+            passwd[constants.ATTR_USER_NAME] = 'sAMAccountName'
+            passwd[constants.ATTR_USER_GID] = 'primaryGroupID'
+            passwd[constants.ATTR_USER_GECOS] = 'displayName'
+            passwd[constants.ATTR_USER_UID] = f'objectSid:{dom_sid}'
+            group[constants.ATTR_GROUP_OBJ] = f'(sAMAccountType={SAMAccountType.SAM_GROUP_OBJECT.value})'
+            group[constants.ATTR_GROUP_GID] = f'objectSid:{dom_sid}'
             data.update({
                 'schema': 'RFC2307BIS',
                 'auxiliary_parameters': '\n'.join(aux_params)
@@ -679,6 +710,11 @@ class LDAPService(TDBWrapConfigService):
         Str('auxiliary_parameters', default=False, max_length=None),
         Ref('nss_info_ldap', 'schema'),
         Bool('enable'),
+        Dict(
+            'advanced',
+            constants.LDAP_SEARCH_BASES_SCHEMA,
+            constants.LDAP_ATTRIBUTE_MAP_SCHEMA
+        ),
         update=True
     ))
     async def do_update(self, data):
@@ -739,7 +775,15 @@ class LDAPService(TDBWrapConfigService):
         must_reload = False
         old = await self.config()
         new = old.copy()
+        advanced = data.pop('advanced', {})
+        new_search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
+        new_attributes = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
         new.update(data)
+        new['advanced'][constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
+
+        for map in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES:
+            new['advanced'][constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map] | new_attributes.get(map, {})
+
         new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
         verrors.check()
