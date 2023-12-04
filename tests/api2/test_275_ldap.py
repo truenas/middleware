@@ -98,6 +98,7 @@ def test_08_verify_ldap_enable_is_true(request):
     depends(request, ["setup_ldap"], scope="session")
     results = GET("/ldap/")
     assert results.json()["enable"] is True, results.text
+    assert results.json()["server_type"] == "OPENLDAP"
 
 
 def test_09_account_privilege_authentication(request):

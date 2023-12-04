@@ -14,6 +14,7 @@ from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_.nslcd_utils import MidNslcdClient
+from middlewared.plugins.ldap_ import constants
 from middlewared.validators import Range
 
 LDAP_SMBCONF_PARAMS = {
@@ -225,6 +226,30 @@ class LDAPModel(sa.Model):
     ldap_kerberos_principal = sa.Column(sa.String(255))
     ldap_validate_certificates = sa.Column(sa.Boolean(), default=True)
     ldap_disable_freenas_cache = sa.Column(sa.Boolean())
+    ldap_base_user = sa.Column(sa.String(256), nullable=True)
+    ldap_base_group = sa.Column(sa.String(256), nullable=True)
+    ldap_base_netgroup = sa.Column(sa.String(256), nullable=True)
+    ldap_user_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_user_name = sa.Column(sa.String(256), nullable=True)
+    ldap_user_uid = sa.Column(sa.String(256), nullable=True)
+    ldap_user_gid = sa.Column(sa.String(256), nullable=True)
+    ldap_user_gecos = sa.Column(sa.String(256), nullable=True)
+    ldap_user_home_directory = sa.Column(sa.String(256), nullable=True)
+    ldap_user_shell = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_last_change = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_min = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_max = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_warning = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_inactive = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_expire = sa.Column(sa.String(256), nullable=True)
+    ldap_group_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_group_gid = sa.Column(sa.String(256), nullable=True)
+    ldap_group_member = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_member = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_triple = sa.Column(sa.String(256), nullable=True)
+    ldap_server_type = sa.Column(sa.String(256), nullable=True)
 
 
 class LDAPService(TDBWrapConfigService):
@@ -367,6 +392,24 @@ class LDAPService(TDBWrapConfigService):
 
         data['uri_list'] = await self.hostnames_to_uris(data)
 
+        # The following portion of ldap_extend shifts ldap search base and map
+        # parameter overrides into their own separate dictionaries
+        # "search_bases" and "attribute_maps" respectively
+        data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] = {}
+        data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME] = {
+            key: {} for key in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES
+        }
+
+        for key in constants.LDAP_SEARCH_BASE_KEYS:
+            data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME][key] = data.pop(key, None)
+
+        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
+            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
+            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
+        )):
+            for key in keys:
+                data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map][key] = data.pop(key, None)
+
         return data
 
     @private
@@ -377,6 +420,19 @@ class LDAPService(TDBWrapConfigService):
 
         data.pop('uri_list')
         data.pop('cert_name')
+        search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
+        attribute_maps = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
+
+        # Flatten the search_bases and attribute_maps prior to DB insertion
+        for key in constants.LDAP_SEARCH_BASE_KEYS:
+            data[key] = search_bases.get(key)
+
+        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
+            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
+            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
+        )):
+            for key in keys:
+                data[key] = attribute_maps[map].get(key)
 
         return data
 
@@ -532,7 +588,7 @@ class LDAPService(TDBWrapConfigService):
         return output_sid
 
     @private
-    async def ldap_validate(self, data, verrors):
+    async def ldap_validate(self, old, data, verrors):
         ldap_has_samba_schema = False
         for idx, h in enumerate(data['uri_list']):
             host, port = urlparse(h).netloc.rsplit(':', 1)
@@ -546,13 +602,13 @@ class LDAPService(TDBWrapConfigService):
                 return
 
         try:
-            await self.middleware.call('ldap.validate_credentials', data)
+            await self.validate_credentials(data)
         except CallError as e:
             await self.convert_ldap_err_to_verr(data, e, verrors)
             return
 
         try:
-            ldap_has_samba_schema = True if (await self.middleware.call('ldap.get_workgroup', data)) else False
+            ldap_has_samba_schema = True if (await self.get_workgroup(data)) else False
         except CallError as e:
             await self.convert_ldap_err_to_verr(data, e, verrors)
 
@@ -564,47 +620,43 @@ class LDAPService(TDBWrapConfigService):
             verrors.add('ldap_update.has_samba_schema',
                         'Encryption is required in order to use legacy Samba schema.')
 
+        if not set(old['hostname']) & set(data['hostname']):
+            # No overlap between old and new hostnames and so force server_type autodetection
+            data['server_type'] = None
+
     @private
     async def autodetect_ldap_settings(self, data):
-        if data['auxiliary_parameters']:
-            """
-            Skip autodetection if auxiliary parameters are
-            already set. This may mean that we've already
-            detected this in the past (or user has set something
-            we shouldn't muck with).
-            """
-            return
+        """
+        The root dse on remote LDAP server contains basic LDAP configuration information.
+        By the time this method is called we have already been able to complete an LDAP
+        bind with the provided credentials.
 
-        try:
-            rootdse = await self.middleware.call('ldap.get_root_DSE', data)
-            if not rootdse:
-                return
+        This method provides basic LDAP server implementation specific configuration
+        parameters that can later be fine-tuned by the admin if they are undesired.
+        """
+        rootdse = (await self.middleware.call('ldap.get_root_DSE', data))[0]['data']
 
-        except Exception:
-            self.logger.warning("Failed to get root DSE", exc_info=True)
-            return
-
-        if 'vendorName' in rootdse[0]['data']:
+        if 'vendorName' in rootdse:
             """
             FreeIPA domain. For now assume in this case that vendorName will
             be 389 project.
             """
-            if rootdse[0]['data']['vendorName'][0] != '389 Project':
-                return
+            if rootdse['vendorName'][0] != '389 Project':
+                self.logger.debug(
+                    '%s: unrecognized vendor name, setting LDAP server type to GENERIC',
+                    rootdse['vendorName'][0]
+                )
+                return constants.SERVER_TYPE_GENERIC
 
-            default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
-            aux_params = [
-                f'base passwd cn=users,cn=accounts,{default_naming_context}',
-                f'base group cn=groups,cn=accounts,{default_naming_context}',
-                f'base netgroup cn=ng,cn=compat,{default_naming_context}',
-            ]
-            data.update({
-                'schema': 'RFC2307BIS',
-                'auxiliary_parameters': '\n'.join(aux_params)
-            })
-            return
+            default_naming_context = rootdse['defaultnamingcontext'][0]
+            data.update({'schema': 'RFC2307BIS'})
+            bases = data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME]
+            bases[constants.SEARCH_BASE_USER] = f'cn=users,cn=accounts,{default_naming_context}'
+            bases[constants.SEARCH_BASE_GROUP] = f'cn=groups,cn=accounts,{default_naming_context}'
+            bases[constants.SEARCH_BASE_NETGROUP] = f'cn=ng,cn=compat,{default_naming_context}'
+            return constants.SERVER_TYPE_FREEIPA
 
-        elif 'domainControllerFunctionality' in rootdse[0]['data']:
+        elif 'domainControllerFunctionality' in rootdse:
             """
             ActiveDirectory domain.
             """
@@ -612,28 +664,44 @@ class LDAPService(TDBWrapConfigService):
                 "Active Directoy plugin should be used for Active Directory domains."
             )
 
-            naming_ctx_dn = rootdse[0]['data']['rootDomainNamingContext'][0]
+            naming_ctx_dn = rootdse['rootDomainNamingContext'][0]
             naming_ctx = await self.get_dn(naming_ctx_dn, 'BASE', data)
             dom_sid_bytes = eval(naming_ctx[0]['data']['objectSid'][0])
             dom_sid = await self.object_sid_to_string(dom_sid_bytes)
+            maps = data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME]
+            passwd = maps[constants.LDAP_PASSWD_MAP_SCHEMA_NAME]
+            group = maps[constants.LDAP_GROUP_MAP_SCHEMA_NAME]
             aux_params = [
-                'map passwd uid sAMAccountName',
-                'map passwd gidNumber primaryGroupID',
-                'map passwd gecos displayName',
                 'nss_uid_offset 20000',
                 'nss_gid_offset 20000',
-                f'map passwd uidNumber objectSid:{dom_sid}',
-                f'map group gidNumber objectSid:{dom_sid}',
-                f'filter passwd (sAMAccountType={SAMAccountType.SAM_USER_OBJECT.value})',
-                f'filter group (sAMAccountType={SAMAccountType.SAM_GROUP_OBJECT.value})',
             ]
+            passwd[constants.ATTR_USER_OBJ] = f'(sAMAccountType={SAMAccountType.SAM_USER_OBJECT.value})'
+            passwd[constants.ATTR_USER_NAME] = 'sAMAccountName'
+            passwd[constants.ATTR_USER_GID] = 'primaryGroupID'
+            passwd[constants.ATTR_USER_GECOS] = 'displayName'
+            passwd[constants.ATTR_USER_UID] = f'objectSid:{dom_sid}'
+            group[constants.ATTR_GROUP_OBJ] = f'(sAMAccountType={SAMAccountType.SAM_GROUP_OBJECT.value})'
+            group[constants.ATTR_GROUP_GID] = f'objectSid:{dom_sid}'
             data.update({
                 'schema': 'RFC2307BIS',
                 'auxiliary_parameters': '\n'.join(aux_params)
             })
-            return
+            return constants.SERVER_TYPE_ACTIVE_DIRECTORY
 
-        return
+        elif 'objectClass' in rootdse:
+            """
+            OpenLDAP
+            """
+            if 'OpenLDAProotDSE' not in rootdse['objectClass']:
+                self.logger.debug(
+                    '%s: unexpected objectClass values in LDAP root DSE',
+                    rootdse['objectClass']
+                )
+                return constants.SERVER_TYPE_GENERIC
+
+            return constants.SERVER_TYPE_OPENLDAP
+
+        return constants.SERVER_TYPE_GENERIC
 
     @accepts(Dict(
         'ldap_update',
@@ -654,6 +722,8 @@ class LDAPService(TDBWrapConfigService):
         Str('auxiliary_parameters', default=False, max_length=None),
         Ref('nss_info_ldap', 'schema'),
         Bool('enable'),
+        constants.LDAP_SEARCH_BASES_SCHEMA,
+        constants.LDAP_ATTRIBUTE_MAP_SCHEMA,
         update=True
     ))
     async def do_update(self, data):
@@ -708,13 +778,41 @@ class LDAPService(TDBWrapConfigService):
         ldapsam passdb backend to provide SMB access to LDAP users. This feature
         requires the presence of Samba LDAP schema extensions on the remote
         LDAP server.
+
+        The following are advanced settings are configuration parameters for
+        handling LDAP servers that do not fully comply with RFC-2307. In most
+        situations all of the following parameters should be set to null,
+        which indicates to backend to use default for the specified NSS info
+        schema.
+
+        `search_bases` - these parameters allow specifying a non-standard
+        search base for users (`base_user`), groups (`base_group`), and
+        netgroups (`base_netgroup`). Must be a valid LDAP DN. No remote
+        validation is performed that the search base exists or contains
+        expected objects.
+
+        `attribute_maps` - allow specifying alternate non-RFC-compliant
+        attribute names for `passwd`, `shadow`, `group`, and `netgroup` object
+        classes as specified in RFC 2307. Setting key to `null` has special
+        meaning that RFC defaults for the configure `nss_info_schema` will
+        be used.
+
+        `server_type` is a readonly key indicating the server_type detected
+        internally by TrueNAS
         """
         await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()
         must_reload = False
         old = await self.config()
         new = old.copy()
+        new_search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
+        new_attributes = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
         new.update(data)
+        new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
+
+        for map in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES:
+            new[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map] | new_attributes.get(map, {})
+
         new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
         verrors.check()
@@ -728,10 +826,11 @@ class LDAPService(TDBWrapConfigService):
         if old != new:
             must_reload = True
             if new['enable']:
-                await self.middleware.call('ldap.ldap_validate', new, verrors)
+                await self.ldap_validate(old, new, verrors)
                 verrors.check()
 
-                await self.middleware.call('ldap.autodetect_ldap_settings', new)
+                if not new['server_type']:
+                    new['server_type'] = await self.autodetect_ldap_settings(new)
 
         await self.ldap_compress(new)
         out = await super().do_update(new)
