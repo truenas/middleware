@@ -31,7 +31,7 @@ def hostpath_dir(path: str, non_empty: bool = False):
     if not path_exists(path):
         call('filesystem.mkdir', path)
     if non_empty:
-        (Path(path) / 'test1').touch()
+        ssh(f'touch {path}/test1')
 
     try:
         yield path
