@@ -216,6 +216,8 @@ class SystemService(Service):
         if self.middleware.call_sync('system.is_enterprise'):
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
 
+        self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
+
         self.middleware.call_sync('failover.configure.license', dser_license)
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
