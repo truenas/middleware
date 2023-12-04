@@ -14,6 +14,7 @@ from middlewared.plugins.directoryservices import DSStatus, SSL
 from middlewared.plugins.idmap import DSType
 from middlewared.plugins.ldap_.ldap_client import LdapClient
 from middlewared.plugins.ldap_.nslcd_utils import MidNslcdClient
+from middlewared.plugins.ldap_ import constants
 from middlewared.validators import Range
 
 LDAP_SMBCONF_PARAMS = {
@@ -34,7 +35,6 @@ LDAP_SMBCONF_PARAMS = {
 }
 
 LDAP_DEPRECATED = "LDAP with SMB schema support"
-
 
 class SAMAccountType(enum.Enum):
     SAM_DOMAIN_OBJECT = 0x0
@@ -225,6 +225,31 @@ class LDAPModel(sa.Model):
     ldap_kerberos_principal = sa.Column(sa.String(255))
     ldap_validate_certificates = sa.Column(sa.Boolean(), default=True)
     ldap_disable_freenas_cache = sa.Column(sa.Boolean())
+    ldap_base_user = sa.Column(sa.String(256), nullable=True)
+    ldap_base_group = sa.Column(sa.String(256), nullable=True)
+    ldap_base_netgroup = sa.Column(sa.String(256), nullable=True)
+    ldap_user_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_user_name = sa.Column(sa.String(256), nullable=True)
+    ldap_user_uid = sa.Column(sa.String(256), nullable=True)
+    ldap_user_gid = sa.Column(sa.String(256), nullable=True)
+    ldap_user_gecos = sa.Column(sa.String(256), nullable=True)
+    ldap_user_home_directory = sa.Column(sa.String(256), nullable=True)
+    ldap_user_shell = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_last_change = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_min = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_max = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_warning = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_inactive = sa.Column(sa.String(256), nullable=True)
+    ldap_shadow_expire = sa.Column(sa.String(256), nullable=True)
+    ldap_group_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_group_name = sa.Column(sa.String(256), nullable=True)
+    ldap_group_gid = sa.Column(sa.String(256), nullable=True)
+    ldap_group_member = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_object_class = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_name = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_member = sa.Column(sa.String(256), nullable=True)
+    ldap_netgroup_triple = sa.Column(sa.String(256), nullable=True)
 
 
 class LDAPService(TDBWrapConfigService):
