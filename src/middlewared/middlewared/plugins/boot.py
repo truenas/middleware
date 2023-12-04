@@ -303,9 +303,15 @@ class BootService(Service):
 async def setup(middleware):
     global BOOT_POOL_NAME
 
-    pools = dict([line.split() for line in (
-        await run('zpool', 'list', '-H', '-o', 'name,compatibility', encoding='utf8')
-    ).stdout.strip().splitlines()])
+    try:
+        pools = dict([line.split('\t') for line in (
+            await run('zpool', 'list', '-H', '-o', 'name,compatibility', encoding='utf8')
+        ).stdout.strip().splitlines()])
+    except Exception:
+        # this isn't fatal, but we need to log something so we can review and fix as needed
+        middleware.logger.warning('Unexpected failure parsing compatibility feature', exc_info=True)
+        return
+
     for i in BOOT_POOL_NAME_VALID:
         if i in pools:
             BOOT_POOL_NAME = i
