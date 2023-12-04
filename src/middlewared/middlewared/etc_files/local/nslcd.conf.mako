@@ -2,12 +2,13 @@
 # NSLCD.CONF(5)		The configuration file for LDAP nameservice daemon
 #
 <%
-        from middlewared.plugins.ldap_ import constants, utils
+        from middlewared.plugins.ldap_ import constants
+        from middlewared.plugins.ldap_ import utils
 
         ldap = middleware.call_sync('ldap.config')
         kerberos_realm = None
         aux = []
-        map_params = = utils.attribute_maps_data_to_params(ldap['advanced'][constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME])
+        map_params = utils.attribute_maps_data_to_params(ldap['advanced'][constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME])
         search_params = utils.search_base_data_to_params(ldap['advanced'][constants.LDAP_SEARCH_BASES_SCHEMA_NAME])
         min_uid = 1000
         kerberos_realm = None
@@ -71,10 +72,10 @@
   % if ldap['schema'] == 'RFC2307BIS':
     nss_nested_groups yes
   % endif
-    ${\n'.join(search_params)}
-    ${\n'.join(map_params)}
+    ${'\n    '.join(search_params)}
+    ${'\n    '.join(map_params)}
   % if aux:
-    ${'\n'.join(aux)}
+    ${'\n    '.join(aux)}
   % endif
     nss_min_uid ${min_uid}
     nss_initgroups_ignoreusers ALLLOCAL

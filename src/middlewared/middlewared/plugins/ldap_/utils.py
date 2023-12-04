@@ -27,7 +27,7 @@ def attribute_maps_data_to_params(data):
         constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
     )):
         for key in keys:
-            if not (value := data[map].get(key)):
+            if not (value := data.get(map, {}).get(key)):
                 continue
 
             match key:

@@ -646,14 +646,11 @@ class LDAPService(TDBWrapConfigService):
                 return
 
             default_naming_context = rootdse[0]['data']['defaultnamingcontext'][0]
-            data.update({
-                'schema': 'RFC2307BIS',
-                'auxiliary_parameters': '# FreeIPA autodetected'
-            })
+            data.update({'schema': 'RFC2307BIS', })
             bases = data['advanced'][constants.LDAP_SEARCH_BASES_SCHEMA_NAME]
             bases[constants.SEARCH_BASE_USER] = f'cn=users,cn=accounts,{default_naming_context}'
             bases[constants.SEARCH_BASE_GROUP] = f'cn=groups,cn=accounts,{default_naming_context}'
-            bases[constants.SEARCH_BASE_NETGROUP] = f'netgroup cn=ng,cn=compat,{default_naming_context}'
+            bases[constants.SEARCH_BASE_NETGROUP] = f'cn=ng,cn=compat,{default_naming_context}'
             return
 
         elif 'domainControllerFunctionality' in rootdse[0]['data']:
@@ -769,6 +766,23 @@ class LDAPService(TDBWrapConfigService):
         ldapsam passdb backend to provide SMB access to LDAP users. This feature
         requires the presence of Samba LDAP schema extensions on the remote
         LDAP server.
+
+        `advanced` these settings are configuration parameters for handling
+        LDAP servers that do not fully comply with RFC-2307. In most situations
+        all of the following parameters should be set to null (inidcating use
+        default for the specified NSS info schema.
+
+        `search_bases` - these parameters allow specifying a non-standard
+        search base for users (`base_user`), groups (`base_group`), and
+        netgroups (`base_netgroup`). Must be a valid LDAP DN. No remote
+        validation is performed that the search base exists or contains
+        expected objects.
+
+        `attribute_maps` - allow specifying alternate non-RFC-compliant
+        attribute names for `passwd`, `shadow`, `group`, and `netgroup` object
+        classes as specified in RFC 2307. Setting key to `null` has special
+        meaning that RFC defaults for the configure `nss_info_schema` will
+        be used.
         """
         await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()

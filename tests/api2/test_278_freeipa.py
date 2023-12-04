@@ -72,9 +72,9 @@ def test_05_verify_config(request):
     depends(request, ["setup_freeipa"], scope="session")
     ldap_config = call('ldap.config')
     assert 'RFC2307BIS' == ldap_config['schema']
-    assert "base passwd cn=users,cn=accounts" in ldap_config['auxiliary_parameters']
-    assert "base group cn=groups,cn=accounts" in ldap_config['auxiliary_parameters']
-    assert "base netgroup cn=ng,cn=compat" in ldap_config['auxiliary_parameters']
+    assert ldap_config['advanced']['search_bases']['base_user'] == 'cn=users,cn=accounts,dc=tn,dc=ixsystems,dc=net'
+    assert ldap_config['advanced']['search_bases']['base_group'] == 'cn=groups,cn=accounts,dc=tn,dc=ixsystems,dc=net'
+    assert ldap_config['advanced']['search_bases']['base_netgroup'] == 'cn=ng,cn=compat,dc=tn,dc=ixsystems,dc=net'
 
 
 @pytest.mark.dependency(name="FREEIPA_NSS_WORKING")
