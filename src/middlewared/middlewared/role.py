@@ -14,6 +14,7 @@ class Role:
 
     includes: [str] = field(default_factory=list)
     full_admin: bool = False
+    builtin: bool = True
 
 
 ROLES = {
@@ -24,8 +25,9 @@ ROLES = {
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
 
-    'FULL_ADMIN': Role(full_admin=True),
-    'READONLY': Role(includes=['ALERT_LIST_READ', 'FILESYSTEM_ATTRS_READ', 'NETWORK_GENERAL_READ']),
+    'FULL_ADMIN': Role(full_admin=True, builtin=False),
+    'READONLY': Role(includes=['ALERT_LIST_READ', 'FILESYSTEM_ATTRS_READ', 'NETWORK_GENERAL_READ'],
+                     builtin=False),
 
     # Alert roles
     'ALERT_LIST_READ': Role(),
@@ -101,11 +103,13 @@ ROLES = {
                                           'REPLICATION_TASK_CONFIG_WRITE',
                                           'REPLICATION_TASK_WRITE',
                                           'SNAPSHOT_TASK_WRITE',
-                                          'SNAPSHOT_WRITE']),
+                                          'SNAPSHOT_WRITE'],
+                                builtin=False),
 
     'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
                                       'SHARING_WRITE',
-                                      'FILESYSTEM_ATTRS_WRITE'])
+                                      'FILESYSTEM_ATTRS_WRITE'],
+                            builtin=False)
 }
 
 
