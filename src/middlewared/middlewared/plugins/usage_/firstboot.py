@@ -19,9 +19,9 @@ class UsageService(Service):
                     'system_hash': _hash,
                     'firstboot': [{'version': version}]
                 })
-            except Exception:
+            except Exception as e:
                 retries -= 1
                 if not retries:
-                    self.logger.error('Failed to send firstboot statistics', exc_info=True)
+                    self.logger.error('Failed to send firstboot statistics: %s', e)
             else:
                 break
