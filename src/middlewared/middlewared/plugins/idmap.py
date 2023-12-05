@@ -319,7 +319,19 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     @filterable
     def known_domains(self, query_filters, query_options):
-        entries = [entry.domain_info() for entry in WBClient().all_domains()]
+        try:
+            entries = [entry.domain_info() for entry in WBClient().all_domains()]
+        except wbclient.WBCError as e:
+            match e.error_code:
+                case wbclient.WBC_ERR_INVALID_RESPONSE:
+                    # Our idmap domain is not AD and so this is not expected to succeed
+                    return []
+                case wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                    # winbindd process is stopped this may be in hot code path. Skip
+                    return []
+                case _:
+                    raise
+
         return filter_list(entries, query_filters, query_options)
 
     @private

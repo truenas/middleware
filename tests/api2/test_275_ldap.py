@@ -113,7 +113,7 @@ def test_09_account_privilege_authentication(request):
             "allowlist": [{"method": "CALL", "resource": "system.info"}],
             "web_shell": False,
         }):
-            with client(auth=(f"{LDAPUSER}@", LDAPPASSWORD)) as c:
+            with client(auth=(LDAPUSER, LDAPPASSWORD)) as c:
                 methods = c.call("core.get_methods")
 
             assert "system.info" in methods
