@@ -637,7 +637,7 @@ def test_memory_stats():
         assert memory_stats['classes']['page_tables'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'PageTables', 0), multiplier=1024 * 1024
         )
-        assert memory_stats['classes']['swap_cache'] == 1921024
+        assert memory_stats['classes']['swap_cache'] == 1921024 * 1024
         assert memory_stats['classes']['slab_cache'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'Slab', 0), multiplier=1024 * 1024
         )
@@ -656,16 +656,16 @@ def test_memory_stats():
         assert memory_stats['classes']['apps'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.ram', 'used', 0), multiplier=1024 * 1024
         )
-        assert memory_stats['extra']['inactive'] == 1413009408
+        assert memory_stats['extra']['inactive'] == 1413009408 * 1024
         assert memory_stats['extra']['committed'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.committed', 'Committed_AS', 0), multiplier=1024 * 1024,
         )
-        assert memory_stats['extra']['active'] == 69398528
+        assert memory_stats['extra']['active'] == 69398528 * 1024
         assert memory_stats['extra']['vmalloc_used'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'mem.kernel', 'VmallocUsed', 0), multiplier=1024 * 1024
         )
-        assert memory_stats['extra']['mapped'] == 56082432
+        assert memory_stats['extra']['mapped'] == 56082432 * 1024
         assert memory_stats['swap']['used'] == normalize_value(
             safely_retrieve_dimension(NETDATA_ALL_METRICS, 'system.swap', 'used', 0), multiplier=1024 * 1024,
         )
-        assert memory_stats['swap']['total'] == 2144333824
+        assert memory_stats['swap']['total'] == 2144333824 * 1024
