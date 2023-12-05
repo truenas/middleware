@@ -118,7 +118,7 @@ async def test__interfaces_service__create_bridge_invalid_ports():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'BRIDGE',
             'bridge_members': ['em0', 'igb2'],
         })
@@ -136,7 +136,7 @@ async def test__interfaces_service__create_bridge_invalid_ports_used():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'BRIDGE',
             'bridge_members': ['em0'],
         })
@@ -155,7 +155,7 @@ async def test__interfaces_service__create_lagg_invalid_ports():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'LINK_AGGREGATION',
             'lag_protocol': 'LACP',
             'lag_ports': ['em0', 'igb2'],
@@ -175,7 +175,7 @@ async def test__interfaces_service__create_lagg_invalid_ports_cloned():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'LINK_AGGREGATION',
             'lag_protocol': 'LACP',
             'lag_ports': ['em1', 'vlan5'],
@@ -195,7 +195,7 @@ async def test__interfaces_service__create_lagg_invalid_ports_used():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'LINK_AGGREGATION',
             'lag_protocol': 'LACP',
             'lag_ports': ['em0'],
@@ -216,7 +216,7 @@ async def test__interfaces_service__create_lagg():
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
     m['network.common.check_failover_disabled'] = AsyncMock()
 
-    await create_service(m, InterfaceService).create(AsyncMock(), {
+    await create_service(m, InterfaceService).do_create({
         'name': 'bond0',
         'type': 'LINK_AGGREGATION',
         'lag_protocol': 'LACP',
@@ -241,7 +241,7 @@ async def test__interfaces_service__lagg_update_members_invalid(attr_val):
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).update(AsyncMock(), 'em0', {
+        await create_service(m, InterfaceService).do_update('em0', {
             attr_val[0]: attr_val[1],
         })
     assert f'interface_update.{attr_val[0]}' in ve.value
@@ -259,7 +259,7 @@ async def test__interfaces_service__create_vlan_invalid_parent():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'VLAN',
             'name': 'myvlan1',
             'vlan_tag': 5,
@@ -279,7 +279,7 @@ async def test__interfaces_service__create_vlan_invalid_parent_used():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).create(AsyncMock(), {
+        await create_service(m, InterfaceService).do_create({
             'type': 'VLAN',
             'vlan_tag': 5,
             'vlan_parent_interface': 'em0',
@@ -299,7 +299,7 @@ async def test__interfaces_service__create_vlan():
     m['kubernetes.node_ip'] = Mock(return_value='0.0.0.0')
     m['network.common.check_failover_disabled'] = AsyncMock()
 
-    await create_service(m, InterfaceService).create(AsyncMock(), {
+    await create_service(m, InterfaceService).do_create({
         'name': 'vlan0',
         'type': 'VLAN',
         'vlan_tag': 5,
@@ -319,7 +319,7 @@ async def test__interfaces_service__update_vlan_mtu_bigger_parent():
     m['network.common.check_failover_disabled'] = AsyncMock()
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).update(AsyncMock(), INTERFACES_WITH_VLAN[-1]['id'], {
+        await create_service(m, InterfaceService).do_update(INTERFACES_WITH_VLAN[-1]['id'], {
             'mtu': 9000,
         })
     assert 'interface_update.mtu' in ve.value
@@ -343,8 +343,8 @@ async def test__interfaces_service__update_two_dhcp():
     update_interface = interfaces_with_one_dhcp[1]
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).update(
-            AsyncMock(), update_interface['id'], {
+        await create_service(m, InterfaceService).do_update(
+            update_interface['id'], {
                 'ipv4_dhcp': True,
             },
         )
@@ -370,8 +370,8 @@ async def test__interfaces_service__update_two_same_network():
     update_interface = interfaces_one_network[1]
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).update(
-            AsyncMock(), update_interface['id'], {
+        await create_service(m, InterfaceService).do_update(
+            update_interface['id'], {
                 'aliases': [{'address': '192.168.5.3', 'netmask': 24}],
             },
         )
@@ -393,8 +393,8 @@ async def test__interfaces_service__update_mtu_options():
     update_interface = INTERFACES[1]
 
     with pytest.raises(ValidationErrors) as ve:
-        await create_service(m, InterfaceService).update(
-            AsyncMock(), update_interface['id'], {
+        await create_service(m, InterfaceService).do_update(
+            update_interface['id'], {
                 'options': 'mtu 1550',
             },
         )
