@@ -1,7 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, Ref, returns, Str
 from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import osc, BRAND
+from middlewared.utils import BRAND
 from middlewared.utils.mako import get_template
 from middlewared.validators import Email
 
@@ -22,6 +22,10 @@ import json
 import os
 import smtplib
 import syslog
+
+
+class DenyNetworkActivity(Exception):
+    pass
 
 
 class QueueItem(object):
@@ -389,6 +393,9 @@ class MailService(ConfigService):
                 syslog.syslog(f"sending mail to {', '.join(to)}\n{headers}")
                 server.sendmail(from_addr.encode(), to, msg.as_string())
                 server.quit()
+        except DenyNetworkActivity:
+            self.logger.warning('Sending email denied')
+            return False
         except Exception as e:
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
@@ -398,10 +405,9 @@ class MailService(ConfigService):
             syslog.syslog(f'Failed to send email to {", ".join(to)}: {str(e)}')
             if isinstance(e, smtplib.SMTPAuthenticationError):
                 raise CallError(
-                    f'Authentication error ({e.smtp_code}): {e.smtp_error}',
-                    errno.EAUTH if osc.IS_FREEBSD else errno.EPERM
+                    f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EPERM
                 )
-            self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
+            self.logger.warning('Failed to send email', exc_info=True)
             if message['queue']:
                 with self.mail_queue as mq:
                     mq.append(msg)
@@ -409,7 +415,10 @@ class MailService(ConfigService):
         return True
 
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
-        self.middleware.call_sync('network.general.will_perform_activity', 'mail')
+        try:
+            self.middleware.call_sync('network.general.will_perform_activity', 'mail')
+        except CallError:
+            raise DenyNetworkActivity()
 
         if local_hostname is None:
             local_hostname = self.middleware.call_sync('system.hostname')
@@ -455,8 +464,12 @@ class MailService(ConfigService):
                                         queue.message['To'].split(', '),
                                         queue.message.as_string())
                         server.quit()
-                except Exception:
-                    self.logger.debug('Sending message from queue failed', exc_info=True)
+                except Exception as e:
+                    if isinstance(e, DenyNetworkActivity):
+                        self.logger.warning('Sending message from queue denied')
+                    else:
+                        self.logger.debug('Sending message from queue failed', exc_info=True)
+
                     queue.attempts += 1
                     if queue.attempts >= mq.MAX_ATTEMPTS:
                         mq.queue.remove(queue)
