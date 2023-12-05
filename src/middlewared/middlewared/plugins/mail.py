@@ -464,12 +464,12 @@ class MailService(ConfigService):
                                         queue.message['To'].split(', '),
                                         queue.message.as_string())
                         server.quit()
-                except Exception as e:
-                    if isinstance(e, DenyNetworkActivity):
-                        self.logger.warning('Sending message from queue denied')
-                    else:
-                        self.logger.debug('Sending message from queue failed', exc_info=True)
-
+                except DenyNetworkActivity:
+                    # no reason to queue up email since network activity was
+                    # explicitly denied by end-user
+                    mq.queue.remove(queue)
+                except Exception:
+                    self.logger.debug('Sending message from queue failed', exc_info=True)
                     queue.attempts += 1
                     if queue.attempts >= mq.MAX_ATTEMPTS:
                         mq.queue.remove(queue)
