@@ -115,10 +115,7 @@ class ACMERegistrationService(CRUDService):
         # 3) SAVE REGISTRATION OBJECT
         # 4) SAVE REGISTRATION BODY
 
-        self.middleware.call_sync('network.general.will_perform_activity', 'acme')
-
         verrors = ValidationErrors()
-
         directory = self.get_directory(data['acme_directory_uri'])
         if not isinstance(directory, messages.Directory):
             verrors.add(
