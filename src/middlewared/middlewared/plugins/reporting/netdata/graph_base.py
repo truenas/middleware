@@ -3,8 +3,6 @@ import statistics
 import typing
 
 from .connector import Netdata
-from .exceptions import ClientConnectError
-
 
 GRAPH_PLUGINS = {}
 RE_GRAPH_PLUGIN = re.compile(r'^(?P<name>.+)Plugin$')
@@ -53,8 +51,8 @@ class GraphBase(metaclass=GraphMeta):
     async def all_charts(self) -> typing.Dict[str, dict]:
         try:
             return await Netdata.get_charts()
-        except ClientConnectError:
-            self.middleware.logger.debug('Failed to connect to netdata', exc_info=True)
+        except Exception as e:
+            self.middleware.logger.warning('Failed to connect to netdata: %s', e)
             return {}
 
     def get_title(self) -> str:
