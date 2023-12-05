@@ -41,10 +41,7 @@ def attribute_maps_data_to_params(data):
             match key:
                 # passwd
                 case constants.ATTR_USER_OBJ:
-                    if 'sAMAccountType' in value:
-                        map_params.append(f'filter passwd {value}')
-                    else:
-                        map_params.append(f'filter passwd (objectClass={value})')
+                    map_params.append(f'filter passwd (objectClass={value})')
                 case constants.ATTR_USER_NAME:
                     map_params.append(f'map passwd uid {value}')
                 case constants.ATTR_USER_UID:
@@ -76,10 +73,7 @@ def attribute_maps_data_to_params(data):
 
                 # group
                 case constants.ATTR_GROUP_OBJ:
-                    if 'sAMAccountType' in value:
-                        map_params.append(f'filter group {value}')
-                    else:
-                        map_params.append(f'filter group (objectClass={value})')
+                    map_params.append(f'filter group (objectClass={value})')
                 case constants.ATTR_GROUP_GID:
                     map_params.append(f'map group gidNumber {value}')
                 case constants.ATTR_GROUP_MEMBER:

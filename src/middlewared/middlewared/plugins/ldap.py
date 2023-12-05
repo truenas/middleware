@@ -624,6 +624,14 @@ class LDAPService(TDBWrapConfigService):
             # No overlap between old and new hostnames and so force server_type autodetection
             data['server_type'] = None
 
+        if not new['server_type'] and data['enable']:
+            data['server_type'] = await self.autodetect_ldap_settings(data)
+            if data['server_type'] == constants.SERVER_TYPE_ACTIVE_DIRECTORY:
+                verrors.add(
+                    'ldap_update.hostname',
+                    'Active Directoy plugin must be used to join Active Directory domains.'
+                )
+
     @private
     async def autodetect_ldap_settings(self, data):
         """
@@ -660,32 +668,6 @@ class LDAPService(TDBWrapConfigService):
             """
             ActiveDirectory domain.
             """
-            self.logger.warning(
-                "Active Directoy plugin should be used for Active Directory domains."
-            )
-
-            naming_ctx_dn = rootdse['rootDomainNamingContext'][0]
-            naming_ctx = await self.get_dn(naming_ctx_dn, 'BASE', data)
-            dom_sid_bytes = eval(naming_ctx[0]['data']['objectSid'][0])
-            dom_sid = await self.object_sid_to_string(dom_sid_bytes)
-            maps = data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME]
-            passwd = maps[constants.LDAP_PASSWD_MAP_SCHEMA_NAME]
-            group = maps[constants.LDAP_GROUP_MAP_SCHEMA_NAME]
-            aux_params = [
-                'nss_uid_offset 20000',
-                'nss_gid_offset 20000',
-            ]
-            passwd[constants.ATTR_USER_OBJ] = f'(sAMAccountType={SAMAccountType.SAM_USER_OBJECT.value})'
-            passwd[constants.ATTR_USER_NAME] = 'sAMAccountName'
-            passwd[constants.ATTR_USER_GID] = 'primaryGroupID'
-            passwd[constants.ATTR_USER_GECOS] = 'displayName'
-            passwd[constants.ATTR_USER_UID] = f'objectSid:{dom_sid}'
-            group[constants.ATTR_GROUP_OBJ] = f'(sAMAccountType={SAMAccountType.SAM_GROUP_OBJECT.value})'
-            group[constants.ATTR_GROUP_GID] = f'objectSid:{dom_sid}'
-            data.update({
-                'schema': 'RFC2307BIS',
-                'auxiliary_parameters': '\n'.join(aux_params)
-            })
             return constants.SERVER_TYPE_ACTIVE_DIRECTORY
 
         elif 'objectClass' in rootdse:
@@ -828,9 +810,6 @@ class LDAPService(TDBWrapConfigService):
             if new['enable']:
                 await self.ldap_validate(old, new, verrors)
                 verrors.check()
-
-                if not new['server_type']:
-                    new['server_type'] = await self.autodetect_ldap_settings(new)
 
         await self.ldap_compress(new)
         out = await super().do_update(new)
