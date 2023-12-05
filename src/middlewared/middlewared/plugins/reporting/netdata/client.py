@@ -106,7 +106,7 @@ class ClientMixin:
                         logger.debug(f'Failed to fetch api response from {task["uri"]}. Reason {task["error"]}')
                     else:
                         responses.append((task['identifier'], task['data']))
-        except (ApiException, ClientConnectError):
-            logger.debug('Failed to connect to netdata', exc_info=True)
+        except Exception as e:
+            logger.debug('Failed to connect to netdata: %s', e)
 
         return responses
