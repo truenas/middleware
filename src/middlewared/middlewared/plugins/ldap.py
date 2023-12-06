@@ -789,8 +789,8 @@ class LDAPService(TDBWrapConfigService):
         new.update(data)
         new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
 
-        for map in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES:
-            new[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map] | new_attributes.get(map, {})
+        for nss_type in constants.LDAP_ATTRIBUTE_MAPS.keys():
+            new[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][nss_type] | new_attributes.get(nss_type, {})
 
         new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
