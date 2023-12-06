@@ -4,7 +4,7 @@ import errno
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from .privilege_utils import privileges_group_mapping
+from middlewared.utils.privilege import privileges_group_mapping
 import middlewared.sqlalchemy as sa
 
 
