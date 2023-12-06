@@ -283,8 +283,7 @@ def test_27_creating_shareuser_to_test_sharing(request):
         "groups": [group_id],
         "password": "testing",
         "uid": next_uid,
-        "shell": '/bin/csh',
-        "smb": True
+        "shell": '/bin/csh'
     }
     results = POST("/user/", payload)
     assert results.status_code == 200, results.text
@@ -343,8 +342,7 @@ def test_31_creating_user_with_homedir(request):
         "shell": '/bin/csh',
         "sshpubkey": "canary",
         "home": f'/mnt/{dataset}/testuser2',
-        "home_mode": '750',
-        "smb": True
+        "home_mode": '750'
     }
     results = POST("/user/", payload1)
     assert results.status_code == 200, results.text
