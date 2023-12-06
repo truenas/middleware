@@ -30,12 +30,9 @@ def attribute_maps_data_to_params(data):
     nslcd configuration information
     """
     map_params = []
-    for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
-        constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
-        constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
-    )):
+    for nss_type, keys in constants.LDAP_ATTRIBUTE_MAPS.items():
         for key in keys:
-            if not (value := data.get(map, {}).get(key)):
+            if not (value := data.get(nss_type, {}).get(key)):
                 continue
 
             match key:

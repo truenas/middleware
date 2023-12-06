@@ -397,18 +397,15 @@ class LDAPService(TDBWrapConfigService):
         # "search_bases" and "attribute_maps" respectively
         data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] = {}
         data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME] = {
-            key: {} for key in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES
+            nss_type: {} for nss_type in constants.LDAP_ATTRIBUTE_MAPS.keys()
         }
 
         for key in constants.LDAP_SEARCH_BASE_KEYS:
             data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME][key] = data.pop(key, None)
 
-        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
-            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
-            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
-        )):
+        for nss_type, keys in constants.LDAP_ATTRIBUTE_MAPS.items():
             for key in keys:
-                data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map][key] = data.pop(key, None)
+                data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][nss_type][key] = data.pop(key, None)
 
         return data
 
@@ -427,12 +424,9 @@ class LDAPService(TDBWrapConfigService):
         for key in constants.LDAP_SEARCH_BASE_KEYS:
             data[key] = search_bases.get(key)
 
-        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
-            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
-            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
-        )):
+        for nss_type, keys in constants.LDAP_ATTRIBUTE_MAPS.items():
             for key in keys:
-                data[key] = attribute_maps[map].get(key)
+                data[key] = attribute_maps[nss_type].get(key)
 
         return data
 
@@ -624,7 +618,7 @@ class LDAPService(TDBWrapConfigService):
             # No overlap between old and new hostnames and so force server_type autodetection
             data['server_type'] = None
 
-        if not new['server_type'] and data['enable']:
+        if not data['server_type'] and data['enable']:
             data['server_type'] = await self.autodetect_ldap_settings(data)
             if data['server_type'] == constants.SERVER_TYPE_ACTIVE_DIRECTORY:
                 verrors.add(
@@ -780,7 +774,10 @@ class LDAPService(TDBWrapConfigService):
         be used.
 
         `server_type` is a readonly key indicating the server_type detected
-        internally by TrueNAS
+        internally by TrueNAS. Value will be set to one of the following:
+        `ACTIVE_DIRECTORY`, `FREEIPA`, `GENERIC`, and `OPENLDAP`. Generic
+        is default if TrueNAS is unable to determine LDAP server type via
+        information in the LDAP root DSE.
         """
         await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()
@@ -792,8 +789,8 @@ class LDAPService(TDBWrapConfigService):
         new.update(data)
         new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
 
-        for map in constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES:
-            new[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map] | new_attributes.get(map, {})
+        for nss_type in constants.LDAP_ATTRIBUTE_MAPS.keys():
+            new[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][nss_type] | new_attributes.get(nss_type, {})
 
         new['uri_list'] = await self.hostnames_to_uris(new)
         await self.common_validate(new, old, verrors)
