@@ -1311,19 +1311,24 @@ def test_48_syslog_filters(request):
                 res = ssh("tail -5 /var/log/syslog")
                 if "rpc.mountd" in res:
                     found = True
+                    break
                 num_tries -= 1
                 sleep(1)
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
+	# NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
+
         # Disable mountd logging
         call("nfs.update", {"mountd_log": False})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
             # wait a few seconds to make sure syslog has a chance to flush log messages
-            sleep(2)
+            sleep(3)
             res = ssh("tail -5 /var/log/syslog")
             assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
+        # Get a second chance to catch mountd messages on the umount.  They should not be present.
+        sleep(3)
         res = ssh("tail -5 /var/log/syslog")
         assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
