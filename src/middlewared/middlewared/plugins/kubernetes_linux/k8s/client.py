@@ -7,7 +7,9 @@ import os
 import typing
 import urllib.parse
 
-from .config import get_config
+from aiohttp.client_exceptions import ClientConnectorError
+
+from .config import get_config, remove_initialized_config
 from .exceptions import ApiException
 from .utils import RequestMode, UPDATE_HEADERS
 
@@ -41,13 +43,20 @@ class ClientMixin:
         cls, endpoint: str, mode: str, body: typing.Any = None, headers: typing.Optional[dict] = None,
         response_type: str = 'json', timeout: int = 50
     ) -> typing.Union[dict, str]:
-        try:
-            async with cls.request(endpoint, mode, body, headers, timeout) as resp:
-                return await resp.json() if response_type == 'json' else await resp.text()
-        except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
-            raise ApiException(f'Failed {endpoint!r} call: {e!r}')
-        except aiohttp.client_exceptions.ContentTypeError as e:
-            raise ApiException(f'Malformed response received from {endpoint!r} endpoint: {e}')
+        retry = 1
+        while True:
+            try:
+                async with cls.request(endpoint, mode, body, headers, timeout) as resp:
+                    return await resp.json() if response_type == 'json' else await resp.text()
+            except (asyncio.TimeoutError, aiohttp.ClientResponseError) as e:
+                raise ApiException(f'Failed {endpoint!r} call: {e!r}')
+            except aiohttp.client_exceptions.ContentTypeError as e:
+                raise ApiException(f'Malformed response received from {endpoint!r} endpoint: {e}')
+            except ClientConnectorError:
+                remove_initialized_config()
+                if retry <= 0:
+                    raise
+            retry -= 1
 
 
 class K8sClientBase(ClientMixin):
