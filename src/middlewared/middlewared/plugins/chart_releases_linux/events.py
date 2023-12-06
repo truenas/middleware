@@ -131,7 +131,10 @@ async def chart_release_event(middleware, event_type, args):
     if args['involvedObject']['kind'] != 'Pod' or not is_ix_namespace(args['involvedObject']['namespace']):
         return
 
-    await middleware.call('chart.release.handle_k8s_event', args)
+    try:
+        await middleware.call('chart.release.handle_k8s_event', args)
+    except Exception as e:
+        middleware.logger.warning('Unhandled exception: %s', e)
 
 
 async def setup(middleware):
