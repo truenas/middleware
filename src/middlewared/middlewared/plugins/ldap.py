@@ -618,7 +618,7 @@ class LDAPService(TDBWrapConfigService):
             # No overlap between old and new hostnames and so force server_type autodetection
             data['server_type'] = None
 
-        if not new['server_type'] and data['enable']:
+        if not data['server_type'] and data['enable']:
             data['server_type'] = await self.autodetect_ldap_settings(data)
             if data['server_type'] == constants.SERVER_TYPE_ACTIVE_DIRECTORY:
                 verrors.add(
