@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import contextlib
+import errno
 import os
 import sys
 import pytest
@@ -143,9 +144,11 @@ def test_restricted_user_2fa_secret_renewal():
     ) as acct:
         with enabled_twofactor_auth():
             with client(auth=(acct.username, acct.password)) as c:
-                with pytest.raises(CallError):
+                with pytest.raises(CallError) as ve:
                     # Trying to renew another user's 2fa token should fail
                     c.call('user.renew_2fa_secret', "root", TEST_TWOFACTOR_INTERVAL)
+
+                assert ve.value.errno == errno.EPERM
 
                 c.call('user.renew_2fa_secret', acct.username, TEST_TWOFACTOR_INTERVAL)
                 user_obj = call('user.query', [['username', '=', acct.username]], {'get': True})

@@ -1,11 +1,14 @@
-def credential_has_full_admin(credential):
+def credential_has_full_admin(credential: object) -> bool:
     if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
         return True
 
     return credential.allowlist.full_admin
 
 
-def credential_username_check(credential, username):
+def credential_full_admin_or_user(
+    credential: object,
+    username: str
+) -> bool:
     if credential is None:
         return False
 
@@ -15,7 +18,10 @@ def credential_username_check(credential, username):
     return credential.user['username'] == username
 
 
-def app_username_check(app, username):
+def app_credential_full_admin_or_user(
+    app: object,
+    username: str
+) -> bool:
     """
     Privilege check for whether credential has full admin privileges
     or matches the specified username
@@ -31,7 +37,7 @@ def app_username_check(app, username):
     if app is None:
         return True
 
-    return credential_username_check(app.authenticated_credentials, username)
+    return credential_credential_full_admin_or_user(app.authenticated_credentials, username)
 
 
 def privileges_group_mapping(

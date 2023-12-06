@@ -3,7 +3,7 @@ import pyotp
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Ref, returns, Str
 from middlewared.service import CallError, no_authz_required, pass_app, private, Service
-from middlewared.utils.privilege import app_username_check
+from middlewared.utils.privilege import app_credential_full_admin_or_user
 from middlewared.validators import Range
 
 
@@ -153,11 +153,15 @@ class UserService(Service):
 
         `2fa_configuration_options.interval` is time duration in seconds specifying OTP expiration time
         from it's creation time.
+
+        NOTE: This username must match the authenticated username unless authenticated
+        credentials have FULL_ADMIN role.
         """
-        if not app_username_check(app, username):
+        if not app_credential_full_admin_or_user(app, username):
             raise CallError(
                 f'{username}: currently authenticated credential may not renew two-factor '
-                'authentication for this user.'
+                'authentication for this user.',
+                errno.EPERM
             )
 
         user = await self.translate_username(username)
