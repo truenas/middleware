@@ -236,7 +236,7 @@ class AuthService(Service):
         super(AuthService, self).__init__(*args, **kwargs)
         self.session_manager.middleware = self.middleware
 
-    @filterable
+    @filterable(roles=['AUTH_SESSIONS_READ'])
     @filterable_returns(Dict(
         'session',
         Str('id'),
@@ -294,7 +294,7 @@ class AuthService(Service):
             options,
         )
 
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['AUTH_SESSIONS_WRITE'])
     @returns(Bool(description='Is `true` if session was terminated successfully'))
     async def terminate_session(self, id_):
         """
@@ -308,7 +308,7 @@ class AuthService(Service):
 
         await session.app.response.close()
 
-    @accepts()
+    @accepts(roles=['AUTH_SESSIONS_WRITE'])
     @returns()
     @pass_app()
     async def terminate_other_sessions(self, app):
