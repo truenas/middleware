@@ -236,7 +236,7 @@ class AuthService(Service):
         super(AuthService, self).__init__(*args, **kwargs)
         self.session_manager.middleware = self.middleware
 
-    @filterable
+    @filterable(roles=['AUTH_SESSIONS_READ'])
     @filterable_returns(Dict(
         'session',
         Str('id'),
@@ -245,7 +245,7 @@ class AuthService(Service):
         Str('origin'),
         Str('credentials'),
         Datetime('created_at'),
-    ), roles=['AUTH_SESSIONS_READ'])
+    ))
     @pass_app()
     def sessions(self, app, filters, options):
         """
