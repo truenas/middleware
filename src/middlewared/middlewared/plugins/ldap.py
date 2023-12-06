@@ -403,12 +403,9 @@ class LDAPService(TDBWrapConfigService):
         for key in constants.LDAP_SEARCH_BASE_KEYS:
             data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME][key] = data.pop(key, None)
 
-        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
-            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
-            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
-        )):
+        for nss_type, keys in constants.LDAP_ATTRIBUTE_MAPS.items():
             for key in keys:
-                data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][map][key] = data.pop(key, None)
+                data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME][nss_type][key] = data.pop(key, None)
 
         return data
 
@@ -427,12 +424,9 @@ class LDAPService(TDBWrapConfigService):
         for key in constants.LDAP_SEARCH_BASE_KEYS:
             data[key] = search_bases.get(key)
 
-        for map, keys in zip(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAMES, (
-            constants.LDAP_PASSWD_MAP_KEYS, constants.LDAP_SHADOW_MAP_KEYS,
-            constants.LDAP_GROUP_MAP_KEYS, constants.LDAP_NETGROUP_MAP_KEYS
-        )):
+        for nss_type, keys in constants.LDAP_ATTRIBUTE_MAPS.items():
             for key in keys:
-                data[key] = attribute_maps[map].get(key)
+                data[key] = attribute_maps[nss_type].get(key)
 
         return data
 
@@ -780,7 +774,10 @@ class LDAPService(TDBWrapConfigService):
         be used.
 
         `server_type` is a readonly key indicating the server_type detected
-        internally by TrueNAS
+        internally by TrueNAS. Value will be set to one of the following:
+        `ACTIVE_DIRECTORY`, `FREEIPA`, `GENERIC`, and `OPENLDAP`. Generic
+        is default if TrueNAS is unable to determine LDAP server type via
+        information in the LDAP root DSE.
         """
         await self.middleware.call("smb.cluster_check")
         verrors = ValidationErrors()
