@@ -245,7 +245,7 @@ class AuthService(Service):
         Str('origin'),
         Str('credentials'),
         Datetime('created_at'),
-    ))
+    ), roles=['AUTH_SESSIONS_READ'])
     @pass_app()
     def sessions(self, app, filters, options):
         """
@@ -294,7 +294,7 @@ class AuthService(Service):
             options,
         )
 
-    @accepts(Str('id'))
+    @accepts(Str('id'), roles=['AUTH_SESSIONS_WRITE'])
     @returns(Bool(description='Is `true` if session was terminated successfully'))
     async def terminate_session(self, id_):
         """
@@ -308,7 +308,7 @@ class AuthService(Service):
 
         await session.app.response.close()
 
-    @accepts()
+    @accepts(roles=['AUTH_SESSIONS_WRITE'])
     @returns()
     @pass_app()
     async def terminate_other_sessions(self, app):
