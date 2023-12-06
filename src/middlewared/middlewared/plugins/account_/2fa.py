@@ -2,7 +2,8 @@ import errno
 import pyotp
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Ref, returns, Str
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, no_authz_required, pass_app, private, Service
+from middlewared.utils.privilege import app_username_check
 from middlewared.validators import Range
 
 
@@ -132,6 +133,7 @@ class UserService(Service):
             }
         )
 
+    @no_authz_required
     @accepts(
         Str('username'),
         Dict(
@@ -142,7 +144,8 @@ class UserService(Service):
         )
     )
     @returns(Ref('user_entry'))
-    async def renew_2fa_secret(self, username, twofactor_options):
+    @pass_app()
+    async def renew_2fa_secret(self, app, username, twofactor_options):
         """
         Renew `username` user's two-factor authentication secret.
 
@@ -151,6 +154,12 @@ class UserService(Service):
         `2fa_configuration_options.interval` is time duration in seconds specifying OTP expiration time
         from it's creation time.
         """
+        if not app_username_check(app, username):
+            raise CallError(
+                f'{username}: currently authenticated credential may not renew two-factor '
+                'authentication for this user.'
+            )
+
         user = await self.translate_username(username)
         twofactor_auth = await self.middleware.call(
             'auth.twofactor.get_user_config', user['id' if user['local'] else 'sid'], user['local']

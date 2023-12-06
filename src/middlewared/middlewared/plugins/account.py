@@ -4,10 +4,10 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
+from middlewared.utils.privilege import privileges_group_mapping
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
-from middlewared.plugins.account_.privilege_utils import privileges_group_mapping
 from middlewared.plugins.idmap_.utils import TRUENAS_IDMAP_DEFAULT_LOW
 
 import binascii
