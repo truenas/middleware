@@ -242,7 +242,7 @@ class PoolDatasetService(Service):
             'quota_type': 'USER',
             'id': '0',
             'quota_value': 0
-        }])
+        }]),
         roles=['DATASET_WRITE']
     )
     @returns()
