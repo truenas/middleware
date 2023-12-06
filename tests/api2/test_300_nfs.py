@@ -1304,15 +1304,23 @@ def test_48_syslog_filters(request):
         # Confirm default setting: mountd logging enabled
         call("nfs.update", {"mountd_log": True})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
-            res = ssh("tail -5 /var/log/syslog")
-            assert "rpc.mountd" in res, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
+            num_tries = 5
+            found = False
+            res = ""
+            while not found and num_tries > 0:
+                res = ssh("tail -5 /var/log/syslog")
+                if "rpc.mountd" in res:
+                    found = True
+                num_tries -= 1
+                sleep(1)
 
-        res = ssh("tail -5 /var/log/syslog")
-        assert "rpc.mountd" in res, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
+            assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
         # Disable mountd logging
         call("nfs.update", {"mountd_log": False})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            # wait a few seconds to make sure syslog has a chance to flush log messages
+            sleep(2)
             res = ssh("tail -5 /var/log/syslog")
             assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
