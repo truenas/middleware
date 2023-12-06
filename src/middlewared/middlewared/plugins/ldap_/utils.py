@@ -84,6 +84,6 @@ def attribute_maps_data_to_params(data):
                 case constants.ATTR_NETGROUP_TRIPLE:
                     map_params.append(f'map netgroup nisNetgroupTriple {value}')
                 case _:
-                    raise ValueError(f'{key}: unexpected attribute map parameter for {map}')
+                    raise ValueError(f'{key}: unexpected attribute map parameter for {nss_type}')
 
     return map_params
