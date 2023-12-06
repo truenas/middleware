@@ -397,7 +397,7 @@ class LDAPService(TDBWrapConfigService):
         # "search_bases" and "attribute_maps" respectively
         data[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] = {}
         data[constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME] = {
-            key: {} for key in constants.LDAP_ATTRIBUTE_MAPS.keys()
+            nss_type: {} for nss_type in constants.LDAP_ATTRIBUTE_MAPS.keys()
         }
 
         for key in constants.LDAP_SEARCH_BASE_KEYS:
