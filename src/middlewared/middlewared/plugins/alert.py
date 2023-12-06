@@ -27,7 +27,7 @@ from middlewared.alert.base import UnavailableException, AlertService as _AlertS
 from middlewared.client.client import ReserveFDException
 from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Patch, returns, Ref, Str
 from middlewared.service import (
-    ConfigService, CRUDService, Service, ValidationErrors,
+    ConfigService, CRUDService, no_authz_required, Service, ValidationErrors,
     job, periodic, private,
 )
 from middlewared.service_exception import CallError
@@ -277,6 +277,7 @@ class AlertService(Service):
         await self.flush_alerts()
 
     @accepts()
+    @no_authz_required
     @returns(List('alert_policies', items=[Str('policy', enum=POLICIES)]))
     async def list_policies(self):
         """
@@ -285,6 +286,7 @@ class AlertService(Service):
         return POLICIES
 
     @accepts()
+    @no_authz_required
     @returns(List('categories', items=[Dict(
         'category',
         Str('id'),
@@ -982,6 +984,7 @@ class AlertServiceService(CRUDService):
     )
 
     @accepts()
+    @no_authz_required
     @returns(List('alert_service_types', items=[Dict(
         'alert_service_type',
         Str('name', required=True),
