@@ -261,11 +261,10 @@ TARGET_DRIVER iscsi {
             else:
                 # In an ALUA config, we may have selected the int_vip.  If so just use
                 # the IP pertainng to this node.
-                rawaddr = addr['ip']
-                if alua_enabled and rawaddr in failover_virtual_aliases and rawaddr in listen_ip_choices and '/' in listen_ip_choices[rawaddr]:
-                    pair = listen_ip_choices[rawaddr].split('/')
-                    rawaddr = pair[0] if node == 'A' else pair[1]
-                address = (f'[{rawaddr}]' if ':' in rawaddr else rawaddr)
+                address = addr['ip']
+                if alua_enabled and address in failover_virtual_aliases and address in listen_ip_choices and '/' in listen_ip_choices[address]:
+                    pair = listen_ip_choices[address].split('/')
+                    address = pair[0] if node == 'A' else pair[1]
 
             group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
             if not has_per_host_access:
