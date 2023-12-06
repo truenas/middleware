@@ -276,7 +276,7 @@ class AlertService(Service):
     async def terminate(self):
         await self.flush_alerts()
 
-    @accepts()
+    @accepts(roles=['ALERT_LIST_READ'])
     @returns(List('alert_policies', items=[Str('policy', enum=POLICIES)]))
     async def list_policies(self):
         """
@@ -284,7 +284,7 @@ class AlertService(Service):
         """
         return POLICIES
 
-    @accepts()
+    @accepts(roles=['ALERT_LIST_READ'])
     @returns(List('categories', items=[Dict(
         'category',
         Str('id'),
