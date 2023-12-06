@@ -33,7 +33,8 @@ class VMWareService(Service):
     @periodic(PENDING_SNAPSHOT_DELETE_INTERVAL.total_seconds(), run_on_start=False)
     @private
     async def delete_pending_snapshots(self):
-        await self.middleware.call("network.general.will_perform_activity", "vmware")
+        if not await self.middleware.call("network.general.can_perform_activity", "vmware"):
+            return
 
         for pending_snapshot_delete in await self.middleware.call(
             "datastore.query",

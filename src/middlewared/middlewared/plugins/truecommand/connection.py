@@ -9,7 +9,9 @@ class TruecommandAPIMixin:
     PORTAL_URI = 'https://portal.ixsystems.com/api'
 
     async def _post_call(self, options=None, payload=None):
-        await self.middleware.call('network.general.will_perform_activity', 'truecommand')
+        if not await self.middleware.call('network.general.can_perform_activity', 'truecommand'):
+            return {'error': 'Network activity denied for TrueCommand service'}
+
         options = options or {}
         timeout = options.get('timeout', 15)
         response = {'error': None, 'response': {}}
