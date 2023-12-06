@@ -31,7 +31,8 @@ class NFSService(Service):
         return entries
 
     # NFS_WRITE because this exposes hostnames and IP addresses
-    @filterable(roles=['SHARING_NFS_WRITE'])
+    # READONLY is considered administrative-level permission
+    @filterable(roles=['READONLY', 'SHARING_NFS_WRITE'])
     def get_nfs3_clients(self, filters, options):
         """
         Read contents of rmtab. This information may not
@@ -70,7 +71,8 @@ class NFSService(Service):
         return states or []
 
     # NFS_WRITE because this exposes hostnames, IP addresses and other details
-    @filterable(roles=['SHARING_NFS_WRITE'])
+    # READONLY is considered administrative-level permission
+    @filterable(roles=['READONLY', 'SHARING_NFS_WRITE'])
     @filterable_returns(Dict(
         'client',
         Str('id'),
