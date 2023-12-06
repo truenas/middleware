@@ -55,7 +55,9 @@ class ClientMixin:
             except ClientConnectorError:
                 remove_initialized_config()
                 if retry <= 0:
-                    raise
+                    raise ApiException(f'Client connection error raised from {endpoint!r} endpoint')
+            except Exception as e:
+                raise ApiException(f'Failed {endpoint!r} call: {e!r}')
             retry -= 1
 
 
