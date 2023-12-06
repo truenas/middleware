@@ -7,7 +7,7 @@ class PoolDatasetService(Service):
     class Config:
         namespace = "pool.dataset"
 
-    @accepts(Str("dataset"))
+    @accepts(Str("dataset"), roles=['DATASET_READ'])
     @returns(Int())
     def snapshot_count(self, dataset):
         """

@@ -31,6 +31,7 @@ class PoolDatasetService(Service):
             ),
             register=True,
         ),
+        roles=['DATASET_WRITE']
     )
     @returns(Ref('pool_dataset_permission'))
     @item_method
@@ -190,6 +191,7 @@ class PoolDatasetService(Service):
         Str('quota_type', enum=['USER', 'GROUP', 'DATASET', 'PROJECT']),
         Ref('query-filters'),
         Ref('query-options'),
+        roles=['DATASET_READ']
     )
     @item_method
     async def get_quota(self, ds, quota_type, filters, options):
@@ -241,6 +243,7 @@ class PoolDatasetService(Service):
             'id': '0',
             'quota_value': 0
         }])
+        roles=['DATASET_WRITE']
     )
     @returns()
     @item_method

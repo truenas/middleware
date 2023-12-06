@@ -10,7 +10,7 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @accepts(Str('dataset'))
+    @accepts(Str('dataset'), roles=['DATASET_READ'])
     @returns(Dict('services_to_restart', additional_attrs=True))
     async def unlock_services_restart_choices(self, dataset):
         """
