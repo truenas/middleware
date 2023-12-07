@@ -161,17 +161,21 @@ class SharingTaskService(CRUDService):
         )
 
     @pass_app(rest=True)
-    async def update(self, app, id_, data):
-        rv = await super().update(app, id_, data)
+    async def update(self, app, audit_callback, id_, data):
+        rv = await super().update(app, audit_callback, id_, data)
         if not rv[self.enabled_field] or not rv[self.locked_field]:
             await self.remove_locked_alert(rv['id'])
         return rv
 
+    update.audit_callback = True
+
     @pass_app(rest=True)
-    async def delete(self, app, id_, *args):
-        rv = await super().delete(app, id_, *args)
+    async def delete(self, app, audit_callback, id_, *args):
+        rv = await super().delete(app, audit_callback, id_, *args)
         await self.remove_locked_alert(id_)
         return rv
+
+    delete.audit_callback = True
 
 
 class SharingService(SharingTaskService):
