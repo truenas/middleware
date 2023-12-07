@@ -11,8 +11,10 @@ def test_job_credentials():
             return 42
     """):
         with unprivileged_user_client(allowlist=[{"method": "CALL", "resource": "test.test1"}]) as c:
+            username = c.call('auth.me')['pw_name']
+
             job_id = c.call("test.test1")
 
             job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
 
-            assert job["credentials"] == {"type": "LOGIN_PASSWORD", "data": {"username": "unprivileged"}}
+            assert job["credentials"] == {"type": "LOGIN_PASSWORD", "data": {"username": username}}
