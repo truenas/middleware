@@ -1,3 +1,4 @@
+from logging import getLogger
 from os import mkfifo
 from threading import Thread
 from time import sleep
@@ -5,6 +6,7 @@ from time import sleep
 from middlewared.utils.prctl import set_name
 
 VRRP_THREAD = None
+LOGGER = getLogger('failover')  # so logs show up in /var/log/failover.log
 
 
 class VrrpFifoThread(Thread):
@@ -14,7 +16,6 @@ class VrrpFifoThread(Thread):
         self._retry_timeout = 2  # timeout in seconds before retrying to connect to FIFO
         self._vrrp_file = '/var/run/vrrpd.fifo'
         self.middleware = kwargs.get('middleware')
-        self.logger = self.middleware.logger
         self.shutdown_line = '--SHUTDOWN--\n'
 
     def shutdown(self):
@@ -34,14 +35,14 @@ class VrrpFifoThread(Thread):
         try:
             self.create_fifo()
         except Exception:
-            self.logger.error('FATAL: Unable to create VRRP fifo.', exc_info=True)
+            LOGGER.error('FATAL: Unable to create VRRP fifo.', exc_info=True)
             return
 
         log_it = True
         while True:
             try:
                 with open(self._vrrp_file) as f:
-                    self.logger.info('vrrp fifo connection established')
+                    LOGGER.info('vrrp fifo connection established')
                     for line in f:
                         if line == self.shutdown_line:
                             return
@@ -49,7 +50,7 @@ class VrrpFifoThread(Thread):
                             self.middleware.call_hook_sync('vrrp.fifo', data=line)
             except Exception:
                 if log_it:
-                    self.logger.warning(
+                    LOGGER.warning(
                         'vrrp fifo connection not established, retrying every %d seconds',
                         self._retry_timeout,
                         exc_info=True
