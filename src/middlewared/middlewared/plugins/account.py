@@ -1,10 +1,13 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, no_auth_required, pass_app, private, filterable, job
+    CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run, filter_list
-from middlewared.utils.privilege import privileges_group_mapping
+from middlewared.utils.privilege import (
+    credential_has_full_admin,
+    privileges_group_mapping
+)
 from middlewared.validators import Email, Range
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.smb import SMBBuiltin
@@ -1444,6 +1447,129 @@ class UserService(CRUDService):
             os.fchmod(f.fileno(), 0o600)
             os.fchown(f.fileno(), user['uid'], gid)
             f.write(f'{pubkey}\n')
+
+    @no_authz_required
+    @accepts(Dict(
+        'password_reset_data',
+        Str('username', required=True),
+        Password('old_password', default=''),
+        Password('new_password', required=True),
+        Dict(
+            'options',
+            Bool('skip_password_check', default=False)
+        )
+    ))
+    @pass_app(require=True)
+    async def password_reset(self, app, data):
+        """
+        Set the password of the specified `username` to the `new_password`
+        specified in payload.
+
+        ValidationErrors will be raised in the following situations:
+        * username does not exist
+        * account is not local to the NAS (Active Directory, LDAP, etc)
+        * account has password authentication disabled
+        * account is locked
+
+        `skip_password_check` option may be specified if authorized session
+        is has FULL_ADMIN role.
+
+        NOTE: when authenticated session has less than FULL_ADMIN role,
+        password changes will be rejected if the payload does not match the
+        currently-authenticated user.
+
+        API keys granting access to this endpoint will be able to reset
+        the password of any user.
+        """
+
+        verrors = ValidationErrors()
+        is_full_admin = credential_has_full_admin(app.authenticated_credentials)
+        authenticated_user = app.authenticated_credentials.user['username']
+
+        username = data['username']
+        password = data['new_password']
+
+        if not is_full_admin and authenticated_user != username:
+            raise CallError(
+                f'{username}: currently authenticated credential may not reset '
+                'password for this user.',
+                errno.EPERM
+            )
+
+        entry = await self.middleware.call(
+            'user.query',
+            [['username', '=', username]],
+            {'extra': {'additional_information': ['DS']}}
+        )
+        if not entry:
+            # This only happens if authenticated user has FULL_ADMIN privileges
+            # and so we're not concerned about letting admin know that username is
+            # bad.
+            verrors.add(
+                'user.reset_password.username',
+                f'{username}: user does not exist.'
+            )
+        else:
+            entry = entry[0]
+            if not entry['local']:
+                # We don't allow resetting passwords on remote directory service.
+                verrors.add(
+                    'user.reset_password.username',
+                    f'{username}: user is not local to the TrueNAS server.'
+                )
+
+        verrors.check()
+
+        if data['options']['skip_password_check'] and not is_full_admin:
+            verrors.add(
+                'user.reset_password.options.skip_password_check',
+                'FULL_ADMIN role is required in order to bypass check for current password.'
+            )
+
+        if not data['options']['skip_password_check'] and not await self.middleware.call(
+            'auth.libpam_authenticate',
+            username, data['old_password']
+        ):
+            verrors.add(
+                'user.reset_password.old_password',
+                f'{username}: failed to validate password.'
+            )
+
+        if entry['password_disabled']:
+            verrors.add(
+                'user.reset_password.username',
+                f'{username}: password authentication disabled for user'
+            )
+
+        if entry['locked']:
+            verrors.add(
+                'user.reset_password.username',
+                f'{username}: user account is locked.'
+            )
+
+        new_hash = crypted_password(password)
+        verrors.check()
+
+        if entry['smb']:
+            # We need to replace NT hash of password while we still have
+            # access to plain-text version.
+            smb_hash = (
+                f'{username}:{entry["uid"]}:{"X" * 32}'
+                f':{nt_password(password)}:[U         ]'
+                f':LCT-{int(time.time()):X}:'
+            )
+        else:
+            smb_hash = '*'
+
+        await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
+            'bsdusr_unixhash': new_hash,
+            'bsdusr_smbhash': smb_hash,
+        })
+        await self.middleware.call('etc.generate', 'shadow')
+
+        if entry['smb']:
+            passdb_sync = await self.middleware.call('smb.synchronize_passdb')
+            await passdb_sync.wait()
 
 
 class GroupModel(sa.Model):
