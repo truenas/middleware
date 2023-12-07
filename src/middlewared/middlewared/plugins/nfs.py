@@ -74,6 +74,7 @@ class NFSService(SystemServiceService):
         Bool('statd_lockd_log', required=True),
         Bool('v4_krb_enabled', required=True),
         Bool('userd_manage_gids', required=True),
+        Bool('keytab_has_nfs_spn', required=True),
     )
 
     @private
@@ -82,11 +83,13 @@ class NFSService(SystemServiceService):
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
         nfs["userd_manage_gids"] = nfs.pop("16")
         nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
+        nfs["keytab_has_nfs_spn"] = keytab_has_nfs
         return nfs
 
     @private
     async def nfs_compress(self, nfs):
         nfs.pop("v4_krb_enabled")
+        nfs.pop("keytab_has_nfs_spn")
         nfs["16"] = nfs.pop("userd_manage_gids")
         return nfs
 
@@ -131,6 +134,7 @@ class NFSService(SystemServiceService):
         'nfs_entry', 'nfs_update',
         ('rm', {'name': 'id'}),
         ('rm', {'name': 'v4_krb_enabled'}),
+        ('rm', {'name': 'keytab_has_nfs_spn'}),
         ('attr', {'update': True}),
     ))
     async def do_update(self, data):
