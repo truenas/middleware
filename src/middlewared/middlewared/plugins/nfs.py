@@ -28,7 +28,7 @@ class NFSModel(sa.Model):
     __tablename__ = 'services_nfs'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nfs_srv_servers = sa.Column(sa.Integer(), default=-1)
+    nfs_srv_servers = sa.Column(sa.Integer(), default=0)
     nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
     nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])

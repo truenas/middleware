@@ -210,7 +210,7 @@ def save_nfs_config():
     but it also might require refactoring of the tests.
     This is called at the start of test_01_creating_the_nfs_server.
     '''
-    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major']
+    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'managed_nfsd']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     res = make_ws_request(ip, get_conf_cmd)
     assert res.get('error') is None, res
@@ -1337,6 +1337,10 @@ def test_48_syslog_filters(request):
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
 
+        # The effect is much more clear if there are many mountd.
+        # We can force this by configuring many nfsd
+        call("nfs.update", {"servers": 24})
+
         # Confirm default setting: mountd logging enabled
         call("nfs.update", {"mountd_log": True})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
@@ -1430,22 +1434,23 @@ def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
         results = SSH_TEST("rm -f /etc/exports", user, password, ip)
     assert results['result'] is True
 
-    # Start NFS
-    payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
-    res = make_ws_request(ip, payload)
-    assert res['result'] is True, f"Expected start success: {res}"
-    sleep(1)
-    confirm_nfsd_processes(16)
+    with nfs_config() as nfs_conf:
+        # Start NFS
+        payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
+        res = make_ws_request(ip, payload)
+        assert res['result'] is True, f"Expected start success: {res}"
+        sleep(1)
+        confirm_nfsd_processes(nfs_conf['servers'])
 
-    # Return NFS to stopped condition
-    payload = {"service": "nfs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
+        # Return NFS to stopped condition
+        payload = {"service": "nfs"}
+        results = POST("/service/stop/", payload)
+        assert results.status_code == 200, results.text
+        sleep(1)
 
-    # Confirm stopped
-    results = GET("/service?service=nfs")
-    assert results.json()[0]["state"] == "STOPPED", results.text
+        # Confirm stopped
+        results = GET("/service?service=nfs")
+        assert results.json()[0]["state"] == "STOPPED", results.text
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])
