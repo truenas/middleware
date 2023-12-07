@@ -12,7 +12,7 @@ class PoolDatasetService(Service):
         namespace = 'pool.dataset'
 
     @item_method
-    @accepts(Str('id', required=True))
+    @accepts(Str('id', required=True), roles=['DATASET_READ'])
     @returns(Ref('attachments'))
     async def attachments(self, oid):
         """

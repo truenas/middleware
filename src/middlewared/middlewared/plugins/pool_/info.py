@@ -1,7 +1,7 @@
 import errno
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, returns, Str
-from middlewared.service import CallError, item_method, private, Service, ValidationError
+from middlewared.service import CallError, item_method, no_authz_required, private, Service, ValidationError
 
 
 class PoolService(Service):
@@ -37,7 +37,7 @@ class PoolService(Service):
         return found
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['READONLY'])
     @returns(List(items=[Dict(
         'attachment',
         Str('type', required=True),
@@ -55,7 +55,7 @@ class PoolService(Service):
         return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
 
     @item_method
-    @accepts(Int('id'))
+    @accepts(Int('id'), roles=['READONLY'])
     @returns(List(items=[Dict(
         'process',
         Int('pid', required=True),
@@ -81,7 +81,7 @@ class PoolService(Service):
         return processes
 
     @item_method
-    @accepts(Int('id', required=False, default=None, null=True))
+    @accepts(Int('id', required=False, default=None, null=True), roles=['READONLY'])
     @returns(List('pool_disks', items=[Str('disk')]))
     async def get_disks(self, oid):
         """
@@ -94,7 +94,10 @@ class PoolService(Service):
                 disks.extend(await self.middleware.call('zfs.pool.get_disks', pool['name']))
         return disks
 
-    @accepts(List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']))
+    @accepts(
+        List('types', items=[Str('type', enum=['FILESYSTEM', 'VOLUME'])], default=['FILESYSTEM', 'VOLUME']),
+        roles=['DATASET_READ']
+    )
     @returns(List(items=[Str('filesystem_name')]))
     async def filesystem_choices(self, types):
         """
@@ -137,7 +140,7 @@ class PoolService(Service):
             )
         ]
 
-    @accepts(Int('id', required=True))
+    @accepts(Int('id', required=True), roles=['READONLY'])
     @returns(Bool('pool_is_upgraded'))
     @item_method
     async def is_upgraded(self, oid):

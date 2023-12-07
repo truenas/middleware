@@ -7,7 +7,7 @@ class PoolDatasetService(Service):
     class Config:
         namespace = "pool.dataset"
 
-    @accepts(Str("dataset"), Bool("raise", default=True))
+    @accepts(Str("dataset"), Bool("raise", default=True), roles=['DATASET_READ'])
     @returns(Str(null=True))
     async def mountpoint(self, dataset, raise_):
         """
