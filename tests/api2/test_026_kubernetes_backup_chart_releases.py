@@ -16,7 +16,7 @@ from middlewared.test.integration.assets.kubernetes import backup
 from middlewared.test.integration.utils import file_exists_and_perms_check
 
 
-backup_release_name = 'backuppostgres'
+backup_release_name = 'backupsyncthing'
 
 # Read all the test below only on non-HA
 if not ha:
@@ -89,10 +89,7 @@ if not ha:
     @pytest.mark.dependency(name='ix_app_backup_restored')
     def test_07_restore_ix_applications_kubernetes_backup(request):
         depends(request, ['ix_app_backup'])
-        payload = {
-            "backup_name": backup_name,
-        }
-        results = POST('/kubernetes/restore_backup/', payload)
+        results = POST('/kubernetes/restore_backup/', backup_name)
         assert results.status_code == 200, results.text
         job_status = wait_on_job(results.json(), 300)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -148,10 +145,7 @@ if not ha:
 
     def test_13_restore_custom_name_kubernetes_backup(request):
         depends(request, ['my_app_backup'])
-        payload = {
-            "backup_name": 'mybackup',
-        }
-        results = POST('/kubernetes/restore_backup/', payload)
+        results = POST('/kubernetes/restore_backup/', 'mybackup')
         assert results.status_code == 200, results.text
         job_status = wait_on_job(results.json(), 300)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -184,10 +178,7 @@ if not ha:
 
     def test_17_restore_custom_name_kubernetes_backup(request):
         depends(request, ['my_second_backup'])
-        payload = {
-            "backup_name": 'mysecondbackup',
-        }
-        results = POST('/kubernetes/restore_backup/', payload)
+        results = POST('/kubernetes/restore_backup/', 'mysecondbackup')
         assert results.status_code == 200, results.text
         job_status = wait_on_job(results.json(), 300)
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
@@ -253,46 +244,39 @@ if not ha:
         def read_file_content(file_path: str) -> str:
             return ssh(f'cat {file_path}')
 
-        with catalog({
-            'force': True,
-            'preferred_trains': ['test-apps'],
-            'label': 'TESTAPPS',
-            'repository': 'https://github.com/Qubad786/test_catalog.git',
-            'branch': 'main'
-        }) as catalog_info:
-            with chart_release({
-                'catalog': catalog_info['label'],
-                'item': 'postgres',
-                'release_name': backup_release_name,
-                'train': 'test-apps',
-            }, wait_until_active=True) as chart_release_info:
-                with backup() as backup_name:
-                    app_info = call(
-                        'chart.release.get_instance', chart_release_info['id'], {'extra': {'retrieve_resources': True}}
-                    )
-                    backup_path = os.path.join(
-                        '/mnt', pool_name, 'ix-applications/backups', backup_name, app_info['id']
-                    )
-                    for f in ('namespace.yaml', 'workloads_replica_counts.json'):
-                        test_path = os.path.join(backup_path, f)
-                        assert file_exists_and_perms_check(test_path) is True, test_path
+        with chart_release({
+            'catalog': 'TRUENAS',
+            'item': 'syncthing',
+            'release_name': backup_release_name,
+            'train': 'charts',
+        }, wait_until_active=True) as chart_release_info:
+            with backup() as backup_name:
+                app_info = call(
+                    'chart.release.get_instance', chart_release_info['id'], {'extra': {'retrieve_resources': True}}
+                )
+                backup_path = os.path.join(
+                    '/mnt', pool_name, 'ix-applications/backups', backup_name, app_info['id']
+                )
+                for f in ('namespace.yaml', 'workloads_replica_counts.json'):
+                    test_path = os.path.join(backup_path, f)
+                    assert file_exists_and_perms_check(test_path) is True, test_path
 
-                    secrets_data = call(
-                        'k8s.secret.query', [
-                            ['type', 'in', ['helm.sh/release.v1', 'Opaque']],
-                            ['metadata.namespace', '=', app_info['namespace']]
-                        ]
-                    )
-                    for secret in secrets_data:
-                        secret_file_path = os.path.join(backup_path, 'secrets', secret['metadata']['name'])
-                        assert file_exists_and_perms_check(secret_file_path) is True, secret_file_path
-                        exported_secret = call('k8s.secret.export_to_yaml', secret['metadata']['name'])
-                        assert read_file_content(secret_file_path) == exported_secret
+                secrets_data = call(
+                    'k8s.secret.query', [
+                        ['type', 'in', ['helm.sh/release.v1', 'Opaque']],
+                        ['metadata.namespace', '=', app_info['namespace']]
+                    ]
+                )
+                for secret in secrets_data:
+                    secret_file_path = os.path.join(backup_path, 'secrets', secret['metadata']['name'])
+                    assert file_exists_and_perms_check(secret_file_path) is True, secret_file_path
+                    exported_secret = call('k8s.secret.export_to_yaml', secret['metadata']['name'])
+                    assert read_file_content(secret_file_path) == exported_secret
 
-                    assert read_file_content(os.path.join(backup_path, 'namespace.yaml')) == call(
-                        'k8s.namespace.export_to_yaml', app_info['namespace']
-                    )
+                assert read_file_content(os.path.join(backup_path, 'namespace.yaml')) == call(
+                    'k8s.namespace.export_to_yaml', app_info['namespace']
+                )
 
-                    assert json.loads(read_file_content(
-                        os.path.join(backup_path, 'workloads_replica_counts.json')
-                    )) == call('chart.release.get_replica_count_for_resources', app_info['resources'])
+                assert json.loads(read_file_content(
+                    os.path.join(backup_path, 'workloads_replica_counts.json')
+                )) == call('chart.release.get_replica_count_for_resources', app_info['resources'])
