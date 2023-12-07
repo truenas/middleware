@@ -12,7 +12,7 @@ class ReportingService(Service):
         cli_namespace = 'system.reporting'
 
     @cli_private
-    @filterable
+    @filterable(roles=['REPORTING_READ'])
     @filterable_returns(Ref('reporting_graph'))
     async def graphs(self, filters, options):
         return await self.middleware.call('reporting.netdata_graphs', filters, options)
@@ -34,7 +34,8 @@ class ReportingService(Service):
             Timestamp('end'),
             Bool('aggregate', default=True),
             register=True,
-        )
+        ),
+        roles=['REPORTING_READ']
     )
     @returns(Ref('netdata_graph_reporting_data'))
     async def get_data(self, graphs, query):
@@ -75,6 +76,7 @@ class ReportingService(Service):
     @accepts(
         Str('name', required=True),
         Ref('reporting_query'),
+        roles=['REPORTING_READ']
     )
     @returns(Ref('netdata_graph_reporting_data'))
     async def graph(self, name, query):

@@ -26,6 +26,7 @@ ROLES = {
     'FILESYSTEM_DATA_WRITE': Role(includes=['FILESYSTEM_DATA_READ']),
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
+    'REPORTING_READ': Role(),
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
@@ -34,6 +35,7 @@ ROLES = {
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
                                'KEYCHAIN_CREDENTIAL_READ',
+                               'REPORTING_READ',
                                'REPLICATION_TASK_CONFIG_READ',
                                'REPLICATION_TASK_READ',
                                'SNAPSHOT_TASK_READ'],
