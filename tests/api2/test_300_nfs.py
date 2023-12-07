@@ -290,7 +290,7 @@ def nfs_config(options=None):
     '''
     try:
         nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'v4_owner_major']
+        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'managed_nfsd']
         [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
@@ -1041,6 +1041,7 @@ def test_40_check_nfs_service_udp_parameter(request):
     This test verifies that toggling the `udp` option generates expected changes
     in nfs kernel server config.
     """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
     with nfs_config():
         get_payload = {'msg': 'method', 'method': 'nfs.config', 'params': []}
         set_payload = {'msg': 'method', 'method': 'nfs.update', 'params': []}
