@@ -46,6 +46,10 @@ class VrrpFifoThread(Thread):
                     for line in f:
                         if line == self.shutdown_line:
                             return
+                        elif not self.middleware.call_sync('system.ready'):
+                            LOGGER.warning(
+                                'Ignoring failover event: %r because system is not ready', line.strip()
+                            )
                         else:
                             self.middleware.call_hook_sync('vrrp.fifo', data=line)
             except Exception:
