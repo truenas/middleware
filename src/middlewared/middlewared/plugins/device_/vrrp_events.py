@@ -1,7 +1,7 @@
 from logging import getLogger
 from os import mkfifo
 from threading import Thread
-from time import sleep
+from time import sleep, time
 
 from middlewared.utils.prctl import set_name
 
@@ -16,11 +16,11 @@ class VrrpFifoThread(Thread):
         self._retry_timeout = 2  # timeout in seconds before retrying to connect to FIFO
         self._vrrp_file = '/var/run/vrrpd.fifo'
         self.middleware = kwargs.get('middleware')
-        self.shutdown_line = '--SHUTDOWN--\n'
+        self.shutdown_line = '--SHUTDOWN--'
 
     def shutdown(self):
         with open(self._vrrp_file, 'w') as f:
-            f.write(self.shutdown_line)
+            f.write(f'{self.shutdown_line}\n')
 
     def create_fifo(self):
         try:
@@ -44,14 +44,15 @@ class VrrpFifoThread(Thread):
                 with open(self._vrrp_file) as f:
                     LOGGER.info('vrrp fifo connection established')
                     for line in f:
-                        if line == self.shutdown_line:
+                        event = line.strip()
+                        if event == self.shutdown_line:
                             return
                         elif not self.middleware.call_sync('system.ready'):
                             LOGGER.warning(
-                                'Ignoring failover event: %r because system is not ready', line.strip()
+                                'Ignoring failover event: %r because system is not ready', event
                             )
                         else:
-                            self.middleware.call_hook_sync('vrrp.fifo', data=line)
+                            self.middleware.call_hook_sync('vrrp.fifo', data={'event': event, 'time': time()})
             except Exception:
                 if log_it:
                     LOGGER.warning(

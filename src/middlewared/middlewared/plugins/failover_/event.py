@@ -767,29 +767,32 @@ class FailoverEventsService(Service):
 
 
 async def vrrp_fifo_hook(middleware, data):
+    if not (msg := data.get('event')):
+        middleware.logger.warning('Missing event key in vrrp message (%s)', data)
+        return
+    elif not (recv_time := data.get('time')):
+        middleware.logger.warning('Missing time key in vrrp message(%s)', data)
+        return
 
-    # `data` is a single line separated by whitespace for a total of 4 words.
+    # we receive a single line separated by whitespace for a total of 4 words.
     # we ignore the 1st word (vrrp instance or group) and the 4th word (priority)
     # since both of them are static in our use case
-    data = data.split()
+    info = msg.split()
+    if len(info) != 4:
+        middleware.logger.warning('Received unexpected vrrp message: %r', info)
+        return
 
-    ifname = data[1].split('_')[0].strip('"')  # interface
-    event = data[2]  # the state that is being transititoned to
-
-    # we only care about MASTER or BACKUP events currently
+    ifname = info[1].split('_')[0].strip('"')
+    event = info[2]
     if event not in ('MASTER', 'BACKUP'):
         return
 
-    middleware.send_event(
-        'failover.vrrp_event',
-        'CHANGED',
-        fields={
-            'ifname': ifname,
-            'event': event,
-        }
-    )
+    middleware.send_event('failover.vrrp_event', 'CHANGED', fields={
+        'ifname': ifname,
+        'event': event,
+    })
 
-    await middleware.call('failover.events.event', ifname, event)
+    await middleware.call('failover.events.event', ifname, event, recv_time)
 
 
 def setup(middleware):
