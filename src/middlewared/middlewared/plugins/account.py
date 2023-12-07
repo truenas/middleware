@@ -1484,7 +1484,10 @@ class UserService(CRUDService):
 
         verrors = ValidationErrors()
         is_full_admin = credential_has_full_admin(app.authenticated_credentials)
-        authenticated_user = app.authenticated_credentials.user['username']
+        authenticated_user = None
+
+        if app.authenticated_credentials.is_user_session:
+            authenticated_user = app.authenticated_credentials.user['username']
 
         username = data['username']
         password = data['new_password']
