@@ -512,7 +512,7 @@ class SMARTTestService(CRUDService):
             **output
         }
 
-    @filterable
+    @filterable(roles=['REPORTING_READ'])
     @filterable_returns(Dict(
         'disk_smart_test_result',
         Str('disk', required=True),
@@ -531,7 +531,7 @@ class SMARTTestService(CRUDService):
             Int('progress', required=True),
             null=True,
         ),
-    ), roles=['REPORTING_READ'])
+    ))
     async def results(self, filters, options):
         """
         Get disk(s) S.M.A.R.T. test(s) results.
