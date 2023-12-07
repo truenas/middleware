@@ -37,7 +37,7 @@ def app_credential_full_admin_or_user(
     if app is None:
         return True
 
-    return credential_credential_full_admin_or_user(app.authenticated_credentials, username)
+    return credential_full_admin_or_user(app.authenticated_credentials, username)
 
 
 def privileges_group_mapping(
