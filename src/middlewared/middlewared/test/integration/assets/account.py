@@ -1,4 +1,6 @@
 import contextlib
+import secrets
+import string
 import types
 
 from middlewared.service_exception import InstanceNotFound
@@ -73,8 +75,8 @@ def unprivileged_user(*, username, group_name, privilege_name, allowlist, web_sh
 @contextlib.contextmanager
 def unprivileged_user_client(roles=None, allowlist=None):
     with unprivileged_user(
-        username="unprivileged",
-        group_name="unprivileged_users",
+        username="unprivileged" + ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(5)),
+        group_name="unprivileged_users" + ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(5)),
         privilege_name="Unprivileged users",
         allowlist=allowlist or [],
         roles=roles or [],
