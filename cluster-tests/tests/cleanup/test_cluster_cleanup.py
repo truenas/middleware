@@ -141,6 +141,14 @@ def test_verify_ctdb_teardown(ip, request):
     assert ans.get('error') is None, ans
     assert len(ans['result']) == 0, ans['result']
 
+    ans = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'smb.getparm',
+        'params': ['clustering', 'global']
+    })
+    assert ans.get('error') is None, ans
+    assert ans['result'] is False, ans['result']
+
 
 @pytest.mark.parametrize('ip', CLUSTER_IPS)
 def test_verify_ctdb_teardown_force(ip, request):
