@@ -67,5 +67,5 @@ class PoolDatasetService(Service):
         raise RuntimeError(f'Unknown attachment delegate {name!r}')
 
     @private
-    async def get_attachment_delegates(self):
-        return self.attachment_delegates
+    async def get_attachment_delegates(self, reverse=False):
+        return self.attachment_delegates[::-1] if reverse else self.attachment_delegates
