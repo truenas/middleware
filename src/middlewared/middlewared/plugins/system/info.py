@@ -152,6 +152,9 @@ class SystemService(Service):
         Str('timezone', required=True),
         Str('system_manufacturer', required=True, null=True),
         Bool('ecc_memory', required=True),
+        Str('host_id', required=True),
+        Bool('production', required=True),
+        Bool('ix_hardware', required=True),
     ))
     async def info(self):
         """
