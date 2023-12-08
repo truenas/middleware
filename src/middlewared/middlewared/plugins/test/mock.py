@@ -1,3 +1,4 @@
+import errno
 from middlewared.service import CallError, Service
 
 
@@ -6,6 +7,9 @@ class TestService(Service):
         private = True
 
     async def set_mock(self, name, args, description):
+        if not await self.middleware.call('system.is_stable'):
+            raise CallError("Mocked methods may not be set in stable releases.", errno.EPERM)
+
         if isinstance(description, str):
             exec(description)
             try:
