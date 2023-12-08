@@ -261,7 +261,7 @@ class SMARTTestService(CRUDService):
 
         return verrors
 
-    @accepts(Str('disk'))
+    @accepts(Str('disk'), roles=['REPORTING_READ'])
     async def query_for_disk(self, disk):
         """
         Query S.M.A.R.T. tests for the specified disk.
@@ -512,7 +512,7 @@ class SMARTTestService(CRUDService):
             **output
         }
 
-    @filterable
+    @filterable(roles=['REPORTING_READ'])
     @filterable_returns(Dict(
         'disk_smart_test_result',
         Str('disk', required=True),

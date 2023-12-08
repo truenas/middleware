@@ -42,6 +42,7 @@ class DiskService(Service):
                 lambda name, powermode: [name, {'powermode': powermode}],
             ),
         ],
+        roles=['REPORTING_READ']
     )
     @returns(Int('temperature', null=True))
     async def temperature(self, name, options):
@@ -86,6 +87,7 @@ class DiskService(Service):
                 lambda name, powermode: [name, {'powermode': powermode}],
             ),
         ],
+        roles=['REPORTING_READ']
     )
     @returns(Dict('disks_temperatures', additional_attrs=True))
     async def temperatures(self, names, options):
@@ -116,7 +118,7 @@ class DiskService(Service):
 
         return dict(zip(names, await asyncio_map(temperature, names, 8)))
 
-    @accepts(List('names', items=[Str('name')]), Int('days', default=7))
+    @accepts(List('names', items=[Str('name')]), Int('days', default=7), roles=['REPORTING_READ'])
     @returns(Dict('temperatures', additional_attrs=True))
     def temperature_agg(self, names, days):
         """Returns min/max/avg temperature for `names` disks for the last `days` days"""
@@ -137,7 +139,7 @@ class DiskService(Service):
 
         return final
 
-    @accepts(List('names', items=[Str('name')]))
+    @accepts(List('names', items=[Str('name')]), roles=['REPORTING_READ'])
     @returns(Ref('alert'))
     async def temperature_alerts(self, names):
         """

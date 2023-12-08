@@ -95,7 +95,7 @@ class DiskService(Service):
 
         return unused
 
-    @accepts(Bool('join_partitions', default=False))
+    @accepts(Bool('join_partitions', default=False), roles=['REPORTING_READ'])
     async def get_unused(self, join_partitions):
         """
         Return disks that are not in use by any zpool that is currently imported. It will
