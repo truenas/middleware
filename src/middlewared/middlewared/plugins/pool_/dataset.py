@@ -944,7 +944,7 @@ class PoolDatasetService(CRUDService):
 
         dataset = await self.get_instance(id_)
         if mountpoint := dataset_mountpoint(dataset):
-            for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
+            for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates', True):
                 attachments = await delegate.query(mountpoint, True)
                 if attachments:
                     await delegate.delete(attachments)
