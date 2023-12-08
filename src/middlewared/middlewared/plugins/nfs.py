@@ -160,11 +160,11 @@ class NFSService(SystemServiceService):
         `servers` - Represents number of servers to create.
                     By default, the number of nfsd is determined by the capabilities of the system.
                     To specify the number of nfsd, set a value between 1 and 256.
-                    To return to default, specify zero (0).
+                    'Unset' the field to return to default.
                     This field will always report the number of nfsd to start.
 
-                    INPUT: 0 .. 256
-                        where 0 will enable the automatic determination
+                    INPUT: 1 .. 256 or 'unset'
+                        where unset will enable the automatic determination
                         and 1 ..256 will set the number of nfsd
                     Default: Number of nfsd is automatically determined
 
