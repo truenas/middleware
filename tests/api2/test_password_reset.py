@@ -19,7 +19,7 @@ TEST_PASSWORD2 = ''.join(secrets.choice(string.ascii_letters + string.digits) fo
 TEST_PASSWORD2_2 = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(10))
 
 
-def test_restricted_user_password_reset():
+def test_restricted_user_set_password():
     with unprivileged_user(
         username=TEST_USERNAME,
         group_name=TEST_GROUPNAME,
@@ -30,7 +30,7 @@ def test_restricted_user_password_reset():
     ) as acct:
         with client(auth=(acct.username, acct.password)) as c:
             # Password reset using existing password and current user should work
-            c.call('user.password_reset', {
+            c.call('user.set_password', {
                 'username': acct.username,
                 'old_password': acct.password,
                 'new_password': TEST_PASSWORD
@@ -41,17 +41,16 @@ def test_restricted_user_password_reset():
                 c2.call('auth.me')
 
         # FULL_ADMIN privileges should also allow password reset:
-        call('user.password_reset', {
+        call('user.set_password', {
             'username': acct.username,
             'old_password': TEST_PASSWORD,
             'new_password': TEST_PASSWORD_2
         })
 
         # FULL_ADMIN should also be able to skip password checks
-        call('user.password_reset', {
+        call('user.set_password', {
             'username': acct.username,
             'new_password': TEST_PASSWORD_2,
-            'options': {'skip_password_check': True},
         })
 
         group_id = call('group.query', [['group', '=', TEST_GROUPNAME]], {'get': True})['id']
@@ -69,7 +68,7 @@ def test_restricted_user_password_reset():
                 # Limited users should not be able to change other
                 # passwords of other users
                 with pytest.raises(CallError) as ve:
-                    c2.call('user.password_reset', {
+                    c2.call('user.set_password', {
                         'username': acct.username,
                         'old_password': TEST_PASSWORD_2,
                         'new_password': 'CANARY'
@@ -79,16 +78,15 @@ def test_restricted_user_password_reset():
 
                 with pytest.raises(ValidationErrors) as ve:
                     # Limited users should not be able to skip password checks
-                    c2.call('user.password_reset', {
+                    c2.call('user.set_password', {
                         'username': TEST_USERNAME_2,
                         'new_password': 'CANARY',
-                        'options': {'skip_password_check': True}
                     })
 
             call("user.update", u['id'], {'password_disabled': True})
             with pytest.raises(ValidationErrors) as ve:
                 # This should fail because we've disabled password auth
-                call('user.password_reset', {
+                call('user.set_password', {
                     'username': TEST_USERNAME_2,
                     'old_password': TEST_PASSWORD2,
                     'new_password': 'CANARY'
@@ -101,7 +99,7 @@ def test_restricted_user_password_reset():
 
             with pytest.raises(ValidationErrors) as ve:
                 # This should fail because we've locked account
-                call('user.password_reset', {
+                call('user.set_password', {
                     'username': TEST_USERNAME_2,
                     'old_password': TEST_PASSWORD2,
                     'new_password': 'CANARY'
@@ -114,7 +112,7 @@ def test_restricted_user_password_reset():
 
             # Unlocking user should allow password reset to succeed
             with client(auth=(TEST_USERNAME_2, TEST_PASSWORD2)) as c2:
-                c2.call('user.password_reset', {
+                c2.call('user.set_password', {
                     'username': TEST_USERNAME_2,
                     'old_password': TEST_PASSWORD2,
                     'new_password': TEST_PASSWORD2_2

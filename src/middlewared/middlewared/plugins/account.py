@@ -1360,7 +1360,8 @@ class UserService(CRUDService):
         else:
             data['unixhash'] = '*'
             data['smbhash'] = '*'
-        return password
+
+        return data
 
     def __set_groups(self, pk, groups):
 
@@ -1450,17 +1451,13 @@ class UserService(CRUDService):
 
     @no_authz_required
     @accepts(Dict(
-        'password_reset_data',
+        'set_password_data',
         Str('username', required=True),
-        Password('old_password', default=''),
+        Password('old_password', default=None),
         Password('new_password', required=True),
-        Dict(
-            'options',
-            Bool('skip_password_check', default=False)
-        )
     ))
     @pass_app(require=True)
-    async def password_reset(self, app, data):
+    async def set_password(self, app, data):
         """
         Set the password of the specified `username` to the `new_password`
         specified in payload.
@@ -1509,7 +1506,7 @@ class UserService(CRUDService):
             # and so we're not concerned about letting admin know that username is
             # bad.
             verrors.add(
-                'user.reset_password.username',
+                'user.set_password.username',
                 f'{username}: user does not exist.'
             )
         else:
@@ -1517,56 +1514,46 @@ class UserService(CRUDService):
             if not entry['local']:
                 # We don't allow resetting passwords on remote directory service.
                 verrors.add(
-                    'user.reset_password.username',
+                    'user.set_password.username',
                     f'{username}: user is not local to the TrueNAS server.'
                 )
 
-        verrors.check()
-
-        if data['options']['skip_password_check'] and not is_full_admin:
+        if data['old_password'] is None and not is_full_admin:
             verrors.add(
-                'user.reset_password.options.skip_password_check',
+                'user.set_password.old_password',
                 'FULL_ADMIN role is required in order to bypass check for current password.'
             )
 
-        if not data['options']['skip_password_check'] and not await self.middleware.call(
+        if data['old_password'] is not None and not await self.middleware.call(
             'auth.libpam_authenticate',
             username, data['old_password']
         ):
             verrors.add(
-                'user.reset_password.old_password',
+                'user.set_password.old_password',
                 f'{username}: failed to validate password.'
             )
 
+        verrors.check()
+
         if entry['password_disabled']:
             verrors.add(
-                'user.reset_password.username',
+                'user.set_password.username',
                 f'{username}: password authentication disabled for user'
             )
 
         if entry['locked']:
             verrors.add(
-                'user.reset_password.username',
+                'user.set_password.username',
                 f'{username}: user account is locked.'
             )
 
-        new_hash = crypted_password(password)
         verrors.check()
 
-        if entry['smb']:
-            # We need to replace NT hash of password while we still have
-            # access to plain-text version.
-            smb_hash = (
-                f'{username}:{entry["uid"]}:{"X" * 32}'
-                f':{nt_password(password)}:[U         ]'
-                f':LCT-{int(time.time()):X}:'
-            )
-        else:
-            smb_hash = '*'
+        entry = self.__set_password(entry | {'password': password})
 
         await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
-            'bsdusr_unixhash': new_hash,
-            'bsdusr_smbhash': smb_hash,
+            'bsdusr_unixhash': entry['unixhash'],
+            'bsdusr_smbhash': entry['smbhash'],
         })
         await self.middleware.call('etc.generate', 'shadow')
 
