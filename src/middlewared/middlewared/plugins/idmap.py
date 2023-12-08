@@ -284,6 +284,14 @@ class IdmapDomainService(TDBWrapCRUDService):
             if not retry or e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
                 raise e
 
+        if not self.middleware.call_sync('systemdataset.sysdataset_path'):
+            raise CallError(
+                'Unexpected filesystem mounted in the system dataset path. '
+                'This may indicate a failure to initialize the system dataset '
+                'and may be resolved by reviewing and fixing errors in the system '
+                'dataset configuration.', errno.EAGAIN
+            )
+
         self.middleware.call_sync('service.start', 'idmap', {'silent': False})
         return self.__wbclient_ctx(False)
 
