@@ -59,7 +59,7 @@ class PoolDatasetService(Service):
             if service is not None:
                 if any(
                     attachment_delegate.service == service
-                    for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
+                    for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates', True)
                 ):
                     need_restart_services.append(service)
                 else:
@@ -89,7 +89,9 @@ class PoolDatasetService(Service):
                 if service is not None:
                     if any(
                         attachment_delegate.service == service
-                        for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
+                        for attachment_delegate in await self.middleware.call(
+                            'pool.dataset.get_attachment_delegates', True
+                        )
                     ):
                         self.logger.info('Restarting service %r that holds dataset %r', service, oid)
                         await self.middleware.call('service.restart', service)
