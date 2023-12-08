@@ -141,7 +141,7 @@ def test_valid_call():
                     "minor": 1,
                 },
                 "origin": ANY,
-                    "protocol": "WEBSOCKET",
+                "protocol": "WEBSOCKET",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "root"},
