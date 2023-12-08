@@ -52,8 +52,11 @@ class PoolDatasetService(Service):
         return result
 
     @private
-    def register_attachment_delegate(self, delegate):
-        self.attachment_delegates.append(delegate)
+    def register_attachment_delegate(self, delegate, order=None):
+        if order is not None:
+            self.attachment_delegates.insert(order, delegate)
+        else:
+            self.attachment_delegates.append(delegate)
 
     @private
     async def query_attachment_delegate(self, name, path, enabled):
