@@ -63,7 +63,8 @@ def render(service, middleware):
             'kubelet-arg': kubelet_args,
             'protect-kernel-defaults': True,
             'disable': [features_mapping[feature] for feature in features_mapping if not config[feature]],
-            'write-kubeconfig-mode': 644,
+            'write-kubeconfig-mode': 640,
+            'write-kubeconfig-group': 'netdata',
         }))
 
     with open('/etc/containerd.json', 'w') as f:
