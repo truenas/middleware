@@ -396,14 +396,14 @@ def test_11_perform_server_side_copy(request):
 
 
 @pytest.mark.parametrize('nfsd,cores,expected', [
-    (50, 1, {'nfsd': 50, 'mountd': 12}),  # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
-    (0, 12, {'nfsd': 12, 'mountd': 3}),   # Dynamic, expect 12 nfsd and 3 mountd
-    (0, 4, {'nfsd': 4, 'mountd': 1}),     # Dynamic, expect 4 nfsd and 1 mountd
-    (0, 2, {'nfsd': 2, 'mountd': 1}),     # Dynamic, expect 2 nfsd and 1 mountd
-    (0, 1, {'nfsd': 1, 'mountd': 1}),     # Dynamic, expect 1 nfsd and 1 mountd
-    (-1, 4, {'nfsd': 4, 'mountd': 1}),    # Should be trapped by validator: Illegal input
-    (257, 4, {'nfsd': 4, 'mountd': 1}),   # Should be trapped by validator: Illegal input
-    (0, 32, {'nfsd': 16, 'mountd': 4}),   # Dynamic, max nfsd via calculation is 16
+    (50, 1, {'nfsd': 50, 'mountd': 12}),    # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
+    (0, 12, {'nfsd': 12, 'mountd': 3}),  # Dynamic, expect 12 nfsd and 3 mountd
+    (0, 4, {'nfsd': 4, 'mountd': 1}),    # Dynamic, expect 4 nfsd and 1 mountd
+    (0, 2, {'nfsd': 2, 'mountd': 1}),    # Dynamic, expect 2 nfsd and 1 mountd
+    (0, 1, {'nfsd': 1, 'mountd': 1}),    # Dynamic, expect 1 nfsd and 1 mountd
+    (-1, 4, {'nfsd': 4, 'mountd': 1}),      # Should be trapped by validator: Illegal input
+    (257, 4, {'nfsd': 4, 'mountd': 1}),     # Should be trapped by validator: Illegal input
+    (0, 32, {'nfsd': 16, 'mountd': 4}),  # Dynamic, max nfsd via calculation is 16
 ])
 def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
@@ -425,9 +425,10 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
 
     with mock("system.info", return_value={"cores": cores}):
 
-        # 0 .. 256 are valid
+        # Use 0 as 'null' flag
         if 0 <= nfsd and nfsd <= 256:
-            call("nfs.update", {"servers": nfsd})
+            nfsd_cmd = None if nfsd == 0 else nfsd
+            call("nfs.update", {"servers": nfsd_cmd})
 
             s = parse_server_config()
             assert int(s['nfsd']['threads']) == expected['nfsd'], str(s)
@@ -443,7 +444,7 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
             with pytest.raises(ValidationErrors) as ve:
                 call("nfs.update", {"servers": nfsd})
 
-            assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 0 and 256', 22)]
+            assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
 
 def test_20_update_nfs_share(request):

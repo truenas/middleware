@@ -28,7 +28,7 @@ class NFSModel(sa.Model):
     __tablename__ = 'services_nfs'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nfs_srv_servers = sa.Column(sa.Integer(), default=0)
+    nfs_srv_servers = sa.Column(sa.Integer(), nullable=True)
     nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
     nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
@@ -59,7 +59,7 @@ class NFSService(SystemServiceService):
     ENTRY = Dict(
         'nfs_entry',
         Int('id', required=True),
-        Int('servers', validators=[Range(min_=0, max_=256)], required=True),
+        Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
         Bool('udp', required=True),
         Bool('allow_nonroot', required=True),
         List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
@@ -86,8 +86,8 @@ class NFSService(SystemServiceService):
         nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
         nfs["keytab_has_nfs_spn"] = keytab_has_nfs
 
-        # Anything less than 1 means the number of nfsd has not been specified.
-        if nfs['servers'] < 1:
+        # 'None' indicates we are to dynamically manage the number of nfsd
+        if nfs['servers'] is None:
             nfs['managed_nfsd'] = True
             system_info = await self.middleware.call("system.info")
 
