@@ -1468,9 +1468,6 @@ class UserService(CRUDService):
         * account has password authentication disabled
         * account is locked
 
-        `skip_password_check` option may be specified if authorized session
-        is has FULL_ADMIN role.
-
         NOTE: when authenticated session has less than FULL_ADMIN role,
         password changes will be rejected if the payload does not match the
         currently-authenticated user.
