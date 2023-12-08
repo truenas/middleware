@@ -138,7 +138,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
         assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
 
 
-def confirm_nfsd_processes(expected=16):
+def confirm_nfsd_processes(expected):
     '''
     Confirm the expected number of nfsd processes are running
     '''
@@ -146,7 +146,7 @@ def confirm_nfsd_processes(expected=16):
     assert int(result['stdout']) == expected, result
 
 
-def confirm_mountd_processes(expected=16):
+def confirm_mountd_processes(expected):
     '''
     Confirm the expected number of mountd processes are running
     '''
@@ -210,7 +210,7 @@ def save_nfs_config():
     but it also might require refactoring of the tests.
     This is called at the start of test_01_creating_the_nfs_server.
     '''
-    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'managed_nfsd']
+    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     res = make_ws_request(ip, get_conf_cmd)
     assert res.get('error') is None, res
@@ -290,7 +290,7 @@ def nfs_config(options=None):
     '''
     try:
         nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'managed_nfsd']
+        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
         [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
@@ -397,13 +397,13 @@ def test_11_perform_server_side_copy(request):
 
 @pytest.mark.parametrize('nfsd,cores,expected', [
     (50, 1, {'nfsd': 50, 'mountd': 12}),    # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
-    (0, 12, {'nfsd': 12, 'mountd': 3}),  # Dynamic, expect 12 nfsd and 3 mountd
-    (0, 4, {'nfsd': 4, 'mountd': 1}),    # Dynamic, expect 4 nfsd and 1 mountd
-    (0, 2, {'nfsd': 2, 'mountd': 1}),    # Dynamic, expect 2 nfsd and 1 mountd
-    (0, 1, {'nfsd': 1, 'mountd': 1}),    # Dynamic, expect 1 nfsd and 1 mountd
-    (-1, 4, {'nfsd': 4, 'mountd': 1}),      # Should be trapped by validator: Illegal input
+    (None, 12, {'nfsd': 12, 'mountd': 3}),  # Dynamic, expect 12 nfsd and 3 mountd
+    (None, 4, {'nfsd': 4, 'mountd': 1}),    # Dynamic, expect 4 nfsd and 1 mountd
+    (None, 2, {'nfsd': 2, 'mountd': 1}),    # Dynamic, expect 2 nfsd and 1 mountd
+    (None, 1, {'nfsd': 1, 'mountd': 1}),    # Dynamic, expect 1 nfsd and 1 mountd
+    (0, 4, {'nfsd': 4, 'mountd': 1}),       # Should be trapped by validator: Illegal input
     (257, 4, {'nfsd': 4, 'mountd': 1}),     # Should be trapped by validator: Illegal input
-    (0, 32, {'nfsd': 16, 'mountd': 4}),  # Dynamic, max nfsd via calculation is 16
+    (None, 48, {'nfsd': 32, 'mountd': 8}),  # Dynamic, max nfsd via calculation is 32
 ])
 def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
@@ -423,12 +423,11 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
     depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
-    with mock("system.info", return_value={"cores": cores}):
+    with mock("system.cpu_info", return_value={"core_count": cores}):
 
         # Use 0 as 'null' flag
-        if 0 <= nfsd and nfsd <= 256:
-            nfsd_cmd = None if nfsd == 0 else nfsd
-            call("nfs.update", {"servers": nfsd_cmd})
+        if nfsd is None or nfsd in range(1, 257):
+            call("nfs.update", {"servers": nfsd})
 
             s = parse_server_config()
             assert int(s['nfsd']['threads']) == expected['nfsd'], str(s)
