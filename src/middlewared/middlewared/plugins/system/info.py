@@ -163,6 +163,9 @@ class SystemService(Service):
         mem_info = await self.middleware.call('system.mem_info')
         birthday = await self.middleware.call('system.birthday')
         timezone_setting = (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone']
+        host_id = await self.middleware.call('system.host_id')
+        is_production = await self.middleware.call('truenas.is_production')
+        ix_hardware = await self.middleware.call('system.is_ix_hardware')
 
         return {
             'version': await self.middleware.call('system.version'),
@@ -185,6 +188,9 @@ class SystemService(Service):
             'timezone': timezone_setting,
             'system_manufacturer': dmidecode['system-manufacturer'] if dmidecode['system-manufacturer'] else None,
             'ecc_memory': dmidecode['ecc-memory'],
+            'host_id': host_id,
+            'production': is_production,
+            'ix_hardware': ix_hardware,
         }
 
     @private
