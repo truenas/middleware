@@ -1,6 +1,7 @@
 import errno
 import pytest
 
+from middlewared.service_exception import CallError
 from middlewared.test.integration.utils import call, mock
 
 
