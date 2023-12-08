@@ -89,11 +89,11 @@ class NFSService(SystemServiceService):
         # 'None' indicates we are to dynamically manage the number of nfsd
         if nfs['servers'] is None:
             nfs['managed_nfsd'] = True
-            system_info = await self.middleware.call("system.info")
+            cpu_info = await self.middleware.call("system.cpu_info")
 
             # Default calculation:
-            #     Number of nfsd == number of cores, but not zero or greater than 16
-            nfs['servers'] = min(max(system_info['cores'], 1), 16)
+            #     Number of nfsd == number of cores, but not zero or greater than 32
+            nfs['servers'] = min(max(cpu_info['core_count'], 1), 32)
         else:
             nfs['managed_nfsd'] = False
 
@@ -166,7 +166,8 @@ class NFSService(SystemServiceService):
                     INPUT: 1 .. 256 or 'unset'
                         where unset will enable the automatic determination
                         and 1 ..256 will set the number of nfsd
-                    Default: Number of nfsd is automatically determined
+                    Default: Number of nfsd is automatically determined and will be no less
+                        than 1 and no more than 32
 
                     The number of mountd will be 1/4 the number of reported nfsd.
 
