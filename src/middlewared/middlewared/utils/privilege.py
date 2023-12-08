@@ -1,3 +1,23 @@
+from middlewared.role import ROLES
+
+
+def privilege_has_webui_access(privilege: dict) -> bool:
+    """
+    This method determines whether the specified privilege is sufficient
+    to grant WebUI access. Current check is whether any of the roles for
+    the privilege entry are not builtin, where "builtin" means an
+    internal role that is used for defining access to particular methods
+    (as opposed to non-builtin ones that were developed explicitly for
+    assignment by administrators).
+
+    The actual check performed here may change at a future time if we
+    decide to add explicit `webui_access` flag to privilege.
+
+    Returns True if privilege grants webui access and False if it does not.
+    """
+    return not any(ROLES[role].builtin for role in privilege['roles'])
+
+
 def credential_has_full_admin(credential: object) -> bool:
     if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:
         return True
