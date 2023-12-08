@@ -62,7 +62,9 @@ class PoolDatasetService(Service):
             # Invalidate locked datasets cache if something got locked
             await self.middleware.call('cache.pop', 'zfs_locked_datasets')
 
-            coroutines = [detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates')]
+            coroutines = [
+                detach(dg) for dg in await self.middleware.call('pool.dataset.get_attachment_delegates', True)
+            ]
             await asyncio.gather(*coroutines)
 
             await self.middleware.call(
