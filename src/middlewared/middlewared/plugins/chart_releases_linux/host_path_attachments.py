@@ -77,5 +77,5 @@ class ChartReleaseFSAttachmentDelegate(FSAttachmentDelegate):
 
 async def setup(middleware):
     middleware.create_task(
-        middleware.call('pool.dataset.register_attachment_delegate', ChartReleaseFSAttachmentDelegate(middleware))
+        middleware.call('pool.dataset.register_attachment_delegate', ChartReleaseFSAttachmentDelegate(middleware), 1)
     )

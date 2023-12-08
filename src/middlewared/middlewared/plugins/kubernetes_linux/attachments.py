@@ -65,5 +65,5 @@ class KubernetesServicePortDelegate(ServicePortDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('pool.dataset.register_attachment_delegate', KubernetesFSAttachmentDelegate(middleware))
+    await middleware.call('pool.dataset.register_attachment_delegate', KubernetesFSAttachmentDelegate(middleware), 0)
     await middleware.call('port.register_attachment_delegate', KubernetesServicePortDelegate(middleware))
