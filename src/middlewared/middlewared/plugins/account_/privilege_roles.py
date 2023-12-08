@@ -1,5 +1,5 @@
 from middlewared.role import ROLES
-from middlewared.service import Service, filterable, filterable_returns, filter_list
+from middlewared.service import Service, filterable, filterable_returns, filter_list, no_authz_required
 from middlewared.schema import Dict, List, Str
 
 
@@ -9,6 +9,7 @@ class PrivilegeService(Service):
         namespace = "privilege"
         cli_namespace = "auth.privilege"
 
+    @no_authz_required
     @filterable
     @filterable_returns(Dict(
         "role",
