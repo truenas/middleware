@@ -1,7 +1,7 @@
-"""empty message
+"""Convert the 'servers' field to nullable
 
 Revision ID: df1a322df40d
-Revises: 08483670ae15
+Revises: abac40d29fc5
 Create Date: 2023-12-08 01:55:21.782521+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'df1a322df40d'
-down_revision = '08483670ae15'
+down_revision = 'abac40d29fc5'
 branch_labels = None
 depends_on = None
 
