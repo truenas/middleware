@@ -44,7 +44,6 @@ class GlusterdService(SimpleService):
             if await self.middleware.call('service.started', svc):
                 await self.middleware.call('service.stop', svc)
 
-        await self.middleware.call('service.stop', 'ctdb')
         umount_job = await self.middleware.call('gluster.fuse.umount', {'all': True})
         await umount_job.wait()
 
