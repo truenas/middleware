@@ -213,6 +213,8 @@ http {
         }
 
         location = /ui/ {
+            allow all;
+
             add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
             add_header Expires 0;
             ${security_headers()}
@@ -223,6 +225,7 @@ http {
 
         location /ui {
             allow all;
+
             if ( $request_method ~ ^POST$ ) {
                 proxy_pass http://127.0.0.1:6000;
             }
