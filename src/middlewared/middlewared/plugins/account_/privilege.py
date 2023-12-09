@@ -4,7 +4,7 @@ import errno
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.privilege import privileges_group_mapping
+from middlewared.utils.privilege import privilege_has_webui_access, privileges_group_mapping
 import middlewared.sqlalchemy as sa
 
 
@@ -344,6 +344,7 @@ class PrivilegeService(CRUDService):
             'roles': set(),
             'allowlist': [],
             'web_shell': False,
+            'webui_access': False,
         }
         for privilege in privileges:
             for role in privilege['roles']:
@@ -358,6 +359,7 @@ class PrivilegeService(CRUDService):
                 compose['allowlist'].append(item)
 
             compose['web_shell'] |= privilege['web_shell']
+            compose['webui_access'] |= privilege_has_webui_access(privilege)
 
         return compose
 
