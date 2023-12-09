@@ -31,6 +31,7 @@ ROLES = {
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
                                'AUTH_SESSIONS_READ',
+                               'DATASET_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
