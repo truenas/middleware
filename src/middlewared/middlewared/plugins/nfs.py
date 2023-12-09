@@ -256,6 +256,10 @@ class NFSService(SystemServiceService):
 
         old = await self.config()
 
+        # Fixup old 'servers' entry before processing changes
+        if old['managed_nfsd']:
+            old['servers'] = None
+
         new = old.copy()
         new.update(data)
 
