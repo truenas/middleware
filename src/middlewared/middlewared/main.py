@@ -505,9 +505,12 @@ class FileApplication(object):
         if 'method' not in data:
             return web.Response(status=422)
 
-        credentials = parse_credentials(request)
-        if credentials is None:
-            raise web.HTTPUnauthorized()
+        try:
+            credentials = parse_credentials(request)
+            if credentials is None:
+                raise web.HTTPUnauthorized()
+        except web.HTTPException as e:
+            return web.Response(status=e.status_code, body=e.text)
         app = create_application(request)
         try:
             authenticated_credentials = await authenticate(self.middleware, request, credentials, 'CALL',
@@ -520,7 +523,7 @@ class FileApplication(object):
                 'credentials': credentials,
                 'error': e.text,
             }, False)
-            raise
+            return web.Response(status=e.status_code, body=e.text)
         app = create_application(request, authenticated_credentials)
         credentials['credentials_data'].pop('password', None)
         await self.middleware.log_audit_message(app, 'AUTHENTICATION', {
@@ -552,6 +555,8 @@ class FileApplication(object):
             else:
                 status_code = 412
             return web.Response(status=status_code, body=str(e))
+        except web.HTTPException as e:
+            return web.Response(status=e.status_code, body=e.text)
         except Exception as e:
             return web.Response(status=500, body=str(e))
 
