@@ -69,7 +69,9 @@ if not ha:
                     ['metadata.namespace', '=', 'kube-system']
                 ], {'select': ['metadata.name', 'status.phase']}
             )
-            if any(pod['status']['phase'] == 'Running' for pod in kube_system_pods):
+            if len([pod for pod in kube_system_pods if pod['status']['phase'] == 'Running']) >= 3:
+                # The 3 number here is to ensure that by the time we try to retrieve stats, some pods are running
+                # and netdata is able to collect some data
                 break
 
         stats = call('chart.release.stats_internal', kube_system_pods)
