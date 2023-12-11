@@ -36,7 +36,8 @@ class FilesystemService(Service):
         """
         Retrieves boolean which is set when immutable flag is set on `path`.
         """
-        return chflags.is_immutable_set(path)
+        stx_attrs = self.stat(path)['attributes']
+        return 'IMMUTABLE' in stx_attrs
 
     @accepts(Bool('set_flag'), Str('path'))
     @returns()
@@ -208,7 +209,7 @@ class FilesystemService(Service):
 
     @private
     def statx_entry_impl(self, entry, options=None):
-        out = {'st': None, 'etype': None, 'is_ctldir': False}
+        out = {'st': None, 'etype': None, 'is_ctldir': False, 'attributes': []}
         opts = options or {"dir_only": False, "file_only": False}
         path = entry.absolute()
 
@@ -219,6 +220,10 @@ class FilesystemService(Service):
             )
         except FileNotFoundError:
             return None
+
+        for attr in stat_x.StatxAttr:
+            if out['st'].stx_attributes & attr:
+                out['attributes'].append(attr.name)
 
         if statlib.S_ISDIR(out['st'].stx_mode):
             out['etype'] = 'DIRECTORY'
@@ -274,6 +279,7 @@ class FilesystemService(Service):
         Int('gid', required=True, null=True),
         Bool('is_mountpoint', required=True),
         Bool('is_ctldir', required=True),
+        List('attributes', required=True, items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]),
         register=True
     ))
     def listdir(self, path, filters, options):
@@ -366,6 +372,7 @@ class FilesystemService(Service):
                 'gid': stat.stx_gid,
                 'is_mountpoint': entry.is_mount(),
                 'is_ctldir': st['is_ctldir'],
+                'attributes': st['attributes']
             }
 
             rv.append(data)
@@ -389,6 +396,7 @@ class FilesystemService(Service):
         Int('nlink', required=True),
         Bool('is_mountpoint', required=True),
         Bool('is_ctldir', required=True),
+        List('attributes', required=True, items=[Str('statx_attribute', enum=[attr.name for attr in stat_x.StatxAttr])]),
         Str('user', null=True, required=True),
         Str('group', null=True, required=True),
         Bool('acl', required=True),
@@ -431,6 +439,7 @@ class FilesystemService(Service):
             'nlink': st['st'].stx_nlink,
             'is_mountpoint': path.is_mount(),
             'is_ctldir': st['is_ctldir'],
+            'attributes': st['attributes']
         }
 
         try:
