@@ -23,7 +23,7 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.settings import conf
 from middlewared.utils import BOOTREADY, filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
-from middlewared.utils.privilege import credential_has_full_admin
+from middlewared.utils.privilege import credential_has_full_admin, credential_is_limited_to_own_jobs
 from middlewared.validators import IpAddress, Range
 
 from .compound_service import CompoundService
@@ -135,14 +135,8 @@ class CoreService(Service):
                 'frames': frames,
             }
 
-    def __is_limited_to_own_jobs(self, credential):
-        if credential is None or not credential.is_user_session:
-            return False
-
-        return not credential_has_full_admin(credential)
-
     def __job_by_credential_and_id(self, credential, job_id):
-        if not self.__is_limited_to_own_jobs(credential):
+        if not credential_is_limited_to_own_jobs(credential):
             return self.middleware.jobs[job_id]
 
         if not credential.is_user_session or credential_has_full_admin(credential):
@@ -201,7 +195,7 @@ class CoreService(Service):
         If authenticated session does not have the FULL_ADMIN role, only
         jobs owned by the current authenticated session will be returned.
         """
-        if app and self.__is_limited_to_own_jobs(app.authenticated_credentials):
+        if app and credential_is_limited_to_own_jobs(app.authenticated_credentials):
             username = app.authenticated_credentials.user['username']
             jobs = list(self.middleware.jobs.for_username(username).values())
         else:
