@@ -303,6 +303,8 @@ class FilesystemService(Service):
           acl(bool): extended ACL is present on file
           is_mountpoint(bool): path is a mountpoint
           is_ctldir(bool): path is within special .zfs directory
+          attributes(list): list of statx file attributes that apply to the
+          file. See statx(2) manpage for more details.
         """
 
         path = self.resolve_cluster_path(path)
@@ -370,7 +372,7 @@ class FilesystemService(Service):
                 'acl': False if self.acl_is_trivial(realpath) else True,
                 'uid': stat.stx_uid,
                 'gid': stat.stx_gid,
-                'is_mountpoint': entry.is_mount(),
+                'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
                 'is_ctldir': st['is_ctldir'],
                 'attributes': st['attributes']
             }
@@ -437,7 +439,7 @@ class FilesystemService(Service):
             'dev': os.makedev(st['st'].stx_dev_major, st['st'].stx_dev_minor),
             'inode': st['st'].stx_ino,
             'nlink': st['st'].stx_nlink,
-            'is_mountpoint': path.is_mount(),
+            'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
             'is_ctldir': st['is_ctldir'],
             'attributes': st['attributes']
         }
