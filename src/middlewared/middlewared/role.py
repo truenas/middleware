@@ -40,6 +40,7 @@ ROLES = {
                                'REPORTING_READ',
                                'REPLICATION_TASK_CONFIG_READ',
                                'REPLICATION_TASK_READ',
+                               'SERVICE_READ',
                                'SNAPSHOT_TASK_READ'],
                      builtin=False),
 
@@ -48,6 +49,9 @@ ROLES = {
 
     'CLOUD_SYNC_READ': Role(),
     'CLOUD_SYNC_WRITE': Role(includes=['CLOUD_SYNC_READ']),
+
+    'SERVICE_READ': Role(),
+    'SERVICE_WRITE': Role(),
 
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
@@ -125,7 +129,8 @@ ROLES = {
 
     'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
                                       'SHARING_WRITE',
-                                      'FILESYSTEM_ATTRS_WRITE'],
+                                      'FILESYSTEM_ATTRS_WRITE',
+                                      'SERVICE_READ'],
                             builtin=False)
 }
 
