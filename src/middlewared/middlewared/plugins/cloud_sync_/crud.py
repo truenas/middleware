@@ -12,7 +12,8 @@ class CloudSyncService(Service):
             Str("description"),
             Str("transfer_mode", enum=["SYNC", "COPY"], required=True),
             Str("path", required=True),
-        )
+        ),
+        roles=["CLOUD_SYNC_WRITE"],
     )
     async def restore(self, id_, data):
         """

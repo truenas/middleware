@@ -573,11 +573,13 @@ class CredentialsService(CRUDService):
 
         cli_namespace = "task.cloud_sync.credential"
 
+        role_prefix = "CLOUD_SYNC"
+
     @accepts(Dict(
         "cloud_sync_credentials_verify",
         Str("provider", required=True),
         Dict("attributes", additional_attrs=True, required=True),
-    ))
+    ), roles=["CLOUD_SYNC_WRITE"])
     async def verify(self, data):
         """
         Verify if `attributes` provided for `provider` are authorized by the `provider`.
@@ -709,6 +711,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         datastore_extend = "cloudsync.extend"
         datastore_extend_context = "cloudsync.extend_context"
         cli_namespace = "task.cloud_sync"
+        role_prefix = "CLOUD_SYNC"
 
     @private
     async def extend_context(self, rows, extra):
@@ -893,7 +896,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         await self.middleware.call("service.restart", "cron")
         return rv
 
-    @accepts(Int("credentials_id"), Str("name"))
+    @accepts(Int("credentials_id"), Str("name"), roles=["CLOUD_SYNC_WRITE"])
     async def create_bucket(self, credentials_id, name):
         """
         Creates a new bucket `name` using ` credentials_id`.
@@ -909,7 +912,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
         await provider.create_bucket(credentials, name)
 
-    @accepts(Int("credentials_id"))
+    @accepts(Int("credentials_id"), roles=["CLOUD_SYNC_WRITE"])
     async def list_buckets(self, credentials_id):
         credentials = await self._get_credentials(credentials_id)
         if not credentials:
@@ -946,7 +949,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         Str("encryption_salt", default=""),
         Dict("attributes", required=True, additional_attrs=True),
         Str("args", default=""),
-    ))
+    ), roles=["CLOUD_SYNC_WRITE"])
     async def list_directory(self, cloud_sync):
         """
         List contents of a remote bucket / directory.
@@ -1021,7 +1024,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
             "cloud_sync_sync_options",
             Bool("dry_run", default=False),
             register=True,
-        )
+        ),
+        roles=["CLOUD_SYNC_WRITE"],
     )
     @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     async def sync(self, job, id_, options):
@@ -1039,6 +1043,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     @accepts(
         Patch("cloud_sync_create", "cloud_sync_sync_onetime"),
         Patch("cloud_sync_sync_options", "cloud_sync_sync_onetime_options"),
+        roles=["CLOUD_SYNC_WRITE"],
     )
     @job(logs=True, abortable=True)
     async def sync_onetime(self, job, cloud_sync, options):
@@ -1091,7 +1096,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
                     raise
 
     @item_method
-    @accepts(Int("id"))
+    @accepts(Int("id"), roles=["CLOUD_SYNC_WRITE"])
     async def abort(self, id_):
         """
         Aborts cloud sync task.
@@ -1108,7 +1113,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         await self.middleware.call("core.job_abort", cloud_sync["job"]["id"])
         return True
 
-    @accepts()
+    @accepts(roles=["CLOUD_SYNC_WRITE"])
     async def providers(self):
         """
         Returns a list of dictionaries of supported providers for Cloud Sync Tasks.

@@ -31,6 +31,7 @@ ROLES = {
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
                                'AUTH_SESSIONS_READ',
+                               'CLOUD_SYNC_READ',
                                'DATASET_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
@@ -44,6 +45,9 @@ ROLES = {
 
     # Alert roles
     'ALERT_LIST_READ': Role(),
+
+    'CLOUD_SYNC_READ': Role(),
+    'CLOUD_SYNC_WRITE': Role(includes=['CLOUD_SYNC_READ']),
 
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
