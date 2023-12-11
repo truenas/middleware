@@ -248,27 +248,15 @@ class FailoverEventsService(Service):
                     ('method', '=', 'failover.events.vrrp_master'),
                     ('method', '=', 'failover.events.vrrp_backup')
                 ]),
-                ('state', '=', 'RUNNING'),
             ]
         )
         for i in current_events:
             cur_iface = i['arguments'][1]
-            cur_event = i['arguments'][2]
-            msg = f'Received {event!r} event for {ifname!r} but '
-            if cur_event == event:
+            if i['state'] == 'RUNNING' and i['arguments'][2] == event:
+                msg = f'Received {event!r} event for {ifname!r} but '
                 msg += f'a duplicate event is currently running for {cur_iface!r}. Ignoring.'
                 logger.info(msg)
                 raise IgnoreFailoverEvent()
-            else:
-                msg += f'an event {cur_event!r} is currently running for {cur_iface!r}. '
-                msg += f'Waiting on the current job (with id {i["id"]}) to complete before continuing.'
-                logger.warning(msg)
-                try:
-                    wait_id = self.middleware.call_sync('core.job_wait', i['id'])
-                    wait_id.wait_sync(raise_error=True)
-                    logger.info('Failover job event with id "%d" finished', i['id'])
-                except Exception:
-                    logger.warning('Failover job event with id "%d" failed', i['id'], exc_info=True)
 
     def _event(self, ifname, event):
 
@@ -663,6 +651,8 @@ class FailoverEventsService(Service):
         # restarting keepalived sends a priority 0 advertisement
         # which means any VIP that is on this controller will be
         # migrated to the other controller
+        logger.info('Pausing failover event processing')
+        self.run_call('vrrpthread.pause_events')
         logger.info('Transitioning all VIPs off this node')
         self.run_call('service.restart', 'keepalived', self.HA_PROPAGATE)
 
@@ -760,6 +750,8 @@ class FailoverEventsService(Service):
             logger.warning('Unhandled exception persisting network interface link addresses on MASTER node',
                            exc_info=True)
 
+        logger.info('Unpausing failover event processing')
+        self.run_call('vrrpthread.unpause_events')
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
 
@@ -767,19 +759,8 @@ class FailoverEventsService(Service):
 
 
 async def vrrp_fifo_hook(middleware, data):
-
-    # `data` is a single line separated by whitespace for a total of 4 words.
-    # we ignore the 1st word (vrrp instance or group) and the 4th word (priority)
-    # since both of them are static in our use case
-    data = data.split()
-
-    ifname = data[1].split('_')[0].strip('"')  # interface
-    event = data[2]  # the state that is being transititoned to
-
-    # we only care about MASTER or BACKUP events currently
-    if event not in ('MASTER', 'BACKUP'):
-        return
-
+    ifname = data['ifname']
+    event = data['event']
     middleware.send_event(
         'failover.vrrp_event',
         'CHANGED',
