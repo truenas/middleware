@@ -15,7 +15,7 @@ def app_has_write_privilege_for_service(
         # Internal middleware call
         return True
 
-    if not app.authenticated_credentials is None:
+    if app.authenticated_credentials is None:
         return False
 
     if credential_has_full_admin(app.authenticated_credentials):
