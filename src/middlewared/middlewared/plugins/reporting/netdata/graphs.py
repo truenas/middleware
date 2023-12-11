@@ -101,7 +101,7 @@ class LoadPlugin(GraphBase):
 
     title = 'System Load Average'
     uses_identifiers = False
-    vertical_label = 'Processes'
+    vertical_label = 'Load'
 
     LOAD_MAPPING = {
         'load1': 'shortterm',
@@ -116,6 +116,16 @@ class LoadPlugin(GraphBase):
         metrics = super().normalize_metrics(metrics)
         metrics['legend'] = [self.LOAD_MAPPING.get(legend, legend) for legend in metrics['legend']]
         return metrics
+
+
+class ProcessesPlugin(GraphBase):
+
+    title = 'System Active Processes'
+    uses_identifiers = False
+    vertical_label = 'Processes'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'system.active_processes'
 
 
 class MemoryPlugin(GraphBase):
