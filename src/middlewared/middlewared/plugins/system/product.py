@@ -5,7 +5,7 @@ from licenselib.license import ContractType, Features, License
 from pathlib import Path
 
 from middlewared.schema import accepts, Bool, returns, Str
-from middlewared.service import CallError, no_auth_required, no_authz_required, private, Service
+from middlewared.service import no_auth_required, no_authz_required, private, Service, ValidationError
 from middlewared.utils import sw_info
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
@@ -203,21 +203,21 @@ class SystemService(Service):
         try:
             dser_license = License.load(license_)
         except Exception:
-            raise CallError('This is not a valid license.')
+            raise ValidationError('system.license', 'This is not a valid license.')
+        else:
+            if not self.middleware.call_sync('system.is_ha_capable'):
+                raise ValidationError('system.license', 'This is not a HA capable system.')
 
         prev_product_type = self.middleware.call_sync('system.product_type')
-
         with open(LICENSE_FILE, 'w+') as f:
             f.write(license_)
 
         self.middleware.call_sync('etc.generate', 'rc')
-
         SystemService.PRODUCT_TYPE = None
         if self.middleware.call_sync('system.is_enterprise'):
             Path('/data/truenas-eula-pending').touch(exist_ok=True)
 
         self.middleware.call_sync('alert.alert_source_clear_run', 'LicenseStatus')
-
         self.middleware.call_sync('failover.configure.license', dser_license)
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', prev_product_type=prev_product_type), wait=False,
