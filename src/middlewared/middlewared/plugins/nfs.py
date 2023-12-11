@@ -192,7 +192,7 @@ class NFSService(SystemServiceService):
                     Default: NFSv3,NFSv4
 
         `v4_v3owner` - Use NFSv3 ownership model for NFSv4
-                    (get description of this)
+                    (See RFC7530)
 
                     INPUT: enable/disable
                     Default: disabled
