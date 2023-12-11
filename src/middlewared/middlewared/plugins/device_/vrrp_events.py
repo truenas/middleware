@@ -17,7 +17,7 @@ LOGGER = getLogger('failover')  # so logs show up in /var/log/failover.log
 class VrrpObjs:
     fifo_thread = None
     event_thread = None
-    event_queue = None
+    event_queue = deque(maxlen=1)
 
 
 class VrrpThreadService(Service):
@@ -40,10 +40,10 @@ class VrrpThreadService(Service):
 
 class VrrpEventThread(Thread):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         super(VrrpEventThread, self).__init__()
         self.middleware = kwargs.get('middleware')
-        self.event_queue = kwargs.get('queue')
+        self.event_queue = VrrpObjs.event_queue
         self.shutdown_event = Event()
         self.pause_event = Event()
         self.grace_period = 0.5
@@ -201,7 +201,7 @@ class VrrpFifoThread(Thread):
         self._vrrp_file = '/var/run/vrrpd.fifo'
         self.pause_event = Event()
         self.middleware = kwargs.get('middleware')
-        self.event_queue = kwargs.get('queue')
+        self.event_queue = VrrpObjs.event_queue
         self.shutdown_line = '--SHUTDOWN--'
 
     def shutdown(self):
@@ -279,16 +279,13 @@ async def _start_stop_vrrp_threads(middleware):
         # if this is a system that is being licensed for HA for the
         # first time (without being rebooted) then we need to make
         # sure we start these threads
-        if VrrpObjs.event_queue is None:
-            VrrpObjs.event_queue = deque(maxlen=1)
-
         timeout = (await middleware.call('failover.config'))['timeout']
         if VrrpObjs.fifo_thread is None or not VrrpObjs.fifo_thread.is_alive():
-            VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware, queue=VrrpObjs.event_queue)
+            VrrpObjs.fifo_thread = VrrpFifoThread(middleware=middleware)
             VrrpObjs.fifo_thread.start()
 
         if VrrpObjs.event_thread is None or not VrrpObjs.event_thread.is_alive():
-            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, queue=VrrpObjs.event_queue, timeout=timeout)
+            VrrpObjs.event_thread = VrrpEventThread(middleware=middleware, timeout=timeout)
             VrrpObjs.event_thread.start()
 
 
