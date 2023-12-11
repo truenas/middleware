@@ -396,14 +396,15 @@ def test_11_perform_server_side_copy(request):
 
 
 @pytest.mark.parametrize('nfsd,cores,expected', [
-    (50, 1, {'nfsd': 50, 'mountd': 12}),    # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
-    (None, 12, {'nfsd': 12, 'mountd': 3}),  # Dynamic, expect 12 nfsd and 3 mountd
-    (None, 4, {'nfsd': 4, 'mountd': 1}),    # Dynamic, expect 4 nfsd and 1 mountd
-    (None, 2, {'nfsd': 2, 'mountd': 1}),    # Dynamic, expect 2 nfsd and 1 mountd
-    (None, 1, {'nfsd': 1, 'mountd': 1}),    # Dynamic, expect 1 nfsd and 1 mountd
-    (0, 4, {'nfsd': 4, 'mountd': 1}),       # Should be trapped by validator: Illegal input
-    (257, 4, {'nfsd': 4, 'mountd': 1}),     # Should be trapped by validator: Illegal input
-    (None, 48, {'nfsd': 32, 'mountd': 8}),  # Dynamic, max nfsd via calculation is 32
+    (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),   # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
+    (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),  # Dynamic, expect 12 nfsd and 3 mountd
+    (None, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),    # Dynamic, expect 4 nfsd and 1 mountd
+    (None, 2, {'nfsd': 2, 'mountd': 1, 'managed': True}),    # Dynamic, expect 2 nfsd and 1 mountd
+    (None, 1, {'nfsd': 1, 'mountd': 1, 'managed': True}),    # Dynamic, expect 1 nfsd and 1 mountd
+    (0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),       # Should be trapped by validator: Illegal input
+    (257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),     # Should be trapped by validator: Illegal input
+    (None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),  # Dynamic, max nfsd via calculation is 32
+    (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),    # -1 is a flag to set bindip and confirm 'managed' stays True
 ])
 def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
@@ -438,12 +439,22 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
             confirm_rpc_processes()
 
             # In all passing cases, the 'servers' field represents the number of expected nfsd
-            assert call("nfs.config")['servers'] == expected['nfsd']
+            nfs_conf = call("nfs.config")
+            assert nfs_conf['servers'] == expected['nfsd']
+            assert nfs_conf['managed_nfsd'] == expected['managed']
         else:
-            with pytest.raises(ValidationErrors) as ve:
-                call("nfs.update", {"servers": nfsd})
+            if nfsd == -1:
+                # We know apriori that the current state is managed_nfsd == True
+                with nfs_config():
+                    # Test making change to non-'server' setting does not change managed_nfsd
+                    call("nfs.update", {"bindip": [ip]})
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+            else:
+                with pytest.raises(ValidationErrors) as ve:
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+                    call("nfs.update", {"servers": nfsd})
 
-            assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
+                assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
 
 def test_20_update_nfs_share(request):
