@@ -13,7 +13,7 @@ class Events(object):
         self._events = {}
         self.__events_private = set()
 
-    def register(self, name, description, private, returns, no_auth_required):
+    def register(self, name, description, private, returns, no_auth_required, no_authz_required):
         if name in self._events:
             raise ValueError(f'Event {name!r} already registered.')
         self._events[name] = {
@@ -21,6 +21,7 @@ class Events(object):
             'accepts': [],
             'returns': [returns] if returns else [Any(name, null=True)],
             'no_auth_required': no_auth_required,
+            'no_authz_required': no_authz_required,
         }
         if private:
             self.__events_private.add(name)

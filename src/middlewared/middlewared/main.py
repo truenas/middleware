@@ -252,6 +252,10 @@ class Application:
         if not self.authenticated:
             return False
 
+        if event:
+            if event['no_authz_required']:
+                return True
+
         return self.authenticated_credentials.authorize('SUBSCRIBE', name)
 
     async def subscribe(self, ident, name):
@@ -1566,14 +1570,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         """
         self.__event_subs[name].append(handler)
 
-    def event_register(self, name, description, *, private=False, returns=None, no_auth_required=False):
+    def event_register(self, name, description, *, private=False, returns=None, no_auth_required=False,
+                       no_authz_required=False):
         """
         All events middleware can send should be registered so they are properly documented
         and can be browsed in documentation page without source code inspection.
         """
-        self.events.register(name, description, private, returns, no_auth_required)
+        self.events.register(name, description, private, returns, no_auth_required, no_authz_required)
 
     def send_event(self, name, event_type, **kwargs):
+        should_send_event = kwargs.pop('should_send_event', None)
 
         if name not in self.events:
             # We should eventually deny events that are not registered to ensure every event is
@@ -1594,7 +1600,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         for session_id, wsclient in list(self.__wsclients.items()):
             try:
-                wsclient.send_event(name, event_type, **kwargs)
+                if should_send_event is None or should_send_event(wsclient):
+                    wsclient.send_event(name, event_type, **kwargs)
             except Exception:
                 self.logger.warn('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
 

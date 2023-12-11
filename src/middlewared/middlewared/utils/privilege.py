@@ -81,3 +81,10 @@ def privileges_group_mapping(
         'roles': list(roles),
         'privileges': privileges_out
     }
+
+
+def credential_is_limited_to_own_jobs(credential: object | None) -> bool:
+    if credential is None or not credential.is_user_session:
+        return False
+
+    return not credential_has_full_admin(credential)

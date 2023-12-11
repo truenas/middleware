@@ -68,12 +68,7 @@ def test_full_admin_role():
         # attempt to wait / cancel job should not fail
         jid = c.call("core.job_test", {"sleep": 1})
 
-        # TODO: job subscription is currently broken for roles
-        # Once this is fixed we can set `job=True` and remove the sleep
-        wait_job_id = c.call("core.job_wait", jid)
-        sleep(2)
-        result = c.call("core.get_jobs", [["id", "=", wait_job_id]], {"get": True})
-        assert result["state"] == "SUCCESS"
+        c.call("core.job_wait", jid, job=True)
 
         c.call("core.job_abort", jid)
 
