@@ -19,8 +19,9 @@ from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
+from middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, ssh, mock
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -137,7 +138,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
         assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
 
 
-def confirm_nfsd_processes(expected=16):
+def confirm_nfsd_processes(expected):
     '''
     Confirm the expected number of nfsd processes are running
     '''
@@ -145,14 +146,16 @@ def confirm_nfsd_processes(expected=16):
     assert int(result['stdout']) == expected, result
 
 
-def confirm_mountd_processes(expected=16):
+def confirm_mountd_processes(expected):
     '''
     Confirm the expected number of mountd processes are running
     '''
     rx_mountd = r"rpc\.mountd"
     result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
-    # We subtract one to account for the rpc.mountd thread manager
-    assert int(result['stdout']) - 1 == expected
+
+    # If there is more than one, we subtract one to account for the rpc.mountd thread manager
+    num_detected = int(result['stdout'])
+    assert (num_detected - 1 if num_detected > 1 else num_detected) == expected
 
 
 def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
@@ -207,7 +210,7 @@ def save_nfs_config():
     but it also might require refactoring of the tests.
     This is called at the start of test_01_creating_the_nfs_server.
     '''
-    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major']
+    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     res = make_ws_request(ip, get_conf_cmd)
     assert res.get('error') is None, res
@@ -287,7 +290,7 @@ def nfs_config(options=None):
     '''
     try:
         nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'v4_owner_major']
+        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
         [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
@@ -392,23 +395,66 @@ def test_11_perform_server_side_copy(request):
         n.server_side_copy('ssc1', 'ssc2')
 
 
-def test_19_updating_the_nfs_service(request):
+@pytest.mark.parametrize('nfsd,cores,expected', [
+    (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),   # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
+    (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),  # Dynamic, expect 12 nfsd and 3 mountd
+    (None, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),    # Dynamic, expect 4 nfsd and 1 mountd
+    (None, 2, {'nfsd': 2, 'mountd': 1, 'managed': True}),    # Dynamic, expect 2 nfsd and 1 mountd
+    (None, 1, {'nfsd': 1, 'mountd': 1, 'managed': True}),    # Dynamic, expect 1 nfsd and 1 mountd
+    (0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),       # Should be trapped by validator: Illegal input
+    (257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),     # Should be trapped by validator: Illegal input
+    (None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),  # Dynamic, max nfsd via calculation is 32
+    (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),    # -1 is a flag to set bindip and confirm 'managed' stays True
+])
+def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
     This test verifies that service can be updated in general,
     and also that the 'servers' key can be altered.
     Latter goal is achieved by reading the nfs config file
     and verifying that the value here was set correctly.
+
+    Update:
+    The default setting for 'servers' is 0. This specifies that we dynamically
+    determine the number of nfsd to start based on the capabilities of the system.
+    In this state, we choose one nfsd for each CPU core.
+    The user can override the dynamic calculation by specifying a
+    number greater than zero.
+
+    The number of mountd will be 1/4 the number of nfsd.
     """
-    results = PUT("/nfs/", {"servers": "50"})
-    assert results.status_code == 200, results.text
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
-    s = parse_server_config()
-    assert int(s['nfsd']['threads']) == 50, str(s)
-    assert int(s['mountd']['threads']) == 50, str(s)
+    with mock("system.cpu_info", return_value={"core_count": cores}):
 
-    confirm_nfsd_processes(50)
-    confirm_mountd_processes(50)
-    confirm_rpc_processes()
+        # Use 0 as 'null' flag
+        if nfsd is None or nfsd in range(1, 257):
+            call("nfs.update", {"servers": nfsd})
+
+            s = parse_server_config()
+            assert int(s['nfsd']['threads']) == expected['nfsd'], str(s)
+            assert int(s['mountd']['threads']) == expected['mountd'], str(s)
+
+            confirm_nfsd_processes(expected['nfsd'])
+            confirm_mountd_processes(expected['mountd'])
+            confirm_rpc_processes()
+
+            # In all passing cases, the 'servers' field represents the number of expected nfsd
+            nfs_conf = call("nfs.config")
+            assert nfs_conf['servers'] == expected['nfsd']
+            assert nfs_conf['managed_nfsd'] == expected['managed']
+        else:
+            if nfsd == -1:
+                # We know apriori that the current state is managed_nfsd == True
+                with nfs_config():
+                    # Test making change to non-'server' setting does not change managed_nfsd
+                    call("nfs.update", {"bindip": [ip]})
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+            else:
+                with pytest.raises(ValidationErrors) as ve:
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+                    call("nfs.update", {"servers": nfsd})
+
+                assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
 
 def test_20_update_nfs_share(request):
@@ -1006,6 +1052,7 @@ def test_40_check_nfs_service_udp_parameter(request):
     This test verifies that toggling the `udp` option generates expected changes
     in nfs kernel server config.
     """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
     with nfs_config():
         get_payload = {'msg': 'method', 'method': 'nfs.config', 'params': []}
         set_payload = {'msg': 'method', 'method': 'nfs.update', 'params': []}
@@ -1301,6 +1348,10 @@ def test_48_syslog_filters(request):
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
     with nfs_config():
 
+        # The effect is much more clear if there are many mountd.
+        # We can force this by configuring many nfsd
+        call("nfs.update", {"servers": 24})
+
         # Confirm default setting: mountd logging enabled
         call("nfs.update", {"mountd_log": True})
         with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
@@ -1317,7 +1368,7 @@ def test_48_syslog_filters(request):
 
             assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
 
-	# NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
+        # NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
 
         # Disable mountd logging
         call("nfs.update", {"mountd_log": False})
@@ -1394,22 +1445,23 @@ def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
         results = SSH_TEST("rm -f /etc/exports", user, password, ip)
     assert results['result'] is True
 
-    # Start NFS
-    payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
-    res = make_ws_request(ip, payload)
-    assert res['result'] is True, f"Expected start success: {res}"
-    sleep(1)
-    confirm_nfsd_processes(16)
+    with nfs_config() as nfs_conf:
+        # Start NFS
+        payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
+        res = make_ws_request(ip, payload)
+        assert res['result'] is True, f"Expected start success: {res}"
+        sleep(1)
+        confirm_nfsd_processes(nfs_conf['servers'])
 
-    # Return NFS to stopped condition
-    payload = {"service": "nfs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
+        # Return NFS to stopped condition
+        payload = {"service": "nfs"}
+        results = POST("/service/stop/", payload)
+        assert results.status_code == 200, results.text
+        sleep(1)
 
-    # Confirm stopped
-    results = GET("/service?service=nfs")
-    assert results.json()[0]["state"] == "STOPPED", results.text
+        # Confirm stopped
+        results = GET("/service?service=nfs")
+        assert results.json()[0]["state"] == "STOPPED", results.text
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])

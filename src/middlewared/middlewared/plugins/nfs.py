@@ -28,7 +28,7 @@ class NFSModel(sa.Model):
     __tablename__ = 'services_nfs'
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    nfs_srv_servers = sa.Column(sa.Integer(), default=4)
+    nfs_srv_servers = sa.Column(sa.Integer(), nullable=True)
     nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
     nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
@@ -59,7 +59,7 @@ class NFSService(SystemServiceService):
     ENTRY = Dict(
         'nfs_entry',
         Int('id', required=True),
-        Int('servers', validators=[Range(min_=1, max_=256)], required=True),
+        Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
         Bool('udp', required=True),
         Bool('allow_nonroot', required=True),
         List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
@@ -75,6 +75,7 @@ class NFSService(SystemServiceService):
         Bool('v4_krb_enabled', required=True),
         Bool('userd_manage_gids', required=True),
         Bool('keytab_has_nfs_spn', required=True),
+        Bool('managed_nfsd', default=True),
     )
 
     @private
@@ -84,13 +85,27 @@ class NFSService(SystemServiceService):
         nfs["userd_manage_gids"] = nfs.pop("16")
         nfs["v4_owner_major"] = nfs.pop("v4_owner_major")
         nfs["keytab_has_nfs_spn"] = keytab_has_nfs
+
+        # 'None' indicates we are to dynamically manage the number of nfsd
+        if nfs['servers'] is None:
+            nfs['managed_nfsd'] = True
+            cpu_info = await self.middleware.call("system.cpu_info")
+
+            # Default calculation:
+            #     Number of nfsd == number of cores, but not zero or greater than 32
+            nfs['servers'] = min(max(cpu_info['core_count'], 1), 32)
+        else:
+            nfs['managed_nfsd'] = False
+
         return nfs
 
     @private
     async def nfs_compress(self, nfs):
+        nfs.pop('managed_nfsd')
         nfs.pop("v4_krb_enabled")
         nfs.pop("keytab_has_nfs_spn")
         nfs["16"] = nfs.pop("userd_manage_gids")
+
         return nfs
 
     @accepts()
@@ -135,32 +150,80 @@ class NFSService(SystemServiceService):
         ('rm', {'name': 'id'}),
         ('rm', {'name': 'v4_krb_enabled'}),
         ('rm', {'name': 'keytab_has_nfs_spn'}),
+        ('rm', {'name': 'managed_nfsd'}),
         ('attr', {'update': True}),
     ))
     async def do_update(self, data):
         """
         Update NFS Service Configuration.
 
-        `servers` represents number of servers to create.
+        `servers` - Represents number of servers to create.
+                    By default, the number of nfsd is determined by the capabilities of the system.
+                    To specify the number of nfsd, set a value between 1 and 256.
+                    'Unset' the field to return to default.
+                    This field will always report the number of nfsd to start.
 
-        When `allow_nonroot` is set, it allows non-root mount requests to be served.
+                    INPUT: 1 .. 256 or 'unset'
+                        where unset will enable the automatic determination
+                        and 1 ..256 will set the number of nfsd
+                    Default: Number of nfsd is automatically determined and will be no less
+                        than 1 and no more than 32
 
-        `bindip` is a list of IP's on which NFS will listen for requests. When it is unset/empty, NFS listens on
-        all available addresses.
+                    The number of mountd will be 1/4 the number of reported nfsd.
 
-        `protocols` specifies whether NFSv3, NFSv4, or both are enabled.
+        `allow_nonroot` - If 'enabled' it allows non-root mount requests to be served.
 
-        `v4_v3owner` when set means that system will use NFSv3 ownership model for NFSv4.
+                        INPUT: enable/disable (True/False)
+                        Default: disabled
 
-        `v4_krb` will force NFS shares to fail if the Kerberos ticket is unavailable.
+        `bindip` -  Limit the server IP addresses available for NFS
+                    By default, NFS will listen on all IP addresses that are active on the server.
+                    To specify the server interface or a set of interfaces provide a list of IP's.
+                    If the field is unset/empty, NFS listens on all available server addresses.
 
-        `v4_domain` overrides the default DNS domain name for NFSv4.
+                    INPUT: list of IP addresses available configured on the server
+                    Default: Use all available addresses (empty list)
 
-        `mountd_port` specifies the port mountd(8) binds to.
+        `protocols` - enable/disable NFSv3, NFSv4
+                    Both can be enabled or NFSv4 or NFSv4 by themselves.  At least one must be enabled.
+                    Note:  The 'showmount' command is available only if NFSv3 is enabled.
 
-        `rpcstatd_port` specifies the port rpc.statd(8) binds to.
+                    INPUT: Select NFSv3 or NFSv4 or NFSv3,NFSv4
+                    Default: NFSv3,NFSv4
 
-        `rpclockd_port` specifies the port rpclockd_port(8) binds to.
+        `v4_v3owner` - when set means that system will use NFSv3 ownership model for NFSv4.
+                    (Deprecated)
+
+        `v4_krb` -  Force Kerberos authentication on NFS shares
+                    If enabled, NFS shares will fail if the Kerberos ticket is unavilable
+
+                    INPUT: enable/disable
+                    Default: disabled
+
+        `v4_domain` -   Specify a DNS domain (NFSv4 only)
+                    If set, the value will be used to override the default DNS domain name for NFSv4.
+                    Specifies the 'Domain' idmapd.conf setting.
+
+                    INPUT: a string
+                    Default: unset, i.e. an empty string.
+
+        `mountd_port` - mountd port binding
+                    The value set specifies the port mountd(8) binds to.
+
+                    INPUT: unset or an integer between 1 .. 65535
+                    Default: unset
+
+        `rpcstatd_port` - statd port binding
+                    The value set specifies the port rpc.statd(8) binds to.
+
+                    INPUT: unset or an integer between 1 .. 65535
+                    Default: unset
+
+        `rpclockd_port` - lockd port binding
+                    The value set specifies the port rpclockd_port(8) binds to.
+
+                    INPUT: unset or an integer between 1 .. 65535
+                    Default: unset
 
         .. examples(websocket)::
 
@@ -189,6 +252,10 @@ class NFSService(SystemServiceService):
                 data.setdefault("v4_v3owner", False)
 
         old = await self.config()
+
+        # Fixup old 'servers' entry before processing changes
+        if old['managed_nfsd']:
+            old['servers'] = None
 
         new = old.copy()
         new.update(data)
