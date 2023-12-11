@@ -191,11 +191,8 @@ class NFSService(SystemServiceService):
                     INPUT: Select NFSv3 or NFSv4 or NFSv3,NFSv4
                     Default: NFSv3,NFSv4
 
-        `v4_v3owner` - Use NFSv3 ownership model for NFSv4
-                    (See RFC7530)
-
-                    INPUT: enable/disable
-                    Default: disabled
+        `v4_v3owner` - when set means that system will use NFSv3 ownership model for NFSv4.
+                    (Deprecated)
 
         `v4_krb` -  Force Kerberos authentication on NFS shares
                     If enabled, NFS shares will fail if the Kerberos ticket is unavilable
