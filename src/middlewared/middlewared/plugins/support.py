@@ -142,24 +142,21 @@ class SupportService(ConfigService):
             ['secondary_phone', 'Secondary Contact Phone'],
         ]
 
-    @accepts(Password('token', default=''))
-    @returns(Dict(additional_attrs=True, example={'API': '11008', 'WebUI': '10004'}))
-    async def fetch_categories(self, token):
-        """
-        Fetch issue categories using access token `token`.
-        Returns a dict with the category name as a key and id as value.
-        """
-
+    @accepts(Password('token'), Str('query'))
+    @returns(List('similar_issues', items=[Dict(
+        'similar_issue',
+        Str('url'),
+        Str('summary'),
+        additional_attrs=True,
+    )]))
+    async def similar_issues(self, token, query):
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
-        if not await self.middleware.call('system.is_enterprise') and not token:
-            raise CallError('token is required')
-
-        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
         data = await post(
-            f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
+            f'https://{ADDRESS}/freenas/api/v1.0/similar_issues',
             data=json.dumps({
                 'token': token,
+                'query': query,
             }),
         )
 
@@ -172,10 +169,9 @@ class SupportService(ConfigService):
         'new_ticket',
         Str('title', required=True, max_length=None),
         Str('body', required=True, max_length=None),
-        Str('category', required=True),
         Bool('attach_debug', default=False),
+        Dict('debug_extra', additional_attrs=True),
         Password('token'),
-        Str('type', enum=['BUG', 'FEATURE']),
         Str('criticality'),
         Str('environment', max_length=None),
         Str('phone'),
@@ -198,7 +194,7 @@ class SupportService(ConfigService):
         For TrueNAS SCALE it will be created on JIRA and for TrueNAS SCALE Enterprise on Salesforce.
 
         For SCALE `criticality`, `environment`, `phone`, `name` and `email` attributes are not required.
-        For SCALE Enterprise `token` and `type` attributes are not required.
+        For SCALE Enterprise `token` attribute is not required.
         """
 
         await self.middleware.call('network.general.will_perform_activity', 'support')
@@ -208,7 +204,7 @@ class SupportService(ConfigService):
         sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
 
         if sw_name == 'freenas':
-            required_attrs = ('type', 'token')
+            required_attrs = ('token',)
         else:
             required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
@@ -224,10 +220,7 @@ class SupportService(ConfigService):
 
         data['version'] = f'{PRODUCT}-{await self.middleware.call("system.version_short")}'
         debug = data.pop('attach_debug')
-
-        type_ = data.get('type')
-        if type_:
-            data['type'] = type_.lower()
+        debug_extra = data.pop('debug_extra', {})
 
         job.set_progress(20, 'Submitting ticket')
 
@@ -249,7 +242,7 @@ class SupportService(ConfigService):
             job.set_progress(60, 'Generating debug file')
 
             debug_job = await self.middleware.call(
-                'system.debug', pipes=Pipes(output=self.middleware.pipe()),
+                'system.debug', {'extra': debug_extra}, pipes=Pipes(output=self.middleware.pipe()),
             )
 
             if await self.middleware.call('failover.licensed'):

@@ -15,7 +15,7 @@ from exceptions import JobTimeOut
     CLUSTER_INFO['NODE_D_IP'],
 ])
 def test_gather_debugs_before_teardown(ip, request):
-    ans = make_ws_request(ip, {'msg': 'method', 'method': 'system.debug_generate'})
+    ans = make_ws_request(ip, {'msg': 'method', 'method': 'system.debug_generate', 'params': [{'extra': {}}]})
     assert ans.get('error') is None, ans
     assert isinstance(ans['result'], int), ans
     try:
