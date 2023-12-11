@@ -1,5 +1,5 @@
 import enum
-from middlewared.utils.privilege import app_credential_full_admin_or_user
+from middlewared.utils.privilege import credential_has_full_admin
 
 class ServiceWriteRole(enum.Enum):
     CIFS = 'SHARING_SMB_WRITE'
@@ -11,11 +11,15 @@ def app_has_write_privilege_for_service(
     app: object | None,
     service: str
 ) -> bool:
-    if app_credential_full_admin_or_user(app, None):
+    if app is None:
+        # Internal middleware call
         return True
 
-    if not app.authenticated_credentials:
+    if not app.authenticated_credentials is None:
         return False
+
+    if credential_has_full_admin(app.authenticated_credentials):
+        return True
 
     if app.authenticated_credentials.has_role('SERVICES_WRITE'):
         return True
