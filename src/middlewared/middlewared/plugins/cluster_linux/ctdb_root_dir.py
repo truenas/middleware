@@ -594,19 +594,17 @@ class CtdbRootDirService(Service):
 
         NOTE: THERE IS NO COMING BACK FROM THIS.
         """
-        config = await self.middleware.call('ctdb.root_dir.config')
         if not force:
+            config = await self.middleware.call('ctdb.root_dir.config')
             for vol in await self.middleware.call('gluster.volume.query'):
                 if vol['name'] != config['volume_name']:
                     # If someone calls this method, we expect that all other gluster volumes
                     # have been destroyed
                     raise CallError(f'{vol["name"]!r} must be removed before deleting {config["volume_name"]!r}')
-        else:
-            # we have to stop gluster service because it spawns a bunch of child processes
-            # for the ctdb shared volume. This also stops ctdb, smb and unmounts all the
-            # FUSE mountpoints.
-            job.set_progress(50, 'Stopping cluster services')
-            await self.middleware.call('service.stop', 'glusterd')
+
+        # This also stops ctdb, smb and unmounts all the FUSE mountpoints.
+        job.set_progress(50, 'Stopping cluster services')
+        await self.middleware.call('service.stop', 'glusterd')
 
         job.set_progress(75, 'Removing cluster related configuration files and directories.')
         wipe_config_job = await self.middleware.call('cluster.utils.wipe_config')
@@ -615,6 +613,7 @@ class CtdbRootDirService(Service):
         job.set_progress(90, 'Disabling cluster service')
         await self.middleware.call('service.update', 'glusterd', {'enable': False})
         await self.middleware.call('smb.reset_smb_ha_mode')
+        await self.middleware.call('etc.generate', 'smb')
 
         job.set_progress(95, 'Detaching trusted storage pool')
         if await self.middleware.call('gluster.peer.query'):

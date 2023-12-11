@@ -552,6 +552,9 @@ def test__schema_file_null():
     ({'minute': '55'}, {'minute': '55'}),
     ({'dow': '2'}, {'dow': '2'}),
     ({'hour': '*'}, {'hour': '*'}),
+    ({'minute': '*/10'}, {'minute': '*/10'}),
+    ({'minute': '10-30/10'}, {'minute': '10-30/10'}),
+    ({'minute': '0/10'}, ValidationErrors),
     ({'minute': '66'}, ValidationErrors),
     ({'hour': '-25'}, ValidationErrors),
     ({'dom': '33'}, ValidationErrors),
@@ -891,6 +894,7 @@ def test__uuid_schema(value, expected_to_fail):
     ('canary', False),
     ('CaNary', False),
     ('can_ary', False),
+    ('can-ary', False),
     ('LOCAL', True),
 ])
 def test__netbiosname_schema(value, expected_to_fail):
@@ -915,6 +919,7 @@ def test__netbiosname_schema(value, expected_to_fail):
     ('canary', False),
     ('CaNary', False),
     ('can_ary', False),
+    ('can-ary', False),
     ('LOCAL', True),
 ])
 def test__netbiosdomain_schema(value, expected_to_fail):

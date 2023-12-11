@@ -33,6 +33,7 @@ class ReportingService(Service):
     @accepts(
         Str('name', required=True),
         Ref('reporting_query'),
+        roles=['REPORTING_READ']
     )
     @returns(Ref('netdata_graph_reporting_data'))
     async def netdata_graph(self, name, query):
@@ -50,7 +51,7 @@ class ReportingService(Service):
         return await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate'])
 
     @cli_private
-    @filterable
+    @filterable(roles=['REPORTING_READ'])
     @filterable_returns(Dict(
         'reporting_graph',
         Str('name'),
@@ -75,6 +76,7 @@ class ReportingService(Service):
             ),
         ], empty=False),
         Ref('reporting_query'),
+        roles=['REPORTING_READ']
     )
     @returns(List('reporting_data', items=[Dict(
         'netdata_graph_reporting_data',

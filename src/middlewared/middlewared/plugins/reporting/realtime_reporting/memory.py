@@ -17,7 +17,7 @@ def get_memory_info(netdata_metrics: dict) -> dict:
         'page_tables': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'mem.kernel', 'PageTables', 0), multiplier=1024 * 1024,
         ),
-        'swap_cache': meminfo['SwapCached'],
+        'swap_cache': normalize_value(meminfo['SwapCached'], multiplier=1024),
         'slab_cache': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'mem.kernel', 'Slab', 0), multiplier=1024 * 1024,
         ),
@@ -39,22 +39,22 @@ def get_memory_info(netdata_metrics: dict) -> dict:
     }
 
     extra = {
-        'inactive': meminfo['Inactive'],
+        'inactive': normalize_value(meminfo['Inactive'], multiplier=1024),
         'committed': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'mem.committed', 'Committed_AS', 0), multiplier=1024 * 1024,
         ),
-        'active': meminfo['Active'],
+        'active': normalize_value(meminfo['Active'], multiplier=1024),
         'vmalloc_used': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'mem.kernel', 'VmallocUsed', 0), multiplier=1024 * 1024,
         ),
-        'mapped': meminfo['Mapped'],
+        'mapped': normalize_value(meminfo['Mapped'], multiplier=1024),
     }
 
     swap = {
         'used': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'system.swap', 'used', 0), multiplier=1024 * 1024,
         ),
-        'total': meminfo['SwapTotal'],
+        'total': normalize_value(meminfo['SwapTotal'], multiplier=1024),
     }
 
     return {

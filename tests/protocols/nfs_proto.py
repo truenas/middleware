@@ -290,6 +290,30 @@ class SSH_NFS(NFS):
         if setfacl['result'] is False:
             raise RuntimeError(setfacl['stderr'])
 
+    def getaclflag(self, path):
+        self.validate(path)
+        # nfs4_getfacl has no knowledge of acl_flags, use nfs4xfr_getfacl instead
+        getfacl = SSH_TEST(
+            f"nfs4xdr_getfacl {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if getfacl['result'] is False:
+            raise RuntimeError(getfacl['stderr'])
+        for line in getfacl['stdout'].split('\n'):
+            if line.startswith('# ACL flags:'):
+                return line.split(':')[1].strip()
+        raise RuntimeError('Could not find acl_flag')
+
+    def setaclflag(self, path, value):
+        self.validate(path)
+        # nfs4_setfacl has no knowledge of acl_flags, use nfs4xfr_setfacl instead
+        getfacl = SSH_TEST(
+            f"nfs4xdr_setfacl -p {value} {self._localpath}/{path}",
+            self._user, self._password, self._ip
+        )
+        if getfacl['result'] is False:
+            raise RuntimeError(getfacl['stderr'])
+
     def getxattr(self, path, xattr_name):
         self.validate(path)
 

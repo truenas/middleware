@@ -74,6 +74,15 @@ class EtcService(Service):
         'truenas_nvdimm': [
             {'type': 'py', 'path': 'truenas_nvdimm', 'checkpoint': 'post_init'},
         ],
+        'shadow': {
+            'ctx': [
+                {'method': 'user.query'},
+                {'method': 'cluster.utils.is_clustered'}
+            ],
+            'entries': [
+                {'type': 'mako', 'path': 'shadow', 'group': 'shadow', 'mode': 0o0640},
+            ]
+        },
         'user': {
             'ctx': [
                 {'method': 'user.query'},
@@ -250,6 +259,7 @@ class EtcService(Service):
         'syslogd': {
             'ctx': [
                 {'method': 'system.advanced.config'},
+                {'method': 'nfs.config'},
             ],
             'entries': [
                 {'type': 'mako', 'path': 'syslog-ng/syslog-ng.conf'},

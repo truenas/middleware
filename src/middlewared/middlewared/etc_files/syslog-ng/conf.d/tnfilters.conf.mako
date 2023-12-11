@@ -2,6 +2,10 @@
     from middlewared.plugins.audit.utils import AUDITED_SERVICES
 
     adv_conf = render_ctx['system.advanced.config']
+
+    audit_filters = [f'filter(f_tnaudit_{svc.lower()});' for svc, vers in AUDITED_SERVICES]
+
+    nfs_conf = render_ctx['nfs.config']
 %>\
 ##################
 # TrueNAS filters
@@ -12,9 +16,7 @@
 filter f_tnaudit_${svc.lower()} { program("TNAUDIT_${svc}") };
 % endfor
 filter f_tnaudit_all {
-% for svc, vers in AUDITED_SERVICES:
-  filter(f_tnaudit_${svc.lower()});
-% endfor
+  ${' or\n  '.join(audit_filters)}
 };
 
 # These filters are used for remote syslog
@@ -44,8 +46,14 @@ filter f_app_mounts {
   program("systemd") and match("mount:" value("MESSAGE")) and match("docker" value("MESSAGE")); or
   program("systemd") and match("mount:" value("MESSAGE")) and match("kubelet" value("MESSAGE"));
 };
+filter f_nfs_mountd {
+  program("rpc.mountd") and level(debug..notice);
+};
 
 filter f_truenas_exclude {
+% if not nfs_conf['mountd_log']:
+  not filter(f_nfs_mountd) and
+% endif
   not filter(f_tnaudit_all) and
   not filter(f_k3s) and
   not filter(f_containerd) and

@@ -1070,7 +1070,7 @@ async def ha_permission(middleware, app):
 
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
     if is_ha_connection(remote_addr, remote_port):
-        AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
+        await AuthService.session_manager.login(app, TrueNasNodeSessionManagerCredentials())
 
 
 async def interface_pre_sync_hook(middleware):

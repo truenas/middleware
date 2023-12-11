@@ -4,6 +4,7 @@ from collections import OrderedDict
 import copy
 from datetime import datetime
 import enum
+from functools import partial
 import logging
 import os
 import shutil
@@ -14,10 +15,29 @@ import threading
 
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
+from middlewared.utils.privilege import credential_is_limited_to_own_jobs
 
 logger = logging.getLogger(__name__)
 
 LOGS_DIR = '/var/log/jobs'
+
+
+def send_job_event(middleware, event_type, job, fields):
+    middleware.send_event('core.get_jobs', event_type, id=job.id, fields=fields,
+                          should_send_event=partial(should_send_job_event, job))
+
+
+def should_send_job_event(job, wsclient):
+    if wsclient.authenticated_credentials and credential_is_limited_to_own_jobs(wsclient.authenticated_credentials):
+        if job.credentials is None:
+            return False
+
+        if not job.credentials.is_user_session:
+            return False
+
+        return job.credentials.user['username'] == wsclient.authenticated_credentials.user['username']
+
+    return True
 
 
 class State(enum.Enum):
@@ -75,7 +95,7 @@ class JobsQueue(object):
         # Shared lock (JobSharedLock) dict
         self.job_locks = {}
 
-        self.middleware.event_register('core.get_jobs', 'Updates on job changes.')
+        self.middleware.event_register('core.get_jobs', 'Updates on job changes.', no_authz_required=True)
 
     def __getitem__(self, item):
         return self.deque[item]
@@ -108,7 +128,7 @@ class JobsQueue(object):
 
         self.deque.add(job)
         self.queue.append(job)
-        self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
+        send_job_event(self.middleware, 'ADDED', job, job.__encode__())
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
@@ -334,7 +354,7 @@ class Job:
         """
         if self.description != description:
             self.description = description
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+            send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
 
     def set_progress(self, percent=None, description=None, extra=None):
         """
@@ -372,7 +392,7 @@ class Job:
                 logger.warning('Failed to run on progress callback', exc_info=True)
 
         if changed:
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=encoded)
+            send_job_event(self.middleware, 'CHANGED', self, encoded)
 
         for wrapped in self.wrapped:
             wrapped.set_progress(**self.progress)
@@ -433,7 +453,7 @@ class Job:
                 raise asyncio.CancelledError()
             else:
                 self.set_state('RUNNING')
-                self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+                send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
 
             self.future = asyncio.ensure_future(self.__run_body())
             try:
@@ -459,7 +479,7 @@ class Job:
 
             queue.release_lock(self)
             self._finished.set()
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+            send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
             if self.options['transient']:
                 queue.remove(self.id)
 

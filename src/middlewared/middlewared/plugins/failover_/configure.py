@@ -16,7 +16,7 @@ class FailoverConfigureService(Service):
 
     def license(self, dser_lic):
         """
-            1. cache locally whether or not this is a HA license
+            1. cache locally whether this is a HA license
             2. if this is a HA license:
                 --ensure we populate IP of heartbeat iface for remote node
                 --ensure we tell remote node to populate IP of heartbeat iface for local node

@@ -67,3 +67,8 @@ def test_write_role_can_write(ds, role):
         c.call("sharing.smb.setacl", {"share_name": share["name"]})
         c.call("sharing.smb.delete", share["id"])
         c.call("smb.status")
+
+        c.call("service.start", "cifs")
+        c.call("service.restart", "cifs")
+        c.call("service.reload", "cifs")
+        c.call("service.stop", "cifs")

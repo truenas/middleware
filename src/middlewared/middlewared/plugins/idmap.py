@@ -284,6 +284,14 @@ class IdmapDomainService(TDBWrapCRUDService):
             if not retry or e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
                 raise e
 
+        if not self.middleware.call_sync('systemdataset.sysdataset_path'):
+            raise CallError(
+                'Unexpected filesystem mounted in the system dataset path. '
+                'This may indicate a failure to initialize the system dataset '
+                'and may be resolved by reviewing and fixing errors in the system '
+                'dataset configuration.', errno.EAGAIN
+            )
+
         self.middleware.call_sync('service.start', 'idmap', {'silent': False})
         return self.__wbclient_ctx(False)
 
@@ -335,7 +343,19 @@ class IdmapDomainService(TDBWrapCRUDService):
     @private
     @filterable
     def known_domains(self, query_filters, query_options):
-        entries = [entry.domain_info() for entry in WBClient().all_domains()]
+        try:
+            entries = [entry.domain_info() for entry in WBClient().all_domains()]
+        except wbclient.WBCError as e:
+            match e.error_code:
+                case wbclient.WBC_ERR_INVALID_RESPONSE:
+                    # Our idmap domain is not AD and so this is not expected to succeed
+                    return []
+                case wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                    # winbindd process is stopped this may be in hot code path. Skip
+                    return []
+                case _:
+                    raise
+
         return filter_list(entries, query_filters, query_options)
 
     @private
@@ -1023,7 +1043,6 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         try:
             client = self.__wbclient_ctx()
-            results = client.sids_to_users_and_groups(sidlist)
             results = client.users_and_groups_to_sids(payload)
         except wbclient.WBCError as e:
             raise CallError(str(e), WBCErr[e.error_code], e.error_code)

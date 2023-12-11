@@ -140,3 +140,27 @@ def test_verify_ctdb_teardown(ip, request):
 
     assert ans.get('error') is None, ans
     assert len(ans['result']) == 0, ans['result']
+
+    ans = make_ws_request(ip, {
+        'msg': 'method',
+        'method': 'smb.getparm',
+        'params': ['clustering', 'global']
+    })
+    assert ans.get('error') is None, ans
+    assert ans['result'] is False, ans['result']
+
+
+@pytest.mark.parametrize('ip', CLUSTER_IPS)
+def test_verify_ctdb_teardown_force(ip, request):
+    depends(request, ['CTDB_TEARDOWN'])
+
+    payload = {'msg': 'method', 'method': 'ctdb.root_dir.teardown', 'params': [True]}
+    ans = make_ws_request(ip, payload)
+    assert ans.get('error') is None, ans
+    assert isinstance(ans['result'], int), ans
+    try:
+        status = wait_on_job(ans['result'], ip, 120)
+    except JobTimeOut:
+        assert False, f'Timed out waiting for ctdb shared volume to be torn down on {ip!r}'
+    else:
+        assert status['state'] == 'SUCCESS', status

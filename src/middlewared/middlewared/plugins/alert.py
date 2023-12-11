@@ -239,6 +239,10 @@ class AlertService(Service):
             for alert in await self.middleware.call("datastore.query", "system.alert"):
                 del alert["id"]
 
+                if alert["source"] and alert["source"] not in ALERT_SOURCES:
+                    self.logger.info("Alert source %r is no longer present", alert["source"])
+                    continue
+
                 try:
                     alert["klass"] = AlertClass.class_by_name[alert["klass"]]
                 except KeyError:
@@ -272,7 +276,7 @@ class AlertService(Service):
     async def terminate(self):
         await self.flush_alerts()
 
-    @accepts()
+    @accepts(roles=['ALERT_LIST_READ'])
     @returns(List('alert_policies', items=[Str('policy', enum=POLICIES)]))
     async def list_policies(self):
         """
@@ -280,7 +284,7 @@ class AlertService(Service):
         """
         return POLICIES
 
-    @accepts()
+    @accepts(roles=['ALERT_LIST_READ'])
     @returns(List('categories', items=[Dict(
         'category',
         Str('id'),

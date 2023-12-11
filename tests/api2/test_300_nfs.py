@@ -19,8 +19,9 @@ from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
 from protocols import SSH_NFS
+from middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh, mock
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
@@ -137,7 +138,7 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=None):
         assert res['result'] == test_res[do_what], f"Expected {test_res[do_what]} for NFS started result, but found {res['result']}"
 
 
-def confirm_nfsd_processes(expected=16):
+def confirm_nfsd_processes(expected):
     '''
     Confirm the expected number of nfsd processes are running
     '''
@@ -145,14 +146,16 @@ def confirm_nfsd_processes(expected=16):
     assert int(result['stdout']) == expected, result
 
 
-def confirm_mountd_processes(expected=16):
+def confirm_mountd_processes(expected):
     '''
     Confirm the expected number of mountd processes are running
     '''
     rx_mountd = r"rpc\.mountd"
     result = SSH_TEST(f"ps -ef | grep '{rx_mountd}' | wc -l", user, password, ip)
-    # We subtract one to account for the rpc.mountd thread manager
-    assert int(result['stdout']) - 1 == expected
+
+    # If there is more than one, we subtract one to account for the rpc.mountd thread manager
+    num_detected = int(result['stdout'])
+    assert (num_detected - 1 if num_detected > 1 else num_detected) == expected
 
 
 def confirm_rpc_processes(expected=['idmapd', 'bind', 'statd']):
@@ -207,7 +210,7 @@ def save_nfs_config():
     but it also might require refactoring of the tests.
     This is called at the start of test_01_creating_the_nfs_server.
     '''
-    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major']
+    exclude = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
     get_conf_cmd = {'msg': 'method', 'method': 'nfs.config', 'params': []}
     res = make_ws_request(ip, get_conf_cmd)
     assert res.get('error') is None, res
@@ -287,7 +290,7 @@ def nfs_config(options=None):
     '''
     try:
         nfs_db_conf = call("nfs.config")
-        excl = ['id', 'v4_krb_enabled', 'v4_owner_major']
+        excl = ['id', 'v4_krb_enabled', 'v4_owner_major', 'keytab_has_nfs_spn', 'managed_nfsd']
         [nfs_db_conf.pop(key) for key in excl]
         yield copy(nfs_db_conf)
     finally:
@@ -392,23 +395,66 @@ def test_11_perform_server_side_copy(request):
         n.server_side_copy('ssc1', 'ssc2')
 
 
-def test_19_updating_the_nfs_service(request):
+@pytest.mark.parametrize('nfsd,cores,expected', [
+    (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),   # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
+    (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),  # Dynamic, expect 12 nfsd and 3 mountd
+    (None, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),    # Dynamic, expect 4 nfsd and 1 mountd
+    (None, 2, {'nfsd': 2, 'mountd': 1, 'managed': True}),    # Dynamic, expect 2 nfsd and 1 mountd
+    (None, 1, {'nfsd': 1, 'mountd': 1, 'managed': True}),    # Dynamic, expect 1 nfsd and 1 mountd
+    (0, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),       # Should be trapped by validator: Illegal input
+    (257, 4, {'nfsd': 4, 'mountd': 1, 'managed': True}),     # Should be trapped by validator: Illegal input
+    (None, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),  # Dynamic, max nfsd via calculation is 32
+    (-1, 48, {'nfsd': 32, 'mountd': 8, 'managed': True}),    # -1 is a flag to set bindip and confirm 'managed' stays True
+])
+def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     """
     This test verifies that service can be updated in general,
     and also that the 'servers' key can be altered.
     Latter goal is achieved by reading the nfs config file
     and verifying that the value here was set correctly.
+
+    Update:
+    The default setting for 'servers' is 0. This specifies that we dynamically
+    determine the number of nfsd to start based on the capabilities of the system.
+    In this state, we choose one nfsd for each CPU core.
+    The user can override the dynamic calculation by specifying a
+    number greater than zero.
+
+    The number of mountd will be 1/4 the number of nfsd.
     """
-    results = PUT("/nfs/", {"servers": "50"})
-    assert results.status_code == 200, results.text
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
 
-    s = parse_server_config()
-    assert int(s['nfsd']['threads']) == 50, str(s)
-    assert int(s['mountd']['threads']) == 50, str(s)
+    with mock("system.cpu_info", return_value={"core_count": cores}):
 
-    confirm_nfsd_processes(50)
-    confirm_mountd_processes(50)
-    confirm_rpc_processes()
+        # Use 0 as 'null' flag
+        if nfsd is None or nfsd in range(1, 257):
+            call("nfs.update", {"servers": nfsd})
+
+            s = parse_server_config()
+            assert int(s['nfsd']['threads']) == expected['nfsd'], str(s)
+            assert int(s['mountd']['threads']) == expected['mountd'], str(s)
+
+            confirm_nfsd_processes(expected['nfsd'])
+            confirm_mountd_processes(expected['mountd'])
+            confirm_rpc_processes()
+
+            # In all passing cases, the 'servers' field represents the number of expected nfsd
+            nfs_conf = call("nfs.config")
+            assert nfs_conf['servers'] == expected['nfsd']
+            assert nfs_conf['managed_nfsd'] == expected['managed']
+        else:
+            if nfsd == -1:
+                # We know apriori that the current state is managed_nfsd == True
+                with nfs_config():
+                    # Test making change to non-'server' setting does not change managed_nfsd
+                    call("nfs.update", {"bindip": [ip]})
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+            else:
+                with pytest.raises(ValidationErrors) as ve:
+                    assert call("nfs.config")['managed_nfsd'] == expected['managed']
+                    call("nfs.update", {"servers": nfsd})
+
+                assert ve.value.errors == [ValidationError('nfs_update.servers', 'Should be between 1 and 256', 22)]
 
 
 def test_20_update_nfs_share(request):
@@ -1006,6 +1052,7 @@ def test_40_check_nfs_service_udp_parameter(request):
     This test verifies that toggling the `udp` option generates expected changes
     in nfs kernel server config.
     """
+    depends(request, ["NFS_SERVICE_STARTED"], scope="session")
     with nfs_config():
         get_payload = {'msg': 'method', 'method': 'nfs.config', 'params': []}
         set_payload = {'msg': 'method', 'method': 'nfs.update', 'params': []}
@@ -1088,12 +1135,14 @@ def test_42_check_nfs_client_status(request):
 def test_43_check_nfsv4_acl_support(request):
     """
     This test validates reading and setting NFSv4 ACLs through an NFSv4
-    mount in the following manner:
+    mount in the following manner for NFSv4.2, NFSv4.1 & NFSv4.0:
     1) Create and locally mount an NFSv4 share on the TrueNAS server
     2) Iterate through all possible permissions options and set them
        via an NFS client, read back through NFS client, and read resulting
        ACL through the filesystem API.
-    3) Repeate same process for each of the supported flags.
+    3) Repeat same process for each of the supported ACE flags.
+    4) For NFSv4.1 or NFSv4.2, repeat same process for each of the
+       supported acl_flags.
     """
     acl_nfs_path = f'/mnt/{pool_name}/test_nfs4_acl'
     test_perms = {
@@ -1119,57 +1168,82 @@ def test_43_check_nfsv4_acl_support(request):
         "NO_PROPAGATE_INHERIT": False,
         "INHERITED": False
     }
-    theacl = [
-        {"tag": "owner@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "group@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "everyone@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "USER", "id": 65534, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
-        {"tag": "GROUP", "id": 666, "perms": test_perms.copy(), "flags": test_flags.copy(), "type": "ALLOW"},
-    ]
-    with nfs_dataset("test_nfs4_acl", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}, theacl):
-        with nfs_share(acl_nfs_path):
-            with SSH_NFS(ip, acl_nfs_path, vers=4, user=user, password=password, ip=ip) as n:
-                nfsacl = n.getacl(".")
-                for idx, ace in enumerate(nfsacl):
-                    assert ace == theacl[idx], str(ace)
-
-                for perm in test_perms.keys():
-                    if perm == 'SYNCHRONIZE':
-                        # break in SYNCHRONIZE because Linux tool limitation
-                        break
-
-                    theacl[4]['perms'][perm] = False
-                    n.setacl(".", theacl)
+    for (version, test_acl_flag) in [(4, True), (4.1, True), (4.0, False)]:
+        theacl = [
+            {"tag": "owner@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "group@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "everyone@", "id": -1, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "USER", "id": 65534, "perms": test_perms, "flags": test_flags, "type": "ALLOW"},
+            {"tag": "GROUP", "id": 666, "perms": test_perms.copy(), "flags": test_flags.copy(), "type": "ALLOW"},
+        ]
+        with nfs_dataset("test_nfs4_acl", {"acltype": "NFSV4", "aclmode": "PASSTHROUGH"}, theacl):
+            with nfs_share(acl_nfs_path):
+                with SSH_NFS(ip, acl_nfs_path, vers=version, user=user, password=password, ip=ip) as n:
                     nfsacl = n.getacl(".")
                     for idx, ace in enumerate(nfsacl):
                         assert ace == theacl[idx], str(ace)
 
-                    payload = {
-                        'path': acl_nfs_path,
-                        'simplified': False
-                    }
-                    result = POST('/filesystem/getacl/', payload)
-                    assert result.status_code == 200, result.text
+                    for perm in test_perms.keys():
+                        if perm == 'SYNCHRONIZE':
+                            # break in SYNCHRONIZE because Linux tool limitation
+                            break
 
-                    for idx, ace in enumerate(result.json()['acl']):
-                        assert ace == nfsacl[idx], str(ace)
+                        theacl[4]['perms'][perm] = False
+                        n.setacl(".", theacl)
+                        nfsacl = n.getacl(".")
+                        for idx, ace in enumerate(nfsacl):
+                            assert ace == theacl[idx], str(ace)
 
-                for flag in ("INHERIT_ONLY", "NO_PROPAGATE_INHERIT"):
-                    theacl[4]['flags'][flag] = True
-                    n.setacl(".", theacl)
-                    nfsacl = n.getacl(".")
-                    for idx, ace in enumerate(nfsacl):
-                        assert ace == theacl[idx], str(ace)
+                        payload = {
+                            'path': acl_nfs_path,
+                            'simplified': False
+                        }
+                        result = POST('/filesystem/getacl/', payload)
+                        assert result.status_code == 200, result.text
 
-                    payload = {
-                        'path': acl_nfs_path,
-                        'simplified': False
-                    }
-                    result = POST('/filesystem/getacl/', payload)
-                    assert result.status_code == 200, result.text
+                        for idx, ace in enumerate(result.json()['acl']):
+                            assert ace == nfsacl[idx], str(ace)
 
-                    for idx, ace in enumerate(result.json()['acl']):
-                        assert ace == nfsacl[idx], str(ace)
+                    for flag in ("INHERIT_ONLY", "NO_PROPAGATE_INHERIT"):
+                        theacl[4]['flags'][flag] = True
+                        n.setacl(".", theacl)
+                        nfsacl = n.getacl(".")
+                        for idx, ace in enumerate(nfsacl):
+                            assert ace == theacl[idx], str(ace)
+
+                        payload = {
+                            'path': acl_nfs_path,
+                            'simplified': False
+                        }
+                        result = POST('/filesystem/getacl/', payload)
+                        assert result.status_code == 200, result.text
+
+                        for idx, ace in enumerate(result.json()['acl']):
+                            assert ace == nfsacl[idx], str(ace)
+                    if test_acl_flag:
+                        assert 'none' == n.getaclflag(".")
+                        for acl_flag in ['auto-inherit', 'protected', 'defaulted']:
+                            n.setaclflag(".", acl_flag)
+                            assert acl_flag == n.getaclflag(".")
+                            payload = {
+                                'path': acl_nfs_path,
+                                'simplified': False
+                            }
+                            result = POST('/filesystem/getacl/', payload)
+                            assert result.status_code == 200, result.text
+                            # Normalize the flag_is_set name for comparision to plugin equivalent
+                            # (just remove the '-' from auto-inherit)
+                            if acl_flag == 'auto-inherit':
+                                flag_is_set = 'autoinherit'
+                            else:
+                                flag_is_set = acl_flag
+                            # Now ensure that only the expected flag is set
+                            nfs41_flags = result.json()['nfs41_flags']
+                            for flag in ['autoinherit', 'protected', 'defaulted']:
+                                if flag == flag_is_set:
+                                    assert nfs41_flags[flag], nfs41_flags
+                                else:
+                                    assert not nfs41_flags[flag], nfs41_flags
 
 
 def test_44_check_nfs_xattr_support(request):
@@ -1263,6 +1337,53 @@ def test_46_set_bind_ip():
         assert ip in rpc_conf.get('-h'), f"rpc_conf = {rpc_conf}"
 
 
+def test_48_syslog_filters(request):
+    """
+    This test checks the function of the mountd_log setting to filter
+    rpc.mountd messages that have priority DEBUG to NOTICE.
+    We performing loopback mounts on the remote TrueNAS server and
+    then check the syslog for rpc.mountd messages.  Outside of SSH_NFS
+    we test the umount case.
+    """
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+    with nfs_config():
+
+        # The effect is much more clear if there are many mountd.
+        # We can force this by configuring many nfsd
+        call("nfs.update", {"servers": 24})
+
+        # Confirm default setting: mountd logging enabled
+        call("nfs.update", {"mountd_log": True})
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            num_tries = 5
+            found = False
+            res = ""
+            while not found and num_tries > 0:
+                res = ssh("tail -5 /var/log/syslog")
+                if "rpc.mountd" in res:
+                    found = True
+                    break
+                num_tries -= 1
+                sleep(1)
+
+            assert found, f"Expected to find 'rpc.mountd' in the output but found:\n{res}"
+
+        # NOTE: Additional mountd messages will get logged on unmount at the exit of the 'with'
+
+        # Disable mountd logging
+        call("nfs.update", {"mountd_log": False})
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            # wait a few seconds to make sure syslog has a chance to flush log messages
+            sleep(3)
+            res = ssh("tail -5 /var/log/syslog")
+            assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
+
+        # Get a second chance to catch mountd messages on the umount.  They should not be present.
+        sleep(3)
+        res = ssh("tail -5 /var/log/syslog")
+        assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
+
+
 def test_50_stoping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
@@ -1324,22 +1445,23 @@ def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
         results = SSH_TEST("rm -f /etc/exports", user, password, ip)
     assert results['result'] is True
 
-    # Start NFS
-    payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
-    res = make_ws_request(ip, payload)
-    assert res['result'] is True, f"Expected start success: {res}"
-    sleep(1)
-    confirm_nfsd_processes(16)
+    with nfs_config() as nfs_conf:
+        # Start NFS
+        payload = {'msg': 'method', 'method': 'service.start', 'params': ['nfs']}
+        res = make_ws_request(ip, payload)
+        assert res['result'] is True, f"Expected start success: {res}"
+        sleep(1)
+        confirm_nfsd_processes(nfs_conf['servers'])
 
-    # Return NFS to stopped condition
-    payload = {"service": "nfs"}
-    results = POST("/service/stop/", payload)
-    assert results.status_code == 200, results.text
-    sleep(1)
+        # Return NFS to stopped condition
+        payload = {"service": "nfs"}
+        results = POST("/service/stop/", payload)
+        assert results.status_code == 200, results.text
+        sleep(1)
 
-    # Confirm stopped
-    results = GET("/service?service=nfs")
-    assert results.json()[0]["state"] == "STOPPED", results.text
+        # Confirm stopped
+        results = GET("/service?service=nfs")
+        assert results.json()[0]["state"] == "STOPPED", results.text
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])

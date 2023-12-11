@@ -98,6 +98,7 @@ def test_08_verify_ldap_enable_is_true(request):
     depends(request, ["setup_ldap"], scope="session")
     results = GET("/ldap/")
     assert results.json()["enable"] is True, results.text
+    assert results.json()["server_type"] == "OPENLDAP"
 
 
 def test_09_account_privilege_authentication(request):
@@ -113,7 +114,7 @@ def test_09_account_privilege_authentication(request):
             "allowlist": [{"method": "CALL", "resource": "system.info"}],
             "web_shell": False,
         }):
-            with client(auth=(f"{LDAPUSER}@", LDAPPASSWORD)) as c:
+            with client(auth=(LDAPUSER, LDAPPASSWORD)) as c:
                 methods = c.call("core.get_methods")
 
             assert "system.info" in methods

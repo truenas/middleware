@@ -14,21 +14,44 @@ class Role:
 
     includes: [str] = field(default_factory=list)
     full_admin: bool = False
+    builtin: bool = True
 
 
 ROLES = {
+    'AUTH_SESSIONS_READ': Role(),
+    'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
     'FILESYSTEM_DATA_READ': Role(),
     'FILESYSTEM_DATA_WRITE': Role(includes=['FILESYSTEM_DATA_READ']),
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
+    'REPORTING_READ': Role(),
 
-    'FULL_ADMIN': Role(full_admin=True),
-    'READONLY': Role(includes=['ALERT_LIST_READ', 'FILESYSTEM_ATTRS_READ', 'NETWORK_GENERAL_READ']),
+    'FULL_ADMIN': Role(full_admin=True, builtin=False),
+    'READONLY': Role(includes=['ALERT_LIST_READ',
+                               'AUTH_SESSIONS_READ',
+                               'CLOUD_SYNC_READ',
+                               'DATASET_READ',
+                               'FILESYSTEM_ATTRS_READ',
+                               'NETWORK_GENERAL_READ',
+                               'SHARING_READ',
+                               'KEYCHAIN_CREDENTIAL_READ',
+                               'REPORTING_READ',
+                               'REPLICATION_TASK_CONFIG_READ',
+                               'REPLICATION_TASK_READ',
+                               'SERVICE_READ',
+                               'SNAPSHOT_TASK_READ'],
+                     builtin=False),
 
     # Alert roles
     'ALERT_LIST_READ': Role(),
+
+    'CLOUD_SYNC_READ': Role(),
+    'CLOUD_SYNC_WRITE': Role(includes=['CLOUD_SYNC_READ']),
+
+    'SERVICE_READ': Role(),
+    'SERVICE_WRITE': Role(),
 
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
@@ -101,11 +124,14 @@ ROLES = {
                                           'REPLICATION_TASK_CONFIG_WRITE',
                                           'REPLICATION_TASK_WRITE',
                                           'SNAPSHOT_TASK_WRITE',
-                                          'SNAPSHOT_WRITE']),
+                                          'SNAPSHOT_WRITE'],
+                                builtin=False),
 
     'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
                                       'SHARING_WRITE',
-                                      'FILESYSTEM_ATTRS_WRITE'])
+                                      'FILESYSTEM_ATTRS_WRITE',
+                                      'SERVICE_READ'],
+                            builtin=False)
 }
 
 

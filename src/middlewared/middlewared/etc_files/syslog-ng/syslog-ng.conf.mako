@@ -59,6 +59,7 @@ def generate_syslog_remote_destination(advanced_config):
         result += f'{transport}("{host}" port({port}) localport(514));'
 
     result += ' };\n'
+    result += 'log { source(tn_remote_src_files); filter(f_tnremote); destination(loghost); };\n'
     result += 'log { source(s_src); filter(f_tnremote); destination(loghost); };\n'
 
     return result
@@ -86,6 +87,13 @@ options {
 # DEFAULT SOURCES
 ##################
 source s_src { system(); internal(); };
+
+source tn_remote_src_files {
+  file("/var/log/middlewared.log");
+  file("/var/log/failover.log");
+  file("/var/log/fenced.log");
+  file("/var/log/zettarepl.log");
+};
 
 ##################
 # filters

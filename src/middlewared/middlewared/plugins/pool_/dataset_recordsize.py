@@ -29,7 +29,7 @@ class PoolDatasetService(Service):
         (1 << 24, '16M'),
     ]
 
-    @accepts(Str('pool_name', default=None, null=True))
+    @accepts(Str('pool_name', default=None, null=True), roles=['DATASET_READ'])
     @returns(List(items=[Str('recordsize_value')]))
     def recordsize_choices(self, pool_name):
         """

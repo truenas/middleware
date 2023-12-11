@@ -50,7 +50,8 @@ class PoolDatasetService(Service):
                     )
                 ],
             ),
-        )
+        ),
+        roles=['DATASET_READ']
     )
     @returns(List(items=[Dict(
         'dataset_encryption_summary',

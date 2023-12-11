@@ -20,24 +20,6 @@ def firstboot(middleware):
             config = middleware.call_sync('datastore.config', 'system.advanced')
             middleware.call_sync('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
 
-        # Creating pristine boot environment from the "default"
-        initial_install_be = 'Initial-Install'
-        middleware.logger.info('Creating %r boot environment...', initial_install_be)
-        activated_be = middleware.call_sync('bootenv.query', [['activated', '=', True]], {'get': True})
-        try:
-            middleware.call_sync('bootenv.create', {'name': initial_install_be, 'source': activated_be['realname']})
-        except Exception:
-            middleware.logger.error('Failed to create initial boot environment', exc_info=True)
-        else:
-            boot_pool = middleware.call_sync('boot.pool_name')
-            cp = subprocess.run(
-                ['zfs', 'set', 'zectl:keep=True', os.path.join(boot_pool, 'ROOT/Initial-Install')], capture_output=True
-            )
-            if cp.returncode != 0:
-                middleware.logger.error(
-                    'Failed to set keep attribute for Initial-Install boot environment: %s', cp.stderr.decode()
-                )
-
 
 async def setup(middleware):
     lifecycle_conf.SYSTEM_BOOT_ID = str(uuid.uuid4())

@@ -36,6 +36,7 @@ class SMBService(Service):
             Bool('fast', default=False),
             Str('restrict_user', default=''),
             Str('restrict_session', default=''),
+            Bool('resolve_uids', default=True),
         ), roles=['SHARING_SMB_WRITE']
     )
     def status(self, info_level, filters, options, status_options):
@@ -91,6 +92,9 @@ class SMBService(Service):
 
         if status_options['restrict_session']:
             statuscmd.extend(['-s', status_options['restrict_session']])
+
+        if status_options['resolve_uids']:
+            statuscmd.append('--resolve-uids')
 
         smbstatus = subprocess.run(statuscmd, capture_output=True)
 

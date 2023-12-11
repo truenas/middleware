@@ -409,7 +409,7 @@ class SMBService(Service):
 
     @private
     @job(lock="groupmap_sync")
-    async def synchronize_group_mappings(self, job):
+    async def synchronize_group_mappings(self, job, bypass_sentinel_check=False):
         """
         This method does the following:
         1) prepares payload for a batch groupmap operation. These are added to two arrays:
@@ -427,6 +427,12 @@ class SMBService(Service):
 
         if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
             return
+
+        if not bypass_sentinel_check and not await self.middleware.call('smb.is_configured'):
+            raise CallError(
+                "SMB server configuration is not complete. "
+                "This may indicate system dataset setup failure."
+            )
 
         groupmap = await self.groupmap_list()
         must_remove_cache = False
