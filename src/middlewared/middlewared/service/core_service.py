@@ -543,11 +543,19 @@ class CoreService(Service):
         """
         return 'pong'
 
-    def _ping_host(self, host, timeout):
-        return run(['ping', '-4', '-w', f'{timeout}', host]).returncode == 0
-
-    def _ping6_host(self, host, timeout):
-        return run(['ping6', '-w', f'{timeout}', host]).returncode == 0
+    def _ping_host(self, version, host, timeout, count=None, interface=None, interval=None):
+        if version == 4:
+            command = ['ping', '-4', '-w', f'{timeout}']
+        elif version == 6:
+            command = ['ping6', '-w', f'{timeout}']
+        if count:
+            command.extend(['-c', str(count)])
+        if interface:
+            command.extend(['-I', interface])
+        if interval:
+            command.extend(['-i', interval])
+        command.append(host)
+        return run(command).returncode == 0
 
     @accepts(
         Dict(
@@ -555,6 +563,9 @@ class CoreService(Service):
             Str('type', enum=['ICMP', 'ICMPV4', 'ICMPV6'], default='ICMP'),
             Str('hostname', required=True),
             Int('timeout', validators=[Range(min_=1, max_=60)], default=4),
+            Int('count', default=None),
+            Str('interface', default=None),
+            Str('interval', default=None),
         ),
     )
     def ping_remote(self, options):
@@ -601,12 +612,39 @@ class CoreService(Service):
         verrors.check()
 
         ping_host = False
-        if addr.version == 4:
-            ping_host = self._ping_host(ip, options['timeout'])
-        elif addr.version == 6:
-            ping_host = self._ping6_host(ip, options['timeout'])
+        if addr.version in [4, 6]:
+            ping_host = self._ping_host(addr.version, ip, options['timeout'], options.get('count'), options.get('interface'), options.get('interval'))
 
         return ping_host
+
+    @accepts(
+        Dict(
+            'options',
+            Str('ip', default=None),
+            Str('interface', default=None),
+        ),
+    )
+    def arp(self, options):
+        arp_command = ['arp', '-n']
+        if interface := options.get('interface'):
+            arp_command.extend(['-i', interface])
+        rv = run(arp_command, capture_output=True)
+        search_ip = options.get('ip')
+        result = {}
+        for line in rv.stdout.decode().strip().splitlines():
+            sline = line.split()
+            try:
+                line_ip = str(ipaddress.ip_address(sline[0]))
+            except ValueError:
+                continue
+            if sline[1] != 'ether':
+                continue
+            if search_ip:
+                if line_ip == search_ip:
+                    result[line_ip] = sline[2]
+            else:
+                result[line_ip] = sline[2]
+        return result
 
     @accepts(
         Str('method'),
