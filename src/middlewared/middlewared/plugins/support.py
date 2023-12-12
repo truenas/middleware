@@ -195,6 +195,12 @@ class SupportService(ConfigService):
 
         For SCALE `criticality`, `environment`, `phone`, `name` and `email` attributes are not required.
         For SCALE Enterprise `token` attribute is not required.
+
+        `debug_extra` is an array of extra files that will be added to the debug:
+        {
+            "directory/file name 1": "file 1 contents",
+            "directory/file name 2": "file 2 contents",
+        }
         """
 
         await self.middleware.call('network.general.will_perform_activity', 'support')

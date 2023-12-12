@@ -74,6 +74,12 @@ class SystemService(Service):
     def debug(self, job, options):
         """
         Download a debug file.
+
+        `extra` is an array of extra files that will be added to the debug:
+        {
+            "directory/file name 1": "file 1 contents",
+            "directory/file name 2": "file 2 contents",
+        }
         """
         job.set_progress(0, 'Generating debug file')
         debug_job = self.middleware.call_sync(
