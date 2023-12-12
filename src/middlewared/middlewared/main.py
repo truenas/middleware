@@ -8,7 +8,7 @@ from .pipe import Pipes, Pipe
 from .restful import parse_credentials, authenticate, create_application, copy_multipart_to_pipe, RESTfulAPI
 from .role import ROLES, RoleManager
 from .settings import conf
-from .schema import clean_and_validate_arg, Error as SchemaError
+from .schema import clean_and_validate_arg, Error as SchemaError, OROperator
 import middlewared.service
 from .service_exception import (
     adapt_exception, CallError, CallException, ErrnoMixin, MatchNotFound, ValidationError, ValidationErrors,
@@ -1461,7 +1461,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             if app.authenticated_credentials:
                 if app.authenticated_credentials.has_role("READONLY"):
                     if hasattr(methodobj, "returns") and methodobj.returns:
-                        result = methodobj.returns[0].dump(result)
+                        schema = methodobj.returns[0]
+                        if isinstance(schema, OROperator):
+                            result = schema.dump(result, False)
+                        else:
+                            result = schema.dump(result)
         finally:
             await self.log_audit_message_for_method(method, methodobj, params, app, True, True, success,
                                                     audit_callback_messages)

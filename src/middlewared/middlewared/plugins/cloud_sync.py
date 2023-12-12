@@ -719,6 +719,15 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         cli_namespace = "task.cloud_sync"
         role_prefix = "CLOUD_SYNC"
 
+    ENTRY = Patch(
+        'cloud_sync_create',
+        'cloud_sync_entry',
+        ('add', Int('id')),
+        ("replace", Dict("credentials", additional_attrs=True, private_keys=["attributes"])),
+        ("add", Dict("job", null=True)),
+        ("add", Bool("locked")),
+    )
+
     @private
     async def extend_context(self, rows, extra):
         return {

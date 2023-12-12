@@ -3,7 +3,7 @@ import contextlib
 import pytest
 
 from middlewared.test.integration.assets.account import unprivileged_user_client
-from middlewared.test.integration.assets.cloud_sync import local_ftp_credential
+from middlewared.test.integration.assets.cloud_sync import local_ftp_credential, local_ftp_task
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.utils import call
 
@@ -28,6 +28,12 @@ def cloudsync_credential():
 
 
 @contextlib.contextmanager
+def cloudsync():
+    with local_ftp_task() as task:
+        yield task["id"]
+
+
+@contextlib.contextmanager
 def disk():
     disks = call("disk.query")
     yield disks[0]["identifier"]
@@ -42,6 +48,7 @@ def keychaincredential():
 @pytest.mark.parametrize("how", ["multiple", "single", "get_instance"])
 @pytest.mark.parametrize("service,id,options,redacted_fields", (
     ("cloudsync.credentials", cloudsync_credential, {}, ["attributes"]),
+    ("cloudsync", cloudsync, {}, ["credentials.attributes", "encryption_password"]),
     ("disk", disk, {"extra": {"passwords": True}}, ["passwd"]),
     ("keychaincredential", keychaincredential, {}, ["attributes"]),
     ("user", 1, {}, ["unixhash", "smbhash"]),
@@ -60,7 +67,11 @@ def test_crud(readonly_client, how, service, id, options, redacted_fields):
             assert False
 
         for k in redacted_fields:
-            assert result[k] == REDACTED
+            obj = result
+            for path in k.split("."):
+                obj = obj[path]
+
+            assert obj == REDACTED, (k, obj, REDACTED)
 
 
 @pytest.mark.parametrize("service,redacted_fields", (
