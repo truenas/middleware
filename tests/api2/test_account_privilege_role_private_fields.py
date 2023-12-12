@@ -3,6 +3,7 @@ import contextlib
 import pytest
 
 from middlewared.test.integration.assets.account import unprivileged_user_client
+from middlewared.test.integration.assets.cloud_sync import local_ftp_credential
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.utils import call
 
@@ -21,6 +22,12 @@ def wrap(id):
 
 
 @contextlib.contextmanager
+def cloudsync_credential():
+    with local_ftp_credential() as credential:
+        yield credential["id"]
+
+
+@contextlib.contextmanager
 def disk():
     disks = call("disk.query")
     yield disks[0]["identifier"]
@@ -34,9 +41,10 @@ def keychaincredential():
 
 @pytest.mark.parametrize("how", ["multiple", "single", "get_instance"])
 @pytest.mark.parametrize("service,id,options,redacted_fields", (
+    ("cloudsync.credentials", cloudsync_credential, {}, ["attributes"]),
     ("disk", disk, {"extra": {"passwords": True}}, ["passwd"]),
-    ("user", 1, {}, ["unixhash", "smbhash"]),
     ("keychaincredential", keychaincredential, {}, ["attributes"]),
+    ("user", 1, {}, ["unixhash", "smbhash"]),
 ))
 def test_crud(readonly_client, how, service, id, options, redacted_fields):
     identifier = "id" if service != "disk" else "identifier"

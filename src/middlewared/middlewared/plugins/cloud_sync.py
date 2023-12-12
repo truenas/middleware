@@ -575,6 +575,12 @@ class CredentialsService(CRUDService):
 
         role_prefix = "CLOUD_SYNC"
 
+    ENTRY = Patch(
+        "cloud_sync_credentials_create",
+        "cloud_sync_credentials_entry",
+        ("add", Int("id")),
+    )
+
     @accepts(Dict(
         "cloud_sync_credentials_verify",
         Str("provider", required=True),
@@ -602,7 +608,7 @@ class CredentialsService(CRUDService):
         "cloud_sync_credentials_create",
         Str("name", required=True),
         Str("provider", required=True),
-        Dict("attributes", additional_attrs=True, required=True),
+        Dict("attributes", additional_attrs=True, required=True, private=True),
         register=True,
     ))
     async def do_create(self, data):
