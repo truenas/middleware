@@ -1,5 +1,6 @@
 import asyncio
 import errno
+import os
 
 from collections import defaultdict
 
@@ -66,6 +67,13 @@ class ChartReleaseService(Service):
                 raise CallError(
                     f'{release_name!r} cannot be started as it is consuming following host path(s) '
                     f'which are locked: {", ".join(release["resources"]["locked_host_paths"])}'
+                )
+            elif non_existent_host_paths := [path for path in release['resources']['host_path_volumes'] if not (
+                await self.middleware.run_in_thread(os.path.exists, path)
+            )]:
+                raise CallError(
+                    f'{release_name!r} cannot be started as it is consuming following host path(s) '
+                    f'which don\'t exist: {", ".join(non_existent_host_paths)}'
                 )
 
             # We redeploy the chart to re-create the services/cronjobs which we had deleted
