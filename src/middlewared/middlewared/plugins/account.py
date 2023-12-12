@@ -243,12 +243,6 @@ class UserService(CRUDService):
         else:
             user['password_history'] = []
 
-
-        if user['last_password_change'] not in (None, 0):
-            user['password_age'] = (ctx['now'] - entry['last_password_change']).days
-        else:
-            user['password_age'] = None
-
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
         user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
         for key in ['last_password_change', 'account_expiration_date']:
@@ -256,6 +250,11 @@ class UserService(CRUDService):
                 continue
 
             user[key] = datetime.fromtimestamp(user[key] * 86400)
+
+        if user['last_password_change'] not in (None, 0):
+            user['password_age'] = (ctx['now'] - user['last_password_change']).days
+        else:
+            user['password_age'] = None
 
         user_roles = set()
         for g in user['groups'] + [user['group']['id']]:
@@ -560,7 +559,7 @@ class UserService(CRUDService):
         Bool('password_aging_enabled', default=False),
         Bool('password_change_required', default=False),
         Int('min_password_age', default=0),
-        Int('max_password_age', default=0),
+        Int('max_password_age', default=None),
         Int('password_warn_period', default=None, null=True),
         Int('password_inactivity_period', default=None, null=True),
         Datetime('account_expiration_date', default=None, null=True),
@@ -666,6 +665,9 @@ class UserService(CRUDService):
                 raise
 
         pk = None  # Make sure pk exists to rollback in case of an error
+        if not data.get('password_disabled'):
+            data['last_password_change'] = datetime.utcnow()
+
         data = self.user_compress(data)
         try:
             self.__set_password(data)
@@ -1638,7 +1640,7 @@ class UserService(CRUDService):
                     f'configured minimum password age {entry["min_password_age"]} for this '
                     'user account.'
                 )
-            entry['password_history'].append(new_hash)
+            entry['password_history'].append(entry['unixhash'])
             while len(entry['password_history']) > PASSWORD_HISTORY_LEN:
                 entry['password_history'].pop(0)
 

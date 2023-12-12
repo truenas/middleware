@@ -29,7 +29,7 @@
         outstr = ''
         if user['last_password_change'] is not None:
             outstr += str(convert_to_days(user['last_password_change']))
-        if user['password_change_required']:
+        elif user['password_change_required']:
             outstr += '0'
         outstr += ':'
 
