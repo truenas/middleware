@@ -930,31 +930,75 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
     we append "insecure" to each exports line.
     Since this is a global option, it triggers an nfsd restart
     even though it's not technically required.
+    Linux will, by default, mount using a priviledged port (1..1023)
+    MacOS NFS mounts do not follow this 'standard' behavior.
 
     Sample:
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,insecure,no_subtree_check)
     """
 
+    def get_client_nfs_port():
+        '''
+        Output from netstat -nt looks like:
+            tcp        0      0 127.0.0.1:50664         127.0.0.1:6000          ESTABLISHED
+        The client port is the number after the ':' in the 5th column
+        '''
+        rv = (None, None)
+        res = ssh("netstat -nt")
+        for line in str(res).splitlines():
+            # The server will listen on port 2049
+            if f"{ip}:2049" in line.split()[3]:
+                rv = (line, line.split()[4].split(':')[1])
+        return rv
+
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+
     # Verify that NFS server configuration is as expected
-    results = GET("/nfs")
-    assert results.status_code == 200, results.text
-    assert results.json()['allow_nonroot'] is False, results.text
+    with nfs_config() as nfs_conf_orig:
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
+        # --- Test: allow_nonroot is False
+        assert nfs_conf_orig['allow_nonroot'] is False, nfs_conf_orig
 
-    results = PUT("/nfs/", {"allow_nonroot": True})
-    assert results.status_code == 200, results.text
+        # Confirm setting in /etc/exports
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-    parsed = parse_exports()
-    assert len(parsed) == 1, str(parsed)
-    assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
+        # Confirm we allow mounts from 'root' ports
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            client_port = get_client_nfs_port()
+            assert client_port[1] is not None, f"Failed to get client port: f{client_port[0]}"
+            assert int(client_port[1]) < 1024, \
+                f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
 
-    results = PUT("/nfs/", {"allow_nonroot": False})
-    assert results.status_code == 200, results.text
+        # Confirm we block mounts from 'non-root' ports
+        with pytest.raises(RuntimeError) as re:
+            with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
+                         user=user, password=password, ip=ip):
+                pass
+            # We should not get to this assert
+            assert False, "Unexpected success with mount"
+        assert 'Operation not permitted' in str(re), re
 
+        # --- Test: allow_nonroot is True
+        new_nfs_conf = call('nfs.update', {"allow_nonroot": True})
+        assert new_nfs_conf['allow_nonroot'] is True, new_nfs_conf
+
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+        # Confirm we allow mounts from 'non-root' ports
+        with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
+                     user=user, password=password, ip=ip):
+
+            client_port = get_client_nfs_port()
+            assert client_port[1] is not None, "Failed to get client port"
+            assert int(client_port[1]) >= 1024, \
+                f"client_port is not in 'non-root' range: {client_port[1]}\n{client_port[0]}"
+
+    # Confirm setting was returned to original state
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
     assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
