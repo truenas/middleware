@@ -172,6 +172,7 @@ class UserService(CRUDService):
         ('add', Bool('builtin')),
         ('add', Bool('id_type_both')),
         ('add', Bool('local')),
+        ('add', Bool('immutable')),
         ('add', Bool('twofactor_auth_configured')),
         ('add', Str('unixhash', private=True)),
         ('add', Str('smbhash', private=True)),
