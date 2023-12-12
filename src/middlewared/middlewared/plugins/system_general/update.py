@@ -111,6 +111,12 @@ class SystemGeneralService(ConfigService):
         if data['ui_port'] == data['ui_httpsport']:
             verrors.add(f'{schema}.ui_port', 'Must be different from "ui_httpsport"')
 
+        if data['ds_auth'] and not await self.middleware.call('system.is_enterprise'):
+            verrors.add(
+                f'{schema}.ds_auth',
+               'Directory services authentication for UI and API access requires an Enterprise license.'
+            )
+
         language = data.get('language')
         system_languages = await self.middleware.call('system.general.language_choices')
         if language not in system_languages.keys():
