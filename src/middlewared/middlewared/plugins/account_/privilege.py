@@ -4,7 +4,11 @@ import errno
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.privilege import privilege_has_webui_access, privileges_group_mapping
+from middlewared.utils.privilege import (
+    LocalAdminGroups,
+    privilege_has_webui_access,
+    privileges_group_mapping
+)
 import middlewared.sqlalchemy as sa
 
 
@@ -125,6 +129,13 @@ class PrivilegeService(CRUDService):
             builtin_privilege = BuiltinPrivileges(new["builtin_name"])
 
             if builtin_privilege == BuiltinPrivileges.LOCAL_ADMINISTRATOR:
+                if LocalAdminGroups.BUILTIN_ADMINISTRATORS not in new["local_groups"]:
+                    verrors.add(
+                        "privilege_update.local_groups",
+                        f"The group {LocalAdminGroups.BUILTIN_ADMINISTRATORS.name.lower()} must be "
+                        "among grantees of the \"Local Administrator\" privilege."
+                    )
+
                 if not await self.middleware.call("group.has_password_enabled_user", new["local_groups"]):
                     verrors.add(
                         "privilege_update.local_groups",
