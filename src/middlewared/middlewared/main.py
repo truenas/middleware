@@ -1457,6 +1457,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
             result = await self._call(method, serviceobj, methodobj, params, app=app,
                                       audit_callback=audit_callback_messages.append, **kwargs)
             success = True
+
+            if app.authenticated_credentials:
+                if app.authenticated_credentials.has_role("READONLY"):
+                    if hasattr(methodobj, "returns") and methodobj.returns:
+                        result = methodobj.returns[0].dump(result)
         finally:
             await self.log_audit_message_for_method(method, methodobj, params, app, True, True, success,
                                                     audit_callback_messages)

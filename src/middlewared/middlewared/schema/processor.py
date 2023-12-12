@@ -38,6 +38,9 @@ def validate_return_type(func, result, schemas):
 
 
 def returns(*schema):
+    if len(schema) > 1:
+        raise ValueError("Multiple schemas for @returns are not allowed")
+
     def returns_internal(f):
         if asyncio.iscoroutinefunction(f):
             async def nf(*args, **kwargs):
