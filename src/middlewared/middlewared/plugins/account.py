@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
+from middlewared.schema import accepts, Bool, Datetime, Dict, Int, List, Password, Patch, returns, Str, LocalUsername
 from middlewared.service import (
     CallError, CRUDService, ValidationErrors, no_auth_required, no_authz_required, pass_app, private, filterable, job
 )
@@ -18,6 +18,7 @@ import crypt
 import errno
 import glob
 import hashlib
+import hmac
 import json
 import os
 import random
@@ -28,12 +29,14 @@ import stat
 import subprocess
 import time
 import warnings
+from datetime import datetime
 from pathlib import Path
 from contextlib import suppress
 
 ADMIN_UID = 950  # When googled, does not conflict with anything
 ADMIN_GID = 950
 SKEL_PATH = '/etc/skel/'
+
 # TrueNAS historically used /nonexistent as the default home directory for new
 # users. The nonexistent directory has caused problems when
 # 1) an admin chooses to create it from shell
@@ -43,6 +46,7 @@ SKEL_PATH = '/etc/skel/'
 LEGACY_DEFAULT_HOME_PATH = '/nonexistent'
 DEFAULT_HOME_PATH = '/var/empty'
 DEFAULT_HOME_PATHS = (DEFAULT_HOME_PATH, LEGACY_DEFAULT_HOME_PATH)
+PASSWORD_HISTORY_LEN = 10
 
 
 def pw_checkname(verrors, attribute, name):
@@ -144,6 +148,15 @@ class UserModel(sa.Model):
     bsdusr_sudo_commands_nopasswd = sa.Column(sa.JSON(list))
     bsdusr_group_id = sa.Column(sa.ForeignKey('account_bsdgroups.id'), index=True)
     bsdusr_email = sa.Column(sa.String(254), nullable=True)
+    bsdusr_password_aging_enabled = sa.Column(sa.Boolean(), default=False)
+    bsdusr_password_change_required = sa.Column(sa.Boolean(), default=False)
+    bsdusr_last_password_change = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_min_password_age = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_max_password_age = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_password_warn_period = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_password_inactivity_period = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_account_expiration_date = sa.Column(sa.Integer(), nullable=True)
+    bsdusr_password_history = sa.Column(sa.EncryptedText(), default=[], nullable=True)
 
 
 class UserService(CRUDService):
@@ -158,7 +171,6 @@ class UserService(CRUDService):
         datastore_prefix = 'bsdusr_'
         cli_namespace = 'account.user'
 
-    # FIXME: Please see if dscache can potentially alter result(s) format, without ad, it doesn't seem to
     ENTRY = Patch(
         'user_create', 'user_entry',
         ('rm', {'name': 'group'}),
@@ -177,6 +189,9 @@ class UserService(CRUDService):
         ('add', Str('nt_name', null=True)),
         ('add', Str('sid', null=True)),
         ('add', List('roles', items=[Str('role')])),
+        ('add', Datetime('last_password_change', null=True)),
+        ('add', Int('password_age', null=True)),
+        ('add', List('password_history', items=[Password('old_hash')], null=True)),
     )
 
     @private
@@ -197,6 +212,7 @@ class UserService(CRUDService):
                 memberships[uid] = [i['group']['id']]
 
         return {
+            'now': datetime.utcnow(),
             'memberships': memberships,
             'user_2fa_mapping': ({
                 entry['user']['id']: bool(entry['secret']) for entry in await self.middleware.call(
@@ -222,9 +238,24 @@ class UserService(CRUDService):
         user['groups'] = ctx['memberships'].get(user['id'], [])
         # Get authorized keys
         user['sshpubkey'] = await self.middleware.run_in_thread(self._read_authorized_keys, user['home'])
+        if user['password_history']:
+            user['password_history'] = user['password_history'].split()
+        else:
+            user['password_history'] = []
+
+
+        if user['last_password_change'] not in (None, 0):
+            user['password_age'] = (ctx['now'] - entry['last_password_change']).days
+        else:
+            user['password_age'] = None
 
         user['immutable'] = user['builtin'] or (user['username'] == 'admin' and user['home'] == '/home/admin')
         user['twofactor_auth_configured'] = bool(ctx['user_2fa_mapping'][user['id']])
+        for key in ['last_password_change', 'account_expiration_date']:
+            if user.get(key) is None:
+                continue
+
+            user[key] = datetime.fromtimestamp(user[key] * 86400)
 
         user_roles = set()
         for g in user['groups'] + [user['group']['id']]:
@@ -252,11 +283,21 @@ class UserService(CRUDService):
             'immutable',
             'home_create',
             'roles',
+            'password_age',
             'twofactor_auth_configured',
         ]
 
         for i in to_remove:
             user.pop(i, None)
+
+        for key in ['last_password_change', 'account_expiration_date']:
+            if user.get(key) is None:
+                continue
+
+            user[key] = int(int(user[key].strftime('%s')) / 86400)
+
+        if user.get('password_history') is not None:
+            user['password_history'] = ' '.join(user['password_history'])
 
         return user
 
@@ -311,10 +352,8 @@ class UserService(CRUDService):
                 ds_users = await self.middleware.call('dscache.query', 'USERS', filters, options.copy())
                 # For AD users, we will not have 2FA attribute normalized so let's do that
                 ad_users_2fa_mapping = await self.middleware.call('auth.twofactor.get_ad_users')
-                for index, user in enumerate(filter(
-                    lambda u: not u['local'] and 'twofactor_auth_configured' not in u, ds_users)
-                ):
-                    ds_users[index]['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
+                for user in ds_users:
+                    user['twofactor_auth_configured'] = bool(ad_users_2fa_mapping.get(user['sid']))
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
@@ -518,6 +557,13 @@ class UserService(CRUDService):
         List('sudo_commands_nopasswd', items=[Str('command', empty=False)]),
         Str('sshpubkey', null=True, max_length=None),
         List('groups', items=[Int('group')]),
+        Bool('password_aging_enabled', default=False),
+        Bool('password_change_required', default=False),
+        Int('min_password_age', default=0),
+        Int('max_password_age', default=0),
+        Int('password_warn_period', default=None, null=True),
+        Int('password_inactivity_period', default=None, null=True),
+        Datetime('account_expiration_date', default=None, null=True),
         register=True,
     ), audit='Create user', audit_extended=lambda data: data["username"])
     @returns(Int('primary_key'))
@@ -692,12 +738,30 @@ class UserService(CRUDService):
         """
 
         user = self.middleware.call_sync('user.get_instance', pk)
+        new_unix_hash = False
+        if (password_aging_enabled := data.get('password_aging_enabled')) is None:
+            password_aging_enabled = user['password_aging_enabled']
+
         if app and app.authenticated_credentials.is_user_session:
             same_user_logged_in = user['username'] == (self.middleware.call_sync('auth.me', app=app))['pw_name']
         else:
             same_user_logged_in = False
 
         verrors = ValidationErrors()
+
+        if data.get('password'):
+            new_unix_hash = True
+            data['last_password_change'] = datetime.utcnow()
+            data['password_change_required'] = False
+            if password_aging_enabled:
+                for hash in user['password_history']:
+                    if hmac.compare_digest(crypt.crypt(data['password'], hash), hash):
+                        verrors.add(
+                            'user_update.password',
+                            'Security configuration for this user account requires a password '
+                            f'that does not match any of the last {PASSWORD_HISTORY_LEN} passwords.'
+                        )
+                        break
 
         if data.get('password_disabled'):
             try:
@@ -866,6 +930,15 @@ class UserService(CRUDService):
         if 'groups' in user:
             groups = user.pop('groups')
             self.__set_groups(pk, groups)
+
+        if password_aging_enabled and new_unix_hash:
+            user['password_history'].append(user['unixhash'])
+            while len(user['password_history']) > PASSWORD_HISTORY_LEN:
+                user['password_history'].pop(0)
+        elif not password_aging_enabled:
+            # Clear out password history since it's not being used and we don't
+            # want to keep around unneeded hashes.
+            user['password_history'] = []
 
         user = self.user_compress(user)
         self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
@@ -1467,6 +1540,8 @@ class UserService(CRUDService):
         * account is not local to the NAS (Active Directory, LDAP, etc)
         * account has password authentication disabled
         * account is locked
+        * password aging for user is enabled and password matches one of last 10 password
+        * password aging is enabled and the user changed password too recently
 
         NOTE: when authenticated session has less than FULL_ADMIN role,
         password changes will be rejected if the payload does not match the
@@ -1544,13 +1619,37 @@ class UserService(CRUDService):
                 f'{username}: user account is locked.'
             )
 
-        verrors.check()
-
         entry = self.__set_password(entry | {'password': password})
+
+        if entry['password_aging_enabled']:
+            for hash in entry['password_history']:
+                if hmac.compare_digest(entry['unixhash'], hash):
+                    verrors.add(
+                        'user.set_password.new_password',
+                        'Security configuration for this user account requires a password '
+                        f'that does not match any of the last {PASSWORD_HISTORY_LEN} passwords.'
+                    )
+                    break
+
+            if entry['password_age'] < entry['min_password_age']:
+                verrors.add(
+                    'user.set_password.username',
+                    f'Current password age of {entry["password_age"]} days is less than the '
+                    f'configured minimum password age {entry["min_password_age"]} for this '
+                    'user account.'
+                )
+            entry['password_history'].append(new_hash)
+            while len(entry['password_history']) > PASSWORD_HISTORY_LEN:
+                entry['password_history'].pop(0)
+
+        verrors.check()
 
         await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
             'bsdusr_unixhash': entry['unixhash'],
             'bsdusr_smbhash': entry['smbhash'],
+            'bsdusr_must_change_password': False,
+            'bsdusr_password_history': ' '.join(entry['password_history']),
+            'bsdusr_last_password_change': datetime.utcnow()
         })
         await self.middleware.call('etc.generate', 'shadow')
 

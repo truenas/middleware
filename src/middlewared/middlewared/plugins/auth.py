@@ -586,7 +586,13 @@ class AuthService(Service):
         else:
             attributes = {}
 
-        return {**user, 'attributes': attributes}
+        if local_acct := await self.middleware.call('user.query', [['name', '=', user['pw_uid']]]):
+            chgpwd = local_acct['password_change_required']
+            chgpwd |= (local_acct['password_age'] > local_acct['max_password_age'])
+        else:
+            chgpwd = False
+
+        return {**user, 'attributes': attributes, 'password_change_required': chgpwd}
 
     @no_authz_required
     @accepts(
