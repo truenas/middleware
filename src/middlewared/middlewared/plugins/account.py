@@ -673,6 +673,8 @@ class UserService(CRUDService):
         try:
             self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
+            if data['password_aging_enabled']:
+                data['password_history'] = data['unixhash']
 
             pk = self.middleware.call_sync('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
             self.middleware.call_sync(
@@ -742,6 +744,7 @@ class UserService(CRUDService):
 
         user = self.middleware.call_sync('user.get_instance', pk)
         new_unix_hash = False
+        orig_hash = user['unixhash']
         if (password_aging_enabled := data.get('password_aging_enabled')) is None:
             password_aging_enabled = user['password_aging_enabled']
 
@@ -935,6 +938,9 @@ class UserService(CRUDService):
             self.__set_groups(pk, groups)
 
         if password_aging_enabled and new_unix_hash:
+            if not user['password_history'] and orig_hash != user['unixhash']:
+                user['password_history'].append(orig_hash)
+
             user['password_history'].append(user['unixhash'])
             while len(user['password_history']) > PASSWORD_HISTORY_LEN:
                 user['password_history'].pop(0)
