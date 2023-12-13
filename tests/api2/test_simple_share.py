@@ -5,6 +5,8 @@ import string
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call
 
 
@@ -37,3 +39,8 @@ def test__smb_simple_share_validation():
         # Another variant of invalid name
         with pytest.raises(ValidationErrors):
             call('sharing.smb.share_precheck', {'name': 'gLobaL'})
+
+        with dataset('test_smb') as ds:
+            with smb_share(f'/mnt/{ds}', 'test_share'):
+                with pytest.raises(ValidationErrors):
+                    call('sharing.smb.share_precheck', {'name': 'test_share'})
