@@ -1,6 +1,5 @@
 import asyncio
 import errno
-import os
 
 from collections import defaultdict
 
@@ -8,7 +7,7 @@ from middlewared.schema import Dict, Int, List, Str, returns
 from middlewared.service import accepts, CallError, job, private, Service
 from middlewared.validators import Range
 
-from .utils import SCALEABLE_RESOURCES
+from .utils import get_non_existent_host_paths, SCALEABLE_RESOURCES
 
 
 class ChartReleaseService(Service):
@@ -68,9 +67,9 @@ class ChartReleaseService(Service):
                     f'{release_name!r} cannot be started as it is consuming following host path(s) '
                     f'which are locked: {", ".join(release["resources"]["locked_host_paths"])}'
                 )
-            elif non_existent_host_paths := [path for path in release['resources']['host_path_volumes'] if not (
-                await self.middleware.run_in_thread(os.path.exists, path)
-            )]:
+            elif non_existent_host_paths := await self.middleware.run_in_thread(
+                get_non_existent_host_paths, release['resources']['host_path_volumes']
+            ):
                 raise CallError(
                     f'{release_name!r} cannot be started as it is consuming following host path(s) '
                     f'which don\'t exist: {", ".join(non_existent_host_paths)}'
