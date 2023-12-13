@@ -58,6 +58,7 @@ class NFS(object):
         self._use_kerberos = kwargs.get('kerberos', False)
         self._ip = kwargs.get('ip')
         self._client_platform = kwargs.get('platform')
+        self._options = kwargs.get('options')
 
     def mount(self):
         raise NotImplementedError
@@ -374,6 +375,8 @@ class SSH_NFS(NFS):
         mnt_opts = f'vers={self._version}'
         if self._use_kerberos:
             mnt_opts += ',sec=krb5'
+        if self._options:
+            mnt_opts += ',' + ','.join(self._options)
 
         cmd = ['mount.nfs', '-o', mnt_opts, f'{self._hostname}:{self._path}', self._localpath]
         do_mount = SSH_TEST(" ".join(cmd), self._mount_user, self._mount_password, self._ip)
