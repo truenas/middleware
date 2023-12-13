@@ -1651,7 +1651,7 @@ class SharingSMBService(SharingService):
             verrors.add(name, 'Sharing root of gluster volume is not permitted.')
 
     @private
-    async def validate_share_name(self, name, schema_name, verrors):
+    async def validate_share_name(self, name, schema_name, verrors, exist_ok=True):
         # Standards for SMB share name are defined in MS-FSCC 2.1.6
         # We are slighly more strict in that blacklist all unicode control characters
         has_control_characters = False
@@ -1672,6 +1672,12 @@ class SharingSMBService(SharingService):
             verrors.add(
                 f'{schema_name}.name', 'Share name contains unicode control characters.'
             )
+
+        if not exist_ok and await self.query([['name', 'C=', name]], {'select': ['name']}):
+            verrors.add(
+                f'{schema_name}.name', 'Share with this name already exists.', errno.EEXIST
+            )
+
 
     @private
     async def validate(self, data, schema_name, verrors, old=None):
@@ -1774,7 +1780,7 @@ class SharingSMBService(SharingService):
                 )
 
         if data.get('name'):
-            await self.validate_share_name(data['name'], 'sharing.smb.share_precheck', verrors)
+            await self.validate_share_name(data['name'], 'sharing.smb.share_precheck', verrors, False)
 
         verrors.check()
 
