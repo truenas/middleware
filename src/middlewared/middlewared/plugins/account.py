@@ -1652,7 +1652,7 @@ class UserService(CRUDService):
             'bsdusr_smbhash': entry['smbhash'],
             'bsdusr_password_change_required': False,
             'bsdusr_password_history': ' '.join(entry['password_history']),
-            'bsdusr_last_password_change': datetime.utcnow()
+            'bsdusr_last_password_change': int(time.time() / 86400)
         })
         await self.middleware.call('etc.generate', 'shadow')
 
