@@ -1649,7 +1649,7 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.update', 'account.bsdusers', entry['id'], {
             'bsdusr_unixhash': entry['unixhash'],
             'bsdusr_smbhash': entry['smbhash'],
-            'bsdusr_must_change_password': False,
+            'bsdusr_password_change_required': False,
             'bsdusr_password_history': ' '.join(entry['password_history']),
             'bsdusr_last_password_change': datetime.utcnow()
         })
