@@ -120,6 +120,10 @@ def normalized_port_value(protocol: str, port: int) -> str:
     return '' if ((protocol == 'http' and port == 80) or (protocol == 'https' and port == 443)) else f':{port}'
 
 
+def get_non_existent_host_paths(paths: list) -> list:
+    return [path for path in paths if not os.path.exists(path)]
+
+
 SCALEABLE_RESOURCES = [
     Resources.DEPLOYMENT,
     Resources.STATEFULSET,
