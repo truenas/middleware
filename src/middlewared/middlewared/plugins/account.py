@@ -289,11 +289,12 @@ class UserService(CRUDService):
         for i in to_remove:
             user.pop(i, None)
 
+        # following keys are stored as days since epoch, c.f. shadow(5) 
         for key in ['last_password_change', 'account_expiration_date']:
             if user.get(key) is None:
                 continue
 
-            user[key] = int(int(user[key].strftime('%s')) / 86400)
+            user[key] = int(int(user[key].timestamp()) / 86400)
 
         if user.get('password_history') is not None:
             user['password_history'] = ' '.join(user['password_history'])
