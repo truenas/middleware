@@ -28,6 +28,9 @@ ROLES = {
                                               'FILESYSTEM_DATA_WRITE']),
     'REPORTING_READ': Role(),
 
+    'SYSTEM_AUDIT_READ': Role(),
+    'SYSTEM_AUDIT_WRITE': Role(),
+
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
                                'AUTH_SESSIONS_READ',
@@ -41,7 +44,8 @@ ROLES = {
                                'REPLICATION_TASK_CONFIG_READ',
                                'REPLICATION_TASK_READ',
                                'SERVICE_READ',
-                               'SNAPSHOT_TASK_READ'],
+                               'SNAPSHOT_TASK_READ',
+                               'SYSTEM_AUDIT_READ'],
                      builtin=False),
 
     # Alert roles

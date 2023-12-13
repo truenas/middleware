@@ -54,6 +54,7 @@ class AuditService(ConfigService):
         datastore = 'system.audit'
         cli_namespace = 'system.audit'
         datastore_extend = 'audit.extend'
+        role_prefix = 'SYSTEM_AUDIT'
 
     ENTRY = Patch(
         'system_audit_update', 'system_audit_config',
@@ -218,7 +219,7 @@ class AuditService(ConfigService):
     @accepts(Patch(
         'audit_query', 'audit_export',
         ('add', Str('export_format', enum=['CSV', 'JSON', 'YAML'], default='JSON')),
-    ))
+    ), roles=['SYSTEM_AUDIT_READ'])
     @returns(Str('audit_file_path'))
     @job()
     def export(self, job, data):
@@ -243,8 +244,12 @@ class AuditService(ConfigService):
         if not (res := self.middleware.call_sync('audit.query', data)):
             raise CallError('No entries were returned by query.', errno.ENOENT)
 
-        # TODO: get username for authenticated user for log
-        target_dir = os.path.join(AUDIT_REPORTS_DIR, 'root')
+        if job.credentials:
+            username = job.credentials.user['username']
+        else:
+            username = 'root'
+
+        target_dir = os.path.join(AUDIT_REPORTS_DIR, username)
         os.makedirs(target_dir, mode=0o700, exist_ok=True)
 
         filename = f'{uuid.uuid4()}.{export_format.lower()}'
