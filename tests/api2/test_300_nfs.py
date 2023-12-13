@@ -933,6 +933,14 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
     Linux will, by default, mount using a priviledged port (1..1023)
     MacOS NFS mounts do not follow this 'standard' behavior.
 
+    Four conditions to test:
+        server:  secure       (e.g. allow_nonroot is False)
+            client: resvport   -> expect to pass.
+            client: noresvport -> expect to fail.
+        server: insecure    (e.g. allow_nonroot is True)
+            client: resvport   -> expect to pass.
+            client: noresvport -> expect to pass
+
     Sample:
     "/mnt/dozer/NFSV4"\
         *(sec=sys,rw,insecure,no_subtree_check)
@@ -948,7 +956,7 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
         res = ssh("netstat -nt")
         for line in str(res).splitlines():
             # The server will listen on port 2049
-            if f"{ip}:2049" in line.split()[3]:
+            if f"{ip}:2049" == line.split()[3]:
                 rv = (line, line.split()[4].split(':')[1])
         return rv
 
@@ -989,10 +997,16 @@ def test_38_check_nfs_allow_nonroot_behavior(request):
         assert len(parsed) == 1, str(parsed)
         assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
 
+        # Confirm we allow mounts from 'root' ports
+        with SSH_NFS(ip, NFS_PATH, vers=4, user=user, password=password, ip=ip):
+            client_port = get_client_nfs_port()
+            assert client_port[1] is not None, "Failed to get client port"
+            assert int(client_port[1]) < 1024, \
+                f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
+
         # Confirm we allow mounts from 'non-root' ports
         with SSH_NFS(ip, NFS_PATH, vers=4, options=['noresvport'],
                      user=user, password=password, ip=ip):
-
             client_port = get_client_nfs_port()
             assert client_port[1] is not None, "Failed to get client port"
             assert int(client_port[1]) >= 1024, \
