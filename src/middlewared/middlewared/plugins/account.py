@@ -1633,7 +1633,7 @@ class UserService(CRUDService):
                     )
                     break
 
-            if entry['password_age'] < (entry['min_password_age'] or 0):
+            if entry['password_age'] is not None and entry['password_age'] < (entry['min_password_age'] or 0):
                 verrors.add(
                     'user.set_password.username',
                     f'Current password age of {entry["password_age"]} days is less than the '
