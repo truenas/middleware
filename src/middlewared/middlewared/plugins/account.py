@@ -1626,7 +1626,7 @@ class UserService(CRUDService):
 
         if entry['password_aging_enabled']:
             for hash in entry['password_history']:
-                if hmac.compare_digest(entry['unixhash'], hash):
+                if hmac.compare_digest(crypt.crypt(data['new_password'], hash), hash):
                     verrors.add(
                         'user.set_password.new_password',
                         'Security configuration for this user account requires a password '
@@ -1634,7 +1634,7 @@ class UserService(CRUDService):
                     )
                     break
 
-            if entry['password_age'] < entry['min_password_age']:
+            if entry['password_age'] < (entry['min_password_age'] or 0):
                 verrors.add(
                     'user.set_password.username',
                     f'Current password age of {entry["password_age"]} days is less than the '
