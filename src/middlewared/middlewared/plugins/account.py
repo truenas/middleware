@@ -673,8 +673,7 @@ class UserService(CRUDService):
         try:
             self.__set_password(data)
             sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
-            if data['password_aging_enabled']:
-                data['password_history'] = data['unixhash']
+            data['password_history'] = data['unixhash']
 
             pk = self.middleware.call_sync('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
             self.middleware.call_sync(
