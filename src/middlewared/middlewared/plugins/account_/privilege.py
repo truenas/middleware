@@ -142,6 +142,13 @@ class PrivilegeService(CRUDService):
                         "None of the members of these groups has password login enabled. At least one grantee of "
                         "the \"Local Administrator\" privilege must have password login enabled."
                     )
+            elif builtin_privilege == BuiltinPrivileges.READONLY:
+                if new["web_shell"]:
+                    verrors.add(
+                        "privilege_update.web_shell",
+                        "Web shell access may not be enabled for the built-in group for "
+                        "read-only administrators."
+                    )
 
         verrors.check()
 
