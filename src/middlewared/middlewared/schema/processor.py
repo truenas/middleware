@@ -64,7 +64,7 @@ def returns(*schema):
     return returns_internal
 
 
-def accepts(*schema, audit=None, audit_extended=None, deprecated=None, roles=None):
+def accepts(*schema, audit=None, audit_callback=False, audit_extended=None, deprecated=None, roles=None):
     """
     `audit` is the message that will be logged to the audit log when the decorated function is called
 
@@ -119,6 +119,8 @@ def accepts(*schema, audit=None, audit_extended=None, deprecated=None, roles=Non
         if f.__code__.co_argcount >= 1 and f.__code__.co_varnames[0] == 'self':
             args_index += 1
         if hasattr(f, '_pass_app'):
+            args_index += 1
+        if audit_callback:
             args_index += 1
         if hasattr(f, '_job'):
             args_index += 1
@@ -191,6 +193,7 @@ def accepts(*schema, audit=None, audit_extended=None, deprecated=None, roles=Non
         if hasattr(func, 'returns'):
             nf.returns = func.returns
         nf.audit = audit
+        nf.audit_callback = audit_callback
         nf.audit_extended = audit_extended
         nf.roles = roles or []
         nf.wraps = f

@@ -683,15 +683,19 @@ class UserService(CRUDService):
             ('attr', {'update': True}),
             ('rm', {'name': 'group_create'}),
         ),
+        audit='Update user',
+        audit_callback=True,
     )
     @returns(Int('primary_key'))
     @pass_app()
-    def do_update(self, app, pk, data):
+    def do_update(self, app, audit_callback, pk, data):
         """
         Update attributes of an existing user.
         """
 
         user = self.middleware.call_sync('user.get_instance', pk)
+        audit_callback(user['username'])
+
         if app and app.authenticated_credentials.is_user_session:
             same_user_logged_in = user['username'] == (self.middleware.call_sync('auth.me', app=app))['pw_name']
         else:
