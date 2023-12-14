@@ -25,6 +25,8 @@ def test_works_for_token():
         assert user["pw_uid"] == 0
         assert user["pw_name"] == "root"
         assert user['two_factor_config'] is not None
+        assert 'SYS_ADMIN' in user['account_attributes']
+        assert 'LOCAL' in user['account_attributes']
 
 
 def test_does_not_work_for_api_key():
@@ -83,5 +85,7 @@ def test_distinguishes_attributes():
             me = c.call("auth.me")
             assert me["attributes"]["test"] == "new_value"
             assert me['two_factor_config'] is not None
+            assert 'SYS_ADMIN' not in me['account_attributes']
+            assert 'LOCAL' in me['account_attributes']
 
     assert not call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", admin["uid"]]])

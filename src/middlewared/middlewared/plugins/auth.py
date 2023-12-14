@@ -11,7 +11,7 @@ from middlewared.auth import (SessionManagerCredentials, UserSessionManagerCrede
                               UnixSocketSessionManagerCredentials, RootTcpSocketSessionManagerCredentials,
                               LoginPasswordSessionManagerCredentials, ApiKeySessionManagerCredentials,
                               TrueNasNodeSessionManagerCredentials)
-from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, Password, Patch, returns, Str
+from middlewared.schema import accepts, Any, Bool, Datetime, Dict, Int, List, Password, Patch, Ref, returns, Str
 from middlewared.service import (
     Service, filterable, filterable_returns, filter_list, no_auth_required, no_authz_required,
     pass_app, private, cli_private, CallError,
@@ -244,6 +244,7 @@ class AuthService(Service):
         Bool('internal'),
         Str('origin'),
         Str('credentials'),
+        Dict('credentials_data', additional_attrs=True),
         Datetime('created_at'),
     ))
     @pass_app()
@@ -474,9 +475,7 @@ class AuthService(Service):
         user = await self.middleware.call('auth.authenticate', username, password)
         twofactor_auth = await self.middleware.call('auth.twofactor.config')
 
-        if user and twofactor_auth['enabled'] and (await self.middleware.call(
-            'user.translate_username', user['username']
-        ))['twofactor_auth_configured']:
+        if user and twofactor_auth['enabled'] and '2FA' in user['account_attributes']:
             # We should run user.verify_twofactor_token regardless of check_user result to prevent guessing
             # passwords with a timing attack
             if not await self.middleware.call('user.verify_twofactor_token', username, otp_token):
@@ -572,6 +571,7 @@ class AuthService(Service):
             'user_information',
             'current_user_information',
             ('add', Dict('attributes', additional_attrs=True)),
+            ('add', Dict('two_factor_config', additional_attrs=True)),
         )
     )
     @pass_app()
@@ -586,7 +586,13 @@ class AuthService(Service):
         else:
             attributes = {}
 
-        return {**user, 'attributes': attributes}
+        try:
+            twofactor_config = await self.middleware.call('user.twofactor_config', user['pw_name'])
+        except Exception:
+            self.logger.error('%s: failed to look up 2fa details', exc_info=True)
+            twofactor_config = None
+
+        return {**user, 'attributes': attributes, 'two_factor_config': twofactor_config}
 
     @no_authz_required
     @accepts(
@@ -625,16 +631,11 @@ class AuthService(Service):
             raise CallError(f'You are logged in using {credentials.class_name()}')
 
         username = credentials.user['username']
-        try:
-            twofactor_config = await self.middleware.call('user.twofactor_config', username)
-        except Exception:
-            self.logger.error('%s: failed to look up 2fa details', exc_info=True)
-            twofactor_config = None
 
         return {
             **(await self.middleware.call('user.get_user_obj', {'username': username})),
             'privilege': credentials.user['privilege'],
-            'two_factor_config': twofactor_config
+            'account_attributes': credentials.user['account_attributes']
         }
 
     async def _attributes(self, user):

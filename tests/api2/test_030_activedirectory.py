@@ -430,6 +430,10 @@ def test_10_account_privilege_authentication(request, set_product_type):
             }):
                 with client(auth=(f"limiteduser@{AD_DOMAIN}", ADPASSWORD)) as c:
                     methods = c.call("core.get_methods")
+                    me = c.call("auth.me")
+
+                    assert 'DIRECTORY_SERVICE' in me['account_attributes']
+                    assert 'ACTIVE_DIRECTORY' in me['account_attributes']
 
                 assert "system.info" in methods
                 assert "pool.create" not in methods
