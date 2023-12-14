@@ -17,6 +17,7 @@ validation_mapping = {
     'validations/nodePort': 'port_available_on_node',
     'validations/hostPath': 'custom_host_path',
     'normalize/ixVolume': 'ix_mount_path',
+    'normalize/acl': 'acl_entries',
     'validations/lockedHostPath': 'locked_host_path',
     'validations/hostPathAttachments': 'host_path_attachments',
 }
@@ -190,6 +191,16 @@ class ChartReleaseService(Service):
             verrors.add(schema_name, 'Dataset name should not be empty.')
         elif not validate_dataset_name(path):
             verrors.add(schema_name, f'Invalid dataset name {path}. "test1, ix-test, ix_test" are valid examples.')
+
+    @private
+    def validate_acl_entries(self, verrors, value, question, schema_name, release_data):
+        try:
+            if value.get('path') and next(
+                Path(value['path']).iterdir(), None
+            ) and not value.get('options', {}).get('force'):
+                verrors.add(schema_name, f'{value["path"]}: path contains existing data and `force` was not specified')
+        except FileNotFoundError:
+            verrors.add(schema_name, f'{value["path"]}: path does not exist')
 
     @private
     async def validate_locked_host_path(self, verrors, path, question, schema_name, release_data):
