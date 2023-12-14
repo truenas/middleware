@@ -12,9 +12,10 @@ PASSWD2 = 'Testpassw0rd2'
 PASSWD3 = 'Testpassw0rd3'
 PASSWD4 = 'Testpassw0rd4'
 
-PASSWORD_REUSE_ERR = """
-Security configuration for this user account requires a password that does not match any of the last 10 passwords.
-"""
+PASSWORD_REUSE_ERR = ( 
+    "Security configuration for this user account requires "
+    "a password that does not match any of the last 10 passwords."
+)
 
 @pytest.fixture(scope="module")
 def create_unprivileged_user(request):
@@ -57,7 +58,7 @@ def test_password_reset(request, create_unprivileged_user):
         with pytest.raises(ValidationErrors) as ve:
             c.call('user.set_password', {'username': USER, 'old_password': PASSWD2, 'new_password': PASSWD1})
 
-        assert PASSWORD_REUSE_ERR in str(ve), str(ve)
+        assert PASSWORD_REUSE_ERR == ve.value.errors[0].errmsg 
 
     # Disabling password aging should allow reuse
     call('user.update', u['id'], {'password_aging_enabled': False})
