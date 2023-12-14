@@ -67,12 +67,12 @@ def test_password_reset(request, create_unprivileged_user):
 
     call('user.update', u['id'], {
         'password_aging_enabled': True,
-        'must_change_password': True,
+        'password_change_required': True,
     })
     with client(auth=(USER, PASSWD1)) as c:
         # Verify that setting password removes `must_change_password` flag.
         assert c.call('auth.me')['password_change_required']
-        c.call('user.set_password', {'username': USER, 'old_password': PASSWD1, 'new_password': PASSWD2})
+        c.call('user.set_password', {'username': USER, 'old_password': PASSWD1, 'new_password': PASSWD3})
         assert c.call('auth.me')['password_change_required'] is False
 
         call('user.update', u['id'], {'min_password_age': 1})
@@ -80,7 +80,7 @@ def test_password_reset(request, create_unprivileged_user):
         # This should fail since it violates minimum password age
         # requirement
         with pytest.raises(ValidationErrors) as ve:
-            c.call('user.set_password', {'username': USER, 'old_password': PASSWD2, 'new_password': PASSWD3})
+            c.call('user.set_password', {'username': USER, 'old_password': PASSWD3, 'new_password': PASSWD4})
 
         call('user.update', u['id'], {'min_password_age': 0})
-        c.call('user.set_password', {'username': USER, 'old_password': PASSWD2, 'new_password': PASSWD3})
+        c.call('user.set_password', {'username': USER, 'old_password': PASSWD3, 'new_password': PASSWD4})
