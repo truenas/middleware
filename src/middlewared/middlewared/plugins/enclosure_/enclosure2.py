@@ -1,7 +1,7 @@
 # Copyright (c) - iXsystems Inc.
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
-# See the file COPYING.IX for complete terms and conditions
+# See the file LICENSE.IX for complete terms and conditions
 
 from libsg3.ses import EnclosureDevice
 from middlewared.schema import accepts, Dict, Str, Int
