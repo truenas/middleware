@@ -1,3 +1,8 @@
+# Copyright (c) - iXsystems Inc.
+#
+# Licensed under the terms of the TrueNAS Enterprise License Agreement
+# See the file COPYING.IX for complete terms and conditions
+
 from middlewared.schema import accepts, returns, List, Str
 from middlewared.service import Service, pass_app, no_auth_required, private
 from middlewared.plugins.interface.netif import netif
