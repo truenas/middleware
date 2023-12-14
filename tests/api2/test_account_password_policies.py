@@ -85,7 +85,7 @@ def test_password_reset(request, create_unprivileged_user):
     with client(auth=(USER, PASSWD3)) as c:
         pass
 
-    call('user.update', u['id'], {'min_password_age': 1})
+    call('user.update', u['id'], {'min_password_age': 7})
 
     with client(auth=(USER, PASSWD3)) as c:
         # This should fail since it violates minimum password age requirement
