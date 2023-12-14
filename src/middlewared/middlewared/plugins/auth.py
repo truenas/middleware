@@ -434,8 +434,6 @@ class AuthService(Service):
         Returns true if two-factor authorization is required for authorizing user's login.
         """
         user_authenticated = await self.check_user(username, password)
-        if not user_authenticated:
-            await asyncio.sleep(random.randint(1, 5))
         return user_authenticated and (
             await self.middleware.call('auth.twofactor.config')
         )['enabled'] and bool(
@@ -657,20 +655,18 @@ async def check_permission(middleware, app):
             user = await middleware.call('auth.authenticate_root')
         else:
             try:
-                query = {
-                    'username': (await middleware.call(
-                        'datastore.query',
-                        'account.bsdusers',
-                        [['uid', '=', origin.uid]],
-                        {'get': True, 'prefix': 'bsdusr_'},
-                    ))['username'],
-                }
-                local = True
+                user_info =  (await middleware.call(
+                    'datastore.query',
+                    'account.bsdusers',
+                    [['uid', '=', origin.uid]],
+                    {'get': True, 'prefix': 'bsdusr_', 'select': ['id', 'uid', 'username']},
+                )) | {'local': True}
+                query = {'username': user_info.pop('username')}
             except MatchNotFound:
                 query = {'uid': origin.uid}
-                local = False
+                user_info = {'id': None, 'uid': None, 'local': False}
 
-            user = await middleware.call('auth.authenticate_user', query, local)
+            user = await middleware.call('auth.authenticate_user', query, user_info)
             if user is None:
                 return
 
