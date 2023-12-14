@@ -69,21 +69,26 @@ def test_password_reset(request, create_unprivileged_user):
         'password_aging_enabled': True,
         'password_change_required': True,
     })
-    with client(auth=(USER, PASSWD1)) as c:
-        # TODO improve test once we have account flags indicating whether password
-        # change is required. Currently, we're testing indirectly via SSH session which
-        # fails due to lack of configuration to change password via PAM
-        result = ssh('pwd', user=USER, password=PASSWD1, check=False, complete_response=True)
-        assert result['result'] is False
 
-        c.call('user.set_password', {'username': USER, 'old_password': PASSWD1, 'new_password': PASSWD3})
+    # Authentication currently will fail if administrator forces password change
+    # due to lack of PAM password integration in middleware.
+    with pytest.raises(AssertionError) as c:
+        with client(auth=(USER, PASSWD1)) as c:
+            pass
 
-        ssh('pwd', user=USER, password=PASSWD3)
+    result = ssh('pwd', user=USER, password=PASSWD1, check=False, complete_response=True)
+    assert result['result'] is False
 
-        call('user.update', u['id'], {'min_password_age': 1})
+    # updating password should remove password_change_required 
+    call('user.set_password', {'username': USER, 'new_password': PASSWD3})
 
-        # This should fail since it violates minimum password age
-        # requirement
+    with client(auth=(USER, PASSWD3)) as c:
+        pass
+
+    call('user.update', u['id'], {'min_password_age': 1})
+
+    with client(auth=(USER, PASSWD3)) as c:
+        # This should fail since it violates minimum password age requirement
         with pytest.raises(ValidationErrors) as ve:
             c.call('user.set_password', {'username': USER, 'old_password': PASSWD3, 'new_password': PASSWD4})
 
