@@ -937,17 +937,11 @@ class UserService(CRUDService):
             groups = user.pop('groups')
             self.__set_groups(pk, groups)
 
-        if password_aging_enabled and new_unix_hash:
-            if not user['password_history'] and orig_hash != user['unixhash']:
-                user['password_history'].append(orig_hash)
-
+        if new_unix_hash:
             user['password_history'].append(user['unixhash'])
             while len(user['password_history']) > PASSWORD_HISTORY_LEN:
                 user['password_history'].pop(0)
-        elif not password_aging_enabled:
-            # Clear out password history since it's not being used and we don't
-            # want to keep around unneeded hashes.
-            user['password_history'] = []
+
 
         user = self.user_compress(user)
         self.middleware.call_sync('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
@@ -1647,6 +1641,7 @@ class UserService(CRUDService):
                     f'configured minimum password age {entry["min_password_age"]} for this '
                     'user account.'
                 )
+
             entry['password_history'].append(entry['unixhash'])
             while len(entry['password_history']) > PASSWORD_HISTORY_LEN:
                 entry['password_history'].pop(0)
