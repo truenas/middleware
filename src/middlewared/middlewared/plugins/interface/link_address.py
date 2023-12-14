@@ -2,6 +2,7 @@ import re
 
 from middlewared.service import private, Service
 
+INTERFACE_FILTERS = [["type", "=", "PHYSICAL"]]
 RE_FREEBSD_BRIDGE = re.compile(r"bridge([0-9]+)$")
 RE_FREEBSD_LAGG = re.compile(r"lagg([0-9]+)$")
 
@@ -22,14 +23,14 @@ class InterfaceService(Service):
                 remote_key = "link_address_b"
 
             real_interfaces = RealInterfaceCollection(
-                await self.middleware.call("interface.query", [["fake", "!=", True]]),
+                await self.middleware.call("interface.query", INTERFACE_FILTERS),
             )
 
             real_interfaces_remote = None
             if await self.middleware.call("failover.status") == "MASTER":
                 try:
                     real_interfaces_remote = RealInterfaceCollection(
-                        await self.middleware.call("failover.call_remote", "interface.query", [[["fake", "!=", True]]]),
+                        await self.middleware.call("failover.call_remote", "interface.query", [INTERFACE_FILTERS]),
                     )
                 except Exception as e:
                     self.middleware.logger.warning(f"Exception while retrieving remote network interfaces: {e!r}")
@@ -173,7 +174,7 @@ async def setup(middleware):
         else:
             link_address_key = "link_address"
 
-        real_interfaces = RealInterfaceCollection(await middleware.call("interface.query", [["fake", "!=", True]]))
+        real_interfaces = RealInterfaceCollection(await middleware.call("interface.query", INTERFACE_FILTERS))
 
         # Migrate BSD network interfaces to Linux
         for db_interface in await middleware.call("datastore.query", "network.interfaces", [], {"prefix": "int_"}):
