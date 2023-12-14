@@ -9,7 +9,7 @@ class IPMIService(Service):
     class Config:
         cli_namespace = 'system.ipmi'
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Bool('ipmi_loaded'))
     def is_loaded(self):
         """Returns a boolean value indicating if /dev/ipmi0 is loaded."""
