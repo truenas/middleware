@@ -70,10 +70,15 @@ def test_password_reset(request, create_unprivileged_user):
         'password_change_required': True,
     })
     with client(auth=(USER, PASSWD1)) as c:
-        # Verify that setting password removes `must_change_password` flag.
-        assert c.call('auth.me')['password_change_required']
+        # TODO improve test once we have account flags indicating whether password
+        # change is required. Currently, we're testing indirectly via SSH session which
+        # fails due to lack of configuration to change password via PAM
+        result = ssh('pwd', user=USER, password=PASSWD1, check=False, complete_response=True)
+        assert result['result'] is False
+
         c.call('user.set_password', {'username': USER, 'old_password': PASSWD1, 'new_password': PASSWD3})
-        assert c.call('auth.me')['password_change_required'] is False
+
+        ssh('pwd', user=USER, password=PASSWD3)
 
         call('user.update', u['id'], {'min_password_age': 1})
 
