@@ -261,6 +261,9 @@ class CoreService(Service):
         return job.abort()
 
     def _should_list_service(self, name, service, target):
+        if service._config.internal is True:
+            return False
+
         if service._config.private is True:
             if not (target == 'REST' and name == 'resttest'):
                 return False
@@ -365,7 +368,7 @@ class CoreService(Service):
                     continue
 
                 # Skip private methods
-                if hasattr(method, '_private'):
+                if hasattr(method, '_private') or hasattr(method, '_internal'):
                     continue
                 if target == 'CLI' and hasattr(method, '_cli_private'):
                     continue

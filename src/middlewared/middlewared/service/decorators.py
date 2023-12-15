@@ -209,6 +209,12 @@ def private(fn):
     return fn
 
 
+def internal(fn):
+    """Method is invalid for external callers. Not exposed in public API"""
+    fn._internal = True
+    return fn
+
+
 def rest_api_metadata(extra_methods=None):
     """
     Allow having endpoints specify explicit rest methods.

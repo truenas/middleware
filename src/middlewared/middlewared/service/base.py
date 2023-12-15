@@ -19,6 +19,7 @@ def service_config(klass, config):
         'namespace': namespace,
         'namespace_alias': None,
         'private': False,
+        'internal': False,
         'thread_pool': None,
         'process_pool': None,
         'cli_namespace': None,

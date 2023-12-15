@@ -1348,6 +1348,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
         :return:
         """
         args = []
+        if app is not None and (serviceobj._config.internal or hasattr(methodobj, '_internal')):
+            raise CallError('This method may only be called internally')
+
         if hasattr(methodobj, '_pass_app'):
             if methodobj._pass_app['require'] and app is None:
                 raise CallError('`app` is required')
