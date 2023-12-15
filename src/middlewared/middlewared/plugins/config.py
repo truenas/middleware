@@ -246,6 +246,13 @@ class ConfigService(Service):
         If `reboot` is true this job will reboot the system after its completed with a delay of 10
         seconds.
         """
+        job.set_progress(0, 'Performing credential check')
+        if job.credentials is None:
+            raise CallError('Unable to check credentials')
+
+        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
+            raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "admin")')
+
         job.set_progress(5, 'Removing cluster information (if any)')
         cjob = self.middleware.call_sync('ctdb.shared.volume.teardown', True)
         cjob.wait_sync()
