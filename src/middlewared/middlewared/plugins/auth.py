@@ -433,14 +433,10 @@ class AuthService(Service):
         """
         Returns true if two-factor authorization is required for authorizing user's login.
         """
-        user_authenticated = await self.check_user(username, password)
+        user_authenticated = await self.middleware.call('auth.authenticate', username, password)
         return user_authenticated and (
             await self.middleware.call('auth.twofactor.config')
-        )['enabled'] and bool(
-            await self.middleware.call(
-                'user.query', [['username', '=', username], ['twofactor_auth_configured', '=', True]]
-            )
-        )
+        )['enabled'] and '2FA' in user_authenticated['account_attributes']
 
     @cli_private
     @no_auth_required
