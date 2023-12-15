@@ -299,11 +299,16 @@ class UserService(CRUDService):
 
         username_sid = {}
         if 'SMB' in additional_information:
-            for u in await self.middleware.call("smb.passdb_list", True):
-                username_sid.update({u['Unix username']: {
-                    'nt_name': u['NT username'],
-                    'sid': u['User SID'],
-                }})
+            try:
+                for u in await self.middleware.call("smb.passdb_list", True):
+                    username_sid.update({u['Unix username']: {
+                        'nt_name': u['NT username'],
+                        'sid': u['User SID'],
+                    }})
+            except Exception:
+                # Failure to retrieve passdb list often means that system dataset is
+                # broken
+                self.logger.error('Failed to retrieve passdb information', exc_info=True)
 
         if dssearch:
             ds_state = await self.middleware.call('directoryservices.get_state')
@@ -1059,6 +1064,7 @@ class UserService(CRUDService):
         if not data['username'] and data['uid'] is None:
             verrors.add('get_user_obj.username', 'Either "username" or "uid" must be specified')
         verrors.check()
+
         return await self.middleware.call(
             'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'], data['sid_info']
         )
@@ -1720,7 +1726,16 @@ class GroupService(CRUDService):
                 ds_groups = await self.middleware.call('dscache.query', 'GROUPS', filters, options)
 
         if 'SMB' in additional_information:
-            smb_groupmap = await self.middleware.call("smb.groupmap_list")
+            try:
+                smb_groupmap = await self.middleware.call("smb.groupmap_list")
+            except Exception:
+                # If system dataset has failed to properly initialize / is broken
+                # then looking up groupmaps will fail.
+                self.logger.error('Failed to retrieve SMB groupmap.', exc_info=True)
+                smb_groupmap = {
+                    'local': {},
+                    'local_builtins': {}
+                }
 
         result = await self.middleware.call(
             'datastore.query', self._config.datastore, [], datastore_options
