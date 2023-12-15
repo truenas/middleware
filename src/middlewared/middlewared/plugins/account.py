@@ -1273,9 +1273,18 @@ class UserService(CRUDService):
                     )
 
         if combined['smb'] and not await self.middleware.call('smb.is_configured'):
-            verrors.add(
-                f'{schema}.smb', 'SMB users may not be configured while SMB service backend is unitialized.'
-            )
+            if (await self.middleware.call('systemdataset.sysdataset_path')) is None:
+                verrors.add(
+                    f'{schema}.smb',
+                    'System dataset is not mounted at expected path. This may indicate '
+                    'an underlying issue with the pool hosting the system dataset. '
+                    'SMB users may not be configured until this configuration issue is addressed.'
+                )
+            else:
+                verrors.add(
+                    f'{schema}.smb',
+                    'SMB users may not be configured while SMB service backend is unitialized.'
+                )
 
         if combined['smb'] and combined['password_disabled']:
             verrors.add(
