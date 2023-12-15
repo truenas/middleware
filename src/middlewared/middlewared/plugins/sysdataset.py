@@ -699,11 +699,6 @@ class SystemDatasetService(ConfigService):
                     self.middleware.call_sync('service.start', i)
 
 
-async def pool_post_create(middleware, pool):
-    if (await middleware.call('systemdataset.config'))['pool'] == await middleware.call('boot.pool_name'):
-        await middleware.call('systemdataset.setup')
-
-
 async def pool_post_import(middleware, pool):
     """
     On pool import we may need to reconfigure system dataset.
