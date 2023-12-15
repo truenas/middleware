@@ -78,7 +78,7 @@ def cleanup_reverse_zone():
         'msg': 'method',
         'method': 'activedirectory.ipaddresses_to_register',
         'params': [
-            {'hostname': f'{hostname}.{AD_DOMAIN}.', 'clustered': False, 'bindip': []},
+            {'hostname': f'{hostname}.{AD_DOMAIN}.', 'bindip': []},
             False
         ],
     })

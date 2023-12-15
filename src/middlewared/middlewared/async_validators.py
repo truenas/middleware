@@ -50,14 +50,8 @@ async def check_path_resides_within_volume(verrors, middleware, name, path):
                     "be accessed through the path-based API, then it should be called "
                     "directly, e.g. '/mnt/dozer/.zfs/snapshot/mysnap'.")
 
-    # we must also make sure that any sharing service does not point to
-    # anywhere within the ".glusterfs" dataset since the clients need
-    # to go through the appropriate gluster client to write to the cluster.
-    # If data is modified directly on the gluster resources, then it will
-    # cause a split-brain scenario which means the data that was modified
-    # would not be sync'ed with other nodes in the cluster.
     rp = Path(rp)
-    for check_path, svc_name in (('.glusterfs', 'Gluster'), ('ix-applications', 'Applications')):
+    for check_path, svc_name in (('ix-applications', 'Applications'),):
         in_use = False
         if st['is_mountpoint'] and rp.name == check_path:
             in_use = True

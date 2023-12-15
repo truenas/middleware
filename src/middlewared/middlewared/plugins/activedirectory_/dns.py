@@ -75,10 +75,7 @@ class ActiveDirectoryService(Service):
     async def ipaddresses_to_register(self, data, valid_only=True):
         validated_ips = []
 
-        if data['clustered']:
-            ips = (await self.middleware.call('smb.bindip_choices')).values()
-        else:
-            ips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use'))]
+        ips = [i['address'] for i in (await self.middleware.call('interface.ip_in_use'))]
 
         if data['bindip']:
             to_check = set(data['bindip']) & set(ips)
@@ -143,7 +140,6 @@ class ActiveDirectoryService(Service):
         return await self.ipaddresses_to_register({
             'bindip': bindip,
             'hostname': hostname,
-            'clustered': smb_ha_mode == 'CLUSTERED'
         })
 
     @private

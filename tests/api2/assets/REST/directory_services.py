@@ -35,6 +35,7 @@ def clear_ad_info():
 def clear_ldap_info():
     results = PUT("/ldap/", {
         "hostname": [],
+        "basedn": "",
         "binddn": "",
         "bindpw": "",
         "ssl": "ON",
@@ -46,7 +47,9 @@ def clear_ldap_info():
         "validate_certificates": True,
         "disable_freenas_cache": False,
         "certificate": None,
+        "auxiliary_parameters": ""
     })
+    assert results.status_code == 200, results.text
     if not results.json().get('job_id'):
         return
 

@@ -31,7 +31,6 @@ class CRUDServiceMetabase(ServiceBase):
                 ('SharingTaskService', ('CRUDService',)),
                 ('SharingService', ('SharingTaskService',)),
                 ('TaskPathService', ('SharingTaskService',)),
-                ('TDBWrapCRUDService', ('CRUDService',)),
             )
         ):
             return klass

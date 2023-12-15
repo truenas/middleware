@@ -9,13 +9,6 @@ class IdmapService(SimpleService):
     systemd_unit = "winbind"
 
     async def healthy(self):
-        is_clustered = await self.middleware.call("smb.getparm", "clustering", "global")
-        if is_clustered:
-            cluster_healthy = await self.middleware.call("ctdb.general.healthy")
-            if not cluster_healthy:
-                self.middleware.logger.warning("Cluster is unhealthy. Refusing to start SMB service.")
-                return False
-
         return await self.middleware.call("smb.configure_wait")
 
     async def start(self):

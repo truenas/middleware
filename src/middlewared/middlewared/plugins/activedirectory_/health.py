@@ -174,7 +174,10 @@ class ActiveDirectoryService(Service):
         try:
             verrors.check()
         except ValidationErrors:
-            await self.middleware.call('activedirectory.direct_update', {"enable": False})
+            await self.middleware.call(
+                'datstore.update', self._config.datastore, config['id'],
+                {"enable": False}, {'prefix': 'ad_'}
+            )
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 
@@ -182,18 +185,5 @@ class ActiveDirectoryService(Service):
         Verify winbindd netlogon connection.
         """
         await self.middleware.call('activedirectory.winbind_status')
-
-        if (await self.middleware.call('smb.get_smb_ha_mode')) == 'CLUSTERED':
-            state_method = 'clustercache.get'
-        else:
-            state_method = 'cache.get'
-
-        try:
-            cached_state = await self.middleware.call(state_method, 'DS_STATE')
-
-            if cached_state['activedirectory'] != 'HEALTHY':
-                await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['HEALTHY'].name})
-        except KeyError:
-            await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['HEALTHY'].name})
-
+        await self.middleware.call('directoryservices.set_state', {'activedirectory': DSStatus['HEALTHY'].name})
         return True

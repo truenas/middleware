@@ -14,7 +14,6 @@ import pyinotify
 from itertools import product
 from middlewared.event import EventSource
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
-from middlewared.plugins.cluster_linux.utils import CTDBConfig, FuseConfig
 from middlewared.plugins.filesystem_ import chflags, dosmode, stat_x
 from middlewared.schema import accepts, Bool, Dict, Float, Int, List, Ref, returns, Path, Str, UnixPerm
 from middlewared.service import private, CallError, filterable_returns, filterable, Service, job
@@ -89,42 +88,6 @@ class FilesystemService(Service):
         return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
 
     @private
-    def is_cluster_path(self, path):
-        return path_location(path) is FSLocation.CLUSTER
-
-    @private
-    def resolve_cluster_path(self, path, ignore_ctdb=False):
-        """
-        Convert a "CLUSTER:"-prefixed path to an absolute path
-        on the server.
-        """
-        if path_location(path) is not FSLocation.CLUSTER:
-            return path
-
-        try:
-            gluster_volume, volpath = strip_location_prefix(path).split('/', 1)
-        except ValueError:
-            raise CallError(
-                'Cluster paths must be provided with the following format: '
-                f'"{FuseConfig.FUSE_PATH_SUBST.value}<cluster volume name>/<path>". '
-                f'For example: "{FuseConfig.FUSE_PATH_SUBST.value}GLSMB/SHARE"'
-            )
-
-        if gluster_volume == CTDBConfig.LEGACY_CTDB_VOL_NAME.value and not ignore_ctdb:
-            raise CallError('access to ctdb volume is not permitted.', errno.EPERM)
-
-        is_mounted = self.middleware.call_sync('gluster.fuse.is_mounted', {'name': gluster_volume})
-        if not is_mounted:
-            raise CallError(f'{gluster_volume}: cluster volume is not mounted.', errno.ENXIO)
-
-        ctdb_vol = self.middleware.call_sync('ctdb.shared.volume.config')['volume_name']
-        if ctdb_vol == gluster_volume:
-            if volpath.startswith(CTDBConfig.CTDB_STATE_DIR.value):
-                raise CallError('access to cluster state directory is not permitted.', errno.EPERM)
-
-        return os.path.join(FuseConfig.FUSE_PATH_BASE.value, gluster_volume, volpath)
-
-    @private
     @filterable
     def mount_info(self, filters, options):
         mntinfo = getmntinfo()
@@ -160,9 +123,8 @@ class FilesystemService(Service):
         indicate the current permissions on the directory and not the permissions specified
         in the mkdir payload
         """
-        path = self.resolve_cluster_path(data['path'])
+        path = data['path']
         options = data['options']
-        is_clustered = path.startswith("/cluster")
         mode = int(options['mode'], 8)
 
         p = pathlib.Path(path)
@@ -173,7 +135,7 @@ class FilesystemService(Service):
             raise CallError(f'{path}: path already exists.', errno.EEXIST)
 
         realpath = os.path.realpath(path)
-        if not is_clustered and not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh')):
+        if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh')):
             raise CallError(f'{path}: path not permitted', errno.EPERM)
 
         os.mkdir(path, mode=mode)
@@ -286,11 +248,6 @@ class FilesystemService(Service):
         """
         Get the contents of a directory.
 
-        Paths on clustered volumes may be specifed with the path prefix
-        `CLUSTER:<volume name>`. For example, to list directories
-        in the directory 'data' in the clustered volume `smb01`, the
-        path should be specified as `CLUSTER:smb01/data`.
-
         Each entry of the list consists of:
           name(str): name of the file
           path(str): absolute path of the entry
@@ -307,7 +264,6 @@ class FilesystemService(Service):
           file. See statx(2) manpage for more details.
         """
 
-        path = self.resolve_cluster_path(path)
         path = pathlib.Path(path)
         if not path.exists():
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)
@@ -362,9 +318,7 @@ class FilesystemService(Service):
 
             data = {
                 'name': entry.name,
-                'path': entry.as_posix().replace(
-                    f'{FuseConfig.FUSE_PATH_BASE.value}/', FuseConfig.FUSE_PATH_SUBST.value
-                ),
+                'path': entry.as_posix(),
                 'realpath': realpath,
                 'type': etype,
                 'size': stat.stx_size,
@@ -406,16 +360,11 @@ class FilesystemService(Service):
     def stat(self, _path):
         """
         Return the filesystem stat(2) for a given `path`.
-
-        Paths on clustered volumes may be specifed with the path prefix
-        `CLUSTER:<volume name>`. For example, to list directories
-        in the directory 'data' in the clustered volume `smb01`, the
-        path should be specified as `CLUSTER:smb01/data`.
         """
         if path_location(_path) is FSLocation.EXTERNAL:
             raise CallError(f'{_path} is external to TrueNAS', errno.EXDEV)
 
-        path = pathlib.Path(self.resolve_cluster_path(_path))
+        path = pathlib.Path(_path)
         if not path.is_absolute():
             raise CallError(f'{_path}: path must be absolute', errno.EINVAL)
 
@@ -569,27 +518,12 @@ class FilesystemService(Service):
         """
         Return stats from the filesystem of a given path.
 
-        Paths on clustered volumes may be specifed with the path prefix
-        `CLUSTER:<volume name>`. For example, to list directories
-        in the directory 'data' in the clustered volume `smb01`, the
-        path should be specified as `CLUSTER:smb01/data`.
-
         Raises:
             CallError(ENOENT) - Path not found
         """
-        # check to see if this is a clustered path and if it is
-        # resolve it to an absolute path
-        # NOTE: this converts path prefixed with 'CLUSTER:' to '/cluster/...'
-        path = self.resolve_cluster_path(path, ignore_ctdb=True)
-
-        allowed_prefixes = ('/mnt/', FuseConfig.FUSE_PATH_BASE.value)
-        if not path.startswith(allowed_prefixes):
-            # if path doesn't start with '/mnt/' bail early
-            raise CallError(f'Path must start with {" or ".join(allowed_prefixes)}')
+        if not path.startswith('/mnt/'):
+            raise CallError('Path must start with "/mnt/"')
         elif path == '/mnt/':
-            # means the path given to us was a literal '/mnt/' which is incorrect.
-            # NOTE: if the user provided 'CLUSTER:' as the literal path then
-            # self.resolve_cluster_path() will raise a similar error
             raise CallError('Path must include more than "/mnt/"')
 
         try:
@@ -637,13 +571,7 @@ class FilesystemService(Service):
         """
         Returns True if the ACL can be fully expressed as a file mode without losing
         any access rules.
-
-        Paths on clustered volumes may be specifed with the path prefix
-        `CLUSTER:<volume name>`. For example, to list directories
-        in the directory 'data' in the clustered volume `smb01`, the
-        path should be specified as `CLUSTER:smb01/data`.
         """
-        path = self.resolve_cluster_path(path)
         if not os.path.exists(path):
             raise CallError(f'Path not found [{path}].', errno.ENOENT)
 

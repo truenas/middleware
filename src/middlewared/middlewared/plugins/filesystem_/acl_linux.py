@@ -36,14 +36,6 @@ class FilesystemService(Service, ACLBase):
         loc = path_location(data['path'])
         if loc is FSLocation.EXTERNAL:
             verrors.add(f'{schema}.path', 'ACL operations on remote server paths are not possible')
-
-        try:
-            data['path'] = self.middleware.call_sync('filesystem.resolve_cluster_path', data['path'])
-        except CallError as e:
-            if e.errno != errno.ENXIO:
-                raise
-
-            verrors.add(f'{schema}.path', e.errmsg)
             return loc
 
         path = data['path']
@@ -64,9 +56,6 @@ class FilesystemService(Service, ACLBase):
         if st['is_ctldir']:
             verrors.add(f'{schema}.path',
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
-            return loc
-
-        if loc is FSLocation.CLUSTER:
             return loc
 
         if any(st['realpath'].startswith(prefix) for prefix in ('/home/admin/.ssh', '/root/.ssh')):
@@ -155,20 +144,6 @@ class FilesystemService(Service, ACLBase):
 
         job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
         options['posixacl'] = True
-        if loc == FSLocation.CLUSTER:
-            parts = data['path'].split('/', 3)
-            target = self.middleware.call_sync('gluster.filesystem.lookup', {
-                'volume_name': parts[2],
-                'parent_uuid': None,
-                'path': parts[3],
-            })
-            glfs_job = self.middleware.call_sync('gluster.filesystem.setperm', {
-                'volume_name': parts[2],
-                'uuid': target['uuid'],
-                'options': {'uid': uid, 'gid': gid}
-            })
-            return job.wrap_sync(glfs_job)
-
         self.acltool(data['path'], 'chown', uid, gid, options)
         job.set_progress(100, 'Finished changing owner.')
 
@@ -239,20 +214,6 @@ class FilesystemService(Service, ACLBase):
         if not options['recursive']:
             job.set_progress(100, 'Finished setting permissions.')
             return
-
-        if loc == FSLocation.CLUSTER:
-            parts = data['path'].split('/', 3)
-            target = self.middleware.call_sync('gluster.filesystem.lookup', {
-                'volume_name': parts[2],
-                'parent_uuid': None,
-                'path': parts[3],
-            })
-            glfs_job = self.middleware.call_sync('gluster.filesystem.setperm', {
-                'volume_name': parts[2],
-                'uuid': target['uuid'],
-                'options': {'uid': uid, 'gid': gid, 'mode': mode, 'acl_operation': 'STRIP'}
-            })
-            return job.wrap_sync(glfs_job)
 
         action = 'clone' if mode else 'strip'
         job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
@@ -409,7 +370,6 @@ class FilesystemService(Service, ACLBase):
         }
 
     def getacl(self, path, simplified, resolve_ids):
-        path = self.middleware.call_sync('filesystem.resolve_cluster_path', path)
         if path_location(path) is FSLocation.EXTERNAL:
             raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
 
@@ -685,20 +645,6 @@ class FilesystemService(Service, ACLBase):
             job.set_progress(100, 'Finished setting POSIX1e ACL.')
             return
 
-        if data['loc'] == FSLocation.CLUSTER:
-            parts = data['path'].split('/', 3)
-            target = self.middleware.call_sync('gluster.filesystem.lookup', {
-                'volume_name': parts[2],
-                'parent_uuid': None,
-                'path': parts[3],
-            })
-            glfs_job = self.middleware.call_sync('gluster.filesystem.setperm', {
-                'volume_name': parts[2],
-                'uuid': target['uuid'],
-                'options': {'uid': uid, 'gid': gid, 'acl_operation': 'INHERIT'}
-            })
-            return job.wrap_sync(glfs_job)
-
         options['posixacl'] = True
         self.acltool(data['path'],
                      'clone' if not do_strip else 'strip',
@@ -710,8 +656,6 @@ class FilesystemService(Service, ACLBase):
         verrors = ValidationErrors()
         data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)
         verrors.check()
-
-        data['path'] = data['path'].replace('CLUSTER:', '/cluster')
 
         if 'acltype' in data:
             acltype = ACLType[data['acltype']]

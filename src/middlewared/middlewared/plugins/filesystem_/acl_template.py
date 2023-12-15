@@ -289,11 +289,8 @@ class ACLTemplateService(CRUDService):
         verrors = ValidationErrors()
         filters = data.get('query-filters')
         if data['path']:
-            path = await self.middleware.call(
-                "filesystem.resolve_cluster_path", data['path']
-            )
             acltype = await self.middleware.call(
-                'filesystem.path_get_acltype', path
+                'filesystem.path_get_acltype', data['path']
             )
             if acltype == ACLType.DISABLED.name:
                 return []

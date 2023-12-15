@@ -27,7 +27,6 @@ from .utils.threading import set_thread_name, IoThreadPoolExecutor
 from .utils.type import copy_function_metadata
 from .webui_auth import addr_in_allowlist, WebUIAuth
 from .worker import main_worker, worker_init
-from .webhooks.cluster_events import ClusterEventsApplication
 from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
@@ -1982,9 +1981,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin):
 
         shellapp = ShellApplication(self)
         app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
-
-        clustereventsapp = ClusterEventsApplication(self)
-        app.router.add_route('POST', '/_clusterevents{path_info:.*}', clustereventsapp.listener)
 
         restful_api = RESTfulAPI(self, app)
         await restful_api.register_resources()
