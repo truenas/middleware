@@ -41,7 +41,7 @@ class NetworkInterfaceModel(sa.Model):
     __tablename__ = 'network_interfaces'
 
     id = sa.Column(sa.Integer, primary_key=True)
-    int_interface = sa.Column(sa.String(300))
+    int_interface = sa.Column(sa.String(300), unique=True)
     int_name = sa.Column(sa.String(120))
     int_dhcp = sa.Column(sa.Boolean(), default=False)
     int_address = sa.Column(sa.String(45), default='')
