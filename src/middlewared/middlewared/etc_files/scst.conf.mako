@@ -311,9 +311,9 @@ TARGET_DRIVER iscsi {
 ##
 ## alias
 ##
-%       if alias:
+%   if alias:
         alias "${alias}"
-%       endif
+%   endif
 %   for chap_auth in chap_users:
         IncomingUser "${chap_auth}"
 %   endfor
