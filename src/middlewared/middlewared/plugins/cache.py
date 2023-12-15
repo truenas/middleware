@@ -426,6 +426,10 @@ class DSCache(Service):
                     'id': user_obj['pw_uid'],
                 })
             except CallError as e:
+                # ENOENT means no winbindd entry for user
+                # ENOTCONN means winbindd is stopped / can't be started
+                # EAGAIN means the system dataset is hosed and needs to be fixed,
+                # but we need to let it through so that it's very clear in logs
                 if e.errno not in (errno.ENOENT, errno.ENOTCONN):
                     self.logger.error('Failed to retrieve SID for uid: %d', u.pw_uid, exc_info=True)
                 sid = None
