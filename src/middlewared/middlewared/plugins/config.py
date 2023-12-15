@@ -250,7 +250,7 @@ class ConfigService(Service):
         if job.credentials is None:
             raise CallError('Unable to check credentials')
 
-        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']):
+        if job.credentials.is_user_session and 'SYS_ADMIN' not in job.credentials.user['account_attributes']:
             raise CallError('Configuration reset is limited to local SYS_ADMIN account ("root" or "admin")')
 
         job.set_progress(5, 'Removing cluster information (if any)')
