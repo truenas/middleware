@@ -131,7 +131,8 @@ ROLES = {
                                           'SNAPSHOT_WRITE'],
                                 builtin=False),
 
-    'SHARING_MANAGER': Role(includes=['DATASET_WRITE',
+    'SHARING_MANAGER': Role(includes=['READONLY',
+                                      'DATASET_WRITE',
                                       'SHARING_WRITE',
                                       'FILESYSTEM_ATTRS_WRITE',
                                       'SERVICE_READ'],
