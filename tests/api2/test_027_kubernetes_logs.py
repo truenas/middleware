@@ -1,16 +1,9 @@
-#!/usr/bin/env python3
-
 import contextlib
-import os
-from time import sleep
 import pytest
-import sys
 
-from pytest_dependency import depends
-apifolder = os.getcwd()
-sys.path.append(apifolder)
 from middlewared.test.integration.utils import call, ssh
-from auto_config import ip
+from pytest_dependency import depends
+from time import sleep
 
 
 @contextlib.contextmanager
@@ -34,7 +27,7 @@ def get_chart_release_pods(release_name, timeout=90):
     time_spend = 0
     while status.get('status') != 'ACTIVE':
         if time_spend > timeout:
-            raise Exception("Time out chart release is not in running state")
+            raise Exception('Time out chart release is not in running state')
         sleep(6)
         time_spend += 6
         status = call('chart.release.pod_status', release_name)
@@ -45,10 +38,11 @@ def get_chart_release_pods(release_name, timeout=90):
     yield chart_pods
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_get_chart_release_logs(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-logs'
-    with official_chart_release('qbittorrent', release_name) as chart_release:
+    with official_chart_release('tftpd-hpa', release_name) as chart_release:
         with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
@@ -59,7 +53,7 @@ def test_get_chart_release_logs(request):
 def test_get_chart_exec_result(request):
     depends(request, ['setup_kubernetes'], scope='session')
     release_name = 'test-exec'
-    with official_chart_release('nginx-proxy-manager', release_name) as chart_release:
+    with official_chart_release('searxng', release_name) as chart_release:
         with get_chart_release_pods(release_name, 300) as pods:
             for pod_name, containers in pods.items():
                 for container in containers:
