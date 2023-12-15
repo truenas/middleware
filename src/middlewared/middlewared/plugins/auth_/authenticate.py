@@ -3,7 +3,7 @@ import hmac
 
 import pam
 
-from middlewared.service import CallError, Service, pass_app, private
+from middlewared.service import CallError, internal, Service, pass_app, private
 
 
 class AuthService(Service):
@@ -47,17 +47,10 @@ class AuthService(Service):
 
         return await self.authenticate_user({'username': username}, user_info)
 
-    @private
-    @pass_app()
-    def check_unixhash(self, app, password, unixhash):
+    @internal
+    def check_unixhash(self, password, unixhash):
         # This method is vulnerable to timing attacks and so should not
         # be exposed to external API consumers in any way.
-        #
-        # FIXME: remove pass_app() and replace with some other decorator
-        # to flag as internal once functionality added.
-        if app is not None:
-            raise CallError("This method may not be called externally")
-
         if unixhash in ('x', '*'):
             return False
 
