@@ -5,7 +5,7 @@ import datetime
 import wbclient
 
 from middlewared.schema import accepts, Bool, Dict, Int, Password, Patch, Ref, Str, LDAP_DN, OROperator
-from middlewared.service import CallError, TDBWrapCRUDService, job, private, ValidationErrors, filterable
+from middlewared.service import CallError, CRUDService, job, private, ValidationErrors, filterable
 from middlewared.service_exception import MatchNotFound
 from middlewared.plugins.directoryservices import SSL
 from middlewared.plugins.idmap_.utils import IDType, TRUENAS_IDMAP_MAX, WBClient, WBCErr
@@ -217,47 +217,7 @@ class IdmapDomainModel(sa.Model):
     idmap_domain_certificate_id = sa.Column(sa.ForeignKey('system_certificate.id'), index=True, nullable=True)
 
 
-class IdmapDomainService(TDBWrapCRUDService):
-
-    tdb_defaults = [
-        {
-            "id": 1,
-            "name": "DS_TYPE_ACTIVEDIRECTORY",
-            "dns_domain_name": None,
-            "range_low": 90000001,
-            "range_high": 200000001,
-            "idmap_backend": "AUTORID",
-            "options": {
-                "rangesize": 10000000
-            },
-            "certificate": None
-        },
-        {
-            "id": 2,
-            "name": "DS_TYPE_LDAP",
-            "dns_domain_name": None,
-            "range_low": 10000,
-            "range_high": 90000000,
-            "idmap_backend": "LDAP",
-            "options": {
-                "ldap_base_dn": "",
-                "ldap_user_dn": "",
-                "ldap_url": "",
-                "ssl": "OFF"
-            },
-            "certificate": None
-        },
-        {
-            "id": 5,
-            "name": "DS_TYPE_DEFAULT_DOMAIN",
-            "dns_domain_name": None,
-            "range_low": 90000001,
-            "range_high": 100000000,
-            "idmap_backend": "TDB",
-            "options": {},
-            "certificate": None
-        }
-    ]
+class IdmapDomainService(CRUDService):
 
     ENTRY = Patch(
         'idmap_domain_create', 'idmap_domain_entry',
@@ -463,11 +423,6 @@ class IdmapDomainService(TDBWrapCRUDService):
         Stop samba, remove the winbindd_cache.tdb file, start samba, flush samba's cache.
         This should be performed after finalizing idmap changes.
         """
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
-        if ha_mode == 'CLUSTERED':
-            await self.middleware.call('service.restart', 'idmap')
-            return
-
         smb_started = await self.middleware.call('service.started', 'cifs')
         await self.middleware.call('service.stop', 'idmap')
 
@@ -871,7 +826,10 @@ class IdmapDomainService(TDBWrapCRUDService):
         final_options.update(data['options'])
         data['options'] = final_options
 
-        id_ = await super().do_create(data)
+        id_ = await self.middleware.call(
+            'datastore.insert', self._config.datastore,
+            data, {'prefix': self._config.datastore_prefix}
+        )
         out = await self.query([('id', '=', id_)], {'get': True})
         await self.synchronize()
         return out
@@ -947,7 +905,10 @@ class IdmapDomainService(TDBWrapCRUDService):
                                        domain, secret)
             await self.middleware.call("directoryservices.backup_secrets")
 
-        await super().do_update(id_, new)
+        await self.middleware.call(
+            'datastore.update', self._config.datastore,
+            new['id'], new, {'prefix': self._config.datastore_prefix}
+        )
 
         out = await self.query([('id', '=', id_)], {'get': True})
         await self.synchronize(False)
@@ -965,7 +926,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         if entry['name'] in DSType.choices():
             raise CallError(f'Deleting system idmap domain [{entry["name"]}] is not permitted.', errno.EPERM)
 
-        ret = await self.direct_delete(id_)
+        ret = await self.middleware.call('datastore.delete', self._config.datastore, id_)
         await self.synchronize()
         return ret
 

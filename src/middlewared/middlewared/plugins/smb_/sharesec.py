@@ -83,9 +83,6 @@ class ShareSec(CRUDService):
         return filter_list(entries, filters, options)
 
     async def dup_share_acl(self, src, dst):
-        if (await self.middleware.call('cluster.utils.is_clustered')):
-            return
-
         val = await self.fetch(src)
         await self.store(dst, val)
 
@@ -309,9 +306,6 @@ class ShareSec(CRUDService):
 
     @periodic(3600, run_on_start=False)
     def check_share_info_tdb(self):
-        if self.middleware.call_sync('cluster.utils.is_clustered'):
-            return
-
         if not os.path.exists(LOCAL_SHARE_INFO_FILE):
             if not self.middleware.call_sync('service.started', 'cifs'):
                 return

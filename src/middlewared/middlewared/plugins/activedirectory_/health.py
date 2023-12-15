@@ -174,7 +174,10 @@ class ActiveDirectoryService(Service):
         try:
             verrors.check()
         except ValidationErrors:
-            await self.middleware.call('activedirectory.direct_update', {"enable": False})
+            await self.middleware.call(
+                'datstore.update', self._config.datastore, config['id'],
+                {"enable": False}, {'prefix': 'ad_'}
+            )
             raise CallError('Automatically disabling ActiveDirectory service due to invalid configuration.',
                             errno.EINVAL)
 

@@ -22,13 +22,7 @@ async def restic(middleware, job, cloud_backup, dry_run):
     cmd = None
     try:
         if await middleware.call("filesystem.is_cluster_path", cloud_backup["path"]):
-            local_path = await middleware.call("filesystem.resolve_cluster_path", cloud_backup["path"])
-            await check_local_path(
-                middleware,
-                local_path,
-                check_mountpoint=False,
-                error_text_path=cloud_backup["path"],
-            )
+            pass
         else:
             local_path = cloud_backup["path"]
             if local_path.startswith("/dev/zvol"):

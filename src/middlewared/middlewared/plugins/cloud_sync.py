@@ -134,17 +134,8 @@ class RcloneConfig:
 async def rclone(middleware, job, cloud_sync, dry_run):
     await middleware.call("network.general.will_perform_activity", "cloud_sync")
 
-    if await middleware.call("filesystem.is_cluster_path", cloud_sync["path"]):
-        path = await middleware.call("filesystem.resolve_cluster_path", cloud_sync["path"])
-        await check_local_path(
-            middleware,
-            path,
-            check_mountpoint=False,
-            error_text_path=cloud_sync["path"],
-        )
-    else:
-        path = cloud_sync["path"]
-        await check_local_path(middleware, path)
+    path = cloud_sync["path"]
+    await check_local_path(middleware, path)
 
     # Use a temporary file to store rclone file
     async with RcloneConfig(cloud_sync) as config:

@@ -15,8 +15,6 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import filter_list, MIDDLEWARE_RUN_DIR
 from middlewared.utils.size import format_size
 from middlewared.plugins.boot import BOOT_POOL_NAME_VALID
-from middlewared.plugins.gluster_linux.utils import get_gluster_workdir_dataset, set_gluster_workdir_dataset
-from middlewared.plugins.cluster_linux.utils import CTDBConfig
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -220,19 +218,10 @@ class SystemDatasetService(ConfigService):
                 self.logger.error('Failed to retrieve activedirectory state', exc_info=True)
                 ad_enabled = False
 
-            clustered = await self.middleware.call('cluster.utils.is_clustered')
-
             if system_ready and ad_enabled:
                 verrors.add(
                     'sysdataset_update.pool',
                     'System dataset location may not be moved while the Active Directory service is enabled.',
-                    errno.EPERM
-                )
-
-            if system_ready and clustered:
-                verrors.add(
-                    'sysdataset_update.pool',
-                    'System dataset location may not be moved while while server is clustered.',
                     errno.EPERM
                 )
 
@@ -423,8 +412,6 @@ class SystemDatasetService(ConfigService):
             os.makedirs('/var/lib/systemd/coredump', exist_ok=True)
             subprocess.run(['mount', '--bind', corepath, '/var/lib/systemd/coredump'])
 
-        self.middleware.call_sync('etc.generate', 'glusterd')
-
         if mounted:
             self.middleware.call_sync('systemdataset._post_setup_service_restart')
 
@@ -542,18 +529,6 @@ class SystemDatasetService(ConfigService):
             subprocess.run(['mount', '-t', 'zfs', dataset, mountpoint], check=True)
             mounted = True
 
-        # make sure the glustereventsd webhook dir and
-        # config file exist
-        init_job = self.middleware.call_sync('gluster.eventsd.init')
-        init_job.wait_sync()
-        if init_job.error:
-            config = self.middleware.call_sync('ctdb.shared.volume.config')
-            self.logger.error(
-                'Failed to initialize %s directory with error: %s',
-                config['volume_name'],
-                init_job.error
-            )
-
         if mounted and path == SYSDATASET_PATH:
             fsid = os.statvfs(SYSDATASET_PATH).f_fsid
             self.middleware.call_sync('cache.put', 'SYSDATASET_PATH', {'dataset': f'{path}/.system', 'fsid': fsid})
@@ -568,34 +543,34 @@ class SystemDatasetService(ConfigService):
 
         This is why mount info is checked before manipulating sysdataset_path.
         """
-        mntinfo = self.middleware.call_sync('filesystem.mount_info', [['mountpoint', '=', SYSDATASET_PATH]])
-        if mntinfo and mntinfo[0]['mount_source'].split('/')[0] == pool:
+        current = self.middleware.call_sync('filesystem.mount_info', [['mountpoint', '=', SYSDATASET_PATH]])
+        if current and current[0]['mount_source'].split('/')[0] == pool:
             try:
                 self.middleware.call_sync('cache.pop', 'SYSDATASET_PATH')
             except KeyError:
                 pass
 
-        subprocess.run(['umount', '/var/lib/systemd/coredump'], check=False)
+        if not (mntinfo := self.middleware.call_sync('filesystem.mount_info', [['mount_source', '=', f'{pool}/.system']])):
+            # Pool's system dataset not mounted
+            return
+
+        mp = mntinfo[0]['mountpoint']
         flags = '-f' if not self.middleware.call_sync('failover.licensed') else '-l'
-        for dataset, name in reversed(self.__get_datasets(pool, uuid)):
-            try:
-                subprocess.run(['umount', flags, dataset], check=True, capture_output=True)
-            except subprocess.CalledProcessError as e:
-                stderr = e.stderr.decode()
-                if 'no mount point specified' in stderr:
-                    # Already unmounted
-                    continue
+        try:
+            subprocess.run(['umount', flags, '--recursive', mp], check=True, capture_output=True)
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr.decode()
+            if 'no mount point specified' in stderr:
+                return
+        else:
+            return
 
-                error = f'Unable to umount {dataset}: {stderr}'
-                if 'target is busy' in stderr:
-                    mountpoint = self.middleware.call_sync('pool.dataset.mountpoint', dataset)
-                    if mountpoint is not None:
-                        error += f'\nThe following processes are using {mountpoint!r}: ' + json.dumps(
-                            self.middleware.call_sync('pool.dataset.processes_using_paths', [mountpoint], True),
-                            indent=2,
-                        )
+        error = f'Unable to umount {mp}: {stderr}'
+        if 'target is busy' in stderr:
+            processes = self.middleware.call_sync('pool.dataset.processes_using_paths', [mp], True)
+            error += f'\nThe following processes are using {mountpoint!r}: ' + json.dumps(processes, indent=2)
 
-                raise CallError(error) from None
+        raise CallError(error) from None
 
     def __get_datasets(self, pool, uuid):
         return [(f'{pool}/.system', '')] + [
@@ -603,7 +578,6 @@ class SystemDatasetService(ConfigService):
                 'cores', 'samba4',
                 f'rrd-{uuid}', f'configs-{uuid}',
                 'webui', 'services',
-                'glusterd', CTDBConfig.LEGACY_CTDB_VOL_NAME.value,
                 f'netdata-{uuid}',
             ]
         ]
@@ -632,9 +606,6 @@ class SystemDatasetService(ConfigService):
             path = SYSDATASET_PATH
 
         self.__mount(_to, config['uuid'], path=path)
-
-        if get_gluster_workdir_dataset() is not None:
-            set_gluster_workdir_dataset(_to)
 
         # context manager handles service stop / restart
         with self.release_system_dataset():
@@ -676,8 +647,6 @@ class SystemDatasetService(ConfigService):
             restart = ['netdata']
             if self.middleware.call_sync('service.started', 'cifs'):
                 restart.insert(0, 'cifs')
-            if self.middleware.call_sync('service.started', 'glusterd'):
-                restart.insert(0, 'glusterd')
             if self.middleware.call_sync('service.started', 'open-vm-tools'):
                 restart.append('open-vm-tools')
             if self.middleware.call_sync('service.started', 'idmap'):

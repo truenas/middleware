@@ -1230,21 +1230,6 @@ class UserService(CRUDService):
             {'prefix': 'bsdusr_'}
         )
 
-        if await self.middleware.call('cluster.utils.is_clustered'):
-            if data.get('smb') is True:
-                verrors.add(
-                    f'{schema}.smb',
-                    'Local non-clustered SMB users may not be created on clustered TrueNAS'
-                )
-
-            if 'username' in data and (await self.middleware.call('cluster.accounts.user.query', [
-                ['username', 'C=', data['username']]
-            ])):
-                verrors.add(
-                    f'{schema}.username',
-                    'Username is already in use by a clustered user.'
-                )
-
         if data.get('uid') is not None:
             try:
                 existing_user = await self.middleware.call(
@@ -1978,21 +1963,6 @@ class GroupService(CRUDService):
     async def __common_validation(self, verrors, data, schema, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
-
-        if await self.middleware.call('cluster.utils.is_clustered'):
-            if data.get('smb') is True:
-                verrors.add(
-                    f'{schema}.smb',
-                    'Local SMB groups may not be created on clustered TrueNAS'
-                )
-
-            if 'name' in data and (await self.middleware.call('cluster.accounts.group.query', [
-                ['group', 'C=', data['name']]
-            ])):
-                verrors.add(
-                    f'{schema}.name',
-                    'Name is already in use by a clustered group.'
-                )
 
         if data.get('smb') and not await self.middleware.call('smb.is_configured'):
             verrors.add(
