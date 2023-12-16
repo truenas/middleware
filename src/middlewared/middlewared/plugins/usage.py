@@ -457,6 +457,21 @@ class UsageService(Service):
 
         return {'vms': vms}
 
+    def gather_nspawn_containers(self, context):
+        nspawn_containers = list()
+        try:
+            cmd = subprocess.run(['machinectl', 'list', '-o', 'json'], capture_output=True)
+            if cmd.returncode == 0:
+                nspawn_containers = json.loads(cmd.stdout.decode())
+        except Exception:
+            return {'nspawn_containers': 0}
+
+        return {
+            'nspawn_containers': len([
+                i for i in nspawn_containers if i.get('service') == 'systemd-nspawn'
+            ])
+        }
+
 
 async def setup(middleware):
     now = datetime.utcnow()
