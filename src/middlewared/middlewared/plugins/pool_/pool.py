@@ -649,8 +649,8 @@ class PoolService(CRUDService):
         self.middleware.create_task(self.middleware.call('disk.swaps_configure'))
         self.middleware.create_task(self.middleware.call('pool.restart_services'))
 
-        if (await middleware.call('systemdataset.config'))['pool'] == await middleware.call('boot.pool_name'):
-            await middleware.call('systemdataset.setup')
+        if (await self.middleware.call('systemdataset.config'))['pool'] == await self.middleware.call('boot.pool_name'):
+            await self.middleware.call('systemdataset.setup')
 
         pool = await self.get_instance(pool_id)
 
