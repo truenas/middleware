@@ -4,7 +4,6 @@ from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, ssh
 
 
-
 @pytest.fixture(scope="module")
 def outdated_pool():
     with another_pool() as pool:
@@ -28,6 +27,8 @@ def test_is_outdated_in_list(outdated_pool):
     assert pool["is_upgraded"] is False
 
 
+# Flaky as one-shot alert creation might be delayed until `alert.process_alerts` completion.
+@pytest.mark.flaky(reruns=5, reruns_delay=5)
 def test_is_outdated_alert(outdated_pool):
     alerts = call("alert.list")
     assert any((i["klass"] == "PoolUpgraded" and i["args"] == outdated_pool["name"] for i in alerts))
