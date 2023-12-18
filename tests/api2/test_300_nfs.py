@@ -1107,43 +1107,17 @@ def test_39_check_nfs_service_protocols_parameter(request):
 
 def test_40_check_nfs_service_udp_parameter(request):
     """
-    This test verifies that toggling the `udp` option generates expected changes
-    in nfs kernel server config.
+    This test verifies the udp config is NOT in the DB and
+    that it is NOT in the etc file.
     """
     depends(request, ["NFS_SERVICE_STARTED"], scope="session")
-    with nfs_config():
-        get_payload = {'msg': 'method', 'method': 'nfs.config', 'params': []}
-        set_payload = {'msg': 'method', 'method': 'nfs.update', 'params': []}
 
-        # Initial state should be disabled:
-        #    DB == False, conf == 'n'
-        res = make_ws_request(ip, get_payload)
-        assert res['result']['udp'] is False, res
-        s = parse_server_config()
-        assert s['nfsd']["udp"] == 'n', str(s)
+    # The 'udp' setting should have been removed
+    nfs_conf = call('nfs.config')
+    assert nfs_conf.get('udp') is None, nfs_conf
 
-        # Multiple restarts cause systemd failures.  Reset the systemd counters.
-        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
-        # Confirm we can enable:
-        #    DB == True, conf =='y', rpc will indicate supported
-        set_payload['params'] = [{'udp': True}]
-        res = make_ws_request(ip, set_payload)
-        assert res['result']['udp'] is True, res
-        s = parse_server_config()
-        assert s['nfsd']["udp"] == 'y', str(s)
-        res = SSH_TEST(f"rpcinfo -T udp {ip} mount", user, password, ip)
-        assert "ready and waiting" in res['output'], res
-
-        # Confirm we can disable:
-        #    DB == False, conf =='n', rpc will indicate not supported
-        set_payload['params'] = [{'udp': False}]
-        res = make_ws_request(ip, set_payload)
-        assert res['result']['udp'] is False, res
-        s = parse_server_config()
-        assert s['nfsd']["udp"] == 'n', str(s)
-        res = SSH_TEST(f"rpcinfo -T udp {ip} mount", user, password, ip)
-        assert "Program not registered" in res['stderr']
+    s = parse_server_config()
+    assert s.get('nfsd', {}).get('udp') is None, s
 
 
 def test_41_check_nfs_service_ports(request):

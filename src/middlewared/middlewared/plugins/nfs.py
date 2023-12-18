@@ -29,7 +29,6 @@ class NFSModel(sa.Model):
 
     id = sa.Column(sa.Integer(), primary_key=True)
     nfs_srv_servers = sa.Column(sa.Integer(), nullable=True)
-    nfs_srv_udp = sa.Column(sa.Boolean(), default=False)
     nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
     nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
     nfs_srv_v4_v3owner = sa.Column(sa.Boolean(), default=False)
@@ -60,7 +59,6 @@ class NFSService(SystemServiceService):
         'nfs_entry',
         Int('id', required=True),
         Int('servers', null=True, validators=[Range(min_=1, max_=256)], required=True),
-        Bool('udp', required=True),
         Bool('allow_nonroot', required=True),
         List('protocols', items=[Str('protocol', enum=NFSProtocol.choices())], required=True),
         Bool('v4_v3owner', required=True),
