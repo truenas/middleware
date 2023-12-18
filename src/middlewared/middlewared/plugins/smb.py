@@ -241,6 +241,7 @@ class SMBService(TDBWrapConfigService):
         datastore_extend = 'smb.smb_extend'
         datastore_prefix = 'cifs_srv_'
         cli_namespace = 'service.smb'
+        role_prefix = 'SHARING_SMB'
 
     LP_CTX = param.LoadParm(SMBPath.STUBCONF.platform())
 
