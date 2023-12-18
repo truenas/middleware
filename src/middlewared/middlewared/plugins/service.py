@@ -116,9 +116,11 @@ class ServiceService(CRUDService):
             'service-update',
             Bool('enable', default=False),
         ),
+        roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE']
     )
     @returns(Int('service_primary_key'))
-    async def do_update(self, id_or_name, data):
+    @pass_app(rest=True)
+    async def do_update(self, app, id_or_name, data):
         """
         Update service entry of `id_or_name`.
 
@@ -127,13 +129,19 @@ class ServiceService(CRUDService):
 
         """
         if not id_or_name.isdigit():
-            svc = await self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', id_or_name)])
-            if not svc:
-                raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
-            id_or_name = svc[0]['id']
+            filters = [['service', '=', id_or_name]]
+        else:
+            filters = [['id', '=', id_or_name]]
+
+        if not (svc := await self.middleware.call('datastore.query', 'services.services', filters, {'prefix': 'srv_'})):
+            raise CallError(f'Service {id_or_name} not found.', errno.ENOENT)
+
+        svc = svc[0]
+        if not app_has_write_privilege_for_service(app, svc['service']):
+            raise CallError(f'{svc["service"]}: authenticated session lacks privilege to update service', errno.EPERM)
 
         rv = await self.middleware.call(
-            'datastore.update', 'services.services', id_or_name, {'srv_enable': data['enable']}
+            'datastore.update', 'services.services', svc['id'], {'srv_enable': data['enable']}
         )
         await self.middleware.call('etc.generate', 'rc')
         return rv
