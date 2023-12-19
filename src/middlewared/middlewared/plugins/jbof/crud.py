@@ -1,3 +1,5 @@
+import time
+
 import middlewared.sqlalchemy as sa
 from middlewared.schema import accepts, Dict, Int, IPAddr, Password, Patch, Str
 from middlewared.service import CRUDService, private, ValidationErrors
@@ -291,6 +293,7 @@ class JBOFService(CRUDService):
         for (eth_index, uri) in enumerate(shelf_interfaces):
             address = jbof_static_ip(shelf_index, eth_index)
             redfish.configure_fabric_interface(uri, address, static_ip_netmask_str(address), mtusize=static_mtu())
+        time.sleep(15)
 
     @private
     def unwire_shelf(self, mgmt_ip):
@@ -359,7 +362,7 @@ class JBOFService(CRUDService):
         connected_shelf_ips = set()
         dirty = False
         configured_interfaces = await self.middleware.call('rdma.interface.query')
-        configured_interface_names = [interface['ifname'] for interface in configured_interfaces]
+        configured_interface_names = [interface['ifname'] for interface in configured_interfaces if interface['node'] == node]
         for interface in configured_interfaces:
             if node and node != interface['node']:
                 continue
@@ -385,7 +388,7 @@ class JBOFService(CRUDService):
             # Try each remaining interface
             if dirty:
                 configured_interfaces = await self.middleware.call('rdma.interface.query')
-                configured_interface_names = [interface['ifname'] for interface in configured_interfaces]
+                configured_interface_names = [interface['ifname'] for interface in configured_interfaces if interface['node'] == node]
                 dirty = False
             for link in links:
                 ifname = link['rdma']
