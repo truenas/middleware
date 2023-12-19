@@ -8,6 +8,7 @@ import re
 
 from pyudev import Context, Devices, DeviceNotFoundAtPathError
 
+from .enums import ControllerModels
 from .slot_mappings import get_nvme_slot_info
 
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
@@ -207,17 +208,27 @@ def map_r30_or_fseries(model, ctx):
 
 
 def map_nvme(dmi):
-    # mapping nvme drives only pertains to these models
-    models = ('R30', 'R50', 'R50B', 'R50BM', 'M50', 'M60', 'F60', 'F100', 'F130')
-    if not (model := dmi.removeprefix('TRUENAS-').removesuffix('-HA')) or (model not in models):
-        return []
-
+    model = dmi.removeprefix('TRUENAS-').removesuffix('-S').removesuffix('-HA')
     ctx = Context()
-    if model in ('R50', 'R50B'):
+    if model in (
+        ControllerModels.R50.value,
+        ControllerModels.R50B.value,
+    ):
         return map_r50_or_r50b(model, ctx)
-    elif model in ('R30', 'F60', 'F100', 'F130'):
+    elif model in (
+        ControllerModels.R30.value,
+        ControllerModels.F60.value,
+        ControllerModels.F100.value,
+        ControllerModels.F130.value,
+    ):
         # all nvme systems which we need to handle separately
         return map_r30_or_fseries(model, ctx)
-    else:
+    elif model in (
+        ControllerModels.M50.value,
+        ControllerModels.M60.value,
+        ControllerModels.R50BM.value,
+    ):
         # M50, M60 and R50BM use same plx nvme bridge
         return map_plx_nvme(model, ctx)
+    else:
+        return []
