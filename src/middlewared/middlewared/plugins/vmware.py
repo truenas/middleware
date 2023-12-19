@@ -34,6 +34,13 @@ class VMWareService(CRUDService):
         datastore = 'storage.vmwareplugin'
         cli_namespace = 'storage.vmware'
 
+    ENTRY = Patch(
+        "vmware_create",
+        "vmware_entry",
+        ("add", Int("id")),
+        ("add", Dict("state", additional_attrs=True)),
+    )
+
     @private
     async def validate_data(self, data, schema_name):
         verrors = ValidationErrors()
