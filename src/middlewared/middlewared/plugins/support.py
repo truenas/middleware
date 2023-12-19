@@ -142,6 +142,32 @@ class SupportService(ConfigService):
             ['secondary_phone', 'Secondary Contact Phone'],
         ]
 
+    @accepts(Password('token', default=''))
+    @returns(Dict(additional_attrs=True, example={'API': '11008', 'WebUI': '10004'}))
+    async def fetch_categories(self, token):
+        """
+        Fetch issue categories using access token `token`.
+        Returns a dict with the category name as a key and id as value.
+        """
+
+        await self.middleware.call('network.general.will_perform_activity', 'support')
+
+        if not await self.middleware.call('system.is_enterprise') and not token:
+            raise CallError('token is required')
+
+        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
+        data = await post(
+            f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
+            data=json.dumps({
+                'token': token,
+            }),
+        )
+
+        if 'error' in data:
+            raise CallError(data['message'], errno.EINVAL)
+
+        return data
+
     @accepts(Password('token'), Str('query'))
     @returns(List('similar_issues', items=[Dict(
         'similar_issue',
@@ -169,6 +195,7 @@ class SupportService(ConfigService):
         'new_ticket',
         Str('title', required=True, max_length=None),
         Str('body', required=True, max_length=None),
+        Str('category'),
         Bool('attach_debug', default=False),
         Dict('debug_extra', additional_attrs=True),
         Password('token'),
@@ -212,7 +239,7 @@ class SupportService(ConfigService):
         if sw_name == 'freenas':
             required_attrs = ('token',)
         else:
-            required_attrs = ('phone', 'name', 'email', 'criticality', 'environment')
+            required_attrs = ('category', 'phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
             license_ = await self.middleware.call('system.license')
             if license_:
