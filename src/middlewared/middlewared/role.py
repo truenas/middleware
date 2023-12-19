@@ -31,6 +31,9 @@ ROLES = {
                                               'FILESYSTEM_DATA_WRITE']),
     'REPORTING_READ': Role(),
 
+    'SUPPORT_READ': Role(),
+    'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
+
     'SYSTEM_AUDIT_READ': Role(),
     'SYSTEM_AUDIT_WRITE': Role(),
 
@@ -49,6 +52,7 @@ ROLES = {
                                'REPLICATION_TASK_READ',
                                'SERVICE_READ',
                                'SNAPSHOT_TASK_READ',
+                               'SUPPORT_READ',
                                'SYSTEM_AUDIT_READ'],
                      builtin=False),
 
