@@ -749,7 +749,7 @@ class ReplicationService(CRUDService):
 
     @accepts(Str("transport", enum=["SSH", "SSH+NETCAT", "LOCAL"], required=True),
              Int("ssh_credentials", null=True, default=None),
-             roles=["REPLICATION_TASK_WRITE"])
+             roles=["REPLICATION_TASK_WRITE", "READONLY"])
     @returns(List("datasets", items=[Str("dataset")]))
     async def list_datasets(self, transport, ssh_credentials):
         """
@@ -800,7 +800,7 @@ class ReplicationService(CRUDService):
 
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
-    @accepts(roles=["REPLICATION_TASK_WRITE"])
+    @accepts(roles=["REPLICATION_TASK_WRITE", "READONLY"])
     @returns(List("naming_schemas", items=[Str("naming_schema")]))
     async def list_naming_schemas(self):
         """
@@ -838,7 +838,7 @@ class ReplicationService(CRUDService):
                 }],
             ),
         ],
-        roles=["REPLICATION_TASK_WRITE"],
+        roles=["REPLICATION_TASK_WRITE", "READONLY"],
     )
     @returns(Dict(
         Int("total"),
