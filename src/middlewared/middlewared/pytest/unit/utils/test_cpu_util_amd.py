@@ -38,6 +38,20 @@ from middlewared.utils.cpu import amd_cpu_temperatures
             "value": 65.5
         },
     }, dict(enumerate([40] * 16))),
+
+    ("AMD Opteron APU  1-Core Processor", 1, {
+        "k10temp-pci-00c3_temp1": {
+            "name": "temp1",
+            "value": 48.23
+        }
+    }, dict(enumerate([48.23] * 1))),
+
+    ("AMD Opteron APU Processor", 1, {
+        "k10temp-pci-00c3_temp1": {
+            "name": "temp1",
+            "value": {"temp1_input": 48.23}
+        },
+    }, dict(enumerate([48.23] * 1))),
 ])
 def test_amd_cpu_temperatures(model, core_count, reading, result):
     with patch(
