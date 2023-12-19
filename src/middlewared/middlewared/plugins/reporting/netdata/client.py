@@ -103,7 +103,6 @@ class ClientMixin:
                             'labels': ['time'],
                             'data': [],
                         }))
-                        logger.debug(f'Failed to fetch api response from {task["uri"]}. Reason {task["error"]}')
                     else:
                         responses.append((task['identifier'], task['data']))
         except Exception as e:
