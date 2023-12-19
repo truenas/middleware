@@ -22,7 +22,7 @@
             "top_loaded": false,
             "front_slots": 24,
             "rear_slots": 0,
-            "internal_loaded": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
