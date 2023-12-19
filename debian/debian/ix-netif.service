@@ -2,10 +2,8 @@
 Description=Setup TrueNAS Network
 DefaultDependencies=no
 
-Before=network-pre.target
-
 After=middlewared.service systemd-modules-load.service
-Before=local-fs.target
+Before=local-fs.target network-pre.target
 Conflicts=systemd-networkd.service
 
 [Service]
