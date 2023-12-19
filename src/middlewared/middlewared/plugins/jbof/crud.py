@@ -333,7 +333,7 @@ class JBOFService(CRUDService):
                 connected_shelf_ips = await self.hardwire_node(node, shelf_index, shelf_ip_to_mac)
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
-                    verrors.add(schema, 'Must be able to communicate with at least one interface on the expansion shelf.')
+                    verrors.add(schema, f'Must be able to communicate with at least one interface on the expansion shelf (node {node}).')
                     return
         else:
             connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
@@ -353,10 +353,6 @@ class JBOFService(CRUDService):
         else:
             links = await self.middleware.call('failover.call_remote', 'rdma.get_link_choices')
 
-        link_to_netdev = {}
-        for link in links:
-            link_to_netdev[link['rdma']] = link['netdev']
-
         # First check to see if any interfaces that were previously configured
         # for this shelf are no longer applicable (they might have been moved to
         # a different port on the JBOF).
@@ -369,13 +365,16 @@ class JBOFService(CRUDService):
                 continue
             host_ip = interface['address']
             shelf_ip = jbof_static_ip_from_initiator_ip(host_ip)
-            netdev = link_to_netdev[interface['ifname']]
             value = decode_static_ip(host_ip)
             if value and value[0] == shelf_index:
                 # This is supposed to be connected to our shelf.  Check connectivity.
-                if not await self.middleware.call('rdma.interface.ping', node, netdev, shelf_ip, shelf_ip_to_mac[shelf_ip]):
+                if await self.middleware.call('rdma.interface.ping', node, interface['ifname'], shelf_ip, shelf_ip_to_mac[shelf_ip]):
                     # This config looks good, keep it.
                     connected_shelf_ips.add(shelf_ip)
+                    if node:
+                        self.logger.info(f'Validated existing link on node {node}: {host_ip} -> {shelf_ip}')
+                    else:
+                        self.logger.info(f'Validated existing link: {host_ip} -> {shelf_ip}')
                 else:
                     self.logger.info('Removing RDMA interface that cannot connect to JBOF')
                     await self.middleware.call('rdma.interface.delete', interface['id'])
@@ -388,11 +387,13 @@ class JBOFService(CRUDService):
                 configured_interfaces = await self.middleware.call('rdma.interface.query')
                 configured_interface_names = [interface['ifname'] for interface in configured_interfaces]
                 dirty = False
-            for ifname in link_to_netdev.keys():
+            for link in links:
+                ifname = link['rdma']
                 if ifname not in configured_interface_names:
+                    host_ip = initiator_ip_from_jbof_static_ip(shelf_ip)
                     payload = {
                         'ifname': ifname,
-                        'address': initiator_ip_from_jbof_static_ip(shelf_ip),
+                        'address': host_ip,
                         'prefixlen': static_ip_netmask_int(),
                         'mtu': static_mtu(),
                         'check': {'ping_ip': shelf_ip,
@@ -404,6 +405,10 @@ class JBOFService(CRUDService):
                         dirty = True
                         connected_shelf_ips.add(shelf_ip)
                         # break out of the ifname loop
+                        if node:
+                            self.logger.info(f'Created link on node {node}: {host_ip} -> {shelf_ip}')
+                        else:
+                            self.logger.info(f'Created link: {host_ip} -> {shelf_ip}')
                         break
         return list(connected_shelf_ips)
 
@@ -425,7 +430,6 @@ class JBOFService(CRUDService):
     @private
     async def unwire_dataplane(self, mgmt_ip, shelf_index):
         """Unware the dataplane interfaces of the specified JBOF."""
-        # shelf_interfaces = await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip)
         await self.middleware.call('jbof.unwire_host', mgmt_ip, shelf_index)
         await self.middleware.call('jbof.unwire_shelf', mgmt_ip)
 

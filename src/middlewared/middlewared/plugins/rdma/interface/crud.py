@@ -8,14 +8,14 @@ from pyroute2.ndb.transaction import CheckProcessException
 
 
 class ConnectionChecker:
-    def __init__(self, middleware, netdev, ip, mac=None):
+    def __init__(self, middleware, ifname, ip, mac=None):
         self.middleware = middleware
-        self.netdev = netdev
+        self.ifname = ifname
         self.ip = ip
         self.mac = mac
 
     def commit(self):
-        if not self.middleware.call_sync('rdma.interface.local_ping', self.netdev, self.ip, self.mac):
+        if not self.middleware.call_sync('rdma.interface.local_ping', self.ifname, self.ip, self.mac):
             raise CheckProcessException('CheckProcess failed')
 
 
@@ -127,16 +127,11 @@ class RDMAInterfaceService(CRUDService):
             return await self.middleware.call('rdma.interface.local_configure_interface', ifname, address, prefixlen, mtu, check)
         else:
             # Remote
-            return await self.middleware.call('failover.call_remote', 'rdma.interface.local_configure_interface', ifname, address, prefixlen, mtu, check)
+            return await self.middleware.call('failover.call_remote', 'rdma.interface.local_configure_interface', [ifname, address, prefixlen, mtu, check])
 
     def local_configure_interface(self, ifname, address, prefixlen=None, mtu=None, check=None):
         """Configure the interface."""
-        netdev = None
-        links = self.middleware.call_sync('rdma.get_link_choices')
-        for link in links:
-            if link['rdma'] == ifname:
-                netdev = link['netdev']
-                break
+        netdev = self.middleware.call_sync('rdma.interface.ifname_to_netdev', ifname)
         if not netdev:
             self.logger.error('Could not find netdev associated with %s', ifname)
             return False
@@ -150,7 +145,9 @@ class RDMAInterfaceService(CRUDService):
                         if address:
                             ctx.push(dev.add_ip(address=address, prefixlen=prefixlen).set('state', 'up'))
                         if check:
-                            ctx.push(ConnectionChecker(self.middleware, netdev, check['ping_ip'], check.get('ping_mac')))
+                            ctx.push(ConnectionChecker(self.middleware, ifname, check['ping_ip'], check.get('ping_mac')))
+            if check:
+                self.logger.info(f'Validated communication of {netdev} with IP {check["ping_ip"]}')
             return True
         except CheckProcessException:
             self.logger.info(f'Failed to validate communication of {netdev} with IP {check["ping_ip"]}')
@@ -159,15 +156,23 @@ class RDMAInterfaceService(CRUDService):
 
         return False
 
-    async def ping(self, node, netdev, ip, mac=None):
+    async def ping(self, node, ifname, ip, mac=None):
         if not node or node == await self.middleware.call('failover.node'):
             # Local
-            return await self.middleware.call('rdma.interface.local_ping', netdev, ip, mac)
+            result = await self.middleware.call('rdma.interface.local_ping', ifname, ip, mac)
         else:
             # Remote
-            return await self.middleware.call('failover.call_remote', 'rdma.interface.local_ping', netdev, ip, mac)
+            result = await self.middleware.call('failover.call_remote', 'rdma.interface.local_ping', [ifname, ip, mac])
+        return result
 
-    async def local_ping(self, netdev, ip, mac=None):
+    async def ifname_to_netdev(self, ifname):
+        links = await self.middleware.call('rdma.get_link_choices')
+        for link in links:
+            if link['rdma'] == ifname:
+                return link['netdev']
+
+    async def local_ping(self, ifname, ip, mac=None):
+        netdev = await self.middleware.call('rdma.interface.ifname_to_netdev', ifname)
         if not await self.middleware.call('core.ping_remote', {'hostname': ip,
                                                                'timeout': 1,
                                                                'count': 4,
