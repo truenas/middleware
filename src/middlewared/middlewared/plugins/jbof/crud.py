@@ -36,6 +36,7 @@ class JBOFService(CRUDService):
         datastore = 'storage.jbof'
         datastore_prefix = "jbof_"
         cli_private = True
+        role_prefix = 'JBOF'
 
     ENTRY = Dict(
         'jbof_entry',

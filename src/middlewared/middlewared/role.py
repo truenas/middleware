@@ -81,6 +81,10 @@ ROLES = {
     'NETWORK_INTERFACE_READ': Role(),
     'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
 
+    # JBOF roles
+    'JBOF_READ': Role(),
+    'JBOF_WRITE': Role(includes=['JBOF_READ']),
+
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
     'SHARING_ISCSI_AUTH_WRITE': Role(includes=['SHARING_ISCSI_AUTH_READ']),
