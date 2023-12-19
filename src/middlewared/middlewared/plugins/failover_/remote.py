@@ -15,7 +15,7 @@ from functools import partial
 
 from middlewared.client import Client, ClientException, CALL_TIMEOUT
 from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Str, Float, returns
-from middlewared.service import CallError, Service, private
+from middlewared.service import CallError, Service, pass_app, private
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 from middlewared.validators import Range
 
@@ -249,9 +249,11 @@ class FailoverService(Service):
             Float('connect_timeout', default=2.0, validators=[Range(min_=2.0, max_=1800.0)]),
             Bool('raise_connect_error', default=True),
         ),
+        roles=['FAILOVER_READ']
     )
     @returns(Any(null=True))
-    def call_remote(self, method, args, options):
+    @pass_app()
+    def call_remote(self, app, method, args, options):
         """
         Call a method on the other node.
 
@@ -273,6 +275,10 @@ class FailoverService(Service):
             `raise_connect_error`: If false, will not raise an exception if a connection error to the other node
                 happens, or connection/call timeout happens, or method does not exist on the remote node.
         """
+
+        if app and not app.authenticated_credentials.authorize('CALL', method):
+            raise CallError(f'{method}: authenticated credentials not authorized to perform call', errno.EPERM)
+
         if options.pop('job_return'):
             options['job'] = 'RETURN'
         raise_connect_error = options.pop('raise_connect_error')
