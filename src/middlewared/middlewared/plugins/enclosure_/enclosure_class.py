@@ -580,11 +580,11 @@ class Enclosure:
         """
         if not self.model:
             return 0
-        elif any((self.is_xseries, self.is_12_bay_jbod)):
+        elif any((self.is_xseries, self.is_r30, self.is_12_bay_jbod)):
             return 12
         elif self.is_r20_series:
             return 14
-        elif any((self.is_hseries, self.is_r10, self.is_r30)):
+        elif any((self.is_hseries, self.is_r10)):
             return 16
         elif any((self.is_fseries, self.is_mseries, self.is_24_bay_jbod)):
             return 24
@@ -623,9 +623,7 @@ class Enclosure:
     def internal_slots(self):
         """Determine the total number of internal drive bays.
 
-        NOTE: This is mostly only relevant to our MINI platforms.
-
         Args:
         Returns: int
         """
-        return 0
+        return 4 if self.is_r30 else 0
