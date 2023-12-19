@@ -1,3 +1,4 @@
+import subprocess
 import time
 
 import middlewared.sqlalchemy as sa
@@ -5,7 +6,7 @@ from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
                                               RedfishClient)
 from middlewared.schema import (Dict, Int, IPAddr, Password, Patch, Str,
                                 accepts, returns)
-from middlewared.service import CRUDService, ValidationErrors, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
 from .functions import (decode_static_ip, initiator_ip_from_jbof_static_ip,
@@ -277,6 +278,8 @@ class JBOFService(CRUDService):
         # shelf_interfaces = await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip)
         await self.middleware.call('jbof.hardwire_shelf', mgmt_ip, shelf_index)
         await self.middleware.call('jbof.hardwire_host', mgmt_ip, shelf_index, schema, verrors)
+        if not verrors:
+            await self.middleware.call('jbof.attach_drives', mgmt_ip, shelf_index, schema, verrors)
 
     @private
     def fabric_interface_choices(self, mgmt_ip):
@@ -301,7 +304,7 @@ class JBOFService(CRUDService):
         for (eth_index, uri) in enumerate(shelf_interfaces):
             address = jbof_static_ip(shelf_index, eth_index)
             redfish.configure_fabric_interface(uri, address, static_ip_netmask_str(address), mtusize=static_mtu())
-        time.sleep(15)
+        time.sleep(20)
 
     @private
     def unwire_shelf(self, mgmt_ip):
@@ -422,6 +425,51 @@ class JBOFService(CRUDService):
                             self.logger.info(f'Created link: {host_ip} -> {shelf_ip}')
                         break
         return list(connected_shelf_ips)
+
+    @private
+    async def attach_drives(self, mgmt_ip, shelf_index, schema, verrors):
+        """Attach drives from the specified expansion shelf."""
+        if await self.middleware.call('failover.licensed'):
+            # HA system
+            if not await self.middleware.call('failover.remote_connected'):
+                verrors.add(schema, 'HA system must be in good state to allow configuration.')
+                return
+
+            this_node = await self.middleware.call('failover.node')
+            if this_node not in ['A', 'B']:
+                verrors.add(schema, 'HA system must be in good state to allow configuration: Invalid node')
+                return
+
+            for node in ['A', 'B']:
+                await self.attach_drives_to_node(node, shelf_index)
+        else:
+            await self.attach_drives_to_node(node, shelf_index)
+
+    @private
+    async def attach_drives_to_node(self, node, shelf_index):
+        localnode = not node or node == await self.middleware.call('failover.node')
+        configured_interfaces = await self.middleware.call('rdma.interface.query')
+        if localnode:
+            for interface in configured_interfaces:
+                if interface['node'] != node:
+                    continue
+                jbof_ip = jbof_static_ip_from_initiator_ip(interface['address'])
+                await self.middleware.call('jbof.nvme_connect', jbof_ip)
+        else:
+            for interface in configured_interfaces:
+                if interface['node'] != node:
+                    continue
+                jbof_ip = jbof_static_ip_from_initiator_ip(interface['address'])
+                await self.middleware.call('failover.call_remote', 'jbof.nvme_connect', [jbof_ip])
+
+    @private
+    def nvme_connect(self, ip, nr_io_queues=16):
+        command = ['nvme', 'connect-all', '-t', 'rdma', '-a', ip, '--persistent', '-i', f'{nr_io_queues}']
+        ret = subprocess.run(command, capture_output=True)
+        if ret.returncode:
+            self.logger.debug(f'Failed to execute "{" ".join(command)}": {ret.stderr.decode()}')
+            raise CallError(f'Failed connect NVMe disks: {ret.stderr.decode()}')
+        return True
 
     @private
     async def unwire_host(self, mgmt_ip, shelf_index):
