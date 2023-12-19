@@ -499,7 +499,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         return False
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     async def backend_options(self):
         """
         This returns full information about idmap backend options. Not all
@@ -509,6 +509,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
     @accepts(
         Str('idmap_backend', enum=[x.name for x in IdmapBackend]),
+        roles=['READONLY']
     )
     async def options_choices(self, backend):
         """
@@ -516,7 +517,7 @@ class IdmapDomainService(TDBWrapCRUDService):
         """
         return IdmapBackend[backend].supported_keys()
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     async def backend_choices(self):
         """
         Returns array of valid idmap backend choices per directory service.
