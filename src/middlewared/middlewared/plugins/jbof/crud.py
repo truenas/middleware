@@ -1,12 +1,18 @@
 import time
 
 import middlewared.sqlalchemy as sa
-from middlewared.schema import accepts, Dict, Int, IPAddr, Password, Patch, Str
-from middlewared.service import CRUDService, private, ValidationErrors
+from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
+                                              RedfishClient)
+from middlewared.schema import (Dict, Int, IPAddr, Password, Patch, Str,
+                                accepts, returns)
+from middlewared.service import CRUDService, ValidationErrors, private
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
-from middlewared.plugins.jbof.redfish import RedfishClient, InvalidCredentialsError
-from .functions import decode_static_ip, initiator_static_ip, jbof_static_ip, initiator_ip_from_jbof_static_ip, jbof_static_ip_from_initiator_ip, static_ip_netmask_int, static_ip_netmask_str, static_mtu
+from .functions import (decode_static_ip, initiator_ip_from_jbof_static_ip,
+                        initiator_static_ip, jbof_static_ip,
+                        jbof_static_ip_from_initiator_ip,
+                        static_ip_netmask_int, static_ip_netmask_str,
+                        static_mtu)
 
 
 class JBOFModel(sa.Model):
@@ -223,9 +229,10 @@ class JBOFService(CRUDService):
             redfish = RedfishClient(f'https://{mgmt_ip}', username, password)
             RedfishClient.cache_set(mgmt_ip, redfish)
 
-    @private
+    @accepts()
+    @returns(Int())
     async def licensed(self):
-        """Return a count of the number of JBOF units licensed"""
+        """Return a count of the number of JBOF units licensed."""
         result = 0
         # Do we have a license at all?
         license_ = await self.middleware.call('system.license')
