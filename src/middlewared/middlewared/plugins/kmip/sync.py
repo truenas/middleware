@@ -41,7 +41,7 @@ class KMIPService(Service, KMIPServerMixin):
         else:
             return True
 
-    @accepts()
+    @accepts(roles=['KMIP_READ'])
     @returns(Bool('pending_kmip_sync'))
     async def kmip_sync_pending(self):
         """
@@ -53,7 +53,7 @@ class KMIPService(Service, KMIPServerMixin):
         )
 
     @periodic(interval=86400)
-    @accepts()
+    @accepts(roles=['KMIP_WRITE'])
     @returns()
     async def sync_keys(self):
         """
@@ -65,7 +65,7 @@ class KMIPService(Service, KMIPServerMixin):
         await self.middleware.call('kmip.sync_zfs_keys')
         await self.middleware.call('kmip.sync_sed_keys')
 
-    @accepts()
+    @accepts(roles=['KMIP_WRITE'])
     @returns()
     async def clear_sync_pending_keys(self):
         """

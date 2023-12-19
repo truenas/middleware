@@ -23,6 +23,10 @@ ROLES = {
 
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
+
+    'KMIP_READ': Role(),
+    'KMIP_WRITE': Role(includes=['KMIP_READ']),
+
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
     'FILESYSTEM_DATA_READ': Role(),
@@ -43,6 +47,7 @@ ROLES = {
                                'AUTH_SESSIONS_READ',
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
+                               'KMIP_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
