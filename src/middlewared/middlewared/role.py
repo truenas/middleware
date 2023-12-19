@@ -29,7 +29,7 @@ ROLES = {
     'REPORTING_READ': Role(),
 
     'SUPPORT_READ': Role(),
-    'SUPPORT_WRITE': Role(),
+    'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
 
     'SYSTEM_AUDIT_READ': Role(),
     'SYSTEM_AUDIT_WRITE': Role(),
