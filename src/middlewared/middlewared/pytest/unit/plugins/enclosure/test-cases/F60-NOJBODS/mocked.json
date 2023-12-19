@@ -18,6 +18,11 @@
             "status": [
                 "OK"
             ],
+            "rackmount": true,
+            "top_loaded": false,
+            "front_slots": 24,
+            "rear_slots": 0,
+            "internal_loaded": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
