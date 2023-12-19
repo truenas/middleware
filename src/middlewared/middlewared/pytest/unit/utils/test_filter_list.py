@@ -1,4 +1,5 @@
 import pytest
+import datetime
 from middlewared.utils import filter_list
 
 
@@ -174,6 +175,37 @@ COMPLEX_DATA = [
     }
 ]
 
+SAMPLE_AUDIT = [
+    {
+        'audit_id': 'd89cd1ba-3982-4407-98fb-febd829ca0d4',
+        'timestamp': datetime.datetime(2023, 12, 18, 16, 10, 30, tzinfo=datetime.timezone.utc),
+        'service': 'MIDDLEWARE',
+        'event': 'AUTHENTICATION'
+    },
+    {
+        'audit_id': 'd53dcd53-2955-453b-9e94-759031e3d1c7',
+        'timestamp': datetime.datetime(2023, 12, 18, 16, 10, 33, tzinfo=datetime.timezone.utc),
+        'service': 'MIDDLEWARE',
+        'event': 'AUTHENTICATION'
+    },
+    {
+        'audit_id': '3f63e567-b302-4d18-803f-fc4dcbd27832',
+        'timestamp': datetime.datetime(2023, 12, 18, 16, 15, 35, tzinfo=datetime.timezone.utc),
+        'service': 'MIDDLEWARE', 'event': 'METHOD_CALL'
+    },
+    {
+        'audit_id': 'e617db35-ee56-40f9-876a-f97edb1f8a26',
+        'timestamp': datetime.datetime(2023, 12, 18, 16, 15, 55, tzinfo=datetime.timezone.utc),
+        'service': 'MIDDLEWARE',
+        'event': 'METHOD_CALL'
+    },
+    {
+        'audit_id': '7fd9f725-afad-4a62-91e4-1adbdaf3928b',
+        'timestamp': datetime.datetime(2023, 12, 18, 16, 21, 25, tzinfo=datetime.timezone.utc),
+        'service': 'MIDDLEWARE',
+        'event': 'AUTHENTICATION'
+    }
+]
 
 def test__filter_list_equal():
     assert len(filter_list(DATA, [['foo', '=', 'foo1']])) == 1
@@ -440,3 +472,34 @@ def test__filter_list_select_as_validation():
         # wrong type in select
         filter_list(DATA_SELECT_COMPLEX, [], {'select': [[1, 'cat']]})
         assert 'first item must be a string' in str(ve)
+
+
+def test__filter_list_timestamp():
+    # Test variations of not being ISO-8601 timestamp
+
+    # check for bogus string
+    with pytest.raises(ValueError) as ve:
+        filter_list([], [["timestamp.$date", "=", "Canary"]])
+
+    assert 'must be an ISO-8601 formatted timestamp string' in str(ve)
+
+
+    # check for wrong type
+    with pytest.raises(ValueError) as ve:
+        filter_list([], [["timestamp.$date", "=", 1]])
+
+    assert 'must be an ISO-8601 formatted timestamp string' in str(ve)
+
+
+    # check for invalid operators
+    with pytest.raises(ValueError) as ve:
+        filter_list([], [["timestamp.$date", "^", '2023-12-18T16:15:35+00:00']])
+
+    assert 'invalid timestamp operation.' in str(ve)
+
+    # A few basic comparison operators to smoke-check
+    assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '>', '2023-12-18T16:15:35+00:00']])) == 2
+    assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '>=', '2023-12-18T16:15:35+00:00']])) == 3
+
+    # Check that zulu abbreviation is evaluated properly
+    assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '<', '2023-12-18T16:15:35Z']])) == 2
