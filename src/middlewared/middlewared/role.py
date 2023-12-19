@@ -18,6 +18,9 @@ class Role:
 
 
 ROLES = {
+    'ACCOUNT_READ': Role(),
+    'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
+
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
     'FILESYSTEM_ATTRS_READ': Role(),
@@ -33,6 +36,7 @@ ROLES = {
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
+                               'ACCOUNT_READ',
                                'AUTH_SESSIONS_READ',
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
