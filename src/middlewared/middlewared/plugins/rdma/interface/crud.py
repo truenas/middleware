@@ -191,3 +191,20 @@ class RDMAInterfaceService(CRUDService):
                 self.middleware.logger.debug('MAC address mismatch for IP %s', ip)
                 return False
         return True
+
+    async def internal_interfaces(self):
+        links = await self.middleware.call('rdma.get_link_choices')
+        ifname_to_netdev = {}
+        for link in links:
+            ifname_to_netdev[link['rdma']] = link['netdev']
+
+        if await self.middleware.call('system.product_type') in ['ENTERPRISE', 'SCALE_ENTERPRISE']:
+            # For Enterprise we treat all RDMA interfaces as internal
+            return list(ifname_to_netdev.values())
+        else:
+            # Otherwise we only treat used RDMA interfaces as internal
+            result = set()
+            interfaces = await self.query()
+            for interface in interfaces:
+                result.add(ifname_to_netdev[interface['ifname']])
+            return list(result)
