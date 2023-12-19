@@ -9,7 +9,7 @@ class PoolDatasetService(Service):
     class Config:
         namespace = 'pool.dataset'
 
-    @accepts()
+    @accepts(roles=['DATASET_READ'])
     @returns(Dict(
         *[Str(k, enum=[k]) for k in ZFS_CHECKSUM_CHOICES if k != 'OFF'],
     ))
@@ -19,7 +19,7 @@ class PoolDatasetService(Service):
         """
         return {v: v for v in ZFS_CHECKSUM_CHOICES if v != 'OFF'}
 
-    @accepts()
+    @accepts(roles=['DATASET_READ'])
     @returns(Dict(
         *[Str(k, enum=[k]) for k in ZFS_COMPRESSION_ALGORITHM_CHOICES],
     ))
@@ -29,7 +29,7 @@ class PoolDatasetService(Service):
         """
         return {v: v for v in ZFS_COMPRESSION_ALGORITHM_CHOICES}
 
-    @accepts()
+    @accepts(roles=['DATASET_READ'])
     @returns(Dict(
         *[Str(k, enum=[k]) for k in ZFS_ENCRYPTION_ALGORITHM_CHOICES],
     ))
@@ -39,7 +39,7 @@ class PoolDatasetService(Service):
         """
         return {v: v for v in ZFS_ENCRYPTION_ALGORITHM_CHOICES}
 
-    @accepts(Str('pool'))
+    @accepts(Str('pool'), roles=['DATASET_READ'])
     @returns(Str())
     async def recommended_zvol_blocksize(self, pool):
         """
