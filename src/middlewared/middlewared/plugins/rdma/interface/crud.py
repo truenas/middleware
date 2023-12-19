@@ -208,3 +208,13 @@ class RDMAInterfaceService(CRUDService):
             for interface in interfaces:
                 result.add(ifname_to_netdev[interface['ifname']])
             return list(result)
+
+    async def configure(self):
+        if await self.middleware.call('failover.licensed'):
+            node = await self.middleware.call('failover.node')
+        else:
+            node = ''
+        interfaces = await self.middleware.call('rdma.interface.query', [['node', '=', node]])
+        for interface in interfaces:
+            await self.middleware.call('rdma.interface.local_configure_interface', interface['ifname'], interface['address'], interface['prefixlen'], interface['mtu'])
+        return interfaces
