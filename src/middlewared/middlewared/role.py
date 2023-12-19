@@ -19,7 +19,7 @@ class Role:
 
 ROLES = {
     'ACCOUNT_READ': Role(),
-    'ACCOUNT_WRITE': Role(),
+    'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
 
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
