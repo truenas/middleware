@@ -56,7 +56,7 @@ class IpmiSelService(Service):
         job.set_progress(100, 'Parsing extended event log complete')
         return filter_list(rv, filters, options)
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     @returns(Dict('ipmi_sel_info', additional_attrs=True))
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def info(self, job):
