@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import errno
 import sys
 import os
 apifolder = os.getcwd()
