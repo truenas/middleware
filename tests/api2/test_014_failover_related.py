@@ -123,7 +123,7 @@ if ha:
             assert remote['nameserver3'] == old_ns
             assert remote['state']['nameserver3'] == old_ns
 
-    def test_08_readonly_ops(request, readonly_admin)
+    def test_08_readonly_ops(request, readonly_admin):
         with client(auth=(readonly_admin.username, readonly_admin.password)) as c:
             c.call('failover.config')
             c.call('failover.node')

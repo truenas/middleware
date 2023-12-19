@@ -276,6 +276,11 @@ class FailoverService(Service):
                 happens, or connection/call timeout happens, or method does not exist on the remote node.
         """
 
+        # external call_remote to no_auth_required and no_authz_required methods
+        # will currently fail due to following check. Any change to this behavior
+        # will need to carefully evaluate security impact of calls to core.get_jobs,
+        # user.set_password, and other methods. It may be a good idea to also
+        # implement whitelist of permitted methods to call_remote for non-internal case.
         if app and not app.authenticated_credentials.authorize('CALL', method):
             raise CallError(f'{method}: authenticated credentials not authorized to perform call', errno.EPERM)
 
