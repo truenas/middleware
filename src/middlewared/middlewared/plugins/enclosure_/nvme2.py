@@ -14,7 +14,7 @@ from .slot_mappings import get_nvme_slot_info
 RE_SLOT = re.compile(r'^0-([0-9]+)$')
 
 
-def fake_nvme_enclosure(model, num_of_nvme_slots, mapped):
+def fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info=None):
     """This function takes the nvme devices that been mapped
     to their respective slots and then creates a "fake" enclosure
     device that matches (similarly) to what our real enclosure
@@ -41,6 +41,9 @@ def fake_nvme_enclosure(model, num_of_nvme_slots, mapped):
         'status': ['OK'],
         'elements': {'Array Device Slot': {}}
     }
+    if ui_info is not None:
+        fake_enclosure.update(ui_info)
+
     disks_map = get_nvme_slot_info(model)
     if not disks_map:
         fake_enclosure['should_ignore'] = True
@@ -164,7 +167,6 @@ def map_r50_or_r50b(model, ctx):
 
 
 def map_r30_or_fseries(model, ctx):
-    num_of_nvme_slots = 16 if model == 'R30' else 24  # r30 has 16 nvme slots, fseries has 24 (all nvme flash)
     nvmes = {}
     for i in ctx.list_devices(subsystem='nvme'):
         for namespace_dev in i.children:
@@ -181,13 +183,14 @@ def map_r30_or_fseries(model, ctx):
     # the keys in this dictionary are the physical pcie slot ids
     # and the values are the slots that the webUI uses to map them
     # to their physical locations in a human manageable way
-    if model == 'R30':
+    if model == ControllerModels.R30.value:
         webui_map = {
             '27': 1, '26': 7, '25': 2, '24': 8,
             '37': 3, '36': 9, '35': 4, '34': 10,
             '45': 5, '47': 11, '40': 6, '41': 12,
             '38': 14, '39': 16, '43': 13, '44': 15,
         }
+        num_of_nvme_slots = len(webui_map)
     else:
         # f-series vendor is nice to us and nvme phys slots start at 1
         # and increment in a human readable way already
@@ -197,6 +200,7 @@ def map_r30_or_fseries(model, ctx):
             '13': 13, '14': 14, '15': 15, '16': 16, '17': 17, '18': 18,
             '19': 19, '20': 20, '21': 21, '22': 22, '23': 23, '24': 24,
         }
+        num_of_nvme_slots = len(webui_map)
 
     mapped = {}
     for i in pathlib.Path('/sys/bus/pci/slots').iterdir():
@@ -204,7 +208,14 @@ def map_r30_or_fseries(model, ctx):
         if (nvme := nvmes.get(addr, None)) and (mapped_slot := webui_map.get(i.name, None)):
             mapped[mapped_slot] = nvme
 
-    return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
+    ui_info = {
+        'rackmount': True,
+        'top_loaded': False,
+        'front_slots': num_of_nvme_slots,
+        'rear_slots': 0,
+        'internal_slots': 0
+    }
+    return fake_nvme_enclosure(model, num_of_nvme_slots, mapped, ui_info)
 
 
 def map_nvme(dmi):
