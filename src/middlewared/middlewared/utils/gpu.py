@@ -6,12 +6,15 @@ from middlewared.service_exception import CallError
 
 
 RE_PCI_ADDR = re.compile(r'(?P<domain>.*):(?P<bus>.*):(?P<slot>.*)\.')
-SENSITIVE_PCI_DEVICE_TYPES = (
-    'PCI Bridge',
-    'ISA Bridge',
-    'RAM memory',
-    'SMBus',
-)
+
+# get capability classes for relevant pci devices from
+# https://github.com/pciutils/pciutils/blob/3d2d69cbc55016c4850ab7333de8e3884ec9d498/lib/header.h#L1429
+SENSITIVE_PCI_DEVICE_TYPES = {
+    '0x0604': 'PCI Bridge',
+    '0x0601': 'ISA Bridge',
+    '0x0500': 'RAM memory',
+    '0x0c05': 'SMBus',
+}
 
 
 def get_gpus():
@@ -56,7 +59,8 @@ def get_gpus():
                 'vm_pci_slot': f'pci_{child["PCI_SLOT_NAME"].replace(".", "_").replace(":", "_")}',
             })
             critical |= any(
-                k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower() for k in SENSITIVE_PCI_DEVICE_TYPES
+                k.lower() in child.get('ID_PCI_SUBCLASS_FROM_DATABASE', '').lower()
+                for k in SENSITIVE_PCI_DEVICE_TYPES.values()
             )
 
         gpus.append({
