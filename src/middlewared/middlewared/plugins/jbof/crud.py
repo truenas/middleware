@@ -59,6 +59,10 @@ class JBOFService(CRUDService):
         Password('mgmt_password', required=True),
     )
 
+    # Number of seconds we need to wait for a ES24N to start responding on
+    # a newly configured IP
+    JBOF_CONFIG_DELAY_SECS = 20
+
     @private
     async def add_index(self, data):
         """Add a private unique index (0-255) to the entry if not already present."""
@@ -66,6 +70,8 @@ class JBOFService(CRUDService):
             index = await self.middleware.call('jbof.next_index')
             if index is not None:
                 data['index'] = index
+            else:
+                raise CallError('Could not generate an index.')
         return data
 
     @private
@@ -81,7 +87,8 @@ class JBOFService(CRUDService):
                 # We're adding a new JBOF - have we exceeded the license?
                 count = await self.middleware.call('jbof.query', [], {'count': True})
                 if count >= license_count:
-                    verrors.add(f"{schema_name}.mgmt_ip1", f"Already configured the number of licensed emclosures: {license_count}")
+                    verrors.add(f"{schema_name}.mgmt_ip1",
+                                f"Already configured the number of licensed emclosures: {license_count}")
 
         # Ensure redfish connects to mgmt1 (incl login)
         mgmt_ip1 = data.get('mgmt_ip1')
@@ -189,9 +196,10 @@ class JBOFService(CRUDService):
         verrors.check()
 
         if old['uuid'] != new['uuid']:
-            self.middleware.logger.debug('Changed UUID of JBOF')
+            self.logger.debug('Changed UUID of JBOF from %s to %s', old['uuid'], new['uuid'])
             await self.middleware.call('jbof.unwire_dataplane', old['mgmt_ip1'], old['index'])
-            await self.middleware.call('jbof.hardwire_dataplane', new['mgmt_ip1'], new['index'], 'jbof_update.mgmt_ip1', verrors)
+            await self.middleware.call('jbof.hardwire_dataplane', new['mgmt_ip1'], new['index'],
+                                       'jbof_update.mgmt_ip1', verrors)
 
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
@@ -214,11 +222,10 @@ class JBOFService(CRUDService):
         try:
             await self.middleware.call('jbof.unwire_dataplane', data['mgmt_ip1'], data['index'])
         except Exception:
-            self.middleware.logger.debug('Unable to unwire JBOF @%r', data['mgmt_ip1'])
+            self.logger.debug('Unable to unwire JBOF @%r', data['mgmt_ip1'])
 
         # Now delete the entry
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
-        # await self.middleware.call('service.restart', 'ntpd')
         return response
 
     @private
@@ -250,7 +257,7 @@ class JBOFService(CRUDService):
         if license_['addhw']:
             for quantity, code in license_['addhw']:
                 if code not in LICENSE_ADDHW_MAPPING:
-                    self.middleware.logger.warning('Unknown additional hardware code %d', code)
+                    self.logger.warning('Unknown additional hardware code %d', code)
                     continue
                 name = LICENSE_ADDHW_MAPPING[code]
                 if name == 'ES24N':
@@ -274,7 +281,6 @@ class JBOFService(CRUDService):
         Then attempt to connect using all the available RDMA capable
         interfaces.
         """
-        # shelf_interfaces = await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip)
         await self.middleware.call('jbof.hardwire_shelf', mgmt_ip, shelf_index)
         await self.middleware.call('jbof.hardwire_host', mgmt_ip, shelf_index, schema, verrors)
         if not verrors:
@@ -303,7 +309,7 @@ class JBOFService(CRUDService):
         for (eth_index, uri) in enumerate(shelf_interfaces):
             address = jbof_static_ip(shelf_index, eth_index)
             redfish.configure_fabric_interface(uri, address, static_ip_netmask_str(address), mtusize=static_mtu())
-        time.sleep(20)
+        time.sleep(JBOFService.JBOF_CONFIG_DELAY_SECS)
 
     @private
     def unwire_shelf(self, mgmt_ip):
@@ -315,56 +321,59 @@ class JBOFService(CRUDService):
     async def hardwire_host(self, mgmt_ip, shelf_index, schema, verrors):
         """Discover which direct links exist to the specified expansion shelf."""
         # See how many interfaces are available on the expansion shelf
-        shelf_interfaces = await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip)
         shelf_ip_to_mac = await self.middleware.call('jbof.fabric_interface_macs', mgmt_ip)
-        shelf_ips = list(shelf_ip_to_mac.keys())
 
         # Setup a dict with the expected IP pairs
         shelf_ip_to_host_ip = {}
-        for eth_index in range(0, len(shelf_interfaces)):
-            shelf_ip_to_host_ip[jbof_static_ip(shelf_index, eth_index)] = initiator_static_ip(shelf_index, eth_index)
+        for idx, _ in enumerate((await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip))):
+            shelf_ip_to_host_ip[jbof_static_ip(shelf_index, idx)] = initiator_static_ip(shelf_index, idx)
 
         # Let's check that we have the expected hardwired IPs on the shelf
-        if set(shelf_ips) != set(list(shelf_ip_to_host_ip.keys())):
+        if set(shelf_ip_to_mac) != set(shelf_ip_to_host_ip):
             # This should not happen
-            verrors.add(schema, 'JBOF does not have expected IPs.')
+            verrors.add(schema, 'JBOF does not have expected IPs.'
+                        f'Expected: {shelf_ip_to_host_ip}, has: {shelf_ip_to_mac}')
             return
 
         if await self.middleware.call('failover.licensed'):
             # HA system
-
             if not await self.middleware.call('failover.remote_connected'):
-                verrors.add(schema, 'HA system must be in good state to allow configuration.')
+                verrors.add(schema, 'Unable to contact remote controller')
                 return
 
             this_node = await self.middleware.call('failover.node')
-            if this_node not in ['A', 'B']:
-                verrors.add(schema, 'HA system must be in good state to allow configuration: Invalid node')
+            if this_node == 'MANUAL':
+                verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
-            for node in ['A', 'B']:
+            for node in ('A', 'B'):
                 connected_shelf_ips = await self.hardwire_node(node, shelf_index, shelf_ip_to_mac)
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
-                    verrors.add(schema, f'Must be able to communicate with at least one interface on the expansion shelf (node {node}).')
+                    verrors.add(schema, f'Unable to communicate with the expansion shelf (node {node})')
                     return
         else:
             connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
             if not connected_shelf_ips:
                 # Failed to connect any IPs => error
-                verrors.add(schema, 'Must be able to communicate with at least one interface on the expansion shelf.')
+                verrors.add(schema, 'Unable to communicate with the expansion shelf')
                 return
 
     @private
     async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac):
         localnode = not node or node == await self.middleware.call('failover.node')
-        shelf_ips = list(shelf_ip_to_mac.keys())
         # Next see what RDMA-capable links are available on the host
         # Also setup a map for frequent use below
         if localnode:
             links = await self.middleware.call('rdma.get_link_choices')
         else:
-            links = await self.middleware.call('failover.call_remote', 'rdma.get_link_choices')
+            try:
+                links = await self.middleware.call('failover.call_remote', 'rdma.get_link_choices')
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    raise
+                self.logger.warning('Cannot hardwire remote node')
+                return []
 
         # First check to see if any interfaces that were previously configured
         # for this shelf are no longer applicable (they might have been moved to
@@ -372,7 +381,8 @@ class JBOFService(CRUDService):
         connected_shelf_ips = set()
         dirty = False
         configured_interfaces = await self.middleware.call('rdma.interface.query')
-        configured_interface_names = [interface['ifname'] for interface in configured_interfaces if interface['node'] == node]
+        configured_interface_names = [interface['ifname'] for interface in configured_interfaces
+                                      if interface['node'] == node]
         for interface in configured_interfaces:
             if node and node != interface['node']:
                 continue
@@ -381,7 +391,8 @@ class JBOFService(CRUDService):
             value = decode_static_ip(host_ip)
             if value and value[0] == shelf_index:
                 # This is supposed to be connected to our shelf.  Check connectivity.
-                if await self.middleware.call('rdma.interface.ping', node, interface['ifname'], shelf_ip, shelf_ip_to_mac[shelf_ip]):
+                if await self.middleware.call('rdma.interface.ping', node, interface['ifname'],
+                                              shelf_ip, shelf_ip_to_mac[shelf_ip]):
                     # This config looks good, keep it.
                     connected_shelf_ips.add(shelf_ip)
                     if node:
@@ -392,13 +403,14 @@ class JBOFService(CRUDService):
                     self.logger.info('Removing RDMA interface that cannot connect to JBOF')
                     await self.middleware.call('rdma.interface.delete', interface['id'])
                     dirty = True
-        for shelf_ip in shelf_ips:
+        for shelf_ip in shelf_ip_to_mac:
             if shelf_ip in connected_shelf_ips:
                 continue
             # Try each remaining interface
             if dirty:
                 configured_interfaces = await self.middleware.call('rdma.interface.query')
-                configured_interface_names = [interface['ifname'] for interface in configured_interfaces if interface['node'] == node]
+                configured_interface_names = [interface['ifname'] for interface in configured_interfaces
+                                              if interface['node'] == node]
                 dirty = False
             for link in links:
                 ifname = link['rdma']
@@ -431,15 +443,15 @@ class JBOFService(CRUDService):
         if await self.middleware.call('failover.licensed'):
             # HA system
             if not await self.middleware.call('failover.remote_connected'):
-                verrors.add(schema, 'HA system must be in good state to allow configuration.')
+                verrors.add(schema, 'Unable to contact remote controller')
                 return
 
             this_node = await self.middleware.call('failover.node')
-            if this_node not in ['A', 'B']:
-                verrors.add(schema, 'HA system must be in good state to allow configuration: Invalid node')
+            if this_node == 'MANUAL':
+                verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
-            for node in ['A', 'B']:
+            for node in ('A', 'B'):
                 await self.attach_drives_to_node(node, shelf_index)
         else:
             await self.attach_drives_to_node(node, shelf_index)
@@ -459,14 +471,21 @@ class JBOFService(CRUDService):
                 if interface['node'] != node:
                     continue
                 jbof_ip = jbof_static_ip_from_initiator_ip(interface['address'])
-                await self.middleware.call('failover.call_remote', 'jbof.nvme_connect', [jbof_ip])
+                try:
+                    await self.middleware.call('failover.call_remote', 'jbof.nvme_connect', [jbof_ip])
+                except CallError as e:
+                    if e.errno != CallError.ENOMETHOD:
+                        raise
 
     @private
     def nvme_connect(self, ip, nr_io_queues=16):
         command = ['nvme', 'connect-all', '-t', 'rdma', '-a', ip, '--persistent', '-i', f'{nr_io_queues}']
         ret = subprocess.run(command, capture_output=True)
         if ret.returncode:
-            self.logger.debug(f'Failed to execute "{" ".join(command)}": {ret.stderr.decode()}')
+            error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
+            if not error:
+                error = 'No error message reported'
+            self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
             raise CallError(f'Failed connect NVMe disks: {ret.stderr.decode()}')
         return True
 
@@ -475,7 +494,10 @@ class JBOFService(CRUDService):
         command = ['nvme', 'list-subsys', '-o', 'json']
         ret = subprocess.run(command, capture_output=True)
         if ret.returncode:
-            self.logger.debug(f'Failed to execute "{" ".join(command)}": {ret.stderr.decode()}')
+            error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
+            if not error:
+                error = 'No error message reported'
+            self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
             raise CallError(f'Failed disconnect NVMe disks: {ret.stderr.decode()}')
         data = json.loads(ret.stdout.decode())
         for d in data:
@@ -519,7 +541,12 @@ class JBOFService(CRUDService):
         if await self.middleware.call('failover.licensed'):
             # HA system
             await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
-            await self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
+            try:
+                await self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    raise
+                # If other controller is not updated to include this method then nothing to tear down
         else:
             await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
 
