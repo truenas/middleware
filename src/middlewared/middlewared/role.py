@@ -36,6 +36,7 @@ ROLES = {
                                'AUTH_SESSIONS_READ',
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
+                               'ENCLOSURE_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
@@ -56,6 +57,10 @@ ROLES = {
 
     'SERVICE_READ': Role(),
     'SERVICE_WRITE': Role(),
+
+    # for webui.enclosure.** namespace
+    'ENCLOSURE_READ': Role(),
+    'ENCLOSURE_WRITE': Role(includes=['ENCLOSURE_READ']),
 
     # Network roles
     'NETWORK_GENERAL_READ': Role(),

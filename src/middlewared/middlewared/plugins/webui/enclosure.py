@@ -7,6 +7,7 @@ class WebUIEnclosureService(Service):
         namespace = 'webui.enclosure'
         private = True
         cli_private = True
+        role_prefix = 'ENCLOSURE'
 
     def dashboard_impl(self):
         disks_to_pools = dict()
@@ -38,7 +39,7 @@ class WebUIEnclosureService(Service):
 
         return enclosures
 
-    @accepts()
+    @accepts(roles=['ENCLOSURE_READ'])
     def dashboard(self):
         """This endpoint is used exclusively by the webUI team for
         the enclosure dashboard page for iX sold hardware.
