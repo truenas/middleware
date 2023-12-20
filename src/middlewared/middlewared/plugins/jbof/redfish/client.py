@@ -160,8 +160,9 @@ class RedfishClient:
     def get_root_object(self):
         try:
             return self.get(self.prefix).json()
-        except Exception as excp:
-            raise excp
+        except Exception as e:
+            logger.debug("Failed to get root object for %r: %s", self.base_url, e, exc_info=True)
+            raise e
 
     def authtype_to_enum(self, authtype):
         if authtype in [AuthMethod.BASIC, AuthMethod.BASIC.value]:
