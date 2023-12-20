@@ -40,6 +40,8 @@ class RedfishClient:
         mgmt_ip = mgmt_ip.rstrip('/')
         url = f'https://{mgmt_ip}{REDFISH_ROOT_PATH}'
         r = requests.get(url, verify=False, timeout=timeout)
+        if not r.ok:
+            return None
         try:
             return r.json()
         except requests.exceptions.JSONDecodeError:
