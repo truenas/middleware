@@ -223,6 +223,7 @@ class JBOFService(CRUDService):
             await self.middleware.call('jbof.unwire_dataplane', data['mgmt_ip1'], data['index'])
         except Exception:
             self.logger.debug('Unable to unwire JBOF @%r', data['mgmt_ip1'])
+            await self.middleware.call('alert.oneshot_create', 'JBOFTearDownFailure', None)
 
         # Now delete the entry
         response = await self.middleware.call('datastore.delete', self._config.datastore, id_)
