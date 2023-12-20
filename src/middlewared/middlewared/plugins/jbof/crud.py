@@ -486,7 +486,7 @@ class JBOFService(CRUDService):
             if not error:
                 error = 'No error message reported'
             self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
-            raise CallError(f'Failed connect NVMe disks: {ret.stderr.decode()}')
+            raise CallError(f'Failed connect NVMe disks: {error}')
         return True
 
     @private
@@ -498,7 +498,7 @@ class JBOFService(CRUDService):
             if not error:
                 error = 'No error message reported'
             self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
-            raise CallError(f'Failed disconnect NVMe disks: {ret.stderr.decode()}')
+            raise CallError(f'Failed disconnect NVMe disks: {error}')
         data = json.loads(ret.stdout.decode())
         for d in data:
             for subsys in d.get('Subsystems', []):
