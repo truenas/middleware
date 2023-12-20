@@ -1,3 +1,4 @@
+import json
 import subprocess
 import time
 
@@ -472,17 +473,59 @@ class JBOFService(CRUDService):
         return True
 
     @private
-    async def unwire_host(self, mgmt_ip, shelf_index):
-        """Unware the dataplane interfaces of the specified JBOF."""
-        # shelf_interfaces = await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip)
+    def nvme_disconnect(self, ips):
+        command = ['nvme', 'list-subsys', '-o', 'json']
+        ret = subprocess.run(command, capture_output=True)
+        if ret.returncode:
+            self.logger.debug(f'Failed to execute "{" ".join(command)}": {ret.stderr.decode()}')
+            raise CallError(f'Failed disconnect NVMe disks: {ret.stderr.decode()}')
+        data = json.loads(ret.stdout.decode())
+        for d in data:
+            for subsys in d.get('Subsystems', []):
+                matched_all_paths = True
+                for path in subsys['Paths']:
+                    matched_address = False
+                    for ip in ips:
+                        if path['Address'].startswith(f'traddr={ip},trsvcid'):
+                            matched_address = True
+                            break
+                    if not matched_address:
+                        matched_all_paths = False
+                        break
+                if matched_all_paths:
+                    command = ['nvme', 'disconnect', '-n', subsys['NQN']]
+                    ret = subprocess.run(command, capture_output=True)
+                    if ret.returncode:
+                        self.logger.debug(f'Failed to execute "{" ".join(command)}": {ret.stderr.decode()}')
+                        raise CallError(f'Failed disconnect NVMe disk: {ret.stderr.decode()}')
+
+    @private
+    async def shelf_interface_count(self, mgmt_ip):
         try:
-            shelf_interface_count = len(await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip))
+            return len(await self.middleware.call('jbof.fabric_interface_choices', mgmt_ip))
         except Exception:
             # Really only expect 4, but we'll over-estimate for now, as we check them anyway
-            shelf_interface_count = 6
+            return 6
+
+    @private
+    async def unwire_host(self, mgmt_ip, shelf_index):
+        """Unware the dataplane interfaces of the specified JBOF."""
         possible_host_ips = []
+        possible_shelf_ips = []
+        shelf_interface_count = await self.shelf_interface_count(mgmt_ip)
         for eth_index in range(0, shelf_interface_count):
             possible_host_ips.append(initiator_static_ip(shelf_index, eth_index))
+            possible_shelf_ips.append(jbof_static_ip(shelf_index, eth_index))
+
+        # Disconnect NVMe disks
+        if await self.middleware.call('failover.licensed'):
+            # HA system
+            await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
+            await self.middleware.call('failover.call_remote', 'jbof.nvme_disconnect', [possible_shelf_ips])
+        else:
+            await self.middleware.call('jbof.nvme_disconnect', possible_shelf_ips)
+
+        # Disconnect interfaces
         for interface in await self.middleware.call('rdma.interface.query', [['address', 'in', possible_host_ips]]):
             await self.middleware.call('rdma.interface.delete', interface['id'])
 
