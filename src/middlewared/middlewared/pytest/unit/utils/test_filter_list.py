@@ -474,29 +474,28 @@ def test__filter_list_select_as_validation():
         assert 'first item must be a string' in str(ve)
 
 
-def test__filter_list_timestamp():
-    # Test variations of not being ISO-8601 timestamp
-
-    # check for bogus string
+def test__filter_list_timestamp_invalid_string():
     with pytest.raises(ValueError) as ve:
         filter_list([], [["timestamp.$date", "=", "Canary"]])
 
     assert 'must be an ISO-8601 formatted timestamp string' in str(ve)
 
 
-    # check for wrong type
+def test__filter_list_timestamp_invalid_type():
     with pytest.raises(ValueError) as ve:
         filter_list([], [["timestamp.$date", "=", 1]])
 
     assert 'must be an ISO-8601 formatted timestamp string' in str(ve)
 
 
-    # check for invalid operators
+def test__filter_list_timestamp_invalid_operator():
     with pytest.raises(ValueError) as ve:
         filter_list([], [["timestamp.$date", "^", '2023-12-18T16:15:35+00:00']])
 
     assert 'invalid timestamp operation.' in str(ve)
 
+
+def test__filter_list_timestamp():
     # A few basic comparison operators to smoke-check
     assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '>', '2023-12-18T16:15:35+00:00']])) == 2
     assert len(filter_list(SAMPLE_AUDIT, [['timestamp.$date', '>=', '2023-12-18T16:15:35+00:00']])) == 3

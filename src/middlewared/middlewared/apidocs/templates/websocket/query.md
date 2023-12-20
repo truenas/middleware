@@ -132,6 +132,19 @@ Javascript:
     ]
 
 
+${'####'} Datetime information
+
+Some query results may include datetime information encoded in JSON object via
+key with designator `.$date`. In this case, query filter using an ISO-8601
+timestamp may be used. For example:
+
+Javascript:
+
+    :::javascript
+    [
+      ['timestamp.$date', '>', '2023-12-18T16:15:35+00:00']
+    ]
+
 
 ${'###'} Query Options
 
@@ -232,20 +245,6 @@ Javascript:
     {
       "order_by": ["size", "-devname", "nulls_first:-expiretime"]
     }
-
-
-${'####'} Datetime information
-
-Some query results may include datetime information encoded in JSON object via
-key with designator `.$date`. In this case, query filter using an ISO-8601
-timestamp may be used. For example:
-
-Javascript:
-
-    :::javascript
-    [
-      ['timestamp.$date', '>', '2023-12-18T16:15:35+00:00']
-    ]
 
 
 ${'####'} Sample SQL statements translated into Query Filters and Query Options
