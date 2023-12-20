@@ -32,7 +32,7 @@ class JBOFModel(sa.Model):
     jbof_uuid = sa.Column(sa.Text(), nullable=False, unique=True)
 
     jbof_mgmt_ip1 = sa.Column(sa.String(45), nullable=False)
-    jbof_mgmt_ip2 = sa.Column(sa.String(45), default='')
+    jbof_mgmt_ip2 = sa.Column(sa.String(45))
     jbof_mgmt_username = sa.Column(sa.String(120))
     jbof_mgmt_password = sa.Column(sa.EncryptedText())
 
@@ -262,9 +262,7 @@ class JBOFService(CRUDService):
         existing_indices = [d['index'] for d in (await self.middleware.call('jbof.query', [], {'select': ['index']}))]
         for index in range(0, 256):
             if index not in existing_indices:
-                break
-        if index not in existing_indices:
-            return index
+                return index
 
     @private
     async def hardwire_dataplane(self, mgmt_ip, shelf_index, schema, verrors):
