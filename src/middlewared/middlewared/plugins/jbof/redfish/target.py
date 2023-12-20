@@ -34,11 +34,9 @@ class JBOFRedfishService(Service):
     def _members(self, mgmt_ip, mgmt_username, mgmt_password, path, timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
         """Return a list containing the names of the IO Managers."""
         result = []
-        # print("PATH:", path)
         r = self.make_request(mgmt_ip, 'get', path,
                               username=mgmt_username, password=mgmt_password, timeout=timeout)
         for member in r.get('Members', []):
-            # print(member)
             if member['@odata.id'].startswith(path):
                 result.append(member['@odata.id'].split('/')[-1])
         return result
@@ -96,11 +94,7 @@ class JBOFRedfishService(Service):
         if not auth:
             auth = (kwargs.get('username', 'Admin'), kwargs.get('password', ''))
 
-        # print(url)
-        # print(auth)
-        # return req(url, auth=auth, verify=False)
         return req(url, auth=auth, verify=False, data=kwargs.get('data', {})).json()
-        # return req(url, auth=auth, **{'headers': HEADER, 'data': json.dumps(kwargs.get('data', {}))}, verify=False)
 
 
 async def setup(middleware):
