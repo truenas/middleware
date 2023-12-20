@@ -137,7 +137,8 @@ class RedfishClient:
         return self._cached_fetch(f'{iom}/mgmt_ethernet_interfaces', uri, use_cached)
 
     def network_device_functions(self, iom, use_cached=True):
-        return self._cached_fetch(f'{iom}/network_device_functions', f'/Chassis/{iom}/NetworkAdapters/1/NetworkDeviceFunctions', use_cached)
+        return self._cached_fetch(f'{iom}/network_device_functions',
+                                  f'/Chassis/{iom}/NetworkAdapters/1/NetworkDeviceFunctions', use_cached)
 
     def fabric_ethernet_interfaces(self, use_cached=True):
         result = []

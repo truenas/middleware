@@ -47,9 +47,11 @@ class JBOFRedfishService(Service):
 
     def ethernet_interfaces(self, mgmt_ip, mgmt_username, mgmt_password, manager, timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
         """Return a list containing the names of the EthernetInterfaces in an IO Managers."""
-        return self._members(mgmt_ip, mgmt_username, mgmt_password, f'{REDFISH_ROOT_PATH}/Managers/{manager}/EthernetInterfaces', timeout)
+        return self._members(mgmt_ip, mgmt_username, mgmt_password,
+                             f'{REDFISH_ROOT_PATH}/Managers/{manager}/EthernetInterfaces', timeout)
 
-    def ethernet_interface(self, mgmt_ip, mgmt_username, mgmt_password, manager, interface, timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
+    def ethernet_interface(self, mgmt_ip, mgmt_username, mgmt_password, manager, interface,
+                           timeout=DEFAULT_REDFISH_TIMEOUT_SECS):
         """Return a list containing the names of the EthernetInterfaces in an IO Managers."""
         return self.make_request(mgmt_ip, 'get',
                                  f'{REDFISH_ROOT_PATH}/Managers/{manager}/EthernetInterfaces/{interface}',
