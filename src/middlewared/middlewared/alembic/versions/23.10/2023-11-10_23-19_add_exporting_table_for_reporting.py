@@ -19,6 +19,13 @@ branch_labels = None
 depends_on = None
 
 
+def get_hostname(conn):
+    try:
+        return dict(conn.execute('SELECT * FROM network_globalconfiguration').fetchone())['gc_hostname']
+    except Exception:
+        return 'truenas'
+
+
 def upgrade():
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
@@ -35,12 +42,13 @@ def upgrade():
         sa.PrimaryKeyConstraint('id', name=op.f('pk_reporting_exports'))
     )
 
+    hostname = get_hostname(conn)
     for graphite_ip in filter(lambda ip: bool(ip[0]), conn.execute('SELECT graphite FROM system_reporting').fetchall()):
         attributes = {
             'destination_ip': graphite_ip[0],
             'destination_port': 2003,
-            'prefix': 'dragonfish',
-            'hostname': 'truenas',
+            'prefix': 'scale',
+            'hostname': hostname,
             'update_every': 1,
             'buffer_on_failures': 10,
             'send_names_instead_of_ids': True,
