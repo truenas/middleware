@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from libzfs import ZFS, ZFSException
-from middlewared.schema import accepts, returns, Bool, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import Service, ValidationError
 
 
@@ -60,9 +60,14 @@ class ZPoolService(Service):
         Str('name', required=False, default=None),
         Bool('real_paths', required=False, default=False),
     ))
-    @returns(Dict(
-        'pool_status',
-        example={
+    def status(self, data):
+        """The equivalent of running 'zpool status' from the cli.
+
+        `name`: str the name of the zpool for which to return the status info
+        `real_paths`: bool if True, resolve the underlying devices to their
+            real device (i.e. /dev/disk/by-id/blah -> /dev/sda1)
+
+        An example of what this returns looks like the following:
           'disks': {
             'sdko': {
               'pool_name': 'sanity',
@@ -108,13 +113,6 @@ class ZPoolService(Service):
             }
           }
         }
-    ))
-    def status(self, data):
-        """The equivalent of running 'zpool status' from the cli.
-
-        `name`: str the name of the zpool for which to return the status info
-        `real_paths`: bool if True, resolve the underlying devices to their
-            real device (i.e. /dev/disk/by-id/blah -> /dev/sda1)
         """
         final = dict()
         with ZFS() as zfs:
