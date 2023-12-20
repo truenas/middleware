@@ -34,6 +34,7 @@ ROLES = {
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
     'REPORTING_READ': Role(),
+    'REPORTING_WRITE': Role(includes=['REPORTING_READ']),
 
     'SUPPORT_READ': Role(),
     'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
