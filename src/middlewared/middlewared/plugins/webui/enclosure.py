@@ -21,13 +21,10 @@ class WebUIEnclosureService(Service):
                     slot_info.pop('value_raw')
                     pool_info = None
                     if slot_info['dev'] and (pool_info := disks_to_pools['disks'].get(slot_info['dev'])):
+                        info = {'enclosure_id': enc['id'], 'slot': int(disk_slot), 'dev': slot_info['dev']}
                         try:
                             index = pool_info['vdev_disks'].index(slot_info['dev'])
-                            pool_info['vdev_disks'][index] = {
-                                'enclosure_id': enc['id'],
-                                'slot': int(disk_slot),
-                                'dev': slot_info['dev'],
-                            }
+                            pool_info['vdev_disks'][index] = info
                         except ValueError:
                             # it means the disk's status in zfs land != ONLINE
                             # (i.e. it could be OFFLINE) and so it won't show
@@ -35,11 +32,7 @@ class WebUIEnclosureService(Service):
                             # this error and still append the disk to the list
                             # The `pool_info['disk_status']` key will be added
                             # which will give more insight into what's going on
-                            pool_info['vdev_disks'].append({
-                                'enclosure_id': enc['id'],
-                                'slot': int(disk_slot),
-                                'dev': slot_info['dev'],
-                            })
+                            pool_info['vdev_disks'].append(info)
 
                     slot_info.update({'pool_info': pool_info})
 
