@@ -153,13 +153,6 @@ class PersistentVolume(CoreAPI):
     OBJECT_TYPE = 'persistentvolumes'
 
 
-class PersistentVolumeClaim(CoreAPI):
-
-    OBJECT_ENDPOINT = '/api/v1/persistentvolumeclaims'
-    OBJECT_HUMAN_NAME = 'Persistent Volume Claim'
-    OBJECT_TYPE = 'persistentvolumeclaims'
-
-
 class RuntimeClass(CoreAPI):
 
     OBJECT_ENDPOINT = '/apis/node.k8s.io/v1/runtimeclasses'

@@ -24,7 +24,6 @@ class Resources(enum.Enum):
     CRONJOB = 'cronjobs'
     DEPLOYMENT = 'deployments'
     JOB = 'jobs'
-    PERSISTENT_VOLUME_CLAIM = 'persistent_volume_claims'
     POD = 'pods'
     STATEFULSET = 'statefulsets'
 
@@ -38,7 +37,7 @@ def get_action_context(release_name):
         'isUpdate': False,
         'isUpgrade': False,
         'isStopped': False,
-        'storageClassName': get_storage_class_name(release_name),
+        'storageClassName': get_storage_class_name(release_name),  # TODO: Remove this usage in next major release
         'upgradeMetadata': {},
         'hasSMBCSI': True,
         'hasNFSCSI': True,

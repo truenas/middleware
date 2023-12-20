@@ -18,8 +18,15 @@ class Role:
 
 
 ROLES = {
+    'ACCOUNT_READ': Role(),
+    'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
+
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
+
+    'KMIP_READ': Role(),
+    'KMIP_WRITE': Role(includes=['KMIP_READ']),
+
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
     'FILESYSTEM_DATA_READ': Role(),
@@ -28,15 +35,20 @@ ROLES = {
                                               'FILESYSTEM_DATA_WRITE']),
     'REPORTING_READ': Role(),
 
+    'SUPPORT_READ': Role(),
+    'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
+
     'SYSTEM_AUDIT_READ': Role(),
     'SYSTEM_AUDIT_WRITE': Role(),
 
     'FULL_ADMIN': Role(full_admin=True, builtin=False),
     'READONLY': Role(includes=['ALERT_LIST_READ',
+                               'ACCOUNT_READ',
                                'AUTH_SESSIONS_READ',
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
                                'ENCLOSURE_READ',
+                               'KMIP_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
@@ -46,6 +58,7 @@ ROLES = {
                                'REPLICATION_TASK_READ',
                                'SERVICE_READ',
                                'SNAPSHOT_TASK_READ',
+                               'SUPPORT_READ',
                                'SYSTEM_AUDIT_READ'],
                      builtin=False),
 

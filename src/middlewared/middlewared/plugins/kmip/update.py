@@ -32,6 +32,7 @@ class KMIPService(ConfigService):
         datastore = 'system_kmip'
         datastore_extend = 'kmip.kmip_extend'
         cli_namespace = 'system.kmip'
+        role_prefix = 'KMIP'
 
     ENTRY = Dict(
         'kmip_entry',
@@ -52,7 +53,7 @@ class KMIPService(ConfigService):
             data[k] = data[k]['id']
         return data
 
-    @accepts()
+    @accepts(roles=['KMIP_READ'])
     @returns(Dict(*[Str(i, enum=[i]) for i in SUPPORTED_SSL_VERSIONS]))
     async def ssl_version_choices(self):
         """

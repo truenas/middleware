@@ -148,7 +148,7 @@ class VMWareService(CRUDService):
         Str('hostname', required=True),
         Str('username', required=True),
         Str('password', private=True, required=True),
-    ))
+    ), roles=['READONLY'])
     def get_datastores(self, data):
         """
         Get datastores from VMWare.
@@ -342,7 +342,7 @@ class VMWareService(CRUDService):
 
         return datastores
 
-    @accepts(Int('pk'))
+    @accepts(Int('pk'), roles=['READONLY'])
     async def get_virtual_machines(self, pk):
         """
         Returns Virtual Machines on the VMWare host identified by `pk`.
@@ -368,7 +368,7 @@ class VMWareService(CRUDService):
             vms[vm.config.uuid] = data
         return vms
 
-    @accepts(Str('dataset'), Bool('recursive'))
+    @accepts(Str('dataset'), Bool('recursive'), roles=['READONLY'])
     def dataset_has_vms(self, dataset, recursive):
         """
         Returns "true" if `dataset` is configured with a VMWare snapshot

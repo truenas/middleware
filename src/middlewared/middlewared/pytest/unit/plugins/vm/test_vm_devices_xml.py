@@ -127,7 +127,7 @@ def test_nic_xml(vm_data, expected_xml):
             'iotype': 'THREADS',
         },
         'dtype': 'DISK',
-    }]}, '<devices><disk type="block" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" />'
+    }]}, '<devices><disk type="block" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" discard="unmap" />'
          '<source dev="/dev/zvol/pool/boot_1" /><target bus="sata" dev="sda" /><boot order="1" />'
          f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
@@ -151,7 +151,7 @@ def test_disk_xml(vm_data, expected_xml):
             'iotype': 'THREADS',
         },
         'dtype': 'RAW',
-    }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" />'
+    }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" discard="unmap" />'
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><boot order="1" />'
          f'</disk>{GUEST_CHANEL}<serial type="pty" /></devices>'
     ),
@@ -164,7 +164,7 @@ def test_disk_xml(vm_data, expected_xml):
             'iotype': 'THREADS',
         },
         'dtype': 'RAW',
-    }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" />'
+    }]}, '<devices><disk type="file" device="disk"><driver name="qemu" type="raw" cache="none" io="threads" discard="unmap" />'
          '<source file="/mnt/tank/somefile" /><target bus="sata" dev="sda" /><boot order="1" />'
          '<blockio logical_block_size="512" physical_block_size="512" /></disk>'
          f'{GUEST_CHANEL}<serial type="pty" /></devices>'

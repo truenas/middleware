@@ -76,5 +76,8 @@ def amd_cpu_temperatures(amd_metrics: dict) -> dict:
         'Tctl' in amd_sensors and amd_sensors['Tctl'] and isinstance(amd_sensors['Tctl'], (int, float))
     ):
         return dict(enumerate([amd_sensors['Tctl']] * core_count))
-    elif 'temp1' in amd_sensors and 'temp1_input' in amd_sensors['temp1']:
-        return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))
+    elif 'temp1' in amd_sensors:
+        if isinstance(amd_sensors['temp1'], float):
+            return dict(enumerate([amd_sensors['temp1']] * core_count))
+        elif 'temp1_input' in amd_sensors['temp1']:
+            return dict(enumerate([amd_sensors['temp1']['temp1_input']] * core_count))

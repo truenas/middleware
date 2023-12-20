@@ -172,9 +172,6 @@ class ChartReleaseService(CRUDService):
                 for p in k8s_svc['spec'].get('ports') or []
             ])
 
-        if get_resources:
-            storage_mapping = await self.middleware.call('chart.release.get_workload_storage_details')
-
         resources_mapping = await self.middleware.call('chart.release.get_resources_with_workload_mapping', {
             'resource_events': extra.get('resource_events', False),
             'resource_filters': resources_filters,
@@ -249,8 +246,6 @@ class ChartReleaseService(CRUDService):
             }
             if get_resources:
                 release_resources = {
-                    'storage_class': storage_mapping['storage_classes'][get_storage_class_name(name)],
-                    'persistent_volumes': storage_mapping['persistent_volumes'][name],
                     'host_path_volumes': await self.host_path_volumes(itertools.chain(
                         *[resources[getattr(Resources, k).value][name] for k in ('DEPLOYMENT', 'STATEFULSET')]
                     )),
@@ -494,11 +489,6 @@ class ChartReleaseService(CRUDService):
                 }
             }, self.middleware, data['release_name'])
 
-            await self.middleware.call(
-                'chart.release.create_update_storage_class_for_chart_release',
-                data['release_name'], os.path.join(release_ds, 'volumes')
-            )
-
             # We will install the chart now and force the installation in an ix based namespace
             # https://github.com/helm/helm/issues/5465#issuecomment-473942223
             await self.middleware.call(
@@ -667,6 +657,9 @@ class ChartReleaseService(CRUDService):
 
     @private
     async def remove_storage_class_and_dataset(self, release_name, job=None):
+        # TODO: We will remove storage class / pv usages here in next major release after dragonfish
+        #  until then for users who already had openebs CSI shipped by us will keep on getting
+        #  their storage class removed
         storage_class_name = get_storage_class_name(release_name)
         if await self.middleware.call('k8s.storage_class.query', [['metadata.name', '=', storage_class_name]]):
             if job:

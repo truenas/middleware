@@ -157,6 +157,7 @@ class UserService(CRUDService):
         datastore_extend_context = 'user.user_extend_context'
         datastore_prefix = 'bsdusr_'
         cli_namespace = 'account.user'
+        role_prefix = 'ACCOUNT'
 
     # FIXME: Please see if dscache can potentially alter result(s) format, without ad, it doesn't seem to
     ENTRY = Patch(
@@ -1029,7 +1030,7 @@ class UserService(CRUDService):
         Int('uid', default=None),
         Bool('get_groups', default=False),
         Bool('sid_info', default=False),
-    ))
+    ), roles=['ACCOUNT_READ'])
     @returns(Dict(
         'user_information',
         Str('pw_name'),
@@ -1069,7 +1070,7 @@ class UserService(CRUDService):
             'dscache.get_uncached_user', data['username'], data['uid'], data['get_groups'], data['sid_info']
         )
 
-    @accepts()
+    @accepts(roles=['ACCOUNT_READ'])
     @returns(Int('next_available_uid'))
     async def get_next_uid(self):
         """
@@ -1606,6 +1607,7 @@ class GroupService(CRUDService):
         datastore_extend = 'group.group_extend'
         datastore_extend_context = 'group.group_extend_context'
         cli_namespace = 'account.group'
+        role_prefix = 'ACCOUNT'
 
     ENTRY = Patch(
         'group_create', 'group_entry',
@@ -1931,7 +1933,7 @@ class GroupService(CRUDService):
 
         return pk
 
-    @accepts()
+    @accepts(roles=['ACCOUNT_READ'])
     @returns(Int('next_available_gid'))
     async def get_next_gid(self):
         """
@@ -1955,7 +1957,7 @@ class GroupService(CRUDService):
         'get_group_obj',
         Str('groupname', default=None),
         Int('gid', default=None)
-    ))
+    ), roles=['ACCOUNT_READ'])
     @returns(Dict(
         'group_info',
         Str('gr_name'),
