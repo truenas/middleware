@@ -23,8 +23,11 @@ class RDMAService(Service):
         lspci_cmd = ['lspci', '-vv', '-s', pci_addr]
         ret = subprocess.run(lspci_cmd, capture_output=True)
         if ret.returncode:
-            self.logger.debug(f'Failed to execute "{" ".join(lspci_cmd)}": {ret.stderr.decode()}')
-            raise CallError(f'Failed to determine serial number/product: {ret.stderr.decode()}')
+            error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
+            if not error:
+                error = 'No error message reported'
+            self.logger.debug('Failed to execute command: %r with error: %r', " ".join(lspci_cmd), error)
+            raise CallError(f'Failed to determine serial number/product: {error}')
         result = {}
         for line in ret.stdout.decode().split('\n'):
             sline = line.strip()
@@ -55,8 +58,11 @@ class RDMAService(Service):
 
         ret = subprocess.run(link_cmd, capture_output=True)
         if ret.returncode:
-            self.logger.debug(f'Failed to execute "{" ".join(link_cmd)}": {ret.stderr.decode()}')
-            raise CallError(f'Failed to determine RDMA links: {ret.stderr.decode()}')
+            error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
+            if not error:
+                error = 'No error message reported'
+            self.logger.debug('Failed to execute command: %r with error: %r', " ".join(link_cmd), error)
+            raise CallError(f'Failed to determine RDMA links: {error}')
 
         result = []
         for link in json.loads(ret.stdout.decode()):
