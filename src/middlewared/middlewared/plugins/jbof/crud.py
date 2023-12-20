@@ -535,6 +535,14 @@ class JBOFService(CRUDService):
         await self.middleware.call('jbof.unwire_host', mgmt_ip, shelf_index)
         await self.middleware.call('jbof.unwire_shelf', mgmt_ip)
 
+    @private
+    async def configure(self):
+        interfaces = await self.middleware.call('rdma.interface.configure')
+
+        for interface in interfaces:
+            jbof_ip = jbof_static_ip_from_initiator_ip(interface['address'])
+            await self.middleware.call('jbof.nvme_connect', jbof_ip)
+
 
 async def setup(middleware):
     RedfishClient.setup()
