@@ -53,7 +53,7 @@ def unprivileged_user_with_web_shell_token(unprivileged_user_with_web_shell):
 def test_libpam_auth(unprivileged_user):
     pam_resp = call('auth.libpam_authenticate', unprivileged_user.username, unprivileged_user.password)
     assert pam_resp['code'] == 0
-    assert pam_resp['reason'] == ''
+    assert pam_resp['reason'] == 'Success'
 
     pam_resp = call('auth.libpam_authenticate', unprivileged_user.username, 'CANARY')
     assert pam_resp['code'] == 7
