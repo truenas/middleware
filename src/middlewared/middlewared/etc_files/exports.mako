@@ -8,23 +8,50 @@
 
     def do_map(share, map_type, map_ids):
         output = []
-        if share[f'{map_type}_user']:
-            uid = middleware.call_sync(
-                'user.get_user_obj',
-                {'username': share[f'{map_type}_user']}
-            )['pw_uid']
-            map_ids[f'{map_type}_user'] = uid
-            output.append(f'anonuid={uid}')
+        raise_keyerror = False
 
-        if share[f'{map_type}_group']:
-            gid = middleware.call_sync(
-                'group.get_group_obj',
-                {'groupname': share[f'{map_type}_group']}
-            )['gr_gid']
-            map_ids[f'{map_type}_group'] = gid
-            output.append(f'anongid={gid}')
+        if usrname := share[f'{map_type}_user']:
+            if uid := middleware.call_sync('user.username_to_uid', usrname):
+                map_ids[f'{map_type}_user'] = uid
+                output.append(f'anonuid={uid}')
+            else:
+                # report the invalid name
+                map_ids[f'{map_type}_user'] = usrname
+                raise_keyerror = True
+
+        if grpname := share[f'{map_type}_group']:
+            if gid := middleware.call_sync('group.groupname_to_gid', grpname):
+                map_ids[f'{map_type}_group'] = gid
+                output.append(f'anongid={gid}')
+            else:
+                # report the invalid group
+                map_ids[f'{map_type}_group'] = grpname
+                raise_keyerror = True
+
+        if raise_keyerror:
+            raise KeyError
 
         return output
+
+
+    def process_keyerror_alert(do_what, share, type, map_ids=None):
+        id = 'share' + str(share['id']) + type
+        sharepath = share['path']
+        match do_what:
+            case 'raise':
+                if map_ids is not None:
+                    invalid_names = ','.join([ v for k, v in map_ids.items() if type in k and v != -1 ])
+                    middleware.logger.warning(
+                        f"{sharepath}: Disabling this NFS share. "
+                        f"Mapping invalid names: {invalid_names}"
+                    )
+                    middleware.call_sync("alert.oneshot_create", "NFSexportMappingInvalidNames",
+                        {'id': id, 'path': sharepath, 'names': invalid_names}
+                    )
+                    raise KeyError
+            case 'clear':
+                middleware.call_sync("alert.oneshot_delete", "NFSexportMappingInvalidNames", id)
+
 
     def generate_options(share, global_sec, config):
         params = []
@@ -45,33 +72,25 @@
         if not share["ro"]:
             params.append("rw")
 
+        # report and scrub out shares with invalid names
         try:
             mapall = do_map(share, "mapall", map_ids)
+            process_keyerror_alert('clear', share, 'mapall')
         except KeyError:
-            middleware.logger.warning(
-                "NSS lookup for anonymous account failed. "
-                "disabling NFS exports.",
-                exc_info = True
-            )
-            raise FileShouldNotExist()
-
+            process_keyerror_alert('raise', share, 'mapall', map_ids)
         if mapall:
             params.extend(mapall)
             params.append("all_squash")
 
         try:
             maproot = do_map(share, "maproot", map_ids)
+            process_keyerror_alert('clear', share, 'maproot')
             if map_ids['maproot_user'] == 0 and map_ids['maproot_group'] == 0:
                 params.append('no_root_squash')
                 maproot = []
 
         except KeyError:
-            middleware.logger.warning(
-                "NSS lookup for anonymous account failed. "
-                "disabling NFS exports.",
-                exc_info = True
-            )
-            raise FileShouldNotExist()
+            process_keyerror_alert('raise', share, 'maproot', map_ids)
 
         if maproot:
             params.extend(maproot)
@@ -177,8 +196,13 @@
     global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
 
     for share in shares:
-        params = generate_options(share, global_sec, config)
         p = Path(share['path'])
+        try:
+            params = generate_options(share, global_sec, config)
+        except KeyError:
+            middleware.logger.info(f"{p}: error in share options, omitting from NFS exports")
+            continue
+
         if not p.exists():
             middleware.logger.debug("%s: path does not exist, omitting from NFS exports", p)
             continue

@@ -1,4 +1,4 @@
-import contextlib
+# import contextlib
 import enum
 import errno
 import ipaddress
@@ -504,24 +504,21 @@ class SharingNFSService(SharingService):
         verrors.check()
 
         for k in ["maproot", "mapall"]:
-            if not data[f"{k}_user"] and not data[f"{k}_group"]:
+            map_user = data[f"{k}_user"]
+            map_group = data[f"{k}_group"]
+            if not map_user and not map_group:
                 pass
-            elif not data[f"{k}_user"] and data[f"{k}_group"]:
+            elif not map_user and map_group:
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
             else:
-                user = group = None
-                with contextlib.suppress(KeyError):
-                    user = await self.middleware.call('dscache.get_uncached_user', data[f'{k}_user'])
+                user_id = await self.middleware.call('user.username_to_uid', map_user)
+                if not user_id:
+                    verrors.add(f"{schema_name}.{k}_user", f"User not found: {map_user}")
 
-                if not user:
-                    verrors.add(f"{schema_name}.{k}_user", "User not found")
-
-                if data[f'{k}_group']:
-                    with contextlib.suppress(KeyError):
-                        group = await self.middleware.call('dscache.get_uncached_group', data[f'{k}_group'])
-
-                    if not group:
-                        verrors.add(f"{schema_name}.{k}_group", "Group not found")
+                if map_group:
+                    group_id = await self.middleware.call('group.groupname_to_gid', map_group)
+                    if not group_id:
+                        verrors.add(f"{schema_name}.{k}_group", f"Group not found: {map_group}")
 
         if data["maproot_user"] and data["mapall_user"]:
             verrors.add(f"{schema_name}.mapall_user", "maproot_user disqualifies mapall_user")
