@@ -388,6 +388,7 @@ class PrivilegeService(CRUDService):
             'roles': {'FULL_ADMIN'},
             'allowlist': [{'method': '*', 'resource': '*'}],
             'web_shell': True,
+            'webui_access': True,
         }
 
     previous_always_has_root_password_enabled_value = None
