@@ -307,10 +307,33 @@ class JBOFService(CRUDService):
     def hardwire_shelf(self, mgmt_ip, shelf_index):
         redfish = RedfishClient.cache_get(self.middleware, mgmt_ip)
         shelf_interfaces = redfish.fabric_ethernet_interfaces()
+
+        # Let's record the link status for each interface
+        up_before = set()
+        for uri in shelf_interfaces:
+            status = redfish.link_status(uri)
+            if status == 'LinkUp':
+                up_before.add(uri)
+
+        # Modify all the interfaces
         for (eth_index, uri) in enumerate(shelf_interfaces):
             address = jbof_static_ip(shelf_index, eth_index)
             redfish.configure_fabric_interface(uri, address, static_ip_netmask_str(address), mtusize=static_mtu())
-        time.sleep(JBOFService.JBOF_CONFIG_DELAY_SECS)
+
+        # Wait for all previously up interfaces to come up again
+        up_after = set()
+        retries = 0
+        while retries < JBOFService.JBOF_CONFIG_DELAY_SECS and up_before - up_after:
+            for uri in up_before:
+                if uri not in up_after:
+                    status = redfish.link_status(uri)
+                    if status == 'LinkUp':
+                        up_after.add(uri)
+            time.sleep(1)
+            retries += 1
+        if up_before - up_after:
+            self.logger.debug('Timed-out waiting for interfaces to come up')
+            # Allow this to continue as we still might manage to ping it.
 
     @private
     def unwire_shelf(self, mgmt_ip):
