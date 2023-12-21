@@ -6,7 +6,7 @@ from middlewared.service import accepts, private, Service
 
 class KubernetesService(Service):
 
-    @accepts()
+    @accepts(roles=['KUBERNETES_READ'])
     @returns(List('kubernetes_node_events', items=[Dict(
         'event',
         Dict(

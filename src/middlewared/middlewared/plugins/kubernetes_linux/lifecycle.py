@@ -414,7 +414,7 @@ class KubernetesService(Service):
     async def get_status_dict(self):
         return {'status': self.STATUS.status.value, 'description': self.STATUS.description}
 
-    @accepts()
+    @accepts(roles=['KUBERNETES_READ'])
     @returns(Dict(
         Str('status', enum=[e.value for e in Status]),
         Str('description'),

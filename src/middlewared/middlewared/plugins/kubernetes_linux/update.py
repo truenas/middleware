@@ -540,7 +540,7 @@ class KubernetesService(ConfigService):
     async def pool_configured(self):
         return bool((await self.middleware.call('kubernetes.config'))['dataset'])
 
-    @accepts()
+    @accepts(roles=['KUBERNETES_READ'])
     @returns(Str('kubernetes_node_ip', null=True))
     async def node_ip(self):
         """
