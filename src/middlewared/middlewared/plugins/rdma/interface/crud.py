@@ -225,7 +225,7 @@ class RDMAInterfaceService(CRUDService):
         for link in links:
             ifname_to_netdev[link['rdma']] = link['netdev']
 
-        if await self.middleware.call('system.product_type') == 'SCALE_ENTERPRISE':
+        if await self.middleware.call('system.is_enterprise'):
             # For Enterprise we treat all RDMA interfaces as internal
             return list(ifname_to_netdev.values())
         else:
