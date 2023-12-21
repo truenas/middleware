@@ -1,4 +1,3 @@
-import json
 import subprocess
 import time
 
@@ -7,12 +6,13 @@ from middlewared.plugins.jbof.redfish import (InvalidCredentialsError,
                                               RedfishClient)
 from middlewared.schema import (Dict, Int, IPAddr, Password, Patch, Str,
                                 accepts, returns)
-from middlewared.service import CallError, CRUDService, ValidationErrors, private
+from middlewared.service import (CallError, CRUDService, ValidationErrors,
+                                 private)
 from middlewared.utils.license import LICENSE_ADDHW_MAPPING
 
-from .functions import (decode_static_ip, initiator_ip_from_jbof_static_ip,
-                        initiator_static_ip, jbof_static_ip,
-                        jbof_static_ip_from_initiator_ip,
+from .functions import (decode_static_ip, get_sys_class_nvme_subsystem,
+                        initiator_ip_from_jbof_static_ip, initiator_static_ip,
+                        jbof_static_ip, jbof_static_ip_from_initiator_ip,
                         static_ip_netmask_int, static_ip_netmask_str,
                         static_mtu)
 
@@ -239,7 +239,7 @@ class JBOFService(CRUDService):
             redfish = RedfishClient(f'https://{mgmt_ip}', username, password)
             RedfishClient.cache_set(mgmt_ip, redfish)
 
-    @accepts()
+    @accepts(roles=['JBOF_READ'])
     @returns(Int())
     async def licensed(self):
         """Return a count of the number of JBOF units licensed."""
@@ -515,34 +515,30 @@ class JBOFService(CRUDService):
         return True
 
     @private
+    def _all_subsys_addresses_match_ips(self, subsys, ips):
+        for nvme in subsys['nvme'].values():
+            if nvme['transport_protocol'] != 'rdma':
+                return False
+            address = nvme['transport_address']
+            if address.startswith('traddr='):
+                address = address[7:].split(',')[0]
+            matched = any(ip == address for ip in ips)
+            if not matched:
+                return False
+        return True
+
+    @private
     def nvme_disconnect(self, ips):
-        command = ['nvme', 'list-subsys', '-o', 'json']
-        ret = subprocess.run(command, capture_output=True)
-        if ret.returncode:
-            error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
-            if not error:
-                error = 'No error message reported'
-            self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
-            raise CallError(f'Failed disconnect NVMe disks: {error}')
-        data = json.loads(ret.stdout.decode())
-        for d in data:
-            for subsys in d.get('Subsystems', []):
-                matched_all_paths = True
-                for path in subsys['Paths']:
-                    matched_address = False
-                    for ip in ips:
-                        if path['Address'].startswith(f'traddr={ip},trsvcid'):
-                            matched_address = True
-                            break
-                    if not matched_address:
-                        matched_all_paths = False
-                        break
-                if matched_all_paths:
-                    command = ['nvme', 'disconnect', '-n', subsys['NQN']]
-                    ret = subprocess.run(command, capture_output=True)
-                    if ret.returncode:
-                        self.logger.debug(f'Failed to execute "{" ".join(command)}": {ret.stderr.decode()}')
-                        raise CallError(f'Failed disconnect NVMe disk: {ret.stderr.decode()}')
+        for subsys in get_sys_class_nvme_subsystem(True).values():
+            if self._all_subsys_addresses_match_ips(subsys, ips):
+                command = ['nvme', 'disconnect', '-n', subsys['nqn']]
+                ret = subprocess.run(command, capture_output=True)
+                if ret.returncode:
+                    error = ret.stderr.decode() if ret.stderr else ret.stdout.decode()
+                    if not error:
+                        error = 'No error message reported'
+                    self.logger.debug('Failed to execute command: %r with error: %r', " ".join(command), error)
+                    raise CallError(f'Failed disconnect NVMe disks: {error}')
 
     @private
     async def shelf_interface_count(self, mgmt_ip):
