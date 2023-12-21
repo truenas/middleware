@@ -373,6 +373,7 @@ class PrivilegeService(CRUDService):
             for item in privilege['allowlist']:
                 if item == {'method': '*', 'resource': '*'} and 'FULL_ADMIN' not in compose['roles']:
                     compose['roles'] |= self.middleware.role_manager.roles_for_role('FULL_ADMIN')
+                    compose['webui_access'] = True
 
                 compose['allowlist'].append(item)
 
