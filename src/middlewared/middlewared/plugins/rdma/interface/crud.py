@@ -23,7 +23,7 @@ class RDMAInterfaceModel(sa.Model):
     __tablename__ = 'rdma_interface'
     __table_args__ = (sa.UniqueConstraint('rdmaif_node', 'rdmaif_ifname'),)
 
-    id = sa.Column(sa.Integer(), primary_key=True)
+    id = sa.Column(sa.Integer(), primary_key=True, autoincrement=True)
 
     rdmaif_node = sa.Column(sa.String(120), nullable=False)
     rdmaif_ifname = sa.Column(sa.String(120), nullable=False)
