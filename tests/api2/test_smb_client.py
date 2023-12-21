@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from middlewared.test.integration.assets.account import user, group
@@ -8,17 +9,14 @@ from middlewared.test.integration.utils import call, client
 
 @pytest.fixture(scope='module')
 def setup_smb_tests(request):
-    with make_dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
+    with dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
         with user({
             'username': 'smbuser',
             'full_name': 'smbuser',
             'group_create': True,
             'password': 'Abcd1234$' 
         }) as u:
-            with smb_share(os.path.join('/mnt', ds), SMB_NAME, {
-                'purpose': 'NO_PRESET',
-                'guestok': True,
-            }) as s:
+            with smb_share(os.path.join('/mnt', ds), 'client_share') as s:
                 try:
                     call('service.start', 'cifs')
                     yield {'dataset': ds, 'share': s, 'user': u}
@@ -27,10 +25,10 @@ def setup_smb_tests(request):
 
 
 @pytest.fixture(scope='function')
-def mount_share(share_data):
+def mount_share(setup_smb_tests):
     with smb_mount(share_data['share']['name'], 'smbuser', 'Abcd1234$'):
         yield share_data
 
 
-def test_test_smb_mount(request, mount_share, setup_smb_tests):
+def test_test_smb_mount(request, mount_share):
     assert call('filesystem.statfs', '/mnt/cifs')['fstype'] == 'cifs'

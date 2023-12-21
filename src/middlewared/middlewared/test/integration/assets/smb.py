@@ -1,6 +1,8 @@
 # -*- coding=utf-8 -*-
 import contextlib
 import logging
+import os
+import sys
 
 from middlewared.test.integration.utils import call, ssh
 
@@ -45,6 +47,6 @@ def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, i
     ssh(f'mkdir {local_path}; {mount_string}')
 
     try:
-        yield
+        yield local_path
     finally:
-        ssh(f'umount {local_path}')
+        ssh(f'umount {local_path}; rmdir {local_path}')
