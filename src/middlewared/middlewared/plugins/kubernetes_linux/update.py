@@ -38,6 +38,7 @@ class KubernetesService(ConfigService):
         datastore = 'services.kubernetes'
         datastore_extend = 'kubernetes.k8s_extend'
         cli_namespace = 'app.kubernetes'
+        role_prefix = 'KUBERNETES'
 
     ENTRY = Dict(
         'kubernetes_entry',
