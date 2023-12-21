@@ -2,11 +2,18 @@
 import contextlib
 import logging
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
+
+try:
+    apifolder = os.getcwd()
+    sys.path.append(apifolder)
+    from auto_config import ip as default_ip
+except ImportError:
+    default_ip = None
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["smb_share"]
+__all__ = ["smb_share", "smb_mount"]
 
 
 @contextlib.contextmanager
@@ -23,3 +30,21 @@ def smb_share(path, name, options=None):
     finally:
         call("sharing.smb.delete", share["id"])
         call("service.stop", "cifs")
+
+
+@contextlib.contextmanager
+def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, ip=default_ip):
+    mount_options = [f'username={username}', f'password={password}'] + options or []
+    mkdir_cmd = [
+        'mount.cifs', f'//{ip}/{share}', local_path,
+        '-o', ','.join(mount_options)
+    ]
+
+    mount_string = ' '.join(mkdir_cmd)
+
+    ssh(f'mkdir {local_path}; {mount_string}')
+
+    try:
+        yield
+    finally:
+        ssh(f'umount {local_path}')
