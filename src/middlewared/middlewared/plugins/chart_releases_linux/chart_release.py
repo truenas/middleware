@@ -27,6 +27,7 @@ class ChartReleaseService(CRUDService):
         datastore_primary_key_type = 'string'
         namespace = 'chart.release'
         cli_namespace = 'app.chart_release'
+        role_prefix = 'APPS'
 
     ENTRY = Dict(
         'chart_release_entry',
