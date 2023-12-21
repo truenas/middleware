@@ -529,7 +529,12 @@ class JBOFService(CRUDService):
 
     @private
     def nvme_disconnect(self, ips):
-        for subsys in get_sys_class_nvme_subsystem(True).values():
+        try:
+            subsystems = get_sys_class_nvme_subsystem(True)
+        except FileNotFoundError:
+            self.logger.debug('Could not find NVMe subsystems to cleanup')
+            return
+        for subsys in subsystems.values():
             if self._all_subsys_addresses_match_ips(subsys, ips):
                 command = ['nvme', 'disconnect', '-n', subsys['nqn']]
                 ret = subprocess.run(command, capture_output=True)
