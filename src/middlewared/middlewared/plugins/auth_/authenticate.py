@@ -39,8 +39,7 @@ class AuthService(Service):
             if unixhash in ('x', '*'):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
             elif await self.middleware.call('auth.check_unixhash', password, unixhash):
-                pam['code'] = pam.PAM_SUCCESS
-                pam['reason'] = ''
+                pam_resp = {'code': pam.PAM_SUCCESS, 'reason': ''}
             else:
                 await self.middleware.call('auth.libpam_authenticate', username, password)
 
