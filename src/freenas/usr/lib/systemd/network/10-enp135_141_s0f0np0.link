@@ -1,0 +1,17 @@
+# The f-series HA system has a quirk with a specific
+# hardware configuration that shows up when 2x pcie
+# slots are filled with add-on NICs. This has something
+# to do with the AMD NTB hardware mapping but the end
+# result is that the A controller's NIC name will be
+# enp135* and the B controller's NIC name will be enp141*.
+# This breaks effectively everything related to our HA
+# logic. To mitigate this issue, this link file will
+# match on pci path name
+[Match]
+Firmware=smbios-field(product_name $= "TRUENAS-F*")
+Path=pci-0000:87:00.0 pci-0000:8d:00.0
+Driver=mlx5_core
+Type=ether
+
+[Link]
+Name=enp200s0f0np0
