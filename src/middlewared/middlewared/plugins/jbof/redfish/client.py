@@ -293,12 +293,19 @@ class RedfishClient:
                                    subnet_mask,
                                    dhcp_enabled=False,
                                    gateway='0.0.0.0',
-                                   mtusize=5000):
+                                   mtusize=5000,
+                                   enabled=True):
         payload = {
             "DHCPv4": {"DHCPEnabled": dhcp_enabled},
             'IPv4StaticAddresses': [{'Address': address,
                                      'Gateway': gateway,
                                      'SubnetMask': subnet_mask}],
             'MTUSize': mtusize,
+            'InterfaceEnabled': enabled,
         }
-        self.post(uri, data=payload)
+        return self.post(uri, data=payload)
+
+    def link_status(self, uri):
+        r = self.get(uri)
+        if r.ok:
+            return r.json().get('LinkStatus')
