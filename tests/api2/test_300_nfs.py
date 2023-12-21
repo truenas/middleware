@@ -306,7 +306,6 @@ def test_01_creating_the_nfs_server():
         "servers": 10,
         "mountd_port": 618,
         "allow_nonroot": False,
-        "udp": False,
         "rpcstatd_port": 871,
         "rpclockd_port": 32803,
         "protocols": ["NFSV3", "NFSV4"]
