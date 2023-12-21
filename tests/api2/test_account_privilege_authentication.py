@@ -50,6 +50,16 @@ def unprivileged_user_with_web_shell_token(unprivileged_user_with_web_shell):
         return c.call("auth.generate_token", 300, {}, True)
 
 
+def test_libpam_auth(unprivileged_user):
+    pam_resp = call('auth.libpam_authenticate', unprivileged_user.username, unprivileged_user.password)
+    assert pam_resp['code'] == 0
+    assert pam_resp['reason'] == ''
+
+    pam_resp = call('auth.libpam_authenticate', unprivileged_user.username, 'CANARY')
+    assert pam_resp['code'] == 7
+    assert pam_resp['reason'] == 'Authentication failure'
+
+
 def test_websocket_auth_session_list_terminate(unprivileged_user):
     with client(auth=(unprivileged_user.username, unprivileged_user.password)) as c:
         sessions = call("auth.sessions")

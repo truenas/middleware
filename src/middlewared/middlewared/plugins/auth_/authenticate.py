@@ -24,6 +24,8 @@ class AuthService(Service):
             user_info = {'id': None, 'uid': None, 'local': False}
             unixhash = None
 
+        pam_resp = {'code': pam.PAM_AUTH_ERR, 'reason': 'Authentication failure'}
+
         # The following provides way for root user to avoid getting locked out
         # of webui via due to PAM enforcing password policies on the root
         # account. Specifically, some legacy users have configured the root
@@ -36,13 +38,16 @@ class AuthService(Service):
         if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
             if unixhash in ('x', '*'):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
-                return None
-
-            if not await self.middleware.call('auth.check_unixhash', password, unixhash):
+            elif await self.middleware.call('auth.check_unixhash', password, unixhash):
+                pam['code'] = pam.PAM_SUCCESS
+                pam['reason'] = ''
+            else:
                 await self.middleware.call('auth.libpam_authenticate', username, password)
-                return None
 
-        elif not await self.middleware.call('auth.libpam_authenticate', username, password):
+        else:
+            pam_resp = await self.middleware.call('auth.libpam_authenticate', username, password)
+
+        if pam_resp['code'] != pam.PAM_SUCCESS:
             return None
 
         return await self.authenticate_user({'username': username}, user_info)
@@ -66,7 +71,8 @@ class AuthService(Service):
     @private
     def libpam_authenticate(self, username, password):
         p = pam.pam()
-        return p.authenticate(username, password, service='middleware')
+        p.authenticate(username, password, service='middleware')
+        return {'code': p.code, 'reason': p.reason}
 
     @private
     async def authenticate_user(self, query, user_info):
