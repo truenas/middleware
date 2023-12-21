@@ -156,6 +156,8 @@ class RDMAInterfaceService(CRUDService):
                             ctx.push(dev.del_ip(address=addr['address'],
                                                 prefixlen=addr['prefixlen'],
                                                 family=addr['family']))
+                        if mtu:
+                            dev['mtu'] = mtu
                         if address:
                             ctx.push(dev.add_ip(address=address, prefixlen=prefixlen).set('state', 'up'))
                         if check:
