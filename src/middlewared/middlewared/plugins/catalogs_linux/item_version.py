@@ -20,7 +20,8 @@ class CatalogService(Service):
             Bool('cache'),  # TODO: Remove this once UI adapts
             Str('catalog', required=True),
             Str('train', required=True),
-        )
+        ),
+        roles=['CATALOG_READ'],
     )
     @returns(Dict(
         'item_details',

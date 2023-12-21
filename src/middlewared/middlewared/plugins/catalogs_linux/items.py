@@ -36,7 +36,8 @@ class CatalogService(Service):
             Bool('cache_only', default=False),
             Bool('retrieve_all_trains', default=True),
             List('trains', items=[Str('train_name')]),
-        )
+        ),
+        roles=['CATALOG_READ'],
     )
     @returns(Dict(
         'trains',
