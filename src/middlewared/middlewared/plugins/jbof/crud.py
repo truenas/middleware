@@ -347,8 +347,9 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
+            connected_shelf_ips = []
             for node in ('A', 'B'):
-                connected_shelf_ips = await self.hardwire_node(node, shelf_index, shelf_ip_to_mac)
+                connected_shelf_ips = await self.hardwire_node(node, shelf_index, shelf_ip_to_mac, connected_shelf_ips)
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
                     verrors.add(schema, f'Unable to communicate with the expansion shelf (node {node})')
@@ -361,7 +362,7 @@ class JBOFService(CRUDService):
                 return
 
     @private
-    async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac):
+    async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac, skip_ips=[]):
         localnode = not node or node == await self.middleware.call('failover.node')
         # Next see what RDMA-capable links are available on the host
         # Also setup a map for frequent use below
@@ -405,7 +406,7 @@ class JBOFService(CRUDService):
                     await self.middleware.call('rdma.interface.delete', interface['id'])
                     dirty = True
         for shelf_ip in shelf_ip_to_mac:
-            if shelf_ip in connected_shelf_ips:
+            if shelf_ip in connected_shelf_ips or shelf_ip in skip_ips:
                 continue
             # Try each remaining interface
             if dirty:
