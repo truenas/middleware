@@ -60,7 +60,8 @@ class ChartReleaseService(Service):
             'upgrade_options',
             Dict('values', additional_attrs=True, private=True),
             Str('item_version', default='latest'),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns(Ref('chart_release_entry'))
     @job(lock=lambda args: f'chart_release_upgrade_{args[0]}')
@@ -130,7 +131,8 @@ class ChartReleaseService(Service):
         Dict(
             'options',
             Str('item_version', default='latest', empty=False)
-        )
+        ),
+        roles=['APPS_READ']
     )
     @returns(Dict(
         Bool('image_update_available', required=True),
@@ -390,7 +392,8 @@ class ChartReleaseService(Service):
         Dict(
             'pull_container_images_options',
             Bool('redeploy', default=True),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns(Dict(
         'container_images', additional_attrs=True,

@@ -30,7 +30,8 @@ class ChartReleaseService(Service):
         Dict(
             'scale_options',
             Int('replica_count', required=True, validators=[Range(min_=0)]),
-        )
+        ),
+        roles=['APPS_WRITE'],
     )
     @returns(Dict(
         'scale_chart_release',
@@ -189,6 +190,7 @@ class ChartReleaseService(Service):
             ],
             empty=False,
         ),
+        roles=['APPS_WRITE'],
     )
     @returns()
     async def scale_workloads(self, release_name, workloads):

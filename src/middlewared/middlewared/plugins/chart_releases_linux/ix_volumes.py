@@ -31,6 +31,7 @@ class ChartReleaseService(Service):
     @accepts(
         Str('release_name'),
         Str('volume_name'),
+        roles=['APPS_WRITE'],
     )
     @returns()
     async def remove_ix_volume(self, release_name, volume_name):

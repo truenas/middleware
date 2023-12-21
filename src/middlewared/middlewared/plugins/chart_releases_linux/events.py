@@ -56,7 +56,7 @@ class ChartReleaseService(Service):
     class Config:
         namespace = 'chart.release'
 
-    @accepts(Str('release_name'))
+    @accepts(Str('release_name'), roles=['APPS_READ'])
     @returns(List(
         'events', items=[Dict(
             'event',

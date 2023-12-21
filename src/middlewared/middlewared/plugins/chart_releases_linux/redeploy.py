@@ -12,7 +12,7 @@ class ChartReleaseService(Service):
     class Config:
         namespace = 'chart.release'
 
-    @accepts(Str('release_name'))
+    @accepts(Str('release_name'), roles=['APPS_WRITE'])
     @returns(Ref('chart_release_entry'))
     @job(lock=lambda args: f'chart_release_redeploy_{args[0]}')
     async def redeploy(self, job, release_name):
