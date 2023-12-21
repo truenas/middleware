@@ -15,7 +15,8 @@ from .utils import BACKUP_NAME_PREFIX, UPDATE_BACKUP_PREFIX
 class KubernetesService(Service):
 
     @accepts(
-        Str('backup_name', null=True, default=None)
+        Str('backup_name', null=True, default=None),
+        roles=['KUBERNETES_WRITE']
     )
     @returns(Str('backup_name'))
     @job(lock='chart_releases_backup')
@@ -98,7 +99,7 @@ class KubernetesService(Service):
             }.items()
         }
 
-    @accepts()
+    @accepts(roles=['KUBERNETES_READ'])
     @returns(Dict('backups', additional_attrs=True))
     def list_backups(self):
         """
@@ -145,7 +146,7 @@ class KubernetesService(Service):
 
         return backups
 
-    @accepts(Str('backup_name'))
+    @accepts(Str('backup_name'), roles=['KUBERNETES_WRITE'])
     @returns()
     def delete_backup(self, backup_name):
         """
