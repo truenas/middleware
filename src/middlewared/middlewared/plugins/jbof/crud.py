@@ -268,7 +268,7 @@ class JBOFService(CRUDService):
     @private
     async def next_index(self):
         existing_indices = [d['index'] for d in (await self.middleware.call('jbof.query', [], {'select': ['index']}))]
-        for index in range(0, 256):
+        for index in range(256):
             if index not in existing_indices:
                 return index
 
@@ -558,7 +558,8 @@ class JBOFService(CRUDService):
         possible_host_ips = []
         possible_shelf_ips = []
         shelf_interface_count = await self.shelf_interface_count(mgmt_ip)
-        for eth_index in range(0, shelf_interface_count):
+        # If shelf_interface_count is e.g. 4 then we want to iterate over [0,1,2,3]
+        for eth_index in range(shelf_interface_count):
             possible_host_ips.append(initiator_static_ip(shelf_index, eth_index))
             possible_shelf_ips.append(jbof_static_ip(shelf_index, eth_index))
 
