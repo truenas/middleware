@@ -3,7 +3,7 @@ from time import clock_gettime, CLOCK_MONOTONIC_RAW
 
 from middlewared.schema import accepts
 from middlewared.service import Service
-from middlewared.utils import sw_info
+from middlewared.utils import sw_version
 
 
 class WebUIMainDashboardService(Service):
@@ -31,7 +31,7 @@ class WebUIMainDashboardService(Service):
 
         return {
             'platform': platform,
-            'version': sw_info()['fullname'],
+            'version': sw_version(),
             'license': self.middleware.call_sync('system.license'),
             'system_serial': dmi['system-serial-number'],
             'hostname': hostname,
