@@ -26,9 +26,9 @@ def setup_smb_tests(request):
 
 @pytest.fixture(scope='function')
 def mount_share(setup_smb_tests):
-    with smb_mount(share_data['share']['name'], 'smbuser', 'Abcd1234$'):
-        yield share_data
+    with smb_mount(share_data['share']['name'], 'smbuser', 'Abcd1234$') as mp:
+        yield setup_smb_tests | {'mountpoint': mp} 
 
 
 def test_test_smb_mount(request, mount_share):
-    assert call('filesystem.statfs', '/mnt/cifs')['fstype'] == 'cifs'
+    assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
