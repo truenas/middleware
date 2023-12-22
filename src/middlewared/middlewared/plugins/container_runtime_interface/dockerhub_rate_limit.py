@@ -10,7 +10,7 @@ class ContainerImagesService(Service):
     class Config:
         namespace = 'container.image'
 
-    @accepts()
+    @accepts(roles=['APPS_READ'])
     @returns(Dict(
         Int('total_pull_limit', null=True, description='Total pull limit for Docker Hub registry'),
         Int(
