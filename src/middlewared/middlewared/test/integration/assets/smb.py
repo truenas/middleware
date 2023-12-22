@@ -36,7 +36,7 @@ def smb_share(path, name, options=None):
 
 @contextlib.contextmanager
 def smb_mount(share, username, password, local_path='/mnt/cifs', options=None, ip=default_ip):
-    mount_options = [f'username={username}', f'password={password}'] + options or []
+    mount_options = [f'username={username}', f'password={password}'] + (options or [])
     mkdir_cmd = [
         'mount.cifs', f'//{ip}/{share}', local_path,
         '-o', ','.join(mount_options)
