@@ -36,6 +36,6 @@ def test_smb_mount(request, mount_share):
 
 def test_acl_share_root(request, mount_share):
     local_acl = call('filesystem.getacl', os.path.join('/mnt', mount_share['dataset']))
-    smb_acl = call('filesysetm.getacl', mount_share['mountpoint'])
+    smb_acl = call('filesystem.getacl', mount_share['mountpoint'])
 
     assert local_acl == smb_acl
