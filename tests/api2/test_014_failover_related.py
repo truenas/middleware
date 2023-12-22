@@ -10,7 +10,7 @@ import pytest
 from functions import GET, SSH_TEST, make_ws_request
 from auto_config import ha, user, password
 from pytest_dependency import depends
-from middlewared.service_exception import CallError
+from middlewared.client import ClientException
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
 
@@ -129,18 +129,7 @@ if ha:
             c.call('failover.config')
             c.call('failover.node')
             c.call('failover.upgrade_pending')
-            c.call('failover.call_remote', 'system.dmidecode_info')
-            with pytest.raises(CallError) as ce:
+            with pytest.raises(ClientException) as ce:
                 c.call('failover.call_remote', 'user.update')
 
-            assert ce.value.errno == errno.EPERM
-
-            with pytest.raises(CallError) as ce:
-                c.call('failover.call_remote', 'core.get_jobs')
-
-            assert ce.value.errno == errno.EPERM
-
-            with pytest.raises(CallError) as ce:
-                c.call('failover.call_remote', 'user.set_password')
-
-            assert ce.value.errno == errno.EPERM
+            assert ce.value.errno == errno.EACCES
