@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import errno
 import sys
 import os
 apifolder = os.getcwd()
@@ -9,13 +10,28 @@ import pytest
 from functions import GET, SSH_TEST, make_ws_request
 from auto_config import ha, user, password
 from pytest_dependency import depends
+from middlewared.service_exception import CallError
+from middlewared.test.integration.assets.account import unprivileged_user
+from middlewared.test.integration.utils import call, client
 
 if ha and "virtual_ip" in os.environ:
     ip = os.environ["virtual_ip"]
 else:
     from auto_config import ip
 
-from middlewared.test.integration.utils import call
+
+@pytest.fixture(scope='module')
+def readonly_admin():
+    # READONLY role implies FAILOVER_READ
+    with unprivileged_user(
+        username='failover_guy',
+        group_name='failover_admins',
+        privilege_name='FAILOVER_PRIV',
+        allowlist=[],
+        web_shell=False,
+        roles=['READONLY']
+    ) as acct:
+        yield acct
 
 
 @pytest.mark.dependency(name='hactl_install_dir')
@@ -107,3 +123,24 @@ if ha:
             remote = call('failover.call_remote', 'network.configuration.config')
             assert remote['nameserver3'] == old_ns
             assert remote['state']['nameserver3'] == old_ns
+
+    def test_08_readonly_ops(request, readonly_admin):
+        with client(auth=(readonly_admin.username, readonly_admin.password)) as c:
+            c.call('failover.config')
+            c.call('failover.node')
+            c.call('failover.upgrade_pending')
+            c.call('failover.call_remote', 'system.dmidecode_info')
+            with pytest.raises(CallError) as ce:
+                c.call('failover.call_remote', 'user.update')
+
+            assert ce.value.errno == errno.EPERM
+
+            with pytest.raises(CallError) as ce:
+                c.call('failover.call_remote', 'core.get_jobs')
+
+            assert ce.value.errno == errno.EPERM
+
+            with pytest.raises(CallError) as ce:
+                c.call('failover.call_remote', 'user.set_password')
+
+            assert ce.value.errno == errno.EPERM
