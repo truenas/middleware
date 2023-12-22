@@ -38,7 +38,7 @@ class WebUIMainDashboardService(Service):
             'uptime': str(timedelta(seconds=clock_gettime(CLOCK_MONOTONIC_RAW))),
         }
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     def sys_info(self):
         """This endpoint was designed to be exclusively
         consumed by the webUI team. This is what makes
