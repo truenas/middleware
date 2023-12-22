@@ -30,14 +30,35 @@ def mount_share(setup_smb_tests):
         yield setup_smb_tests | {'mountpoint': mp} 
 
 
+def compare_acls(share_path, local_path):
+    local_acl = call('filesystem.getacl', local_path)
+    local_acl.pop('path')
+    smb_acl = call('filesystem.getacl', share_path)
+    smb_acl.pop('path')
+    assert local_acl == smb_acl
+
+
 def test_smb_mount(request, mount_share):
     assert call('filesystem.statfs', mount_share['mountpoint'])['fstype'] == 'cifs'
 
 
 def test_acl_share_root(request, mount_share):
-    local_acl = call('filesystem.getacl', os.path.join('/mnt', mount_share['dataset']))
-    local_acl.pop('path')
-    smb_acl = call('filesystem.getacl', mount_share['mountpoint'])
-    smb_acl.pop('path')
+    compare_acls(mount_share['share']['path'], mount_share['mountpoint'])
 
-    assert local_acl == smb_acl
+
+def test_acl_share_subdir(request, mount_share):
+    call('filesystem.mkdir', {'path': os.path.join(mount_share['share']['path'], 'testdir')})
+
+    compare_acls(
+        os.path.join(mount_share['share']['path'], 'testdir'),
+        os.path.join(mount_share['mountpoint'], 'testdir')
+    )
+
+
+def test_acl_share_file(request, mount_share):
+    ssh(f'touch {os.path.join(mount_share["share"]["path"], "testfile")}')
+
+    compare_acls(
+        os.path.join(mount_share['share']['path'], 'testfile'),
+        os.path.join(mount_share['mountpoint'], 'testfile')
+    )
