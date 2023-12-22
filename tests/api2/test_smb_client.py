@@ -4,12 +4,12 @@ import pytest
 from middlewared.test.integration.assets.account import user, group
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share, smb_mount 
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 
 
 @pytest.fixture(scope='module')
 def setup_smb_tests(request):
-    with dataset('smb-cifs', data={'share_type': 'SMB'}) as ds:
+    with dataset('smbclient-testing', data={'share_type': 'SMB'}) as ds:
         with user({
             'username': 'smbuser',
             'full_name': 'smbuser',
@@ -47,7 +47,10 @@ def test_acl_share_root(request, mount_share):
 
 
 def test_acl_share_subdir(request, mount_share):
-    call('filesystem.mkdir', {'path': os.path.join(mount_share['share']['path'], 'testdir')})
+    call('filesystem.mkdir', {
+        'path': os.path.join(mount_share['share']['path'], 'testdir'),
+        'options': {'raise_chmod_error': False},
+    })
 
     compare_acls(
         os.path.join(mount_share['share']['path'], 'testdir'),
