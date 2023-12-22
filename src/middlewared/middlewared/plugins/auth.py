@@ -356,7 +356,7 @@ class AuthService(Service):
         Dict('attrs', additional_attrs=True),
         Bool('match_origin', default=False),
     )
-    @returns(Password('token'))
+    @returns(Str('token'))
     @pass_app(rest=True)
     def generate_token(self, app, ttl, attrs, match_origin):
         """
