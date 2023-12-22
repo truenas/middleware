@@ -52,6 +52,7 @@ class FailoverService(ConfigService):
         datastore = 'system.failover'
         datastore_extend = 'failover.failover_extend'
         cli_private = True
+        role_prefix = 'FAILOVER'
 
     ENTRY = Dict(
         'failover_entry',
@@ -161,7 +162,7 @@ class FailoverService(ConfigService):
 
         return FailoverService.HA_MODE
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(Str())
     async def hardware(self):
         """
@@ -177,7 +178,7 @@ class FailoverService(ConfigService):
         """
         return (await self.middleware.call('failover.ha_mode'))[0]
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(Str())
     async def node(self):
         """
@@ -260,7 +261,7 @@ class FailoverService(ConfigService):
         await self.middleware.call('failover.status')
         await self.middleware.call('failover.disabled.reasons')
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(Bool())
     def in_progress(self):
         """
@@ -322,7 +323,7 @@ class FailoverService(ConfigService):
                 # this shouldn't be reached but better safe than sorry
                 os.system('shutdown -r now')
 
-    @accepts()
+    @accepts(roles=['FAILOVER_WRITE'])
     @returns(Bool())
     async def force_master(self):
         """
@@ -349,7 +350,7 @@ class FailoverService(ConfigService):
     @accepts(Dict(
         'options',
         Bool('reboot', default=False),
-    ))
+    ), roles=['FAILOVER_WRITE'])
     @returns()
     def sync_to_peer(self, options):
         """
@@ -386,7 +387,7 @@ class FailoverService(ConfigService):
         if options['reboot']:
             self.middleware.call_sync('failover.call_remote', 'system.reboot', [{'delay': 2}])
 
-    @accepts()
+    @accepts(roles=['FAILOVER_WRITE'])
     @returns()
     def sync_from_peer(self):
         """
@@ -602,6 +603,7 @@ class FailoverService(ConfigService):
             'options',
             Bool('active'),
         ),
+        roles=['FAILOVER_WRITE']
     )
     @returns()
     async def control(self, action, options):
@@ -640,7 +642,7 @@ class FailoverService(ConfigService):
         Str('train', empty=False),
         Bool('resume', default=False),
         Bool('resume_manual', default=False),
-    ))
+    ), roles=['FAILOVER_WRITE'])
     @returns(Bool())
     @job(lock='failover_upgrade', pipes=['input'], check_pipes=False)
     def upgrade(self, job, options):
@@ -915,7 +917,7 @@ class FailoverService(ConfigService):
                 raise
         return False
 
-    @accepts()
+    @accepts(roles=['FAILOVER_READ'])
     @returns(Bool())
     def upgrade_pending(self):
         """
@@ -948,7 +950,7 @@ class FailoverService(ConfigService):
 
         return can_update(remote_version, local_version)
 
-    @accepts()
+    @accepts(roles=['FAILOVER_WRITE'])
     @returns(Bool())
     @job(lock='failover_upgrade_finish')
     def upgrade_finish(self, job):

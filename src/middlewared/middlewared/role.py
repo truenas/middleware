@@ -21,6 +21,9 @@ ROLES = {
     'ACCOUNT_READ': Role(),
     'ACCOUNT_WRITE': Role(includes=['ACCOUNT_READ']),
 
+    'FAILOVER_READ': Role(),
+    'FAILOVER_WRITE': Role(includes=['FAILOVER_READ']),
+
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
 
@@ -49,6 +52,7 @@ ROLES = {
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
                                'ENCLOSURE_READ',
+                               'FAILOVER_READ',
                                'KMIP_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
