@@ -26,7 +26,7 @@ def setup_smb_tests(request):
 
 @pytest.fixture(scope='function')
 def mount_share(setup_smb_tests):
-    with smb_mount(share_data['share']['name'], 'smbuser', 'Abcd1234$') as mp:
+    with smb_mount(setup_smb_tests['share']['name'], 'smbuser', 'Abcd1234$') as mp:
         yield setup_smb_tests | {'mountpoint': mp} 
 
 
