@@ -159,6 +159,9 @@ class SystemGeneralService(ConfigService):
                     f'When "{wildcard}" has been selected, selection of other addresses is not allowed'
                 )
 
+        if data.get('ds_auth'):
+            verrors.add(f'{schema}.{key}', 'This feature may not currently be enabled in TrueNAS Cobia.')
+
         certificate_id = data.get('ui_certificate')
         cert = await self.middleware.call(
             'certificate.query',
@@ -213,7 +216,8 @@ class SystemGeneralService(ConfigService):
         then all IP addresses are allowed to use API and UI.
 
         `ds_auth` controls whether configured Directory Service users that are granted with Privileges are allowed to
-        log in to the Web UI or use TrueNAS API.
+        log in to the Web UI or use TrueNAS API. This feature is under development and is not currently available in
+        TrueNAS Cobia release.
 
         UI configuration is not applied automatically. Call `system.general.ui_restart` to apply new UI settings (all
         HTTP connections will be aborted) or specify `ui_restart_delay` (in seconds) to automatically apply them after
