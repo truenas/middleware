@@ -114,14 +114,21 @@ class IPMISELAlertSource(AlertSource):
                 dismissed_datetime = max(record["datetime"] for record in records)
                 await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, dismissed_datetime)
 
-            for record in filter(lambda x: x["datetime"] > dismissed_datetime, records):
+            alerts_by_key = {}
+            for record in sorted(
+                filter(lambda x: x["datetime"] > dismissed_datetime, records),
+                key=lambda x: x["datetime"],
+            ):
                 record.pop("id")
                 dt = record.pop("datetime")
-                alerts.append(Alert(
+                alert = Alert(
                     IPMISELAlertClass,
                     {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
-                    key=[record, dt.isoformat()], datetime=dt)
+                    key=[record, dt.isoformat()],
+                    datetime=dt,
                 )
+                alerts_by_key[alert.key] = alert
+            alerts = list(alerts_by_key.values())
 
         return alerts
 
