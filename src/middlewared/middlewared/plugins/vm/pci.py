@@ -9,7 +9,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, returns, Str
 from middlewared.service import private, Service, ValidationErrors
 from middlewared.utils.gpu import get_gpus, SENSITIVE_PCI_DEVICE_TYPES
 
-from .utils import convert_pci_id_to_vm_pci_slot
+from .utils import convert_pci_id_to_vm_pci_slot, get_pci_device_class
 
 
 RE_DEVICE_NAME = re.compile(r'(\w+):(\w+):(\w+).(\w+)')
@@ -82,28 +82,32 @@ class VMDeviceService(Service):
 
         dbs, func = obj.sys_name.split('.')
         dom, bus, slot = dbs.split(':')
-        cap_class = f'{(obj.attributes.get("class") or b"").decode() or None}'
-        ctrl_type = obj.properties.get('ID_PCI_SUBCLASS_FROM_DATABASE')
+        device_path = os.path.join('/sys/bus/pci/devices', obj.sys_name)
+        cap_class = f'{(obj.attributes.get("class") or b"").decode()}' or get_pci_device_class(device_path)
+        controller_type = obj.properties.get('ID_PCI_SUBCLASS_FROM_DATABASE') or SENSITIVE_PCI_DEVICE_TYPES.get(
+            cap_class[:6]
+        )
+
         drivers = []
-        if (driver := obj.properties.get('DRIVER')):
+        if driver := obj.properties.get('DRIVER'):
             drivers.append(driver)
 
-        data['capability']['class'] = cap_class
+        data['capability']['class'] = cap_class or None
         data['capability']['domain'] = f'{int(dom, base=16)}'
         data['capability']['bus'] = f'{int(bus, base=16)}'
         data['capability']['slot'] = f'{int(slot, base=16)}'
         data['capability']['function'] = f'{int(func, base=16)}'
         data['capability']['product'] = obj.properties.get('ID_MODEL_FROM_DATABASE', 'Not Available')
         data['capability']['vendor'] = obj.properties.get('ID_VENDOR_FROM_DATABASE', 'Not Available')
-        data['controller_type'] = ctrl_type
-        data['critical'] = any(not ctrl_type or i.lower() in ctrl_type.lower() for i in SENSITIVE_PCI_DEVICE_TYPES)
+        data['controller_type'] = controller_type
+        data['critical'] = bool(not cap_class or SENSITIVE_PCI_DEVICE_TYPES.get(cap_class[:6]))
         data['iommu_group'] = igi
         data['available'] = all(i == 'vfio-pci' for i in drivers) and not data['critical']
         data['drivers'] = drivers
         data['device_path'] = os.path.join('/sys/bus/pci/devices', obj.sys_name)
         data['reset_mechanism_defined'] = os.path.exists(os.path.join(data['device_path'], 'reset'))
 
-        prefix = obj.sys_name + (f' {ctrl_type!r}' if ctrl_type else '')
+        prefix = obj.sys_name + (f' {controller_type!r}' if controller_type else '')
         vendor = data['capability']['vendor'].strip()
         suffix = data['capability']['product'].strip()
         if vendor and suffix:

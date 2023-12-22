@@ -499,7 +499,7 @@ class IdmapDomainService(TDBWrapCRUDService):
 
         return False
 
-    @accepts()
+    @accepts(roles=['READONLY'])
     async def backend_options(self):
         """
         This returns full information about idmap backend options. Not all

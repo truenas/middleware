@@ -10,4 +10,5 @@ LICENSE_ADDHW_MAPPING = {
     9: "ES102",
     10: "ES102G2",
     11: "ES60G2",
+    12: "ES24N",
 }

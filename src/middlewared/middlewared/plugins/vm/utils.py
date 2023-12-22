@@ -1,3 +1,5 @@
+import contextlib
+import os
 from xml.etree import ElementTree as etree
 
 
@@ -23,3 +25,11 @@ def get_virsh_command_args():
 
 def convert_pci_id_to_vm_pci_slot(pci_id: str) -> str:
     return f'pci_{pci_id.replace(".", "_").replace(":", "_")}'
+
+
+def get_pci_device_class(pci_path: str) -> str:
+    with contextlib.suppress(FileNotFoundError):
+        with open(os.path.join(pci_path, 'class'), 'r') as r:
+            return r.read().strip()
+
+    return ''

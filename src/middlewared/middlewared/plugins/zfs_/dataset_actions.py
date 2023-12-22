@@ -57,7 +57,7 @@ class ZFSDatasetService(Service):
             with libzfs.ZFS() as zfs:
                 dataset = zfs.get_dataset(name)
                 if options['recursive']:
-                    dataset.mount_recursive()
+                    dataset.mount_recursive(ignore_errors=True)
                 else:
                     dataset.mount()
         except libzfs.ZFSException as e:

@@ -114,20 +114,27 @@ class IPMISELAlertSource(AlertSource):
                 dismissed_datetime = max(record["datetime"] for record in records)
                 await self.middleware.call("keyvalue.set", self.dismissed_datetime_kv_key, dismissed_datetime)
 
-            for record in filter(lambda x: x["datetime"] > dismissed_datetime, records):
+            alerts_by_key = {}
+            for record in sorted(
+                filter(lambda x: x["datetime"] > dismissed_datetime, records),
+                key=lambda x: x["datetime"],
+            ):
                 record.pop("id")
                 dt = record.pop("datetime")
-                alerts.append(Alert(
+                alert = Alert(
                     IPMISELAlertClass,
                     {"name": record["name"], "event_direction": record["event_direction"], "event": record["event"]},
-                    key=[record, dt.isoformat()], datetime=dt)
+                    key=[record, dt.isoformat()],
+                    datetime=dt,
                 )
+                alerts_by_key[alert.key] = alert
+            alerts = list(alerts_by_key.values())
 
         return alerts
 
     async def produce_sel_low_space_alert(self):
         info = (await (await self.middleware.call("ipmi.sel.info")).wait())
-        free_bytes = alloc_tot = alloc_us = None
+        alloc_tot = alloc_us = None
         if (free_bytes := info.get("free_space_remaining")) is not None:
             free_bytes = free_bytes.split(" ", 1)[0]
             if (alloc_tot := info.get("number_of_possible_allocation_units")) is not None:
@@ -150,6 +157,9 @@ class IPMISELAlertSource(AlertSource):
         return alert
 
     async def check(self):
+        if not await self.middleware.call("system.is_ix_hardware"):
+            return
+
         alerts = []
         alerts.extend(await self.produce_sel_elist_alerts())
         if (low_space_alert := await self.produce_sel_low_space_alert()) is not None:

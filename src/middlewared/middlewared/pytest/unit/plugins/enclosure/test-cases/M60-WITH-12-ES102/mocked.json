@@ -21,6 +21,11 @@
             "bsg": "/dev/bsg/19:0:309:0",
             "sg": "/dev/sg1155",
             "pci": "19:0:309:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -2546,6 +2551,11 @@
             "bsg": "/dev/bsg/18:0:206:0",
             "sg": "/dev/sg640",
             "pci": "18:0:206:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -5071,6 +5081,11 @@
             "bsg": "/dev/bsg/19:0:1:0",
             "sg": "/dev/sg847",
             "pci": "19:0:1:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -7596,6 +7611,11 @@
             "bsg": "/dev/bsg/18:0:0:0",
             "sg": "/dev/sg434",
             "pci": "18:0:0:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -10121,6 +10141,11 @@
             "bsg": "/dev/bsg/0:0:206:0",
             "sg": "/dev/sg208",
             "pci": "0:0:206:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -12646,6 +12671,11 @@
             "bsg": "/dev/bsg/19:0:0:0",
             "sg": "/dev/sg846",
             "pci": "19:0:0:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -15171,6 +15201,11 @@
             "bsg": "/dev/bsg/0:0:309:0",
             "sg": "/dev/sg311",
             "pci": "0:0:309:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -17714,6 +17749,11 @@
             "bsg": "/dev/bsg/19:0:206:0",
             "sg": "/dev/sg1052",
             "pci": "19:0:206:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -20239,6 +20279,11 @@
             "bsg": "/dev/bsg/18:0:103:0",
             "sg": "/dev/sg537",
             "pci": "18:0:103:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -22764,6 +22809,11 @@
             "bsg": "/dev/bsg/17:0:19:0",
             "sg": "/dev/sg433",
             "pci": "17:0:19:0",
+            "rackmount": true,
+            "top_loaded": false,
+            "front_slots": 24,
+            "rear_slots": 4,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -23184,6 +23234,11 @@
             "bsg": "/dev/bsg/18:0:207:0",
             "sg": "/dev/sg641",
             "pci": "18:0:207:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -25727,6 +25782,11 @@
             "bsg": "/dev/bsg/0:0:103:0",
             "sg": "/dev/sg105",
             "pci": "0:0:103:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {
@@ -28252,6 +28312,11 @@
             "bsg": "/dev/bsg/0:0:0:0",
             "sg": "/dev/sg2",
             "pci": "0:0:0:0",
+            "rackmount": true,
+            "top_loaded": true,
+            "front_slots": 102,
+            "rear_slots": 0,
+            "internal_slots": 0,
             "elements": {
                 "Array Device Slot": {
                     "1": {

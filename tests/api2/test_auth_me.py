@@ -12,6 +12,7 @@ def test_works():
     assert user["pw_uid"] == 0
     assert user["pw_name"] == "root"
     assert user['two_factor_config'] is not None
+    assert user['privilege']['webui_access']
 
 
 def test_works_for_token():
@@ -87,5 +88,6 @@ def test_distinguishes_attributes():
             assert me['two_factor_config'] is not None
             assert 'SYS_ADMIN' not in me['account_attributes']
             assert 'LOCAL' in me['account_attributes']
+            assert me['privilege']['webui_access']
 
     assert not call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", admin["uid"]]])

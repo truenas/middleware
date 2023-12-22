@@ -13,11 +13,6 @@
 syslog = 1
 vers2 = n
 threads = ${num_nfsd}
-% if config['udp']:
-udp = y
-% else:
-udp = n
-% endif
 % if "NFSV3" in config["protocols"]:
 vers3 = y
 % else:

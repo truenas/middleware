@@ -110,14 +110,14 @@ class Enclosure2Service(Service):
         if data['status'] == 'CLEAR':
             actions = ('clear=ident', 'clear=fault')
         else:
-            actions = (f'set={data["status"].lower()}')
+            actions = (f'set={data["status"].lower()}',)
 
         encdev = EnclosureDevice(sgdev)
         try:
             for action in actions:
                 encdev.set_control(str(origslot), action)
         except OSError:
-            self.logger.warning('Failed to {data["status"]} slot {data["slot"]!r} on enclosure {enc_info["id"]}')
+            self.logger.warning(f'Failed to {data["status"]} slot {data["slot"]!r} on enclosure {enc_info["id"]}')
 
     @filterable
     def query(self, filters, options):

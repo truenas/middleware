@@ -26,6 +26,10 @@ ROLES = {
 
     'AUTH_SESSIONS_READ': Role(),
     'AUTH_SESSIONS_WRITE': Role(includes=['AUTH_SESSIONS_READ']),
+
+    'KMIP_READ': Role(),
+    'KMIP_WRITE': Role(includes=['KMIP_READ']),
+
     'FILESYSTEM_ATTRS_READ': Role(),
     'FILESYSTEM_ATTRS_WRITE': Role(includes=['FILESYSTEM_ATTRS_READ']),
     'FILESYSTEM_DATA_READ': Role(),
@@ -33,6 +37,7 @@ ROLES = {
     'FILESYSTEM_FULL_CONTROL': Role(includes=['FILESYSTEM_ATTRS_WRITE',
                                               'FILESYSTEM_DATA_WRITE']),
     'REPORTING_READ': Role(),
+    'REPORTING_WRITE': Role(includes=['REPORTING_READ']),
 
     'SUPPORT_READ': Role(),
     'SUPPORT_WRITE': Role(includes=['SUPPORT_READ']),
@@ -46,7 +51,9 @@ ROLES = {
                                'AUTH_SESSIONS_READ',
                                'CLOUD_SYNC_READ',
                                'DATASET_READ',
+                               'ENCLOSURE_READ',
                                'FAILOVER_READ',
+                               'KMIP_READ',
                                'FILESYSTEM_ATTRS_READ',
                                'NETWORK_GENERAL_READ',
                                'SHARING_READ',
@@ -69,10 +76,18 @@ ROLES = {
     'SERVICE_READ': Role(),
     'SERVICE_WRITE': Role(),
 
+    # for webui.enclosure.** namespace
+    'ENCLOSURE_READ': Role(),
+    'ENCLOSURE_WRITE': Role(includes=['ENCLOSURE_READ']),
+
     # Network roles
     'NETWORK_GENERAL_READ': Role(),
     'NETWORK_INTERFACE_READ': Role(),
     'NETWORK_INTERFACE_WRITE': Role(includes=['NETWORK_INTERFACE_READ']),
+
+    # JBOF roles
+    'JBOF_READ': Role(),
+    'JBOF_WRITE': Role(includes=['JBOF_READ']),
 
     # iSCSI roles
     'SHARING_ISCSI_AUTH_READ': Role(),
