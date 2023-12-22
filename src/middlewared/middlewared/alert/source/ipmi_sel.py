@@ -134,7 +134,7 @@ class IPMISELAlertSource(AlertSource):
 
     async def produce_sel_low_space_alert(self):
         info = (await (await self.middleware.call("ipmi.sel.info")).wait())
-        free_bytes = alloc_tot = alloc_us = None
+        alloc_tot = alloc_us = None
         if (free_bytes := info.get("free_space_remaining")) is not None:
             free_bytes = free_bytes.split(" ", 1)[0]
             if (alloc_tot := info.get("number_of_possible_allocation_units")) is not None:
@@ -157,6 +157,9 @@ class IPMISELAlertSource(AlertSource):
         return alert
 
     async def check(self):
+        if not await self.middleware.call("system.is_ix_hardware"):
+            return
+
         alerts = []
         alerts.extend(await self.produce_sel_elist_alerts())
         if (low_space_alert := await self.produce_sel_low_space_alert()) is not None:
