@@ -25,6 +25,7 @@ class Dict(Attribute):
             name = ''
         self.additional_attrs = kwargs.pop('additional_attrs', False)
         self.conditional_defaults = kwargs.pop('conditional_defaults', {})
+        self.private_keys = kwargs.pop('private_keys', [])
         self.strict = kwargs.pop('strict', False)
         # Update property is used to disable requirement on all attributes
         # as well to not populate default values for not specified attributes
@@ -135,6 +136,10 @@ class Dict(Attribute):
 
         value = value.copy()
         for key in value:
+            if key in self.private_keys:
+                value[key] = REDACTED_VALUE
+                continue
+
             attr = self.attrs.get(key)
             if not attr:
                 continue

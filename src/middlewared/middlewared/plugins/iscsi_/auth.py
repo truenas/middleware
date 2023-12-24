@@ -24,6 +24,12 @@ class iSCSITargetAuthCredentialService(CRUDService):
         cli_namespace = 'sharing.iscsi.target.auth_credential'
         role_prefix = 'SHARING_ISCSI_AUTH'
 
+    ENTRY = Patch(
+        'iscsi_auth_create',
+        'iscsi_auth_entry',
+        ('add', Int('id', required=True)),
+    )
+
     @accepts(Dict(
         'iscsi_auth_create',
         Int('tag', required=True),

@@ -221,7 +221,8 @@ class DNSAuthenticatorService(CRUDService):
         Dict(
             'attributes',
             additional_attrs=True,
-            description='Specific attributes of each `authenticator`'
+            description='Specific attributes of each `authenticator`',
+            private=True,
         ),
         Str('name', description='User defined name of authenticator', required=True),
     )

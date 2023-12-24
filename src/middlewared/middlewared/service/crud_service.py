@@ -70,6 +70,8 @@ class CRUDServiceMetabase(ServiceBase):
             name='query_result',
         ))(query_method)
 
+        klass.get_instance = returns(Ref(entry_key))(klass.get_instance)
+
         for m_name in filter(lambda m: hasattr(klass, m), ('do_create', 'do_update')):
             for d_name, decorator in filter(
                 lambda d: not hasattr(getattr(klass, m_name), d[0]), (('returns', returns), ('accepts', accepts))

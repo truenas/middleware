@@ -283,6 +283,30 @@ class LDAPService(TDBWrapConfigService):
         datastore_prefix = "ldap_"
         cli_namespace = "directory_service.ldap"
 
+    ENTRY = Dict(
+        'ldap_update',
+        List('hostname', required=True),
+        LDAP_DN('basedn', required=True),
+        LDAP_DN('binddn'),
+        Str('bindpw', private=True),
+        Bool('anonbind', default=False),
+        Ref('ldap_ssl_choice', 'ssl'),
+        Int('certificate', null=True),
+        Bool('validate_certificates', default=True),
+        Bool('disable_freenas_cache'),
+        Int('timeout', default=30),
+        Int('dns_timeout', default=5),
+        Int('kerberos_realm', null=True),
+        Str('kerberos_principal'),
+        Bool('has_samba_schema', default=False),
+        Str('auxiliary_parameters', default=False, max_length=None),
+        Ref('nss_info_ldap', 'schema'),
+        Bool('enable'),
+        constants.LDAP_SEARCH_BASES_SCHEMA,
+        constants.LDAP_ATTRIBUTE_MAP_SCHEMA,
+        register=True,
+    )
+
     @private
     async def convert_schema_to_registry(self, data_in):
         """
@@ -679,29 +703,7 @@ class LDAPService(TDBWrapConfigService):
 
         return constants.SERVER_TYPE_GENERIC
 
-    @accepts(Dict(
-        'ldap_update',
-        List('hostname', required=True),
-        LDAP_DN('basedn', required=True),
-        LDAP_DN('binddn'),
-        Str('bindpw', private=True),
-        Bool('anonbind', default=False),
-        Ref('ldap_ssl_choice', 'ssl'),
-        Int('certificate', null=True),
-        Bool('validate_certificates', default=True),
-        Bool('disable_freenas_cache'),
-        Int('timeout', default=30),
-        Int('dns_timeout', default=5),
-        Int('kerberos_realm', null=True),
-        Str('kerberos_principal'),
-        Bool('has_samba_schema', default=False),
-        Str('auxiliary_parameters', default=False, max_length=None),
-        Ref('nss_info_ldap', 'schema'),
-        Bool('enable'),
-        constants.LDAP_SEARCH_BASES_SCHEMA,
-        constants.LDAP_ATTRIBUTE_MAP_SCHEMA,
-        update=True
-    ))
+    @accepts(Ref('ldap_update'))
     async def do_update(self, data):
         """
         `hostname` list of ip addresses or hostnames of LDAP servers with
