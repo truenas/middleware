@@ -166,7 +166,10 @@ ROLES = {
                                       'SHARING_WRITE',
                                       'FILESYSTEM_ATTRS_WRITE',
                                       'SERVICE_READ'],
-                            builtin=False)
+                            builtin=False),
+    # Apps roles
+    'KUBERNETES_READ': Role(includes=['CONTAINER_READ']),
+    'KUBERNETES_WRITE': Role(includes=['CONTAINER_WRITE']),
 }
 
 
