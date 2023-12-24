@@ -50,6 +50,7 @@ async def datastore_test():
 
                 m["datastore.insert"] = ds.insert
                 m["datastore.update"] = ds.update
+                m["datastore.delete"] = ds.delete
 
                 yield ds
 

@@ -92,11 +92,13 @@ class VMDeviceModel(Model):
     (
         {
             "hw": {"eth0": "08:00:27:1e:9f:d3", "eth1": "08:00:27:1e:9f:d4"},
-            "interface": {"eth0": 0, "eth1": 1},
+            "interface": {"eth0": 0, "eth1": 1, "lagg0": 10, "lagg1": 11},
+            "lagg": {"lagg0": ["eth0"], "lagg1": ["eth1"]},
         },
         {
             "hw": {"eth1": "08:00:27:1e:9f:d3", "eth0": "08:00:27:1e:9f:d4"},
-            "interface": {"eth1": 0, "eth0": 1},
+            "interface": {"eth1": 0, "eth0": 1, "bond0": 10, "bond1": 11},
+            "lagg": {"bond0": ["eth1"], "bond1": ["eth0"]},
         },
     ),
     # Interface gone
