@@ -11,7 +11,8 @@
         raise_keyerror = False
 
         if usrname := share[f'{map_type}_user']:
-            if uid := middleware.call_sync('user.username_to_uid', usrname):
+            uid = middleware.call_sync('user.username_to_uid', usrname)
+            if uid is not None:
                 map_ids[f'{map_type}_user'] = uid
                 output.append(f'anonuid={uid}')
             else:
@@ -20,7 +21,8 @@
                 raise_keyerror = True
 
         if grpname := share[f'{map_type}_group']:
-            if gid := middleware.call_sync('group.groupname_to_gid', grpname):
+            gid = middleware.call_sync('group.groupname_to_gid', grpname)
+            if gid is not None:
                 map_ids[f'{map_type}_group'] = gid
                 output.append(f'anongid={gid}')
             else:
@@ -40,7 +42,9 @@
         match do_what:
             case 'raise':
                 if map_ids is not None:
-                    invalid_names = ','.join([ v for k, v in map_ids.items() if type in k and v != -1 ])
+                    invalid_names = ','.join([
+                        v for k, v in map_ids.items() if type in k and not isinstance(v, int)
+                    ])
                     middleware.logger.warning(
                         f"{sharepath}: Disabling this NFS share. "
                         f"Mapping invalid names: {invalid_names}"
