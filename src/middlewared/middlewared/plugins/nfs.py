@@ -1,4 +1,3 @@
-# import contextlib
 import enum
 import errno
 import ipaddress
