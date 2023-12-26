@@ -7,6 +7,7 @@ import tempfile
 import pytest
 import requests
 
+from middlewared.test.integration.assets.account import root_with_password_disabled
 from middlewared.test.integration.assets.keychain import ssh_keypair
 from middlewared.test.integration.utils import call, client, host, mock, url
 
@@ -16,28 +17,19 @@ def admin():
     assert call("user.query", [["uid", "=", 950]]) == []
     assert call("user.query", [["username", "=", "admin"]]) == []
 
-    root_backup = call("datastore.query", "account.bsdusers", [["bsdusr_username", "=", "root"]], {"get": True})
-    root_backup["bsdusr_group"] = root_backup["bsdusr_group"]["id"]
-    root_id = root_backup.pop("id")
-    # Connect before removing root password
-    with client() as c:
-        try:
-            c.call("datastore.update", "account.bsdusers", root_id, {"bsdusr_password_disabled": True})
-            c.call("user.setup_local_administrator", "admin", "admin")
-            call("system.info", client_kwargs=dict(auth=("admin", "admin")))
-            # Quickly restore root password before anyone notices
-            c.call("datastore.update", "account.bsdusers", root_id, root_backup)
-            c.call("etc.generate", "user")
+    with root_with_password_disabled() as context:
+        context.client.call("datastore.update", "account.bsdusers", context.root_id, {"bsdusr_unixhash": "*"})
+        context.client.call("user.setup_local_administrator", "admin", "admin")
+        call("system.info", client_kwargs=dict(auth=("admin", "admin")))
+        # Quickly restore root password before anyone notices
+        context.client.call("datastore.update", "account.bsdusers", context.root_id, context.root_backup)
+        context.client.call("etc.generate", "user")
 
-            admin = call("user.query", [["username", "=", "admin"]], {"get": True})
-            try:
-                yield admin
-            finally:
-                call("user.delete", admin["id"])
+        admin = call("user.query", [["username", "=", "admin"]], {"get": True})
+        try:
+            yield admin
         finally:
-            # Restore root access on test failure
-            c.call("datastore.update", "account.bsdusers", root_id, root_backup)
-            c.call("etc.generate", "user")
+            call("user.delete", admin["id"])
 
 
 def test_installer_admin_has_local_administrator_privilege(admin):

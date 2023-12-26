@@ -3,6 +3,7 @@ import hmac
 
 import pam
 
+from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, Service, private
 
 
@@ -38,7 +39,7 @@ class AuthService(Service):
                 {'get': True, 'prefix': 'bsdusr_'},
             )
 
-            if root['unixhash'] in ('x', '*'):
+            if not unixhash_is_valid(root['unixhash']):
                 return None
 
             if not hmac.compare_digest(crypt.crypt(password, root['unixhash']), root['unixhash']):

@@ -72,6 +72,10 @@ def crypted_password(cleartext):
     ))
 
 
+def unixhash_is_valid(unixhash):
+    return unixhash not in ("x", "*")
+
+
 def nt_password(cleartext):
     nthash = hashlib.new('md4', cleartext.encode('utf-16le')).digest()
     return binascii.hexlify(nthash).decode().upper()
