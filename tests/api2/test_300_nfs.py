@@ -1493,34 +1493,33 @@ def test_50_nfs_invalid_user_group_mapping(request, type, data):
 
     ''' Test Processing '''
     with directory(f'{NFS_PATH}/sub1') as tmp_path:
-        match type:
 
-            case 'InvalidAssignment':
-                payload = {'path': tmp_path} | data[0]
-                with pytest.raises(ValidationErrors) as ve:
-                    call("sharing.nfs.create", payload)
-                assert ve.value.errors == [ValidationError('sharingnfs_create.' + f'{data[1]}', data[2], 22)]
+        if type == 'InvalidAssignment':
+            payload = {'path': tmp_path} | data[0]
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.nfs.create", payload)
+            assert ve.value.errors == [ValidationError('sharingnfs_create.' + f'{data[1]}', data[2], 22)]
 
-            case 'MissingUser':
-                usrname = data[1]
-                testkey, testval = data[0].split('_')
+        elif type == 'MissingUser':
+            usrname = data[1]
+            testkey, testval = data[0].split('_')
 
-                usr_payload = {'username': usrname, 'full_name': usrname,
-                               'group_create': True, 'password': 'abadpassword'}
-                mapping = {data[0]: usrname}
-                with create_user(usr_payload) as usrInst:
-                    with nfs_share(tmp_path, mapping) as share:
-                        run_missing_usrgrp_test(testval, tmp_path, share, usrInst)
+            usr_payload = {'username': usrname, 'full_name': usrname,
+                           'group_create': True, 'password': 'abadpassword'}
+            mapping = {data[0]: usrname}
+            with create_user(usr_payload) as usrInst:
+                with nfs_share(tmp_path, mapping) as share:
+                    run_missing_usrgrp_test(testval, tmp_path, share, usrInst)
 
-            case 'MissingGroup':
-                # Use a built-in user for the group test
-                grpname = data[1]
-                testkey, testval = data[0].split('_')
+        elif type == 'MissingGroup':
+            # Use a built-in user for the group test
+            grpname = data[1]
+            testkey, testval = data[0].split('_')
 
-                mapping = {f"{testkey}_user": 'ftp', data[0]: grpname}
-                with create_group({'name': grpname}) as grpInst:
-                    with nfs_share(tmp_path, mapping) as share:
-                        run_missing_usrgrp_test(testval, tmp_path, share, grpInst)
+            mapping = {f"{testkey}_user": 'ftp', data[0]: grpname}
+            with create_group({'name': grpname}) as grpInst:
+                with nfs_share(tmp_path, mapping) as share:
+                    run_missing_usrgrp_test(testval, tmp_path, share, grpInst)
 
 
 def test_70_stoping_nfs_service(request):
