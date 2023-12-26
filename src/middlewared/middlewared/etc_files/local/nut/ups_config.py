@@ -12,8 +12,8 @@ def generate_ups_config(middleware):
     os.makedirs(UPS_CONFPATH)
     os.makedirs(UPS_VARPATH, exist_ok=True)
 
-    uucp_group = middleware.call_sync('group.query', [['group', '=', 'uucp']], {'get': True})
-    os.chown(UPS_VARPATH, 0, uucp_group['gid'])
+    nut_group = middleware.call_sync('group.query', [['group', '=', 'nut']], {'get': True})
+    os.chown(UPS_VARPATH, 0, nut_group['gid'])
     os.chmod(UPS_VARPATH, 0o770)
 
 

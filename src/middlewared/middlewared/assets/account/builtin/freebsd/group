@@ -29,6 +29,7 @@ www:*:80:
 ntpd:*:123:
 avahi:*:200:
 messagebus:*:201:
+nut:*:316:
 nslcd:*:389:
 consul:*:469:
 nomad:*:472:

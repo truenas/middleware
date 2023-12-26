@@ -19,7 +19,6 @@ DEFAULT_ETC_PERMS = 0o644
 
 class EtcUSR(enum.IntEnum):
     ROOT = 0
-    UUCP = 66
     NSLCD = 110
     MINIO = 473
     WEBDAV = 666
@@ -28,9 +27,8 @@ class EtcUSR(enum.IntEnum):
 class EtcGRP(enum.IntEnum):
     ROOT = 0
     SHADOW = 42
-    UUCP = 66
     NSLCD = 115
-    NUT = 126
+    NUT = 316
     MINIO = 473
     WEBDAV = 666
 
@@ -248,11 +246,11 @@ class EtcService(Service):
         ],
         'ups': [
             {'type': 'py', 'path': 'local/nut/ups_config'},
-            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': EtcGRP.UUCP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': EtcGRP.UUCP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': EtcGRP.UUCP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': EtcGRP.UUCP, 'mode': 0o440},
-            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': EtcGRP.UUCP, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/ups.conf', 'owner': 'root', 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.conf', 'owner': 'root', 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsd.users', 'owner': 'root', 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upsmon.conf', 'owner': 'root', 'group': EtcGRP.NUT, 'mode': 0o440},
+            {'type': 'mako', 'path': 'local/nut/upssched.conf', 'owner': 'root', 'group': EtcGRP.NUT, 'mode': 0o440},
             {'type': 'py', 'path': 'local/nut/ups_perms'}
         ],
         'rsync': [
