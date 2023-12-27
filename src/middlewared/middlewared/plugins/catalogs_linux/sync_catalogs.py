@@ -18,7 +18,11 @@ class CatalogService(Service):
         """
         Refresh all available catalogs from upstream.
         """
-        catalogs = await self.middleware.call('catalog.query')
+        catalogs = await self.middleware.call(
+            'catalog.query', [
+                ['id', '=', OFFICIAL_LABEL]
+            ] if await self.middleware.call('catalog.cannot_be_added') else []
+        )
         catalog_len = len(catalogs)
         for index, catalog in enumerate(catalogs):
             job.set_progress((index / catalog_len) * 100, f'Syncing {catalog["id"]} catalog')
