@@ -135,6 +135,15 @@ class CoreService(Service):
                 'frames': frames,
             }
 
+    def _job_by_app_and_id(self, app, job_id):
+        if app is None:
+            try:
+                return self.middleware.jobs[job_id]
+            except KeyError:
+                raise CallError('Job does not exist', errno.ENOENT)
+        else:
+            return self.__job_by_credential_and_id(app.authenticated_credentials, job_id)
+
     def __job_by_credential_and_id(self, credential, job_id):
         if not credential_is_limited_to_own_jobs(credential):
             return self.middleware.jobs[job_id]
@@ -217,10 +226,7 @@ class CoreService(Service):
         Please see `core.download` method documentation for explanation on `filename` and `buffered` arguments,
         and return value.
         """
-        if app is None:
-            job = self.middleware.jobs[id_]
-        else:
-            job = self.__job_by_credential_and_id(app.authenticated_credentials, id_)
+        job = self._job_by_app_and_id(app, id_)
 
         if job.logs_path is None:
             raise CallError('This job has no logs')
@@ -273,11 +279,7 @@ class CoreService(Service):
     @accepts(Int('id'))
     @pass_app(rest=True)
     def job_abort(self, app, id_):
-        if app is None:
-            job = self.middleware.jobs[id_]
-        else:
-            job = self.__job_by_credential_and_id(app.authenticated_credentials, id_)
-
+        job = self._job_by_app_and_id(app, id_)
         return job.abort()
 
     def _should_list_service(self, name, service, target):
