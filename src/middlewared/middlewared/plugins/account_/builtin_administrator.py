@@ -1,3 +1,4 @@
+from middlewared.plugins.account import unixhash_is_valid
 from middlewared.schema import accepts, Int, List
 from middlewared.service import filter_list, Service, private
 
@@ -41,7 +42,7 @@ class GroupService(Service):
             if membership["user"]["bsdusr_password_disabled"]:
                 continue
 
-            if membership["user"]["bsdusr_unixhash"] in ("x", "*"):
+            if not unixhash_is_valid(membership["user"]["bsdusr_unixhash"]):
                 continue
 
             result.append({k.removeprefix("bsdusr_"): v for k, v in membership["user"].items()})

@@ -3,6 +3,7 @@ import hmac
 
 import pam
 
+from middlewared.plugins.account import unixhash_is_valid
 from middlewared.service import CallError, Service, pass_app, private
 
 
@@ -36,7 +37,7 @@ class AuthService(Service):
         # In all failure cases libpam_authenticate is called so that timing
         # is consistent with pam_fail_delay
         if username == 'root' and await self.middleware.call('privilege.always_has_root_password_enabled'):
-            if unixhash in ('x', '*'):
+            if not unixhash_is_valid(unixhash):
                 await self.middleware.call('auth.libpam_authenticate', username, password)
             elif await self.middleware.call('auth.check_unixhash', password, unixhash):
                 pam_resp = {'code': pam.PAM_SUCCESS, 'reason': ''}
@@ -62,7 +63,7 @@ class AuthService(Service):
         if app is not None:
             raise CallError("This method may not be called externally")
 
-        if unixhash in ('x', '*'):
+        if not unixhash_is_valid(unixhash):
             return False
 
         return hmac.compare_digest(crypt.crypt(password, unixhash), unixhash)

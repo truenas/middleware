@@ -4,8 +4,8 @@ import types
 import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
-from middlewared.test.integration.assets.account import group
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.assets.account import group, root_with_password_disabled
+from middlewared.test.integration.utils import call, client, mock
 
 
 def test_change_local_administrator_groups_to_invalid():
@@ -115,3 +115,11 @@ def test_remove_only_local_administrator_password_enabled_user():
         "After disabling password for this user no password-enabled local user will have built-in privilege "
         "'Local Administrator'."
     )
+
+
+def test_password_disabled_root_is_a_local_administrator():
+    with root_with_password_disabled():
+        local_administrators = call("privilege.local_administrators")
+
+        assert len(local_administrators) == 1
+        assert local_administrators[0]["username"] == "root"
