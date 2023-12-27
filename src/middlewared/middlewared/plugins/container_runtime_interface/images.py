@@ -18,6 +18,7 @@ class ContainerImagesService(CRUDService):
         namespace = 'container.image'
         namespace_alias = 'docker.images'
         cli_namespace = 'app.docker.image'
+        role_prefix = 'APPS'
 
     ENTRY = Dict(
         'container_image_entry',
@@ -38,7 +39,7 @@ class ContainerImagesService(CRUDService):
         List('complete_tags', items=[Str('complete_tag')]),
     )
 
-    @filterable(roles=['APPS_READ'])
+    @filterable
     def query(self, filters, options):
         """
         Retrieve container images present in the system.
