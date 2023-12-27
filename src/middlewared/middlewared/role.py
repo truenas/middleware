@@ -168,10 +168,14 @@ ROLES = {
                                       'SERVICE_READ'],
                             builtin=False),
     # Apps roles
+    'CONTAINER_READ': Role(),
+    'CONTAINER_WRITE': Role(includes=['CONTAINER_READ']),
+    'CATALOG_READ': Role(),
+    'CATALOG_WRITE': Role(includes=['CATALOG_READ']),
     'KUBERNETES_READ': Role(includes=['CONTAINER_READ']),
-    'KUBERNETES_WRITE': Role(includes=['CONTAINER_WRITE']),
+    'KUBERNETES_WRITE': Role(includes=['CONTAINER_WRITE', 'KUBERNETES_READ']),
     'APPS_READ': Role(includes=['CATALOG_READ']),
-    'APPS_WRITE': Role(includes=['CATALOG_WRITE']),
+    'APPS_WRITE': Role(includes=['CATALOG_WRITE', 'APPS_READ']),
 }
 
 
