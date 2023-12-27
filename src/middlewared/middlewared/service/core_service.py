@@ -646,6 +646,7 @@ class CoreService(Service):
                 result[line_ip] = sline[2]
         return result
 
+    @no_authz_required
     @accepts(
         Str('method'),
         List('args'),
@@ -663,7 +664,10 @@ class CoreService(Service):
 
         Returns the job id and the URL for download.
         """
-        job = await self.middleware.call(method, *args, pipes=Pipes(output=self.middleware.pipe(buffered)))
+        if not app.authenticated_credentials.authorize('CALL', method):
+            raise CallError('Not authorized', errno.EACCES)
+
+        job = await self.middleware.call(method, *args, app=app, pipes=Pipes(output=self.middleware.pipe(buffered)))
         token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id}, app=app)
         self.middleware.fileapp.register_job(job.id, buffered)
         return job.id, f'/_download/{job.id}?auth_token={token}'
