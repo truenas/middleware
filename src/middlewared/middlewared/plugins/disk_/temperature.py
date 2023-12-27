@@ -132,9 +132,9 @@ class DiskService(Service):
         for disk in self.middleware.call_sync('reporting.netdata_graph', 'disktemp', opts):
             if disk['identifier'] in names:
                 final[disk['identifier']] = {
-                    'min': disk['aggregations']['min']['temperature_value'],
-                    'max': disk['aggregations']['max']['temperature_value'],
-                    'avg': disk['aggregations']['mean']['temperature_value'],
+                    'min': disk['aggregations']['min'].get('temperature_value', None),
+                    'max': disk['aggregations']['max'].get('temperature_value', None),
+                    'avg': disk['aggregations']['mean'].get('temperature_value', None),
                 }
 
         return final
