@@ -193,6 +193,15 @@ class CatalogService(CRUDService):
 
         verrors.check()
 
+    @private
+    async def cannot_be_added(self):
+        if not await self.middleware.call('kubernetes.pool_configured'):
+            return 'Catalogs cannot be added until apps pool is configured'
+        elif (await self.middleware.call('kubernetes.config'))['passthrough_mode']:
+            return 'Catalogs cannot be added when passthrough mode is enabled for apps'
+
+        return False
+
     @accepts(
         Patch(
             'catalog_entry',
@@ -218,10 +227,8 @@ class CatalogService(CRUDService):
         # We normalize the label
         data['label'] = data['label'].upper()
 
-        if not await self.middleware.call('kubernetes.pool_configured'):
-            verrors.add('catalog_create.label', 'Catalogs cannot be added until apps pool is configured')
-        elif (await self.middleware.call('kubernetes.config'))['passthrough_mode']:
-            verrors.add('catalog_create.label', 'Catalogs cannot be added when passthrough mode is enabled for apps')
+        if error := await self.cannot_be_added():
+            verrors.add('catalog_create.label', error)
 
         if await self.query([['id', '=', data['label']]]):
             verrors.add('catalog_create.label', 'A catalog with specified label already exists', errno=errno.EEXIST)
