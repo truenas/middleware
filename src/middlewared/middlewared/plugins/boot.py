@@ -300,10 +300,9 @@ async def setup(middleware):
 
             compatibility = pools[i]
             if compatibility != 'grub2':
-                middleware.logger.info(f'Boot pool {BOOT_POOL_NAME!r} has {compatibility=!r}, upgrading it')
+                middleware.logger.info(f'Boot pool {BOOT_POOL_NAME!r} has {compatibility=!r}, setting it to grub2')
                 try:
                     await run('zpool', 'set', 'compatibility=grub2', BOOT_POOL_NAME)
-                    await run('zpool', 'upgrade', BOOT_POOL_NAME)
                 except Exception as e:
                     middleware.logger.error(f'Error setting boot pool compatibility: {e!r}')
 
