@@ -194,6 +194,18 @@ class CatalogService(CRUDService):
         verrors.check()
 
     @private
+    async def dataset_mounted(self):
+        if k8s_dataset := (await self.middleware.call('kubernetes.config'))['dataset']:
+            if catalog_ds := await self.middleware.call(
+                'zfs.dataset.query', [['id', '=', os.path.join(k8s_dataset, 'catalogs')]], {
+                    'extra': {'properties': ['mounted']}
+                }
+            ):
+                return catalog_ds[0]['properties']['mounted']['parsed']
+
+        return False
+
+    @private
     async def cannot_be_added(self):
         if not await self.middleware.call('kubernetes.pool_configured'):
             return 'Catalogs cannot be added until apps pool is configured'
