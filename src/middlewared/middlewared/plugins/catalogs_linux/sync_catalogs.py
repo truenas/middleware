@@ -46,8 +46,14 @@ class CatalogService(Service):
         """
         try:
             catalog = await self.middleware.call('catalog.get_instance', catalog_label)
-            if catalog_label != OFFICIAL_LABEL and await self.middleware.call('catalog.cannot_be_added'):
-                raise CallError('Cannot sync non-official catalogs when apps are not configured')
+            if catalog_label != OFFICIAL_LABEL and (
+                await self.middleware.call('catalog.cannot_be_added') or not await self.middleware.call(
+                    'catalog.dataset_mounted'
+                )
+            ):
+                raise CallError(
+                    'Cannot sync non-official catalogs when apps are not configured or catalog dataset is not mounted'
+                )
 
             job.set_progress(5, 'Updating catalog repository')
             await self.middleware.call('catalog.update_git_repository', catalog)
