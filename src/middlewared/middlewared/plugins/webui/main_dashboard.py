@@ -1,5 +1,5 @@
-from datetime import timedelta
-from time import clock_gettime, CLOCK_MONOTONIC_RAW
+from datetime import datetime, timezone
+from time import clock_gettime, CLOCK_MONOTONIC_RAW, time
 
 from middlewared.schema import accepts
 from middlewared.service import Service
@@ -35,7 +35,8 @@ class WebUIMainDashboardService(Service):
             'license': self.middleware.call_sync('system.license'),
             'system_serial': dmi['system-serial-number'],
             'hostname': hostname,
-            'uptime': str(timedelta(seconds=clock_gettime(CLOCK_MONOTONIC_RAW))),
+            'uptime_seconds': clock_gettime(CLOCK_MONOTONIC_RAW),
+            'datetime': datetime.fromtimestamp(time(), timezone.utc),
         }
 
     @accepts(roles=['READONLY'])
