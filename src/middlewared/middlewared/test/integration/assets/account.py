@@ -82,3 +82,19 @@ def unprivileged_user_client(roles=None, allowlist=None):
     ) as t:
         with client(auth=(t.username, t.password)) as c:
             yield c
+
+
+@contextlib.contextmanager
+def root_with_password_disabled():
+    root_backup = call("datastore.query", "account.bsdusers", [["bsdusr_username", "=", "root"]], {"get": True})
+    root_backup["bsdusr_group"] = root_backup["bsdusr_group"]["id"]
+    root_id = root_backup.pop("id")
+    # Connect before removing root password
+    with client() as c:
+        try:
+            c.call("datastore.update", "account.bsdusers", root_id, {"bsdusr_password_disabled": True})
+            yield types.SimpleNamespace(client=c, root_id=root_id, root_backup=root_backup)
+        finally:
+            # Restore root access on test failure
+            c.call("datastore.update", "account.bsdusers", root_id, root_backup)
+            c.call("etc.generate", "user")

@@ -1,6 +1,7 @@
 import enum
 import errno
 
+from middlewared.plugins.account import unixhash_is_valid
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, SID, Str, Patch
 from middlewared.service import CallError, CRUDService, filter_list, private, ValidationErrors
 from middlewared.service_exception import MatchNotFound
@@ -386,7 +387,7 @@ class PrivilegeService(CRUDService):
             [['username', '=', 'root']],
             {'get': True},
         )
-        users = await self.local_administrators([root_user['id']], groups)
+        users = await self.local_administrators([root_user['id']], users, groups)
         if not users:
             value = True
         else:
@@ -402,8 +403,10 @@ class PrivilegeService(CRUDService):
         return value
 
     @private
-    async def local_administrators(self, exclude_user_ids=None, groups=None):
+    async def local_administrators(self, exclude_user_ids=None, users=None, groups=None):
         exclude_user_ids = exclude_user_ids or []
+        if users is None:
+            users = await self.middleware.call('user.query')
         if groups is None:
             groups = await self.middleware.call('group.query')
 
@@ -413,12 +416,24 @@ class PrivilegeService(CRUDService):
             [['builtin_name', '=', BuiltinPrivileges.LOCAL_ADMINISTRATOR.value]],
             {'get': True},
         )
-        return await self.middleware.call(
+        local_administrators = await self.middleware.call(
             'group.get_password_enabled_users',
             local_administrator_privilege['local_groups'],
             exclude_user_ids,
             groups,
         )
+        if not local_administrators:
+            root_user = filter_list(
+                users,
+                [['username', '=', 'root']],
+                {'get': True},
+            )
+            if root_user['id'] not in exclude_user_ids:
+                if unixhash_is_valid(root_user['unixhash']):
+                    # This can only be if `always_has_root_password_enabled` is `True`
+                    local_administrators = [root_user]
+
+        return local_administrators
 
 
 async def setup(middleware):
