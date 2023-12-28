@@ -18,8 +18,10 @@ sys.path.append(apifolder)
 from functions import PUT, POST, GET, SSH_TEST, DELETE, wait_on_job
 from functions import make_ws_request
 from auto_config import pool_name, ha, hostname, password, user
-from protocols import SSH_NFS
+from protocols import SSH_NFS, nfs_share
 from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.test.integration.assets.account import user as create_user
+from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.utils import call, ssh, mock
 
@@ -223,7 +225,7 @@ def restore_nfs_config():
     Restore the NFS configuration to the settings saved by save_nfs_config.
     This should be called _before_ NFS is shutdown to ensure the NFS conf file in /etc
     matches the DB settings.
-    This is called at the start of test_50_stoping_nfs_service.
+    This is called at the start of stopping_nfs_service.
     '''
     set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
     res = make_ws_request(ip, set_conf_cmd)
@@ -261,22 +263,6 @@ def nfs_dataset(name, options=None, acl=None, mode=None):
             sleep(10)
             result = DELETE(f"/pool/dataset/id/{urllib.parse.quote(dataset, '')}/")
             retry -= 1
-        assert result.status_code == 200, result.text
-
-
-@contextlib.contextmanager
-def nfs_share(path, options=None):
-    results = POST("/sharing/nfs/", {
-        "path": path,
-        **(options or {}),
-    })
-    assert results.status_code == 200, results.text
-    id = results.json()["id"]
-
-    try:
-        yield id
-    finally:
-        result = DELETE(f"/sharing/nfs/id/{id}/")
         assert result.status_code == 200, result.text
 
 
@@ -413,7 +399,7 @@ def test_19_updating_the_nfs_service(request, nfsd, cores, expected):
     and verifying that the value here was set correctly.
 
     Update:
-    The default setting for 'servers' is 0. This specifies that we dynamically
+    The default setting for 'servers' is None. This specifies that we dynamically
     determine the number of nfsd to start based on the capabilities of the system.
     In this state, we choose one nfsd for each CPU core.
     The user can override the dynamic calculation by specifying a
@@ -674,12 +660,11 @@ def test_34_check_nfs_share_maproot(request):
         *(sec=sys,rw,anonuid=65534,anongid=65534,subtree_check)
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    payload = {
+
+    call('sharing.nfs.update', nfsid, {
         'maproot_user': 'nobody',
         'maproot_group': 'nogroup'
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -690,14 +675,12 @@ def test_34_check_nfs_share_maproot(request):
 
     """
     setting maproot_user and maproot_group to root should
-    cause us to append "not_root_squash" to options.
+    cause us to append "no_root_squash" to options.
     """
-    payload = {
+    call('sharing.nfs.update', nfsid, {
         'maproot_user': 'root',
         'maproot_group': 'root'
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -721,12 +704,10 @@ def test_34_check_nfs_share_maproot(request):
             assert 'no_root_squash' not in params, str(parsed)
             assert not any(filter(lambda x: x.startswith('anon'), params)), str(parsed)
 
-    payload = {
+    call('sharing.nfs.update', nfsid, {
         'maproot_user': '',
         'maproot_group': ''
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -745,12 +726,11 @@ def test_35_check_nfs_share_mapall(request):
         *(sec=sys,rw,all_squash,anonuid=65534,anongid=65534,subtree_check)
     """
     depends(request, ["NFSID_SHARE_CREATED"], scope="session")
-    payload = {
+
+    call('sharing.nfs.update', nfsid, {
         'mapall_user': 'nobody',
         'mapall_group': 'nogroup'
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -760,12 +740,10 @@ def test_35_check_nfs_share_mapall(request):
     assert 'anongid=65534' in params, str(parsed)
     assert 'all_squash' in params, str(parsed)
 
-    payload = {
+    call('sharing.nfs.update', nfsid, {
         'mapall_user': '',
         'mapall_group': ''
-    }
-    results = PUT(f"/sharing/nfs/id/{nfsid}/", payload)
-    assert results.status_code == 200, results.text
+    })
 
     parsed = parse_exports()
     assert len(parsed) == 1, str(parsed)
@@ -1415,7 +1393,110 @@ def test_48_syslog_filters(request):
         assert "rpc.mountd" not in res, f"Did not expect to find 'rpc.mountd' in the output but found:\n{res}"
 
 
-def test_50_stoping_nfs_service(request):
+@pytest.mark.parametrize('type,data', [
+    ('InvalidAssignment', [
+        {'maproot_user': 'baduser'}, 'maproot_user', 'User not found: baduser'
+    ]),
+    ('InvalidAssignment', [
+        {'maproot_group': 'badgroup'}, 'maproot_user', 'This field is required when map group is specified'
+    ]),
+    ('InvalidAssignment', [
+        {'mapall_user': 'baduser'}, 'mapall_user', 'User not found: baduser'
+    ]),
+    ('InvalidAssignment', [
+        {'mapall_group': 'badgroup'}, 'mapall_user', 'This field is required when map group is specified'
+    ]),
+    ('MissingUser', [
+        'maproot_user', 'missinguser'
+    ]),
+    ('MissingUser', [
+        'mapall_user', 'missinguser'
+    ]),
+    ('MissingGroup', [
+        'maproot_group', 'missingroup'
+    ]),
+    ('MissingGroup', [
+        'mapall_group', 'missingroup'
+    ]),
+])
+def test_50_nfs_invalid_user_group_mapping(request, type, data):
+    '''
+    Verify we properly trap and handle invalid user and group mapping
+    Two conditions:
+        1) Catch invalid assignments
+        2) Catch invalid settings at NFS start
+    '''
+    depends(request, ["NFSID_SHARE_CREATED"], scope="session")
+
+    ''' Local helper routine '''
+    def run_missing_usrgrp_test(usrgrp, tmp_path, share, usrgrpInst):
+        parsed = parse_exports()
+        assert len(parsed) == 2, str(parsed)
+        this_share = [entry for entry in parsed if entry['path'] == f'{tmp_path}']
+        assert len(this_share) == 1, f"Did not find share {tmp_path}.\nexports = {parsed}"
+
+        # Remove the user/group and restart nfs
+        call(f'{usrgrp}.delete', usrgrpInst['id'])
+        call('service.restart', 'nfs')
+
+        # An alert should be generated
+        alerts = call('alert.list')
+        this_alert = [entry for entry in alerts if entry['klass'] == "NFSexportMappingInvalidNames"]
+        assert len(this_alert) == 1, f"Did not find alert for 'NFSexportMappingInvalidNames'.\n{alerts}"
+
+        # The NFS export should have been removed
+        parsed = parse_exports()
+        assert len(parsed) == 1, str(parsed)
+        this_share = [entry for entry in parsed if entry['path'] == f'{tmp_path}']
+        assert len(this_share) == 0, f"Unexpectedly found share {tmp_path}.\nexports = {parsed}"
+
+        # Modify share to map with a built-in user or group and restart NFS
+        call('sharing.nfs.update', share, {data[0]: "ftp"})
+        call('service.restart', 'nfs')
+
+        # The alert should be cleared
+        alerts = call('alert.list')
+        this_alert = [entry for entry in alerts if entry['key'] == "NFSexportMappingInvalidNames"]
+        assert len(this_alert) == 0, f"Unexpectedly found alert 'NFSexportMappingInvalidNames'.\n{alerts}"
+
+        # Share should have been restored
+        parsed = parse_exports()
+        assert len(parsed) == 2, str(parsed)
+        this_share = [entry for entry in parsed if entry['path'] == f'{tmp_path}']
+        assert len(this_share) == 1, f"Did not find share {tmp_path}.\nexports = {parsed}"
+
+    ''' Test Processing '''
+    with directory(f'{NFS_PATH}/sub1') as tmp_path:
+
+        if type == 'InvalidAssignment':
+            payload = {'path': tmp_path} | data[0]
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.nfs.create", payload)
+            assert ve.value.errors == [ValidationError('sharingnfs_create.' + f'{data[1]}', data[2], 22)]
+
+        elif type == 'MissingUser':
+            usrname = data[1]
+            testkey, testval = data[0].split('_')
+
+            usr_payload = {'username': usrname, 'full_name': usrname,
+                           'group_create': True, 'password': 'abadpassword'}
+            mapping = {data[0]: usrname}
+            with create_user(usr_payload) as usrInst:
+                with nfs_share(tmp_path, mapping) as share:
+                    run_missing_usrgrp_test(testval, tmp_path, share, usrInst)
+
+        elif type == 'MissingGroup':
+            # Use a built-in user for the group test
+            grpname = data[1]
+            testkey, testval = data[0].split('_')
+
+            mapping = {f"{testkey}_user": 'ftp', data[0]: grpname}
+            with create_group({'name': grpname}) as grpInst:
+                with nfs_share(tmp_path, mapping) as share:
+                    run_missing_usrgrp_test(testval, tmp_path, share, grpInst)
+
+
+def test_70_stopping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
     payload = {"service": "nfs"}
@@ -1424,12 +1505,12 @@ def test_50_stoping_nfs_service(request):
     sleep(1)
 
 
-def test_51_checking_to_see_if_nfs_service_is_stop(request):
+def test_71_checking_to_see_if_nfs_service_is_stop(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]["state"] == "STOPPED", results.text
 
 
-def test_52_check_adjusting_threadpool_mode(request):
+def test_72_check_adjusting_threadpool_mode(request):
     """
     Verify that NFS thread pool configuration can be adjusted
     through private API endpoints.
@@ -1449,23 +1530,23 @@ def test_52_check_adjusting_threadpool_mode(request):
         assert res['result'] == m, res
 
 
-def test_54_disable_nfs_service_at_boot(request):
+def test_74_disable_nfs_service_at_boot(request):
     results = PUT("/service/id/nfs/", {"enable": False})
     assert results.status_code == 200, results.text
 
 
-def test_55_checking_nfs_disable_at_boot(request):
+def test_75_checking_nfs_disable_at_boot(request):
     results = GET("/service?service=nfs")
     assert results.json()[0]['enable'] is False, results.text
 
 
-def test_56_destroying_smb_dataset(request):
+def test_76_destroying_smb_dataset(request):
     results = DELETE(f"/pool/dataset/id/{dataset_url}/")
     assert results.status_code == 200, results.text
 
 
 @pytest.mark.parametrize('exports', ['missing', 'empty'])
-def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
+def test_80_start_nfs_service_with_missing_or_empty_exports(request, exports):
     '''
     NAS-123498: Eliminate conditions on exports for service start
     The goal is to make the NFS server behavior similar to the other protocols
@@ -1496,7 +1577,7 @@ def test_60_start_nfs_service_with_missing_or_empty_exports(request, exports):
 
 
 @pytest.mark.parametrize('expect_NFS_start', [False, True])
-def test_62_files_in_exportsd(request, expect_NFS_start):
+def test_82_files_in_exportsd(request, expect_NFS_start):
     '''
     Any files in /etc/exports.d are potentially dangerous, especially zfs.exports.
     We implemented protections against rogue exports files.
