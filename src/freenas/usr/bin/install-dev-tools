@@ -30,6 +30,9 @@ PIP_PACKAGES=()
 if [ -f /usr/local/libexec/disable-rootfs-protection ]; then
     # Running on SCALE
     /usr/local/libexec/disable-rootfs-protection
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
 fi
 
 apt update
