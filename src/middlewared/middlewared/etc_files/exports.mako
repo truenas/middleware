@@ -6,59 +6,48 @@
     from contextlib import suppress
     from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
 
-    def do_map(share, map_type, map_ids):
+    
+    def do_map(share, map_type, map_ids, alert_shares):
         output = []
-        raise_keyerror = False
+        invalid_name = []
 
         if usrname := share[f'{map_type}_user']:
-            uid = middleware.call_sync('user.username_to_uid', usrname)
-            if uid is not None:
+            try:
+                uid = middleware.call_sync('user.get_user_obj', {'username': usrname})['pw_uid']
                 map_ids[f'{map_type}_user'] = uid
                 output.append(f'anonuid={uid}')
-            else:
+            except KeyError:
                 # report the invalid name
+                middleware.logger.info(f"adding {usrname} to invalid_name")
                 map_ids[f'{map_type}_user'] = usrname
-                raise_keyerror = True
+                invalid_name.append(usrname)
 
         if grpname := share[f'{map_type}_group']:
-            gid = middleware.call_sync('group.groupname_to_gid', grpname)
-            if gid is not None:
+            try:
+                gid = middleware.call_sync('group.get_group_obj', {'groupname': grpname})['gr_gid']
                 map_ids[f'{map_type}_group'] = gid
                 output.append(f'anongid={gid}')
-            else:
-                # report the invalid group
+            except KeyError:
+                # report the invalid name
                 map_ids[f'{map_type}_group'] = grpname
-                raise_keyerror = True
+                middleware.logger.info(f"adding {grpname} to invalid_name")
+                invalid_name.append(grpname)
 
-        if raise_keyerror:
-            raise KeyError
+        if invalid_name:
+            try:
+                alert_shares[share['path']] += invalid_name
+            except KeyError:
+                alert_shares[share['path']] = invalid_name
+            # Raise KeyError For alert reporting and skip this share
+            raise KeyError(f'Missing {invalid_name}') from None
 
         return output
 
 
-    def process_keyerror_alert(do_what, share, type, map_ids=None):
-        id = 'share' + str(share['id']) + type
-        sharepath = share['path']
-        match do_what:
-            case 'raise':
-                if map_ids is not None:
-                    invalid_names = ','.join([
-                        v for k, v in map_ids.items() if type in k and not isinstance(v, int)
-                    ])
-                    middleware.logger.warning(
-                        f"{sharepath}: Disabling this NFS share. "
-                        f"Mapping invalid names: {invalid_names}"
-                    )
-                    middleware.call_sync("alert.oneshot_create", "NFSexportMappingInvalidNames",
-                        {'id': id, 'path': sharepath, 'names': invalid_names}
-                    )
-                    raise KeyError
-            case 'clear':
-                middleware.call_sync("alert.oneshot_delete", "NFSexportMappingInvalidNames", id)
-
-
-    def generate_options(share, global_sec, config):
+    def generate_options(share, global_sec, config, alert_shares):
         params = []
+        mapall = []
+        maproot = []
         map_ids = {
             'maproot_user': -1,
             'maproot_group': -1,
@@ -77,24 +66,16 @@
             params.append("rw")
 
         # report and scrub out shares with invalid names
-        try:
-            mapall = do_map(share, "mapall", map_ids)
-            process_keyerror_alert('clear', share, 'mapall')
-        except KeyError:
-            process_keyerror_alert('raise', share, 'mapall', map_ids)
+        mapall = do_map(share, "mapall", map_ids, alert_shares)
+
         if mapall:
             params.extend(mapall)
             params.append("all_squash")
 
-        try:
-            maproot = do_map(share, "maproot", map_ids)
-            process_keyerror_alert('clear', share, 'maproot')
-            if map_ids['maproot_user'] == 0 and map_ids['maproot_group'] == 0:
-                params.append('no_root_squash')
-                maproot = []
-
-        except KeyError:
-            process_keyerror_alert('raise', share, 'maproot', map_ids)
+        maproot = do_map(share, "maproot", map_ids, alert_shares)
+        if map_ids['maproot_user'] == 0 and map_ids['maproot_group'] == 0:
+            params.append('no_root_squash')
+            maproot = []
 
         if maproot:
             params.extend(maproot)
@@ -192,6 +173,8 @@
 
     entries = []
     gaierrors = []
+    alert_shares = {}
+
     config = render_ctx["nfs.config"]
     shares = render_ctx["sharing.nfs.query"]
     poison_exports = not disable_exportsd()
@@ -201,14 +184,14 @@
 
     for share in shares:
         p = Path(share['path'])
-        try:
-            params = generate_options(share, global_sec, config)
-        except KeyError:
-            middleware.logger.info(f"{p}: error in share options, omitting from NFS exports")
+        if not p.exists():
+            middleware.logger.info("%s: path does not exist, omitting from NFS exports", p)
             continue
 
-        if not p.exists():
-            middleware.logger.debug("%s: path does not exist, omitting from NFS exports", p)
+        try:
+            params = generate_options(share, global_sec, config, alert_shares)
+        except KeyError:
+            middleware.logger.info("%s: error in share options, omitting from NFS exports", p)
             continue
 
         anonymous = True
@@ -244,6 +227,22 @@
         )
     else:
         middleware.call_sync('alert.oneshot_delete', 'NFSHostnameLookupFail', None)
+
+    if alert_shares:
+        for sharepath, invalid_names in alert_shares.items():
+            middleware.logger.warning(
+                f"{sharepath}: Disabling this NFS share. "
+                f"Mapping invalid names: {','.join(invalid_names)}"
+            )
+        # Generate the share_list string
+        disabled_shares = str(",".join("('{}': {})".format(k, ','.join(v)) for k, v in alert_shares.items()))
+
+        middleware.call_sync("alert.oneshot_create", "NFSexportMappingInvalidNames",
+            {'share_list': disabled_shares}
+        )
+    else:
+        middleware.call_sync("alert.oneshot_delete", "NFSexportMappingInvalidNames")
+
 
 %>
 % if poison_exports:

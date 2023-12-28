@@ -1,4 +1,4 @@
-from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 
 
 class NFSblockedByExportsDirAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -15,13 +15,7 @@ class NFSexportMappingInvalidNamesAlertClass(AlertClass, SimpleOneShotAlertClass
     category = AlertCategory.SHARING
     level = AlertLevel.ERROR
     title = "NFS export entry blocked"
-    text = "NFS export for %(path)r contains names that are invalid: %(names)s"
-
-    async def create(self, args):
-        return Alert(NFSexportMappingInvalidNamesAlertClass, args, key=args['id'])
+    text = "NFS shares have invalid names:\n%(share_list)s"
 
     async def delete(self, alerts, query):
-        return list(filter(
-            lambda alert: alert.args['id'] != query,
-            alerts
-        ))
+        return []

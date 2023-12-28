@@ -510,13 +510,15 @@ class SharingNFSService(SharingService):
             elif not map_user and map_group:
                 verrors.add(f"{schema_name}.{k}_user", "This field is required when map group is specified")
             else:
-                user_id = await self.middleware.call('user.username_to_uid', map_user)
-                if user_id is None:
+                try:
+                    await self.middleware.call('user.get_user_obj', {'username': map_user})
+                except KeyError:
                     verrors.add(f"{schema_name}.{k}_user", f"User not found: {map_user}")
 
                 if map_group:
-                    group_id = await self.middleware.call('group.groupname_to_gid', map_group)
-                    if group_id is None:
+                    try:
+                        await self.middleware.call('group.get_group_obj', {'groupname': map_group})
+                    except KeyError:
                         verrors.add(f"{schema_name}.{k}_group", f"Group not found: {map_group}")
 
         if data["maproot_user"] and data["mapall_user"]:

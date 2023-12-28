@@ -225,7 +225,7 @@ def restore_nfs_config():
     Restore the NFS configuration to the settings saved by save_nfs_config.
     This should be called _before_ NFS is shutdown to ensure the NFS conf file in /etc
     matches the DB settings.
-    This is called at the start of test_50_stoping_nfs_service.
+    This is called at the start of stopping_nfs_service.
     '''
     set_conf_cmd = {'msg': 'method', 'method': 'nfs.update', 'params': [NFS_CONFIG.default_nfs_config]}
     res = make_ws_request(ip, set_conf_cmd)
@@ -1467,8 +1467,8 @@ def test_50_nfs_invalid_user_group_mapping(request, type, data):
 
         # An alert should be generated
         alerts = call('alert.list')
-        this_alert = [entry for entry in alerts if entry['key'] == f'"share{share}{testkey}"']
-        assert len(this_alert) == 1, f"Did not find alert for 'share{share}{testkey}'.\n{alerts}"
+        this_alert = [entry for entry in alerts if entry['klass'] == "NFSexportMappingInvalidNames"]
+        assert len(this_alert) == 1, f"Did not find alert for 'NFSexportMappingInvalidNames'.\n{alerts}"
 
         # The NFS export should have been removed
         parsed = parse_exports()
@@ -1482,8 +1482,8 @@ def test_50_nfs_invalid_user_group_mapping(request, type, data):
 
         # The alert should be cleared
         alerts = call('alert.list')
-        this_alert = [entry for entry in alerts if entry['key'] == f'"share{share}{testkey}"']
-        assert len(this_alert) == 0, f"Unexpectedly found alert 'share{share}{testkey}'.\n{alerts}"
+        this_alert = [entry for entry in alerts if entry['key'] == "NFSexportMappingInvalidNames"]
+        assert len(this_alert) == 0, f"Unexpectedly found alert 'NFSexportMappingInvalidNames'.\n{alerts}"
 
         # Share should have been restored
         parsed = parse_exports()
@@ -1522,7 +1522,7 @@ def test_50_nfs_invalid_user_group_mapping(request, type, data):
                     run_missing_usrgrp_test(testval, tmp_path, share, grpInst)
 
 
-def test_70_stoping_nfs_service(request):
+def test_70_stopping_nfs_service(request):
     # Restore original settings before we stop
     restore_nfs_config()
     payload = {"service": "nfs"}
