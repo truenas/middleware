@@ -18,7 +18,6 @@
                 output.append(f'anonuid={uid}')
             except KeyError:
                 # report the invalid name
-                middleware.logger.info(f"adding {usrname} to invalid_name")
                 map_ids[f'{map_type}_user'] = usrname
                 invalid_name.append(usrname)
 
@@ -30,7 +29,6 @@
             except KeyError:
                 # report the invalid name
                 map_ids[f'{map_type}_group'] = grpname
-                middleware.logger.info(f"adding {grpname} to invalid_name")
                 invalid_name.append(grpname)
 
         if invalid_name:
@@ -229,16 +227,14 @@
         middleware.call_sync('alert.oneshot_delete', 'NFSHostnameLookupFail', None)
 
     if alert_shares:
+        disabled_shares = []
         for sharepath, invalid_names in alert_shares.items():
-            middleware.logger.warning(
-                f"{sharepath}: Disabling this NFS share. "
-                f"Mapping invalid names: {','.join(invalid_names)}"
-            )
-        # Generate the share_list string
-        disabled_shares = str(",".join("('{}': {})".format(k, ','.join(v)) for k, v in alert_shares.items()))
+            names = ','.join(invalid_names)
+            middleware.logger.warning('%s: Disabling this NFS share. Mapping invalid names: %s', sharepath, names)
+            disabled_shares.append(f'({sharepath}: {names})')
 
         middleware.call_sync("alert.oneshot_create", "NFSexportMappingInvalidNames",
-            {'share_list': disabled_shares}
+            {'share_list': ','.join(disabled_shares)}
         )
     else:
         middleware.call_sync("alert.oneshot_delete", "NFSexportMappingInvalidNames")
