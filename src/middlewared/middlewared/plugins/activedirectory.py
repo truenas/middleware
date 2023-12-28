@@ -281,7 +281,7 @@ class ActiveDirectoryService(TDBWrapConfigService):
         if new["enable"] and old["enable"] and new["kerberos_realm"] != old["kerberos_realm"]:
             verrors.add(
                 "activedirectory_update.kerberos_realm",
-                "Kerberos realm may not be be altered while the AD service is enabled. "
+                "Kerberos realm may not be altered while the AD service is enabled. "
                 "This is to avoid introducing possible configuration errors that may result "
                 "in a production outage."
             )
@@ -497,8 +497,11 @@ class ActiveDirectoryService(TDBWrapConfigService):
                 'timeout',
                 'dns_timeout'
             ]
-            for entry in new.keys():
-                if new[entry] != old[entry] and entry not in permitted_keys:
+            for entry in old.keys():
+                if entry not in new or entry in permitted_keys:
+                    continue
+
+                if new[entry] != old[entry]:
                     raise ValidationError(
                         f'activedirectory.{entry}',
                         'Parameter may not be changed while the Active Directory service is enabled.'
