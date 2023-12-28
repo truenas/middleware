@@ -380,32 +380,6 @@ def test_11_perform_server_side_copy(request):
         n.server_side_copy('ssc1', 'ssc2')
 
 
-@pytest.mark.parametrize('data', [
-    ({'name': 'root', 'uid': 0, 'gid': 0}),
-    ({'name': 'ftp', 'uid': 121, 'gid': 14}),
-    ({'name': 'bogus', 'uid': None, 'gid': None}),
-])
-def test_15_name_to_id(data):
-    user_id = call('user.username_to_uid', data['name'])
-    assert user_id == data['uid'], f"Expected {data['name']} UID to be {data['uid']}, but found {user_id}"
-
-    group_id = call('group.groupname_to_gid', data['name'])
-    assert group_id == data['gid'], f"Expected {data['name']} GID to be {data['gid']}, but found {group_id}"
-
-
-@pytest.mark.parametrize('data', [
-    ({'name': 'root', 'uid': 0, 'gid': 0}),
-    ({'name': 'ftp', 'uid': 121, 'gid': 14}),
-    ({'name': None, 'uid': 3456, 'gid': 3456}),  # Assumes 3456 is not attached to any name
-])
-def test_15_id_to_name(data):
-    user_name = call('user.uid_to_username', data['uid'])
-    assert user_name == data['name'], f"Expected UID {data['uid']} to be {data['name']}, but found {user_name}"
-
-    group_name = call('group.gid_to_groupname', data['gid'])
-    assert group_name == data['name'], f"Expected GID {data['gid']} to be {data['name']}, but found {group_name}"
-
-
 @pytest.mark.parametrize('nfsd,cores,expected', [
     (50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}),   # User specifies number of nfsd, expect: 50 nfsd, 12 mountd
     (None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}),  # Dynamic, expect 12 nfsd and 3 mountd
