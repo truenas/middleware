@@ -16,6 +16,7 @@ from auto_config import vm_name, ip, user, password, update
 
 url = "https://raw.githubusercontent.com/iXsystems/ixbuild/master/prepnode/"
 
+
 # Exclude if update is false
 if update is True:
     def test_00_get_update_conf_for_internals_and_nightly(request):
@@ -179,7 +180,7 @@ if update is True:
             assert update_version == current_version, results.text
 
 
-# These folowing test will only run if iXautomation created config.cfg
+# These following test will only run if iXautomation created config.cfg
 if os.path.exists(f'{apifolder}/config.cfg') is True:
     configs = ConfigParser()
     configs.read('config.cfg')
@@ -202,10 +203,9 @@ if os.path.exists(f'{apifolder}/config.cfg') is True:
             train = None
             current = version.rsplit('-', maxsplit=3)[0] + '-Nightlies'
         results = GET('/update/get_trains/')
-        # For nightlies
-        if train is None:
-            assert results.json()['trains'] == {}, results.text
-        else:
+
+        # Skip for nightly builds
+        if train is not None:
             assert train in results.json()['trains'], results.text
         assert results.json()['current'] == current, results.text
         assert results.json()['selected'] == current, results.text

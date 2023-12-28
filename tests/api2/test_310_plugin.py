@@ -15,23 +15,15 @@ pytestmark = pytest.mark.skipif(dev_test, reason=reason)
 
 # Exclude from HA testing
 if not ha:
-    JOB_ID = None
     job_results = None
-    is_freenas = GET("/system/is_freenas/").json()
     test_repos_url = 'https://github.com/freenas/iocage-ix-plugins.git'
 
-    plugins_branch = '13.1-RELEASE'
+    plugins_branch = 'master'
     repos_url = 'https://github.com/ix-plugin-hub/iocage-plugin-index.git'
     index_url = f'https://raw.githubusercontent.com/ix-plugin-hub/iocage-plugin-index/{plugins_branch}/INDEX'
 
     plugin_index = GET(index_url).json()
     plugin_list = list(plugin_index.keys())
-
-    # custom URL
-    repos_url2 = 'https://github.com/ericbsd/iocage-plugin-index.git'
-    index_url2 = f'https://raw.githubusercontent.com/ericbsd/iocage-plugin-index/{plugins_branch}/INDEX'
-    plugin_index2 = GET(index_url2).json()
-    plugin_list2 = list(plugin_index2.keys())
 
     plugin_objects = [
         "id",
@@ -231,11 +223,11 @@ if not ha:
         results = GET('/plugin/id/asigra/')
         assert results.status_code == 404, results.text
 
-    def test_25_get_list_of_available_plugins_job_id_on_custom_repos(request):
+    def test_25_get_list_of_available_plugins_job_id(request):
         depends(request, ["ACTIVATE_JAIL_POOL"])
         global job_results
         payload = {
-            "plugin_repository": repos_url2,
+            "plugin_repository": repos_url,
             "branch": plugins_branch
         }
         results = POST('/plugin/available/', payload)
@@ -245,7 +237,7 @@ if not ha:
         assert job_status['state'] == 'SUCCESS', str(job_status['results'])
         job_results = job_status['results']
 
-    @pytest.mark.parametrize('plugin', plugin_list2)
+    @pytest.mark.parametrize('plugin', plugin_list)
     def test_26_verify_available_plugin_(plugin, request):
         depends(request, ["ACTIVATE_JAIL_POOL"])
         assert isinstance(job_results['result'], list), str(job_results)
@@ -270,7 +262,7 @@ if not ha:
                 'nat=1'
             ],
             "branch": plugins_branch,
-            "plugin_repository": repos_url2
+            "plugin_repository": repos_url
         }
         results = POST('/plugin/', payload)
         assert results.status_code == 200, results.text

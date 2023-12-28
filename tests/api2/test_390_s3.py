@@ -6,7 +6,6 @@ import pytest
 import sys
 import os
 from pytest_dependency import depends
-from time import sleep
 apifolder = os.getcwd()
 sys.path.append(apifolder)
 from functions import GET, POST, PUT, DELETE
@@ -60,29 +59,11 @@ def test_04_start_s3_service(request):
         }
     )
 
-    assert result.status_code == 200, result.text
-    sleep(1)
+    assert result.status_code == 422, result.text
+    assert result.json()['message'] == 'S3 service is deprecated', result.text
 
 
-def test_05_verify_s3_is_running(request):
-    depends(request, ["pool_04"], scope="session")
-    results = GET("/service/?service=s3")
-    assert results.json()[0]["state"] == "RUNNING", results.text
-
-
-def test_06_stop_iSCSI_service(request):
-    depends(request, ["pool_04"], scope="session")
-    result = POST(
-        '/service/stop/', {
-            'service': 's3',
-        }
-    )
-
-    assert result.status_code == 200, result.text
-    sleep(1)
-
-
-def test_07_verify_s3_is_not_running(request):
+def test_05_verify_s3_has_not_started(request):
     depends(request, ["pool_04"], scope="session")
     results = GET("/service/?service=s3")
     assert results.json()[0]["state"] == "STOPPED", results.text

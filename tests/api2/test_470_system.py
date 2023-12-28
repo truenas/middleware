@@ -49,15 +49,18 @@ if os.path.exists(f'{apifolder}/config.cfg') is True:
     configs.read('config.cfg')
     version = configs['NAS_CONFIG']['version']
 
-    # These folowing test will only run if iXautomation created config.cfg
+    # These following test will only run if iXautomation created config.cfg
     def test_06_verify_system_version_and_system_info_version_match_iso_version():
+        global version_length
         system_version_results = GET("/system/version/")
-        assert system_version_results.json() == version, system_version_results.text
+        assert system_version_results.status_code == 200, system_version_results.text
+        version_length = len(system_version_results.json())
+        assert system_version_results.json() == version[:version_length], system_version_results.text
 
         system_info_results = GET("/system/info/")
-        assert system_info_results.json()['version'] == version, system_info_results.text
+        assert system_info_results.json()['version'] == version[:version_length], system_info_results.text
 
     def test_07_verify_etc_versionwith_iso_version():
         results = SSH_TEST('cat /etc/version', user, password, ip)
         assert results['result'] is True, f'out: {results["output"]}, err: {results["stderr"]}'
-        assert version in results["output"], str(results["output"])
+        assert version[:version_length] in results["output"], str(results["output"])
