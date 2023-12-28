@@ -13,7 +13,7 @@ from auto_config import pool_name, ip, user, password, ha
 from functions import GET, POST, PUT, DELETE, SSH_TEST, cmd_test, make_ws_request, wait_on_job
 from protocols import smb_connection, smb_share
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationErrors, ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call, client
@@ -204,6 +204,21 @@ def test_07_enable_leave_activedirectory(request):
         createcomputer=AD_COMPUTER_OU,
         dns_timeout=15
     ) as ad:
+        # We should be able to change some parameters when joined to AD
+        call('activedirectory.update', {'domainname': AD_DOMAIN, 'verbose_logging': True})
+
+        # Changing kerberos realm should raise ValidationError
+        with pytest.raises(ValidationErrors) as ve:
+            call('activedirectory.update', {'domainname': AD_DOMAIN, 'kerberos_realm': None})
+
+        assert ve.value.errors[0].errmsg.startswith('Kerberos realm may not be altered')
+
+        # This should be caught by our catchall
+        with pytest.raises(ValidationError) as ve:
+            call('activedirectory.update', {'domainname': AD_DOMAIN, 'createcomputer': ''})
+
+        assert ve.value.errmsg.startswith('Parameter may not be changed')
+
         # Verify that we're not leaking passwords into middleware log
         cmd = f"""grep -R "{ADPASSWORD}" /var/log/middlewared.log"""
         results = SSH_TEST(cmd, user, password, ip)
