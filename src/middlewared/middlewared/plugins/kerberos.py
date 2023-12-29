@@ -1213,7 +1213,7 @@ class KerberosKeytabService(CRUDService):
             )
         else:
             await self.middleware.call(
-                'datastore.update', self._config.datastore, id_,
+                'datastore.update', self._config.datastore, entry[0]['id'],
                 {'name': 'AD_MACHINE_ACCOUNT', 'file': keytab_file},
                 {'prefix': self._config.datastore_prefix}
             )
