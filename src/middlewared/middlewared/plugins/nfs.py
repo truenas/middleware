@@ -290,7 +290,7 @@ class NFSService(SystemServiceService):
             if ad_config['enable'] and not ad_config['use_default_domain']:
                 await self.middleware.call(
                     'datastore.update', 'directoryservice.activedirectory',
-                    {'use_default_domain': True}, {'prefix': True}
+                    {'use_default_domain': True}, {'prefix': 'ad_'}
                 )
                 await self.middleware.call('activedirectory.synchronize')
                 await self.middleware.call('service.reload', 'idmap')
