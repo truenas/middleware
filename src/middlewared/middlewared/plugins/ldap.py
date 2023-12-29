@@ -761,6 +761,7 @@ class LDAPService(ConfigService):
         new = old.copy()
         new_search_bases = data.pop(constants.LDAP_SEARCH_BASES_SCHEMA_NAME, {})
         new_attributes = data.pop(constants.LDAP_ATTRIBUTE_MAP_SCHEMA_NAME, {})
+        self.logger.debug("XXX: data: %s", data)
         new.update(data)
         new[constants.LDAP_SEARCH_BASES_SCHEMA_NAME] | new_search_bases
 
