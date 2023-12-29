@@ -263,7 +263,7 @@ class LDAPService(ConfigService):
 
     ENTRY = Dict(
         'ldap_update',
-        List('hostname', required=True),
+        List('hostname'),
         LDAP_DN('basedn'),
         LDAP_DN('binddn'),
         Str('bindpw', private=True),
@@ -474,7 +474,6 @@ class LDAPService(ConfigService):
 
     @private
     async def common_validate(self, new, old, verrors):
-        ha_mode = await self.middleware.call('smb.get_smb_ha_mode')
         if not new["enable"]:
             return
 
